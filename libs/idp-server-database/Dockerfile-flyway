@@ -1,39 +1,16 @@
-# builder stage: resolve dependencies for caching
-FROM gradle:8.8-jdk21 AS builder
-WORKDIR /app
-COPY gradle gradle
-COPY gradlew .
-COPY build.gradle .
-RUN ./gradlew --no-daemon dependencies || true
+# Flyway official image for database migrations
+# Supports both PostgreSQL and MySQL via DB_TYPE environment variable
+FROM flyway/flyway:11
 
-# runtime stage
-FROM eclipse-temurin:21-jre
-WORKDIR /app
+# Copy migration SQL files
+COPY postgresql /flyway/sql/postgresql
+COPY mysql /flyway/sql/mysql
 
-# create non-root user
-RUN useradd -m -s /bin/bash runner
-
-# set Gradle user home to runner's home directory
-ENV GRADLE_USER_HOME=/home/runner/.gradle
-
-# copy only the required files from builder
-COPY --from=builder /app/gradlew ./gradlew
-COPY --from=builder /app/gradle ./gradle
-COPY build.gradle ./build.gradle
-COPY mysql ./mysql
-COPY postgresql ./postgresql
+# Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 
-# grant execution permission and set ownership to runner
-RUN chmod +x /entrypoint.sh \
- && chown -R runner:runner /app \
- && mkdir -p ${GRADLE_USER_HOME} \
- && chown -R runner:runner ${GRADLE_USER_HOME}
-
-# switch to non-root user
-USER runner
-
-RUN ./gradlew
+# Set executable permission
+RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["migrate"]
