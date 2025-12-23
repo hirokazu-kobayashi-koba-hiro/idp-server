@@ -5,16 +5,25 @@ import { check } from "k6";
 const tenantData = JSON.parse(open('../data/performance-test-tenant.json'));
 const tenantCount = tenantData.length;
 
-// 動的にシナリオを生成
+// 環境変数でカスタマイズ可能なパラメータ
+// テスト方針の測定観点に対応:
+// - ベースライン測定: TOTAL_VU_COUNT=10, TOTAL_RATE=5
+// - マルチテナント影響測定: テナント数を変えて実行
+// - 同時負荷影響測定: TOTAL_VU_COUNT=30/60/120/300
+const TOTAL_VU_COUNT = parseInt(__ENV.TOTAL_VU_COUNT || '30');
+const TOTAL_RATE = parseInt(__ENV.TOTAL_RATE || '10');
+const DURATION = __ENV.DURATION || '5m';
+
+// 動的にシナリオを生成（テナント数に応じてVU/レートを分配）
 const scenarios = {};
 for (let i = 0; i < tenantCount; i++) {
   scenarios[`tenant${i}`] = {
     executor: 'constant-arrival-rate',
-    preAllocatedVUs: Math.ceil(30 / tenantCount),
-    maxVUs: Math.ceil(60 / tenantCount),
-    rate: Math.ceil(10 / tenantCount) || 1,
+    preAllocatedVUs: Math.ceil(TOTAL_VU_COUNT / tenantCount),
+    maxVUs: Math.ceil((TOTAL_VU_COUNT * 2) / tenantCount),
+    rate: Math.ceil(TOTAL_RATE / tenantCount) || 1,
     timeUnit: '1s',
-    duration: '5m',
+    duration: DURATION,
     exec: 'multiTenantAuthCodeFlow',
     env: { TENANT_INDEX: String(i) },
   };

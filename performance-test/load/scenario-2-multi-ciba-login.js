@@ -1,19 +1,40 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
 
-const data = JSON.parse(open('../data/performance-test-tenant.json'));
-const tenantCount = data.length;
+// マルチユーザーデータを優先して読み込む
+let data;
+let useMultiUser = false;
 
-// 動的にシナリオを生成
+try {
+  data = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
+  useMultiUser = true;
+} catch (e) {
+  data = JSON.parse(open('../data/performance-test-tenant.json'));
+  useMultiUser = false;
+}
+
+// 環境変数でテナント数を制御可能（デフォルトは全テナント）
+const maxTenants = parseInt(__ENV.TENANT_COUNT || String(data.length));
+const tenantCount = Math.min(maxTenants, data.length);
+
+// 環境変数でカスタマイズ可能なパラメータ
+// テスト方針の測定観点に対応:
+// - マルチテナント影響測定: テナント数1→5→10（JSONファイルで制御）
+// - 同時負荷影響測定: TOTAL_VU_COUNT=50/100/200/500
+const TOTAL_VU_COUNT = parseInt(__ENV.TOTAL_VU_COUNT || '50');
+const TOTAL_RATE = parseInt(__ENV.TOTAL_RATE || '20');
+const DURATION = __ENV.DURATION || '5m';
+
+// 動的にシナリオを生成（テナント数に応じてVU/レートを分配）
 const scenarios = {};
 for (let i = 0; i < tenantCount; i++) {
   scenarios[`tenant${i}`] = {
     executor: 'constant-arrival-rate',
-    preAllocatedVUs: Math.ceil(50 / tenantCount),
-    maxVUs: Math.ceil(100 / tenantCount),
-    rate: Math.ceil(20 / tenantCount) || 1,
+    preAllocatedVUs: Math.ceil(TOTAL_VU_COUNT / tenantCount),
+    maxVUs: Math.ceil((TOTAL_VU_COUNT * 2) / tenantCount),
+    rate: Math.ceil(TOTAL_RATE / tenantCount) || 1,
     timeUnit: '1s',
-    duration: '5m',
+    duration: DURATION,
     exec: 'multiTenantLogin',
     env: { TENANT_INDEX: String(i) },
   };
@@ -30,14 +51,26 @@ export function multiTenantLogin() {
 
 
 function login(index) {
-  const baseUrl = __ENV.BASE_URL;
+  const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
   const testData = data[index];
   const clientId = testData.clientId;
   const clientSecret = testData.clientSecret;
   const tenantId = testData.tenantId;
 
-  const userId = testData.userId;
-  const deviceId = testData.deviceId;
+  // ユーザーをランダムに選択（マルチユーザーモードの場合）
+  let userId, deviceId;
+  if (useMultiUser && testData.users && testData.users.length > 0) {
+    const users = testData.users;
+    const randomIndex = Math.floor(Math.random() * users.length);
+    const user = users[randomIndex];
+    userId = user.user_id;
+    deviceId = user.device_id;
+  } else {
+    // シングルユーザーモード
+    userId = testData.userId;
+    deviceId = testData.deviceId;
+  }
+
   const bindingMessage = "999";
   const loginHint = encodeURIComponent(`sub:${userId},idp:idp-server`);
 

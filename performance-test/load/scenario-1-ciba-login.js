@@ -1,30 +1,55 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
 
-// 設定ファイルから読み込み（環境変数BASE_URLのみ必要）
-const tenantData = JSON.parse(open('../data/performance-test-tenant.json'));
+// 設定ファイルから読み込み
+// マルチユーザーデータがある場合はそちらを優先（100K+ユーザーでのベンチマーク用）
+// なければシングルユーザーデータを使用（簡易テスト用）
+let tenantData;
+let useMultiUser = false;
+
+try {
+  tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
+  useMultiUser = true;
+} catch (e) {
+  tenantData = JSON.parse(open('../data/performance-test-tenant.json'));
+  useMultiUser = false;
+}
+
 const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
 const config = tenantData[tenantIndex];
 
-export const options = {
+// マルチユーザーモードの場合、ユーザー配列を取得
+const users = useMultiUser ? config.users : null;
+const userCount = users ? users.length : 1;
 
+// 環境変数でカスタマイズ可能なパラメータ
+// テスト方針の測定観点に対応:
+// - ベースライン測定: VU_COUNT=10, RATE=5, DURATION=5m
+// - 同時負荷影響測定: VU_COUNT=50/100/200/500, RATE=100/200/400/1000
+const VU_COUNT = parseInt(__ENV.VU_COUNT || '50');
+const MAX_VU_COUNT = parseInt(__ENV.MAX_VU_COUNT || String(VU_COUNT * 2));
+const LOGIN_RATE = parseInt(__ENV.LOGIN_RATE || '20');
+const INTROSPECT_RATE = parseInt(__ENV.INTROSPECT_RATE || '80');
+const DURATION = __ENV.DURATION || '5m';
+
+export const options = {
   scenarios: {
     login: {
       executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 20,
+      preAllocatedVUs: VU_COUNT,
+      maxVUs: MAX_VU_COUNT,
+      rate: LOGIN_RATE,
       timeUnit: '1s',
-      duration: '5m',
+      duration: DURATION,
       exec: 'login',
     },
     introspection: {
       executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 80,
+      preAllocatedVUs: VU_COUNT,
+      maxVUs: MAX_VU_COUNT,
+      rate: INTROSPECT_RATE,
       timeUnit: '1s',
-      duration: '5m',
+      duration: DURATION,
       exec: 'introspect',
     },
   },
@@ -36,9 +61,19 @@ export function login() {
   const clientSecret = config.clientSecret;
   const tenantId = config.tenantId;
 
-  // テナント登録時に作成されたユーザー/デバイスを使用
-  const userId = config.userId;
-  const deviceId = config.deviceId;
+  // ユーザーをランダムに選択（マルチユーザーモードの場合）
+  let userId, deviceId;
+  if (useMultiUser && users) {
+    const randomIndex = Math.floor(Math.random() * userCount);
+    const user = users[randomIndex];
+    userId = user.user_id;
+    deviceId = user.device_id;
+  } else {
+    // シングルユーザーモード（テナント登録時に作成されたユーザー）
+    userId = config.userId;
+    deviceId = config.deviceId;
+  }
+
   const bindingMessage = "999";
   const loginHint = encodeURIComponent(`sub:${userId},idp:idp-server`);
 

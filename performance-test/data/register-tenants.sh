@@ -50,20 +50,24 @@ ADMIN_CLIENT_SECRET_DEFAULT="${ADMIN_CLIENT_SECRET:-}"
 BASE_URL="${AUTHORIZATION_SERVER_URL:-http://localhost:8080}"
 
 usage() {
-  echo "Usage: $0 -n <number_of_tenants> [-d <dry_run_flag>]"
+  echo "Usage: $0 -n <number_of_tenants> [-d <dry_run_flag>] [-a]"
   echo ""
   echo "Parameters (optional - defaults loaded from .env):"
   echo "  -n   Number of tenants to register (required)"
   echo "  -d   Dry run flag (true/false, default: false)"
   echo "  -b   Base URL (default: from .env AUTHORIZATION_SERVER_URL or http://localhost:8080)"
+  echo "  -a   Append mode: add tenants to existing file instead of overwriting"
   exit 1
 }
 
-while getopts ":n:d:b:" opt; do
+APPEND_MODE="false"
+
+while getopts ":n:d:b:a" opt; do
   case $opt in
     n) NUM_TENANTS="$OPTARG" ;;
     d) DRY_RUN="$OPTARG" ;;
     b) BASE_URL="$OPTARG" ;;
+    a) APPEND_MODE="true" ;;
     *) usage ;;
   esac
 done
@@ -90,6 +94,7 @@ echo "=============================================="
 echo "Base URL: $BASE_URL"
 echo "Admin Tenant: $ADMIN_TENANT_ID"
 echo "Tenants to register: $NUM_TENANTS"
+echo "Append mode: $APPEND_MODE"
 echo "Dry run: $DRY_RUN"
 echo "Template: $TEMPLATE_FILE"
 echo ""
@@ -126,8 +131,30 @@ mkdir -p "$WORK_DIR"
 echo "🚀 Start registering $NUM_TENANTS tenants..."
 echo ""
 
-echo "[" > "$OUTPUT_FILE"
-first=1
+# Handle append mode
+if [ "$APPEND_MODE" = "true" ] && [ -f "$OUTPUT_FILE" ]; then
+  # Read existing tenants and prepare for append
+  EXISTING_COUNT=$(jq 'length' "$OUTPUT_FILE" 2>/dev/null || echo "0")
+  echo "📋 Existing tenants: $EXISTING_COUNT"
+
+  # Remove closing bracket and prepare for append
+  # Create temp file with existing data minus the closing bracket
+  jq '.[:-1]' "$OUTPUT_FILE" > "${OUTPUT_FILE}.tmp" 2>/dev/null || echo "[]" > "${OUTPUT_FILE}.tmp"
+
+  if [ "$EXISTING_COUNT" -gt 0 ]; then
+    # Get all but remove closing bracket, add comma for continuation
+    head -c -2 "$OUTPUT_FILE" > "${OUTPUT_FILE}.tmp"
+    echo "," >> "${OUTPUT_FILE}.tmp"
+    first=0
+  else
+    echo "[" > "${OUTPUT_FILE}.tmp"
+    first=1
+  fi
+  mv "${OUTPUT_FILE}.tmp" "$OUTPUT_FILE"
+else
+  echo "[" > "$OUTPUT_FILE"
+  first=1
+fi
 
 for ((i=1; i<=NUM_TENANTS; i++)); do
   export ORGANIZATION_ID=$(uuidgen | tr 'A-Z' 'a-z')

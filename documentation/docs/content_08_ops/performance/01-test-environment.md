@@ -217,18 +217,18 @@ WITH (FORMAT csv, HEADER false, DELIMITER E'\t')"
 
 ### テナントデータ
 
+オンボーディングAPIを使用して、テスト用テナントを登録する。認証情報は`.env`ファイルから自動的に読み込まれる。
+
 ```bash
-./performance-test/data/register-tenants.sh \
-  -e local \
-  -u ito.ichiro \
-  -p successUserCode001 \
-  -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
-  -b http://localhost:8080 \
-  -c clientSecretPost \
-  -s clientSecretPostPassword... \
-  -n 5 \
-  -d false
+# 5テナントを登録（.envから認証情報を読み込み）
+./performance-test/data/register-tenants.sh -n 5
+
+# ドライラン
+./performance-test/data/register-tenants.sh -n 5 -d true
 ```
+
+生成されるファイル：
+- `performance-test/data/performance-test-tenant.json` - テナント情報（k6スクリプトで使用）
 
 ---
 
@@ -246,13 +246,16 @@ k6 version
 
 ### 環境変数
 
+ロードテストスクリプトは`performance-test-tenant.json`から設定を自動読み込みするため、環境変数設定は最小限で済む。
+
 ```bash
+# BASE_URLのみ必要（オプション、デフォルト: http://localhost:8080）
 export BASE_URL=http://localhost:8080
-export TENANT_ID=67e7eae6-62b0-4500-9eff-87459f63fc66
-export CLIENT_ID=clientSecretPost
-export CLIENT_SECRET=clientSecretPostPassword...
-export REDIRECT_URI=https://www.certification.openid.net/test/a/idp_oidc_basic/callback
 ```
+
+:::note
+ストレステストは引き続き環境変数が必要です。詳細は[テスト実行ガイド](./06-test-execution-guide.md)を参照してください。
+:::
 
 ---
 

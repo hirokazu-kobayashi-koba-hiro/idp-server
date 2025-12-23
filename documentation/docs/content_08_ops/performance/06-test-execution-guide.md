@@ -16,172 +16,41 @@
 ## 実行順序の概要
 
 ```
-Phase 1: テストデータファイル生成（TSV/JSON）
+Phase 1: Docker環境起動
     ↓
-Phase 2: Docker環境起動
+Phase 2: テストデータ一括準備（全測定に必要なデータを事前投入）
+    ├── 2.1: テナント登録（最大10テナント）
+    ├── 2.2: ユーザーデータ生成（各テナント100万件）
+    └── 2.3: PostgreSQL COPY投入
     ↓
-Phase 3: シングルテナントデータ投入（100万件）
+Phase 3: ストレステスト実行
     ↓
-Phase 4: テナント・クライアント確認
-    ↓
-Phase 1.5: マルチテナントデータ準備（必要な場合）
-    ↓
-Phase 5: 環境変数設定
-    ↓
-Phase 6-7: テスト実行
+Phase 4: ロードテスト実行（パラメータ変更のみ、データ追加不要）
+    ├── ベースライン測定
+    ├── 同時負荷影響測定
+    ├── マルチテナント影響測定（TENANT_COUNT で制御）
+    ├── データスケール影響測定
+    └── 負荷限界検証
 ```
 
-:::note マルチテナントテストを行う場合
-Phase 1.5 は Phase 2（Docker起動）の後に実行してください。
-既存テナント情報をDBから取得する必要があるためです。
+:::tip 一括データ準備の利点
+- テスト間の一貫性が保証される
+- 測定ごとのデータ追加が不要
+- パラメータ（`TENANT_COUNT`, `VU_COUNT`等）で各測定を制御
 :::
 
 ---
 
-## Phase 1: テストデータ準備
+## Phase 1: Docker環境起動
 
-### Step 1.1: ユーザーデータ生成（100万件）
-
-既存データがない場合、またはデータを再生成する場合：
-
-```bash
-python3 ./performance-test/data/generate_users_100k.py
-```
-
-生成されるファイル：
-- `performance-test/data/generated_users_100k.tsv` (約550MB, 100万件)
-- `performance-test/data/generated_user_devices_100k.tsv` (約155MB, 100万件)
-
-:::note
-実行には数分かかります。進捗は1000件ごとに表示されます。
-:::
-
-### Step 1.2: テスト用JSONデータ生成
-
-k6スクリプトで使用するテストユーザーデータを生成：
-
-```bash
-chmod +x ./performance-test/data/test-user.sh
-./performance-test/data/test-user.sh all
-```
-
-生成されるファイル（各500件）：
-| ファイル | login_hint パターン | 使用ユーザー範囲 |
-|---------|-------------------|----------------|
-| performance-test-user-device.json | device:{deviceId} | 1-500 |
-| performance-test-user-sub.json | sub:{subject} | 501-1000 |
-| performance-test-user-email.json | email:{email} | 1001-1500 |
-| performance-test-user-phone.json | phone:{phone} | 1501-2000 |
-| performance-test-user-ex-sub.json | ex-sub:{externalSubject} | 2001-2500 |
-
----
-
-## Phase 1.5: マルチテナント・スケーラビリティテスト用データ準備
-
-マルチテナントテストやスケーラビリティテストを行う場合は、追加のデータ準備が必要。
-
-### Step 1.5.1: テナント登録
-
-マルチテナントテスト用に複数のテナント（組織）を登録する。
-オンボーディングAPIを使用して、各テナントに組織・認可サーバー・クライアント・ユーザーを一括作成する。
-
-:::note 前提条件
-- Docker環境が起動済みであること
-- `.env` ファイルに管理者情報（`ADMIN_TENANT_ID`, `ADMIN_USER_EMAIL`, `ADMIN_USER_PASSWORD`, `ADMIN_CLIENT_ID`, `ADMIN_CLIENT_SECRET`）が設定されていること
-- 先に Phase 2 (Docker環境起動) を実行すること
-:::
-
-```bash
-# 5テナントを登録
-./performance-test/data/register-tenants.sh -n 5
-
-# ドライラン（実際には登録しない）
-./performance-test/data/register-tenants.sh -n 5 -d true
-```
-
-パラメータ説明：
-| パラメータ | 説明 |
-|----------|------|
-| -n | 登録するテナント数（必須） |
-| -d | ドライラン（true/false、デフォルト: false） |
-| -b | ベースURL（デフォルト: .envの`AUTHORIZATION_SERVER_URL`または`http://localhost:8080`） |
-
-:::tip .envからの自動読み込み
-管理者認証情報は `.env` ファイルから自動的に読み込まれます。手動での指定は不要です。
-:::
-
-生成されるファイル：
-- `performance-test/data/performance-test-tenant.json` - テナント情報（各テナントの組織ID、テナントID、クライアント情報、ユーザー情報）
-
-確認：
-```bash
-cat ./performance-test/data/performance-test-tenant.json
-```
-
-### Step 1.5.2: マルチテナント用ユーザーデータ生成
-
-各テナントにユーザーデータを生成：
-
-```bash
-# デフォルト: 各テナント10万ユーザー
-python3 ./performance-test/data/generate_multi_tenant_users.py
-
-# ユーザー数を指定する場合
-python3 ./performance-test/data/generate_multi_tenant_users.py --users-per-tenant 50000
-```
-
-生成されるファイル：
-- `generated_multi_tenant_users.tsv` - 全テナントのユーザーデータ
-- `generated_multi_tenant_devices.tsv` - 全テナントの認証デバイスデータ
-- `performance-test-multi-tenant-users.json` - k6テスト用データ（各テナント500ユーザー）
-
-### Step 1.5.3: マルチテナント用データ投入
-
-```bash
-# ユーザーデータ投入
-PGPASSWORD=idpserver psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
-  id, tenant_id, provider_id, external_user_id, name, email,
-  email_verified, phone_number, phone_number_verified,
-  preferred_username, status, authentication_devices
-) FROM './performance-test/data/generated_multi_tenant_users.tsv'
-WITH (FORMAT csv, HEADER false, DELIMITER E'\t')"
-
-# 認証デバイスデータ投入
-PGPASSWORD=idpserver psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user_authentication_devices (
-  id, tenant_id, user_id, os, model, platform, locale,
-  app_name, priority, available_methods,
-  notification_token, notification_channel
-) FROM './performance-test/data/generated_multi_tenant_devices.tsv'
-WITH (FORMAT csv, HEADER false, DELIMITER E'\t')"
-```
-
-### スケーラビリティテスト用データパターン
-
-| テストパターン | テナント数 | ユーザー数/テナント | 合計ユーザー | 用途 |
-|--------------|----------|-------------------|-------------|------|
-| シングルテナント | 1 | 100万 | 100万 | 基本性能測定 |
-| マルチテナント（小） | 5 | 10万 | 50万 | マルチテナント性能 |
-| マルチテナント（中） | 5 | 20万 | 100万 | スケーラビリティ評価 |
-| データスケール | 1 | 10万/100万 | 可変 | データ量影響評価 |
-
----
-
-## Phase 2: Docker環境起動
-
-### Step 2.1: 性能テスト用構成で起動
+### Step 1.1: Docker Compose で起動
 
 ```bash
 # プロジェクトルートで実行
-docker compose -f docker-compose.performance.yml up -d
-```
-
-または標準構成で起動：
-
-```bash
 docker compose up -d
 ```
 
-### Step 2.2: 起動確認
+### Step 1.2: 起動確認
 
 ```bash
 # コンテナ状態確認
@@ -191,75 +60,170 @@ docker compose ps
 curl http://localhost:8080/health
 ```
 
-### Step 2.3: pg_stat_statements 有効化
+### Step 1.3: pg_stat_statements 有効化
 
 ```bash
-docker exec -it <postgresql-container> psql -U idpserver -d idpserver -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
+docker exec -it postgres-primary psql -U idpserver -d idpserver -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
 ```
 
 ---
 
-## Phase 3: データ投入
+## Phase 2: テストデータ一括準備
 
-### Step 3.1: ユーザーデータ投入
+全測定（ベースライン、同時負荷、マルチテナント、データスケール）に必要なデータを事前に一括投入する。
 
-```bash
-# PostgreSQLコンテナに接続してデータ投入
-docker exec -i <postgresql-container> psql -U idpserver -d idpserver -c "\COPY idp_user (
-  id,
-  tenant_id,
-  provider_id,
-  external_user_id,
-  name,
-  email,
-  email_verified,
-  phone_number,
-  phone_number_verified,
-  preferred_username,
-  status,
-  authentication_devices
-) FROM STDIN WITH (FORMAT csv, HEADER false, DELIMITER E'\t')" < ./performance-test/data/generated_users_100k.tsv
-```
+:::note 前提条件
+- Docker環境が起動済みであること（Phase 1完了）
+- `.env` ファイルに管理者情報が設定されていること
+:::
 
-または、ホストから直接：
+### テスト方針に基づくデータ規模
 
-```bash
-PGPASSWORD=idpserver psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
-  id,
-  tenant_id,
-  provider_id,
-  external_user_id,
-  name,
-  email,
-  email_verified,
-  phone_number,
-  phone_number_verified,
-  preferred_username,
-  status,
-  authentication_devices
-) FROM './performance-test/data/generated_users_100k.tsv' WITH (FORMAT csv, HEADER false, DELIMITER E'\t')"
-```
+| 測定観点 | テナント数 | ユーザー/テナント | 備考 |
+|---------|----------|-----------------|------|
+| ベースライン | 1 | 100,000 | 基準値測定 |
+| 同時負荷 | 1 | 100,000 | VU/レートを変更 |
+| マルチテナント | 1→5→10 | 100,000 | TENANT_COUNTで制御 |
+| データスケール | 1 | 10万→100万 | 段階的に測定 |
 
-### Step 3.2: 認証デバイスデータ投入
+**推奨構成**: 10テナント × 100,000ユーザー = 1,000,000ユーザー
+
+### Step 2.1: テナント登録
+
+オンボーディングAPIで全テナントを一括登録する。
 
 ```bash
-PGPASSWORD=idpserver psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user_authentication_devices (
-  id,
-  tenant_id,
-  user_id,
-  os,
-  model,
-  platform,
-  locale,
-  app_name,
-  priority,
-  available_methods,
-  notification_token,
-  notification_channel
-) FROM './performance-test/data/generated_user_devices_100k.tsv' WITH (FORMAT csv, HEADER false, DELIMITER E'\t')"
+# 全測定に必要な最大テナント数（10）を一括登録
+./performance-test/data/register-tenants.sh -n 10
+
+# 追加でテナントを登録する場合（既存を保持）
+./performance-test/data/register-tenants.sh -n 5 -a
+
+# ドライラン（実際には登録しない）
+./performance-test/data/register-tenants.sh -n 10 -d true
 ```
 
-### Step 3.3: 投入確認
+パラメータ説明：
+| パラメータ | 説明 |
+|----------|------|
+| -n | 登録するテナント数（必須） |
+| -a | 追加モード：既存テナントを保持して追加 |
+| -d | ドライラン（true/false、デフォルト: false） |
+| -b | ベースURL（デフォルト: .envの`AUTHORIZATION_SERVER_URL`） |
+
+生成されるファイル：
+- `performance-test/data/performance-test-tenant.json` - テナント情報
+
+確認：
+```bash
+cat ./performance-test/data/performance-test-tenant.json | jq 'length'
+# → 10
+```
+
+### Step 2.2: ユーザーデータ生成
+
+各テナントにユーザーデータを生成する。
+
+```bash
+# 各テナント10万ユーザー（推奨）
+python3 ./performance-test/data/generate_multi_tenant_users.py
+
+# 各テナント100万ユーザー（大規模テスト用）
+python3 ./performance-test/data/generate_multi_tenant_users.py --users-per-tenant 1000000
+```
+
+生成されるファイル：
+| ファイル | 内容 |
+|---------|------|
+| `generated_multi_tenant_users.tsv` | 全テナントのユーザーデータ |
+| `generated_multi_tenant_devices.tsv` | 全テナントの認証デバイスデータ |
+| `performance-test-multi-tenant-users.json` | k6テスト用（各テナント500ユーザー） |
+
+### Step 2.3: PostgreSQL COPY投入
+
+```bash
+# ユーザーデータ投入
+docker exec -i postgres-primary psql -U idpserver -d idpserver -c "\COPY idp_user (
+  id, tenant_id, provider_id, external_user_id, name, email,
+  email_verified, phone_number, phone_number_verified,
+  preferred_username, status, authentication_devices
+) FROM STDIN WITH (FORMAT csv, HEADER false, DELIMITER E'\t')" \
+  < ./performance-test/data/generated_multi_tenant_users.tsv
+
+# 認証デバイスデータ投入
+docker exec -i postgres-primary psql -U idpserver -d idpserver -c "\COPY idp_user_authentication_devices (
+  id, tenant_id, user_id, os, model, platform, locale,
+  app_name, priority, available_methods,
+  notification_token, notification_channel
+) FROM STDIN WITH (FORMAT csv, HEADER false, DELIMITER E'\t')" \
+  < ./performance-test/data/generated_multi_tenant_devices.tsv
+```
+
+### Step 2.4: 投入確認
+
+```bash
+# テナント別ユーザー数を確認
+docker exec postgres-primary psql -U idpserver -d idpserver -c "
+SELECT tenant_id, COUNT(*) as user_count
+FROM idp_user
+GROUP BY tenant_id
+ORDER BY user_count DESC
+LIMIT 15;
+"
+
+# 合計確認
+docker exec postgres-primary psql -U idpserver -d idpserver -c "
+SELECT
+  (SELECT COUNT(*) FROM idp_user) as total_users,
+  (SELECT COUNT(*) FROM idp_user_authentication_devices) as total_devices,
+  (SELECT COUNT(DISTINCT tenant_id) FROM idp_user) as tenant_count;
+"
+```
+
+期待結果（10テナント × 10万ユーザー）：
+```
+ total_users | total_devices | tenant_count
+-------------+---------------+--------------
+     1000000 |       1000000 |           10
+```
+
+---
+
+## Phase 3: ストレステスト実行
+
+:::note 旧ストレステスト用データ（オプション）
+ストレステストで login_hint パターン別テストを行う場合のみ必要：
+
+```bash
+chmod +x ./performance-test/data/test-user.sh
+./performance-test/data/test-user.sh all
+```
+:::
+
+### 結果ディレクトリ作成
+
+```bash
+mkdir -p performance-test/result/stress
+mkdir -p performance-test/result/load
+```
+
+### Step 3.1: 認可リクエスト
+
+```bash
+k6 run --summary-export=./performance-test/result/stress/scenario-1-authorization-request.json \
+  ./performance-test/stress/scenario-1-authorization-request.js
+```
+
+（以下のストレステスト項目は変更なし）
+
+---
+
+## Phase 4: ロードテスト実行
+
+ロードテストは環境変数でパラメータをカスタマイズ可能。
+Phase 2 でデータ投入済みのため、各測定はパラメータ変更のみで実施。
+
+### Step 4.0: 投入確認
 
 ```bash
 PGPASSWORD=idpserver psql -U idpserver -d idpserver -h localhost -p 5432 -c "
@@ -269,175 +233,226 @@ SELECT
 "
 ```
 
-期待結果：
+期待結果（10テナント × 10万ユーザー）：
 ```
-  users   | devices
-----------+---------
- 1000000  | 1000000
-```
-
----
-
-## Phase 4: テナント・クライアント登録
-
-### Step 4.1: シングルテナント用テナント登録
-
-シングルテナントテスト用のテナントが未登録の場合、E2Eテストを実行して登録する。
-
-```bash
-cd e2e && npm test
+ total_users | total_devices | tenant_count
+-------------+---------------+--------------
+     1000000 |       1000000 |           10
 ```
 
-これにより、テスト用テナント `67e7eae6-62b0-4500-9eff-87459f63fc66` とクライアント `clientSecretPost` が登録される。
+### 環境変数パラメータ一覧
 
-### Step 4.2: 登録確認
-
-```bash
-# テナント一覧を確認
-docker exec postgres-primary psql -U idpserver -d idpserver -c "
-SELECT tenant_id, COUNT(*) as client_count
-FROM client_configuration
-GROUP BY tenant_id
-ORDER BY tenant_id
-LIMIT 10;
-"
-
-# テスト用テナントのクライアント確認
-docker exec postgres-primary psql -U idpserver -d idpserver -c "
-SELECT id_alias, tenant_id
-FROM client_configuration
-WHERE id_alias = 'clientSecretPost'
-LIMIT 5;
-"
-```
-
----
-
-## Phase 5: 環境変数設定
-
-```bash
-export BASE_URL=http://localhost:8080
-export TENANT_ID=67e7eae6-62b0-4500-9eff-87459f63fc66
-export CLIENT_ID=clientSecretPost
-export CLIENT_SECRET=clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890
-export REDIRECT_URI=https://www.certification.openid.net/test/a/idp_oidc_basic/callback
-```
-
-確認：
-
-```bash
-echo "BASE_URL: $BASE_URL"
-echo "TENANT_ID: $TENANT_ID"
-```
-
----
-
-## Phase 6: ストレステスト実行
-
-### 結果ディレクトリ作成
-
-```bash
-mkdir -p performance-test/result/stress
-mkdir -p performance-test/result/load
-```
-
-### Step 6.1: 認可リクエスト
-
-```bash
-k6 run --summary-export=./performance-test/result/stress/scenario-1-authorization-request.json \
-  ./performance-test/stress/scenario-1-authorization-request.js
-```
-
-### Step 6.2: BC Request
-
-```bash
-k6 run --summary-export=./performance-test/result/stress/scenario-2-bc.json \
-  ./performance-test/stress/scenario-2-bc.js
-```
-
-### Step 6.3: CIBA Flow（全パターン）
-
-```bash
-# device パターン
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-device.json \
-  ./performance-test/stress/scenario-3-ciba-device.js
-
-# sub パターン
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-sub.json \
-  ./performance-test/stress/scenario-3-ciba-sub.js
-
-# email パターン
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-email.json \
-  ./performance-test/stress/scenario-3-ciba-email.js
-
-# phone パターン
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-phone.json \
-  ./performance-test/stress/scenario-3-ciba-phone.js
-
-# ex-sub パターン
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-ex-sub.json \
-  ./performance-test/stress/scenario-3-ciba-ex-sub.js
-```
-
-### Step 6.4: Token（各Grant Type）
-
-```bash
-# Password Grant
-k6 run --summary-export=./performance-test/result/stress/scenario-4-token-password.json \
-  ./performance-test/stress/scenario-4-token-password.js
-
-# Client Credentials Grant
-k6 run --summary-export=./performance-test/result/stress/scenario-5-token-client-credentials.json \
-  ./performance-test/stress/scenario-5-token-client-credentials.js
-```
-
-### Step 6.5: その他
-
-```bash
-# JWKS
-k6 run --summary-export=./performance-test/result/stress/scenario-6-jwks.json \
-  ./performance-test/stress/scenario-6-jwks.js
-
-# Token Introspection
-k6 run --summary-export=./performance-test/result/stress/scenario-7-token-introspection.json \
-  ./performance-test/stress/scenario-7-token-introspection.js
-
-# Authentication Device
-k6 run --summary-export=./performance-test/result/stress/scenario-8-authentication-device.json \
-  ./performance-test/stress/scenario-8-authentication-device.js
-
-# Identity Verification
-k6 run --summary-export=./performance-test/result/stress/scenario-9-identity-verification-application.json \
-  ./performance-test/stress/scenario-9-identity-verification-application.js
-```
-
----
-
-## Phase 7: ロードテスト実行
+| シナリオ | パラメータ | デフォルト | 説明 |
+|---------|-----------|-----------|------|
+| scenario-1 | `VU_COUNT` | 50 | 同時VU数 |
+| | `MAX_VU_COUNT` | VU_COUNT×2 | 最大VU数 |
+| | `LOGIN_RATE` | 20 | ログインリクエスト/秒 |
+| | `INTROSPECT_RATE` | 80 | Introspectリクエスト/秒 |
+| | `DURATION` | 5m | テスト時間 |
+| scenario-2 | `TENANT_COUNT` | 全テナント | 使用するテナント数（マルチテナント測定用） |
+| | `TOTAL_VU_COUNT` | 50 | 全テナント合計VU数 |
+| | `TOTAL_RATE` | 20 | 全テナント合計リクエスト/秒 |
+| | `DURATION` | 5m | テスト時間 |
+| scenario-3 | `PEAK_RATE` | 30 | ピークリクエスト/秒 |
+| | `VU_COUNT` | 5 | 初期VU数 |
+| | `MAX_VU_COUNT` | 20 | 最大VU数 |
+| | `RAMP_UP_DURATION` | 3m | ランプアップ時間 |
+| | `SUSTAIN_DURATION` | 5m | 維持時間 |
+| | `RAMP_DOWN_DURATION` | 2m | ランプダウン時間 |
+| scenario-4 | `TOTAL_VU_COUNT` | 30 | 全テナント合計VU数 |
+| | `TOTAL_RATE` | 10 | 全テナント合計リクエスト/秒 |
+| | `DURATION` | 5m | テスト時間 |
 
 ### Step 7.1: シングルテナントCIBA
 
 ```bash
+# デフォルト設定で実行
 k6 run ./performance-test/load/scenario-1-ciba-login.js
+
+# カスタム設定で実行
+VU_COUNT=100 LOGIN_RATE=50 DURATION=10m \
+  k6 run ./performance-test/load/scenario-1-ciba-login.js
 ```
 
 ### Step 7.2: マルチテナントCIBA
 
 ```bash
+# デフォルト設定で実行
 k6 run ./performance-test/load/scenario-2-multi-ciba-login.js
+
+# カスタム設定で実行
+TOTAL_VU_COUNT=100 TOTAL_RATE=50 DURATION=10m \
+  k6 run ./performance-test/load/scenario-2-multi-ciba-login.js
 ```
 
 ### Step 7.3: ピーク負荷
 
 ```bash
+# デフォルト設定で実行
 k6 run ./performance-test/load/scenario-3-peak-login.js
+
+# カスタム設定で実行
+PEAK_RATE=100 MAX_VU_COUNT=50 SUSTAIN_DURATION=10m \
+  k6 run ./performance-test/load/scenario-3-peak-login.js
 ```
 
-### Step 7.4: フェデレーション
+### Step 7.4: 認可コードフロー
+
+パスワード認証 → トークン発行 → Userinfo → Introspectionのフローを実行。
 
 ```bash
-k6 run ./performance-test/load/scenario-4-federation.js
+# デフォルト設定で実行
+k6 run ./performance-test/load/scenario-4-authorization-code.js
+
+# カスタム設定で実行
+TOTAL_VU_COUNT=60 TOTAL_RATE=20 DURATION=10m \
+  k6 run ./performance-test/load/scenario-4-authorization-code.js
 ```
+
+---
+
+## Phase 7.5: 測定観点別テスト実行
+
+[テスト方針](./test-strategy)に基づいた測定観点別の実行手順。
+
+### 7.5.1: ベースライン測定
+
+最小構成での基準性能値を取得。
+
+```bash
+# シングルテナント、低負荷で実行
+VU_COUNT=10 LOGIN_RATE=5 INTROSPECT_RATE=20 DURATION=5m \
+  k6 run ./performance-test/load/scenario-1-ciba-login.js \
+  --summary-export=./performance-test/result/load/baseline.json
+
+# 認可コードフローのベースライン
+TOTAL_VU_COUNT=10 TOTAL_RATE=5 DURATION=5m \
+  k6 run ./performance-test/load/scenario-4-authorization-code.js \
+  --summary-export=./performance-test/result/load/baseline-authcode.json
+```
+
+### 7.5.2: 同時負荷影響測定
+
+VU数を段階的に増加させてブレークポイントを特定。
+
+```bash
+# Step 1: 50 VU
+VU_COUNT=50 LOGIN_RATE=100 DURATION=5m \
+  k6 run ./performance-test/load/scenario-1-ciba-login.js \
+  --summary-export=./performance-test/result/load/load-vu50.json
+
+# Step 2: 100 VU
+VU_COUNT=100 LOGIN_RATE=200 DURATION=5m \
+  k6 run ./performance-test/load/scenario-1-ciba-login.js \
+  --summary-export=./performance-test/result/load/load-vu100.json
+
+# Step 3: 200 VU
+VU_COUNT=200 LOGIN_RATE=400 DURATION=5m \
+  k6 run ./performance-test/load/scenario-1-ciba-login.js \
+  --summary-export=./performance-test/result/load/load-vu200.json
+
+# Step 4: 500 VU
+VU_COUNT=500 LOGIN_RATE=1000 DURATION=5m \
+  k6 run ./performance-test/load/scenario-1-ciba-login.js \
+  --summary-export=./performance-test/result/load/load-vu500.json
+```
+
+### 7.5.3: マルチテナント影響測定
+
+テナント数を変えてRLSオーバーヘッドを測定。
+`TENANT_COUNT` パラメータで使用するテナント数を制御（データ追加不要）。
+
+:::note 前提条件
+Phase 2 で10テナント分のデータが投入済みであること。
+:::
+
+```bash
+# Step 1: 1テナント（ベースライン）
+TENANT_COUNT=1 TOTAL_VU_COUNT=50 TOTAL_RATE=20 DURATION=5m \
+  k6 run ./performance-test/load/scenario-2-multi-ciba-login.js \
+  --summary-export=./performance-test/result/load/multi-tenant-1.json
+
+# Step 2: 5テナント
+TENANT_COUNT=5 TOTAL_VU_COUNT=50 TOTAL_RATE=20 DURATION=5m \
+  k6 run ./performance-test/load/scenario-2-multi-ciba-login.js \
+  --summary-export=./performance-test/result/load/multi-tenant-5.json
+
+# Step 3: 10テナント
+TENANT_COUNT=10 TOTAL_VU_COUNT=50 TOTAL_RATE=20 DURATION=5m \
+  k6 run ./performance-test/load/scenario-2-multi-ciba-login.js \
+  --summary-export=./performance-test/result/load/multi-tenant-10.json
+```
+
+### 7.5.4: データスケール影響測定
+
+ユーザー数を変えて性能劣化を測定。
+
+:::warning データ投入が必要
+この測定は、DBに存在するユーザー数を段階的に変えて測定するため、一括準備とは別に実施する。
+各ステップ前にDBをクリーンアップし、必要なデータ量を投入する。
+:::
+
+```bash
+# Step 1: 10,000ユーザー（クリーン環境で実施）
+# DBクリーンアップ後、10,000ユーザーを投入
+python3 ./performance-test/data/generate_multi_tenant_users.py --users-per-tenant 10000
+# データ投入後テスト実行
+VU_COUNT=50 LOGIN_RATE=20 DURATION=5m \
+  k6 run ./performance-test/load/scenario-1-ciba-login.js \
+  --summary-export=./performance-test/result/load/scale-10k.json
+
+# Step 2: 100,000ユーザー
+python3 ./performance-test/data/generate_multi_tenant_users.py --users-per-tenant 100000
+# データ投入後テスト実行
+VU_COUNT=50 LOGIN_RATE=20 DURATION=5m \
+  k6 run ./performance-test/load/scenario-1-ciba-login.js \
+  --summary-export=./performance-test/result/load/scale-100k.json
+
+# Step 3: 1,000,000ユーザー
+python3 ./performance-test/data/generate_multi_tenant_users.py --users-per-tenant 1000000
+# データ投入後テスト実行
+VU_COUNT=50 LOGIN_RATE=20 DURATION=5m \
+  k6 run ./performance-test/load/scenario-1-ciba-login.js \
+  --summary-export=./performance-test/result/load/scale-1m.json
+```
+
+:::tip 簡易測定
+一括準備済みの環境（10テナント×10万ユーザー）で、シングルテナント使用時と全テナント使用時を比較することでも、データ規模の影響を概算できる。
+:::
+
+### 7.5.5: 負荷限界検証
+
+ピーク負荷を段階的に増加させてブレークポイントを特定。
+
+```bash
+# Step 1: 30 req/s
+PEAK_RATE=30 MAX_VU_COUNT=20 \
+  k6 run ./performance-test/load/scenario-3-peak-login.js \
+  --summary-export=./performance-test/result/load/peak-30.json
+
+# Step 2: 50 req/s
+PEAK_RATE=50 MAX_VU_COUNT=30 \
+  k6 run ./performance-test/load/scenario-3-peak-login.js \
+  --summary-export=./performance-test/result/load/peak-50.json
+
+# Step 3: 100 req/s
+PEAK_RATE=100 MAX_VU_COUNT=60 \
+  k6 run ./performance-test/load/scenario-3-peak-login.js \
+  --summary-export=./performance-test/result/load/peak-100.json
+
+# Step 4: 200 req/s
+PEAK_RATE=200 MAX_VU_COUNT=120 \
+  k6 run ./performance-test/load/scenario-3-peak-login.js \
+  --summary-export=./performance-test/result/load/peak-200.json
+```
+
+:::tip 結果の比較
+各ステップの結果JSONを比較して、エラー率の増加開始点やレイテンシ劣化曲線を確認してください。
+```bash
+# 結果サマリーの確認
+cat ./performance-test/result/load/load-vu*.json | jq '{file: input_filename, http_req_duration_p95: .metrics.http_req_duration.values.p95}'
+```
+:::
 
 ---
 

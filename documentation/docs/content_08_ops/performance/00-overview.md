@@ -113,6 +113,42 @@ idp-server が以下の要件を満たすことを検証する：
 
 ---
 
+## テストシナリオ一覧
+
+### ロードテスト
+
+| シナリオ | ファイル | 説明 | 設定読込 |
+|---------|---------|------|---------|
+| CIBA ログイン | `scenario-1-ciba-login.js` | シングルテナントCIBAフロー + Introspection | 自動 |
+| マルチテナントCIBA | `scenario-2-multi-ciba-login.js` | 複数テナント並列CIBAフロー | 自動 |
+| ピーク負荷 | `scenario-3-peak-login.js` | ランプアップ/ダウン負荷パターン | 自動 |
+| 認可コードフロー | `scenario-4-authorization-code.js` | パスワード認証 → トークン → Userinfo → Introspection | 自動 |
+
+:::tip 設定の自動読み込み
+ロードテストは `performance-test-tenant.json` から設定を自動読み込みします。
+環境変数 `BASE_URL` のみ必要（デフォルト: `http://localhost:8080`）
+:::
+
+### ストレステスト
+
+| シナリオ | ファイル | 説明 |
+|---------|---------|------|
+| 認可リクエスト | `scenario-1-authorization-request.js` | 認可エンドポイント単体 |
+| BC Request | `scenario-2-bc.js` | CIBA認証リクエスト単体 |
+| CIBA Device | `scenario-3-ciba-device.js` | device パターン |
+| CIBA Sub | `scenario-3-ciba-sub.js` | sub パターン |
+| CIBA Email | `scenario-3-ciba-email.js` | email パターン |
+| CIBA Phone | `scenario-3-ciba-phone.js` | phone パターン |
+| CIBA Ex-Sub | `scenario-3-ciba-ex-sub.js` | external subject パターン |
+| Token Password | `scenario-4-token-password.js` | Password Grant |
+| Token Client Credentials | `scenario-5-token-client-credentials.js` | Client Credentials Grant |
+| JWKS | `scenario-6-jwks.js` | 公開鍵取得 |
+| Token Introspection | `scenario-7-token-introspection.js` | トークン検証 |
+| Authentication Device | `scenario-8-authentication-device.js` | 認証デバイス |
+| Identity Verification | `scenario-9-identity-verification-application.js` | 身元確認申請 |
+
+---
+
 ## ドキュメント構成
 
 | ドキュメント | 内容 |
@@ -122,6 +158,8 @@ idp-server が以下の要件を満たすことを検証する：
 | [03-load-test-results.md](./03-load-test-results.md) | ロードテスト結果 |
 | [04-scalability-evaluation.md](./04-scalability-evaluation.md) | スケーラビリティ評価 |
 | [05-tuning-guide.md](./05-tuning-guide.md) | チューニングガイド |
+| [06-test-execution-guide.md](./06-test-execution-guide.md) | テスト実行ガイド（Step-by-Step） |
+| [07-test-strategy.md](./07-test-strategy.md) | **性能テスト方針**（テスト条件・評価基準） |
 
 ---
 
