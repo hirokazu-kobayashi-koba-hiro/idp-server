@@ -1,0 +1,131 @@
+{
+  "organization": {
+    "id": "${ORGANIZATION_ID}",
+    "name": "perf-test-org-${TENANT_INDEX}",
+    "description": "Performance test organization ${TENANT_INDEX}"
+  },
+  "tenant": {
+    "id": "${TENANT_ID}",
+    "name": "perf-test-tenant-${TENANT_INDEX}",
+    "domain": "${BASE_URL}/${TENANT_ID}",
+    "authorization_provider": "idp-server",
+    "session_config": {
+      "cookie_name": "PERF_TEST_${TENANT_INDEX}_SESSION",
+      "use_secure_cookie": false
+    },
+    "cors_config": {
+      "allow_origins": ["http://localhost:3000"]
+    },
+    "security_event_log_config": {
+      "format": "structured_json",
+      "stage": "processed",
+      "include_user_id": true,
+      "include_user_name": true,
+      "include_client_id": true,
+      "include_ip": true,
+      "persistence_enabled": false,
+      "include_detail": false
+    },
+    "identity_policy_config": {
+      "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID",
+      "authentication_device_rule": {
+        "max_devices": 100,
+        "required_identity_verification": false
+      }
+    }
+  },
+  "authorization_server": {
+    "issuer": "${BASE_URL}/${TENANT_ID}",
+    "authorization_endpoint": "${BASE_URL}/${TENANT_ID}/v1/authorizations",
+    "token_endpoint": "${BASE_URL}/${TENANT_ID}/v1/tokens",
+    "token_endpoint_auth_methods_supported": [
+      "client_secret_post",
+      "client_secret_basic"
+    ],
+    "token_endpoint_auth_signing_alg_values_supported": ["RS256", "ES256"],
+    "userinfo_endpoint": "${BASE_URL}/${TENANT_ID}/v1/userinfo",
+    "jwks_uri": "${BASE_URL}/${TENANT_ID}/v1/jwks",
+    "jwks": "{ \"keys\": [ { \"kty\": \"EC\", \"d\": \"yIWDrlhnCy3yL9xLuqZGOBFFq4PWGsCeM7Sc_lfeaQQ\", \"use\": \"sig\", \"crv\": \"P-256\", \"kid\": \"access_token\", \"x\": \"iWJINqt0ySv3kVEvlHbvNkPKY2pPSf1cG1PSx3tRfw0\", \"y\": \"rW1FdfXK5AQcv-Go6Xho0CR5AbLai7Gp9IdLTIXTSIQ\", \"alg\": \"ES256\" }, { \"kty\": \"EC\", \"d\": \"HrgT4zqM2BvrlwUWagyeNnZ40nZ7rTY4gYG9k99oGJg\", \"use\": \"enc\", \"crv\": \"P-256\", \"kid\": \"request_enc_key\", \"x\": \"PM6be42POiKdNzRKGeZ1Gia8908XfmSSbS4cwPasWTo\", \"y\": \"wksaan9a4h3L8R1UMmvc9w6rPB_F07IA-VHx7n7Add4\", \"alg\": \"ECDH-ES\" }] }",
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token",
+      "password",
+      "client_credentials",
+      "urn:openid:params:grant-type:ciba"
+    ],
+    "scopes_supported": [
+      "openid",
+      "profile",
+      "email",
+      "phone",
+      "offline_access"
+    ],
+    "response_types_supported": ["code", "token", "id_token"],
+    "response_modes_supported": ["query", "fragment"],
+    "subject_types_supported": ["public"],
+    "id_token_signing_alg_values_supported": ["RS256", "ES256"],
+    "claims_supported": [
+      "sub", "iss", "auth_time", "name", "email", "email_verified", "phone_number", "phone_number_verified"
+    ],
+    "claims_parameter_supported": true,
+    "introspection_endpoint": "${BASE_URL}/${TENANT_ID}/v1/tokens/introspection",
+    "revocation_endpoint": "${BASE_URL}/${TENANT_ID}/v1/tokens/revocation",
+    "backchannel_token_delivery_modes_supported": ["poll", "ping"],
+    "backchannel_authentication_endpoint": "${BASE_URL}/${TENANT_ID}/v1/backchannel/authentications",
+    "backchannel_authentication_request_signing_alg_values_supported": ["RS256", "ES256"],
+    "backchannel_user_code_parameter_supported": true,
+    "extension": {
+      "access_token_type": "JWT",
+      "token_signed_key_id": "access_token",
+      "id_token_signed_key_id": "access_token",
+      "access_token_duration": 3600,
+      "id_token_duration": 3600,
+      "backchannel_authentication_request_expires_in": 60,
+      "backchannel_authentication_polling_interval": 5
+    }
+  },
+  "user": {
+    "sub": "${USER_ID}",
+    "provider_id": "idp-server",
+    "name": "perf-test-user-${TENANT_INDEX}",
+    "email": "perf-test-${TENANT_INDEX}@example.com",
+    "email_verified": true,
+    "phone_number": "090${TENANT_INDEX}0000001",
+    "raw_password": "perfTestPassword001",
+    "role": "user",
+    "authentication_devices": [
+      {
+        "id": "${DEVICE_ID}",
+        "platform": "iOS",
+        "os": "iOS 18.5",
+        "model": "iPhone15",
+        "notification_channel": "fcm",
+        "notification_token": "perf-test-token-${TENANT_INDEX}",
+        "priority": 1
+      }
+    ]
+  },
+  "client": {
+    "client_id": "${CLIENT_UUID}",
+    "client_id_alias": "clientSecretPost",
+    "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
+    "redirect_uris": [
+      "http://localhost:8081/callback",
+      "https://www.certification.openid.net/test/a/idp_oidc_basic/callback"
+    ],
+    "response_types": ["code", "token", "id_token"],
+    "grant_types": [
+      "authorization_code",
+      "refresh_token",
+      "password",
+      "client_credentials",
+      "urn:openid:params:grant-type:ciba"
+    ],
+    "scope": "openid profile email phone offline_access",
+    "client_name": "Performance Test Client ${TENANT_INDEX}",
+    "token_endpoint_auth_method": "client_secret_post",
+    "backchannel_token_delivery_mode": "poll",
+    "backchannel_user_code_parameter": true,
+    "application_type": "web"
+  }
+}

@@ -30,9 +30,10 @@ export const options = {
 }
 
 const data = JSON.parse(open('../data/performance-test-tenant.json'));
+const tenantCount = data.length;
 
 export function peakLogin() {
-  const index = Math.floor(Math.random() * 5);
+  const index = Math.floor(Math.random() * tenantCount);
   login(index);
 }
 
@@ -43,9 +44,10 @@ function login(index) {
   const clientSecret = testData.clientSecret;
   const tenantId = testData.tenantId;
 
+  const userId = testData.userId;
   const deviceId = testData.deviceId;
   const bindingMessage = "999";
-  const loginHint = encodeURIComponent(`sub:${deviceId},idp:idp-server`);
+  const loginHint = encodeURIComponent(`sub:${userId},idp:idp-server`);
 
   const url = `${baseUrl}/${tenantId}/v1/backchannel/authentications`;
 

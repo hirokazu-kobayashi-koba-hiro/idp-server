@@ -1,77 +1,31 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
 
-export const options = {
+const data = JSON.parse(open('../data/performance-test-tenant.json'));
+const tenantCount = data.length;
 
-  scenarios: {
-    tenant0: {
-      executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 20,
-      timeUnit: '1s',
-      duration: '5m',
-      exec: 'tenant0login',
-    },
-    tenant1: {
-      executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 20,
-      timeUnit: '1s',
-      duration: '5m',
-      exec: 'tenant1login',
-    },
-    tenant2: {
-      executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 20,
-      timeUnit: '1s',
-      duration: '5m',
-      exec: 'tenant2login',
-    },
-    tenant3: {
-      executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 20,
-      timeUnit: '1s',
-      duration: '5m',
-      exec: 'tenant3login',
-    },
-    tenant4: {
-      executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 20,
-      timeUnit: '1s',
-      duration: '5m',
-      exec: 'tenant4login',
-    },
-  },
+// 動的にシナリオを生成
+const scenarios = {};
+for (let i = 0; i < tenantCount; i++) {
+  scenarios[`tenant${i}`] = {
+    executor: 'constant-arrival-rate',
+    preAllocatedVUs: Math.ceil(50 / tenantCount),
+    maxVUs: Math.ceil(100 / tenantCount),
+    rate: Math.ceil(20 / tenantCount) || 1,
+    timeUnit: '1s',
+    duration: '5m',
+    exec: 'multiTenantLogin',
+    env: { TENANT_INDEX: String(i) },
+  };
+}
+
+export const options = {
+  scenarios: scenarios,
 };
 
-const data = JSON.parse(open('../data/performance-test-tenant.json'));
-
-export function tenant0login() {
-  login(0)
-}
-
-export function tenant1login() {
-  login(1)
-}
-
-export function tenant2login() {
-  login(2)
-}
-
-export function tenant3login() {
-  login(3)
-}
-
-export function tenant4login() {
-  login(4)
+export function multiTenantLogin() {
+  const index = parseInt(__ENV.TENANT_INDEX);
+  login(index);
 }
 
 
@@ -82,9 +36,10 @@ function login(index) {
   const clientSecret = testData.clientSecret;
   const tenantId = testData.tenantId;
 
+  const userId = testData.userId;
   const deviceId = testData.deviceId;
   const bindingMessage = "999";
-  const loginHint = encodeURIComponent(`sub:${deviceId},idp:idp-server`);
+  const loginHint = encodeURIComponent(`sub:${userId},idp:idp-server`);
 
   const url = `${baseUrl}/${tenantId}/v1/backchannel/authentications`;
 

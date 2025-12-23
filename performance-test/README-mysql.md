@@ -70,17 +70,59 @@ LINES TERMINATED BY '\n'
 
 ### tenants
 
+Register performance test tenants using the onboarding API. The script reads credentials from `.env` file.
+
+**Prerequisites:**
+- `.env` file in project root with the following variables:
+  ```
+  ADMIN_USER_EMAIL=admin@example.com
+  ADMIN_USER_PASSWORD=your-password
+  ADMIN_TENANT_ID=your-admin-tenant-id
+  ADMIN_CLIENT_ID=your-client-id
+  ADMIN_CLIENT_SECRET=your-client-secret
+  AUTHORIZATION_SERVER_URL=http://localhost:8080
+  ```
+
+**Register tenants:**
+
 ```shell
-./performance-test/data/register-tenants.sh \
-  -e local \
-  -u ito.ichiro \
-  -p successUserCode001 \
-  -t 67e7eae6-62b0-4500-9eff-87459f63fc66 \
-  -b http://localhost:8080 \
-  -c clientSecretPost \
-  -s clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890 \
-  -n 5 \
-  -d false
+# Register 5 tenants (credentials loaded from .env)
+./performance-test/data/register-tenants.sh -n 5
+
+# Dry run mode
+./performance-test/data/register-tenants.sh -n 5 -d true
+
+# Specify custom base URL
+./performance-test/data/register-tenants.sh -n 5 -b http://localhost:8080
+```
+
+This creates:
+- `performance-test/data/performance-test-tenant.json` - Tenant configuration for load tests
+
+### Multi-tenant User Data (Optional)
+
+For multi-tenant load tests with dedicated users per tenant:
+
+```shell
+# Generate multi-tenant user data (reads from performance-test-tenant.json)
+python3 ./performance-test/data/generate_multi_tenant_users.py
+
+# Import to MySQL
+mysql -u root -p"$MYSQL_ROOT_PASSWORD" -h 127.0.0.1 -P 3306 idpserver --local-infile=1 -e "
+LOAD DATA LOCAL INFILE './performance-test/data/multi_tenant_users.tsv'
+INTO TABLE idp_user
+FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' ESCAPED BY '\"'
+LINES TERMINATED BY '\n'
+(id, tenant_id, provider_id, external_user_id, name, email, email_verified, phone_number, phone_number_verified, preferred_username, status, authentication_devices);
+"
+
+mysql -u root -p"$MYSQL_ROOT_PASSWORD" -h 127.0.0.1 -P 3306 idpserver --local-infile=1 -e "
+LOAD DATA LOCAL INFILE './performance-test/data/multi_tenant_devices.tsv'
+INTO TABLE idp_user_authentication_devices
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+(id, tenant_id, user_id, os, model, platform, locale, app_name, priority, available_methods, notification_token, notification_channel);
+"
 ```
 
 ## k6
@@ -170,7 +212,7 @@ k6 run ./performance-test/load/scenario-3-peak-login.js
 ```
 
 ```shell
-k6 run ./performance-test/load/scenario-4-federation.js
+k6 run ./performance-test/load/scenario-4-authorization-code.js
 ```
 
 

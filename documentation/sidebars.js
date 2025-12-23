@@ -523,6 +523,21 @@ const sidebars = {
       items: [
         "content_08_ops/ops-01-test-strategy",
         "content_08_ops/ops-02-performance-test",
+        "content_08_ops/ops-03-authentication-device-search-performance",
+        {
+          type: "category",
+          label: "パフォーマンス",
+          collapsed: true,
+          items: [
+            "content_08_ops/performance/00-overview",
+            "content_08_ops/performance/01-test-environment",
+            "content_08_ops/performance/02-stress-test-results",
+            "content_08_ops/performance/03-load-test-results",
+            "content_08_ops/performance/04-scalability-evaluation",
+            "content_08_ops/performance/05-tuning-guide",
+            "content_08_ops/performance/06-test-execution-guide"
+          ]
+        },
         {
           type: "category",
           label: "商用デプロイ",
