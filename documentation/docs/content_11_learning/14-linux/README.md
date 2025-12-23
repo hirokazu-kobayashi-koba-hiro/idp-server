@@ -86,6 +86,7 @@
 | ドキュメント | 説明 | 所要時間 |
 |-------------|------|---------|
 | [ネットワーク基礎](networking-basics.md) | TCP/IP、ソケット、DNS | 60分 |
+| [SSH](ssh.md) | リモート接続、鍵認証、トンネリング | 45分 |
 | [iptables/ファイアウォール](iptables-firewall.md) | パケットフィルタリング | 45分 |
 | [ネットワークトラブルシューティング](network-troubleshooting.md) | 診断ツール | 45分 |
 

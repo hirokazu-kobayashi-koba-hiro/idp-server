@@ -479,6 +479,7 @@ const sidebars = {
               collapsed: true,
               items: [
                 "content_11_learning/linux/networking-basics",
+                "content_11_learning/linux/ssh",
                 "content_11_learning/linux/iptables-firewall",
                 "content_11_learning/linux/network-troubleshooting"
               ]
