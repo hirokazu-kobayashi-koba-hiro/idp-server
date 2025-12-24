@@ -173,9 +173,3 @@ idp-server が以下の要件を満たすことを検証する：
 | [06-test-execution-guide.md](./06-test-execution-guide.md) | テスト実行ガイド（Step-by-Step） |
 | [07-test-strategy.md](./07-test-strategy.md) | **性能テスト方針**（テスト条件・評価基準） |
 
----
-
-## 関連リソース
-
-- [k6テストスクリプト](../../../../performance-test/)
-- [テストスクリプト](../../../../performance-test/scripts/)
