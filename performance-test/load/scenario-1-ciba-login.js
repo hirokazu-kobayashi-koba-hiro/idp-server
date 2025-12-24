@@ -1,42 +1,61 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
 
-export const options = {
+// 設定ファイルから読み込み
+const tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
 
+const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
+const config = tenantData[tenantIndex];
+const users = config.users;
+const userCount = users.length;
+
+// 環境変数でカスタマイズ可能なパラメータ
+// テスト方針の測定観点に対応:
+// - ベースライン測定: VU_COUNT=10, RATE=5, DURATION=5m
+// - 同時負荷影響測定: VU_COUNT=50/100/200/500, RATE=100/200/400/1000
+const VU_COUNT = parseInt(__ENV.VU_COUNT || '50');
+const MAX_VU_COUNT = parseInt(__ENV.MAX_VU_COUNT || String(VU_COUNT * 2));
+const LOGIN_RATE = parseInt(__ENV.LOGIN_RATE || '20');
+const INTROSPECT_RATE = parseInt(__ENV.INTROSPECT_RATE || '80');
+const DURATION = __ENV.DURATION || '5m';
+
+export const options = {
   scenarios: {
     login: {
       executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 20,
+      preAllocatedVUs: VU_COUNT,
+      maxVUs: MAX_VU_COUNT,
+      rate: LOGIN_RATE,
       timeUnit: '1s',
-      duration: '5m',
+      duration: DURATION,
       exec: 'login',
     },
     introspection: {
       executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 80,
+      preAllocatedVUs: VU_COUNT,
+      maxVUs: MAX_VU_COUNT,
+      rate: INTROSPECT_RATE,
       timeUnit: '1s',
-      duration: '5m',
+      duration: DURATION,
       exec: 'introspect',
     },
   },
 };
 
-const data = JSON.parse(open('../data/performance-test-user.json'));
-
 export function login() {
-  const baseUrl = __ENV.BASE_URL;
-  const clientId = __ENV.CLIENT_ID;
-  const clientSecret = __ENV.CLIENT_SECRET;
-  const tenantId = __ENV.TENANT_ID;
+  const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+  const clientId = config.clientId;
+  const clientSecret = config.clientSecret;
+  const tenantId = config.tenantId;
 
-  const testUser = data[getRandomInt(499)];
-  const deviceId = testUser.device_id;
+  // ユーザーをランダムに選択
+  const randomIndex = Math.floor(Math.random() * userCount);
+  const user = users[randomIndex];
+  const userId = user.user_id;
+  const deviceId = user.device_id;
+
   const bindingMessage = "999";
-  const loginHint = encodeURIComponent(`sub:${deviceId},idp:idp-server`);
+  const loginHint = encodeURIComponent(`sub:${userId},idp:idp-server`);
 
   const url = `${baseUrl}/${tenantId}/v1/backchannel/authentications`;
 
@@ -60,14 +79,14 @@ export function login() {
   // console.log(authReqId)
 
   //authentication transaction
-  const txRes = http.get(`${baseUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentication-devices/${deviceId}/authentications?attributes.auth_req_id=${authReqId}`);
+  const txRes = http.get(`${baseUrl}/${tenantId}/v1/authentication-devices/${deviceId}/authentications?attributes.auth_req_id=${authReqId}`);
   check(txRes, { "txRes request OK": (r) => r.status === 200 });
   const txList = JSON.parse(txRes.body);
   const tx = txList.list[0]
   // console.log(tx.id)
 
   //bindingMessage
-  const bindingMessageRes = http.post(`${baseUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/authentications/${tx.id}/authentication-device-binding-message`,
+  const bindingMessageRes = http.post(`${baseUrl}/${tenantId}/v1/authentications/${tx.id}/authentication-device-binding-message`,
     JSON.stringify({ binding_message: bindingMessage }),
     { headers: { "Content-Type": "application/json" } }
   );
@@ -76,7 +95,7 @@ export function login() {
 
   //token
   const tokenRes = http.post(
-    `${baseUrl}/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens`,
+    `${baseUrl}/${tenantId}/v1/tokens`,
     `grant_type=urn:openid:params:grant-type:ciba&auth_req_id=${authReqId}&client_id=${clientId}&client_secret=${clientSecret}`,
     { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
   );
@@ -91,13 +110,14 @@ export function login() {
 }
 
 export function introspect() {
-
-  const baseUrl = __ENV.BASE_URL;
-  const tenantId = __ENV.TENANT_ID;
-  const token = __ENV.ACCESS_TOKEN
+  const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+  const tenantId = config.tenantId;
+  const clientId = config.clientId;
+  const clientSecret = config.clientSecret;
+  const token = __ENV.ACCESS_TOKEN;
   const url = `${baseUrl}/${tenantId}/v1/tokens/introspection`;
 
-  const payload = `token=${token}`
+  const payload = `token=${token}&client_id=${clientId}&client_secret=${clientSecret}`;
 
   const params = {
     headers: {
@@ -112,8 +132,4 @@ export function introspect() {
     'status is 200': (r) => r.status === 200,
   });
 
-}
-
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
 }

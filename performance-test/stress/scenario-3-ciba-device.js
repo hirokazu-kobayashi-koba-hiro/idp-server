@@ -1,25 +1,39 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
 
+// 環境変数でカスタマイズ可能なパラメータ
+const VU_COUNT = parseInt(__ENV.VU_COUNT || '120');
+const DURATION = __ENV.DURATION || '30s';
+
 export let options = {
-  vus: 120, // Number of concurrent virtual users
-  duration: '30s', // Test duration
+  vus: VU_COUNT,
+  duration: DURATION,
   thresholds: {
     http_req_duration: ['p(95)<500'], // 95% of requests should complete below 500ms
     http_req_failed: ['rate<0.01'],   // Error rate should be less than 1%
   },
 };
 
-const data = JSON.parse(open('../data/performance-test-user.json'));
+// 設定ファイルから読み込み
+const tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
+
+const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
+const config = tenantData[tenantIndex];
+const users = config.users;
+const userCount = users.length;
 
 export default function() {
-  const baseUrl = __ENV.BASE_URL;
-  const clientId = __ENV.CLIENT_ID;
-  const clientSecret = __ENV.CLIENT_SECRET;
-  const tenantId = __ENV.TENANT_ID;
+  const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+  const clientId = config.clientId;
+  const clientSecret = config.clientSecret;
+  const tenantId = config.tenantId;
 
-  const testUser = data[getRandomInt(499)]
-  const deviceId = testUser.device_id;
+  // ユーザーをランダムに選択
+  const randomIndex = Math.floor(Math.random() * userCount);
+  const user = users[randomIndex];
+  const userId = user.user_id;
+  const deviceId = user.device_id;
+
   const bindingMessage = "999";
   const loginHint = encodeURIComponent(`device:${deviceId},idp:idp-server`);
 
@@ -75,8 +89,4 @@ export default function() {
 
   check(jwksResponse, { "jwksResponse request OK": (r) => r.status === 200 });
 
-}
-
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
 }

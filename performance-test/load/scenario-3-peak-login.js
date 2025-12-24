@@ -2,25 +2,40 @@ import http from "k6/http";
 import { check, sleep } from "k6";
 import encoding from "k6/encoding";
 
+// 設定ファイルから読み込み
+const data = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
+const tenantCount = data.length;
+
+// 環境変数でカスタマイズ可能なパラメータ
+// テスト方針の測定観点に対応:
+// - 負荷限界検証: PEAK_RATE=30/50/100/200でブレークポイント特定
+// - ランプアップ/ダウンパターンで安定性確認
+const PEAK_RATE = parseInt(__ENV.PEAK_RATE || '30');
+const VU_COUNT = parseInt(__ENV.VU_COUNT || '5');
+const MAX_VU_COUNT = parseInt(__ENV.MAX_VU_COUNT || '20');
+const RAMP_UP_DURATION = __ENV.RAMP_UP_DURATION || '3m';
+const SUSTAIN_DURATION = __ENV.SUSTAIN_DURATION || '5m';
+const RAMP_DOWN_DURATION = __ENV.RAMP_DOWN_DURATION || '2m';
+
 export const options = {
   scenarios: {
     peakLoad: {
       executor: 'ramping-arrival-rate',
-      startRate: 30, // Initial request rate (requests per second)
+      startRate: PEAK_RATE,
       timeUnit: '1s',
-      preAllocatedVUs: 5, // Minimum number of VUs to pre-allocate
-      maxVUs: 20,         // Maximum number of VUs allowed
+      preAllocatedVUs: VU_COUNT,
+      maxVUs: MAX_VU_COUNT,
       stages: [
-        { target: 30, duration: '3m' }, // Ramp-up phase
-        { target: 30, duration: '5m' }, // Sustained peak phase
-        { target: 0, duration: '2m' }     // Ramp-down phase
+        { target: PEAK_RATE, duration: RAMP_UP_DURATION },
+        { target: PEAK_RATE, duration: SUSTAIN_DURATION },
+        { target: 0, duration: RAMP_DOWN_DURATION }
       ],
       exec: 'peakLogin'
     },
     deleteExpiredData: {
       executor: 'constant-arrival-rate',
       rate: '1',
-      timeUnit: '30s',
+      timeUnit: '1s',
       duration: '10m',
       preAllocatedVUs: 1,
       maxVUs: 1,
@@ -29,10 +44,8 @@ export const options = {
   }
 }
 
-const data = JSON.parse(open('../data/performance-test-tenant.json'));
-
 export function peakLogin() {
-  const index = Math.floor(Math.random() * 5);
+  const index = Math.floor(Math.random() * tenantCount);
   login(index);
 }
 
@@ -43,9 +56,14 @@ function login(index) {
   const clientSecret = testData.clientSecret;
   const tenantId = testData.tenantId;
 
-  const deviceId = testData.deviceId;
+  // ユーザーをランダムに選択
+  const users = testData.users;
+  const randomUserIndex = Math.floor(Math.random() * users.length);
+  const user = users[randomUserIndex];
+  const userId = user.user_id;
+  const deviceId = user.device_id;
   const bindingMessage = "999";
-  const loginHint = encodeURIComponent(`sub:${deviceId},idp:idp-server`);
+  const loginHint = encodeURIComponent(`sub:${userId},idp:idp-server`);
 
   const url = `${baseUrl}/${tenantId}/v1/backchannel/authentications`;
 
@@ -102,8 +120,8 @@ function login(index) {
 export function deleteExpiredData() {
   const baseUrl = __ENV.BASE_URL;
 
-  const adminApikey = __ENV.ADMIN_API_KEY;
-  const adminApiSecret = __ENV.ADMIN_API_SECRET;
+  const adminApikey = __ENV.IDP_SERVER_API_KEY;
+  const adminApiSecret = __ENV.IDP_SERVER_API_SECRET;
   const url = `${baseUrl}/v1/admin/operations/delete-expired-data`;
 
   const payload = JSON.stringify({

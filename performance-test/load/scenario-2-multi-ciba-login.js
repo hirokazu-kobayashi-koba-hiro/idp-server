@@ -1,90 +1,62 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
 
-export const options = {
+// 設定ファイルから読み込み
+const data = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
 
-  scenarios: {
-    tenant0: {
-      executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 20,
-      timeUnit: '1s',
-      duration: '5m',
-      exec: 'tenant0login',
-    },
-    tenant1: {
-      executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 20,
-      timeUnit: '1s',
-      duration: '5m',
-      exec: 'tenant1login',
-    },
-    tenant2: {
-      executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 20,
-      timeUnit: '1s',
-      duration: '5m',
-      exec: 'tenant2login',
-    },
-    tenant3: {
-      executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 20,
-      timeUnit: '1s',
-      duration: '5m',
-      exec: 'tenant3login',
-    },
-    tenant4: {
-      executor: 'constant-arrival-rate',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
-      rate: 20,
-      timeUnit: '1s',
-      duration: '5m',
-      exec: 'tenant4login',
-    },
-  },
+// 環境変数でテナント数を制御可能（デフォルトは全テナント）
+const maxTenants = parseInt(__ENV.TENANT_COUNT || String(data.length));
+const tenantCount = Math.min(maxTenants, data.length);
+
+// 環境変数でカスタマイズ可能なパラメータ
+// テスト方針の測定観点に対応:
+// - マルチテナント影響測定: テナント数1→5→10（JSONファイルで制御）
+// - 同時負荷影響測定: TOTAL_VU_COUNT=50/100/200/500
+const TOTAL_VU_COUNT = parseInt(__ENV.TOTAL_VU_COUNT || '50');
+const TOTAL_RATE = parseInt(__ENV.TOTAL_RATE || '20');
+const DURATION = __ENV.DURATION || '5m';
+
+// 動的にシナリオを生成（テナント数に応じてVU/レートを分配）
+const scenarios = {};
+for (let i = 0; i < tenantCount; i++) {
+  scenarios[`tenant${i}`] = {
+    executor: 'constant-arrival-rate',
+    preAllocatedVUs: Math.ceil(TOTAL_VU_COUNT / tenantCount),
+    maxVUs: Math.ceil((TOTAL_VU_COUNT * 2) / tenantCount),
+    rate: Math.ceil(TOTAL_RATE / tenantCount) || 1,
+    timeUnit: '1s',
+    duration: DURATION,
+    exec: 'multiTenantLogin',
+    env: { TENANT_INDEX: String(i) },
+  };
+}
+
+export const options = {
+  scenarios: scenarios,
 };
 
-const data = JSON.parse(open('../data/performance-test-tenant.json'));
-
-export function tenant0login() {
-  login(0)
-}
-
-export function tenant1login() {
-  login(1)
-}
-
-export function tenant2login() {
-  login(2)
-}
-
-export function tenant3login() {
-  login(3)
-}
-
-export function tenant4login() {
-  login(4)
+export function multiTenantLogin() {
+  const index = parseInt(__ENV.TENANT_INDEX);
+  login(index);
 }
 
 
 function login(index) {
-  const baseUrl = __ENV.BASE_URL;
+  const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
   const testData = data[index];
   const clientId = testData.clientId;
   const clientSecret = testData.clientSecret;
   const tenantId = testData.tenantId;
 
-  const deviceId = testData.deviceId;
+  // ユーザーをランダムに選択
+  const users = testData.users;
+  const randomIndex = Math.floor(Math.random() * users.length);
+  const user = users[randomIndex];
+  const userId = user.user_id;
+  const deviceId = user.device_id;
+
   const bindingMessage = "999";
-  const loginHint = encodeURIComponent(`sub:${deviceId},idp:idp-server`);
+  const loginHint = encodeURIComponent(`sub:${userId},idp:idp-server`);
 
   const url = `${baseUrl}/${tenantId}/v1/backchannel/authentications`;
 

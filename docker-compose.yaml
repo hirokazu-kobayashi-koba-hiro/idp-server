@@ -49,14 +49,14 @@ services:
       DB_WRITER_USER_NAME: idp_app_user
       DB_WRITER_PASSWORD: ${IDP_DB_APP_PASSWORD?Database app password is required. Set IDP_DB_APP_PASSWORD environment variable.}
       DB_WRITER_TIMEOUT: 2000
-      DB_WRITER_MAX_POOL_SIZE: 30
-      DB_WRITER_MIN_IDLE: 10
+      DB_WRITER_MAX_POOL_SIZE: 10
+      DB_WRITER_MIN_IDLE: 5
       DB_READER_URL: jdbc:postgresql://postgres-replica:5432/idpserver
       DB_READER_USER_NAME: idp_app_user
       DB_READER_PASSWORD: ${IDP_DB_APP_PASSWORD?Database app password is required. Set IDP_DB_APP_PASSWORD environment variable.}
       DB_READER_TIMEOUT: 2000
-      DB_READER_MAX_POOL_SIZE: 30
-      DB_READER_MIN_IDLE: 10
+      DB_READER_MAX_POOL_SIZE: 10
+      DB_READER_MIN_IDLE: 5
       REDIS_HOST: redis
       REDIS_SESSION_DATABASE: 0
       REDIS_PASSWORD: ""
@@ -133,14 +133,14 @@ services:
       DB_WRITER_USER_NAME: idp_app_user
       DB_WRITER_PASSWORD: ${IDP_DB_APP_PASSWORD?Database app password is required. Set IDP_DB_APP_PASSWORD environment variable.}
       DB_WRITER_TIMEOUT: 2000
-      DB_WRITER_MAX_POOL_SIZE: 30
-      DB_WRITER_MIN_IDLE: 10
+      DB_WRITER_MAX_POOL_SIZE: 10
+      DB_WRITER_MIN_IDLE: 5
       DB_READER_URL: jdbc:postgresql://postgres-replica:5432/idpserver
       DB_READER_USER_NAME: idp_app_user
       DB_READER_PASSWORD: ${IDP_DB_APP_PASSWORD?Database app password is required. Set IDP_DB_APP_PASSWORD environment variable.}
       DB_READER_TIMEOUT: 2000
-      DB_READER_MAX_POOL_SIZE: 30
-      DB_READER_MIN_IDLE: 10
+      DB_READER_MAX_POOL_SIZE: 10
+      DB_READER_MIN_IDLE: 5
       REDIS_HOST: redis
       REDIS_SESSION_DATABASE: 0
       REDIS_PASSWORD: ""

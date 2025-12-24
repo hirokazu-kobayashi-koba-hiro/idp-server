@@ -38,9 +38,8 @@ out/
 
 secret/
 
-### Performance Test Data ###
-performance-test/data/generated_*.tsv
-performance-test/data/performance-test-*.json
+### Performance Test ###
+performance-test/data/
 performance-test/result/
 
 .env
