@@ -155,10 +155,10 @@
 
 | カテゴリ | エンドポイント | 実測TPS | TPS目標 | p95目標 |
 |---------|--------------|---------|---------|---------|
-| 読み取り | JWKS | 2,684 | 2,000+ | 200ms |
-| 読み取り | Token Introspection | 2,453 | 2,000+ | 200ms |
 | 認可 | Authorization Request | 2,577 | 2,000+ | 200ms |
 | トークン発行 | Token (Client Credentials) | 1,471 | 1,000+ | 250ms |
+| トークン検証 | Token Introspection | 2,453 | 2,000+ | 200ms |
+| 公開鍵 | JWKS | 2,684 | 2,000+ | 200ms |
 | CIBA | BC Request | 1,317 | 1,000+ | 250ms |
 
 ### フロー完了TPS（複数HTTPリクエスト）
