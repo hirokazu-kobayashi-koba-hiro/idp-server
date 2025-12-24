@@ -104,7 +104,7 @@ public class SmartCachedOAuthAuthorizationResolver implements OAuthAuthorization
 
       CachedAccessToken newCachedToken =
           new CachedAccessToken(tokenResponse.getAccessToken(), expiresIn, configBufferSeconds);
-      cacheStore.put(cacheKey, newCachedToken);
+      cacheStore.put(cacheKey, newCachedToken, expiresIn);
 
       log.debug("Cached new access token for key: {}, expires in: {}s", cacheKey, expiresIn);
 
@@ -158,5 +158,12 @@ public class SmartCachedOAuthAuthorizationResolver implements OAuthAuthorization
     tokenResponse.setRefreshToken(jsonNodeWrapper.getValueOrEmptyAsString("refresh_token"));
 
     return tokenResponse;
+  }
+
+  @Override
+  public void invalidateCache(OAuthAuthorizationConfiguration config) {
+    String cacheKey = CachedAccessToken.generateCacheKey(config);
+    cacheStore.delete(cacheKey);
+    log.info("Invalidated cached access token for key: {}", cacheKey);
   }
 }

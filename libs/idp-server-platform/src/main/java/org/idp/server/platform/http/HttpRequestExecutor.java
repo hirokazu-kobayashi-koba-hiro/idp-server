@@ -104,7 +104,9 @@ public class HttpRequestExecutor {
   /**
    * Executes HTTP request based on configuration with dynamic parameter mapping.
    *
-   * <p>Request building is delegated to {@link HttpRequestBuilder}.
+   * <p>Request building is delegated to {@link HttpRequestBuilder}. If OAuth authentication is
+   * configured and the response is 401 Unauthorized or 403 Forbidden, the cached token is
+   * invalidated and the request is retried once with a new token.
    *
    * @param configuration request configuration (URL, method, auth, mapping rules)
    * @param httpRequestBaseParams parameters to map into request
@@ -114,15 +116,45 @@ public class HttpRequestExecutor {
       HttpRequestExecutionConfigInterface configuration,
       HttpRequestBaseParams httpRequestBaseParams) {
 
+    return executeWithOAuthRetry(configuration, httpRequestBaseParams, false);
+  }
+
+  private HttpRequestResult executeWithOAuthRetry(
+      HttpRequestExecutionConfigInterface configuration,
+      HttpRequestBaseParams httpRequestBaseParams,
+      boolean isRetry) {
+
     HttpRequest httpRequest = requestBuilder.build(configuration, httpRequestBaseParams);
     HttpResponseResolveConfigs responseResolveConfigs = configuration.responseResolveConfigs();
 
+    HttpRequestResult result;
     if (configuration.hasRetryConfiguration()) {
-      return executeWithRetryAndCriteria(
-          httpRequest, configuration.retryConfiguration(), responseResolveConfigs);
+      result =
+          executeWithRetryAndCriteria(
+              httpRequest, configuration.retryConfiguration(), responseResolveConfigs);
+    } else {
+      result = executeWithCriteria(httpRequest, responseResolveConfigs);
     }
 
-    return executeWithCriteria(httpRequest, responseResolveConfigs);
+    // If OAuth is configured and response is 401/403, invalidate cache and retry once
+    if (configuration.httpRequestAuthType().isOauth2()
+        && (result.statusCode() == 401 || result.statusCode() == 403)
+        && !isRetry) {
+
+      OAuthAuthorizationConfiguration oAuthConfig = configuration.oauthAuthorization();
+      OAuthAuthorizationResolver resolver = oAuthAuthorizationResolvers.get(oAuthConfig.type());
+
+      log.info(
+          "Received {} {}, invalidating cached token and retrying: uri={}",
+          result.statusCode(),
+          result.statusCode() == 401 ? "Unauthorized" : "Forbidden",
+          httpRequest.uri());
+
+      resolver.invalidateCache(oAuthConfig);
+      return executeWithOAuthRetry(configuration, httpRequestBaseParams, true);
+    }
+
+    return result;
   }
 
   public HttpRequestResult get(
@@ -193,6 +225,8 @@ public class HttpRequestExecutor {
    * Executes HTTP request with OAuth 2.0 Bearer token authentication.
    *
    * <p>Resolves access token via {@link OAuthAuthorizationResolver} and adds Authorization header.
+   * If the request returns 401 Unauthorized or 403 Forbidden, the cached token is invalidated and a
+   * new token is fetched for a single retry attempt.
    *
    * @param httpRequest the HTTP request to execute
    * @param oAuthConfig OAuth configuration for token resolution, null to skip authentication
@@ -200,6 +234,11 @@ public class HttpRequestExecutor {
    */
   public HttpRequestResult executeWithOAuth(
       HttpRequest httpRequest, OAuthAuthorizationConfiguration oAuthConfig) {
+    return executeWithOAuthInternal(httpRequest, oAuthConfig, false);
+  }
+
+  private HttpRequestResult executeWithOAuthInternal(
+      HttpRequest httpRequest, OAuthAuthorizationConfiguration oAuthConfig, boolean isRetry) {
     if (oAuthConfig == null) {
       return execute(httpRequest);
     }
@@ -207,6 +246,24 @@ public class HttpRequestExecutor {
     OAuthAuthorizationResolver resolver = oAuthAuthorizationResolvers.get(oAuthConfig.type());
     String accessToken = resolver.resolve(oAuthConfig);
 
+    HttpRequest enhancedRequest = buildRequestWithAuth(httpRequest, accessToken);
+    HttpRequestResult result = execute(enhancedRequest);
+
+    // If 401 Unauthorized or 403 Forbidden and not already a retry, invalidate cache and retry once
+    if ((result.statusCode() == 401 || result.statusCode() == 403) && !isRetry) {
+      log.info(
+          "Received {} {}, invalidating cached token and retrying: uri={}",
+          result.statusCode(),
+          result.statusCode() == 401 ? "Unauthorized" : "Forbidden",
+          httpRequest.uri());
+      resolver.invalidateCache(oAuthConfig);
+      return executeWithOAuthInternal(httpRequest, oAuthConfig, true);
+    }
+
+    return result;
+  }
+
+  private HttpRequest buildRequestWithAuth(HttpRequest httpRequest, String accessToken) {
     HttpRequest.Builder builder =
         HttpRequest.newBuilder()
             .uri(httpRequest.uri())
@@ -228,8 +285,7 @@ public class HttpRequestExecutor {
     // Add OAuth authorization header
     builder.header("Authorization", "Bearer " + accessToken);
 
-    HttpRequest enhancedRequest = builder.build();
-    return execute(enhancedRequest);
+    return builder.build();
   }
 
   /**
