@@ -1,6 +1,6 @@
 # ロードテスト結果
 
-本ドキュメントでは、[テスト方針](./07-test-strategy)に基づいた測定観点別のロードテスト結果を報告する。
+本ドキュメントでは、[テスト方針](./07-test-strategy.md)に基づいた測定観点別のロードテスト結果を報告する。
 
 ---
 
@@ -481,7 +481,7 @@ TENANT_COUNT=10 TOTAL_VU_COUNT=50 TOTAL_RATE=20 DURATION=2m \
 
 ## 関連ドキュメント
 
-- [テスト方針](./07-test-strategy)
+- [テスト方針](./07-test-strategy.md)
 - [テスト環境](./test-environment)
 - [テスト実行ガイド](./test-execution-guide)
 - [ストレステスト結果](./stress-test-results)

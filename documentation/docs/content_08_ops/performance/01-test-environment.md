@@ -177,10 +177,7 @@ services:
 
 ## テストデータ
 
-テストデータの準備については以下を参照：
-
-- [テスト実行ガイド](./06-test-execution-guide) - データ生成・投入手順
-- [performance-test/README.md](../../../../performance-test/README.md) - スクリプト詳細
+テストデータの準備については[テスト実行ガイド](./06-test-execution-guide.md)を参照。
 
 ---
 

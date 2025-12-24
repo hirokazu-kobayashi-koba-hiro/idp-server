@@ -316,7 +316,7 @@ TOTAL_VU_COUNT=60 TOTAL_RATE=20 DURATION=10m \
 
 ## Phase 7.5: 測定観点別テスト実行
 
-[テスト方針](./07-test-strategy)に基づいた測定観点別の実行手順。
+[テスト方針](./07-test-strategy.md)に基づいた測定観点別の実行手順。
 
 ### 7.5.1: ベースライン測定
 
