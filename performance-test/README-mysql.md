@@ -24,105 +24,53 @@ conducted. Each test type targets a specific system behavior:
 
 ## Test Data Preparation
 
-### 🗃️ User
+### 🗃️ User Data Generation
+
+Use `generate_users.py` to create test user data. This script generates:
+- User TSV file for `idp_user` table
+- Device TSV file for `idp_user_authentication_devices` table
+- Test users JSON file for k6 CIBA tests
+
+#### Recommended: Combined Setup (1M + 9x100K)
+
+This configuration supports both large-scale single-tenant tests and multi-tenant tests:
 
 ```shell
-python3 ./performance-test/data/generate_users_100k.py
+# 1. Register 10 tenants
+./performance-test/scripts/register-tenants.sh -n 10
+
+# 2. Generate: first tenant 1M users, other 9 tenants 100K each
+python3 ./performance-test/scripts/generate_users.py \
+  --tenants-file ./performance-test/data/performance-test-tenant.json \
+  --users 100000 \
+  --first-tenant-users 1000000
+
+# 3. Import to MySQL
+./performance-test/scripts/import_users.sh multi_tenant_1m+9x100k
+
+# 4. Setup for k6 tests
+cp ./performance-test/data/multi_tenant_1m+9x100k_test_users.json \
+   ./performance-test/data/performance-test-multi-tenant-users.json
 ```
 
+**Result:**
+- Tenant 1: 1,000,000 users (for large-scale tests)
+- Tenant 2-10: 100,000 users each (for multi-tenant tests)
+- Total: 1,900,000 users
+
+#### Alternative: Uniform Multi-Tenant (10 x 100K)
+
 ```shell
-chmod +x ./performance-test/data/test-user.sh
-
-# Generate test user JSON for all login_hint patterns
-./performance-test/data/test-user.sh all
-
-# Or generate for specific pattern:
-# ./performance-test/data/test-user.sh device  # device:{deviceId} pattern (default)
-# ./performance-test/data/test-user.sh sub     # sub:{subject} pattern
-# ./performance-test/data/test-user.sh email   # email:{email} pattern
-# ./performance-test/data/test-user.sh phone   # phone:{phone} pattern
-# ./performance-test/data/test-user.sh ex-sub  # ex-sub:{externalSubject} pattern
+python3 ./performance-test/scripts/generate_users.py --users 100000 \
+  --tenants-file ./performance-test/data/performance-test-tenant.json
+./performance-test/scripts/import_users.sh multi_tenant_10x100k
 ```
 
-* register user data
+#### Alternative: Single Tenant Only
 
 ```shell
-mysql -u root -p"$MYSQL_ROOT_PASSWORD" -h 127.0.0.1 -P 3306 idpserver --local-infile=1 -e "
-LOAD DATA LOCAL INFILE './performance-test/data/generated_users_100k.tsv'
-INTO TABLE idp_user
-FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' ESCAPED BY '\"'
-LINES TERMINATED BY '\n'
-(id, tenant_id, provider_id, external_user_id, name, email, email_verified, phone_number, phone_number_verified, preferred_username, status, authentication_devices);
-"
-```
-
-* register authentication devices data (for optimized query performance)
-
-```shell
-mysql -u root -p"$MYSQL_ROOT_PASSWORD" -h 127.0.0.1 -P 3306 idpserver --local-infile=1 -e "
-LOAD DATA LOCAL INFILE './performance-test/data/generated_user_devices_100k.tsv'
-INTO TABLE idp_user_authentication_devices
-FIELDS TERMINATED BY '\t'
-LINES TERMINATED BY '\n'
-(id, tenant_id, user_id, os, model, platform, locale, app_name, priority, available_methods, notification_token, notification_channel);
-"
-```
-
-### tenants
-
-Register performance test tenants using the onboarding API. The script reads credentials from `.env` file.
-
-**Prerequisites:**
-- `.env` file in project root with the following variables:
-  ```
-  ADMIN_USER_EMAIL=admin@example.com
-  ADMIN_USER_PASSWORD=your-password
-  ADMIN_TENANT_ID=your-admin-tenant-id
-  ADMIN_CLIENT_ID=your-client-id
-  ADMIN_CLIENT_SECRET=your-client-secret
-  AUTHORIZATION_SERVER_URL=http://localhost:8080
-  ```
-
-**Register tenants:**
-
-```shell
-# Register 5 tenants (credentials loaded from .env)
-./performance-test/data/register-tenants.sh -n 5
-
-# Dry run mode
-./performance-test/data/register-tenants.sh -n 5 -d true
-
-# Specify custom base URL
-./performance-test/data/register-tenants.sh -n 5 -b http://localhost:8080
-```
-
-This creates:
-- `performance-test/data/performance-test-tenant.json` - Tenant configuration for load tests
-
-### Multi-tenant User Data (Optional)
-
-For multi-tenant load tests with dedicated users per tenant:
-
-```shell
-# Generate multi-tenant user data (reads from performance-test-tenant.json)
-python3 ./performance-test/data/generate_multi_tenant_users.py
-
-# Import to MySQL
-mysql -u root -p"$MYSQL_ROOT_PASSWORD" -h 127.0.0.1 -P 3306 idpserver --local-infile=1 -e "
-LOAD DATA LOCAL INFILE './performance-test/data/multi_tenant_users.tsv'
-INTO TABLE idp_user
-FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' ESCAPED BY '\"'
-LINES TERMINATED BY '\n'
-(id, tenant_id, provider_id, external_user_id, name, email, email_verified, phone_number, phone_number_verified, preferred_username, status, authentication_devices);
-"
-
-mysql -u root -p"$MYSQL_ROOT_PASSWORD" -h 127.0.0.1 -P 3306 idpserver --local-infile=1 -e "
-LOAD DATA LOCAL INFILE './performance-test/data/multi_tenant_devices.tsv'
-INTO TABLE idp_user_authentication_devices
-FIELDS TERMINATED BY '\t'
-LINES TERMINATED BY '\n'
-(id, tenant_id, user_id, os, model, platform, locale, app_name, priority, available_methods, notification_token, notification_channel);
-"
+python3 ./performance-test/scripts/generate_users.py --users 1000000
+./performance-test/scripts/import_users.sh single_tenant_1m
 ```
 
 ## k6
@@ -208,6 +156,10 @@ k6 run ./performance-test/load/scenario-2-multi-ciba-login.js
 ```
 
 ```shell
+# Admin API credentials required for deleteExpiredData scenario
+# Get these from your idp-server admin configuration
+export IDP_SERVER_API_KEY=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+export IDP_SERVER_API_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 k6 run ./performance-test/load/scenario-3-peak-login.js
 ```
 

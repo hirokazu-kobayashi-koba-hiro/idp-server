@@ -22,13 +22,8 @@ export let options = {
   },
 };
 
-// 設定ファイルから読み込み
-let tenantData;
-try {
-  tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
-} catch (e) {
-  tenantData = JSON.parse(open('../data/performance-test-tenant.json'));
-}
+// 設定ファイルから読み込み（パスワードテストはテナント登録時のユーザーを使用）
+const tenantData = JSON.parse(open('../data/performance-test-tenant.json'));
 
 const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
 const config = tenantData[tenantIndex];
@@ -39,9 +34,9 @@ export default function () {
   const clientSecret = config.clientSecret;
   const tenantId = config.tenantId;
 
-  // パスワードグラントのテストユーザー（環境変数またはデフォルト値）
-  const username = __ENV.USERNAME || 'ito.ichiro';
-  const password = __ENV.PASSWORD || 'successUserCode001';
+  // パスワードグラントのテストユーザー（設定ファイルから読み込み）
+  const username = config.userEmail;
+  const password = config.userPassword;
 
   const url = `${baseUrl}/${tenantId}/v1/tokens`;
 

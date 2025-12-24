@@ -21,23 +21,13 @@ export let options = {
 };
 
 // 設定ファイルから読み込み
-let tenantData;
-let useMultiUser = false;
-
-try {
-  tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
-  useMultiUser = true;
-} catch (e) {
-  tenantData = JSON.parse(open('../data/performance-test-tenant.json'));
-  useMultiUser = false;
-}
+const tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
 
 const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
 const config = tenantData[tenantIndex];
 
-// マルチユーザーモードの場合、ユーザー配列を取得
-const users = useMultiUser ? config.users : null;
-const userCount = users ? users.length : 1;
+const users = config.users;
+const userCount = users.length;
 
 export default function () {
   const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
@@ -46,14 +36,9 @@ export default function () {
   const tenantId = config.tenantId;
 
   // ユーザーをランダムに選択
-  let userId;
-  if (useMultiUser && users) {
-    const randomIndex = Math.floor(Math.random() * userCount);
-    const user = users[randomIndex];
-    userId = user.user_id;
-  } else {
-    userId = config.userId;
-  }
+  const randomIndex = Math.floor(Math.random() * userCount);
+  const user = users[randomIndex];
+  const userId = user.user_id;
 
   const loginHint = encodeURIComponent(`sub:${userId}`);
 

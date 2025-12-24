@@ -37,16 +37,16 @@ This configuration supports both large-scale single-tenant tests and multi-tenan
 
 ```shell
 # 1. Register 10 tenants
-./performance-test/data/register-tenants.sh -n 10
+./performance-test/scripts/register-tenants.sh -n 10
 
 # 2. Generate: first tenant 1M users, other 9 tenants 100K each
-python3 ./performance-test/data/generate_users.py \
+python3 ./performance-test/scripts/generate_users.py \
   --tenants-file ./performance-test/data/performance-test-tenant.json \
   --users 100000 \
   --first-tenant-users 1000000
 
 # 3. Import to PostgreSQL
-./performance-test/data/import_users.sh multi_tenant_1m+9x100k
+./performance-test/scripts/import_users.sh multi_tenant_1m+9x100k
 
 # 4. Setup for k6 tests
 cp ./performance-test/data/multi_tenant_1m+9x100k_test_users.json \
@@ -61,48 +61,17 @@ cp ./performance-test/data/multi_tenant_1m+9x100k_test_users.json \
 #### Alternative: Uniform Multi-Tenant (10 x 100K)
 
 ```shell
-python3 ./performance-test/data/generate_users.py --users 100000 \
+python3 ./performance-test/scripts/generate_users.py --users 100000 \
   --tenants-file ./performance-test/data/performance-test-tenant.json
-./performance-test/data/import_users.sh multi_tenant_10x100k
+./performance-test/scripts/import_users.sh multi_tenant_10x100k
 ```
 
 #### Alternative: Single Tenant Only
 
 ```shell
-python3 ./performance-test/data/generate_users.py --users 1000000
-./performance-test/data/import_users.sh single_tenant_1m
+python3 ./performance-test/scripts/generate_users.py --users 1000000
+./performance-test/scripts/import_users.sh single_tenant_1m
 ```
-
-### Tenants
-
-Register performance test tenants using the onboarding API. The script reads credentials from `.env` file.
-
-**Prerequisites:**
-- `.env` file in project root with the following variables:
-  ```
-  ADMIN_USER_EMAIL=admin@example.com
-  ADMIN_USER_PASSWORD=your-password
-  ADMIN_TENANT_ID=your-admin-tenant-id
-  ADMIN_CLIENT_ID=your-client-id
-  ADMIN_CLIENT_SECRET=your-client-secret
-  AUTHORIZATION_SERVER_URL=http://localhost:8080
-  ```
-
-**Register tenants:**
-
-```shell
-# Register 5 tenants (credentials loaded from .env)
-./performance-test/data/register-tenants.sh -n 5
-
-# Dry run mode
-./performance-test/data/register-tenants.sh -n 5 -d true
-
-# Specify custom base URL
-./performance-test/data/register-tenants.sh -n 5 -b http://localhost:8080
-```
-
-This creates:
-- `performance-test/data/performance-test-tenant.json` - Tenant configuration for load tests
 
 ## k6
 
@@ -188,6 +157,10 @@ k6 run ./performance-test/load/scenario-2-multi-ciba-login.js
 ```
 
 ```shell
+# Admin API credentials required for deleteExpiredData scenario
+# Get these from your idp-server admin configuration
+export IDP_SERVER_API_KEY=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+export IDP_SERVER_API_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 k6 run ./performance-test/load/scenario-3-peak-login.js
 ```
 

@@ -2,7 +2,8 @@ import http from "k6/http";
 import { check, sleep } from "k6";
 import encoding from "k6/encoding";
 
-const data = JSON.parse(open('../data/performance-test-tenant.json'));
+// 設定ファイルから読み込み
+const data = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
 const tenantCount = data.length;
 
 // 環境変数でカスタマイズ可能なパラメータ
@@ -34,7 +35,7 @@ export const options = {
     deleteExpiredData: {
       executor: 'constant-arrival-rate',
       rate: '1',
-      timeUnit: '30s',
+      timeUnit: '1s',
       duration: '10m',
       preAllocatedVUs: 1,
       maxVUs: 1,
@@ -55,8 +56,12 @@ function login(index) {
   const clientSecret = testData.clientSecret;
   const tenantId = testData.tenantId;
 
-  const userId = testData.userId;
-  const deviceId = testData.deviceId;
+  // ユーザーをランダムに選択
+  const users = testData.users;
+  const randomUserIndex = Math.floor(Math.random() * users.length);
+  const user = users[randomUserIndex];
+  const userId = user.user_id;
+  const deviceId = user.device_id;
   const bindingMessage = "999";
   const loginHint = encodeURIComponent(`sub:${userId},idp:idp-server`);
 
@@ -115,8 +120,8 @@ function login(index) {
 export function deleteExpiredData() {
   const baseUrl = __ENV.BASE_URL;
 
-  const adminApikey = __ENV.ADMIN_API_KEY;
-  const adminApiSecret = __ENV.ADMIN_API_SECRET;
+  const adminApikey = __ENV.IDP_SERVER_API_KEY;
+  const adminApiSecret = __ENV.IDP_SERVER_API_SECRET;
   const url = `${baseUrl}/v1/admin/operations/delete-expired-data`;
 
   const payload = JSON.stringify({

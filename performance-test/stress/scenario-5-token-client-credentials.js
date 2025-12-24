@@ -15,12 +15,7 @@ export let options = {
 };
 
 // 設定ファイルから読み込み
-let tenantData;
-try {
-  tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
-} catch (e) {
-  tenantData = JSON.parse(open('../data/performance-test-tenant.json'));
-}
+const tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
 
 const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
 const config = tenantData[tenantIndex];

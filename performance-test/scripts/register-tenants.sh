@@ -24,8 +24,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CONFIG_SCRIPTS_DIR="$PROJECT_ROOT/config/scripts"
-TEMPLATE_FILE="$PROJECT_ROOT/performance-test/templates/onboarding-template.json"
-OUTPUT_FILE="$SCRIPT_DIR/performance-test-tenant.json"
+TEMPLATE_FILE="$SCRIPT_DIR/templates/onboarding-template.json"
+OUTPUT_FILE="$PROJECT_ROOT/performance-test/data/performance-test-tenant.json"
 WORK_DIR="$SCRIPT_DIR/.tenant-work"
 ENV_FILE="$PROJECT_ROOT/.env"
 

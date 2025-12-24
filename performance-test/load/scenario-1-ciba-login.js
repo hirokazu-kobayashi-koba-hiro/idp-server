@@ -2,25 +2,12 @@ import http from "k6/http";
 import { check, sleep } from "k6";
 
 // 設定ファイルから読み込み
-// マルチユーザーデータがある場合はそちらを優先（100K+ユーザーでのベンチマーク用）
-// なければシングルユーザーデータを使用（簡易テスト用）
-let tenantData;
-let useMultiUser = false;
-
-try {
-  tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
-  useMultiUser = true;
-} catch (e) {
-  tenantData = JSON.parse(open('../data/performance-test-tenant.json'));
-  useMultiUser = false;
-}
+const tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
 
 const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
 const config = tenantData[tenantIndex];
-
-// マルチユーザーモードの場合、ユーザー配列を取得
-const users = useMultiUser ? config.users : null;
-const userCount = users ? users.length : 1;
+const users = config.users;
+const userCount = users.length;
 
 // 環境変数でカスタマイズ可能なパラメータ
 // テスト方針の測定観点に対応:
@@ -61,18 +48,11 @@ export function login() {
   const clientSecret = config.clientSecret;
   const tenantId = config.tenantId;
 
-  // ユーザーをランダムに選択（マルチユーザーモードの場合）
-  let userId, deviceId;
-  if (useMultiUser && users) {
-    const randomIndex = Math.floor(Math.random() * userCount);
-    const user = users[randomIndex];
-    userId = user.user_id;
-    deviceId = user.device_id;
-  } else {
-    // シングルユーザーモード（テナント登録時に作成されたユーザー）
-    userId = config.userId;
-    deviceId = config.deviceId;
-  }
+  // ユーザーをランダムに選択
+  const randomIndex = Math.floor(Math.random() * userCount);
+  const user = users[randomIndex];
+  const userId = user.user_id;
+  const deviceId = user.device_id;
 
   const bindingMessage = "999";
   const loginHint = encodeURIComponent(`sub:${userId},idp:idp-server`);

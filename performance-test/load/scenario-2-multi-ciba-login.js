@@ -1,17 +1,8 @@
 import http from "k6/http";
 import { check, sleep } from "k6";
 
-// マルチユーザーデータを優先して読み込む
-let data;
-let useMultiUser = false;
-
-try {
-  data = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
-  useMultiUser = true;
-} catch (e) {
-  data = JSON.parse(open('../data/performance-test-tenant.json'));
-  useMultiUser = false;
-}
+// 設定ファイルから読み込み
+const data = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
 
 // 環境変数でテナント数を制御可能（デフォルトは全テナント）
 const maxTenants = parseInt(__ENV.TENANT_COUNT || String(data.length));
@@ -57,19 +48,12 @@ function login(index) {
   const clientSecret = testData.clientSecret;
   const tenantId = testData.tenantId;
 
-  // ユーザーをランダムに選択（マルチユーザーモードの場合）
-  let userId, deviceId;
-  if (useMultiUser && testData.users && testData.users.length > 0) {
-    const users = testData.users;
-    const randomIndex = Math.floor(Math.random() * users.length);
-    const user = users[randomIndex];
-    userId = user.user_id;
-    deviceId = user.device_id;
-  } else {
-    // シングルユーザーモード
-    userId = testData.userId;
-    deviceId = testData.deviceId;
-  }
+  // ユーザーをランダムに選択
+  const users = testData.users;
+  const randomIndex = Math.floor(Math.random() * users.length);
+  const user = users[randomIndex];
+  const userId = user.user_id;
+  const deviceId = user.device_id;
 
   const bindingMessage = "999";
   const loginHint = encodeURIComponent(`sub:${userId},idp:idp-server`);

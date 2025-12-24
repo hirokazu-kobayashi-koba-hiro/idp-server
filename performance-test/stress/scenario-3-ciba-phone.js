@@ -21,23 +21,12 @@ export let options = {
 };
 
 // 設定ファイルから読み込み
-let tenantData;
-let useMultiUser = false;
-
-try {
-  tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
-  useMultiUser = true;
-} catch (e) {
-  tenantData = JSON.parse(open('../data/performance-test-tenant.json'));
-  useMultiUser = false;
-}
+const tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
 
 const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
 const config = tenantData[tenantIndex];
-
-// マルチユーザーモードの場合、ユーザー配列を取得
-const users = useMultiUser ? config.users : null;
-const userCount = users ? users.length : 1;
+const users = config.users;
+const userCount = users.length;
 
 export default function() {
   const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
@@ -46,19 +35,11 @@ export default function() {
   const tenantId = config.tenantId;
 
   // ユーザーをランダムに選択
-  let phone, deviceId, providerId;
-  if (useMultiUser && users) {
-    const randomIndex = Math.floor(Math.random() * userCount);
-    const user = users[randomIndex];
-    phone = user.phone;
-    deviceId = user.device_id;
-    providerId = user.provider_id || 'idp-server';
-  } else {
-    // シングルユーザーモードではphoneがない場合がある
-    phone = config.userPhone || '09000000001';
-    deviceId = config.deviceId;
-    providerId = 'idp-server';
-  }
+  const randomIndex = Math.floor(Math.random() * userCount);
+  const user = users[randomIndex];
+  const phone = user.phone;
+  const deviceId = user.device_id;
+  const providerId = user.provider_id || 'idp-server';
 
   const bindingMessage = "999";
   const loginHint = encodeURIComponent(`phone:${phone},idp:${providerId}`);
