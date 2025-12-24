@@ -239,8 +239,11 @@ public class OidcFederationInteractor implements FederationInteractor {
     } else {
       user.setSub(UUID.randomUUID().toString());
       user.setStatus(UserStatus.FEDERATED);
-      user.applyIdentityPolicy(tenant.identityPolicyConfig());
     }
+
+    // Apply identity policy on every authentication to ensure preferred_username is set
+    // for security events (Issue #1131)
+    user.applyIdentityPolicy(tenant.identityPolicyConfig());
 
     return user;
   }
