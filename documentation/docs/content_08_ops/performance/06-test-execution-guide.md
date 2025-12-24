@@ -94,13 +94,13 @@ docker exec -it postgres-primary psql -U idpserver -d idpserver -c "CREATE EXTEN
 
 ```bash
 # 全測定に必要な最大テナント数（10）を一括登録
-./performance-test/data/register-tenants.sh -n 10
+./performance-test/scripts/register-tenants.sh -n 10
 
 # 追加でテナントを登録する場合（既存を保持）
-./performance-test/data/register-tenants.sh -n 5 -a
+./performance-test/scripts/register-tenants.sh -n 5 -a
 
 # ドライラン（実際には登録しない）
-./performance-test/data/register-tenants.sh -n 10 -d true
+./performance-test/scripts/register-tenants.sh -n 10 -d true
 ```
 
 パラメータ説明：
@@ -125,41 +125,53 @@ cat ./performance-test/data/performance-test-tenant.json | jq 'length'
 各テナントにユーザーデータを生成する。
 
 ```bash
-# 各テナント10万ユーザー（推奨）
-python3 ./performance-test/data/generate_multi_tenant_users.py
+# 推奨構成: 最初のテナント100万ユーザー、他9テナント各10万ユーザー
+python3 ./performance-test/scripts/generate_users.py \
+  --tenants-file ./performance-test/data/performance-test-tenant.json \
+  --users 100000 \
+  --first-tenant-users 1000000
 
-# 各テナント100万ユーザー（大規模テスト用）
-python3 ./performance-test/data/generate_multi_tenant_users.py --users-per-tenant 1000000
+# 均等構成: 全テナント各10万ユーザー
+python3 ./performance-test/scripts/generate_users.py \
+  --tenants-file ./performance-test/data/performance-test-tenant.json \
+  --users 100000
 ```
 
-生成されるファイル：
+パラメータ説明：
+| パラメータ | 説明 |
+|----------|------|
+| --tenants-file | テナント情報JSONファイル |
+| --users | 各テナントのユーザー数 |
+| --first-tenant-users | 最初のテナントのみ別のユーザー数を指定（オプション） |
+
+生成されるファイル（推奨構成の場合）：
 | ファイル | 内容 |
 |---------|------|
-| `generated_multi_tenant_users.tsv` | 全テナントのユーザーデータ |
-| `generated_multi_tenant_devices.tsv` | 全テナントの認証デバイスデータ |
-| `performance-test-multi-tenant-users.json` | k6テスト用（各テナント500ユーザー） |
+| `multi_tenant_1m+9x100k_users.tsv` | 全テナントのユーザーデータ |
+| `multi_tenant_1m+9x100k_devices.tsv` | 全テナントの認証デバイスデータ |
+| `multi_tenant_1m+9x100k_test_users.json` | k6テスト用（各テナント500ユーザー） |
 
-### Step 2.3: PostgreSQL COPY投入
+### Step 2.3: データ投入
+
+`import_users.sh` スクリプトでデータを投入する。
 
 ```bash
-# ユーザーデータ投入
-docker exec -i postgres-primary psql -U idpserver -d idpserver -c "\COPY idp_user (
-  id, tenant_id, provider_id, external_user_id, name, email,
-  email_verified, phone_number, phone_number_verified,
-  preferred_username, status, authentication_devices
-) FROM STDIN WITH (FORMAT csv, HEADER false, DELIMITER E'\t')" \
-  < ./performance-test/data/generated_multi_tenant_users.tsv
+# 推奨構成のデータを投入
+./performance-test/scripts/import_users.sh multi_tenant_1m+9x100k
 
-# 認証デバイスデータ投入
-docker exec -i postgres-primary psql -U idpserver -d idpserver -c "\COPY idp_user_authentication_devices (
-  id, tenant_id, user_id, os, model, platform, locale,
-  app_name, priority, available_methods,
-  notification_token, notification_channel
-) FROM STDIN WITH (FORMAT csv, HEADER false, DELIMITER E'\t')" \
-  < ./performance-test/data/generated_multi_tenant_devices.tsv
+# 均等構成の場合
+./performance-test/scripts/import_users.sh multi_tenant_10x100k
 ```
 
-### Step 2.4: 投入確認
+### Step 2.4: k6テスト用JSONの配置
+
+```bash
+# 推奨構成の場合
+cp ./performance-test/data/multi_tenant_1m+9x100k_test_users.json \
+   ./performance-test/data/performance-test-multi-tenant-users.json
+```
+
+### Step 2.5: 投入確認
 
 ```bash
 # テナント別ユーザー数を確認
@@ -190,15 +202,6 @@ SELECT
 ---
 
 ## Phase 3: ストレステスト実行
-
-:::note 旧ストレステスト用データ（オプション）
-ストレステストで login_hint パターン別テストを行う場合のみ必要：
-
-```bash
-chmod +x ./performance-test/data/test-user.sh
-./performance-test/data/test-user.sh all
-```
-:::
 
 ### 結果ディレクトリ作成
 
@@ -313,7 +316,7 @@ TOTAL_VU_COUNT=60 TOTAL_RATE=20 DURATION=10m \
 
 ## Phase 7.5: 測定観点別テスト実行
 
-[テスト方針](./test-strategy)に基づいた測定観点別の実行手順。
+[テスト方針](./07-test-strategy)に基づいた測定観点別の実行手順。
 
 ### 7.5.1: ベースライン測定
 
@@ -387,37 +390,61 @@ TENANT_COUNT=10 TOTAL_VU_COUNT=50 TOTAL_RATE=20 DURATION=5m \
 
 ユーザー数を変えて性能劣化を測定。
 
-:::warning データ投入が必要
-この測定は、DBに存在するユーザー数を段階的に変えて測定するため、一括準備とは別に実施する。
-各ステップ前にDBをクリーンアップし、必要なデータ量を投入する。
+:::warning 独立した測定として実施
+この測定はデータ規模による性能差を比較するため、Phase 2とは独立して実施する。
+
+**各ステップの手順**：
+1. ユーザーデータのクリーンアップ
+   ```bash
+   docker exec postgres-primary psql -U idpserver -d idpserver -c "TRUNCATE idp_user CASCADE;"
+   ```
+2. 指定規模のデータを生成・投入
+3. テスト実行
+
+**注意**: この測定でPhase 2のユーザーデータは削除される。測定後に他のテストを実施する場合は、Phase 2を再実行すること。
 :::
 
 ```bash
 # Step 1: 10,000ユーザー（クリーン環境で実施）
-# DBクリーンアップ後、10,000ユーザーを投入
-python3 ./performance-test/data/generate_multi_tenant_users.py --users-per-tenant 10000
-# データ投入後テスト実行
+python3 ./performance-test/scripts/generate_users.py \
+  --tenants-file ./performance-test/data/performance-test-tenant.json \
+  --users 10000
+./performance-test/scripts/import_users.sh multi_tenant_10x10k
+cp ./performance-test/data/multi_tenant_10x10k_test_users.json \
+   ./performance-test/data/performance-test-multi-tenant-users.json
+
 VU_COUNT=50 LOGIN_RATE=20 DURATION=5m \
   k6 run ./performance-test/load/scenario-1-ciba-login.js \
   --summary-export=./performance-test/result/load/scale-10k.json
 
 # Step 2: 100,000ユーザー
-python3 ./performance-test/data/generate_multi_tenant_users.py --users-per-tenant 100000
-# データ投入後テスト実行
+python3 ./performance-test/scripts/generate_users.py \
+  --tenants-file ./performance-test/data/performance-test-tenant.json \
+  --users 100000
+./performance-test/scripts/import_users.sh multi_tenant_10x100k
+cp ./performance-test/data/multi_tenant_10x100k_test_users.json \
+   ./performance-test/data/performance-test-multi-tenant-users.json
+
 VU_COUNT=50 LOGIN_RATE=20 DURATION=5m \
   k6 run ./performance-test/load/scenario-1-ciba-login.js \
   --summary-export=./performance-test/result/load/scale-100k.json
 
 # Step 3: 1,000,000ユーザー
-python3 ./performance-test/data/generate_multi_tenant_users.py --users-per-tenant 1000000
-# データ投入後テスト実行
+python3 ./performance-test/scripts/generate_users.py \
+  --tenants-file ./performance-test/data/performance-test-tenant.json \
+  --users 100000 \
+  --first-tenant-users 1000000
+./performance-test/scripts/import_users.sh multi_tenant_1m+9x100k
+cp ./performance-test/data/multi_tenant_1m+9x100k_test_users.json \
+   ./performance-test/data/performance-test-multi-tenant-users.json
+
 VU_COUNT=50 LOGIN_RATE=20 DURATION=5m \
   k6 run ./performance-test/load/scenario-1-ciba-login.js \
   --summary-export=./performance-test/result/load/scale-1m.json
 ```
 
 :::tip 簡易測定
-一括準備済みの環境（10テナント×10万ユーザー）で、シングルテナント使用時と全テナント使用時を比較することでも、データ規模の影響を概算できる。
+推奨構成（1テナント100万 + 9テナント10万）を使用し、TENANT_INDEX=0 で最初のテナント（100万ユーザー）を指定することで大規模データスケールの影響を測定できる。
 :::
 
 ### 7.5.5: 負荷限界検証
@@ -491,13 +518,19 @@ docker stats $(docker compose ps -q idp-server)
 
 ## Phase 9: クリーンアップ
 
-### テストデータ削除
+### ユーザーデータのクリーンアップ
+
+性能テスト用テナントのユーザーデータを削除する。
 
 ```bash
-PGPASSWORD=idpserver psql -U idpserver -d idpserver -h localhost -p 5432 -c "
-DELETE FROM idp_user_authentication_devices WHERE tenant_id = '67e7eae6-62b0-4500-9eff-87459f63fc66';
-DELETE FROM idp_user WHERE tenant_id = '67e7eae6-62b0-4500-9eff-87459f63fc66';
+# 特定テナントのユーザーデータを削除
+TENANT_ID="<対象テナントID>"
+docker exec postgres-primary psql -U idpserver -d idpserver -c "
+DELETE FROM idp_user WHERE tenant_id = '$TENANT_ID';
 "
+
+# 全テナントのユーザーデータを削除する場合（注意: 全データが削除される）
+# docker exec postgres-primary psql -U idpserver -d idpserver -c "TRUNCATE idp_user CASCADE;"
 ```
 
 ### Docker環境停止

@@ -149,30 +149,39 @@
 
 ## 性能目標
 
-### エンドポイント別目標値
+### API単体TPS（1 HTTPリクエスト）
 
-Keycloakのサイジングガイドライン（1 vCPU = 15ログイン/秒）を参考に設定。
+実測値ベースの目標値（テスト環境: 2 vCPU × 2インスタンス、120 VU）
 
-| カテゴリ | エンドポイント | TPS目標 | p95目標 | p99目標 |
+| カテゴリ | エンドポイント | 実測TPS | TPS目標 | p95目標 |
 |---------|--------------|---------|---------|---------|
-| **高頻度API** | JWKS | 2,000+ | 50ms | 100ms |
-| **高頻度API** | Introspection | 1,500+ | 100ms | 200ms |
-| **認証フロー** | Authorization Request | 1,000+ | 150ms | 300ms |
-| **認証フロー** | CIBA Full Flow | 500+ | 300ms | 500ms |
-| **トークン発行** | Client Credentials | 500+ | 200ms | 400ms |
-| **トークン発行** | Authorization Code | 300+ | 300ms | 500ms |
+| 読み取り | JWKS | 2,684 | 2,000+ | 200ms |
+| 読み取り | Token Introspection | 2,453 | 2,000+ | 200ms |
+| 認可 | Authorization Request | 2,577 | 2,000+ | 200ms |
+| トークン発行 | Token (Client Credentials) | 1,471 | 1,000+ | 250ms |
+| CIBA | BC Request | 1,317 | 1,000+ | 250ms |
 
-### サイジング目安
+### フロー完了TPS（複数HTTPリクエスト）
 
-| リソース | ログイン/秒 | トークン検証/秒 |
-|---------|-----------|---------------|
-| 1 vCPU | 15 | 100 |
-| 2 vCPU | 30 | 200 |
-| 4 vCPU | 60 | 400 |
+| フロー | 構成API数 | 実測完了/秒 | 完了TPS目標 | p95目標 |
+|-------|----------|------------|-----------|---------|
+| CIBA Full Flow | 5 | 270-294 | 250+ | 300ms |
+
+**CIBA Full Flowの構成**:
+1. `POST /backchannel/authentications`（BC Request）
+2. `GET /authentication-devices/{id}/authentications`
+3. `POST /authentications/{id}/authentication-device-binding-message`
+4. `POST /tokens`
+5. `GET /jwks`
+
+### 参考：テスト環境での実測値
+
+| 環境 | 構成 | CIBA完了/秒 | Token Introspection/秒 |
+|-----|------|------------|----------------------|
+| ローカル検証 | 2 vCPU × 2インスタンス | 280 | 2,400 |
 
 :::note
-上記は目安値であり、実測に基づく調整が必要。
-Keycloakと異なるアーキテクチャのため、独自の係数を導出する。
+スケールアウト時の性能は構成により異なる。本番環境では個別に性能検証を実施すること。
 :::
 
 ### 信頼性目標

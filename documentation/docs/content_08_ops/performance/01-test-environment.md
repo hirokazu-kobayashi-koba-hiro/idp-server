@@ -177,58 +177,10 @@ services:
 
 ## テストデータ
 
-### ユーザーデータ
+テストデータの準備については以下を参照：
 
-```bash
-# 10万ユーザーデータ生成
-python3 ./performance-test/data/generate_users_100k.py
-
-# テストユーザーJSON生成
-./performance-test/data/test-user.sh all
-```
-
-生成されるファイル：
-
-| ファイル | 内容 | 件数 |
-|---------|------|------|
-| generated_users_100k.tsv | ユーザーマスタ | 100,000 |
-| generated_user_devices_100k.tsv | 認証デバイス | 100,000 |
-| performance-test-user.json | テスト用ユーザーリスト | 500 |
-
-### データ投入
-
-```bash
-# ユーザーデータ投入
-psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
-  id, tenant_id, provider_id, external_user_id, name, email,
-  email_verified, phone_number, phone_number_verified,
-  preferred_username, status, authentication_devices
-) FROM './performance-test/data/generated_users_100k.tsv'
-WITH (FORMAT csv, HEADER false, DELIMITER E'\t')"
-
-# 認証デバイスデータ投入
-psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user_authentication_devices (
-  id, tenant_id, user_id, os, model, platform, locale,
-  app_name, priority, available_methods,
-  notification_token, notification_channel
-) FROM './performance-test/data/generated_user_devices_100k.tsv'
-WITH (FORMAT csv, HEADER false, DELIMITER E'\t')"
-```
-
-### テナントデータ
-
-オンボーディングAPIを使用して、テスト用テナントを登録する。認証情報は`.env`ファイルから自動的に読み込まれる。
-
-```bash
-# 5テナントを登録（.envから認証情報を読み込み）
-./performance-test/data/register-tenants.sh -n 5
-
-# ドライラン
-./performance-test/data/register-tenants.sh -n 5 -d true
-```
-
-生成されるファイル：
-- `performance-test/data/performance-test-tenant.json` - テナント情報（k6スクリプトで使用）
+- [テスト実行ガイド](./06-test-execution-guide) - データ生成・投入手順
+- [performance-test/README.md](../../../../performance-test/README.md) - スクリプト詳細
 
 ---
 
