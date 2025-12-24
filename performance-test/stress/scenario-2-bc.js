@@ -1,29 +1,61 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
+/**
+ * CIBA BC Request Stress Test
+ *
+ * Tests the CIBA backchannel authentication request endpoint.
+ * Uses sub:{subject} login_hint format.
+ */
+// 環境変数でカスタマイズ可能なパラメータ
+const VU_COUNT = parseInt(__ENV.VU_COUNT || '120');
+const DURATION = __ENV.DURATION || '30s';
+
 export let options = {
-  vus: 120, // Number of concurrent virtual users
-  duration: '30s', // Test duration
+  vus: VU_COUNT,
+  duration: DURATION,
   thresholds: {
     http_req_duration: ['p(95)<500'], // 95% of requests should complete below 500ms
     http_req_failed: ['rate<0.01'],   // Error rate should be less than 1%
   },
 };
 
-const data = JSON.parse(open('../data/performance-test-user-sub.json'));
+// 設定ファイルから読み込み
+let tenantData;
+let useMultiUser = false;
 
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
+try {
+  tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
+  useMultiUser = true;
+} catch (e) {
+  tenantData = JSON.parse(open('../data/performance-test-tenant.json'));
+  useMultiUser = false;
 }
 
-export default function () {
-  const baseUrl = __ENV.BASE_URL;
-  const clientId = __ENV.CLIENT_ID;
-  const clientSecret = __ENV.CLIENT_SECRET;
-  const tenantId = __ENV.TENANT_ID;
+const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
+const config = tenantData[tenantIndex];
 
-  const testUser = data[getRandomInt(499)]
-  const loginHint = encodeURIComponent(`sub:${testUser.sub}`);
+// マルチユーザーモードの場合、ユーザー配列を取得
+const users = useMultiUser ? config.users : null;
+const userCount = users ? users.length : 1;
+
+export default function () {
+  const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+  const clientId = config.clientId;
+  const clientSecret = config.clientSecret;
+  const tenantId = config.tenantId;
+
+  // ユーザーをランダムに選択
+  let userId;
+  if (useMultiUser && users) {
+    const randomIndex = Math.floor(Math.random() * userCount);
+    const user = users[randomIndex];
+    userId = user.user_id;
+  } else {
+    userId = config.userId;
+  }
+
+  const loginHint = encodeURIComponent(`sub:${userId}`);
 
   const url = `${baseUrl}/${tenantId}/v1/backchannel/authentications`;
 

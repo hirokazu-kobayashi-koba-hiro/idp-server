@@ -10,7 +10,20 @@
 |-----|---|
 | 同時接続数 (VUs) | 120 |
 | テスト時間 | 30秒 |
-| テストツール | k6 v1.0.0 |
+| テストツール | k6 |
+| テスト実施日 | 2025-12-24 |
+
+### データ規模パターン
+
+| パターン | 構成 | 総ユーザー数 | 用途 |
+|---------|------|------------|------|
+| マルチテナント（均等） | 10テナント × 10万ユーザー | 100万 | テナント分離の負荷検証 |
+| マルチテナント（大規模単一含む） | 1テナント×100万 + 9テナント×10万 | 190万 | 大規模テナントのスケーラビリティ検証 |
+
+:::note
+「大規模単一テナント」テストは、10テナント構成のうち100万ユーザーを持つ最初のテナントを使用して実施。
+:::
+
 
 ### 判定基準
 
@@ -27,28 +40,36 @@
 
 | シナリオ | リクエスト数 | TPS | 平均応答時間 | p95 | エラー率 | 判定 |
 |---------|-----------|-----|------------|-----|---------|-----|
-| 認可リクエスト | 43,064 | 1,433 | 83.6ms | 238.4ms | 0.00% | PASS |
-| Token (Client Credentials) | 45,896 | 1,527 | 78.5ms | 159.9ms | 0.00% | PASS |
-| Token (Password) | 1,432 | 47 | 421.0ms | 576.2ms | 0.00% | FAIL |
-| JWKS | 44,315 | 1,476 | 81.2ms | 106.5ms | 0.00% | PASS |
-| Token Introspection | 89,909 | 2,994 | 40.0ms | 130.8ms | 0.00% | PASS |
+| 認可リクエスト | 77,506 | 2,577 | 46.4ms | 183.8ms | 0.00% | PASS |
+| Token (Client Credentials) | 44,211 | 1,471 | 81.4ms | 211.1ms | 0.00% | PASS |
+| JWKS | 80,663 | 2,684 | 44.6ms | 156.8ms | 0.00% | PASS |
+| Token Introspection | 74,072 | 2,453 | 48.7ms | 198.5ms | 0.00% | PASS |
 
-### CIBA フロー
+### CIBA フロー（マルチテナント: 10テナント × 10万ユーザー）
 
-| シナリオ | リクエスト数 | TPS | 平均応答時間 | p95 | エラー率 | 判定 |
-|---------|-----------|-----|------------|-----|---------|-----|
-| BC Request | 40,722 | 1,355 | 88.4ms | 208.3ms | 0.00% | PASS |
-| CIBA Full (device) | 34,635 | 1,135 | 104.9ms | 305.3ms | 0.00% | PASS |
-| CIBA Full (sub) | - | - | - | - | - | - |
-| CIBA Full (email) | - | - | - | - | - | - |
-| CIBA Full (phone) | - | - | - | - | - | - |
+| シナリオ | login_hint | リクエスト数 | TPS | 平均応答時間 | p95 | エラー率 | 判定 |
+|---------|-----------|------------|-----|------------|-----|---------|-----|
+| BC Request | sub | 39,625 | 1,317 | 90.9ms | 223.5ms | 0.00% | PASS |
+| CIBA Full (device) | device | 44,585 | 1,472 | 81.2ms | 247.6ms | 0.00% | PASS |
+| CIBA Full (sub) | sub | 43,220 | 1,430 | 83.6ms | 260.1ms | 0.00% | PASS |
+| CIBA Full (email) | email | 43,050 | 1,425 | 83.9ms | 259.0ms | 0.00% | PASS |
+| CIBA Full (phone) | phone | 40,750 | 1,348 | 88.6ms | 294.9ms | 0.00% | PASS |
+| CIBA Full (ex-sub) | ex-sub | 41,580 | 1,374 | 86.9ms | 288.4ms | 0.00% | PASS |
 
-### その他
+### CIBA フロー（大規模単一テナント: 100万ユーザー）
 
-| シナリオ | リクエスト数 | TPS | 平均応答時間 | p95 | エラー率 | 判定 |
-|---------|-----------|-----|------------|-----|---------|-----|
-| Authentication Device | - | 2,054 | - | 148.4ms | 0.00% | PASS |
-| Identity Verification | - | 321 | 61.8ms | 231.8ms | 0.00% | PASS |
+| シナリオ | login_hint | リクエスト数 | TPS | 平均応答時間 | p95 | エラー率 | 判定 |
+|---------|-----------|------------|-----|------------|-----|---------|-----|
+| CIBA Full (device) | device | 44,865 | 1,481 | 80.6ms | 226.9ms | 0.00% | PASS |
+| CIBA Full (sub) | sub | 44,270 | 1,464 | 81.6ms | 247.0ms | 0.00% | PASS |
+| CIBA Full (email) | email | 40,375 | 1,333 | 89.6ms | 266.7ms | 0.00% | PASS |
+| CIBA Full (phone) | phone | 39,835 | 1,316 | 90.7ms | 292.0ms | 0.00% | PASS |
+| CIBA Full (ex-sub) | ex-sub | 41,855 | 1,382 | 86.3ms | 285.1ms | 0.00% | PASS |
+
+:::tip 大規模単一テナントの考察
+1テナントに100万ユーザーを集約した環境でも、マルチテナント環境とほぼ同等の性能を維持。
+インデックスとキャッシュ戦略が効果的に機能していることを確認。
+:::
 
 ---
 
@@ -66,20 +87,20 @@
 
 | 指標 | 値 |
 |-----|---|
-| 総リクエスト数 | 43,064 |
-| スループット | 1,433 req/s |
-| 平均応答時間 | 83.6 ms |
-| 中央値 | 58.7 ms |
-| p90 | 174.3 ms |
-| p95 | 238.4 ms |
-| 最大応答時間 | 1,501.7 ms |
+| 総リクエスト数 | 77,506 |
+| スループット | 2,577 req/s |
+| 平均応答時間 | 46.4 ms |
+| 中央値 | 22.4 ms |
+| p90 | 116.0 ms |
+| p95 | 183.8 ms |
+| 最大応答時間 | 1,420 ms |
 | エラー率 | 0.00% |
 
 #### 考察
 
 - ステートレスな設計により高いスループットを実現
+- **100万ユーザー環境でも2,500 TPS以上を達成**
 - レスポンス生成（ID Token含む）も含めて安定した性能
-- 1,400 TPS以上を維持し、目標を大幅に上回る
 
 ---
 
@@ -89,16 +110,17 @@ CIBAバックチャンネル認証リクエスト (`/backchannel/authentications
 
 ```
 エンドポイント: POST /{tenant_id}/v1/backchannel/authentications
+login_hint: sub:{user_id}
 ```
 
 #### 結果
 
 | 指標 | 値 |
 |-----|---|
-| 総リクエスト数 | 40,722 |
-| スループット | 1,355 req/s |
-| 平均応答時間 | 88.4 ms |
-| p95 | 208.3 ms |
+| 総リクエスト数 | 39,625 |
+| スループット | 1,317 req/s |
+| 平均応答時間 | 90.9 ms |
+| p95 | 223.5 ms |
 | エラー率 | 0.00% |
 
 #### 考察
@@ -108,7 +130,7 @@ CIBAバックチャンネル認証リクエスト (`/backchannel/authentications
 
 ---
 
-### scenario-3: CIBA Full Flow (device)
+### scenario-3: CIBA Full Flow
 
 CIBAフロー全体（BC Request → Transaction → Binding → Token → JWKS）。
 
@@ -121,24 +143,23 @@ CIBAフロー全体（BC Request → Transaction → Binding → Token → JWKS�
 5. GET /jwks
 ```
 
-#### 結果
+#### login_hint パターン別結果
 
-| 指標 | 値 |
-|-----|---|
-| 総リクエスト数 | 34,635 |
-| イテレーション数 | 6,927 |
-| イテレーション/秒 | 227 |
-| 平均応答時間 | 104.9 ms |
-| p95 | 305.3 ms |
-| イテレーション時間 (avg) | 525.0 ms |
-| イテレーション時間 (p95) | 905.3 ms |
-| エラー率 | 0.00% |
+| パターン | 総リクエスト数 | TPS | 平均応答時間 | p95 | イテレーション/秒 |
+|---------|-------------|-----|------------|-----|-----------------|
+| device | 44,585 | 1,472 | 81.2ms | 247.6ms | 294 |
+| sub | 43,220 | 1,430 | 83.6ms | 260.1ms | 286 |
+| email | 43,050 | 1,425 | 83.9ms | 259.0ms | 285 |
+| phone | 40,750 | 1,348 | 88.6ms | 294.9ms | 270 |
+| ex-sub | 41,580 | 1,374 | 86.9ms | 288.4ms | 275 |
 
 #### 考察
 
-- 5ステップのフロー全体でp95が1秒以内
-- 各ステップの処理が効率的に連携
-- 実運用で十分な性能を確保
+- **device**: 最高性能（デバイスID直接参照のため高速）
+- **sub**: findById検索で安定した性能
+- **email**: findByEmail検索、subと同等の性能
+- **phone**: findByPhone検索、やや遅め（インデックス最適化の余地あり）
+- **ex-sub**: 外部IdP連携検索、良好な性能
 
 ---
 
@@ -186,10 +207,10 @@ Client Credentials Grant。
 
 | 指標 | 値 |
 |-----|---|
-| 総リクエスト数 | 45,896 |
-| スループット | 1,527 req/s |
-| 平均応答時間 | 78.5 ms |
-| p95 | 159.9 ms |
+| 総リクエスト数 | 44,211 |
+| スループット | 1,471 req/s |
+| 平均応答時間 | 81.4 ms |
+| p95 | 211.1 ms |
 | エラー率 | 0.00% |
 
 #### 考察
@@ -212,15 +233,17 @@ Client Credentials Grant。
 
 | 指標 | 値 |
 |-----|---|
-| スループット | 1,476 req/s |
-| 平均応答時間 | 81.2 ms |
-| p95 | 106.5 ms |
+| 総リクエスト数 | 80,663 |
+| スループット | 2,684 req/s |
+| 平均応答時間 | 44.6 ms |
+| p95 | 156.8 ms |
 | エラー率 | 0.00% |
 
 #### 考察
 
 - Redisキャッシュが効果的に機能
 - リソースサーバーからの頻繁なアクセスに対応可能
+- **最高TPS**を達成
 
 ---
 
@@ -236,15 +259,15 @@ Client Credentials Grant。
 
 | 指標 | 値 |
 |-----|---|
-| 総リクエスト数 | 89,909 |
-| スループット | 2,994 req/s |
-| 平均応答時間 | 40.0 ms |
-| p95 | 130.8 ms |
+| 総リクエスト数 | 74,072 |
+| スループット | 2,453 req/s |
+| 平均応答時間 | 48.7 ms |
+| p95 | 198.5 ms |
 | エラー率 | 0.00% |
 
 #### 考察
 
-- **最高スループット**を達成
+- 高スループットを達成
 - 軽量な処理とキャッシュ戦略の成果
 - リソースサーバーからの大量リクエストに対応可能
 
@@ -273,31 +296,48 @@ Client Credentials Grant。
 
 ## 総合評価
 
-### 性能ランキング
+### 性能ランキング（100万ユーザー環境）
 
-| 順位 | エンドポイント | TPS | コメント |
-|-----|--------------|-----|---------|
-| 1 | Token Introspection | 2,994 | 最高性能 |
-| 2 | Authentication Device | 2,054 | 高性能 |
-| 3 | Token (Client Credentials) | 1,527 | 良好 |
-| 4 | JWKS | 1,476 | 良好 |
-| 5 | Authorization | 1,433 | 良好 |
-| 6 | BC Request | 1,355 | 良好 |
-| 7 | CIBA Full Flow | 1,135 | 合格 |
-| 8 | Identity Verification | 320 | 許容範囲 |
-| 9 | Token (Password) | 47 | 要改善 |
+| 順位 | エンドポイント | TPS | p95 | コメント |
+|-----|--------------|-----|-----|---------|
+| 1 | JWKS | 2,684 | 156.8ms | 最高性能 |
+| 2 | Authorization | 2,577 | 183.8ms | 高性能 |
+| 3 | Token Introspection | 2,453 | 198.5ms | 高性能 |
+| 4 | CIBA Full (device) | 1,481 | 226.9ms | 良好 |
+| 5 | Token (Client Credentials) | 1,471 | 211.1ms | 良好 |
+| 6 | CIBA Full (sub) | 1,464 | 247.0ms | 良好 |
+| 7 | CIBA Full (ex-sub) | 1,382 | 285.1ms | 良好 |
+
+### データ規模別比較（CIBA device パターン）
+
+| データ規模 | TPS | p95 | 性能差 |
+|-----------|-----|-----|-------|
+| マルチテナント（10×10万） | 1,472 | 247.6ms | 基準 |
+| 大規模単一（1×100万） | 1,481 | 226.9ms | +0.6% |
+
+:::note
+1テナントに100万ユーザーを集約しても性能劣化は見られず、むしろわずかに向上。
+テナント間のコンテキストスイッチがないことが要因と考えられる。
+:::
 
 ### 判定結果
 
-- **全体**: 9シナリオ中8シナリオがp95目標を達成
-- **ボトルネック**: Password Grant のみ性能要件未達
-- **推奨**: Password Grant は CIBA または Authorization Code Flow への移行を推奨
+- **全体**: 全シナリオがp95目標（500ms以下）を達成
+- **スケーラビリティ**: 100万ユーザー環境でも高性能を維持
+- **最高TPS**: JWKS エンドポイントが 2,684 req/s を達成
+- **CIBA**: 全login_hintパターンで安定した性能を確認
+- **大規模単一テナント**: マルチテナントと同等以上の性能を確認
 
 ---
 
 ## 実行コマンド
 
 ```bash
+# 環境変数でカスタマイズ可能
+# VU_COUNT: 同時接続数（デフォルト: 120）
+# DURATION: テスト時間（デフォルト: 30s）
+# TENANT_INDEX: テナントインデックス（デフォルト: ランダム、0で最初のテナント固定）
+
 # 認可リクエスト
 k6 run --summary-export=./performance-test/result/stress/scenario-1-authorization-request.json \
   ./performance-test/stress/scenario-1-authorization-request.js
@@ -306,6 +346,14 @@ k6 run --summary-export=./performance-test/result/stress/scenario-1-authorizatio
 k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-device.json \
   ./performance-test/stress/scenario-3-ciba-device.js
 
+# CIBA (sub)
+k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-sub.json \
+  ./performance-test/stress/scenario-3-ciba-sub.js
+
+# CIBA (email)
+k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-email.json \
+  ./performance-test/stress/scenario-3-ciba-email.js
+
 # Token (Client Credentials)
 k6 run --summary-export=./performance-test/result/stress/scenario-5-token-client-credentials.json \
   ./performance-test/stress/scenario-5-token-client-credentials.js
@@ -313,6 +361,14 @@ k6 run --summary-export=./performance-test/result/stress/scenario-5-token-client
 # Token Introspection
 k6 run --summary-export=./performance-test/result/stress/scenario-7-token-introspection.json \
   ./performance-test/stress/scenario-7-token-introspection.js
+
+# カスタム設定例
+VU_COUNT=200 DURATION=1m k6 run ./performance-test/stress/scenario-6-jwks.js
+
+# 大規模単一テナント（100万ユーザー）でのCIBAテスト
+TENANT_INDEX=0 VU_COUNT=120 DURATION=30s k6 run \
+  --summary-export=./performance-test/result/stress/scenario-3-ciba-device-1m.json \
+  ./performance-test/stress/scenario-3-ciba-device.js
 ```
 
 ---

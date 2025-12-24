@@ -7,28 +7,58 @@ import { check, sleep } from "k6";
  * Tests the CIBA flow using sub:{subject} login_hint format.
  * This pattern uses findById to look up users by their subject identifier.
  */
+// 環境変数でカスタマイズ可能なパラメータ
+const VU_COUNT = parseInt(__ENV.VU_COUNT || '120');
+const DURATION = __ENV.DURATION || '30s';
+
 export let options = {
-  vus: 120,
-  duration: '30s',
+  vus: VU_COUNT,
+  duration: DURATION,
   thresholds: {
     http_req_duration: ['p(95)<500'],
     http_req_failed: ['rate<0.01'],
   },
 };
 
-const data = JSON.parse(open('../data/performance-test-user-sub.json'));
+// 設定ファイルから読み込み
+let tenantData;
+let useMultiUser = false;
+
+try {
+  tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
+  useMultiUser = true;
+} catch (e) {
+  tenantData = JSON.parse(open('../data/performance-test-tenant.json'));
+  useMultiUser = false;
+}
+
+const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
+const config = tenantData[tenantIndex];
+
+// マルチユーザーモードの場合、ユーザー配列を取得
+const users = useMultiUser ? config.users : null;
+const userCount = users ? users.length : 1;
 
 export default function() {
-  const baseUrl = __ENV.BASE_URL;
-  const clientId = __ENV.CLIENT_ID;
-  const clientSecret = __ENV.CLIENT_SECRET;
-  const tenantId = __ENV.TENANT_ID;
+  const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+  const clientId = config.clientId;
+  const clientSecret = config.clientSecret;
+  const tenantId = config.tenantId;
 
-  const testUser = data[getRandomInt(499)]
-  const sub = testUser.sub;
-  const deviceId = testUser.device_id;
+  // ユーザーをランダムに選択
+  let userId, deviceId;
+  if (useMultiUser && users) {
+    const randomIndex = Math.floor(Math.random() * userCount);
+    const user = users[randomIndex];
+    userId = user.user_id;
+    deviceId = user.device_id;
+  } else {
+    userId = config.userId;
+    deviceId = config.deviceId;
+  }
+
   const bindingMessage = "999";
-  const loginHint = encodeURIComponent(`sub:${sub}`);
+  const loginHint = encodeURIComponent(`sub:${userId}`);
 
   const url = `${baseUrl}/${tenantId}/v1/backchannel/authentications`;
 
@@ -82,8 +112,4 @@ export default function() {
 
   const jwksResponse = http.get(`${baseUrl}/${tenantId}/v1/jwks`);
   check(jwksResponse, { "jwksResponse request OK": (r) => r.status === 200 });
-}
-
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
 }

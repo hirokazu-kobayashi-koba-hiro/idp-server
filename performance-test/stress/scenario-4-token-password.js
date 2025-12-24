@@ -1,20 +1,47 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
+/**
+ * Token Password Grant Stress Test
+ *
+ * Tests the Resource Owner Password Credentials Grant.
+ * Note: This grant type is CPU-intensive due to bcrypt password verification.
+ * VUs are set lower (20) to avoid overwhelming the server.
+ */
+// 環境変数でカスタマイズ可能なパラメータ
+// Note: VU_COUNTのデフォルトは20（bcryptが重いため低めに設定）
+const VU_COUNT = parseInt(__ENV.VU_COUNT || '20');
+const DURATION = __ENV.DURATION || '30s';
+
 export let options = {
-  vus: 20, // Number of concurrent virtual users
-  duration: '30s', // Test duration
+  vus: VU_COUNT,
+  duration: DURATION,
   thresholds: {
     http_req_duration: ['p(95)<500'], // 95% of requests should complete below 500ms
     http_req_failed: ['rate<0.01'],   // Error rate should be less than 1%
   },
 };
 
+// 設定ファイルから読み込み
+let tenantData;
+try {
+  tenantData = JSON.parse(open('../data/performance-test-multi-tenant-users.json'));
+} catch (e) {
+  tenantData = JSON.parse(open('../data/performance-test-tenant.json'));
+}
+
+const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
+const config = tenantData[tenantIndex];
+
 export default function () {
-  const baseUrl = __ENV.BASE_URL;
-  const clientId = __ENV.CLIENT_ID;
-  const clientSecret = __ENV.CLIENT_SECRET;
-  const tenantId = __ENV.TENANT_ID;
+  const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+  const clientId = config.clientId;
+  const clientSecret = config.clientSecret;
+  const tenantId = config.tenantId;
+
+  // パスワードグラントのテストユーザー（環境変数またはデフォルト値）
+  const username = __ENV.USERNAME || 'ito.ichiro';
+  const password = __ENV.PASSWORD || 'successUserCode001';
 
   const url = `${baseUrl}/${tenantId}/v1/tokens`;
 
@@ -22,8 +49,8 @@ export default function () {
     `grant_type=password` +
     `&client_id=${clientId}` +
     `&scope=openid profile phone email account management transfers` +
-    `&password=successUserCode001` +
-    `&username=ito.ichiro` +
+    `&password=${password}` +
+    `&username=${username}` +
     `&client_secret=${clientSecret}`;
 
   const params = {

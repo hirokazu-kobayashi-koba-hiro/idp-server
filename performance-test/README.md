@@ -24,64 +24,56 @@ conducted. Each test type targets a specific system behavior:
 
 ## Test Data Preparation
 
-### 🗃️ User
+### 🗃️ User Data Generation
+
+Use `generate_users.py` to create test user data. This script generates:
+- User TSV file for `idp_user` table
+- Device TSV file for `idp_user_authentication_devices` table
+- Test users JSON file for k6 CIBA tests
+
+#### Recommended: Combined Setup (1M + 9x100K)
+
+This configuration supports both large-scale single-tenant tests and multi-tenant tests:
 
 ```shell
-python3 ./performance-test/data/generate_users_100k.py
+# 1. Register 10 tenants
+./performance-test/data/register-tenants.sh -n 10
+
+# 2. Generate: first tenant 1M users, other 9 tenants 100K each
+python3 ./performance-test/data/generate_users.py \
+  --tenants-file ./performance-test/data/performance-test-tenant.json \
+  --users 100000 \
+  --first-tenant-users 1000000
+
+# 3. Import to PostgreSQL
+./performance-test/data/import_users.sh multi_tenant_1m+9x100k
+
+# 4. Setup for k6 tests
+cp ./performance-test/data/multi_tenant_1m+9x100k_test_users.json \
+   ./performance-test/data/performance-test-multi-tenant-users.json
 ```
+
+**Result:**
+- Tenant 1: 1,000,000 users (for large-scale tests)
+- Tenant 2-10: 100,000 users each (for multi-tenant tests)
+- Total: 1,900,000 users
+
+#### Alternative: Uniform Multi-Tenant (10 x 100K)
 
 ```shell
-chmod +x ./performance-test/data/test-user.sh
-
-# Generate test user JSON for all login_hint patterns
-./performance-test/data/test-user.sh all
-
-# Or generate for specific pattern:
-# ./performance-test/data/test-user.sh device  # device:{deviceId} pattern (default)
-# ./performance-test/data/test-user.sh sub     # sub:{subject} pattern
-# ./performance-test/data/test-user.sh email   # email:{email} pattern
-# ./performance-test/data/test-user.sh phone   # phone:{phone} pattern
-# ./performance-test/data/test-user.sh ex-sub  # ex-sub:{externalSubject} pattern
+python3 ./performance-test/data/generate_users.py --users 100000 \
+  --tenants-file ./performance-test/data/performance-test-tenant.json
+./performance-test/data/import_users.sh multi_tenant_10x100k
 ```
 
-* register user data
+#### Alternative: Single Tenant Only
 
 ```shell
-psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
-  id,
-  tenant_id,
-  provider_id,
-  external_user_id,
-  name,
-  email,
-  email_verified,
-  phone_number,
-  phone_number_verified,
-  preferred_username,
-  status,
-  authentication_devices
-) FROM './performance-test/data/generated_users_100k.tsv' WITH (FORMAT csv, HEADER false,  DELIMITER E'\t')"
+python3 ./performance-test/data/generate_users.py --users 1000000
+./performance-test/data/import_users.sh single_tenant_1m
 ```
 
-* register authentication devices data (for optimized query performance)
-
-```shell
-psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user_authentication_devices (
-  id,
-  tenant_id,
-  user_id,
-  os,
-  model,
-  platform,
-  locale,
-  app_name,
-  priority,
-  available_methods,
-  notification_token,
-  notification_channel
-) FROM './performance-test/data/generated_user_devices_100k.tsv' WITH (FORMAT csv, HEADER false,  DELIMITER E'\t')"
-```
-### tenants
+### Tenants
 
 Register performance test tenants using the onboarding API. The script reads credentials from `.env` file.
 
@@ -111,26 +103,6 @@ Register performance test tenants using the onboarding API. The script reads cre
 
 This creates:
 - `performance-test/data/performance-test-tenant.json` - Tenant configuration for load tests
-
-### Multi-tenant User Data (Optional)
-
-For multi-tenant load tests with dedicated users per tenant:
-
-```shell
-# Generate multi-tenant user data (reads from performance-test-tenant.json)
-python3 ./performance-test/data/generate_multi_tenant_users.py
-
-# Import to PostgreSQL
-psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user (
-  id, tenant_id, provider_id, external_user_id, name, email, email_verified,
-  phone_number, phone_number_verified, preferred_username, status, authentication_devices
-) FROM './performance-test/data/multi_tenant_users.tsv' WITH (FORMAT csv, HEADER false, DELIMITER E'\t')"
-
-psql -U idpserver -d idpserver -h localhost -p 5432 -c "\COPY idp_user_authentication_devices (
-  id, tenant_id, user_id, os, model, platform, locale, app_name, priority,
-  available_methods, notification_token, notification_channel
-) FROM './performance-test/data/multi_tenant_devices.tsv' WITH (FORMAT csv, HEADER false, DELIMITER E'\t')"
-```
 
 ## k6
 
