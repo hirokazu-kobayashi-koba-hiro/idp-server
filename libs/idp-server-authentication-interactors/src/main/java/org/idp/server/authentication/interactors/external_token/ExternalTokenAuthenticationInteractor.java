@@ -127,8 +127,11 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
       if (!user.hasStatus()) {
         user.setStatus(UserStatus.INITIALIZED);
       }
-      user.applyIdentityPolicy(tenant.identityPolicyConfig());
     }
+
+    // Apply identity policy on every authentication to ensure preferred_username is set
+    // for security events (Issue #1131)
+    user.applyIdentityPolicy(tenant.identityPolicyConfig());
 
     Map<String, Object> result = new HashMap<>();
     result.put("user", user.toMap());

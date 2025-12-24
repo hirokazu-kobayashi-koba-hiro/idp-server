@@ -20,6 +20,120 @@
 
 ---
 
+## 設定の関係性
+
+Federation認証を構成する3つの設定要素の関係を示します。
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         Consumer Tenant (認証を受ける側)                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌──────────────────┐      ┌──────────────────────┐      ┌──────────────────┐  │
+│  │     Client       │      │ Authentication       │      │   Federation     │  │
+│  │                  │      │ Policy               │      │   Configuration  │  │
+│  ├──────────────────┤      ├──────────────────────┤      ├──────────────────┤  │
+│  │ client_id        │      │ flow: "oauth"        │      │ type: "oidc"     │  │
+│  │ scope:           │─────▶│ conditions:          │      │ sso_provider:    │  │
+│  │   "openid email" │      │   scopes: ["openid"] │      │   "google"       │  │
+│  │ redirect_uris    │      │                      │      │                  │  │
+│  └──────────────────┘      │ available_methods:   │      │ payload:         │  │
+│                            │   - "password"       │      │   provider:      │  │
+│         scope参照          │   - "oidc-google" ◀──┼──────┤     "standard"   │  │
+│              │             │                      │      │   issuer: ...    │  │
+│              ▼             │ success_conditions:  │      │   client_id: ... │  │
+│  ┌──────────────────────┐  │   oidc-google の     │      │   userinfo_      │  │
+│  │ 認可リクエスト        │  │   success_count >= 1 │      │   mapping_rules  │  │
+│  │ GET /authorizations  │  └──────────────────────┘      └────────┬─────────┘  │
+│  │   ?scope=openid      │              │                          │            │
+│  │   &client_id=xxx     │              │                          │            │
+│  └──────────┬───────────┘              │                          │            │
+│             │                          │                          │            │
+│             ▼                          ▼                          ▼            │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                        認可フロー処理                                    │   │
+│  │  1. Client検証 → 2. Policy評価 → 3. 利用可能な認証方法を提示           │   │
+│  │                                     (password, oidc-google)             │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                        │                                       │
+│                                        │ユーザーがFederation選択               │
+│                                        ▼                                       │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │  Federation開始: POST /{tenant}/v1/authorizations/{id}/federations/oidc │   │
+│  │    → Federation Configurationを参照してProvider IdPにリダイレクト        │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                        │                                       │
+└────────────────────────────────────────┼───────────────────────────────────────┘
+                                         │
+                                         ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         Provider Tenant (外部IdP)                               │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │  Authorization Server                                                    │  │
+│  │    claims_supported: ["sub", "name", "email", "preferred_username"]      │  │
+│  │    ^^^^^^^^^^^^^^^^  ← これがないとUserInfoでemailが返らない！            │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  認証完了後、Consumer Tenantのcallback URLにリダイレクト:                       │
+│    /{consumer-tenant}/v1/authorizations/federations/oidc/callback              │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                         │
+                                         ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         Consumer Tenant (Callback処理)                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │  OidcFederationInteractor.callback()                                    │   │
+│  │    1. code → token交換                                                  │   │
+│  │    2. UserInfo取得                                                      │   │
+│  │    3. userinfo_mapping_rules でUser属性マッピング                       │   │
+│  │    4. applyIdentityPolicy() で preferred_username 設定                  │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 設定要素の紐づけ
+
+```
+┌─────────────────────────────────────┐
+│ Client                              │
+│  scope: "openid email"              │
+│  extension:                         │
+│    available_federations:           │
+│      - id: {federation_config_id}   │
+│        type: "oidc"                 │
+│        sso_provider: "google"  ─────┼──────────┐
+│        auto_selected: true          │          │
+└─────────────────┬───────────────────┘          │
+                  │ scope参照                    │ sso_provider参照
+                  ▼                              ▼
+┌─────────────────────────────┐    ┌─────────────────────────────┐
+│ Authentication Policy       │    │ Federation Configuration    │
+│                             │    │                             │
+│ conditions:                 │    │ id: {federation_config_id}  │
+│   scopes: ["openid"]        │    │ type: "oidc"                │
+│                             │    │ sso_provider: "google" ◀────┼── 一致
+│ available_methods:          │    │                             │
+│   - "password"              │    │ payload:                    │
+│   - "oidc-google" ◀─────────┼────┤   provider: "standard"      │
+│                             │    │   issuer: ...               │
+│ success_conditions:         │    │   userinfo_mapping_rules    │
+│   oidc-google.success >= 1  │    │                             │
+└─────────────────────────────┘    └─────────────────────────────┘
+```
+
+**紐づけルール**:
+1. **Client → Federation**: `extension.available_federations[].sso_provider` で利用可能なFederation Configurationを指定
+2. **Policy → Federation**: `available_methods` に `oidc-{sso_provider}` 形式でFederation Configurationを参照
+3. **auto_selected**: `true`の場合、認証画面でこのFederationが自動選択される
+
+---
+
 ## 設定ファイル構造
 
 ### federation/oidc/external-idp.json
@@ -40,7 +154,7 @@
     "client_id": "${EXTERNAL_IDP_CLIENT_ID}",
     "client_secret": "${EXTERNAL_IDP_CLIENT_SECRET}",
     "client_authentication_type": "client_secret_post",
-    "redirect_uri": "${IDP_SERVER_URL}/${TENANT_ID}/v1/federation/oidc/callback",
+    "redirect_uri": "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/federations/oidc/callback",
     "scopes_supported": [
       "openid",
       "profile",
@@ -83,17 +197,32 @@
 
 ### Payloadセクション
 
+#### Executorタイプ
+
+| フィールド | 必須 | 説明 | 値 |
+|-----------|------|------|-----|
+| `type` | ✅ | プロトコル種別 | `standard` |
+| `provider` | ✅ | Executorタイプ | `standard` / `oauth-extension` / `Facebook` |
+
+**providerの選択基準**:
+- `standard`: 標準OIDCフロー（Google, Azure AD等）
+- `oauth-extension`: カスタムUserInfo取得が必要な場合（`userinfo_execution`と併用）
+- `Facebook`: Facebook Login専用（大文字始まり）
+
+⚠️ **注意**: 無効なprovider値を指定すると**サーバーエラー**になります。値は**大文字小文字を区別**します。
+
 #### OIDC基本設定
 
 | フィールド | 必須 | 説明 |
 |-----------|------|------|
 | `issuer` | ✅ | 外部IdPのIssuer |
+| `issuer_name` | ✅ | IdP識別名（ユーザーの`external_idp_issuer`に設定） |
 | `authorization_endpoint` | ✅ | 認可エンドポイント |
 | `token_endpoint` | ✅ | トークンエンドポイント |
 | `userinfo_endpoint` | ✅ | UserInfoエンドポイント |
 | `client_id` | ✅ | idp-serverのクライアントID |
 | `client_secret` | ✅ | idp-serverのクライアントシークレット |
-| `redirect_uri` | ✅ | コールバックURI |
+| `redirect_uri` | ✅ | コールバックURI（`/{tenant-id}/v1/authorizations/federations/oidc/callback`） |
 | `scopes_supported` | ✅ | リクエストするスコープ |
 
 ---
@@ -126,6 +255,30 @@
 ```
 
 **JSONPath**: `$.` で外部IdPのUserInfo JSONを参照
+
+##### Executorタイプによるレスポンス構造の違い
+
+| Executorタイプ | JSONPath構造 | 例 |
+|---------------|-------------|-----|
+| `standard` | `$.http_request.response_body.xxx` | `$.http_request.response_body.email` |
+| `oauth-extension` | `$.xxx` または `$.userinfo_execution_http_requests[N].response_body.xxx` | `$.email` |
+| `Facebook` | `$.http_request.response_body.xxx` | `$.http_request.response_body.email` |
+
+⚠️ **StandardOidcExecutor**: UserInfoレスポンスが`http_request.response_body`でラップされるため、JSONPathを調整が必要です。
+
+##### idp-server同士のフェデレーション時の注意
+
+Provider IdPがidp-serverの場合、**Provider側の認可サーバーに`claims_supported`を設定**する必要があります：
+
+```json
+{
+  "authorization_server": {
+    "claims_supported": ["sub", "name", "email", "email_verified", "preferred_username"]
+  }
+}
+```
+
+これがないと、UserInfoエンドポイントは`sub`のみを返し、`email`等のクレームがマッピングされません。
 
 ---
 
@@ -333,7 +486,7 @@ Content-Type: application/json
     "userinfo_endpoint": "https://external-idp.example.com/userinfo",
     "client_id": "your-client-id",
     "client_secret": "your-client-secret",
-    "redirect_uri": "https://idp.example.com/{tenant-id}/v1/federation/oidc/callback",
+    "redirect_uri": "https://idp.example.com/{tenant-id}/v1/authorizations/federations/oidc/callback",
     "scopes_supported": ["openid", "profile"],
     "userinfo_mapping_rules": [
       {"from": "$.sub", "to": "external_user_id"}
@@ -562,7 +715,7 @@ Federation認証を有効化：
     "userinfo_endpoint": "https://external-idp.example.com/oauth2/userinfo",
     "client_id": "your-client-id",
     "client_secret": "your-client-secret",
-    "redirect_uri": "http://localhost:8080/tenant-id/v1/federation/oidc/callback",
+    "redirect_uri": "http://localhost:8080/tenant-id/v1/authorizations/federations/oidc/callback",
     "scopes_supported": ["openid", "profile", "email"],
     "userinfo_mapping_rules": [
       {"from": "$.sub", "to": "external_user_id"},

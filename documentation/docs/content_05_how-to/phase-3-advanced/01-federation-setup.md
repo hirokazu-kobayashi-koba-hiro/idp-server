@@ -47,6 +47,27 @@ Authorization Code発行
 - ✅ 企業SSO（Google Workspace、Azure AD）と統合
 - ✅ セキュリティ向上（外部IdPのMFAを利用）
 
+### 設定要素の関係（概要）
+
+Federation認証には3つの設定が連携します：
+
+```
+┌──────────────────┐    ┌──────────────────────┐    ┌──────────────────┐
+│     Client       │    │ Authentication       │    │   Federation     │
+│                  │    │ Policy               │    │   Configuration  │
+├──────────────────┤    ├──────────────────────┤    ├──────────────────┤
+│ extension:       │    │ available_methods:   │    │ sso_provider:    │
+│  available_      │───▶│  - "oidc-google" ◀───┼────│   "google"       │
+│  federations:    │    │                      │    │                  │
+│   sso_provider:  │    │ success_conditions:  │    │ payload:         │
+│    "google"      │    │  oidc-google >= 1    │    │  issuer, ...     │
+└──────────────────┘    └──────────────────────┘    └──────────────────┘
+```
+
+**命名規則**: `oidc-{sso_provider}` でAuthentication PolicyとFederation Configurationが紐づく
+
+📖 **詳細**: [Federation設定ガイド](../../content_06_developer-guide/05-configuration/federation.md)
+
 ---
 
 ## 例: Google連携を設定
@@ -58,7 +79,7 @@ Google Cloud Consoleで事前準備：
 1. **プロジェクト作成**
 2. **OAuth 2.0クライアント作成**
    - アプリケーションタイプ: ウェブアプリケーション
-   - 承認済みのリダイレクトURI: `http://localhost:8080/{tenant-id}/v1/authentications/federations/oidc/google/callback`
+   - 承認済みのリダイレクトURI: `http://localhost:8080/{tenant-id}/v1/authorizations/federations/oidc/callback`
 
 3. **クライアントID・シークレット取得**
    - クライアントID: `123456789-abcdefg.apps.googleusercontent.com`
@@ -76,21 +97,34 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
     "type": "oidc",
     "sso_provider": "google",
     "enabled": true,
-    "client_id": "123456789-abcdefg.apps.googleusercontent.com",
-    "client_secret": "GOCSPX-xxxxxxxxxxxxx",
-    "issuer": "https://accounts.google.com",
-    "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
-    "token_endpoint": "https://oauth2.googleapis.com/token",
-    "userinfo_endpoint": "https://openidconnect.googleapis.com/v1/userinfo",
-    "scopes": ["openid", "profile", "email"],
-    "user_mapping_rules": {
-      "sub": "$.sub",
-      "email": "$.email",
-      "name": "$.name",
-      "picture": "$.picture"
+    "payload": {
+      "type": "standard",
+      "provider": "standard",
+      "issuer": "https://accounts.google.com",
+      "issuer_name": "google",
+      "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
+      "token_endpoint": "https://oauth2.googleapis.com/token",
+      "userinfo_endpoint": "https://openidconnect.googleapis.com/v1/userinfo",
+      "client_id": "123456789-abcdefg.apps.googleusercontent.com",
+      "client_secret": "GOCSPX-xxxxxxxxxxxxx",
+      "redirect_uri": "http://localhost:8080/${TENANT_ID}/v1/authorizations/federations/oidc/callback",
+      "scopes_supported": ["openid", "profile", "email"],
+      "userinfo_mapping_rules": [
+        {"from": "$.sub", "to": "external_idp_user_id"},
+        {"from": "$.email", "to": "email"},
+        {"from": "$.name", "to": "name"},
+        {"from": "$.picture", "to": "picture"}
+      ]
     }
   }'
 ```
+
+**重要なフィールド**:
+- `payload.type`: プロトコル種別（`standard`=標準OIDC）
+- `payload.provider`: Executorタイプ（`standard`/`oauth-extension`/`facebook`）
+- `payload.issuer_name`: IdP識別名（ユーザーの`external_idp_issuer`に設定される）
+- `payload.redirect_uri`: コールバックURL（外部IdPに登録するURL）
+- `payload.userinfo_mapping_rules`: UserInfo→idp-serverユーザーへのマッピング
 
 **レスポンス**:
 ```json
@@ -108,9 +142,11 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 **設定内容**:
 - `sso_provider: "google"` - Google連携を識別
-- `issuer` - Googleの発行者URL
-- `scopes` - Googleから取得する情報（openid, profile, email）
-- `user_mapping_rules` - Googleのユーザー情報 → idp-serverのユーザー属性マッピング
+- `payload.issuer` - Googleの発行者URL
+- `payload.issuer_name` - IdP識別名
+- `payload.provider` - Executorタイプ（`standard`=標準OIDCフロー）
+- `payload.scopes_supported` - Googleから取得する情報（openid, profile, email）
+- `payload.userinfo_mapping_rules` - Googleのユーザー情報 → idp-serverのユーザー属性マッピング
 
 ---
 
@@ -263,17 +299,23 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
   "type": "oidc",
   "sso_provider": "azure_ad",
   "enabled": true,
-  "client_id": "your-client-id",
-  "client_secret": "your-client-secret",
-  "issuer": "https://login.microsoftonline.com/{tenant-id}/v2.0",
-  "authorization_endpoint": "https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/authorize",
-  "token_endpoint": "https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token",
-  "userinfo_endpoint": "https://graph.microsoft.com/oidc/userinfo",
-  "scopes": ["openid", "profile", "email"],
-  "user_mapping_rules": {
-    "sub": "$.sub",
-    "email": "$.email",
-    "name": "$.name"
+  "payload": {
+    "type": "standard",
+    "provider": "standard",
+    "issuer": "https://login.microsoftonline.com/{azure-tenant-id}/v2.0",
+    "issuer_name": "azure_ad",
+    "authorization_endpoint": "https://login.microsoftonline.com/{azure-tenant-id}/oauth2/v2.0/authorize",
+    "token_endpoint": "https://login.microsoftonline.com/{azure-tenant-id}/oauth2/v2.0/token",
+    "userinfo_endpoint": "https://graph.microsoft.com/oidc/userinfo",
+    "client_id": "your-client-id",
+    "client_secret": "your-client-secret",
+    "redirect_uri": "http://localhost:8080/${TENANT_ID}/v1/authorizations/federations/oidc/callback",
+    "scopes_supported": ["openid", "profile", "email"],
+    "userinfo_mapping_rules": [
+      {"from": "$.sub", "to": "external_idp_user_id"},
+      {"from": "$.email", "to": "email"},
+      {"from": "$.name", "to": "name"}
+    ]
   }
 }
 ```
@@ -285,18 +327,24 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
   "type": "oidc",
   "sso_provider": "custom-idp",
   "enabled": true,
-  "client_id": "your-client-id",
-  "client_secret": "your-client-secret",
-  "issuer": "https://your-idp.example.com",
-  "authorization_endpoint": "https://your-idp.example.com/oauth2/authorize",
-  "token_endpoint": "https://your-idp.example.com/oauth2/token",
-  "userinfo_endpoint": "https://your-idp.example.com/oauth2/userinfo",
-  "scopes": ["openid", "profile", "email"],
-  "user_mapping_rules": {
-    "sub": "$.sub",
-    "email": "$.email",
-    "name": "$.name",
-    "department": "$.custom_claims.department"
+  "payload": {
+    "type": "standard",
+    "provider": "standard",
+    "issuer": "https://your-idp.example.com",
+    "issuer_name": "custom-idp",
+    "authorization_endpoint": "https://your-idp.example.com/oauth2/authorize",
+    "token_endpoint": "https://your-idp.example.com/oauth2/token",
+    "userinfo_endpoint": "https://your-idp.example.com/oauth2/userinfo",
+    "client_id": "your-client-id",
+    "client_secret": "your-client-secret",
+    "redirect_uri": "http://localhost:8080/${TENANT_ID}/v1/authorizations/federations/oidc/callback",
+    "scopes_supported": ["openid", "profile", "email"],
+    "userinfo_mapping_rules": [
+      {"from": "$.sub", "to": "external_idp_user_id"},
+      {"from": "$.email", "to": "email"},
+      {"from": "$.name", "to": "name"},
+      {"from": "$.custom_claims.department", "to": "custom_properties.department"}
+    ]
   }
 }
 ```
@@ -317,10 +365,10 @@ Googleのエラー: redirect_uri_mismatch
 **解決策**:
 ```bash
 # Google Cloud Consoleで以下を登録
-http://localhost:8080/{tenant-id}/v1/authentications/federations/oidc/google/callback
+http://localhost:8080/{tenant-id}/v1/authorizations/federations/oidc/callback
 
 # 注意: {tenant-id} は実際のテナントIDに置き換える
-http://localhost:8080/18ffff8d-8d97-460f-a71b-33f2e8afd41e/v1/authentications/federations/oidc/google/callback
+http://localhost:8080/18ffff8d-8d97-460f-a71b-33f2e8afd41e/v1/authorizations/federations/oidc/callback
 ```
 
 ---
@@ -404,17 +452,33 @@ ID Token検証時:
 
 ## 高度な設定
 
+### Executorタイプ（payload.provider）
+
+外部IdPとの通信方法を指定します：
+
+| provider | 説明 | 用途 |
+|----------|------|------|
+| `standard` | 標準OIDCフロー | Google, Azure AD等のOIDC準拠IdP |
+| `oauth-extension` | OAuth拡張フロー | カスタムUserInfo取得が必要な場合 |
+| `Facebook` | Facebook専用フロー | Facebook Login（大文字始まり） |
+
+**通常は`standard`を使用**してください。`oauth-extension`は`userinfo_execution`でカスタムHTTPリクエストが必要な場合に使用します。
+
+⚠️ **注意**: 無効なprovider値を指定すると**500エラー**（`No OidcSsoExecutor found for provider xxx`）になります。値は**大文字小文字を区別**します。
+
 ### カスタム属性マッピング
 
 ```json
 {
-  "user_mapping_rules": {
-    "sub": "$.sub",
-    "email": "$.email",
-    "name": "$.name",
-    "picture": "$.picture",
-    "department": "$.custom_claims.department",
-    "employee_id": "$.custom_claims.employee_id"
+  "payload": {
+    "userinfo_mapping_rules": [
+      {"from": "$.sub", "to": "external_idp_user_id"},
+      {"from": "$.email", "to": "email"},
+      {"from": "$.name", "to": "name"},
+      {"from": "$.picture", "to": "picture"},
+      {"from": "$.custom_claims.department", "to": "custom_properties.department"},
+      {"from": "$.custom_claims.employee_id", "to": "custom_properties.employee_id"}
+    ]
   }
 }
 ```
@@ -422,6 +486,11 @@ ID Token検証時:
 **JSONPath**で柔軟にマッピング:
 - `$.email` - ルート直下の`email`
 - `$.custom_claims.department` - ネストした属性
+
+**重要な`to`フィールド**:
+- `external_idp_user_id` - 外部IdPでのユーザーID（**必須**）
+- `email`, `name`, `picture` - 標準ユーザー属性
+- `custom_properties.xxx` - カスタム属性
 
 ### 複数HTTPリクエスト（高度）
 

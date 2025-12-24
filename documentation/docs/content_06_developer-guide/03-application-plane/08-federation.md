@@ -90,10 +90,10 @@ Authorization Code発行（通常フロー）
 外部IdPへのリダイレクトを開始：
 
 ```
-POST /{tenant-id}/v1/authentications/{auth-req-id}/federations/{type}/{provider}
+POST /{tenant-id}/v1/authorizations/{auth-req-id}/federations/{type}/{provider}
 
 # 例: Googleでログイン
-POST /{tenant-id}/v1/authentications/abc-123/federations/oidc/google
+POST /{tenant-id}/v1/authorizations/abc-123/federations/oidc/google
 ```
 
 **レスポンス**:
@@ -101,7 +101,7 @@ POST /{tenant-id}/v1/authentications/abc-123/federations/oidc/google
 HTTP/1.1 302 Found
 Location: https://accounts.google.com/o/oauth2/v2/auth?
   client_id=xxx.apps.googleusercontent.com&
-  redirect_uri=http://localhost:8080/{tenant-id}/v1/federations/callback/oidc/google&
+  redirect_uri=http://localhost:8080/{tenant-id}/v1/authorizations/federations/oidc/callback&
   response_type=code&
   scope=openid+profile+email&
   state=uuid&
@@ -119,13 +119,16 @@ Location: https://accounts.google.com/o/oauth2/v2/auth?
 外部IdPからのコールバック受信：
 
 ```
-GET /{tenant-id}/v1/federations/callback/{type}/{provider}?code=xxx&state=uuid
+POST /{tenant-id}/v1/authorizations/federations/{type}/callback
 
 # 例: Googleからのコールバック
-GET /{tenant-id}/v1/federations/callback/oidc/google?code=abc123&state=session-uuid
+POST /{tenant-id}/v1/authorizations/federations/oidc/callback
+Content-Type: application/x-www-form-urlencoded
+
+code=abc123&state=session-uuid
 ```
 
-**パラメータ**:
+**パラメータ（リクエストボディ）**:
 - `code`: 認可コード（外部IdPが発行）
 - `state`: Session識別子（改ざん検証用）
 
@@ -138,7 +141,7 @@ GET /{tenant-id}/v1/federations/callback/oidc/google?code=abc123&state=session-u
 ### Phase 1: Federation Request
 
 ```
-POST /{tenant-id}/v1/authentications/{auth-req-id}/federations/oidc/google
+POST /{tenant-id}/v1/authorizations/{auth-req-id}/federations/oidc/google
     ↓
 OAuthFlowEntryService.requestFederation()
     ↓
@@ -238,7 +241,7 @@ Google アカウントで認証
     ↓
 Google が Authorization Code 発行
     ↓
-302 Redirect: http://localhost/{tenant}/v1/federations/callback/oidc/google?code=abc123&state={state}
+302 Redirect: http://localhost/{tenant}/v1/authorizations/federations/oidc/callback?code=abc123&state={state}
 ```
 
 ---
@@ -246,7 +249,8 @@ Google が Authorization Code 発行
 ### Phase 3: Federation Callback
 
 ```
-GET /{tenant-id}/v1/federations/callback/oidc/google?code=abc123&state={state}
+POST /{tenant-id}/v1/authorizations/federations/oidc/callback
+# body: code=abc123&state={state}
     ↓
 OAuthFlowEntryService.callbackFederation()
     ↓
@@ -602,7 +606,7 @@ describe('OIDC Federation Flow', () => {
 
     // 2. Federation Request
     const federationResponse = await axios.post(
-      `http://localhost:8080/${tenantId}/v1/authentications/${authReqId}/federations/oidc/google`,
+      `http://localhost:8080/${tenantId}/v1/authorizations/${authReqId}/federations/oidc/google`,
       {},
       {
         maxRedirects: 0,
@@ -626,12 +630,12 @@ describe('OIDC Federation Flow', () => {
     const mockCode = 'mock-google-code';
 
     // 3. Federation Callback（モック）
-    const callbackResponse = await axios.get(
-      `http://localhost:8080/${tenantId}/v1/federations/callback/oidc/google`,
+    const callbackResponse = await axios.post(
+      `http://localhost:8080/${tenantId}/v1/authorizations/federations/oidc/callback`,
+      `code=${mockCode}&state=${mockState}`,
       {
-        params: {
-          code: mockCode,
-          state: mockState
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
         },
         maxRedirects: 0,
         validateStatus: (status) => status === 302
