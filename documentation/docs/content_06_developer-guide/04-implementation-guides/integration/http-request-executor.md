@@ -429,8 +429,8 @@ INFO  SmartCachedOAuthAuthorizationResolver - Invalidated cached access token fo
 
 #### 関連Issue
 
-- Issue #1139: キャッシュTTL個別設定
-- Issue #1143: 401/403エラー時のキャッシュクリア＆リトライ機能
+- [Issue #1139](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1139): キャッシュTTL個別設定
+- [Issue #1143](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1143): 401/403エラー時のキャッシュクリア＆リトライ機能
 
 ### トークンキャッシュの有効期限管理
 
