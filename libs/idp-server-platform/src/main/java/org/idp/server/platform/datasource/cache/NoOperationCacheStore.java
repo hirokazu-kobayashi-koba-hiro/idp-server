@@ -24,6 +24,9 @@ public class NoOperationCacheStore implements CacheStore {
   public <T> void put(String key, T value) {}
 
   @Override
+  public <T> void put(String key, T value, int timeToLiveSeconds) {}
+
+  @Override
   public <T> Optional<T> find(String key, Class<T> type) {
     return Optional.empty();
   }

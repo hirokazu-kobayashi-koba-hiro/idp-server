@@ -20,4 +20,8 @@ public interface OAuthAuthorizationResolver {
   String type();
 
   String resolve(OAuthAuthorizationConfiguration oAuthAuthorizationConfig);
+
+  default void invalidateCache(OAuthAuthorizationConfiguration oAuthAuthorizationConfig) {
+    // Default implementation does nothing
+  }
 }

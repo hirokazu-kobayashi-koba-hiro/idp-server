@@ -31,6 +31,8 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
+import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1079,5 +1081,254 @@ public class HttpRequestExecutorTest {
     }
 
     // Uses default implementation: hasRetryConfiguration() returns false
+  }
+
+  // ===== OAuth 401/403 Retry Tests =====
+
+  @Test
+  void testExecuteWithOAuth_401_InvalidatesCacheAndRetries() throws Exception {
+    // Arrange: First request returns 401, retry with new token should succeed
+    OAuthAuthorizationResolver mockResolver = mock(OAuthAuthorizationResolver.class);
+    OAuthAuthorizationConfiguration mockOAuthConfig = mock(OAuthAuthorizationConfiguration.class);
+
+    when(mockOAuthConfig.type()).thenReturn("client_credentials");
+    when(oAuthAuthorizationResolvers.get("client_credentials")).thenReturn(mockResolver);
+
+    // First call returns old token, second call returns new token
+    when(mockResolver.resolve(mockOAuthConfig)).thenReturn("old_token", "new_token");
+
+    // First request with old token returns 401, second with new token returns 200
+    @SuppressWarnings("unchecked")
+    HttpResponse<String> unauthorizedResponse = mock(HttpResponse.class);
+    when(unauthorizedResponse.statusCode()).thenReturn(401);
+    when(unauthorizedResponse.headers())
+        .thenReturn(java.net.http.HttpHeaders.of(Map.of(), (a, b) -> true));
+    when(unauthorizedResponse.body()).thenReturn("{\"error\": \"Unauthorized\"}");
+
+    @SuppressWarnings("unchecked")
+    HttpResponse<String> successResponse = mock(HttpResponse.class);
+    when(successResponse.statusCode()).thenReturn(200);
+    when(successResponse.headers())
+        .thenReturn(java.net.http.HttpHeaders.of(Map.of(), (a, b) -> true));
+    when(successResponse.body()).thenReturn("{\"success\": true}");
+
+    when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+        .thenReturn(unauthorizedResponse)
+        .thenReturn(successResponse);
+
+    // Act
+    HttpRequestResult result = executor.executeWithOAuth(testRequest, mockOAuthConfig);
+
+    // Assert
+    assertTrue(result.isSuccess(), "Should succeed after retry with new token");
+    assertEquals(200, result.statusCode());
+
+    // Verify invalidateCache was called
+    verify(mockResolver, times(1)).invalidateCache(mockOAuthConfig);
+
+    // Verify resolve was called twice (initial + after cache invalidation)
+    verify(mockResolver, times(2)).resolve(mockOAuthConfig);
+
+    // Verify two HTTP requests were made
+    verify(httpClient, times(2)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
+  }
+
+  @Test
+  void testExecuteWithOAuth_403_InvalidatesCacheAndRetries() throws Exception {
+    // Arrange: First request returns 403, retry with new token should succeed
+    OAuthAuthorizationResolver mockResolver = mock(OAuthAuthorizationResolver.class);
+    OAuthAuthorizationConfiguration mockOAuthConfig = mock(OAuthAuthorizationConfiguration.class);
+
+    when(mockOAuthConfig.type()).thenReturn("client_credentials");
+    when(oAuthAuthorizationResolvers.get("client_credentials")).thenReturn(mockResolver);
+
+    when(mockResolver.resolve(mockOAuthConfig)).thenReturn("old_token", "new_token");
+
+    @SuppressWarnings("unchecked")
+    HttpResponse<String> forbiddenResponse = mock(HttpResponse.class);
+    when(forbiddenResponse.statusCode()).thenReturn(403);
+    when(forbiddenResponse.headers())
+        .thenReturn(java.net.http.HttpHeaders.of(Map.of(), (a, b) -> true));
+    when(forbiddenResponse.body()).thenReturn("{\"error\": \"Forbidden\"}");
+
+    @SuppressWarnings("unchecked")
+    HttpResponse<String> successResponse = mock(HttpResponse.class);
+    when(successResponse.statusCode()).thenReturn(200);
+    when(successResponse.headers())
+        .thenReturn(java.net.http.HttpHeaders.of(Map.of(), (a, b) -> true));
+    when(successResponse.body()).thenReturn("{\"success\": true}");
+
+    when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+        .thenReturn(forbiddenResponse)
+        .thenReturn(successResponse);
+
+    // Act
+    HttpRequestResult result = executor.executeWithOAuth(testRequest, mockOAuthConfig);
+
+    // Assert
+    assertTrue(result.isSuccess(), "Should succeed after retry with new token");
+    assertEquals(200, result.statusCode());
+    verify(mockResolver, times(1)).invalidateCache(mockOAuthConfig);
+    verify(mockResolver, times(2)).resolve(mockOAuthConfig);
+    verify(httpClient, times(2)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
+  }
+
+  @Test
+  void testExecuteWithOAuth_401_NoInfiniteRetry() throws Exception {
+    // Arrange: Both requests return 401 (token is truly invalid)
+    OAuthAuthorizationResolver mockResolver = mock(OAuthAuthorizationResolver.class);
+    OAuthAuthorizationConfiguration mockOAuthConfig = mock(OAuthAuthorizationConfiguration.class);
+
+    when(mockOAuthConfig.type()).thenReturn("client_credentials");
+    when(oAuthAuthorizationResolvers.get("client_credentials")).thenReturn(mockResolver);
+    when(mockResolver.resolve(mockOAuthConfig)).thenReturn("invalid_token");
+
+    @SuppressWarnings("unchecked")
+    HttpResponse<String> unauthorizedResponse = mock(HttpResponse.class);
+    when(unauthorizedResponse.statusCode()).thenReturn(401);
+    when(unauthorizedResponse.headers())
+        .thenReturn(java.net.http.HttpHeaders.of(Map.of(), (a, b) -> true));
+    when(unauthorizedResponse.body()).thenReturn("{\"error\": \"Unauthorized\"}");
+
+    when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+        .thenReturn(unauthorizedResponse);
+
+    // Act
+    HttpRequestResult result = executor.executeWithOAuth(testRequest, mockOAuthConfig);
+
+    // Assert: Should return 401 after single retry (no infinite loop)
+    assertFalse(result.isSuccess());
+    assertEquals(401, result.statusCode());
+
+    // Verify only one cache invalidation (retry happens once)
+    verify(mockResolver, times(1)).invalidateCache(mockOAuthConfig);
+
+    // Verify resolve was called twice (initial + retry)
+    verify(mockResolver, times(2)).resolve(mockOAuthConfig);
+
+    // Verify only two HTTP requests (initial + one retry)
+    verify(httpClient, times(2)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
+  }
+
+  @Test
+  void testExecuteWithOAuth_200_NoRetryNeeded() throws Exception {
+    // Arrange: First request succeeds
+    OAuthAuthorizationResolver mockResolver = mock(OAuthAuthorizationResolver.class);
+    OAuthAuthorizationConfiguration mockOAuthConfig = mock(OAuthAuthorizationConfiguration.class);
+
+    when(mockOAuthConfig.type()).thenReturn("client_credentials");
+    when(oAuthAuthorizationResolvers.get("client_credentials")).thenReturn(mockResolver);
+    when(mockResolver.resolve(mockOAuthConfig)).thenReturn("valid_token");
+
+    @SuppressWarnings("unchecked")
+    HttpResponse<String> successResponse = mock(HttpResponse.class);
+    when(successResponse.statusCode()).thenReturn(200);
+    when(successResponse.headers())
+        .thenReturn(java.net.http.HttpHeaders.of(Map.of(), (a, b) -> true));
+    when(successResponse.body()).thenReturn("{\"success\": true}");
+
+    when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+        .thenReturn(successResponse);
+
+    // Act
+    HttpRequestResult result = executor.executeWithOAuth(testRequest, mockOAuthConfig);
+
+    // Assert: Should succeed without retry
+    assertTrue(result.isSuccess());
+    assertEquals(200, result.statusCode());
+
+    // Verify no cache invalidation
+    verify(mockResolver, never()).invalidateCache(any());
+
+    // Verify resolve was called only once
+    verify(mockResolver, times(1)).resolve(mockOAuthConfig);
+
+    // Verify only one HTTP request
+    verify(httpClient, times(1)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
+  }
+
+  @Test
+  void testExecuteWithOAuth_500_NoRetry() throws Exception {
+    // Arrange: Server error (500) should not trigger OAuth retry
+    OAuthAuthorizationResolver mockResolver = mock(OAuthAuthorizationResolver.class);
+    OAuthAuthorizationConfiguration mockOAuthConfig = mock(OAuthAuthorizationConfiguration.class);
+
+    when(mockOAuthConfig.type()).thenReturn("client_credentials");
+    when(oAuthAuthorizationResolvers.get("client_credentials")).thenReturn(mockResolver);
+    when(mockResolver.resolve(mockOAuthConfig)).thenReturn("valid_token");
+
+    @SuppressWarnings("unchecked")
+    HttpResponse<String> serverErrorResponse = mock(HttpResponse.class);
+    when(serverErrorResponse.statusCode()).thenReturn(500);
+    when(serverErrorResponse.headers())
+        .thenReturn(java.net.http.HttpHeaders.of(Map.of(), (a, b) -> true));
+    when(serverErrorResponse.body()).thenReturn("{\"error\": \"Internal Server Error\"}");
+
+    when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+        .thenReturn(serverErrorResponse);
+
+    // Act
+    HttpRequestResult result = executor.executeWithOAuth(testRequest, mockOAuthConfig);
+
+    // Assert: Should return 500 without OAuth retry
+    assertFalse(result.isSuccess());
+    assertEquals(500, result.statusCode());
+
+    // Verify no cache invalidation for non-auth errors
+    verify(mockResolver, never()).invalidateCache(any());
+
+    // Verify resolve was called only once
+    verify(mockResolver, times(1)).resolve(mockOAuthConfig);
+
+    // Verify only one HTTP request
+    verify(httpClient, times(1)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
+  }
+
+  @Test
+  void testExecuteWithOAuth_AuthorizationHeaderContainsNewToken() throws Exception {
+    // Arrange: Verify that retry uses the new token
+    OAuthAuthorizationResolver mockResolver = mock(OAuthAuthorizationResolver.class);
+    OAuthAuthorizationConfiguration mockOAuthConfig = mock(OAuthAuthorizationConfiguration.class);
+
+    when(mockOAuthConfig.type()).thenReturn("client_credentials");
+    when(oAuthAuthorizationResolvers.get("client_credentials")).thenReturn(mockResolver);
+    when(mockResolver.resolve(mockOAuthConfig)).thenReturn("old_token", "new_token");
+
+    @SuppressWarnings("unchecked")
+    HttpResponse<String> unauthorizedResponse = mock(HttpResponse.class);
+    when(unauthorizedResponse.statusCode()).thenReturn(401);
+    when(unauthorizedResponse.headers())
+        .thenReturn(java.net.http.HttpHeaders.of(Map.of(), (a, b) -> true));
+    when(unauthorizedResponse.body()).thenReturn("{\"error\": \"Unauthorized\"}");
+
+    @SuppressWarnings("unchecked")
+    HttpResponse<String> successResponse = mock(HttpResponse.class);
+    when(successResponse.statusCode()).thenReturn(200);
+    when(successResponse.headers())
+        .thenReturn(java.net.http.HttpHeaders.of(Map.of(), (a, b) -> true));
+    when(successResponse.body()).thenReturn("{\"success\": true}");
+
+    when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+        .thenReturn(unauthorizedResponse)
+        .thenReturn(successResponse);
+
+    // Act
+    executor.executeWithOAuth(testRequest, mockOAuthConfig);
+
+    // Assert: Capture the requests and verify Authorization headers
+    var capturedRequests = org.mockito.ArgumentCaptor.forClass(HttpRequest.class);
+    verify(httpClient, times(2))
+        .send(capturedRequests.capture(), any(HttpResponse.BodyHandler.class));
+
+    var requests = capturedRequests.getAllValues();
+    assertEquals(2, requests.size());
+
+    // First request should have old token
+    String firstAuthHeader = requests.get(0).headers().firstValue("Authorization").orElse("");
+    assertEquals("Bearer old_token", firstAuthHeader);
+
+    // Second request should have new token
+    String secondAuthHeader = requests.get(1).headers().firstValue("Authorization").orElse("");
+    assertEquals("Bearer new_token", secondAuthHeader);
   }
 }

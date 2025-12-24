@@ -1476,6 +1476,73 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-oauth-retry-401",
+      "type": "http",
+      "documentation": "E2E test: OAuth 401 retry - always returns 401 to verify retry behavior in logs",
+      "method": "post",
+      "endpoint": "e2e/oauth-retry/401-always",
+      "responses": [
+        {
+          "uuid": "oauth-401-response",
+          "body": "{\n  \"error\": \"invalid_token\",\n  \"error_description\": \"The access token is expired or revoked\"\n}",
+          "latency": 50,
+          "statusCode": 401,
+          "label": "401 Unauthorized - Always",
+          "headers": [
+            {
+              "key": "WWW-Authenticate",
+              "value": "Bearer error=\"invalid_token\", error_description=\"The access token is expired or revoked\""
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-oauth-retry-403",
+      "type": "http",
+      "documentation": "E2E test: OAuth 403 retry - always returns 403 to verify retry behavior in logs",
+      "method": "post",
+      "endpoint": "e2e/oauth-retry/403-always",
+      "responses": [
+        {
+          "uuid": "oauth-403-response",
+          "body": "{\n  \"error\": \"insufficient_scope\",\n  \"error_description\": \"The access token does not have the required scope\"\n}",
+          "latency": 50,
+          "statusCode": 403,
+          "label": "403 Forbidden - Always",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -1570,6 +1637,14 @@
     {
       "type": "route",
       "uuid": "e2e-error-responses"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-oauth-retry-401"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-oauth-retry-403"
     }
   ],
   "proxyMode": false,
