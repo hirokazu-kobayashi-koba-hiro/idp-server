@@ -249,9 +249,3 @@ logging:
       file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 ```
 
----
-
-## 関連ドキュメント
-
-- [performance-test/README.md](../../../../performance-test/README.md) - k6テスト実行ガイド
-- [performance-test/README-mysql.md](../../../../performance-test/README-mysql.md) - MySQL環境向けガイド
