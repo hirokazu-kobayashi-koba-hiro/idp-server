@@ -151,21 +151,19 @@
 
 ### API単体TPS（1 HTTPリクエスト）
 
-実測値ベースの目標値（テスト環境: 2 vCPU × 2インスタンス、120 VU）
-
-| カテゴリ | エンドポイント | 実測TPS | TPS目標 | p95目標 |
-|---------|--------------|---------|---------|---------|
-| 認可 | Authorization Request | 2,577 | 2,000+ | 200ms |
-| トークン発行 | Token (Client Credentials) | 1,471 | 1,000+ | 250ms |
-| トークン検証 | Token Introspection | 2,453 | 2,000+ | 200ms |
-| 公開鍵 | JWKS | 2,684 | 2,000+ | 200ms |
-| CIBA | BC Request | 1,317 | 1,000+ | 250ms |
+| カテゴリ | エンドポイント | TPS目標 | p95目標 |
+|---------|--------------|---------|---------|
+| 認可 | Authorization Request | 2,000+ | 200ms |
+| トークン発行 | Token (Client Credentials) | 1,000+ | 250ms |
+| トークン検証 | Token Introspection | 2,000+ | 200ms |
+| 公開鍵 | JWKS | 2,000+ | 200ms |
+| CIBA | BC Request | 1,000+ | 250ms |
 
 ### フロー完了TPS（複数HTTPリクエスト）
 
-| フロー | 構成API数 | 実測完了/秒 | 完了TPS目標 | p95目標 |
-|-------|----------|------------|-----------|---------|
-| CIBA Full Flow | 5 | 270-294 | 250+ | 300ms |
+| フロー | 構成API数 | 完了TPS目標 | p95目標 |
+|-------|----------|-----------|---------|
+| CIBA Full Flow | 5 | 250+ | 300ms |
 
 **CIBA Full Flowの構成**:
 1. `POST /backchannel/authentications`（BC Request）
