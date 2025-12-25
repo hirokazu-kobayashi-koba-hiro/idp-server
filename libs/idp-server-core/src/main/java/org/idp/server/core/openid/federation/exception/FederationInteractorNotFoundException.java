@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.federation;
+package org.idp.server.core.openid.federation.exception;
 
 import org.idp.server.platform.exception.NotFoundException;
 
-public class FederationConfigurationNotFoundException extends NotFoundException {
-  public FederationConfigurationNotFoundException(String message) {
+public class FederationInteractorNotFoundException extends NotFoundException {
+
+  public FederationInteractorNotFoundException(String message) {
     super(message);
   }
 }
