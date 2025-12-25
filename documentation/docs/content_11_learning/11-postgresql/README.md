@@ -45,6 +45,8 @@ PostgreSQLのインストール、運用、保守に関するドキュメント�
 | 04 | [dev-04-transactions.md](dev-04-transactions.md) | トランザクション（ACID、分離レベル、ロック） |
 | 05 | [dev-05-query-optimization.md](dev-05-query-optimization.md) | クエリ最適化（EXPLAIN、実行計画） |
 | 06 | [dev-06-connection-pooling.md](dev-06-connection-pooling.md) | コネクションプーリング（PgBouncer, HikariCP） |
+| 07 | [dev-07-plpgsql-basics.md](dev-07-plpgsql-basics.md) | PL/pgSQL 基本編（関数、プロシージャ、エラーハンドリング） |
+| 08 | [dev-08-plpgsql-advanced.md](dev-08-plpgsql-advanced.md) | PL/pgSQL 応用編（動的SQL、トリガー、パフォーマンス、セキュリティ） |
 
 ---
 
@@ -62,8 +64,10 @@ PostgreSQLのインストール、運用、保守に関するドキュメント�
 
 1. **dev-05-query-optimization.md** - クエリの最適化手法
 2. **dev-06-connection-pooling.md** - 接続管理の最適化
-3. **dba-08-planner.md** - プランナーの深い理解
-4. **dba-07-partitioning.md** - 大規模テーブルの分割
+3. **dev-07-plpgsql-basics.md** - PL/pgSQL基本（関数とプロシージャ）
+4. **dev-08-plpgsql-advanced.md** - PL/pgSQL応用（動的SQL、トリガー、最適化）
+5. **dba-08-planner.md** - プランナーの深い理解
+6. **dba-07-partitioning.md** - 大規模テーブルの分割
 
 ### 運用担当者（DBA）
 
