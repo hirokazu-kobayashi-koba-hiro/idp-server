@@ -17,7 +17,7 @@
 package org.idp.server.core.openid.federation;
 
 import java.util.Map;
-import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.core.openid.federation.exception.FederationInteractorNotFoundException;
 
 public class FederationInteractors {
 
@@ -31,7 +31,7 @@ public class FederationInteractors {
     FederationInteractor federationInteractor = executors.get(type);
 
     if (federationInteractor == null) {
-      throw new UnSupportedException("Unknown SSO type: " + type.name());
+      throw new FederationInteractorNotFoundException("Unknown SSO type: " + type.name());
     }
 
     return federationInteractor;

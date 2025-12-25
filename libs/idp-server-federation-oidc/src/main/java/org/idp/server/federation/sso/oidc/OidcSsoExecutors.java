@@ -18,7 +18,7 @@ package org.idp.server.federation.sso.oidc;
 
 import java.util.Map;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
-import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.federation.sso.oidc.exception.OidcSsoExecutorNotFoundException;
 
 public class OidcSsoExecutors {
 
@@ -32,7 +32,8 @@ public class OidcSsoExecutors {
     OidcSsoExecutor oidcSsoExecutor = executors.get(provider);
 
     if (oidcSsoExecutor == null) {
-      throw new UnSupportedException("No OidcSsoExecutor found for provider " + provider.name());
+      throw new OidcSsoExecutorNotFoundException(
+          "No OidcSsoExecutor found for provider " + provider.name());
     }
 
     return oidcSsoExecutor;
