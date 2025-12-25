@@ -72,6 +72,16 @@ public class JedisCacheStore implements CacheStore {
   }
 
   @Override
+  public <T> void put(String key, T value, int timeToLiveSeconds) {
+    try (Jedis resource = jedisPool.getResource()) {
+      String json = jsonConverter.write(value);
+      resource.setex(key, timeToLiveSeconds, json);
+    } catch (Exception e) {
+      log.error("Failed to put cache", e);
+    }
+  }
+
+  @Override
   public <T> Optional<T> find(String key, Class<T> type) {
     try (Jedis resource = jedisPool.getResource()) {
       String json = resource.get(key);
