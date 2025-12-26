@@ -13,24 +13,67 @@ OAuth 2.0で発生しうる**セキュリティ脅威**と、それに対する*
 #### 脅威シナリオ
 
 ```
-1. 攻撃者がユーザーのデバイスにマルウェアを仕込む
-2. ユーザーが正常にOAuth認証を完了
-3. Authorization Codeがredirect_uriにリダイレクトされる
-4. 攻撃者がマルウェアでAuthorization Codeを横取り
-5. 攻撃者が横取りしたCodeでAccess Tokenを取得
-6. ユーザーになりすましてAPI操作
+┌─────────┐      ┌─────────┐      ┌─────────┐
+│  ユーザー │      │   IdP   │      │ 攻撃者  │
+└────┬────┘      └────┬────┘      └────┬────┘
+     │                │                │
+     │ 1. 認証リクエスト │                │
+     │───────────────>│                │
+     │                │                │
+     │ 2. ログイン完了  │                │
+     │<───────────────│                │
+     │                │                │
+     │ 3. Code発行     │                │
+     │<───────────────│                │
+     │                │                │
+     │ ─ ─ ─ ─ ─ ─ ─ ─│─ ─ ─ ─ ─ ─ ─ >│ 4. マルウェアが
+     │                │                │    Codeを横取り
+     │                │                │
+     │                │ 5. Codeでトークン要求
+     │                │<───────────────│
+     │                │                │
+     │                │ 6. Token発行   │
+     │                │───────────────>│
+     │                │                │
+     │                │      7. なりすましAPI操作
+     │                │                │
 ```
 
 #### 対策: PKCE（Proof Key for Code Exchange）
 
 **仕組み**:
 ```
-1. クライアントがcode_verifier（ランダム文字列）を生成
-2. code_challenge = SHA256(code_verifier)を計算
-3. Authorization Requestにcode_challengeを含める
-4. Authorization Codeを取得
-5. Token Requestにcode_verifierを含める
-6. サーバーがSHA256(code_verifier)とcode_challengeを照合
+┌──────────┐                    ┌─────────┐
+│ クライアント│                    │   IdP   │
+└────┬─────┘                    └────┬────┘
+     │                               │
+     │ 1. code_verifier を生成        │
+     │    (ランダム文字列)             │
+     │                               │
+     │ 2. code_challenge = SHA256(code_verifier)
+     │                               │
+     │ 3. 認証リクエスト               │
+     │    + code_challenge            │
+     │──────────────────────────────>│
+     │                               │
+     │ 4. Authorization Code         │
+     │<──────────────────────────────│
+     │                               │
+     │  ┌─────────────────────────┐  │
+     │  │ 攻撃者がCodeを横取りしても │  │
+     │  │ code_verifierを知らない  │  │
+     │  └─────────────────────────┘  │
+     │                               │
+     │ 5. Token リクエスト            │
+     │    + code_verifier             │
+     │──────────────────────────────>│
+     │                               │
+     │    6. SHA256(code_verifier)   │
+     │       == code_challenge ?     │
+     │       → 一致すればToken発行   │
+     │                               │
+     │ 7. Access Token               │
+     │<──────────────────────────────│
 ```
 
 **効果**:
@@ -137,15 +180,6 @@ OAuth 2.0で発生しうる**セキュリティ脅威**と、それに対する*
 
 **RFC**: [RFC 6819 - OAuth 2.0 Threat Model](https://datatracker.ietf.org/doc/html/rfc6819)
 
-#### 対策3: トークンバインディング（DPoP）
-
-**仕組み**:
-- Access Tokenを特定の公開鍵にバインド
-- トークン使用時にDPoP Proof（署名）を要求
-- トークンを盗んでも、秘密鍵がないと使用不可
-
-**RFC**: [RFC 9449 - DPoP](https://datatracker.ietf.org/doc/html/rfc9449)
-
 ---
 
 ### 5. Redirect URI検証漏れ
@@ -167,10 +201,9 @@ OAuth 2.0で発生しうる**セキュリティ脅威**と、それに対する*
 - 事前登録されたredirect_uriのみ許可
 - ワイルドカード不可（`https://example.com/*`は不可）
 
-**実装**:
+**実装例**:
 ```java
-// idp-serverの実装例
-// OAuth2RequestVerifier.java で検証
+// 検証ロジック例
 if (!registeredRedirectUris.contains(requestRedirectUri)) {
     throw new InvalidRedirectUriException("redirect_uri not registered");
 }
@@ -200,7 +233,7 @@ if (!registeredRedirectUris.contains(requestRedirectUri)) {
 - クライアント登録時にredirect_uriを事前登録
 - 登録されていないURIへのリダイレクトを拒否
 
-**idp-serverでの実装**:
+**一般的な実装**:
 - クライアント設定で`redirect_uris`配列に明示的に登録
 - 動的なredirect_uriは原則禁止
 
@@ -253,6 +286,29 @@ IDサービス開発者が実装前に確認すべき項目：
 
 ---
 
+## 発展: トークンバインディング（DPoP）
+
+> この内容は発展的なトピックです。基礎を理解してから学習することを推奨します。
+
+**課題**: Access Tokenが盗まれると、攻撃者がそのまま使用できてしまう
+
+**DPoP（Demonstrating Proof of Possession）の仕組み**:
+```
+1. クライアントが公開鍵・秘密鍵ペアを生成
+2. トークン取得時に公開鍵をサーバーに登録
+3. Access Tokenが公開鍵にバインドされる
+4. API呼び出し時にDPoP Proof（秘密鍵での署名）を添付
+5. サーバーがDPoP Proofを検証
+```
+
+**効果**:
+- トークンを盗んでも、秘密鍵がないと使用不可
+- トークン漏洩時の被害を大幅に軽減
+
+**RFC**: [RFC 9449 - DPoP](https://datatracker.ietf.org/doc/html/rfc9449)
+
+---
+
 ## 参考資料
 
 - [RFC 6819 - OAuth 2.0 Threat Model and Security Considerations](https://datatracker.ietf.org/doc/html/rfc6819)
@@ -261,5 +317,5 @@ IDサービス開発者が実装前に確認すべき項目：
 
 ---
 
-**最終更新**: 2025-12-18
+**最終更新**: 2025-12-25
 **対象**: IDサービス開発初心者
