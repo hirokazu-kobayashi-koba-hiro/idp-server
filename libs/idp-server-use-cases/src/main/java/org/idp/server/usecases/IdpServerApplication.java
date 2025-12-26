@@ -100,6 +100,8 @@ import org.idp.server.core.openid.identity.*;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.openid.identity.authentication.UserPasswordAuthenticator;
+import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogApi;
+import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogEventPublisher;
 import org.idp.server.core.openid.identity.event.*;
 import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
@@ -164,6 +166,7 @@ import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsQuery
 import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepository;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
 import org.idp.server.usecases.application.enduser.*;
+import org.idp.server.usecases.application.enduser.AuthenticationDeviceLogEntryService;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationCallbackEntryService;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationEntryService;
 import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
@@ -198,6 +201,7 @@ public class IdpServerApplication {
   TenantInvitationMetaDataApi tenantInvitationMetaDataApi;
   UserOperationApi userOperationApi;
   UserLifecycleEventApi userLifecycleEventApi;
+  AuthenticationDeviceLogApi authenticationDeviceLogApi;
   OnboardingApi onboardingApi;
   TenantManagementApi tenantManagementApi;
   TenantStatisticsApi tenantStatisticsApi;
@@ -725,6 +729,16 @@ public class IdpServerApplication {
             UserLifecycleEventApi.class,
             databaseTypeProvider);
 
+    AuthenticationDeviceLogEventPublisher authenticationDeviceLogEventPublisher =
+        new AuthenticationDeviceLogEventPublisher(securityEventPublisher);
+
+    this.authenticationDeviceLogApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AuthenticationDeviceLogEntryService(
+                tenantQueryRepository, userQueryRepository, authenticationDeviceLogEventPublisher),
+            AuthenticationDeviceLogApi.class,
+            databaseTypeProvider);
+
     this.adminUserAuthenticationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AdminUserAuthenticationEntryService(
@@ -1223,6 +1237,10 @@ public class IdpServerApplication {
 
   public UserLifecycleEventApi userLifecycleEventApi() {
     return userLifecycleEventApi;
+  }
+
+  public AuthenticationDeviceLogApi authenticationDeviceLogApi() {
+    return authenticationDeviceLogApi;
   }
 
   public OnboardingApi onboardingApi() {

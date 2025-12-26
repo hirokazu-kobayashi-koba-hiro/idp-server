@@ -106,16 +106,52 @@ paths:
         - 認証
       summary: 認証デバイスのログ
       description: |
-       認証デバイスのFIDO-UAFなどの実行っ結果のログをアプリケーションのログとして出力する。
+        認証デバイス（モバイルアプリ等）からのFIDO認証などの実行結果ログを受信し、アプリケーションログとして出力する。
+
+        **セキュリティイベント連携**:
+        - リクエストに `device_id` または `user_id` が含まれる場合、該当ユーザーを検索
+        - ユーザーが見つかった場合、セキュリティイベント `authentication_device_log` を発行
+        - ユーザーが見つからない場合、セキュリティイベントは発行されない（ノイズ防止）
+        - リクエストボディ全体が `execution_result` としてセキュリティイベントの詳細に保存される
       parameters:
         - in: path
           name: tenant-id
           required: true
           schema:
             type: string
+          description: テナント識別子
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationDeviceLogRequest'
+            examples:
+              fido2_success:
+                summary: FIDO2認証成功
+                value:
+                  device_id: "device-12345-abcde"
+                  event: "fido2_authentication"
+                  status: "success"
+                  timestamp: "2025-12-26T10:00:00Z"
+                  details:
+                    authenticator_type: "platform"
+                    user_verification: true
+              fido_uaf_failure:
+                summary: FIDO-UAF認証失敗
+                value:
+                  user_id: "550e8400-e29b-41d4-a716-446655440000"
+                  event: "fido_uaf_authentication"
+                  status: "failure"
+                  timestamp: "2025-12-26T10:05:00Z"
+                  details:
+                    error_code: "USER_CANCELLED"
+                    error_message: "User cancelled the authentication"
       responses:
         '200':
-          description: 200 OK
+          description: |
+            ログ受信成功。
+            セキュリティイベントの発行有無に関わらず200を返却する。
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -513,6 +549,47 @@ components:
                 example: "internal server error"
 
   schemas:
+    AuthenticationDeviceLogRequest:
+      type: object
+      description: |
+        認証デバイスログのリクエストボディ。
+        `device_id` または `user_id` のいずれかを含めることで、セキュリティイベントがユーザーに紐づけられる。
+      properties:
+        device_id:
+          type: string
+          description: |
+            認証デバイスの識別子。
+            この値でユーザーを検索し、セキュリティイベントに紐づける。
+          example: "device-12345-abcde"
+        user_id:
+          type: string
+          format: uuid
+          description: |
+            ユーザーの識別子（UUID）。
+            `device_id` でユーザーが見つからない場合、この値で検索する。
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        event:
+          type: string
+          description: イベント種別（例：fido2_authentication, fido_uaf_registration）
+          example: "fido2_authentication"
+        status:
+          type: string
+          enum: [success, failure, cancelled]
+          description: 実行結果のステータス
+          example: "success"
+        timestamp:
+          type: string
+          format: date-time
+          description: イベント発生日時（ISO-8601形式）
+          example: "2025-12-26T10:00:00Z"
+        details:
+          type: object
+          description: イベントの詳細情報（任意のキー・バリュー）
+          additionalProperties: true
+          example:
+            authenticator_type: "platform"
+            user_verification: true
+
     AuthenticationTransactionListResponse:
       type: object
       properties:
