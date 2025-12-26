@@ -59,7 +59,7 @@ public class TokenRequestResponse {
     this.tokenResponse = new TokenResponseBuilder().build();
     this.errorResponse = errorResponse;
     Map<String, String> values = new HashMap<>();
-    values.put("Content-Typee", "application/json");
+    values.put("Content-Type", "application/json");
     values.put("Cache-Control", "no-store");
     values.put("Pragma", "no-cache");
     this.headers = values;
