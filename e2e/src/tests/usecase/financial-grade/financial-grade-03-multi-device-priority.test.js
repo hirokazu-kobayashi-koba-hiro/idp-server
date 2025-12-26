@@ -537,6 +537,23 @@ describe("Financial Grade: Multi-Device Priority - Later Registration Wins (Issu
     firstDeviceId = interactionResponse.data.device_id;
     console.log(`  ✅ First device registered: ${firstDeviceId} (expected auto priority: 1)`);
 
+    // Send authentication device log for first device
+    await postWithJson({
+      url: `${backendUrl}/${testTenantId}/v1/authentication-devices/logs`,
+      body: {
+        device_id: firstDeviceId,
+        event: "fido_uaf_registration",
+        status: "success",
+        timestamp: new Date().toISOString(),
+        details: {
+          app_name: "First App",
+          platform: "Android",
+          model: "Device 1",
+        },
+      },
+    });
+    console.log(`  📝 Authentication device log sent for first device`);
+
     // Device 2 (Second registered - should get auto priority 2)
     console.log("  Registering second device...");
     mfaResponse = await mtlsPostWithJson({
@@ -574,6 +591,23 @@ describe("Financial Grade: Multi-Device Priority - Later Registration Wins (Issu
     secondDeviceId = interactionResponse.data.device_id;
     console.log(`  ✅ Second device registered: ${secondDeviceId} (expected auto priority: 2)`);
 
+    // Send authentication device log for second device
+    await postWithJson({
+      url: `${backendUrl}/${testTenantId}/v1/authentication-devices/logs`,
+      body: {
+        device_id: secondDeviceId,
+        event: "fido_uaf_registration",
+        status: "success",
+        timestamp: new Date().toISOString(),
+        details: {
+          app_name: "Second App",
+          platform: "iOS",
+          model: "Device 2",
+        },
+      },
+    });
+    console.log(`  📝 Authentication device log sent for second device`);
+
     // Device 3 (Third registered - should get auto priority 3)
     console.log("  Registering third device...");
     mfaResponse = await mtlsPostWithJson({
@@ -610,6 +644,23 @@ describe("Financial Grade: Multi-Device Priority - Later Registration Wins (Issu
     expect(interactionResponse.status).toBe(200);
     thirdDeviceId = interactionResponse.data.device_id;
     console.log(`  ✅ Third device registered: ${thirdDeviceId} (expected auto priority: 3)`);
+
+    // Send authentication device log for third device
+    await postWithJson({
+      url: `${backendUrl}/${testTenantId}/v1/authentication-devices/logs`,
+      body: {
+        device_id: thirdDeviceId,
+        event: "fido_uaf_registration",
+        status: "success",
+        timestamp: new Date().toISOString(),
+        details: {
+          app_name: "Third App",
+          platform: "Android",
+          model: "Device 3",
+        },
+      },
+    });
+    console.log(`  📝 Authentication device log sent for third device`);
 
     // Step 9: Send CIBA request via mTLS (using same client)
     console.log("\n=== Step 9: Sending CIBA Request via mTLS ===");

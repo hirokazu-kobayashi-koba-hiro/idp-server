@@ -100,6 +100,7 @@ public enum DefaultSecurityEventType {
   authentication_device_deregistration_failure("User failed to deregister a device"),
   authentication_device_registration_challenge_success(
       "User successfully challenge a device registration"),
+  authentication_device_log("Authentication device log from client"),
   backchannel_authentication_request_success(
       "User successfully authenticated with a backchannel authentication"),
   backchannel_authentication_request_failure(

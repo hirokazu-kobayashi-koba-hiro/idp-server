@@ -318,8 +318,79 @@ Application Planeで発行されるSecurityEvent：
 | `token_request_success` | トークン発行成功 | TokenEntryService |
 | `userinfo_success` | UserInfo取得成功 | UserinfoEntryService |
 | `backchannel_authentication_request_success` | CIBA認証リクエスト成功 | CibaFlowEntryService |
+| `authentication_device_log` | 認証デバイスからのログ受信 | [AuthenticationDeviceLogEntryService.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/application/enduser/AuthenticationDeviceLogEntryService.java) |
 
 **完全なリスト**: [DefaultSecurityEventType.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/event/DefaultSecurityEventType.java)
+
+---
+
+## Authentication Device Log
+
+クライアント（モバイルアプリ等）から送信される認証デバイスログをセキュリティイベントとして記録します。
+
+### エンドポイント
+
+```
+POST /{tenant-id}/v1/authentication-devices/logs
+```
+
+### リクエスト例
+
+```json
+{
+  "device_id": "device-12345",
+  "event": "fido2_authentication_attempt",
+  "status": "success",
+  "timestamp": "2025-12-26T10:00:00Z",
+  "details": {
+    "authenticator_type": "platform",
+    "user_verification": true
+  }
+}
+```
+
+### 処理フロー
+
+```
+クライアント → POST /logs
+    ↓
+AuthenticationDeviceV1Api
+    ↓ (ログ出力)
+    log.info(requestBody)
+    ↓
+AuthenticationDeviceLogEntryService
+    ↓
+    1. device_id または user_id からユーザー検索
+    2. ユーザーが見つかった場合のみセキュリティイベント発行
+    ↓
+SecurityEventPublisher.publish()
+```
+
+### ユーザー検索ロジック
+
+1. `device_id` がリクエストに含まれる場合 → `UserQueryRepository.findByAuthenticationDevice()` で検索
+2. `user_id` がリクエストに含まれる場合 → `UserQueryRepository.findById()` で検索
+3. ユーザーが見つからない場合 → セキュリティイベントは発行されない（ノイズ防止）
+
+### セキュリティイベント詳細
+
+発行されるセキュリティイベントには以下の情報が含まれます：
+
+| フィールド | 内容 |
+|-----------|------|
+| `event_type` | `authentication_device_log` |
+| `tenant` | テナント情報（ID、issuer、name） |
+| `user` | ユーザー情報（見つかった場合） |
+| `execution_result` | リクエストボディ全体 |
+| `ip_address` | クライアントIPアドレス |
+| `user_agent` | User-Agent |
+
+### 実装ファイル
+
+- API: [AuthenticationDeviceV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/authentication/device/AuthenticationDeviceV1Api.java)
+- EntryService: [AuthenticationDeviceLogEntryService.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/application/enduser/AuthenticationDeviceLogEntryService.java)
+- EventPublisher: [AuthenticationDeviceLogEventPublisher.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/device/AuthenticationDeviceLogEventPublisher.java)
+- EventCreator: [AuthenticationDeviceLogEventCreator.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/device/AuthenticationDeviceLogEventCreator.java)
 
 ---
 
@@ -457,4 +528,4 @@ POST /v1/management/tenants/{tenant-id}/security-event-hooks
 - [SecurityEventPublisher.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/event/SecurityEventPublisher.java)
 - [SecurityEventRetryScheduler.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/event/SecurityEventRetryScheduler.java)
 
-**最終更新**: 2025-12-13
+**最終更新**: 2025-12-26
