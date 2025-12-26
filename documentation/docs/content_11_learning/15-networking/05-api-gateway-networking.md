@@ -280,7 +280,7 @@ aws apigateway update-rest-api \
 
 ### 3.1 カスタムドメインの設定
 
-デフォルトのAPI Gatewayエンドポイント（例：https://api-id.execute-api.us-east-1.amazonaws.com）を、カスタムドメイン（例：https://api.example.com）に変更できます。
+デフォルトのAPI Gatewayエンドポイント（例：`https://api-id.execute-api.us-east-1.amazonaws.com`）を、カスタムドメイン（例：`https://api.example.com`）に変更できます。
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
