@@ -618,52 +618,6 @@ FAPI 2.0 + PAR:
 | 強く推奨 | 開発環境でも `127.0.0.1` を使用（`localhost` ではなく） |
 | 推奨 | 環境ごとに別々の redirect_uri を登録（dev, staging, prod） |
 
-### 検証の実装例
-
-```java
-public class RedirectUriValidator {
-    
-    private final Set<String> registeredUris;
-    private final boolean allowLoopbackPort;
-    
-    public boolean validate(String requestUri) {
-        // 1. null/空チェック
-        if (requestUri == null || requestUri.isEmpty()) {
-            return false;
-        }
-        
-        // 2. フラグメントチェック
-        if (requestUri.contains("#")) {
-            return false;
-        }
-        
-        // 3. Loopback IP の場合はポート番号を無視して比較
-        if (allowLoopbackPort && isLoopbackUri(requestUri)) {
-            return registeredUris.stream()
-                .filter(this::isLoopbackUri)
-                .anyMatch(registered -> matchIgnoringPort(registered, requestUri));
-        }
-        
-        // 4. 完全一致で比較
-        return registeredUris.contains(requestUri);
-    }
-    
-    private boolean isLoopbackUri(String uri) {
-        return uri.startsWith("http://127.0.0.1") 
-            || uri.startsWith("http://[::1]");
-    }
-    
-    private boolean matchIgnoringPort(String registered, String request) {
-        URI regUri = URI.create(registered);
-        URI reqUri = URI.create(request);
-        
-        return regUri.getScheme().equals(reqUri.getScheme())
-            && regUri.getHost().equals(reqUri.getHost())
-            && regUri.getPath().equals(reqUri.getPath());
-        // ポート番号は比較しない
-    }
-}
-```
 
 ---
 

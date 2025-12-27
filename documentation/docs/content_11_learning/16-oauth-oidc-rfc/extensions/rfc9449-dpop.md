@@ -135,14 +135,6 @@ DPoP Proof は以下の構造を持つ JWT です。
 
 クライアントは最初に鍵ペアを生成します。
 
-```javascript
-const keyPair = await crypto.subtle.generateKey(
-  { name: 'ECDSA', namedCurve: 'P-256' },
-  true,
-  ['sign', 'verify']
-);
-```
-
 #### Step 2: トークンリクエスト
 
 ```http
@@ -246,106 +238,6 @@ ath = BASE64URL(SHA256(access_token))
 
 3. トークンの jkt と DPoP Proof の公開鍵を照合
    - 一致しなければ拒否
-```
-
-### 実装例
-
-#### クライアント側（JavaScript）
-
-```javascript
-class DPoPClient {
-  constructor() {
-    this.keyPair = null;
-  }
-
-  async init() {
-    this.keyPair = await crypto.subtle.generateKey(
-      { name: 'ECDSA', namedCurve: 'P-256' },
-      true,
-      ['sign', 'verify']
-    );
-  }
-
-  async createProof(method, uri, accessToken = null, nonce = null) {
-    const publicKeyJwk = await crypto.subtle.exportKey(
-      'jwk',
-      this.keyPair.publicKey
-    );
-    // 秘密鍵成分を除去
-    delete publicKeyJwk.d;
-
-    const header = {
-      typ: 'dpop+jwt',
-      alg: 'ES256',
-      jwk: publicKeyJwk
-    };
-
-    const payload = {
-      jti: crypto.randomUUID(),
-      htm: method,
-      htu: uri,
-      iat: Math.floor(Date.now() / 1000)
-    };
-
-    // アクセストークンがある場合は ath を追加
-    if (accessToken) {
-      payload.ath = await this.computeAth(accessToken);
-    }
-
-    // nonce がある場合は追加
-    if (nonce) {
-      payload.nonce = nonce;
-    }
-
-    return this.signJwt(header, payload);
-  }
-
-  async computeAth(accessToken) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(accessToken);
-    const hash = await crypto.subtle.digest('SHA-256', data);
-    return this.base64url(new Uint8Array(hash));
-  }
-
-  async signJwt(header, payload) {
-    const headerB64 = this.base64url(JSON.stringify(header));
-    const payloadB64 = this.base64url(JSON.stringify(payload));
-    const signingInput = `${headerB64}.${payloadB64}`;
-
-    const signature = await crypto.subtle.sign(
-      { name: 'ECDSA', hash: 'SHA-256' },
-      this.keyPair.privateKey,
-      new TextEncoder().encode(signingInput)
-    );
-
-    const signatureB64 = this.base64url(new Uint8Array(signature));
-    return `${signingInput}.${signatureB64}`;
-  }
-
-  base64url(input) {
-    const str = typeof input === 'string' 
-      ? btoa(input)
-      : btoa(String.fromCharCode(...input));
-    return str.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  }
-}
-
-// 使用例
-const dpop = new DPoPClient();
-await dpop.init();
-
-// トークンリクエスト
-const tokenProof = await dpop.createProof(
-  'POST',
-  'https://auth.example.com/token'
-);
-
-// リソースリクエスト
-const resourceProof = await dpop.createProof(
-  'GET',
-  'https://api.example.com/resource',
-  accessToken
-);
 ```
 
 ### nonce による追加保護

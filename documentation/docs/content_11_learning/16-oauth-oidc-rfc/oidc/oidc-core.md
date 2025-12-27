@@ -283,67 +283,6 @@ Pairwise:
   RP-B: sub = "xyz789..."  ← RP-B 用に生成（異なる）
 ```
 
-### 実装例（RP 側）
-
-```java
-@Controller
-public class OIDCLoginController {
-    
-    private final OIDCClient oidcClient;
-    
-    @GetMapping("/login")
-    public String login(HttpSession session) {
-        // 1. state と nonce を生成
-        String state = UUID.randomUUID().toString();
-        String nonce = UUID.randomUUID().toString();
-        session.setAttribute("oidc_state", state);
-        session.setAttribute("oidc_nonce", nonce);
-        
-        // 2. 認可リクエスト URL を構築
-        String authUrl = UriComponentsBuilder
-            .fromHttpUrl(oidcClient.getAuthorizationEndpoint())
-            .queryParam("response_type", "code")
-            .queryParam("client_id", oidcClient.getClientId())
-            .queryParam("redirect_uri", oidcClient.getRedirectUri())
-            .queryParam("scope", "openid profile email")
-            .queryParam("state", state)
-            .queryParam("nonce", nonce)
-            .build()
-            .toUriString();
-        
-        return "redirect:" + authUrl;
-    }
-    
-    @GetMapping("/callback")
-    public String callback(
-            @RequestParam String code,
-            @RequestParam String state,
-            HttpSession session) {
-        
-        // 3. state 検証
-        String savedState = (String) session.getAttribute("oidc_state");
-        if (!state.equals(savedState)) {
-            throw new SecurityException("Invalid state");
-        }
-        
-        // 4. トークンリクエスト
-        TokenResponse tokens = oidcClient.exchangeCode(code);
-        
-        // 5. ID Token 検証
-        String savedNonce = (String) session.getAttribute("oidc_nonce");
-        IDTokenClaims claims = oidcClient.validateIdToken(
-            tokens.getIdToken(), 
-            savedNonce
-        );
-        
-        // 6. ユーザー情報を使ってログイン処理
-        User user = userService.findOrCreateByOIDC(claims);
-        session.setAttribute("user", user);
-        
-        return "redirect:/home";
-    }
-}
-```
 
 ### セキュリティ考慮事項
 

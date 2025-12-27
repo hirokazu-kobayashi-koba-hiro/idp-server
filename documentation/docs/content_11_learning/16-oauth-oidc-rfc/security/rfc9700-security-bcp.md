@@ -79,14 +79,6 @@ RFC 6749（OAuth 2.0 Core）の発行から 10 年以上が経過し、新たな
 
 > The authorization server MUST compare URIs using exact string matching.
 
-```java
-// 正しい実装
-boolean isValid = registeredUri.equals(requestUri);
-
-// 危険な実装（プレフィックスマッチ）
-boolean isValid = requestUri.startsWith(registeredUri); // ❌
-```
-
 #### ワイルドカードの禁止
 
 > Authorization servers SHOULD NOT allow clients to register redirect URI patterns.

@@ -231,60 +231,6 @@ AES-GCM は暗号化と認証を同時に行う AEAD（Authenticated Encryption 
    )
 ```
 
-### 実装例
-
-#### Java（Nimbus JOSE + JWT）
-
-```java
-// 暗号化
-JWEHeader header = new JWEHeader.Builder(
-    JWEAlgorithm.RSA_OAEP_256,
-    EncryptionMethod.A256GCM
-)
-    .keyID("key-2024-01")
-    .build();
-
-Payload payload = new Payload("{\"sub\":\"user-123\",\"ssn\":\"123-45-6789\"}");
-
-JWEObject jweObject = new JWEObject(header, payload);
-jweObject.encrypt(new RSAEncrypter(recipientPublicKey));
-
-String jwe = jweObject.serialize();
-
-// 復号
-JWEObject parsed = JWEObject.parse(jwe);
-parsed.decrypt(new RSADecrypter(recipientPrivateKey));
-
-String plaintext = parsed.getPayload().toString();
-```
-
-#### JavaScript（jose）
-
-```javascript
-import * as jose from 'jose';
-
-// 暗号化
-const publicKey = await jose.importSPKI(publicKeyPem, 'RSA-OAEP-256');
-
-const jwe = await new jose.CompactEncrypt(
-  new TextEncoder().encode(JSON.stringify({
-    sub: 'user-123',
-    ssn: '123-45-6789'
-  }))
-)
-  .setProtectedHeader({
-    alg: 'RSA-OAEP-256',
-    enc: 'A256GCM',
-    kid: 'key-2024-01'
-  })
-  .encrypt(publicKey);
-
-// 復号
-const privateKey = await jose.importPKCS8(privateKeyPem, 'RSA-OAEP-256');
-
-const { plaintext, protectedHeader } = await jose.compactDecrypt(jwe, privateKey);
-const claims = JSON.parse(new TextDecoder().decode(plaintext));
-```
 
 ### Nested JWT（Sign-then-Encrypt）
 

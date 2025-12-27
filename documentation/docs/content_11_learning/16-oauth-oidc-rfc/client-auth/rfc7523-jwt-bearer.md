@@ -147,59 +147,9 @@ RFC 7523 で使用する JWT には、特定のクレーム（claim）が必須�
 
 `client_secret` を HMAC の鍵として使用し、JWT に署名します。
 
-```java
-// 1. JWT クレームを構築
-JWTClaimsSet claims = new JWTClaimsSet.Builder()
-    .issuer(clientId)
-    .subject(clientId)
-    .audience(tokenEndpoint)
-    .expirationTime(Date.from(Instant.now().plusSeconds(300)))
-    .issueTime(new Date())
-    .jwtID(UUID.randomUUID().toString())
-    .build();
-
-// 2. client_secret を鍵として HMAC 署名
-SecretKey secretKey = new SecretKeySpec(
-    clientSecret.getBytes(StandardCharsets.UTF_8),
-    "HmacSHA256"
-);
-SignedJWT signedJWT = new SignedJWT(
-    new JWSHeader(JWSAlgorithm.HS256),
-    claims
-);
-signedJWT.sign(new MACSigner(secretKey));
-
-// 3. トークンリクエストに含める
-String clientAssertion = signedJWT.serialize();
-```
-
 #### private_key_jwt の実装例
 
 クライアントが保持する秘密鍵で署名し、認可サーバーは公開鍵で検証します。
-
-```java
-// 1. JWT クレームを構築
-JWTClaimsSet claims = new JWTClaimsSet.Builder()
-    .issuer(clientId)
-    .subject(clientId)
-    .audience(tokenEndpoint)
-    .expirationTime(Date.from(Instant.now().plusSeconds(300)))
-    .issueTime(new Date())
-    .jwtID(UUID.randomUUID().toString())
-    .build();
-
-// 2. 秘密鍵で署名
-SignedJWT signedJWT = new SignedJWT(
-    new JWSHeader.Builder(JWSAlgorithm.RS256)
-        .keyID(keyId)
-        .build(),
-    claims
-);
-signedJWT.sign(new RSASSASigner(privateKey));
-
-// 3. トークンリクエストに含める
-String clientAssertion = signedJWT.serialize();
-```
 
 ### JWT Bearer グラントの詳細
 

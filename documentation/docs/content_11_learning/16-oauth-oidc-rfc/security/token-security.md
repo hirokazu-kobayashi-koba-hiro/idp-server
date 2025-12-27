@@ -243,52 +243,6 @@ Web アプリケーション:
 
 ### 署名検証
 
-```java
-// 署名検証の実装例
-public JWT validateToken(String token) {
-    SignedJWT jwt = SignedJWT.parse(token);
-
-    // 1. アルゴリズムの検証
-    JWSAlgorithm alg = jwt.getHeader().getAlgorithm();
-    if (!allowedAlgorithms.contains(alg)) {
-        throw new InvalidTokenException("Unsupported algorithm: " + alg);
-    }
-
-    // 2. 署名の検証
-    JWKSet jwks = fetchJWKS(jwt.getHeader().getKeyID());
-    JWSVerifier verifier = new RSASSAVerifier(jwks.getKey());
-    if (!jwt.verify(verifier)) {
-        throw new InvalidTokenException("Invalid signature");
-    }
-
-    // 3. クレームの検証
-    JWTClaimsSet claims = jwt.getJWTClaimsSet();
-
-    // iss の検証
-    if (!expectedIssuer.equals(claims.getIssuer())) {
-        throw new InvalidTokenException("Invalid issuer");
-    }
-
-    // aud の検証
-    if (!claims.getAudience().contains(myAudience)) {
-        throw new InvalidTokenException("Invalid audience");
-    }
-
-    // exp の検証
-    if (claims.getExpirationTime().before(new Date())) {
-        throw new InvalidTokenException("Token expired");
-    }
-
-    // nbf の検証（あれば）
-    if (claims.getNotBeforeTime() != null &&
-        claims.getNotBeforeTime().after(new Date())) {
-        throw new InvalidTokenException("Token not yet valid");
-    }
-
-    return jwt;
-}
-```
-
 ### typ ヘッダーの検証
 
 ```

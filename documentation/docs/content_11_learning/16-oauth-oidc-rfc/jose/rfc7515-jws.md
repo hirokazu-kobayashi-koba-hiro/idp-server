@@ -167,19 +167,6 @@ HS512: HMAC using SHA-512
 
 同じ秘密鍵で署名と検証を行う。
 
-```java
-// 署名
-Mac mac = Mac.getInstance("HmacSHA256");
-mac.init(new SecretKeySpec(secret, "HmacSHA256"));
-byte[] signature = mac.doFinal(signingInput.getBytes());
-
-// 検証
-Mac mac = Mac.getInstance("HmacSHA256");
-mac.init(new SecretKeySpec(secret, "HmacSHA256"));
-byte[] expected = mac.doFinal(signingInput.getBytes());
-boolean valid = MessageDigest.isEqual(signature, expected);
-```
-
 #### RSA（非対称鍵）
 
 ```
@@ -194,20 +181,6 @@ PS512: RSASSA-PSS using SHA-512 and MGF1 with SHA-512
 
 秘密鍵で署名、公開鍵で検証。
 
-```java
-// 署名
-Signature sig = Signature.getInstance("SHA256withRSA");
-sig.initSign(privateKey);
-sig.update(signingInput.getBytes());
-byte[] signature = sig.sign();
-
-// 検証
-Signature sig = Signature.getInstance("SHA256withRSA");
-sig.initVerify(publicKey);
-sig.update(signingInput.getBytes());
-boolean valid = sig.verify(signature);
-```
-
 #### ECDSA（楕円曲線）
 
 ```
@@ -217,15 +190,6 @@ ES512: ECDSA using P-521 and SHA-512
 ```
 
 RSA より短い鍵で同等のセキュリティ。
-
-```java
-// 署名
-Signature sig = Signature.getInstance("SHA256withECDSA");
-sig.initSign(privateKey);
-sig.update(signingInput.getBytes());
-byte[] signature = sig.sign();
-// 注意: JWS 形式に変換が必要（R || S 形式）
-```
 
 #### EdDSA
 
@@ -289,56 +253,6 @@ none: No digital signature or MAC
 
 6. 署名を検証
    VERIFY(signing_input, signature, public_key)
-```
-
-### 実装例
-
-#### Java（Nimbus JOSE + JWT）
-
-```java
-// 署名の生成
-JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
-    .keyID("key-2024-01")
-    .build();
-
-Payload payload = new Payload("{\"sub\":\"user-123\"}");
-
-JWSObject jwsObject = new JWSObject(header, payload);
-jwsObject.sign(new RSASSASigner(privateKey));
-
-String jws = jwsObject.serialize();
-
-// 署名の検証
-JWSObject parsed = JWSObject.parse(jws);
-JWSVerifier verifier = new RSASSAVerifier(publicKey);
-
-if (parsed.verify(verifier)) {
-    String payload = parsed.getPayload().toString();
-    // 検証成功
-} else {
-    throw new SecurityException("Invalid signature");
-}
-```
-
-#### JavaScript（jose）
-
-```javascript
-import * as jose from 'jose';
-
-// 署名の生成
-const privateKey = await jose.importPKCS8(privateKeyPem, 'RS256');
-
-const jws = await new jose.CompactSign(
-  new TextEncoder().encode(JSON.stringify({ sub: 'user-123' }))
-)
-  .setProtectedHeader({ alg: 'RS256', kid: 'key-2024-01' })
-  .sign(privateKey);
-
-// 署名の検証
-const publicKey = await jose.importSPKI(publicKeyPem, 'RS256');
-
-const { payload, protectedHeader } = await jose.compactVerify(jws, publicKey);
-const claims = JSON.parse(new TextDecoder().decode(payload));
 ```
 
 ### セキュリティ考慮事項

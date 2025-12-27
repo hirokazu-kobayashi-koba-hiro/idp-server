@@ -149,75 +149,6 @@ DPoP を使用している場合、追加の情報が返されます。
 
 `cnf.jkt` は DPoP 公開鍵のサムプリントです。リソースサーバーはこの値を使って DPoP Proof を検証します。
 
-### 実装例
-
-#### リソースサーバー（Java / Spring）
-
-```java
-@Service
-public class TokenIntrospectionService {
-    
-    private final WebClient webClient;
-    private final String introspectionEndpoint;
-    private final String clientId;
-    private final String clientSecret;
-    
-    public IntrospectionResponse introspect(String token) {
-        String credentials = Base64.getEncoder()
-            .encodeToString((clientId + ":" + clientSecret).getBytes());
-        
-        return webClient.post()
-            .uri(introspectionEndpoint)
-            .header("Authorization", "Basic " + credentials)
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-            .body(BodyInserters.fromFormData("token", token)
-                .with("token_type_hint", "access_token"))
-            .retrieve()
-            .bodyToMono(IntrospectionResponse.class)
-            .block();
-    }
-}
-
-@Data
-public class IntrospectionResponse {
-    private boolean active;
-    private String scope;
-    private String clientId;
-    private String username;
-    private String tokenType;
-    private Long exp;
-    private Long iat;
-    private String sub;
-    private String aud;
-    private String iss;
-    private Cnf cnf;  // DPoP 用
-    
-    @Data
-    public static class Cnf {
-        private String jkt;
-    }
-}
-```
-
-#### 認可サーバー（Spring Authorization Server）
-
-```java
-@Configuration
-public class IntrospectionConfig {
-    
-    @Bean
-    public OAuth2TokenIntrospectionAuthenticationProvider 
-            introspectionAuthenticationProvider(
-                RegisteredClientRepository clientRepository,
-                OAuth2AuthorizationService authorizationService) {
-        return new OAuth2TokenIntrospectionAuthenticationProvider(
-            clientRepository,
-            authorizationService
-        );
-    }
-}
-```
-
 ### キャッシュ戦略
 
 イントロスペクションはリクエストごとに認可サーバーへ問い合わせるため、パフォーマンスへの影響があります。以下の戦略を検討してください。
@@ -231,36 +162,6 @@ public class IntrospectionConfig {
 ```
 
 #### 2. キャッシュ付きイントロスペクション
-
-```java
-@Service
-public class CachedIntrospectionService {
-    
-    private final Cache<String, IntrospectionResponse> cache;
-    private final TokenIntrospectionService introspectionService;
-    
-    public IntrospectionResponse introspect(String token) {
-        String cacheKey = computeHash(token);
-        
-        IntrospectionResponse cached = cache.getIfPresent(cacheKey);
-        if (cached != null) {
-            // キャッシュの有効期限もチェック
-            if (cached.getExp() > Instant.now().getEpochSecond()) {
-                return cached;
-            }
-        }
-        
-        IntrospectionResponse response = introspectionService.introspect(token);
-        
-        if (response.isActive()) {
-            // 短い TTL でキャッシュ（例: 30秒）
-            cache.put(cacheKey, response);
-        }
-        
-        return response;
-    }
-}
-```
 
 **注意**: キャッシュを使用すると失効の反映が遅れます。セキュリティ要件に応じてキャッシュ TTL を調整してください。
 

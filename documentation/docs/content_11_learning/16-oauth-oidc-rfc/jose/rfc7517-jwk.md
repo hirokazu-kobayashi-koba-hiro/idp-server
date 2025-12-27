@@ -233,59 +233,6 @@ EC の場合:
 
 DPoP でトークンをバインドする際に使用されます。
 
-### 実装例
-
-#### Java（Nimbus JOSE + JWT）
-
-```java
-// RSA 鍵ペアから JWK を生成
-KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
-gen.initialize(2048);
-KeyPair keyPair = gen.generateKeyPair();
-
-RSAKey jwk = new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
-    .privateKey((RSAPrivateKey) keyPair.getPrivate())
-    .keyID("key-2024-01")
-    .keyUse(KeyUse.SIGNATURE)
-    .algorithm(JWSAlgorithm.RS256)
-    .build();
-
-// 公開鍵のみを取得（JWKS エンドポイント用）
-RSAKey publicJwk = jwk.toPublicJWK();
-
-// JSON 文字列に変換
-String jwkJson = publicJwk.toJSONString();
-
-// JWK Set を作成
-JWKSet jwkSet = new JWKSet(publicJwk);
-String jwksJson = jwkSet.toJSONObject().toString();
-```
-
-#### JavaScript（jose）
-
-```javascript
-import * as jose from 'jose';
-
-// 鍵ペアを生成
-const { publicKey, privateKey } = await jose.generateKeyPair('RS256');
-
-// JWK にエクスポート
-const publicJwk = await jose.exportJWK(publicKey);
-publicJwk.kid = 'key-2024-01';
-publicJwk.use = 'sig';
-publicJwk.alg = 'RS256';
-
-const privateJwk = await jose.exportJWK(privateKey);
-privateJwk.kid = 'key-2024-01';
-privateJwk.use = 'sig';
-privateJwk.alg = 'RS256';
-
-// JWK Set を構築
-const jwks = { keys: [publicJwk] };
-
-// JWK から鍵をインポート
-const importedPublicKey = await jose.importJWK(publicJwk, 'RS256');
-```
 
 ### JWKS エンドポイント
 

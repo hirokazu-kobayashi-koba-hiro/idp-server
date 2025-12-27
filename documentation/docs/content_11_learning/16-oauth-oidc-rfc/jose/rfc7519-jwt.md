@@ -146,54 +146,6 @@ IANA に登録されているか、衝突回避のために URI 形式で定義�
 | `PS256` | RSA-PSS | 公開鍵/秘密鍵 | より安全な RSA |
 | `none` | なし | - | **使用禁止** |
 
-### JWT の生成
-
-#### Java（Nimbus JOSE + JWT）
-
-```java
-// 1. クレームセットを作成
-JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-    .issuer("https://auth.example.com")
-    .subject("user-123")
-    .audience("https://api.example.com")
-    .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
-    .issueTime(new Date())
-    .jwtID(UUID.randomUUID().toString())
-    .claim("email", "user@example.com")
-    .build();
-
-// 2. ヘッダーを作成
-JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
-    .keyID("key-id-123")
-    .build();
-
-// 3. 署名付き JWT を作成
-SignedJWT signedJWT = new SignedJWT(header, claimsSet);
-signedJWT.sign(new RSASSASigner(privateKey));
-
-// 4. シリアライズ
-String token = signedJWT.serialize();
-```
-
-#### JavaScript（jose）
-
-```javascript
-import * as jose from 'jose';
-
-const privateKey = await jose.importPKCS8(privateKeyPem, 'RS256');
-
-const token = await new jose.SignJWT({
-    email: 'user@example.com'
-  })
-  .setProtectedHeader({ alg: 'RS256', kid: 'key-id-123' })
-  .setIssuer('https://auth.example.com')
-  .setSubject('user-123')
-  .setAudience('https://api.example.com')
-  .setExpirationTime('1h')
-  .setIssuedAt()
-  .setJti(crypto.randomUUID())
-  .sign(privateKey);
-```
 
 ### JWT の検証
 
@@ -217,63 +169,6 @@ const token = await new jose.SignJWT({
    └── その他のビジネスロジック
 ```
 
-#### Java での検証例
-
-```java
-public class JWTValidator {
-    
-    private final JWKSource<SecurityContext> jwkSource;
-    private final String expectedIssuer;
-    private final String expectedAudience;
-    
-    public JWTClaimsSet validate(String token) throws Exception {
-        // 1. パース
-        SignedJWT signedJWT = SignedJWT.parse(token);
-        
-        // 2. 鍵の取得
-        JWSHeader header = signedJWT.getHeader();
-        JWKSelector selector = new JWKSelector(
-            new JWKMatcher.Builder()
-                .keyID(header.getKeyID())
-                .build()
-        );
-        List<JWK> jwks = jwkSource.get(selector, null);
-        
-        if (jwks.isEmpty()) {
-            throw new JWTVerificationException("Key not found");
-        }
-        
-        // 3. 署名検証
-        JWSVerifier verifier = new RSASSAVerifier(
-            jwks.get(0).toRSAKey().toRSAPublicKey()
-        );
-        
-        if (!signedJWT.verify(verifier)) {
-            throw new JWTVerificationException("Invalid signature");
-        }
-        
-        // 4. クレーム検証
-        JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
-        
-        // 有効期限
-        if (claims.getExpirationTime().before(new Date())) {
-            throw new JWTVerificationException("Token expired");
-        }
-        
-        // 発行者
-        if (!expectedIssuer.equals(claims.getIssuer())) {
-            throw new JWTVerificationException("Invalid issuer");
-        }
-        
-        // 対象者
-        if (!claims.getAudience().contains(expectedAudience)) {
-            throw new JWTVerificationException("Invalid audience");
-        }
-        
-        return claims;
-    }
-}
-```
 
 ### JWT vs JWS vs JWE
 

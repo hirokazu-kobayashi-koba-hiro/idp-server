@@ -174,46 +174,7 @@ PKI mTLS では、証明書の Subject DN を照合。
 
 ### 証明書ハッシュの計算
 
-```java
-public String computeCertificateThumbprint(X509Certificate cert) 
-        throws Exception {
-    byte[] encoded = cert.getEncoded();
-    MessageDigest digest = MessageDigest.getInstance("SHA-256");
-    byte[] hash = digest.digest(encoded);
-    return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
-}
-```
-
 ### リソースサーバーでの検証
-
-```java
-public class MtlsTokenValidator {
-    
-    public void validate(String accessToken, X509Certificate clientCert) {
-        // 1. トークンを検証（署名、有効期限など）
-        JWTClaimsSet claims = validateToken(accessToken);
-        
-        // 2. cnf クレームを取得
-        Map<String, Object> cnf = (Map<String, Object>) claims.getClaim("cnf");
-        if (cnf == null) {
-            throw new SecurityException("Token is not certificate-bound");
-        }
-        
-        String expectedThumbprint = (String) cnf.get("x5t#S256");
-        if (expectedThumbprint == null) {
-            throw new SecurityException("Missing x5t#S256 in cnf");
-        }
-        
-        // 3. 証明書のサムプリントを計算
-        String actualThumbprint = computeCertificateThumbprint(clientCert);
-        
-        // 4. 照合
-        if (!expectedThumbprint.equals(actualThumbprint)) {
-            throw new SecurityException("Certificate thumbprint mismatch");
-        }
-    }
-}
-```
 
 ### TLS 終端の考慮事項
 
@@ -233,23 +194,6 @@ public class MtlsTokenValidator {
 | AWS ALB | `X-Amzn-Mtls-Clientcert` | URL エンコード PEM |
 | Nginx | `X-SSL-Client-Cert` | URL エンコード PEM |
 | Envoy | `X-Forwarded-Client-Cert` | 独自形式 |
-
-```java
-// AWS ALB からクライアント証明書を取得
-public X509Certificate extractCertificate(HttpServletRequest request) 
-        throws Exception {
-    String certHeader = request.getHeader("X-Amzn-Mtls-Clientcert");
-    if (certHeader == null) {
-        throw new SecurityException("No client certificate");
-    }
-    
-    String pem = URLDecoder.decode(certHeader, StandardCharsets.UTF_8);
-    CertificateFactory cf = CertificateFactory.getInstance("X.509");
-    return (X509Certificate) cf.generateCertificate(
-        new ByteArrayInputStream(pem.getBytes())
-    );
-}
-```
 
 ### FAPI における mTLS
 
