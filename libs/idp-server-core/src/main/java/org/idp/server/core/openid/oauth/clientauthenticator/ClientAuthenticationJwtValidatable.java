@@ -27,11 +27,28 @@ import org.idp.server.platform.jose.JsonWebTokenClaims;
 public interface ClientAuthenticationJwtValidatable {
 
   default void validate(JoseContext joseContext, BackchannelRequestContext context) {
+    throwExceptionIfUnsignedJwt(joseContext);
     throwExceptionIfInvalidIss(joseContext, context);
     throwExceptionIfInvalidSub(joseContext, context);
     throwExceptionIfInvalidAud(joseContext, context);
     throwExceptionIfInvalidJti(joseContext, context);
     throwExceptionIfInvalidExp(joseContext, context);
+  }
+
+  /**
+   * Validates that the client assertion JWT is properly signed (not using alg: none).
+   *
+   * <p>Per RFC 7523 Section 3: "The JWT MUST be digitally signed or have a Message Authentication
+   * Code (MAC) applied by the issuer."
+   *
+   * @param joseContext the parsed JWT context
+   * @throws ClientUnAuthorizedException if the JWT uses alg: none
+   */
+  default void throwExceptionIfUnsignedJwt(JoseContext joseContext) {
+    if (!joseContext.hasJsonWebSignature()) {
+      throw new ClientUnAuthorizedException(
+          "client_assertion must be signed, alg: none is not allowed per RFC 7523");
+    }
   }
 
   /**
