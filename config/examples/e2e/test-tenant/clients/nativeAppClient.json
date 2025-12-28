@@ -1,0 +1,22 @@
+{
+  "client_id": "f8a1b2c3-d4e5-6789-abcd-ef0123456789",
+  "client_id_alias": "nativeAppClient",
+  "client_secret": "nativeAppClientSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  "client_id_issued_at": 2893256800,
+  "client_secret_expires_at": 2893276800,
+  "redirect_uris": [
+    "http://127.0.0.1:8080/callback",
+    "http://localhost:8080/callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email account",
+  "client_name": "Native App Test Client",
+  "token_endpoint_auth_method": "client_secret_post",
+  "application_type": "native"
+}

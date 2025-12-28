@@ -263,6 +263,15 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return applicationType.equals("web");
   }
 
+  /**
+   * RFC 8252 Section 7: Native Applications
+   *
+   * @return true if application_type is "native"
+   */
+  public boolean isNativeApplication() {
+    return applicationType.equals("native");
+  }
+
   public String idTokenEncryptedResponseAlg() {
     return idTokenEncryptedResponseAlg;
   }

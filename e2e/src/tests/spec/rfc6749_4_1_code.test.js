@@ -9,7 +9,7 @@ import {
 } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
 import { matchWithUSASCII } from "../../lib/util";
-import { postWithJson } from "../../lib/http";
+import { postWithJson, get } from "../../lib/http";
 
 describe("The OAuth 2.0 Authorization Framework code", () => {
   it("success pattern", async () => {
@@ -788,6 +788,231 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
       expect(response.data.error_description).toBe(
         "Bad request. Content-Type header does not match supported values"
       );
+    });
+  });
+
+  /**
+   * RFC 6749 Section 3.1.2: Redirection Endpoint
+   * https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2
+   */
+  describe("3.1.2. Redirection Endpoint", () => {
+    /**
+     * Helper function for OAuth 2.0 authorization requests (no openid scope)
+     */
+    const requestOAuth2Authorization = async (redirectUri) => {
+      const params = new URLSearchParams({
+        response_type: "code",
+        client_id: clientSecretPostClient.clientId,
+        redirect_uri: redirectUri,
+        scope: "account", // No openid = OAuth 2.0 flow
+        state: `test-state-${Date.now()}`,
+      });
+
+      const response = await get({
+        url: `${serverConfig.authorizationEndpoint}?${params.toString()}`,
+        headers: {},
+      });
+
+      return response;
+    };
+
+    describe("3.1.2.  The redirection endpoint URI MUST be an absolute URI", () => {
+      it("should reject relative URI (path only)", async () => {
+        const relativeUri = "/callback";
+        const response = await requestOAuth2Authorization(relativeUri);
+
+        expect(response.status).toBe(302);
+        const location = response.headers.location || "";
+        const url = new URL(location);
+        console.log(url);
+        expect(url.searchParams.get("error")).toBe("invalid_request");
+        expect(url.searchParams.get("error_description")).toContain("redirect_uri must be an absolute URI (/callback)");
+      });
+
+      it("should reject protocol-relative URI", async () => {
+        const protocolRelativeUri = "//www.certification.openid.net/test/a/idp_oidc_basic/callback";
+        const response = await requestOAuth2Authorization(protocolRelativeUri);
+
+        expect(response.status).toBe(302);
+        const location = response.headers.location || "";
+        const url = new URL(location);
+        expect(url.searchParams.get("error")).toBe("invalid_request");
+        expect(url.searchParams.get("error_description")).toContain("redirect_uri must be an absolute URI (//www.certification.openid.net/test/a/idp_oidc_basic/callback)");
+      });
+    });
+
+    describe("3.1.2.  The endpoint URI MUST NOT include a fragment component", () => {
+      it("should reject redirect_uri with fragment", async () => {
+        const uriWithFragment = clientSecretPostClient.redirectUri + "#fragment";
+        const response = await requestOAuth2Authorization(uriWithFragment);
+
+        expect(response.status).toBe(302);
+        const location = response.headers.location || "";
+        const url = new URL(location);
+        console.log(url);
+        expect(url.searchParams.get("error")).toBe("invalid_request");
+        expect(url.searchParams.get("error_description")).toContain("redirect_uri must not fragment");
+      });
+    });
+
+    describe("3.1.2.3.  Dynamic Configuration - URI matching", () => {
+      it("should reject unregistered redirect_uri", async () => {
+        const unregisteredUri = "https://attacker.example.com/callback";
+        const response = await requestOAuth2Authorization(unregisteredUri);
+
+        expect(response.status).toBe(302);
+        const location = response.headers.location || "";
+        const url = new URL(location);
+        console.log(url);
+        expect(url.searchParams.get("error")).toBe("invalid_request");
+        expect(url.searchParams.get("error_description")).toContain("redirect_uri does not match");
+      });
+
+      it("should reject redirect_uri with different host", async () => {
+        const differentHostUri = clientSecretPostClient.redirectUri.replace(
+          "www.certification.openid.net",
+          "evil.certification.openid.net"
+        );
+        const response = await requestOAuth2Authorization(differentHostUri);
+
+        expect(response.status).toBe(302);
+        const location = response.headers.location || "";
+        const url = new URL(location);
+        console.log(url);
+        expect(url.searchParams.get("error")).toBe("invalid_request");
+        expect(url.searchParams.get("error_description")).toContain("redirect_uri does not match");
+      });
+
+      it("should reject redirect_uri with different path", async () => {
+        const differentPathUri = clientSecretPostClient.redirectUri.replace("/callback", "/malicious");
+        const response = await requestOAuth2Authorization(differentPathUri);
+
+        expect(response.status).toBe(302);
+        const location = response.headers.location || "";
+        const url = new URL(location);
+        console.log(url);
+        expect(url.searchParams.get("error")).toBe("invalid_request");
+        expect(url.searchParams.get("error_description")).toContain("redirect_uri does not match");
+      });
+
+      /**
+       * RFC 3986 Section 3.1: Scheme comparison
+       * http and https are different schemes and MUST NOT match
+       */
+      it("should reject redirect_uri with different scheme (http vs https)", async () => {
+        // Registered: https://www.certification.openid.net/...
+        // Requested:  http://www.certification.openid.net/...
+        const httpSchemeUri = clientSecretPostClient.redirectUri.replace("https://", "http://");
+        const response = await requestOAuth2Authorization(httpSchemeUri);
+
+        expect(response.status).toBe(302);
+        const location = response.headers.location || "";
+        const url = new URL(location);
+        console.log(url);
+        expect(url.searchParams.get("error")).toBe("invalid_request");
+        expect(url.searchParams.get("error_description")).toContain("redirect_uri does not match");
+      });
+
+      /**
+       * RFC 3986 Section 6.2.2: Syntax-Based Normalization
+       * Host is case-insensitive
+       */
+      it("should accept host case difference (RFC 3986 Section 3.2.2)", async () => {
+        const upperCaseHostUri = clientSecretPostClient.redirectUri.replace(
+          "www.certification.openid.net",
+          "WWW.CERTIFICATION.OPENID.NET"
+        );
+        const response = await requestOAuth2Authorization(upperCaseHostUri);
+
+        expect(response.status).toBe(302);
+        const location = response.headers.location || "";
+        console.log(location);
+        // Host comparison is case-insensitive per RFC 3986, should match after normalization
+        expect(location).not.toContain("error=");
+      });
+
+      /**
+       * RFC 3986 Section 3.1: Scheme is case-insensitive
+       */
+      it("should accept scheme case difference (RFC 3986 Section 3.1)", async () => {
+        const upperCaseSchemeUri = clientSecretPostClient.redirectUri.replace("https://", "HTTPS://");
+        const response = await requestOAuth2Authorization(upperCaseSchemeUri);
+
+        expect(response.status).toBe(302);
+        const location = response.headers.location || "";
+        console.log(location);
+        // Scheme comparison is case-insensitive per RFC 3986, should match after normalization
+        expect(location).not.toContain("error=");
+      });
+
+      /**
+       * RFC 3986 Section 6.2.3: Scheme-Based Normalization
+       * Default port should be equivalent to no port
+       * https://example.com:443/ = https://example.com/
+       */
+      it("should accept default port for HTTPS (RFC 3986 Section 6.2.3)", async () => {
+        // Registered: https://www.certification.openid.net/test/a/idp_oidc_basic/callback
+        // Requested:  https://www.certification.openid.net:443/test/a/idp_oidc_basic/callback
+        const defaultPortUri = clientSecretPostClient.redirectUri.replace(
+          "www.certification.openid.net",
+          "www.certification.openid.net:443"
+        );
+        const response = await requestOAuth2Authorization(defaultPortUri);
+
+        expect(response.status).toBe(302);
+        const location = response.headers.location || "";
+        const url = new URL(location);
+        console.log(url);
+        // Default port (443 for HTTPS) should be equivalent to no port
+        expect(location).not.toContain("error=");
+      });
+
+      /**
+       * RFC 3986 Section 6.2.2.2: Percent-Encoding Normalization
+       * Unreserved characters should be decoded for comparison
+       * %7E (tilde) = ~ for unreserved characters
+       */
+      it("should handle percent-encoded unreserved characters (RFC 3986 Section 6.2.2.2)", async () => {
+        // Registered: https://www.certification.openid.net/test/a/idp_oidc_basic/callback
+        // Requested:  https://www.certification.openid.net/test/a/idp%5Foidc%5Fbasic/callback
+        // %5F = underscore (_) which is an unreserved character
+        const percentEncodedUri = clientSecretPostClient.redirectUri.replace(
+          "idp_oidc_basic",
+          "idp%5Foidc%5Fbasic"
+        );
+        const response = await requestOAuth2Authorization(percentEncodedUri);
+
+        expect(response.status).toBe(302);
+        const location = response.headers.location || "";
+        const url = new URL(location);
+        console.log(url);
+        // Percent-encoded unreserved characters should be decoded for comparison
+        expect(location).not.toContain("error=");
+      });
+
+      /**
+       * RFC 3986 Section 6.2.2.3: Path Segment Normalization
+       * Dot segments (. and ..) should be removed
+       */
+      it("should reject path with dot segments (RFC 3986 Section 6.2.2.3)", async () => {
+        // Registered: https://www.certification.openid.net/test/a/idp_oidc_basic/callback
+        // Requested:  https://www.certification.openid.net/test/a/idp_oidc_basic/../idp_oidc_basic/callback
+        // After normalization: /test/a/idp_oidc_basic/callback (same path)
+        // However, OAuth 2.0 typically does NOT normalize paths - exact match required
+        const dotSegmentUri = clientSecretPostClient.redirectUri.replace(
+          "/callback",
+          "/../idp_oidc_basic/callback"
+        );
+        const response = await requestOAuth2Authorization(dotSegmentUri);
+
+        expect(response.status).toBe(302);
+        const location = response.headers.location || "";
+        const url = new URL(location);
+        console.log(url);
+        // OAuth 2.0 requires exact match - dot segments should cause mismatch
+        expect(url.searchParams.get("error")).toBe("invalid_request");
+        expect(url.searchParams.get("error_description")).toContain("redirect_uri does not match");
+      });
     });
   });
 });

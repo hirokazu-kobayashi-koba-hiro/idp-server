@@ -571,6 +571,19 @@ export const publicClient = {
 };
 
 /**
+ * Native App Client (application_type: native)
+ * RFC 8252: OAuth 2.0 for Native Apps
+ */
+export const nativeAppClient = {
+  clientId: "nativeAppClient",
+  clientSecret: "nativeAppClientSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "http://127.0.0.1:8080/callback",
+  redirectUriLocalhost: "http://localhost:8080/callback",
+  scope: "openid profile email account",
+  applicationType: "native",
+};
+
+/**
  * Helper function to create a custom server configuration for any tenant ID
  * Useful for tests that need to work with different tenants dynamically
  * 

@@ -124,6 +124,7 @@ client_files=(
   tlsClientAuth.json
   unsupportedClient.json
   federationClient.json
+  nativeAppClient.json
 )
 
 for client_file in "${client_files[@]}"; do

@@ -22,6 +22,7 @@ import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.openid.oauth.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.openid.oauth.verifier.base.OAuthRequestBaseVerifier;
 import org.idp.server.platform.http.InvalidUriException;
+import org.idp.server.platform.http.UriMatcher;
 import org.idp.server.platform.http.UriWrapper;
 
 public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
@@ -51,10 +52,29 @@ public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
    */
   void throwExceptionIfInvalidRedirectUri(OAuthRequestContext context) {
     if (context.hasRedirectUriInRequest()) {
+      throwExceptionIfNotAbsoluteRedirectUri(context);
       throwExceptionIfRedirectUriContainsFragment(context);
       throwExceptionIfUnMatchRedirectUri(context);
     } else {
       throwExceptionIfMultiRegisteredRedirectUri(context);
+    }
+  }
+
+  /**
+   * RFC 6749 Section 3.1.2: redirect_uri MUST be absolute URI
+   *
+   * <p>The redirection endpoint URI MUST be an absolute URI as defined by [RFC3986] Section 4.3.
+   *
+   * @param context
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2">3.1.2. Redirection
+   *     Endpoint</a>
+   */
+  void throwExceptionIfNotAbsoluteRedirectUri(OAuthRequestContext context) {
+    if (!UriMatcher.isAbsoluteUri(context.redirectUri().value())) {
+      throw new OAuthBadRequestException(
+          "invalid_request",
+          String.format("redirect_uri must be an absolute URI (%s)", context.redirectUri().value()),
+          context.tenant());
     }
   }
 
@@ -100,22 +120,42 @@ public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
    * server MUST compare the two URIs using simple string comparison as defined in [RFC3986] Section
    * 6.2.1.
    *
+   * <p>RFC 8252 Section 7.3: For native apps using loopback redirect URIs (localhost/127.0.0.1),
+   * the port can be dynamic and should be ignored during comparison.
+   *
    * @param context
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2.3">3.1.2.3. Dynamic
    *     Configuration</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc8252#section-7.3">RFC 8252 Section 7.3</a>
    * @see <a href="https://www.rfc-editor.org/rfc/rfc3986.html">rfc3986</a>
    */
   void throwExceptionIfUnMatchRedirectUri(OAuthRequestContext context) {
     RegisteredRedirectUris registeredRedirectUris = context.registeredRedirectUris();
-    if (!registeredRedirectUris.containsWithNormalizationAndComparison(
-        context.redirectUri().value())) {
+    String redirectUri = context.redirectUri().value();
+
+    // RFC 8252 Section 7.3: For native apps, loopback redirect URIs can use dynamic ports
+    if (context.isNativeApplication() && UriMatcher.isLoopbackUri(redirectUri)) {
+      if (!registeredRedirectUris.containsWithLoopbackPortAllowance(redirectUri)) {
+        throw new OAuthBadRequestException(
+            "invalid_request",
+            String.format(
+                "authorization request redirect_uri does not match registered redirect uris (%s)",
+                redirectUri),
+            context.tenant());
+      }
+      return;
+    }
+
+    // Standard comparison with syntax-based normalization
+    if (!registeredRedirectUris.containsWithNormalizationAndComparison(redirectUri)) {
       throw new OAuthBadRequestException(
           "invalid_request",
           String.format(
-              "authorization request redirect_uri does not match registered redirect uris (%s)",
-              context.redirectUri().value()),
+              "redirect_uri does not match any registered redirect_uri, simple string comparison failed (%s)",
+              redirectUri),
           context.tenant());
     }
+    // SIMPLE_MATCH and NORMALIZED_MATCH are both allowed
   }
 
   /**
