@@ -44,7 +44,6 @@ import org.idp.server.core.openid.token.OAuthTokenIdentifier;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-// FIXME consider. this is bad code.
 public class ClientNotificationService implements RefreshTokenCreatable {
 
   BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
