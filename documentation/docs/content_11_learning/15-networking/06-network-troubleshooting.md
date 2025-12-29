@@ -6,7 +6,7 @@
 ## 学べること
 - 体系的なネットワーク診断フロー
 - DNS、接続性、SSL/TLSのトラブルシューティング
-- ロードバランサーとAPI Gatewayの問題診断
+- ロードバランサーとリバースプロキシの問題診断
 - パケットキャプチャとログ分析
 - 実践的な診断ツールの使い方
 - よくあるネットワーク問題と解決策
@@ -15,7 +15,7 @@
 - [01-dns-fundamentals.md](./01-dns-fundamentals.md) - DNS基礎
 - [03-load-balancing.md](./03-load-balancing.md) - ロードバランシング
 - [04-ssl-tls-certificates.md](./04-ssl-tls-certificates.md) - SSL/TLS証明書
-- [05-api-gateway-networking.md](./05-api-gateway-networking.md) - API Gateway
+- [05-api-gateway-networking.md](./05-api-gateway-networking.md) - リバースプロキシ
 - Linuxコマンドラインの基本操作
 
 ---
@@ -172,9 +172,9 @@ whois example.com
 # 3. 権威DNSサーバーに直接問い合わせ
 dig @ns1.example.com example.com
 
-# 4. ゾーンファイル確認（Route 53の場合）
-aws route53 list-resource-record-sets \
-  --hosted-zone-id Z1234567890ABC
+# 4. ゾーンファイル確認（権威DNSサーバー）
+# 権威DNSサーバーに直接問い合わせ
+dig @ns1.example.com example.com
 
 # 解決
 # - DNSレコードを作成
@@ -185,7 +185,7 @@ aws route53 list-resource-record-sets \
 
 ```bash
 # 症状
-# Route 53でレコード変更したが、古いIPが返される
+# DNSレコードを変更したが、古いIPが返される
 
 # 診断
 # 1. TTL確認
@@ -338,28 +338,28 @@ curl -m 10 https://example.com
 # 3. サーバーダウン
 
 # 診断
-# 1. ファイアウォール確認（AWS）
-aws ec2 describe-security-groups --group-ids sg-12345678
+# 1. ファイアウォール確認
+sudo iptables -L -n -v
 
-# インバウンドルールを確認:
-# - HTTPS (TCP 443) が 0.0.0.0/0 から許可されているか
+# または firewalld の場合
+sudo firewall-cmd --list-all
 
-# 2. NACLチェック
-aws ec2 describe-network-acls --filters "Name=association.subnet-id,Values=subnet-12345678"
+# 2. ポートが開いているか確認
+sudo ss -tuln | grep :443
 
-# 3. ルーティングテーブル
-aws ec2 describe-route-tables --filters "Name=association.subnet-id,Values=subnet-12345678"
-
-# 4. tracerouteで経路確認
+# 3. tracerouteで経路確認
 traceroute example.com
 
+# 4. ファイアウォールログ確認
+sudo tail -f /var/log/syslog | grep -i firewall
+
 # 解決
-# セキュリティグループでHTTPS許可
-aws ec2 authorize-security-group-ingress \
-  --group-id sg-12345678 \
-  --protocol tcp \
-  --port 443 \
-  --cidr 0.0.0.0/0
+# iptablesでHTTPS許可
+sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+# または firewalld の場合
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
 ```
 
 #### 問題3: "No route to host"
@@ -503,13 +503,12 @@ echo | openssl s_client -servername api.example.com -connect api.example.com:443
 
 # 解決
 # 1. ワイルドカード証明書を取得（*.example.com）
-sudo certbot certonly --dns-route53 -d *.example.com -d example.com
+sudo certbot certonly --manual --preferred-challenges dns -d *.example.com -d example.com
 
 # 2. SANにapi.example.comを追加した証明書を再発行
-aws acm request-certificate \
-  --domain-name example.com \
-  --subject-alternative-names www.example.com api.example.com \
-  --validation-method DNS
+# 証明書プロバイダーの管理画面で新しい証明書をリクエスト
+# またはCertbotで再取得:
+sudo certbot certonly --manual -d example.com -d www.example.com -d api.example.com
 ```
 
 #### 問題3: "Protocol error"
@@ -536,86 +535,76 @@ ssl_protocols TLSv1.2 TLSv1.3;  # TLSv1.0/1.1を無効化
 
 ## 5. ロードバランサー診断
 
-### 5.1 ALB/NLBトラブルシューティング
+### 5.1 ヘルスチェック失敗のトラブルシューティング
 
-#### 問題1: ヘルスチェック失敗
+#### 問題1: バックエンドが「Unhealthy」状態
 
 ```bash
 # 症状
-# ALBのターゲットが "unhealthy" 状態
+# ロードバランサーがバックエンドサーバーを「不健全」と判定
 
 # 診断
-# 1. ターゲットグループの状態確認
-aws elbv2 describe-target-health \
-  --target-group-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-targets/50dc6c495c0c9188
+# 1. バックエンドサーバーにログイン
+ssh backend-server
 
-# 出力例:
-# {
-#     "TargetHealthDescriptions": [
-#         {
-#             "Target": {
-#                 "Id": "i-1234567890abcdef0",
-#                 "Port": 8080
-#             },
-#             "HealthCheckPort": "8080",
-#             "TargetHealth": {
-#                 "State": "unhealthy",
-#                 "Reason": "Target.ResponseCodeMismatch",
-#                 "Description": "Health checks failed with these codes: [503]"
-#             }
-#         }
-#     ]
-# }
-
-# 2. ヘルスチェック設定確認
-aws elbv2 describe-target-groups \
-  --target-group-arns arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-targets/50dc6c495c0c9188
-
-# 3. インスタンス側でヘルスチェックエンドポイント確認
-# インスタンスにSSHでログイン
+# 2. ヘルスチェックエンドポイント確認
 curl http://localhost:8080/health
 # 503 Service Unavailable ← 問題発見
 
-# 4. アプリケーションログ確認
+# 3. アプリケーションログ確認
 sudo tail -f /var/log/app.log
+
+# 4. サービス稼働状況確認
+sudo systemctl status myapp
+
+# 5. ポートリスニング確認
+sudo ss -tuln | grep :8080
 
 # 解決
 # 1. アプリケーションを修正（/health エンドポイントが200を返すように）
-# 2. ヘルスチェックパスを変更
-aws elbv2 modify-target-group \
-  --target-group-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-targets/50dc6c495c0c9188 \
-  --health-check-path /healthz \
-  --health-check-interval-seconds 30 \
-  --healthy-threshold-count 2
+# 2. サービス再起動
+sudo systemctl restart myapp
+
+# 3. ファイアウォール確認（ロードバランサーからのアクセス許可）
+sudo iptables -L -n | grep 8080
 ```
 
 #### 問題2: 504 Gateway Timeout
 
 ```bash
 # 症状
-# ALB経由のリクエストで504エラー
+# ロードバランサー経由のリクエストで504エラー
 
 # 原因
-# 1. バックエンドの応答が遅い（デフォルトタイムアウト: 60秒）
+# 1. バックエンドの応答が遅い
 # 2. バックエンドがタイムアウト内に応答しない
 
 # 診断
-# 1. ALBアクセスログを確認
-# S3バケットにログを有効化している場合
-aws s3 cp s3://my-alb-logs/AWSLogs/123456789012/elasticloadbalancing/us-east-1/2025/12/26/ . --recursive
+# 1. Nginxアクセスログ確認
+sudo tail -f /var/log/nginx/access.log
 
-# ログ解析
-# request_processing_time, target_processing_time, response_processing_time を確認
-awk '{print $6, $7, $8}' alb-log.txt | sort -n -k2
+# ログフォーマット例:
+# $remote_addr - [$time_local] "$request" $status $request_time $upstream_response_time
 
 # 2. バックエンドの応答時間計測
 time curl http://backend-instance:8080/api/slow-endpoint
 
+# 3. バックエンドリソース確認
+# CPU使用率
+top
+
+# メモリ使用率
+free -m
+
+# ディスクI/O
+iostat -x 1
+
 # 解決
-# 1. アイドルタイムアウト延長
-aws elbv2 modify-load-balancer-attributes \
-  --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/my-alb/50dc6c495c0c9188 \
-  --attributes Key=idle_timeout.timeout_seconds,Value=120
+# 1. Nginxタイムアウト延長
+# /etc/nginx/nginx.conf
+proxy_connect_timeout 120s;
+proxy_send_timeout 120s;
+proxy_read_timeout 120s;
 
 # 2. バックエンドのパフォーマンス最適化
 # - データベースクエリ最適化
@@ -623,151 +612,46 @@ aws elbv2 modify-load-balancer-attributes \
 # - 非同期処理化
 ```
 
-### 5.2 ALBアクセスログ分析
+### 5.2 Nginxアクセスログ分析
 
 ```bash
 #!/bin/bash
-# alb-log-analysis.sh - ALBログ分析スクリプト
+# nginx-log-analysis.sh - Nginxログ分析スクリプト
 
 LOG_FILE=$1
 
-echo "=== ALB アクセスログ分析 ==="
+echo "=== Nginx アクセスログ分析 ==="
 
 # 1. ステータスコード分布
 echo -e "\n[1] HTTPステータスコード分布"
 awk '{print $9}' $LOG_FILE | sort | uniq -c | sort -rn
 
 # 2. 遅いリクエストTOP 10
-echo -e "\n[2] 遅いリクエストTOP 10"
-awk '{print $7, $11}' $LOG_FILE | sort -k1 -rn | head -10
+echo -e "\n[2] 遅いリクエストTOP 10（レスポンス時間）"
+awk '{print $10, $7}' $LOG_FILE | sort -k1 -rn | head -10
 
 # 3. エラーレスポンスの詳細
 echo -e "\n[3] 5xx エラー"
-awk '$9 >= 500 {print $9, $11, $12}' $LOG_FILE
+awk '$9 >= 500 {print $9, $7, $10}' $LOG_FILE
 
-# 4. ターゲット処理時間が長いリクエスト
-echo -e "\n[4] ターゲット処理時間 > 1秒"
-awk '$7 > 1.0 {print $7, $11, $12}' $LOG_FILE | head -20
+# 4. リクエスト処理時間が長いリクエスト
+echo -e "\n[4] 処理時間 > 1秒"
+awk '$10 > 1.0 {print $10, $7}' $LOG_FILE | head -20
 
 # 5. クライアントIPアドレスTOP 10
 echo -e "\n[5] アクセス元IP TOP 10"
-awk '{print $3}' $LOG_FILE | cut -d: -f1 | sort | uniq -c | sort -rn | head -10
+awk '{print $1}' $LOG_FILE | sort | uniq -c | sort -rn | head -10
+
+# 6. アクセス数の多いエンドポイントTOP 10
+echo -e "\n[6] アクセス数TOP 10"
+awk '{print $7}' $LOG_FILE | sort | uniq -c | sort -rn | head -10
 ```
 
 ---
 
-## 6. API Gateway診断
+## 6. パケットキャプチャ
 
-### 6.1 API Gatewayトラブルシューティング
-
-#### 問題1: 403 Forbidden
-
-```bash
-# 症状
-curl https://api-id.execute-api.us-east-1.amazonaws.com/prod/users
-# {"message":"Forbidden"}
-
-# 原因
-# 1. リソースポリシーで拒否
-# 2. オーソライザーで拒否
-# 3. APIキーが必要だが未指定
-# 4. WAFでブロック
-
-# 診断
-# 1. CloudWatch Logsを有効化して詳細確認
-aws apigateway update-stage \
-  --rest-api-id api-id \
-  --stage-name prod \
-  --patch-operations \
-    op=replace,path=/accessLogSettings/destinationArn,value=arn:aws:logs:us-east-1:123456789012:log-group:api-gateway-logs \
-    op=replace,path=/accessLogSettings/format,value='$context.requestId'
-
-# 2. CloudWatch Logsでエラー確認
-aws logs filter-log-events \
-  --log-group-name /aws/apigateway/my-api \
-  --filter-pattern "Forbidden"
-
-# 3. オーソライザーログ確認
-aws logs filter-log-events \
-  --log-group-name /aws/lambda/my-authorizer \
-  --start-time $(date -d '10 minutes ago' +%s)000
-
-# 解決
-# オーソライザーが原因の場合、Lambdaを修正
-# リソースポリシーが原因の場合、ポリシーを修正
-```
-
-#### 問題2: 429 Too Many Requests
-
-```bash
-# 症状
-curl https://api-id.execute-api.us-east-1.amazonaws.com/prod/users
-# {"message":"Too Many Requests"}
-
-# 原因
-# スロットリング制限に達した
-
-# 診断
-# 1. CloudWatch メトリクスで確認
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/ApiGateway \
-  --metric-name Count \
-  --dimensions Name=ApiName,Value=my-api Name=Stage,Value=prod \
-  --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S) \
-  --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
-  --period 300 \
-  --statistics Sum
-
-# 2. 使用量プランの制限確認
-aws apigateway get-usage-plans
-
-# 解決
-# 1. ステージレベルのスロットリング緩和
-aws apigateway update-stage \
-  --rest-api-id api-id \
-  --stage-name prod \
-  --patch-operations \
-    op=replace,path=/throttle/rateLimit,value=5000 \
-    op=replace,path=/throttle/burstLimit,value=10000
-
-# 2. 使用量プラン変更
-aws apigateway update-usage-plan \
-  --usage-plan-id plan-id \
-  --patch-operations \
-    op=replace,path=/throttle/rateLimit,value=1000
-```
-
-#### 問題3: VPC Link接続エラー
-
-```bash
-# 症状
-# VPC Link統合で "Internal server error"
-
-# 診断
-# 1. VPC Link状態確認
-aws apigateway get-vpc-links
-
-# 2. NLBヘルスチェック確認
-aws elbv2 describe-target-health \
-  --target-group-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/vpc-link-targets/50dc6c495c0c9188
-
-# 3. セキュリティグループ確認（NLB → ターゲット）
-aws ec2 describe-security-groups --group-ids sg-target
-
-# 解決
-# NLBターゲットのセキュリティグループでNLBサブネットからのアクセス許可
-aws ec2 authorize-security-group-ingress \
-  --group-id sg-target \
-  --protocol tcp \
-  --port 8080 \
-  --cidr 10.0.0.0/16  # NLBサブネットのCIDR
-```
-
----
-
-## 7. パケットキャプチャ
-
-### 7.1 tcpdumpによるパケットキャプチャ
+### 6.1 tcpdumpによるパケットキャプチャ
 
 ```bash
 # 基本的なキャプチャ
@@ -792,37 +676,11 @@ sudo tcpdump -i eth0 -c 100 -w capture.pcap
 # capture.pcapをダウンロードしてWiresharkで開く
 ```
 
-### 7.2 VPCフローログ（AWS）
-
-```bash
-# VPCフローログ有効化
-aws ec2 create-flow-logs \
-  --resource-type VPC \
-  --resource-ids vpc-1234567890abcdef0 \
-  --traffic-type ALL \
-  --log-destination-type cloud-watch-logs \
-  --log-group-name /aws/vpc/flowlogs \
-  --deliver-logs-permission-arn arn:aws:iam::123456789012:role/flowlogsRole
-
-# CloudWatch Insights でクエリ
-# 拒否されたトラフィック
-fields @timestamp, srcAddr, dstAddr, dstPort, action
-| filter action = "REJECT"
-| sort @timestamp desc
-| limit 100
-
-# ポート443へのアクセス
-fields @timestamp, srcAddr, dstAddr, bytes
-| filter dstPort = 443
-| stats sum(bytes) as totalBytes by srcAddr
-| sort totalBytes desc
-```
-
 ---
 
-## 8. 総合診断チェックリスト
+## 7. 総合診断チェックリスト
 
-### 8.1 接続できない場合
+### 7.1 接続できない場合
 
 ```
 □ DNS解決できるか? (dig/nslookup)
@@ -832,7 +690,7 @@ fields @timestamp, srcAddr, dstAddr, bytes
   └─ No → ネットワーク疎通確認、ファイアウォール確認
 
 □ TCPポートに接続できるか? (nc/telnet)
-  └─ No → セキュリティグループ、ファイアウォール確認
+  └─ No → ファイアウォール確認、iptables/firewalld設定
 
 □ サーバーがポートをリスニングしているか? (ss/netstat)
   └─ No → サービス起動確認
@@ -844,7 +702,7 @@ fields @timestamp, srcAddr, dstAddr, bytes
   └─ No → ヘルスチェックエンドポイント確認
 ```
 
-### 8.2 遅い場合
+### 7.2 遅い場合
 
 ```
 □ DNS解決に時間がかかっているか?
@@ -857,10 +715,10 @@ fields @timestamp, srcAddr, dstAddr, bytes
   └─ Yes → アプリケーション最適化、キャッシュ導入
 
 □ ネットワーク遅延が大きいか? (traceroute)
-  └─ Yes → CloudFront導入、リージョン変更
+  └─ Yes → CDN導入、近いリージョンへ移行
 ```
 
-### 8.3 間欠的に失敗する場合
+### 7.3 間欠的に失敗する場合
 
 ```
 □ タイムアウト設定は適切か?
@@ -869,10 +727,10 @@ fields @timestamp, srcAddr, dstAddr, bytes
 □ リトライロジックはあるか?
   └─ 追加: 指数バックオフ付きリトライ
 
-□ スロットリングに引っかかっているか?
+□ レート制限に引っかかっているか?
   └─ Yes → レート制限緩和、リクエスト分散
 
-□ ヘルスチェック失敗で一時的にターゲット除外されているか?
+□ ヘルスチェック失敗で一時的にバックエンド除外されているか?
   └─ Yes → ヘルスチェック閾値調整
 ```
 
@@ -889,7 +747,7 @@ fields @timestamp, srcAddr, dstAddr, bytes
 - 接続性問題の診断（Connection refused、Timeout、No route to host）
 - SSL/TLS問題の診断（証明書エラー、プロトコルエラー）
 - ロードバランサー問題の診断（ヘルスチェック失敗、504 Timeout）
-- API Gateway問題の診断（403 Forbidden、429 Too Many Requests）
+- リバースプロキシ問題の診断（403 Forbidden、429 Too Many Requests）
 - パケットキャプチャとログ分析
 
 ### 重要な診断ツール
@@ -905,10 +763,7 @@ SSL/TLS診断:
   openssl s_client, SSL Labs
 
 パケット分析:
-  tcpdump, Wireshark, VPCフローログ
-
-AWS診断:
-  AWS CLI, CloudWatch Logs/Metrics, X-Ray
+  tcpdump, Wireshark, tshark
 ```
 
 ### トラブルシューティングのベストプラクティス
@@ -923,12 +778,12 @@ AWS診断:
    - 変更前後で検証
 
 3. ログの活用
-   - CloudWatch Logs有効化
+   - アプリケーションログの確認
    - アクセスログ、エラーログ分析
 
 4. モニタリング
-   - CloudWatch Metrics
-   - アラーム設定
+   - メトリクス収集とグラフ化
+   - アラート設定
 
 5. ドキュメント化
    - 問題と解決策を記録
@@ -940,17 +795,17 @@ AWS診断:
 ```
 □ DNS診断スクリプトを実行できる
 □ 接続性診断スクリプトを実行できる
-□ SSL/TLS証明書を検証できる
-□ ALBアクセスログを分析できる
-□ CloudWatch Logsでエラーを調査できる
+□ SSL/TLS証明書を検証できる（openssl s_client）
+□ Nginxアクセスログを分析できる
+□ アプリケーションログでエラーを調査できる
 □ tcpdumpでパケットキャプチャできる
-□ VPCフローログを有効化できる
+□ Wiresharkでパケット解析できる
 ```
 
 ### 参考リンク
 
-- [AWS VPC Reachability Analyzer](https://docs.aws.amazon.com/vpc/latest/reachability/)
-- [AWS Network Manager](https://docs.aws.amazon.com/vpc/latest/tgw/what-is-network-manager.html)
 - [Wireshark Documentation](https://www.wireshark.org/docs/)
+- [tcpdump Manual](https://www.tcpdump.org/manpages/tcpdump.1.html)
 - [SSL Labs](https://www.ssllabs.com/)
-- [AWS Troubleshooting Guide](https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/troubleshooting.html)
+- [Nginx Troubleshooting](https://nginx.org/en/docs/troubleshooting.html)
+- [Linux Network Troubleshooting](https://www.kernel.org/doc/Documentation/networking/)

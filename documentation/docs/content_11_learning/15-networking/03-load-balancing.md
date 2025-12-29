@@ -6,10 +6,9 @@
 ## 学べること
 - ロードバランシングの基本概念とアルゴリズム
 - L4（Transport Layer）とL7（Application Layer）ロードバランサーの違い
-- AWS ELB（ALB、NLB、CLB）の実践的な使い方
-- ヘルスチェックとセッション維持
+- ヘルスチェックとセッション維持の仕組み
 - ロードバランサーとDNSの連携
-- コンテナ環境でのロードバランシング
+- 一般的なロードバランシングパターン
 
 ## 前提知識
 - [01-dns-fundamentals.md](./01-dns-fundamentals.md) の内容
@@ -298,7 +297,7 @@ hash(192.168.1.30) % 3 = 2 → サーバー3
 │      ▼                                                      │
 │  ┌──────────────────────┐                                   │
 │  │  L7ロードバランサー   │                                   │
-│  │  (ALB)               │                                   │
+│  │  (Nginx/HAProxy)     │                                   │
 │  └──────────────────────┘                                   │
 │      │                                                      │
 │      │ 判断基準:                                             │
@@ -338,206 +337,152 @@ hash(192.168.1.30) % 3 = 2 → サーバー3
 
 ---
 
-## 4. AWS Elastic Load Balancing (ELB)
+## 4. 実践的なロードバランサー設定
 
-### 4.1 ELBの種類
+### 4.1 ロードバランサーの選択基準
 
-AWSは3種類のロードバランサーを提供しています。
+ロードバランサーを選択する際の一般的な考慮事項:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  AWS ELB の種類                              │
+│              ロードバランサー選択基準                         │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  1. ALB (Application Load Balancer)                         │
-│     - L7ロードバランサー                                     │
-│     - HTTP/HTTPS専用                                        │
-│     - パスベースルーティング                                 │
-│     - 最新、最も機能豊富                                     │
+│  L7ロードバランサー（アプリケーション層）                    │
+│  推奨ケース:                                                 │
+│  - HTTP/HTTPSトラフィック                                   │
+│  - URLパスベースルーティングが必要                           │
+│  - SSL/TLS終端が必要                                        │
+│  - WebSocketサポートが必要                                  │
+│  例: Nginx, HAProxy, Apache mod_proxy                       │
 │                                                              │
-│  2. NLB (Network Load Balancer)                             │
-│     - L4ロードバランサー                                     │
-│     - TCP/UDP/TLS                                           │
-│     - 超高速（数百万リクエスト/秒）                          │
-│     - 固定IPアドレス対応                                     │
-│                                                              │
-│  3. CLB (Classic Load Balancer)                             │
-│     - 旧世代（非推奨）                                       │
-│     - L4/L7ハイブリッド                                      │
-│     - 新規作成は推奨されない                                 │
+│  L4ロードバランサー（トランスポート層）                      │
+│  推奨ケース:                                                 │
+│  - 非HTTPプロトコル（TCP/UDP）                              │
+│  - 超高速処理が必要                                          │
+│  - SSL/TLSをバックエンドで処理                              │
+│  - データベース接続の負荷分散                                │
+│  例: HAProxy (TCPモード), LVS, Nginx Stream                │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 4.2 ALB（Application Load Balancer）
+### 4.2 L7ロードバランサーの一般的な機能
 
-#### ALBの主要機能
+L7ロードバランサー（Nginx、HAProxy等）で実現できる一般的な機能:
 
 ```
 1. パスベースルーティング
-   /api/*     → API Target Group
-   /images/*  → Static Target Group
-   /*         → Default Target Group
+   /api/*     → APIサーバーグループ
+   /images/*  → 静的コンテンツサーバー
+   /*         → デフォルトサーバーグループ
 
 2. ホストベースルーティング
-   api.example.com     → API Target Group
-   www.example.com     → Web Target Group
+   api.example.com     → APIサーバー
+   www.example.com     → Webサーバー
 
 3. HTTPヘッダーベースルーティング
-   User-Agent: Mobile  → Mobile Target Group
-   User-Agent: Desktop → Desktop Target Group
+   User-Agent: Mobile  → モバイル専用サーバー
+   User-Agent: Desktop → デスクトップ専用サーバー
 
-4. HTTP/2、WebSocket、gRPC サポート
+4. プロトコルサポート
+   - HTTP/1.1、HTTP/2
+   - WebSocket
+   - gRPC
 
 5. SSL/TLS終端
-   - ACM統合（無料証明書）
+   - 証明書の一元管理
    - SNI（複数証明書）サポート
-
-6. Lambda統合
-   - サーバーレスアプリケーションへのルーティング
 ```
 
-#### ALB作成例（AWS CLI）
+#### Nginx設定例（L7ロードバランサー）
 
-```bash
-# 1. ターゲットグループ作成
-aws elbv2 create-target-group \
-  --name api-targets \
-  --protocol HTTP \
-  --port 8080 \
-  --vpc-id vpc-1234567890abcdef0 \
-  --health-check-path /health \
-  --health-check-interval-seconds 30 \
-  --health-check-timeout-seconds 5 \
-  --healthy-threshold-count 2 \
-  --unhealthy-threshold-count 3
+```nginx
+# /etc/nginx/nginx.conf
 
-# 2. ALB作成
-aws elbv2 create-load-balancer \
-  --name my-alb \
-  --subnets subnet-12345678 subnet-87654321 \
-  --security-groups sg-12345678 \
-  --scheme internet-facing \
-  --type application \
-  --ip-address-type ipv4
+http {
+    # バックエンドサーバーグループ定義
+    upstream api_servers {
+        server 192.168.1.10:8080;
+        server 192.168.1.11:8080;
+        server 192.168.1.12:8080;
+    }
 
-# 3. リスナー作成（HTTPSリスナー）
-aws elbv2 create-listener \
-  --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/my-alb/50dc6c495c0c9188 \
-  --protocol HTTPS \
-  --port 443 \
-  --certificates CertificateArn=arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012 \
-  --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/api-targets/50dc6c495c0c9188
+    upstream web_servers {
+        server 192.168.1.20:80;
+        server 192.168.1.21:80;
+    }
 
-# 4. パスベースルーティングルール追加
-aws elbv2 create-rule \
-  --listener-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/my-alb/50dc6c495c0c9188/0123456789abcdef \
-  --priority 10 \
-  --conditions Field=path-pattern,Values='/api/*' \
-  --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/api-targets/50dc6c495c0c9188
+    # ロードバランサー設定
+    server {
+        listen 80;
+        server_name example.com;
 
-# 5. ターゲット登録
-aws elbv2 register-targets \
-  --target-group-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/api-targets/50dc6c495c0c9188 \
-  --targets Id=i-1234567890abcdef0 Id=i-0987654321fedcba0
+        # パスベースルーティング
+        location /api/ {
+            proxy_pass http://api_servers;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+        location / {
+            proxy_pass http://web_servers;
+            proxy_set_header Host $host;
+        }
+    }
+}
 ```
 
-#### ALBルーティングルール例
+### 4.3 L4ロードバランサーの設定
+
+L4ロードバランサーは、TCPレベルでの負荷分散を提供します。
+
+#### HAProxy設定例（L4モード）
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                  ALB ルーティング例                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  リスナー: HTTPS:443                                         │
-│                                                              │
-│  ルール1 (優先度: 10)                                        │
-│    条件: Path = /api/*                                       │
-│    アクション: api-target-group に転送                       │
-│                                                              │
-│  ルール2 (優先度: 20)                                        │
-│    条件: Path = /static/*                                    │
-│    アクション: s3-redirect (リダイレクト)                    │
-│                                                              │
-│  ルール3 (優先度: 30)                                        │
-│    条件: Header[User-Agent] contains "Mobile"                │
-│    アクション: mobile-target-group に転送                    │
-│                                                              │
-│  デフォルトルール                                            │
-│    条件: なし（全てマッチ）                                  │
-│    アクション: default-target-group に転送                   │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+# /etc/haproxy/haproxy.cfg
+
+global
+    maxconn 4096
+    log /dev/log local0
+
+defaults
+    mode tcp
+    timeout connect 5000ms
+    timeout client 50000ms
+    timeout server 50000ms
+
+# データベース負荷分散（PostgreSQL）
+frontend postgres_frontend
+    bind *:5432
+    default_backend postgres_servers
+
+backend postgres_servers
+    balance roundrobin
+    server pg1 192.168.1.10:5432 check
+    server pg2 192.168.1.11:5432 check
+    server pg3 192.168.1.12:5432 check
 ```
 
-### 4.3 NLB（Network Load Balancer）
+#### Nginx Stream設定例（L4モード）
 
-#### NLBの主要機能
+```nginx
+# /etc/nginx/nginx.conf
 
-```
-1. 超高パフォーマンス
-   - 数百万リクエスト/秒
-   - 超低レイテンシー
+stream {
+    upstream postgres_backend {
+        server 192.168.1.10:5432;
+        server 192.168.1.11:5432;
+        server 192.168.1.12:5432;
+    }
 
-2. 固定IPアドレス
-   - Elastic IP 割り当て可能
-   - ファイアウォールホワイトリスト対応
-
-3. プロトコルサポート
-   - TCP、UDP、TLS
-
-4. クロスゾーン負荷分散
-
-5. ターゲットタイプ
-   - EC2インスタンス
-   - IPアドレス（オンプレミス含む）
-   - ALB（NLB → ALB チェーン）
-```
-
-#### NLB作成例
-
-```bash
-# 1. ターゲットグループ作成（TCP）
-aws elbv2 create-target-group \
-  --name db-targets \
-  --protocol TCP \
-  --port 5432 \
-  --vpc-id vpc-1234567890abcdef0 \
-  --health-check-protocol TCP \
-  --health-check-port 5432
-
-# 2. NLB作成
-aws elbv2 create-load-balancer \
-  --name my-nlb \
-  --subnets subnet-12345678 subnet-87654321 \
-  --type network \
-  --scheme internet-facing
-
-# 3. リスナー作成（TCPリスナー）
-aws elbv2 create-listener \
-  --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/net/my-nlb/50dc6c495c0c9188 \
-  --protocol TCP \
-  --port 5432 \
-  --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/db-targets/50dc6c495c0c9188
-```
-
-#### NLBの典型的なユースケース
-
-```
-1. データベース接続
-   - PostgreSQL、MySQL、MongoDB等
-   - 固定IPで接続元制限
-
-2. 非HTTPプロトコル
-   - SMTP、DNS、カスタムTCPプロトコル
-
-3. 超高速処理が必要な場合
-   - ゲームサーバー
-   - IoTデータ収集
-
-4. ハイブリッドクラウド
-   - オンプレミスサーバーとの統合
-   - IPアドレスターゲット使用
+    server {
+        listen 5432;
+        proxy_pass postgres_backend;
+        proxy_connect_timeout 1s;
+    }
+}
 ```
 
 ---
@@ -585,72 +530,63 @@ Success Codes           200         正常とみなすHTTPステータス
 
 ### 5.3 ヘルスチェックエンドポイントの実装
 
-```java
-// Spring Boot でのヘルスチェックエンドポイント実装例
+ヘルスチェックエンドポイントは、アプリケーションの正常性を確認するためのシンプルなHTTPエンドポイントです。
 
-@RestController
-public class HealthCheckController {
+```
+一般的なヘルスチェックエンドポイント設計:
 
-    @Autowired
-    private DataSource dataSource;
+1. シンプルなヘルスチェック（/health）
+   - HTTPステータス: 200 OK（正常時）
+   - レスポンス: "OK" または {"status": "UP"}
+   - 用途: 基本的な生存確認
 
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
+2. 詳細なヘルスチェック（/health/detailed）
+   - データベース接続確認
+   - 外部API接続確認
+   - キャッシュサーバー接続確認
+   - HTTPステータス: 200（全て正常）、503（異常あり）
+   - レスポンス例:
+     {
+       "status": "UP",
+       "database": "UP",
+       "cache": "UP"
+     }
 
-    // シンプルなヘルスチェック
-    @GetMapping("/health")
-    public ResponseEntity<String> health() {
-        return ResponseEntity.ok("OK");
-    }
+3. Readiness Probe（/ready）
+   - アプリケーション初期化完了確認
+   - トラフィック受付準備完了を示す
+   - コンテナ環境で重要
 
-    // 詳細なヘルスチェック
-    @GetMapping("/health/detailed")
-    public ResponseEntity<Map<String, Object>> detailedHealth() {
-        Map<String, Object> health = new HashMap<>();
+4. Liveness Probe（/alive）
+   - プロセスの生存確認
+   - 最も軽量なチェック
+```
 
-        try {
-            // データベース接続チェック
-            try (Connection conn = dataSource.getConnection()) {
-                conn.createStatement().execute("SELECT 1");
-                health.put("database", "UP");
-            }
-        } catch (Exception e) {
-            health.put("database", "DOWN");
-            health.put("database_error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(health);
-        }
+#### シンプルな実装例（疑似コード）
 
-        try {
-            // Redis接続チェック
-            redisTemplate.opsForValue().get("health_check");
-            health.put("redis", "UP");
-        } catch (Exception e) {
-            health.put("redis", "DOWN");
-            health.put("redis_error", e.getMessage());
-            // Redisは必須でない場合、継続
-        }
+```
+GET /health
+  if (application_is_running) {
+    return 200 OK, body: "OK"
+  } else {
+    return 503 Service Unavailable
+  }
 
-        health.put("status", "UP");
-        return ResponseEntity.ok(health);
-    }
+GET /health/detailed
+  status = {}
 
-    // 起動準備完了チェック（Readiness Probe）
-    @GetMapping("/ready")
-    public ResponseEntity<String> ready() {
-        // アプリケーション初期化完了チェック
-        if (!applicationInitialized) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("NOT READY");
-        }
-        return ResponseEntity.ok("READY");
-    }
+  # データベースチェック
+  try {
+    execute_query("SELECT 1")
+    status["database"] = "UP"
+  } catch (error) {
+    status["database"] = "DOWN"
+    return 503, body: status
+  }
 
-    // 生存確認（Liveness Probe）
-    @GetMapping("/alive")
-    public ResponseEntity<String> alive() {
-        // 単純な応答（プロセスが生きているか）
-        return ResponseEntity.ok("ALIVE");
-    }
-}
+  # 全て正常
+  status["status"] = "UP"
+  return 200, body: status
 ```
 
 ### 5.4 ヘルスチェックのベストプラクティス
@@ -707,30 +643,30 @@ public class HealthCheckController {
 
 ### 6.2 セッション維持の方式
 
-#### Cookieベース（ALBのデフォルト）
+#### Cookieベース
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              ALB Cookie ベースセッション維持                 │
+│              Cookie ベースセッション維持                     │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  1. 初回リクエスト                                           │
-│     クライアント → ALB → Server1                             │
+│     クライアント → ロードバランサー → Server1                │
 │                                                              │
-│  2. ALBがCookieを追加                                        │
-│     ALB → クライアント                                       │
-│     Set-Cookie: AWSALB=...; Path=/; Expires=...             │
+│  2. ロードバランサーがCookieを追加                           │
+│     ロードバランサー → クライアント                          │
+│     Set-Cookie: LB_SESSION=...; Path=/; Expires=...         │
 │                                                              │
 │  3. 2回目以降のリクエスト                                    │
-│     クライアント → ALB (Cookieを送信)                        │
-│     Cookie: AWSALB=...                                      │
+│     クライアント → ロードバランサー (Cookieを送信)           │
+│     Cookie: LB_SESSION=...                                  │
 │     ↓                                                       │
-│     ALB がCookieを読み取り、Server1に転送                   │
+│     ロードバランサーがCookieを読み取り、Server1に転送        │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### IPアドレスベース（NLB）
+#### IPアドレスベース
 
 ```
 クライアントIPアドレスに基づいて同じサーバーに転送
@@ -741,179 +677,198 @@ hash(クライアントIP) % サーバー数 = サーバーインデックス
 欠点: NATやプロキシ経由で同一IPに見える場合、偏りが発生
 ```
 
-### 6.3 ALBでのSticky Session設定
+### 6.3 ロードバランサーでのSticky Session設定
 
-```bash
-# ターゲットグループでSticky Session有効化
-aws elbv2 modify-target-group-attributes \
-  --target-group-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-targets/50dc6c495c0c9188 \
-  --attributes \
-    Key=stickiness.enabled,Value=true \
-    Key=stickiness.type,Value=lb_cookie \
-    Key=stickiness.lb_cookie.duration_seconds,Value=86400
+#### Nginx設定例
 
-# アプリケーションCookieベースのSticky Session
-aws elbv2 modify-target-group-attributes \
-  --target-group-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-targets/50dc6c495c0c9188 \
-  --attributes \
-    Key=stickiness.enabled,Value=true \
-    Key=stickiness.type,Value=app_cookie \
-    Key=stickiness.app_cookie.cookie_name,Value=JSESSIONID \
-    Key=stickiness.app_cookie.duration_seconds,Value=86400
+```nginx
+# /etc/nginx/nginx.conf
+
+upstream backend_servers {
+    # IPハッシュによるセッション維持
+    ip_hash;
+
+    server 192.168.1.10:8080;
+    server 192.168.1.11:8080;
+    server 192.168.1.12:8080;
+}
+
+server {
+    listen 80;
+    server_name example.com;
+
+    location / {
+        proxy_pass http://backend_servers;
+    }
+}
+```
+
+#### HAProxy設定例
+
+```
+# /etc/haproxy/haproxy.cfg
+
+backend web_servers
+    balance roundrobin
+    # Cookieベースのセッション維持
+    cookie SERVERID insert indirect nocache
+
+    server web1 192.168.1.10:80 check cookie web1
+    server web2 192.168.1.11:80 check cookie web2
+    server web3 192.168.1.12:80 check cookie web3
 ```
 
 ### 6.4 ステートレス設計（推奨）
 
 セッション維持に依存しない設計が推奨されます。
 
-```java
-// アンチパターン: サーバー側セッション
-// HttpSession を使用（メモリに保存）
-HttpSession session = request.getSession();
-session.setAttribute("user", user);
+```
+アンチパターン: サーバー側セッション
+  - サーバーのメモリにセッション情報を保存
+  - スケールアウトが困難
+  - ロードバランサーでSticky Session必須
 
-// 推奨パターン1: JWTトークン
-// セッション情報をトークンに含める（ステートレス）
-String token = Jwts.builder()
-    .setSubject(user.getId())
-    .claim("email", user.getEmail())
-    .setExpiration(new Date(System.currentTimeMillis() + 3600000))
-    .signWith(SignatureAlgorithm.HS256, secretKey)
-    .compact();
+推奨パターン1: トークンベース認証（JWT等）
+  - セッション情報をトークンに含める
+  - ステートレス（サーバー側でセッション保持不要）
+  - どのサーバーでもトークン検証可能
+  - スケールアウトが容易
 
-// 推奨パターン2: 外部セッションストア
-// Redis、DynamoDB等にセッション保存
-@Bean
-public HttpSessionIdResolver httpSessionIdResolver() {
-    return HeaderHttpSessionIdResolver.xAuthToken();
-}
+推奨パターン2: 外部セッションストア
+  - Redis、Memcached等にセッション保存
+  - 全サーバーから共有セッションストアにアクセス
+  - Sticky Session不要
+  - 高可用性設計が必要
 
-@Bean
-public RedisTemplate<String, Object> sessionRedisTemplate() {
-    // Spring Session with Redis
-}
+比較:
+┌──────────────────┬─────────┬──────────┬─────────────┐
+│ 方式             │ 複雑度  │ スケール │ Sticky必要   │
+├──────────────────┼─────────┼──────────┼─────────────┤
+│ サーバーセッション│ 低      │ 困難     │ 必須         │
+│ トークンベース    │ 中      │ 容易     │ 不要         │
+│ 外部ストア        │ 高      │ 容易     │ 不要         │
+└──────────────────┴─────────┴──────────┴─────────────┘
 ```
 
 ---
 
 ## 7. コンテナ環境でのロードバランシング
 
-### 7.1 ECS + ALB
+### 7.1 コンテナ環境の特徴
+
+コンテナオーケストレーション（Kubernetes、Docker Swarm等）では、動的にコンテナが作成・削除されるため、ロードバランサーとの統合が重要です。
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              ECS + ALB の統合                                │
+│              コンテナロードバランシングの課題                 │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  ALB                                                         │
-│   ├─ Listener (HTTPS:443)                                   │
-│   │   ├─ Rule: /api/*  → api-target-group                   │
-│   │   └─ Rule: /web/*  → web-target-group                   │
-│   │                                                          │
-│  ECS Cluster                                                 │
-│   ├─ Service: api-service                                    │
-│   │   ├─ Task1 (動的ポート: 32768) ← api-target-group       │
-│   │   ├─ Task2 (動的ポート: 32769) ← api-target-group       │
-│   │   └─ Task3 (動的ポート: 32770) ← api-target-group       │
-│   │                                                          │
-│   └─ Service: web-service                                    │
-│       ├─ Task1 (動的ポート: 32771) ← web-target-group       │
-│       └─ Task2 (動的ポート: 32772) ← web-target-group       │
+│  従来の環境:                                                 │
+│  - サーバーのIPアドレスは固定                                │
+│  - 手動でロードバランサーに登録                              │
 │                                                              │
-│  ※ ECSが自動的にターゲットグループにタスクを登録/解除       │
+│  コンテナ環境:                                               │
+│  - コンテナのIPアドレスは動的に変化                          │
+│  - コンテナの数が自動的に増減（オートスケール）              │
+│  - ロードバランサーへの自動登録/解除が必要                   │
+│                                                              │
+│  解決策:                                                     │
+│  - サービスディスカバリー                                    │
+│  - 動的ターゲット登録                                        │
+│  - ヘルスチェックによる自動除外                              │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### ECS Service with ALB設定例
-
-```yaml
-# ECS Task Definition
-{
-  "family": "api-task",
-  "containerDefinitions": [
-    {
-      "name": "api-container",
-      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/api:latest",
-      "portMappings": [
-        {
-          "containerPort": 8080,
-          "protocol": "tcp"
-        }
-      ],
-      "healthCheck": {
-        "command": ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"],
-        "interval": 30,
-        "timeout": 5,
-        "retries": 3,
-        "startPeriod": 60
-      }
-    }
-  ]
-}
-```
-
-```bash
-# ECS Service作成（ALB統合）
-aws ecs create-service \
-  --cluster my-cluster \
-  --service-name api-service \
-  --task-definition api-task:1 \
-  --desired-count 3 \
-  --launch-type FARGATE \
-  --network-configuration "awsvpcConfiguration={subnets=[subnet-12345678,subnet-87654321],securityGroups=[sg-12345678],assignPublicIp=ENABLED}" \
-  --load-balancers \
-    targetGroupArn=arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/api-targets/50dc6c495c0c9188,\
-    containerName=api-container,\
-    containerPort=8080
-```
-
 ### 7.2 Kubernetes Service（LoadBalancer type）
 
+Kubernetesは、Serviceリソースを使用してロードバランシングを提供します。
+
 ```yaml
-# Kubernetes Service - LoadBalancer type
+# Kubernetes Service定義
 apiVersion: v1
 kind: Service
 metadata:
   name: api-service
-  annotations:
-    # AWS Load Balancer Controller annotations
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"  # NLB使用
-    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
 spec:
-  type: LoadBalancer
+  type: LoadBalancer  # 外部ロードバランサーを自動作成
   selector:
     app: api
   ports:
     - port: 80
       targetPort: 8080
       protocol: TCP
+
 ---
-# ALB使用（Ingress経由）
+# Deployment定義（バックエンドPod）
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: api
+        image: myapp/api:latest
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+```
+
+### 7.3 Kubernetes Ingress
+
+Ingressは、L7レベルのロードバランシングとルーティングを提供します。
+
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: api-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/healthcheck-path: /health
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:123456789012:certificate/...
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
     - host: api.example.com
       http:
         paths:
-          - path: /
+          # パスベースルーティング
+          - path: /api/v1
             pathType: Prefix
             backend:
               service:
-                name: api-service
+                name: api-v1-service
                 port:
                   number: 80
+          - path: /api/v2
+            pathType: Prefix
+            backend:
+              service:
+                name: api-v2-service
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - api.example.com
+      secretName: api-tls-secret
 ```
 
 ---
@@ -926,43 +881,44 @@ spec:
 
 - ロードバランシングの基本概念とアルゴリズム（ラウンドロビン、最小接続数、IPハッシュ等）
 - L4とL7ロードバランサーの違いと使い分け
-- AWS ELB（ALB、NLB）の機能と実装
+- Nginx、HAProxyを使用したロードバランサー設定
 - ヘルスチェックの仕組みとベストプラクティス
 - セッション維持とステートレス設計
-- コンテナ環境（ECS、Kubernetes）でのロードバランシング
+- コンテナ環境（Kubernetes）でのロードバランシング
 
 ### 重要なポイント
 
 ```
 1. L4 vs L7 の使い分け
-   - HTTP/HTTPS → ALB（L7）
-   - TCP/UDP、非HTTP → NLB（L4）
-   - 超高速処理 → NLB
+   - HTTP/HTTPS → L7ロードバランサー（Nginx、HAProxy）
+   - TCP/UDP、非HTTP → L4ロードバランサー
+   - 超高速処理 → L4が有利
 
 2. ヘルスチェックの設計
-   - 軽量なエンドポイント
-   - 依存サービスのチェック
+   - 軽量なエンドポイント（/health）
+   - 依存サービスのチェック（データベース、キャッシュ等）
    - 適切なタイムアウト設定
 
-3. ステートレス設計
+3. ステートレス設計（推奨）
    - セッション維持に依存しない
-   - JWTトークン使用
-   - 外部セッションストア（Redis等）
+   - トークンベース認証（JWT等）
+   - 外部セッションストア（Redis、Memcached等）
 
 4. パスベースルーティングの活用
    - マイクロサービス統合
-   - コスト削減（1つのALBで複数サービス）
+   - バージョニング（/api/v1、/api/v2）
+   - サービス分離
 ```
 
 ### 次のステップ
 
-- [04-ssl-tls-certificates.md](./04-ssl-tls-certificates.md) - SSL/TLS証明書とACM
-- [05-api-gateway-networking.md](./05-api-gateway-networking.md) - API Gatewayとロードバランサー
-- [06-network-troubleshooting.md](./06-network-troubleshooting.md) - ロードバランサーのトラブルシューティング
+- [04-ssl-tls-certificates.md](./04-ssl-tls-certificates.md) - SSL/TLS証明書管理
+- [05-api-gateway-networking.md](./05-api-gateway-networking.md) - リバースプロキシとAPI Gateway
+- [06-network-troubleshooting.md](./06-network-troubleshooting.md) - ネットワークトラブルシューティング
 
 ### 参考リンク
 
-- [AWS ELB Documentation](https://docs.aws.amazon.com/elasticloadbalancing/)
-- [ALB User Guide](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/)
-- [NLB User Guide](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/)
-- [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
+- [Nginx Documentation](https://nginx.org/en/docs/)
+- [HAProxy Documentation](https://www.haproxy.org/documentation.html)
+- [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/)
+- [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)

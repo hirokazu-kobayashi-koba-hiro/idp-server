@@ -957,7 +957,7 @@ kdig -d @8.8.8.8 +tls example.com
 
 ### 次のステップ
 
-- [02-dns-advanced.md](./02-dns-advanced.md) - DNS詳細（CNAME、Route 53、DNSSEC）
+- [02-dns-advanced.md](./02-dns-advanced.md) - DNS詳細（CNAME、DNSルーティング、DNSSEC）
 - [03-load-balancing.md](./03-load-balancing.md) - ロードバランシングとDNSの関係
 - [06-network-troubleshooting.md](./06-network-troubleshooting.md) - ネットワークトラブルシューティング
 
