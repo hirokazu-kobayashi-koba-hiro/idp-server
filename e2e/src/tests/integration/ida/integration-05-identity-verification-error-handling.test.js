@@ -463,6 +463,83 @@ describe("Identity Verification Error Handling", () => {
 
   });
 
+  describe("400 Bad Request - Invalid Path Parameter Tests", () => {
+
+    it("should return 404 for non-existent configuration type", async () => {
+      console.log("\n🧪 Test: Non-existent configuration type → 404");
+
+      const nonExistentType = "non-existent-config-type";
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${nonExistentType}/apply`;
+
+      const response = await postWithJson({
+        url: applyUrl,
+        body: { "name": "Test User" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      expect(response.status).toBe(404);
+      expect(response.data).toHaveProperty("error", "invalid_request");
+      expect(response.data.error_description).toContain("Not Found");
+
+      console.log("✅ Non-existent config type correctly returns 404");
+    });
+
+    it("should return 400 for invalid UUID format in application ID", async () => {
+      console.log("\n🧪 Test: Invalid UUID format in application ID → 400");
+
+      const invalidUuid = "not-a-valid-uuid";
+      const processUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${configurationType}/${invalidUuid}/complete`;
+
+      const response = await postWithJson({
+        url: processUrl,
+        body: {},
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      expect(response.status).toBe(400);
+      expect(response.data).toHaveProperty("error");
+
+      console.log("✅ Invalid UUID format correctly returns 400");
+    });
+
+    it("should return 200 with filtered results for query parameters", async () => {
+      console.log("\n🧪 Test: Query filter with no matches → 200 with empty list");
+
+      const noMatchFilter = "status-that-does-not-exist";
+      const listUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications?status=${encodeURIComponent(noMatchFilter)}`;
+
+      const response = await get({
+        url: listUrl,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("list");
+      expect(Array.isArray(response.data.list)).toBe(true);
+
+      console.log("✅ Query filter with no matches returns 200 with empty list");
+    });
+
+  });
+
   describe("401 and 404 Combined Scenario Tests", () => {
 
     it("should prioritize 401 over 404 when both conditions apply", async () => {
@@ -488,6 +565,239 @@ describe("Identity Verification Error Handling", () => {
       expect(response.data).toHaveProperty("error", "invalid_token");
 
       console.log("✅ Correctly prioritized 401 over 404");
+    });
+
+  });
+
+  describe("SSRF Protection - Malicious Request Body Data", () => {
+    let ssrfTestConfigId;
+    let ssrfTestConfigType;
+
+    beforeAll(async () => {
+      console.log("\n🔧 Setup: Creating SSRF protection test configuration...");
+
+      ssrfTestConfigId = uuidv4();
+      ssrfTestConfigType = `ssrf-test-${uuidv4()}`;
+
+      // Configuration that uses path_mapping_rules to interpolate user input into URL
+      const configurationData = {
+        "id": ssrfTestConfigId,
+        "type": ssrfTestConfigType,
+        "attributes": {
+          "enabled": true,
+          "description": "Test configuration for SSRF protection"
+        },
+        "common": {
+          "callback_application_id_param": "app_id",
+          "auth_type": "none"
+        },
+        "processes": {
+          "apply": {
+            "request": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": { "type": "string" },
+                  "name": { "type": "string" }
+                },
+                "required": ["user_id", "name"]
+              }
+            },
+            "execution": {
+              "type": "http_request",
+              "http_request": {
+                "url": `${mockApiBaseUrl}/e2e/users/{{user_id}}/verify`,
+                "method": "POST",
+                "auth_type": "none",
+                "path_mapping_rules": [
+                  {
+                    "from": "$.request_body.user_id",
+                    "to": "user_id"
+                  }
+                ],
+                "body_mapping_rules": [
+                  {
+                    "from": "$.request_body.name",
+                    "to": "name"
+                  }
+                ]
+              }
+            },
+            "transition": {
+              "applying": {
+                "any_of": [[]]
+              }
+            },
+            "store": {
+              "application_details_mapping_rules": [
+                {
+                  "from": "$.request_body",
+                  "to": "*"
+                }
+              ]
+            }
+          }
+        }
+      };
+
+      const configUrl = `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`;
+
+      const configResponse = await postWithJson({
+        url: configUrl,
+        body: configurationData,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${orgAccessToken}`
+        }
+      });
+
+      console.log(`✅ SSRF test configuration created: ${ssrfTestConfigType}`);
+      expect(configResponse.status).toBe(201);
+    });
+
+    afterAll(async () => {
+      if (ssrfTestConfigId) {
+        await deletion({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${ssrfTestConfigId}`,
+          headers: { Authorization: `Bearer ${orgAccessToken}` }
+        });
+        console.log(`🧹 Cleaned up SSRF test configuration: ${ssrfTestConfigId}`);
+      }
+    });
+
+    it("should reject path traversal in request body used for URL interpolation", async () => {
+      console.log("\n🧪 Test: SSRF - Path traversal in user_id → 400");
+
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${ssrfTestConfigType}/apply`;
+
+      const response = await postWithJson({
+        url: applyUrl,
+        body: {
+          "user_id": "../../../admin/secret",
+          "name": "Test User"
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      // Path traversal should be rejected by UrlParameterSanitizer
+      expect(response.status).toBe(400);
+      expect(response.data).toHaveProperty("error");
+
+      console.log("✅ Path traversal in request body correctly rejected (SSRF protection)");
+    });
+
+    it("should reject URL scheme injection in request body used for URL interpolation", async () => {
+      console.log("\n🧪 Test: SSRF - URL scheme injection in user_id → 400");
+
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${ssrfTestConfigType}/apply`;
+
+      const response = await postWithJson({
+        url: applyUrl,
+        body: {
+          "user_id": "http://evil.com/steal",
+          "name": "Test User"
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      // URL scheme injection should be rejected by UrlParameterSanitizer
+      expect(response.status).toBe(400);
+      expect(response.data).toHaveProperty("error");
+
+      console.log("✅ URL scheme injection in request body correctly rejected (SSRF protection)");
+    });
+
+    it("should reject CRLF injection in request body used for URL interpolation", async () => {
+      console.log("\n🧪 Test: SSRF - CRLF injection in user_id → 400");
+
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${ssrfTestConfigType}/apply`;
+
+      const response = await postWithJson({
+        url: applyUrl,
+        body: {
+          "user_id": "user123\r\nX-Injected: header",
+          "name": "Test User"
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      // CRLF injection should be rejected by UrlParameterSanitizer
+      expect(response.status).toBe(400);
+      expect(response.data).toHaveProperty("error");
+
+      console.log("✅ CRLF injection in request body correctly rejected (SSRF protection)");
+    });
+
+    it("should reject script/command injection characters in request body", async () => {
+      console.log("\n🧪 Test: SSRF - Script injection in user_id → 400");
+
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${ssrfTestConfigType}/apply`;
+
+      const response = await postWithJson({
+        url: applyUrl,
+        body: {
+          "user_id": "<script>alert(1)</script>",
+          "name": "Test User"
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      // Script injection should be rejected by UrlParameterSanitizer
+      expect(response.status).toBe(400);
+      expect(response.data).toHaveProperty("error");
+
+      console.log("✅ Script injection in request body correctly rejected (SSRF protection)");
+    });
+
+    it("should allow valid user_id and make successful external request", async () => {
+      console.log("\n🧪 Test: SSRF - Valid user_id → Success (200)");
+
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${ssrfTestConfigType}/apply`;
+
+      const response = await postWithJson({
+        url: applyUrl,
+        body: {
+          "user_id": "user-12345",
+          "name": "Test User"
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      // Valid user_id should pass sanitization and reach the mock server
+      // Mock server returns 200 with verification result
+      expect(response.status).toBe(200);
+
+      console.log("✅ Valid user_id passed sanitization and verification succeeded");
     });
 
   });

@@ -16,8 +16,6 @@
 
 package org.idp.server.platform.http;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -29,18 +27,19 @@ public class HttpQueryParams {
   public HttpQueryParams() {}
 
   public HttpQueryParams(Map<String, String> values) {
-    this.values.putAll(values);
+    values.forEach(this::add);
   }
 
   public static HttpQueryParams fromMapObject(Map<String, Object> values) {
-    Map<String, String> map = new HashMap<>();
-    values.forEach((k, v) -> map.put(k, v.toString()));
-    return new HttpQueryParams(map);
+    HttpQueryParams params = new HttpQueryParams();
+    values.forEach((k, v) -> params.add(k, v.toString()));
+    return params;
   }
 
   public void add(String key, String value) {
-    String urlEncodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8);
-    values.put(key, urlEncodedValue);
+    String urlEncodedKey = UrlParameterSanitizer.encodeQueryKey(key);
+    String urlEncodedValue = UrlParameterSanitizer.encodeQueryValue(value);
+    values.put(urlEncodedKey, urlEncodedValue);
   }
 
   public String params() {

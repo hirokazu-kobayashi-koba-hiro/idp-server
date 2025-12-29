@@ -1545,6 +1545,37 @@
       "streamingInterval": 0
     },
     {
+      "uuid": "e2e-ssrf-user-verify",
+      "type": "http",
+      "documentation": "E2E test: User verification endpoint for SSRF protection test",
+      "method": "post",
+      "endpoint": "e2e/users/:user_id/verify",
+      "responses": [
+        {
+          "uuid": "ssrf-verify-success",
+          "body": "{\n  \"status\": \"verified\",\n  \"user_id\": \"{{urlParam 'user_id'}}\",\n  \"message\": \"User verification successful\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Verification Success",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
       "uuid": "ciba-notification-callback",
       "type": "http",
       "documentation": "CIBA client notification endpoint - RFC 8266 Section 10.2/10.3. Validates Authorization header contains Bearer token.",
