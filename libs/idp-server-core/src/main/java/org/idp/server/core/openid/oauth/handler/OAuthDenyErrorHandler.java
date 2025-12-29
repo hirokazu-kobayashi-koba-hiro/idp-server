@@ -36,7 +36,7 @@ public class OAuthDenyErrorHandler {
       AuthorizationErrorResponseCreator authorizationErrorResponseCreator =
           new AuthorizationErrorResponseCreator(redirectableBadRequestException);
       AuthorizationErrorResponse errorResponse = authorizationErrorResponseCreator.create();
-      log.warn(redirectableBadRequestException.getMessage(), exception);
+      log.warn(redirectableBadRequestException.getMessage());
       return new OAuthDenyResponse(OAuthDenyStatus.REDIRECABLE_BAD_REQUEST, errorResponse);
     }
     if (exception instanceof ClientConfigurationNotFoundException) {

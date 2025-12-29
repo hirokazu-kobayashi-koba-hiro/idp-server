@@ -18,6 +18,7 @@ package org.idp.server.core.openid.oauth;
 
 import java.util.Map;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.logout.OAuthLogoutContext;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
@@ -55,6 +56,17 @@ public class OAuthFlowEventPublisher {
     OAuthFlowEventCreator eventCreator =
         new OAuthFlowEventCreator(
             tenant, authorizationRequest, user, type, authenticationResult, requestAttributes);
+    SecurityEvent securityEvent = eventCreator.create();
+    securityEventPublisher.publish(securityEvent);
+  }
+
+  public void publishLogout(
+      Tenant tenant,
+      OAuthLogoutContext context,
+      SecurityEventType type,
+      RequestAttributes requestAttributes) {
+    OAuthLogoutEventCreator eventCreator =
+        new OAuthLogoutEventCreator(tenant, context, type, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }

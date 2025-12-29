@@ -43,6 +43,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
   OAuthDenyHandler oAuthDenyHandler;
   OAuthDenyErrorHandler denyErrorHandler;
   OAuthHandler oAuthHandler;
+  OAuthLogoutErrorHandler logoutErrorHandler;
   OAuthSessionDelegate oAuthSessionDelegate;
 
   public DefaultOAuthProtocol(
@@ -83,6 +84,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
     this.oAuthRequestErrorHandler = new OAuthRequestErrorHandler();
     this.authAuthorizeErrorHandler = new OAuthAuthorizeErrorHandler();
     this.denyErrorHandler = new OAuthDenyErrorHandler();
+    this.logoutErrorHandler = new OAuthLogoutErrorHandler();
     this.oAuthSessionDelegate = oAuthSessionDelegate;
   }
 
@@ -168,7 +170,12 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
   }
 
   public OAuthLogoutResponse logout(OAuthLogoutRequest request) {
+    try {
 
-    return oAuthHandler.handleLogout(request, oAuthSessionDelegate);
+      return oAuthHandler.handleLogout(request, oAuthSessionDelegate);
+    } catch (Exception exception) {
+
+      return logoutErrorHandler.handle(exception);
+    }
   }
 }

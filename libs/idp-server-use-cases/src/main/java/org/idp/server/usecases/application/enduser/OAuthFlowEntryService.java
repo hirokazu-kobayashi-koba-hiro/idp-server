@@ -436,6 +436,16 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
-    return oAuthProtocol.logout(oAuthLogoutRequest);
+    OAuthLogoutResponse response = oAuthProtocol.logout(oAuthLogoutRequest);
+
+    if (response.isOk() && response.hasContext()) {
+      eventPublisher.publishLogout(
+          tenant,
+          response.context(),
+          DefaultSecurityEventType.logout.toEventType(),
+          requestAttributes);
+    }
+
+    return response;
   }
 }

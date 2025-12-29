@@ -24,12 +24,20 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
-import org.idp.server.core.openid.oauth.io.*;
+import org.idp.server.core.openid.oauth.io.OAuthLogoutRequest;
+import org.idp.server.core.openid.oauth.io.OAuthLogoutResponse;
+import org.idp.server.core.openid.oauth.io.OAuthViewDataRequest;
+import org.idp.server.core.openid.oauth.io.OAuthViewDataResponse;
+import org.idp.server.core.openid.oauth.io.OAuthViewDataStatus;
+import org.idp.server.core.openid.oauth.logout.LogoutRequestVerifier;
+import org.idp.server.core.openid.oauth.logout.OAuthLogoutContext;
+import org.idp.server.core.openid.oauth.logout.OAuthLogoutContextCreator;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.openid.oauth.request.OAuthLogoutParameters;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.oauth.validator.OAuthLogoutValidator;
 import org.idp.server.core.openid.oauth.view.OAuthViewData;
 import org.idp.server.core.openid.oauth.view.OAuthViewDataCreator;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -92,25 +100,66 @@ public class OAuthHandler {
     return authorizationRequestRepository.get(tenant, authorizationRequestIdentifier);
   }
 
-  // TODO this is debug code.
+  /**
+   * Handles RP-Initiated Logout requests.
+   *
+   * <p>OpenID Connect RP-Initiated Logout 1.0 implementation.
+   *
+   * <p>Note: idp-server requires id_token_hint for all logout requests. This ensures that the
+   * End-User can always be identified without requiring a confirmation screen.
+   *
+   * @param request the logout request
+   * @param delegate the session delegate for session management
+   * @return the logout response
+   * @see <a href="https://openid.net/specs/openid-connect-rpinitiated-1_0.html">RP-Initiated
+   *     Logout</a>
+   */
   public OAuthLogoutResponse handleLogout(
       OAuthLogoutRequest request, OAuthSessionDelegate delegate) {
 
     OAuthLogoutParameters parameters = request.toParameters();
     Tenant tenant = request.tenant();
 
+    // 1. Validate parameters (id_token_hint is REQUIRED)
+    OAuthLogoutValidator validator = new OAuthLogoutValidator(tenant, parameters);
+    validator.validate();
+
+    // 2. Get server configuration
+    AuthorizationServerConfiguration serverConfiguration =
+        authorizationServerConfigurationQueryRepository.get(tenant);
+
+    // 3. Create context (validates id_token_hint signature and claims)
+    OAuthLogoutContextCreator contextCreator =
+        new OAuthLogoutContextCreator(tenant, parameters, serverConfiguration);
+    OAuthLogoutContext context = contextCreator.create();
+
+    // 4. Get client configuration
+    ClientConfiguration clientConfiguration =
+        clientConfigurationQueryRepository.get(tenant, context.clientId());
+    context.setClientConfiguration(clientConfiguration);
+
+    // 5. Verify request (post_logout_redirect_uri, audience match, etc.)
+    LogoutRequestVerifier verifier = new LogoutRequestVerifier();
+    verifier.verify(context);
+
+    // 6. Delete session
     OAuthSessionKey oAuthSessionKey =
-        new OAuthSessionKey(tenant.identifierValue(), parameters.clientId().value());
+        new OAuthSessionKey(tenant.identifierValue(), context.clientId().value());
     OAuthSession session = delegate.find(oAuthSessionKey);
-    delegate.deleteSession(oAuthSessionKey);
-
-    String redirectUri =
-        parameters.hasPostLogoutRedirectUri() ? parameters.postLogoutRedirectUri().value() : "";
-
-    if (parameters.hasPostLogoutRedirectUri()) {
-      return new OAuthLogoutResponse(OAuthLogoutStatus.REDIRECABLE_FOUND, redirectUri);
+    if (session != null) {
+      context.setSession(session);
+      delegate.deleteSession(oAuthSessionKey);
     }
 
-    return new OAuthLogoutResponse(OAuthLogoutStatus.OK, "");
+    // 7. Build response
+    if (context.hasPostLogoutRedirectUri()) {
+      String redirectUri = context.postLogoutRedirectUri().value();
+      if (context.hasState()) {
+        redirectUri += "?state=" + context.state().value();
+      }
+      return OAuthLogoutResponse.redirect(redirectUri, context);
+    }
+
+    return OAuthLogoutResponse.ok(context);
   }
 }

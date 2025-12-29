@@ -167,6 +167,7 @@ export const clientSecretPostClient = {
   clientSecret:
     "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  postLogoutRedirectUri: "https://client.example.org/logout-callback",
   scope: "account management identity_verification_application identity_verification_application_delete claims:authentication_devices claims:ex_sub ",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
