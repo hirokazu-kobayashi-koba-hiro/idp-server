@@ -105,6 +105,29 @@ public class OidcFederationInteractor implements FederationInteractor {
     OidcSsoSession session =
         sessionQueryRepository.get(tenant, ssoState.ssoSessionIdentifier(), OidcSsoSession.class);
 
+    if (!session.exists()) {
+      log.warn(
+          "SSO session not found for federation callback. Session ID: {}",
+          ssoState.ssoSessionIdentifier().value());
+      Map<String, Object> errors = new HashMap<>();
+      errors.put("error", "invalid_request");
+      errors.put("error_description", "SSO session not found or expired");
+      return FederationInteractionResult.error(
+          federationType, ssoProvider, new OidcSsoSession(), 400, errors);
+    }
+
+    String callbackState = federationCallbackRequest.state();
+    if (!session.state().equals(callbackState)) {
+      log.error(
+          "State mismatch in federation callback (possible CSRF attack). Expected: {}, Received: {}",
+          session.state(),
+          callbackState);
+      Map<String, Object> errors = new HashMap<>();
+      errors.put("error", "invalid_request");
+      errors.put("error_description", "State parameter mismatch");
+      return FederationInteractionResult.error(federationType, ssoProvider, session, 400, errors);
+    }
+
     OidcSsoConfiguration oidcSsoConfiguration =
         configurationQueryRepository.get(
             tenant, federationType, ssoProvider, OidcSsoConfiguration.class);
