@@ -38,7 +38,6 @@ public class AuthorizationCodeGrantOAuth2Verifier
       AuthorizationRequest authorizationRequest,
       AuthorizationCodeGrant authorizationCodeGrant,
       ClientCredentials clientCredentials) {
-    baseVerifier.verify(
-        tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);
+    baseVerifier.verify(tokenRequestContext, authorizationRequest, authorizationCodeGrant);
   }
 }

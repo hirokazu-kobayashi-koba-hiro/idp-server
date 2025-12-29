@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { requestToken } from "../../api/oauthClient";
-import { clientSecretPostClient, serverConfig } from "../testConfig";
+import { clientSecretPostClient, serverConfig, unsupportedServerConfig, unsupportedClient } from "../testConfig";
 
 describe("The OAuth 2.0 Authorization Framework resource owner password credentials", () => {
   const oauth = serverConfig.oauth;
@@ -95,6 +95,44 @@ describe("The OAuth 2.0 Authorization Framework resource owner password credenti
       expect(tokenResponse.status).toBe(401);
       expect(tokenResponse.data.error).toEqual("invalid_client");
       expect(tokenResponse.data.error_description).toEqual("Client authentication failed: method=client_secret_post, client_id=clientSecretPost, reason=client_secret does not match");
+    });
+  });
+
+  describe("5.2. Error Response", () => {
+    it("unsupported_grant_type The authorization grant type is not supported by the authorization server.", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: unsupportedServerConfig.tokenEndpoint,
+        grantType: "password",
+        scope: unsupportedClient.scope,
+        clientId: unsupportedClient.clientId,
+        clientSecret: unsupportedClient.clientSecret,
+        username: oauth.username,
+        password: oauth.password,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("unsupported_grant_type");
+      expect(tokenResponse.data.error_description).toEqual(
+        "this request grant_type is password, but authorization server does not support"
+      );
+    });
+
+    it("unauthorized_client The authenticated client is not authorized to use this authorization grant type.", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        scope: unsupportedClient.scope,
+        clientId: unsupportedClient.clientId,
+        clientSecret: unsupportedClient.clientSecret,
+        username: oauth.username,
+        password: oauth.password,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("unauthorized_client");
+      expect(tokenResponse.data.error_description).toEqual(
+        "this request grant_type is password, but client does not support"
+      );
     });
   });
 });

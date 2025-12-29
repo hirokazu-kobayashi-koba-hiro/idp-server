@@ -713,11 +713,10 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
       expect(tokenResponse.data.error_description).toEqual("authorization code is expired");
     }, 620000);
 
-    //FIXME fix test process
-    xit("unauthorized_client The authenticated client is not authorized to use this authorization grant type.", async () => {
+    it("unauthorized_client The authenticated client is not authorized to use this authorization grant type.", async () => {
       const tokenResponse = await requestToken({
         endpoint: serverConfig.tokenEndpoint,
-        code: "authorizationResponse.code",
+        code: "dummy_code",
         grantType: "authorization_code",
         redirectUri: unsupportedClient.redirectUri,
         clientId: unsupportedClient.clientId,
@@ -733,10 +732,10 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
       );
     });
 
-    xit("unsupported_grant_type The authorization grant type is not supported by the authorization server.", async () => {
+    it("unsupported_grant_type The authorization grant type is not supported by the authorization server.", async () => {
       const tokenResponse = await requestToken({
         endpoint: unsupportedServerConfig.tokenEndpoint,
-        code: "authorizationResponse.code",
+        code: "dummy_code",
         grantType: "authorization_code",
         redirectUri: unsupportedClient.redirectUri,
         clientId: unsupportedClient.clientId,

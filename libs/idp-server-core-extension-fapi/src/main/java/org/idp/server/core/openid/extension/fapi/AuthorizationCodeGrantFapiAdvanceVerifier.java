@@ -44,8 +44,7 @@ public class AuthorizationCodeGrantFapiAdvanceVerifier
       AuthorizationRequest authorizationRequest,
       AuthorizationCodeGrant authorizationCodeGrant,
       ClientCredentials clientCredentials) {
-    baseVerifier.verify(
-        tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);
+    baseVerifier.verify(tokenRequestContext, authorizationRequest, authorizationCodeGrant);
     throwExceptionIfClientSecretPostOrClientSecretBasicOrClientSecretJwtOrPublicClient(
         tokenRequestContext);
     throwExceptionIfCertificateBoundRequiredButMissing(tokenRequestContext, clientCredentials);
