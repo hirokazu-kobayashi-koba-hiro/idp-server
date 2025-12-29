@@ -94,7 +94,8 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
                 jsonWebSignature,
                 clientConfiguration.idTokenEncryptedResponseAlg(),
                 clientConfiguration.idTokenEncryptedResponseEnc(),
-                clientConfiguration.jwks());
+                clientConfiguration.jwks(),
+                clientConfiguration.clientSecretValue());
         String jwe = nestedJsonWebEncryptionCreator.create();
         return new IdToken(jwe);
       }

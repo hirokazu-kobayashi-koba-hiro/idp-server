@@ -139,7 +139,19 @@
       "type": "string",
       "enum": [
         "RSA1_5",
-        "A128KW"
+        "RSA-OAEP",
+        "RSA-OAEP-256",
+        "A128KW",
+        "A192KW",
+        "A256KW",
+        "dir",
+        "ECDH-ES",
+        "ECDH-ES+A128KW",
+        "ECDH-ES+A192KW",
+        "ECDH-ES+A256KW",
+        "A128GCMKW",
+        "A192GCMKW",
+        "A256GCMKW"
       ],
       "description": "OPTIONAL. JWE alg algorithm [JWA] REQUIRED for encrypting the ID Token issued to this Client. If this is requested, the response will be signed then encrypted, with the result being a Nested JWT, as defined in [JWT]. The default, if omitted, is that no encryption is performed."
     },
@@ -147,7 +159,10 @@
       "type": "string",
       "enum": [
         "A128CBC-HS256",
+        "A192CBC-HS384",
+        "A256CBC-HS512",
         "A128GCM",
+        "A192GCM",
         "A256GCM"
       ],
       "description": "OPTIONAL. JWE enc algorithm [JWA] REQUIRED for encrypting the ID Token issued to this Client. If id_token_encrypted_response_alg is specified, the default id_token_encrypted_response_enc value is A128CBC-HS256. When id_token_encrypted_response_enc is included, id_token_encrypted_response_alg MUST also be provided."
@@ -166,7 +181,19 @@
       "type": "string",
       "enum": [
         "RSA1_5",
-        "A128KW"
+        "RSA-OAEP",
+        "RSA-OAEP-256",
+        "A128KW",
+        "A192KW",
+        "A256KW",
+        "dir",
+        "ECDH-ES",
+        "ECDH-ES+A128KW",
+        "ECDH-ES+A192KW",
+        "ECDH-ES+A256KW",
+        "A128GCMKW",
+        "A192GCMKW",
+        "A256GCMKW"
       ],
       "description": "OPTIONAL. JWE [JWE] alg algorithm [JWA] REQUIRED for encrypting UserInfo Responses. If both signing and encryption are requested, the response will be signed then encrypted, with the result being a Nested JWT, as defined in [JWT]. The default, if omitted, is that no encryption is performed."
     },
@@ -174,7 +201,10 @@
       "type": "string",
       "enum": [
         "A128CBC-HS256",
+        "A192CBC-HS384",
+        "A256CBC-HS512",
         "A128GCM",
+        "A192GCM",
         "A256GCM"
       ],
       "description": "OPTIONAL. JWE enc algorithm [JWA] REQUIRED for encrypting UserInfo Responses. If userinfo_encrypted_response_alg is specified, the default userinfo_encrypted_response_enc value is A128CBC-HS256. When userinfo_encrypted_response_enc is included, userinfo_encrypted_response_alg MUST also be provided."

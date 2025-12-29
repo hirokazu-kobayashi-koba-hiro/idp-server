@@ -92,11 +92,13 @@
   ],
   "id_token_encryption_alg_values_supported": [
     "RSA1_5",
-    "A128KW"
+    "A128KW",
+    "A256KW"
   ],
   "id_token_encryption_enc_values_supported": [
     "A128CBC-HS256",
-    "A128GCM"
+    "A128GCM",
+    "A256GCM"
   ],
   "request_object_signing_alg_values_supported": [
     "none",

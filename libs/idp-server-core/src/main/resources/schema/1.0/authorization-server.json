@@ -156,7 +156,19 @@
         "type": "string",
         "enum": [
           "RSA1_5",
-          "A128KW"
+          "RSA-OAEP",
+          "RSA-OAEP-256",
+          "A128KW",
+          "A192KW",
+          "A256KW",
+          "dir",
+          "ECDH-ES",
+          "ECDH-ES+A128KW",
+          "ECDH-ES+A192KW",
+          "ECDH-ES+A256KW",
+          "A128GCMKW",
+          "A192GCMKW",
+          "A256GCMKW"
         ]
       },
       "description": "OPTIONAL. JSON array containing a list of the JWE encryption algorithms (alg values) supported by the OP for the ID Token to encode the Claims in a JWT [JWT]."
@@ -167,7 +179,10 @@
         "type": "string",
         "enum": [
           "A128CBC-HS256",
+          "A192CBC-HS384",
+          "A256CBC-HS512",
           "A128GCM",
+          "A192GCM",
           "A256GCM"
         ]
       },

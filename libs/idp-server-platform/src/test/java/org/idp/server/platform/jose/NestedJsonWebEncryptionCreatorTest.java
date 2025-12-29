@@ -92,7 +92,7 @@ public class NestedJsonWebEncryptionCreatorTest {
         jsonWebSignatureFactory.createWithAsymmetricKey(claims, Map.of(), jwkValue);
 
     NestedJsonWebEncryptionCreator nestedJsonWebEncryptionCreator =
-        new NestedJsonWebEncryptionCreator(jsonWebSignature, "ECDH-ES", "A256GCM", jwks);
+        new NestedJsonWebEncryptionCreator(jsonWebSignature, "ECDH-ES", "A256GCM", jwks, "");
     String jwe = nestedJsonWebEncryptionCreator.create();
     System.out.println(jwe);
   }
@@ -127,7 +127,7 @@ public class NestedJsonWebEncryptionCreatorTest {
         jsonWebSignatureFactory.createWithAsymmetricKey(claims, Map.of(), jwkValue);
 
     NestedJsonWebEncryptionCreator nestedJsonWebEncryptionCreator =
-        new NestedJsonWebEncryptionCreator(jsonWebSignature, "RSA1_5", "A256GCM", jwks);
+        new NestedJsonWebEncryptionCreator(jsonWebSignature, "RSA1_5", "A256GCM", jwks, "");
     String jwe = nestedJsonWebEncryptionCreator.create();
     System.out.println(jwe);
   }

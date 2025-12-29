@@ -4,6 +4,7 @@ import { requestToken } from "../../api/oauthClient";
 import {
   clientSecretPostClient,
   clientSecretPostWithIdTokenEncClient,
+  clientSecretPostWithSymmetricIdTokenEncClient,
   serverConfig,
 } from "../testConfig";
 import { requestAuthorizations, requestLogout } from "../../oauth/request";
@@ -551,6 +552,108 @@ describe("OpenID Connect RP-Initiated Logout 1.0", () => {
 
       console.log("Decrypted JWS Logout response:", response.status, response.data);
       expect(response.status).toBe(200);
+    });
+  });
+
+  describe("Symmetric JWE ID Token Support", () => {
+    /**
+     * Helper to get a symmetrically encrypted ID token (A256KW)
+     */
+    const getSymmetricEncryptedIdToken = async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostWithSymmetricIdTokenEncClient.clientId,
+        responseType: "code",
+        state: `test-state-${Date.now()}`,
+        scope: "openid " + clientSecretPostWithSymmetricIdTokenEncClient.scope,
+        redirectUri: clientSecretPostWithSymmetricIdTokenEncClient.redirectUri,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostWithSymmetricIdTokenEncClient.redirectUri,
+        clientId: clientSecretPostWithSymmetricIdTokenEncClient.clientId,
+        clientSecret: clientSecretPostWithSymmetricIdTokenEncClient.clientSecret,
+      });
+
+      console.log("Symmetric Encrypted ID Token Response:", JSON.stringify(tokenResponse.data, null, 2));
+      expect(tokenResponse.status).toBe(200);
+
+      return tokenResponse.data.id_token;
+    };
+
+    /**
+     * Per OIDC Core Section 10.2, symmetric encryption uses keys derived from client_secret.
+     * Unlike asymmetric JWE (encrypted with client's public key), the OP can decrypt
+     * symmetric JWE because it knows the client_secret.
+     *
+     * Per RP-Initiated Logout spec: "Note that symmetrically encrypted ID Tokens
+     * used as id_token_hint values [...] require the Client Identifier to be
+     * specified by other means, so that the ID Tokens can be decrypted by the OP."
+     */
+    it("should accept symmetric JWE id_token_hint with client_id parameter", async () => {
+      const encryptedIdToken = await getSymmetricEncryptedIdToken();
+
+      // Verify it's a JWE (5 parts separated by dots)
+      const parts = encryptedIdToken.split(".");
+      console.log("Symmetric JWE Token parts count:", parts.length);
+      expect(parts.length).toBe(5); // JWE has 5 parts
+
+      // Symmetric JWE CAN be decrypted by the OP using client_secret
+      // But client_id parameter is REQUIRED to look up the client_secret
+      const response = await requestLogout({
+        endpoint: serverConfig.logoutEndpoint,
+        idTokenHint: encryptedIdToken,
+        clientId: clientSecretPostWithSymmetricIdTokenEncClient.clientId,
+      });
+
+      console.log("Symmetric JWE Logout response:", response.status, response.data);
+
+      // OP can decrypt symmetric JWE using client_secret derived key
+      expect(response.status).toBe(200);
+    });
+
+    it("should reject symmetric JWE id_token_hint without client_id parameter", async () => {
+      const encryptedIdToken = await getSymmetricEncryptedIdToken();
+
+      // Verify it's a JWE (5 parts)
+      const parts = encryptedIdToken.split(".");
+      expect(parts.length).toBe(5);
+
+      // Without client_id, OP cannot determine which client_secret to use
+      const response = await requestLogout({
+        endpoint: serverConfig.logoutEndpoint,
+        idTokenHint: encryptedIdToken,
+        // client_id is intentionally omitted
+      });
+
+      console.log("Symmetric JWE without client_id response:", response.status, response.data);
+
+      // Should fail because client_id is required for symmetric JWE decryption
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("invalid_request");
+      expect(response.data.error_description).toContain("client_id");
+    });
+
+    it("should redirect to registered post_logout_redirect_uri after symmetric JWE logout", async () => {
+      const encryptedIdToken = await getSymmetricEncryptedIdToken();
+      const testState = `symmetric-jwe-logout-${Date.now()}`;
+
+      const response = await requestLogout({
+        endpoint: serverConfig.logoutEndpoint,
+        idTokenHint: encryptedIdToken,
+        clientId: clientSecretPostWithSymmetricIdTokenEncClient.clientId,
+        postLogoutRedirectUri: clientSecretPostWithSymmetricIdTokenEncClient.postLogoutRedirectUri,
+        state: testState,
+      });
+
+      console.log("Symmetric JWE Logout with redirect:", response.status, response.headers.location);
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toContain(clientSecretPostWithSymmetricIdTokenEncClient.postLogoutRedirectUri);
+      expect(response.headers.location).toContain(`state=${testState}`);
     });
   });
 });

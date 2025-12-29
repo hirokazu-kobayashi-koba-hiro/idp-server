@@ -30,7 +30,6 @@ import java.util.Set;
  * <ul>
  *   <li>Key Wrapping (A128KW, A192KW, A256KW, A128GCMKW, A192GCMKW, A256GCMKW)
  *   <li>Direct Key Agreement (dir)
- *   <li>Password-Based Key Derivation (PBES2-HS256+A128KW, PBES2-HS384+A192KW, PBES2-HS512+A256KW)
  * </ul>
  *
  * <p>OpenID Connect Core 1.0 Section 10.2 specifies that symmetric encryption keys for ID Token
@@ -50,10 +49,7 @@ public class SymmetricJweAlgorithms {
           JWEAlgorithm.A128GCMKW,
           JWEAlgorithm.A192GCMKW,
           JWEAlgorithm.A256GCMKW,
-          JWEAlgorithm.DIR,
-          JWEAlgorithm.PBES2_HS256_A128KW,
-          JWEAlgorithm.PBES2_HS384_A192KW,
-          JWEAlgorithm.PBES2_HS512_A256KW);
+          JWEAlgorithm.DIR);
 
   private SymmetricJweAlgorithms() {}
 
@@ -74,5 +70,32 @@ public class SymmetricJweAlgorithms {
    */
   public static boolean contains(JWEAlgorithm algorithm) {
     return VALUES.contains(algorithm);
+  }
+
+  /**
+   * Gets the required key length in bytes for the algorithm.
+   *
+   * <p>OpenID Connect Core 1.0 Section 16.19 specifies minimum key lengths:
+   *
+   * <ul>
+   *   <li>A128KW, A128GCMKW: 16 octets (128 bits)
+   *   <li>A192KW, A192GCMKW: 24 octets (192 bits)
+   *   <li>A256KW, A256GCMKW, dir: 32 octets (256 bits)
+   * </ul>
+   *
+   * @param algorithm the JWE algorithm
+   * @return the key length in bytes
+   */
+  public static int getRequiredKeyLength(JWEAlgorithm algorithm) {
+    if (algorithm.equals(JWEAlgorithm.A128KW) || algorithm.equals(JWEAlgorithm.A128GCMKW)) {
+      return 16; // 128 bits
+    } else if (algorithm.equals(JWEAlgorithm.A192KW) || algorithm.equals(JWEAlgorithm.A192GCMKW)) {
+      return 24; // 192 bits
+    } else if (algorithm.equals(JWEAlgorithm.A256KW)
+        || algorithm.equals(JWEAlgorithm.A256GCMKW)
+        || algorithm.equals(JWEAlgorithm.DIR)) {
+      return 32; // 256 bits
+    }
+    return 32; // default to 256 bits
   }
 }

@@ -116,6 +116,7 @@ client_files=(
   clientSecretJwt2.json
   clientSecretPost.json
   clientSecretPostWithIdTokenEnc.json
+  clientSecretPostWithSymmetricIdTokenEnc.json
   privateKeyJwt.json
   privateKeyJwtMtls.json
   publicClient.json

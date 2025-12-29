@@ -233,6 +233,21 @@ export const federationClient = {
   httpRedirectUri: "http://localhost:8081/callback",
 };
 
+/**
+ * Client with symmetric JWE ID token encryption (A256KW)
+ * Used for testing RP-Initiated Logout with symmetrically encrypted id_token_hint
+ */
+export const clientSecretPostWithSymmetricIdTokenEncClient = {
+  clientId: "clientSecretPostWithSymmetricIdTokenEnc",
+  clientSecret:
+    "clientSecretPostWithSymmetricIdTokenEncPassword1234567890123456789012345678901234567890",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  postLogoutRedirectUri: "https://client.example.org/logout-callback",
+  scope: "account",
+  idTokenEncAlg: "A256KW",
+  idTokenEncEnc: "A256GCM",
+};
+
 export const clientSecretPostWithIdTokenEncClient = {
   clientId: "clientSecretPostWithIdTokenEnc",
   clientSecret:
