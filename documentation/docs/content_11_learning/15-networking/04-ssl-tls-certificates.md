@@ -6,8 +6,8 @@
 ## 学べること
 - SSL/TLS証明書の基本概念とライフサイクル
 - 証明書の種類と選び方（DV、OV、EV、ワイルドカード）
-- AWS Certificate Manager (ACM)の実践的な使い方
 - Let's Encryptによる無料証明書の取得と自動更新
+- OpenSSLを使用した証明書検証
 - 証明書の更新とローテーション戦略
 - SSL/TLSのトラブルシューティング
 
@@ -112,7 +112,7 @@ Subject Alternative Name (SAN)
 │     - ドメイン所有権のみ検証                                 │
 │     - 数分〜数時間で発行                                     │
 │     - 最も安価（無料のものも多い）                           │
-│     - Let's Encrypt、AWS ACM                                │
+│     - Let's Encrypt、ZeroSSL等                              │
 │     用途: 個人サイト、開発環境、ほとんどのWebサイト          │
 │                                                              │
 │  2. OV (Organization Validation) 証明書                     │
@@ -175,213 +175,97 @@ Subject Alternative Name (SAN)
 ├────────────────────┼──────────────┼─────────────────┤
 │ 金融機関           │ EV           │ 最高レベルの信頼 │
 ├────────────────────┼──────────────┼─────────────────┤
-│ AWS環境            │ AWS ACM (DV) │ 無料、自動更新   │
-├────────────────────┼──────────────┼─────────────────┤
 │ 多数のサブドメイン │ ワイルドカード│ 管理簡略化       │
 └────────────────────┴──────────────┴─────────────────┘
 ```
 
 ---
 
-## 3. AWS Certificate Manager (ACM)
+## 3. 証明書の取得方法
 
-### 3.1 ACMの概要
+### 3.1 証明書取得の選択肢
 
-**AWS Certificate Manager (ACM)**は、SSL/TLS証明書の作成、管理、デプロイを簡素化するサービスです。
+SSL/TLS証明書を取得する一般的な方法:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  ACM の主要機能                              │
+│              証明書取得方法の比較                             │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  1. 無料のパブリック証明書                                   │
-│     - DV証明書                                               │
-│     - 無制限の証明書発行                                     │
-│     - AWS統合サービスで使用可能                              │
+│  1. 商用認証局（CA）                                         │
+│     - DigiCert、GlobalSign、Sectigo等                      │
+│     - 有料（年間数千円〜数万円）                             │
+│     - OV/EV証明書が必要な場合                                │
+│     - サポートが充実                                         │
 │                                                              │
-│  2. 自動更新                                                 │
-│     - 証明書の有効期限前に自動更新                           │
-│     - ダウンタイムなし                                       │
+│  2. Let's Encrypt（無料CA）                                 │
+│     - 完全無料のDV証明書                                     │
+│     - 自動化対応（ACME プロトコル）                          │
+│     - 有効期間90日（自動更新推奨）                           │
+│     - 個人サイト、開発環境に最適                             │
 │                                                              │
-│  3. AWS統合                                                  │
-│     - CloudFront、ALB、API Gateway等と統合                  │
-│     - 簡単なデプロイ                                         │
-│                                                              │
-│  4. プライベート証明書                                       │
-│     - 内部用途の証明書（有料）                               │
-│     - プライベートCA管理                                     │
+│  3. 自己署名証明書                                           │
+│     - OpenSSLで自作                                          │
+│     - 開発/テスト環境のみ                                    │
+│     - ブラウザ警告が表示される                               │
+│     - 本番環境では使用不可                                   │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 ACM証明書のリクエスト
+### 3.2 自己署名証明書の作成（開発/テスト用）
 
-#### パブリック証明書のリクエスト（DNS検証）
-
-```bash
-# 1. 証明書リクエスト
-aws acm request-certificate \
-  --domain-name example.com \
-  --subject-alternative-names www.example.com api.example.com \
-  --validation-method DNS \
-  --idempotency-token $(date +%s)
-
-# 出力例:
-# {
-#     "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
-# }
-
-# 2. DNS検証レコード情報を取得
-aws acm describe-certificate \
-  --certificate-arn arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012
-
-# 出力例（抜粋）:
-# "DomainValidationOptions": [
-#     {
-#         "DomainName": "example.com",
-#         "ValidationDomain": "example.com",
-#         "ValidationStatus": "PENDING_VALIDATION",
-#         "ResourceRecord": {
-#             "Name": "_abc123.example.com.",
-#             "Type": "CNAME",
-#             "Value": "_xyz789.acm-validations.aws."
-#         }
-#     }
-# ]
-
-# 3. Route 53にDNS検証レコードを追加（自動化）
-# ACMコンソールで "Route 53でレコードを作成" ボタンをクリック
-# または、CLIで:
-aws route53 change-resource-record-sets \
-  --hosted-zone-id Z1234567890ABC \
-  --change-batch '{
-    "Changes": [{
-      "Action": "CREATE",
-      "ResourceRecordSet": {
-        "Name": "_abc123.example.com.",
-        "Type": "CNAME",
-        "TTL": 300,
-        "ResourceRecords": [{"Value": "_xyz789.acm-validations.aws."}]
-      }
-    }]
-  }'
-
-# 4. 検証完了を待つ（通常数分）
-aws acm describe-certificate \
-  --certificate-arn arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012 \
-  --query 'Certificate.Status'
-
-# "ISSUED" が返されれば成功
-```
-
-#### ワイルドカード証明書のリクエスト
+OpenSSLを使用して自己署名証明書を作成する方法:
 
 ```bash
-# ワイルドカード証明書 (*.example.com)
-aws acm request-certificate \
-  --domain-name *.example.com \
-  --subject-alternative-names example.com \
-  --validation-method DNS
+# 1. 秘密鍵の生成
+openssl genrsa -out server.key 2048
 
-# DNS検証レコードは1つだけ（*.example.comとexample.comで共有）
-```
+# 2. CSR（証明書署名要求）の生成
+openssl req -new -key server.key -out server.csr
+# 対話形式で以下を入力:
+# Country Name (2 letter code) []:JP
+# State or Province Name []:Tokyo
+# Locality Name []:Minato
+# Organization Name []:Example Corp
+# Organizational Unit Name []:IT Department
+# Common Name []:example.com
+# Email Address []:admin@example.com
 
-### 3.3 ACM証明書のデプロイ
+# 3. 自己署名証明書の生成（有効期間365日）
+openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
 
-#### CloudFrontへのデプロイ
+# 4. ワンライナーで生成（対話なし）
+openssl req -x509 -newkey rsa:2048 -keyout server.key -out server.crt -days 365 -nodes \
+  -subj "/C=JP/ST=Tokyo/L=Minato/O=Example Corp/OU=IT/CN=example.com"
 
-```bash
-# CloudFront ディストリビューション作成（証明書指定）
-# 注意: CloudFront用のACM証明書はus-east-1リージョンで作成必須
+# 5. SANを含む証明書の生成（複数ドメイン対応）
+cat > san.cnf <<EOF
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+prompt = no
 
-aws cloudfront create-distribution \
-  --distribution-config '{
-    "CallerReference": "'"$(date +%s)"'",
-    "Aliases": {
-      "Quantity": 1,
-      "Items": ["www.example.com"]
-    },
-    "DefaultRootObject": "index.html",
-    "Origins": {
-      "Quantity": 1,
-      "Items": [{
-        "Id": "S3-example-bucket",
-        "DomainName": "example-bucket.s3.amazonaws.com",
-        "S3OriginConfig": {
-          "OriginAccessIdentity": ""
-        }
-      }]
-    },
-    "DefaultCacheBehavior": {
-      "TargetOriginId": "S3-example-bucket",
-      "ViewerProtocolPolicy": "redirect-to-https",
-      "TrustedSigners": {
-        "Enabled": false,
-        "Quantity": 0
-      },
-      "ForwardedValues": {
-        "QueryString": false,
-        "Cookies": {"Forward": "none"}
-      },
-      "MinTTL": 0
-    },
-    "ViewerCertificate": {
-      "ACMCertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012",
-      "SSLSupportMethod": "sni-only",
-      "MinimumProtocolVersion": "TLSv1.2_2021"
-    },
-    "Comment": "Example distribution",
-    "Enabled": true
-  }'
-```
+[req_distinguished_name]
+C = JP
+ST = Tokyo
+L = Minato
+O = Example Corp
+OU = IT
+CN = example.com
 
-#### ALBへのデプロイ
+[v3_req]
+subjectAltName = @alt_names
 
-```bash
-# ALB HTTPSリスナーに証明書を追加
-aws elbv2 create-listener \
-  --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/my-alb/50dc6c495c0c9188 \
-  --protocol HTTPS \
-  --port 443 \
-  --certificates CertificateArn=arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012 \
-  --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/my-targets/50dc6c495c0c9188
+[alt_names]
+DNS.1 = example.com
+DNS.2 = www.example.com
+DNS.3 = api.example.com
+EOF
 
-# 複数証明書の追加（SNI）
-aws elbv2 add-listener-certificates \
-  --listener-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/my-alb/50dc6c495c0c9188/0123456789abcdef \
-  --certificates \
-    CertificateArn=arn:aws:acm:us-east-1:123456789012:certificate/aaaaaaaa-1234-1234-1234-123456789012 \
-    CertificateArn=arn:aws:acm:us-east-1:123456789012:certificate/bbbbbbbb-1234-1234-1234-123456789012
-```
+openssl req -x509 -newkey rsa:2048 -keyout server.key -out server.crt -days 365 -nodes -config san.cnf -extensions v3_req
 
-### 3.4 ACM証明書の自動更新
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│              ACM 自動更新の仕組み                            │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  証明書発行                                                  │
-│      ↓                                                      │
-│  有効期間: 13ヶ月（395日）                                   │
-│      ↓                                                      │
-│  60日前: ACMが自動的に更新開始                               │
-│      ↓                                                      │
-│  DNS検証レコードを確認                                       │
-│  - Route 53管理: 自動で検証完了                             │
-│  - 外部DNS: 手動でDNS検証レコード維持が必要                  │
-│      ↓                                                      │
-│  新しい証明書を発行                                          │
-│      ↓                                                      │
-│  統合サービス（ALB、CloudFront等）に自動デプロイ             │
-│      ↓                                                      │
-│  ダウンタイムなし                                            │
-│                                                              │
-│  【重要】                                                    │
-│  - DNS検証レコードは削除しないこと                           │
-│  - Route 53使用が推奨（完全自動化）                          │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+# 注意: 自己署名証明書は開発/テスト専用。本番環境では使用しないこと
 ```
 
 ---
@@ -455,20 +339,11 @@ sudo certbot certonly \
 #
 # Before continuing, verify the record is deployed.
 
-# Route 53にTXTレコードを追加
-aws route53 change-resource-record-sets \
-  --hosted-zone-id Z1234567890ABC \
-  --change-batch '{
-    "Changes": [{
-      "Action": "CREATE",
-      "ResourceRecordSet": {
-        "Name": "_acme-challenge.example.com.",
-        "Type": "TXT",
-        "TTL": 60,
-        "ResourceRecords": [{"Value": "\"1234567890abcdefghijklmnopqrstuvwxyzABCDEF\""}]
-      }
-    }]
-  }'
+# DNSプロバイダーの管理画面またはAPIでTXTレコードを追加
+# 例: TXTレコード
+#   名前: _acme-challenge.example.com
+#   値: 1234567890abcdefghijklmnopqrstuvwxyzABCDEF
+#   TTL: 60
 
 # DNS反映確認
 dig _acme-challenge.example.com TXT +short
@@ -476,18 +351,23 @@ dig _acme-challenge.example.com TXT +short
 # Enterキーで続行
 ```
 
-#### Route 53 DNS プラグイン（自動化）
+#### DNS API プラグイン（自動化）
+
+多くのDNSプロバイダーがCertbot用のプラグインを提供しています。
 
 ```bash
-# プラグインインストール
-sudo pip3 install certbot-dns-route53
+# DNSプロバイダーのプラグインをインストール（例）
+# Cloudflare: sudo pip3 install certbot-dns-cloudflare
+# DigitalOcean: sudo pip3 install certbot-dns-digitalocean
+# その他多数のDNSプロバイダー対応プラグインあり
 
-# IAM権限が必要（Route 53へのアクセス）
-# IAMロールまたはアクセスキー設定
+# DNS APIの認証情報を設定（プラグインにより異なる）
+# 例: ~/.secrets/cloudflare.ini に認証トークンを保存
 
 # 証明書取得（DNS-01自動化）
 sudo certbot certonly \
-  --dns-route53 \
+  --dns-cloudflare \
+  --dns-cloudflare-credentials ~/.secrets/cloudflare.ini \
   -d *.example.com \
   -d example.com
 
@@ -564,40 +444,9 @@ server {
 
 ---
 
-## 5. 証明書のインポート（外部CA）
+## 5. 証明書の検証とデバッグ
 
-### 5.1 ACMへの証明書インポート
-
-外部CAから取得した証明書をACMにインポートできます。
-
-```bash
-# 証明書のインポート
-aws acm import-certificate \
-  --certificate fileb://certificate.pem \
-  --private-key fileb://private-key.pem \
-  --certificate-chain fileb://certificate-chain.pem
-
-# 証明書ファイルの準備:
-# certificate.pem       : サーバー証明書
-# private-key.pem       : 秘密鍵
-# certificate-chain.pem : 中間証明書チェーン
-
-# インポート後の証明書更新
-aws acm import-certificate \
-  --certificate-arn arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012 \
-  --certificate fileb://new-certificate.pem \
-  --private-key fileb://new-private-key.pem \
-  --certificate-chain fileb://new-certificate-chain.pem
-```
-
-**注意点**:
-```
-- インポート証明書は自動更新されない
-- 有効期限の60日前にEventBridgeで通知設定可能
-- 手動更新が必要
-```
-
-### 5.2 証明書の検証
+### 5.1 OpenSSLによる証明書検証
 
 ```bash
 # 証明書の内容確認
@@ -636,11 +485,7 @@ openssl verify -CAfile certificate-chain.pem certificate.pem
 │  2. 有効期限の30日前に更新開始                               │
 │  3. 有効期限の7日前に最終確認                                │
 │                                                              │
-│  【ACM（自動更新）】                                         │
-│  - Route 53でDNS管理 → 完全自動化                           │
-│  - 外部DNS → DNS検証レコードの永続化必須                     │
-│                                                              │
-│  【Let's Encrypt】                                          │
+│  【Let's Encrypt（自動更新）】                               │
 │  - certbot renew の自動化（cron/systemd timer）             │
 │  - 有効期限30日前から更新可能                                │
 │  - 更新後のサービス再起動（--post-hook）                     │
@@ -654,37 +499,6 @@ openssl verify -CAfile certificate-chain.pem certificate.pem
 ```
 
 ### 6.2 証明書有効期限の監視
-
-#### ACM証明書の監視（EventBridge）
-
-```json
-// EventBridge ルール: ACM証明書の有効期限アラート
-{
-  "source": ["aws.acm"],
-  "detail-type": ["ACM Certificate Approaching Expiration"],
-  "detail": {
-    "DaysToExpiry": [60]
-  }
-}
-```
-
-```bash
-# EventBridgeルール作成
-aws events put-rule \
-  --name acm-certificate-expiration \
-  --event-pattern '{
-    "source": ["aws.acm"],
-    "detail-type": ["ACM Certificate Approaching Expiration"],
-    "detail": {
-      "DaysToExpiry": [60, 30, 7]
-    }
-  }'
-
-# SNSトピックをターゲットに設定
-aws events put-targets \
-  --rule acm-certificate-expiration \
-  --targets "Id"="1","Arn"="arn:aws:sns:us-east-1:123456789012:certificate-alerts"
-```
 
 #### スクリプトによる監視
 
@@ -735,7 +549,7 @@ fi
 対処法:
 1. ワイルドカード証明書を使用（*.example.com）
 2. SANにapi.example.comを追加した証明書を再発行
-3. ALBで複数証明書を設定（SNI）
+3. SNI（Server Name Indication）で複数証明書を設定
 ```
 
 #### エラー2: "NET::ERR_CERT_DATE_INVALID"
@@ -799,25 +613,6 @@ cd testssl.sh
 ./testssl.sh example.com
 ```
 
-### 7.3 ALB/CloudFrontでのSSL設定確認
-
-```bash
-# ALBリスナー確認
-aws elbv2 describe-listeners \
-  --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/my-alb/50dc6c495c0c9188
-
-# ALB証明書確認
-aws elbv2 describe-listener-certificates \
-  --listener-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/my-alb/50dc6c495c0c9188/0123456789abcdef
-
-# CloudFront証明書確認
-aws cloudfront get-distribution-config --id E1234567890ABC
-
-# ACM証明書詳細
-aws acm describe-certificate \
-  --certificate-arn arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012
-```
-
 ---
 
 ## まとめ
@@ -828,25 +623,29 @@ aws acm describe-certificate \
 
 - SSL/TLS証明書の役割と構造
 - 証明書の種類（DV、OV、EV、ワイルドカード）と選択基準
-- AWS Certificate Manager (ACM)による無料証明書の発行と自動更新
+- 商用CA、Let's Encrypt、自己署名証明書の使い分け
 - Let's Encryptによる証明書取得とCertbotの使用
+- OpenSSLを使用した証明書検証
 - 証明書のライフサイクル管理と更新戦略
 - SSL/TLSのトラブルシューティング手法
 
 ### 重要なポイント
 
 ```
-1. AWS環境ではACM推奨
-   - 無料、自動更新、AWS統合
-   - Route 53でDNS管理すると完全自動化
+1. 本番環境での証明書選択
+   - 商用サイト: Let's Encrypt（無料DV証明書）
+   - 企業サイト: 商用CA（OV/EV証明書）
+   - 開発/テスト: 自己署名証明書
 
-2. Let's Encryptは自動更新必須
+2. Let's Encryptの運用
    - 有効期限90日（短い）
-   - certbot renewの自動化設定
+   - certbot renewの自動化必須（cron/systemd timer）
+   - DNS-01チャレンジでワイルドカード証明書
 
 3. 証明書監視の徹底
-   - 有効期限の60日前にアラート
-   - EventBridge/cronによる監視
+   - 有効期限の30日前にアラート
+   - cronによる自動監視スクリプト
+   - 証明書チェーンの検証
 
 4. セキュリティ設定
    - TLSv1.2以上のみ許可
@@ -857,24 +656,24 @@ aws acm describe-certificate \
 ### チェックリスト
 
 ```
-□ ACM証明書でDNS検証レコードを永続化
 □ Let's Encrypt自動更新の設定（cron/systemd timer）
-□ 証明書有効期限の監視アラート設定
+□ 証明書有効期限の監視スクリプト配置
 □ ワイルドカード証明書の適切な利用
-□ 証明書と秘密鍵の安全な保管
+□ 証明書と秘密鍵の安全な保管（パーミッション600）
 □ TLS設定の定期的な見直し（SSL Labs等）
+□ 証明書チェーンの完全性確認
 ```
 
 ### 次のステップ
 
-- [05-api-gateway-networking.md](./05-api-gateway-networking.md) - API GatewayでのSSL/TLS設定
-- [06-network-troubleshooting.md](./06-network-troubleshooting.md) - SSL/TLSトラブルシューティング実践
+- [05-api-gateway-networking.md](./05-api-gateway-networking.md) - リバースプロキシとAPI Gateway
+- [06-network-troubleshooting.md](./06-network-troubleshooting.md) - ネットワークトラブルシューティング
 - [content_11_learning/12-crypto/tls-ssl.md](../12-crypto/tls-ssl.md) - TLS/SSLプロトコル詳細
 
 ### 参考リンク
 
-- [AWS Certificate Manager Documentation](https://docs.aws.amazon.com/acm/)
 - [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
 - [Certbot Documentation](https://certbot.eff.org/docs/)
+- [OpenSSL Documentation](https://www.openssl.org/docs/)
 - [SSL Labs](https://www.ssllabs.com/)
 - [Mozilla SSL Configuration Generator](https://ssl-config.mozilla.org/)

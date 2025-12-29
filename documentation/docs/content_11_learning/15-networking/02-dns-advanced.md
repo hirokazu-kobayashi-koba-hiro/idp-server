@@ -1,20 +1,17 @@
-# DNS詳細: CNAME、DNSSECとクラウドDNS
+# DNS詳細: CNAMEとDNSSEC
 
 ## 所要時間
-約50分
+約40分
 
 ## 学べること
-- CNAMEレコードの詳細仕様と制約
-- CNAMEに関連する実践的な問題と対策（AWS Advanced JDBC Wrapper含む）
+- CNAMEレコードの詳細仕様と制約（RFC仕様ベース）
+- CNAMEに関連する実践的な問題と対策
 - DNSSEC（DNS Security Extensions）の基礎
-- AWS Route 53の実践的な使い方
-- クラウド環境でのDNSベストプラクティス
-- プライベートDNSとサービスディスカバリー
+- 一般的なDNSベストプラクティス
 
 ## 前提知識
 - [01-dns-fundamentals.md](./01-dns-fundamentals.md) の内容
-- 基本的なクラウドサービスの理解
-- データベース接続の基礎知識
+- ネットワークとDNSの基本理解
 
 ---
 
@@ -90,8 +87,8 @@ CNAMEが別のCNAMEを指すことは可能ですが、推奨されません。
 ```bash
 # CNAMEチェーンの例
 www.example.com.     IN  CNAME  www-prod.example.com.
-www-prod.example.com. IN CNAME  lb-12345.us-east-1.elb.amazonaws.com.
-lb-12345.us-east-1.elb.amazonaws.com. IN A 52.1.2.3
+www-prod.example.com. IN CNAME  lb.example.net.
+lb.example.net. IN A 192.0.2.10
 
 # 問題点:
 # 1. DNS問い合わせが複数回発生（パフォーマンス低下）
@@ -126,11 +123,11 @@ lb-12345.us-east-1.elb.amazonaws.com. IN A 52.1.2.3
 │  example.com.    IN  CNAME  lb.cloudprovider.com.           │
 │                                                              │
 │  ✅ 解決策2: Aレコードを使う（推奨）                         │
-│  example.com.    IN  A      52.1.2.3                        │
+│  example.com.    IN  A      192.0.2.10                      │
 │                                                              │
-│  ✅ 解決策3: ALIASレコード（Route 53等の拡張機能）           │
-│  example.com.    IN  ALIAS  lb.cloudprovider.com.           │
-│  → 次節で詳述                                                │
+│  ✅ 解決策3: DNSプロバイダ独自の拡張機能                     │
+│  一部のDNSサービスではALIAS/AFLATTENレコードなどの           │
+│  独自拡張機能でCNAME制約を回避できる場合がある               │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -139,7 +136,7 @@ lb-12345.us-east-1.elb.amazonaws.com. IN A 52.1.2.3
 
 ```bash
 # ユースケース1: CDNへのマッピング
-www.example.com.     IN  CNAME  d111111abcdef8.cloudfront.net.
+www.example.com.     IN  CNAME  cdn.provider.net.
 
 # ユースケース2: サブドメインの統合
 blog.example.com.    IN  CNAME  example.com.
@@ -161,90 +158,17 @@ dig www.example.com
 
 # 出力例:
 # ;; ANSWER SECTION:
-# www.example.com.      300  IN  CNAME  d111111abcdef8.cloudfront.net.
-# d111111abcdef8.cloudfront.net. 60 IN A 52.84.123.45
+# www.example.com.      300  IN  CNAME  cdn.provider.net.
+# cdn.provider.net. 60 IN A 192.0.2.20
 ```
 
 ---
 
 ## 2. CNAMEに関連する実践的な問題
 
-### 2.1 AWS Advanced JDBC WrapperとCNAMEの問題
+### 2.1 メール配送とCNAME
 
-**AWS Advanced JDBC Wrapper**は、RDS Proxy、Aurora、フェイルオーバー機能を提供するJDBCドライバーのラッパーです。このラッパーには、**CNAMEレコードに対する特殊な動作**があります。
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│      AWS Advanced JDBC Wrapper の CNAME処理動作              │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  【問題のシナリオ】                                          │
-│                                                              │
-│  DNS設定:                                                    │
-│  db.example.com.  IN  CNAME  my-db.cluster-xxx.us-east-1.   │
-│                               rds.amazonaws.com.             │
-│                                                              │
-│  アプリケーション設定:                                       │
-│  jdbc:aws-wrapper:postgresql://db.example.com:5432/mydb     │
-│                                                              │
-│  【何が起こるか】                                            │
-│  1. DNS解決: db.example.com → CNAME検出                     │
-│  2. CNAME先を取得: my-db.cluster-xxx.us-east-1.rds.amazonaws.com │
-│  3. ⚠️ ラッパーがCNAME先のホスト名を使用                     │
-│  4. SSL証明書検証で、元のホスト名(db.example.com)ではなく   │
-│     CNAME先(*.rds.amazonaws.com)で検証される                │
-│  5. トポロジー検出（クラスタ構成の把握）にも影響             │
-│                                                              │
-│  【問題点】                                                  │
-│  - CNAME先のホスト名がアプリケーションに露出                 │
-│  - フェイルオーバー検知に影響する可能性                      │
-│  - 意図しない動作につながる                                  │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### 実際のエラー例
-
-```java
-// Java アプリケーションログ
-Caused by: javax.net.ssl.SSLHandshakeException:
-  No subject alternative DNS name matching db.example.com found.
-  Certificate is valid for *.rds.amazonaws.com
-
-// または
-FATAL: SSL connection failed:
-  server certificate for "*.rds.amazonaws.com" does not match host name "db.example.com"
-```
-
-#### 対策方法
-
-```
-対策1: CNAMEを使わず、Aレコードを使用
-  ❌ db.example.com.  IN  CNAME  my-db.cluster-xxx.us-east-1.rds.amazonaws.com.
-  ✅ db.example.com.  IN  A      10.0.1.10
-
-  利点: DNS標準に準拠、問題が起きにくい
-  欠点: IPアドレスが変わった場合に手動更新が必要
-
-対策2: Route 53 ALIASレコードを使用（AWSの場合）
-  ✅ db.example.com.  IN  ALIAS  my-db.cluster-xxx.us-east-1.rds.amazonaws.com.
-
-  利点: 自動的にIPアドレス追従、CNAMEの制約なし
-  欠点: Route 53専用機能（他のDNSサービスでは使えない）
-
-対策3: RDS Proxyを使用
-  RDS Proxy経由で接続することで、エンドポイントが安定
-  ✅ jdbc:aws-wrapper:postgresql://my-rds-proxy.proxy-xxx.us-east-1.rds.amazonaws.com:5432/mydb
-
-対策4: JDBC接続パラメータでSSL検証を調整（非推奨）
-  ⚠️ jdbc:aws-wrapper:postgresql://db.example.com:5432/mydb?ssl=true&sslmode=require&sslrootcert=...
-
-  欠点: セキュリティリスク、本質的な解決ではない
-```
-
-### 2.2 その他のCNAME問題例
-
-#### 問題1: メール配送とCNAME
+CNAMEレコードは他のレコードタイプと併用できないため、メール設定で問題が起きることがあります。
 
 ```
 # ❌ 間違った設定
@@ -258,7 +182,7 @@ example.com.    IN  MX     10 mail.example.com.
 mail.example.com. IN A    93.184.216.35
 ```
 
-#### 問題2: HTTPリダイレクトとCNAME
+### 2.2 HTTPリダイレクトとCNAME
 
 ```
 # シナリオ: example.com → www.example.com にリダイレクトしたい
@@ -287,130 +211,28 @@ server {
 </VirtualHost>
 ```
 
-#### 問題3: CDNとCNAME設定ミス
+### 2.3 CDNとCNAME設定ミス
 
 ```bash
 # ❌ よくある間違い
 www.example.com.  IN  CNAME  example.com.
-example.com.      IN  CNAME  d111111abcdef8.cloudfront.net.
+example.com.      IN  CNAME  cdn.provider.net.
 → CNAMEチェーンが発生、パフォーマンス低下
 
 # ✅ 正しい設定
-www.example.com.  IN  CNAME  d111111abcdef8.cloudfront.net.
-example.com.      IN  A      52.84.123.45  # CloudFrontのIPまたはALIAS
+www.example.com.  IN  CNAME  cdn.provider.net.
+example.com.      IN  A      192.0.2.30  # CDNのIPアドレス
 ```
 
 ---
 
-## 3. AWS Route 53
+## 3. 高度なDNSルーティングパターン
 
-### 3.1 Route 53の概要
+### 3.1 DNSベースのトラフィック制御
 
-**Amazon Route 53**は、AWSが提供する高可用性でスケーラブルなDNSサービスです。
+DNSを使用してトラフィックを制御するいくつかの一般的なパターンがあります。
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                  Route 53 の主要機能                         │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  1. 権威DNSサービス                                          │
-│     - ドメインのホストゾーン管理                             │
-│     - 高可用性（複数のAZに分散）                             │
-│     - SLA 100%                                              │
-│                                                              │
-│  2. ドメイン登録                                             │
-│     - gTLD/ccTLDの登録・管理                                │
-│                                                              │
-│  3. ヘルスチェック                                           │
-│     - エンドポイントの監視                                   │
-│     - 障害検知とフェイルオーバー                             │
-│                                                              │
-│  4. トラフィックポリシー                                     │
-│     - ルーティングポリシー（後述）                           │
-│     - 地理的ルーティング                                     │
-│     - レイテンシーベースルーティング                         │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 3.2 ALIASレコード（Route 53拡張機能）
-
-**ALIASレコード**は、Route 53独自の機能で、CNAMEの制約を回避しつつ、AWSリソースへのマッピングを提供します。
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│              ALIAS vs CNAME vs A レコード                    │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  項目              │ A      │ CNAME  │ ALIAS                 │
-│  ─────────────────┼────────┼────────┼──────────────────    │
-│  ゾーンAPEXで使用  │ ✅     │ ❌     │ ✅                    │
-│  他レコードと共存  │ ✅     │ ❌     │ ✅（一部）            │
-│  IPアドレス指定    │ ✅     │ ❌     │ 自動解決              │
-│  DNS問い合わせ回数 │ 1回    │ 2回以上│ 1回                   │
-│  Route 53課金     │ 有料   │ 有料   │ AWSリソース宛は無料   │
-│  標準DNS仕様      │ ✅     │ ✅     │ ❌（Route 53専用）    │
-│                                                              │
-│  【ALIAS使用例】                                             │
-│  example.com.  ALIAS  my-alb-123.us-east-1.elb.amazonaws.com │
-│                                                              │
-│  内部動作:                                                   │
-│  1. クライアント: example.com のIPは?                        │
-│  2. Route 53: ALIASを検出                                   │
-│  3. Route 53: ELBのIPアドレスを自動取得                     │
-│  4. Route 53: Aレコードとして応答（例: 52.1.2.3）           │
-│  → クライアントからは通常のAレコードに見える                 │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### ALIASレコード対応AWSサービス
-
-```
-- CloudFront ディストリビューション
-- Elastic Load Balancing (ALB, NLB, CLB)
-- API Gateway
-- VPC エンドポイント
-- S3 Webサイトエンドポイント
-- 同一ホストゾーン内の他のレコード
-- Global Accelerator
-```
-
-#### ALIAS設定例（AWS CLI）
-
-```bash
-# ALIASレコードを作成（JSON形式）
-cat > alias-record.json <<EOF
-{
-  "Changes": [{
-    "Action": "CREATE",
-    "ResourceRecordSet": {
-      "Name": "example.com",
-      "Type": "A",
-      "AliasTarget": {
-        "HostedZoneId": "Z35SXDOTRQ7X7K",
-        "DNSName": "my-alb-123.us-east-1.elb.amazonaws.com",
-        "EvaluateTargetHealth": true
-      }
-    }
-  }]
-}
-EOF
-
-aws route53 change-resource-record-sets \
-  --hosted-zone-id Z1234567890ABC \
-  --change-batch file://alias-record.json
-
-# 確認
-dig example.com +short
-# 52.1.2.3  ← ALBのIPアドレスが直接返される
-```
-
-### 3.3 ルーティングポリシー
-
-Route 53は、複数の高度なルーティングポリシーをサポートしています。
-
-#### シンプルルーティング
+#### シンプルルーティング（ラウンドロビンDNS）
 
 ```
 最も基本的なルーティング。1つのレコードに複数の値を返す。
@@ -420,7 +242,16 @@ example.com.  A  192.0.2.2
 example.com.  A  192.0.2.3
 
 → 全てのIPアドレスがランダムな順序でクライアントに返される
+
+特徴:
+- シンプルで設定が容易
+- 簡易的な負荷分散
+- 障害検知機能なし（ダウンしたサーバーにもアクセスしてしまう）
 ```
+
+### 3.2 高度なDNSルーティング
+
+一部の高度なDNSサービスやロードバランサーでは、以下のような機能を提供しています。
 
 #### 加重ルーティング（Weighted Routing）
 
@@ -430,15 +261,12 @@ example.com.  A  192.0.2.3
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  トラフィックを重み付けして分散                              │
+│  （一部のDNSプロバイダーでサポート）                         │
 │                                                              │
-│  レコード1: example.com  A  192.0.2.1  (重み: 70)           │
-│  レコード2: example.com  A  192.0.2.2  (重み: 20)           │
-│  レコード3: example.com  A  192.0.2.3  (重み: 10)           │
-│                                                              │
-│  結果:                                                       │
-│  70%のトラフィック → 192.0.2.1                               │
-│  20%のトラフィック → 192.0.2.2                               │
-│  10%のトラフィック → 192.0.2.3                               │
+│  概念的な設定例:                                             │
+│  example.com  A  192.0.2.1  (重み: 70%)                     │
+│  example.com  A  192.0.2.2  (重み: 20%)                     │
+│  example.com  A  192.0.2.3  (重み: 10%)                     │
 │                                                              │
 │  ユースケース:                                               │
 │  - カナリアリリース（新バージョンに10%のトラフィック）       │
@@ -446,62 +274,6 @@ example.com.  A  192.0.2.3
 │  - サーバー能力に応じた負荷分散                              │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
-```
-
-#### レイテンシーベースルーティング
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│              レイテンシーベースルーティング                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  クライアントから最も近い（低レイテンシー）リージョンに      │
-│  トラフィックをルーティング                                  │
-│                                                              │
-│  設定例:                                                     │
-│  example.com  A  52.1.2.3   (us-east-1)                     │
-│  example.com  A  13.2.3.4   (ap-northeast-1)                │
-│  example.com  A  18.3.4.5   (eu-west-1)                     │
-│                                                              │
-│  クライアント              応答                              │
-│  東京          →  13.2.3.4  (ap-northeast-1)                │
-│  ニューヨーク  →  52.1.2.3  (us-east-1)                     │
-│  ロンドン      →  18.3.4.5  (eu-west-1)                     │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### フェイルオーバールーティング
-
-```bash
-# プライマリ/セカンダリ構成
-# ヘルスチェックでプライマリが異常の場合、セカンダリを返す
-
-# プライマリレコード
-aws route53 change-resource-record-sets \
-  --hosted-zone-id Z1234567890ABC \
-  --change-batch '{
-    "Changes": [{
-      "Action": "CREATE",
-      "ResourceRecordSet": {
-        "Name": "example.com",
-        "Type": "A",
-        "SetIdentifier": "Primary",
-        "Failover": "PRIMARY",
-        "TTL": 60,
-        "ResourceRecords": [{"Value": "192.0.2.1"}],
-        "HealthCheckId": "abc-123-def"
-      }
-    }]
-  }'
-
-# セカンダリレコード
-# (同様にFailover: "SECONDARY"で設定)
-
-# ヘルスチェック作成
-aws route53 create-health-check \
-  --health-check-config \
-    IPAddress=192.0.2.1,Port=443,Type=HTTPS,ResourcePath=/health
 ```
 
 #### 地理的ルーティング（Geolocation）
@@ -512,11 +284,12 @@ aws route53 create-health-check \
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  クライアントの地理的位置に基づいてルーティング              │
+│  （一部のDNSプロバイダーでサポート）                         │
 │                                                              │
-│  設定例:                                                     │
-│  - 日本からのアクセス → jp-server.example.com               │
-│  - 米国からのアクセス → us-server.example.com               │
-│  - その他の地域       → default-server.example.com          │
+│  概念的な設定例:                                             │
+│  - 日本からのアクセス → 192.0.2.10 (東京サーバー)           │
+│  - 米国からのアクセス → 192.0.2.20 (米国サーバー)           │
+│  - その他の地域       → 192.0.2.30 (デフォルトサーバー)     │
 │                                                              │
 │  ユースケース:                                               │
 │  - コンテンツのローカライゼーション                          │
@@ -526,44 +299,31 @@ aws route53 create-health-check \
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.4 Route 53プライベートホストゾーン
+### 3.3 プライベートDNS
 
-VPC内でのみ解決可能なプライベートDNSゾーンを作成できます。
+組織内部でのみ解決可能なプライベートDNSゾーンの概念
 
-```bash
-# プライベートホストゾーン作成
-aws route53 create-hosted-zone \
-  --name internal.example.com \
-  --vpc VPCRegion=us-east-1,VPCId=vpc-1234567890abcdef0 \
-  --caller-reference "$(date +%s)" \
-  --hosted-zone-config PrivateZone=true
-
-# レコード作成
-aws route53 change-resource-record-sets \
-  --hosted-zone-id Z9876543210ZYX \
-  --change-batch '{
-    "Changes": [{
-      "Action": "CREATE",
-      "ResourceRecordSet": {
-        "Name": "db.internal.example.com",
-        "Type": "A",
-        "TTL": 300,
-        "ResourceRecords": [{"Value": "10.0.1.10"}]
-      }
-    }]
-  }'
-
-# VPC内のEC2インスタンスから解決可能
-dig db.internal.example.com +short
-# 10.0.1.10
 ```
-
-**プライベートホストゾーンのユースケース**:
-```
-- RDSエンドポイントのカスタムドメイン
-- 内部APIエンドポイント
-- 内部マイクロサービス間通信
-- 開発/ステージング環境の分離
+┌─────────────────────────────────────────────────────────────┐
+│              プライベートDNSの概念                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  【公開DNS（パブリックDNS）】                                │
+│  - インターネット全体から解決可能                            │
+│  - example.com → 93.184.216.34                              │
+│                                                              │
+│  【プライベートDNS】                                         │
+│  - 組織内ネットワークでのみ解決可能                          │
+│  - internal.example.com → 10.0.1.10                         │
+│  - インターネットからはアクセス不可                          │
+│                                                              │
+│  ユースケース:                                               │
+│  - データベースエンドポイントのカスタムドメイン              │
+│  - 内部APIエンドポイント                                     │
+│  - マイクロサービス間通信                                    │
+│  - 開発/ステージング環境の分離                               │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -643,52 +403,31 @@ dig example.com DNSKEY +short
 dig example.com DS +short
 ```
 
-### 4.4 Route 53でのDNSSEC設定
-
-```bash
-# 1. ホストゾーンでDNSSECを有効化
-aws route53 enable-hosted-zone-dnssec \
-  --hosted-zone-id Z1234567890ABC
-
-# 2. KSK（キー署名鍵）を作成
-aws route53 create-key-signing-key \
-  --hosted-zone-id Z1234567890ABC \
-  --name example-ksk \
-  --status ACTIVE \
-  --key-management-service-arn arn:aws:kms:us-east-1:123456789012:key/...
-
-# 3. 親ゾーン（レジストラ）にDSレコードを設定
-# Route 53コンソールでDSレコード情報を取得し、ドメインレジストラに設定
-
-# 4. DNSSEC検証
-dig @8.8.8.8 example.com +dnssec +multiline
-```
-
 ---
 
-## 5. サービスディスカバリーとプライベートDNS
+## 5. サービスディスカバリー
 
-### 5.1 AWS Cloud Map
+### 5.1 サービスディスカバリーの概念
 
-**AWS Cloud Map**は、クラウドリソースのサービスディスカバリーを提供します。
+**サービスディスカバリー**は、動的に変化するサービスのエンドポイント（IPアドレス、ポート）を自動的に発見する仕組みです。
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  AWS Cloud Map の動作                        │
+│              サービスディスカバリーの動作                     │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  【サービス登録】                                            │
-│  ECS Task/K8s Pod起動                                        │
+│  アプリケーションインスタンス起動                            │
 │      ↓                                                      │
-│  Cloud Map にサービスインスタンス登録                        │
+│  サービスレジストリに登録                                    │
 │      ↓                                                      │
 │  DNSレコード自動作成                                         │
-│  api.service.local  →  10.0.1.10 (Task IP)                  │
+│  api.service.local  →  10.0.1.10                            │
 │                                                              │
 │  【サービス発見】                                            │
 │  クライアント: api.service.local のIPは?                     │
 │      ↓                                                      │
-│  Route 53 / Cloud Map が応答                                │
+│  DNSサーバーが応答                                           │
 │      ↓                                                      │
 │  10.0.1.10 に接続                                            │
 │                                                              │
@@ -698,37 +437,9 @@ dig @8.8.8.8 example.com +dnssec +multiline
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### Cloud Map設定例
-
-```bash
-# 1. ネームスペース作成（プライベートDNS）
-aws servicediscovery create-private-dns-namespace \
-  --name service.local \
-  --vpc vpc-1234567890abcdef0
-
-# 2. サービス作成
-aws servicediscovery create-service \
-  --name api \
-  --namespace-id ns-abc123 \
-  --dns-config \
-    'NamespaceId=ns-abc123,DnsRecords=[{Type=A,TTL=60}]' \
-  --health-check-custom-config FailureThreshold=1
-
-# 3. サービスインスタンス登録（通常はECS/EKSが自動実行）
-aws servicediscovery register-instance \
-  --service-id srv-xyz789 \
-  --instance-id i-1234567890abcdef0 \
-  --attributes \
-    'AWS_INSTANCE_IPV4=10.0.1.10,AWS_INSTANCE_PORT=8080'
-
-# 4. DNSクエリ
-dig api.service.local +short
-# 10.0.1.10
-```
-
 ### 5.2 Kubernetesサービスディスカバリー
 
-Kubernetes（EKS含む）は、内部DNSベースのサービスディスカバリーを提供します。
+Kubernetesは、内部DNSベースのサービスディスカバリーを標準で提供します。
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -827,41 +538,25 @@ kubectl exec -it client -- nslookup -type=SRV _http._tcp.api-service.production.
 
 ### 6.2 DNS問い合わせの削減
 
-```java
-// アプリケーション側のDNSキャッシュ設定例
+アプリケーション側でDNSキャッシュを適切に設定することで、DNS問い合わせを削減できます。
 
-// Java - JVM DNSキャッシュ設定（システムプロパティ）
-// 成功時のキャッシュTTL（秒、-1=無期限、0=キャッシュなし）
--Dsun.net.inetaddr.ttl=60
-
-// 失敗時のキャッシュTTL（秒）
--Dsun.net.inetaddr.negative.ttl=10
-
-// セキュリティマネージャ有効時のデフォルトTTL
-// デフォルト: 30秒（セキュリティ対策でキャッシュを長くしない）
-
-// プログラムから設定（Security.setProperty）
-import java.security.Security;
-
-Security.setProperty("networkaddress.cache.ttl", "60");
-Security.setProperty("networkaddress.cache.negative.ttl", "10");
 ```
+一般的なアプリケーションDNSキャッシュ設定:
 
-```python
-# Python - DNSキャッシュ（aiodns使用例）
-import asyncio
-import aiodns
+1. OSレベルのキャッシュ
+   - systemd-resolved (Linux)
+   - mDNSResponder (macOS)
+   - DNS Client service (Windows)
 
-# DNSリゾルバをアプリケーション起動時に作成（キャッシュ共有）
-resolver = aiodns.DNSResolver()
+2. アプリケーションレベルのキャッシュ
+   - Webブラウザ: 独自のDNSキャッシュ
+   - HTTPクライアントライブラリ: 接続プールとDNSキャッシュ
+   - データベース接続プール: 接続確立時のDNS解決をキャッシュ
 
-async def resolve_hostname(hostname):
-    try:
-        result = await resolver.gethostbyname(hostname, socket.AF_INET)
-        return result.addresses[0]
-    except aiodns.error.DNSError as e:
-        print(f"DNS resolution failed: {e}")
-        return None
+3. キャッシュ設定のベストプラクティス
+   - 成功時のキャッシュTTL: 30-60秒（バランス重視）
+   - 失敗時のキャッシュTTL: 5-10秒（短め）
+   - 長時間稼働するアプリケーション: 定期的なDNS再解決
 ```
 
 ### 6.3 マルチリージョン構成のDNS設計
@@ -889,34 +584,30 @@ async def resolve_hostname(hostname):
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 6.4 DNS監視とアラート
+### 6.4 DNS監視とトラブルシューティング
 
 ```bash
-# CloudWatchでRoute 53メトリクスを監視
+# DNS応答時間の監視
+dig example.com | grep "Query time"
 
-# DNSクエリ数
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/Route53 \
-  --metric-name Queries \
-  --dimensions Name=HostedZoneId,Value=Z1234567890ABC \
-  --start-time 2025-12-26T00:00:00Z \
-  --end-time 2025-12-26T23:59:59Z \
-  --period 3600 \
-  --statistics Sum
+# 定期的なDNS監視スクリプト例
+#!/bin/bash
+while true; do
+  response_time=$(dig example.com | grep "Query time" | awk '{print $4}')
+  echo "$(date): DNS query time: ${response_time}msec"
 
-# ヘルスチェック失敗アラート
-aws cloudwatch put-metric-alarm \
-  --alarm-name route53-health-check-failed \
-  --alarm-description "Route 53 health check failed" \
-  --metric-name HealthCheckStatus \
-  --namespace AWS/Route53 \
-  --statistic Minimum \
-  --period 60 \
-  --threshold 1 \
-  --comparison-operator LessThanThreshold \
-  --datapoints-to-alarm 2 \
-  --evaluation-periods 2 \
-  --alarm-actions arn:aws:sns:us-east-1:123456789012:alerts
+  if [ "$response_time" -gt 100 ]; then
+    echo "WARNING: DNS response time > 100ms"
+  fi
+
+  sleep 60
+done
+
+# DNS伝播確認（複数のパブリックDNSで確認）
+for dns in 8.8.8.8 1.1.1.1 208.67.222.222; do
+  echo "DNS server: $dns"
+  dig @$dns example.com +short
+done
 ```
 
 ---
@@ -930,59 +621,62 @@ aws cloudwatch put-metric-alarm \
 - **CNAMEレコードの詳細**
   - CNAMEは標準的なDNS仕様（RFC 1034/1035）
   - 他のレコードとの共存禁止、ゾーンAPEXでの制約
-  - AWS Advanced JDBC WrapperでのCNAME問題と対策
+  - CNAMEチェーンの問題とパフォーマンス影響
 
-- **AWS Route 53**
-  - ALIASレコード（Route 53独自機能でCNAME制約を回避）
-  - 高度なルーティングポリシー（加重、レイテンシー、フェイルオーバー等）
-  - プライベートホストゾーンとVPC統合
+- **高度なDNSルーティング**
+  - ラウンドロビンDNSによる簡易負荷分散
+  - 加重ルーティング（一部DNSプロバイダー）
+  - 地理的ルーティング（一部DNSプロバイダー）
 
 - **DNSSEC**
   - DNS応答の真正性・完全性の保証
   - 信頼の連鎖（Chain of Trust）
-  - Route 53でのDNSSEC有効化
+  - RRSIG、DNSKEY、DSレコードの役割
 
 - **サービスディスカバリー**
-  - AWS Cloud Mapによる動的サービス登録
+  - 動的なサービスエンドポイント発見の仕組み
   - KubernetesのDNSベースサービスディスカバリー
+  - プライベートDNSの活用
 
 - **DNS最適化**
-  - TTL最適化、アプリケーション側キャッシュ
-  - マルチリージョン構成のDNS設計パターン
+  - TTL最適化によるパフォーマンス向上
+  - アプリケーション側DNSキャッシュ
+  - マルチリージョン構成のDNS設計
 
 ### 重要なポイント
 
 ```
 1. CNAMEの制約を理解する
-   - ゾーンAPEXでは使えない
+   - ゾーンAPEXでは使えない（RFC仕様）
    - 他のレコードと共存できない
-   - AWS Advanced JDBC Wrapperでは注意が必要
+   - CNAMEチェーンは避ける
 
-2. Route 53 ALIASを活用する
-   - CNAMEの制約を回避
-   - AWSリソースへの動的マッピング
-   - DNS問い合わせが1回で済む
+2. DNSルーティングの選択
+   - シンプルな負荷分散: ラウンドロビンDNS
+   - 高度な制御: DNSプロバイダーの拡張機能
+   - 障害検知: ヘルスチェック連携が必要
 
-3. 適切なルーティングポリシーを選択
-   - レイテンシーベース: グローバルパフォーマンス
-   - フェイルオーバー: 高可用性
-   - 加重: カナリアリリース
-
-4. セキュリティとパフォーマンスのバランス
+3. セキュリティとパフォーマンス
    - DNSSEC: セキュリティ向上
-   - TTL最適化: パフォーマンスとコスト削減
+   - TTL最適化: キャッシュ効率化
+   - DNSキャッシュ: 問い合わせ削減
+
+4. トラブルシューティング
+   - dig/nslookup/hostツールの活用
+   - DNS伝播の確認
+   - 複数のDNSサーバーでの検証
 ```
 
 ### 次のステップ
 
-- [03-load-balancing.md](./03-load-balancing.md) - ロードバランシングとDNSの連携
+- [03-load-balancing.md](./03-load-balancing.md) - ロードバランシングの詳細
 - [04-ssl-tls-certificates.md](./04-ssl-tls-certificates.md) - SSL/TLS証明書管理
-- [06-network-troubleshooting.md](./06-network-troubleshooting.md) - DNSトラブルシューティング実践
+- [06-network-troubleshooting.md](./06-network-troubleshooting.md) - ネットワークトラブルシューティング
 
 ### 参考リンク
 
 - [RFC 1034 - Domain Names - Concepts](https://tools.ietf.org/html/rfc1034)
+- [RFC 1035 - Domain Names - Implementation](https://tools.ietf.org/html/rfc1035)
 - [RFC 4033-4035 - DNSSEC](https://tools.ietf.org/html/rfc4033)
-- [AWS Route 53 Documentation](https://docs.aws.amazon.com/route53/)
-- [AWS Advanced JDBC Wrapper](https://github.com/awslabs/aws-advanced-jdbc-wrapper)
 - [Kubernetes DNS Specification](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
+- [DNS Flag Day](https://dnsflagday.net/)

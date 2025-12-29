@@ -15,10 +15,10 @@
 | # | ドキュメント | 内容 | 所要時間 |
 |---|-------------|------|---------|
 | 01 | [dns-fundamentals.md](01-dns-fundamentals.md) | DNS基礎（名前解決、レコードタイプ、dig/nslookup） | 40分 |
-| 02 | [dns-advanced.md](02-dns-advanced.md) | DNS詳細（CNAME、Route 53、キャッシュ、実践戦略） | 50分 |
-| 03 | [load-balancing.md](03-load-balancing.md) | ロードバランシング（L4/L7、ALB/NLB、ヘルスチェック） | 45分 |
-| 04 | [ssl-tls-certificates.md](04-ssl-tls-certificates.md) | SSL/TLS証明書管理（ACM、Let's Encrypt、openssl） | 40分 |
-| 05 | [api-gateway-networking.md](05-api-gateway-networking.md) | API Gateway（CORS、カスタムドメイン、スロットリング） | 45分 |
+| 02 | [dns-advanced.md](02-dns-advanced.md) | DNS詳細（CNAME、DNSルーティング、キャッシュ戦略） | 50分 |
+| 03 | [load-balancing.md](03-load-balancing.md) | ロードバランシング（L4/L7、アルゴリズム、ヘルスチェック） | 45分 |
+| 04 | [ssl-tls-certificates.md](04-ssl-tls-certificates.md) | SSL/TLS証明書管理（Let's Encrypt、openssl、自動更新） | 40分 |
+| 05 | [api-gateway-networking.md](05-api-gateway-networking.md) | リバースプロキシ（CORS、認証、レート制限） | 45分 |
 | 06 | [network-troubleshooting.md](06-network-troubleshooting.md) | ネットワークトラブルシューティング（診断、デバッグ） | 40分 |
 
 ---
@@ -37,14 +37,14 @@
 
 クラウド環境でのインフラ設計・運用に必要な知識を習得します。
 
-1. **02-dns-advanced.md** - CNAME、Route 53、DNS戦略
-2. **03-load-balancing.md** - ALB/NLB設計、ヘルスチェック
-3. **05-api-gateway-networking.md** - API Gateway実践
-4. **06-network-troubleshooting.md** - AWS環境での高度なデバッグ
+1. **02-dns-advanced.md** - CNAME、DNSルーティング戦略
+2. **03-load-balancing.md** - ロードバランサー設計、ヘルスチェック
+3. **05-api-gateway-networking.md** - リバースプロキシ実践
+4. **06-network-troubleshooting.md** - 高度なネットワーク診断とデバッグ
 
 ### 上級者（インフラエンジニア）
 
-すべてのコンテンツ + AWS公式ドキュメント
+すべてのコンテンツ + 各種公式ドキュメント（Nginx、HAProxy、OpenSSL、RFC等）
 
 ---
 
@@ -72,16 +72,16 @@
 
 **学べること**:
 - CNAMEレコードの詳細な動作と制約
-- Route 53 Aliasレコード（AWS独自機能）
-- JavaアプリケーションでのDNSキャッシュ制御
-- RDS/Auroraエンドポイント管理戦略
-- AWS Advanced JDBC WrapperとCNAMEの問題
+- DNSルーティングパターン（ラウンドロビン、加重、地理的）
+- DNSキャッシュ制御とTTL戦略
+- サービスディスカバリーの概念
+- DNSSEC（DNS Security Extensions）
 
 **実践内容**:
 - CNAMEを使ったサブドメイン管理
-- Route 53でのヘルスチェックとフェイルオーバー
+- DNSベースの負荷分散とフェイルオーバー
 - Blue/GreenデプロイメントでのDNS切り替え
-- JavaのDNSキャッシュTTL設定
+- プライベートDNSの活用
 
 ### 03. ロードバランシング
 
@@ -89,14 +89,13 @@
 
 **学べること**:
 - L4（トランスポート層）とL7（アプリケーション層）の違い
-- ロードバランシングアルゴリズム
-- AWS ALB/NLBの使い分け
+- ロードバランシングアルゴリズム（Round Robin、Least Connections等）
 - ヘルスチェック設計
-- スティッキーセッション
+- セッションアフィニティ（スティッキーセッション）
 
 **実践内容**:
-- Spring BootアプリのALB統合
-- ヘルスチェックエンドポイント実装
+- Nginx/HAProxyによるロードバランシング設定
+- ヘルスチェックエンドポイント設計
 - パスベースルーティング設定
 
 ### 04. SSL/TLS証明書管理
@@ -104,33 +103,32 @@
 **対象**: 全開発者、インフラエンジニア
 
 **学べること**:
-- SSL/TLS証明書の構造と仕組み
-- 証明書チェーン（ルートCA、中間CA）
-- AWS Certificate Manager (ACM)の使い方
-- Let's Encryptでの無料証明書取得
+- SSL/TLS証明書の構造と証明書チェーン
+- 証明書の種類（DV、OV、EV、ワイルドカード）
+- Let's Encryptによる無料証明書取得
 - opensslコマンドでの証明書検証
+- 証明書更新の自動化
 
 **実践内容**:
-- ACMでの証明書発行（DNS検証）
-- 証明書の有効期限確認
+- Let's Encrypt + Certbotでの証明書取得
+- OpenSSLでの証明書検証と有効期限確認
 - 証明書エラーのトラブルシューティング
 
-### 05. API Gateway ネットワーキング
+### 05. リバースプロキシとAPI Gateway
 
 **対象**: API開発者、DevOpsエンジニア
 
 **学べること**:
-- API Gatewayの仕組み（REST API vs HTTP API）
+- リバースプロキシとAPI Gatewayパターンの概念
 - CORS設定の詳細
-- カスタムドメインとACM証明書の紐付け
-- スロットリング戦略
-- VPCリンク
+- 認証方式（Basic認証、APIキー、JWT）
+- レート制限とスロットリング
 
 **実践内容**:
-- API GatewayでのCORS有効化
-- カスタムドメイン設定
-- Lambda Authorizerの実装
-- ロギングとモニタリング
+- NginxでのCORS設定
+- リバースプロキシ認証実装
+- レート制限設定
+- キャッシング戦略
 
 ### 06. ネットワークトラブルシューティング
 
@@ -138,16 +136,16 @@
 
 **学べること**:
 - 体系的なトラブルシューティング手法
-- 接続問題の診断（ping, telnet, curl）
+- 接続問題の診断（ping, telnet, nc, curl）
 - DNS問題の診断（dig +trace）
 - SSL/TLS問題の診断（openssl s_client）
-- AWS環境特有の問題（セキュリティグループ、VPC Flow Logs）
+- パケットキャプチャとネットワーク分析
 
 **実践内容**:
 - よくあるエラーの解決法
 - curl -v での詳細診断
 - 証明書チェーンの検証
-- タイムアウト問題の特定
+- tcpdumpによるパケット分析
 
 ---
 
@@ -179,7 +177,7 @@
 - ✅ DNS戦略を設計できる（フェイルオーバー、Blue/Green）
 - ✅ ロードバランサーを適切に設定できる
 - ✅ 証明書管理を自動化できる
-- ✅ API Gatewayを活用したアーキテクチャを設計できる
+- ✅ リバースプロキシパターンを設計できる
 
 ### インフラエンジニアにとって
 
@@ -193,10 +191,10 @@
 ## 参考リソース
 
 ### 公式ドキュメント
-- [AWS Route 53 Documentation](https://docs.aws.amazon.com/route53/)
-- [AWS Elastic Load Balancing](https://docs.aws.amazon.com/elasticloadbalancing/)
-- [AWS API Gateway](https://docs.aws.amazon.com/apigateway/)
-- [AWS Certificate Manager](https://docs.aws.amazon.com/acm/)
+- [Nginx Documentation](https://nginx.org/en/docs/)
+- [HAProxy Documentation](https://www.haproxy.org/documentation.html)
+- [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
+- [OpenSSL Documentation](https://www.openssl.org/docs/)
 
 ### RFC（DNS標準仕様）
 - [RFC 1035](https://www.rfc-editor.org/rfc/rfc1035) - DNS仕様
@@ -207,4 +205,4 @@
 - dig - DNS問い合わせツール
 - openssl - SSL/TLS証明書検証
 - curl - HTTP/HTTPS通信テスト
-- AWS CLI - AWS リソース管理
+- tcpdump/Wireshark - パケットキャプチャ

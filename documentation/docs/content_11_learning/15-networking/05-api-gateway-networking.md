@@ -1,15 +1,14 @@
-# API Gatewayとネットワーキング
+# リバースプロキシとAPI Gateway
 
 ## 所要時間
-約45分
+約35分
 
 ## 学べること
-- API Gatewayの基本概念とネットワーク統合
-- REST API、HTTP API、WebSocket APIの違い
-- VPC統合とプライベートAPI
-- カスタムドメインとSSL/TLS設定
-- スロットリング、キャッシング、認証
-- CloudFrontとの連携パターン
+- リバースプロキシの基本概念と役割
+- Nginxを使用したリバースプロキシ設定
+- API Gatewayパターンの一般的な実装
+- レート制限、キャッシング、認証の実装
+- CORSの設定と対応
 
 ## 前提知識
 - [01-dns-fundamentals.md](./01-dns-fundamentals.md) - DNS基礎
@@ -19,390 +18,324 @@
 
 ---
 
-## 1. API Gatewayの基礎
+## 1. リバースプロキシとAPI Gatewayの基礎
 
-### 1.1 API Gatewayとは
+### 1.1 リバースプロキシとは
 
-**Amazon API Gateway**は、あらゆる規模のREST、HTTP、WebSocket APIを作成、公開、保守、監視、保護するためのフルマネージド型サービスです。
+**リバースプロキシ**は、クライアントとバックエンドサーバーの間に配置され、クライアントからのリクエストを代理で受け取り、適切なバックエンドに転送する役割を持ちます。
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              API Gateway の役割                              │
+│              リバースプロキシの役割                           │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  クライアント（モバイル、Web、IoT等）                         │
+│  クライアント（ブラウザ、モバイルアプリ等）                   │
 │      │                                                      │
 │      │ HTTPS リクエスト                                     │
 │      ▼                                                      │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │           API Gateway                                │  │
+│  │           リバースプロキシ (Nginx/HAProxy)           │  │
 │  │  ┌────────────────────────────────────────────────┐  │  │
-│  │  │ 1. 認証・認可（IAM、Cognito、Lambda）          │  │  │
+│  │  │ 1. 認証・認可                                  │  │  │
 │  │  │ 2. リクエスト検証                              │  │  │
 │  │  │ 3. レート制限（スロットリング）                 │  │  │
 │  │  │ 4. キャッシング                                │  │  │
-│  │  │ 5. リクエスト/レスポンス変換                   │  │  │
+│  │  │ 5. SSL/TLS終端                                 │  │  │
 │  │  │ 6. ロギング・モニタリング                      │  │  │
 │  │  └────────────────────────────────────────────────┘  │  │
 │  └──────────────────────────────────────────────────────┘  │
 │      │                                                      │
-│      ├───► Lambda関数                                      │
-│      ├───► EC2/ECS（VPC統合）                              │
-│      ├───► DynamoDB、S3                                    │
-│      └───► 外部HTTP エンドポイント                          │
+│      ├───► Webアプリケーションサーバー                      │
+│      ├───► APIサーバー                                      │
+│      ├───► マイクロサービス群                               │
+│      └───► 静的コンテンツサーバー                           │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 1.2 API Gatewayの種類
+### 1.2 API Gatewayパターン
+
+**API Gateway**は、マイクロサービスアーキテクチャにおいて、クライアントと複数のバックエンドサービスの間に配置される単一のエントリーポイントです。
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│          REST API vs HTTP API vs WebSocket API              │
+│              API Gateway パターンの利点                      │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  REST API                                                    │
-│  - 最も機能豊富                                              │
-│  - API キー、使用量プラン、リクエスト検証                    │
-│  - モックレスポンス、SDKジェネレーション                     │
-│  - 価格: 高め                                                │
-│  用途: エンタープライズアプリケーション                      │
+│  利点:                                                       │
+│  1. 単一エントリーポイント                                   │
+│     - クライアントは1つのエンドポイントのみ知る必要         │
 │                                                              │
-│  HTTP API                                                    │
-│  - シンプル、低コスト（REST APIの70%安）                     │
-│  - JWT認証ネイティブサポート                                 │
-│  - OIDC/OAuth 2.0統合                                       │
-│  - 価格: 低い                                                │
-│  用途: マイクロサービス、OAuth/OIDC認証API                   │
+│  2. プロトコル変換                                           │
+│     - 外部: HTTPS/REST → 内部: gRPC/HTTP                    │
 │                                                              │
-│  WebSocket API                                               │
-│  - 双方向通信                                                │
-│  - リアルタイムアプリケーション                              │
-│  - 接続管理（@connections）                                 │
-│  用途: チャット、ゲーム、リアルタイムダッシュボード          │
+│  3. リクエスト集約                                           │
+│     - 複数のバックエンド呼び出しを1つに集約                 │
+│                                                              │
+│  4. 認証・認可の一元化                                       │
+│     - JWT検証、APIキー管理                                  │
+│                                                              │
+│  5. レート制限・スロットリング                               │
+│     - サービス保護                                           │
+│                                                              │
+│  6. キャッシング                                             │
+│     - バックエンド負荷軽減                                   │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. API Gatewayのネットワーク統合
+## 2. Nginxによるリバースプロキシ設定
 
-### 2.1 統合タイプ
+### 2.1 基本的なリバースプロキシ設定
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│              API Gateway 統合タイプ                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  1. Lambda統合（LAMBDA / LAMBDA_PROXY）                     │
-│     API Gateway → Lambda関数                                │
-│                                                              │
-│  2. HTTP統合（HTTP / HTTP_PROXY）                           │
-│     API Gateway → 外部HTTPエンドポイント                    │
-│                                                              │
-│  3. AWS統合（AWS）                                          │
-│     API Gateway → AWSサービス（DynamoDB、S3等）             │
-│                                                              │
-│  4. VPC Link統合                                             │
-│     API Gateway → プライベートリソース（NLB経由）           │
-│                                                              │
-│  5. モック統合（MOCK）                                      │
-│     API Gateway → 固定レスポンス（バックエンドなし）        │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
+Nginxを使用したシンプルなリバースプロキシ設定:
 
-### 2.2 VPC統合（VPC Link）
+```nginx
+# /etc/nginx/sites-available/api-gateway
 
-**VPC Link**を使用すると、API GatewayからVPC内のプライベートリソースにアクセスできます。
+server {
+    listen 443 ssl http2;
+    server_name api.example.com;
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│              VPC Link の仕組み                               │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  インターネット                                              │
-│      │                                                      │
-│      │ HTTPS                                                │
-│      ▼                                                      │
-│  ┌──────────────────┐                                       │
-│  │  API Gateway     │ (パブリック)                          │
-│  │  (REST API)      │                                       │
-│  └──────────────────┘                                       │
-│      │                                                      │
-│      │ VPC Link (REST API用)                                │
-│      │ または                                                │
-│      │ VPC Link (HTTP API用)                                │
-│      ▼                                                      │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  VPC                                                  │  │
-│  │  ┌────────────────────────────────────────────────┐  │  │
-│  │  │  Network Load Balancer (NLB)                   │  │  │
-│  │  └────────────────────────────────────────────────┘  │  │
-│  │      │                                                │  │
-│  │      ├───► EC2 インスタンス (10.0.1.10)               │  │
-│  │      ├───► ECS タスク (10.0.1.20)                     │  │
-│  │      └───► Lambda (VPC内)                             │  │
-│  │                                                        │  │
-│  └────────────────────────────────────────────────────────┘  │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
+    # SSL/TLS設定
+    ssl_certificate /etc/letsencrypt/live/api.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.example.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384';
 
-#### REST API用 VPC Link作成
+    # ロギング
+    access_log /var/log/nginx/api-access.log;
+    error_log /var/log/nginx/api-error.log;
 
-```bash
-# 1. NLB作成（VPC内）
-aws elbv2 create-load-balancer \
-  --name internal-nlb \
-  --subnets subnet-12345678 subnet-87654321 \
-  --scheme internal \
-  --type network
+    # バックエンドサーバーへのプロキシ
+    location / {
+        proxy_pass http://backend-app:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
 
-# 2. ターゲットグループ作成
-aws elbv2 create-target-group \
-  --name api-targets \
-  --protocol TCP \
-  --port 8080 \
-  --vpc-id vpc-1234567890abcdef0
-
-# 3. リスナー作成
-aws elbv2 create-listener \
-  --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/net/internal-nlb/50dc6c495c0c9188 \
-  --protocol TCP \
-  --port 80 \
-  --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/api-targets/50dc6c495c0c9188
-
-# 4. VPC Link作成（REST API用）
-aws apigateway create-vpc-link \
-  --name my-vpc-link \
-  --target-arns arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/net/internal-nlb/50dc6c495c0c9188
-
-# 5. REST APIにVPC Link統合を設定
-# API Gateway Console または AWS CLI/CloudFormationで設定
-```
-
-#### HTTP API用 VPC Link作成
-
-```bash
-# HTTP API用のVPC Linkは異なるコマンド
-aws apigatewayv2 create-vpc-link \
-  --name my-http-vpc-link \
-  --subnet-ids subnet-12345678 subnet-87654321 \
-  --security-group-ids sg-12345678
-```
-
-### 2.3 プライベートAPI
-
-**プライベートAPI**は、VPCエンドポイント経由でのみアクセス可能なAPIです。
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│              プライベートAPI の構成                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │  VPC                                                    │ │
-│  │  ┌──────────────────────────────────────────────────┐  │ │
-│  │  │  EC2インスタンス                                  │  │ │
-│  │  │  (10.0.1.10)                                      │  │ │
-│  │  └──────────────────────────────────────────────────┘  │ │
-│  │      │                                                  │ │
-│  │      │ HTTPS                                            │ │
-│  │      ▼                                                  │ │
-│  │  ┌──────────────────────────────────────────────────┐  │ │
-│  │  │  VPCエンドポイント (execute-api)                  │  │ │
-│  │  │  vpce-1234567890abcdef0                           │  │ │
-│  │  └──────────────────────────────────────────────────┘  │ │
-│  │      │                                                  │ │
-│  └──────┼──────────────────────────────────────────────────┘ │
-│         │                                                    │
-│         │ AWS PrivateLink                                   │
-│         ▼                                                    │
-│  ┌──────────────────┐                                       │
-│  │  API Gateway     │                                       │
-│  │  (プライベートAPI)│                                       │
-│  └──────────────────┘                                       │
-│                                                              │
-│  特徴:                                                       │
-│  - インターネットからアクセス不可                            │
-│  - VPC内からのみアクセス可能                                 │
-│  - リソースポリシーで更に制限可能                            │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### プライベートAPI作成例
-
-```bash
-# 1. VPCエンドポイント作成
-aws ec2 create-vpc-endpoint \
-  --vpc-id vpc-1234567890abcdef0 \
-  --vpc-endpoint-type Interface \
-  --service-name com.amazonaws.us-east-1.execute-api \
-  --subnet-ids subnet-12345678 subnet-87654321 \
-  --security-group-ids sg-12345678
-
-# 2. プライベートREST API作成
-aws apigateway create-rest-api \
-  --name private-api \
-  --endpoint-configuration types=PRIVATE
-
-# 3. リソースポリシー設定
-cat > resource-policy.json <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": "execute-api:Invoke",
-      "Resource": "arn:aws:execute-api:us-east-1:123456789012:api-id/*",
-      "Condition": {
-        "StringEquals": {
-          "aws:SourceVpce": "vpce-1234567890abcdef0"
-        }
-      }
+        # タイムアウト設定
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
-  ]
 }
-EOF
+```
 
-aws apigateway update-rest-api \
-  --rest-api-id api-id \
-  --patch-operations op=replace,path=/policy,value=file://resource-policy.json
+### 2.2 パスベースルーティング
+
+複数のバックエンドサービスへのルーティング:
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name api.example.com;
+
+    # /api/v1/* → API v1サーバー
+    location /api/v1/ {
+        proxy_pass http://api-v1-backend:8080/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # /api/v2/* → API v2サーバー
+    location /api/v2/ {
+        proxy_pass http://api-v2-backend:8080/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # /auth/* → 認証サービス
+    location /auth/ {
+        proxy_pass http://auth-service:9000/;
+        proxy_set_header Host $host;
+    }
+
+    # /static/* → 静的コンテンツ（CDN/S3等）
+    location /static/ {
+        proxy_pass http://cdn.example.com/;
+        proxy_cache my_cache;
+        proxy_cache_valid 200 1h;
+    }
+}
 ```
 
 ---
 
-## 3. カスタムドメインとSSL/TLS
+## 3. 認証とセキュリティ
 
-### 3.1 カスタムドメインの設定
+### 3.1 基本認証（Basic Authentication）
 
-デフォルトのAPI Gatewayエンドポイント（例：`https://api-id.execute-api.us-east-1.amazonaws.com`）を、カスタムドメイン（例：`https://api.example.com`）に変更できます。
+最もシンプルな認証方式:
 
+```nginx
+# /etc/nginx/sites-available/api-gateway
+
+server {
+    listen 443 ssl http2;
+    server_name api.example.com;
+
+    location /api/ {
+        # Basic認証
+        auth_basic "API Access";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+
+        proxy_pass http://backend-api:8080/;
+        proxy_set_header Host $host;
+    }
+}
 ```
-┌─────────────────────────────────────────────────────────────┐
-│          カスタムドメインの構成                              │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  クライアント                                                │
-│      │                                                      │
-│      │ https://api.example.com/prod/users                   │
-│      ▼                                                      │
-│  ┌──────────────────┐                                       │
-│  │  Route 53        │                                       │
-│  │  api.example.com │                                       │
-│  │  ↓ ALIAS         │                                       │
-│  │  d-xxxx.execute-api.us-east-1.amazonaws.com             │
-│  └──────────────────┘                                       │
-│      │                                                      │
-│      ▼                                                      │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  CloudFront ディストリビューション                    │  │
-│  │  (API Gateway カスタムドメインが自動作成)             │  │
-│  │  証明書: ACM (us-east-1)                              │  │
-│  └──────────────────────────────────────────────────────┘  │
-│      │                                                      │
-│      ▼                                                      │
-│  ┌──────────────────┐                                       │
-│  │  API Gateway     │                                       │
-│  │  ステージ: prod   │                                       │
-│  │  パス: /users     │                                       │
-│  └──────────────────┘                                       │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### カスタムドメイン作成手順
 
 ```bash
-# 1. ACM証明書作成（us-east-1リージョン必須 - エッジ最適化の場合）
-aws acm request-certificate \
-  --domain-name api.example.com \
-  --validation-method DNS \
-  --region us-east-1
+# .htpasswdファイル作成
+sudo apt-get install apache2-utils
+sudo htpasswd -c /etc/nginx/.htpasswd username
+```
 
-# 2. DNS検証完了後、カスタムドメイン作成
-aws apigateway create-domain-name \
-  --domain-name api.example.com \
-  --certificate-arn arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012 \
-  --endpoint-configuration types=EDGE \
-  --security-policy TLS_1_2
+### 3.2 APIキー認証
 
-# リージョナルエンドポイントの場合（推奨）
-aws apigateway create-domain-name \
-  --domain-name api.example.com \
-  --regional-certificate-arn arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012 \
-  --endpoint-configuration types=REGIONAL \
-  --security-policy TLS_1_2
+カスタムヘッダーによるAPIキー検証:
 
-# 3. ベースパスマッピング作成（API ステージとカスタムドメインを紐付け）
-aws apigateway create-base-path-mapping \
-  --domain-name api.example.com \
-  --rest-api-id api123456 \
-  --stage prod \
-  --base-path v1
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name api.example.com;
 
-# 複数バージョンのAPI
-aws apigateway create-base-path-mapping \
-  --domain-name api.example.com \
-  --rest-api-id api123456 \
-  --stage prod \
-  --base-path v1
-
-aws apigateway create-base-path-mapping \
-  --domain-name api.example.com \
-  --rest-api-id api789012 \
-  --stage prod \
-  --base-path v2
-
-# 結果:
-# https://api.example.com/v1/* → api123456 (prod ステージ)
-# https://api.example.com/v2/* → api789012 (prod ステージ)
-
-# 4. Route 53でDNSレコード作成
-aws route53 change-resource-record-sets \
-  --hosted-zone-id Z1234567890ABC \
-  --change-batch '{
-    "Changes": [{
-      "Action": "CREATE",
-      "ResourceRecordSet": {
-        "Name": "api.example.com",
-        "Type": "A",
-        "AliasTarget": {
-          "HostedZoneId": "Z2FDTNDATAQYW2",
-          "DNSName": "d-xxxx.execute-api.us-east-1.amazonaws.com",
-          "EvaluateTargetHealth": false
+    location /api/ {
+        # APIキーチェック
+        if ($http_x_api_key = "") {
+            return 401 "API Key Required";
         }
-      }
-    }]
-  }'
+
+        # APIキー検証（簡易版）
+        set $valid_key 0;
+        if ($http_x_api_key = "your-secret-api-key") {
+            set $valid_key 1;
+        }
+
+        if ($valid_key = 0) {
+            return 403 "Invalid API Key";
+        }
+
+        proxy_pass http://backend-api:8080/;
+        proxy_set_header Host $host;
+        proxy_set_header X-API-Key $http_x_api_key;
+    }
+}
 ```
 
-### 3.2 エッジ最適化 vs リージョナル
+### 3.3 JWT認証
+
+JWT（JSON Web Token）による認証（nginx-jwt モジュール使用）:
+
+```nginx
+# JWT検証の概念（実装にはnginx-jwtモジュールまたはLuaスクリプトが必要）
+
+server {
+    listen 443 ssl http2;
+    server_name api.example.com;
+
+    location /api/ {
+        # Authorizationヘッダーからトークン取得
+        # JWT検証ロジック（署名検証、有効期限確認）
+        # ※実装詳細はnginx-jwtモジュールまたはLuaスクリプト参照
+
+        # 検証成功後、バックエンドにプロキシ
+        proxy_pass http://backend-api:8080/;
+        proxy_set_header Host $host;
+        proxy_set_header X-User-ID $jwt_claim_sub;  # JWTのsubクレームを渡す
+    }
+}
+```
+
+**JWT検証の一般的な流れ:**
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│          エッジ最適化 vs リージョナルエンドポイント          │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  エッジ最適化エンドポイント                                  │
-│  - CloudFront経由でグローバル配信                            │
-│  - 低レイテンシー（エッジロケーション活用）                  │
-│  - ACM証明書はus-east-1リージョン必須                        │
-│  - 追加コストなし（CloudFront組み込み）                      │
-│  用途: グローバルアプリケーション                            │
-│                                                              │
-│  リージョナルエンドポイント                                  │
-│  - 特定リージョンにデプロイ                                  │
-│  - CloudFront統合は任意（手動設定）                          │
-│  - ACM証明書は同一リージョンで取得                           │
-│  - VPC Link、プライベートAPIで必須                           │
-│  用途: 特定リージョンのみ、VPC統合、独自CloudFront設定       │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+1. クライアントがAuthorizationヘッダーでJWTを送信
+   Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+2. リバースプロキシでJWT検証
+   - 署名検証（HMAC/RSA）
+   - 有効期限確認（exp claim）
+   - Issuer確認（iss claim）
+
+3. 検証成功
+   - バックエンドにリクエスト転送
+   - ユーザー情報をヘッダーに追加
+
+4. 検証失敗
+   - 401 Unauthorizedを返す
+```
+
+---
+
+## 4. レート制限とスロットリング
+
+### 4.1 Nginxによるレート制限
+
+リクエスト数を制限してサービスを保護:
+
+```nginx
+# /etc/nginx/nginx.conf
+
+http {
+    # レート制限ゾーン定義
+    # クライアントIPごとに10MB、1秒あたり10リクエストまで
+    limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
+
+    # APIキーごとのレート制限
+    limit_req_zone $http_x_api_key zone=apikey_limit:10m rate=100r/s;
+
+    server {
+        listen 443 ssl http2;
+        server_name api.example.com;
+
+        location /api/ {
+            # レート制限適用（burst=20で一時的な超過を許可）
+            limit_req zone=api_limit burst=20 nodelay;
+
+            # 429 Too Many Requestsのカスタムレスポンス
+            limit_req_status 429;
+
+            proxy_pass http://backend-api:8080/;
+            proxy_set_header Host $host;
+        }
+
+        # プレミアムAPIエンドポイント（高レート制限）
+        location /api/premium/ {
+            limit_req zone=apikey_limit burst=50 nodelay;
+
+            proxy_pass http://backend-api:8080/premium/;
+            proxy_set_header Host $host;
+        }
+    }
+}
+```
+
+### 4.2 接続数制限
+
+同時接続数の制限:
+
+```nginx
+http {
+    # 接続数制限ゾーン
+    limit_conn_zone $binary_remote_addr zone=conn_limit:10m;
+
+    server {
+        listen 443 ssl http2;
+        server_name api.example.com;
+
+        location /api/ {
+            # クライアントIPごとに10接続まで
+            limit_conn conn_limit 10;
+
+            proxy_pass http://backend-api:8080/;
+        }
+    }
+}
 ```
 
 ---
@@ -416,266 +349,81 @@ aws route53 change-resource-record-sets \
 │          API Gateway 認証方式                                │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  1. IAM認証                                                  │
-│     - AWS署名バージョン4（SigV4）                            │
-│     - AWSサービス間通信に最適                                │
+│  1. Basic認証                                                │
+│     - HTTPヘッダーでユーザー名/パスワードを送信              │
+│     - シンプルだが、HTTPS必須                                │
 │                                                              │
-│  2. Cognito オーソライザー                                   │
-│     - Cognito User Poolsで認証                               │
-│     - OAuth 2.0 / OIDC                                      │
-│                                                              │
-│  3. Lambda オーソライザー（カスタムオーソライザー）          │
-│     - カスタム認証ロジック                                   │
-│     - トークンベース or リクエストパラメータベース           │
-│                                                              │
-│  4. API キー                                                 │
+│  2. APIキー認証                                              │
+│     - リクエストヘッダーまたはクエリパラメータでキー送信      │
 │     - シンプルなアクセス制御                                 │
-│     - 使用量プランと組み合わせ                               │
+│     - 使用量制限と組み合わせ                                 │
 │                                                              │
-│  5. JWT オーソライザー（HTTP API専用）                       │
-│     - JWTトークンのネイティブ検証                            │
-│     - OIDC/OAuth 2.0統合                                    │
+│  3. JWT（JSON Web Token）認証                               │
+│     - JWTトークンの検証                                      │
+│     - OAuth 2.0 / OIDC統合                                  │
+│     - ステートレスな認証                                     │
+│                                                              │
+│  4. OAuth 2.0                                               │
+│     - アクセストークンベースの認証                            │
+│     - 外部認証プロバイダー連携                               │
+│     - スコープベースのアクセス制御                            │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 4.2 Lambda オーソライザー実装例
-
-```javascript
-// Lambda オーソライザー関数（Node.js）
-exports.handler = async (event) => {
-    console.log('Event:', JSON.stringify(event, null, 2));
-
-    // トークン取得（Authorizationヘッダーから）
-    const token = event.authorizationToken;
-
-    try {
-        // トークン検証ロジック（例: JWTトークン検証）
-        const decoded = verifyJwtToken(token);
-
-        // IAMポリシー生成（Allow）
-        return generatePolicy(decoded.sub, 'Allow', event.methodArn);
-    } catch (error) {
-        console.error('Authentication failed:', error);
-
-        // IAMポリシー生成（Deny）
-        return generatePolicy('user', 'Deny', event.methodArn);
-    }
-};
-
-function generatePolicy(principalId, effect, resource) {
-    const authResponse = {
-        principalId: principalId
-    };
-
-    if (effect && resource) {
-        const policyDocument = {
-            Version: '2012-10-17',
-            Statement: [{
-                Action: 'execute-api:Invoke',
-                Effect: effect,
-                Resource: resource
-            }]
-        };
-        authResponse.policyDocument = policyDocument;
-    }
-
-    // コンテキスト（バックエンドに渡される追加情報）
-    authResponse.context = {
-        userId: principalId,
-        email: 'user@example.com',
-        role: 'admin'
-    };
-
-    return authResponse;
-}
-
-function verifyJwtToken(token) {
-    // JWT検証ロジック（jsonwebtokenライブラリ使用）
-    const jwt = require('jsonwebtoken');
-    const publicKey = process.env.JWT_PUBLIC_KEY;
-
-    return jwt.verify(token, publicKey, {
-        algorithms: ['RS256']
-    });
-}
-```
-
-#### Lambdaオーソライザー設定（AWS CLI）
-
-```bash
-# Lambda関数作成（省略）
-
-# REST APIにオーソライザー追加
-aws apigateway create-authorizer \
-  --rest-api-id api123456 \
-  --name my-lambda-authorizer \
-  --type TOKEN \
-  --authorizer-uri arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:123456789012:function:my-authorizer/invocations \
-  --identity-source method.request.header.Authorization \
-  --authorizer-result-ttl-in-seconds 300
-
-# メソッドにオーソライザーを適用
-aws apigateway update-method \
-  --rest-api-id api123456 \
-  --resource-id abc123 \
-  --http-method GET \
-  --patch-operations op=replace,path=/authorizationType,value=CUSTOM \
-                      op=replace,path=/authorizerId,value=authorizer-id
-```
-
-### 4.3 HTTP API JWTオーソライザー
-
-HTTP APIでは、JWTオーソライザーをネイティブにサポートしています。
-
-```bash
-# HTTP API作成
-aws apigatewayv2 create-api \
-  --name my-http-api \
-  --protocol-type HTTP \
-  --target arn:aws:lambda:us-east-1:123456789012:function:my-function
-
-# JWTオーソライザー作成
-aws apigatewayv2 create-authorizer \
-  --api-id api-id \
-  --name jwt-authorizer \
-  --authorizer-type JWT \
-  --identity-source '$request.header.Authorization' \
-  --jwt-configuration Audience=https://example.com,Issuer=https://cognito-idp.us-east-1.amazonaws.com/us-east-1_XXXXXXXXX
-
-# ルートにオーソライザーを適用
-aws apigatewayv2 update-route \
-  --api-id api-id \
-  --route-id route-id \
-  --authorization-type JWT \
-  --authorizer-id authorizer-id
-```
 
 ---
 
-## 5. スロットリング、キャッシング、CORS
+## 5. キャッシングとCORS
 
-### 5.1 スロットリング（レート制限）
+### 5.1 Nginxキャッシング
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│          API Gateway スロットリング                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  【デフォルト制限】                                          │
-│  - リージョンごとのアカウント制限:                           │
-│    - 定常レート: 10,000 リクエスト/秒                        │
-│    - バースト: 5,000 リクエスト                              │
-│                                                              │
-│  【制限の階層】                                              │
-│  1. アカウントレベル（リージョンごと）                       │
-│  2. ステージレベル                                           │
-│  3. メソッドレベル                                           │
-│                                                              │
-│  【使用量プラン】                                            │
-│  - APIキーごとのレート制限                                   │
-│  - クォータ（日次/週次/月次）                                │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
+レスポンスをキャッシュしてバックエンド負荷を軽減:
 
-#### スロットリング設定
+```nginx
+# /etc/nginx/nginx.conf
 
-```bash
-# ステージレベルのスロットリング設定
-aws apigateway update-stage \
-  --rest-api-id api123456 \
-  --stage-name prod \
-  --patch-operations \
-    op=replace,path=/throttle/rateLimit,value=1000 \
-    op=replace,path=/throttle/burstLimit,value=2000
+http {
+    # キャッシュパス定義
+    proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=api_cache:10m max_size=1g inactive=60m use_temp_path=off;
 
-# メソッドレベルのスロットリング設定
-aws apigateway update-stage \
-  --rest-api-id api123456 \
-  --stage-name prod \
-  --patch-operations \
-    op=replace,path=/*/GET/users/throttle/rateLimit,value=500 \
-    op=replace,path=/*/GET/users/throttle/burstLimit,value=1000
+    server {
+        listen 443 ssl http2;
+        server_name api.example.com;
 
-# 使用量プラン作成
-aws apigateway create-usage-plan \
-  --name basic-plan \
-  --throttle rateLimit=100,burstLimit=200 \
-  --quota limit=10000,period=MONTH \
-  --api-stages apiId=api123456,stage=prod
+        location /api/public/ {
+            # キャッシュ有効化
+            proxy_cache api_cache;
 
-# APIキー作成
-aws apigateway create-api-key \
-  --name customer-api-key \
-  --enabled
+            # キャッシュキー（URL + クエリパラメータ）
+            proxy_cache_key "$scheme$request_method$host$request_uri";
 
-# APIキーを使用量プランに関連付け
-aws apigateway create-usage-plan-key \
-  --usage-plan-id plan-id \
-  --key-id api-key-id \
-  --key-type API_KEY
+            # ステータスコード200の場合、5分間キャッシュ
+            proxy_cache_valid 200 5m;
+
+            # キャッシュステータスをヘッダーに追加（デバッグ用）
+            add_header X-Cache-Status $upstream_cache_status;
+
+            # バックエンドへプロキシ
+            proxy_pass http://backend-api:8080/public/;
+            proxy_set_header Host $host;
+        }
+
+        # 認証が必要なエンドポイント（キャッシュなし）
+        location /api/private/ {
+            proxy_pass http://backend-api:8080/private/;
+            proxy_set_header Host $host;
+            proxy_set_header Authorization $http_authorization;
+
+            # キャッシュ無効化
+            proxy_no_cache 1;
+            proxy_cache_bypass 1;
+        }
+    }
+}
 ```
 
-### 5.2 キャッシング
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│          API Gateway キャッシング                            │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  リクエスト1 → API Gateway                                   │
-│               ↓ キャッシュミス                               │
-│               Lambda実行 (100ms)                             │
-│               ↓                                             │
-│               キャッシュに保存 (TTL: 300秒)                  │
-│               ↓                                             │
-│               レスポンス                                     │
-│                                                              │
-│  リクエスト2 (同じパラメータ) → API Gateway                  │
-│                                 ↓ キャッシュヒット           │
-│                                 キャッシュから返却 (1ms)     │
-│                                                              │
-│  【キャッシュキー】                                          │
-│  - パス                                                      │
-│  - クエリパラメータ                                          │
-│  - ヘッダー（設定可能）                                      │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### キャッシング設定
-
-```bash
-# ステージでキャッシング有効化
-aws apigateway update-stage \
-  --rest-api-id api123456 \
-  --stage-name prod \
-  --patch-operations \
-    op=replace,path=/cacheClusterEnabled,value=true \
-    op=replace,path=/cacheClusterSize,value=0.5
-
-# キャッシュサイズ:
-# 0.5GB, 1.6GB, 6.1GB, 13.5GB, 28.4GB, 58.2GB, 118GB, 237GB
-
-# TTL設定（秒）
-aws apigateway update-stage \
-  --rest-api-id api123456 \
-  --stage-name prod \
-  --patch-operations \
-    op=replace,path=/methodSettings/*/GET~1users/cacheTtlInSeconds,value=300
-
-# クエリパラメータをキャッシュキーに含める
-aws apigateway update-method \
-  --rest-api-id api123456 \
-  --resource-id abc123 \
-  --http-method GET \
-  --patch-operations \
-    op=replace,path=/requestParameters/method.request.querystring.userId,value=true \
-    op=replace,path=/cacheKeyParameters,value=method.request.querystring.userId
-```
-
-### 5.3 CORS設定
+### 5.2 CORS設定
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -705,186 +453,120 @@ aws apigateway update-method \
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### CORS設定（REST API）
+#### NginxでのCORS設定
 
-```bash
-# OPTIONSメソッド作成（モック統合）
-aws apigateway put-method \
-  --rest-api-id api123456 \
-  --resource-id abc123 \
-  --http-method OPTIONS \
-  --authorization-type NONE
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name api.example.com;
 
-aws apigateway put-integration \
-  --rest-api-id api123456 \
-  --resource-id abc123 \
-  --http-method OPTIONS \
-  --type MOCK \
-  --request-templates '{"application/json": "{\"statusCode\": 200}"}'
+    location /api/ {
+        # プリフライトリクエスト（OPTIONS）への応答
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' 'https://example.com' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-API-Key' always;
+            add_header 'Access-Control-Max-Age' 3600 always;
+            add_header 'Content-Type' 'text/plain; charset=utf-8' always;
+            add_header 'Content-Length' 0 always;
+            return 204;
+        }
 
-aws apigateway put-method-response \
-  --rest-api-id api123456 \
-  --resource-id abc123 \
-  --http-method OPTIONS \
-  --status-code 200 \
-  --response-parameters \
-    method.response.header.Access-Control-Allow-Headers=true \
-    method.response.header.Access-Control-Allow-Methods=true \
-    method.response.header.Access-Control-Allow-Origin=true
+        # 実際のリクエストへのCORSヘッダー追加
+        add_header 'Access-Control-Allow-Origin' 'https://example.com' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
 
-aws apigateway put-integration-response \
-  --rest-api-id api123456 \
-  --resource-id abc123 \
-  --http-method OPTIONS \
-  --status-code 200 \
-  --response-parameters \
-    method.response.header.Access-Control-Allow-Headers="'Content-Type,Authorization'" \
-    method.response.header.Access-Control-Allow-Methods="'GET,POST,PUT,DELETE'" \
-    method.response.header.Access-Control-Allow-Origin="'https://example.com'"
+        proxy_pass http://backend-api:8080/;
+        proxy_set_header Host $host;
+    }
+}
 ```
 
-#### CORS設定（HTTP API - 簡単）
+#### 複数オリジンへの対応
 
-```bash
-# HTTP APIはCORSが簡単に設定可能
-aws apigatewayv2 update-api \
-  --api-id api-id \
-  --cors-configuration \
-    AllowOrigins=https://example.com,AllowMethods=GET,POST,PUT,DELETE,AllowHeaders=Content-Type,Authorization,MaxAge=3600
+```nginx
+# 複数のオリジンを許可する場合
+
+map $http_origin $cors_origin {
+    default "";
+    "~^https://example\.com$" $http_origin;
+    "~^https://app\.example\.com$" $http_origin;
+    "~^http://localhost:3000$" $http_origin;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name api.example.com;
+
+    location /api/ {
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' $cors_origin always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization' always;
+            add_header 'Access-Control-Max-Age' 3600 always;
+            return 204;
+        }
+
+        add_header 'Access-Control-Allow-Origin' $cors_origin always;
+
+        proxy_pass http://backend-api:8080/;
+    }
+}
 ```
 
 ---
 
-## 6. CloudFrontとの連携
+## 6. ログとモニタリング
 
-### 6.1 CloudFront + API Gateway パターン
+### 6.1 アクセスログ
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│          CloudFront + API Gateway 構成                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  クライアント                                                │
-│      │                                                      │
-│      │ https://example.com                                  │
-│      ▼                                                      │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  CloudFront                                           │  │
-│  │  ┌────────────────────────────────────────────────┐  │  │
-│  │  │ ビヘイビア1: /api/*                             │  │  │
-│  │  │ → API Gateway (オリジン)                        │  │  │
-│  │  │ キャッシュ: 無効 or 短時間                       │  │  │
-│  │  └────────────────────────────────────────────────┘  │  │
-│  │  ┌────────────────────────────────────────────────┐  │  │
-│  │  │ ビヘイビア2: /static/*                          │  │  │
-│  │  │ → S3 (オリジン)                                 │  │  │
-│  │  │ キャッシュ: 長時間                               │  │  │
-│  │  └────────────────────────────────────────────────┘  │  │
-│  │  ┌────────────────────────────────────────────────┐  │  │
-│  │  │ デフォルトビヘイビア: /*                        │  │  │
-│  │  │ → S3 (SPA)                                      │  │  │
-│  │  └────────────────────────────────────────────────┘  │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                              │
-│  利点:                                                       │
-│  - 単一ドメインでAPI + 静的コンテンツ配信                    │
-│  - WAF統合（DDoS対策、レート制限）                           │
-│  - グローバルエッジキャッシング                              │
-│  - カスタムSSL証明書                                         │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
+Nginxのアクセスログでリクエストを追跡:
 
-#### CloudFrontディストリビューション作成例
+```nginx
+http {
+    # カスタムログフォーマット
+    log_format api_log '$remote_addr - $remote_user [$time_local] '
+                       '"$request" $status $body_bytes_sent '
+                       '"$http_referer" "$http_user_agent" '
+                       '$request_time $upstream_response_time '
+                       '"$http_x_api_key"';
 
-```json
-// cloudfront-config.json
-{
-  "CallerReference": "2025-12-26-api-cf",
-  "Aliases": {
-    "Quantity": 1,
-    "Items": ["example.com"]
-  },
-  "DefaultRootObject": "index.html",
-  "Origins": {
-    "Quantity": 2,
-    "Items": [
-      {
-        "Id": "api-gateway",
-        "DomainName": "api123456.execute-api.us-east-1.amazonaws.com",
-        "OriginPath": "/prod",
-        "CustomOriginConfig": {
-          "HTTPPort": 80,
-          "HTTPSPort": 443,
-          "OriginProtocolPolicy": "https-only",
-          "OriginSslProtocols": {
-            "Quantity": 1,
-            "Items": ["TLSv1.2"]
-          }
+    server {
+        listen 443 ssl http2;
+        server_name api.example.com;
+
+        # アクセスログ
+        access_log /var/log/nginx/api-access.log api_log;
+
+        # エラーログ
+        error_log /var/log/nginx/api-error.log warn;
+
+        location /api/ {
+            proxy_pass http://backend-api:8080/;
+            proxy_set_header Host $host;
         }
-      },
-      {
-        "Id": "s3-static",
-        "DomainName": "my-bucket.s3.amazonaws.com",
-        "S3OriginConfig": {
-          "OriginAccessIdentity": "origin-access-identity/cloudfront/ABCDEFG1234567"
-        }
-      }
-    ]
-  },
-  "DefaultCacheBehavior": {
-    "TargetOriginId": "s3-static",
-    "ViewerProtocolPolicy": "redirect-to-https",
-    "AllowedMethods": {
-      "Quantity": 2,
-      "Items": ["GET", "HEAD"]
-    },
-    "ForwardedValues": {
-      "QueryString": false,
-      "Cookies": {"Forward": "none"}
-    },
-    "MinTTL": 0,
-    "DefaultTTL": 86400,
-    "MaxTTL": 31536000
-  },
-  "CacheBehaviors": {
-    "Quantity": 1,
-    "Items": [
-      {
-        "PathPattern": "/api/*",
-        "TargetOriginId": "api-gateway",
-        "ViewerProtocolPolicy": "https-only",
-        "AllowedMethods": {
-          "Quantity": 7,
-          "Items": ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-        },
-        "ForwardedValues": {
-          "QueryString": true,
-          "Cookies": {"Forward": "all"},
-          "Headers": {
-            "Quantity": 3,
-            "Items": ["Authorization", "Content-Type", "Accept"]
-          }
-        },
-        "MinTTL": 0,
-        "DefaultTTL": 0,
-        "MaxTTL": 0
-      }
-    ]
-  },
-  "ViewerCertificate": {
-    "ACMCertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012",
-    "SSLSupportMethod": "sni-only",
-    "MinimumProtocolVersion": "TLSv1.2_2021"
-  },
-  "Comment": "API Gateway + S3 distribution",
-  "Enabled": true
+    }
 }
 ```
 
-```bash
-aws cloudfront create-distribution \
-  --distribution-config file://cloudfront-config.json
+### 6.2 メトリクス収集
+
+リクエストメトリクスの収集（Prometheusとの統合例）:
+
+```nginx
+# nginx-module-vts または nginx-prometheus-exporter を使用
+
+server {
+    listen 9113;  # メトリクスエンドポイント
+    server_name localhost;
+
+    location /metrics {
+        # Prometheusメトリクスエクスポート
+        # nginx-module-vtsの場合: vhost_traffic_status_display;
+        # nginx-prometheus-exporterの場合: stub_status;
+        stub_status;
+    }
+}
 ```
 
 ---
@@ -893,62 +575,67 @@ aws cloudfront create-distribution \
 
 ### 学んだこと
 
-本章では、API Gatewayのネットワーキング機能を学びました:
+本章では、リバースプロキシとAPI Gatewayパターンを学びました:
 
-- API Gatewayの基本概念と統合タイプ（Lambda、HTTP、VPC Link）
-- VPC統合とプライベートAPIの構成
-- カスタムドメインとSSL/TLS設定
-- 認証・認可（IAM、Cognito、Lambda オーソライザー、JWT）
-- スロットリング、キャッシング、CORS設定
-- CloudFrontとの連携パターン
+- リバースプロキシとAPI Gatewayパターンの基本概念
+- Nginxを使用したリバースプロキシ設定
+- パスベースルーティングの実装
+- 認証方式（Basic認証、APIキー、JWT）
+- レート制限とスロットリングの実装
+- キャッシングによるパフォーマンス最適化
+- CORS設定
+- ログとモニタリング
 
 ### 重要なポイント
 
 ```
-1. HTTP API vs REST API の選択
-   - シンプル、低コスト → HTTP API
-   - 豊富な機能 → REST API
+1. リバースプロキシの役割
+   - 単一エントリーポイント
+   - SSL/TLS終端
+   - 認証・認可の一元化
+   - レート制限とキャッシング
 
-2. VPC統合
-   - プライベートリソースへのアクセス
-   - NLB経由のVPC Link
+2. パスベースルーティング
+   - /api/v1/* → APIv1サーバー
+   - /api/v2/* → APIv2サーバー
+   - /static/* → 静的コンテンツ
+   - マイクロサービス統合に有効
 
-3. カスタムドメイン
-   - エッジ最適化（グローバル）
-   - リージョナル（VPC統合、独自CloudFront）
+3. セキュリティ
+   - Basic認証（シンプル）
+   - APIキー認証（中間）
+   - JWT認証（推奨）
 
-4. 認証の選択
-   - AWS内部 → IAM
-   - ユーザー認証 → Cognito / JWT
-   - カスタムロジック → Lambda オーソライザー
+4. パフォーマンス最適化
+   - レート制限でサービス保護
+   - キャッシングでバックエンド負荷軽減
+   - 適切なTTL設定
 
-5. パフォーマンス最適化
-   - キャッシング（適切なTTL設定）
-   - スロットリング（レート制限）
-   - CloudFront統合（グローバル配信）
+5. CORS設定
+   - プリフライトリクエスト対応
+   - 複数オリジンサポート
 ```
 
 ### ベストプラクティス
 
 ```
-□ HTTP APIを優先検討（コスト削減）
-□ VPC内リソースはVPC Link経由
-□ カスタムドメインでブランディング
-□ 適切な認証方式の選択
-□ スロットリングで保護
-□ CloudWatch Logsで監視
-□ X-Rayでトレーシング
-□ WAF統合（CloudFront経由）
+□ HTTPS/TLS必須（Let's Encryptで証明書取得）
+□ 適切な認証方式の選択（JWT推奨）
+□ レート制限でDDoS対策
+□ キャッシングでパフォーマンス向上
+□ CORSを適切に設定
+□ アクセスログで監視
+□ メトリクス収集（Prometheus等）
 ```
 
 ### 次のステップ
 
-- [06-network-troubleshooting.md](./06-network-troubleshooting.md) - API Gatewayのトラブルシューティング
-- [content_06_developer-guide/03-application-plane/](../../content_06_developer-guide/03-application-plane/) - idp-serverでのAPI設計
+- [06-network-troubleshooting.md](./06-network-troubleshooting.md) - ネットワークトラブルシューティング
+- [03-load-balancing.md](./03-load-balancing.md) - ロードバランシングの詳細
 
 ### 参考リンク
 
-- [AWS API Gateway Documentation](https://docs.aws.amazon.com/apigateway/)
-- [API Gateway REST API](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-rest-api.html)
-- [API Gateway HTTP API](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api.html)
-- [VPC Link](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vpc-links.html)
+- [Nginx Documentation](https://nginx.org/en/docs/)
+- [Nginx Reverse Proxy](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/)
+- [HAProxy Documentation](https://www.haproxy.org/documentation.html)
+- [CORS MDN Documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
