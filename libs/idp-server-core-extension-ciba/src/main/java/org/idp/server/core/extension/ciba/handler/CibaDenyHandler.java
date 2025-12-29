@@ -23,9 +23,11 @@ import org.idp.server.core.extension.ciba.handler.io.CibaDenyResponse;
 import org.idp.server.core.extension.ciba.handler.io.CibaDenyStatus;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
+import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.type.extension.DeniedScopes;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -36,18 +38,21 @@ public class CibaDenyHandler {
   BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  ClientNotificationService clientNotificationService;
 
   public CibaDenyHandler(
       CibaGrantRepository cibaGrantRepository,
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      ClientNotificationService clientNotificationService) {
     this.cibaGrantRepository = cibaGrantRepository;
     this.backchannelAuthenticationRequestRepository = backchannelAuthenticationRequestRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.clientNotificationService = clientNotificationService;
   }
 
   public CibaDenyResponse handle(CibaDenyRequest request) {
@@ -63,6 +68,33 @@ public class CibaDenyHandler {
             CibaGrantStatus.access_denied, new Authentication(), new DeniedScopes());
     cibaGrantRepository.update(tenant, updated);
 
+    BackchannelAuthenticationRequest backchannelAuthenticationRequest =
+        backchannelAuthenticationRequestRepository.find(
+            tenant, backchannelAuthenticationRequestIdentifier);
+
+    notifyErrorIfRequired(backchannelAuthenticationRequest, updated, tenant);
+
     return new CibaDenyResponse(CibaDenyStatus.OK);
+  }
+
+  private void notifyErrorIfRequired(
+      BackchannelAuthenticationRequest backchannelAuthenticationRequest,
+      CibaGrant cibaGrant,
+      Tenant tenant) {
+
+    if (!backchannelAuthenticationRequest.isPingMode()
+        && !backchannelAuthenticationRequest.isPushMode()) {
+      return;
+    }
+
+    ClientConfiguration clientConfiguration =
+        clientConfigurationQueryRepository.get(tenant, cibaGrant.requestedClientId());
+
+    clientNotificationService.notifyError(
+        backchannelAuthenticationRequest,
+        cibaGrant,
+        clientConfiguration,
+        "access_denied",
+        "The end-user denied the authorization request.");
   }
 }

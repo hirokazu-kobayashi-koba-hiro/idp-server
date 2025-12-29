@@ -16,7 +16,6 @@
 
 package org.idp.server.core.extension.ciba.handler;
 
-import org.idp.server.core.extension.ciba.gateway.ClientNotificationGateway;
 import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.grant.CibaGrantStatus;
 import org.idp.server.core.extension.ciba.handler.io.CibaAuthorizeRequest;
@@ -27,12 +26,10 @@ import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.extension.ciba.validator.CibaAuthorizeRequestValidator;
-import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
-import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class CibaAuthorizeHandler {
@@ -46,20 +43,13 @@ public class CibaAuthorizeHandler {
   public CibaAuthorizeHandler(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
       CibaGrantRepository cibaGrantRepository,
-      AuthorizationGrantedRepository authorizationGrantedRepository,
-      OAuthTokenCommandRepository oAuthTokenCommandRepository,
-      ClientNotificationGateway clientNotificationGateway,
+      ClientNotificationService clientNotificationService,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.cibaGrantRepository = cibaGrantRepository;
     this.backchannelAuthenticationRequestRepository = backchannelAuthenticationRequestRepository;
-    this.clientNotificationService =
-        new ClientNotificationService(
-            backchannelAuthenticationRequestRepository,
-            authorizationGrantedRepository,
-            oAuthTokenCommandRepository,
-            clientNotificationGateway);
+    this.clientNotificationService = clientNotificationService;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;

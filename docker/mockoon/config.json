@@ -1543,6 +1543,69 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "ciba-notification-callback",
+      "type": "http",
+      "documentation": "CIBA client notification endpoint - RFC 8266 Section 10.2/10.3. Validates Authorization header contains Bearer token.",
+      "method": "post",
+      "endpoint": "ciba/callback",
+      "responses": [
+        {
+          "uuid": "ciba-callback-success",
+          "body": "",
+          "latency": 0,
+          "statusCode": 204,
+          "label": "Success - Valid Authorization header",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Authorization",
+              "value": "^Bearer .+$",
+              "invert": false,
+              "operator": "regex"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "ciba-callback-unauthorized",
+          "body": "{\n  \"error\": \"invalid_token\",\n  \"error_description\": \"Missing or invalid Authorization header. Expected: Bearer <client_notification_token>\"\n}",
+          "latency": 0,
+          "statusCode": 401,
+          "label": "Unauthorized - Missing/Invalid Authorization header",
+          "headers": [
+            {
+              "key": "WWW-Authenticate",
+              "value": "Bearer error=\"invalid_token\""
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -1645,6 +1708,10 @@
     {
       "type": "route",
       "uuid": "e2e-oauth-retry-403"
+    },
+    {
+      "type": "route",
+      "uuid": "ciba-notification-callback"
     }
   ],
   "proxyMode": false,

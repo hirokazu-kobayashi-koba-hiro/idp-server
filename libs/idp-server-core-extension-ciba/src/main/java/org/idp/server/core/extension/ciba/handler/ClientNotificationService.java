@@ -130,6 +130,27 @@ public class ClientNotificationService implements RefreshTokenCreatable {
     }
   }
 
+  public void notifyError(
+      BackchannelAuthenticationRequest backchannelAuthenticationRequest,
+      CibaGrant cibaGrant,
+      ClientConfiguration clientConfiguration,
+      String error,
+      String errorDescription) {
+
+    ClientNotificationRequestBodyBuilder builder =
+        new ClientNotificationRequestBodyBuilder()
+            .add(cibaGrant.authReqId())
+            .addError(error)
+            .addErrorDescription(errorDescription);
+
+    ClientNotificationRequest clientNotificationRequest =
+        new ClientNotificationRequest(
+            clientConfiguration.backchannelClientNotificationEndpoint(),
+            builder.build(),
+            backchannelAuthenticationRequest.clientNotificationToken().value());
+    clientNotificationGateway.notify(clientNotificationRequest);
+  }
+
   private void registerOrUpdate(Tenant tenant, CibaGrant cibaGrant) {
     AuthorizationGranted latest =
         authorizationGrantedRepository.find(

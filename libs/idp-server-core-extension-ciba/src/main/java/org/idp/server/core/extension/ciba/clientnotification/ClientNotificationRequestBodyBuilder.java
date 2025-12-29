@@ -65,6 +65,16 @@ public class ClientNotificationRequestBodyBuilder {
     return this;
   }
 
+  public ClientNotificationRequestBodyBuilder addError(String error) {
+    values.put("error", error);
+    return this;
+  }
+
+  public ClientNotificationRequestBodyBuilder addErrorDescription(String errorDescription) {
+    values.put("error_description", errorDescription);
+    return this;
+  }
+
   public String build() {
     return jsonConverter.write(values);
   }
