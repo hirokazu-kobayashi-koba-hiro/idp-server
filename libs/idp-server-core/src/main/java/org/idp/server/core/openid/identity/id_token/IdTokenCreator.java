@@ -33,6 +33,20 @@ import org.idp.server.core.openid.oauth.type.oidc.IdToken;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.*;
 
+/**
+ * IdTokenCreator
+ *
+ * <p>Creates ID Tokens by combining standard OIDC claims with custom claims, and optionally
+ * encrypting the result.
+ *
+ * <p><b>Security Note:</b> Standard OIDC claims (sub, iss, aud, exp, iat, auth_time, nonce, acr,
+ * amr, azp) cannot be overwritten by custom claims. Custom claims are added first, then standard
+ * claims override any conflicts. This prevents malicious or misconfigured plugins from tampering
+ * with identity-critical claims.
+ *
+ * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#IDToken">OIDC Core 1.0 - ID
+ *     Token</a>
+ */
 public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable {
 
   CustomIndividualClaimsCreators customIndividualClaimsCreators;
@@ -57,7 +71,7 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
       ClientConfiguration clientConfiguration) {
     try {
 
-      Map<String, Object> claims =
+      Map<String, Object> standardClaims =
           createIndividualClaims(
               user,
               authentication,
@@ -77,7 +91,12 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
               requestedClaimsPayload,
               authorizationServerConfiguration,
               clientConfiguration);
+
+      // Custom claims first, then standard claims override
+      // This prevents custom claims from overwriting standard OIDC claims (sub, iss, aud, etc.)
+      Map<String, Object> claims = new HashMap<>();
       claims.putAll(customIndividualClaims);
+      claims.putAll(standardClaims);
 
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
       JsonWebSignature jsonWebSignature =

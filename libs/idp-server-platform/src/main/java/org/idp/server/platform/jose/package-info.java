@@ -25,7 +25,8 @@
  *
  * <ul>
  *   <li>{@link org.idp.server.platform.jose.JsonWebSignatureFactory} - Creates JWS (signed JWT)
- *   <li>{@link org.idp.server.platform.jose.NestedJsonWebEncryptionCreator} - Creates JWE (encrypted JWT) using Sign-then-Encrypt pattern
+ *   <li>{@link org.idp.server.platform.jose.NestedJsonWebEncryptionCreator} - Creates JWE
+ *       (encrypted JWT) using Sign-then-Encrypt pattern
  * </ul>
  *
  * <h3>Verification and Decryption</h3>
@@ -56,10 +57,13 @@
  * <h2>Utilities (Internal Use)</h2>
  *
  * <ul>
- *   <li>{@link org.idp.server.platform.jose.SymmetricJweAlgorithms} - Symmetric JWE algorithm detection
+ *   <li>{@link org.idp.server.platform.jose.SymmetricJweAlgorithms} - Symmetric JWE algorithm
+ *       detection
  *   <li>{@link org.idp.server.platform.jose.JoseAlgorithmAnalyzer} - Algorithm type analysis
- *   <li>{@link org.idp.server.platform.jose.JsonWebEncrypterFactory} - Creates JWEEncrypter (internal)
- *   <li>{@link org.idp.server.platform.jose.JsonWebEncDecrypterFactory} - Creates JWEDecrypter (internal)
+ *   <li>{@link org.idp.server.platform.jose.JsonWebEncrypterFactory} - Creates JWEEncrypter
+ *       (internal)
+ *   <li>{@link org.idp.server.platform.jose.JsonWebEncDecrypterFactory} - Creates JWEDecrypter
+ *       (internal)
  * </ul>
  *
  * <h2>Usage Examples</h2>
