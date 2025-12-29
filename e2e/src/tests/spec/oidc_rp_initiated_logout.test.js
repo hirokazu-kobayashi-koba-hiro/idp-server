@@ -3,9 +3,11 @@ import { describe, expect, it } from "@jest/globals";
 import { requestToken } from "../../api/oauthClient";
 import {
   clientSecretPostClient,
+  clientSecretPostWithIdTokenEncClient,
   serverConfig,
 } from "../testConfig";
 import { requestAuthorizations, requestLogout } from "../../oauth/request";
+import { decryptAndVerifyAndDecodeIdToken } from "../../lib/jose";
 
 /**
  * OpenID Connect RP-Initiated Logout 1.0 Tests
@@ -460,6 +462,95 @@ describe("OpenID Connect RP-Initiated Logout 1.0", () => {
       });
 
       expect(logoutResponse.status).toBe(200);
+    });
+  });
+
+  describe("Encrypted ID Token Support", () => {
+    /**
+     * Helper to get an encrypted ID token and decrypt it
+     */
+    const getEncryptedIdToken = async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostWithIdTokenEncClient.clientId,
+        responseType: "code",
+        state: `test-state-${Date.now()}`,
+        scope: "openid " + clientSecretPostWithIdTokenEncClient.scope,
+        redirectUri: clientSecretPostWithIdTokenEncClient.redirectUri,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostWithIdTokenEncClient.redirectUri,
+        clientId: clientSecretPostWithIdTokenEncClient.clientId,
+        clientSecret: clientSecretPostWithIdTokenEncClient.clientSecret,
+      });
+
+      console.log("Encrypted ID Token Response:", JSON.stringify(tokenResponse.data, null, 2));
+      expect(tokenResponse.status).toBe(200);
+
+      return tokenResponse.data.id_token;
+    };
+
+    /**
+     * When the ID Token is encrypted (JWE), the RP must decrypt it first
+     * before sending to the logout endpoint.
+     *
+     * JWE is encrypted with the client's public key, so only the client
+     * can decrypt it. The OP cannot decrypt a JWE meant for the client.
+     */
+    it("should reject JWE id_token_hint - OP cannot decrypt client-encrypted tokens", async () => {
+      const encryptedIdToken = await getEncryptedIdToken();
+
+      // Verify it's a JWE (5 parts separated by dots)
+      const parts = encryptedIdToken.split(".");
+      console.log("Token parts count:", parts.length);
+      expect(parts.length).toBe(5); // JWE has 5 parts
+
+      // Try logout with the encrypted token (JWE)
+      // This should fail because the JWE is encrypted with the client's public key
+      const response = await requestLogout({
+        endpoint: serverConfig.logoutEndpoint,
+        idTokenHint: encryptedIdToken,
+      });
+
+      console.log("JWE Logout response:", response.status, response.data);
+
+      // JWE encrypted with client's key cannot be decrypted by the OP
+      // So this should return an error
+      expect(response.status).toBe(400);
+    });
+
+    it("should accept decrypted JWS from encrypted ID token", async () => {
+      const encryptedIdToken = await getEncryptedIdToken();
+
+      // Verify it's a JWE (5 parts)
+      const parts = encryptedIdToken.split(".");
+      expect(parts.length).toBe(5);
+
+      // Client decrypts the JWE using its private key
+      const jwksResponse = await fetch(`${serverConfig.issuer}/v1/jwks`);
+      const jwks = await jwksResponse.json();
+
+      // Use jose library to decrypt and get the inner JWS
+      const jose = await import("jose");
+      const privateKey = await jose.importJWK(clientSecretPostWithIdTokenEncClient.idTokenEncKey);
+      const { plaintext } = await jose.compactDecrypt(encryptedIdToken, privateKey);
+      const decryptedJws = new TextDecoder().decode(plaintext);
+
+      console.log("Decrypted JWS parts:", decryptedJws.split(".").length);
+      expect(decryptedJws.split(".").length).toBe(3); // JWS has 3 parts
+
+      // Send the decrypted JWS to the logout endpoint
+      const response = await requestLogout({
+        endpoint: serverConfig.logoutEndpoint,
+        idTokenHint: decryptedJws,
+      });
+
+      console.log("Decrypted JWS Logout response:", response.status, response.data);
+      expect(response.status).toBe(200);
     });
   });
 });

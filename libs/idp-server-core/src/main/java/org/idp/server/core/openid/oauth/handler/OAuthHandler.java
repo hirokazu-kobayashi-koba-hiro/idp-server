@@ -128,21 +128,17 @@ public class OAuthHandler {
     AuthorizationServerConfiguration serverConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
 
-    // 3. Create context (validates id_token_hint signature and claims)
+    // 3. Create context (validates id_token_hint, determines client, builds context)
     OAuthLogoutContextCreator contextCreator =
-        new OAuthLogoutContextCreator(tenant, parameters, serverConfiguration);
+        new OAuthLogoutContextCreator(
+            tenant, parameters, serverConfiguration, clientConfigurationQueryRepository);
     OAuthLogoutContext context = contextCreator.create();
 
-    // 4. Get client configuration
-    ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, context.clientId());
-    context.setClientConfiguration(clientConfiguration);
-
-    // 5. Verify request (post_logout_redirect_uri, audience match, etc.)
+    // 4. Verify request (post_logout_redirect_uri, audience match, etc.)
     LogoutRequestVerifier verifier = new LogoutRequestVerifier();
     verifier.verify(context);
 
-    // 6. Delete session
+    // 5. Delete session
     OAuthSessionKey oAuthSessionKey =
         new OAuthSessionKey(tenant.identifierValue(), context.clientId().value());
     OAuthSession session = delegate.find(oAuthSessionKey);
@@ -151,7 +147,7 @@ public class OAuthHandler {
       delegate.deleteSession(oAuthSessionKey);
     }
 
-    // 7. Build response
+    // 6. Build response
     if (context.hasPostLogoutRedirectUri()) {
       String redirectUri = context.postLogoutRedirectUri().value();
       if (context.hasState()) {

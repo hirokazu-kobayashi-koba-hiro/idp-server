@@ -51,15 +51,13 @@ public class OAuthLogoutContext {
       Tenant tenant,
       OAuthLogoutParameters parameters,
       AuthorizationServerConfiguration serverConfiguration,
+      ClientConfiguration clientConfiguration,
       JsonWebTokenClaims idTokenClaims) {
     this.tenant = tenant;
     this.parameters = parameters;
     this.serverConfiguration = serverConfiguration;
-    this.idTokenClaims = idTokenClaims;
-  }
-
-  public void setClientConfiguration(ClientConfiguration clientConfiguration) {
     this.clientConfiguration = clientConfiguration;
+    this.idTokenClaims = idTokenClaims;
   }
 
   public void setSession(OAuthSession session) {

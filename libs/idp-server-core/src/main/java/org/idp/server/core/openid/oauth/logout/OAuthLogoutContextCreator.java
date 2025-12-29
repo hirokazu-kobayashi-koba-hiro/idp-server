@@ -17,9 +17,11 @@
 package org.idp.server.core.openid.oauth.logout;
 
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.openid.oauth.request.OAuthLogoutParameters;
-import org.idp.server.platform.jose.*;
+import org.idp.server.platform.jose.JoseInvalidException;
+import org.idp.server.platform.jose.JsonWebTokenClaims;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -30,6 +32,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  * <p>Note: idp-server requires id_token_hint for all logout requests, so this creator always
  * expects id_token_hint to be present.
  *
+ * <p>Supports multiple id_token_hint formats:
+ *
+ * <ul>
+ *   <li>JWS (signed JWT) - verified using server's public keys
+ *   <li>Symmetric JWE - decrypted using client_secret (requires client_id parameter)
+ *   <li>Asymmetric JWE - not supported (OP cannot decrypt)
+ * </ul>
+ *
  * @see <a href="https://openid.net/specs/openid-connect-rpinitiated-1_0.html">RP-Initiated
  *     Logout</a>
  */
@@ -38,27 +48,34 @@ public class OAuthLogoutContextCreator {
   Tenant tenant;
   OAuthLogoutParameters parameters;
   AuthorizationServerConfiguration serverConfiguration;
+  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  IdTokenHintContextCreators idTokenHintContextCreators;
 
   public OAuthLogoutContextCreator(
       Tenant tenant,
       OAuthLogoutParameters parameters,
-      AuthorizationServerConfiguration serverConfiguration) {
+      AuthorizationServerConfiguration serverConfiguration,
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.tenant = tenant;
     this.parameters = parameters;
     this.serverConfiguration = serverConfiguration;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.idTokenHintContextCreators = new IdTokenHintContextCreators();
   }
 
   /**
    * Creates OAuthLogoutContext.
    *
-   * <p>Parses and validates id_token_hint (required by idp-server).
+   * <p>Parses and validates id_token_hint (required by idp-server), determines client, and builds
+   * context with all required information.
    *
    * @return the logout context
    */
   public OAuthLogoutContext create() {
-    JsonWebTokenClaims idTokenClaims = parseAndValidateIdTokenHint();
+    IdTokenHintResult result = parseAndValidateIdTokenHint();
 
-    return new OAuthLogoutContext(tenant, parameters, serverConfiguration, idTokenClaims);
+    return new OAuthLogoutContext(
+        tenant, parameters, serverConfiguration, result.clientConfiguration(), result.claims());
   }
 
   /**
@@ -68,29 +85,23 @@ public class OAuthLogoutContextCreator {
    * identified by the ID Token's aud claim has a current session - Verify the signature - Check
    * that iss matches this OP
    *
-   * @return the parsed claims
+   * @return the result containing parsed claims and client configuration
    * @throws OAuthBadRequestException if validation fails
    */
-  private JsonWebTokenClaims parseAndValidateIdTokenHint() {
+  private IdTokenHintResult parseAndValidateIdTokenHint() {
     String idTokenHintValue = parameters.idTokenHint().value();
 
     try {
-      JoseHandler joseHandler = new JoseHandler();
-      JoseContext joseContext =
-          joseHandler.handle(idTokenHintValue, serverConfiguration.jwks(), "", "");
+      IdTokenHintPattern pattern = IdTokenHintPattern.parse(idTokenHintValue);
+      IdTokenHintContextCreator creator = idTokenHintContextCreators.get(pattern);
 
-      JsonWebSignature jsonWebSignature = joseContext.jsonWebSignature();
-      if (!jsonWebSignature.exists()) {
-        throw new OAuthBadRequestException(
-            "invalid_request", "id_token_hint must be a valid signed JWT", tenant);
-      }
+      IdTokenHintResult result =
+          creator.create(
+              tenant, parameters, serverConfiguration, clientConfigurationQueryRepository);
 
-      joseContext.verifySignature();
+      validateIdTokenClaims(result.claims());
 
-      JsonWebTokenClaims claims = joseContext.claims();
-      validateIdTokenClaims(claims);
-
-      return claims;
+      return result;
     } catch (JoseInvalidException exception) {
       throw new OAuthBadRequestException(
           "invalid_request",

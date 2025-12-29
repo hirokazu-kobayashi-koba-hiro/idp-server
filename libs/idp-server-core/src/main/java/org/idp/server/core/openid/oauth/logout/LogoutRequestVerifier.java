@@ -52,6 +52,9 @@ public class LogoutRequestVerifier {
    * <p>"If the post_logout_redirect_uri value is provided but is not valid for the identified
    * Client (or no Client was identified), the OP MUST NOT perform post-logout redirection..."
    *
+   * <p>Note: Client identification is always guaranteed since id_token_hint is required and each
+   * IdTokenHintContextCreator validates client existence.
+   *
    * @param context the logout context
    * @throws OAuthBadRequestException if validation fails
    */
@@ -61,14 +64,6 @@ public class LogoutRequestVerifier {
     }
 
     String postLogoutRedirectUri = context.postLogoutRedirectUri().value();
-
-    if (!context.hasClientConfiguration()) {
-      throw new OAuthBadRequestException(
-          "invalid_request",
-          "post_logout_redirect_uri provided but client could not be identified",
-          context.tenant());
-    }
-
     ClientConfiguration clientConfiguration = context.clientConfiguration();
 
     if (!clientConfiguration.hasPostLogoutRedirectUris()) {

@@ -87,17 +87,26 @@ public class OAuthLogoutValidator {
   }
 
   /**
-   * id_token_hint must have a valid JWT structure.
+   * id_token_hint must have a valid JWT or JWE structure.
+   *
+   * <p>Accepts:
+   *
+   * <ul>
+   *   <li>JWS (signed JWT): header.payload.signature (3 parts)
+   *   <li>JWE (encrypted JWT): header.encryptedKey.iv.ciphertext.tag (5 parts)
+   *   <li>Unsigned JWT: header.payload (2 parts) - not recommended but valid
+   * </ul>
    *
    * @throws OAuthBadRequestException if id_token_hint has invalid format
    */
   void throwExceptionIfInvalidIdTokenHintFormat() {
     String idTokenHint = parameters.idTokenHint().value();
     String[] parts = idTokenHint.split("\\.");
-    if (parts.length < 2 || parts.length > 3) {
+    // Valid formats: 2 parts (unsigned), 3 parts (JWS), 5 parts (JWE)
+    if (parts.length != 2 && parts.length != 3 && parts.length != 5) {
       throw new OAuthBadRequestException(
           "invalid_request",
-          "id_token_hint must be a valid JWT format (header.payload or header.payload.signature)",
+          "id_token_hint must be a valid JWT (header.payload.signature) or JWE (header.encryptedKey.iv.ciphertext.tag) format",
           tenant);
     }
   }
