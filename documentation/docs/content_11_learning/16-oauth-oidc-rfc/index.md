@@ -106,7 +106,7 @@ OAuth 2.0 / OIDC のセキュリティに関する仕様とベストプラクテ
 | FAPI 1.0 | [fapi1-baseline](./advanced/fapi1-baseline.md) | FAPI 1.0 Baseline Profile |
 | FAPI 1.0 | [fapi1-advanced](./advanced/fapi1-advanced.md) | FAPI 1.0 Advanced Profile |
 | FAPI 2.0 | [fapi2-security](./advanced/fapi2-security.md) | FAPI 2.0 Security Profile |
-| RFC 9564 | [rfc9564-ciba](./advanced/rfc9564-ciba.md) | CIBA（Client Initiated Backchannel Authentication） |
+| OIDC CIBA | [oidc-ciba](./advanced/oidc-ciba.md) | CIBA（Client Initiated Backchannel Authentication） |
 | Grant Mgmt | [grant-management](./advanced/grant-management.md) | Grant Management for OAuth 2.0 |
 
 ---
