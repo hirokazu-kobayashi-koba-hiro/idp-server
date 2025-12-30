@@ -214,7 +214,7 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
     log.debug("SMS authentication succeeded for user: {}", verifiedUser.sub());
 
     Map<String, Object> responseContents = new HashMap<>(contents);
-    responseContents.put("user", verifiedUser.toMap());
+    responseContents.put("user", verifiedUser.toMinimalizedMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,

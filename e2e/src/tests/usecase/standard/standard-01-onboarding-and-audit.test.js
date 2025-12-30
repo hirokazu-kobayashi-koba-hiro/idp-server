@@ -689,12 +689,11 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
 
     expect(secondRequest.status).toBe(200);
     expect(secondRequest.data.user).toBeDefined();
-    expect(secondRequest.data.user.email).toBe(`new-user-${timestamp}@test.example.com`);
-    expect(secondRequest.data.user.name).toBe("New User");
-    console.log(`✅ Second request succeeded: ${secondRequest.data.user.email}`);
+    expect(secondRequest.data.user.status).toEqual("INITIALIZED");
+    console.log(`✅ Second request succeeded: sub=${secondRequest.data.user.sub}`);
 
     // Verify transaction was NOT polluted with existing user data
-    expect(secondRequest.data.user.email).not.toBe(existingUserEmail);
+    expect(secondRequest.data.user.sub).not.toBe(userId);
     console.log(`✅ Transaction was not polluted - registered NEW user, not existing user`);
 
     console.log("\n=== Step 5: Test Multiple Failures Without Pollution ===");
@@ -756,7 +755,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
       },
     });
     expect(attempt3.status).toBe(200);
-    expect(attempt3.data.user.email).toBe(`final-user-${timestamp}@test.example.com`);
+    expect(attempt3.data.user.status).toEqual("INITIALIZED");
     console.log(`✅ Final attempt succeeded after multiple failures`);
 
     console.log("\n=== Cleanup ===");

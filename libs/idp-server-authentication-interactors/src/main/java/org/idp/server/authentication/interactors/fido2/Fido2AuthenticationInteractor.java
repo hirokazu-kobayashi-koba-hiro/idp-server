@@ -142,7 +142,7 @@ public class Fido2AuthenticationInteractor implements AuthenticationInteractor {
     }
 
     Map<String, Object> response = new HashMap<>(contents);
-    response.put("user", user.toMap());
+    response.put("user", user.toMinimalizedMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,

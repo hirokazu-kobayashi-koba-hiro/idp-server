@@ -468,7 +468,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 }
 ```
 
-**実装**: Interactorが`response.put("user", user.toMap())`で構築
+**実装**: Interactorが`response.put("user", user.toMinimalizedMap())`で構築
 
 **HTTP Status**: `200 OK` (`AuthenticationInteractionStatus.SUCCESS`)
 
