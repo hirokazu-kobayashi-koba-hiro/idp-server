@@ -121,7 +121,7 @@ Grant Management が対処する主な脅威：
 
 実装:
   GET /grants で一覧取得
-  DELETE /grants/{grant_id} で取り消し
+  DELETE /grants/\{grant_id\} で取り消し
 ```
 
 #### ユースケース2: 段階的な認可
@@ -160,7 +160,7 @@ Grant Management が対処する主な脅威：
   ユーザーが「家計簿アプリで銀行口座が同期できない」と問い合わせ
 
 RPの対応:
-  GET /grants/{grant_id}
+  GET /grants/\{grant_id\}
 
   レスポンス:
   {
@@ -624,8 +624,8 @@ def validate_grant_access(grant_id, access_token):
 | 操作 | レート制限 | 期間 | 理由 |
 |------|----------|------|------|
 | GET /grants | 100リクエスト | 1分 | DoS防止 |
-| GET /grants/{id} | 300リクエスト | 1分 | 詳細照会の頻度が高い |
-| DELETE /grants/{id} | 10リクエスト | 1分 | 誤操作防止、悪用防止 |
+| GET /grants/\{id\} | 300リクエスト | 1分 | 詳細照会の頻度が高い |
+| DELETE /grants/\{id\} | 10リクエスト | 1分 | 誤操作防止、悪用防止 |
 
 **実装のポイント:**
 - IPアドレスとユーザーIDの両方で制限
@@ -836,7 +836,7 @@ grant_id = secrets.token_urlsafe(16)  # 128ビット
 
 攻撃シナリオ:
 1. 攻撃者が正規ユーザーのGrant IDを入手
-2. 自分のアクセストークンでGET /grants/{grant_id}
+2. 自分のアクセストークンでGET /grants/\{grant_id\}
 3. 検証なしの場合、他ユーザーのGrant情報を取得
 4. プライバシー侵害、権限昇格
 
@@ -931,8 +931,8 @@ Grant削除時、関連するすべてのリソースを無効化し、認可の
 | 操作 | レート制限 | 期間 | 理由 |
 |------|----------|------|------|
 | GET /grants | 100リクエスト | 1分 | DoS防止 |
-| GET /grants/{id} | 300リクエスト | 1分 | 詳細照会の頻度が高い |
-| DELETE /grants/{id} | 10リクエスト | 1分 | 誤操作防止、悪用防止 |
+| GET /grants/\{id\} | 300リクエスト | 1分 | 詳細照会の頻度が高い |
+| DELETE /grants/\{id\} | 10リクエスト | 1分 | 誤操作防止、悪用防止 |
 
 **実装のポイント**:
 - IPアドレスとユーザーIDの両方で制限
@@ -941,7 +941,7 @@ Grant削除時、関連するすべてのリソースを無効化し、認可の
 
 **実装例（Redis）**:
 ```python
-key = f"rate_limit:{user_id}:grants:get"
+key = f"rate_limit:\{user_id\}:grants:get"
 count = redis.incr(key)
 redis.expire(key, 60)  # 1分
 if count > 100:
@@ -960,9 +960,9 @@ if count > 100:
 |---------|---------------------------|-----------------|
 | **アクセス権** | ユーザーが自分のGrantを照会 | GET /grants |
 | **訂正権** | Grantを更新（scope変更） | PATCH /grants（grant_management_action=merge/replace） |
-| **削除権（忘れられる権利）** | Grantを削除 | DELETE /grants/{id} |
+| **削除権（忘れられる権利）** | Grantを削除 | DELETE /grants/\{id\} |
 | **データポータビリティ権** | データをエクスポート | GET /grants（JSON形式） |
-| **透明性** | Grantの詳細情報を提供 | GET /grants/{id} |
+| **透明性** | Grantの詳細情報を提供 | GET /grants/\{id\} |
 
 **具体的な実装**:
 
@@ -975,7 +975,7 @@ if count > 100:
 
 2. **削除権（Right to Erasure）**
    ```http
-   DELETE /grants/{grant_id}
+   DELETE /grants/\{grant_id\}
    ```
    - カスケード削除（トークン、セッション）
    - 監査ログは保持（法的要件）
