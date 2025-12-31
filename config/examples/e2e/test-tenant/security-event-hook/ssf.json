@@ -11,19 +11,19 @@
     "spec": "https://openid.net/specs/openid-sharedsignals-framework-1_0.html"
   },
   "metadata": {
-    "issuer": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+    "issuer": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66",
     "spec_version": "1_0",
-    "jwks_uri": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/ssf/jwks",
+    "jwks_uri": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/ssf/jwks",
     "jwks": "{\n  \"keys\": [\n    {\n      \"kty\": \"EC\",\n      \"d\": \"_9Ki4nmPFljpGneu1bZeAVxHoJiOnt7Cmr98qSI9SQI\",\n      \"use\": \"sig\",\n      \"crv\": \"P-256\",\n      \"kid\": \"ssf-debug\",\n      \"x\": \"nitxvSyqpZEhGXT-oJ8CJD_Pr3feMVFAO43d8TlHk1w\",\n      \"y\": \"xA6Slvr4rRnF53TNaIdeRsw9v655xGlHPD3YNGy_CMY\",\n      \"alg\": \"ES256\"\n    }\n  ]\n}",
     "delivery_methods_supported": [
       "urn:ietf:rfc:8935",
       "urn:ietf:rfc:8936"
     ],
-    "configuration_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/ssf-configuration",
-    "status_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/ssf/mgmt/status",
-    "add_subject_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/ssf/mgmt/subject:add",
-    "remove_subject_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/ssf/mgmt/subject:remove",
-    "verification_endpoint": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66/ssf/mgmt/verification",
+    "configuration_endpoint": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/ssf-configuration",
+    "status_endpoint": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66/ssf/mgmt/status",
+    "add_subject_endpoint": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66/ssf/mgmt/subject:add",
+    "remove_subject_endpoint": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66/ssf/mgmt/subject:remove",
+    "verification_endpoint": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66/ssf/mgmt/verification",
     "critical_subject_members": [
       "tenant",
       "user"

@@ -16,8 +16,11 @@
 
 package org.idp.server.core.openid.oauth.io;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.logout.OAuthLogoutContext;
+import org.idp.server.core.openid.session.logout.FrontChannelLogoutIframe;
 
 /**
  * OAuthLogoutResponse
@@ -34,39 +37,56 @@ public class OAuthLogoutResponse {
   String error;
   String errorDescription;
   OAuthLogoutContext context;
+  List<FrontChannelLogoutIframe> frontChannelIframes;
 
-  public OAuthLogoutResponse() {}
+  public OAuthLogoutResponse() {
+    this.frontChannelIframes = new ArrayList<>();
+  }
 
   private OAuthLogoutResponse(
       OAuthLogoutStatus status,
       String redirectUri,
       String error,
       String errorDescription,
-      OAuthLogoutContext context) {
+      OAuthLogoutContext context,
+      List<FrontChannelLogoutIframe> frontChannelIframes) {
     this.status = status;
     this.redirectUri = redirectUri;
     this.error = error;
     this.errorDescription = errorDescription;
     this.context = context;
+    this.frontChannelIframes =
+        frontChannelIframes != null ? frontChannelIframes : new ArrayList<>();
   }
 
   public static OAuthLogoutResponse ok(OAuthLogoutContext context) {
-    return new OAuthLogoutResponse(OAuthLogoutStatus.OK, "", "", "", context);
+    return new OAuthLogoutResponse(OAuthLogoutStatus.OK, "", "", "", context, null);
   }
 
   public static OAuthLogoutResponse redirect(String redirectUri, OAuthLogoutContext context) {
     return new OAuthLogoutResponse(
-        OAuthLogoutStatus.REDIRECABLE_FOUND, redirectUri, "", "", context);
+        OAuthLogoutStatus.REDIRECABLE_FOUND, redirectUri, "", "", context, null);
   }
 
   public static OAuthLogoutResponse badRequest(String error, String errorDescription) {
     return new OAuthLogoutResponse(
-        OAuthLogoutStatus.BAD_REQUEST, "", error, errorDescription, null);
+        OAuthLogoutStatus.BAD_REQUEST, "", error, errorDescription, null, null);
   }
 
   public static OAuthLogoutResponse serverError(String errorDescription) {
     return new OAuthLogoutResponse(
-        OAuthLogoutStatus.SERVER_ERROR, "", "server_error", errorDescription, null);
+        OAuthLogoutStatus.SERVER_ERROR, "", "server_error", errorDescription, null, null);
+  }
+
+  public static OAuthLogoutResponse withFrontChannelIframes(
+      OAuthLogoutResponse original, List<FrontChannelLogoutIframe> frontChannelIframes) {
+    return new OAuthLogoutResponse(
+        original.status,
+        original.redirectUri,
+        original.error,
+        original.errorDescription,
+        original.context,
+        frontChannelIframes);
   }
 
   public Map<String, Object> contents() {
@@ -106,5 +126,13 @@ public class OAuthLogoutResponse {
 
   public boolean isOk() {
     return status == OAuthLogoutStatus.OK || status == OAuthLogoutStatus.REDIRECABLE_FOUND;
+  }
+
+  public List<FrontChannelLogoutIframe> frontChannelIframes() {
+    return frontChannelIframes;
+  }
+
+  public boolean hasFrontChannelIframes() {
+    return frontChannelIframes != null && !frontChannelIframes.isEmpty();
   }
 }

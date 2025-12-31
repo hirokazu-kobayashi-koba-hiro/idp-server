@@ -110,6 +110,7 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.oauth.*;
+import org.idp.server.core.openid.oauth.OAuthSessionDelegate;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
@@ -122,6 +123,16 @@ import org.idp.server.core.openid.plugin.UserLifecycleEventExecutorPluginLoader;
 import org.idp.server.core.openid.plugin.authentication.AuthenticationExecutorPluginLoader;
 import org.idp.server.core.openid.plugin.authentication.AuthenticationInteractorPluginLoader;
 import org.idp.server.core.openid.plugin.authentication.FederationInteractorPluginLoader;
+import org.idp.server.core.openid.session.AuthSessionCookieDelegate;
+import org.idp.server.core.openid.session.OIDCSessionCoordinator;
+import org.idp.server.core.openid.session.OIDCSessionManager;
+import org.idp.server.core.openid.session.SessionCookieDelegate;
+import org.idp.server.core.openid.session.logout.BackChannelLogoutService;
+import org.idp.server.core.openid.session.logout.FrontChannelLogoutService;
+import org.idp.server.core.openid.session.logout.LogoutNotificationRepository;
+import org.idp.server.core.openid.session.logout.LogoutOrchestrator;
+import org.idp.server.core.openid.session.repository.ClientSessionRepository;
+import org.idp.server.core.openid.session.repository.OPSessionRepository;
 import org.idp.server.core.openid.token.*;
 import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
@@ -256,6 +267,8 @@ public class IdpServerApplication {
       String databaseType,
       CacheStore cacheStore,
       OAuthSessionDelegate oAuthSessionDelegate,
+      SessionCookieDelegate sessionCookieDelegate,
+      AuthSessionCookieDelegate authSessionCookieDelegate,
       PasswordEncodeDelegation passwordEncodeDelegation,
       PasswordVerificationDelegation passwordVerificationDelegation,
       SecurityEventPublisher securityEventPublisher,
@@ -280,6 +293,9 @@ public class IdpServerApplication {
     ApplicationComponentContainer applicationComponentContainer =
         ApplicationComponentContainerPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(OAuthSessionDelegate.class, oAuthSessionDelegate);
+    applicationComponentContainer.register(SessionCookieDelegate.class, sessionCookieDelegate);
+    applicationComponentContainer.register(
+        AuthSessionCookieDelegate.class, authSessionCookieDelegate);
     OAuthAuthorizationResolvers oAuthAuthorizationResolvers =
         applicationComponentContainer.resolve(OAuthAuthorizationResolvers.class);
     dependencyContainer.register(OAuthAuthorizationResolvers.class, oAuthAuthorizationResolvers);
@@ -529,11 +545,42 @@ public class IdpServerApplication {
     AuditLogWriters auditLogWriters =
         AuditLogWriterPluginLoader.load(applicationComponentContainer);
 
+    // OIDC Session Management - optional feature (requires Redis)
+    OIDCSessionCoordinator oidcSessionCoordinator = null;
+    LogoutOrchestrator logoutOrchestrator = null;
+    try {
+      OPSessionRepository opSessionRepository =
+          applicationComponentContainer.resolve(OPSessionRepository.class);
+      ClientSessionRepository clientSessionRepository =
+          applicationComponentContainer.resolve(ClientSessionRepository.class);
+      BackChannelLogoutService backChannelLogoutService =
+          applicationComponentContainer.resolve(BackChannelLogoutService.class);
+      FrontChannelLogoutService frontChannelLogoutService =
+          applicationComponentContainer.resolve(FrontChannelLogoutService.class);
+      LogoutNotificationRepository logoutNotificationRepository =
+          applicationComponentContainer.resolve(LogoutNotificationRepository.class);
+
+      long defaultSessionTimeoutSeconds = 3600L; // 1 hour
+      OIDCSessionManager sessionManager =
+          new OIDCSessionManager(
+              opSessionRepository, clientSessionRepository, defaultSessionTimeoutSeconds);
+      oidcSessionCoordinator = new OIDCSessionCoordinator(sessionManager);
+      logoutOrchestrator =
+          new LogoutOrchestrator(
+              sessionManager,
+              backChannelLogoutService,
+              frontChannelLogoutService,
+              logoutNotificationRepository);
+    } catch (Exception e) {
+      // OIDC Session Management is disabled (Redis not available)
+    }
+
     this.oAuthFlowApi =
         TenantAwareEntryServiceProxy.createProxy(
             new OAuthFlowEntryService(
                 new OAuthProtocols(protocolContainer.resolveAll(OAuthProtocol.class)),
-                oAuthSessionDelegate,
+                sessionCookieDelegate,
+                authSessionCookieDelegate,
                 authenticationInteractors,
                 federationInteractors,
                 userQueryRepository,
@@ -543,7 +590,11 @@ public class IdpServerApplication {
                 authenticationTransactionQueryRepository,
                 authenticationPolicyConfigurationQueryRepository,
                 oAuthFLowEventPublisher,
-                userLifecycleEventPublisher),
+                userLifecycleEventPublisher,
+                oidcSessionCoordinator,
+                logoutOrchestrator,
+                authorizationServerConfigurationQueryRepository,
+                clientConfigurationQueryRepository),
             OAuthFlowApi.class,
             databaseTypeProvider);
 

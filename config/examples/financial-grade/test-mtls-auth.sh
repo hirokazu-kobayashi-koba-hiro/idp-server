@@ -37,7 +37,7 @@ fi
 # Extract IDs
 CLIENT_ID=$(jq -r '.client_id' "${FINANCIAL_CLIENT_FILE}")
 TENANT_ID=$(jq -r '.tenant.id' "${FINANCIAL_TENANT_FILE}")
-BASE_URL="http://localhost:8080"
+BASE_URL="https://localhost:8443"
 TOKEN_ENDPOINT="${BASE_URL}/${TENANT_ID}/v1/tokens"
 
 echo "📋 Configuration:"

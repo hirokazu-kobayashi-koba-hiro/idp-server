@@ -1,4 +1,4 @@
-export const backendUrl = process.env.IDP_SERVER_URL || "http://localhost:8080";
+export const backendUrl = process.env.IDP_SERVER_URL || "https://localhost:8443";
 export const mtlBackendUrl = process.env.IDP_SERVER_MTLS_URL || "https://localhost:8445";
 
 // Default tenant IDs for backward compatibility

@@ -21,6 +21,9 @@ import java.util.Map;
 
 public class AuthenticationTransactionAttributes {
 
+  /** Key for storing authSessionId to prevent authorization flow hijacking attacks. */
+  public static final String AUTH_SESSION_ID_KEY = "auth_session_id";
+
   Map<String, Object> values;
 
   public AuthenticationTransactionAttributes() {
@@ -28,7 +31,40 @@ public class AuthenticationTransactionAttributes {
   }
 
   public AuthenticationTransactionAttributes(Map<String, Object> values) {
-    this.values = values;
+    this.values = values != null ? new HashMap<>(values) : new HashMap<>();
+  }
+
+  /**
+   * Creates attributes with an authSessionId for browser session binding.
+   *
+   * @param authSessionId the authentication session ID
+   * @return new attributes instance with authSessionId
+   */
+  public static AuthenticationTransactionAttributes withAuthSessionId(AuthSessionId authSessionId) {
+    AuthenticationTransactionAttributes attributes = new AuthenticationTransactionAttributes();
+    if (authSessionId != null && authSessionId.exists()) {
+      attributes.values.put(AUTH_SESSION_ID_KEY, authSessionId.value());
+    }
+    return attributes;
+  }
+
+  /**
+   * Gets the authentication session ID for browser session binding.
+   *
+   * @return AuthSessionId, or empty AuthSessionId if not present
+   */
+  public AuthSessionId authSessionId() {
+    String value = getValueOrEmpty(AUTH_SESSION_ID_KEY);
+    return new AuthSessionId(value);
+  }
+
+  /**
+   * Checks if this transaction has an authSessionId bound to it.
+   *
+   * @return true if authSessionId is present
+   */
+  public boolean hasAuthSessionId() {
+    return authSessionId().exists();
   }
 
   public Map<String, Object> toMap() {

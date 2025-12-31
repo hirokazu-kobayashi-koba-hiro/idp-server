@@ -165,6 +165,9 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
     if (authentication.hasAcrValues()) {
       claims.put("acr", authentication.acr());
     }
+    if (idTokenCustomClaims.hasSid()) {
+      claims.put("sid", idTokenCustomClaims.sid().value());
+    }
 
     Map<String, Object> individualClaims =
         createIndividualClaims(

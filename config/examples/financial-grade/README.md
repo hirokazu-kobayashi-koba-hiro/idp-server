@@ -33,7 +33,7 @@ financial-grade/
 - PostgreSQLデータベース設定済み
 - `.env` ファイルに以下の環境変数が設定済み:
   ```bash
-  AUTHORIZATION_SERVER_URL=http://localhost:8080
+  AUTHORIZATION_SERVER_URL=https://localhost:8443
   ADMIN_TENANT_ID=<admin-tenant-id>
   ADMIN_USER_EMAIL=<admin-email>
   ADMIN_USER_PASSWORD=<admin-password>
@@ -375,7 +375,7 @@ cd config/examples/financial-grade
 ### 1. FAPI準拠確認
 
 ```bash
-curl http://localhost:8080/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/openid-configuration | jq '{
+curl https://localhost:8443/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/openid-configuration | jq '{
   mtls: .tls_client_certificate_bound_access_tokens,
   auth_methods: .token_endpoint_auth_methods_supported,
   request_object: .request_object_signing_alg_values_supported,
@@ -406,7 +406,7 @@ curl http://localhost:8080/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/open
 ### 2. FAPI Scopes確認
 
 ```bash
-curl http://localhost:8080/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/openid-configuration | jq '.extension | {
+curl https://localhost:8443/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/openid-configuration | jq '.extension | {
   fapi_baseline: .fapi_baseline_scopes,
   fapi_advance: .fapi_advance_scopes,
   required_verification: .required_identity_verification_scopes
@@ -425,7 +425,7 @@ curl http://localhost:8080/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/open
 ### 3. 認証ポリシー確認
 
 ```bash
-curl http://localhost:8080/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/openid-configuration | jq '.extension.authentication_policies[] | {
+curl https://localhost:8443/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/openid-configuration | jq '.extension.authentication_policies[] | {
   description: .description,
   priority: .priority,
   scopes: .conditions.scopes,
@@ -458,7 +458,7 @@ curl http://localhost:8080/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/open
 ```bash
 curl --cert ./config/examples/financial-grade/certs/client-cert.pem \
      --key ./config/examples/financial-grade/certs/client-key.pem \
-     -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+     -X POST "https://localhost:8443/${TENANT_ID}/v1/tokens" \
      -H "Content-Type: application/x-www-form-urlencoded" \
      --data-urlencode "grant_type=authorization_code" \
      --data-urlencode "code=${AUTHORIZATION_CODE}" \
@@ -478,7 +478,7 @@ curl --cert ./config/examples/financial-grade/certs/client-cert.pem \
 curl --cert ./config/examples/financial-grade/certs/client-cert.pem \
      --key ./config/examples/financial-grade/certs/client-key.pem \
      -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-     "http://localhost:8080/${TENANT_ID}/v1/userinfo"
+     "https://localhost:8443/${TENANT_ID}/v1/userinfo"
 ```
 
 証明書が一致しない場合、`401 Unauthorized`エラーが返されます。
@@ -496,7 +496,7 @@ REDIRECT_URI="http://localhost:3000/callback/"
 CERT_FILE="./certs/client-cert.pem"
 
 # Step 1: 認可リクエストを開始
-curl -v -X GET "http://localhost:8080/${TENANT_ID}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email%20account&state=test-state"
+curl -v -X GET "https://localhost:8443/${TENANT_ID}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email%20account&state=test-state"
 
 # URLから認証トランザクションIDを取得
 export AUTH_TX_ID="取得したID"
@@ -505,7 +505,7 @@ export AUTH_TX_ID="取得したID"
 ENCODED_CERT=$(cat ${CERT_FILE} | awk '{printf "%s%%0A", $0}' | sed 's/%0A$//')
 
 # Step 3: 新規ユーザー登録（initial-registration API）
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/initial-registration" \
+curl -X POST "https://localhost:8443/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/initial-registration" \
   -H "Content-Type: application/json" \
   -H "x-ssl-cert: ${ENCODED_CERT}" \
   -d '{
@@ -516,7 +516,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}
   }' | jq
 
 # Step 4: 認可許諾
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/authorize" \
+curl -X POST "https://localhost:8443/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/authorize" \
   -H "Content-Type: application/json" \
   -H "x-ssl-cert: ${ENCODED_CERT}" | jq
 
@@ -528,7 +528,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}
 # Step 5: 認可コードをトークンに交換（MTLS認証）
 AUTH_CODE="取得した認可コード"
 
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+curl -X POST "https://localhost:8443/${TENANT_ID}/v1/tokens" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -H "x-ssl-cert: ${ENCODED_CERT}" \
   --data-urlencode "grant_type=authorization_code" \
@@ -558,7 +558,7 @@ REDIRECT_URI="http://localhost:3000/callback/"
 CERT_FILE="./certs/client-cert.pem"
 
 # Step 1: 認可リクエストを開始
-curl -v -X GET "http://localhost:8080/${TENANT_ID}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email%20account%20transfers&state=test-state"
+curl -v -X GET "https://localhost:8443/${TENANT_ID}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email%20account%20transfers&state=test-state"
 
 # 認証トランザクションIDを取得
 export AUTH_TX_ID="取得したID"
@@ -567,7 +567,7 @@ export AUTH_TX_ID="取得したID"
 ENCODED_CERT=$(cat ${CERT_FILE} | awk '{printf "%s%%0A", $0}' | sed 's/%0A$//')
 
 # Step 2: パスワード認証
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/password-authentication" \
+curl -X POST "https://localhost:8443/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/password-authentication" \
   -H "Content-Type: application/json" \
   -H "x-ssl-cert: ${ENCODED_CERT}" \
   -d '{
@@ -576,14 +576,14 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}
   }' | jq
 
 # Step 3: 認可許諾
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/authorize" \
+curl -X POST "https://localhost:8443/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/authorize" \
   -H "Content-Type: application/json" \
   -H "x-ssl-cert: ${ENCODED_CERT}" | jq
 
 # Step 4: トークン取得（MTLS認証）
 AUTH_CODE="取得した認可コード"
 
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+curl -X POST "https://localhost:8443/${TENANT_ID}/v1/tokens" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -H "x-ssl-cert: ${ENCODED_CERT}" \
   --data-urlencode "grant_type=authorization_code" \
@@ -603,7 +603,7 @@ REDIRECT_URI="http://localhost:3000/callback/"
 CERT_FILE="./certs/client-cert.pem"
 
 # Step 1: 認可リクエスト（transfersスコープ含む）
-curl -v -X GET "http://localhost:8080/${TENANT_ID}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20transfers&state=test-state"
+curl -v -X GET "https://localhost:8443/${TENANT_ID}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20transfers&state=test-state"
 
 # 認証トランザクションIDを取得
 export AUTH_TX_ID="取得したID"
@@ -616,10 +616,10 @@ ENCODED_CERT=$(cat ${CERT_FILE} | awk '{printf "%s%%0A", $0}' | sed 's/%0A$//')
 # password-authenticationは拒否され、WebAuthn/FIDO-UAFのみ許可
 
 # WebAuthn登録（事前準備）
-# curl -X POST "http://localhost:8080/${TENANT_ID}/v1/me/authentication-devices/webauthn/register/start" ...
+# curl -X POST "https://localhost:8443/${TENANT_ID}/v1/me/authentication-devices/webauthn/register/start" ...
 
 # WebAuthn認証
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/fido2-authentication" \
+curl -X POST "https://localhost:8443/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/fido2-authentication" \
   -H "Content-Type: application/json" \
   -H "x-ssl-cert: ${ENCODED_CERT}" \
   -d '{
@@ -636,14 +636,14 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}
   }' | jq
 
 # Step 3: 認可許諾
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/authorize" \
+curl -X POST "https://localhost:8443/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/authorize" \
   -H "Content-Type: application/json" \
   -H "x-ssl-cert: ${ENCODED_CERT}" | jq
 
 # Step 4: トークン取得
 AUTH_CODE="取得した認可コード"
 
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+curl -X POST "https://localhost:8443/${TENANT_ID}/v1/tokens" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -H "x-ssl-cert: ${ENCODED_CERT}" \
   --data-urlencode "grant_type=authorization_code" \
@@ -665,7 +665,7 @@ ENCODED_CERT=$(cat ${CERT_FILE} | awk '{printf "%s%%0A", $0}' | sed 's/%0A$//')
 # Refresh Tokenでアクセストークンを更新（MTLS認証）
 REFRESH_TOKEN="前回取得したリフレッシュトークン"
 
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+curl -X POST "https://localhost:8443/${TENANT_ID}/v1/tokens" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -H "x-ssl-cert: ${ENCODED_CERT}" \
   --data-urlencode "grant_type=refresh_token" \
@@ -726,7 +726,7 @@ openssl x509 -in client-cert.pem -text -noout
 **解決策**:
 ```bash
 # 認証ポリシー一覧確認
-curl http://localhost:8080/v1/management/organizations/${ORG_ID}/tenants/${TENANT_ID}/authentication-policies \
+curl https://localhost:8443/v1/management/organizations/${ORG_ID}/tenants/${TENANT_ID}/authentication-policies \
   -H "Authorization: Bearer ${ORG_TOKEN}"
 ```
 

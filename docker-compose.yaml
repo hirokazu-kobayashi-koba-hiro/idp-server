@@ -81,6 +81,9 @@ services:
       IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS: ${IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS:-true}
       IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE: ${IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE:-10000}
       IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS: ${IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS:-/v1/tokens,/v1/authorizations,/v1/backchannel/authentications,/v1/userinfo}
+      # AUTH_SESSION cookie settings (SameSite=None requires Secure=true with HTTPS)
+      IDP_AUTH_SESSION_SAME_SITE: ${IDP_AUTH_SESSION_SAME_SITE:-None}
+      IDP_AUTH_SESSION_SECURE: ${IDP_AUTH_SESSION_SECURE:-true}
       JAVA_TOOL_OPTIONS: >
         -Xms512m -Xmx2g
         -XX:MaxGCPauseMillis=100
@@ -165,6 +168,9 @@ services:
       IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS: ${IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS:-true}
       IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE: ${IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE:-10000}
       IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS: ${IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS:-/v1/tokens,/v1/authorizations,/v1/backchannel/authentications,/v1/userinfo}
+      # AUTH_SESSION cookie settings (SameSite=None requires Secure=true with HTTPS)
+      IDP_AUTH_SESSION_SAME_SITE: ${IDP_AUTH_SESSION_SAME_SITE:-None}
+      IDP_AUTH_SESSION_SECURE: ${IDP_AUTH_SESSION_SECURE:-true}
       JAVA_TOOL_OPTIONS: >
         -Xms512m -Xmx2g
         -XX:MaxGCPauseMillis=100
@@ -181,6 +187,7 @@ services:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "8080:80"     # HTTP
+      - "8443:443"    # HTTPS
       - "8445:8443"   # HTTPS + mTLS
 
   postgres-primary:
@@ -326,12 +333,15 @@ services:
     build:
       context: .
       dockerfile: docker/app-view/Dockerfile
+      args:
+        # Cross-origin deployment: app-view on port 3000, IDP on HTTPS port 8443
+        BASE_PATH: ""
+        NEXT_PUBLIC_BACKEND_URL: "https://localhost:8443"
     container_name: app-view
     ports:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_IDP_SERVER_URL: "http://localhost:8080"
     depends_on:
       - idp-server-1
 

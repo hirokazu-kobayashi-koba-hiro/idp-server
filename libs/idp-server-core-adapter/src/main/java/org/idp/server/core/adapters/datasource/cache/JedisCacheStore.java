@@ -100,11 +100,34 @@ public class JedisCacheStore implements CacheStore {
   }
 
   @Override
+  public boolean exists(String key) {
+    try (Jedis resource = jedisPool.getResource()) {
+      return resource.exists(key);
+    } catch (Exception e) {
+      log.error("Failed to check cache existence", e);
+      return false;
+    }
+  }
+
+  @Override
   public void delete(String key) {
     try (Jedis resource = jedisPool.getResource()) {
       resource.del(key);
     } catch (Exception e) {
       log.error("Failed to delete cache", e);
     }
+  }
+
+  /**
+   * Returns the JedisPool for low-level Redis operations.
+   *
+   * <p>This is needed for session management operations that require Redis-specific features like
+   * sets (SADD/SMEMBERS), TTL queries, and atomic operations that cannot be abstracted through
+   * CacheStore interface.
+   *
+   * @return JedisPool instance
+   */
+  public JedisPool jedisPool() {
+    return jedisPool;
   }
 }

@@ -9,17 +9,17 @@
           "fcm": {
             "templates": {
               "transaction": {
-                "sender": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+                "sender": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66",
                 "title": "transaction",
                 "body": "Hello,\n\nPlease try authentication"
               },
               "authentication": {
-                "sender": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+                "sender": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66",
                 "title": "authentication ",
                 "body": "Hello,\n\nPlease try authentication"
               },
               "default": {
-                "sender": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+                "sender": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66",
                 "title": "default",
                 "body": "Hello,\n\nPlease try"
               }
@@ -29,17 +29,17 @@
           "apns": {
             "templates": {
               "transaction": {
-                "sender": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+                "sender": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66",
                 "title": "transaction",
                 "body": "Hello,\n\nPlease try authentication"
               },
               "authentication": {
-                "sender": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+                "sender": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66",
                 "title": "authentication ",
                 "body": "Hello,\n\nPlease try authentication"
               },
               "default": {
-                "sender": "http://localhost:8080/67e7eae6-62b0-4500-9eff-87459f63fc66",
+                "sender": "https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66",
                 "title": "default",
                 "body": "Hello,\n\nPlease try"
               }

@@ -18,7 +18,13 @@ package org.idp.server.core.openid.oauth;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import org.idp.server.core.openid.authentication.*;
+import org.idp.server.core.openid.authentication.AuthSessionId;
+import org.idp.server.core.openid.authentication.AuthenticationContext;
+import org.idp.server.core.openid.authentication.AuthenticationRequest;
+import org.idp.server.core.openid.authentication.AuthenticationTransaction;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionAttributes;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.AuthorizationIdentifier;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.identity.User;
@@ -41,6 +47,24 @@ public class OAuthAuthenticationTransactionCreator {
       Tenant tenant,
       OAuthRequestResponse requestResponse,
       AuthenticationPolicyConfiguration policyConfiguration) {
+    return create(tenant, requestResponse, policyConfiguration, new AuthSessionId());
+  }
+
+  /**
+   * Creates an AuthenticationTransaction with browser session binding.
+   *
+   * @param tenant the tenant
+   * @param requestResponse the OAuth request response
+   * @param policyConfiguration the authentication policy configuration
+   * @param authSessionId the authentication session ID for browser binding (prevents session
+   *     fixation attacks)
+   * @return the created AuthenticationTransaction
+   */
+  public static AuthenticationTransaction create(
+      Tenant tenant,
+      OAuthRequestResponse requestResponse,
+      AuthenticationPolicyConfiguration policyConfiguration,
+      AuthSessionId authSessionId) {
 
     AuthenticationTransactionIdentifier identifier =
         new AuthenticationTransactionIdentifier(UUID.randomUUID().toString());
@@ -53,7 +77,8 @@ public class OAuthAuthenticationTransactionCreator {
             authenticationRequest.requestedClientId(),
             authenticationRequest.acrValues(),
             authenticationRequest.scopes());
-    AuthenticationTransactionAttributes attributes = new AuthenticationTransactionAttributes();
+    AuthenticationTransactionAttributes attributes =
+        AuthenticationTransactionAttributes.withAuthSessionId(authSessionId);
 
     return new AuthenticationTransaction(
         identifier,

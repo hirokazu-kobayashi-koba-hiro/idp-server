@@ -5,6 +5,11 @@ idp:
    apiSecret: ${IDP_SERVER_API_SECRET}
    encryptionKey: ${ENCRYPTION_KEY}
    databaseType: "${DATABASE_TYPE:POSTGRESQL}"
+  auth-session:
+    # Cookie SameSite attribute: Lax (same-origin) or None (cross-origin, requires HTTPS)
+    same-site: "${IDP_AUTH_SESSION_SAME_SITE:Lax}"
+    # Cookie Secure flag: true for HTTPS, false for HTTP development
+    secure: ${IDP_AUTH_SESSION_SECURE:true}
   server:
     shutdown:
       delay: "${IDP_SERVER_SHUTDOWN_DELAY:5s}"

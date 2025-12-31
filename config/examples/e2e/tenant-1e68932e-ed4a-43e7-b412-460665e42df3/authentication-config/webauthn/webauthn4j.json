@@ -4,7 +4,7 @@
   "metadata": {
     "webauthn4j": {
       "rp_id": "localhost",
-      "origin": "http://localhost:8080",
+      "origin": "https://localhost:8443",
       "rp_name": "admin",
       "token_binding_id": null,
       "require_resident_key": false,

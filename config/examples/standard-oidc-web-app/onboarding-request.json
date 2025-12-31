@@ -8,8 +8,13 @@
     "id": "d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df",
     "name": "Local Organizer Tenant",
     "type": "ORGANIZER",
-    "domain": "http://localhost:8080",
+    "domain": "https://localhost:8443",
     "authorization_provider": "idp-server",
+    "ui_config": {
+      "base_url": "http://localhost:3000",
+      "signin_page": "/signin/",
+      "signup_page": "/signup/"
+    },
     "session_config": {
       "cookie_name": "LOCAL_DEV_SESSION",
       "use_secure_cookie": false
@@ -17,7 +22,7 @@
     "cors_config": {
       "allow_origins": [
         "http://localhost:3000",
-        "http://localhost:8080"
+        "https://localhost:8443"
       ]
     },
     "security_event_log_config": {
@@ -33,9 +38,9 @@
     }
   },
   "authorization_server": {
-    "issuer": "http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df",
-    "authorization_endpoint": "http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/authorizations",
-    "token_endpoint": "http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens",
+    "issuer": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df",
+    "authorization_endpoint": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/authorizations",
+    "token_endpoint": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens",
     "token_endpoint_auth_methods_supported": [
       "client_secret_post",
       "client_secret_basic"
@@ -44,8 +49,8 @@
       "RS256",
       "ES256"
     ],
-    "userinfo_endpoint": "http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/userinfo",
-    "jwks_uri": "http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/jwks",
+    "userinfo_endpoint": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/userinfo",
+    "jwks_uri": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/jwks",
     "jwks": "{\"keys\":[{\"kty\":\"EC\",\"x\":\"_g1pn_N84_T82eU-YVN4pcgQt3tfvZWJMPabMFNgbVg\",\"y\":\"B3vLi4eGNz9rzoj493h7zHBpM5G3lSM7Af57fru2-FE\",\"crv\":\"P-256\",\"d\":\"xHfNjJqElnZajzexFG49MQqO01TrveM4mL4tlz8T9jw\",\"use\":\"sig\",\"kid\":\"signing_key_1\",\"alg\":\"ES256\"}]}",
     "grant_types_supported": [
       "authorization_code",
@@ -74,8 +79,8 @@
       "ES256"
     ],
     "claims_parameter_supported": true,
-    "token_introspection_endpoint": "http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens/introspection",
-    "token_revocation_endpoint": "http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens/revocation",
+    "token_introspection_endpoint": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens/introspection",
+    "token_revocation_endpoint": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens/revocation",
     "extension": {
       "access_token_type": "JWT",
       "token_signed_key_id": "signing_key_1",

@@ -346,4 +346,25 @@ public class AuthenticationTransaction {
     }
     return null;
   }
+
+  /**
+   * Gets the authentication session ID bound to this transaction.
+   *
+   * @return AuthSessionId for browser session binding, or empty AuthSessionId if not bound
+   */
+  public AuthSessionId authSessionId() {
+    if (hasAttributes()) {
+      return attributes.authSessionId();
+    }
+    return new AuthSessionId();
+  }
+
+  /**
+   * Checks if this transaction has an authentication session binding.
+   *
+   * @return true if authSessionId is present
+   */
+  public boolean hasAuthSessionId() {
+    return hasAttributes() && attributes.hasAuthSessionId();
+  }
 }

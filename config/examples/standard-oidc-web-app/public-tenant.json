@@ -3,17 +3,23 @@
     "id": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
     "name": "Public Web App Tenant",
     "type": "BUSINESS",
-    "domain": "http://localhost:8080",
+    "domain": "https://localhost:8443",
     "authorization_provider": "idp-server",
+    "ui_config": {
+      "base_url": "http://localhost:3000",
+      "signin_page": "/signin/",
+      "signup_page": "/signup/"
+    },
     "session_config": {
       "cookie_name": "PUBLIC_WEB_SESSION",
-      "use_secure_cookie": false
+      "use_secure_cookie": true
     },
     "cors_config": {
       "allow_origins": [
         "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:8080"
+        "http://localhost:3010",
+        "https://localhost:8443",
+        "https://localhost:8443"
       ]
     },
     "security_event_log_config": {
@@ -29,7 +35,7 @@
   },
   "authorization_server": {
     "issuer": "http://load-balancer/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
-    "authorization_endpoint": "http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/authorizations",
+    "authorization_endpoint": "https://localhost:8443/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/authorizations",
     "token_endpoint": "http://load-balancer/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens",
     "token_endpoint_auth_methods_supported": [
       "client_secret_post",

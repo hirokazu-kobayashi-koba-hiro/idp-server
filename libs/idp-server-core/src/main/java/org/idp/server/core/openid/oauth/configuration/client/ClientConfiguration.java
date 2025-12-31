@@ -65,6 +65,10 @@ public class ClientConfiguration implements JsonReadable, Configurable {
   String authorizationSignedResponseAlg;
   String authorizationEncryptedResponseAlg;
   String authorizationEncryptedResponseEnc;
+  String backchannelLogoutUri;
+  boolean backchannelLogoutSessionRequired = false;
+  String frontchannelLogoutUri;
+  boolean frontchannelLogoutSessionRequired = false;
   boolean enabled = true;
   LocalDateTime createdAt;
   LocalDateTime updatedAt;
@@ -358,6 +362,34 @@ public class ClientConfiguration implements JsonReadable, Configurable {
         && Objects.nonNull(idTokenEncryptedResponseEnc);
   }
 
+  public String backchannelLogoutUri() {
+    return backchannelLogoutUri;
+  }
+
+  public boolean hasBackchannelLogoutUri() {
+    return backchannelLogoutUri != null && !backchannelLogoutUri.isEmpty();
+  }
+
+  public boolean backchannelLogoutSessionRequired() {
+    return backchannelLogoutSessionRequired;
+  }
+
+  public String frontchannelLogoutUri() {
+    return frontchannelLogoutUri;
+  }
+
+  public boolean hasFrontchannelLogoutUri() {
+    return frontchannelLogoutUri != null && !frontchannelLogoutUri.isEmpty();
+  }
+
+  public boolean frontchannelLogoutSessionRequired() {
+    return frontchannelLogoutSessionRequired;
+  }
+
+  public boolean supportsLogoutNotification() {
+    return hasBackchannelLogoutUri() || hasFrontchannelLogoutUri();
+  }
+
   public ClientAttributes clientAttributes() {
     return new ClientAttributes(
         clientId, clientIdAlias, clientName, clientUri, logoUri, contacts, tosUri, policyUri);
@@ -487,6 +519,10 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     map.put("authorization_signed_response_alg", authorizationSignedResponseAlg);
     map.put("authorization_encrypted_response_alg", authorizationEncryptedResponseAlg);
     map.put("authorization_encrypted_response_enc", authorizationEncryptedResponseEnc);
+    map.put("backchannel_logout_uri", backchannelLogoutUri);
+    map.put("backchannel_logout_session_required", backchannelLogoutSessionRequired);
+    map.put("frontchannel_logout_uri", frontchannelLogoutUri);
+    map.put("frontchannel_logout_session_required", frontchannelLogoutSessionRequired);
     map.put("enabled", enabled);
     if (hasCreatedAt()) map.put("created_at", createdAt.toString());
     if (hasUpdatedAt()) map.put("updated_at", updatedAt.toString());

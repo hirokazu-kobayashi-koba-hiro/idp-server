@@ -53,8 +53,8 @@ Organization (76c1b7c2-c362-42b6-a19e-f346e7967699)
 | **Admin Client Secret** | `local-dev-admin-secret-32chars` | 管理用シークレット |
 | **Public Client ID** | `8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f` | 一般WebアプリクライアントID（Public Tenant） |
 | **Public Client Secret** | `local-dev-public-secret-32char` | 一般Webアプリシークレット |
-| **Domain** | `http://localhost:8080` | IDP Server URL |
-| **CORS Origins** | `http://localhost:3000`, `http://localhost:8080` | 許可オリジン |
+| **Domain** | `https://localhost:8443` | IDP Server URL |
+| **CORS Origins** | `http://localhost:3000`, `https://localhost:8443` | 許可オリジン |
 | **Redirect URIs** | `http://localhost:3000/callback/`, `http://localhost:3001/callback/` | コールバックURL |
 | **Admin Email** | `admin@localhost.local` | 管理者メール |
 | **Admin Password** | `LocalDevPassword123` | 管理者パスワード |
@@ -192,7 +192,7 @@ curl -X POST ${AUTHORIZATION_SERVER_URL}/v1/management/onboarding \
 
 ```bash
 # 1. ブラウザで以下のURLを開く（Public Client - Public Tenant使用）
-open "http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/authorizations?response_type=code&client_id=8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f&redirect_uri=http://localhost:3000/callback/&scope=openid%20profile%20email&state=test-state"
+open "https://localhost:8443/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/authorizations?response_type=code&client_id=8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f&redirect_uri=http://localhost:3000/callback/&scope=openid%20profile%20email&state=test-state"
 
 # 2. ログイン画面で入力
 #    Email: admin@localhost.local
@@ -203,7 +203,7 @@ open "http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/authorizatio
 #    ↑ この code=XXXXX の部分をコピー
 
 # 4. 認可コードをトークンに交換（Public Client - Public Tenant使用）
-curl -X POST http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens \
+curl -X POST https://localhost:8443/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=authorization_code" \
   -d "code=w30J3188oZr4vnsI3GYce6ZGG-8" \
@@ -225,7 +225,7 @@ curl -X POST http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/token
 
 ```bash
 # 1. ブラウザで以下のURLを開く（Public Client2 - Public Tenant使用）
-open "http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/authorizations?response_type=code&client_id=ef274ddf-08d4-4049-82b8-5cdadf0890b9&redirect_uri=http://localhost:3000/callback/&scope=openid%20profile%20email&state=test-state"
+open "https://localhost:8443/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/authorizations?response_type=code&client_id=ef274ddf-08d4-4049-82b8-5cdadf0890b9&redirect_uri=http://localhost:3000/callback/&scope=openid%20profile%20email&state=test-state"
 
 # 2. ログイン画面で入力
 #    Email: admin@localhost.local
@@ -236,7 +236,7 @@ open "http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/authorizatio
 #    ↑ この code=XXXXX の部分をコピー
 
 # 4. 認可コードをトークンに交換（Public Client - Public Tenant使用）
-curl -X POST http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens \
+curl -X POST https://localhost:8443/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=authorization_code" \
   -d "code=w30J3188oZr4vnsI3GYce6ZGG-8" \
@@ -262,10 +262,10 @@ curl -X POST http://localhost:8080/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/token
 ```bash
 # 方法A: Authorization Code Flow（管理用クライアント - Organizer Tenant使用）
 # 1. ブラウザで以下のURLを開く（Admin Client）
-open "http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/authorizations?response_type=code&client_id=fcdfdf17-d633-448d-b2f0-af1c8ce3ff19&redirect_uri=http://localhost:3000/callback/&scope=openid%20profile%20email%20management&state=test-state"
+open "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/authorizations?response_type=code&client_id=fcdfdf17-d633-448d-b2f0-af1c8ce3ff19&redirect_uri=http://localhost:3000/callback/&scope=openid%20profile%20email%20management&state=test-state"
 
 # 2. ログイン → コード取得 → トークン交換（手順は3-1と同じ）
-curl -X POST http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens \
+curl -X POST https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=authorization_code" \
   -d "code=Up5wHgULsd5BMXr2Oa3mPryRd5Y" \
@@ -274,7 +274,7 @@ curl -X POST http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/token
   -d "client_secret=local-dev-admin-secret-32chars"
 
 # 方法B: Password Grant（管理用クライアントのみ対応 - Organizer Tenant使用）
-curl -X POST http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens \
+curl -X POST https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=password" \
   -d "username=admin@localhost.local" \
@@ -324,7 +324,7 @@ curl -X POST http://localhost:8080/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/token
 {
   "allow_origins": [
     "http://localhost:3000",
-    "http://localhost:8080"
+    "https://localhost:8443"
   ]
 }
 ```
@@ -396,7 +396,7 @@ echo "local-dev-secret-32-chars-long!!!"
 
 ```bash
 # CORS許可オリジンを確認
-# 設定: ["http://localhost:3000", "http://localhost:8080"]
+# 設定: ["http://localhost:3000", "https://localhost:8443"]
 # プロトコル・ホスト・ポート番号まで完全一致が必要
 ```
 
@@ -411,12 +411,12 @@ echo "local-dev-secret-32-chars-long!!!"
 
 IDPサーバーが起動しているか確認：
 ```bash
-curl -v http://localhost:8080/health
+curl -v https://localhost:8443/health
 ```
 
 テナントが作成されているか確認：
 ```bash
-curl -X GET http://localhost:8080/v1/management/tenants/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df \
+curl -X GET https://localhost:8443/v1/management/tenants/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}"
 ```
 
