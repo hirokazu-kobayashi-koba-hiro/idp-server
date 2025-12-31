@@ -923,12 +923,6 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     Map<String, Object> map = new HashMap<>();
 
     if (exists()) map.put("sub", sub);
-    if (exists()) map.put("provider_id", providerId);
-    if (hasExternalUserId()) map.put("external_user_id", externalUserId);
-    if (hasName()) map.put("name", name);
-    if (hasEmail()) map.put("email", email);
-    if (hasLocale()) map.put("locale", locale);
-    if (hasPhoneNumber()) map.put("phone_number", phoneNumber);
     if (exists()) map.put("status", status.name());
 
     return map;

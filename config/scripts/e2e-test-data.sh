@@ -116,6 +116,7 @@ client_files=(
   clientSecretJwt2.json
   clientSecretPost.json
   clientSecretPostWithIdTokenEnc.json
+  clientSecretPostWithSymmetricIdTokenEnc.json
   privateKeyJwt.json
   privateKeyJwtMtls.json
   publicClient.json
@@ -124,6 +125,7 @@ client_files=(
   tlsClientAuth.json
   unsupportedClient.json
   federationClient.json
+  nativeAppClient.json
 )
 
 for client_file in "${client_files[@]}"; do

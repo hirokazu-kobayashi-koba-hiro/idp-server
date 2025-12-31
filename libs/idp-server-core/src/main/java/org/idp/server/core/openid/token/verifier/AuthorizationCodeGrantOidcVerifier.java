@@ -37,7 +37,6 @@ public class AuthorizationCodeGrantOidcVerifier implements AuthorizationCodeGran
       AuthorizationRequest authorizationRequest,
       AuthorizationCodeGrant authorizationCodeGrant,
       ClientCredentials clientCredentials) {
-    baseVerifier.verify(
-        tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);
+    baseVerifier.verify(tokenRequestContext, authorizationRequest, authorizationCodeGrant);
   }
 }

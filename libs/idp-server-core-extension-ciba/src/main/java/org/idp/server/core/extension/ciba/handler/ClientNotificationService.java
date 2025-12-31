@@ -44,7 +44,6 @@ import org.idp.server.core.openid.token.OAuthTokenIdentifier;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-// FIXME consider. this is bad code.
 public class ClientNotificationService implements RefreshTokenCreatable {
 
   BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
@@ -128,6 +127,27 @@ public class ClientNotificationService implements RefreshTokenCreatable {
           new OAuthTokenBuilder(identifier).add(accessToken).add(refreshToken).add(idToken).build();
       oAuthTokenCommandRepository.register(tenant, oAuthToken);
     }
+  }
+
+  public void notifyError(
+      BackchannelAuthenticationRequest backchannelAuthenticationRequest,
+      CibaGrant cibaGrant,
+      ClientConfiguration clientConfiguration,
+      String error,
+      String errorDescription) {
+
+    ClientNotificationRequestBodyBuilder builder =
+        new ClientNotificationRequestBodyBuilder()
+            .add(cibaGrant.authReqId())
+            .addError(error)
+            .addErrorDescription(errorDescription);
+
+    ClientNotificationRequest clientNotificationRequest =
+        new ClientNotificationRequest(
+            clientConfiguration.backchannelClientNotificationEndpoint(),
+            builder.build(),
+            backchannelAuthenticationRequest.clientNotificationToken().value());
+    clientNotificationGateway.notify(clientNotificationRequest);
   }
 
   private void registerOrUpdate(Tenant tenant, CibaGrant cibaGrant) {

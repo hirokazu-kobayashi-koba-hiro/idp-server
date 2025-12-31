@@ -224,14 +224,39 @@ export const pushAuthorizations = async ({
   });
 };
 
-export const requestLogout = async ({ endpoint, clientId}) => {
+/**
+ * Request RP-Initiated Logout
+ *
+ * @param {string} endpoint - Logout endpoint URL
+ * @param {string} [clientId] - Client ID (optional)
+ * @param {string} [idTokenHint] - ID Token hint (optional, recommended)
+ * @param {string} [logoutHint] - Logout hint (optional)
+ * @param {string} [postLogoutRedirectUri] - Post-logout redirect URI (optional)
+ * @param {string} [state] - State parameter (optional)
+ * @param {string} [uiLocales] - UI locales (optional)
+ * @see https://openid.net/specs/openid-connect-rpinitiated-1_0.html
+ */
+export const requestLogout = async ({
+  endpoint,
+  clientId,
+  idTokenHint,
+  logoutHint,
+  postLogoutRedirectUri,
+  state,
+  uiLocales,
+}) => {
+  const paramsObj = {};
+  if (clientId) paramsObj.clientId = clientId;
+  if (idTokenHint) paramsObj.idTokenHint = idTokenHint;
+  if (logoutHint) paramsObj.logoutHint = logoutHint;
+  if (postLogoutRedirectUri) paramsObj.postLogoutRedirectUri = postLogoutRedirectUri;
+  if (state) paramsObj.state = state;
+  if (uiLocales) paramsObj.uiLocales = uiLocales;
 
-  const params = new URLSearchParams(convertToSnake({
-    clientId
-  }));
+  const params = new URLSearchParams(convertToSnake(paramsObj));
 
   return await get({
-    url: endpoint + "?" +params.toString(),
+    url: endpoint + "?" + params.toString(),
     headers: {},
   });
 };

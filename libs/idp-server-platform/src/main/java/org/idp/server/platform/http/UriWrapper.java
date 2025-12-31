@@ -39,10 +39,11 @@ public class UriWrapper {
     if (port != -1) {
       return port;
     }
-    if (value.getScheme().equals("https")) {
+    // RFC 3986 Section 3.1: Scheme is case-insensitive
+    if (value.getScheme().equalsIgnoreCase("https")) {
       return 443;
     }
-    if (value.getScheme().equals("http")) {
+    if (value.getScheme().equalsIgnoreCase("http")) {
       return 80;
     }
     return -1;
@@ -82,6 +83,33 @@ public class UriWrapper {
     return getPort() == other.getPort();
   }
 
+  /**
+   * RFC 3986 Section 3.1: Scheme is case-insensitive
+   *
+   * @param other the other UriWrapper to compare
+   * @return true if schemes are equal (case-insensitive)
+   */
+  public boolean equalsScheme(UriWrapper other) {
+    if (!hasScheme() && !other.hasScheme()) {
+      return true;
+    }
+    if (hasScheme() && !other.hasScheme()) {
+      return false;
+    }
+    if (!hasScheme() && other.hasScheme()) {
+      return false;
+    }
+    return getScheme().equalsIgnoreCase(other.getScheme());
+  }
+
+  public String getScheme() {
+    return value.getScheme();
+  }
+
+  public boolean hasScheme() {
+    return Objects.nonNull(value.getScheme());
+  }
+
   public String getHost() {
     return value.getHost();
   }
@@ -104,5 +132,67 @@ public class UriWrapper {
 
   public boolean hasFragment() {
     return Objects.nonNull(value.getFragment());
+  }
+
+  /**
+   * RFC 6749 Section 3.1.2: redirect_uri MUST be absolute URI
+   *
+   * @return true if URI is absolute (has scheme)
+   */
+  public boolean isAbsolute() {
+    return value.isAbsolute();
+  }
+
+  /**
+   * RFC 8252 Section 7.3: Loopback Interface Redirection
+   *
+   * <p>Native apps can use http://localhost or http://127.0.0.1 for redirect_uri. The port can be
+   * dynamic.
+   *
+   * @return true if host is localhost or 127.0.0.1
+   */
+  public boolean isLoopbackHost() {
+    String host = getHost();
+    if (host == null) {
+      return false;
+    }
+    return host.equalsIgnoreCase("localhost") || host.equals("127.0.0.1");
+  }
+
+  /**
+   * RFC 8252 Section 7.3: Loopback port matching
+   *
+   * <p>For loopback URIs, the port can be dynamic. This method compares two URIs ignoring port.
+   *
+   * @param other the other UriWrapper to compare
+   * @return true if URIs match ignoring port (for loopback)
+   */
+  public boolean equalsIgnoringPort(UriWrapper other) {
+    if (!equalsScheme(other)) {
+      return false;
+    }
+    if (!equalsHost(other)) {
+      return false;
+    }
+    if (!equalsPath(other)) {
+      return false;
+    }
+    return equalsUserinfo(other);
+  }
+
+  public boolean isHttpScheme() {
+    return hasScheme() && getScheme().equalsIgnoreCase("http");
+  }
+
+  public boolean isHttpsScheme() {
+    return hasScheme() && getScheme().equalsIgnoreCase("https");
+  }
+
+  public boolean isCustomScheme() {
+    if (!hasScheme()) {
+      return false;
+    }
+    String scheme = getScheme().toLowerCase();
+    return !scheme.equals("http") && !scheme.equals("https");
   }
 }

@@ -72,6 +72,19 @@ scope=openid verified_claims:given_name verified_claims:family_name
 
 ## セキュリティ考慮事項
 
+### 標準クレームの保護
+
+カスタムクレーム（プラグインで追加されるクレーム）は、OIDC標準クレームを上書きすることができません。
+
+**IDトークン・Userinfoレスポンス・アクセストークン（JWT形式）で、以下のクレームは常に標準値が使用されます：**
+
+- **共通**: `sub`, `iss`, `aud`, `exp`, `iat`
+- **IDトークン**: `auth_time`, `nonce`, `acr`, `amr`, `azp`
+- **Userinfo**: `name`, `given_name`, `family_name`, `email`, `phone_number` など
+- **アクセストークン**: `client_id`, `scope`, `jti`, `cnf`
+
+これは、カスタムクレームプラグインの誤った実装や悪意のあるコードによって、認証・認可に重要なクレーム（`sub`, `iss`等）が改ざんされることを防ぐためです。
+
 ### スコープの最小化
 
 必要最小限のスコープのみを要求することで、情報漏洩リスクを低減します。

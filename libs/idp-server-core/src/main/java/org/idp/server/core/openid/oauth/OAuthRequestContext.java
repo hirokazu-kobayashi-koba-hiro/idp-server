@@ -366,6 +366,15 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     return clientConfiguration.isWebApplication();
   }
 
+  /**
+   * RFC 8252 Section 7: Native Applications
+   *
+   * @return true if application_type is "native"
+   */
+  public boolean isNativeApplication() {
+    return clientConfiguration.isNativeApplication();
+  }
+
   public boolean hasAuthorizationDetails() {
     return authorizationRequest.hasAuthorizationDetails();
   }

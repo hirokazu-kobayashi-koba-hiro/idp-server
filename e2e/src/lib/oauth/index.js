@@ -41,6 +41,62 @@ export const createInvalidClientAssertionWithPrivateKey = ({ client, issuer, inv
   });
 };
 
+/**
+ * Creates an unsigned JWT (alg: none) for testing purposes.
+ * RFC 7523 requires signed JWTs, so this should be rejected.
+ */
+export const createUnsignedClientAssertion = ({ client, issuer }) => {
+  const header = { alg: "none", typ: "JWT" };
+  const payload = {
+    iss: client.clientId,
+    sub: client.clientId,
+    aud: issuer,
+    jti: generateJti(),
+    exp: toEpocTime({ adjusted: 3600 }),
+    iat: toEpocTime({ adjusted: 0 })
+  };
+  const encodedHeader = Buffer.from(JSON.stringify(header)).toString("base64url");
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  return `${encodedHeader}.${encodedPayload}.`;
+};
+
+/**
+ * Creates a custom client assertion with specified payload overrides.
+ * Useful for testing invalid claims (wrong iss, expired, etc.)
+ * @param {Object} options
+ * @param {Object} options.client - Client configuration
+ * @param {string} options.issuer - Token endpoint URL (audience)
+ * @param {Object} options.overrides - Claims to override
+ * @param {string[]} options.omit - Claims to omit from payload
+ */
+export const createCustomClientAssertion = ({ client, issuer, overrides = {}, omit = [] }) => {
+  let payload = {
+    iss: client.clientId,
+    sub: client.clientId,
+    aud: issuer,
+    jti: generateJti(),
+    exp: toEpocTime({ adjusted: 3600 }),
+    iat: toEpocTime({ adjusted: 0 }),
+    ...overrides
+  };
+
+  // Remove omitted claims
+  for (const claim of omit) {
+    delete payload[claim];
+  }
+
+  if (client.clientSecretKey) {
+    return createJwtWithPrivateKey({
+      payload,
+      privateKey: client.clientSecretKey
+    });
+  }
+  return createJwt({
+    payload,
+    secret: client.clientSecret
+  });
+};
+
 export const calculateCodeChallengeWithS256 = (codeVerifier) => {
   const s256Hash = digestS256(codeVerifier);
   const codeChallenge = Base64.stringify(s256Hash);

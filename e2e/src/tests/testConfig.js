@@ -167,6 +167,7 @@ export const clientSecretPostClient = {
   clientSecret:
     "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  postLogoutRedirectUri: "https://client.example.org/logout-callback",
   scope: "account management identity_verification_application identity_verification_application_delete claims:authentication_devices claims:ex_sub ",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
@@ -230,6 +231,21 @@ export const federationClient = {
   requestUri: "",
   invalidRequestUri: "https://invalid.request.uri/request",
   httpRedirectUri: "http://localhost:8081/callback",
+};
+
+/**
+ * Client with symmetric JWE ID token encryption (A256KW)
+ * Used for testing RP-Initiated Logout with symmetrically encrypted id_token_hint
+ */
+export const clientSecretPostWithSymmetricIdTokenEncClient = {
+  clientId: "clientSecretPostWithSymmetricIdTokenEnc",
+  clientSecret:
+    "clientSecretPostWithSymmetricIdTokenEncPassword1234567890123456789012345678901234567890",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  postLogoutRedirectUri: "https://client.example.org/logout-callback",
+  scope: "account",
+  idTokenEncAlg: "A256KW",
+  idTokenEncEnc: "A256GCM",
 };
 
 export const clientSecretPostWithIdTokenEncClient = {
@@ -568,6 +584,19 @@ export const publicClient = {
     y: "AbLAhZvzCFBq4huLzupVW_dwGwfcPu4CnJ-TySKaoUWBQW9xvvSlGqLpzAx-9zhMkMVqnx78shcAGmaSV59FSLmU",
     alg: "ES512"
   }
+};
+
+/**
+ * Native App Client (application_type: native)
+ * RFC 8252: OAuth 2.0 for Native Apps
+ */
+export const nativeAppClient = {
+  clientId: "nativeAppClient",
+  clientSecret: "nativeAppClientSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "http://127.0.0.1:8080/callback",
+  redirectUriLocalhost: "http://localhost:8080/callback",
+  scope: "openid profile email account",
+  applicationType: "native",
 };
 
 /**

@@ -33,24 +33,33 @@ public class ClientCredentialsGrantValidator {
     throwExceptionIfUnSupportedGrantTypeWithClient();
   }
 
+  /**
+   * 5.2. Error Response unauthorized_client
+   *
+   * <p>The authenticated client is not authorized to use this authorization grant type.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-5.2">5.2. Error Response</a>
+   */
   void throwExceptionIfUnSupportedGrantTypeWithClient() {
-    if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.password)) {
+    if (!tokenRequestContext.isSupportedGrantTypeWithClient(GrantType.client_credentials)) {
       throw new TokenBadRequestException(
-          "unsupported_grant_type",
-          "this request grant_type is password, but client does not support");
-    }
-    if (!tokenRequestContext.isSupportedPasswordGrant()) {
-      throw new TokenBadRequestException(
-          "unsupported_grant_type",
+          "unauthorized_client",
           "this request grant_type is client_credentials, but client does not support");
     }
   }
 
+  /**
+   * 5.2. Error Response unsupported_grant_type
+   *
+   * <p>The authorization grant type is not supported by the authorization server.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-5.2">5.2. Error Response</a>
+   */
   void throwExceptionIfUnSupportedGrantTypeWithServer() {
-    if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.password)) {
+    if (!tokenRequestContext.isSupportedGrantTypeWithServer(GrantType.client_credentials)) {
       throw new TokenBadRequestException(
-          "unauthorized_client",
-          "this request grant_type is client_credentials, but authorization server does not authorize");
+          "unsupported_grant_type",
+          "this request grant_type is client_credentials, but authorization server does not support");
     }
   }
 }

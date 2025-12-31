@@ -37,6 +37,23 @@ public class ApiExceptionHandler {
 
   LoggerWrapper log = LoggerWrapper.getLogger(ApiExceptionHandler.class);
 
+  @ExceptionHandler(MaliciousInputException.class)
+  public ResponseEntity<?> handleException(
+      MaliciousInputException exception, HttpServletRequest request) {
+    // Log attack details at ERROR level for security investigation
+    log.error(
+        "Malicious input detected: attack_type={}, input_value={}, uri={}, method={}",
+        exception.attackType(),
+        exception.inputValue(),
+        request.getRequestURI(),
+        request.getMethod());
+
+    // Return generic error message to client (no details about the attack)
+    Map<String, String> response =
+        Map.of("error", "invalid_request", "error_description", "Invalid parameter value");
+    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+  }
+
   @ExceptionHandler(BadRequestException.class)
   public ResponseEntity<?> handleException(BadRequestException exception) {
     log.warn(exception.getMessage(), exception);

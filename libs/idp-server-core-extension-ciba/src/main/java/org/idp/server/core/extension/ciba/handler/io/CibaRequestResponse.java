@@ -32,7 +32,6 @@ public class CibaRequestResponse {
     this.status = status;
     this.backchannelAuthenticationResponse = backchannelAuthenticationResponse;
     this.errorResponse = new BackchannelAuthenticationErrorResponse();
-    // FIXME consider
     this.contentType = ContentType.application_json;
   }
 
@@ -40,7 +39,6 @@ public class CibaRequestResponse {
       CibaRequestStatus status, BackchannelAuthenticationErrorResponse errorResponse) {
     this.status = status;
     this.errorResponse = errorResponse;
-    // FIXME consider
     this.contentType = ContentType.application_json;
   }
 

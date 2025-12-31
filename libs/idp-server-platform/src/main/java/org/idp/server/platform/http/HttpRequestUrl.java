@@ -52,8 +52,9 @@ public class HttpRequestUrl {
     String interpolated = value;
     for (Map.Entry<String, String> entry : pathParams.entrySet()) {
       String key = entry.getKey();
-      String value = entry.getValue();
-      interpolated = interpolated.replace("{{" + key + "}}", value);
+      String paramValue = entry.getValue();
+      String sanitizedValue = UrlParameterSanitizer.sanitizePath(paramValue);
+      interpolated = interpolated.replace("{{" + key + "}}", sanitizedValue);
     }
     return new HttpRequestUrl(interpolated);
   }

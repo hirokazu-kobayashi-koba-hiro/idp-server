@@ -25,6 +25,18 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.userinfo.plugin.UserinfoCustomIndividualClaimsCreators;
 
+/**
+ * UserinfoClaimsCreator
+ *
+ * <p>Creates claims for the Userinfo response by combining standard OIDC claims with custom claims.
+ *
+ * <p><b>Security Note:</b> Standard OIDC claims (sub, name, email, etc.) cannot be overwritten by
+ * custom claims. Custom claims are added first, then standard claims override any conflicts. This
+ * prevents malicious or misconfigured plugins from tampering with identity-critical claims.
+ *
+ * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#UserInfo">OIDC Core 1.0 -
+ *     UserInfo Endpoint</a>
+ */
 public class UserinfoClaimsCreator implements IndividualClaimsCreatable {
 
   User user;
@@ -55,8 +67,10 @@ public class UserinfoClaimsCreator implements IndividualClaimsCreatable {
         userinfoCustomIndividualClaimsCreators.createCustomIndividualClaims(
             user, authorizationGrant, authorizationServerConfiguration, clientConfiguration);
 
-    claims.putAll(individualClaims);
+    // Custom claims first, then standard claims override
+    // This prevents custom claims from overwriting standard OIDC claims (sub, name, email, etc.)
     claims.putAll(customIndividualClaims);
+    claims.putAll(individualClaims);
 
     return claims;
   }

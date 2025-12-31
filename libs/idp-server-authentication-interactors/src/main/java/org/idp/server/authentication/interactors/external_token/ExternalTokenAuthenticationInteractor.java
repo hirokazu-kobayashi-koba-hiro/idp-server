@@ -134,7 +134,7 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
     user.applyIdentityPolicy(tenant.identityPolicyConfig());
 
     Map<String, Object> result = new HashMap<>();
-    result.put("user", user.toMap());
+    result.put("user", user.toMinimalizedMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,

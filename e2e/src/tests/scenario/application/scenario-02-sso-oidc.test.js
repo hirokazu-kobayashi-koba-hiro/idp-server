@@ -287,6 +287,105 @@ describe("sso oidc", () => {
       expect(authorizationResponse.error).not.toBeNull();
     });
 
+    it("callback with non-existent session ID", async () => {
+      // Create a state with non-existent session ID (valid UUID format)
+      const fakeState = Buffer.from(JSON.stringify({
+        session_id: "00000000-0000-0000-0000-000000000000",
+        authorization_request_id: "00000000-0000-0000-0000-000000000001",
+        tenant_id: serverConfig.tenantId,
+        provider: "fake-provider"
+      })).toString('base64url');
+
+      // Try to call callback with fake state - should fail with session not found
+      const federationCallbackResponse = await post({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/federations/oidc/callback`,
+        body: new URLSearchParams({
+          "code": "fake-auth-code",
+          "state": fakeState
+        }).toString()
+      });
+      console.log("Non-existent session callback response:", federationCallbackResponse.data);
+      // Session not found returns 404 from repository layer
+      expect(federationCallbackResponse.status).toBe(404);
+      expect(federationCallbackResponse.data.error).toBe("invalid_request");
+      expect(federationCallbackResponse.data.error_description).toContain("federation sso session is not found");
+    });
+
+    it("callback with tampered state (CSRF protection - state mismatch)", async () => {
+      const registrationUser = {
+        email: faker.internet.email(),
+        name: faker.person.fullName(),
+        zoneinfo: "Asia/Tokyo",
+        locale: "ja-JP",
+        phone_number: faker.phone.number("090-####-####"),
+      };
+
+      const interaction = async (id, user) => {
+        const viewResponse = await get({
+          url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${id}/view-data`,
+        });
+        expect(viewResponse.status).toBe(200);
+
+        const federationSetting = viewResponse.data.available_federations.find(federation => federation.auto_selected);
+
+        // Start federation flow to create a real session
+        const federationRequestResponse = await post({
+          url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${id}/federations/${federationSetting.type}/${federationSetting.sso_provider}`,
+          body: ""
+        });
+        console.log("Federation request response:", federationRequestResponse.data);
+        expect(federationRequestResponse.status).toBe(200);
+
+        // Extract original state from redirect URI
+        const redirectUri = federationRequestResponse.data.redirect_uri;
+        const originalState = new URL(redirectUri).searchParams.get("state");
+        console.log("Original state:", originalState);
+
+        // Decode the original state to get session_id
+        const decodedState = JSON.parse(Buffer.from(originalState, 'base64url').toString());
+        console.log("Decoded state:", decodedState);
+
+        // Create a tampered state with same session_id but different authorization_request_id
+        const tamperedState = Buffer.from(JSON.stringify({
+          session_id: decodedState.session_id,
+          authorization_request_id: "tampered-auth-req-id",
+          tenant_id: decodedState.tenant_id,
+          provider: decodedState.provider
+        })).toString('base64url');
+        console.log("Tampered state:", tamperedState);
+
+        // Try to call callback with tampered state - should fail with state mismatch
+        const federationCallbackResponse = await post({
+          url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/federations/oidc/callback`,
+          body: new URLSearchParams({
+            "code": "fake-auth-code",
+            "state": tamperedState
+          }).toString()
+        });
+        console.log("Tampered state callback response:", federationCallbackResponse.data);
+        expect(federationCallbackResponse.status).toBe(400);
+        expect(federationCallbackResponse.data.error).toBe("invalid_request");
+        expect(federationCallbackResponse.data.error_description).toContain("State parameter mismatch");
+      };
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid profile phone email" + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        customParams: {
+          organizationId: "123",
+          organizationName: "test",
+        },
+        interaction,
+        action: "deny"
+      });
+
+      expect(authorizationResponse.error).not.toBeNull();
+    });
+
     it("callback is invalid format", async () => {
       const registrationUser = {
         email: faker.internet.email(),

@@ -61,6 +61,14 @@ public class DefaultCibaProtocol implements CibaProtocol {
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       HttpRequestExecutor httpRequestExecutor) {
+
+    ClientNotificationService clientNotificationService =
+        new ClientNotificationService(
+            backchannelAuthenticationRequestRepository,
+            authorizationGrantedRepository,
+            oAuthTokenCommandRepository,
+            new NotificationClient(httpRequestExecutor));
+
     this.cibaRequestHandler =
         new CibaRequestHandler(
             backchannelAuthenticationRequestRepository,
@@ -71,9 +79,7 @@ public class DefaultCibaProtocol implements CibaProtocol {
         new CibaAuthorizeHandler(
             backchannelAuthenticationRequestRepository,
             cibaGrantRepository,
-            authorizationGrantedRepository,
-            oAuthTokenCommandRepository,
-            new NotificationClient(httpRequestExecutor),
+            clientNotificationService,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.denyHandler =
@@ -81,7 +87,8 @@ public class DefaultCibaProtocol implements CibaProtocol {
             cibaGrantRepository,
             backchannelAuthenticationRequestRepository,
             authorizationServerConfigurationQueryRepository,
-            clientConfigurationQueryRepository);
+            clientConfigurationQueryRepository,
+            clientNotificationService);
     this.errorHandler = new CibaRequestErrorHandler();
     this.authorizeErrorHandler = new CibaAuthorizeRequestErrorHandler();
     this.denyErrorHandler = new CibaDenyRequestErrorHandler();

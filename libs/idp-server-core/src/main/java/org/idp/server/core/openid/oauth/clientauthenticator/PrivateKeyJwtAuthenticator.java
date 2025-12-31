@@ -115,6 +115,7 @@ class PrivateKeyJwtAuthenticator
               clientConfiguration.jwks(),
               clientConfiguration.clientSecretValue());
       joseContext.verifySignature();
+      // RFC 7523: validate() includes check for alg: none
       validate(joseContext, context);
       return joseContext;
     } catch (JoseInvalidException e) {

@@ -127,7 +127,7 @@ public class AuthorizationCodeGrantService
   public OAuthToken create(
       TokenRequestContext tokenRequestContext, ClientCredentials clientCredentials) {
     TokenRequestCodeGrantValidator validator =
-        new TokenRequestCodeGrantValidator(tokenRequestContext.parameters());
+        new TokenRequestCodeGrantValidator(tokenRequestContext);
     validator.validate();
 
     Tenant tenant = tokenRequestContext.tenant();

@@ -40,6 +40,19 @@ import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebSignatureFactory;
 import org.idp.server.platform.random.RandomStringGenerator;
 
+/**
+ * AccessTokenCreator
+ *
+ * <p>Creates access tokens (both JWT and opaque identifier formats) with proper claim handling.
+ *
+ * <p><b>Security Note:</b> Standard JWT claims (sub, iss, client_id, scope, jti, cnf, etc.) cannot
+ * be overwritten by custom claims. Custom claims are added first, then standard claims override any
+ * conflicts. This prevents malicious or misconfigured plugins from tampering with security-critical
+ * claims.
+ *
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc9068">RFC 9068 - JWT Profile for OAuth 2.0
+ *     Access Tokens</a>
+ */
 public class AccessTokenCreator {
 
   public static final AccessTokenCreator INSTANCE = new AccessTokenCreator();
@@ -124,6 +137,18 @@ public class AccessTokenCreator {
       ExpiresAt expiresAt)
       throws JsonWebKeyInvalidException, JoseInvalidException {
     AccessTokenPayloadBuilder payloadBuilder = new AccessTokenPayloadBuilder();
+
+    // Custom claims first, then standard claims override
+    // This prevents custom claims from overwriting standard JWT claims (sub, iss, client_id, etc.)
+    Map<String, Object> customClaims =
+        customClaimsCreators.create(
+            authorizationGrant,
+            authorizationServerConfiguration,
+            clientConfiguration,
+            clientCredentials);
+    payloadBuilder.addCustomClaims(customClaims);
+
+    // Standard claims (these will override any conflicting custom claims)
     payloadBuilder.add(authorizationServerConfiguration.tokenIssuer());
     payloadBuilder.add(authorizationGrant.subject());
     payloadBuilder.add(authorizationGrant.requestedClientId());
@@ -135,14 +160,6 @@ public class AccessTokenCreator {
     payloadBuilder.add(createdAt);
     payloadBuilder.add(expiresAt);
     payloadBuilder.addJti(UUID.randomUUID().toString());
-
-    Map<String, Object> customClaims =
-        customClaimsCreators.create(
-            authorizationGrant,
-            authorizationServerConfiguration,
-            clientConfiguration,
-            clientCredentials);
-    payloadBuilder.addCustomClaims(customClaims);
 
     ClientCertificationThumbprint thumbprint =
         createClientCertificationThumbprint(

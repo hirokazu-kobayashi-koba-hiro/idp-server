@@ -24,6 +24,7 @@ import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
 import org.idp.server.core.openid.oauth.type.oidc.Prompts;
 import org.idp.server.core.openid.oauth.verifier.AuthorizationRequestVerifier;
+import org.idp.server.platform.http.UriMatcher;
 
 /**
  * 3.1.2.2. Authentication Request Validation
@@ -63,6 +64,7 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
   @Override
   public void verify(OAuthRequestContext context) {
     throwExceptionIfNotContainsRedirectUri(context);
+    throwExceptionIfNotAbsoluteRedirectUri(context);
     throwExceptionIfUnRegisteredRedirectUri(context);
     throwExceptionIfHttpRedirectUriAndImplicitFlow(context);
     throwExceptionIfNotContainsNonceAndImplicitFlowOrHybridFlow(context);
@@ -71,6 +73,24 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
     throwExceptionIfInvalidPrompt(context);
     throwExceptionIfInvalidPromptNonePattern(context);
     throwExceptionIfInvalidMaxAge(context);
+  }
+
+  /**
+   * RFC 6749 Section 3.1.2: redirect_uri MUST be absolute URI
+   *
+   * <p>The redirection endpoint URI MUST be an absolute URI as defined by [RFC3986] Section 4.3.
+   *
+   * @param context
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2">3.1.2. Redirection
+   *     Endpoint</a>
+   */
+  void throwExceptionIfNotAbsoluteRedirectUri(OAuthRequestContext context) {
+    if (!UriMatcher.isAbsoluteUri(context.redirectUri().value())) {
+      throw new OAuthBadRequestException(
+          "invalid_request",
+          String.format("redirect_uri must be an absolute URI (%s)", context.redirectUri().value()),
+          context.tenant());
+    }
   }
 
   /**

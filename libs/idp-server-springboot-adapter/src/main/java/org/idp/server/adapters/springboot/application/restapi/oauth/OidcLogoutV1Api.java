@@ -58,14 +58,16 @@ public class OidcLogoutV1Api implements ParameterTransformable, SecurityHeaderCo
         return new ResponseEntity<>(headers, HttpStatus.OK);
       }
       case REDIRECABLE_FOUND -> {
-        headers.add(HttpHeaders.LOCATION, response.redirectUriValue());
+        headers.add(HttpHeaders.LOCATION, response.redirectUri());
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
       }
       case BAD_REQUEST -> {
-        return new ResponseEntity<>(headers, HttpStatus.BAD_REQUEST);
+        headers.add("Content-Type", "application/json");
+        return new ResponseEntity<>(response.contents(), headers, HttpStatus.BAD_REQUEST);
       }
       default -> {
-        return new ResponseEntity<>(headers, HttpStatus.INTERNAL_SERVER_ERROR);
+        headers.add("Content-Type", "application/json");
+        return new ResponseEntity<>(response.contents(), headers, HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }

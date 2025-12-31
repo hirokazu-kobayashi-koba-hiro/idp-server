@@ -32,6 +32,7 @@ public class ClientConfiguration implements JsonReadable, Configurable {
   String clientIdAlias;
   String clientSecret;
   List<String> redirectUris = new ArrayList<>();
+  List<String> postLogoutRedirectUris = new ArrayList<>();
   String tokenEndpointAuthMethod;
   List<String> grantTypes = new ArrayList<>();
   List<String> responseTypes = new ArrayList<>();
@@ -110,6 +111,25 @@ public class ClientConfiguration implements JsonReadable, Configurable {
 
   public RegisteredRedirectUris registeredRedirectUris() {
     return new RegisteredRedirectUris(redirectUris);
+  }
+
+  public List<String> postLogoutRedirectUris() {
+    return postLogoutRedirectUris;
+  }
+
+  public boolean hasPostLogoutRedirectUris() {
+    return postLogoutRedirectUris != null && !postLogoutRedirectUris.isEmpty();
+  }
+
+  /**
+   * OpenID Connect RP-Initiated Logout 1.0 Section 4: post_logout_redirect_uri MUST match a
+   * registered URI exactly.
+   *
+   * @param postLogoutRedirectUri the URI to validate
+   * @return true if the URI is registered
+   */
+  public boolean isRegisteredPostLogoutRedirectUri(String postLogoutRedirectUri) {
+    return postLogoutRedirectUris.contains(postLogoutRedirectUri);
   }
 
   public String tokenEndpointAuthMethod() {
@@ -261,6 +281,15 @@ public class ClientConfiguration implements JsonReadable, Configurable {
 
   public boolean isWebApplication() {
     return applicationType.equals("web");
+  }
+
+  /**
+   * RFC 8252 Section 7: Native Applications
+   *
+   * @return true if application_type is "native"
+   */
+  public boolean isNativeApplication() {
+    return applicationType.equals("native");
   }
 
   public String idTokenEncryptedResponseAlg() {
@@ -423,6 +452,7 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     map.put("client_id_alias", clientIdAlias);
     map.put("client_secret", clientSecret);
     map.put("redirect_uris", redirectUris);
+    map.put("post_logout_redirect_uris", postLogoutRedirectUris);
     map.put("token_endpoint_auth_method", tokenEndpointAuthMethod);
     map.put("grant_types", grantTypes);
     map.put("response_types", responseTypes);

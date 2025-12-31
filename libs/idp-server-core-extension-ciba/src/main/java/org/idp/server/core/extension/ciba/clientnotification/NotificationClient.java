@@ -42,6 +42,7 @@ public class NotificationClient implements ClientNotificationGateway {
           HttpRequest.newBuilder()
               .uri(new URI(clientNotificationRequest.endpoint()))
               .header("Content-Type", "application/json")
+              .header("Authorization", "Bearer " + clientNotificationRequest.token())
               .POST(HttpRequest.BodyPublishers.ofString(clientNotificationRequest.body()))
               .build();
 

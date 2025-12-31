@@ -159,7 +159,7 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
     user.applyIdentityPolicy(tenant.identityPolicyConfig());
 
     Map<String, Object> response = new HashMap<>();
-    response.put("user", user.toMap());
+    response.put("user", user.toMinimalizedMap());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,

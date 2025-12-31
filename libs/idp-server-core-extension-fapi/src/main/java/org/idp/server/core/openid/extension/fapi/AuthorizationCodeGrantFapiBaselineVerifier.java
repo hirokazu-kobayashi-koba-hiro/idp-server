@@ -46,8 +46,7 @@ public class AuthorizationCodeGrantFapiBaselineVerifier
       AuthorizationRequest authorizationRequest,
       AuthorizationCodeGrant authorizationCodeGrant,
       ClientCredentials clientCredentials) {
-    baseVerifier.verify(
-        tokenRequestContext, authorizationRequest, authorizationCodeGrant, clientCredentials);
+    baseVerifier.verify(tokenRequestContext, authorizationRequest, authorizationCodeGrant);
     throwExceptionIfInvalidSymmetricKey(tokenRequestContext);
     throwExceptionIfClientSecretPostOrClientSecretBasic(tokenRequestContext);
     throwExceptionIfRsaAlgorithmKeySizeSmallerThan2048(tokenRequestContext, clientCredentials);
