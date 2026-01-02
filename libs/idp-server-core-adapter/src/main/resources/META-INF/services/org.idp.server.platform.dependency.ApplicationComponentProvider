@@ -62,7 +62,3 @@ org.idp.server.core.adapters.datasource.statistics.command.yearly.TenantYearlySt
 org.idp.server.core.adapters.datasource.statistics.query.yearly.TenantYearlyStatisticsQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.session.OPSessionRepositoryProvider
 org.idp.server.core.adapters.datasource.session.ClientSessionRepositoryProvider
-org.idp.server.core.adapters.datasource.session.LogoutTokenJtiRepositoryProvider
-org.idp.server.core.adapters.datasource.session.BackChannelLogoutServiceProvider
-org.idp.server.core.adapters.datasource.session.FrontChannelLogoutServiceProvider
-org.idp.server.core.adapters.datasource.session.audit.LogoutNotificationRepositoryProvider
