@@ -1,0 +1,365 @@
+version: '3'
+
+# Subdomain configuration for production-like local development
+#
+# Prerequisites:
+#   1. Run setup script: ./scripts/setup-local-subdomain.sh
+#   2. This sets up dnsmasq and mkcert for *.local.dev
+#
+# Access:
+#   - IDP Server API:    https://api.local.dev
+#   - Authorization UI:  https://auth.local.dev
+#
+# Cookie sharing:
+#   - cookie_domain: "local.dev" in tenant session_config
+
+services:
+  idp-server-1:
+    build: .
+    image: idp-server:latest
+    container_name: idp-server-1
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      postgres-replica:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      postgres-user-init:
+        condition: service_completed_successfully
+      flyway-migrator:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2g
+        reservations:
+          cpus: '0.5'
+          memory: 1g
+    environment:
+      SERVER_URL: "https://api.local.dev"
+      IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY?IDP server API key is required. Set IDP_SERVER_API_KEY environment variable.}
+      IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET?IDP server API secret is required. Set IDP_SERVER_API_SECRET environment variable.}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY?Encryption key is required. Set ENCRYPTION_KEY environment variable.}
+      ADMIN_TENANT_ID: ${ADMIN_TENANT_ID:-67e7eae6-62b0-4500-9eff-87459f63fc66}
+      DATABASE_TYPE: POSTGRESQL
+      DB_WRITER_URL: jdbc:postgresql://postgres-primary:5432/idpserver
+      CONTROL_PLANE_DB_WRITER_URL: jdbc:postgresql://postgres-primary:5432/idpserver
+      CONTROL_PLANE_DB_WRITER_USER_NAME: idp_admin_user
+      CONTROL_PLANE_DB_WRITER_PASSWORD: ${IDP_DB_ADMIN_PASSWORD?Database admin password is required. Set IDP_DB_ADMIN_PASSWORD environment variable.}
+      CONTROL_PLANE_DB_WRITER_TIMEOUT: 2000
+      CONTROL_PLANE_DB_WRITER_MAX_POOL_SIZE: 10
+      CONTROL_PLANE_DB_WRITER_MIN_IDLE: 5
+      CONTROL_PLANE_DB_READER_URL: jdbc:postgresql://postgres-replica:5432/idpserver
+      CONTROL_PLANE_DB_READER_USER_NAME: idp_admin_user
+      CONTROL_PLANE_DB_READER_PASSWORD: ${IDP_DB_ADMIN_PASSWORD?Database admin password is required. Set IDP_DB_ADMIN_PASSWORD environment variable.}
+      CONTROL_PLANE_DB_READER_TIMEOUT: 2000
+      CONTROL_PLANE_DB_READER_MAX_POOL_SIZE: 10
+      CONTROL_PLANE_DB_READER_MIN_IDLE: 5
+      DB_WRITER_USER_NAME: idp_app_user
+      DB_WRITER_PASSWORD: ${IDP_DB_APP_PASSWORD?Database app password is required. Set IDP_DB_APP_PASSWORD environment variable.}
+      DB_WRITER_TIMEOUT: 2000
+      DB_WRITER_MAX_POOL_SIZE: 10
+      DB_WRITER_MIN_IDLE: 5
+      DB_READER_URL: jdbc:postgresql://postgres-replica:5432/idpserver
+      DB_READER_USER_NAME: idp_app_user
+      DB_READER_PASSWORD: ${IDP_DB_APP_PASSWORD?Database app password is required. Set IDP_DB_APP_PASSWORD environment variable.}
+      DB_READER_TIMEOUT: 2000
+      DB_READER_MAX_POOL_SIZE: 10
+      DB_READER_MIN_IDLE: 5
+      REDIS_HOST: redis
+      REDIS_SESSION_DATABASE: 0
+      REDIS_PASSWORD: ""
+      REDIS_CACHE_DATABASE: 1
+      REDIS_CACHE_PASSWORD: ""
+      REDIS_CACHE_TIMEOUT: 10000
+      REDIS_PORT: 6379
+      CACHE_ENABLE: "true"
+      CACHE_TIME_TO_LIVE_SECOND: 300
+      IDP_SERVER_SHUTDOWN_DELAY: "5s"
+      SERVER_TOMCAT_THREADS_MAX: 300
+      SERVER_TOMCAT_THREADS_MIN_SPARE: 50
+      LOGGING_LEVEL_ROOT: info
+      LOGGING_LEVEL_WEB: info
+      LOGGING_LEVEL_IDP_SERVER_AUTHENTICATION_INTERACTORS: debug
+      LOGGING_LEVEL_IDP_SERVER_PLATFORM: info
+      LOGGING_LEVEL_IDP_SERVER_HTTP_REQUEST_EXECUTOR: debug
+      LOGGING_LEVEL_IDP_SERVER_CORE_OPENID: ${LOGGING_LEVEL_IDP_SERVER_CORE_OPENID:-debug}
+      LOGGING_LEVEL_IDP_SERVER_CORE_ADAPTERS: ${LOGGING_LEVEL_IDP_SERVER_CORE_ADAPTERS:-debug}
+      LOGGING_LEVEL_REQUEST_RESPONSE_LOGGING_FILTER: ${LOGGING_LEVEL_REQUEST_RESPONSE_LOGGING_FILTER:-debug}
+      IDP_LOGGING_REQUEST_RESPONSE_ENABLED: ${IDP_LOGGING_REQUEST_RESPONSE_ENABLED:-false}
+      IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS: ${IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS:-true}
+      IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE: ${IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE:-10000}
+      IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS: ${IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS:-/v1/tokens,/v1/authorizations,/v1/backchannel/authentications,/v1/userinfo}
+      # Subdomain cookie: SameSite=Lax is sufficient for same-site subdomains
+      IDP_AUTH_SESSION_SAME_SITE: ${IDP_AUTH_SESSION_SAME_SITE:-Lax}
+      IDP_AUTH_SESSION_SECURE: ${IDP_AUTH_SESSION_SECURE:-true}
+      JAVA_TOOL_OPTIONS: >
+        -Xms512m -Xmx2g
+        -XX:MaxGCPauseMillis=100
+
+  idp-server-2:
+    build: .
+    image: idp-server:latest
+    container_name: idp-server-2
+    ports:
+      - "8082:8080"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      postgres-replica:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      postgres-user-init:
+        condition: service_completed_successfully
+      flyway-migrator:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2g
+        reservations:
+          cpus: '0.5'
+          memory: 1g
+    environment:
+      SERVER_URL: "https://api.local.dev"
+      IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY:-30113151-4ee1-4f6a-a1ac-cc1be9eaf695}
+      IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET:-MTY5YjM3NmYtOTY0ZC00Nzg0LWIyOTMtOWQyNDhjMTkyNmIwCg==}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-JjN9c6N4STeA+g9d+TtBGp5MC3sbqOWs+S9qzJG42iY=}
+      ADMIN_TENANT_ID: ${ADMIN_TENANT_ID:-67e7eae6-62b0-4500-9eff-87459f63fc66}
+      DATABASE_TYPE: POSTGRESQL
+      DB_WRITER_URL: jdbc:postgresql://postgres-primary:5432/idpserver
+      CONTROL_PLANE_DB_WRITER_URL: jdbc:postgresql://postgres-primary:5432/idpserver
+      CONTROL_PLANE_DB_WRITER_USER_NAME: idp_admin_user
+      CONTROL_PLANE_DB_WRITER_PASSWORD: ${IDP_DB_ADMIN_PASSWORD?Database admin password is required. Set IDP_DB_ADMIN_PASSWORD environment variable.}
+      CONTROL_PLANE_DB_WRITER_TIMEOUT: 2000
+      CONTROL_PLANE_DB_WRITER_MAX_POOL_SIZE: 10
+      CONTROL_PLANE_DB_WRITER_MIN_IDLE: 5
+      CONTROL_PLANE_DB_READER_URL: jdbc:postgresql://postgres-replica:5432/idpserver
+      CONTROL_PLANE_DB_READER_USER_NAME: idp_admin_user
+      CONTROL_PLANE_DB_READER_PASSWORD: ${IDP_DB_ADMIN_PASSWORD?Database admin password is required. Set IDP_DB_ADMIN_PASSWORD environment variable.}
+      CONTROL_PLANE_DB_READER_TIMEOUT: 2000
+      CONTROL_PLANE_DB_READER_MAX_POOL_SIZE: 10
+      CONTROL_PLANE_DB_READER_MIN_IDLE: 5
+      DB_WRITER_USER_NAME: idp_app_user
+      DB_WRITER_PASSWORD: ${IDP_DB_APP_PASSWORD?Database app password is required. Set IDP_DB_APP_PASSWORD environment variable.}
+      DB_WRITER_TIMEOUT: 2000
+      DB_WRITER_MAX_POOL_SIZE: 10
+      DB_WRITER_MIN_IDLE: 5
+      DB_READER_URL: jdbc:postgresql://postgres-replica:5432/idpserver
+      DB_READER_USER_NAME: idp_app_user
+      DB_READER_PASSWORD: ${IDP_DB_APP_PASSWORD?Database app password is required. Set IDP_DB_APP_PASSWORD environment variable.}
+      DB_READER_TIMEOUT: 2000
+      DB_READER_MAX_POOL_SIZE: 10
+      DB_READER_MIN_IDLE: 5
+      REDIS_HOST: redis
+      REDIS_SESSION_DATABASE: 0
+      REDIS_PASSWORD: ""
+      REDIS_CACHE_DATABASE: 1
+      REDIS_CACHE_PASSWORD: ""
+      REDIS_CACHE_TIMEOUT: 10000
+      REDIS_PORT: 6379
+      CACHE_ENABLE: "true"
+      CACHE_TIME_TO_LIVE_SECOND: 300
+      IDP_SERVER_SHUTDOWN_DELAY: "5s"
+      SERVER_TOMCAT_THREADS_MAX: 300
+      SERVER_TOMCAT_THREADS_MIN_SPARE: 50
+      LOGGING_LEVEL_ROOT: info
+      LOGGING_LEVEL_WEB: info
+      LOGGING_LEVEL_IDP_SERVER_AUTHENTICATION_INTERACTORS: debug
+      LOGGING_LEVEL_IDP_SERVER_PLATFORM: info
+      LOGGING_LEVEL_IDP_SERVER_HTTP_REQUEST_EXECUTOR: debug
+      LOGGING_LEVEL_IDP_SERVER_CORE_OPENID: ${LOGGING_LEVEL_IDP_SERVER_CORE_OPENID:-debug}
+      LOGGING_LEVEL_IDP_SERVER_CORE_ADAPTERS: ${LOGGING_LEVEL_IDP_SERVER_CORE_ADAPTERS:-debug}
+      LOGGING_LEVEL_REQUEST_RESPONSE_LOGGING_FILTER: ${LOGGING_LEVEL_REQUEST_RESPONSE_LOGGING_FILTER:-debug}
+      IDP_LOGGING_REQUEST_RESPONSE_ENABLED: ${IDP_LOGGING_REQUEST_RESPONSE_ENABLED:-false}
+      IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS: ${IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS:-true}
+      IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE: ${IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE:-10000}
+      IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS: ${IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS:-/v1/tokens,/v1/authorizations,/v1/backchannel/authentications,/v1/userinfo}
+      # Subdomain cookie: SameSite=Lax is sufficient for same-site subdomains
+      IDP_AUTH_SESSION_SAME_SITE: ${IDP_AUTH_SESSION_SAME_SITE:-Lax}
+      IDP_AUTH_SESSION_SECURE: ${IDP_AUTH_SESSION_SECURE:-true}
+      JAVA_TOOL_OPTIONS: >
+        -Xms512m -Xmx2g
+        -XX:MaxGCPauseMillis=100
+
+  nginx:
+    build: ./docker/nginx
+    image: idp-nginx:latest
+    container_name: load-balancer
+    depends_on:
+      - idp-server-1
+      - idp-server-2
+      - app-view
+    volumes:
+      - ./docker/nginx/nginx-subdomain.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/certs:/etc/nginx/certs:ro
+    ports:
+      - "80:80"       # HTTP (redirects to HTTPS)
+      - "443:443"     # HTTPS
+
+  postgres-primary:
+    build:
+      context: ./docker/postgresql/primary
+    image: idp-postgres-primary:15
+    container_name: postgres-primary
+    environment:
+      - POSTGRES_USER=idpserver
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
+      - POSTGRES_DB=idpserver
+      - TZ=UTC
+      - DB_OWNER_USER=${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
+      - DB_OWNER_PASSWORD=${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
+    ports:
+      - "5432:5432"
+    command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements,pg_cron", "-c", "cron.database_name=postgres" ]
+    volumes:
+      - ./libs/idp-server-database/postgresql/init/00-init-app-user.sh:/docker-entrypoint-initdb.d/00-init-app-user.sh
+      - ./libs/idp-server-database/postgresql/init/01-add-bypassrls.sh:/docker-entrypoint-initdb.d/01-add-bypassrls.sh
+      - ./libs/idp-server-database/postgresql/init/02-init-partman.sh:/docker-entrypoint-initdb.d/02-init-partman.sh
+      - ./docker/postgresql/primary/init-replication.sh:/docker-entrypoint-initdb.d/99-init-replication.sh
+      - postgres_primary_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U idpserver -d idpserver" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  postgres-replica:
+    build:
+      context: ./docker/postgresql/replica
+    container_name: postgres-replica
+    environment:
+      - POSTGRES_USER=idpserver
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
+      - POSTGRES_DB=idpserver
+      - TZ=UTC
+    ports:
+      - "5433:5432"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U idpserver -d idpserver && psql -U idpserver -d idpserver -c 'SELECT pg_is_in_recovery();' | grep -q 't'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  postgres-user-init:
+    build:
+      context: ./libs/idp-server-database
+      dockerfile: Dockerfile-postgres-init
+    image: idp-postgres-user-init:latest
+    restart: "no"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres-primary
+      PGPORT: 5432
+      POSTGRES_USER: idpserver
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
+      POSTGRES_DB: idpserver
+      DB_OWNER_USER: ${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
+      IDP_DB_ADMIN_PASSWORD: ${IDP_DB_ADMIN_PASSWORD?Database admin password is required. Set IDP_DB_ADMIN_PASSWORD environment variable.}
+      IDP_DB_APP_PASSWORD: ${IDP_DB_APP_PASSWORD?Database app password is required. Set IDP_DB_APP_PASSWORD environment variable.}
+
+  flyway-migrator:
+    build:
+      context: ./libs/idp-server-database
+      dockerfile: Dockerfile-flyway
+    image: idp-flyway-migrator:latest
+    restart: "no"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      postgres-user-init:
+        condition: service_completed_successfully
+    environment:
+      DB_TYPE: postgresql
+      DB_URL: jdbc:postgresql://postgres-primary:5432/idpserver
+      DB_USER_NAME: ${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
+      DB_PASSWORD: ${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
+    command: [ "migrate" ]
+
+  pg-cron-setup:
+    build:
+      context: ./libs/idp-server-database
+      dockerfile: Dockerfile-pg-cron-setup
+    image: idp-pg-cron-setup:latest
+    restart: "no"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      flyway-migrator:
+        condition: service_completed_successfully
+    environment:
+      PGHOST: postgres-primary
+      PGPORT: 5432
+      POSTGRES_DB: idpserver
+      DB_USER_NAME: ${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
+      DB_PASSWORD: ${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  mockoon:
+    image: mockoon/cli:latest
+    volumes:
+      - ./docker/mockoon/config.json:/data/config.json
+    command: [
+      "-d", "/data/config.json",
+      "-p", "4000"
+    ]
+    ports:
+      - "4000:4000"
+
+  app-view:
+    build:
+      context: .
+      dockerfile: docker/app-view/Dockerfile
+      args:
+        # Subdomain deployment: Authorization UI on auth.local.dev, IDP API on api.local.dev
+        BASE_PATH: ""
+        NEXT_PUBLIC_BACKEND_URL: "https://api.local.dev"
+    container_name: app-view
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - idp-server-1
+
+  sample-web:
+    build:
+      context: ./sample-web
+      dockerfile: Dockerfile
+    container_name: sample-web
+    environment:
+      NODE_ENV: production
+      AUTH_SECRET: "123"
+      AUTH_TRUST_HOST: "true"
+      AUTH_URL: "https://sample.local.dev"
+      NEXT_PUBLIC_IDP_SERVER_ISSUER: "https://api.local.dev/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+      NEXT_PUBLIC_FRONTEND_URL: "https://sample.local.dev"
+      NEXT_PUBLIC_IDP_CLIENT_ID: "8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f"
+      NEXT_IDP_CLIENT_SECRET: "local-dev-public-secret-32char"
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    extra_hosts:
+      - "api.local.dev:host-gateway"
+      - "auth.local.dev:host-gateway"
+      - "sample.local.dev:host-gateway"
+    depends_on:
+      - idp-server-1
+
+volumes:
+  postgres_primary_data:
+  postgres_replica_data:

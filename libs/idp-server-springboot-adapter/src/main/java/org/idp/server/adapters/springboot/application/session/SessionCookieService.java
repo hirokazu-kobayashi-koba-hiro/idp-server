@@ -63,6 +63,7 @@ public class SessionCookieService implements SessionCookieDelegate {
   public void registerSessionCookies(
       Tenant tenant, String identityToken, String sessionHash, long maxAgeSeconds) {
     String cookiePath = "/" + tenant.identifierValue() + "/";
+    String cookieDomain = getCookieDomain(tenant);
     boolean secureCookie = getSecureCookie(tenant);
     String sameSite = getSameSite(tenant);
 
@@ -81,11 +82,14 @@ public class SessionCookieService implements SessionCookieDelegate {
     sessionCookie.setHttpOnly(false);
     sessionCookie.setSecure(secureCookie);
 
-    // Set SameSite via header (Cookie API doesn't support SameSite directly)
-    addCookieWithSameSite(identityCookie, sameSite);
-    addCookieWithSameSite(sessionCookie, sameSite);
+    // Set SameSite and Domain via header (Cookie API doesn't support SameSite directly)
+    addCookieWithSameSiteAndDomain(identityCookie, sameSite, cookieDomain);
+    addCookieWithSameSiteAndDomain(sessionCookie, sameSite, cookieDomain);
 
-    log.debug("Session cookies set: IDP_IDENTITY and IDP_SESSION, path={}", cookiePath);
+    log.debug(
+        "Session cookies set: IDP_IDENTITY and IDP_SESSION, path={}, domain={}",
+        cookiePath,
+        cookieDomain != null ? cookieDomain : "(host only)");
   }
 
   @Override
@@ -101,6 +105,7 @@ public class SessionCookieService implements SessionCookieDelegate {
   @Override
   public void clearSessionCookies(Tenant tenant) {
     String cookiePath = "/" + tenant.identifierValue() + "/";
+    String cookieDomain = getCookieDomain(tenant);
     boolean secureCookie = getSecureCookie(tenant);
     String sameSite = getSameSite(tenant);
 
@@ -118,10 +123,10 @@ public class SessionCookieService implements SessionCookieDelegate {
     sessionCookie.setHttpOnly(false);
     sessionCookie.setSecure(secureCookie);
 
-    addCookieWithSameSite(identityCookie, sameSite);
-    addCookieWithSameSite(sessionCookie, sameSite);
+    addCookieWithSameSiteAndDomain(identityCookie, sameSite, cookieDomain);
+    addCookieWithSameSiteAndDomain(sessionCookie, sameSite, cookieDomain);
 
-    log.debug("Session cookies cleared, path={}", cookiePath);
+    log.debug("Session cookies cleared, path={}, domain={}", cookiePath, cookieDomain);
   }
 
   private Optional<String> getCookieValue(String cookieName) {
@@ -141,7 +146,7 @@ public class SessionCookieService implements SessionCookieDelegate {
     return Optional.empty();
   }
 
-  private void addCookieWithSameSite(Cookie cookie, String sameSite) {
+  private void addCookieWithSameSiteAndDomain(Cookie cookie, String sameSite, String cookieDomain) {
     StringBuilder cookieHeader = new StringBuilder();
     cookieHeader.append(cookie.getName()).append("=").append(cookie.getValue());
 
@@ -151,6 +156,10 @@ public class SessionCookieService implements SessionCookieDelegate {
 
     if (cookie.getPath() != null) {
       cookieHeader.append("; Path=").append(cookie.getPath());
+    }
+
+    if (cookieDomain != null && !cookieDomain.isEmpty()) {
+      cookieHeader.append("; Domain=").append(cookieDomain);
     }
 
     if (cookie.getSecure()) {
@@ -166,6 +175,13 @@ public class SessionCookieService implements SessionCookieDelegate {
     }
 
     httpServletResponse.addHeader("Set-Cookie", cookieHeader.toString());
+  }
+
+  private String getCookieDomain(Tenant tenant) {
+    if (tenant.sessionConfiguration() != null && tenant.sessionConfiguration().hasCookieDomain()) {
+      return tenant.sessionConfiguration().cookieDomain();
+    }
+    return null;
   }
 
   private boolean getSecureCookie(Tenant tenant) {

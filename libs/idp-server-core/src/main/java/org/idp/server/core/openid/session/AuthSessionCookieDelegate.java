@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.session;
 
 import java.util.Optional;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * AuthSessionCookieDelegate
@@ -50,11 +51,15 @@ public interface AuthSessionCookieDelegate {
    * <p>The cookie path is set to /{tenantId}/ to prevent cookie conflicts in federation flows where
    * multiple tenants on the same domain would otherwise overwrite each other's cookies.
    *
-   * @param tenantId tenant identifier for scoping the cookie path
+   * <p>When tenant's sessionConfiguration specifies a cookie domain, the cookie will be shared
+   * across subdomains (e.g., setting domain to "example.com" allows sharing between
+   * "app.example.com" and "auth.example.com").
+   *
+   * @param tenant tenant for scoping the cookie path and session configuration
    * @param authSessionId unique identifier for this authorization session
    * @param maxAgeSeconds cookie max age in seconds (should match authorization request expiry)
    */
-  void setAuthSessionCookie(String tenantId, String authSessionId, long maxAgeSeconds);
+  void setAuthSessionCookie(Tenant tenant, String authSessionId, long maxAgeSeconds);
 
   /**
    * Gets the authentication session ID from AUTH_SESSION cookie.
@@ -67,7 +72,7 @@ public interface AuthSessionCookieDelegate {
    * Clears the authentication session cookie. Should be called after authorization is complete
    * (success or failure).
    *
-   * @param tenantId tenant identifier for scoping the cookie path
+   * @param tenant tenant for scoping the cookie path and session configuration
    */
-  void clearAuthSessionCookie(String tenantId);
+  void clearAuthSessionCookie(Tenant tenant);
 }

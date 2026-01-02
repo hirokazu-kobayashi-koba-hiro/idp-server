@@ -2,27 +2,31 @@
   "organization": {
     "id": "76c1b7c2-c362-42b6-a19e-f346e7967699",
     "name": "Local Development Organization",
-    "description": "Standard OIDC web application for local development"
+    "description": "Standard OIDC web application for local subdomain development"
   },
   "tenant": {
     "id": "d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df",
     "name": "Local Organizer Tenant",
     "type": "ORGANIZER",
-    "domain": "https://localhost:8443",
+    "domain": "https://api.local.dev",
     "authorization_provider": "idp-server",
     "ui_config": {
-      "base_url": "http://localhost:3000",
+      "base_url": "https://auth.local.dev",
       "signin_page": "/signin/",
       "signup_page": "/signup/"
     },
     "session_config": {
       "cookie_name": "LOCAL_DEV_SESSION",
-      "use_secure_cookie": false
+      "cookie_domain": "local.dev",
+      "cookie_same_site": "Lax",
+      "use_secure_cookie": true,
+      "timeout_seconds": 3600
     },
     "cors_config": {
       "allow_origins": [
-        "http://localhost:3000",
-        "https://localhost:8443"
+        "https://auth.local.dev",
+        "https://api.local.dev",
+        "https://sample.local.dev"
       ]
     },
     "security_event_log_config": {
@@ -38,9 +42,9 @@
     }
   },
   "authorization_server": {
-    "issuer": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df",
-    "authorization_endpoint": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/authorizations",
-    "token_endpoint": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens",
+    "issuer": "https://api.local.dev/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df",
+    "authorization_endpoint": "https://api.local.dev/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/authorizations",
+    "token_endpoint": "https://api.local.dev/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens",
     "token_endpoint_auth_methods_supported": [
       "client_secret_post",
       "client_secret_basic"
@@ -49,8 +53,8 @@
       "RS256",
       "ES256"
     ],
-    "userinfo_endpoint": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/userinfo",
-    "jwks_uri": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/jwks",
+    "userinfo_endpoint": "https://api.local.dev/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/userinfo",
+    "jwks_uri": "https://api.local.dev/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/jwks",
     "jwks": "{\"keys\":[{\"kty\":\"EC\",\"x\":\"_g1pn_N84_T82eU-YVN4pcgQt3tfvZWJMPabMFNgbVg\",\"y\":\"B3vLi4eGNz9rzoj493h7zHBpM5G3lSM7Af57fru2-FE\",\"crv\":\"P-256\",\"d\":\"xHfNjJqElnZajzexFG49MQqO01TrveM4mL4tlz8T9jw\",\"use\":\"sig\",\"kid\":\"signing_key_1\",\"alg\":\"ES256\"}]}",
     "grant_types_supported": [
       "authorization_code",
@@ -79,8 +83,8 @@
       "ES256"
     ],
     "claims_parameter_supported": true,
-    "token_introspection_endpoint": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens/introspection",
-    "token_revocation_endpoint": "https://localhost:8443/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens/revocation",
+    "token_introspection_endpoint": "https://api.local.dev/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens/introspection",
+    "token_revocation_endpoint": "https://api.local.dev/d49fa8d0-00f1-4c5b-b1e8-cc4076c6b1df/v1/tokens/revocation",
     "extension": {
       "access_token_type": "JWT",
       "token_signed_key_id": "signing_key_1",
@@ -93,8 +97,8 @@
   "user": {
     "sub": "481b2c4c-dfa4-456a-ab1f-9bf41b692aca",
     "provider_id": "idp-server",
-    "name": "admin@localhost.local",
-    "email": "admin@localhost.local",
+    "name": "admin@local.dev",
+    "email": "admin@local.dev",
     "email_verified": true,
     "raw_password": "LocalDevPassword123"
   },
@@ -103,7 +107,7 @@
     "client_id_alias": "local-admin-client",
     "client_secret": "local-dev-admin-secret-32chars",
     "redirect_uris": [
-      "http://localhost:3000/callback/"
+      "https://auth.local.dev/callback/"
     ],
     "response_types": [
       "code"
@@ -117,5 +121,26 @@
     "client_name": "Local Development Admin Client",
     "token_endpoint_auth_method": "client_secret_post",
     "application_type": "web"
-  }
+  },
+  "additional_clients": [
+    {
+      "client_id": "8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f",
+      "client_id_alias": "sample-web-client",
+      "client_secret": "local-dev-public-secret-32char",
+      "redirect_uris": [
+        "https://sample.local.dev/api/auth/callback/idp-server"
+      ],
+      "response_types": [
+        "code"
+      ],
+      "grant_types": [
+        "authorization_code",
+        "refresh_token"
+      ],
+      "scope": "openid profile email",
+      "client_name": "Sample Web Application",
+      "token_endpoint_auth_method": "client_secret_post",
+      "application_type": "web"
+    }
+  ]
 }

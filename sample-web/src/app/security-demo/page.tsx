@@ -45,7 +45,7 @@ export default function SecurityDemoPage() {
     authUrl.searchParams.set("client_id", clientId || "");
     authUrl.searchParams.set("response_type", "code");
     authUrl.searchParams.set("scope", "openid profile email");
-    authUrl.searchParams.set("redirect_uri", `${frontendUrl}/api/auth/callback/idp-server`);
+    authUrl.searchParams.set("redirect_uri", `${frontendUrl}/api/security-test/callback`);
     authUrl.searchParams.set("state", state);
     authUrl.searchParams.set("code_challenge", codeChallenge);
     authUrl.searchParams.set("code_challenge_method", "S256");

@@ -175,8 +175,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
               tenant, requestResponse, authenticationPolicyConfiguration, authSessionId);
       authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
 
-      // Set AUTH_SESSION cookie with same expiry as authorization request
-      setAuthSessionCookie(
+      // Register AUTH_SESSION cookie with same expiry as authorization request
+      registerAuthSessionCookie(
           tenant, authSessionId, requestResponse.oauthAuthorizationRequestExpiresIn());
     }
 
@@ -633,20 +633,19 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   }
 
   /**
-   * Sets AUTH_SESSION cookie with generated authSessionId.
+   * Registers AUTH_SESSION cookie with authSessionId.
    *
    * @param tenant the tenant for scoping the cookie path
    * @param authSessionId the authentication session ID to store in cookie
    * @param maxAgeSeconds cookie max age in seconds
    */
-  private void setAuthSessionCookie(
+  private void registerAuthSessionCookie(
       Tenant tenant, AuthSessionId authSessionId, long maxAgeSeconds) {
     if (authSessionCookieDelegate == null || !authSessionId.exists()) {
       return;
     }
 
-    authSessionCookieDelegate.setAuthSessionCookie(
-        tenant.identifierValue(), authSessionId.value(), maxAgeSeconds);
+    authSessionCookieDelegate.setAuthSessionCookie(tenant, authSessionId.value(), maxAgeSeconds);
   }
 
   /**
@@ -656,7 +655,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
    */
   private void clearAuthSessionCookie(Tenant tenant) {
     if (authSessionCookieDelegate != null) {
-      authSessionCookieDelegate.clearAuthSessionCookie(tenant.identifierValue());
+      authSessionCookieDelegate.clearAuthSessionCookie(tenant);
     }
   }
 }

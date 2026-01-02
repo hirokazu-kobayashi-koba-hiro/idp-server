@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
           client_id: process.env.NEXT_PUBLIC_IDP_CLIENT_ID || "",
           response_type: "code",
           scope: "openid profile email",
-          redirect_uri: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api/auth/callback/idp-server`,
+          redirect_uri: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api/security-test/callback`,
           state: generateRandomState(),
           code_challenge: await generateCodeChallenge(generateCodeVerifier()),
           code_challenge_method: "S256",

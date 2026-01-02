@@ -22,6 +22,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.Optional;
 import org.idp.server.core.openid.session.AuthSessionCookieDelegate;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.springframework.stereotype.Service;
 
 /**
@@ -79,22 +81,28 @@ public class AuthSessionCookieService implements AuthSessionCookieDelegate {
   }
 
   @Override
-  public void setAuthSessionCookie(String tenantId, String authSessionId, long maxAgeSeconds) {
-    String cookiePath = "/" + tenantId + "/";
+  public void setAuthSessionCookie(Tenant tenant, String authSessionId, long maxAgeSeconds) {
+    SessionConfiguration sessionConfiguration = tenant.sessionConfiguration();
+    String cookiePath = "/" + tenant.identifierValue() + "/";
+    String cookieDomain = resolveCookieDomain(sessionConfiguration);
+    boolean secure = resolveSecure(sessionConfiguration);
+    String sameSiteValue = resolveSameSite(sessionConfiguration);
+
     Cookie authSessionCookie = new Cookie(AUTH_SESSION_COOKIE_NAME, authSessionId);
     authSessionCookie.setMaxAge((int) maxAgeSeconds);
     authSessionCookie.setPath(cookiePath);
     authSessionCookie.setHttpOnly(true);
-    authSessionCookie.setSecure(secureCookie);
+    authSessionCookie.setSecure(secure);
 
-    addCookieWithSameSite(authSessionCookie, sameSite);
+    addCookieWithSameSiteAndDomain(authSessionCookie, sameSiteValue, cookieDomain);
 
     log.debug(
-        "AUTH_SESSION cookie set: id={}, path={} (SameSite={}, Secure={})",
+        "AUTH_SESSION cookie set: id={}, path={}, domain={} (SameSite={}, Secure={})",
         maskSessionId(authSessionId),
         cookiePath,
-        sameSite,
-        secureCookie);
+        cookieDomain != null ? cookieDomain : "(host only)",
+        sameSiteValue,
+        secure);
   }
 
   @Override
@@ -119,20 +127,25 @@ public class AuthSessionCookieService implements AuthSessionCookieDelegate {
   }
 
   @Override
-  public void clearAuthSessionCookie(String tenantId) {
-    String cookiePath = "/" + tenantId + "/";
+  public void clearAuthSessionCookie(Tenant tenant) {
+    SessionConfiguration sessionConfiguration = tenant.sessionConfiguration();
+    String cookiePath = "/" + tenant.identifierValue() + "/";
+    String cookieDomain = resolveCookieDomain(sessionConfiguration);
+    boolean secure = resolveSecure(sessionConfiguration);
+    String sameSiteValue = resolveSameSite(sessionConfiguration);
+
     Cookie authSessionCookie = new Cookie(AUTH_SESSION_COOKIE_NAME, "");
     authSessionCookie.setMaxAge(0);
     authSessionCookie.setPath(cookiePath);
     authSessionCookie.setHttpOnly(true);
-    authSessionCookie.setSecure(secureCookie);
+    authSessionCookie.setSecure(secure);
 
-    addCookieWithSameSite(authSessionCookie, sameSite);
+    addCookieWithSameSiteAndDomain(authSessionCookie, sameSiteValue, cookieDomain);
 
-    log.debug("AUTH_SESSION cookie cleared: path={}", cookiePath);
+    log.debug("AUTH_SESSION cookie cleared: path={}, domain={}", cookiePath, cookieDomain);
   }
 
-  private void addCookieWithSameSite(Cookie cookie, String sameSite) {
+  private void addCookieWithSameSiteAndDomain(Cookie cookie, String sameSite, String cookieDomain) {
     StringBuilder cookieHeader = new StringBuilder();
     cookieHeader.append(cookie.getName()).append("=").append(cookie.getValue());
 
@@ -142,6 +155,10 @@ public class AuthSessionCookieService implements AuthSessionCookieDelegate {
 
     if (cookie.getPath() != null) {
       cookieHeader.append("; Path=").append(cookie.getPath());
+    }
+
+    if (cookieDomain != null && !cookieDomain.isEmpty()) {
+      cookieHeader.append("; Domain=").append(cookieDomain);
     }
 
     if (cookie.getSecure()) {
@@ -157,6 +174,27 @@ public class AuthSessionCookieService implements AuthSessionCookieDelegate {
     }
 
     httpServletResponse.addHeader("Set-Cookie", cookieHeader.toString());
+  }
+
+  private String resolveCookieDomain(SessionConfiguration sessionConfiguration) {
+    if (sessionConfiguration != null && sessionConfiguration.hasCookieDomain()) {
+      return sessionConfiguration.cookieDomain();
+    }
+    return null;
+  }
+
+  private boolean resolveSecure(SessionConfiguration sessionConfiguration) {
+    if (sessionConfiguration != null) {
+      return sessionConfiguration.useSecureCookie();
+    }
+    return secureCookie;
+  }
+
+  private String resolveSameSite(SessionConfiguration sessionConfiguration) {
+    if (sessionConfiguration != null) {
+      return sessionConfiguration.cookieSameSite();
+    }
+    return sameSite;
   }
 
   /**

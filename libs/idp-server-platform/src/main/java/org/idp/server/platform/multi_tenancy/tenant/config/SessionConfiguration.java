@@ -29,6 +29,7 @@ import java.util.Objects;
 public class SessionConfiguration {
 
   private final String cookieName;
+  private final String cookieDomain;
   private final String cookieSameSite;
   private final boolean useSecureCookie;
   private final boolean useHttpOnlyCookie;
@@ -37,6 +38,7 @@ public class SessionConfiguration {
 
   public SessionConfiguration() {
     this.cookieName = null;
+    this.cookieDomain = null;
     this.cookieSameSite = "None";
     this.useSecureCookie = true;
     this.useHttpOnlyCookie = true;
@@ -47,6 +49,7 @@ public class SessionConfiguration {
   public SessionConfiguration(Map<String, Object> values) {
     Map<String, Object> safeValues = Objects.requireNonNullElseGet(values, HashMap::new);
     this.cookieName = extractString(safeValues, "cookie_name", null);
+    this.cookieDomain = extractString(safeValues, "cookie_domain", null);
     this.cookieSameSite = extractString(safeValues, "cookie_same_site", "None");
     this.useSecureCookie = extractBoolean(safeValues, "use_secure_cookie", true);
     this.useHttpOnlyCookie = extractBoolean(safeValues, "use_http_only_cookie", true);
@@ -70,6 +73,28 @@ public class SessionConfiguration {
    */
   public boolean hasCookieName() {
     return cookieName != null && !cookieName.isEmpty();
+  }
+
+  /**
+   * Returns the cookie domain for cross-subdomain cookie sharing
+   *
+   * <p>When set, cookies will be shared across all subdomains of the specified domain. For example,
+   * if set to "example.com", cookies will be accessible from both "app.example.com" and
+   * "auth.example.com".
+   *
+   * @return cookie domain, or null if not configured (cookie will be scoped to the exact host)
+   */
+  public String cookieDomain() {
+    return cookieDomain;
+  }
+
+  /**
+   * Returns whether cookie domain is configured
+   *
+   * @return true if cookie domain is explicitly configured
+   */
+  public boolean hasCookieDomain() {
+    return cookieDomain != null && !cookieDomain.isEmpty();
   }
 
   /**
@@ -126,6 +151,9 @@ public class SessionConfiguration {
     Map<String, Object> map = new HashMap<>();
     if (cookieName != null) {
       map.put("cookie_name", cookieName);
+    }
+    if (cookieDomain != null) {
+      map.put("cookie_domain", cookieDomain);
     }
     map.put("cookie_same_site", cookieSameSite);
     map.put("use_secure_cookie", useSecureCookie);

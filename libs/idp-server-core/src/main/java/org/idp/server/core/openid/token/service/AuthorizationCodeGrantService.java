@@ -37,6 +37,7 @@ import org.idp.server.core.openid.oauth.type.oidc.IdToken;
 import org.idp.server.core.openid.oauth.type.vc.CNonceCreatable;
 import org.idp.server.core.openid.oauth.type.verifiablecredential.CNonce;
 import org.idp.server.core.openid.oauth.type.verifiablecredential.CNonceExpiresIn;
+import org.idp.server.core.openid.session.ClientSessionIdentifier;
 import org.idp.server.core.openid.token.*;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
@@ -165,13 +166,23 @@ public class AuthorizationCodeGrantService
             .add(refreshToken);
 
     if (authorizationRequest.isOidcProfile()) {
-      IdTokenCustomClaims idTokenCustomClaims =
+      IdTokenCustomClaimsBuilder idTokenCustomClaimsBuilder =
           new IdTokenCustomClaimsBuilder()
               .add(authorizationCodeGrant.authorizationCode())
               .add(accessToken.accessTokenEntity())
               .add(authorizationRequest.nonce())
-              .add(authorizationRequest.state())
-              .build();
+              .add(authorizationRequest.state());
+
+      // Add sid for OIDC Session Management if present in custom properties
+      if (authorizationGrant.hasCustomProperties()
+          && authorizationGrant.customProperties().contains("sid")) {
+        String sidValue = authorizationGrant.customProperties().getValueAsStringOrEmpty("sid");
+        if (!sidValue.isEmpty()) {
+          idTokenCustomClaimsBuilder.add(new ClientSessionIdentifier(sidValue));
+        }
+      }
+
+      IdTokenCustomClaims idTokenCustomClaims = idTokenCustomClaimsBuilder.build();
       IdToken idToken =
           idTokenCreator.createIdToken(
               authorizationGrant.user(),
