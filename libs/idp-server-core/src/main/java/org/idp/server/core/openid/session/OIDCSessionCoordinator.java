@@ -70,8 +70,15 @@ public class OIDCSessionCoordinator {
             ? authentication.time().atZone(ZoneOffset.UTC).toInstant()
             : Instant.now();
 
+    long sessionTimeoutSeconds = getSessionTimeoutSeconds(tenant);
     return sessionManager.createOPSession(
-        tenant, user.sub(), user, authTime, authentication.acr(), authentication.methods());
+        tenant,
+        user.sub(),
+        user,
+        authTime,
+        authentication.acr(),
+        authentication.methods(),
+        sessionTimeoutSeconds);
   }
 
   /**
@@ -133,8 +140,10 @@ public class OIDCSessionCoordinator {
    */
   public ClientSessionIdentifier onAuthorize(
       Tenant tenant, OPSession opSession, String clientId, Set<String> scopes, String nonce) {
+    long sessionTimeoutSeconds = getSessionTimeoutSeconds(tenant);
     ClientSession clientSession =
-        sessionManager.createClientSession(tenant, opSession, clientId, scopes, Map.of(), nonce);
+        sessionManager.createClientSession(
+            tenant, opSession, clientId, scopes, Map.of(), nonce, sessionTimeoutSeconds);
     return clientSession.sid();
   }
 
@@ -185,10 +194,7 @@ public class OIDCSessionCoordinator {
       return;
     }
 
-    long maxAgeSeconds =
-        tenant.sessionConfiguration() != null
-            ? tenant.sessionConfiguration().timeoutSeconds()
-            : DEFAULT_SESSION_MAX_AGE_SECONDS;
+    long maxAgeSeconds = getSessionTimeoutSeconds(tenant);
 
     String identityTokenValue = opSession.id().value();
     String sessionHash = computeSessionHash(identityTokenValue);
@@ -210,5 +216,18 @@ public class OIDCSessionCoordinator {
       return Optional.empty();
     }
     return sessionCookieDelegate.getIdentityToken().flatMap(token -> getOPSession(tenant, token));
+  }
+
+  /**
+   * Gets the session timeout from tenant configuration.
+   *
+   * @param tenant the tenant
+   * @return session timeout in seconds
+   */
+  private long getSessionTimeoutSeconds(Tenant tenant) {
+    if (tenant.sessionConfiguration() != null) {
+      return tenant.sessionConfiguration().timeoutSeconds();
+    }
+    return DEFAULT_SESSION_MAX_AGE_SECONDS;
   }
 }

@@ -63,13 +63,15 @@ public class SessionCookieService implements SessionCookieDelegate {
   public void registerSessionCookies(
       Tenant tenant, String identityToken, String sessionHash, long maxAgeSeconds) {
     String cookiePath = "/" + tenant.identifierValue() + "/";
+    boolean secureCookie = getSecureCookie(tenant);
+    String sameSite = getSameSite(tenant);
 
     // Set IDP_IDENTITY cookie (HttpOnly for security)
     Cookie identityCookie = new Cookie(IDENTITY_COOKIE_NAME, identityToken);
     identityCookie.setMaxAge((int) maxAgeSeconds);
     identityCookie.setPath(cookiePath);
     identityCookie.setHttpOnly(true);
-    identityCookie.setSecure(DEFAULT_SECURE);
+    identityCookie.setSecure(secureCookie);
 
     // Set IDP_SESSION cookie (NOT HttpOnly - accessible by JavaScript for session management
     // iframe)
@@ -77,11 +79,11 @@ public class SessionCookieService implements SessionCookieDelegate {
     sessionCookie.setMaxAge((int) maxAgeSeconds);
     sessionCookie.setPath(cookiePath);
     sessionCookie.setHttpOnly(false);
-    sessionCookie.setSecure(DEFAULT_SECURE);
+    sessionCookie.setSecure(secureCookie);
 
     // Set SameSite via header (Cookie API doesn't support SameSite directly)
-    addCookieWithSameSite(identityCookie, DEFAULT_SAME_SITE);
-    addCookieWithSameSite(sessionCookie, DEFAULT_SAME_SITE);
+    addCookieWithSameSite(identityCookie, sameSite);
+    addCookieWithSameSite(sessionCookie, sameSite);
 
     log.debug("Session cookies set: IDP_IDENTITY and IDP_SESSION, path={}", cookiePath);
   }
@@ -99,23 +101,25 @@ public class SessionCookieService implements SessionCookieDelegate {
   @Override
   public void clearSessionCookies(Tenant tenant) {
     String cookiePath = "/" + tenant.identifierValue() + "/";
+    boolean secureCookie = getSecureCookie(tenant);
+    String sameSite = getSameSite(tenant);
 
     // Clear IDP_IDENTITY cookie
     Cookie identityCookie = new Cookie(IDENTITY_COOKIE_NAME, "");
     identityCookie.setMaxAge(0);
     identityCookie.setPath(cookiePath);
     identityCookie.setHttpOnly(true);
-    identityCookie.setSecure(DEFAULT_SECURE);
+    identityCookie.setSecure(secureCookie);
 
     // Clear IDP_SESSION cookie
     Cookie sessionCookie = new Cookie(SESSION_COOKIE_NAME, "");
     sessionCookie.setMaxAge(0);
     sessionCookie.setPath(cookiePath);
     sessionCookie.setHttpOnly(false);
-    sessionCookie.setSecure(DEFAULT_SECURE);
+    sessionCookie.setSecure(secureCookie);
 
-    addCookieWithSameSite(identityCookie, DEFAULT_SAME_SITE);
-    addCookieWithSameSite(sessionCookie, DEFAULT_SAME_SITE);
+    addCookieWithSameSite(identityCookie, sameSite);
+    addCookieWithSameSite(sessionCookie, sameSite);
 
     log.debug("Session cookies cleared, path={}", cookiePath);
   }
@@ -162,5 +166,19 @@ public class SessionCookieService implements SessionCookieDelegate {
     }
 
     httpServletResponse.addHeader("Set-Cookie", cookieHeader.toString());
+  }
+
+  private boolean getSecureCookie(Tenant tenant) {
+    if (tenant.sessionConfiguration() != null) {
+      return tenant.sessionConfiguration().useSecureCookie();
+    }
+    return DEFAULT_SECURE;
+  }
+
+  private String getSameSite(Tenant tenant) {
+    if (tenant.sessionConfiguration() != null) {
+      return tenant.sessionConfiguration().cookieSameSite();
+    }
+    return DEFAULT_SAME_SITE;
   }
 }

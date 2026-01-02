@@ -13,8 +13,6 @@ idp:
   server:
     shutdown:
       delay: "${IDP_SERVER_SHUTDOWN_DELAY:5s}"
-  session:
-    mode: "${IDP_SESSION_MODE:redis}"
   time:
    zone: "${TIME_ZONE:UTC}"
   logging:
@@ -97,22 +95,6 @@ logging:
     org.idp.server.adapters.springboot.logging.RequestResponseLoggingFilter: "${LOGGING_LEVEL_REQUEST_RESPONSE_LOGGING_FILTER:info}"
 
 spring:
-  data:
-    redis:
-      host: "${REDIS_HOST:localhost}"
-      port: ${REDIS_PORT:6379}
-      database: ${REDIS_SESSION_DATABASE:0}
-      password: ${REDIS_PASSWORD:}
-      timeout: "${REDIS_TIMEOUT:2s}"
-      jedis:
-        pool:
-          max-active: ${REDIS_JEDIS_POOL_MAX_ACTIVE:32}
-          max-idle: ${REDIS_JEDIS_POOL_MAX_IDLE:16}
-          min-idle: ${REDIS_JEDIS_POOL_MIN_IDLE:0}
-  session:
-    redis:
-      configure-action: ${SPRING_SESSION_REDIS_CONFIGURE_ACTION:none}
-    timeout: "${SESSION_TIMEOUT:3600s}"
   lifecycle:
     timeout-per-shutdown-phase: 30s
 

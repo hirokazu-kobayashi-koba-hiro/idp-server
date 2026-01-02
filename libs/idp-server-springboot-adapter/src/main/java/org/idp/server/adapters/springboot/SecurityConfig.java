@@ -17,9 +17,6 @@
 package org.idp.server.adapters.springboot;
 
 import org.idp.server.adapters.springboot.application.restapi.model.IdPApplicationScope;
-import org.idp.server.adapters.springboot.application.session.DynamicCookieSerializer;
-import org.idp.server.platform.multi_tenancy.tenant.TenantMetaDataApi;
-import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -30,7 +27,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.session.web.http.CookieSerializer;
 
 @Configuration
 @EnableWebSecurity
@@ -41,19 +37,16 @@ public class SecurityConfig {
   OrgManagementFilter orgManagementFilter;
   ProtectedResourceApiFilter protectedResourceApiFilter;
   DynamicCorsFilter dynamicCorsFilter;
-  TenantMetaDataApi tenantMetaDataApi;
 
   public SecurityConfig(
       ManagementApiFilter managementApiFilter,
       OrgManagementFilter orgManagementFilter,
       ProtectedResourceApiFilter protectedResourceApiFilter,
-      DynamicCorsFilter dynamicCorsFilter,
-      IdpServerApplication idpServerApplication) {
+      DynamicCorsFilter dynamicCorsFilter) {
     this.managementApiFilter = managementApiFilter;
     this.orgManagementFilter = orgManagementFilter;
     this.protectedResourceApiFilter = protectedResourceApiFilter;
     this.dynamicCorsFilter = dynamicCorsFilter;
-    this.tenantMetaDataApi = idpServerApplication.tenantMetadataApi();
   }
 
   @Bean
@@ -88,10 +81,5 @@ public class SecurityConfig {
     http.addFilterBefore(dynamicCorsFilter, ProtectedResourceApiFilter.class);
 
     return http.build();
-  }
-
-  @Bean
-  public CookieSerializer cookieSerializer() {
-    return new DynamicCookieSerializer(tenantMetaDataApi);
   }
 }
