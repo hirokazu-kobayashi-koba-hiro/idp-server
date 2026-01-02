@@ -22,9 +22,6 @@ import org.idp.server.core.openid.grant_management.grant.AuthorizationCodeGrantC
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.OAuthAuthorizeContext;
-import org.idp.server.core.openid.oauth.OAuthSession;
-import org.idp.server.core.openid.oauth.OAuthSessionDelegate;
-import org.idp.server.core.openid.oauth.OAuthSessionKey;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
@@ -74,8 +71,7 @@ public class OAuthAuthorizeHandler {
     this.creators = new AuthorizationResponseCreators();
   }
 
-  public AuthorizationResponse handle(
-      OAuthAuthorizeRequest request, OAuthSessionDelegate delegate) {
+  public AuthorizationResponse handle(OAuthAuthorizeRequest request) {
 
     Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
@@ -122,12 +118,6 @@ public class OAuthAuthorizeHandler {
       OAuthToken oAuthToken = OAuthTokenFactory.create(authorizationResponse, authorizationGrant);
       oAuthTokenCommandRepository.register(tenant, oAuthToken);
     }
-
-    OAuthSessionKey oAuthSessionKey =
-        new OAuthSessionKey(tenant.identifierValue(), requestedClientId.value());
-    OAuthSession session =
-        OAuthSession.create(oAuthSessionKey, user, authentication, authorizationRequest.maxAge());
-    delegate.registerSession(tenant, session);
 
     return authorizationResponse;
   }

@@ -28,6 +28,7 @@ import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepositor
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.openid.oauth.response.AuthorizationResponse;
+import org.idp.server.core.openid.session.OIDCSessionCoordinator;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
@@ -44,7 +45,6 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
   OAuthDenyErrorHandler denyErrorHandler;
   OAuthHandler oAuthHandler;
   OAuthLogoutErrorHandler logoutErrorHandler;
-  OAuthSessionDelegate oAuthSessionDelegate;
 
   public DefaultOAuthProtocol(
       AuthorizationRequestRepository authorizationRequestRepository,
@@ -54,7 +54,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
       AuthorizationGrantedRepository authorizationGrantedRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
-      OAuthSessionDelegate oAuthSessionDelegate,
+      OIDCSessionCoordinator oidcSessionCoordinator,
       HttpRequestExecutor httpRequestExecutor) {
     this.requestHandler =
         new OAuthRequestHandler(
@@ -80,12 +80,12 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
         new OAuthHandler(
             authorizationRequestRepository,
             authorizationServerConfigurationQueryRepository,
-            clientConfigurationQueryRepository);
+            clientConfigurationQueryRepository,
+            oidcSessionCoordinator);
     this.oAuthRequestErrorHandler = new OAuthRequestErrorHandler();
     this.authAuthorizeErrorHandler = new OAuthAuthorizeErrorHandler();
     this.denyErrorHandler = new OAuthDenyErrorHandler();
     this.logoutErrorHandler = new OAuthLogoutErrorHandler();
-    this.oAuthSessionDelegate = oAuthSessionDelegate;
   }
 
   @Override
@@ -118,14 +118,12 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
 
     try {
 
-      OAuthRequestContext context =
-          requestHandler.handleRequest(oAuthRequest, oAuthSessionDelegate);
+      OAuthRequestContext context = requestHandler.handleRequest(oAuthRequest);
 
       if (context.canAutomaticallyAuthorize()) {
 
         OAuthAuthorizeRequest oAuthAuthorizeRequest = context.createOAuthAuthorizeRequest();
-        AuthorizationResponse response =
-            authorizeHandler.handle(oAuthAuthorizeRequest, oAuthSessionDelegate);
+        AuthorizationResponse response = authorizeHandler.handle(oAuthAuthorizeRequest);
         return new OAuthRequestResponse(OAuthRequestStatus.NO_INTERACTION_OK, context, response);
       }
 
@@ -136,10 +134,9 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
     }
   }
 
-  public OAuthViewDataResponse getViewData(
-      OAuthViewDataRequest request, OAuthUserDelegate oAuthUserDelegate) {
+  public OAuthViewDataResponse getViewData(OAuthViewDataRequest request) {
 
-    return oAuthHandler.handleViewData(request, oAuthSessionDelegate, oAuthUserDelegate);
+    return oAuthHandler.handleViewData(request);
   }
 
   public AuthorizationRequest get(Tenant tenant, AuthorizationRequestIdentifier identifier) {
@@ -150,7 +147,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
   public OAuthAuthorizeResponse authorize(OAuthAuthorizeRequest request) {
     try {
 
-      AuthorizationResponse response = authorizeHandler.handle(request, oAuthSessionDelegate);
+      AuthorizationResponse response = authorizeHandler.handle(request);
 
       return new OAuthAuthorizeResponse(OAuthAuthorizeStatus.OK, response);
     } catch (Exception exception) {
@@ -172,7 +169,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
   public OAuthLogoutResponse logout(OAuthLogoutRequest request) {
     try {
 
-      return oAuthHandler.handleLogout(request, oAuthSessionDelegate);
+      return oAuthHandler.handleLogout(request);
     } catch (Exception exception) {
 
       return logoutErrorHandler.handle(exception);

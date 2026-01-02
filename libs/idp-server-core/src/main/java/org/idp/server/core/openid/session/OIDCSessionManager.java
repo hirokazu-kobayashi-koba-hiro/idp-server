@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.session.repository.ClientSessionRepository;
 import org.idp.server.core.openid.session.repository.OPSessionRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -42,19 +43,20 @@ public class OIDCSessionManager {
   }
 
   public OPSession createOPSession(
-      Tenant tenant, String sub, Instant authTime, String acr, List<String> amr) {
-    return createOPSession(tenant, sub, authTime, acr, amr, defaultSessionTimeoutSeconds);
+      Tenant tenant, String sub, User user, Instant authTime, String acr, List<String> amr) {
+    return createOPSession(tenant, sub, user, authTime, acr, amr, defaultSessionTimeoutSeconds);
   }
 
   public OPSession createOPSession(
       Tenant tenant,
       String sub,
+      User user,
       Instant authTime,
       String acr,
       List<String> amr,
       long sessionTimeoutSeconds) {
     OPSession session =
-        OPSession.create(tenant.identifier(), sub, authTime, acr, amr, sessionTimeoutSeconds);
+        OPSession.create(tenant.identifier(), sub, user, authTime, acr, amr, sessionTimeoutSeconds);
     opSessionRepository.save(tenant, session);
     return session;
   }

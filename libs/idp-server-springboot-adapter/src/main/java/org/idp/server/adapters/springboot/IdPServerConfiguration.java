@@ -25,7 +25,6 @@ import org.idp.server.adapters.springboot.application.event.UserLifecycleEventPu
 import org.idp.server.adapters.springboot.application.property.AppDatabaseConfigProperties;
 import org.idp.server.adapters.springboot.application.property.ControlPlaneDatabaseConfigProperties;
 import org.idp.server.adapters.springboot.application.session.AuthSessionCookieService;
-import org.idp.server.adapters.springboot.application.session.OAuthSessionService;
 import org.idp.server.adapters.springboot.application.session.SessionCookieService;
 import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
 import org.idp.server.core.adapters.datasource.config.HikariConnectionProvider;
@@ -101,7 +100,6 @@ public class IdPServerConfiguration {
 
   @Bean
   public IdpServerApplication idpServerApplication(
-      OAuthSessionService oAuthSessionService,
       SessionCookieService sessionCookieService,
       AuthSessionCookieService authSessionCookieService,
       SecurityEventPublisherService eventPublisherService,
@@ -127,7 +125,6 @@ public class IdPServerConfiguration {
         encryptionKey,
         databaseType,
         cacheStore,
-        oAuthSessionService,
         sessionCookieService,
         authSessionCookieService,
         passwordEncoder,

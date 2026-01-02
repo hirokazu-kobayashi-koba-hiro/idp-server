@@ -18,11 +18,13 @@ package org.idp.server.core.openid.oauth.io;
 
 import java.util.Map;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthViewDataRequest {
   Tenant tenant;
   String id;
+  OPSession opSession;
   Map<String, Object> additionalViewData;
 
   public OAuthViewDataRequest(Tenant tenant, String id) {
@@ -36,12 +38,24 @@ public class OAuthViewDataRequest {
     this.additionalViewData = additionalViewData;
   }
 
+  public OAuthViewDataRequest(
+      Tenant tenant, String id, OPSession opSession, Map<String, Object> additionalViewData) {
+    this.tenant = tenant;
+    this.id = id;
+    this.opSession = opSession;
+    this.additionalViewData = additionalViewData;
+  }
+
   public Tenant tenant() {
     return tenant;
   }
 
   public AuthorizationRequestIdentifier toIdentifier() {
     return new AuthorizationRequestIdentifier(id);
+  }
+
+  public OPSession opSession() {
+    return opSession;
   }
 
   public Map<String, Object> additionalViewData() {

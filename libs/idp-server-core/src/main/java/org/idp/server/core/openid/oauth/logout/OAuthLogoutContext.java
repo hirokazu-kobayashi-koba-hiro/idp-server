@@ -16,7 +16,6 @@
 
 package org.idp.server.core.openid.oauth.logout;
 
-import org.idp.server.core.openid.oauth.OAuthSession;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.request.OAuthLogoutParameters;
@@ -43,7 +42,6 @@ public class OAuthLogoutContext {
   AuthorizationServerConfiguration serverConfiguration;
   ClientConfiguration clientConfiguration;
   JsonWebTokenClaims idTokenClaims;
-  OAuthSession session;
 
   public OAuthLogoutContext() {}
 
@@ -58,10 +56,6 @@ public class OAuthLogoutContext {
     this.serverConfiguration = serverConfiguration;
     this.clientConfiguration = clientConfiguration;
     this.idTokenClaims = idTokenClaims;
-  }
-
-  public void setSession(OAuthSession session) {
-    this.session = session;
   }
 
   public Tenant tenant() {
@@ -86,14 +80,6 @@ public class OAuthLogoutContext {
 
   public boolean hasIdTokenClaims() {
     return idTokenClaims != null;
-  }
-
-  public OAuthSession session() {
-    return session;
-  }
-
-  public boolean hasSession() {
-    return session != null && session.exists();
   }
 
   public IdTokenHint idTokenHint() {

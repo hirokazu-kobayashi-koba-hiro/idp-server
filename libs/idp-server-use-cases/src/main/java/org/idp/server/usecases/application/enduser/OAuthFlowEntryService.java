@@ -50,9 +50,6 @@ import org.idp.server.core.openid.identity.event.UserLifecycleType;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.*;
-import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
-import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
@@ -64,9 +61,6 @@ import org.idp.server.core.openid.session.NoOpOIDCSessionCoordinator;
 import org.idp.server.core.openid.session.OIDCSessionCoordinator;
 import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
-import org.idp.server.core.openid.session.logout.ClientLogoutUriResolver;
-import org.idp.server.core.openid.session.logout.DefaultClientLogoutUriResolver;
-import org.idp.server.core.openid.session.logout.LogoutOrchestrator;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -82,7 +76,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * ClientSession for session management, similar to Keycloak's UserSession/ClientSession pattern.
  */
 @Transaction
-public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
+public class OAuthFlowEntryService implements OAuthFlowApi {
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(OAuthFlowEntryService.class);
 
@@ -100,9 +94,6 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
   OAuthFlowEventPublisher eventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   OIDCSessionCoordinator oidcSessionCoordinator;
-  LogoutOrchestrator logoutOrchestrator;
-  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
-  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public OAuthFlowEntryService(
       OAuthProtocols oAuthProtocols,
@@ -119,11 +110,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
           authenticationPolicyConfigurationQueryRepository,
       OAuthFlowEventPublisher eventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
-      OIDCSessionCoordinator oidcSessionCoordinator,
-      LogoutOrchestrator logoutOrchestrator,
-      AuthorizationServerConfigurationQueryRepository
-          authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      OIDCSessionCoordinator oidcSessionCoordinator) {
     this.oAuthProtocols = oAuthProtocols;
     this.sessionCookieDelegate = sessionCookieDelegate;
     this.authSessionCookieDelegate = authSessionCookieDelegate;
@@ -142,10 +129,6 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         oidcSessionCoordinator != null
             ? oidcSessionCoordinator
             : NoOpOIDCSessionCoordinator.getInstance();
-    this.logoutOrchestrator = logoutOrchestrator;
-    this.authorizationServerConfigurationQueryRepository =
-        authorizationServerConfigurationQueryRepository;
-    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
   @Override
@@ -171,6 +154,11 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     OAuthRequest oAuthRequest = new OAuthRequest(tenant, params);
+
+    // Get OPSession from cookie for prompt=none handling
+    Optional<OPSession> opSessionOpt =
+        oidcSessionCoordinator.getOPSessionFromCookie(tenant, sessionCookieDelegate);
+    opSessionOpt.ifPresent(oAuthRequest::setOPSession);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     OAuthRequestResponse requestResponse = oAuthProtocol.request(oAuthRequest);
@@ -212,19 +200,17 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     Map<String, Object> additionalViewData = new HashMap<>();
     additionalViewData.put("authentication_policy", authenticationPolicy.toMap());
 
+    // Get OPSession from cookie for sessionEnabled check
+    OPSession opSession =
+        oidcSessionCoordinator.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
+
     OAuthViewDataRequest oAuthViewDataRequest =
         new OAuthViewDataRequest(
-            tenant, authorizationRequestIdentifier.value(), additionalViewData);
+            tenant, authorizationRequestIdentifier.value(), opSession, additionalViewData);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
-    return oAuthProtocol.getViewData(oAuthViewDataRequest, this);
-  }
-
-  @Override
-  public boolean userExists(Tenant tenant, UserIdentifier userIdentifier) {
-    User user = userQueryRepository.findById(tenant, userIdentifier);
-    return user.exists();
+    return oAuthProtocol.getViewData(oAuthViewDataRequest);
   }
 
   @Override
@@ -262,12 +248,13 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
-    if (result.isSuccess() && oidcSessionCoordinator.isEnabled()) {
+    if (updatedTransaction.isSuccess() && oidcSessionCoordinator.isEnabled()) {
       // Create OPSession and set cookies
       Authentication authentication = updatedTransaction.authentication();
       OPSession opSession =
-          oidcSessionCoordinator.onAuthenticationSuccess(tenant, result.user(), authentication);
-      oidcSessionCoordinator.setSessionCookies(tenant, opSession, sessionCookieDelegate);
+          oidcSessionCoordinator.onAuthenticationSuccess(
+              tenant, updatedTransaction.user(), authentication);
+      oidcSessionCoordinator.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
     }
 
     if (updatedTransaction.isLocked()) {
@@ -356,11 +343,12 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     // Create OPSession for federated authentication
-    if (oidcSessionCoordinator.isEnabled() && result.user().exists()) {
+    if (oidcSessionCoordinator.isEnabled() && updatedTransaction.isSuccess()) {
       Authentication authentication = updatedTransaction.authentication();
       OPSession opSession =
-          oidcSessionCoordinator.onAuthenticationSuccess(tenant, result.user(), authentication);
-      oidcSessionCoordinator.setSessionCookies(tenant, opSession, sessionCookieDelegate);
+          oidcSessionCoordinator.onAuthenticationSuccess(
+              tenant, updatedTransaction.user(), authentication);
+      oidcSessionCoordinator.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
     }
 
     eventPublisher.publish(
@@ -583,12 +571,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     OAuthLogoutResponse response = oAuthProtocol.logout(oAuthLogoutRequest);
 
     if (response.isOk() && response.hasContext()) {
-      // Execute OIDC Session Management logout
-      response = executeSessionLogout(tenant, response);
-
       // Clear session cookies
       if (sessionCookieDelegate != null) {
-        sessionCookieDelegate.clearSessionCookies();
+        sessionCookieDelegate.clearSessionCookies(tenant);
       }
 
       eventPublisher.publishLogout(
@@ -625,42 +610,6 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
             authorizationRequest.scopes().toStringSet(),
             authorizationRequest.nonce().value());
     authorizeRequest.setCustomProperties(Map.of("sid", sid.value()));
-  }
-
-  private OAuthLogoutResponse executeSessionLogout(Tenant tenant, OAuthLogoutResponse response) {
-    if (!oidcSessionCoordinator.isEnabled() || !response.context().hasSessionId()) {
-      return response;
-    }
-
-    AuthorizationServerConfiguration serverConfig =
-        authorizationServerConfigurationQueryRepository.get(tenant);
-
-    String signingAlg =
-        serverConfig.idTokenSigningAlgValuesSupported().isEmpty()
-            ? "RS256"
-            : serverConfig.idTokenSigningAlgValuesSupported().get(0);
-
-    ClientLogoutUriResolver resolver =
-        new DefaultClientLogoutUriResolver(tenant, clientConfigurationQueryRepository);
-
-    Optional<LogoutOrchestrator.LogoutResult> logoutResultOpt =
-        oidcSessionCoordinator.executeLogout(
-            tenant,
-            response.context().sessionId(),
-            response.context().subject(),
-            response.context().clientId().value(),
-            serverConfig.tokenIssuer().value(),
-            serverConfig.jwks(),
-            signingAlg,
-            logoutOrchestrator,
-            resolver);
-
-    if (logoutResultOpt.isPresent() && logoutResultOpt.get().hasFrontChannelIframes()) {
-      return OAuthLogoutResponse.withFrontChannelIframes(
-          response, logoutResultOpt.get().frontChannelIframes());
-    }
-
-    return response;
   }
 
   /**

@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.session;
 
 import java.util.Optional;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * SessionCookieDelegate
@@ -39,11 +40,13 @@ public interface SessionCookieDelegate {
   /**
    * Sets session cookies after successful authentication.
    *
+   * @param tenant tenant for cookie path scoping and session configuration
    * @param identityToken JWT containing session information
    * @param sessionHash SHA256 hash of opSessionId for session management iframe
    * @param maxAgeSeconds cookie max age in seconds
    */
-  void setSessionCookies(String identityToken, String sessionHash, long maxAgeSeconds);
+  void registerSessionCookies(
+      Tenant tenant, String identityToken, String sessionHash, long maxAgeSeconds);
 
   /**
    * Gets the identity token from IDP_IDENTITY cookie.
@@ -59,6 +62,10 @@ public interface SessionCookieDelegate {
    */
   Optional<String> getSessionHash();
 
-  /** Clears session cookies on logout. */
-  void clearSessionCookies();
+  /**
+   * Clears session cookies on logout.
+   *
+   * @param tenant tenant for cookie path scoping
+   */
+  void clearSessionCookies(Tenant tenant);
 }

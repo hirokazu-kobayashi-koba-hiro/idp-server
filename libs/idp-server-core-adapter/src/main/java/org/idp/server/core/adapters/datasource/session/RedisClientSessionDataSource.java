@@ -49,7 +49,7 @@ public class RedisClientSessionDataSource implements ClientSessionRepository {
   @Override
   public void save(Tenant tenant, ClientSession session) {
     try (Jedis jedis = jedisPool.getResource()) {
-      String key = KEY_PREFIX + session.sid().value();
+      String key = buildKey(tenant, session.sid());
       String json = jsonConverter.write(session);
       long ttl = session.ttlSeconds();
 
@@ -61,7 +61,7 @@ public class RedisClientSessionDataSource implements ClientSessionRepository {
       }
 
       // インデックス: OPセッション → クライアントセッション群
-      String opSessionIndexKey = IDX_OP_SESSION_PREFIX + session.opSessionId().value();
+      String opSessionIndexKey = buildOpSessionIndexKey(tenant, session.opSessionId());
       jedis.sadd(opSessionIndexKey, session.sid().value());
       if (ttl > 0) {
         jedis.expire(opSessionIndexKey, ttl);
@@ -96,7 +96,7 @@ public class RedisClientSessionDataSource implements ClientSessionRepository {
   @Override
   public Optional<ClientSession> findBySid(Tenant tenant, ClientSessionIdentifier sid) {
     try (Jedis jedis = jedisPool.getResource()) {
-      String key = KEY_PREFIX + sid.value();
+      String key = buildKey(tenant, sid);
       String json = jedis.get(key);
 
       if (json == null) {
@@ -115,7 +115,7 @@ public class RedisClientSessionDataSource implements ClientSessionRepository {
   @Override
   public ClientSessions findByOpSessionId(Tenant tenant, OPSessionIdentifier opSessionId) {
     try (Jedis jedis = jedisPool.getResource()) {
-      String indexKey = IDX_OP_SESSION_PREFIX + opSessionId.value();
+      String indexKey = buildOpSessionIndexKey(tenant, opSessionId);
       Set<String> sids = jedis.smembers(indexKey);
 
       if (sids == null || sids.isEmpty()) {
@@ -124,7 +124,7 @@ public class RedisClientSessionDataSource implements ClientSessionRepository {
 
       List<ClientSession> sessions = new ArrayList<>();
       for (String sid : sids) {
-        String key = KEY_PREFIX + sid;
+        String key = buildKey(tenant, new ClientSessionIdentifier(sid));
         String json = jedis.get(key);
         if (json != null) {
           sessions.add(jsonConverter.read(json, ClientSession.class));
@@ -155,7 +155,7 @@ public class RedisClientSessionDataSource implements ClientSessionRepository {
 
       List<ClientSession> sessions = new ArrayList<>();
       for (String sid : sids) {
-        String key = KEY_PREFIX + sid;
+        String key = buildKey(tenantId, new ClientSessionIdentifier(sid));
         String json = jedis.get(key);
         if (json != null) {
           sessions.add(jsonConverter.read(json, ClientSession.class));
@@ -184,7 +184,7 @@ public class RedisClientSessionDataSource implements ClientSessionRepository {
 
       List<ClientSession> sessions = new ArrayList<>();
       for (String sid : sids) {
-        String key = KEY_PREFIX + sid;
+        String key = buildKey(tenantId, new ClientSessionIdentifier(sid));
         String json = jedis.get(key);
         if (json != null) {
           sessions.add(jsonConverter.read(json, ClientSession.class));
@@ -208,12 +208,12 @@ public class RedisClientSessionDataSource implements ClientSessionRepository {
   public void deleteBySid(Tenant tenant, ClientSessionIdentifier sid) {
     try (Jedis jedis = jedisPool.getResource()) {
       // まずセッション情報を取得してインデックスを削除
-      String key = KEY_PREFIX + sid.value();
+      String key = buildKey(tenant, sid);
       String json = jedis.get(key);
 
       if (json != null) {
         ClientSession session = jsonConverter.read(json, ClientSession.class);
-        removeFromIndexes(jedis, session);
+        removeFromIndexes(jedis, tenant, session);
       }
 
       jedis.del(key);
@@ -227,7 +227,7 @@ public class RedisClientSessionDataSource implements ClientSessionRepository {
   @Override
   public int deleteByOpSessionId(Tenant tenant, OPSessionIdentifier opSessionId) {
     try (Jedis jedis = jedisPool.getResource()) {
-      String indexKey = IDX_OP_SESSION_PREFIX + opSessionId.value();
+      String indexKey = buildOpSessionIndexKey(tenant, opSessionId);
       Set<String> sids = jedis.smembers(indexKey);
 
       if (sids == null || sids.isEmpty()) {
@@ -236,12 +236,12 @@ public class RedisClientSessionDataSource implements ClientSessionRepository {
 
       int deletedCount = 0;
       for (String sid : sids) {
-        String key = KEY_PREFIX + sid;
+        String key = buildKey(tenant, new ClientSessionIdentifier(sid));
         String json = jedis.get(key);
 
         if (json != null) {
           ClientSession session = jsonConverter.read(json, ClientSession.class);
-          removeFromIndexes(jedis, session);
+          removeFromIndexes(jedis, tenant, session);
           jedis.del(key);
           deletedCount++;
         }
@@ -260,13 +260,28 @@ public class RedisClientSessionDataSource implements ClientSessionRepository {
     }
   }
 
-  private void removeFromIndexes(Jedis jedis, ClientSession session) {
+  private void removeFromIndexes(Jedis jedis, Tenant tenant, ClientSession session) {
+    String opSessionIndexKey = buildOpSessionIndexKey(tenant, session.opSessionId());
+    jedis.srem(opSessionIndexKey, session.sid().value());
+
     String tenantSubIndexKey = buildTenantSubIndexKey(session.tenantId(), session.sub());
     jedis.srem(tenantSubIndexKey, session.sid().value());
 
     String tenantClientSubIndexKey =
         buildTenantClientSubIndexKey(session.tenantId(), session.clientId(), session.sub());
     jedis.srem(tenantClientSubIndexKey, session.sid().value());
+  }
+
+  private String buildKey(Tenant tenant, ClientSessionIdentifier sid) {
+    return KEY_PREFIX + tenant.identifierValue() + ":" + sid.value();
+  }
+
+  private String buildKey(TenantIdentifier tenantId, ClientSessionIdentifier sid) {
+    return KEY_PREFIX + tenantId.value() + ":" + sid.value();
+  }
+
+  private String buildOpSessionIndexKey(Tenant tenant, OPSessionIdentifier opSessionId) {
+    return IDX_OP_SESSION_PREFIX + tenant.identifierValue() + ":" + opSessionId.value();
   }
 
   private String buildTenantSubIndexKey(TenantIdentifier tenantId, String sub) {

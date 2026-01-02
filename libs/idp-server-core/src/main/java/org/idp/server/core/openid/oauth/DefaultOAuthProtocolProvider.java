@@ -21,6 +21,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
+import org.idp.server.core.openid.session.OIDCSessionCoordinator;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolProvider;
@@ -48,7 +49,7 @@ public class DefaultOAuthProtocolProvider implements ProtocolProvider<OAuthProto
         container.resolve(AuthorizationCodeGrantRepository.class);
     OAuthTokenCommandRepository oAuthTokenCommandRepository =
         container.resolve(OAuthTokenCommandRepository.class);
-    OAuthSessionDelegate oAuthSessionDelegate = container.resolve(OAuthSessionDelegate.class);
+    OIDCSessionCoordinator oidcSessionCoordinator = container.resolve(OIDCSessionCoordinator.class);
     HttpRequestExecutor httpRequestExecutor = container.resolve(HttpRequestExecutor.class);
     return new DefaultOAuthProtocol(
         authorizationRequestRepository,
@@ -57,7 +58,7 @@ public class DefaultOAuthProtocolProvider implements ProtocolProvider<OAuthProto
         authorizationGrantedRepository,
         authorizationCodeGrantRepository,
         oAuthTokenCommandRepository,
-        oAuthSessionDelegate,
+        oidcSessionCoordinator,
         httpRequestExecutor);
   }
 }

@@ -23,9 +23,6 @@ import java.util.Optional;
 import java.util.Set;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.session.logout.ClientLogoutUriResolver;
-import org.idp.server.core.openid.session.logout.LogoutContext;
-import org.idp.server.core.openid.session.logout.LogoutOrchestrator;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -74,21 +71,7 @@ public class OIDCSessionCoordinator {
             : Instant.now();
 
     return sessionManager.createOPSession(
-        tenant, user.sub(), authTime, authentication.acr(), authentication.methods());
-  }
-
-  /**
-   * Creates an IdentityCookieToken for the IDP_IDENTITY cookie.
-   *
-   * @param issuer the token issuer
-   * @param opSession the OP session
-   * @param maxAgeSeconds cookie max age in seconds
-   * @return the identity cookie token
-   */
-  public IdentityCookieToken createIdentityCookieToken(
-      String issuer, OPSession opSession, long maxAgeSeconds) {
-    return IdentityCookieToken.create(
-        issuer, opSession.sub(), opSession.id().value(), opSession.authTime(), maxAgeSeconds);
+        tenant, user.sub(), user, authTime, authentication.acr(), authentication.methods());
   }
 
   /**
@@ -156,22 +139,6 @@ public class OIDCSessionCoordinator {
   }
 
   /**
-   * Creates a ClientSession on authorization and returns the sid for ID Token.
-   *
-   * @param tenant the tenant
-   * @param opSessionId the OP Session ID
-   * @param clientId the client ID
-   * @param scopes the authorized scopes
-   * @param nonce the nonce from authorization request
-   * @return the ClientSession sid, or empty if session not found
-   */
-  public Optional<ClientSessionIdentifier> onAuthorize(
-      Tenant tenant, String opSessionId, String clientId, Set<String> scopes, String nonce) {
-    return getOPSession(tenant, opSessionId)
-        .map(opSession -> onAuthorize(tenant, opSession, clientId, scopes, nonce));
-  }
-
-  /**
    * Looks up the OPSession from a ClientSession sid (from ID Token).
    *
    * @param tenant the tenant
@@ -211,24 +178,11 @@ public class OIDCSessionCoordinator {
    * @param tenant the tenant (for session timeout configuration)
    * @param opSession the OP session
    * @param sessionCookieDelegate the delegate for setting cookies
-   * @throws NullPointerException if tenant or opSession is null
-   * @throws IllegalArgumentException if opSession has invalid id
    */
-  public void setSessionCookies(
+  public void registerSessionCookies(
       Tenant tenant, OPSession opSession, SessionCookieDelegate sessionCookieDelegate) {
     if (sessionCookieDelegate == null) {
       return;
-    }
-
-    // Validate required parameters to fail fast on programming errors
-    if (tenant == null) {
-      throw new NullPointerException("tenant must not be null");
-    }
-    if (opSession == null) {
-      throw new NullPointerException("opSession must not be null");
-    }
-    if (opSession.id() == null || opSession.id().value() == null) {
-      throw new IllegalArgumentException("opSession.id must not be null");
     }
 
     long maxAgeSeconds =
@@ -239,16 +193,8 @@ public class OIDCSessionCoordinator {
     String identityTokenValue = opSession.id().value();
     String sessionHash = computeSessionHash(identityTokenValue);
 
-    try {
-      sessionCookieDelegate.setSessionCookies(identityTokenValue, sessionHash, maxAgeSeconds);
-    } catch (RuntimeException e) {
-      // Cookie setting failure should not break authentication flow
-      // This can happen due to network issues or response already committed
-      log.warn(
-          "Failed to set session cookies for opSession: {}, continuing authentication: {}",
-          opSession.id().value(),
-          e.getMessage());
-    }
+    sessionCookieDelegate.registerSessionCookies(
+        tenant, identityTokenValue, sessionHash, maxAgeSeconds);
   }
 
   /**
@@ -264,68 +210,5 @@ public class OIDCSessionCoordinator {
       return Optional.empty();
     }
     return sessionCookieDelegate.getIdentityToken().flatMap(token -> getOPSession(tenant, token));
-  }
-
-  /**
-   * Executes session logout and returns the logout result.
-   *
-   * <p>This method encapsulates the logout logic that was previously in EntryService. It handles:
-   *
-   * <ul>
-   *   <li>Looking up the OPSession from the sid in the ID token
-   *   <li>Creating the LogoutContext
-   *   <li>Executing the logout via LogoutOrchestrator
-   * </ul>
-   *
-   * @param tenant the tenant
-   * @param sid the session ID from id_token_hint
-   * @param sub the subject
-   * @param clientId the client ID that initiated logout
-   * @param issuer the token issuer
-   * @param signingKeyJwks the signing key JWKS
-   * @param signingAlgorithm the signing algorithm
-   * @param logoutOrchestrator the logout orchestrator
-   * @param resolver the client logout URI resolver
-   * @return the logout result, or empty if session not found
-   */
-  public Optional<LogoutOrchestrator.LogoutResult> executeLogout(
-      Tenant tenant,
-      String sid,
-      String sub,
-      String clientId,
-      String issuer,
-      String signingKeyJwks,
-      String signingAlgorithm,
-      LogoutOrchestrator logoutOrchestrator,
-      ClientLogoutUriResolver resolver) {
-
-    if (logoutOrchestrator == null) {
-      return Optional.empty();
-    }
-
-    ClientSessionIdentifier clientSessionId = new ClientSessionIdentifier(sid);
-    Optional<OPSessionIdentifier> opSessionIdOpt = findOPSessionBySid(tenant, clientSessionId);
-
-    if (opSessionIdOpt.isEmpty()) {
-      log.debug("OPSession not found for sid: {}", sid);
-      return Optional.empty();
-    }
-
-    try {
-      LogoutContext context =
-          new LogoutContext(
-              opSessionIdOpt.get(), sub, clientId, issuer, signingKeyJwks, signingAlgorithm);
-
-      LogoutOrchestrator.LogoutResult result =
-          logoutOrchestrator.executeRPInitiatedLogout(tenant, context, resolver);
-
-      return Optional.of(result);
-    } catch (Exception e) {
-      log.warn(
-          "Failed to execute session logout notifications, but continuing logout: {}",
-          e.getMessage(),
-          e);
-      return Optional.empty();
-    }
   }
 }

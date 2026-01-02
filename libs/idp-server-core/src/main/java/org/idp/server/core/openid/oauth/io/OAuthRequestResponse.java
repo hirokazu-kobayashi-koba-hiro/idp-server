@@ -19,7 +19,6 @@ package org.idp.server.core.openid.oauth.io;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.OAuthRequestContext;
-import org.idp.server.core.openid.oauth.OAuthSession;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
@@ -36,30 +35,22 @@ public class OAuthRequestResponse {
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
   AuthorizationResponse response;
-  OAuthSession session;
   AuthorizationErrorResponse errorResponse;
   Map<String, String> contents;
   String frontUrl;
   String redirectUri;
   String error;
   String errorDescription;
-  String sessionKey;
 
   public OAuthRequestResponse() {}
 
   public OAuthRequestResponse(
-      OAuthRequestStatus status,
-      OAuthRequestContext context,
-      OAuthSession session,
-      String frontUrl) {
+      OAuthRequestStatus status, OAuthRequestContext context, String frontUrl) {
     this.status = status;
     this.authorizationRequest = context.authorizationRequest();
     this.authorizationServerConfiguration = context.serverConfiguration();
     this.clientConfiguration = context.clientConfiguration();
-    this.session = session;
-    // FIXME bad code
     this.contents = Map.of("id", context.identifier().value());
-    this.sessionKey = context.sessionKeyValue();
     this.frontUrl = frontUrl;
   }
 
@@ -134,10 +125,6 @@ public class OAuthRequestResponse {
 
   public String errorDescription() {
     return errorDescription;
-  }
-
-  public String sessionKey() {
-    return sessionKey;
   }
 
   public int oauthAuthorizationRequestExpiresIn() {

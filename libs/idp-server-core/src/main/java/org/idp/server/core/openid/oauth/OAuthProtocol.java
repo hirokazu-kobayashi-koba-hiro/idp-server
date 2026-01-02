@@ -30,7 +30,7 @@ public interface OAuthProtocol {
 
   OAuthRequestResponse request(OAuthRequest oAuthRequest);
 
-  OAuthViewDataResponse getViewData(OAuthViewDataRequest request, OAuthUserDelegate delegate);
+  OAuthViewDataResponse getViewData(OAuthViewDataRequest request);
 
   AuthorizationRequest get(
       Tenant tenant, AuthorizationRequestIdentifier authorizationRequestIdentifier);

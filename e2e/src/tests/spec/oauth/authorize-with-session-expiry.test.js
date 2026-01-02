@@ -75,7 +75,7 @@ describe("OAuth Authorize With Session - Session Expiry", () => {
     // Should return 400 (BAD_REQUEST) not 500 (INTERNAL_SERVER_ERROR)
     expect(response.status).toBe(400);
     expect(response.data.error).toBe("invalid_request");
-    expect(response.data.error_description).toBe("session expired");
+    expect(response.data.error_description).toBe("session not found");
   });
 
   test("should return 400 when session user is null (fresh session without authentication)", async () => {
@@ -97,7 +97,7 @@ describe("OAuth Authorize With Session - Session Expiry", () => {
     // Should return 400 (BAD_REQUEST) not 500 (INTERNAL_SERVER_ERROR)
     expect(response.status).toBe(400);
     expect(response.data.error).toBe("invalid_request");
-    expect(response.data.error_description).toBe("session expired");
+    expect(response.data.error_description).toBe("session not found");
   });
 
   test("should return 200 when valid session exists with authenticated user", async () => {

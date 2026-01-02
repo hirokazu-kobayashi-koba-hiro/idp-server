@@ -105,38 +105,6 @@ public class AuthSessionValidator {
   }
 
   /**
-   * Creates validation result without throwing exception.
-   *
-   * @param transaction the authentication transaction
-   * @param cookieAuthSessionId the authSessionId from cookie
-   * @return validation result
-   */
-  public static AuthSessionValidationResult validateSafely(
-      AuthenticationTransaction transaction, AuthSessionId cookieAuthSessionId) {
-
-    if (!transaction.hasAuthSessionId()) {
-      return AuthSessionValidationResult.skipped();
-    }
-
-    // Skip validation for device-based authentication
-    if (transaction.hasAuthenticationDevice()) {
-      return AuthSessionValidationResult.skipped();
-    }
-
-    AuthSessionId expectedAuthSessionId = transaction.authSessionId();
-
-    if (cookieAuthSessionId == null || !cookieAuthSessionId.exists()) {
-      return AuthSessionValidationResult.failed("Missing AUTH_SESSION cookie");
-    }
-
-    if (!expectedAuthSessionId.matches(cookieAuthSessionId)) {
-      return AuthSessionValidationResult.failed("AUTH_SESSION cookie mismatch");
-    }
-
-    return AuthSessionValidationResult.success();
-  }
-
-  /**
    * Masks session ID for secure logging (shows first 8 and last 4 characters).
    *
    * @param sessionId the session ID to mask

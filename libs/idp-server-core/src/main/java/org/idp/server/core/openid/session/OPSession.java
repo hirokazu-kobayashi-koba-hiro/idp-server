@@ -18,8 +18,11 @@ package org.idp.server.core.openid.session;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
+import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class OPSession implements Serializable {
@@ -27,6 +30,7 @@ public class OPSession implements Serializable {
   private OPSessionIdentifier id;
   private TenantIdentifier tenantId;
   private String sub;
+  private User user;
   private Instant authTime;
   private String acr;
   private List<String> amr;
@@ -38,15 +42,16 @@ public class OPSession implements Serializable {
   private Instant terminatedAt;
   private TerminationReason terminationReason;
 
+  /** Default constructor for JSON deserialization. */
   public OPSession() {
     this.id = new OPSessionIdentifier();
-    this.status = SessionStatus.ACTIVE;
   }
 
   public OPSession(
       OPSessionIdentifier id,
       TenantIdentifier tenantId,
       String sub,
+      User user,
       Instant authTime,
       String acr,
       List<String> amr,
@@ -57,6 +62,7 @@ public class OPSession implements Serializable {
     this.id = id;
     this.tenantId = tenantId;
     this.sub = sub;
+    this.user = user;
     this.authTime = authTime;
     this.acr = acr;
     this.amr = amr;
@@ -70,6 +76,7 @@ public class OPSession implements Serializable {
   public static OPSession create(
       TenantIdentifier tenantId,
       String sub,
+      User user,
       Instant authTime,
       String acr,
       List<String> amr,
@@ -79,6 +86,7 @@ public class OPSession implements Serializable {
         OPSessionIdentifier.generate(),
         tenantId,
         sub,
+        user,
         authTime,
         acr,
         amr,
@@ -100,6 +108,10 @@ public class OPSession implements Serializable {
     return sub;
   }
 
+  public User user() {
+    return user;
+  }
+
   public Instant authTime() {
     return authTime;
   }
@@ -110,6 +122,13 @@ public class OPSession implements Serializable {
 
   public List<String> amr() {
     return amr;
+  }
+
+  public Authentication authentication() {
+    return new Authentication()
+        .setTime(authTime.atZone(ZoneOffset.UTC).toLocalDateTime())
+        .addAcr(acr != null ? acr : "")
+        .addMethods(amr != null ? amr : List.of());
   }
 
   public BrowserState browserState() {
@@ -145,6 +164,9 @@ public class OPSession implements Serializable {
   }
 
   public boolean isExpired() {
+    if (status == null || expiresAt == null) {
+      return true;
+    }
     if (status == SessionStatus.EXPIRED || status == SessionStatus.TERMINATED) {
       return true;
     }
@@ -152,7 +174,7 @@ public class OPSession implements Serializable {
   }
 
   public boolean isActive() {
-    return status == SessionStatus.ACTIVE && !isExpired();
+    return status != null && status == SessionStatus.ACTIVE && !isExpired();
   }
 
   public OPSession touch() {

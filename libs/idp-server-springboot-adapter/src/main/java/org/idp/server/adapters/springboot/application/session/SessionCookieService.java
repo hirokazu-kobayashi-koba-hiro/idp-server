@@ -22,6 +22,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.Optional;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.springframework.stereotype.Service;
 
 /**
@@ -46,7 +47,6 @@ public class SessionCookieService implements SessionCookieDelegate {
   public static final String SESSION_COOKIE_NAME = "IDP_SESSION";
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(SessionCookieService.class);
-  private static final String DEFAULT_COOKIE_PATH = "/";
   private static final boolean DEFAULT_SECURE = true;
   private static final String DEFAULT_SAME_SITE = "Lax";
 
@@ -60,11 +60,14 @@ public class SessionCookieService implements SessionCookieDelegate {
   }
 
   @Override
-  public void setSessionCookies(String identityToken, String sessionHash, long maxAgeSeconds) {
+  public void registerSessionCookies(
+      Tenant tenant, String identityToken, String sessionHash, long maxAgeSeconds) {
+    String cookiePath = "/" + tenant.identifierValue() + "/";
+
     // Set IDP_IDENTITY cookie (HttpOnly for security)
     Cookie identityCookie = new Cookie(IDENTITY_COOKIE_NAME, identityToken);
     identityCookie.setMaxAge((int) maxAgeSeconds);
-    identityCookie.setPath(DEFAULT_COOKIE_PATH);
+    identityCookie.setPath(cookiePath);
     identityCookie.setHttpOnly(true);
     identityCookie.setSecure(DEFAULT_SECURE);
 
@@ -72,7 +75,7 @@ public class SessionCookieService implements SessionCookieDelegate {
     // iframe)
     Cookie sessionCookie = new Cookie(SESSION_COOKIE_NAME, sessionHash);
     sessionCookie.setMaxAge((int) maxAgeSeconds);
-    sessionCookie.setPath(DEFAULT_COOKIE_PATH);
+    sessionCookie.setPath(cookiePath);
     sessionCookie.setHttpOnly(false);
     sessionCookie.setSecure(DEFAULT_SECURE);
 
@@ -80,7 +83,7 @@ public class SessionCookieService implements SessionCookieDelegate {
     addCookieWithSameSite(identityCookie, DEFAULT_SAME_SITE);
     addCookieWithSameSite(sessionCookie, DEFAULT_SAME_SITE);
 
-    log.debug("Session cookies set: IDP_IDENTITY and IDP_SESSION");
+    log.debug("Session cookies set: IDP_IDENTITY and IDP_SESSION, path={}", cookiePath);
   }
 
   @Override
@@ -94,25 +97,27 @@ public class SessionCookieService implements SessionCookieDelegate {
   }
 
   @Override
-  public void clearSessionCookies() {
+  public void clearSessionCookies(Tenant tenant) {
+    String cookiePath = "/" + tenant.identifierValue() + "/";
+
     // Clear IDP_IDENTITY cookie
     Cookie identityCookie = new Cookie(IDENTITY_COOKIE_NAME, "");
     identityCookie.setMaxAge(0);
-    identityCookie.setPath(DEFAULT_COOKIE_PATH);
+    identityCookie.setPath(cookiePath);
     identityCookie.setHttpOnly(true);
     identityCookie.setSecure(DEFAULT_SECURE);
 
     // Clear IDP_SESSION cookie
     Cookie sessionCookie = new Cookie(SESSION_COOKIE_NAME, "");
     sessionCookie.setMaxAge(0);
-    sessionCookie.setPath(DEFAULT_COOKIE_PATH);
+    sessionCookie.setPath(cookiePath);
     sessionCookie.setHttpOnly(false);
     sessionCookie.setSecure(DEFAULT_SECURE);
 
     addCookieWithSameSite(identityCookie, DEFAULT_SAME_SITE);
     addCookieWithSameSite(sessionCookie, DEFAULT_SAME_SITE);
 
-    log.debug("Session cookies cleared");
+    log.debug("Session cookies cleared, path={}", cookiePath);
   }
 
   private Optional<String> getCookieValue(String cookieName) {

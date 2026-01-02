@@ -20,8 +20,6 @@ import java.util.Optional;
 import java.util.Set;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.session.logout.ClientLogoutUriResolver;
-import org.idp.server.core.openid.session.logout.LogoutOrchestrator;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -49,12 +47,6 @@ public class NoOpOIDCSessionCoordinator extends OIDCSessionCoordinator {
   }
 
   @Override
-  public IdentityCookieToken createIdentityCookieToken(
-      String issuer, OPSession opSession, long maxAgeSeconds) {
-    return null;
-  }
-
-  @Override
   public String computeSessionHash(String opSessionId) {
     return "";
   }
@@ -76,12 +68,6 @@ public class NoOpOIDCSessionCoordinator extends OIDCSessionCoordinator {
   }
 
   @Override
-  public Optional<ClientSessionIdentifier> onAuthorize(
-      Tenant tenant, String opSessionId, String clientId, Set<String> scopes, String nonce) {
-    return Optional.empty();
-  }
-
-  @Override
   public Optional<OPSessionIdentifier> findOPSessionBySid(
       Tenant tenant, ClientSessionIdentifier sid) {
     return Optional.empty();
@@ -98,7 +84,7 @@ public class NoOpOIDCSessionCoordinator extends OIDCSessionCoordinator {
   }
 
   @Override
-  public void setSessionCookies(
+  public void registerSessionCookies(
       Tenant tenant, OPSession opSession, SessionCookieDelegate sessionCookieDelegate) {
     // No-op
   }
@@ -106,20 +92,6 @@ public class NoOpOIDCSessionCoordinator extends OIDCSessionCoordinator {
   @Override
   public Optional<OPSession> getOPSessionFromCookie(
       Tenant tenant, SessionCookieDelegate sessionCookieDelegate) {
-    return Optional.empty();
-  }
-
-  @Override
-  public Optional<LogoutOrchestrator.LogoutResult> executeLogout(
-      Tenant tenant,
-      String sid,
-      String sub,
-      String clientId,
-      String issuer,
-      String signingKeyJwks,
-      String signingAlgorithm,
-      LogoutOrchestrator logoutOrchestrator,
-      ClientLogoutUriResolver resolver) {
     return Optional.empty();
   }
 }

@@ -42,7 +42,7 @@ public class RedisOPSessionDataSource implements OPSessionRepository {
   @Override
   public void save(Tenant tenant, OPSession session) {
     try (Jedis jedis = jedisPool.getResource()) {
-      String key = KEY_PREFIX + session.id().value();
+      String key = buildKey(tenant, session.id());
       String json = jsonConverter.write(session);
       long ttl = session.ttlSeconds();
 
@@ -54,7 +54,7 @@ public class RedisOPSessionDataSource implements OPSessionRepository {
 
       // browser_state も保存
       if (session.browserState() != null && session.browserState().exists()) {
-        String browserStateKey = BROWSER_STATE_PREFIX + session.id().value();
+        String browserStateKey = buildBrowserStateKey(tenant, session.id());
         if (ttl > 0) {
           jedis.setex(browserStateKey, ttl, session.browserState().value());
         } else {
@@ -76,7 +76,7 @@ public class RedisOPSessionDataSource implements OPSessionRepository {
   @Override
   public Optional<OPSession> findById(Tenant tenant, OPSessionIdentifier id) {
     try (Jedis jedis = jedisPool.getResource()) {
-      String key = KEY_PREFIX + id.value();
+      String key = buildKey(tenant, id);
       String json = jedis.get(key);
 
       if (json == null) {
@@ -95,8 +95,8 @@ public class RedisOPSessionDataSource implements OPSessionRepository {
   @Override
   public void delete(Tenant tenant, OPSessionIdentifier id) {
     try (Jedis jedis = jedisPool.getResource()) {
-      String key = KEY_PREFIX + id.value();
-      String browserStateKey = BROWSER_STATE_PREFIX + id.value();
+      String key = buildKey(tenant, id);
+      String browserStateKey = buildBrowserStateKey(tenant, id);
 
       jedis.del(key, browserStateKey);
       log.debug("Deleted OP session. id:{}, tenant:{}", id.value(), tenant.identifierValue());
@@ -109,7 +109,7 @@ public class RedisOPSessionDataSource implements OPSessionRepository {
   @Override
   public void updateLastAccessedAt(Tenant tenant, OPSession session) {
     try (Jedis jedis = jedisPool.getResource()) {
-      String key = KEY_PREFIX + session.id().value();
+      String key = buildKey(tenant, session.id());
       String json = jsonConverter.write(session);
       long ttl = jedis.ttl(key);
 
@@ -126,5 +126,13 @@ public class RedisOPSessionDataSource implements OPSessionRepository {
     } catch (Exception e) {
       log.error("Failed to update OP session", e);
     }
+  }
+
+  private String buildKey(Tenant tenant, OPSessionIdentifier id) {
+    return KEY_PREFIX + tenant.identifierValue() + ":" + id.value();
+  }
+
+  private String buildBrowserStateKey(Tenant tenant, OPSessionIdentifier id) {
+    return BROWSER_STATE_PREFIX + tenant.identifierValue() + ":" + id.value();
   }
 }

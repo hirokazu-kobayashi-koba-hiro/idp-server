@@ -20,7 +20,6 @@ import org.idp.server.core.openid.identity.id_token.RequestedClaimsPayload;
 import org.idp.server.core.openid.identity.id_token.RequestedIdTokenClaims;
 import org.idp.server.core.openid.identity.id_token.RequestedUserinfoClaims;
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
-import org.idp.server.core.openid.oauth.OAuthSessionKey;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
@@ -385,9 +384,5 @@ public class AuthorizationRequest {
 
   public boolean hasCustomParams() {
     return customParams.exists();
-  }
-
-  public OAuthSessionKey sessionKey() {
-    return new OAuthSessionKey(tenantIdentifier.value(), requestedClientId.value());
   }
 }
