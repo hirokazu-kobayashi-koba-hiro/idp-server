@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-/**
- * OIDC Session Management adapters.
- *
- * <p>This package provides session repository implementations with pluggable storage:
- *
- * <ul>
- *   <li>OPSessionDataSource - OP session storage
- *   <li>ClientSessionDataSource - Client session storage with index management
- *   <li>JedisSessionStore - Redis-based session storage
- *   <li>InMemorySessionStore - In-memory session storage for development/testing
- * </ul>
- */
-package org.idp.server.core.adapters.datasource.session;
+package org.idp.server.platform.datasource.session;
+
+public class SessionStoreException extends RuntimeException {
+
+  public SessionStoreException(String message) {
+    super(message);
+  }
+
+  public SessionStoreException(String message, Throwable throwable) {
+    super(message, throwable);
+  }
+}

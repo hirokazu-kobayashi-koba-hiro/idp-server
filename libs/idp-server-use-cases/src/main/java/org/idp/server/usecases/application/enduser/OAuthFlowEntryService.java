@@ -57,8 +57,7 @@ import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.oauth.type.extension.OAuthDenyReason;
 import org.idp.server.core.openid.session.AuthSessionCookieDelegate;
 import org.idp.server.core.openid.session.ClientSessionIdentifier;
-import org.idp.server.core.openid.session.NoOpOIDCSessionCoordinator;
-import org.idp.server.core.openid.session.OIDCSessionCoordinator;
+import org.idp.server.core.openid.session.OIDCSessionHandler;
 import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.platform.datasource.Transaction;
@@ -93,7 +92,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
   AuthenticationPolicyConfigurationQueryRepository authenticationPolicyConfigurationQueryRepository;
   OAuthFlowEventPublisher eventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
-  OIDCSessionCoordinator oidcSessionCoordinator;
+  OIDCSessionHandler oidcSessionHandler;
 
   public OAuthFlowEntryService(
       OAuthProtocols oAuthProtocols,
@@ -110,7 +109,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
           authenticationPolicyConfigurationQueryRepository,
       OAuthFlowEventPublisher eventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
-      OIDCSessionCoordinator oidcSessionCoordinator) {
+      OIDCSessionHandler oidcSessionHandler) {
     this.oAuthProtocols = oAuthProtocols;
     this.sessionCookieDelegate = sessionCookieDelegate;
     this.authSessionCookieDelegate = authSessionCookieDelegate;
@@ -125,10 +124,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         authenticationPolicyConfigurationQueryRepository;
     this.eventPublisher = eventPublisher;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
-    this.oidcSessionCoordinator =
-        oidcSessionCoordinator != null
-            ? oidcSessionCoordinator
-            : NoOpOIDCSessionCoordinator.getInstance();
+    this.oidcSessionHandler = oidcSessionHandler;
   }
 
   @Override
@@ -157,7 +153,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     // Get OPSession from cookie for prompt=none handling
     Optional<OPSession> opSessionOpt =
-        oidcSessionCoordinator.getOPSessionFromCookie(tenant, sessionCookieDelegate);
+        oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate);
     opSessionOpt.ifPresent(oAuthRequest::setOPSession);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
@@ -176,8 +172,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
 
       // Register AUTH_SESSION cookie with same expiry as authorization request
-      registerAuthSessionCookie(
-          tenant, authSessionId, requestResponse.oauthAuthorizationRequestExpiresIn());
+      authSessionCookieDelegate.setAuthSessionCookie(
+          tenant, authSessionId.value(), requestResponse.oauthAuthorizationRequestExpiresIn());
     }
 
     return requestResponse;
@@ -202,7 +198,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     // Get OPSession from cookie for sessionEnabled check
     OPSession opSession =
-        oidcSessionCoordinator.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
+        oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
 
     OAuthViewDataRequest oAuthViewDataRequest =
         new OAuthViewDataRequest(
@@ -234,7 +230,11 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         authenticationTransactionQueryRepository.get(tenant, authorizationIdentifier);
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
-    validateAuthSession(authenticationTransaction);
+    // Skip validation for device-based interactors (e.g., push notification) as they don't have the
+    // cookie
+    if (authenticationInteractor.isBrowserBased()) {
+      validateAuthSession(authenticationTransaction);
+    }
 
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
@@ -248,13 +248,13 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
-    if (updatedTransaction.isSuccess() && oidcSessionCoordinator.isEnabled()) {
+    if (updatedTransaction.isSuccess()) {
       // Create OPSession and set cookies
       Authentication authentication = updatedTransaction.authentication();
       OPSession opSession =
-          oidcSessionCoordinator.onAuthenticationSuccess(
+          oidcSessionHandler.onAuthenticationSuccess(
               tenant, updatedTransaction.user(), authentication);
-      oidcSessionCoordinator.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
+      oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
     }
 
     if (updatedTransaction.isLocked()) {
@@ -343,12 +343,12 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     // Create OPSession for federated authentication
-    if (oidcSessionCoordinator.isEnabled() && updatedTransaction.isSuccess()) {
+    if (updatedTransaction.isSuccess()) {
       Authentication authentication = updatedTransaction.authentication();
       OPSession opSession =
-          oidcSessionCoordinator.onAuthenticationSuccess(
+          oidcSessionHandler.onAuthenticationSuccess(
               tenant, updatedTransaction.user(), authentication);
-      oidcSessionCoordinator.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
+      oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
     }
 
     eventPublisher.publish(
@@ -387,7 +387,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     oAuthAuthorizeRequest.setDeniedScopes(deniedScopes);
 
     // Create ClientSession for OIDC Session Management
-    oidcSessionCoordinator
+    oidcSessionHandler
         .getOPSessionFromCookie(tenant, sessionCookieDelegate)
         .ifPresent(
             opSession ->
@@ -403,7 +403,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
           tenant, authenticationTransaction.identifier());
 
       // Clear AUTH_SESSION cookie - authorization flow is complete
-      clearAuthSessionCookie(tenant);
+      authSessionCookieDelegate.clearAuthSessionCookie(tenant);
 
       eventPublisher.publish(
           tenant,
@@ -429,19 +429,20 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    // Validate AUTH_SESSION cookie to prevent authorization flow hijacking attacks
+    AuthenticationTransaction authenticationTransaction =
+        authenticationTransactionQueryRepository.get(
+            tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
+    validateAuthSession(authenticationTransaction);
+
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
-    // Session coordinator is required for this flow
-    if (!oidcSessionCoordinator.isEnabled()) {
-      return new OAuthAuthorizeResponse(
-          OAuthAuthorizeStatus.BAD_REQUEST, "invalid_request", "session management not configured");
-    }
-
     // Get OPSession from cookie
     Optional<OPSession> opSessionOpt =
-        oidcSessionCoordinator.getOPSessionFromCookie(tenant, sessionCookieDelegate);
+        oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate);
 
     if (opSessionOpt.isEmpty()) {
       eventPublisher.publish(
@@ -460,7 +461,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     // Validate session
     Long maxAge =
         authorizationRequest.maxAge().exists() ? authorizationRequest.maxAge().toLongValue() : null;
-    if (!oidcSessionCoordinator.isSessionValid(opSession, maxAge)) {
+    if (!oidcSessionHandler.isSessionValid(opSession, maxAge)) {
       eventPublisher.publish(
           tenant,
           authorizationRequest,
@@ -553,7 +554,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
         tenant, authenticationTransaction.identifier());
 
     // Clear AUTH_SESSION cookie - authorization flow is complete (denied)
-    clearAuthSessionCookie(tenant);
+    authSessionCookieDelegate.clearAuthSessionCookie(tenant);
 
     return denyResponse;
   }
@@ -572,9 +573,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     if (response.isOk() && response.hasContext()) {
       // Clear session cookies
-      if (sessionCookieDelegate != null) {
-        sessionCookieDelegate.clearSessionCookies(tenant);
-      }
+      sessionCookieDelegate.clearSessionCookies(tenant);
 
       eventPublisher.publishLogout(
           tenant,
@@ -599,11 +598,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       OPSession opSession,
       AuthorizationRequest authorizationRequest,
       OAuthAuthorizeRequest authorizeRequest) {
-    if (!oidcSessionCoordinator.isEnabled()) {
-      return;
-    }
     ClientSessionIdentifier sid =
-        oidcSessionCoordinator.onAuthorize(
+        oidcSessionHandler.onAuthorize(
             tenant,
             opSession,
             authorizationRequest.requestedClientId().value(),
@@ -619,10 +615,6 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
    * @throws org.idp.server.platform.exception.UnauthorizedException if validation fails
    */
   private void validateAuthSession(AuthenticationTransaction authenticationTransaction) {
-    if (authSessionCookieDelegate == null) {
-      return;
-    }
-
     AuthSessionId cookieAuthSessionId =
         authSessionCookieDelegate
             .getAuthSessionId()
@@ -630,32 +622,5 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
             .orElse(new AuthSessionId());
 
     AuthSessionValidator.validate(authenticationTransaction, cookieAuthSessionId);
-  }
-
-  /**
-   * Registers AUTH_SESSION cookie with authSessionId.
-   *
-   * @param tenant the tenant for scoping the cookie path
-   * @param authSessionId the authentication session ID to store in cookie
-   * @param maxAgeSeconds cookie max age in seconds
-   */
-  private void registerAuthSessionCookie(
-      Tenant tenant, AuthSessionId authSessionId, long maxAgeSeconds) {
-    if (authSessionCookieDelegate == null || !authSessionId.exists()) {
-      return;
-    }
-
-    authSessionCookieDelegate.setAuthSessionCookie(tenant, authSessionId.value(), maxAgeSeconds);
-  }
-
-  /**
-   * Clears AUTH_SESSION cookie after authorization flow is complete.
-   *
-   * @param tenant the tenant for scoping the cookie path
-   */
-  private void clearAuthSessionCookie(Tenant tenant) {
-    if (authSessionCookieDelegate != null) {
-      authSessionCookieDelegate.clearAuthSessionCookie(tenant);
-    }
   }
 }

@@ -41,6 +41,11 @@ public class AuthenticationDeviceNotificationNoActionInteractor
   }
 
   @Override
+  public boolean isBrowserBased() {
+    return false;
+  }
+
+  @Override
   public String method() {
     return "authentication-device-no-action";
   }

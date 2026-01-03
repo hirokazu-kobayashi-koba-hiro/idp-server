@@ -52,12 +52,8 @@ public class AuthSessionValidator {
   /**
    * Validates that the cookie authSessionId matches the transaction's authSessionId.
    *
-   * <p>This validation is skipped for:
-   *
-   * <ul>
-   *   <li>Transactions without authSessionId (backwards compatibility)
-   *   <li>Device-based authentication (CIBA, push notification, etc.)
-   * </ul>
+   * <p>This validation is skipped for transactions without authSessionId (e.g., CIBA and other
+   * non-browser flows).
    *
    * @param transaction the authentication transaction containing the expected authSessionId
    * @param cookieAuthSessionId the authSessionId from the AUTH_SESSION cookie
@@ -66,16 +62,10 @@ public class AuthSessionValidator {
   public static void validate(
       AuthenticationTransaction transaction, AuthSessionId cookieAuthSessionId) {
 
-    // If transaction has no authSessionId, skip validation (backwards compatibility)
+    // If transaction has no authSessionId, skip validation
+    // This covers CIBA and other non-browser flows that don't use AUTH_SESSION cookie
     if (!transaction.hasAuthSessionId()) {
       log.debug("AUTH_SESSION validation skipped: transaction has no authSessionId");
-      return;
-    }
-
-    // Skip validation for device-based authentication (CIBA, push notification, etc.)
-    // These flows use separate authentication mechanisms (device tokens, push confirmation)
-    if (transaction.hasAuthenticationDevice()) {
-      log.debug("AUTH_SESSION validation skipped: device-based authentication");
       return;
     }
 
@@ -115,42 +105,5 @@ public class AuthSessionValidator {
       return "***";
     }
     return sessionId.substring(0, 8) + "..." + sessionId.substring(sessionId.length() - 4);
-  }
-
-  /** Result of AUTH_SESSION validation. */
-  public static class AuthSessionValidationResult {
-    private final boolean valid;
-    private final boolean skipped;
-    private final String errorMessage;
-
-    private AuthSessionValidationResult(boolean valid, boolean skipped, String errorMessage) {
-      this.valid = valid;
-      this.skipped = skipped;
-      this.errorMessage = errorMessage;
-    }
-
-    public static AuthSessionValidationResult success() {
-      return new AuthSessionValidationResult(true, false, null);
-    }
-
-    public static AuthSessionValidationResult skipped() {
-      return new AuthSessionValidationResult(true, true, null);
-    }
-
-    public static AuthSessionValidationResult failed(String errorMessage) {
-      return new AuthSessionValidationResult(false, false, errorMessage);
-    }
-
-    public boolean isValid() {
-      return valid;
-    }
-
-    public boolean isSkipped() {
-      return skipped;
-    }
-
-    public String errorMessage() {
-      return errorMessage;
-    }
   }
 }

@@ -27,9 +27,9 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
- * OIDCSessionCoordinator
+ * OIDCSessionHandler
  *
- * <p>Coordinates OIDC Session Management operations. This class encapsulates the business logic for
+ * <p>Handles OIDC Session Management operations. This class encapsulates the business logic for
  * session creation and management, keeping the EntryService focused on orchestration.
  *
  * <p>Session management follows the Keycloak pattern:
@@ -44,15 +44,15 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  * @see <a href="https://openid.net/specs/openid-connect-session-1_0.html">OIDC Session
  *     Management</a>
  */
-public class OIDCSessionCoordinator {
+public class OIDCSessionHandler {
 
-  private static final LoggerWrapper log = LoggerWrapper.getLogger(OIDCSessionCoordinator.class);
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(OIDCSessionHandler.class);
   private static final long DEFAULT_SESSION_MAX_AGE_SECONDS = 36000L; // 10 hours
 
-  private final OIDCSessionManager sessionManager;
+  private final OIDCSessionService sessionService;
 
-  public OIDCSessionCoordinator(OIDCSessionManager sessionManager) {
-    this.sessionManager = sessionManager;
+  public OIDCSessionHandler(OIDCSessionService sessionService) {
+    this.sessionService = sessionService;
   }
 
   /**
@@ -71,7 +71,7 @@ public class OIDCSessionCoordinator {
             : Instant.now();
 
     long sessionTimeoutSeconds = getSessionTimeoutSeconds(tenant);
-    return sessionManager.createOPSession(
+    return sessionService.createOPSession(
         tenant,
         user.sub(),
         user,
@@ -102,7 +102,7 @@ public class OIDCSessionCoordinator {
     if (opSessionId == null || opSessionId.isEmpty()) {
       return Optional.empty();
     }
-    return sessionManager.getOPSession(tenant, new OPSessionIdentifier(opSessionId));
+    return sessionService.getOPSession(tenant, new OPSessionIdentifier(opSessionId));
   }
 
   /**
@@ -142,7 +142,7 @@ public class OIDCSessionCoordinator {
       Tenant tenant, OPSession opSession, String clientId, Set<String> scopes, String nonce) {
     long sessionTimeoutSeconds = getSessionTimeoutSeconds(tenant);
     ClientSession clientSession =
-        sessionManager.createClientSession(
+        sessionService.createClientSession(
             tenant, opSession, clientId, scopes, Map.of(), nonce, sessionTimeoutSeconds);
     return clientSession.sid();
   }
@@ -156,33 +156,24 @@ public class OIDCSessionCoordinator {
    */
   public Optional<OPSessionIdentifier> findOPSessionBySid(
       Tenant tenant, ClientSessionIdentifier sid) {
-    return sessionManager.getClientSession(tenant, sid).map(ClientSession::opSessionId);
+    return sessionService.getClientSession(tenant, sid).map(ClientSession::opSessionId);
   }
 
   /**
-   * Gets the session manager.
+   * Terminates the OP session and all associated client sessions.
    *
-   * @return the session manager
+   * @param tenant the tenant
+   * @param opSessionId the OP session identifier
+   * @param reason the termination reason
+   * @return the client sessions that were terminated
    */
-  public OIDCSessionManager sessionManager() {
-    return sessionManager;
-  }
-
-  /**
-   * Checks if session management is enabled.
-   *
-   * @return true if session manager is available
-   */
-  public boolean isEnabled() {
-    return sessionManager != null;
+  public ClientSessions terminateOPSession(
+      Tenant tenant, OPSessionIdentifier opSessionId, TerminationReason reason) {
+    return sessionService.terminateOPSession(tenant, opSessionId, reason);
   }
 
   /**
    * Sets session cookies after successful authentication.
-   *
-   * <p>This method encapsulates the cookie setting logic that was previously in EntryService,
-   * following the principle that the Coordinator should handle "how" while EntryService handles
-   * "what".
    *
    * @param tenant the tenant (for session timeout configuration)
    * @param opSession the OP session
@@ -190,10 +181,6 @@ public class OIDCSessionCoordinator {
    */
   public void registerSessionCookies(
       Tenant tenant, OPSession opSession, SessionCookieDelegate sessionCookieDelegate) {
-    if (sessionCookieDelegate == null) {
-      return;
-    }
-
     long maxAgeSeconds = getSessionTimeoutSeconds(tenant);
 
     String identityTokenValue = opSession.id().value();
@@ -212,9 +199,6 @@ public class OIDCSessionCoordinator {
    */
   public Optional<OPSession> getOPSessionFromCookie(
       Tenant tenant, SessionCookieDelegate sessionCookieDelegate) {
-    if (sessionCookieDelegate == null) {
-      return Optional.empty();
-    }
     return sessionCookieDelegate.getIdentityToken().flatMap(token -> getOPSession(tenant, token));
   }
 

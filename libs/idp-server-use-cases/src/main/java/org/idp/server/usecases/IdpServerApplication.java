@@ -123,9 +123,8 @@ import org.idp.server.core.openid.plugin.authentication.AuthenticationExecutorPl
 import org.idp.server.core.openid.plugin.authentication.AuthenticationInteractorPluginLoader;
 import org.idp.server.core.openid.plugin.authentication.FederationInteractorPluginLoader;
 import org.idp.server.core.openid.session.AuthSessionCookieDelegate;
-import org.idp.server.core.openid.session.NoOpOIDCSessionCoordinator;
-import org.idp.server.core.openid.session.OIDCSessionCoordinator;
-import org.idp.server.core.openid.session.OIDCSessionManager;
+import org.idp.server.core.openid.session.OIDCSessionHandler;
+import org.idp.server.core.openid.session.OIDCSessionService;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.session.repository.ClientSessionRepository;
 import org.idp.server.core.openid.session.repository.OPSessionRepository;
@@ -145,6 +144,7 @@ import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.datasource.DatabaseTypeConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.datasource.session.SessionStore;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.date.TimeConfig;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
@@ -262,6 +262,7 @@ public class IdpServerApplication {
       String encryptionKey,
       String databaseType,
       CacheStore cacheStore,
+      SessionStore sessionStore,
       SessionCookieDelegate sessionCookieDelegate,
       AuthSessionCookieDelegate authSessionCookieDelegate,
       PasswordEncodeDelegation passwordEncodeDelegation,
@@ -283,6 +284,7 @@ public class IdpServerApplication {
     dependencyContainer.register(AesCipher.class, aesCipher);
     dependencyContainer.register(HmacHasher.class, hmacHasher);
     dependencyContainer.register(CacheStore.class, cacheStore);
+    dependencyContainer.register(SessionStore.class, sessionStore);
     DatabaseTypeConfiguration databaseTypeConfig = new DatabaseTypeConfiguration(databaseType);
     dependencyContainer.register(DatabaseTypeConfiguration.class, databaseTypeConfig);
     ApplicationComponentContainer applicationComponentContainer =
@@ -439,27 +441,19 @@ public class IdpServerApplication {
         PasswordCredentialsGrantDelegate.class,
         new UserPasswordAuthenticator(userQueryRepository, passwordVerificationDelegation));
 
-    // OIDC Session Management - optional feature (requires Redis)
+    // OIDC Session Management
     // Must be registered before ProtocolContainerPluginLoader.load() as
     // DefaultOAuthProtocolProvider
     // needs it
-    OIDCSessionCoordinator oidcSessionCoordinator;
-    try {
-      OPSessionRepository opSessionRepository =
-          applicationComponentContainer.resolve(OPSessionRepository.class);
-      ClientSessionRepository clientSessionRepository =
-          applicationComponentContainer.resolve(ClientSessionRepository.class);
+    OPSessionRepository opSessionRepository =
+        applicationComponentContainer.resolve(OPSessionRepository.class);
+    ClientSessionRepository clientSessionRepository =
+        applicationComponentContainer.resolve(ClientSessionRepository.class);
 
-      long defaultSessionTimeoutSeconds = 3600L; // 1 hour
-      OIDCSessionManager sessionManager =
-          new OIDCSessionManager(
-              opSessionRepository, clientSessionRepository, defaultSessionTimeoutSeconds);
-      oidcSessionCoordinator = new OIDCSessionCoordinator(sessionManager);
-    } catch (Exception e) {
-      // OIDC Session Management is disabled (Redis not available)
-      oidcSessionCoordinator = NoOpOIDCSessionCoordinator.getInstance();
-    }
-    applicationComponentContainer.register(OIDCSessionCoordinator.class, oidcSessionCoordinator);
+    OIDCSessionService sessionService =
+        new OIDCSessionService(opSessionRepository, clientSessionRepository);
+    OIDCSessionHandler oidcSessionHandler = new OIDCSessionHandler(sessionService);
+    applicationComponentContainer.register(OIDCSessionHandler.class, oidcSessionHandler);
 
     ProtocolContainer protocolContainer =
         ProtocolContainerPluginLoader.load(applicationComponentContainer);
@@ -577,7 +571,7 @@ public class IdpServerApplication {
                 authenticationPolicyConfigurationQueryRepository,
                 oAuthFLowEventPublisher,
                 userLifecycleEventPublisher,
-                oidcSessionCoordinator),
+                oidcSessionHandler),
             OAuthFlowApi.class,
             databaseTypeProvider);
 

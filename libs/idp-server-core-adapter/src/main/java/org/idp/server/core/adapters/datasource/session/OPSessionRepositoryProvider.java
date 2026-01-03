@@ -16,9 +16,8 @@
 
 package org.idp.server.core.adapters.datasource.session;
 
-import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
 import org.idp.server.core.openid.session.repository.OPSessionRepository;
-import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.datasource.session.SessionStore;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -32,12 +31,7 @@ public class OPSessionRepositoryProvider
 
   @Override
   public OPSessionRepository provide(ApplicationComponentDependencyContainer container) {
-    CacheStore cacheStore = container.resolve(CacheStore.class);
-    if (cacheStore instanceof JedisCacheStore jedisCacheStore) {
-      return new RedisOPSessionDataSource(jedisCacheStore.jedisPool());
-    }
-    throw new UnsupportedOperationException(
-        "OIDC Session Management requires JedisCacheStore (Redis). Current CacheStore: "
-            + cacheStore.getClass().getSimpleName());
+    SessionStore sessionStore = container.resolve(SessionStore.class);
+    return new OPSessionDataSource(sessionStore);
   }
 }

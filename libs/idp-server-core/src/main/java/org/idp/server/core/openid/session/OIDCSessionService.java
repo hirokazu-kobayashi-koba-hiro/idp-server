@@ -27,24 +27,15 @@ import org.idp.server.core.openid.session.repository.OPSessionRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
-public class OIDCSessionManager {
+public class OIDCSessionService {
 
   private final OPSessionRepository opSessionRepository;
   private final ClientSessionRepository clientSessionRepository;
-  private final long defaultSessionTimeoutSeconds;
 
-  public OIDCSessionManager(
-      OPSessionRepository opSessionRepository,
-      ClientSessionRepository clientSessionRepository,
-      long defaultSessionTimeoutSeconds) {
+  public OIDCSessionService(
+      OPSessionRepository opSessionRepository, ClientSessionRepository clientSessionRepository) {
     this.opSessionRepository = opSessionRepository;
     this.clientSessionRepository = clientSessionRepository;
-    this.defaultSessionTimeoutSeconds = defaultSessionTimeoutSeconds;
-  }
-
-  public OPSession createOPSession(
-      Tenant tenant, String sub, User user, Instant authTime, String acr, List<String> amr) {
-    return createOPSession(tenant, sub, user, authTime, acr, amr, defaultSessionTimeoutSeconds);
   }
 
   public OPSession createOPSession(
@@ -89,17 +80,6 @@ public class OIDCSessionManager {
     opSessionRepository.delete(tenant, sessionId);
 
     return clientSessions;
-  }
-
-  public ClientSession createClientSession(
-      Tenant tenant,
-      OPSession opSession,
-      String clientId,
-      Set<String> scope,
-      Map<String, Object> claims,
-      String nonce) {
-    return createClientSession(
-        tenant, opSession, clientId, scope, claims, nonce, defaultSessionTimeoutSeconds);
   }
 
   public ClientSession createClientSession(

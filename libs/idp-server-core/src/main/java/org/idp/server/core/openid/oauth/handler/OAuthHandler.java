@@ -37,7 +37,7 @@ import org.idp.server.core.openid.oauth.validator.OAuthLogoutValidator;
 import org.idp.server.core.openid.oauth.view.OAuthViewData;
 import org.idp.server.core.openid.oauth.view.OAuthViewDataCreator;
 import org.idp.server.core.openid.session.ClientSessionIdentifier;
-import org.idp.server.core.openid.session.OIDCSessionCoordinator;
+import org.idp.server.core.openid.session.OIDCSessionHandler;
 import org.idp.server.core.openid.session.TerminationReason;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -46,19 +46,19 @@ public class OAuthHandler {
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
-  OIDCSessionCoordinator oidcSessionCoordinator;
+  OIDCSessionHandler oidcSessionHandler;
 
   public OAuthHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
-      OIDCSessionCoordinator oidcSessionCoordinator) {
+      OIDCSessionHandler oidcSessionHandler) {
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
-    this.oidcSessionCoordinator = oidcSessionCoordinator;
+    this.oidcSessionHandler = oidcSessionHandler;
   }
 
   public OAuthViewDataResponse handleViewData(OAuthViewDataRequest request) {
@@ -129,13 +129,12 @@ public class OAuthHandler {
     // 5. Terminate OPSession using sid from id_token_hint
     if (context.hasSessionId()) {
       ClientSessionIdentifier clientSessionId = new ClientSessionIdentifier(context.sessionId());
-      oidcSessionCoordinator
+      oidcSessionHandler
           .findOPSessionBySid(tenant, clientSessionId)
           .ifPresent(
               opSessionId ->
-                  oidcSessionCoordinator
-                      .sessionManager()
-                      .terminateOPSession(tenant, opSessionId, TerminationReason.USER_LOGOUT));
+                  oidcSessionHandler.terminateOPSession(
+                      tenant, opSessionId, TerminationReason.USER_LOGOUT));
     }
 
     // 6. Build response

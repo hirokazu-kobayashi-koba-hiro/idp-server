@@ -28,6 +28,19 @@ public interface AuthenticationInteractor {
     return OperationType.AUTHENTICATION;
   }
 
+  /**
+   * Returns whether this interactor is browser-based.
+   *
+   * <p>Browser-based interactors require AUTH_SESSION cookie validation to prevent session fixation
+   * attacks. Device-based interactors (e.g., push notification confirmation) should return false as
+   * the request comes from a different device without the cookie.
+   *
+   * @return true if browser-based (default), false if device-based
+   */
+  default boolean isBrowserBased() {
+    return true;
+  }
+
   String method();
 
   AuthenticationInteractionRequestResult interact(

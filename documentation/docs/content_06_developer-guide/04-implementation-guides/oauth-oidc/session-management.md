@@ -114,15 +114,12 @@ public class ClientSession {
 
 **参考実装**: [ClientSession.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/ClientSession.java)
 
-### OIDCSessionCoordinator
+### OIDCSessionHandler
 
 **セッション管理操作を調整**するクラスです。
 
 ```java
-public class OIDCSessionCoordinator {
-
-  // セッション管理が有効かどうか
-  public boolean isEnabled();
+public class OIDCSessionHandler {
 
   // 認証成功時にOPSessionを作成
   public OPSession onAuthenticationSuccess(
@@ -134,7 +131,7 @@ public class OIDCSessionCoordinator {
       Set<String> scopes, String nonce);
 
   // セッションCookieを設定
-  public void setSessionCookies(
+  public void registerSessionCookies(
       Tenant tenant, OPSession opSession, SessionCookieDelegate delegate);
 
   // CookieからOPSessionを取得
@@ -147,53 +144,13 @@ public class OIDCSessionCoordinator {
   // セッション有効性を検証
   public boolean isSessionValid(OPSession opSession, Long maxAge);
 
-  // ログアウト実行
-  public Optional<LogoutResult> executeLogout(
-      Tenant tenant, String sid, String sub, String clientId, ...);
+  // OPSessionの終了
+  public ClientSessions terminateOPSession(
+      Tenant tenant, OPSessionIdentifier opSessionId, TerminationReason reason);
 }
 ```
 
-**参考実装**: [OIDCSessionCoordinator.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/OIDCSessionCoordinator.java)
-
-### NoOpOIDCSessionCoordinator
-
-セッション管理が無効な場合に使用される**NoOp（何もしない）実装**です。nullチェックを不要にするNull Objectパターンを採用しています。
-
-```java
-public class NoOpOIDCSessionCoordinator extends OIDCSessionCoordinator {
-
-  private static final NoOpOIDCSessionCoordinator INSTANCE = new NoOpOIDCSessionCoordinator();
-
-  public static NoOpOIDCSessionCoordinator getInstance();
-
-  @Override
-  public boolean isEnabled() {
-    return false;  // 常にfalse
-  }
-
-  @Override
-  public Optional<OPSession> getOPSessionFromCookie(...) {
-    return Optional.empty();  // 常に空
-  }
-
-  // 他のメソッドも何もしない実装
-}
-```
-
-**使用例（OAuthFlowEntryService）**:
-```java
-// コンストラクタでnullの場合はNoOp版を使用
-this.oidcSessionCoordinator = oidcSessionCoordinator != null
-    ? oidcSessionCoordinator
-    : NoOpOIDCSessionCoordinator.getInstance();
-
-// nullチェック不要でisEnabled()を使用
-if (oidcSessionCoordinator.isEnabled()) {
-  // セッション管理が有効な場合のみ実行
-}
-```
-
-**参考実装**: [NoOpOIDCSessionCoordinator.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/NoOpOIDCSessionCoordinator.java)
+**参考実装**: [OIDCSessionHandler.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/OIDCSessionHandler.java)
 
 ---
 
@@ -214,22 +171,18 @@ if (oidcSessionCoordinator.isEnabled()) {
                                       └─────────────────────┘
 ```
 
-**実装箇所**: `OAuthFlowEntryService.interact()`
+**実装箇所**: `OAuthFlowEntryService.authenticate()`
 
 ```java
-if (result.isSuccess()) {
-  if (oidcSessionCoordinator.isEnabled()) {
-    Authentication authentication = updatedTransaction.authentication();
-    OPSession opSession = oidcSessionCoordinator.onAuthenticationSuccess(
-        tenant, result.user(), authentication);
+if (updatedTransaction.isSuccess()) {
+  Authentication authentication = updatedTransaction.authentication();
+  OPSession opSession = oidcSessionHandler.onAuthenticationSuccess(
+      tenant, updatedTransaction.user(), authentication);
 
-    // Cookie設定（OIDCSessionCoordinatorに委譲）
-    oidcSessionCoordinator.setSessionCookies(tenant, opSession, sessionCookieDelegate);
-  }
+  // Cookie設定（OIDCSessionHandlerに委譲）
+  oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
 }
 ```
-
-**ポイント**: `isEnabled()`により、nullチェックが不要になります。セッション管理が無効な場合は`NoOpOIDCSessionCoordinator`が使用され、すべてのメソッドが安全に何もしない動作をします。
 
 ### 2. ClientSession作成（認可時）
 
@@ -253,15 +206,13 @@ if (result.isSuccess()) {
 **実装箇所**: `OAuthFlowEntryService.authorize()`
 
 ```java
-if (oidcSessionCoordinator.isEnabled()) {
-  oidcSessionCoordinator
-      .getOPSessionFromCookie(tenant, sessionCookieDelegate)
-      .ifPresent(opSession -> {
-        ClientSessionIdentifier sid = oidcSessionCoordinator
-            .onAuthorize(tenant, opSession, clientId, scopes, nonce);
-        oAuthAuthorizeRequest.setCustomProperties(Map.of("sid", sid.value()));
-      });
-}
+oidcSessionHandler
+    .getOPSessionFromCookie(tenant, sessionCookieDelegate)
+    .ifPresent(opSession -> {
+      ClientSessionIdentifier sid = oidcSessionHandler
+          .onAuthorize(tenant, opSession, clientId, scopes, nonce);
+      oAuthAuthorizeRequest.setCustomProperties(Map.of("sid", sid.value()));
+    });
 ```
 
 ### 3. SSO（セッション再利用）
@@ -290,8 +241,8 @@ if (oidcSessionCoordinator.isEnabled()) {
 **実装箇所**: `OAuthFlowEntryService.authorizeWithSession()`
 
 ```java
-// OPSessionをCookieから取得（OIDCSessionCoordinatorに委譲）
-Optional<OPSession> opSessionOpt = oidcSessionCoordinator
+// OPSessionをCookieから取得（OIDCSessionHandlerに委譲）
+Optional<OPSession> opSessionOpt = oidcSessionHandler
     .getOPSessionFromCookie(tenant, sessionCookieDelegate);
 
 if (opSessionOpt.isEmpty()) {
@@ -306,7 +257,7 @@ Long maxAge = authorizationRequest.maxAge().exists()
     ? authorizationRequest.maxAge().toLongValue()
     : null;
 
-if (!oidcSessionCoordinator.isSessionValid(opSession, maxAge)) {
+if (!oidcSessionHandler.isSessionValid(opSession, maxAge)) {
   return new OAuthAuthorizeResponse(
       OAuthAuthorizeStatus.BAD_REQUEST, "invalid_request", "session expired");
 }
@@ -717,9 +668,8 @@ Client                              OP
 |---------|------|
 | `OPSession.java` | OP-Browser間セッション |
 | `ClientSession.java` | OP-RP間セッション |
-| `OIDCSessionCoordinator.java` | セッション管理調整 |
-| `NoOpOIDCSessionCoordinator.java` | セッション無効時のNoOp実装 |
-| `OIDCSessionManager.java` | セッションCRUD操作 |
+| `OIDCSessionHandler.java` | セッション管理調整 |
+| `OIDCSessionService.java` | セッションCRUD操作 |
 | `OPSessionRepository.java` | OPセッションリポジトリインターフェース |
 | `ClientSessionRepository.java` | ClientセッションリポジトリIF |
 | `SessionCookieDelegate.java` | Cookie操作インターフェース |

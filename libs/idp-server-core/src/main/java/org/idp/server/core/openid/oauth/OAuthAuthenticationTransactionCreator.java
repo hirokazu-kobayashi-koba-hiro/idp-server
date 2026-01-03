@@ -43,13 +43,6 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class OAuthAuthenticationTransactionCreator {
 
-  public static AuthenticationTransaction create(
-      Tenant tenant,
-      OAuthRequestResponse requestResponse,
-      AuthenticationPolicyConfiguration policyConfiguration) {
-    return create(tenant, requestResponse, policyConfiguration, new AuthSessionId());
-  }
-
   /**
    * Creates an AuthenticationTransaction with browser session binding.
    *

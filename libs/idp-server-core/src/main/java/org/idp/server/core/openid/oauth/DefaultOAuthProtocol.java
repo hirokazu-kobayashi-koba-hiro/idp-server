@@ -28,7 +28,7 @@ import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepositor
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.openid.oauth.response.AuthorizationResponse;
-import org.idp.server.core.openid.session.OIDCSessionCoordinator;
+import org.idp.server.core.openid.session.OIDCSessionHandler;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
@@ -54,7 +54,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
       AuthorizationGrantedRepository authorizationGrantedRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
-      OIDCSessionCoordinator oidcSessionCoordinator,
+      OIDCSessionHandler oidcSessionHandler,
       HttpRequestExecutor httpRequestExecutor) {
     this.requestHandler =
         new OAuthRequestHandler(
@@ -81,7 +81,7 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
             authorizationRequestRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository,
-            oidcSessionCoordinator);
+            oidcSessionHandler);
     this.oAuthRequestErrorHandler = new OAuthRequestErrorHandler();
     this.authAuthorizeErrorHandler = new OAuthAuthorizeErrorHandler();
     this.denyErrorHandler = new OAuthDenyErrorHandler();
