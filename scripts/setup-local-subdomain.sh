@@ -14,7 +14,7 @@
 #   ./scripts/setup-local-subdomain.sh
 #
 # Then start the services:
-#   docker-compose -f docker-compose-subdomain.yaml up -d
+#   docker-compose up -d
 #
 
 set -e
@@ -92,7 +92,13 @@ mkcert "*.local.dev" local.dev
 echo "  Certificates created in $CERTS_DIR"
 
 echo ""
-echo "Step 8: Verifying DNS resolution..."
+echo "Step 8: Copying mkcert root CA for Java truststore..."
+MKCERT_CAROOT=$(mkcert -CAROOT)
+cp "$MKCERT_CAROOT/rootCA.pem" "$CERTS_DIR/"
+echo "  Root CA copied to $CERTS_DIR/rootCA.pem"
+
+echo ""
+echo "Step 9: Verifying DNS resolution..."
 sleep 2
 if ping -c 1 auth.local.dev &> /dev/null; then
     echo "  ✓ auth.local.dev resolves to 127.0.0.1"
@@ -111,7 +117,7 @@ echo ""
 echo "=== Setup Complete ==="
 echo ""
 echo "Start the subdomain environment:"
-echo "  docker-compose -f docker-compose-subdomain.yaml up -d"
+echo "  docker-compose up -d"
 echo ""
 echo "Access:"
 echo "  IDP Server: https://auth.local.dev"

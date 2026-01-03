@@ -1,5 +1,5 @@
 export const backendUrl = process.env.IDP_SERVER_URL || "https://localhost:8443";
-export const mtlBackendUrl = process.env.IDP_SERVER_MTLS_URL || "https://localhost:8445";
+export const mtlBackendUrl = process.env.IDP_SERVER_MTLS_URL || "https://api.local.dev:8443";
 
 // Default tenant IDs for backward compatibility
 const DEFAULT_ADMIN_TENANT_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"; // Admin tenant for Management API tests

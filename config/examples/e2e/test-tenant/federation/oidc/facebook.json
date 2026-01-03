@@ -52,6 +52,6 @@
     ],
     "client_id": "949393364072577",
     "client_secret": "xxx",
-    "redirect_uri": "https://localhost:8443/signin/sso-callback/index.html"
+    "redirect_uri": "https://api.local.dev/signin/sso-callback/index.html"
   }
 }

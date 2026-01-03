@@ -23,7 +23,7 @@ services:
           cpus: '0.5'
           memory: 1g
     environment:
-      SERVER_URL: "http://localhost:8081"
+      SERVER_URL: "https://api.local.dev"
       IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY?IDP server API key is required. Set IDP_SERVER_API_KEY environment variable.}
       IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET?IDP server API secret is required. Set IDP_SERVER_API_SECRET environment variable.}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY?Encryption key is required. Set ENCRYPTION_KEY environment variable.}
@@ -75,12 +75,17 @@ services:
       IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS: ${IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS:-true}
       IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE: ${IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE:-10000}
       IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS: ${IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS:-/v1/tokens,/v1/authorizations,/v1/backchannel/authentications,/v1/userinfo}
-      # Cross-origin AUTH_SESSION cookie settings (for app-view on different origin)
-      IDP_AUTH_SESSION_SAME_SITE: ${IDP_AUTH_SESSION_SAME_SITE:-None}
-      IDP_AUTH_SESSION_SECURE: ${IDP_AUTH_SESSION_SECURE:-false}
+      # Subdomain cookie: SameSite=Lax is sufficient for same-site subdomains
+      IDP_AUTH_SESSION_SAME_SITE: ${IDP_AUTH_SESSION_SAME_SITE:-Lax}
+      IDP_AUTH_SESSION_SECURE: ${IDP_AUTH_SESSION_SECURE:-true}
       JAVA_TOOL_OPTIONS: >
         -Xms512m -Xmx2g
         -XX:MaxGCPauseMillis=100
+    volumes:
+      - ./docker/nginx/certs/rootCA.pem:/app/certs/rootCA.pem:ro
+    extra_hosts:
+      - "api.local.dev:host-gateway"
+      - "auth.local.dev:host-gateway"
 
   idp-server-2:
     build: .
@@ -104,7 +109,7 @@ services:
           cpus: '0.5'
           memory: 1g
     environment:
-      SERVER_URL: "http://localhost:8082"
+      SERVER_URL: "https://api.local.dev"
       IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY:-30113151-4ee1-4f6a-a1ac-cc1be9eaf695}
       IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET:-MTY5YjM3NmYtOTY0ZC00Nzg0LWIyOTMtOWQyNDhjMTkyNmIwCg==}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-JjN9c6N4STeA+g9d+TtBGp5MC3sbqOWs+S9qzJG42iY=}
@@ -156,12 +161,17 @@ services:
       IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS: ${IDP_LOGGING_REQUEST_RESPONSE_MASK_TOKENS:-true}
       IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE: ${IDP_LOGGING_REQUEST_RESPONSE_MAX_BODY_SIZE:-10000}
       IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS: ${IDP_LOGGING_REQUEST_RESPONSE_ENDPOINTS:-/v1/tokens,/v1/authorizations,/v1/backchannel/authentications,/v1/userinfo}
-      # Cross-origin AUTH_SESSION cookie settings (for app-view on different origin)
-      IDP_AUTH_SESSION_SAME_SITE: ${IDP_AUTH_SESSION_SAME_SITE:-None}
-      IDP_AUTH_SESSION_SECURE: ${IDP_AUTH_SESSION_SECURE:-false}
+      # Subdomain cookie: SameSite=Lax is sufficient for same-site subdomains
+      IDP_AUTH_SESSION_SAME_SITE: ${IDP_AUTH_SESSION_SAME_SITE:-Lax}
+      IDP_AUTH_SESSION_SECURE: ${IDP_AUTH_SESSION_SECURE:-true}
       JAVA_TOOL_OPTIONS: >
         -Xms512m -Xmx2g
         -XX:MaxGCPauseMillis=100
+    volumes:
+      - ./docker/nginx/certs/rootCA.pem:/app/certs/rootCA.pem:ro
+    extra_hosts:
+      - "api.local.dev:host-gateway"
+      - "auth.local.dev:host-gateway"
 
   nginx:
     build: ./docker/nginx
@@ -170,12 +180,14 @@ services:
     depends_on:
       - idp-server-1
       - idp-server-2
+      - app-view
     volumes:
-      # Nginx configuration (read-only)
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/certs:/etc/nginx/certs:ro
     ports:
-      - "8080:80"     # HTTP
-      - "8445:8443"   # HTTPS + mTLS
+      - "80:80"       # HTTP (redirects to HTTPS)
+      - "443:443"     # HTTPS
+      - "8443:8443"   # HTTPS + mTLS
 
   mysql:
     image: mysql:8.0
@@ -252,9 +264,9 @@ services:
       context: .
       dockerfile: docker/app-view/Dockerfile
       args:
-        # Cross-origin deployment: app-view on port 3000, IDP on port 8080
+        # Subdomain deployment: app-view on auth.local.dev, IDP on api.local.dev
         BASE_PATH: ""
-        NEXT_PUBLIC_BACKEND_URL: "http://localhost:8080"
+        NEXT_PUBLIC_BACKEND_URL: "https://api.local.dev"
     container_name: app-view
     ports:
       - "3000:3000"

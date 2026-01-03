@@ -71,7 +71,7 @@ echo "✅ Secrets saved to config/secrets/local/"
 # Write .env file (references only, no hardcoded secrets)
 cat > .env <<EOF
 # Base Configuration
-AUTHORIZATION_SERVER_URL=http://localhost:8080
+AUTHORIZATION_SERVER_URL=https://api.local.dev
 ENV=local
 DRY_RUN=false
 

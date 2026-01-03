@@ -78,10 +78,10 @@ cp .env.example .env
 
 ```bash
 # ビルド
-docker-compose -f docker-compose-subdomain.yaml build
+docker-compose build
 
 # 起動
-docker-compose -f docker-compose-subdomain.yaml up -d
+docker-compose up -d
 ```
 
 ### 6. 動作確認
@@ -151,11 +151,11 @@ docker-compose down
 ## 通常の開発環境との切り替え
 
 ```bash
-# サブドメイン構成
-docker-compose -f docker-compose-subdomain.yaml up -d
+# サブドメイン構成（デフォルト）
+docker-compose up -d
 
 # 通常構成（localhost）
-docker-compose up -d
+docker-compose -f docker-compose-localhost.yaml up -d
 ```
 
 ## 本番環境との対応
