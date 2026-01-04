@@ -246,6 +246,59 @@ idx:tenant:{tenantId}:client:{clientId}:sub:{sub} # クライアント×ユー�
 | **Secure** | Yes | HTTPS通信のみ |
 | **SameSite** | Lax | CSRF攻撃軽減 |
 
+### 認証トランザクションとのセッションバインディング
+
+認可フロー全体を通じて、同一ブラウザセッションであることを保証する仕組みです。
+
+```
+認可リクエスト開始
+    │
+    ▼
+┌─────────────────────────────────────────────────────┐
+│ AuthenticationTransaction                            │
+│   authSessionId: "xyz789"  ←── 認可リクエスト時に生成 │
+└─────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────┐
+│ AUTH_SESSION Cookie: "xyz789"                        │
+│   ブラウザに設定（HttpOnly, Secure, SameSite=Lax）   │
+└─────────────────────────────────────────────────────┘
+    │
+    ▼
+認証・認可の各エンドポイントで検証
+    POST /password-authentication → validateAuthSession()
+    POST /authorize              → validateAuthSession()
+    POST /authorize-with-session → validateAuthSession()
+```
+
+- **目的**: 認可フローハイジャック攻撃の防止
+- **制御**: 認証ポリシーの`auth_session_binding_required`で有効/無効を設定（デフォルト: 有効）
+- **例外**: CIBA等のnon-browserフローでは自動的にスキップ
+
+### 認証ポリシー整合性の検証
+
+SSOセッション再利用時に、認証ポリシーの要件を満たしているかを検証する仕組みです。
+
+```
+【問題となるシナリオ】
+
+1. パスワードのみのクライアントでログイン
+   └─ OPSession作成（パスワード認証のみ）
+
+2. MFA必須のクライアントにアクセス
+   └─ OPSessionが有効なのでSSOが可能に見える
+
+3. authorize-with-session を実行
+   └─ [対策なし] MFAをバイパスして認可される ❌
+   └─ [対策あり] 認証ポリシーの条件を満たさず拒否 ✓
+```
+
+この対策により、異なる認証強度を要求するクライアント間でのセッション再利用を適切に制御します。
+
+- **仕組み**: OPSessionに認証結果（interactionResults）を保存し、authorize-with-session時に認証ポリシーのsuccessConditionsを再評価
+- **結果**: 認証ポリシーの条件を満たさない場合、セキュリティイベントを発行し認可を拒否
+
 ## 関連ドキュメント
 
 - [セッション管理 実装ガイド](../../content_06_developer-guide/04-implementation-guides/oauth-oidc/session-management.md) - 実装詳細

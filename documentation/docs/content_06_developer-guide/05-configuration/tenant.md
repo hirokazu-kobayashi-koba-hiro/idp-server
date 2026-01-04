@@ -724,7 +724,8 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 {
   "session_config": {
     "cookie_name": null,
-    "cookie_same_site": "None",
+    "cookie_domain": "example.com",
+    "cookie_same_site": "Lax",
     "use_secure_cookie": true,
     "use_http_only_cookie": true,
     "cookie_path": "/",
@@ -736,6 +737,7 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 | フィールド | 型 | デフォルト | 説明 |
 |-----------|---|----------|------|
 | `cookie_name` | string \| null | `null` (自動生成) | セッションCookie名 |
+| `cookie_domain` | string \| null | `null` | Cookie Domain属性（サブドメイン共有用） |
 | `cookie_same_site` | string | `None` | SameSite属性 (`None`, `Lax`, `Strict`) |
 | `use_secure_cookie` | boolean | `true` | Secure属性を使用 |
 | `use_http_only_cookie` | boolean | `true` | HttpOnly属性を使用 |
@@ -744,7 +746,101 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 
 **重要**: `cookie_name`が`null`の場合、`IDP_SERVER_SESSION_{tenant-id-prefix}`形式で自動生成されます。
 
+#### 構成パターン別の推奨設定
+
+IdPとRP（アプリケーション）の構成に応じて、Cookie設定を適切に行う必要があります。
+
+```
+【Same-Origin vs Same-Site の違い】
+
+Same-Origin: スキーム + ホスト + ポート が一致
+Same-Site:   eTLD+1（有効トップレベルドメイン+1）が一致
+
+例: idp.example.com と app.example.com
+   → Cross-Origin だが Same-Site
+   → SameSite=Lax でも Cookie が送信される
+```
+
+| 構成 | 例 | cookie_domain | cookie_same_site | 説明 |
+|------|---|---------------|------------------|------|
+| **同一オリジン** | example.com/idp, example.com/app | 指定なし | `Lax` / `Strict` | 全て同じドメイン |
+| **サブドメイン** | idp.example.com, app.example.com | `example.com` | `Lax` | Same-Site内で共有 |
+| **クロスサイト** | idp.example.com, app.another.com | 指定なし | `None` | 異なるサイト間 |
+
+#### cookie_domain の効果
+
+```
+【cookie_domain: "example.com" の場合】
+
+Set-Cookie: SESSION=xxx; Domain=example.com; ...
+
+以下の全ドメインでCookieが送信される:
+  ✅ example.com
+  ✅ idp.example.com
+  ✅ app.example.com
+  ✅ auth.example.com
+
+【cookie_domain: null（未指定）の場合】
+
+Set-Cookie: SESSION=xxx; ...  (Domain属性なし)
+
+Cookieは設定元のホストにのみ送信される:
+  ✅ idp.example.com (設定元)
+  ❌ app.example.com
+  ❌ auth.example.com
+```
+
+#### SameSite属性とCookie送信
+
+**Same-Siteリクエスト**（サブドメイン間を含む）では、SameSite属性に関係なく全て送信されます。
+
+**Cross-Siteリクエスト**の場合のみ、SameSite属性が効きます：
+
+| SameSite値 | GETナビゲーション | POST | fetch/XHR | 用途 |
+|:-----------|:-----------------|:-----|:----------|:-----|
+| `Strict` | ❌ | ❌ | ❌ | 高セキュリティ（金融グレード） |
+| `Lax` | ✅ | ❌ | ❌ | 推奨（OIDCリダイレクトフロー対応） |
+| `None` | ✅ | ✅ | ✅ | Cross-Site構成（Secure必須） |
+
+#### 構成パターン別の設定例
+
+**パターン1: サブドメイン構成（推奨）**
+```json
+{
+  "session_config": {
+    "cookie_domain": "example.com",
+    "cookie_same_site": "Lax",
+    "use_secure_cookie": true
+  }
+}
+```
+→ `idp.example.com`, `app.example.com`, `auth.example.com` 間でCookieを共有
+
+**パターン2: クロスサイト構成**
+```json
+{
+  "session_config": {
+    "cookie_same_site": "None",
+    "use_secure_cookie": true
+  }
+}
+```
+→ `idp.example.com` と `app.another.com` 間でCookieを送信
+
+**パターン3: 高セキュリティ（同一オリジン）**
+```json
+{
+  "session_config": {
+    "cookie_same_site": "Strict",
+    "use_secure_cookie": true
+  }
+}
+```
+→ Cross-Siteからの全リクエストでCookie送信を拒否
+
 **実装**: [SessionConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/SessionConfiguration.java)
+
+**関連ドキュメント**: [Webセッションの基礎 - オリジンとCookieの送信](../../../content_11_learning/19-session-management/01-web-session-basics.md#オリジンとcookieの送信)
 
 ---
 

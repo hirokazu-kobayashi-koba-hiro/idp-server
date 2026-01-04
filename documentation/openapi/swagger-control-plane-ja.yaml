@@ -6312,6 +6312,17 @@ components:
           description: List of authentication step definitions
           items:
             $ref: '#/components/schemas/AuthenticationStepDefinition'
+        auth_session_binding_required:
+          type: boolean
+          default: true
+          description: |
+            AUTH_SESSION Cookie検証の有効/無効を制御します。
+
+            trueの場合、認可フロー中にAUTH_SESSION Cookieの検証を行い、
+            認可フローハイジャック攻撃（攻撃者が認可URLを被害者に送信し、
+            被害者の認証を自分のセッションに紐づける攻撃）を防止します。
+
+            セキュリティ上の理由から、本番環境ではtrueを推奨します。
       additionalProperties: false
 
     AuthenticationPolicyCondition:
@@ -6951,25 +6962,56 @@ components:
 
     SessionConfiguration:
       type: object
+      description: |
+        セッション管理とCookie設定。
+
+        **構成パターン別の推奨設定:**
+
+        | 構成 | cookie_domain | cookie_same_site | 説明 |
+        |------|---------------|------------------|------|
+        | 同一オリジン | 指定なし | Lax/Strict | IdPとRPが同じドメイン |
+        | サブドメイン | 親ドメイン（例: example.com） | Lax | idp.example.com ↔ app.example.com |
+        | クロスサイト | 指定なし | None（Secure必須） | idp.example.com ↔ app.another.com |
+
+        **サブドメイン間はSame-Site扱い:**
+        idp.example.comとapp.example.comはCross-Originだが、Same-Site（eTLD+1が同じ）。
+        SameSite=Laxでも全リクエストでCookieが送信される。
       properties:
         cookie_name:
           type: string
           nullable: true
           default: null
           description: セッションCookie名（null時は自動生成）
+        cookie_domain:
+          type: string
+          nullable: true
+          default: null
+          description: |
+            CookieのDomain属性。サブドメイン間でCookieを共有する場合に設定。
+
+            例: `example.com` を設定すると、idp.example.com、app.example.com、auth.example.com で同じCookieが送信される。
+
+            null（未指定）の場合、Cookieは設定元のホストにのみ送信される。
         cookie_same_site:
           type: string
           enum: [None, Lax, Strict]
           default: None
-          description: SameSite属性
+          description: |
+            SameSite属性。Cross-Siteリクエスト時のCookie送信を制御。
+
+            - **Strict**: Cross-Siteリクエストでは送信しない（高セキュリティ）
+            - **Lax**: Cross-SiteのGETナビゲーション（リダイレクト等）のみ送信（推奨）
+            - **None**: 常に送信（Secure=true必須、Cross-Site構成向け）
+
+            **注意:** サブドメイン間（例: idp.example.com ↔ app.example.com）はSame-Site扱いのため、Laxでも全リクエストでCookieが送信される。
         use_secure_cookie:
           type: boolean
           default: true
-          description: Secure属性を使用
+          description: Secure属性を使用（HTTPS時のみCookie送信）
         use_http_only_cookie:
           type: boolean
           default: true
-          description: HttpOnly属性を使用
+          description: HttpOnly属性を使用（JavaScriptからのアクセス禁止、XSS対策）
         cookie_path:
           type: string
           default: /

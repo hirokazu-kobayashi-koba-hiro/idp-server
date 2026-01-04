@@ -10,6 +10,8 @@
 ### 学べること
 - HTTPのステートレス性とセッションの必要性
 - Cookieの仕組みと属性
+- Same-Origin / Cross-Origin と Same-Site / Cross-Site の違い
+- SameSite属性によるCookie送信制御
 - Servletコンテナの役割
 - セッションのセキュリティ
 
@@ -141,6 +143,294 @@ Set-Cookie: SESSION=abc123;
 | Strict | 他サイトからは送信しない | 高セキュリティ |
 | Lax | GETナビゲーションのみ送信 | 推奨（バランス） |
 | None | 常に送信（Secure必須） | サードパーティCookie |
+
+---
+
+## オリジンとCookieの送信
+
+### オリジン（Origin）とは
+
+**オリジン** = スキーム + ホスト + ポート
+
+```
+【オリジンの構成要素】
+
+https://idp.example.com:443/authorize
+  │          │            │
+  │          │            └── ポート（443）
+  │          └── ホスト（idp.example.com）
+  └── スキーム（https）
+
+→ オリジン: https://idp.example.com:443
+```
+
+### Same-Origin vs Cross-Origin
+
+| 比較元 | 比較先 | 判定 | 理由 |
+|:------|:------|:-----|:----|
+| `https://idp.example.com` | `https://idp.example.com/path` | **Same-Origin** | 全て一致 |
+| `https://idp.example.com` | `https://app.example.com` | **Cross-Origin** | ホストが異なる |
+| `https://idp.example.com` | `http://idp.example.com` | **Cross-Origin** | スキームが異なる |
+| `https://idp.example.com` | `https://idp.example.com:8443` | **Cross-Origin** | ポートが異なる |
+
+### サイト（Site）とは
+
+**サイト** = eTLD+1（有効トップレベルドメイン + 1レベル）
+
+```
+【eTLD+1 の例】
+
+idp.example.com
+    └────┬────┘
+     eTLD+1 = example.com
+
+app.example.com
+    └────┬────┘
+     eTLD+1 = example.com
+
+→ 両方とも同じサイト（example.com）
+```
+
+**eTLD（有効トップレベルドメイン）**:
+- `.com`, `.org`, `.net` など
+- `.co.jp`, `.com.au` など（2レベルのTLD）
+- [Public Suffix List](https://publicsuffix.org/) で管理
+
+### Same-Site vs Cross-Site
+
+```
+【Same-Site の判定】
+
+┌─────────────────────────────────────────────────────────────────┐
+│                      example.com (サイト)                        │
+│                                                                 │
+│   ┌─────────────────┐           ┌─────────────────┐            │
+│   │ idp.example.com │ ←─────→  │ app.example.com │            │
+│   │                 │ Same-Site │                 │            │
+│   │    (IdP)        │           │    (RP)         │            │
+│   └─────────────────┘           └─────────────────┘            │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+【Cross-Site の判定】
+
+┌─────────────────────┐           ┌─────────────────────┐
+│   example.com       │           │   another.com       │
+│                     │           │                     │
+│  ┌───────────────┐  │           │  ┌───────────────┐  │
+│  │idp.example.com│  │ ←───────→ │  │app.another.com│  │
+│  │               │  │Cross-Site │  │               │  │
+│  │    (IdP)      │  │           │  │    (RP)       │  │
+│  └───────────────┘  │           │  └───────────────┘  │
+│                     │           │                     │
+└─────────────────────┘           └─────────────────────┘
+```
+
+| 比較 | Same-Origin | Same-Site |
+|:----|:------------|:----------|
+| 基準 | スキーム + ホスト + ポート | eTLD+1 |
+| `idp.example.com` vs `app.example.com` | Cross-Origin | **Same-Site** |
+| `example.com` vs `another.com` | Cross-Origin | **Cross-Site** |
+
+### SameSite属性とCookie送信
+
+SameSite属性は**Cross-Site**リクエスト時のCookie送信を制御します。
+
+#### Same-Site リクエストの場合
+
+```
+【Same-Site リクエスト】
+
+example.com 内のサブドメイン間
+┌─────────────────────────────────────────────────────────────────┐
+│                      example.com (サイト)                        │
+│                                                                 │
+│   ┌─────────────────┐           ┌─────────────────┐            │
+│   │ idp.example.com │ ←─────→  │ app.example.com │            │
+│   │                 │           │                 │            │
+│   │  Cookie:        │  リクエスト│  リンク/POST/   │            │
+│   │  SameSite=???   │           │  fetch 全て     │            │
+│   └─────────────────┘           └─────────────────┘            │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+| SameSite値 | GETナビゲーション | POST送信 | fetch/XHR |
+|:-----------|:-----------------|:---------|:----------|
+| Strict     | ✅ 送信する       | ✅        | ✅         |
+| Lax        | ✅ 送信する       | ✅        | ✅         |
+| None       | ✅ 送信する       | ✅        | ✅         |
+
+→ Same-Site内では SameSite属性に関係なく全て送信される
+```
+
+#### Cross-Site リクエストの場合
+
+```
+【Cross-Site リクエスト】
+
+サイトA (example.com)                    サイトB (another.com)
+┌─────────────────────┐                 ┌─────────────────────┐
+│                     │                 │                     │
+│  Cookie:            │   リクエスト    │  リンククリック      │
+│  SESSION=abc123     │ ←───────────── │  <a href="...">     │
+│  SameSite=???       │                 │                     │
+│                     │                 │                     │
+└─────────────────────┘                 └─────────────────────┘
+
+| SameSite値 | GETナビゲーション | POST送信 | fetch/XHR |
+|:-----------|:-----------------|:---------|:----------|
+| Strict     | ❌ 送信しない     | ❌        | ❌         |
+| Lax        | ✅ 送信する       | ❌        | ❌         |
+| None       | ✅ 送信する       | ✅        | ✅         |
+
+→ SameSite属性が効くのは Cross-Site の場合のみ
+```
+
+**GETナビゲーション**: リンククリック、リダイレクト、アドレスバー入力
+**POST送信**: フォーム送信
+**fetch/XHR**: JavaScript からの非同期リクエスト
+
+### IdP/RPシナリオ別のCookie挙動
+
+#### シナリオ1: 同一オリジン
+
+```
+【同一オリジン構成】
+
+https://example.com/idp  ← IdP
+https://example.com/app  ← RP
+
+→ Same-Origin、Same-Site
+→ SameSite=Strict でも全て送信される
+```
+
+| 設定 | Cookie送信 |
+|:----|:----------|
+| SameSite=Strict | ✅ |
+| SameSite=Lax | ✅ |
+| SameSite=None | ✅ |
+
+#### シナリオ2: サブドメイン（Same-Site）
+
+```
+【サブドメイン構成】
+
+https://idp.example.com  ← IdP
+https://app.example.com  ← RP
+
+→ Cross-Origin だが Same-Site
+```
+
+| リクエスト種別 | SameSite=Strict | SameSite=Lax | SameSite=None |
+|:-------------|:----------------|:-------------|:--------------|
+| リンククリック（GET） | ❌ | ✅ | ✅ |
+| フォーム送信（POST） | ❌ | ❌ | ✅ |
+| fetch/XHR | ❌ | ❌ | ✅ |
+
+**ポイント**: SameSite=Lax でリンククリック時にCookie送信される（OIDCリダイレクトフローで重要）
+
+#### シナリオ3: 別ドメイン（Cross-Site）
+
+```
+【別ドメイン構成】
+
+https://idp.example.com   ← IdP
+https://app.another.com   ← RP
+
+→ Cross-Origin かつ Cross-Site
+```
+
+| リクエスト種別 | SameSite=Strict | SameSite=Lax | SameSite=None |
+|:-------------|:----------------|:-------------|:--------------|
+| リンククリック（GET） | ❌ | ✅ | ✅ |
+| フォーム送信（POST） | ❌ | ❌ | ✅ |
+| fetch/XHR | ❌ | ❌ | ✅ |
+
+**注意**: SameSite=None を使う場合は **Secure属性が必須**
+
+### OIDCフローでの影響
+
+```
+【認可コードフロー】
+
+1. RP → IdP へリダイレクト
+   GET https://idp.example.com/authorize?...
+
+   ← IdPのCookieが送信されるか？
+
+   SameSite=Lax: ✅ 送信される（トップレベルナビゲーション）
+   SameSite=Strict: ❌ 送信されない
+
+2. IdP での認証（IdPドメイン内）
+   POST https://idp.example.com/password-authentication
+
+   ← IdPのCookieが送信されるか？
+
+   SameSite=Lax: ✅ 送信される（Same-Site）
+   SameSite=Strict: ✅ 送信される（Same-Site）
+
+3. IdP → RP へリダイレクト
+   302 Redirect to https://app.another.com/callback?code=...
+
+   ← RPドメインへの遷移（IdPのCookieは関係なし）
+```
+
+**推奨設定**:
+- IdPのセッションCookie: `SameSite=Lax`
+- 理由: Cross-Site からのリダイレクトでもCookieが送信され、SSOが機能する
+
+### Domain属性による共有
+
+```
+【Domain属性の効果】
+
+Set-Cookie: SESSION=abc123; Domain=example.com; Path=/
+
+→ 以下のすべてでCookieが送信される:
+   - example.com
+   - idp.example.com
+   - app.example.com
+   - sub.app.example.com
+```
+
+**注意**: Domain属性を指定すると、サブドメイン間でCookieが共有される
+
+| 設定 | idp.example.com | app.example.com |
+|:----|:----------------|:----------------|
+| Domain指定なし | ✅ | ❌ |
+| Domain=example.com | ✅ | ✅ |
+
+### まとめ: Cookie送信の判定フロー
+
+```
+【Cookie送信判定】
+
+リクエスト発生
+    │
+    ▼
+Domain属性チェック ─── 不一致 ──→ ❌ 送信しない
+    │
+    │ 一致
+    ▼
+Path属性チェック ─── 不一致 ──→ ❌ 送信しない
+    │
+    │ 一致
+    ▼
+Secure属性チェック ─── HTTPなのにSecure ──→ ❌ 送信しない
+    │
+    │ OK
+    ▼
+SameSite属性チェック
+    │
+    ├─ Same-Site リクエスト ──→ ✅ 送信する
+    │
+    └─ Cross-Site リクエスト
+         │
+         ├─ Strict ──→ ❌ 送信しない
+         ├─ Lax + GETナビゲーション ──→ ✅ 送信する
+         ├─ Lax + その他 ──→ ❌ 送信しない
+         └─ None + Secure ──→ ✅ 送信する
+```
 
 ---
 
