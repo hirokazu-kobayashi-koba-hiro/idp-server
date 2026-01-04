@@ -600,6 +600,28 @@ export const nativeAppClient = {
 };
 
 /**
+ * SSO Password Only Client
+ * Authentication policy: password only (no MFA required)
+ */
+export const ssoPasswordOnlyClient = {
+  clientId: "ssoPasswordOnlyClient",
+  clientSecret: "ssoPasswordOnlyClientSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "openid profile email",
+};
+
+/**
+ * SSO MFA Required Client
+ * Authentication policy: password + SMS required
+ */
+export const ssoMfaRequiredClient = {
+  clientId: "ssoMfaRequiredClient",
+  clientSecret: "ssoMfaRequiredClientSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "openid profile email",
+};
+
+/**
  * Helper function to create a custom server configuration for any tenant ID
  * Useful for tests that need to work with different tenants dynamically
  * 

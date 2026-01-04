@@ -6,7 +6,9 @@ import {
   backendUrl,
   clientSecretPostClient,
   clientSecretBasicClient,
-  serverConfig
+  serverConfig,
+  ssoPasswordOnlyClient,
+  ssoMfaRequiredClient
 } from "../../testConfig";
 import {
   getAuthorizations,
@@ -553,6 +555,218 @@ describe("SSO Session Management", () => {
 
   });
 
+  describe("Security - ACR Downgrade Prevention", () => {
+
+    it("should reject authorize-with-session when session acr does not meet requested acr_values", async () => {
+      const user = {
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+      };
+
+      // Step 1: Login with password only (creates OPSession with loa1 or similar acr)
+      console.log("Step 1: Login with password only to create low-ACR OPSession");
+
+      const firstAuthResponse = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "low-acr-state",
+        scope: "openid profile",
+        redirectUri: clientSecretPostClient.redirectUri,
+        // No acr_values - use default policy
+      });
+
+      expect(firstAuthResponse.status).toBe(302);
+      const { params: firstParams } = convertNextAction(firstAuthResponse.headers.location);
+      const firstId = firstParams.get("id");
+
+      // Authenticate with password only
+      const passwordResponse = await postAuthentication({
+        endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/{id}/password-authentication`,
+        id: firstId,
+        body: user,
+      });
+      expect(passwordResponse.status).toBe(200);
+
+      // Complete authorization (creates OPSession with password-only ACR)
+      const authorizeResponse = await authorize({
+        endpoint: serverConfig.authorizeEndpoint,
+        id: firstId,
+        body: {},
+      });
+      expect(authorizeResponse.status).toBe(200);
+
+      const firstResult = convertToAuthorizationResponse(authorizeResponse.data.redirect_uri);
+      expect(firstResult.code).toBeDefined();
+
+      // Get tokens to complete flow
+      await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: firstResult.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      console.log("Initial login successful - OPSession created with password-only ACR");
+
+      // Step 2: Start new authorization request with higher ACR requirement
+      console.log("\nStep 2: Start new authorization request with higher acr_values requirement");
+
+      const secondAuthResponse = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "high-acr-state",
+        scope: "openid profile",
+        redirectUri: clientSecretPostClient.redirectUri,
+        acrValues: "urn:mace:incommon:iap:silver", // Request higher ACR than session has
+      });
+
+      expect(secondAuthResponse.status).toBe(302);
+      const { params: secondParams } = convertNextAction(secondAuthResponse.headers.location);
+      const secondId = secondParams.get("id");
+      console.log("New authorization ID:", secondId);
+
+      // Check view-data - session should NOT be enabled due to ACR mismatch
+      const viewDataResponse = await get({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${secondId}/view-data`,
+      });
+      console.log("View data response:", viewDataResponse.status);
+      console.log("Session enabled:", viewDataResponse.data?.session_enabled);
+
+      // Session should be disabled because session ACR doesn't match requested acr_values
+      expect(viewDataResponse.data?.session_enabled).toBe(false);
+
+      // Step 3: Try authorize-with-session (should be rejected)
+      console.log("\nStep 3: Try authorize-with-session (should fail due to ACR mismatch)");
+
+      const ssoResponse = await authorizeWithSession(secondId);
+      console.log("SSO response status:", ssoResponse.status);
+      console.log("SSO response data:", JSON.stringify(ssoResponse.data));
+
+      // Should be rejected due to ACR mismatch
+      expect(ssoResponse.status).toBe(400);
+      expect(ssoResponse.data.error).toBe("invalid_request");
+      expect(ssoResponse.data.error_description).toContain("acr");
+
+      console.log("ACR downgrade attack successfully blocked!");
+    });
+
+    it("should allow authorize-with-session when session acr meets requested acr_values", async () => {
+      const user = {
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+      };
+
+      // Step 1: Login with specific ACR to create OPSession
+      console.log("Step 1: Login with specific ACR to create OPSession");
+
+      const firstAuthResponse = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "acr-match-state",
+        scope: "openid profile",
+        redirectUri: clientSecretPostClient.redirectUri,
+        acrValues: "urn:mace:incommon:iap:bronze", // Specific ACR
+      });
+
+      expect(firstAuthResponse.status).toBe(302);
+      const { params: firstParams } = convertNextAction(firstAuthResponse.headers.location);
+      const firstId = firstParams.get("id");
+
+      // Authenticate
+      const passwordResponse = await postAuthentication({
+        endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/{id}/password-authentication`,
+        id: firstId,
+        body: user,
+      });
+      expect(passwordResponse.status).toBe(200);
+
+      // Complete authorization (creates OPSession with bronze ACR)
+      const authorizeResponse = await authorize({
+        endpoint: serverConfig.authorizeEndpoint,
+        id: firstId,
+        body: {},
+      });
+      expect(authorizeResponse.status).toBe(200);
+
+      const firstResult = convertToAuthorizationResponse(authorizeResponse.data.redirect_uri);
+      expect(firstResult.code).toBeDefined();
+
+      // Get tokens
+      await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: firstResult.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      console.log("Initial login successful with bronze ACR");
+
+      // Step 2: Start new authorization request with same ACR requirement
+      console.log("\nStep 2: Start new authorization request with same acr_values");
+
+      const secondAuthResponse = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "same-acr-state",
+        scope: "openid profile",
+        redirectUri: clientSecretPostClient.redirectUri,
+        acrValues: "urn:mace:incommon:iap:bronze", // Same ACR as session
+      });
+
+      expect(secondAuthResponse.status).toBe(302);
+      const { params: secondParams } = convertNextAction(secondAuthResponse.headers.location);
+      const secondId = secondParams.get("id");
+      console.log("New authorization ID:", secondId);
+
+      // Check view-data - session should be enabled since ACR matches
+      const viewDataResponse = await get({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${secondId}/view-data`,
+      });
+      console.log("View data response:", viewDataResponse.status);
+      console.log("Session enabled:", viewDataResponse.data?.session_enabled);
+
+      // Session should be enabled because session ACR matches requested acr_values
+      expect(viewDataResponse.data?.session_enabled).toBe(true);
+
+      // Step 3: Use authorize-with-session (should succeed)
+      console.log("\nStep 3: Call authorize-with-session (should succeed)");
+
+      const ssoResponse = await authorizeWithSession(secondId);
+      console.log("SSO response status:", ssoResponse.status);
+      console.log("SSO response data:", JSON.stringify(ssoResponse.data));
+
+      expect(ssoResponse.status).toBe(200);
+      expect(ssoResponse.data.redirect_uri).toBeDefined();
+
+      const ssoResult = convertToAuthorizationResponse(ssoResponse.data.redirect_uri);
+      expect(ssoResult.code).toBeDefined();
+      expect(ssoResult.error).toBeFalsy();
+
+      // Exchange code for tokens
+      const ssoTokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: ssoResult.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(ssoTokenResponse.status).toBe(200);
+      expect(ssoTokenResponse.data.id_token).toBeDefined();
+
+      console.log("authorize-with-session with matching ACR successful!");
+    });
+
+  });
+
   describe("Security - Authorization Flow Hijacking Prevention", () => {
 
     it("should reject authorize-with-session when AUTH_SESSION cookie is missing", async () => {
@@ -742,6 +956,190 @@ describe("SSO Session Management", () => {
       expect(hijackResponse.data.error_description).toContain("auth_session_mismatch");
 
       console.log("Hijack attempt successfully blocked - AUTH_SESSION validation working!");
+    });
+
+  });
+
+  describe("Security - Authentication Policy Bypass Prevention", () => {
+
+    it("should reject authorize-with-session when session does not satisfy MFA policy", async () => {
+      /**
+       * Attack scenario:
+       * 1. User logs in with ssoPasswordOnlyClient (password only) - creates OPSession with password-authentication success
+       * 2. User starts authorization with ssoMfaRequiredClient (requires password + SMS)
+       * 3. User tries authorize-with-session - should FAIL because OPSession doesn't have sms-authentication success
+       */
+      const user = {
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+      };
+
+      console.log("=== Authentication Policy Bypass Prevention Test ===\n");
+
+      // Step 1: Login with ssoPasswordOnlyClient (password only)
+      console.log("Step 1: Login with ssoPasswordOnlyClient (password only policy)");
+
+      const firstAuthResponse = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: ssoPasswordOnlyClient.clientId,
+        responseType: "code",
+        state: "password-only-state",
+        scope: "openid profile",
+        redirectUri: ssoPasswordOnlyClient.redirectUri,
+      });
+
+      expect(firstAuthResponse.status).toBe(302);
+      const { params: firstParams } = convertNextAction(firstAuthResponse.headers.location);
+      const firstId = firstParams.get("id");
+      console.log("Password-only client authorization ID:", firstId);
+
+      // Authenticate with password
+      const passwordAuthResponse = await postAuthentication({
+        endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/{id}/password-authentication`,
+        id: firstId,
+        body: user,
+      });
+      expect(passwordAuthResponse.status).toBe(200);
+      console.log("Password authentication successful");
+
+      // Complete authorization
+      const authorizeResponse = await authorize({
+        endpoint: serverConfig.authorizeEndpoint,
+        id: firstId,
+        body: {},
+      });
+      expect(authorizeResponse.status).toBe(200);
+      console.log("Authorization completed - OPSession created with password-only authentication");
+
+      // Exchange code for tokens (to establish session)
+      const firstResult = convertToAuthorizationResponse(authorizeResponse.data.redirect_uri);
+      await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: firstResult.code,
+        grantType: "authorization_code",
+        redirectUri: ssoPasswordOnlyClient.redirectUri,
+        clientId: ssoPasswordOnlyClient.clientId,
+        clientSecret: ssoPasswordOnlyClient.clientSecret,
+      });
+
+      // Step 2: Start authorization with ssoMfaRequiredClient (requires password + SMS)
+      console.log("\nStep 2: Start authorization with ssoMfaRequiredClient (MFA required policy)");
+
+      const secondAuthResponse = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: ssoMfaRequiredClient.clientId,
+        responseType: "code",
+        state: "mfa-required-state",
+        scope: "openid profile",
+        redirectUri: ssoMfaRequiredClient.redirectUri,
+      });
+
+      expect(secondAuthResponse.status).toBe(302);
+      const { params: secondParams } = convertNextAction(secondAuthResponse.headers.location);
+      const secondId = secondParams.get("id");
+      console.log("MFA-required client authorization ID:", secondId);
+
+      // Step 3: Try authorize-with-session (should FAIL)
+      console.log("\nStep 3: Try authorize-with-session (should FAIL - session lacks SMS authentication)");
+
+      const ssoResponse = await authorizeWithSession(secondId);
+      console.log("SSO response status:", ssoResponse.status);
+      console.log("SSO response data:", JSON.stringify(ssoResponse.data));
+
+      // Should be rejected because OPSession only has password authentication,
+      // but ssoMfaRequiredClient's policy requires both password AND SMS
+      expect(ssoResponse.status).toBe(400);
+      expect(ssoResponse.data.error).toBe("invalid_request");
+      expect(ssoResponse.data.error_description).toContain("session does not satisfy authentication policy");
+
+      console.log("\n=== SUCCESS: Authentication Policy Bypass Prevented! ===");
+      console.log("Attack blocked: User cannot bypass MFA by using password-only session");
+    });
+
+    it("should allow authorize-with-session when session satisfies policy", async () => {
+      /**
+       * Normal scenario:
+       * 1. User logs in with ssoPasswordOnlyClient (password only)
+       * 2. User starts another authorization with ssoPasswordOnlyClient (same policy)
+       * 3. User uses authorize-with-session - should SUCCEED
+       */
+      const user = {
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+      };
+
+      console.log("=== Session Satisfies Policy - Should Succeed ===\n");
+
+      // Step 1: Login with ssoPasswordOnlyClient
+      console.log("Step 1: Login with ssoPasswordOnlyClient");
+
+      const firstAuthResponse = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: ssoPasswordOnlyClient.clientId,
+        responseType: "code",
+        state: "first-login-state",
+        scope: "openid profile",
+        redirectUri: ssoPasswordOnlyClient.redirectUri,
+      });
+
+      expect(firstAuthResponse.status).toBe(302);
+      const { params: firstParams } = convertNextAction(firstAuthResponse.headers.location);
+      const firstId = firstParams.get("id");
+
+      await postAuthentication({
+        endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/{id}/password-authentication`,
+        id: firstId,
+        body: user,
+      });
+
+      const authorizeResponse = await authorize({
+        endpoint: serverConfig.authorizeEndpoint,
+        id: firstId,
+        body: {},
+      });
+      expect(authorizeResponse.status).toBe(200);
+
+      const firstResult = convertToAuthorizationResponse(authorizeResponse.data.redirect_uri);
+      await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: firstResult.code,
+        grantType: "authorization_code",
+        redirectUri: ssoPasswordOnlyClient.redirectUri,
+        clientId: ssoPasswordOnlyClient.clientId,
+        clientSecret: ssoPasswordOnlyClient.clientSecret,
+      });
+      console.log("Initial login completed");
+
+      // Step 2: Start another authorization with SAME client
+      console.log("\nStep 2: Start authorization with same client (ssoPasswordOnlyClient)");
+
+      const secondAuthResponse = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: ssoPasswordOnlyClient.clientId,
+        responseType: "code",
+        state: "sso-state",
+        scope: "openid profile",
+        redirectUri: ssoPasswordOnlyClient.redirectUri,
+      });
+
+      expect(secondAuthResponse.status).toBe(302);
+      const { params: secondParams } = convertNextAction(secondAuthResponse.headers.location);
+      const secondId = secondParams.get("id");
+
+      // Step 3: Use authorize-with-session (should succeed)
+      console.log("\nStep 3: Use authorize-with-session (should succeed)");
+
+      const ssoResponse = await authorizeWithSession(secondId);
+      console.log("SSO response status:", ssoResponse.status);
+
+      expect(ssoResponse.status).toBe(200);
+      expect(ssoResponse.data.redirect_uri).toBeDefined();
+
+      const ssoResult = convertToAuthorizationResponse(ssoResponse.data.redirect_uri);
+      expect(ssoResult.code).toBeDefined();
+      expect(ssoResult.error).toBeFalsy();
+
+      console.log("\n=== SUCCESS: SSO worked with matching policy ===");
     });
 
   });

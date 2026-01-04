@@ -61,10 +61,14 @@ public class OIDCSessionHandler {
    * @param tenant the tenant
    * @param user the authenticated user
    * @param authentication the authentication result
+   * @param interactionResults the authentication interaction results for policy evaluation
    * @return the created OPSession
    */
   public OPSession onAuthenticationSuccess(
-      Tenant tenant, User user, Authentication authentication) {
+      Tenant tenant,
+      User user,
+      Authentication authentication,
+      Map<String, Map<String, Object>> interactionResults) {
     Instant authTime =
         authentication.hasAuthenticationTime()
             ? authentication.time().atZone(ZoneOffset.UTC).toInstant()
@@ -78,6 +82,7 @@ public class OIDCSessionHandler {
         authTime,
         authentication.acr(),
         authentication.methods(),
+        interactionResults,
         sessionTimeoutSeconds);
   }
 

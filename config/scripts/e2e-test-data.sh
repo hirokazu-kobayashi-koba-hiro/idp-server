@@ -126,6 +126,8 @@ client_files=(
   unsupportedClient.json
   federationClient.json
   nativeAppClient.json
+  ssoPasswordOnlyClient.json
+  ssoMfaRequiredClient.json
 )
 
 for client_file in "${client_files[@]}"; do

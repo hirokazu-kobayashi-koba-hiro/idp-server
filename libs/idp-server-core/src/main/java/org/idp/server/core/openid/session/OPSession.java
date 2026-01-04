@@ -19,9 +19,12 @@ package org.idp.server.core.openid.session;
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionResults;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
@@ -34,6 +37,7 @@ public class OPSession implements Serializable {
   private Instant authTime;
   private String acr;
   private List<String> amr;
+  private Map<String, Map<String, Object>> interactionResults;
   private BrowserState browserState;
   private Instant createdAt;
   private Instant expiresAt;
@@ -55,6 +59,7 @@ public class OPSession implements Serializable {
       Instant authTime,
       String acr,
       List<String> amr,
+      Map<String, Map<String, Object>> interactionResults,
       BrowserState browserState,
       Instant createdAt,
       Instant expiresAt,
@@ -66,6 +71,7 @@ public class OPSession implements Serializable {
     this.authTime = authTime;
     this.acr = acr;
     this.amr = amr;
+    this.interactionResults = interactionResults;
     this.browserState = browserState;
     this.createdAt = createdAt;
     this.expiresAt = expiresAt;
@@ -80,6 +86,7 @@ public class OPSession implements Serializable {
       Instant authTime,
       String acr,
       List<String> amr,
+      Map<String, Map<String, Object>> interactionResults,
       long sessionTimeoutSeconds) {
     Instant now = Instant.now();
     return new OPSession(
@@ -90,6 +97,7 @@ public class OPSession implements Serializable {
         authTime,
         acr,
         amr,
+        interactionResults,
         BrowserState.generate(),
         now,
         now.plusSeconds(sessionTimeoutSeconds),
@@ -122,6 +130,21 @@ public class OPSession implements Serializable {
 
   public List<String> amr() {
     return amr;
+  }
+
+  public Map<String, Map<String, Object>> interactionResults() {
+    return interactionResults != null ? interactionResults : new HashMap<>();
+  }
+
+  public boolean hasInteractionResults() {
+    return interactionResults != null && !interactionResults.isEmpty();
+  }
+
+  public AuthenticationInteractionResults toAuthenticationInteractionResults() {
+    if (interactionResults == null || interactionResults.isEmpty()) {
+      return new AuthenticationInteractionResults();
+    }
+    return AuthenticationInteractionResults.fromMap(interactionResults);
   }
 
   public Authentication authentication() {

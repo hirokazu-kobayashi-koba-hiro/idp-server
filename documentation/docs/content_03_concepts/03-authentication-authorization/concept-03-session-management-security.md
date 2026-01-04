@@ -182,6 +182,7 @@ sequenceDiagram
 |------|------|------|
 | セッション固定攻撃 (Session Fixation) | AUTH_SESSION Cookie検証 | `validateAuthSession()` |
 | 認可フローハイジャック (authorize-with-session経由) | AUTH_SESSION Cookie検証 | `authorizeWithSession()`に追加 |
+| ACRダウングレード攻撃 | acr_values検証 | `isSessionEnabled()`, `authorizeWithSession()` |
 | CSRF攻撃 | SameSite=Lax + POST only | Cookie設定 |
 | XSS経由のセッション窃取 | HttpOnly | IDP_IDENTITY Cookie |
 
@@ -198,23 +199,33 @@ sequenceDiagram
 
 ### 対策
 
-`authorizeWithSession()` で `validateAuthSession()` を実行し、AUTH_SESSION Cookieの一致を検証。
-
-```java
-public OAuthAuthorizeResponse authorizeWithSession(...) {
-    // Validate AUTH_SESSION cookie to prevent authorization flow hijacking attacks
-    AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(
-            tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
-    validateAuthSession(authenticationTransaction);
-    // ...
-}
-```
+`authorizeWithSession()` で AUTH_SESSION Cookieの一致を検証。認可フローを開始したブラウザと完了するブラウザが同一であることを保証。
 
 ### 結果
 
 - AUTH_SESSION Cookie不一致 → 401 `auth_session_mismatch`
 - AUTH_SESSION Cookie欠落 → 401 `auth_session_mismatch`
+
+## 対策：ACRダウングレード攻撃
+
+### 攻撃シナリオ
+
+```
+1. ユーザーがloa1（パスワードのみ）でログイン → OPSession(acr=loa1)作成
+2. 新しい認可リクエスト（acr_values=loa2, MFA必要）
+3. セッションが有効なためauthorize-with-sessionが使用可能に見える
+4. authorize-with-session → loa1で認可される（MFAバイパス）
+```
+
+### 対策
+
+acr_valuesとセッションのacrの整合性を検証。セッションのacrが要求されたacr_valuesに含まれない場合、セッション再利用を拒否。
+
+### 結果
+
+- セッションにacrがない → session_enabled=false, 400エラー
+- セッションのacrがacr_valuesに含まれない → session_enabled=false, 400エラー
+- セッションのacrがacr_valuesに含まれる → session_enabled=true, 認可成功
 
 ## E2Eテスト
 
@@ -222,6 +233,8 @@ public OAuthAuthorizeResponse authorizeWithSession(...) {
 |-------|---------|
 | AUTH_SESSION Cookie missing | `scenario-13-sso-session-management.test.js` |
 | AUTH_SESSION Cookie mismatch | `scenario-13-sso-session-management.test.js` |
+| ACR downgrade prevention (reject) | `scenario-13-sso-session-management.test.js` |
+| ACR match (allow) | `scenario-13-sso-session-management.test.js` |
 
 ## 参考
 

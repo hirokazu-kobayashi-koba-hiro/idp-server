@@ -83,6 +83,7 @@ public class OAuthViewDataCreator {
    *   <li>OPSession exists and is active
    *   <li>prompt=login is not specified (prompt=login forces re-authentication)
    *   <li>If max_age is specified, auth_time must be within the max_age window
+   *   <li>If acr_values is specified, session's acr must be in the requested acr_values
    * </ul>
    *
    * @return true if session-based authorization can be used
@@ -103,6 +104,17 @@ public class OAuthViewDataCreator {
       long maxAgeSeconds = authorizationRequest.maxAge().toLongValue();
       Instant maxAuthTime = opSession.authTime().plusSeconds(maxAgeSeconds);
       if (Instant.now().isAfter(maxAuthTime)) {
+        return false;
+      }
+    }
+
+    // Check acr_values constraint - prevent ACR downgrade attacks
+    if (authorizationRequest.hasAcrValues()) {
+      String sessionAcr = opSession.acr();
+      if (sessionAcr == null || sessionAcr.isEmpty()) {
+        return false;
+      }
+      if (!authorizationRequest.acrValues().contains(sessionAcr)) {
         return false;
       }
     }

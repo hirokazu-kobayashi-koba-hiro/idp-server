@@ -67,6 +67,10 @@ public enum DefaultSecurityEventType {
   oauth_authorize("OAuth Authorize success"),
   oauth_authorize_with_session("OAuth Authorize success with a session"),
   oauth_authorize_with_session_expired("OAuth Authorize failed due to session expired"),
+  oauth_authorize_with_session_acr_mismatch(
+      "OAuth Authorize failed due to session acr not matching requested acr_values"),
+  oauth_authorize_with_session_policy_mismatch(
+      "OAuth Authorize failed due to session not satisfying authentication policy"),
   oauth_deny("OAuth Deny success"),
   issue_token_success("Issue token success"),
   issue_token_failure("Issue token failure"),

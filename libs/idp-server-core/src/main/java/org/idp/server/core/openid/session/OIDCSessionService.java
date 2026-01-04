@@ -45,9 +45,18 @@ public class OIDCSessionService {
       Instant authTime,
       String acr,
       List<String> amr,
+      Map<String, Map<String, Object>> interactionResults,
       long sessionTimeoutSeconds) {
     OPSession session =
-        OPSession.create(tenant.identifier(), sub, user, authTime, acr, amr, sessionTimeoutSeconds);
+        OPSession.create(
+            tenant.identifier(),
+            sub,
+            user,
+            authTime,
+            acr,
+            amr,
+            interactionResults,
+            sessionTimeoutSeconds);
     opSessionRepository.save(tenant, session);
     return session;
   }

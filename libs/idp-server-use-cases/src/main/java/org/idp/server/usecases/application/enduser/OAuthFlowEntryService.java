@@ -27,11 +27,13 @@ import org.idp.server.core.openid.authentication.AuthSessionValidator;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionResults;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.authentication.AuthenticationInteractor;
 import org.idp.server.core.openid.authentication.AuthenticationInteractors;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.core.openid.authentication.AuthorizationIdentifier;
+import org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
@@ -253,7 +255,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       Authentication authentication = updatedTransaction.authentication();
       OPSession opSession =
           oidcSessionHandler.onAuthenticationSuccess(
-              tenant, updatedTransaction.user(), authentication);
+              tenant,
+              updatedTransaction.user(),
+              authentication,
+              updatedTransaction.interactionResults().toStorageMap());
       oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
     }
 
@@ -347,7 +352,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
       Authentication authentication = updatedTransaction.authentication();
       OPSession opSession =
           oidcSessionHandler.onAuthenticationSuccess(
-              tenant, updatedTransaction.user(), authentication);
+              tenant,
+              updatedTransaction.user(),
+              authentication,
+              updatedTransaction.interactionResults().toStorageMap());
       oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
     }
 
@@ -471,6 +479,48 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
       return new OAuthAuthorizeResponse(
           OAuthAuthorizeStatus.BAD_REQUEST, "invalid_request", "session expired");
+    }
+
+    // Validate acr_values - prevent ACR downgrade attacks
+    if (authorizationRequest.hasAcrValues()) {
+      String sessionAcr = opSession.acr();
+      if (sessionAcr == null
+          || sessionAcr.isEmpty()
+          || !authorizationRequest.acrValues().contains(sessionAcr)) {
+        eventPublisher.publish(
+            tenant,
+            authorizationRequest,
+            new User(),
+            DefaultSecurityEventType.oauth_authorize_with_session_acr_mismatch.toEventType(),
+            requestAttributes);
+
+        return new OAuthAuthorizeResponse(
+            OAuthAuthorizeStatus.BAD_REQUEST,
+            "invalid_request",
+            "session acr does not satisfy requested acr_values");
+      }
+    }
+
+    // Validate authentication policy - prevent authentication policy bypass
+    if (authenticationTransaction.hasAuthenticationPolicy()) {
+      AuthenticationPolicy policy = authenticationTransaction.authenticationPolicy();
+      if (policy.hasSuccessConditions()) {
+        AuthenticationInteractionResults sessionResults =
+            opSession.toAuthenticationInteractionResults();
+        if (!MfaConditionEvaluator.isSuccessSatisfied(policy.successConditions(), sessionResults)) {
+          eventPublisher.publish(
+              tenant,
+              authorizationRequest,
+              new User(),
+              DefaultSecurityEventType.oauth_authorize_with_session_policy_mismatch.toEventType(),
+              requestAttributes);
+
+          return new OAuthAuthorizeResponse(
+              OAuthAuthorizeStatus.BAD_REQUEST,
+              "invalid_request",
+              "session does not satisfy authentication policy");
+        }
+      }
     }
 
     // Get user from session
