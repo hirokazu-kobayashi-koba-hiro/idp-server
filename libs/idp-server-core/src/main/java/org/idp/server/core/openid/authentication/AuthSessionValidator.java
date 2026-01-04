@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.authentication;
 
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.log.LoggerWrapper;
 
@@ -53,7 +54,7 @@ public class AuthSessionValidator {
    * Validates that the cookie authSessionId matches the transaction's authSessionId.
    *
    * <p>This validation is skipped for transactions without authSessionId (e.g., CIBA and other
-   * non-browser flows).
+   * non-browser flows), or when the authentication policy has auth_session_binding_required=false.
    *
    * @param transaction the authentication transaction containing the expected authSessionId
    * @param cookieAuthSessionId the authSessionId from the AUTH_SESSION cookie
@@ -66,6 +67,13 @@ public class AuthSessionValidator {
     // This covers CIBA and other non-browser flows that don't use AUTH_SESSION cookie
     if (!transaction.hasAuthSessionId()) {
       log.debug("AUTH_SESSION validation skipped: transaction has no authSessionId");
+      return;
+    }
+
+    // If authentication policy allows opt-out, skip validation
+    AuthenticationPolicy authenticationPolicy = transaction.authenticationPolicy();
+    if (authenticationPolicy != null && !authenticationPolicy.authSessionBindingRequired()) {
+      log.debug("AUTH_SESSION validation skipped: auth_session_binding_required=false in policy");
       return;
     }
 
