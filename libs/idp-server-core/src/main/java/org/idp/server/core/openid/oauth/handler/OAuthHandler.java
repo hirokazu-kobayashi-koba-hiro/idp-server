@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth.handler;
 
+import org.idp.server.core.openid.oauth.OAuthUserDelegate;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
@@ -38,6 +39,7 @@ import org.idp.server.core.openid.oauth.view.OAuthViewData;
 import org.idp.server.core.openid.oauth.view.OAuthViewDataCreator;
 import org.idp.server.core.openid.session.ClientSessionIdentifier;
 import org.idp.server.core.openid.session.OIDCSessionHandler;
+import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.core.openid.session.TerminationReason;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -61,7 +63,8 @@ public class OAuthHandler {
     this.oidcSessionHandler = oidcSessionHandler;
   }
 
-  public OAuthViewDataResponse handleViewData(OAuthViewDataRequest request) {
+  public OAuthViewDataResponse handleViewData(
+      OAuthViewDataRequest request, OAuthUserDelegate oAuthUserDelegate) {
     Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
 
@@ -73,12 +76,22 @@ public class OAuthHandler {
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, requestedClientId);
 
+    OPSession opSession = request.opSession();
+
+    // Check if user still exists in DB
+    if (opSession != null && opSession.exists()) {
+      boolean userExists = oAuthUserDelegate.userExists(tenant, opSession.userIdentifier());
+      if (!userExists) {
+        opSession = null;
+      }
+    }
+
     OAuthViewDataCreator creator =
         new OAuthViewDataCreator(
             authorizationRequest,
             authorizationServerConfiguration,
             clientConfiguration,
-            request.opSession(),
+            opSession,
             request.additionalViewData());
     OAuthViewData oAuthViewData = creator.create();
 

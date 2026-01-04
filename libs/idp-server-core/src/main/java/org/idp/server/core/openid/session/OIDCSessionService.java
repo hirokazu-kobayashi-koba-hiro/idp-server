@@ -40,7 +40,6 @@ public class OIDCSessionService {
 
   public OPSession createOPSession(
       Tenant tenant,
-      String sub,
       User user,
       Instant authTime,
       String acr,
@@ -50,7 +49,6 @@ public class OIDCSessionService {
     OPSession session =
         OPSession.create(
             tenant.identifier(),
-            sub,
             user,
             authTime,
             acr,

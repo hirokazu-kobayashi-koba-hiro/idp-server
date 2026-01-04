@@ -4,124 +4,9 @@
   "enabled": true,
   "policies": [
     {
-      "description": "sso_password_only_policy",
-      "priority": 20,
-      "conditions": {
-        "client_ids": [
-          "ssoPasswordOnlyClient",
-          "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-        ]
-      },
-      "available_methods": [
-        "password",
-        "initial-registration"
-      ],
-      "acr_mapping_rules": {
-        "urn:mace:incommon:iap:bronze": [
-          "password"
-        ]
-      },
-      "success_conditions": {
-        "any_of": [
-          [
-            {
-              "path": "$.password-authentication.success_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 1
-            }
-          ],
-          [
-            {
-              "path": "$.initial-registration.success_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 1
-            }
-          ]
-        ]
-      },
-      "failure_conditions": {
-        "any_of": [
-          [
-            {
-              "path": "$.password-authentication.failure_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 5
-            }
-          ]
-        ]
-      }
-    },
-    {
-      "description": "sso_mfa_required_policy",
-      "priority": 20,
-      "conditions": {
-        "client_ids": [
-          "ssoMfaRequiredClient",
-          "b2c3d4e5-f6a7-8901-bcde-f12345678901"
-        ]
-      },
-      "available_methods": [
-        "password",
-        "sms",
-        "initial-registration"
-      ],
-      "acr_mapping_rules": {
-        "urn:mace:incommon:iap:silver": [
-          "sms"
-        ],
-        "urn:mace:incommon:iap:bronze": [
-          "password"
-        ]
-      },
-      "success_conditions": {
-        "any_of": [
-          [
-            {
-              "path": "$.password-authentication.success_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 1
-            },
-            {
-              "path": "$.sms-authentication.success_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 1
-            }
-          ]
-        ]
-      },
-      "failure_conditions": {
-        "any_of": [
-          [
-            {
-              "path": "$.password-authentication.failure_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 5
-            }
-          ],
-          [
-            {
-              "path": "$.sms-authentication.failure_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 5
-            }
-          ]
-        ]
-      }
-    },
-    {
       "description": "default_authentication_policy",
-      "priority": 1,
+      "priority": 100,
       "conditions": {
-        "client_ids": [
-          "federationClient"
-        ],
         "scopes": [
           "openid"
         ]
@@ -136,24 +21,17 @@
       ],
       "step_definitions": [
         {
-          "method": "sso",
+          "method": "email",
           "order": 1,
           "requires_user": false,
           "allow_registration": true,
-          "user_identity_source": "sso"
-        },
-        {
-          "method": "email",
-          "order": 2,
-          "requires_user": true,
-          "allow_registration": false,
           "user_identity_source": "email"
         },
         {
           "method": "sms",
           "order": 2,
           "requires_user": true,
-          "allow_registration": false,
+          "allow_registration": true,
           "user_identity_source": "phone_number"
         }
       ],
@@ -358,9 +236,124 @@
       }
     },
     {
-      "description": "default_authentication_policy",
-      "priority": 2,
+      "description": "sso_password_only_policy",
+      "priority": 20,
       "conditions": {
+        "client_ids": [
+          "ssoPasswordOnlyClient",
+          "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        ]
+      },
+      "available_methods": [
+        "password",
+        "initial-registration"
+      ],
+      "acr_mapping_rules": {
+        "urn:mace:incommon:iap:bronze": [
+          "password"
+        ]
+      },
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "description": "sso_mfa_required_policy",
+      "priority": 20,
+      "conditions": {
+        "client_ids": [
+          "ssoMfaRequiredClient",
+          "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+        ]
+      },
+      "available_methods": [
+        "password",
+        "sms",
+        "initial-registration"
+      ],
+      "acr_mapping_rules": {
+        "urn:mace:incommon:iap:silver": [
+          "sms"
+        ],
+        "urn:mace:incommon:iap:bronze": [
+          "password"
+        ]
+      },
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.sms-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.sms-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "description": "default_authentication_policy",
+      "priority": 1,
+      "conditions": {
+        "client_ids": [
+          "federationClient"
+        ],
         "scopes": [
           "openid"
         ]
@@ -375,17 +368,24 @@
       ],
       "step_definitions": [
         {
-          "method": "email",
+          "method": "sso",
           "order": 1,
           "requires_user": false,
           "allow_registration": true,
+          "user_identity_source": "sso"
+        },
+        {
+          "method": "email",
+          "order": 2,
+          "requires_user": true,
+          "allow_registration": false,
           "user_identity_source": "email"
         },
         {
           "method": "sms",
           "order": 2,
           "requires_user": true,
-          "allow_registration": true,
+          "allow_registration": false,
           "user_identity_source": "phone_number"
         }
       ],

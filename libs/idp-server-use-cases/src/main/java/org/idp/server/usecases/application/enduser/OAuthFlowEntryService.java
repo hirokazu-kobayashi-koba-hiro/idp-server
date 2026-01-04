@@ -16,8 +16,6 @@
 
 package org.idp.server.usecases.application.enduser;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,13 +25,11 @@ import org.idp.server.core.openid.authentication.AuthSessionValidator;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
-import org.idp.server.core.openid.authentication.AuthenticationInteractionResults;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.authentication.AuthenticationInteractor;
 import org.idp.server.core.openid.authentication.AuthenticationInteractors;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.core.openid.authentication.AuthorizationIdentifier;
-import org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
@@ -62,6 +58,7 @@ import org.idp.server.core.openid.session.ClientSessionIdentifier;
 import org.idp.server.core.openid.session.OIDCSessionHandler;
 import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
+import org.idp.server.core.openid.session.SessionValidationResult;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -77,7 +74,7 @@ import org.idp.server.platform.type.RequestAttributes;
  * ClientSession for session management, similar to Keycloak's UserSession/ClientSession pattern.
  */
 @Transaction
-public class OAuthFlowEntryService implements OAuthFlowApi {
+public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(OAuthFlowEntryService.class);
 
@@ -208,7 +205,13 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
-    return oAuthProtocol.getViewData(oAuthViewDataRequest);
+    return oAuthProtocol.getViewData(oAuthViewDataRequest, this);
+  }
+
+  @Override
+  public boolean userExists(Tenant tenant, UserIdentifier userIdentifier) {
+    User user = userQueryRepository.findById(tenant, userIdentifier);
+    return user.exists();
   }
 
   @Override
@@ -448,96 +451,38 @@ public class OAuthFlowEntryService implements OAuthFlowApi {
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
-    // Get OPSession from cookie
-    Optional<OPSession> opSessionOpt =
-        oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate);
+    // Get OPSession from cookie and validate
+    OPSession opSession =
+        oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
 
-    if (opSessionOpt.isEmpty()) {
+    SessionValidationResult validationResult =
+        oidcSessionHandler.validateSessionForAuthorization(
+            opSession, authorizationRequest, authenticationTransaction.authenticationPolicy());
+
+    if (validationResult.isInvalid()) {
       eventPublisher.publish(
           tenant,
           authorizationRequest,
           new User(),
-          DefaultSecurityEventType.oauth_authorize_with_session_expired.toEventType(),
+          validationResult.eventType().toEventType(),
           requestAttributes);
 
       return new OAuthAuthorizeResponse(
-          OAuthAuthorizeStatus.BAD_REQUEST, "invalid_request", "session not found");
-    }
-
-    OPSession opSession = opSessionOpt.get();
-
-    // Validate session
-    Long maxAge =
-        authorizationRequest.maxAge().exists() ? authorizationRequest.maxAge().toLongValue() : null;
-    if (!oidcSessionHandler.isSessionValid(opSession, maxAge)) {
-      eventPublisher.publish(
-          tenant,
-          authorizationRequest,
-          new User(),
-          DefaultSecurityEventType.oauth_authorize_with_session_expired.toEventType(),
-          requestAttributes);
-
-      return new OAuthAuthorizeResponse(
-          OAuthAuthorizeStatus.BAD_REQUEST, "invalid_request", "session expired");
-    }
-
-    // Validate acr_values - prevent ACR downgrade attacks
-    if (authorizationRequest.hasAcrValues()) {
-      String sessionAcr = opSession.acr();
-      if (sessionAcr == null
-          || sessionAcr.isEmpty()
-          || !authorizationRequest.acrValues().contains(sessionAcr)) {
-        eventPublisher.publish(
-            tenant,
-            authorizationRequest,
-            new User(),
-            DefaultSecurityEventType.oauth_authorize_with_session_acr_mismatch.toEventType(),
-            requestAttributes);
-
-        return new OAuthAuthorizeResponse(
-            OAuthAuthorizeStatus.BAD_REQUEST,
-            "invalid_request",
-            "session acr does not satisfy requested acr_values");
-      }
-    }
-
-    // Validate authentication policy - prevent authentication policy bypass
-    if (authenticationTransaction.hasAuthenticationPolicy()) {
-      AuthenticationPolicy policy = authenticationTransaction.authenticationPolicy();
-      if (policy.hasSuccessConditions()) {
-        AuthenticationInteractionResults sessionResults =
-            opSession.toAuthenticationInteractionResults();
-        if (!MfaConditionEvaluator.isSuccessSatisfied(policy.successConditions(), sessionResults)) {
-          eventPublisher.publish(
-              tenant,
-              authorizationRequest,
-              new User(),
-              DefaultSecurityEventType.oauth_authorize_with_session_policy_mismatch.toEventType(),
-              requestAttributes);
-
-          return new OAuthAuthorizeResponse(
-              OAuthAuthorizeStatus.BAD_REQUEST,
-              "invalid_request",
-              "session does not satisfy authentication policy");
-        }
-      }
+          OAuthAuthorizeStatus.BAD_REQUEST,
+          validationResult.errorCode(),
+          validationResult.errorDescription());
     }
 
     // Get user from session
-    User user = userQueryRepository.findById(tenant, new UserIdentifier(opSession.sub()));
+    User user = userQueryRepository.findById(tenant, opSession.userIdentifier());
     if (!user.exists()) {
       return new OAuthAuthorizeResponse(
           OAuthAuthorizeStatus.BAD_REQUEST, "invalid_request", "user not found");
     }
 
-    // Create Authentication from session
-    LocalDateTime authTime = LocalDateTime.ofInstant(opSession.authTime(), ZoneOffset.UTC);
-    Authentication authentication =
-        new Authentication().setTime(authTime).addAcr(opSession.acr()).addMethods(opSession.amr());
-
     OAuthAuthorizeRequest authAuthorizeRequest =
         new OAuthAuthorizeRequest(
-            tenant, authorizationRequestIdentifier.value(), user, authentication);
+            tenant, authorizationRequestIdentifier.value(), user, opSession.authentication());
 
     // Create ClientSession
     createClientSessionAndSetSid(tenant, opSession, authorizationRequest, authAuthorizeRequest);

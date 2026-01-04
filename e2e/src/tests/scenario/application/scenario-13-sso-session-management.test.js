@@ -984,7 +984,7 @@ describe("SSO Session Management", () => {
         clientId: ssoPasswordOnlyClient.clientId,
         responseType: "code",
         state: "password-only-state",
-        scope: "openid profile",
+        scope: "profile",
         redirectUri: ssoPasswordOnlyClient.redirectUri,
       });
 
@@ -1030,7 +1030,7 @@ describe("SSO Session Management", () => {
         clientId: ssoMfaRequiredClient.clientId,
         responseType: "code",
         state: "mfa-required-state",
-        scope: "openid profile",
+        scope: "profile",
         redirectUri: ssoMfaRequiredClient.redirectUri,
       });
 

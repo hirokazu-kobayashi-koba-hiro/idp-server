@@ -26,13 +26,13 @@ import java.util.Objects;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionResults;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class OPSession implements Serializable {
 
   private OPSessionIdentifier id;
   private TenantIdentifier tenantId;
-  private String sub;
   private User user;
   private Instant authTime;
   private String acr;
@@ -54,7 +54,6 @@ public class OPSession implements Serializable {
   public OPSession(
       OPSessionIdentifier id,
       TenantIdentifier tenantId,
-      String sub,
       User user,
       Instant authTime,
       String acr,
@@ -66,7 +65,6 @@ public class OPSession implements Serializable {
       Instant lastAccessedAt) {
     this.id = id;
     this.tenantId = tenantId;
-    this.sub = sub;
     this.user = user;
     this.authTime = authTime;
     this.acr = acr;
@@ -81,7 +79,6 @@ public class OPSession implements Serializable {
 
   public static OPSession create(
       TenantIdentifier tenantId,
-      String sub,
       User user,
       Instant authTime,
       String acr,
@@ -92,7 +89,6 @@ public class OPSession implements Serializable {
     return new OPSession(
         OPSessionIdentifier.generate(),
         tenantId,
-        sub,
         user,
         authTime,
         acr,
@@ -113,7 +109,11 @@ public class OPSession implements Serializable {
   }
 
   public String sub() {
-    return sub;
+    return user != null ? user.sub() : null;
+  }
+
+  public UserIdentifier userIdentifier() {
+    return user != null ? new UserIdentifier(user.sub()) : new UserIdentifier();
   }
 
   public User user() {

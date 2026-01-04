@@ -22,7 +22,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -50,9 +52,11 @@ public class OIDCSessionHandler {
   private static final long DEFAULT_SESSION_MAX_AGE_SECONDS = 36000L; // 10 hours
 
   private final OIDCSessionService sessionService;
+  private final OIDCSessionVerifier sessionVerifier;
 
   public OIDCSessionHandler(OIDCSessionService sessionService) {
     this.sessionService = sessionService;
+    this.sessionVerifier = new OIDCSessionVerifier();
   }
 
   /**
@@ -77,7 +81,6 @@ public class OIDCSessionHandler {
     long sessionTimeoutSeconds = getSessionTimeoutSeconds(tenant);
     return sessionService.createOPSession(
         tenant,
-        user.sub(),
         user,
         authTime,
         authentication.acr(),
@@ -111,26 +114,28 @@ public class OIDCSessionHandler {
   }
 
   /**
-   * Validates if the OPSession is valid for SSO.
+   * Validates session for authorize-with-session flow.
    *
-   * @param opSession the OP session
-   * @param maxAge max age from authorization request (optional)
-   * @return true if session is valid
+   * <p>Performs comprehensive validation including:
+   *
+   * <ul>
+   *   <li>Session existence and expiration
+   *   <li>max_age constraint from authorization request
+   *   <li>acr_values constraint - prevents ACR downgrade attacks
+   *   <li>Authentication policy successConditions - prevents policy bypass
+   * </ul>
+   *
+   * @param opSession the OP session (may be null)
+   * @param authorizationRequest the authorization request
+   * @param authenticationPolicy the authentication policy for the client
+   * @return validation result with error details if invalid
    */
-  public boolean isSessionValid(OPSession opSession, Long maxAge) {
-    if (opSession == null || opSession.isExpired()) {
-      return false;
-    }
-
-    if (maxAge != null && maxAge > 0) {
-      Instant authTime = opSession.authTime();
-      Instant maxAuthTime = authTime.plusSeconds(maxAge);
-      if (Instant.now().isAfter(maxAuthTime)) {
-        return false;
-      }
-    }
-
-    return true;
+  public SessionValidationResult validateSessionForAuthorization(
+      OPSession opSession,
+      AuthorizationRequest authorizationRequest,
+      AuthenticationPolicy authenticationPolicy) {
+    return sessionVerifier.verifyForAuthorization(
+        opSession, authorizationRequest, authenticationPolicy);
   }
 
   /**
