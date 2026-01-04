@@ -323,11 +323,11 @@ https://app.example.com  ← RP
 
 | リクエスト種別 | SameSite=Strict | SameSite=Lax | SameSite=None |
 |:-------------|:----------------|:-------------|:--------------|
-| リンククリック（GET） | ❌ | ✅ | ✅ |
-| フォーム送信（POST） | ❌ | ❌ | ✅ |
-| fetch/XHR | ❌ | ❌ | ✅ |
+| リンククリック（GET） | ✅ | ✅ | ✅ |
+| フォーム送信（POST） | ✅ | ✅ | ✅ |
+| fetch/XHR | ✅ | ✅ | ✅ |
 
-**ポイント**: SameSite=Lax でリンククリック時にCookie送信される（OIDCリダイレクトフローで重要）
+**ポイント**: Same-Siteなので、SameSite属性に関係なく全てのCookieが送信される
 
 #### シナリオ3: 別ドメイン（Cross-Site）
 
