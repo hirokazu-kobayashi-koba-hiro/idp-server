@@ -23,7 +23,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface OPSessionRepository {
 
-  void save(Tenant tenant, OPSession session);
+  void register(Tenant tenant, OPSession session);
 
   Optional<OPSession> findById(Tenant tenant, OPSessionIdentifier id);
 

@@ -26,7 +26,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public interface ClientSessionRepository {
 
-  void save(Tenant tenant, ClientSession session);
+  void register(Tenant tenant, ClientSession session);
 
   Optional<ClientSession> findBySid(Tenant tenant, ClientSessionIdentifier sid);
 

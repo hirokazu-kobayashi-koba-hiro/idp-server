@@ -55,7 +55,7 @@ public class OIDCSessionService {
             amr,
             interactionResults,
             sessionTimeoutSeconds);
-    opSessionRepository.save(tenant, session);
+    opSessionRepository.register(tenant, session);
     return session;
   }
 
@@ -99,7 +99,7 @@ public class OIDCSessionService {
       long sessionTimeoutSeconds) {
     ClientSession session =
         ClientSession.create(opSession, clientId, scope, claims, nonce, sessionTimeoutSeconds);
-    clientSessionRepository.save(tenant, session);
+    clientSessionRepository.register(tenant, session);
     return session;
   }
 

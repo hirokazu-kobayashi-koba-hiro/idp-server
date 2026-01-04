@@ -30,6 +30,11 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  *
  * <p>Implementation of OPSessionRepository using SessionStore abstraction. Works with both Redis
  * and InMemory backends depending on the SessionStore implementation.
+ *
+ * <p>This implementation uses graceful degradation - session store errors are logged but not
+ * propagated. This ensures that core authentication flows can continue even if the session store
+ * (e.g., Redis) is unavailable. The trade-off is that SSO functionality will be degraded (users
+ * will need to re-authenticate each time).
  */
 public class OPSessionDataSource implements OPSessionRepository {
 
@@ -45,60 +50,94 @@ public class OPSessionDataSource implements OPSessionRepository {
   }
 
   @Override
-  public void save(Tenant tenant, OPSession session) {
-    String key = buildKey(tenant, session.id());
-    String json = jsonConverter.write(session);
-    long ttl = session.ttlSeconds();
+  public void register(Tenant tenant, OPSession session) {
+    try {
+      String key = buildKey(tenant, session.id());
+      String json = jsonConverter.write(session);
+      long ttl = session.ttlSeconds();
 
-    sessionStore.set(key, json, ttl);
+      sessionStore.set(key, json, ttl);
 
-    // browser_state も保存
-    if (session.browserState() != null && session.browserState().exists()) {
-      String browserStateKey = buildBrowserStateKey(tenant, session.id());
-      sessionStore.set(browserStateKey, session.browserState().value(), ttl);
+      // Save browser_state as well
+      if (session.browserState() != null && session.browserState().exists()) {
+        String browserStateKey = buildBrowserStateKey(tenant, session.id());
+        sessionStore.set(browserStateKey, session.browserState().value(), ttl);
+      }
+
+      log.debug(
+          "Saved OP session. id:{}, tenant:{}, ttl:{}",
+          session.id().value(),
+          tenant.identifierValue(),
+          ttl);
+    } catch (Exception e) {
+      log.error(
+          "Failed to save OP session (graceful degradation). id:{}, tenant:{}, error:{}",
+          session.id().value(),
+          tenant.identifierValue(),
+          e.getMessage());
     }
-
-    log.debug(
-        "Saved OP session. id:{}, tenant:{}, ttl:{}",
-        session.id().value(),
-        tenant.identifierValue(),
-        ttl);
   }
 
   @Override
   public Optional<OPSession> findById(Tenant tenant, OPSessionIdentifier id) {
-    String key = buildKey(tenant, id);
-    return sessionStore
-        .get(key)
-        .map(
-            json -> {
-              OPSession session = jsonConverter.read(json, OPSession.class);
-              log.debug("Found OP session. id:{}, tenant:{}", id.value(), tenant.identifierValue());
-              return session;
-            });
+    try {
+      String key = buildKey(tenant, id);
+      return sessionStore
+          .get(key)
+          .map(
+              json -> {
+                OPSession session = jsonConverter.read(json, OPSession.class);
+                log.debug(
+                    "Found OP session. id:{}, tenant:{}", id.value(), tenant.identifierValue());
+                return session;
+              });
+    } catch (Exception e) {
+      log.error(
+          "Failed to find OP session (graceful degradation). id:{}, tenant:{}, error:{}",
+          id.value(),
+          tenant.identifierValue(),
+          e.getMessage());
+      return Optional.empty();
+    }
   }
 
   @Override
   public void delete(Tenant tenant, OPSessionIdentifier id) {
-    String key = buildKey(tenant, id);
-    String browserStateKey = buildBrowserStateKey(tenant, id);
+    try {
+      String key = buildKey(tenant, id);
+      String browserStateKey = buildBrowserStateKey(tenant, id);
 
-    sessionStore.delete(key, browserStateKey);
-    log.debug("Deleted OP session. id:{}, tenant:{}", id.value(), tenant.identifierValue());
+      sessionStore.delete(key, browserStateKey);
+      log.debug("Deleted OP session. id:{}, tenant:{}", id.value(), tenant.identifierValue());
+    } catch (Exception e) {
+      log.error(
+          "Failed to delete OP session (graceful degradation). id:{}, tenant:{}, error:{}",
+          id.value(),
+          tenant.identifierValue(),
+          e.getMessage());
+    }
   }
 
   @Override
   public void updateLastAccessedAt(Tenant tenant, OPSession session) {
-    String key = buildKey(tenant, session.id());
-    String json = jsonConverter.write(session);
-    long ttl = sessionStore.ttl(key);
+    try {
+      String key = buildKey(tenant, session.id());
+      String json = jsonConverter.write(session);
+      long ttl = sessionStore.ttl(key);
 
-    sessionStore.set(key, json, ttl > 0 ? ttl : 0);
+      sessionStore.set(key, json, ttl > 0 ? ttl : 0);
 
-    log.debug(
-        "Updated OP session lastAccessedAt. id:{}, tenant:{}",
-        session.id().value(),
-        tenant.identifierValue());
+      log.debug(
+          "Updated OP session lastAccessedAt. id:{}, tenant:{}",
+          session.id().value(),
+          tenant.identifierValue());
+    } catch (Exception e) {
+      log.error(
+          "Failed to update OP session lastAccessedAt (graceful degradation). id:{}, tenant:{}, error:{}",
+          session.id().value(),
+          tenant.identifierValue(),
+          e.getMessage());
+    }
   }
 
   private String buildKey(Tenant tenant, OPSessionIdentifier id) {

@@ -36,6 +36,10 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
  *
  * <p>Implementation of ClientSessionRepository using SessionStore abstraction. Works with both
  * Redis and InMemory backends depending on the SessionStore implementation.
+ *
+ * <p>This implementation uses graceful degradation - session store errors are logged but not
+ * propagated. This ensures that core authentication flows can continue even if the session store
+ * (e.g., Redis) is unavailable.
  */
 public class ClientSessionDataSource implements ClientSessionRepository {
 
@@ -52,177 +56,236 @@ public class ClientSessionDataSource implements ClientSessionRepository {
   }
 
   @Override
-  public void save(Tenant tenant, ClientSession session) {
-    String key = buildKey(tenant, session.sid());
-    String json = jsonConverter.write(session);
-    long ttl = session.ttlSeconds();
+  public void register(Tenant tenant, ClientSession session) {
+    try {
+      String key = buildKey(tenant, session.sid());
+      String json = jsonConverter.write(session);
+      long ttl = session.ttlSeconds();
 
-    // セッション本体を保存
-    sessionStore.set(key, json, ttl);
+      // Save session data
+      sessionStore.set(key, json, ttl);
 
-    // インデックス: OPセッション → クライアントセッション群
-    String opSessionIndexKey = buildOpSessionIndexKey(tenant, session.opSessionId());
-    sessionStore.setAdd(opSessionIndexKey, session.sid().value());
-    if (ttl > 0) {
-      sessionStore.expire(opSessionIndexKey, ttl);
+      // Index: OP session -> client sessions
+      String opSessionIndexKey = buildOpSessionIndexKey(tenant, session.opSessionId());
+      sessionStore.setAdd(opSessionIndexKey, session.sid().value());
+      if (ttl > 0) {
+        sessionStore.expire(opSessionIndexKey, ttl);
+      }
+
+      // Index: tenant + sub -> client sessions
+      String tenantSubIndexKey = buildTenantSubIndexKey(session.tenantId(), session.sub());
+      sessionStore.setAdd(tenantSubIndexKey, session.sid().value());
+      if (ttl > 0) {
+        sessionStore.expire(tenantSubIndexKey, ttl);
+      }
+
+      // Index: tenant + client + sub -> client sessions
+      String tenantClientSubIndexKey =
+          buildTenantClientSubIndexKey(session.tenantId(), session.clientId(), session.sub());
+      sessionStore.setAdd(tenantClientSubIndexKey, session.sid().value());
+      if (ttl > 0) {
+        sessionStore.expire(tenantClientSubIndexKey, ttl);
+      }
+
+      log.debug(
+          "Saved client session. sid:{}, opSessionId:{}, clientId:{}",
+          session.sid().value(),
+          session.opSessionId().value(),
+          session.clientId());
+    } catch (Exception e) {
+      log.error(
+          "Failed to save client session (graceful degradation). sid:{}, error:{}",
+          session.sid().value(),
+          e.getMessage());
     }
-
-    // インデックス: テナント+sub → クライアントセッション群
-    String tenantSubIndexKey = buildTenantSubIndexKey(session.tenantId(), session.sub());
-    sessionStore.setAdd(tenantSubIndexKey, session.sid().value());
-    if (ttl > 0) {
-      sessionStore.expire(tenantSubIndexKey, ttl);
-    }
-
-    // インデックス: テナント+client+sub → クライアントセッション群
-    String tenantClientSubIndexKey =
-        buildTenantClientSubIndexKey(session.tenantId(), session.clientId(), session.sub());
-    sessionStore.setAdd(tenantClientSubIndexKey, session.sid().value());
-    if (ttl > 0) {
-      sessionStore.expire(tenantClientSubIndexKey, ttl);
-    }
-
-    log.debug(
-        "Saved client session. sid:{}, opSessionId:{}, clientId:{}",
-        session.sid().value(),
-        session.opSessionId().value(),
-        session.clientId());
   }
 
   @Override
   public Optional<ClientSession> findBySid(Tenant tenant, ClientSessionIdentifier sid) {
-    String key = buildKey(tenant, sid);
-    return sessionStore
-        .get(key)
-        .map(
-            json -> {
-              ClientSession session = jsonConverter.read(json, ClientSession.class);
-              log.debug(
-                  "Found client session. sid:{}, tenant:{}", sid.value(), tenant.identifierValue());
-              return session;
-            });
+    try {
+      String key = buildKey(tenant, sid);
+      return sessionStore
+          .get(key)
+          .map(
+              json -> {
+                ClientSession session = jsonConverter.read(json, ClientSession.class);
+                log.debug(
+                    "Found client session. sid:{}, tenant:{}",
+                    sid.value(),
+                    tenant.identifierValue());
+                return session;
+              });
+    } catch (Exception e) {
+      log.error(
+          "Failed to find client session (graceful degradation). sid:{}, error:{}",
+          sid.value(),
+          e.getMessage());
+      return Optional.empty();
+    }
   }
 
   @Override
   public ClientSessions findByOpSessionId(Tenant tenant, OPSessionIdentifier opSessionId) {
-    String indexKey = buildOpSessionIndexKey(tenant, opSessionId);
-    Set<String> sids = sessionStore.setMembers(indexKey);
+    try {
+      String indexKey = buildOpSessionIndexKey(tenant, opSessionId);
+      Set<String> sids = sessionStore.setMembers(indexKey);
 
-    if (sids.isEmpty()) {
+      if (sids.isEmpty()) {
+        return ClientSessions.empty();
+      }
+
+      List<ClientSession> sessions = new ArrayList<>();
+      for (String sid : sids) {
+        String key = buildKey(tenant, new ClientSessionIdentifier(sid));
+        sessionStore
+            .get(key)
+            .ifPresent(json -> sessions.add(jsonConverter.read(json, ClientSession.class)));
+      }
+
+      log.debug(
+          "Found {} client sessions for opSessionId:{}, tenant:{}",
+          sessions.size(),
+          opSessionId.value(),
+          tenant.identifierValue());
+      return new ClientSessions(sessions);
+    } catch (Exception e) {
+      log.error(
+          "Failed to find client sessions by opSessionId (graceful degradation). opSessionId:{}, error:{}",
+          opSessionId.value(),
+          e.getMessage());
       return ClientSessions.empty();
     }
-
-    List<ClientSession> sessions = new ArrayList<>();
-    for (String sid : sids) {
-      String key = buildKey(tenant, new ClientSessionIdentifier(sid));
-      sessionStore
-          .get(key)
-          .ifPresent(json -> sessions.add(jsonConverter.read(json, ClientSession.class)));
-    }
-
-    log.debug(
-        "Found {} client sessions for opSessionId:{}, tenant:{}",
-        sessions.size(),
-        opSessionId.value(),
-        tenant.identifierValue());
-    return new ClientSessions(sessions);
   }
 
   @Override
   public ClientSessions findByTenantAndSub(TenantIdentifier tenantId, String sub) {
-    String indexKey = buildTenantSubIndexKey(tenantId, sub);
-    Set<String> sids = sessionStore.setMembers(indexKey);
+    try {
+      String indexKey = buildTenantSubIndexKey(tenantId, sub);
+      Set<String> sids = sessionStore.setMembers(indexKey);
 
-    if (sids.isEmpty()) {
+      if (sids.isEmpty()) {
+        return ClientSessions.empty();
+      }
+
+      List<ClientSession> sessions = new ArrayList<>();
+      for (String sid : sids) {
+        String key = buildKey(tenantId, new ClientSessionIdentifier(sid));
+        sessionStore
+            .get(key)
+            .ifPresent(json -> sessions.add(jsonConverter.read(json, ClientSession.class)));
+      }
+
+      log.debug(
+          "Found {} client sessions for tenant:{}, sub:{}", sessions.size(), tenantId.value(), sub);
+      return new ClientSessions(sessions);
+    } catch (Exception e) {
+      log.error(
+          "Failed to find client sessions by tenant and sub (graceful degradation). tenant:{}, sub:{}, error:{}",
+          tenantId.value(),
+          sub,
+          e.getMessage());
       return ClientSessions.empty();
     }
-
-    List<ClientSession> sessions = new ArrayList<>();
-    for (String sid : sids) {
-      String key = buildKey(tenantId, new ClientSessionIdentifier(sid));
-      sessionStore
-          .get(key)
-          .ifPresent(json -> sessions.add(jsonConverter.read(json, ClientSession.class)));
-    }
-
-    log.debug(
-        "Found {} client sessions for tenant:{}, sub:{}", sessions.size(), tenantId.value(), sub);
-    return new ClientSessions(sessions);
   }
 
   @Override
   public ClientSessions findByTenantClientAndSub(
       TenantIdentifier tenantId, String clientId, String sub) {
-    String indexKey = buildTenantClientSubIndexKey(tenantId, clientId, sub);
-    Set<String> sids = sessionStore.setMembers(indexKey);
+    try {
+      String indexKey = buildTenantClientSubIndexKey(tenantId, clientId, sub);
+      Set<String> sids = sessionStore.setMembers(indexKey);
 
-    if (sids.isEmpty()) {
+      if (sids.isEmpty()) {
+        return ClientSessions.empty();
+      }
+
+      List<ClientSession> sessions = new ArrayList<>();
+      for (String sid : sids) {
+        String key = buildKey(tenantId, new ClientSessionIdentifier(sid));
+        sessionStore
+            .get(key)
+            .ifPresent(json -> sessions.add(jsonConverter.read(json, ClientSession.class)));
+      }
+
+      log.debug(
+          "Found {} client sessions for tenant:{}, clientId:{}, sub:{}",
+          sessions.size(),
+          tenantId.value(),
+          clientId,
+          sub);
+      return new ClientSessions(sessions);
+    } catch (Exception e) {
+      log.error(
+          "Failed to find client sessions by tenant, client and sub (graceful degradation). tenant:{}, clientId:{}, sub:{}, error:{}",
+          tenantId.value(),
+          clientId,
+          sub,
+          e.getMessage());
       return ClientSessions.empty();
     }
-
-    List<ClientSession> sessions = new ArrayList<>();
-    for (String sid : sids) {
-      String key = buildKey(tenantId, new ClientSessionIdentifier(sid));
-      sessionStore
-          .get(key)
-          .ifPresent(json -> sessions.add(jsonConverter.read(json, ClientSession.class)));
-    }
-
-    log.debug(
-        "Found {} client sessions for tenant:{}, clientId:{}, sub:{}",
-        sessions.size(),
-        tenantId.value(),
-        clientId,
-        sub);
-    return new ClientSessions(sessions);
   }
 
   @Override
   public void deleteBySid(Tenant tenant, ClientSessionIdentifier sid) {
-    String key = buildKey(tenant, sid);
+    try {
+      String key = buildKey(tenant, sid);
 
-    // まずセッション情報を取得してインデックスを削除
-    sessionStore
-        .get(key)
-        .ifPresent(
-            json -> {
-              ClientSession session = jsonConverter.read(json, ClientSession.class);
-              removeFromIndexes(tenant, session);
-            });
+      // First get session info to remove from indexes
+      sessionStore
+          .get(key)
+          .ifPresent(
+              json -> {
+                ClientSession session = jsonConverter.read(json, ClientSession.class);
+                removeFromIndexes(tenant, session);
+              });
 
-    sessionStore.delete(key);
-    log.debug("Deleted client session. sid:{}, tenant:{}", sid.value(), tenant.identifierValue());
+      sessionStore.delete(key);
+      log.debug("Deleted client session. sid:{}, tenant:{}", sid.value(), tenant.identifierValue());
+    } catch (Exception e) {
+      log.error(
+          "Failed to delete client session (graceful degradation). sid:{}, error:{}",
+          sid.value(),
+          e.getMessage());
+    }
   }
 
   @Override
   public int deleteByOpSessionId(Tenant tenant, OPSessionIdentifier opSessionId) {
-    String indexKey = buildOpSessionIndexKey(tenant, opSessionId);
-    Set<String> sids = sessionStore.setMembers(indexKey);
+    try {
+      String indexKey = buildOpSessionIndexKey(tenant, opSessionId);
+      Set<String> sids = sessionStore.setMembers(indexKey);
 
-    if (sids.isEmpty()) {
+      if (sids.isEmpty()) {
+        return 0;
+      }
+
+      int deletedCount = 0;
+      for (String sid : sids) {
+        String key = buildKey(tenant, new ClientSessionIdentifier(sid));
+        Optional<String> jsonOpt = sessionStore.get(key);
+
+        if (jsonOpt.isPresent()) {
+          ClientSession session = jsonConverter.read(jsonOpt.get(), ClientSession.class);
+          removeFromIndexes(tenant, session);
+          sessionStore.delete(key);
+          deletedCount++;
+        }
+      }
+
+      sessionStore.delete(indexKey);
+      log.debug(
+          "Deleted {} client sessions for opSessionId:{}, tenant:{}",
+          deletedCount,
+          opSessionId.value(),
+          tenant.identifierValue());
+      return deletedCount;
+    } catch (Exception e) {
+      log.error(
+          "Failed to delete client sessions by opSessionId (graceful degradation). opSessionId:{}, error:{}",
+          opSessionId.value(),
+          e.getMessage());
       return 0;
     }
-
-    int deletedCount = 0;
-    for (String sid : sids) {
-      String key = buildKey(tenant, new ClientSessionIdentifier(sid));
-      Optional<String> jsonOpt = sessionStore.get(key);
-
-      if (jsonOpt.isPresent()) {
-        ClientSession session = jsonConverter.read(jsonOpt.get(), ClientSession.class);
-        removeFromIndexes(tenant, session);
-        sessionStore.delete(key);
-        deletedCount++;
-      }
-    }
-
-    sessionStore.delete(indexKey);
-    log.debug(
-        "Deleted {} client sessions for opSessionId:{}, tenant:{}",
-        deletedCount,
-        opSessionId.value(),
-        tenant.identifierValue());
-    return deletedCount;
   }
 
   private void removeFromIndexes(Tenant tenant, ClientSession session) {
