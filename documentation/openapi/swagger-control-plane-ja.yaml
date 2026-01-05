@@ -2758,6 +2758,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/sessions/{session-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/SessionId'
+    delete:
+      summary: Delete user session
+      description: |
+        指定されたユーザーの特定のセッションを削除（ログアウト）します。
+
+        このエンドポイントは、ユーザーの特定のOPセッションを無効化します。
+        セッション削除により、そのセッションに関連するすべてのトークンも無効化されます。
+
+        **ユースケース:**
+        - 不正アクセスが疑われるセッションの強制終了
+        - ユーザーからの要請によるリモートログアウト
+        - セキュリティインシデント対応
+      tags:
+        - organization-user
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: セッションを正常に削除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: セッション、ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # Organization-level Role Management API
   /v1/management/organizations/{organization-id}/tenants/{tenant-id}/roles:
     parameters:
@@ -3374,6 +3412,14 @@ components:
         type: string
         format: uuid
       description: ユーザーの識別子
+    SessionId:
+      name: session-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: セッションの識別子
     AuthenticationConfigId:
       name: config-id
       in: path

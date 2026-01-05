@@ -26,6 +26,7 @@ import org.idp.server.control_plane.management.identity.user.io.UserManagementRe
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserQueries;
+import org.idp.server.core.openid.session.OPSessionIdentifier;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -59,6 +60,7 @@ public interface UserManagementApi {
           new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_UPDATE)));
       map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_DELETE)));
       map.put("findSessions", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_READ)));
+      map.put("deleteSession", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_DELETE)));
     } else {
       // PUBLIC tenants require USER_* permissions
       map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.USER_CREATE)));
@@ -78,6 +80,7 @@ public interface UserManagementApi {
           new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
       map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.USER_DELETE)));
       map.put("findSessions", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_READ)));
+      map.put("deleteSession", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_DELETE)));
     }
 
     AdminPermissions adminPermissions = map.get(method);
@@ -166,4 +169,12 @@ public interface UserManagementApi {
       TenantIdentifier tenantIdentifier,
       UserIdentifier userIdentifier,
       RequestAttributes requestAttributes);
+
+  UserManagementResponse deleteSession(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      OPSessionIdentifier sessionIdentifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 }

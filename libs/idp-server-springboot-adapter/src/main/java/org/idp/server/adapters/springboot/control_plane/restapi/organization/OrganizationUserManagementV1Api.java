@@ -25,6 +25,7 @@ import org.idp.server.control_plane.management.identity.user.io.UserManagementRe
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserQueries;
+import org.idp.server.core.openid.session.OPSessionIdentifier;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -463,6 +464,33 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
             new TenantIdentifier(tenantId),
             new UserIdentifier(userId),
             requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @DeleteMapping("/{userId}/sessions/{sessionId}")
+  public ResponseEntity<?> deleteSession(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @PathVariable String userId,
+      @PathVariable String sessionId,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        orgUserManagementApi.deleteSession(
+            organizationOperatorPrincipal.authenticationContext(),
+            new TenantIdentifier(tenantId),
+            new UserIdentifier(userId),
+            new OPSessionIdentifier(sessionId),
+            requestAttributes,
+            dryRun);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("content-type", "application/json");

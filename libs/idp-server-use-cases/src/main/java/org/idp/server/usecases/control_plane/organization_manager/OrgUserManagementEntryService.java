@@ -35,6 +35,7 @@ import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
+import org.idp.server.core.openid.session.OPSessionIdentifier;
 import org.idp.server.core.openid.session.repository.OPSessionRepository;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
@@ -180,6 +181,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
         new UserOrganizationAssignmentsUpdateService(
             userQueryRepository, userCommandRepository, relatedDataVerifier));
     services.put("findSessions", new UserSessionsFindService(opSessionRepository));
+    services.put("deleteSession", new UserSessionDeleteService(opSessionRepository));
 
     return new OrgUserManagementHandler(
         services, this, tenantQueryRepository, new OrganizationAccessVerifier());
@@ -453,5 +455,29 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
+  }
+
+  @Override
+  public UserManagementResponse deleteSession(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      OPSessionIdentifier sessionIdentifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    UserManagementResult result =
+        handler.handle(
+            "deleteSession",
+            authenticationContext,
+            tenantIdentifier,
+            new UserSessionDeleteRequest(userIdentifier, sessionIdentifier),
+            requestAttributes,
+            dryRun);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(dryRun);
   }
 }

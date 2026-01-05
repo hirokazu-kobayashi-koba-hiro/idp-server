@@ -16,7 +16,7 @@ import {
   authorize,
   requestToken
 } from "../../../api/oauthClient";
-import { get, post, postWithJson } from "../../../lib/http";
+import { get, post, postWithJson, deletion } from "../../../lib/http";
 import { convertNextAction, convertToAuthorizationResponse } from "../../../lib/util";
 
 /**
@@ -1310,6 +1310,150 @@ describe("SSO Session Management", () => {
       expect(sessionsResponse.data.list).toEqual([]);
 
       console.log("\n=== SUCCESS: Empty session list returned correctly ===");
+    });
+
+    it("should delete user session via organization-level API", async () => {
+      /**
+       * Test scenario:
+       * 1. User logs in via authorization flow to create an OPSession
+       * 2. Get OAuth token with management scope
+       * 3. Get the session list to find the session ID
+       * 4. Delete the session via DELETE API
+       * 5. Verify the session was deleted by listing again
+       */
+      console.log("=== Management API - Session Deletion Test ===\n");
+
+      const user = {
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+      };
+
+      // Step 1: Login via authorization flow to create OPSession
+      console.log("Step 1: Login via authorization flow to create OPSession");
+
+      const authResponse = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "session-delete-test",
+        scope: "openid profile",
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authResponse.status).toBe(302);
+
+      const { nextAction, params } = convertNextAction(authResponse.headers.location);
+      expect(nextAction).toBe("goAuthentication");
+      const authId = params.get("id");
+
+      // Perform password authentication
+      const passwordResponse = await postAuthentication({
+        endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/{id}/password-authentication`,
+        id: authId,
+        body: user,
+      });
+      expect(passwordResponse.status).toBe(200);
+
+      // Complete authorization (this creates OPSession)
+      const authorizeResponse = await authorize({
+        endpoint: serverConfig.authorizeEndpoint,
+        id: authId,
+        body: {},
+      });
+      expect(authorizeResponse.status).toBe(200);
+      console.log("Authorization completed - OPSession created");
+
+      // Get user sub from the authorization response
+      const authResult = convertToAuthorizationResponse(authorizeResponse.data.redirect_uri);
+
+      // Exchange code for tokens to get id_token with sub
+      const tokenExchangeResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authResult.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenExchangeResponse.status).toBe(200);
+
+      const idToken = tokenExchangeResponse.data.id_token;
+      const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+      const userSub = payload.sub;
+      console.log("User sub from id_token:", userSub);
+
+      // Step 2: Get OAuth token with management scope for Management API
+      console.log("\nStep 2: Get OAuth token with management scope");
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: user.username,
+        password: user.password,
+        scope: "management session:read session:delete",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log("Token response status:", tokenResponse.status);
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Step 3: Get the session list to find the session ID
+      console.log("\nStep 3: Get session list to find session ID");
+
+      const sessionsEndpoint = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users/${userSub}/sessions`;
+
+      const sessionsResponse = await get({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("Sessions response status:", sessionsResponse.status);
+      expect(sessionsResponse.status).toBe(200);
+      expect(sessionsResponse.data.list.length).toBeGreaterThan(0);
+
+      const sessionToDelete = sessionsResponse.data.list[0];
+      const sessionId = sessionToDelete.id;
+      console.log("Session ID to delete:", sessionId);
+
+      // Step 4: Delete the session via DELETE API
+      console.log("\nStep 4: Delete the session via DELETE API");
+
+      const deleteEndpoint = `${sessionsEndpoint}/${sessionId}`;
+      console.log("Delete endpoint:", deleteEndpoint);
+
+      const deleteResponse = await deletion({
+        url: deleteEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("Delete response status:", deleteResponse.status);
+
+      expect(deleteResponse.status).toBe(204);
+
+      // Step 5: Verify the session was deleted by listing again
+      console.log("\nStep 5: Verify the session was deleted");
+
+      const verifyResponse = await get({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("Verify response status:", verifyResponse.status);
+      console.log("Remaining sessions:", verifyResponse.data.list.length);
+
+      expect(verifyResponse.status).toBe(200);
+
+      // The deleted session should not be in the list
+      const deletedSessionStillExists = verifyResponse.data.list.some(s => s.id === sessionId);
+      expect(deletedSessionStillExists).toBe(false);
+
+      console.log("\n=== SUCCESS: Session deletion via Management API works! ===");
     });
 
   });

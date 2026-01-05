@@ -25,6 +25,7 @@ import org.idp.server.control_plane.management.identity.user.io.UserManagementRe
 import org.idp.server.control_plane.management.identity.user.io.UserRegistrationRequest;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserQueries;
+import org.idp.server.core.openid.session.OPSessionIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;
@@ -315,6 +316,33 @@ public class UserManagementV1Api implements ParameterTransformable {
             tenantIdentifier,
             userIdentifier,
             requestAttributes);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(
+        response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @DeleteMapping("/{user-id}/sessions/{session-id}")
+  public ResponseEntity<?> deleteSession(
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("user-id") UserIdentifier userIdentifier,
+      @PathVariable("session-id") String sessionId,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        userManagementApi.deleteSession(
+            operatorPrincipal.authenticationContext(),
+            tenantIdentifier,
+            userIdentifier,
+            new OPSessionIdentifier(sessionId),
+            requestAttributes,
+            dryRun);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
