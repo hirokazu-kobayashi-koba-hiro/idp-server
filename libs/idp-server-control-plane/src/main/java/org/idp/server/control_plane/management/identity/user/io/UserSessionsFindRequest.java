@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.session.repository;
+package org.idp.server.control_plane.management.identity.user.io;
 
-import java.util.Optional;
+import java.util.Map;
+import org.idp.server.control_plane.management.identity.user.handler.UserManagementRequest;
 import org.idp.server.core.openid.identity.UserIdentifier;
-import org.idp.server.core.openid.session.OPSession;
-import org.idp.server.core.openid.session.OPSessionIdentifier;
-import org.idp.server.core.openid.session.OPSessions;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public interface OPSessionRepository {
+public class UserSessionsFindRequest implements UserManagementRequest {
 
-  void register(Tenant tenant, OPSession session);
+  UserIdentifier userIdentifier;
 
-  Optional<OPSession> findById(Tenant tenant, OPSessionIdentifier id);
+  public UserSessionsFindRequest(UserIdentifier userIdentifier) {
+    this.userIdentifier = userIdentifier;
+  }
 
-  OPSessions findByUser(Tenant tenant, UserIdentifier userIdentifier);
+  public UserIdentifier userIdentifier() {
+    return userIdentifier;
+  }
 
-  void delete(Tenant tenant, OPSessionIdentifier id);
-
-  void updateLastAccessedAt(Tenant tenant, OPSession session);
+  @Override
+  public Map<String, Object> toMap() {
+    return Map.of("user_id", userIdentifier.value());
+  }
 }

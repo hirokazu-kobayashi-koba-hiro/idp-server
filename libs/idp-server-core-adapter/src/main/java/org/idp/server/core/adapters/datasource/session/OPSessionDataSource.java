@@ -16,9 +16,14 @@
 
 package org.idp.server.core.adapters.datasource.session;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.core.openid.session.OPSessionIdentifier;
+import org.idp.server.core.openid.session.OPSessions;
 import org.idp.server.core.openid.session.repository.OPSessionRepository;
 import org.idp.server.platform.datasource.session.SessionStore;
 import org.idp.server.platform.json.JsonConverter;
@@ -40,6 +45,7 @@ public class OPSessionDataSource implements OPSessionRepository {
 
   private static final String KEY_PREFIX = "op_session:";
   private static final String BROWSER_STATE_PREFIX = "browser_state:";
+  private static final String IDX_USER_PREFIX = "idx:op_user:";
 
   private final SessionStore sessionStore;
   private final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
@@ -64,10 +70,21 @@ public class OPSessionDataSource implements OPSessionRepository {
         sessionStore.set(browserStateKey, session.browserState().value(), ttl);
       }
 
+      // Index: user (sub) -> OP sessions
+      String sub = session.sub();
+      if (sub != null && !sub.isEmpty()) {
+        String userIndexKey = buildUserIndexKey(tenant, sub);
+        sessionStore.setAdd(userIndexKey, session.id().value());
+        if (ttl > 0) {
+          sessionStore.expire(userIndexKey, ttl);
+        }
+      }
+
       log.debug(
-          "Saved OP session. id:{}, tenant:{}, ttl:{}",
+          "Saved OP session. id:{}, tenant:{}, sub:{}, ttl:{}",
           session.id().value(),
           tenant.identifierValue(),
+          sub,
           ttl);
     } catch (Exception e) {
       log.error(
@@ -102,10 +119,58 @@ public class OPSessionDataSource implements OPSessionRepository {
   }
 
   @Override
+  public OPSessions findByUser(Tenant tenant, UserIdentifier userIdentifier) {
+    try {
+      String sub = userIdentifier.value();
+      String userIndexKey = buildUserIndexKey(tenant, sub);
+      Set<String> sessionIds = sessionStore.setMembers(userIndexKey);
+
+      if (sessionIds.isEmpty()) {
+        return OPSessions.empty();
+      }
+
+      List<OPSession> sessions = new ArrayList<>();
+      for (String sessionId : sessionIds) {
+        String key = buildKey(tenant, new OPSessionIdentifier(sessionId));
+        sessionStore
+            .get(key)
+            .ifPresent(json -> sessions.add(jsonConverter.read(json, OPSession.class)));
+      }
+
+      log.debug(
+          "Found {} OP sessions for tenant:{}, user:{}",
+          sessions.size(),
+          tenant.identifierValue(),
+          sub);
+      return new OPSessions(sessions);
+    } catch (Exception e) {
+      log.error(
+          "Failed to find OP sessions by user (graceful degradation). tenant:{}, user:{}, error:{}",
+          tenant.identifierValue(),
+          userIdentifier.value(),
+          e.getMessage());
+      return OPSessions.empty();
+    }
+  }
+
+  @Override
   public void delete(Tenant tenant, OPSessionIdentifier id) {
     try {
       String key = buildKey(tenant, id);
       String browserStateKey = buildBrowserStateKey(tenant, id);
+
+      // First get session to remove from user index
+      sessionStore
+          .get(key)
+          .ifPresent(
+              json -> {
+                OPSession session = jsonConverter.read(json, OPSession.class);
+                String sub = session.sub();
+                if (sub != null && !sub.isEmpty()) {
+                  String userIndexKey = buildUserIndexKey(tenant, sub);
+                  sessionStore.setRemove(userIndexKey, id.value());
+                }
+              });
 
       sessionStore.delete(key, browserStateKey);
       log.debug("Deleted OP session. id:{}, tenant:{}", id.value(), tenant.identifierValue());
@@ -146,5 +211,9 @@ public class OPSessionDataSource implements OPSessionRepository {
 
   private String buildBrowserStateKey(Tenant tenant, OPSessionIdentifier id) {
     return BROWSER_STATE_PREFIX + tenant.identifierValue() + ":" + id.value();
+  }
+
+  private String buildUserIndexKey(Tenant tenant, String sub) {
+    return IDX_USER_PREFIX + tenant.identifierValue() + ":" + sub;
   }
 }

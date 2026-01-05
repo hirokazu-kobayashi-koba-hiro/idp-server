@@ -217,6 +217,23 @@ public class OPSession implements Serializable {
     return Math.max(ttl, 0);
   }
 
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", id != null ? id.value() : null);
+    map.put("tenant_id", tenantId != null ? tenantId.value() : null);
+    map.put("sub", sub());
+    map.put("auth_time", authTime != null ? authTime.toString() : null);
+    map.put("acr", acr);
+    map.put("amr", amr);
+    map.put("created_at", createdAt != null ? createdAt.toString() : null);
+    map.put("expires_at", expiresAt != null ? expiresAt.toString() : null);
+    map.put("last_accessed_at", lastAccessedAt != null ? lastAccessedAt.toString() : null);
+    map.put("status", status != null ? status.name() : null);
+    map.put("terminated_at", terminatedAt != null ? terminatedAt.toString() : null);
+    map.put("termination_reason", terminationReason != null ? terminationReason.name() : null);
+    return map;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

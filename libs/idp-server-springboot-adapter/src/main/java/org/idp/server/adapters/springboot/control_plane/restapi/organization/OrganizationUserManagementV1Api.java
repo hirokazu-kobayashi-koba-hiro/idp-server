@@ -446,4 +446,27 @@ public class OrganizationUserManagementV1Api implements ParameterTransformable {
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
+
+  @GetMapping("/{userId}/sessions")
+  public ResponseEntity<?> getSessions(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @PathVariable String userId,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        orgUserManagementApi.findSessions(
+            organizationOperatorPrincipal.authenticationContext(),
+            new TenantIdentifier(tenantId),
+            new UserIdentifier(userId),
+            requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
 }

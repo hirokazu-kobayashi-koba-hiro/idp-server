@@ -35,6 +35,7 @@ import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
+import org.idp.server.core.openid.session.repository.OPSessionRepository;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -95,6 +96,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
       RoleQueryRepository roleQueryRepository,
+      OPSessionRepository opSessionRepository,
       PasswordEncodeDelegation passwordEncodeDelegation,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       AuditLogPublisher auditLogPublisher,
@@ -117,6 +119,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
             userQueryRepository,
             userCommandRepository,
             roleQueryRepository,
+            opSessionRepository,
             passwordEncodeDelegation,
             verifier,
             relatedDataVerifier,
@@ -129,6 +132,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository,
       RoleQueryRepository roleQueryRepository,
+      OPSessionRepository opSessionRepository,
       PasswordEncodeDelegation passwordEncodeDelegation,
       UserRegistrationVerifier verifier,
       UserRegistrationRelatedDataVerifier relatedDataVerifier,
@@ -175,6 +179,7 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
         "updateOrganizationAssignments",
         new UserOrganizationAssignmentsUpdateService(
             userQueryRepository, userCommandRepository, relatedDataVerifier));
+    services.put("findSessions", new UserSessionsFindService(opSessionRepository));
 
     return new OrgUserManagementHandler(
         services, this, tenantQueryRepository, new OrganizationAccessVerifier());
@@ -425,5 +430,28 @@ public class OrgUserManagementEntryService implements OrgUserManagementApi {
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(dryRun);
+  }
+
+  @Override
+  @Transaction(readOnly = true)
+  public UserManagementResponse findSessions(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      RequestAttributes requestAttributes) {
+
+    UserManagementResult result =
+        handler.handle(
+            "findSessions",
+            authenticationContext,
+            tenantIdentifier,
+            new UserSessionsFindRequest(userIdentifier),
+            requestAttributes,
+            false);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(false);
   }
 }

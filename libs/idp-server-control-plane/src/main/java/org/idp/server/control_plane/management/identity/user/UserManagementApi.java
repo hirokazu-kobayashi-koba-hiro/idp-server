@@ -58,6 +58,7 @@ public interface UserManagementApi {
           "updateOrganizationAssignments",
           new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_UPDATE)));
       map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_DELETE)));
+      map.put("findSessions", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_READ)));
     } else {
       // PUBLIC tenants require USER_* permissions
       map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.USER_CREATE)));
@@ -76,6 +77,7 @@ public interface UserManagementApi {
           "updateOrganizationAssignments",
           new AdminPermissions(Set.of(DefaultAdminPermission.USER_UPDATE)));
       map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.USER_DELETE)));
+      map.put("findSessions", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_READ)));
     }
 
     AdminPermissions adminPermissions = map.get(method);
@@ -158,4 +160,10 @@ public interface UserManagementApi {
       UserRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
+
+  UserManagementResponse findSessions(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      RequestAttributes requestAttributes);
 }

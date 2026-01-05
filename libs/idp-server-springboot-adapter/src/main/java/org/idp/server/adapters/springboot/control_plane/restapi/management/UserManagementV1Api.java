@@ -299,4 +299,27 @@ public class UserManagementV1Api implements ParameterTransformable {
     return new ResponseEntity<>(
         response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
   }
+
+  @GetMapping("/{user-id}/sessions")
+  public ResponseEntity<?> getSessions(
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("user-id") UserIdentifier userIdentifier,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        userManagementApi.findSessions(
+            operatorPrincipal.authenticationContext(),
+            tenantIdentifier,
+            userIdentifier,
+            requestAttributes);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(
+        response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
+  }
 }

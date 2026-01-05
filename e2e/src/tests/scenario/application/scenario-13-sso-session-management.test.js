@@ -1144,4 +1144,174 @@ describe("SSO Session Management", () => {
 
   });
 
+  describe("Management API - Session Listing", () => {
+
+    it("should list user sessions via organization-level API after login", async () => {
+      /**
+       * Test scenario:
+       * 1. User logs in via authorization flow to create an OPSession
+       * 2. Get OAuth token with management scope
+       * 3. Call GET /v1/management/organizations/{org-id}/tenants/{tenant-id}/users/{user-id}/sessions
+       * 4. Verify session information is returned
+       */
+      console.log("=== Management API - Session Listing Test ===\n");
+
+      const user = {
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+      };
+
+      // Step 1: Login via authorization flow to create OPSession
+      console.log("Step 1: Login via authorization flow to create OPSession");
+
+      const authResponse = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "session-list-test",
+        scope: "openid profile",
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authResponse.status).toBe(302);
+
+      const { nextAction, params } = convertNextAction(authResponse.headers.location);
+      expect(nextAction).toBe("goAuthentication");
+      const authId = params.get("id");
+
+      // Perform password authentication
+      const passwordResponse = await postAuthentication({
+        endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/{id}/password-authentication`,
+        id: authId,
+        body: user,
+      });
+      expect(passwordResponse.status).toBe(200);
+
+      // Complete authorization (this creates OPSession)
+      const authorizeResponse = await authorize({
+        endpoint: serverConfig.authorizeEndpoint,
+        id: authId,
+        body: {},
+      });
+      expect(authorizeResponse.status).toBe(200);
+      console.log("Authorization completed - OPSession created");
+
+      // Get user sub from the authorization response
+      const authResult = convertToAuthorizationResponse(authorizeResponse.data.redirect_uri);
+
+      // Exchange code for tokens to get id_token with sub
+      const tokenExchangeResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authResult.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenExchangeResponse.status).toBe(200);
+
+      const idToken = tokenExchangeResponse.data.id_token;
+      const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+      const userSub = payload.sub;
+      console.log("User sub from id_token:", userSub);
+
+      // Step 2: Get OAuth token with management scope for Management API
+      console.log("\nStep 2: Get OAuth token with management scope");
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: user.username,
+        password: user.password,
+        scope: "management session:read",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log("Token response status:", tokenResponse.status);
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Step 3: Call the sessions endpoint
+      console.log("\nStep 3: Call GET /users/{user-id}/sessions endpoint");
+
+      const sessionsEndpoint = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users/${userSub}/sessions`;
+      console.log("Sessions endpoint:", sessionsEndpoint);
+
+      const sessionsResponse = await get({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("Sessions response status:", sessionsResponse.status);
+      console.log("Sessions response data:", JSON.stringify(sessionsResponse.data, null, 2));
+
+      // Verify response
+      expect(sessionsResponse.status).toBe(200);
+      expect(sessionsResponse.data).toHaveProperty("list");
+      expect(Array.isArray(sessionsResponse.data.list)).toBe(true);
+      expect(sessionsResponse.data.list.length).toBeGreaterThan(0);
+
+      // Verify session structure
+      const session = sessionsResponse.data.list[0];
+      console.log("\nFirst session details:");
+      console.log("- ID:", session.id);
+      console.log("- Sub:", session.sub);
+      console.log("- Status:", session.status);
+      console.log("- Created at:", session.created_at);
+      console.log("- Expires at:", session.expires_at);
+
+      expect(session).toHaveProperty("id");
+      expect(session).toHaveProperty("sub");
+      expect(session.sub).toBe(userSub);
+
+      console.log("\n=== SUCCESS: Session listing via Management API works! ===");
+    });
+
+    it("should return empty list when user has no active sessions", async () => {
+      /**
+       * Test scenario:
+       * 1. Get OAuth token with management scope
+       * 2. Call sessions endpoint for a user that has no sessions
+       * 3. Verify empty list is returned
+       */
+      console.log("=== Management API - Empty Session List Test ===\n");
+
+      // Get OAuth token with management scope
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: "management session:read",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Call sessions endpoint for a non-existent user
+      const nonExistentUserId = "00000000-0000-0000-0000-000000000000";
+      const sessionsEndpoint = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users/${nonExistentUserId}/sessions`;
+
+      const sessionsResponse = await get({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("Sessions response status:", sessionsResponse.status);
+      console.log("Sessions response data:", JSON.stringify(sessionsResponse.data, null, 2));
+
+      // Verify empty list is returned
+      expect(sessionsResponse.status).toBe(200);
+      expect(sessionsResponse.data).toHaveProperty("list");
+      expect(sessionsResponse.data.list).toEqual([]);
+
+      console.log("\n=== SUCCESS: Empty session list returned correctly ===");
+    });
+
+  });
+
 });

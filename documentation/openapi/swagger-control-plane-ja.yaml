@@ -2718,6 +2718,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  # Organization-level User Session Management API
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/sessions:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+    get:
+      summary: List user sessions
+      description: |
+        指定されたユーザーのアクティブなセッション一覧を取得します。
+
+        このエンドポイントは、ユーザーが現在持っているOPセッション（OpenID Provider Session）の情報を返します。
+        セッション情報には、セッションID、認証時刻、有効期限、最終アクセス時刻などが含まれます。
+
+        **ユースケース:**
+        - ユーザーのログイン状況の確認
+        - 不正アクセスの検出（予期しないセッションの発見）
+        - セッション管理画面の構築
+      tags:
+        - organization-user
+      responses:
+        '200':
+          description: ユーザーのセッション一覧を正常に取得しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSessionListResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # Organization-level Role Management API
   /v1/management/organizations/{organization-id}/tenants/{tenant-id}/roles:
     parameters:
@@ -7020,6 +7060,85 @@ components:
           type: integer
           default: 3600
           description: セッションタイムアウト（秒）
+
+    UserSession:
+      type: object
+      description: ユーザーのOPセッション（OpenID Provider Session）情報
+      properties:
+        id:
+          type: string
+          description: セッションID
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        tenant_id:
+          type: string
+          description: テナントID
+          example: "952f6906-3e95-4ed3-86b2-981f90f785f9"
+        sub:
+          type: string
+          description: ユーザーの一意識別子（subject）
+          example: "3ec055a8-8000-44a2-8677-e70ebff414e2"
+        auth_time:
+          type: string
+          format: date-time
+          description: 認証が行われた時刻（ISO 8601形式）
+          example: "2025-01-05T10:30:00Z"
+        acr:
+          type: string
+          nullable: true
+          description: 認証コンテキストクラス参照（Authentication Context Class Reference）
+          example: "urn:mace:incommon:iap:silver"
+        amr:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: 認証方法参照（Authentication Methods References）
+          example: ["pwd", "otp"]
+        created_at:
+          type: string
+          format: date-time
+          description: セッション作成時刻（ISO 8601形式）
+          example: "2025-01-05T10:30:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          description: セッション有効期限（ISO 8601形式）
+          example: "2025-01-05T11:30:00Z"
+        last_accessed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 最終アクセス時刻（ISO 8601形式）
+          example: "2025-01-05T10:45:00Z"
+        status:
+          type: string
+          enum: [ACTIVE, TERMINATED]
+          description: セッションステータス
+          example: "ACTIVE"
+        terminated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: セッション終了時刻（終了している場合のみ）
+          example: null
+        termination_reason:
+          type: string
+          nullable: true
+          enum: [USER_LOGOUT, ADMIN_REVOCATION, TIMEOUT, SESSION_LIMIT_EXCEEDED]
+          description: セッション終了理由（終了している場合のみ）
+          example: null
+
+    UserSessionListResponse:
+      type: object
+      description: ユーザーセッション一覧のレスポンス
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSession'
+          description: セッションの配列
+      required:
+        - list
 
     SecurityEventLogConfiguration:
       type: object
