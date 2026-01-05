@@ -1,0 +1,19 @@
+{
+  "client_id": "a5b6c7d8-e9f0-1234-bcde-567890123456",
+  "client_id_alias": "oidcc-post-client",
+  "client_secret": "oidcc-post-secret-32characters",
+  "redirect_uris": [
+    "https://localhost.emobix.co.uk:8443/test/a/oidc-core-basic/callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email address phone offline_access",
+  "client_name": "OIDCC Post Client (client_secret_post)",
+  "token_endpoint_auth_method": "client_secret_post",
+  "application_type": "web"
+}

@@ -1,0 +1,19 @@
+{
+  "client_id": "b6c7d8e9-f0a1-2345-cdef-678901234567",
+  "client_id_alias": "oidcc-second-client",
+  "client_secret": "oidcc-second-secret-32characters",
+  "redirect_uris": [
+    "https://localhost.emobix.co.uk:8443/test/a/oidc-core-basic/callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email address phone offline_access",
+  "client_name": "OIDCC Second Client",
+  "token_endpoint_auth_method": "client_secret_basic",
+  "application_type": "web"
+}

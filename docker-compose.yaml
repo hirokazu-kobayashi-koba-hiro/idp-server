@@ -226,7 +226,7 @@ services:
     ports:
       - "80:80"       # HTTP (redirects to HTTPS)
       - "443:443"     # HTTPS
-      - "8443:8443"   # HTTPS + mTLS
+      - "8445:8443"   # HTTPS + mTLS
 
   postgres-primary:
     build:
