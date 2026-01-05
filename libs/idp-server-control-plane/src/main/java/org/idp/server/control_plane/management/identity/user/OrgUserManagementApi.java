@@ -115,6 +115,8 @@ public interface OrgUserManagementApi {
       map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.ADMIN_USER_DELETE)));
       map.put("findSessions", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_READ)));
       map.put("deleteSession", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_DELETE)));
+      map.put(
+          "deleteSessions", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_DELETE)));
     } else {
       // PUBLIC tenants require USER_* permissions
       map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.USER_CREATE)));
@@ -135,6 +137,8 @@ public interface OrgUserManagementApi {
       map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.USER_DELETE)));
       map.put("findSessions", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_READ)));
       map.put("deleteSession", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_DELETE)));
+      map.put(
+          "deleteSessions", new AdminPermissions(Set.of(DefaultAdminPermission.SESSION_DELETE)));
     }
 
     AdminPermissions adminPermissions = map.get(method);
@@ -353,6 +357,13 @@ public interface OrgUserManagementApi {
       TenantIdentifier tenantIdentifier,
       UserIdentifier userIdentifier,
       OPSessionIdentifier sessionIdentifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  UserManagementResponse deleteSessions(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
       RequestAttributes requestAttributes,
       boolean dryRun);
 }

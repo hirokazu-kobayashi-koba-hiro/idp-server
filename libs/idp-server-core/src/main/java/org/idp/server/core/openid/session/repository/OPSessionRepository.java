@@ -33,5 +33,7 @@ public interface OPSessionRepository {
 
   void delete(Tenant tenant, OPSessionIdentifier id);
 
+  void deleteByUser(Tenant tenant, UserIdentifier userIdentifier);
+
   void updateLastAccessedAt(Tenant tenant, OPSession session);
 }

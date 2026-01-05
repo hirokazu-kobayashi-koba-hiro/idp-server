@@ -184,6 +184,42 @@ public class OPSessionDataSource implements OPSessionRepository {
   }
 
   @Override
+  public void deleteByUser(Tenant tenant, UserIdentifier userIdentifier) {
+    try {
+      String sub = userIdentifier.value();
+      String userIndexKey = buildUserIndexKey(tenant, sub);
+      Set<String> sessionIds = sessionStore.setMembers(userIndexKey);
+
+      if (sessionIds.isEmpty()) {
+        log.debug("No OP sessions to delete for tenant:{}, user:{}", tenant.identifierValue(), sub);
+        return;
+      }
+
+      for (String sessionId : sessionIds) {
+        OPSessionIdentifier id = new OPSessionIdentifier(sessionId);
+        String key = buildKey(tenant, id);
+        String browserStateKey = buildBrowserStateKey(tenant, id);
+        sessionStore.delete(key, browserStateKey);
+      }
+
+      // Delete the user index
+      sessionStore.delete(userIndexKey);
+
+      log.debug(
+          "Deleted {} OP sessions for tenant:{}, user:{}",
+          sessionIds.size(),
+          tenant.identifierValue(),
+          sub);
+    } catch (Exception e) {
+      log.error(
+          "Failed to delete OP sessions by user (graceful degradation). tenant:{}, user:{}, error:{}",
+          tenant.identifierValue(),
+          userIdentifier.value(),
+          e.getMessage());
+    }
+  }
+
+  @Override
   public void updateLastAccessedAt(Tenant tenant, OPSession session) {
     try {
       String key = buildKey(tenant, session.id());

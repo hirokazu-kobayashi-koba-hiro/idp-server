@@ -2757,6 +2757,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete all user sessions
+      description: |
+        指定されたユーザーのすべてのセッションを一括削除（ログアウト）します。
+
+        このエンドポイントは、ユーザーが持つすべてのOPセッションを無効化します。
+        パスワード変更後の全デバイスからのログアウトや、アカウント侵害時の緊急対応に使用します。
+
+        **ユースケース:**
+        - パスワード変更後の全セッション無効化
+        - アカウント侵害時の緊急対応
+        - ユーザー退職時のセッションクリア
+      tags:
+        - organization-user
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: すべてのセッションを正常に削除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/sessions/{session-id}:
     parameters:

@@ -1456,6 +1456,310 @@ describe("SSO Session Management", () => {
       console.log("\n=== SUCCESS: Session deletion via Management API works! ===");
     });
 
+    it("should delete all user sessions via organization-level API", async () => {
+      /**
+       * Test scenario:
+       * 1. User logs in multiple times via authorization flow to create multiple OPSessions
+       * 2. Get OAuth token with management scope
+       * 3. Get the session list to verify multiple sessions exist
+       * 4. Delete all sessions via DELETE API (without session-id)
+       * 5. Verify all sessions were deleted
+       */
+      console.log("=== Management API - Delete All Sessions Test ===\n");
+
+      const user = {
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+      };
+
+      // Step 1: Create first session via authorization flow
+      console.log("Step 1: Create first session via authorization flow");
+
+      const authResponse1 = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "session-delete-all-test-1",
+        scope: "openid profile",
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authResponse1.status).toBe(302);
+
+      const { params: params1 } = convertNextAction(authResponse1.headers.location);
+      const authId1 = params1.get("id");
+
+      await postAuthentication({
+        endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/{id}/password-authentication`,
+        id: authId1,
+        body: user,
+      });
+
+      const authorizeResponse1 = await authorize({
+        endpoint: serverConfig.authorizeEndpoint,
+        id: authId1,
+        body: {},
+      });
+      expect(authorizeResponse1.status).toBe(200);
+
+      const authResult1 = convertToAuthorizationResponse(authorizeResponse1.data.redirect_uri);
+
+      const tokenExchangeResponse1 = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authResult1.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenExchangeResponse1.status).toBe(200);
+
+      const idToken = tokenExchangeResponse1.data.id_token;
+      const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+      const userSub = payload.sub;
+      console.log("User sub:", userSub);
+
+      // Step 2: Get OAuth token with management scope
+      console.log("\nStep 2: Get OAuth token with management scope");
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: user.username,
+        password: user.password,
+        scope: "management session:read session:delete",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Step 3: Get session list to verify sessions exist
+      console.log("\nStep 3: Get session list to verify sessions exist");
+
+      const sessionsEndpoint = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users/${userSub}/sessions`;
+
+      const sessionsResponse = await get({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("Sessions count before deletion:", sessionsResponse.data.list.length);
+      expect(sessionsResponse.status).toBe(200);
+      expect(sessionsResponse.data.list.length).toBeGreaterThan(0);
+
+      // Step 4: Delete all sessions via DELETE API
+      console.log("\nStep 4: Delete all sessions via DELETE API");
+
+      const deleteAllResponse = await deletion({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("Delete all response status:", deleteAllResponse.status);
+
+      expect(deleteAllResponse.status).toBe(204);
+
+      // Step 5: Verify all sessions were deleted
+      console.log("\nStep 5: Verify all sessions were deleted");
+
+      const verifyResponse = await get({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("Remaining sessions:", verifyResponse.data.list.length);
+
+      expect(verifyResponse.status).toBe(200);
+      expect(verifyResponse.data.list).toEqual([]);
+
+      console.log("\n=== SUCCESS: Delete all sessions via Management API works! ===");
+    });
+
+  });
+
+  describe("Session deletion and prompt=none behavior", () => {
+
+    it("should return login_required when prompt=none after all sessions are deleted", async () => {
+      /**
+       * Test scenario:
+       * 1. User logs in via authorization flow to create an OPSession
+       * 2. Get session list to verify session exists
+       * 3. Use prompt=none to get authorization code (should succeed)
+       * 4. Delete all sessions via Management API
+       * 5. Try prompt=none again (should return login_required)
+       */
+      console.log("=== Session Deletion and prompt=none Behavior Test ===\n");
+
+      const user = {
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+      };
+
+      // Step 1: Login via authorization flow to create OPSession
+      console.log("Step 1: Login via authorization flow to create OPSession");
+
+      const authResponse = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "session-deletion-test",
+        scope: "openid profile",
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authResponse.status).toBe(302);
+
+      const { nextAction, params } = convertNextAction(authResponse.headers.location);
+      expect(nextAction).toBe("goAuthentication");
+      const authId = params.get("id");
+
+      // Perform password authentication
+      const passwordResponse = await postAuthentication({
+        endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/{id}/password-authentication`,
+        id: authId,
+        body: user,
+      });
+      expect(passwordResponse.status).toBe(200);
+
+      // Complete authorization (this creates OPSession)
+      const authorizeResponse = await authorize({
+        endpoint: serverConfig.authorizeEndpoint,
+        id: authId,
+        body: {},
+      });
+      expect(authorizeResponse.status).toBe(200);
+      console.log("Authorization completed - OPSession created");
+
+      // Get user sub from the authorization response
+      const authResult = convertToAuthorizationResponse(authorizeResponse.data.redirect_uri);
+      expect(authResult.code).toBeDefined();
+
+      // Exchange code for tokens to get id_token with sub
+      const tokenExchangeResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authResult.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenExchangeResponse.status).toBe(200);
+
+      const idToken = tokenExchangeResponse.data.id_token;
+      const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+      const userSub = payload.sub;
+      console.log("User sub from id_token:", userSub);
+
+      // Step 2: Get OAuth token with management scope and verify session exists
+      console.log("\nStep 2: Get session list to verify session exists");
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: user.username,
+        password: user.password,
+        scope: "management session:read session:delete",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const sessionsEndpoint = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users/${userSub}/sessions`;
+
+      const sessionsResponse = await get({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("Sessions response status:", sessionsResponse.status);
+      console.log("Sessions count:", sessionsResponse.data?.list?.length);
+
+      expect(sessionsResponse.status).toBe(200);
+      expect(sessionsResponse.data.list.length).toBeGreaterThan(0);
+      console.log("Session exists - verified");
+
+      // Step 3: Use prompt=none to get authorization code (should succeed)
+      console.log("\nStep 3: Use prompt=none to get authorization code (should succeed)");
+
+      const promptNoneResponse1 = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "prompt-none-before-delete",
+        scope: "openid profile",
+        redirectUri: clientSecretPostClient.redirectUri,
+        prompt: "none",
+      });
+
+      console.log("prompt=none response status (before deletion):", promptNoneResponse1.status);
+      expect(promptNoneResponse1.status).toBe(302);
+
+      const promptNoneResult1 = convertToAuthorizationResponse(promptNoneResponse1.headers.location);
+      console.log("prompt=none result (before deletion):", promptNoneResult1);
+
+      // Should have authorization code without error
+      expect(promptNoneResult1.code).toBeDefined();
+      expect(promptNoneResult1.error).toBeFalsy();
+      console.log("prompt=none succeeded - authorization code obtained");
+
+      // Step 4: Delete all sessions via Management API
+      console.log("\nStep 4: Delete all sessions via Management API");
+
+      const deleteAllResponse = await deletion({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("Delete all sessions response status:", deleteAllResponse.status);
+      expect(deleteAllResponse.status).toBe(204);
+
+      // Verify all sessions were deleted
+      const verifyResponse = await get({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      console.log("Remaining sessions after deletion:", verifyResponse.data?.list?.length);
+      expect(verifyResponse.data.list).toEqual([]);
+      console.log("All sessions deleted - verified");
+
+      // Step 5: Try prompt=none again (should return login_required)
+      console.log("\nStep 5: Try prompt=none again (should return login_required)");
+
+      const promptNoneResponse2 = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "prompt-none-after-delete",
+        scope: "openid profile",
+        redirectUri: clientSecretPostClient.redirectUri,
+        prompt: "none",
+      });
+
+      console.log("prompt=none response status (after deletion):", promptNoneResponse2.status);
+      expect(promptNoneResponse2.status).toBe(302);
+
+      const promptNoneResult2 = convertToAuthorizationResponse(promptNoneResponse2.headers.location);
+      console.log("prompt=none result (after deletion):", promptNoneResult2);
+
+      // Should return login_required error since all sessions were deleted
+      expect(promptNoneResult2.error).toBe("login_required");
+      expect(promptNoneResult2.code).toBeFalsy();
+
+      console.log("\n=== SUCCESS: Session deletion correctly invalidates prompt=none! ===");
+    });
+
   });
 
 });

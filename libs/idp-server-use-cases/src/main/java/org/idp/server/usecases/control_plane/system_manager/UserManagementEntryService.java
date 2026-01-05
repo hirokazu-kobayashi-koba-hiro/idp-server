@@ -163,6 +163,7 @@ public class UserManagementEntryService implements UserManagementApi {
             userQueryRepository, userCommandRepository, relatedDataVerifier));
     services.put("findSessions", new UserSessionsFindService(opSessionRepository));
     services.put("deleteSession", new UserSessionDeleteService(opSessionRepository));
+    services.put("deleteSessions", new UserSessionsDeleteService(opSessionRepository));
 
     return new UserManagementHandler(services, this, tenantQueryRepository);
   }
@@ -448,6 +449,29 @@ public class UserManagementEntryService implements UserManagementApi {
             authenticationContext,
             tenantIdentifier,
             new UserSessionDeleteRequest(userIdentifier, sessionIdentifier),
+            requestAttributes,
+            dryRun);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(dryRun);
+  }
+
+  @Override
+  public UserManagementResponse deleteSessions(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    UserManagementResult result =
+        handler.handle(
+            "deleteSessions",
+            authenticationContext,
+            tenantIdentifier,
+            new UserSessionsDeleteRequest(userIdentifier),
             requestAttributes,
             dryRun);
 

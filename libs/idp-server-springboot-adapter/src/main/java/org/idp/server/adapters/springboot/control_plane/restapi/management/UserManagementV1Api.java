@@ -350,4 +350,29 @@ public class UserManagementV1Api implements ParameterTransformable {
     return new ResponseEntity<>(
         response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
   }
+
+  @DeleteMapping("/{user-id}/sessions")
+  public ResponseEntity<?> deleteSessions(
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("user-id") UserIdentifier userIdentifier,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserManagementResponse response =
+        userManagementApi.deleteSessions(
+            operatorPrincipal.authenticationContext(),
+            tenantIdentifier,
+            userIdentifier,
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("Content-Type", "application/json");
+
+    return new ResponseEntity<>(
+        response.contents(), headers, HttpStatus.valueOf(response.statusCode()));
+  }
 }
