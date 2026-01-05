@@ -226,7 +226,8 @@
   },
   "session_config": {
     "use_secure_cookie": true,
-    "cookie_same_site": "Strict"
+    "cookie_same_site": "Strict",
+    "switch_policy": "STRICT"
   },
   "cors_config": {
     "allow_origins": ["https://banking.example.com"]
@@ -274,6 +275,7 @@
 - `access_token_type: "jwt"`: JWT形式で署名検証可能
 - `access_token_duration: 600`: 10分の短い有効期限（セキュリティ向上）
 - `fapi_baseline_scopes` / `fapi_advance_scopes`: FAPI検証スコープ
+- `switch_policy: "STRICT"`: 別ユーザー認証を拒否（ログアウト必須）
 
 **FAPI準拠の利点**:
 - 金融機関レベルのセキュリティ
@@ -729,7 +731,8 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
     "use_secure_cookie": true,
     "use_http_only_cookie": true,
     "cookie_path": "/",
-    "timeout_seconds": 3600
+    "timeout_seconds": 3600,
+    "switch_policy": "SWITCH_ALLOWED"
   }
 }
 ```
@@ -743,8 +746,21 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 | `use_http_only_cookie` | boolean | `true` | HttpOnly属性を使用 |
 | `cookie_path` | string | `/` | Cookieのパス |
 | `timeout_seconds` | number | `3600` | セッションタイムアウト（秒） |
+| `switch_policy` | string | `SWITCH_ALLOWED` | セッション切替ポリシー |
 
 **重要**: `cookie_name`が`null`の場合、`IDP_SERVER_SESSION_{tenant-id-prefix}`形式で自動生成されます。
+
+#### switch_policy - セッション切替ポリシー
+
+同一ブラウザで別ユーザーが認証しようとした場合の動作を制御します。
+
+| 値 | 動作 | ユースケース |
+|---|------|-------------|
+| `STRICT` | エラーを返す（ログアウト必須） | 金融、エンタープライズ |
+| `SWITCH_ALLOWED` | 古いセッション削除→新規作成（デフォルト） | 一般的なWebアプリ、共有PC |
+| `MULTI_SESSION` | 新規作成（古いのは残る） | 後方互換性維持 |
+
+**同一ユーザーの再認証時**: ポリシーに関係なく、既存セッションを再利用します（lastAccessedAt更新）。これにより孤立セッションの発生を防止します。
 
 #### 構成パターン別の推奨設定
 

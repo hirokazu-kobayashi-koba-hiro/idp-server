@@ -22,7 +22,9 @@ public enum TerminationReason {
   ADMIN("admin"),
   SECURITY("security"),
   BACKCHANNEL("backchannel"),
-  PARENT_TERMINATED("parent_terminated");
+  PARENT_TERMINATED("parent_terminated"),
+  USER_SWITCH("user_switch"),
+  UNKNOWN("unknown");
 
   private final String value;
 
@@ -36,10 +38,10 @@ public enum TerminationReason {
 
   public static TerminationReason of(String value) {
     for (TerminationReason reason : values()) {
-      if (reason.value.equals(value)) {
+      if (reason.value.equalsIgnoreCase(value)) {
         return reason;
       }
     }
-    throw new IllegalArgumentException("Unknown termination reason: " + value);
+    return UNKNOWN;
   }
 }

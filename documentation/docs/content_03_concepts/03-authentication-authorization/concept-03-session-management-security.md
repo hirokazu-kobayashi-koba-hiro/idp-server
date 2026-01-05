@@ -223,6 +223,8 @@ sequenceDiagram
 | 認証ポリシーバイパス攻撃 | interactionResults検証 | `authorizeWithSession()`で再評価 |
 | CSRF攻撃 | SameSite=Lax + POST only | Cookie設定 |
 | XSS経由のセッション窃取 | HttpOnly | IDP_IDENTITY Cookie |
+| 孤立セッション蓄積 | セッション切替ポリシー | `SWITCH_ALLOWED`で同一ユーザー再認証時に再利用 |
+| 別ユーザーへのなりすまし | セッション切替ポリシー | `STRICT`で別ユーザー認証を拒否 |
 
 ## 対策：認可フローハイジャック
 
@@ -354,6 +356,53 @@ OPSessionに認証結果（interactionResults）を保存し、authorize-with-se
 | 検証タイミング | isSessionEnabled() | authorizeWithSession() |
 | 保存データ | OPSession.acr | OPSession.interactionResults |
 
+## 対策：セッション切替ポリシー
+
+### 概要
+
+同一ブラウザで別ユーザーが認証しようとした場合の動作を制御します。
+
+### ポリシー
+
+| ポリシー | 動作 | セキュリティレベル |
+|----------|------|------------------|
+| `STRICT` | エラーを返す（ログアウト必須） | 高 |
+| `SWITCH_ALLOWED` | 古いセッション削除→新規作成 (デフォルト) | 中 |
+| `MULTI_SESSION` | 新規作成（古いのは残る） | 低 |
+
+### 動作フロー
+
+```
+同一ユーザーが再認証
+└── 既存セッションを再利用（lastAccessedAt更新）
+    → 孤立セッションを防止
+
+別ユーザーが認証（既存セッションあり）
+├── STRICT         → DifferentUserAuthenticatedException（403）
+├── SWITCH_ALLOWED → 古いセッション終了（USER_SWITCH）→ 新規作成
+└── MULTI_SESSION  → 新規作成（古いのはTTL満了まで残存）
+```
+
+### セキュリティ上の考慮
+
+| 観点 | STRICT | SWITCH_ALLOWED | MULTI_SESSION |
+|------|--------|----------------|---------------|
+| 孤立セッション | なし | なし | あり |
+| 共有PC対応 | × | ○ | ○ |
+| セッション管理 | 厳格 | バランス | 緩い |
+| 推奨環境 | 金融、エンタープライズ | 一般Webアプリ | 後方互換性 |
+
+### テナント設定
+
+```json
+{
+  "session": {
+    "timeout_seconds": 3600,
+    "switch_policy": "STRICT"
+  }
+}
+```
+
 ## E2Eテスト
 
 | テスト | ファイル |
@@ -364,6 +413,7 @@ OPSessionに認証結果（interactionResults）を保存し、authorize-with-se
 | ACR match (allow) | `scenario-13-sso-session-management.test.js` |
 | Authentication policy bypass prevention (reject) | `scenario-13-sso-session-management.test.js` |
 | Same policy SSO (allow) | `scenario-13-sso-session-management.test.js` |
+| Same user re-authentication (session reuse) | `scenario-13-sso-session-management.test.js` |
 
 ## 参考
 

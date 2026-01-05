@@ -539,6 +539,90 @@ idx:tenant:{tenantId}:client:{clientId}:sub:{sub} # クライアント×ユー�
 
 ---
 
+## 🔄 セッション切替ポリシー
+
+同一ブラウザで別ユーザーが認証しようとした場合の動作を制御します。
+
+### ポリシー一覧
+
+| ポリシー | 動作 | ユースケース |
+|----------|------|-------------|
+| `STRICT` | エラーを返す（ログアウト必須） | 金融、エンタープライズ |
+| `SWITCH_ALLOWED` | 古いセッション削除→新規作成 (デフォルト) | 一般的なWebアプリ、共有PC |
+| `MULTI_SESSION` | 新規作成（古いのは残る） | 後方互換性維持 |
+
+### 動作フロー
+
+```
+同一ユーザーが再認証
+└── 既存セッションを再利用（lastAccessedAt更新）
+
+別ユーザーが認証（既存セッションあり）
+├── STRICT         → DifferentUserAuthenticatedException
+├── SWITCH_ALLOWED → 古いセッション終了（USER_SWITCH）→ 新規作成
+└── MULTI_SESSION  → 新規作成（古いのはTTL満了まで残存）
+```
+
+### テナント設定
+
+```json
+{
+  "session": {
+    "timeout_seconds": 3600,
+    "switch_policy": "SWITCH_ALLOWED"
+  }
+}
+```
+
+### 実装
+
+**OIDCSessionHandler.onAuthenticationSuccess()** でポリシーに基づいた処理を行います：
+
+```java
+public OPSession onAuthenticationSuccess(
+    Tenant tenant,
+    User user,
+    Authentication authentication,
+    Map<String, Map<String, Object>> interactionResults,
+    OPSession existingSession) {
+
+  if (existingSession != null && existingSession.isActive()) {
+    String existingSub = existingSession.sub();
+    String authenticatedSub = user.sub();
+
+    // 同一ユーザー → セッション再利用
+    if (existingSub != null && existingSub.equals(authenticatedSub)) {
+      sessionService.touchOPSession(tenant, existingSession);
+      return existingSession;
+    }
+
+    // 別ユーザー → ポリシーに従う
+    SessionSwitchPolicy policy = getSessionSwitchPolicy(tenant);
+
+    switch (policy) {
+      case STRICT:
+        throw new DifferentUserAuthenticatedException(existingSub, authenticatedSub);
+      case SWITCH_ALLOWED:
+        sessionService.terminateOPSession(tenant, existingSession.id(),
+            TerminationReason.USER_SWITCH);
+        break;
+      case MULTI_SESSION:
+      default:
+        // 古いセッションはそのまま残る
+        break;
+    }
+  }
+
+  return createNewOPSession(tenant, user, authentication, interactionResults);
+}
+```
+
+**参考実装**:
+- [SessionSwitchPolicy.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/SessionSwitchPolicy.java)
+- [DifferentUserAuthenticatedException.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/DifferentUserAuthenticatedException.java)
+
+---
+
 ## 🔒 セキュリティ考慮事項
 
 ### 1. セッションハイジャック対策
@@ -680,3 +764,6 @@ Client                              OP
 | `IdentityCookieToken.java` | Identity Cookie JWT |
 | `LogoutOrchestrator.java` | ログアウト調整 |
 | `OAuthFlowEntryService.java` | OAuth/OIDCフロー統合 |
+| `SessionSwitchPolicy.java` | セッション切替ポリシー定義 |
+| `DifferentUserAuthenticatedException.java` | 別ユーザー認証例外 |
+| `TerminationReason.java` | セッション終了理由 |

@@ -35,6 +35,7 @@ public class SessionConfiguration {
   private final boolean useHttpOnlyCookie;
   private final String cookiePath;
   private final int timeoutSeconds;
+  private final String switchPolicy;
 
   public SessionConfiguration() {
     this.cookieName = null;
@@ -44,6 +45,7 @@ public class SessionConfiguration {
     this.useHttpOnlyCookie = true;
     this.cookiePath = "/";
     this.timeoutSeconds = 3600;
+    this.switchPolicy = "SWITCH_ALLOWED";
   }
 
   public SessionConfiguration(Map<String, Object> values) {
@@ -55,6 +57,7 @@ public class SessionConfiguration {
     this.useHttpOnlyCookie = extractBoolean(safeValues, "use_http_only_cookie", true);
     this.cookiePath = extractString(safeValues, "cookie_path", "/");
     this.timeoutSeconds = extractInt(safeValues, "timeout_seconds", 3600);
+    this.switchPolicy = extractString(safeValues, "switch_policy", "SWITCH_ALLOWED");
   }
 
   /**
@@ -143,6 +146,24 @@ public class SessionConfiguration {
   }
 
   /**
+   * Returns the session switch policy
+   *
+   * <p>Controls behavior when a different user attempts to authenticate in a browser with an
+   * existing session:
+   *
+   * <ul>
+   *   <li>STRICT: Error, user must logout first
+   *   <li>SWITCH_ALLOWED: Terminate old session, create new (default)
+   *   <li>MULTI_SESSION: Create new session, old remains until TTL
+   * </ul>
+   *
+   * @return switch policy name (default: SWITCH_ALLOWED)
+   */
+  public String switchPolicy() {
+    return switchPolicy;
+  }
+
+  /**
    * Returns the configuration as a map
    *
    * @return configuration map
@@ -160,6 +181,7 @@ public class SessionConfiguration {
     map.put("use_http_only_cookie", useHttpOnlyCookie);
     map.put("cookie_path", cookiePath);
     map.put("timeout_seconds", timeoutSeconds);
+    map.put("switch_policy", switchPolicy);
     return map;
   }
 

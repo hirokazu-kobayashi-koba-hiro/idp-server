@@ -299,6 +299,38 @@ SSOセッション再利用時に、認証ポリシーの要件を満たして�
 - **仕組み**: OPSessionに認証結果（interactionResults）を保存し、authorize-with-session時に認証ポリシーのsuccessConditionsを再評価
 - **結果**: 認証ポリシーの条件を満たさない場合、セキュリティイベントを発行し認可を拒否
 
+### セッション切替ポリシー
+
+同一ブラウザで別ユーザーが認証しようとした場合の動作を制御します。
+
+```
+同一ユーザーが再認証
+└── 既存セッションを再利用（lastAccessedAt更新）
+    → 孤立セッションを防止
+
+別ユーザーが認証（既存セッションあり）
+├── STRICT         → エラー（ログアウト必須）
+├── SWITCH_ALLOWED → 古いセッション終了 → 新規作成（デフォルト）
+└── MULTI_SESSION  → 新規作成（古いのは残る）
+```
+
+| ポリシー | 動作 | ユースケース |
+|----------|------|-------------|
+| `STRICT` | 別ユーザー認証を拒否 | 金融、エンタープライズ |
+| `SWITCH_ALLOWED` | 古いセッション削除→新規作成 | 一般的なWebアプリ、共有PC |
+| `MULTI_SESSION` | 新規作成（古いのは残る） | 後方互換性維持 |
+
+**テナント設定**:
+
+```json
+{
+  "session": {
+    "timeout_seconds": 3600,
+    "switch_policy": "SWITCH_ALLOWED"
+  }
+}
+```
+
 ## 関連ドキュメント
 
 - [セッション管理 実装ガイド](../../content_06_developer-guide/04-implementation-guides/oauth-oidc/session-management.md) - 実装詳細

@@ -7137,6 +7137,18 @@ components:
           type: integer
           default: 3600
           description: セッションタイムアウト（秒）
+        switch_policy:
+          type: string
+          enum: [STRICT, SWITCH_ALLOWED, MULTI_SESSION]
+          default: SWITCH_ALLOWED
+          description: |
+            セッション切替ポリシー。同一ブラウザで別ユーザーが認証しようとした場合の動作を制御。
+
+            - **STRICT**: エラーを返す（ログアウト必須）。金融・エンタープライズ向け
+            - **SWITCH_ALLOWED**: 古いセッションを終了して新規作成（デフォルト）。一般的なWebアプリ向け
+            - **MULTI_SESSION**: 新規セッション作成（古いのは残る）。後方互換性維持
+
+            **同一ユーザーの再認証時**: ポリシーに関係なく、既存セッションを再利用（lastAccessedAt更新）
 
     UserSession:
       type: object

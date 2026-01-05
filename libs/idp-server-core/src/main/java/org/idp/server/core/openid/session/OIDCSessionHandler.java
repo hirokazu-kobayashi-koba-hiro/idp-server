@@ -60,15 +60,84 @@ public class OIDCSessionHandler {
   }
 
   /**
-   * Creates an OPSession on successful authentication.
+   * Handles session creation or reuse on successful authentication.
+   *
+   * <p>This method implements session switch policy:
+   *
+   * <ul>
+   *   <li>Same user with active session: Reuse existing session (touch lastAccessedAt)
+   *   <li>Different user with STRICT policy: Throw DifferentUserAuthenticatedException
+   *   <li>Different user with SWITCH_ALLOWED policy: Terminate old session, create new
+   *   <li>Different user with MULTI_SESSION policy: Create new session (old remains)
+   *   <li>No existing session: Create new session
+   * </ul>
    *
    * @param tenant the tenant
    * @param user the authenticated user
    * @param authentication the authentication result
    * @param interactionResults the authentication interaction results for policy evaluation
-   * @return the created OPSession
+   * @param existingSession the existing OPSession from cookie, or null if none
+   * @return the OPSession (reused or newly created)
+   * @throws DifferentUserAuthenticatedException if STRICT policy and different user
    */
   public OPSession onAuthenticationSuccess(
+      Tenant tenant,
+      User user,
+      Authentication authentication,
+      Map<String, Map<String, Object>> interactionResults,
+      OPSession existingSession) {
+
+    // Check if we have an active existing session
+    if (existingSession != null && existingSession.isActive()) {
+      String existingSub = existingSession.sub();
+      String authenticatedSub = user.sub();
+
+      // Same user: reuse existing session
+      if (existingSub != null && existingSub.equals(authenticatedSub)) {
+        log.debug(
+            "Reusing existing OPSession for same user. sessionId:{}, sub:{}",
+            existingSession.id().value(),
+            existingSub);
+        sessionService.touchOPSession(tenant, existingSession);
+        return existingSession;
+      }
+
+      // Different user: apply session switch policy
+      SessionSwitchPolicy policy = getSessionSwitchPolicy(tenant);
+      log.debug(
+          "Different user authenticated. existingSub:{}, authenticatedSub:{}, policy:{}",
+          existingSub,
+          authenticatedSub,
+          policy);
+
+      switch (policy) {
+        case STRICT:
+          throw new DifferentUserAuthenticatedException(existingSub, authenticatedSub);
+
+        case SWITCH_ALLOWED:
+          // Terminate old session and create new
+          sessionService.terminateOPSession(
+              tenant, existingSession.id(), TerminationReason.USER_SWITCH);
+          log.debug(
+              "Terminated existing session due to user switch. sessionId:{}",
+              existingSession.id().value());
+          break;
+
+        case MULTI_SESSION:
+        default:
+          // Just create new session, old one remains until TTL
+          log.debug(
+              "Creating new session (MULTI_SESSION mode). Old session remains: {}",
+              existingSession.id().value());
+          break;
+      }
+    }
+
+    // Create new session
+    return createNewOPSession(tenant, user, authentication, interactionResults);
+  }
+
+  private OPSession createNewOPSession(
       Tenant tenant,
       User user,
       Authentication authentication,
@@ -223,5 +292,18 @@ public class OIDCSessionHandler {
       return tenant.sessionConfiguration().timeoutSeconds();
     }
     return DEFAULT_SESSION_MAX_AGE_SECONDS;
+  }
+
+  /**
+   * Gets the session switch policy from tenant configuration.
+   *
+   * @param tenant the tenant
+   * @return session switch policy (default: SWITCH_ALLOWED)
+   */
+  private SessionSwitchPolicy getSessionSwitchPolicy(Tenant tenant) {
+    if (tenant.sessionConfiguration() != null) {
+      return SessionSwitchPolicy.of(tenant.sessionConfiguration().switchPolicy());
+    }
+    return SessionSwitchPolicy.SWITCH_ALLOWED;
   }
 }

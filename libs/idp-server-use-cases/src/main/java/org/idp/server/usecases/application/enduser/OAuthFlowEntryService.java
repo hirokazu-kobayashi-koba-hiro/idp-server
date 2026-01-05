@@ -254,14 +254,19 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     if (updatedTransaction.isSuccess()) {
-      // Create OPSession and set cookies
+      // Get existing session from cookie for session switch policy handling
+      OPSession existingSession =
+          oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
+
+      // Create or reuse OPSession based on session switch policy
       Authentication authentication = updatedTransaction.authentication();
       OPSession opSession =
           oidcSessionHandler.onAuthenticationSuccess(
               tenant,
               updatedTransaction.user(),
               authentication,
-              updatedTransaction.interactionResults().toStorageMap());
+              updatedTransaction.interactionResults().toStorageMap(),
+              existingSession);
       oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
     }
 
@@ -352,13 +357,18 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
     // Create OPSession for federated authentication
     if (updatedTransaction.isSuccess()) {
+      // Get existing session from cookie for session switch policy handling
+      OPSession existingSession =
+          oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate).orElse(null);
+
       Authentication authentication = updatedTransaction.authentication();
       OPSession opSession =
           oidcSessionHandler.onAuthenticationSuccess(
               tenant,
               updatedTransaction.user(),
               authentication,
-              updatedTransaction.interactionResults().toStorageMap());
+              updatedTransaction.interactionResults().toStorageMap(),
+              existingSession);
       oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
     }
 

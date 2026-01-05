@@ -1583,6 +1583,171 @@ describe("SSO Session Management", () => {
 
   });
 
+  describe("Session Switch Policy - Same user re-authentication", () => {
+
+    it("should reuse existing OPSession when same user re-authenticates", async () => {
+      /**
+       * Test scenario:
+       * 1. User logs in via authorization flow to create an OPSession
+       * 2. Get session list - verify only one session
+       * 3. User logs in again (e.g., prompt=login)
+       * 4. Get session list - should still have only one session (reused)
+       */
+      console.log("=== Session Switch Policy - Same User Re-authentication Test ===\n");
+
+      const user = {
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+      };
+
+      // Step 1: First login to create OPSession
+      console.log("Step 1: First login to create OPSession");
+
+      const authResponse1 = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "first-login-reuse-test",
+        scope: "openid profile",
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authResponse1.status).toBe(302);
+
+      const { params: params1 } = convertNextAction(authResponse1.headers.location);
+      const authId1 = params1.get("id");
+
+      await postAuthentication({
+        endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/{id}/password-authentication`,
+        id: authId1,
+        body: user,
+      });
+
+      const authorizeResponse1 = await authorize({
+        endpoint: serverConfig.authorizeEndpoint,
+        id: authId1,
+        body: {},
+      });
+      expect(authorizeResponse1.status).toBe(200);
+
+      const authResult1 = convertToAuthorizationResponse(authorizeResponse1.data.redirect_uri);
+
+      const tokenExchangeResponse1 = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authResult1.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenExchangeResponse1.status).toBe(200);
+
+      const idToken = tokenExchangeResponse1.data.id_token;
+      const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+      const userSub = payload.sub;
+      console.log("User sub:", userSub);
+
+      // Step 2: Get session list - verify only one session
+      console.log("\nStep 2: Get session list to verify session count");
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: user.username,
+        password: user.password,
+        scope: "management session:read session:delete",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const sessionsEndpoint = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/users/${userSub}/sessions`;
+
+      const sessionsResponse1 = await get({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("Sessions count after first login:", sessionsResponse1.data.list.length);
+      const initialSessionCount = sessionsResponse1.data.list.length;
+      const firstSessionId = sessionsResponse1.data.list[0]?.id;
+      console.log("First session ID:", firstSessionId);
+
+      // Step 3: User logs in again (re-authentication)
+      console.log("\nStep 3: User logs in again (re-authentication)");
+
+      const authResponse2 = await getAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "second-login-reuse-test",
+        scope: "openid profile",
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authResponse2.status).toBe(302);
+
+      const { params: params2 } = convertNextAction(authResponse2.headers.location);
+      const authId2 = params2.get("id");
+
+      await postAuthentication({
+        endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/{id}/password-authentication`,
+        id: authId2,
+        body: user,
+      });
+
+      const authorizeResponse2 = await authorize({
+        endpoint: serverConfig.authorizeEndpoint,
+        id: authId2,
+        body: {},
+      });
+      expect(authorizeResponse2.status).toBe(200);
+
+      const authResult2 = convertToAuthorizationResponse(authorizeResponse2.data.redirect_uri);
+
+      await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authResult2.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      // Step 4: Get session list - should have same session count (session reused)
+      console.log("\nStep 4: Verify session was reused (same count, same ID)");
+
+      const sessionsResponse2 = await get({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log("Sessions count after second login:", sessionsResponse2.data.list.length);
+      const secondSessionId = sessionsResponse2.data.list[0]?.id;
+      console.log("Session ID after re-auth:", secondSessionId);
+
+      // Session count should remain the same (session reused, not created new)
+      expect(sessionsResponse2.data.list.length).toBe(initialSessionCount);
+
+      // Session ID should be the same (session reused)
+      expect(secondSessionId).toBe(firstSessionId);
+
+      console.log("\n=== SUCCESS: Same user re-authentication reuses existing session! ===");
+
+      // Cleanup: Delete all sessions
+      await deletion({
+        url: sessionsEndpoint,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    });
+
+  });
+
   describe("Session deletion and prompt=none behavior", () => {
 
     it("should return login_required when prompt=none after all sessions are deleted", async () => {
