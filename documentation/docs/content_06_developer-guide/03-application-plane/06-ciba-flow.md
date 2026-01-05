@@ -656,6 +656,33 @@ auth_req_idは`expires_in`秒間のみ有効：
 
 ---
 
+## AuthorizationGranted 登録タイミング
+
+### CIBAフローでのAuthorizationGranted登録
+
+`AuthorizationGranted`（認可同意記録）は**ユーザー承認時**（`CibaAuthorizeHandler`）に登録されます。
+
+```
+1. CIBA認証リクエスト（auth_req_id発行）
+    ↓
+2. プッシュ通知送信
+    ↓
+3. ユーザーがスマホで承認 ← この時点でAuthorizationGranted登録
+    ↓
+4. Token Request（ポーリング）
+```
+
+### 用途
+
+- **同意記録の管理**: ユーザーがどのクライアントに同意したかの履歴
+- **Grant Management**: 同意の取り消し・更新
+
+**注意**: CIBAフローはブラウザセッションを作成しないため、Authorization Code Flowのような`prompt=none`によるSSOは適用されません。
+
+**実装**: [CibaAuthorizeHandler.java](../../../../libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/ciba/handler/CibaAuthorizeHandler.java)
+
+---
+
 ## auth_req_id のライフサイクル
 
 ### 作成 → 使用 → 削除

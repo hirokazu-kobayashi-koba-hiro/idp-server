@@ -193,23 +193,9 @@ describe("Standard Use Case: Session Switch Policy (Issue #1171)", () => {
       expect(result1.code).toBeDefined();
       console.log("User 1 logged in successfully, authorization code obtained");
 
-      // Step 4: Exchange authorization code for tokens (registers AuthorizationGranted)
-      console.log("\nStep 4: Exchange authorization code for tokens");
-
-      const tokenResponse1 = await requestToken({
-        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
-        grantType: "authorization_code",
-        code: result1.code,
-        redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
-        clientId: clientId,
-        clientSecret: clientSecret,
-      });
-      expect(tokenResponse1.status).toBe(200);
-      expect(tokenResponse1.data.access_token).toBeDefined();
-      console.log("Token exchange successful, AuthorizationGranted registered");
-
-      // Step 5: Verify User 1 can get authorization code with prompt=none (SSO)
-      console.log("\nStep 5: Verify User 1 can use SSO with prompt=none");
+      // Step 4: Verify User 1 can get authorization code with prompt=none (SSO) BEFORE token exchange
+      // This tests that AuthorizationGranted is registered at authorize time, not token time
+      console.log("\nStep 4: Verify User 1 can use SSO with prompt=none (BEFORE token exchange)");
 
       const ssoAuthResponse = await getAuthorizations({
         endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
@@ -225,10 +211,10 @@ describe("Standard Use Case: Session Switch Policy (Issue #1171)", () => {
       const ssoRedirectUri = ssoAuthResponse.headers.location;
       expect(ssoRedirectUri).toContain("code=");
       expect(ssoRedirectUri).not.toContain("error=");
-      console.log("User 1 SSO with prompt=none succeeded");
+      console.log("User 1 SSO with prompt=none succeeded (before token exchange!)");
 
-      // Step 6: User 2 tries to log in (should fail with STRICT policy)
-      console.log("\nStep 6: User 2 tries to log in (should fail with STRICT policy)");
+      // Step 5: User 2 tries to log in (should fail with STRICT policy)
+      console.log("\nStep 5: User 2 tries to log in (should fail with STRICT policy)");
 
       const authResponse2 = await getAuthorizations({
         endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,

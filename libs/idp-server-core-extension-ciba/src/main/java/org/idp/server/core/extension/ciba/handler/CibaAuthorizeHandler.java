@@ -16,6 +16,7 @@
 
 package org.idp.server.core.extension.ciba.handler;
 
+import java.util.UUID;
 import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.grant.CibaGrantStatus;
 import org.idp.server.core.extension.ciba.handler.io.CibaAuthorizeRequest;
@@ -26,6 +27,10 @@ import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.extension.ciba.validator.CibaAuthorizeRequestValidator;
+import org.idp.server.core.openid.grant_management.AuthorizationGranted;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedIdentifier;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
+import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
@@ -39,6 +44,7 @@ public class CibaAuthorizeHandler {
   ClientNotificationService clientNotificationService;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  AuthorizationGrantedRepository authorizationGrantedRepository;
 
   public CibaAuthorizeHandler(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
@@ -46,13 +52,15 @@ public class CibaAuthorizeHandler {
       ClientNotificationService clientNotificationService,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      AuthorizationGrantedRepository authorizationGrantedRepository) {
     this.cibaGrantRepository = cibaGrantRepository;
     this.backchannelAuthenticationRequestRepository = backchannelAuthenticationRequestRepository;
     this.clientNotificationService = clientNotificationService;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.authorizationGrantedRepository = authorizationGrantedRepository;
   }
 
   public CibaAuthorizeResponse handle(CibaAuthorizeRequest request) {
@@ -81,6 +89,9 @@ public class CibaAuthorizeHandler {
             CibaGrantStatus.authorized, request.authentication(), request.toDeniedScopes());
     cibaGrantRepository.update(tenant, updated);
 
+    // Register AuthorizationGranted at CIBA authorize time
+    registerOrUpdateAuthorizationGranted(tenant, updated.authorizationGrant());
+
     clientNotificationService.notify(
         tenant,
         backchannelAuthenticationRequest,
@@ -88,5 +99,23 @@ public class CibaAuthorizeHandler {
         authorizationServerConfiguration,
         clientConfiguration);
     return new CibaAuthorizeResponse(CibaAuthorizeStatus.OK);
+  }
+
+  private void registerOrUpdateAuthorizationGranted(
+      Tenant tenant, AuthorizationGrant authorizationGrant) {
+    AuthorizationGranted latest =
+        authorizationGrantedRepository.find(
+            tenant, authorizationGrant.requestedClientId(), authorizationGrant.user());
+
+    if (latest.exists()) {
+      AuthorizationGranted merge = latest.merge(authorizationGrant);
+      authorizationGrantedRepository.update(tenant, merge);
+      return;
+    }
+    AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
+        new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
+    AuthorizationGranted authorizationGranted =
+        new AuthorizationGranted(authorizationGrantedIdentifier, authorizationGrant);
+    authorizationGrantedRepository.register(tenant, authorizationGranted);
   }
 }

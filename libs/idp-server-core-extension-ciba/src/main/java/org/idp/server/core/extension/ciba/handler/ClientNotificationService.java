@@ -23,10 +23,6 @@ import org.idp.server.core.extension.ciba.gateway.ClientNotificationGateway;
 import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.openid.authentication.Authentication;
-import org.idp.server.core.openid.grant_management.AuthorizationGranted;
-import org.idp.server.core.openid.grant_management.AuthorizationGrantedIdentifier;
-import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.identity.id_token.IdTokenCreator;
 import org.idp.server.core.openid.identity.id_token.IdTokenCustomClaims;
 import org.idp.server.core.openid.identity.id_token.IdTokenCustomClaimsBuilder;
@@ -47,7 +43,6 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public class ClientNotificationService implements RefreshTokenCreatable {
 
   BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
-  AuthorizationGrantedRepository authorizationGrantedRepository;
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
   ClientNotificationGateway clientNotificationGateway;
   IdTokenCreator idTokenCreator;
@@ -55,11 +50,9 @@ public class ClientNotificationService implements RefreshTokenCreatable {
 
   public ClientNotificationService(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
-      AuthorizationGrantedRepository authorizationGrantedRepository,
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
       ClientNotificationGateway clientNotificationGateway) {
     this.backchannelAuthenticationRequestRepository = backchannelAuthenticationRequestRepository;
-    this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.clientNotificationGateway = clientNotificationGateway;
     this.idTokenCreator = IdTokenCreator.getInstance();
@@ -99,7 +92,7 @@ public class ClientNotificationService implements RefreshTokenCreatable {
       IdToken idToken =
           idTokenCreator.createIdToken(
               cibaGrant.user(),
-              new Authentication(),
+              cibaGrant.authorizationGrant().authentication(),
               cibaGrant.authorizationGrant(),
               idTokenCustomClaims,
               new RequestedClaimsPayload(),
@@ -120,8 +113,6 @@ public class ClientNotificationService implements RefreshTokenCreatable {
       clientNotificationGateway.notify(clientNotificationRequest);
 
       OAuthTokenIdentifier identifier = new OAuthTokenIdentifier(UUID.randomUUID().toString());
-
-      registerOrUpdate(tenant, cibaGrant);
 
       OAuthToken oAuthToken =
           new OAuthTokenBuilder(identifier).add(accessToken).add(refreshToken).add(idToken).build();
@@ -148,23 +139,5 @@ public class ClientNotificationService implements RefreshTokenCreatable {
             builder.build(),
             backchannelAuthenticationRequest.clientNotificationToken().value());
     clientNotificationGateway.notify(clientNotificationRequest);
-  }
-
-  private void registerOrUpdate(Tenant tenant, CibaGrant cibaGrant) {
-    AuthorizationGranted latest =
-        authorizationGrantedRepository.find(
-            tenant, cibaGrant.requestedClientId(), cibaGrant.user());
-
-    if (latest.exists()) {
-      AuthorizationGranted merge = latest.merge(cibaGrant.authorizationGrant());
-
-      authorizationGrantedRepository.update(tenant, merge);
-      return;
-    }
-    AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
-        new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
-    AuthorizationGranted authorizationGranted =
-        new AuthorizationGranted(authorizationGrantedIdentifier, cibaGrant.authorizationGrant());
-    authorizationGrantedRepository.register(tenant, authorizationGranted);
   }
 }

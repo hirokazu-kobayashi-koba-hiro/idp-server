@@ -70,7 +70,8 @@ public class DefaultOAuthProtocol implements OAuthProtocol {
             authorizationCodeGrantRepository,
             oAuthTokenCommandRepository,
             authorizationServerConfigurationQueryRepository,
-            clientConfigurationQueryRepository);
+            clientConfigurationQueryRepository,
+            authorizationGrantedRepository);
     this.oAuthDenyHandler =
         new OAuthDenyHandler(
             authorizationRequestRepository,

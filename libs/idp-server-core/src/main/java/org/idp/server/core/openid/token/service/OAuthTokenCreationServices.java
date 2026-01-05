@@ -21,7 +21,6 @@ import static org.idp.server.core.openid.oauth.type.oauth.GrantType.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
@@ -36,7 +35,6 @@ public class OAuthTokenCreationServices {
   public OAuthTokenCreationServices(
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
-      AuthorizationGrantedRepository authorizationGrantedRepository,
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
       Map<GrantType, OAuthTokenCreationService> extensionOAuthTokenCreationServices) {
@@ -45,8 +43,7 @@ public class OAuthTokenCreationServices {
         new AuthorizationCodeGrantService(
             authorizationRequestRepository,
             oAuthTokenCommandRepository,
-            authorizationCodeGrantRepository,
-            authorizationGrantedRepository));
+            authorizationCodeGrantRepository));
     values.put(
         refresh_token,
         new RefreshTokenGrantService(oAuthTokenCommandRepository, oAuthTokenQueryRepository));

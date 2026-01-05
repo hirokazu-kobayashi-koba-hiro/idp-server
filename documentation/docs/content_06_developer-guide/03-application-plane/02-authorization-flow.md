@@ -495,6 +495,59 @@ OAuth2RequestVerifier.verify(context)
 
 ---
 
+## SSO（シングルサインオン）可能タイミング
+
+### SSO（prompt=none）が利用可能になるタイミング
+
+**重要**: idp-serverでは、SSOは**認可承認時点**（Phase 3完了時）から利用可能になります。
+
+```
+Phase 1: Authorization Request
+    ↓
+Phase 2: User Authentication
+    ↓
+Phase 3: Authorization Approve ← この時点でSSO可能になる
+    ↓
+Phase 4: Token Request（SSOにはこのステップは不要）
+```
+
+### 技術的な仕組み
+
+**AuthorizationGranted登録タイミング**:
+- `AuthorizationGranted`（認可同意記録）は**認可承認時**（`OAuthAuthorizeHandler`）に登録される
+- これにより、Token Request前でも`prompt=none`によるSSO認可が可能
+
+```
+認可承認完了
+    ↓
+AuthorizationGranted登録（DB）← SSO可能に
+    ↓
+Token Request（省略可能）
+    ↓
+別のクライアントから prompt=none でSSO認可可能
+```
+
+### SSO利用条件
+
+`prompt=none`でSSO認可が成功するための条件:
+1. ✅ 同一ユーザーで過去に認可完了済み（AuthorizationGranted存在）
+2. ✅ 有効なOAuthSession存在（セッション期限内）
+3. ✅ 要求スコープが既認可スコープに含まれる
+
+### 他IdPとの比較
+
+| IdP | SSO可能タイミング |
+|-----|-----------------|
+| **idp-server** | 認可承認時（Token Request前） |
+| **Keycloak** | 認可承認時（Token Request前） |
+| **Auth0** | 認可承認時（Token Request前） |
+
+**設計理由**: Token Request前にSSOを可能にすることで、ユーザー体験を向上させる。ユーザーが認可を完了した時点で、別のクライアントからもスムーズにログインできる。
+
+**実装**: [OAuthAuthorizeHandler.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/handler/OAuthAuthorizeHandler.java)
+
+---
+
 ## データのライフサイクル
 
 ### Authorization Code の一生
