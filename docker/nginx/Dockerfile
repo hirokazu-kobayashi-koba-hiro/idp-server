@@ -5,7 +5,7 @@ COPY server.crt /etc/nginx/server.crt
 COPY server.key /etc/nginx/server.key
 
 # Copy SSL and mTLS configurations
-COPY ssl.conf /etc/nginx/conf.d/ssl.conf
+COPY ssl.conf /etc/nginx/ssl.conf
 COPY mtls.conf /etc/nginx/mtls.conf
 
 # Create directory for client certificates (mTLS)

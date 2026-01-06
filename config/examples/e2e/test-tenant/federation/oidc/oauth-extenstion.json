@@ -3,13 +3,13 @@
   "type": "oidc",
   "sso_provider": "b7481833-c95a-4c7a-9481-94b30008c8ef",
   "payload": {
-    "issuer": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3",
+    "issuer": "https://api.local.dev/1e68932e-ed4a-43e7-b412-460665e42df3",
     "issuer_name": "test-provider",
     "type": "oauth-extension",
     "provider": "oauth-extension",
-    "authorization_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/authorizations",
-    "token_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens",
-    "userinfo_endpoint": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/userinfo",
+    "authorization_endpoint": "https://api.local.dev/1e68932e-ed4a-43e7-b412-460665e42df3/v1/authorizations",
+    "token_endpoint": "https://api.local.dev/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens",
+    "userinfo_endpoint": "https://api.local.dev/1e68932e-ed4a-43e7-b412-460665e42df3/v1/userinfo",
     "userinfo_execution": {
       "function": "http_requests",
       "http_requests": [
@@ -41,10 +41,10 @@
       "profile"
     ],
     "revocation_endpoint": "https://oauth2.googleapis.com/revoke",
-    "jwks_uri": "http://localhost:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/jwks",
+    "jwks_uri": "https://api.local.dev/1e68932e-ed4a-43e7-b412-460665e42df3/v1/jwks",
     "client_id": "clientSecretPost",
     "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
-    "redirect_uri": "http://localhost:8080/signin/sso-callback/index.html",
+    "redirect_uri": "https://api.local.dev/signin/sso-callback/index.html",
     "userinfo_mapping_rules": [
       { "static_value": "mock-provider", "to": "provider_id" },
       { "from": "$.userinfo_execution_http_requests[0].response_body.id", "to": "external_user_id" },

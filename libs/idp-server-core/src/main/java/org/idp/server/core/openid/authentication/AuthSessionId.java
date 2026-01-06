@@ -1,0 +1,97 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.core.openid.authentication;
+
+import java.security.SecureRandom;
+import java.util.Base64;
+import java.util.Objects;
+
+/**
+ * AuthSessionId
+ *
+ * <p>Unique identifier for binding browser session to authorization transaction. This value is
+ * stored in the AUTH_SESSION cookie and in the AuthenticationTransaction to prevent session
+ * fixation attacks on the authorization flow.
+ *
+ * @see org.idp.server.core.openid.session.AuthSessionCookieDelegate
+ */
+public class AuthSessionId {
+
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+  private static final int TOKEN_LENGTH = 32; // 256 bits
+
+  private final String value;
+
+  public AuthSessionId() {
+    this.value = "";
+  }
+
+  public AuthSessionId(String value) {
+    this.value = value != null ? value : "";
+  }
+
+  /**
+   * Generates a cryptographically secure random AuthSessionId.
+   *
+   * @return newly generated AuthSessionId
+   */
+  public static AuthSessionId generate() {
+    byte[] bytes = new byte[TOKEN_LENGTH];
+    SECURE_RANDOM.nextBytes(bytes);
+    String value = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    return new AuthSessionId(value);
+  }
+
+  public String value() {
+    return value;
+  }
+
+  public boolean exists() {
+    return value != null && !value.isEmpty();
+  }
+
+  /**
+   * Validates that this AuthSessionId matches the expected value.
+   *
+   * @param expected the expected AuthSessionId
+   * @return true if values match, false otherwise
+   */
+  public boolean matches(AuthSessionId expected) {
+    if (!exists() || !expected.exists()) {
+      return false;
+    }
+    return value.equals(expected.value);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    AuthSessionId that = (AuthSessionId) o;
+    return Objects.equals(value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(value);
+  }
+
+  @Override
+  public String toString() {
+    return value;
+  }
+}

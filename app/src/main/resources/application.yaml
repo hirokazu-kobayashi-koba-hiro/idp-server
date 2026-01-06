@@ -5,11 +5,14 @@ idp:
    apiSecret: ${IDP_SERVER_API_SECRET}
    encryptionKey: ${ENCRYPTION_KEY}
    databaseType: "${DATABASE_TYPE:POSTGRESQL}"
+  auth-session:
+    # Cookie SameSite attribute: Lax (same-origin) or None (cross-origin, requires HTTPS)
+    same-site: "${IDP_AUTH_SESSION_SAME_SITE:Lax}"
+    # Cookie Secure flag: true for HTTPS, false for HTTP development
+    secure: ${IDP_AUTH_SESSION_SECURE:true}
   server:
     shutdown:
       delay: "${IDP_SERVER_SHUTDOWN_DELAY:5s}"
-  session:
-    mode: "${IDP_SESSION_MODE:redis}"
   time:
    zone: "${TIME_ZONE:UTC}"
   logging:
@@ -65,6 +68,17 @@ idp:
       maxTotal: ${REDIS_MAX_TOTAL:20}
       maxIdle: ${REDIS_MAX_IDLE:3}
       minIdle: ${REDIS_MIN_IDLE:2}
+  session:
+    enabled: ${SESSION_REDIS_ENABLE:true}
+    redis:
+      host: "${REDIS_HOST:localhost}"
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_SESSION_DATABASE:0}
+      timeout: ${REDIS_SESSION_TIMEOUT:10000}
+      password: ${REDIS_SESSION_PASSWORD:}
+      maxTotal: ${REDIS_SESSION_MAX_TOTAL:20}
+      maxIdle: ${REDIS_SESSION_MAX_IDLE:3}
+      minIdle: ${REDIS_SESSION_MIN_IDLE:2}
 
 logging:
   level:
@@ -77,6 +91,7 @@ logging:
           authentication: "${LOGGING_LEVEL_IDP_SERVER_AUTHENTICATION_INTERACTORS:info}"
           control_plane: "${LOGGING_LEVEL_IDP_SERVER_CONTROL_PLANE:info}"
           core.oidc: "${LOGGING_LEVEL_IDP_SERVER_CORE_OIDC:info}"
+          core.openid: "${LOGGING_LEVEL_IDP_SERVER_CORE_OPENID:info}"
           core.adapters: "${LOGGING_LEVEL_IDP_SERVER_CORE_ADAPTERS:info}"
           core.extension: "${LOGGING_LEVEL_IDP_SERVER_CORE_EXTENSION:info}"
           email.aws: "${LOGGING_LEVEL_IDP_SERVER_EMAIL_AWS:info}"
@@ -91,22 +106,6 @@ logging:
     org.idp.server.adapters.springboot.logging.RequestResponseLoggingFilter: "${LOGGING_LEVEL_REQUEST_RESPONSE_LOGGING_FILTER:info}"
 
 spring:
-  data:
-    redis:
-      host: "${REDIS_HOST:localhost}"
-      port: ${REDIS_PORT:6379}
-      database: ${REDIS_SESSION_DATABASE:0}
-      password: ${REDIS_PASSWORD:}
-      timeout: "${REDIS_TIMEOUT:2s}"
-      jedis:
-        pool:
-          max-active: ${REDIS_JEDIS_POOL_MAX_ACTIVE:32}
-          max-idle: ${REDIS_JEDIS_POOL_MAX_IDLE:16}
-          min-idle: ${REDIS_JEDIS_POOL_MIN_IDLE:0}
-  session:
-    redis:
-      configure-action: ${SPRING_SESSION_REDIS_CONFIGURE_ACTION:none}
-    timeout: "${SESSION_TIMEOUT:3600s}"
   lifecycle:
     timeout-per-shutdown-phase: 30s
 

@@ -1,4 +1,4 @@
-import { Container, Stack, Typography, Grid } from "@mui/material";
+import { Container, Stack, Typography, Grid, Button, Box } from "@mui/material";
 import { auth } from "@/app/auth";
 import { redirect } from "next/navigation";
 import UserInfo from "@/components/UserInfo";
@@ -6,6 +6,7 @@ import TokenViewer from "@/components/TokenViewer";
 import PasswordChange from "@/components/PasswordChange";
 import UserDelete from "@/components/UserDelete";
 import LogoutButton from "@/components/LogoutButton";
+import SecurityIcon from "@mui/icons-material/Security";
 
 const Home = async () => {
   const session = await auth();
@@ -22,7 +23,18 @@ const Home = async () => {
           <Typography variant="h4" component="h1">
             ダッシュボード
           </Typography>
-          <LogoutButton idToken={session.idToken} />
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              href="/security-demo"
+              variant="outlined"
+              color="warning"
+              startIcon={<SecurityIcon />}
+              size="small"
+            >
+              セキュリティデモ
+            </Button>
+            <LogoutButton idToken={session.idToken} />
+          </Box>
         </Stack>
 
         {/* User Info */}

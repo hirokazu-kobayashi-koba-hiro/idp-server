@@ -39,6 +39,11 @@ public class AuthenticationDeviceDeniedInteractor implements AuthenticationInter
   }
 
   @Override
+  public boolean isBrowserBased() {
+    return false;
+  }
+
+  @Override
   public String method() {
     return "deny";
   }

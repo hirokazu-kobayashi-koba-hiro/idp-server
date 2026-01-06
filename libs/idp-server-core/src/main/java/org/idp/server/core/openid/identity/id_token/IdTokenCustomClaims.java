@@ -21,6 +21,7 @@ import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.AuthorizationCode;
 import org.idp.server.core.openid.oauth.type.oauth.State;
 import org.idp.server.core.openid.oauth.type.oidc.Nonce;
+import org.idp.server.core.openid.session.ClientSessionIdentifier;
 
 public class IdTokenCustomClaims {
   AuthorizationCode authorizationCode;
@@ -28,18 +29,21 @@ public class IdTokenCustomClaims {
   State state;
   Nonce nonce;
   CustomProperties customProperties;
+  ClientSessionIdentifier sid;
 
   IdTokenCustomClaims(
       AuthorizationCode authorizationCode,
       AccessTokenEntity accessTokenEntity,
       State state,
       Nonce nonce,
-      CustomProperties customProperties) {
+      CustomProperties customProperties,
+      ClientSessionIdentifier sid) {
     this.authorizationCode = authorizationCode;
     this.accessTokenEntity = accessTokenEntity;
     this.state = state;
     this.nonce = nonce;
     this.customProperties = customProperties;
+    this.sid = sid;
   }
 
   public AuthorizationCode authorizationCode() {
@@ -80,5 +84,13 @@ public class IdTokenCustomClaims {
 
   public boolean hasCustomProperties() {
     return customProperties.exists();
+  }
+
+  public ClientSessionIdentifier sid() {
+    return sid;
+  }
+
+  public boolean hasSid() {
+    return sid != null && sid.exists();
   }
 }

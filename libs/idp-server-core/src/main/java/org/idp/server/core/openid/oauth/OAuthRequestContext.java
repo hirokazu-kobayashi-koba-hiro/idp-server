@@ -20,7 +20,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import org.idp.server.core.openid.grant_management.AuthorizationGranted;
 import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
 import org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims;
@@ -43,6 +42,7 @@ import org.idp.server.core.openid.oauth.type.extension.ResponseModeValue;
 import org.idp.server.core.openid.oauth.type.oauth.*;
 import org.idp.server.core.openid.oauth.type.oidc.ResponseMode;
 import org.idp.server.core.openid.oauth.view.OAuthViewUrlResolver;
+import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -57,7 +57,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   AuthorizationRequest authorizationRequest;
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
-  OAuthSession session;
+  OPSession opSession;
   AuthorizationGranted authorizationGranted;
 
   public OAuthRequestContext() {}
@@ -79,8 +79,8 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     this.clientConfiguration = clientConfiguration;
   }
 
-  public void setSession(OAuthSession session) {
-    this.session = session;
+  public void setOPSession(OPSession opSession) {
+    this.opSession = opSession;
   }
 
   public void setAuthorizationGranted(AuthorizationGranted authorizationGranted) {
@@ -92,13 +92,21 @@ public class OAuthRequestContext implements ResponseModeDecidable {
       return false;
     }
 
-    if (session == null || !session.exists()) {
+    if (opSession == null || !opSession.exists()) {
       throw new OAuthRedirectableBadRequestException(
           "login_required", "invalid session, session is not registered", this);
     }
-    if (!session.isValid(authorizationRequest())) {
+    if (!opSession.isActive()) {
       throw new OAuthRedirectableBadRequestException(
-          "login_required", "invalid session, session is invalid", this);
+          "login_required", "invalid session, session is expired or terminated", this);
+    }
+    if (authorizationRequest.hasMaxAge()) {
+      long maxAgeSeconds = authorizationRequest.maxAge().toLongValue();
+      java.time.Instant maxAuthTime = opSession.authTime().plusSeconds(maxAgeSeconds);
+      if (java.time.Instant.now().isAfter(maxAuthTime)) {
+        throw new OAuthRedirectableBadRequestException(
+            "login_required", "session exceeds max_age", this);
+      }
     }
 
     if (authorizationGranted == null || !authorizationGranted.exists()) {
@@ -188,36 +196,26 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     return new OAuthAuthorizeRequest(
             tenant,
             authorizationRequestIdentifier().value(),
-            session.user(),
-            session.authentication())
-        .setCustomProperties(session.customProperties());
+            opSession.user(),
+            opSession.authentication())
+        .setCustomProperties(opSession.user().customPropertiesValue());
   }
 
   public OAuthRequestResponse createResponse() {
     String frontUrl = OAuthViewUrlResolver.resolve(this);
     if (isPromptCreate()) {
-
-      return new OAuthRequestResponse(
-          OAuthRequestStatus.OK_ACCOUNT_CREATION, this, session, frontUrl);
+      return new OAuthRequestResponse(OAuthRequestStatus.OK_ACCOUNT_CREATION, this, frontUrl);
     }
 
-    if (Objects.isNull(session) || !session.exists()) {
-      return new OAuthRequestResponse(OAuthRequestStatus.OK, this, session, frontUrl);
-    }
-
-    if (!session.isValid(authorizationRequest())) {
-      return new OAuthRequestResponse(OAuthRequestStatus.OK, this, session, frontUrl);
-    }
-
-    return new OAuthRequestResponse(OAuthRequestStatus.OK_SESSION_ENABLE, this, session, frontUrl);
+    return new OAuthRequestResponse(OAuthRequestStatus.OK, this, frontUrl);
   }
 
   public Tenant tenant() {
     return tenant;
   }
 
-  public OAuthSession session() {
-    return session;
+  public OPSession opSession() {
+    return opSession;
   }
 
   public AuthorizationRequestIdentifier identifier() {
@@ -385,14 +383,6 @@ public class OAuthRequestContext implements ResponseModeDecidable {
 
   public RequestedClientId clientId() {
     return authorizationRequest.requestedClientId();
-  }
-
-  public OAuthSessionKey sessionKey() {
-    return authorizationRequest.sessionKey();
-  }
-
-  public String sessionKeyValue() {
-    return sessionKey().key();
   }
 
   public boolean isOidcRequest() {

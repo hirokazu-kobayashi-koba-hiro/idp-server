@@ -23,12 +23,14 @@ import org.idp.server.core.openid.identity.id_token.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.openid.oauth.OAuthAuthorizeContext;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
+import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.extension.JarmPayload;
 import org.idp.server.core.openid.oauth.type.extension.ResponseModeValue;
 import org.idp.server.core.openid.oauth.type.oauth.AuthorizationCode;
 import org.idp.server.core.openid.oauth.type.oauth.ExpiresIn;
 import org.idp.server.core.openid.oauth.type.oauth.TokenType;
 import org.idp.server.core.openid.oauth.type.oidc.IdToken;
+import org.idp.server.core.openid.session.ClientSessionIdentifier;
 import org.idp.server.core.openid.token.AccessToken;
 import org.idp.server.core.openid.token.AccessTokenCreator;
 
@@ -59,13 +61,23 @@ public class AuthorizationResponseCodeTokenIdTokenCreator
             context.clientConfiguration(),
             new ClientCredentials());
 
-    IdTokenCustomClaims idTokenCustomClaims =
+    IdTokenCustomClaimsBuilder idTokenCustomClaimsBuilder =
         new IdTokenCustomClaimsBuilder()
             .add(authorizationRequest.state())
             .add(authorizationRequest.nonce())
             .add(accessToken.accessTokenEntity())
-            .add(authorizationCode)
-            .build();
+            .add(authorizationCode);
+
+    // Add sid for OIDC Session Management if present
+    CustomProperties customProperties = context.customProperties();
+    if (customProperties != null && customProperties.contains("sid")) {
+      String sidValue = customProperties.getValueAsStringOrEmpty("sid");
+      if (!sidValue.isEmpty()) {
+        idTokenCustomClaimsBuilder.add(new ClientSessionIdentifier(sidValue));
+      }
+    }
+
+    IdTokenCustomClaims idTokenCustomClaims = idTokenCustomClaimsBuilder.build();
 
     IdToken idToken =
         idTokenCreator.createIdToken(

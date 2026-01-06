@@ -64,6 +64,11 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
   }
 
   @Override
+  public boolean isBrowserBased() {
+    return false;
+  }
+
+  @Override
   public OperationType operationType() {
     return OperationType.CHALLENGE;
   }

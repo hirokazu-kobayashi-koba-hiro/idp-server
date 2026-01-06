@@ -25,5 +25,7 @@ public interface CacheStore {
 
   <T> Optional<T> find(String key, Class<T> type);
 
+  boolean exists(String key);
+
   void delete(String key);
 }

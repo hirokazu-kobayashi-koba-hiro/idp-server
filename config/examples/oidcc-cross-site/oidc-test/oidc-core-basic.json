@@ -1,0 +1,25 @@
+{
+  "alias": "oidc-core-basic",
+  "description": "oidc-core-basic",
+  "server": {
+    "issuer": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d",
+    "jwks_uri": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/jwks",
+    "authorization_endpoint": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/authorizations",
+    "token_endpoint": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/tokens",
+    "userinfo_endpoint": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/userinfo",
+    "acr_values": "urn:mace:incommon:iap:bronze",
+    "login_hint": "oidcc-test"
+  },
+  "client": {
+    "client_id": "oidcc-basic-client",
+    "client_secret": "oidcc-basic-secret-32characters1"
+  },
+  "client_secret_post": {
+    "client_id": "oidcc-post-client",
+    "client_secret": "oidcc-post-secret-32characters12"
+  },
+  "client2": {
+    "client_id": "oidcc-second-client",
+    "client_secret": "oidcc-second-secret-32characters"
+  }
+}

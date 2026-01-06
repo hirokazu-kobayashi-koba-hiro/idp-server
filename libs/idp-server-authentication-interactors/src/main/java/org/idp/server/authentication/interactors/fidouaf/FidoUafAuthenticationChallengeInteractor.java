@@ -64,6 +64,11 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
   }
 
   @Override
+  public boolean isBrowserBased() {
+    return false;
+  }
+
+  @Override
   public OperationType operationType() {
     return OperationType.CHALLENGE;
   }

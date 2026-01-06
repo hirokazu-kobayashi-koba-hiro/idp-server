@@ -114,7 +114,7 @@
           {
             "type": "sso_credentials",
             "details": {
-              "token_endpoint": "http://host.docker.internal:8080/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens",
+              "token_endpoint": "https://api.local.dev/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens",
               "client_id": "clientSecretPost",
               "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
               "access_token_expires_in": 300,

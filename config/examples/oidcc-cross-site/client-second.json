@@ -1,0 +1,31 @@
+{
+  "client_id": "94db3cf2-7306-48a0-ab19-201742754236",
+  "client_id_alias": "oidcc-second-client",
+  "client_secret": "oidcc-second-secret-32characters",
+  "redirect_uris": [
+    "https://localhost.emobix.co.uk:8443/test/a/oidc-core-basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/oidc-core-comprehensive-test/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/oidcc-rp-initiated-logout/callback"
+  ],
+  "response_types": [
+    "code",
+    "token",
+    "id_token",
+    "code token",
+    "code id_token",
+    "token id_token",
+    "code token id_token",
+    "none"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email address phone offline_access",
+  "client_name": "OIDCC Second Client",
+  "token_endpoint_auth_method": "client_secret_basic",
+  "application_type": "web",
+  "post_logout_redirect_uris": [
+    "https://localhost.emobix.co.uk:8443/test/a/oidcc-rp-initiated-logout/post_logout_redirect"
+  ]
+}

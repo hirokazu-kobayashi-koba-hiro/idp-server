@@ -21,10 +21,12 @@ import org.idp.server.core.openid.identity.id_token.IdTokenCustomClaims;
 import org.idp.server.core.openid.identity.id_token.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.openid.oauth.OAuthAuthorizeContext;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
+import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.extension.JarmPayload;
 import org.idp.server.core.openid.oauth.type.extension.ResponseModeValue;
 import org.idp.server.core.openid.oauth.type.oauth.AuthorizationCode;
 import org.idp.server.core.openid.oauth.type.oidc.IdToken;
+import org.idp.server.core.openid.session.ClientSessionIdentifier;
 
 public class AuthorizationResponseCodeIdTokenCreator
     implements AuthorizationResponseCreator,
@@ -43,12 +45,22 @@ public class AuthorizationResponseCodeIdTokenCreator
     AuthorizationRequest authorizationRequest = context.authorizationRequest();
     AuthorizationCode authorizationCode = createAuthorizationCode();
 
-    IdTokenCustomClaims idTokenCustomClaims =
+    IdTokenCustomClaimsBuilder idTokenCustomClaimsBuilder =
         new IdTokenCustomClaimsBuilder()
             .add(authorizationCode)
             .add(authorizationRequest.state())
-            .add(authorizationRequest.nonce())
-            .build();
+            .add(authorizationRequest.nonce());
+
+    // Add sid for OIDC Session Management if present
+    CustomProperties customProperties = context.customProperties();
+    if (customProperties != null && customProperties.contains("sid")) {
+      String sidValue = customProperties.getValueAsStringOrEmpty("sid");
+      if (!sidValue.isEmpty()) {
+        idTokenCustomClaimsBuilder.add(new ClientSessionIdentifier(sidValue));
+      }
+    }
+
+    IdTokenCustomClaims idTokenCustomClaims = idTokenCustomClaimsBuilder.build();
 
     IdToken idToken =
         idTokenCreator.createIdToken(

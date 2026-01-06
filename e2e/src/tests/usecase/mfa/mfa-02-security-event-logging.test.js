@@ -1103,6 +1103,7 @@ describe("Use Case: MFA Security Event Logging", () => {
       },
     });
 
+    console.log(registrationResponse.data)
     expect(registrationResponse.status).toBe(200);
     console.log("✓ User registered:", userEmail, "phone:", userPhoneNumber);
 
@@ -1264,6 +1265,7 @@ describe("Use Case: MFA Security Event Logging", () => {
       },
     });
 
+    console.log(registrationResponse.data)
     expect(registrationResponse.status).toBe(200);
     console.log("✓ User registered:", userEmail);
 
@@ -1425,6 +1427,7 @@ describe("Use Case: MFA Security Event Logging", () => {
       },
     });
 
+    console.log(registration1.data)
     expect(registration1.status).toBe(200);
     console.log("✓ First user registered:", userEmail1, "phone:", sharedPhoneNumber);
 
@@ -1604,6 +1607,7 @@ describe("Use Case: MFA Security Event Logging", () => {
       },
     });
 
+    console.log(registrationResponse.data);
     expect(registrationResponse.status).toBe(200);
     console.log("✓ Initial registration completed:", userEmail);
     console.log("  User is now in transaction but registration flow not yet finalized");
@@ -1732,6 +1736,7 @@ describe("Use Case: MFA Security Event Logging", () => {
       },
     });
 
+    console.log(registrationResponse.data);
     expect(registrationResponse.status).toBe(200);
     console.log("✓ Initial registration completed:", userEmail, "phone:", userPhoneNumber);
     console.log("  User is now in transaction but registration flow not yet finalized");

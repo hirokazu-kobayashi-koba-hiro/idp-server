@@ -64,6 +64,11 @@ public class FidoUafAuthenticationInteractor implements AuthenticationInteractor
   }
 
   @Override
+  public boolean isBrowserBased() {
+    return false;
+  }
+
+  @Override
   public String method() {
     return StandardAuthenticationMethod.FIDO_UAF.type();
   }

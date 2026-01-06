@@ -16,9 +16,6 @@
 
 package org.idp.server.core.openid.oauth.handler;
 
-import org.idp.server.core.openid.oauth.OAuthSession;
-import org.idp.server.core.openid.oauth.OAuthSessionDelegate;
-import org.idp.server.core.openid.oauth.OAuthSessionKey;
 import org.idp.server.core.openid.oauth.OAuthUserDelegate;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
@@ -40,6 +37,10 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.validator.OAuthLogoutValidator;
 import org.idp.server.core.openid.oauth.view.OAuthViewData;
 import org.idp.server.core.openid.oauth.view.OAuthViewDataCreator;
+import org.idp.server.core.openid.session.ClientSessionIdentifier;
+import org.idp.server.core.openid.session.OIDCSessionHandler;
+import org.idp.server.core.openid.session.OPSession;
+import org.idp.server.core.openid.session.TerminationReason;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthHandler {
@@ -47,22 +48,23 @@ public class OAuthHandler {
   AuthorizationRequestRepository authorizationRequestRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  OIDCSessionHandler oidcSessionHandler;
 
   public OAuthHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      OIDCSessionHandler oidcSessionHandler) {
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.oidcSessionHandler = oidcSessionHandler;
   }
 
   public OAuthViewDataResponse handleViewData(
-      OAuthViewDataRequest request,
-      OAuthSessionDelegate oAuthSessionDelegate,
-      OAuthUserDelegate oAuthUserDelegate) {
+      OAuthViewDataRequest request, OAuthUserDelegate oAuthUserDelegate) {
     Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
 
@@ -74,12 +76,13 @@ public class OAuthHandler {
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, requestedClientId);
 
-    OAuthSession session = oAuthSessionDelegate.find(authorizationRequest.sessionKey());
+    OPSession opSession = request.opSession();
 
-    if (session != null && session.hasUser()) {
-      boolean userExists = oAuthUserDelegate.userExists(tenant, session.user().userIdentifier());
+    // Check if user still exists in DB
+    if (opSession != null && opSession.exists()) {
+      boolean userExists = oAuthUserDelegate.userExists(tenant, opSession.userIdentifier());
       if (!userExists) {
-        session = null;
+        opSession = null;
       }
     }
 
@@ -88,7 +91,7 @@ public class OAuthHandler {
             authorizationRequest,
             authorizationServerConfiguration,
             clientConfiguration,
-            session,
+            opSession,
             request.additionalViewData());
     OAuthViewData oAuthViewData = creator.create();
 
@@ -109,13 +112,11 @@ public class OAuthHandler {
    * End-User can always be identified without requiring a confirmation screen.
    *
    * @param request the logout request
-   * @param delegate the session delegate for session management
    * @return the logout response
    * @see <a href="https://openid.net/specs/openid-connect-rpinitiated-1_0.html">RP-Initiated
    *     Logout</a>
    */
-  public OAuthLogoutResponse handleLogout(
-      OAuthLogoutRequest request, OAuthSessionDelegate delegate) {
+  public OAuthLogoutResponse handleLogout(OAuthLogoutRequest request) {
 
     OAuthLogoutParameters parameters = request.toParameters();
     Tenant tenant = request.tenant();
@@ -138,13 +139,15 @@ public class OAuthHandler {
     LogoutRequestVerifier verifier = new LogoutRequestVerifier();
     verifier.verify(context);
 
-    // 5. Delete session
-    OAuthSessionKey oAuthSessionKey =
-        new OAuthSessionKey(tenant.identifierValue(), context.clientId().value());
-    OAuthSession session = delegate.find(oAuthSessionKey);
-    if (session != null) {
-      context.setSession(session);
-      delegate.deleteSession(oAuthSessionKey);
+    // 5. Terminate OPSession using sid from id_token_hint
+    if (context.hasSessionId()) {
+      ClientSessionIdentifier clientSessionId = new ClientSessionIdentifier(context.sessionId());
+      oidcSessionHandler
+          .findOPSessionBySid(tenant, clientSessionId)
+          .ifPresent(
+              opSessionId ->
+                  oidcSessionHandler.terminateOPSession(
+                      tenant, opSessionId, TerminationReason.USER_LOGOUT));
     }
 
     // 6. Build response

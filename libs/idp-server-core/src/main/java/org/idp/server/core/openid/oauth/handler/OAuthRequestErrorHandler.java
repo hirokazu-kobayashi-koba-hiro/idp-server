@@ -142,8 +142,9 @@ public class OAuthRequestErrorHandler {
     }
 
     Error error = new Error("server_error");
-    ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
-    log.error("OAuth request server error: error={}", exception.getMessage(), exception);
+    String message = exception.getMessage() != null ? exception.getMessage() : "unexpected error";
+    ErrorDescription errorDescription = new ErrorDescription(message);
+    log.error("OAuth request server error: error={}", message, exception);
     return new OAuthRequestResponse(OAuthRequestStatus.SERVER_ERROR, "", error, errorDescription);
   }
 }

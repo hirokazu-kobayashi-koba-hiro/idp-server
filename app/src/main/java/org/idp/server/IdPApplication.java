@@ -16,14 +16,11 @@
 
 package org.idp.server;
 
-import org.idp.server.configuration.IdpSessionProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.session.SessionAutoConfiguration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication(exclude = SessionAutoConfiguration.class)
-@EnableConfigurationProperties(IdpSessionProperties.class)
 public class IdPApplication {
 
   public static void main(String[] args) {

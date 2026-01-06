@@ -100,6 +100,16 @@ public class JedisCacheStore implements CacheStore {
   }
 
   @Override
+  public boolean exists(String key) {
+    try (Jedis resource = jedisPool.getResource()) {
+      return resource.exists(key);
+    } catch (Exception e) {
+      log.error("Failed to check cache existence", e);
+      return false;
+    }
+  }
+
+  @Override
   public void delete(String key) {
     try (Jedis resource = jedisPool.getResource()) {
       resource.del(key);

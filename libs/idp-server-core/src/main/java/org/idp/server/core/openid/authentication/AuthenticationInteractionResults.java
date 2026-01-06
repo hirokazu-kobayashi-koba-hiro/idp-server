@@ -33,6 +33,49 @@ public class AuthenticationInteractionResults implements JsonReadable {
     this.values = values;
   }
 
+  /**
+   * Creates AuthenticationInteractionResults from a Map structure. Used for reconstructing from
+   * OPSession storage.
+   */
+  public static AuthenticationInteractionResults fromMap(Map<String, Map<String, Object>> mapData) {
+    Map<String, AuthenticationInteractionResult> results = new HashMap<>();
+    for (Map.Entry<String, Map<String, Object>> entry : mapData.entrySet()) {
+      String key = entry.getKey();
+      Map<String, Object> data = entry.getValue();
+      AuthenticationInteractionResult result =
+          new AuthenticationInteractionResult(
+              (String) data.get("operation_type"),
+              (String) data.get("method"),
+              getIntValue(data.get("call_count")),
+              getIntValue(data.get("success_count")),
+              getIntValue(data.get("failure_count")),
+              parseInteractionTime(data.get("interaction_time")));
+      results.put(key, result);
+    }
+    return new AuthenticationInteractionResults(results);
+  }
+
+  private static int getIntValue(Object value) {
+    if (value == null) return 0;
+    if (value instanceof Integer) return (Integer) value;
+    if (value instanceof Long) return ((Long) value).intValue();
+    if (value instanceof Number) return ((Number) value).intValue();
+    return 0;
+  }
+
+  private static LocalDateTime parseInteractionTime(Object value) {
+    if (value == null) return null;
+    if (value instanceof LocalDateTime) return (LocalDateTime) value;
+    if (value instanceof String) {
+      try {
+        return LocalDateTime.parse((String) value);
+      } catch (Exception e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
   public boolean containsSuccessful(String type) {
     if (!values.containsKey(type)) {
       return false;
@@ -54,6 +97,12 @@ public class AuthenticationInteractionResults implements JsonReadable {
   }
 
   public Map<String, Object> toMapAsObject() {
+    return values.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toMap()));
+  }
+
+  /** Returns interaction results as Map for OPSession storage. */
+  public Map<String, Map<String, Object>> toStorageMap() {
     return values.entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toMap()));
   }

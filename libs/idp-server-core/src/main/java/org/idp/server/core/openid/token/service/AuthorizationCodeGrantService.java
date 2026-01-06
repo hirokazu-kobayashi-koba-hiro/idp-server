@@ -17,9 +17,6 @@
 package org.idp.server.core.openid.token.service;
 
 import java.util.UUID;
-import org.idp.server.core.openid.grant_management.AuthorizationGranted;
-import org.idp.server.core.openid.grant_management.AuthorizationGrantedIdentifier;
-import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationCodeGrant;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.id_token.IdTokenCreator;
@@ -37,6 +34,7 @@ import org.idp.server.core.openid.oauth.type.oidc.IdToken;
 import org.idp.server.core.openid.oauth.type.vc.CNonceCreatable;
 import org.idp.server.core.openid.oauth.type.verifiablecredential.CNonce;
 import org.idp.server.core.openid.oauth.type.verifiablecredential.CNonceExpiresIn;
+import org.idp.server.core.openid.session.ClientSessionIdentifier;
 import org.idp.server.core.openid.token.*;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
@@ -99,7 +97,6 @@ public class AuthorizationCodeGrantService
   AuthorizationRequestRepository authorizationRequestRepository;
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
   AuthorizationCodeGrantRepository authorizationCodeGrantRepository;
-  AuthorizationGrantedRepository authorizationGrantedRepository;
   AuthorizationCodeGrantVerifier verifier;
   IdTokenCreator idTokenCreator;
   AccessTokenCreator accessTokenCreator;
@@ -107,12 +104,10 @@ public class AuthorizationCodeGrantService
   public AuthorizationCodeGrantService(
       AuthorizationRequestRepository authorizationRequestRepository,
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
-      AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
-      AuthorizationGrantedRepository authorizationGrantedRepository) {
+      AuthorizationCodeGrantRepository authorizationCodeGrantRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
-    this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.verifier = new AuthorizationCodeGrantVerifier();
     this.idTokenCreator = IdTokenCreator.getInstance();
     this.accessTokenCreator = AccessTokenCreator.getInstance();
@@ -165,13 +160,23 @@ public class AuthorizationCodeGrantService
             .add(refreshToken);
 
     if (authorizationRequest.isOidcProfile()) {
-      IdTokenCustomClaims idTokenCustomClaims =
+      IdTokenCustomClaimsBuilder idTokenCustomClaimsBuilder =
           new IdTokenCustomClaimsBuilder()
               .add(authorizationCodeGrant.authorizationCode())
               .add(accessToken.accessTokenEntity())
               .add(authorizationRequest.nonce())
-              .add(authorizationRequest.state())
-              .build();
+              .add(authorizationRequest.state());
+
+      // Add sid for OIDC Session Management if present in custom properties
+      if (authorizationGrant.hasCustomProperties()
+          && authorizationGrant.customProperties().contains("sid")) {
+        String sidValue = authorizationGrant.customProperties().getValueAsStringOrEmpty("sid");
+        if (!sidValue.isEmpty()) {
+          idTokenCustomClaimsBuilder.add(new ClientSessionIdentifier(sidValue));
+        }
+      }
+
+      IdTokenCustomClaims idTokenCustomClaims = idTokenCustomClaimsBuilder.build();
       IdToken idToken =
           idTokenCreator.createIdToken(
               authorizationGrant.user(),
@@ -191,8 +196,6 @@ public class AuthorizationCodeGrantService
       oAuthTokenBuilder.add(cNonceExpiresIn);
     }
 
-    registerOrUpdate(tenant, authorizationGrant);
-
     OAuthToken oAuthToken = oAuthTokenBuilder.build();
 
     oAuthTokenCommandRepository.register(tenant, oAuthToken);
@@ -201,23 +204,5 @@ public class AuthorizationCodeGrantService
         tokenRequestContext.tenant(), authorizationCodeGrant.authorizationRequestIdentifier());
 
     return oAuthToken;
-  }
-
-  private void registerOrUpdate(Tenant tenant, AuthorizationGrant authorizationGrant) {
-    AuthorizationGranted latest =
-        authorizationGrantedRepository.find(
-            tenant, authorizationGrant.requestedClientId(), authorizationGrant.user());
-
-    if (latest.exists()) {
-      AuthorizationGranted merge = latest.merge(authorizationGrant);
-
-      authorizationGrantedRepository.update(tenant, merge);
-      return;
-    }
-    AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
-        new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
-    AuthorizationGranted authorizationGranted =
-        new AuthorizationGranted(authorizationGrantedIdentifier, authorizationGrant);
-    authorizationGrantedRepository.register(tenant, authorizationGranted);
   }
 }

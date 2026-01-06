@@ -16,15 +16,16 @@
 
 package org.idp.server.core.openid.oauth.handler;
 
+import java.util.UUID;
 import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.grant_management.AuthorizationGranted;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedIdentifier;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationCodeGrant;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationCodeGrantCreator;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.OAuthAuthorizeContext;
-import org.idp.server.core.openid.oauth.OAuthSession;
-import org.idp.server.core.openid.oauth.OAuthSessionDelegate;
-import org.idp.server.core.openid.oauth.OAuthSessionKey;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
@@ -57,6 +58,7 @@ public class OAuthAuthorizeHandler {
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  AuthorizationGrantedRepository authorizationGrantedRepository;
 
   public OAuthAuthorizeHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
@@ -64,18 +66,19 @@ public class OAuthAuthorizeHandler {
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      AuthorizationGrantedRepository authorizationGrantedRepository) {
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationCodeGrantRepository = authorizationCodeGrantRepository;
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.creators = new AuthorizationResponseCreators();
   }
 
-  public AuthorizationResponse handle(
-      OAuthAuthorizeRequest request, OAuthSessionDelegate delegate) {
+  public AuthorizationResponse handle(OAuthAuthorizeRequest request) {
 
     Tenant tenant = request.tenant();
     AuthorizationRequestIdentifier authorizationRequestIdentifier = request.toIdentifier();
@@ -123,12 +126,27 @@ public class OAuthAuthorizeHandler {
       oAuthTokenCommandRepository.register(tenant, oAuthToken);
     }
 
-    OAuthSessionKey oAuthSessionKey =
-        new OAuthSessionKey(tenant.identifierValue(), requestedClientId.value());
-    OAuthSession session =
-        OAuthSession.create(oAuthSessionKey, user, authentication, authorizationRequest.maxAge());
-    delegate.registerSession(tenant, session);
+    // Register AuthorizationGranted at authorization time (enables SSO before token exchange)
+    registerOrUpdateAuthorizationGranted(tenant, authorizationGrant);
 
     return authorizationResponse;
+  }
+
+  private void registerOrUpdateAuthorizationGranted(
+      Tenant tenant, AuthorizationGrant authorizationGrant) {
+    AuthorizationGranted latest =
+        authorizationGrantedRepository.find(
+            tenant, authorizationGrant.requestedClientId(), authorizationGrant.user());
+
+    if (latest.exists()) {
+      AuthorizationGranted merge = latest.merge(authorizationGrant);
+      authorizationGrantedRepository.update(tenant, merge);
+      return;
+    }
+    AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
+        new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
+    AuthorizationGranted authorizationGranted =
+        new AuthorizationGranted(authorizationGrantedIdentifier, authorizationGrant);
+    authorizationGrantedRepository.register(tenant, authorizationGranted);
   }
 }

@@ -600,6 +600,8 @@ describe("organization user management - PATCH parameter tests", () => {
       // Verify status unchanged
       expect(response.data.result.status).toBe(userStatus);
 
+      await sleep(500);
+
       // Verify by GET
       const getResponse = await get({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users/${userId}`,

@@ -21,6 +21,7 @@ import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.AuthorizationCode;
 import org.idp.server.core.openid.oauth.type.oauth.State;
 import org.idp.server.core.openid.oauth.type.oidc.Nonce;
+import org.idp.server.core.openid.session.ClientSessionIdentifier;
 
 public class IdTokenCustomClaimsBuilder {
   AuthorizationCode authorizationCode = new AuthorizationCode();
@@ -28,6 +29,7 @@ public class IdTokenCustomClaimsBuilder {
   State state = new State();
   Nonce nonce = new Nonce();
   CustomProperties customProperties = new CustomProperties();
+  ClientSessionIdentifier sid;
 
   public IdTokenCustomClaimsBuilder() {}
 
@@ -56,8 +58,13 @@ public class IdTokenCustomClaimsBuilder {
     return this;
   }
 
+  public IdTokenCustomClaimsBuilder add(ClientSessionIdentifier sid) {
+    this.sid = sid;
+    return this;
+  }
+
   public IdTokenCustomClaims build() {
     return new IdTokenCustomClaims(
-        authorizationCode, accessTokenEntity, state, nonce, customProperties);
+        authorizationCode, accessTokenEntity, state, nonce, customProperties, sid);
   }
 }

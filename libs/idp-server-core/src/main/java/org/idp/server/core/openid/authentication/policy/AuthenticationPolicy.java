@@ -38,6 +38,7 @@ public class AuthenticationPolicy implements JsonReadable {
   AuthenticationResultConditionConfig failureConditions = new AuthenticationResultConditionConfig();
   AuthenticationResultConditionConfig lockConditions = new AuthenticationResultConditionConfig();
   List<AuthenticationStepDefinition> stepDefinitions = new ArrayList<>();
+  boolean authSessionBindingRequired = true; // default: enabled for security
 
   public AuthenticationPolicy() {}
 
@@ -127,6 +128,10 @@ public class AuthenticationPolicy implements JsonReadable {
     return stepDefinitions != null && !stepDefinitions.isEmpty();
   }
 
+  public boolean authSessionBindingRequired() {
+    return authSessionBindingRequired;
+  }
+
   public boolean exists() {
     return hasSuccessConditions();
   }
@@ -144,6 +149,7 @@ public class AuthenticationPolicy implements JsonReadable {
     if (hasFailureConditions()) map.put("failure_conditions", failureConditions.toMap());
     if (hasLockConditions()) map.put("lock_conditions", lockConditions.toMap());
     if (hasStepDefinitions()) map.put("step_definitions", stepDefinitionsAsMap());
+    map.put("auth_session_binding_required", authSessionBindingRequired);
     return map;
   }
 }

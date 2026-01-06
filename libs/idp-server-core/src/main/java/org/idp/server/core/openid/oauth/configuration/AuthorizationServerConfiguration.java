@@ -34,6 +34,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   String jwks;
   String jwksUri;
   String registrationEndpoint = "";
+  String endSessionEndpoint = "";
   List<String> scopesSupported = new ArrayList<>();
   List<String> responseTypesSupported = new ArrayList<>();
   List<String> responseModesSupported = new ArrayList<>();
@@ -377,6 +378,14 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return Objects.nonNull(registrationEndpoint) && !registrationEndpoint.isEmpty();
   }
 
+  public String endSessionEndpoint() {
+    return endSessionEndpoint;
+  }
+
+  public boolean hasEndSessionEndpoint() {
+    return Objects.nonNull(endSessionEndpoint) && !endSessionEndpoint.isEmpty();
+  }
+
   public boolean isSupportedResponseType(ResponseType responseType) {
     return responseTypesSupported.contains(responseType.value());
   }
@@ -663,6 +672,9 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     }
     if (hasRegistrationEndpoint()) {
       map.put("registration_endpoint", registrationEndpoint);
+    }
+    if (hasEndSessionEndpoint()) {
+      map.put("end_session_endpoint", endSessionEndpoint);
     }
     map.put("jwks_uri", jwksUri());
     if (hasScopesSupported()) {

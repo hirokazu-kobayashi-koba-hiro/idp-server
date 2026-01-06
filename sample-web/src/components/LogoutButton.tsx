@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button, CircularProgress } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
+import { signOut } from "next-auth/react";
 
 const issuer = process.env.NEXT_PUBLIC_IDP_SERVER_ISSUER;
 const clientId = process.env.NEXT_PUBLIC_IDP_CLIENT_ID;
@@ -30,6 +31,12 @@ const LogoutButton = ({ idToken }: LogoutButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogout = async () => {
+    console.log("[LogoutButton] handleLogout called");
+    console.log("[LogoutButton] issuer:", issuer);
+    console.log("[LogoutButton] clientId:", clientId);
+    console.log("[LogoutButton] frontendUrl:", frontendUrl);
+    console.log("[LogoutButton] idToken:", idToken ? "present" : "not present");
+
     setIsLoading(true);
 
     try {
@@ -42,18 +49,25 @@ const LogoutButton = ({ idToken }: LogoutButtonProps) => {
         params.set("id_token_hint", idToken);
       }
 
+      const logoutUrl = `${issuer}/v1/logout?${params.toString()}`;
+      console.log("[LogoutButton] Calling logout URL:", logoutUrl);
+
       // ブラウザから fetch で IDP server の logout を呼び出し（Cookie が送信される）
-      await fetch(`${issuer}/v1/logout?${params.toString()}`, {
+      const response = await fetch(logoutUrl, {
         method: "GET",
         credentials: "include",
       });
 
-      // NextAuth の Cookie を削除してホームへリダイレクト
-      window.location.href = `${frontendUrl}/api/auth/logout`;
+      console.log("[LogoutButton] Logout response status:", response.status);
+      console.log("[LogoutButton] Logout response ok:", response.ok);
+
+      // NextAuth のセッションを削除してホームへリダイレクト（確認画面スキップ）
+      console.log("[LogoutButton] Calling NextAuth signOut");
+      await signOut({ callbackUrl: "/" });
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("[LogoutButton] Logout error:", error);
       // エラーでも NextAuth のセッションは削除
-      window.location.href = `${frontendUrl}/api/auth/logout`;
+      await signOut({ callbackUrl: "/" });
     }
   };
 

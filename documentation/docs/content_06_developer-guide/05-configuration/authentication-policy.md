@@ -95,6 +95,7 @@
 | `success_conditions` | ✅ | 成功条件 |
 | `failure_conditions` | ❌ | 失敗条件 |
 | `lock_conditions` | ❌ | ロック条件 |
+| `auth_session_binding_required` | ❌ | セッションバインディング（デフォルト: `true`） |
 
 ---
 
@@ -262,6 +263,79 @@ ACR値と認証方式のマッピング：
 - **段階的なユーザー登録**: Email認証 → SMS認証で段階的に情報を収集
 - **ステップアップ認証**: 通常ログイン後、重要な操作前にSMS認証を要求
 - **複合認証**: 複数の認証方式を組み合わせてセキュリティを強化
+
+---
+
+## Auth Session Binding（セッションバインディング）
+
+**目的**: 認可フローハイジャック攻撃を防止するための設定です。
+
+### 概要
+
+```
+【認可フローハイジャック攻撃】
+
+1. 攻撃者が認可リクエストを開始 → id=abc123, AUTH_SESSION=xyz789 を取得
+2. 攻撃者がURL (id=abc123) を被害者に送信
+3. 被害者がそのURLにアクセスして認証しようとする
+4. 被害者のブラウザにはAUTH_SESSION Cookieがない
+5. 【対策あり】認証時にvalidateAuthSession()が失敗 → 被害者が認証できない
+```
+
+### 設定
+
+| フィールド | 型 | デフォルト | 説明 |
+|-----------|---|----------|------|
+| `auth_session_binding_required` | boolean | `true` | AUTH_SESSION Cookie検証の有効/無効 |
+
+### 設定例
+
+**標準（推奨）**:
+```json
+{
+  "policies": [{
+    "auth_session_binding_required": true,
+    "available_methods": ["password"],
+    "success_conditions": { ... }
+  }]
+}
+```
+→ AUTH_SESSION Cookieの検証を実施。認可フローハイジャック攻撃を防止。
+
+**無効化（特殊なユースケース向け）**:
+```json
+{
+  "policies": [{
+    "auth_session_binding_required": false,
+    "available_methods": ["password"],
+    "success_conditions": { ... }
+  }]
+}
+```
+→ AUTH_SESSION Cookieの検証をスキップ。
+
+### 検証タイミング
+
+AUTH_SESSION Cookieは以下のエンドポイントで検証されます：
+
+| エンドポイント | 説明 |
+|--------------|------|
+| `POST /password-authentication` | パスワード認証 |
+| `POST /totp-authentication` | TOTP認証 |
+| `POST /authorize` | 認可（同意） |
+| `POST /authorize-with-session` | SSO認可 |
+
+### 例外
+
+以下のフローでは、AUTH_SESSION検証が自動的にスキップされます：
+
+- **CIBA（Client Initiated Backchannel Authentication）**: ブラウザを経由しない認証フロー
+- その他のnon-browserフロー
+
+### 関連ドキュメント
+
+- [セッション管理コンセプト](../../../content_03_concepts/03-authentication-authorization/concept-03-session-management.md#認証トランザクションとのセッションバインディング)
+- [セッション管理セキュリティ](../../../content_03_concepts/03-authentication-authorization/concept-03-session-management-security.md#対策認可フローハイジャック)
 
 ---
 

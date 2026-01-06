@@ -18,7 +18,6 @@ package org.idp.server.core.extension.ciba.token;
 
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
-import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.token.plugin.OAuthTokenCreationServiceFactory;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.service.OAuthTokenCreationService;
@@ -33,12 +32,9 @@ public class CibaGrantServiceFactory implements OAuthTokenCreationServiceFactory
     CibaGrantRepository cibaGrantRepository = container.resolve(CibaGrantRepository.class);
     OAuthTokenCommandRepository oAuthTokenCommandRepository =
         container.resolve(OAuthTokenCommandRepository.class);
-    AuthorizationGrantedRepository authorizationGrantedRepository =
-        container.resolve(AuthorizationGrantedRepository.class);
     return new CibaGrantService(
         backchannelAuthenticationRequestRepository,
         cibaGrantRepository,
-        oAuthTokenCommandRepository,
-        authorizationGrantedRepository);
+        oAuthTokenCommandRepository);
   }
 }

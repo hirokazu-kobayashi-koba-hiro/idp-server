@@ -60,6 +60,11 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
   }
 
   @Override
+  public boolean isBrowserBased() {
+    return false;
+  }
+
+  @Override
   public OperationType operationType() {
     return OperationType.DE_REGISTRATION;
   }

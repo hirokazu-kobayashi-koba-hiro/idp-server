@@ -1,0 +1,19 @@
+{
+  "alias": "oidc-core-comprehensive-test",
+  "description": "oidc-core-comprehensive-test",
+  "server": {
+    "discoveryUrl": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/.well-known/openid-configuration"
+  },
+  "client": {
+    "client_id": "oidcc-basic-client",
+    "client_secret": "oidcc-basic-secret-32characters1"
+  },
+  "client_secret_post": {
+    "client_id": "oidcc-post-client",
+    "client_secret": "oidcc-post-secret-32characters12"
+  },
+  "client2": {
+    "client_id": "oidcc-second-client",
+    "client_secret": "oidcc-second-secret-32characters"
+  }
+}

@@ -65,7 +65,6 @@ public class DefaultCibaProtocol implements CibaProtocol {
     ClientNotificationService clientNotificationService =
         new ClientNotificationService(
             backchannelAuthenticationRequestRepository,
-            authorizationGrantedRepository,
             oAuthTokenCommandRepository,
             new NotificationClient(httpRequestExecutor));
 
@@ -81,7 +80,8 @@ public class DefaultCibaProtocol implements CibaProtocol {
             cibaGrantRepository,
             clientNotificationService,
             authorizationServerConfigurationQueryRepository,
-            clientConfigurationQueryRepository);
+            clientConfigurationQueryRepository,
+            authorizationGrantedRepository);
     this.denyHandler =
         new CibaDenyHandler(
             cibaGrantRepository,

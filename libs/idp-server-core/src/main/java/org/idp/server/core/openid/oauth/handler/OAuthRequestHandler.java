@@ -34,6 +34,7 @@ import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepositor
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.openid.oauth.validator.OAuthRequestValidator;
 import org.idp.server.core.openid.oauth.verifier.OAuthRequestVerifier;
+import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -112,8 +113,7 @@ public class OAuthRequestHandler {
     return oAuthPushedRequestContext;
   }
 
-  public OAuthRequestContext handleRequest(
-      OAuthRequest oAuthRequest, OAuthSessionDelegate delegate) {
+  public OAuthRequestContext handleRequest(OAuthRequest oAuthRequest) {
     OAuthRequestParameters parameters = oAuthRequest.toParameters();
     Tenant tenant = oAuthRequest.tenant();
 
@@ -142,13 +142,13 @@ public class OAuthRequestHandler {
       authorizationRequestRepository.register(tenant, context.authorizationRequest());
     }
 
-    OAuthSession session = delegate.find(context.sessionKey());
-
-    if (session.exists() && session.hasUser()) {
-      context.setSession(session);
+    // Set OPSession for prompt=none handling
+    OPSession opSession = oAuthRequest.opSession();
+    if (opSession != null && opSession.exists() && opSession.isActive()) {
+      context.setOPSession(opSession);
 
       AuthorizationGranted authorizationGranted =
-          grantedRepository.find(tenant, parameters.clientId(), session.user());
+          grantedRepository.find(tenant, parameters.clientId(), opSession.user());
       context.setAuthorizationGranted(authorizationGranted);
     }
 

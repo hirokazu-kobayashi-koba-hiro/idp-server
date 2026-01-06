@@ -54,7 +54,7 @@ public class OAuthAuthorizeRequestValidator {
     if (Objects.isNull(user) || !user.exists()) {
       throw new OAuthAuthorizeBadRequestException("invalid_request", "user is required");
     }
-    if (Objects.isNull(authentication)) {
+    if (Objects.isNull(authentication) || !authentication.exists()) {
       throw new OAuthAuthorizeBadRequestException("invalid_request", "authentication is required");
     }
   }

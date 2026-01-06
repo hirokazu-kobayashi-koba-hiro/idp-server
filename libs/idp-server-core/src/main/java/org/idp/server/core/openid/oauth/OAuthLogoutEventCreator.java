@@ -17,8 +17,6 @@
 package org.idp.server.core.openid.oauth;
 
 import java.util.HashMap;
-import org.idp.server.core.openid.identity.SecurityEventUserCreatable;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.logout.OAuthLogoutContext;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
@@ -30,7 +28,7 @@ import org.idp.server.platform.type.RequestAttributes;
  *
  * <p>Creates security events for RP-Initiated Logout.
  */
-public class OAuthLogoutEventCreator implements SecurityEventUserCreatable {
+public class OAuthLogoutEventCreator {
 
   Tenant tenant;
   OAuthLogoutContext context;
@@ -68,19 +66,19 @@ public class OAuthLogoutEventCreator implements SecurityEventUserCreatable {
       builder.add(securityEventClient);
     }
 
-    if (context.hasSession() && context.session().hasUser()) {
-      User user = context.session().user();
-      SecurityEventUser securityEventUser = createSecurityEventUser(user);
+    // Get subject from id_token_hint if available
+    String subject = context.subject();
+    if (subject != null && !subject.isEmpty()) {
+      SecurityEventUser securityEventUser = new SecurityEventUser(subject, "", "", "", "");
       builder.add(securityEventUser);
-      detailsMap.put("user", toDetailWithSensitiveData(user, tenant));
+      detailsMap.put("subject", subject);
     }
 
     builder.add(requestAttributes.getIpAddress());
     builder.add(requestAttributes.getUserAgent());
     detailsMap.putAll(requestAttributes.toMap());
 
-    SecurityEventDetail securityEventDetail =
-        createSecurityEventDetailWithScrubbing(detailsMap, tenant);
+    SecurityEventDetail securityEventDetail = new SecurityEventDetail(detailsMap);
     builder.add(securityEventDetail);
 
     return builder.build();

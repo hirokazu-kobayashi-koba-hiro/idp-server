@@ -28,13 +28,6 @@ dependencies {
 	implementation project(':libs:idp-server-webauthn4j-adapter')
 	implementation project(':libs:idp-server-springboot-adapter')
 
-	//session-redis
-	implementation 'org.springframework.session:spring-session-data-redis'
-	implementation('org.springframework.boot:spring-boot-starter-data-redis') {
-		exclude group: 'io.lettuce.core', module: 'lettuce-core'
-	}
-	implementation 'redis.clients:jedis:5.1.0'
-
 	//log format
 	implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 

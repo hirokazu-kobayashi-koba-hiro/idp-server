@@ -24,9 +24,12 @@ import org.idp.server.adapters.springboot.application.event.SecurityEventPublish
 import org.idp.server.adapters.springboot.application.event.UserLifecycleEventPublisherService;
 import org.idp.server.adapters.springboot.application.property.AppDatabaseConfigProperties;
 import org.idp.server.adapters.springboot.application.property.ControlPlaneDatabaseConfigProperties;
-import org.idp.server.adapters.springboot.application.session.OAuthSessionService;
+import org.idp.server.adapters.springboot.application.session.AuthSessionCookieService;
+import org.idp.server.adapters.springboot.application.session.SessionCookieService;
 import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
 import org.idp.server.core.adapters.datasource.config.HikariConnectionProvider;
+import org.idp.server.core.adapters.datasource.session.InMemorySessionStore;
+import org.idp.server.core.adapters.datasource.session.JedisSessionStore;
 import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.datasource.ConfigurableApplicationDatabaseTypeProvider;
 import org.idp.server.platform.datasource.DatabaseConfig;
@@ -35,6 +38,8 @@ import org.idp.server.platform.datasource.DbConfig;
 import org.idp.server.platform.datasource.cache.CacheConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
+import org.idp.server.platform.datasource.session.SessionConfiguration;
+import org.idp.server.platform.datasource.session.SessionStore;
 import org.idp.server.platform.date.TimeConfig;
 import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,6 +96,33 @@ public class IdPServerConfiguration {
   @Value("${idp.cache.redis.minIdle}")
   int minIdle;
 
+  @Value("${idp.session.enabled}")
+  boolean sessionEnabled;
+
+  @Value("${idp.session.redis.host}")
+  String sessionRedisHost;
+
+  @Value("${idp.session.redis.port}")
+  int sessionRedisPort;
+
+  @Value("${idp.session.redis.database}")
+  int sessionRedisDatabase;
+
+  @Value("${idp.session.redis.timeout}")
+  int sessionRedisTimeout;
+
+  @Value("${idp.session.redis.password}")
+  String sessionRedisPassword;
+
+  @Value("${idp.session.redis.maxTotal}")
+  int sessionMaxTotal;
+
+  @Value("${idp.session.redis.maxIdle}")
+  int sessionMaxIdle;
+
+  @Value("${idp.session.redis.minIdle}")
+  int sessionMinIdle;
+
   @Value("${idp.time.zone}")
   String timeZone;
 
@@ -99,7 +131,8 @@ public class IdPServerConfiguration {
 
   @Bean
   public IdpServerApplication idpServerApplication(
-      OAuthSessionService oAuthSessionService,
+      SessionCookieService sessionCookieService,
+      AuthSessionCookieService authSessionCookieService,
       SecurityEventPublisherService eventPublisherService,
       AuditLogPublisherService auditLogPublisher,
       UserLifecycleEventPublisherService userLifecycleEventPublisherService) {
@@ -110,6 +143,7 @@ public class IdPServerConfiguration {
     HikariConnectionProvider dbConnectionProvider = createHikariConnectionProvider();
 
     CacheStore cacheStore = createCacheStore();
+    SessionStore sessionStore = createSessionStore();
 
     BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
     PasswordEncoder passwordEncoder = new PasswordEncoder(bCryptPasswordEncoder);
@@ -123,7 +157,9 @@ public class IdPServerConfiguration {
         encryptionKey,
         databaseType,
         cacheStore,
-        oAuthSessionService,
+        sessionStore,
+        sessionCookieService,
+        authSessionCookieService,
         passwordEncoder,
         passwordVerification,
         eventPublisherService,
@@ -175,5 +211,22 @@ public class IdPServerConfiguration {
     }
 
     return new NoOperationCacheStore();
+  }
+
+  private SessionStore createSessionStore() {
+    if (sessionEnabled) {
+      SessionConfiguration sessionConfiguration =
+          new SessionConfiguration(
+              sessionRedisHost,
+              sessionRedisPort,
+              sessionRedisDatabase,
+              sessionRedisTimeout,
+              sessionRedisPassword,
+              sessionMaxTotal,
+              sessionMaxIdle,
+              sessionMinIdle);
+      return new JedisSessionStore(sessionConfiguration);
+    }
+    return new InMemorySessionStore();
   }
 }

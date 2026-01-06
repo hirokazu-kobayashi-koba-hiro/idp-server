@@ -33,6 +33,8 @@ import org.idp.server.control_plane.management.identity.user.handler.UserManagem
 import org.idp.server.control_plane.management.identity.user.handler.UserManagementService;
 import org.idp.server.control_plane.management.identity.user.handler.UserPasswordUpdateService;
 import org.idp.server.control_plane.management.identity.user.handler.UserPatchService;
+import org.idp.server.control_plane.management.identity.user.handler.UserSessionDeleteService;
+import org.idp.server.control_plane.management.identity.user.handler.UserSessionsFindService;
 import org.idp.server.control_plane.management.identity.user.handler.UserUpdateService;
 import org.idp.server.control_plane.management.identity.user.io.*;
 import org.idp.server.control_plane.management.identity.user.verifier.UserRegistrationRelatedDataVerifier;
@@ -44,6 +46,8 @@ import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
+import org.idp.server.core.openid.session.OPSessionIdentifier;
+import org.idp.server.core.openid.session.repository.OPSessionRepository;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -70,6 +74,7 @@ public class UserManagementEntryService implements UserManagementApi {
       UserCommandRepository userCommandRepository,
       RoleQueryRepository roleQueryRepository,
       OrganizationRepository organizationRepository,
+      OPSessionRepository opSessionRepository,
       PasswordEncodeDelegation passwordEncodeDelegation,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       AuditLogPublisher auditLogPublisher,
@@ -93,6 +98,7 @@ public class UserManagementEntryService implements UserManagementApi {
             userCommandRepository,
             roleQueryRepository,
             organizationRepository,
+            opSessionRepository,
             passwordEncodeDelegation,
             verifier,
             userLifecycleEventPublisher,
@@ -105,6 +111,7 @@ public class UserManagementEntryService implements UserManagementApi {
       UserCommandRepository userCommandRepository,
       RoleQueryRepository roleQueryRepository,
       OrganizationRepository organizationRepository,
+      OPSessionRepository opSessionRepository,
       PasswordEncodeDelegation passwordEncodeDelegation,
       UserRegistrationVerifier verifier,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
@@ -154,6 +161,9 @@ public class UserManagementEntryService implements UserManagementApi {
         "updateOrganizationAssignments",
         new UserOrganizationAssignmentsUpdateService(
             userQueryRepository, userCommandRepository, relatedDataVerifier));
+    services.put("findSessions", new UserSessionsFindService(opSessionRepository));
+    services.put("deleteSession", new UserSessionDeleteService(opSessionRepository));
+    services.put("deleteSessions", new UserSessionsDeleteService(opSessionRepository));
 
     return new UserManagementHandler(services, this, tenantQueryRepository);
   }
@@ -392,6 +402,76 @@ public class UserManagementEntryService implements UserManagementApi {
             authenticationContext,
             tenantIdentifier,
             updateRequest,
+            requestAttributes,
+            dryRun);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(dryRun);
+  }
+
+  @Override
+  @Transaction(readOnly = true)
+  public UserManagementResponse findSessions(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      RequestAttributes requestAttributes) {
+
+    UserManagementResult result =
+        handler.handle(
+            "findSessions",
+            authenticationContext,
+            tenantIdentifier,
+            new UserSessionsFindRequest(userIdentifier),
+            requestAttributes,
+            false);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(false);
+  }
+
+  @Override
+  public UserManagementResponse deleteSession(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      OPSessionIdentifier sessionIdentifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    UserManagementResult result =
+        handler.handle(
+            "deleteSession",
+            authenticationContext,
+            tenantIdentifier,
+            new UserSessionDeleteRequest(userIdentifier, sessionIdentifier),
+            requestAttributes,
+            dryRun);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(dryRun);
+  }
+
+  @Override
+  public UserManagementResponse deleteSessions(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      UserIdentifier userIdentifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    UserManagementResult result =
+        handler.handle(
+            "deleteSessions",
+            authenticationContext,
+            tenantIdentifier,
+            new UserSessionsDeleteRequest(userIdentifier),
             requestAttributes,
             dryRun);
 

@@ -1,6 +1,6 @@
 # セッション管理
 
-セッション管理は、ユーザーのログイン状態を維持し、複数のリクエスト間でユーザーを識別するための仕組みです。
+セッション管理は、ユーザーのログイン状態を維持し、シングルサインオン（SSO）やログアウト連携を実現するための仕組みです。
 
 ## セッションとは
 
@@ -9,262 +9,337 @@
 ### セッションの役割
 
 1. **認証状態の保持**: ログイン後、毎回パスワード入力せずにサービス利用可能
-2. **ユーザー識別**: 複数のリクエスト間でユーザーを一意に識別
-3. **一時データの保存**: ユーザーごとの設定や状態を保持
+2. **シングルサインオン（SSO）**: 一度のログインで複数のアプリケーションにアクセス
+3. **ログアウト連携**: 一箇所でログアウトすると関連するすべてのアプリからログアウト
 
-### セッションとトークンの関係
+### セッションとトークンの違い
 
-```mermaid
-flowchart TB
-    A[ユーザーログイン] --> B[セッション作成]
-    B --> C[Cookie発行: JSESSIONID]
-    C --> D[OAuth認可リクエスト]
-    D --> E{セッション確認}
-    E -->|有効| F[認可コード発行]
-    E -->|無効| A
-    F --> G[トークン発行]
+| 項目 | セッション | トークン |
+|:---|:---|:---|
+| **用途** | ブラウザとIdP間の状態管理 | クライアントとリソースサーバー間の認可 |
+| **保存場所** | Cookie（ブラウザ側）+ Redis/DB（サーバー側） | クライアントアプリケーション |
+| **有効期限** | セッションタイムアウト（通常30分〜数時間） | トークン有効期限（アクセストークン: 分〜時間） |
+| **識別対象** | ユーザーのブラウザ | クライアントアプリケーションのリクエスト |
+
+## idp-serverのセッション管理
+
+### なぜSpring Sessionを使わないか
+
+idp-serverは、OIDC Session Managementの要件を満たすため、独自のセッション管理を実装しています。
+
+| Spring Session | OIDC Session Management |
+|---------------|-------------------------|
+| 1ブラウザ = 1セッション | 1 OPセッション : N クライアントセッション |
+| HttpSessionの分散化が目的 | sid, sub での複合検索が必要 |
+| RP（クライアント）側での利用を想定 | OP（IdP）側でのセッション管理 |
+
+この要件の違いから、Keycloakなどと同様に独自実装を採用しています。
+
+### セッションの階層構造
+
+idp-serverでは、2層のセッション構造を採用しています。
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Browser Session                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                    OPSession                             │   │
+│  │  - ブラウザとOP間のセッション（SSO用）                    │   │
+│  │  - sub, authTime, acr, amr を保持                        │   │
+│  │  - 複数のClientSessionを持つ                             │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│           │                    │                    │           │
+│           ▼                    ▼                    ▼           │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │ ClientSession   │  │ ClientSession   │  │ ClientSession   │ │
+│  │ アプリA         │  │ アプリB         │  │ アプリC         │ │
+│  │ sid: xxx        │  │ sid: yyy        │  │ sid: zzz        │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**区別**:
-- **セッション**: ブラウザとIdP間の状態管理（Cookie）
-- **トークン**: クライアントとリソースサーバー間の認可情報（Bearer Token）
+#### OPSession（OPセッション）
 
-## セッション管理方式
-
-idp-serverは2つのセッション管理方式をサポートしています。
-
-### 1. ローカルセッション管理
-
-**概要**: アプリケーションサーバーのメモリ上でセッション情報を保持
-
-#### 特徴
-
-| 項目 | 内容 |
-|:---|:---|
-| **保存先** | サーバーメモリ（JVM Heap） |
-| **スケール** | 単一サーバーのみ |
-| **永続性** | サーバー再起動で消失 |
-| **パフォーマンス** | 高速（メモリアクセス） |
-| **適用範囲** | 開発環境、小規模環境 |
-
-#### 動作イメージ
-
-```mermaid
-flowchart LR
-    A[ブラウザ] -->|Cookie: JSESSIONID=abc123| B[idp-server]
-    B --> C[メモリ]
-    C -->|SessionID: abc123| D[ユーザー情報]
-```
-
-#### メリット・デメリット
-
-**✅ メリット**:
-- 設定不要、シンプル
-- 高速アクセス
-- 外部依存なし
-
-**❌ デメリット**:
-- サーバー再起動でセッション消失（ユーザーは再ログイン必要）
-- 複数サーバー間でセッション共有不可
-- メモリ使用量増加
-
-### 2. 分散セッション管理（Redis）
-
-**概要**: Redisにセッション情報を保存し、複数サーバー間で共有
-
-#### 特徴
-
-| 項目 | 内容 |
-|:---|:---|
-| **保存先** | Redis |
-| **スケール** | 複数サーバー対応 |
-| **永続性** | サーバー再起動でも保持 |
-| **パフォーマンス** | 高速（Redisキャッシュ） |
-| **適用範囲** | 本番環境、冗長構成 |
-
-#### 動作イメージ
-
-```mermaid
-flowchart TB
-    A[ブラウザ] -->|Cookie: JSESSIONID=abc123| B[idp-server 1]
-    A -->|Cookie: JSESSIONID=abc123| C[idp-server 2]
-    B --> D[Redis]
-    C --> D
-    D -->|SessionID: abc123| E[ユーザー情報]
-```
-
-#### メリット・デメリット
-
-**✅ メリット**:
-- サーバー間でセッション共有可能
-- サーバー再起動でもセッション維持
-- フェイルオーバー対応（サーバー障害時も継続）
-- スケールアウト可能（サーバー追加容易）
-
-**❌ デメリット**:
-- Redis環境が必要
-- ネットワークレイテンシ（わずか）
-- 設定がやや複雑
-
-## Cookie設定の動的解決
-
-idp-serverは、リクエストコンテキストに応じてCookie属性を動的に決定します。
-
-### Cookie属性
+ブラウザとIdP（OP）間のセッションです。ユーザーがログインすると作成されます。
 
 | 属性 | 説明 |
 |:---|:---|
-| **domain** | Cookieの有効ドメイン |
-| **path** | Cookieの有効パス |
-| **secure** | HTTPS通信時のみCookieを送信 |
-| **HttpOnly** | JavaScriptからのアクセス防止 |
-| **SameSite** | クロスサイトリクエスト制御（`Lax` / `Strict` / `None`） |
-| **Max-Age** | 有効期限（秒） |
+| **id** | セッションID（UUID） |
+| **sub** | ユーザー識別子 |
+| **authTime** | 認証時刻 |
+| **acr** | 認証コンテキストクラス（認証強度） |
+| **amr** | 認証方式（password, otp, fido等） |
+| **expiresAt** | 有効期限 |
 
-### 動的解決が必要な理由
+#### ClientSession（クライアントセッション）
 
-環境やアプリケーションの種類によって、適切なCookie設定が異なります：
+OPSessionと特定のアプリケーション（RP）間のセッションです。認可が完了すると作成されます。
 
-- **開発環境 vs 本番環境**: HTTPとHTTPSの違いに応じたsecure属性の設定
-- **SPA vs SSR**: クロスドメインか同一ドメインかに応じたSameSite属性の設定
-- **マルチテナント**: テナントごとの独自ドメインに応じたdomain属性の設定
+| 属性 | 説明 |
+|:---|:---|
+| **sid** | セッションID（ID Tokenのsidクレームに含まれる） |
+| **opSessionId** | 親となるOPSessionのID |
+| **clientId** | アプリケーションのClient ID |
+| **scopes** | 認可されたスコープ |
+| **nonce** | 認可リクエストのnonce |
 
-## セッションライフサイクル
+## Cookieの役割
 
-```mermaid
-flowchart LR
-    A[1. 作成] --> B[2. 使用]
-    B --> C[3. 更新]
-    C --> D{タイムアウト?}
-    D -->|No| B
-    D -->|Yes| E[4. 失効]
-    F[明示的ログアウト] --> E
+idp-serverは、セッション管理に複数のCookieを使用します。
+
+### セッション識別Cookie
+
+| Cookie名 | 内容 | HttpOnly | 目的 |
+|----------|------|----------|------|
+| `IDP_IDENTITY` | OPSessionのID | Yes | SSO識別用（サーバー側で使用） |
+| `IDP_SESSION` | SHA256(opSessionId) | No | Session Management iframe用 |
+
+- **IDP_IDENTITY**: サーバー側でセッションを識別するためのCookie（HttpOnlyでセキュア）
+- **IDP_SESSION**: OIDC Session Managementのiframeでセッション状態を確認するためのCookie
+
+### 認可フロー保護Cookie
+
+| Cookie名 | 内容 | 目的 |
+|----------|------|------|
+| `AUTH_SESSION` | 認可セッションID | 認可フロー乗っ取り攻撃の防止 |
+
+認可リクエストからトークン取得までの一連のフローを、同一ブラウザセッション内でのみ有効にします。
+
+### テナント分離
+
+Cookieのパスでテナントを分離できます。
+
+```
+Browser Cookie Storage:
+├── /tenant-a/
+│   ├── IDP_IDENTITY = "session-id-for-tenant-a"
+│   └── IDP_SESSION = "hash-a..."
+│
+└── /tenant-b/
+    ├── IDP_IDENTITY = "session-id-for-tenant-b"
+    └── IDP_SESSION = "hash-b..."
 ```
 
-### 1. セッション作成
+これにより、同一ブラウザで複数テナントに独立してログインできます。
 
-**タイミング**: 認証成功時
+## シングルサインオン（SSO）
 
-```java
-// OAuthSessionDataSource.register()で自動設定
-// テナント設定に基づいてタイムアウトが動的に設定される
-HttpSession session = request.getSession(true);
-session.setAttribute("user_id", "user123");
-session.setAttribute("tenant_id", "tenant-a");
-// timeout_seconds はテナント設定から自動適用
-session.setMaxInactiveInterval(tenant.sessionConfiguration().timeoutSeconds());
+OPSessionにより、一度のログインで複数のアプリケーションにアクセスできます。
+
+```
+1. ユーザーがアプリAにアクセス
+   └─ ログインしてOPSession作成 → ClientSession(A)作成
+
+2. ユーザーがアプリBにアクセス
+   └─ OPSessionが有効なので再認証不要 → ClientSession(B)作成
+
+3. ユーザーがアプリCにアクセス
+   └─ OPSessionが有効なので再認証不要 → ClientSession(C)作成
 ```
 
-### 2. セッション使用
+### max_ageパラメータ
 
-**タイミング**: 各HTTPリクエスト
+アプリケーションは認可リクエストで`max_age`パラメータを指定することで、最後の認証からの経過時間を制限できます。
 
-```java
-HttpSession session = request.getSession(false);
-String userId = (String) session.getAttribute("user_id");
+```
+max_age=300  → 最後の認証から5分以上経過していたら再認証を要求
 ```
 
-### 3. セッション更新
+### prompt=loginパラメータ
 
-**タイミング**: アクティビティ検出時
+`prompt=login`を指定すると、既存のセッションを無視して再認証を要求できます。
 
-```java
-session.setMaxInactiveInterval(3600); // タイムアウトをリセット
+## ログアウト
+
+idp-serverは、OIDC仕様に準拠した複数のログアウト方式をサポートしています。
+
+### RP-Initiated Logout
+
+アプリケーション（RP）からログアウトを開始する方式です。
+
+```
+1. ユーザーがアプリでログアウトボタンをクリック
+2. アプリがIdPの/logoutエンドポイントにリダイレクト
+3. IdPがセッションを終了
+4. IdPが指定されたURLにリダイレクト
 ```
 
-### 4. セッション失効
+### Back-Channel Logout
 
-**タイミング**:
-- タイムアウト（最終アクセスから一定時間経過）
-- 明示的ログアウト
-- セキュリティイベント（不正検知等）
+IdPからアプリケーションにサーバー間通信でログアウトを通知する方式です。
 
-```java
-session.invalidate();
+```
+1. ユーザーがIdPまたは他のアプリでログアウト
+2. IdPが各アプリのbackchannel_logout_uriにLogout Tokenを送信
+3. 各アプリがローカルセッションを終了
 ```
 
-## セッションタイムアウト
+**特徴**:
+- ユーザーのブラウザを経由しない（サーバー間通信）
+- 信頼性が高い
+- アプリがオフラインでも後で処理可能
 
-idp-serverでは、テナント単位でセッションタイムアウトを設定できます。
+### Front-Channel Logout
 
-### テナント別タイムアウト設定
+IdPからアプリケーションにブラウザ経由でログアウトを通知する方式です。
 
-各テナントの要件に応じて、異なるセッションタイムアウトを設定可能です：
+```
+1. ユーザーがIdPでログアウト
+2. IdPがログアウト確認ページを表示
+3. ページ内のiframeで各アプリのfrontchannel_logout_uriを読み込み
+4. 各アプリがローカルセッションを終了
+```
 
-| ユースケース | 推奨タイムアウト | 理由 |
+**特徴**:
+- ユーザーのブラウザを経由
+- Cookie削除などブラウザ側の処理が可能
+- ブラウザの制限（3rdパーティCookieブロック等）の影響を受ける
+
+## セッションストレージ
+
+idp-serverは、Redisをセッションストレージとして使用します。
+
+### なぜRedisか
+
+| 要件 | Redisの利点 |
+|:---|:---|
+| **高速アクセス** | インメモリDB |
+| **TTL（有効期限）** | ネイティブサポート |
+| **複合検索** | セカンダリインデックス |
+| **分散環境** | クラスタ構成対応 |
+
+### インデックス構造
+
+効率的な検索のため、以下のインデックスを作成します。
+
+```
+# OPSession
+op_session:{tenantId}:{opSessionId}           # メインデータ
+idx:tenant:{tenantId}:sub:{sub}               # ユーザー別検索
+
+# ClientSession
+client_session:{tenantId}:{sid}               # メインデータ
+idx:tenant:{tenantId}:op_session:{opSessionId} # OPSession別検索
+idx:tenant:{tenantId}:sub:{sub}               # ユーザー別検索
+idx:tenant:{tenantId}:client:{clientId}:sub:{sub} # クライアント×ユーザー検索
+```
+
+## セキュリティ機能
+
+### セッション固定攻撃対策
+
+認証成功時にセッションIDを再生成します。
+
+### CSRF対策
+
+- **SameSite Cookie属性**: `Lax`または`Strict`でクロスサイトリクエストを制限
+- **AUTH_SESSION Cookie**: 認可フローの乗っ取りを防止
+
+### Cookie属性
+
+| 属性 | 設定 | 目的 |
 |:---|:---|:---|
-| **金融機関** | 5-15分 | 高セキュリティ要件（NIST推奨） |
-| **一般アプリケーション** | 30分-2時間 | セキュリティと利便性のバランス |
-| **低摩擦サービス** | 2-8時間 | ユーザー利便性優先 |
-| **長期セッション** | 24時間-7日 | エンタープライズ向け |
+| **HttpOnly** | IDP_IDENTITY: Yes | XSSによるCookie盗難防止 |
+| **Secure** | Yes | HTTPS通信のみ |
+| **SameSite** | Lax | CSRF攻撃軽減 |
 
-### 設定方法
+### 認証トランザクションとのセッションバインディング
 
-セッションタイムアウトは `SessionConfiguration` の `timeout_seconds` フィールドで設定します：
+認可フロー全体を通じて、同一ブラウザセッションであることを保証する仕組みです。
+
+```
+認可リクエスト開始
+    │
+    ▼
+┌─────────────────────────────────────────────────────┐
+│ AuthenticationTransaction                            │
+│   authSessionId: "xyz789"  ←── 認可リクエスト時に生成 │
+└─────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────┐
+│ AUTH_SESSION Cookie: "xyz789"                        │
+│   ブラウザに設定（HttpOnly, Secure, SameSite=Lax）   │
+└─────────────────────────────────────────────────────┘
+    │
+    ▼
+認証・認可の各エンドポイントで検証
+    POST /password-authentication → validateAuthSession()
+    POST /authorize              → validateAuthSession()
+    POST /authorize-with-session → validateAuthSession()
+```
+
+- **目的**: 認可フローハイジャック攻撃の防止
+- **制御**: 認証ポリシーの`auth_session_binding_required`で有効/無効を設定（デフォルト: 有効）
+- **例外**: CIBA等のnon-browserフローでは自動的にスキップ
+
+### 認証ポリシー整合性の検証
+
+SSOセッション再利用時に、認証ポリシーの要件を満たしているかを検証する仕組みです。
+
+```
+【問題となるシナリオ】
+
+1. パスワードのみのクライアントでログイン
+   └─ OPSession作成（パスワード認証のみ）
+
+2. MFA必須のクライアントにアクセス
+   └─ OPSessionが有効なのでSSOが可能に見える
+
+3. authorize-with-session を実行
+   └─ [対策なし] MFAをバイパスして認可される ❌
+   └─ [対策あり] 認証ポリシーの条件を満たさず拒否 ✓
+```
+
+この対策により、異なる認証強度を要求するクライアント間でのセッション再利用を適切に制御します。
+
+- **仕組み**: OPSessionに認証結果（interactionResults）を保存し、authorize-with-session時に認証ポリシーのsuccessConditionsを再評価
+- **結果**: 認証ポリシーの条件を満たさない場合、セキュリティイベントを発行し認可を拒否
+
+### セッション切替ポリシー
+
+同一ブラウザで別ユーザーが認証しようとした場合の動作を制御します。
+
+```
+同一ユーザーが再認証
+└── 既存セッションを再利用（lastAccessedAt更新）
+    → 孤立セッションを防止
+
+別ユーザーが認証（既存セッションあり）
+├── STRICT         → エラー（ログアウト必須）
+├── SWITCH_ALLOWED → 古いセッション終了 → 新規作成（デフォルト）
+└── MULTI_SESSION  → 新規作成（古いのは残る）
+```
+
+| ポリシー | 動作 | ユースケース |
+|----------|------|-------------|
+| `STRICT` | 別ユーザー認証を拒否 | 金融、エンタープライズ |
+| `SWITCH_ALLOWED` | 古いセッション削除→新規作成 | 一般的なWebアプリ、共有PC |
+| `MULTI_SESSION` | 新規作成（古いのは残る） | 後方互換性維持 |
+
+**テナント設定**:
 
 ```json
 {
-  "session_configuration": {
-    "cookie_name": "IDP_SERVER_SESSION",
-    "cookie_same_site": "None",
-    "use_secure_cookie": true,
-    "use_http_only_cookie": true,
-    "cookie_path": "/",
-    "timeout_seconds": 1800
+  "session": {
+    "timeout_seconds": 3600,
+    "switch_policy": "SWITCH_ALLOWED"
   }
 }
 ```
 
-**デフォルト値**: 3600秒（1時間）
-
-### 動作仕組み
-
-1. **セッション登録時**: `OAuthSessionDataSource.register()` でテナント設定を読み込み
-2. **タイムアウト設定**: `httpSession.setMaxInactiveInterval(tenant.sessionConfiguration().timeoutSeconds())`
-3. **動的適用**: テナントごとに異なるタイムアウトが適用される
-
-```java
-// 実装例（OAuthSessionDataSource.java）
-@Override
-public void register(Tenant tenant, OAuthSession oAuthSession) {
-  String sessionKey = oAuthSession.sessionKeyValue();
-  int timeoutSeconds = tenant.sessionConfiguration().timeoutSeconds();
-  httpSession.setMaxInactiveInterval(timeoutSeconds);
-  httpSession.setAttribute(sessionKey, oAuthSession);
-}
-```
-
-### タイムアウトの種類
-
-idp-serverは **アイドルタイムアウト** を採用しています：
-
-- **アイドルタイムアウト**: 最終アクセスから一定時間経過で失効
-- **絶対タイムアウト**: ログインから一定時間経過で失効（未サポート）
-
-## セキュリティ機能
-
-idp-serverでは、以下のセッションセキュリティ機能を提供します。
-
-### セッション固定攻撃対策
-
-認証成功時にセッションIDを再生成することで、セッション固定攻撃を防ぎます。
-
-### CSRF対策
-
-SameSite Cookie属性を使用して、クロスサイトリクエストフォージェリ（CSRF）攻撃を防ぎます。
-
-### HttpOnly属性
-
-JavaScriptからのCookieアクセスを防止し、XSS攻撃によるセッション盗難を防ぎます。
-
 ## 関連ドキュメント
 
+- [セッション管理 実装ガイド](../../content_06_developer-guide/04-implementation-guides/oauth-oidc/session-management.md) - 実装詳細
 - [トークン管理](../04-tokens-claims/concept-02-token-management.md) - トークンとセッションの使い分け
 - [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナント分離の仕組み
-- [Cookie/CORS設定](../../content_08_ops/commercial-deployment/00-overview.md) - 本番環境での設定
 
-## 参考資料
+## 関連仕様
 
-- [Spring Session Documentation](https://spring.io/projects/spring-session)
-- [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
-- [RFC 6265 - HTTP State Management Mechanism (Cookies)](https://datatracker.ietf.org/doc/html/rfc6265)
+- [OpenID Connect Session Management 1.0](https://openid.net/specs/openid-connect-session-1_0.html)
+- [OpenID Connect RP-Initiated Logout 1.0](https://openid.net/specs/openid-connect-rpinitiated-1_0.html)
+- [OpenID Connect Back-Channel Logout 1.0](https://openid.net/specs/openid-connect-backchannel-1_0.html)
+- [OpenID Connect Front-Channel Logout 1.0](https://openid.net/specs/openid-connect-frontchannel-1_0.html)

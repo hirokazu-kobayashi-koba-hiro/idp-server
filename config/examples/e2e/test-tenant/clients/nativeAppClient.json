@@ -6,7 +6,7 @@
   "client_secret_expires_at": 2893276800,
   "redirect_uris": [
     "http://127.0.0.1:8080/callback",
-    "http://localhost:8080/callback"
+    "http://localhost:8443/callback"
   ],
   "response_types": [
     "code"

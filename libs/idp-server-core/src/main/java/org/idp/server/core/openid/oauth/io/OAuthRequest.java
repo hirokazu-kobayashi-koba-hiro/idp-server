@@ -19,6 +19,7 @@ package org.idp.server.core.openid.oauth.io;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
+import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /** OAuthRequest */
@@ -27,6 +28,7 @@ public class OAuthRequest {
   Tenant tenant;
   Map<String, String[]> params;
   String sessionId;
+  OPSession opSession;
 
   public OAuthRequest(Tenant tenant, Map<String, String[]> params) {
     this.tenant = tenant;
@@ -52,5 +54,17 @@ public class OAuthRequest {
 
   public OAuthRequestParameters toParameters() {
     return new OAuthRequestParameters(params);
+  }
+
+  public void setOPSession(OPSession opSession) {
+    this.opSession = opSession;
+  }
+
+  public OPSession opSession() {
+    return opSession;
+  }
+
+  public boolean hasOPSession() {
+    return opSession != null && opSession.exists();
   }
 }

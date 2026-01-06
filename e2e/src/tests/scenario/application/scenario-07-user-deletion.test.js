@@ -315,6 +315,7 @@ describe("User lifecycle", () => {
         interaction,
       });
       console.log(authorizationResponse);
+      expect(authorizationResponse.code).not.toEqual("");
       expect(authorizationResponse.code).not.toBeNull();
 
       const tokenResponse = await requestToken({

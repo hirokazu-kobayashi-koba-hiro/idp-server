@@ -35,6 +35,11 @@ public class AuthenticationDeviceBindingMessageInteractor implements Authenticat
   }
 
   @Override
+  public boolean isBrowserBased() {
+    return false;
+  }
+
+  @Override
   public String method() {
     return "binding-message";
   }

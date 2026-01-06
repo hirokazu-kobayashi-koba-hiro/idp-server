@@ -29,29 +29,35 @@ import java.util.Objects;
 public class SessionConfiguration {
 
   private final String cookieName;
+  private final String cookieDomain;
   private final String cookieSameSite;
   private final boolean useSecureCookie;
   private final boolean useHttpOnlyCookie;
   private final String cookiePath;
   private final int timeoutSeconds;
+  private final String switchPolicy;
 
   public SessionConfiguration() {
     this.cookieName = null;
-    this.cookieSameSite = "None";
+    this.cookieDomain = null;
+    this.cookieSameSite = "Lax";
     this.useSecureCookie = true;
     this.useHttpOnlyCookie = true;
     this.cookiePath = "/";
     this.timeoutSeconds = 3600;
+    this.switchPolicy = "SWITCH_ALLOWED";
   }
 
   public SessionConfiguration(Map<String, Object> values) {
     Map<String, Object> safeValues = Objects.requireNonNullElseGet(values, HashMap::new);
     this.cookieName = extractString(safeValues, "cookie_name", null);
-    this.cookieSameSite = extractString(safeValues, "cookie_same_site", "None");
+    this.cookieDomain = extractString(safeValues, "cookie_domain", null);
+    this.cookieSameSite = extractString(safeValues, "cookie_same_site", "Lax");
     this.useSecureCookie = extractBoolean(safeValues, "use_secure_cookie", true);
     this.useHttpOnlyCookie = extractBoolean(safeValues, "use_http_only_cookie", true);
     this.cookiePath = extractString(safeValues, "cookie_path", "/");
     this.timeoutSeconds = extractInt(safeValues, "timeout_seconds", 3600);
+    this.switchPolicy = extractString(safeValues, "switch_policy", "SWITCH_ALLOWED");
   }
 
   /**
@@ -73,9 +79,31 @@ public class SessionConfiguration {
   }
 
   /**
+   * Returns the cookie domain for cross-subdomain cookie sharing
+   *
+   * <p>When set, cookies will be shared across all subdomains of the specified domain. For example,
+   * if set to "example.com", cookies will be accessible from both "app.example.com" and
+   * "auth.example.com".
+   *
+   * @return cookie domain, or null if not configured (cookie will be scoped to the exact host)
+   */
+  public String cookieDomain() {
+    return cookieDomain;
+  }
+
+  /**
+   * Returns whether cookie domain is configured
+   *
+   * @return true if cookie domain is explicitly configured
+   */
+  public boolean hasCookieDomain() {
+    return cookieDomain != null && !cookieDomain.isEmpty();
+  }
+
+  /**
    * Returns the cookie SameSite attribute
    *
-   * @return SameSite attribute value (default: None)
+   * @return SameSite attribute value (default: Lax)
    */
   public String cookieSameSite() {
     return cookieSameSite;
@@ -118,6 +146,24 @@ public class SessionConfiguration {
   }
 
   /**
+   * Returns the session switch policy
+   *
+   * <p>Controls behavior when a different user attempts to authenticate in a browser with an
+   * existing session:
+   *
+   * <ul>
+   *   <li>STRICT: Error, user must logout first
+   *   <li>SWITCH_ALLOWED: Terminate old session, create new (default)
+   *   <li>MULTI_SESSION: Create new session, old remains until TTL
+   * </ul>
+   *
+   * @return switch policy name (default: SWITCH_ALLOWED)
+   */
+  public String switchPolicy() {
+    return switchPolicy;
+  }
+
+  /**
    * Returns the configuration as a map
    *
    * @return configuration map
@@ -127,11 +173,15 @@ public class SessionConfiguration {
     if (cookieName != null) {
       map.put("cookie_name", cookieName);
     }
+    if (cookieDomain != null) {
+      map.put("cookie_domain", cookieDomain);
+    }
     map.put("cookie_same_site", cookieSameSite);
     map.put("use_secure_cookie", useSecureCookie);
     map.put("use_http_only_cookie", useHttpOnlyCookie);
     map.put("cookie_path", cookiePath);
     map.put("timeout_seconds", timeoutSeconds);
+    map.put("switch_policy", switchPolicy);
     return map;
   }
 

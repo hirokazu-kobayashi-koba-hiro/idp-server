@@ -5,9 +5,9 @@ import { createContext, useContext, useState } from "react";
 
 const queryClient = new QueryClient();
 
-export const backendUrl =
-  process.env.NEXT_PUBLIC_BACKEND_URL ||
-  "https://idp-server-0d10773f8944.herokuapp.com";
+// Use empty string for same-origin deployment (via nginx proxy at /auth-views/)
+// This ensures AUTH_SESSION cookies are sent with SameSite=Lax
+export const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
 
 interface AppContextType {
   id: string | null;

@@ -1,5 +1,5 @@
-export const backendUrl = process.env.IDP_SERVER_URL || "http://localhost:8080";
-export const mtlBackendUrl = process.env.IDP_SERVER_MTLS_URL || "https://localhost:8445";
+export const backendUrl = process.env.IDP_SERVER_URL || "https://api.local.dev";
+export const mtlBackendUrl = process.env.IDP_SERVER_MTLS_URL || "https://api.local.dev:8445";
 
 // Default tenant IDs for backward compatibility
 const DEFAULT_ADMIN_TENANT_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"; // Admin tenant for Management API tests
@@ -597,6 +597,28 @@ export const nativeAppClient = {
   redirectUriLocalhost: "http://localhost:8080/callback",
   scope: "openid profile email account",
   applicationType: "native",
+};
+
+/**
+ * SSO Password Only Client
+ * Authentication policy: password only (no MFA required)
+ */
+export const ssoPasswordOnlyClient = {
+  clientId: "ssoPasswordOnlyClient",
+  clientSecret: "ssoPasswordOnlyClientSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "openid profile email",
+};
+
+/**
+ * SSO MFA Required Client
+ * Authentication policy: password + SMS required
+ */
+export const ssoMfaRequiredClient = {
+  clientId: "ssoMfaRequiredClient",
+  clientSecret: "ssoMfaRequiredClientSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "openid profile email",
 };
 
 /**

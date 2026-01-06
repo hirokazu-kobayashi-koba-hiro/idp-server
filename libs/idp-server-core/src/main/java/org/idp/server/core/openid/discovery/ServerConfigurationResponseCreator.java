@@ -41,6 +41,9 @@ public class ServerConfigurationResponseCreator {
     if (authorizationServerConfiguration.hasRegistrationEndpoint()) {
       map.put("registration_endpoint", authorizationServerConfiguration.registrationEndpoint());
     }
+    if (authorizationServerConfiguration.hasEndSessionEndpoint()) {
+      map.put("end_session_endpoint", authorizationServerConfiguration.endSessionEndpoint());
+    }
     map.put("jwks_uri", authorizationServerConfiguration.jwksUri());
     if (authorizationServerConfiguration.hasScopesSupported()) {
       map.put("scopes_supported", authorizationServerConfiguration.scopesSupported());

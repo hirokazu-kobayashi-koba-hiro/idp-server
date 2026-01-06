@@ -57,6 +57,11 @@ public class AuthenticationDeviceNotificationInteractor implements Authenticatio
   }
 
   @Override
+  public boolean isBrowserBased() {
+    return false;
+  }
+
+  @Override
   public String method() {
     return "authentication-device-notification";
   }

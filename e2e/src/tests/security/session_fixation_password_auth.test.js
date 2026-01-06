@@ -3,85 +3,99 @@ import { clientSecretPostClient, serverConfig } from "../testConfig";
 import axios from "axios";
 
 /**
- * Detailed Session Fixation Attack Test - Password Authentication Focus
+ * Session Fixation Attack Prevention Test - Password Authentication Focus
  *
- * This test specifically checks if session ID is regenerated AFTER password authentication,
- * which is the critical point where privilege escalation occurs.
+ * This test verifies that the system is protected against session fixation attacks.
+ *
+ * Session Cookie Design:
+ * - IDP_AUTH_SESSION: Binds authentication transaction to browser (CSRF protection)
+ * - IDP_IDENTITY: Issued after successful authentication (SSO session)
+ *
+ * Security Properties:
+ * 1. IDP_AUTH_SESSION is scoped to tenant path (/{tenantId}/)
+ * 2. IDP_IDENTITY is only issued after successful authentication
+ * 3. An attacker cannot "fix" a session for a victim to use
  *
  * Related Issue: #736
  */
-describe("Security: Session Fixation at Password Authentication (Issue #736)", () => {
-  const getSessionId = (response) => {
+describe("Security: Session Fixation Prevention at Password Authentication (Issue #736)", () => {
+  const getCookie = (response, cookieName) => {
     const setCookieHeader = response.headers["set-cookie"];
     if (!setCookieHeader) {
       return null;
     }
 
-    const sessionCookie = Array.isArray(setCookieHeader)
-      ? setCookieHeader.find((cookie) => cookie.startsWith("SESSION="))
-      : setCookieHeader.startsWith("SESSION=")
+    const cookies = Array.isArray(setCookieHeader)
       ? setCookieHeader
-      : null;
+      : [setCookieHeader];
+    const cookie = cookies.find((c) => c.startsWith(`${cookieName}=`));
 
-    if (!sessionCookie) {
+    if (!cookie) {
       return null;
     }
 
-    const match = sessionCookie.match(/SESSION=([^;]+)/);
+    const match = cookie.match(new RegExp(`${cookieName}=([^;]+)`));
     return match ? match[1] : null;
   };
 
-  it("CRITICAL: Session ID must be regenerated after password authentication", async () => {
+  it("Session fixation attack must be prevented - IDP_IDENTITY only issued after authentication", async () => {
     console.log("\n" + "=".repeat(80));
-    console.log("SESSION FIXATION TEST: Password Authentication Step");
+    console.log("SESSION FIXATION PREVENTION TEST: Password Authentication");
     console.log("=".repeat(80) + "\n");
 
     // =====================================================================
-    // Step 1: Attacker obtains a session ID (unauthenticated)
+    // Step 1: Start authorization flow - check cookies issued
     // =====================================================================
-    console.log("📋 Step 1: Attacker obtains unauthenticated session ID");
+    console.log("📋 Step 1: Start authorization flow");
     console.log("-".repeat(80));
 
-    const attackerResponse = await axios.get(
-      serverConfig.authorizationEndpoint,
-      {
-        params: {
-          client_id: clientSecretPostClient.clientId,
-          response_type: "code",
-          scope: clientSecretPostClient.scope,
-          redirect_uri: clientSecretPostClient.redirectUri,
-          state: "attacker-session",
-        },
-        maxRedirects: 0,
-        validateStatus: () => true,
-      }
-    );
+    const initialResponse = await axios.get(serverConfig.authorizationEndpoint, {
+      params: {
+        client_id: clientSecretPostClient.clientId,
+        response_type: "code",
+        scope: clientSecretPostClient.scope,
+        redirect_uri: clientSecretPostClient.redirectUri,
+        state: "test-session",
+      },
+      maxRedirects: 0,
+      validateStatus: () => true,
+    });
 
-    const attackerSessionId = getSessionId(attackerResponse);
-    console.log("   Attacker's session ID:", attackerSessionId);
-    console.log("   Status:", attackerResponse.status);
+    const authSessionCookie = getCookie(initialResponse, "IDP_AUTH_SESSION");
+    const identityCookieBefore = getCookie(initialResponse, "IDP_IDENTITY");
 
-    expect(attackerSessionId).not.toBeNull();
+    console.log("   IDP_AUTH_SESSION:", authSessionCookie ? "issued" : "(none)");
+    console.log("   IDP_IDENTITY:", identityCookieBefore || "(none - correct, not authenticated yet)");
+    console.log("   Status:", initialResponse.status);
+
+    // IDP_IDENTITY should NOT be issued before authentication
+    expect(identityCookieBefore).toBeNull();
 
     // Extract the authentication ID from the redirect location
-    const location = attackerResponse.headers.location;
+    const location = initialResponse.headers.location;
     const authIdMatch = location.match(/[?&]id=([^&]+)/);
     expect(authIdMatch).not.toBeNull();
     const authId = authIdMatch[1];
     console.log("   Authentication ID:", authId);
 
     // =====================================================================
-    // Step 2: Victim performs password authentication with attacker's session
+    // Step 2: Perform password authentication
     // =====================================================================
-    console.log(
-      "\n📋 Step 2: Victim authenticates with password using attacker's session"
-    );
+    console.log("\n📋 Step 2: Perform password authentication");
     console.log("-".repeat(80));
-    console.log("   Using session ID:", attackerSessionId);
 
     const passwordAuthEndpoint =
       serverConfig.authorizationIdEndpoint.replace("{id}", authId) +
       "password-authentication";
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    if (authSessionCookie) {
+      headers.Cookie = `IDP_AUTH_SESSION=${authSessionCookie}`;
+      console.log("   Using IDP_AUTH_SESSION cookie");
+    }
+
     const passwordAuthResponse = await axios.post(
       passwordAuthEndpoint,
       {
@@ -89,141 +103,104 @@ describe("Security: Session Fixation at Password Authentication (Issue #736)", (
         password: "successUserCode001",
       },
       {
-        headers: {
-          "Content-Type": "application/json",
-          Cookie: `SESSION=${attackerSessionId}`, // Using attacker's session!
-        },
+        headers,
         maxRedirects: 0,
         validateStatus: () => true,
       }
     );
 
-    const sessionAfterPasswordAuth = getSessionId(passwordAuthResponse);
-    console.log(
-      "   Session ID after password auth:",
-      sessionAfterPasswordAuth || "(no new session)"
-    );
     console.log("   Status:", passwordAuthResponse.status);
+    expect(passwordAuthResponse.status).toBe(200);
+
+    // IDP_IDENTITY is issued after successful authentication (in interact method)
+    const identityCookieAfterAuth = getCookie(passwordAuthResponse, "IDP_IDENTITY");
+    console.log("   IDP_IDENTITY after auth:", identityCookieAfterAuth ? "issued (SSO session)" : "(none)");
 
     // =====================================================================
-    // Step 3: Call authorize API to complete the flow
+    // Step 3: Complete authorization flow
     // =====================================================================
-    console.log(
-      "\n📋 Step 3: Call authorize API to complete authentication flow"
-    );
+    console.log("\n📋 Step 3: Complete authorization flow");
     console.log("-".repeat(80));
+
+    const authorizeHeaders = {
+      "Content-Type": "application/json",
+    };
+    if (authSessionCookie) {
+      authorizeHeaders.Cookie = `IDP_AUTH_SESSION=${authSessionCookie}`;
+    }
+    // Include IDP_IDENTITY cookie if issued
+    if (identityCookieAfterAuth) {
+      authorizeHeaders.Cookie = authorizeHeaders.Cookie
+        ? `${authorizeHeaders.Cookie}; IDP_IDENTITY=${identityCookieAfterAuth}`
+        : `IDP_IDENTITY=${identityCookieAfterAuth}`;
+    }
 
     const authorizeResponse = await axios.post(
       serverConfig.authorizeEndpoint.replace("{id}", authId),
       {},
       {
-        headers: {
-          "Content-Type": "application/json",
-          Cookie: `SESSION=${attackerSessionId}`, // Still using attacker's original session
-        },
+        headers: authorizeHeaders,
         maxRedirects: 0,
         validateStatus: () => true,
       }
     );
 
-    const sessionAfterAuthorize = getSessionId(authorizeResponse);
-    console.log(
-      "   Session ID after authorize:",
-      sessionAfterAuthorize || "(no new session)"
-    );
+    // Check if IDP_IDENTITY is also returned from authorize (might be refreshed)
+    const identityCookieFromAuthorize = getCookie(authorizeResponse, "IDP_IDENTITY");
+    // Use the cookie from auth response or authorize response
+    const identityCookieAfter = identityCookieAfterAuth || identityCookieFromAuthorize;
+
     console.log("   Status:", authorizeResponse.status);
+    console.log("   IDP_IDENTITY from auth:", identityCookieAfterAuth ? "issued" : "(none)");
+    console.log("   IDP_IDENTITY from authorize:", identityCookieFromAuthorize ? "issued" : "(none)");
     console.log("   Redirect URI:", authorizeResponse.data?.redirect_uri);
 
     // =====================================================================
-    // Step 4: Security Analysis
+    // Security Analysis
     // =====================================================================
     console.log("\n" + "=".repeat(80));
     console.log("🔍 SECURITY ANALYSIS");
     console.log("=".repeat(80));
-    console.log("\nSession ID Lifecycle:");
-    console.log("   1. Before authentication (attacker):  ", attackerSessionId);
-    console.log(
-      "   2. After password authentication:     ",
-      sessionAfterPasswordAuth || "(no new session)"
-    );
-    console.log(
-      "   3. After authorize (complete flow):   ",
-      sessionAfterAuthorize || "(no new session)"
-    );
+    console.log("\nCookie Lifecycle:");
+    console.log("   1. Before authentication (authorization request):");
+    console.log("      - IDP_AUTH_SESSION:", authSessionCookie ? "issued (transaction binding)" : "(none)");
+    console.log("      - IDP_IDENTITY:", identityCookieBefore || "(none - SECURE)");
+    console.log("   2. After password authentication (interact):");
+    console.log("      - IDP_IDENTITY:", identityCookieAfterAuth ? "issued (SSO session)" : "(none)");
+    console.log("   3. After authorization complete:");
+    console.log("      - IDP_IDENTITY:", identityCookieFromAuthorize ? "refreshed" : "(using existing)");
 
     // =====================================================================
-    // CRITICAL VULNERABILITY CHECK
+    // SECURITY ASSESSMENT
     // =====================================================================
     console.log("\n" + "=".repeat(80));
-    console.log("⚠️  VULNERABILITY ASSESSMENT");
+    console.log("✅ VULNERABILITY ASSESSMENT");
     console.log("=".repeat(80));
 
-    let vulnerabilityDetected = false;
+    /*
+     * Session Fixation Prevention:
+     *
+     * The IDP_IDENTITY cookie (SSO session) is ONLY issued after successful
+     * authentication. An attacker cannot:
+     * 1. Obtain a valid IDP_IDENTITY before victim authenticates
+     * 2. "Fix" a session that the victim will use
+     *
+     * The IDP_AUTH_SESSION cookie is:
+     * - Scoped to /{tenantId}/ path
+     * - Only used during the authentication transaction
+     * - Not a session identifier that persists after auth
+     */
 
-    // Check if session ID was regenerated after password auth OR after authorize
-    const sessionRegeneratedAfterPasswordAuth =
-      sessionAfterPasswordAuth &&
-      sessionAfterPasswordAuth !== attackerSessionId;
-    const sessionRegeneratedAfterAuthorize =
-      sessionAfterAuthorize && sessionAfterAuthorize !== attackerSessionId;
-
-    if (
-      !sessionRegeneratedAfterPasswordAuth &&
-      !sessionRegeneratedAfterAuthorize
-    ) {
-      console.log("\n❌❌❌ CRITICAL SECURITY VULNERABILITY DETECTED! ❌❌❌");
-      console.log("\nSession ID was NOT regenerated after authentication!");
-      console.log("\nAttack Success Scenario:");
-      console.log(
-        "   1. Attacker obtained session ID:          ",
-        attackerSessionId
-      );
-      console.log("   2. Victim authenticated with it");
-      console.log(
-        "   3. Session after password auth:           ",
-        sessionAfterPasswordAuth || "(null)"
-      );
-      console.log(
-        "   4. Session after authorize:               ",
-        sessionAfterAuthorize || "(null)"
-      );
-      console.log("   5. Session ID did NOT change:             ✓ VULNERABLE");
-      console.log("   6. Attacker can hijack the session:       ✓ VULNERABLE");
-      console.log("\nSeverity: CRITICAL");
-      console.log("CVE: CWE-384 (Session Fixation)");
-      console.log("OWASP: A02:2021 – Cryptographic Failures");
-      vulnerabilityDetected = true;
-    } else if (sessionRegeneratedAfterPasswordAuth) {
-      console.log(
-        "\n✅ Session ID was regenerated after password authentication"
-      );
-      console.log("\nSession regeneration detected:");
-      console.log("   Before auth:           ", attackerSessionId);
-      console.log("   After password auth:   ", sessionAfterPasswordAuth);
-      console.log(
-        "   After authorize:       ",
-        sessionAfterAuthorize || "(null)"
-      );
-      console.log("\nAttack Success Scenario:");
-      console.log("   Attacker can hijack the session:  ✗ PROTECTED");
-      console.log("\nSeverity: NONE");
-      console.log(
-        "Status: Protected against session fixation attacks at password authentication step"
-      );
-    } else if (sessionRegeneratedAfterAuthorize) {
-      console.log("\n✅ Session ID was regenerated after authorize");
-      console.log("\nSession regeneration detected:");
-      console.log("   Before auth:           ", attackerSessionId);
-      console.log(
-        "   After password auth:   ",
-        sessionAfterPasswordAuth || "(null)"
-      );
-      console.log("   After authorize:       ", sessionAfterAuthorize);
-      console.log("\nAttack Success Scenario:");
-      console.log("   Attacker can hijack the session:  ✗ PROTECTED");
-      console.log("\nSeverity: NONE");
-      console.log(
-        "Status: Protected against session fixation attacks at authorize step"
+    if (!identityCookieBefore && identityCookieAfter) {
+      console.log("\n✅ SECURE: IDP_IDENTITY only issued after authentication");
+      console.log("   - Attacker cannot obtain authenticated session before victim logs in");
+      console.log("   - Session fixation attack is not possible");
+      console.log("\nProtection Method: Post-authentication session creation");
+    } else if (identityCookieBefore) {
+      console.log("\n❌ VULNERABLE: IDP_IDENTITY issued before authentication!");
+      throw new Error(
+        "SECURITY VULNERABILITY: IDP_IDENTITY cookie was issued before authentication. " +
+        "This enables session fixation attacks."
       );
     }
 
@@ -232,22 +209,17 @@ describe("Security: Session Fixation at Password Authentication (Issue #736)", (
     console.log("=".repeat(80) + "\n");
 
     // =====================================================================
-    // Test Assertion - MUST FAIL if vulnerability detected
+    // Test Assertions
     // =====================================================================
-    if (vulnerabilityDetected) {
-      throw new Error(
-        "SECURITY VULNERABILITY: Session fixation attack is possible! " +
-          "Session ID was not regenerated after authentication. " +
-          `Before auth: ${attackerSessionId}, ` +
-          `After password auth: ${sessionAfterPasswordAuth || "null"}, ` +
-          `After authorize: ${sessionAfterAuthorize || "null"}. ` +
-          "See Issue #736 for remediation steps."
-      );
-    }
 
-    // Session ID MUST be regenerated after authentication (either at password auth or authorize step)
-    const sessionWasRegenerated =
-      sessionRegeneratedAfterPasswordAuth || sessionRegeneratedAfterAuthorize;
-    expect(sessionWasRegenerated).toBe(true);
+    // IDP_IDENTITY must NOT exist before authentication
+    expect(identityCookieBefore).toBeNull();
+
+    // Authorization should succeed
+    expect(authorizeResponse.status).toBe(200);
+    expect(authorizeResponse.data?.redirect_uri).toBeDefined();
+
+    // IDP_IDENTITY should be issued after successful authentication
+    expect(identityCookieAfter).not.toBeNull();
   });
 });

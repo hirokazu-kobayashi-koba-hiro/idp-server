@@ -1,0 +1,170 @@
+# OIDCC Certification Test Configuration (Cross-Site)
+
+OpenID Connect Core 認定テスト用の設定ファイルです。
+
+## ファイル構成
+
+```
+oidcc-cross-site/
+├── README.md                 # このファイル
+├── onboarding-request.json   # Onboarding API 用設定（組織・テナント・ユーザー・クライアント1）
+├── client-post.json          # 2つ目のクライアント（client_secret_post）
+├── client-second.json        # 3つ目のクライアント（second client）
+├── setup.sh                  # セットアップスクリプト
+├── update.sh                 # 更新スクリプト
+└── delete.sh                 # 削除スクリプト
+```
+
+## テストプラン
+
+| 項目 | 値                                           |
+|------|---------------------------------------------|
+| テストプラン名 | `oidcc-xxx`                                 |
+| 認定プロファイル | Form Post OP                                |
+| Response Type | `code`                                      |
+| Response Mode | `form_post`                                 |
+| Client Auth | `client_secret_basic`, `client_secret_post` |
+
+## セットアップ
+
+### 1. 前提条件
+
+- idp-server が起動していること
+- `.env` ファイルに管理者認証情報が設定されていること
+
+### 2. セットアップ実行
+
+```bash
+cd config/examples/oidcc-cross-site
+chmod +x setup.sh
+./setup.sh
+```
+
+### 3. セットアップ結果
+
+| リソース | 値 |
+|---------|-----|
+| Tenant ID | `e8c169c2-019f-46c9-af39-7be12ec51e4d` |
+| Issuer | `https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d` |
+
+### 4. 設定更新
+
+設定ファイルを編集後、以下のスクリプトで反映できます：
+
+```bash
+# テナント・認可サーバー・クライアントを更新
+./update.sh
+```
+
+更新対象:
+- テナント設定
+- 認可サーバー設定（JWKS含む）
+- クライアント設定（3つ全て）
+
+**鍵ローテーション（OIDCC テスト用）:**
+`onboarding-request.json` の `jwks` を編集し、新しい鍵を追加後 `./update.sh` を実行
+
+## クライアント設定
+
+### Client 1: client_secret_basic
+
+| 項目 | 値 |
+|------|-----|
+| Client ID | `35f40824-807c-4f36-bf91-a8da0692b032` |
+| Client ID Alias | `oidcc-basic-client` |
+| Client Secret | `oidcc-basic-secret-32characters!` |
+| Auth Method | `client_secret_basic` |
+| Redirect URI | `https://localhost.emobix.co.uk:8443/test/a/oidc-core-basic/callback` |
+
+### Client 2: client_secret_post
+
+| 項目 | 値 |
+|------|-----|
+| Client ID | `f8702ea8-33b1-4433-9b5d-f1034f0bd5b5` |
+| Client ID Alias | `oidcc-post-client` |
+| Client Secret | `oidcc-post-secret-32characters!!` |
+| Auth Method | `client_secret_post` |
+| Redirect URI | `https://localhost.emobix.co.uk:8443/test/a/oidc-core-basic/callback` |
+
+### Client 3: Second Client
+
+| 項目 | 値 |
+|------|-----|
+| Client ID | `94db3cf2-7306-48a0-ab19-201742754236` |
+| Client ID Alias | `oidcc-second-client` |
+| Client Secret | `oidcc-second-secret-32characters!` |
+| Auth Method | `client_secret_basic` |
+| Redirect URI | `https://localhost.emobix.co.uk:8443/test/a/oidc-core-basic/callback` |
+
+## テストユーザー
+
+| 項目 | 値 |
+|------|-----|
+| Email | `oidcc-test@example.com` |
+| Password | `OidccTestPassword123!` |
+| Name | `OIDCC Test User` |
+| Phone | `+81-90-1234-5678` |
+| Address | `123 Test Street, Tokyo, Japan 100-0001` |
+
+## Conformance Suite 設定
+
+OpenID Conformance Suite で以下の設定を使用:
+
+```
+Server:
+  Issuer: https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d
+
+Client (client_secret_basic):
+  Client ID: 35f40824-807c-4f36-bf91-a8da0692b032
+  Client Secret: oidcc-basic-secret-32characters1
+
+Client (client_secret_post):
+  Client ID: f8702ea8-33b1-4433-9b5d-f1034f0bd5b5
+  Client Secret: oidcc-post-secret-32characters12
+
+Second Client:
+  Client ID: 94db3cf2-7306-48a0-ab19-201742754236
+  Client Secret: oidcc-second-secret-32characters
+
+User:
+  Username: oidcc-test@example.com
+  Password: OidccTestPassword123!
+```
+
+## サポートされる機能
+
+| 機能 | サポート |
+|------|---------|
+| response_mode=form_post | Yes |
+| response_type=code | Yes |
+| prompt=none | Yes |
+| prompt=login | Yes |
+| max_age | Yes |
+| acr_values | Yes |
+| login_hint | Yes |
+| id_token_hint | Yes |
+| claims parameter | Yes |
+| request parameter | Yes |
+| request_uri parameter | Yes |
+| PKCE | Yes |
+| Refresh Token | Yes |
+
+## テストモジュール (38個)
+
+1. oidcc-server - 基本フロー
+2. oidcc-response-type-missing - response_type省略エラー
+3. oidcc-idtoken-signature - ID Token署名検証
+4. oidcc-userinfo-get - UserInfo GET
+5. oidcc-userinfo-post-header - UserInfo POST (header)
+6. oidcc-userinfo-post-body - UserInfo POST (body)
+7. oidcc-scope-profile/email/address/phone/all - スコープテスト
+8. oidcc-prompt-login/none - prompt パラメータ
+9. oidcc-max-age-1/10000 - max_age パラメータ
+10. oidcc-id-token-hint - id_token_hint
+11. oidcc-login-hint - login_hint
+12. oidcc-codereuse - 認可コード再利用防止
+13. oidcc-refresh-token - リフレッシュトークン
+14. oidcc-ensure-request-with-valid-pkce-succeeds - PKCE
+... など
+
+詳細は OpenID Conformance Suite のドキュメントを参照。

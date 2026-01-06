@@ -123,7 +123,10 @@ public enum DefaultAdminPermission {
   AUTHENTICATION_TRANSACTION_READ(
       "authentication-transaction:read", "Admin Read authentication-transaction information"),
   AUTHENTICATION_INTERACTION_READ(
-      "authentication-interaction:read", "Admin Read authentication-interaction information");
+      "authentication-interaction:read", "Admin Read authentication-interaction information"),
+
+  SESSION_READ("session:read", "Admin Read user session information"),
+  SESSION_DELETE("session:delete", "Admin Delete user session");
 
   private final String value;
   private final String description;
