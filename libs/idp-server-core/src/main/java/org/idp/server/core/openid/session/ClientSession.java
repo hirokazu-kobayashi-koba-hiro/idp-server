@@ -171,6 +171,24 @@ public class ClientSession implements Serializable {
     return this;
   }
 
+  /**
+   * Refreshes the client session with new authorization context.
+   *
+   * @param scope the new authorized scopes
+   * @param claims the new claims
+   * @param nonce the new nonce
+   * @param sessionTimeoutSeconds the session timeout in seconds
+   * @return this client session (mutated)
+   */
+  public ClientSession refresh(
+      Set<String> scope, Map<String, Object> claims, String nonce, long sessionTimeoutSeconds) {
+    this.scope = scope;
+    this.claims = claims;
+    this.nonce = nonce;
+    this.expiresAt = Instant.now().plusSeconds(sessionTimeoutSeconds);
+    return this;
+  }
+
   public long ttlSeconds() {
     long ttl = expiresAt.getEpochSecond() - Instant.now().getEpochSecond();
     return Math.max(ttl, 0);

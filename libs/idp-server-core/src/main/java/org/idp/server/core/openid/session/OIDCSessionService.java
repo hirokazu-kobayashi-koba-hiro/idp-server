@@ -103,6 +103,43 @@ public class OIDCSessionService {
     return session;
   }
 
+  /**
+   * Gets existing ClientSession or creates a new one.
+   *
+   * <p>If a ClientSession already exists for the same OPSession and clientId, it will be refreshed
+   * with the new authorization context. Otherwise, a new ClientSession will be created.
+   *
+   * @param tenant the tenant
+   * @param opSession the OP session
+   * @param clientId the client ID
+   * @param scope the authorized scopes
+   * @param claims the claims
+   * @param nonce the nonce from authorization request
+   * @param sessionTimeoutSeconds the session timeout in seconds
+   * @return the ClientSession (existing refreshed or newly created)
+   */
+  public ClientSession getOrCreateClientSession(
+      Tenant tenant,
+      OPSession opSession,
+      String clientId,
+      Set<String> scope,
+      Map<String, Object> claims,
+      String nonce,
+      long sessionTimeoutSeconds) {
+    Optional<ClientSession> existingSession =
+        clientSessionRepository.findByOpSessionIdAndClientId(tenant, opSession.id(), clientId);
+
+    if (existingSession.isPresent() && existingSession.get().isActive()) {
+      ClientSession session = existingSession.get();
+      session.refresh(scope, claims, nonce, sessionTimeoutSeconds);
+      clientSessionRepository.update(tenant, session);
+      return session;
+    }
+
+    return createClientSession(
+        tenant, opSession, clientId, scope, claims, nonce, sessionTimeoutSeconds);
+  }
+
   public Optional<ClientSession> getClientSession(Tenant tenant, ClientSessionIdentifier sid) {
     return clientSessionRepository.findBySid(tenant, sid);
   }

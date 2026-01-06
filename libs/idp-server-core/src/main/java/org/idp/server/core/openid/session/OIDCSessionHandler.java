@@ -208,7 +208,11 @@ public class OIDCSessionHandler {
   }
 
   /**
-   * Creates a ClientSession on authorization and returns the sid for ID Token.
+   * Gets or creates a ClientSession on authorization and returns the sid for ID Token.
+   *
+   * <p>If a ClientSession already exists for the same OPSession and clientId, it will be reused
+   * (refreshed with new authorization context). This prevents accumulation of stale ClientSessions
+   * in Redis when the same user authorizes the same client multiple times.
    *
    * @param tenant the tenant
    * @param opSession the OP session
@@ -221,7 +225,7 @@ public class OIDCSessionHandler {
       Tenant tenant, OPSession opSession, String clientId, Set<String> scopes, String nonce) {
     long sessionTimeoutSeconds = getSessionTimeoutSeconds(tenant);
     ClientSession clientSession =
-        sessionService.createClientSession(
+        sessionService.getOrCreateClientSession(
             tenant, opSession, clientId, scopes, Map.of(), nonce, sessionTimeoutSeconds);
     return clientSession.sid();
   }

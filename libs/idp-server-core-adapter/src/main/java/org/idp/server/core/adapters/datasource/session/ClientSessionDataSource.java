@@ -101,6 +101,46 @@ public class ClientSessionDataSource implements ClientSessionRepository {
   }
 
   @Override
+  public void update(Tenant tenant, ClientSession session) {
+    try {
+      String key = buildKey(tenant, session.sid());
+      String json = jsonConverter.write(session);
+      long ttl = session.ttlSeconds();
+
+      // Update session data (indexes remain unchanged as sid doesn't change)
+      sessionStore.set(key, json, ttl);
+
+      // Update TTL on indexes
+      String opSessionIndexKey = buildOpSessionIndexKey(tenant, session.opSessionId());
+      if (ttl > 0) {
+        sessionStore.expire(opSessionIndexKey, ttl);
+      }
+
+      String tenantSubIndexKey = buildTenantSubIndexKey(session.tenantId(), session.sub());
+      if (ttl > 0) {
+        sessionStore.expire(tenantSubIndexKey, ttl);
+      }
+
+      String tenantClientSubIndexKey =
+          buildTenantClientSubIndexKey(session.tenantId(), session.clientId(), session.sub());
+      if (ttl > 0) {
+        sessionStore.expire(tenantClientSubIndexKey, ttl);
+      }
+
+      log.debug(
+          "Updated client session. sid:{}, opSessionId:{}, clientId:{}",
+          session.sid().value(),
+          session.opSessionId().value(),
+          session.clientId());
+    } catch (Exception e) {
+      log.error(
+          "Failed to update client session (graceful degradation). sid:{}, error:{}",
+          session.sid().value(),
+          e.getMessage());
+    }
+  }
+
+  @Override
   public Optional<ClientSession> findBySid(Tenant tenant, ClientSessionIdentifier sid) {
     try {
       String key = buildKey(tenant, sid);
@@ -154,6 +194,33 @@ public class ClientSessionDataSource implements ClientSessionRepository {
           opSessionId.value(),
           e.getMessage());
       return ClientSessions.empty();
+    }
+  }
+
+  @Override
+  public Optional<ClientSession> findByOpSessionIdAndClientId(
+      Tenant tenant, OPSessionIdentifier opSessionId, String clientId) {
+    try {
+      ClientSessions sessions = findByOpSessionId(tenant, opSessionId);
+      Optional<ClientSession> result =
+          sessions.stream().filter(session -> clientId.equals(session.clientId())).findFirst();
+
+      result.ifPresent(
+          session ->
+              log.debug(
+                  "Found client session for opSessionId:{}, clientId:{}, sid:{}",
+                  opSessionId.value(),
+                  clientId,
+                  session.sid().value()));
+
+      return result;
+    } catch (Exception e) {
+      log.error(
+          "Failed to find client session by opSessionId and clientId (graceful degradation). opSessionId:{}, clientId:{}, error:{}",
+          opSessionId.value(),
+          clientId,
+          e.getMessage());
+      return Optional.empty();
     }
   }
 

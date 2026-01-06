@@ -40,7 +40,7 @@ public class SessionConfiguration {
   public SessionConfiguration() {
     this.cookieName = null;
     this.cookieDomain = null;
-    this.cookieSameSite = "None";
+    this.cookieSameSite = "Lax";
     this.useSecureCookie = true;
     this.useHttpOnlyCookie = true;
     this.cookiePath = "/";
@@ -52,7 +52,7 @@ public class SessionConfiguration {
     Map<String, Object> safeValues = Objects.requireNonNullElseGet(values, HashMap::new);
     this.cookieName = extractString(safeValues, "cookie_name", null);
     this.cookieDomain = extractString(safeValues, "cookie_domain", null);
-    this.cookieSameSite = extractString(safeValues, "cookie_same_site", "None");
+    this.cookieSameSite = extractString(safeValues, "cookie_same_site", "Lax");
     this.useSecureCookie = extractBoolean(safeValues, "use_secure_cookie", true);
     this.useHttpOnlyCookie = extractBoolean(safeValues, "use_http_only_cookie", true);
     this.cookiePath = extractString(safeValues, "cookie_path", "/");
@@ -103,7 +103,7 @@ public class SessionConfiguration {
   /**
    * Returns the cookie SameSite attribute
    *
-   * @return SameSite attribute value (default: None)
+   * @return SameSite attribute value (default: Lax)
    */
   public String cookieSameSite() {
     return cookieSameSite;

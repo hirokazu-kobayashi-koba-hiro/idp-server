@@ -28,9 +28,14 @@ public interface ClientSessionRepository {
 
   void register(Tenant tenant, ClientSession session);
 
+  void update(Tenant tenant, ClientSession session);
+
   Optional<ClientSession> findBySid(Tenant tenant, ClientSessionIdentifier sid);
 
   ClientSessions findByOpSessionId(Tenant tenant, OPSessionIdentifier opSessionId);
+
+  Optional<ClientSession> findByOpSessionIdAndClientId(
+      Tenant tenant, OPSessionIdentifier opSessionId, String clientId);
 
   ClientSessions findByTenantAndSub(TenantIdentifier tenantId, String sub);
 
