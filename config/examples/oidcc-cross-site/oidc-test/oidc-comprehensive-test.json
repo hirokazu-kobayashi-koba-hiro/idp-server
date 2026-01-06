@@ -1,8 +1,8 @@
 {
-  "alias": "oidcc-discovery-endpoint-verification",
-  "description": "oidcc-discovery-endpoint-verification",
+  "alias": "oidc-core-comprehensive-test",
+  "description": "oidc-core-comprehensive-test",
   "server": {
-    "discoveryUrl": "https://api.local.dev/d2e3f4a5-b6c7-8901-def0-234567890123/.well-known/openid-configuration"
+    "discoveryUrl": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/.well-known/openid-configuration"
   },
   "client": {
     "client_id": "oidcc-basic-client",

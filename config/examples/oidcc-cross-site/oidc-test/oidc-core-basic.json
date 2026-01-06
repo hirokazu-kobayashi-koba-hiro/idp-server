@@ -2,11 +2,11 @@
   "alias": "oidc-core-basic",
   "description": "oidc-core-basic",
   "server": {
-    "issuer": "https://api.local.dev/d2e3f4a5-b6c7-8901-def0-234567890123",
-    "jwks_uri": "https://api.local.dev/d2e3f4a5-b6c7-8901-def0-234567890123/v1/jwks",
-    "authorization_endpoint": "https://api.local.dev/d2e3f4a5-b6c7-8901-def0-234567890123/v1/authorizations",
-    "token_endpoint": "https://api.local.dev/d2e3f4a5-b6c7-8901-def0-234567890123/v1/tokens",
-    "userinfo_endpoint": "https://api.local.dev/d2e3f4a5-b6c7-8901-def0-234567890123/v1/userinfo",
+    "issuer": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d",
+    "jwks_uri": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/jwks",
+    "authorization_endpoint": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/authorizations",
+    "token_endpoint": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/tokens",
+    "userinfo_endpoint": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/userinfo",
     "acr_values": "urn:mace:incommon:iap:bronze",
     "login_hint": "oidcc-test"
   },

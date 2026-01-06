@@ -1,11 +1,11 @@
-# OIDCC Form Post Basic Certification Test Configuration
+# OIDCC Certification Test Configuration (Cross-Site)
 
-OpenID Connect Core Form Post Basic 認定テスト用の設定ファイルです。
+OpenID Connect Core 認定テスト用の設定ファイルです。
 
 ## ファイル構成
 
 ```
-oidcc-formpost-basic/
+oidcc-cross-site/
 ├── README.md                 # このファイル
 ├── onboarding-request.json   # Onboarding API 用設定（組織・テナント・ユーザー・クライアント1）
 ├── client-post.json          # 2つ目のクライアント（client_secret_post）
@@ -17,12 +17,12 @@ oidcc-formpost-basic/
 
 ## テストプラン
 
-| 項目 | 値 |
-|------|-----|
-| テストプラン名 | `oidcc-formpost-basic-certification-test-plan` |
-| 認定プロファイル | Form Post OP |
-| Response Type | `code` |
-| Response Mode | `form_post` |
+| 項目 | 値                                           |
+|------|---------------------------------------------|
+| テストプラン名 | `oidcc-xxx`                                 |
+| 認定プロファイル | Form Post OP                                |
+| Response Type | `code`                                      |
+| Response Mode | `form_post`                                 |
 | Client Auth | `client_secret_basic`, `client_secret_post` |
 
 ## セットアップ
@@ -35,7 +35,7 @@ oidcc-formpost-basic/
 ### 2. セットアップ実行
 
 ```bash
-cd config/examples/oidcc-formpost-basic
+cd config/examples/oidcc-cross-site
 chmod +x setup.sh
 ./setup.sh
 ```
@@ -44,8 +44,8 @@ chmod +x setup.sh
 
 | リソース | 値 |
 |---------|-----|
-| Tenant ID | `d2e3f4a5-b6c7-8901-def0-234567890123` |
-| Issuer | `https://api.local.dev/d2e3f4a5-b6c7-8901-def0-234567890123` |
+| Tenant ID | `e8c169c2-019f-46c9-af39-7be12ec51e4d` |
+| Issuer | `https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d` |
 
 ### 4. 設定更新
 
@@ -70,7 +70,7 @@ chmod +x setup.sh
 
 | 項目 | 値 |
 |------|-----|
-| Client ID | `f4a5b6c7-d8e9-0123-abcd-456789012345` |
+| Client ID | `35f40824-807c-4f36-bf91-a8da0692b032` |
 | Client ID Alias | `oidcc-basic-client` |
 | Client Secret | `oidcc-basic-secret-32characters!` |
 | Auth Method | `client_secret_basic` |
@@ -80,7 +80,7 @@ chmod +x setup.sh
 
 | 項目 | 値 |
 |------|-----|
-| Client ID | `a5b6c7d8-e9f0-1234-bcde-567890123456` |
+| Client ID | `f8702ea8-33b1-4433-9b5d-f1034f0bd5b5` |
 | Client ID Alias | `oidcc-post-client` |
 | Client Secret | `oidcc-post-secret-32characters!!` |
 | Auth Method | `client_secret_post` |
@@ -90,7 +90,7 @@ chmod +x setup.sh
 
 | 項目 | 値 |
 |------|-----|
-| Client ID | `b6c7d8e9-f0a1-2345-cdef-678901234567` |
+| Client ID | `94db3cf2-7306-48a0-ab19-201742754236` |
 | Client ID Alias | `oidcc-second-client` |
 | Client Secret | `oidcc-second-secret-32characters!` |
 | Auth Method | `client_secret_basic` |
@@ -112,18 +112,18 @@ OpenID Conformance Suite で以下の設定を使用:
 
 ```
 Server:
-  Issuer: https://api.local.dev/d2e3f4a5-b6c7-8901-def0-234567890123
+  Issuer: https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d
 
 Client (client_secret_basic):
-  Client ID: f4a5b6c7-d8e9-0123-abcd-456789012345
+  Client ID: 35f40824-807c-4f36-bf91-a8da0692b032
   Client Secret: oidcc-basic-secret-32characters1
 
 Client (client_secret_post):
-  Client ID: a5b6c7d8-e9f0-1234-bcde-567890123456
+  Client ID: f8702ea8-33b1-4433-9b5d-f1034f0bd5b5
   Client Secret: oidcc-post-secret-32characters12
 
 Second Client:
-  Client ID: b6c7d8e9-f0a1-2345-cdef-678901234567
+  Client ID: 94db3cf2-7306-48a0-ab19-201742754236
   Client Secret: oidcc-second-secret-32characters
 
 User:
