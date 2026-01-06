@@ -17,7 +17,6 @@
 package org.idp.server.core.openid.token.handler.token;
 
 import java.util.Map;
-import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
@@ -58,7 +57,6 @@ public class TokenRequestHandler {
   public TokenRequestHandler(
       AuthorizationRequestRepository authorizationRequestRepository,
       AuthorizationCodeGrantRepository authorizationCodeGrantRepository,
-      AuthorizationGrantedRepository authorizationGrantedRepository,
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
@@ -69,7 +67,6 @@ public class TokenRequestHandler {
         new OAuthTokenCreationServices(
             authorizationRequestRepository,
             authorizationCodeGrantRepository,
-            authorizationGrantedRepository,
             oAuthTokenCommandRepository,
             oAuthTokenQueryRepository,
             extensionOAuthTokenCreationServices);

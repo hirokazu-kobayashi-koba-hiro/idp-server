@@ -2719,6 +2719,112 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/sessions:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+    get:
+      summary: List user sessions
+      description: |
+        指定されたユーザーのアクティブなセッション一覧を取得します。
+
+        このエンドポイントは、ユーザーが現在持っているOPセッション（OpenID Provider Session）の情報を返します。
+        セッション情報には、セッションID、認証時刻、有効期限、最終アクセス時刻などが含まれます。
+
+        **ユースケース:**
+        - ユーザーのログイン状況の確認
+        - 不正アクセスの検出（予期しないセッションの発見）
+        - セッション管理画面の構築
+      tags:
+        - organization-user
+      responses:
+        '200':
+          description: ユーザーのセッション一覧を正常に取得しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSessionListResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete all user sessions
+      description: |
+        指定されたユーザーのすべてのセッションを一括削除（ログアウト）します。
+
+        このエンドポイントは、ユーザーが持つすべてのOPセッションを無効化します。
+        パスワード変更後の全デバイスからのログアウトや、アカウント侵害時の緊急対応に使用します。
+
+        **ユースケース:**
+        - パスワード変更後の全セッション無効化
+        - アカウント侵害時の緊急対応
+        - ユーザー退職時のセッションクリア
+      tags:
+        - organization-user
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: すべてのセッションを正常に削除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/sessions/{session-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/SessionId'
+    delete:
+      summary: Delete user session
+      description: |
+        指定されたユーザーの特定のセッションを削除（ログアウト）します。
+
+        このエンドポイントは、ユーザーの特定のOPセッションを無効化します。
+        セッション削除により、そのセッションに関連するすべてのトークンも無効化されます。
+
+        **ユースケース:**
+        - 不正アクセスが疑われるセッションの強制終了
+        - ユーザーからの要請によるリモートログアウト
+        - セキュリティインシデント対応
+      tags:
+        - organization-user
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: セッションを正常に削除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: セッション、ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /v1/management/organizations/{organization-id}/tenants/{tenant-id}/roles:
     parameters:
       - $ref: '#/components/parameters/OrganizationId'
@@ -3327,6 +3433,14 @@ components:
         type: string
         format: uuid
       description: ユーザーの識別子
+    SessionId:
+      name: session-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: セッションの識別子
     AuthenticationConfigId:
       name: config-id
       in: path
@@ -7380,6 +7494,106 @@ components:
           type: integer
           default: 3600
           description: セッションタイムアウト（秒）
+        switch_policy:
+          type: string
+          enum:
+            - STRICT
+            - SWITCH_ALLOWED
+            - MULTI_SESSION
+          default: SWITCH_ALLOWED
+          description: |
+            セッション切替ポリシー。同一ブラウザで別ユーザーが認証しようとした場合の動作を制御。
+
+            - **STRICT**: エラーを返す（ログアウト必須）。金融・エンタープライズ向け
+            - **SWITCH_ALLOWED**: 古いセッションを終了して新規作成（デフォルト）。一般的なWebアプリ向け
+            - **MULTI_SESSION**: 新規セッション作成（古いのは残る）。後方互換性維持
+
+            **同一ユーザーの再認証時**: ポリシーに関係なく、既存セッションを再利用（lastAccessedAt更新）
+    UserSession:
+      type: object
+      description: ユーザーのOPセッション（OpenID Provider Session）情報
+      properties:
+        id:
+          type: string
+          description: セッションID
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        tenant_id:
+          type: string
+          description: テナントID
+          example: 952f6906-3e95-4ed3-86b2-981f90f785f9
+        sub:
+          type: string
+          description: ユーザーの一意識別子（subject）
+          example: 3ec055a8-8000-44a2-8677-e70ebff414e2
+        auth_time:
+          type: string
+          format: date-time
+          description: 認証が行われた時刻（ISO 8601形式）
+          example: '2025-01-05T10:30:00Z'
+        acr:
+          type: string
+          nullable: true
+          description: 認証コンテキストクラス参照（Authentication Context Class Reference）
+          example: urn:mace:incommon:iap:silver
+        amr:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: 認証方法参照（Authentication Methods References）
+          example:
+            - pwd
+            - otp
+        created_at:
+          type: string
+          format: date-time
+          description: セッション作成時刻（ISO 8601形式）
+          example: '2025-01-05T10:30:00Z'
+        expires_at:
+          type: string
+          format: date-time
+          description: セッション有効期限（ISO 8601形式）
+          example: '2025-01-05T11:30:00Z'
+        last_accessed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 最終アクセス時刻（ISO 8601形式）
+          example: '2025-01-05T10:45:00Z'
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - TERMINATED
+          description: セッションステータス
+          example: ACTIVE
+        terminated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: セッション終了時刻（終了している場合のみ）
+          example: null
+        termination_reason:
+          type: string
+          nullable: true
+          enum:
+            - USER_LOGOUT
+            - ADMIN_REVOCATION
+            - TIMEOUT
+            - SESSION_LIMIT_EXCEEDED
+          description: セッション終了理由（終了している場合のみ）
+          example: null
+    UserSessionListResponse:
+      type: object
+      description: ユーザーセッション一覧のレスポンス
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSession'
+          description: セッションの配列
+      required:
+        - list
     SecurityEventLogConfiguration:
       type: object
       properties:

@@ -21,9 +21,6 @@ import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
-import org.idp.server.core.openid.grant_management.AuthorizationGranted;
-import org.idp.server.core.openid.grant_management.AuthorizationGrantedIdentifier;
-import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.id_token.IdTokenCreator;
 import org.idp.server.core.openid.identity.id_token.IdTokenCustomClaims;
@@ -47,7 +44,6 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
   BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository;
   CibaGrantRepository cibaGrantRepository;
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
-  AuthorizationGrantedRepository authorizationGrantedRepository;
   IdTokenCreator idTokenCreator;
   AccessTokenCreator accessTokenCreator;
   CibaGrantVerifier verifier;
@@ -55,12 +51,10 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
   public CibaGrantService(
       BackchannelAuthenticationRequestRepository backchannelAuthenticationRequestRepository,
       CibaGrantRepository cibaGrantRepository,
-      OAuthTokenCommandRepository oAuthTokenCommandRepository,
-      AuthorizationGrantedRepository authorizationGrantedRepository) {
+      OAuthTokenCommandRepository oAuthTokenCommandRepository) {
     this.backchannelAuthenticationRequestRepository = backchannelAuthenticationRequestRepository;
     this.cibaGrantRepository = cibaGrantRepository;
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
-    this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.idTokenCreator = IdTokenCreator.getInstance();
     this.verifier = new CibaGrantVerifier();
     this.accessTokenCreator = AccessTokenCreator.getInstance();
@@ -125,8 +119,6 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
             clientConfiguration);
     oAuthTokenBuilder.add(idToken);
 
-    registerOrUpdate(tenant, cibaGrant);
-
     OAuthToken oAuthToken = oAuthTokenBuilder.build();
 
     oAuthTokenCommandRepository.register(tenant, oAuthToken);
@@ -135,23 +127,5 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
     cibaGrantRepository.delete(tenant, cibaGrant);
 
     return oAuthToken;
-  }
-
-  private void registerOrUpdate(Tenant tenant, CibaGrant cibaGrant) {
-    AuthorizationGranted latest =
-        authorizationGrantedRepository.find(
-            tenant, cibaGrant.requestedClientId(), cibaGrant.user());
-
-    if (latest.exists()) {
-      AuthorizationGranted merge = latest.merge(cibaGrant.authorizationGrant());
-
-      authorizationGrantedRepository.update(tenant, merge);
-      return;
-    }
-    AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
-        new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
-    AuthorizationGranted authorizationGranted =
-        new AuthorizationGranted(authorizationGrantedIdentifier, cibaGrant.authorizationGrant());
-    authorizationGrantedRepository.register(tenant, authorizationGranted);
   }
 }
