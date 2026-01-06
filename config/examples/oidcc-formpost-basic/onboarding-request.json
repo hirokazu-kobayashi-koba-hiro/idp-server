@@ -43,6 +43,7 @@
       "ES256"
     ],
     "userinfo_endpoint": "https://api.local.dev/d2e3f4a5-b6c7-8901-def0-234567890123/v1/userinfo",
+    "end_session_endpoint": "https://api.local.dev/d2e3f4a5-b6c7-8901-def0-234567890123/v1/logout",
     "jwks_uri": "https://api.local.dev/d2e3f4a5-b6c7-8901-def0-234567890123/v1/jwks",
     "jwks": "{\"keys\":[{\"kty\":\"EC\",\"x\":\"_g1pn_N84_T82eU-YVN4pcgQt3tfvZWJMPabMFNgbVg\",\"y\":\"B3vLi4eGNz9rzoj493h7zHBpM5G3lSM7Af57fru2-FE\",\"crv\":\"P-256\",\"d\":\"xHfNjJqElnZajzexFG49MQqO01TrveM4mL4tlz8T9jw\",\"use\":\"sig\",\"kid\":\"signing_key_1\",\"alg\":\"ES256\"}]}",
     "grant_types_supported": [
@@ -60,7 +61,14 @@
       "offline_access"
     ],
     "response_types_supported": [
-      "code"
+      "code",
+      "token",
+      "id_token",
+      "code token",
+      "code id_token",
+      "token id_token",
+      "code token id_token",
+      "none"
     ],
     "response_modes_supported": [
       "query",
@@ -150,12 +158,21 @@
   "client": {
     "client_id": "f4a5b6c7-d8e9-0123-abcd-456789012345",
     "client_id_alias": "oidcc-basic-client",
-    "client_secret": "oidcc-basic-secret-32characters",
+    "client_secret": "oidcc-basic-secret-32characters1",
     "redirect_uris": [
-      "https://localhost.emobix.co.uk:8443/test/a/oidc-core-basic/callback"
+      "https://localhost.emobix.co.uk:8443/test/a/oidc-core-basic/callback",
+      "https://localhost.emobix.co.uk:8443/test/a/oidc-core-comprehensive-test/callback",
+      "https://localhost.emobix.co.uk:8443/test/a/oidcc-rp-initiated-logout/callback"
     ],
     "response_types": [
-      "code"
+      "code",
+      "token",
+      "id_token",
+      "code token",
+      "code id_token",
+      "token id_token",
+      "code token id_token",
+      "none"
     ],
     "grant_types": [
       "authorization_code",
@@ -164,6 +181,9 @@
     "scope": "openid profile email address phone offline_access",
     "client_name": "OIDCC Basic Client (client_secret_basic)",
     "token_endpoint_auth_method": "client_secret_basic",
-    "application_type": "web"
+    "application_type": "web",
+    "post_logout_redirect_uris": [
+      "https://localhost.emobix.co.uk:8443/test/a/oidcc-rp-initiated-logout/post_logout_redirect"
+    ]
   }
 }

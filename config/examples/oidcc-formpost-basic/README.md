@@ -11,6 +11,7 @@ oidcc-formpost-basic/
 ├── client-post.json          # 2つ目のクライアント（client_secret_post）
 ├── client-second.json        # 3つ目のクライアント（second client）
 ├── setup.sh                  # セットアップスクリプト
+├── update.sh                 # 更新スクリプト
 └── delete.sh                 # 削除スクリプト
 ```
 
@@ -45,6 +46,23 @@ chmod +x setup.sh
 |---------|-----|
 | Tenant ID | `d2e3f4a5-b6c7-8901-def0-234567890123` |
 | Issuer | `https://api.local.dev/d2e3f4a5-b6c7-8901-def0-234567890123` |
+
+### 4. 設定更新
+
+設定ファイルを編集後、以下のスクリプトで反映できます：
+
+```bash
+# テナント・認可サーバー・クライアントを更新
+./update.sh
+```
+
+更新対象:
+- テナント設定
+- 認可サーバー設定（JWKS含む）
+- クライアント設定（3つ全て）
+
+**鍵ローテーション（OIDCC テスト用）:**
+`onboarding-request.json` の `jwks` を編集し、新しい鍵を追加後 `./update.sh` を実行
 
 ## クライアント設定
 

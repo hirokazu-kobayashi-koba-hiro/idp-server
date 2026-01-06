@@ -43,7 +43,7 @@ public class OAuthViewUrlResolver {
   public static String resolveError(Tenant tenant, Error error, ErrorDescription errorDescription) {
     String base = tenant.baseUrl();
     return String.format(
-        "%s/error?error=%s&error_description=%s&tenant_id=%s",
+        "%s/error/?error=%s&error_description=%s&tenant_id=%s",
         base, error.value(), errorDescription.value(), tenant.identifier().value());
   }
 
