@@ -7,12 +7,12 @@
 ### 初回認証フロー
 
 ```
-認可リクエスト ────→ 認証中 ────→ 認可完了 ────→ SSO可能
+認可リクエスト ────→ 認証完了 ────→ 認可完了 ────→ SSO可能
       │                │              │              │
       ▼                ▼              ▼              ▼
 ┌───────────┐   ┌───────────┐   ┌───────────┐   ┌───────────┐
-│AuthSession│   │  検証継続  │   │ OPSession │   │  再利用    │
-│  Cookie   │   │           │   │  Cookie   │   │  可能     │
+│AuthSession│   │ OPSession │   │ClientSession│  │  再利用    │
+│  Cookie   │   │  Cookie   │   │  作成      │   │  可能     │
 └───────────┘   └───────────┘   └───────────┘   └───────────┘
 ```
 
@@ -21,7 +21,8 @@
 | セッション | Cookie | 役割 | ライフサイクル |
 |-----------|--------|------|---------------|
 | AuthenticationTransaction | AUTH_SESSION | 認可フローの保護 | 認可リクエスト〜認可完了 |
-| OPSession | IDP_IDENTITY | SSO | 認可完了〜ログアウト/期限切れ |
+| OPSession | IDP_IDENTITY | SSO | 認証完了〜ログアウト/期限切れ |
+| ClientSession | - | クライアント別セッション管理 | 認可完了〜ログアウト/期限切れ |
 
 ### SSO時の検証
 
@@ -72,9 +73,18 @@ SSO認可リクエスト ────→ セッション検証 ────→ �
 │  │ Authentication    │  認証情報を更新                                      │
 │  │ Transaction更新   │  - user, acr, amr, authTime                         │
 │  └──────────────────┘                                                      │
+│         │                                                                   │
+│         ▼                                                                   │
+│  ┌──────────────────┐     ┌──────────────────┐                             │
+│  │ OPSession作成     │     │ IDP_IDENTITY      │                             │
+│  │ (SSO用)          │     │ IDP_SESSION       │                             │
+│  │ acr, amr, authTime│     │ Cookie設定        │                             │
+│  │ interactionResults│     │                   │                             │
+│  └──────────────────┘     └──────────────────┘                             │
 │                                                                             │
-│  ※ この時点ではOPSessionは作成されない                                      │
-│  ※ MFA途中離脱の場合、ここで止まる                                          │
+│  ※ 認証成功時にOPSessionを作成（セッション切替ポリシー適用）                │
+│  ※ 同一ユーザー再認証時は既存セッションを再利用                              │
+│  ※ MFA途中離脱の場合、OPSessionは作成されない                               │
 │                                                                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
@@ -89,17 +99,10 @@ SSO認可リクエスト ────→ セッション検証 ────→ �
 │  └──────────────────┘                                                      │
 │         │                                                                   │
 │         ▼                                                                   │
-│  ┌──────────────────┐     ┌──────────────────┐                             │
-│  │ OPSession作成     │     │ ClientSession作成 │                             │
-│  │ (SSO用)          │     │ (per-client)     │                             │
-│  │ acr, amr, authTime│     │ sid for ID Token │                             │
-│  └──────────────────┘     └──────────────────┘                             │
-│         │                                                                   │
-│         ▼                                                                   │
 │  ┌──────────────────┐                                                      │
-│  │ IDP_IDENTITY      │  OPSession ID (HttpOnly)                            │
-│  │ IDP_SESSION       │  SHA256(OPSession ID) (for iframe)                  │
-│  │ Cookie設定        │                                                      │
+│  │ ClientSession作成 │  クライアント固有のセッション                         │
+│  │ (per-client)     │  sid for ID Token                                    │
+│  │ scope, claims    │  OPSessionに紐付く                                   │
 │  └──────────────────┘                                                      │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -192,17 +195,18 @@ sequenceDiagram
     IdP->>Session Store: AuthenticationTransaction作成
     IdP->>Browser: 302 Redirect + AUTH_SESSION Cookie
 
-    Note over Browser,Session Store: 認証フロー
+    Note over Browser,Session Store: 認証フロー（認証完了時にOPSession作成）
     Browser->>IdP: POST /password-authentication
     IdP->>IdP: validateAuthSession()
     IdP->>Session Store: AuthenticationTransaction更新
+    IdP->>Session Store: OPSession作成（セッション切替ポリシー適用）
+    IdP->>Browser: 認証結果 + IDP_IDENTITY Cookie
 
-    Note over Browser,Session Store: 認可完了
+    Note over Browser,Session Store: 認可完了（ClientSession作成）
     Browser->>IdP: POST /authorize
     IdP->>IdP: validateAuthSession()
-    IdP->>Session Store: OPSession作成
-    IdP->>Session Store: ClientSession作成
-    IdP->>Browser: 認可コード + IDP_IDENTITY Cookie
+    IdP->>Session Store: ClientSession作成（OPSessionに紐付く）
+    IdP->>Browser: 認可コード
 ```
 
 ## Cookie一覧
