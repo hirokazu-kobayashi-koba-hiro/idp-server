@@ -54,7 +54,8 @@
           "refresh_token",
           "password",
           "client_credentials",
-          "urn:openid:params:grant-type:ciba"
+          "urn:openid:params:grant-type:ciba",
+          "urn:ietf:params:oauth:grant-type:jwt-bearer"
         ]
       },
       "default": [
@@ -325,9 +326,13 @@
                 "type": "string",
                 "description": "Federation identifier"
               },
+              "issuer": {
+                "type": "string",
+                "description": "Trusted issuer identifier for JWT Bearer Grant"
+              },
               "type": {
                 "type": "string",
-                "enum": ["oauth2", "saml2", "oidc"],
+                "enum": ["oauth2", "saml2", "oidc", "device"],
                 "description": "Federation type"
               },
               "sso_provider": {
@@ -338,9 +343,18 @@
                 "type": "boolean",
                 "default": false,
                 "description": "Auto-selection flag for federation"
+              },
+              "subject_claim_mapping": {
+                "type": "string",
+                "description": "Claim to use for mapping JWT subject to user (sub, email, etc.)"
+              },
+              "jwt_bearer_grant_enabled": {
+                "type": "boolean",
+                "default": false,
+                "description": "Enable JWT Bearer Grant for this federation"
               }
             },
-            "required": ["id", "type"]
+            "required": ["type"]
           },
           "description": "OPTIONAL. List of available federation configurations"
         },

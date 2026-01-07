@@ -23,6 +23,7 @@ import org.idp.server.core.openid.oauth.type.ArrayValueMap;
 import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
 import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
 import org.idp.server.core.openid.oauth.type.oauth.*;
+import org.idp.server.core.openid.oauth.type.oauth.JwtBearerAssertion;
 import org.idp.server.core.openid.oauth.type.pkce.CodeVerifier;
 
 /** TokenRequestParameters */
@@ -151,6 +152,14 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
 
   public boolean hasAuthReqId() {
     return contains(OAuthRequestKey.auth_req_id);
+  }
+
+  public JwtBearerAssertion assertion() {
+    return new JwtBearerAssertion(getValueOrEmpty(OAuthRequestKey.assertion));
+  }
+
+  public boolean hasAssertion() {
+    return contains(OAuthRequestKey.assertion);
   }
 
   public String getValueOrEmpty(OAuthRequestKey key) {

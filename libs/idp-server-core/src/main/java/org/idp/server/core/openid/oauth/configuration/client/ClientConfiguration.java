@@ -18,6 +18,7 @@ package org.idp.server.core.openid.oauth.configuration.client;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.oauth.type.ciba.BackchannelTokenDeliveryMode;
@@ -464,6 +465,20 @@ public class ClientConfiguration implements JsonReadable, Configurable {
 
   public List<Map<String, Object>> availableFederationsAsMapList() {
     return extension.availableFederationsAsMapList();
+  }
+
+  public Optional<AvailableFederation> findAvailableFederationByIssuer(String issuer) {
+    return availableFederations().stream()
+        .filter(federation -> federation.jwtBearerGrantEnabled())
+        .filter(federation -> federation.matchesIssuer(issuer))
+        .findFirst();
+  }
+
+  public Optional<AvailableFederation> findDeviceFederation() {
+    return availableFederations().stream()
+        .filter(federation -> federation.jwtBearerGrantEnabled())
+        .filter(AvailableFederation::isDeviceType)
+        .findFirst();
   }
 
   public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {

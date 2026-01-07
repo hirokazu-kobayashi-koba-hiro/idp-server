@@ -101,7 +101,8 @@
           "refresh_token",
           "password",
           "client_credentials",
-          "urn:openid:params:grant-type:ciba"
+          "urn:openid:params:grant-type:ciba",
+          "urn:ietf:params:oauth:grant-type:jwt-bearer"
         ]
       },
       "default": [

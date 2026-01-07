@@ -90,6 +90,7 @@ const sidebars = {
             "content_03_concepts/authentication-authorization/concept-06-fapi",
             "content_03_concepts/authentication-authorization/concept-07-passwordless",
             "content_03_concepts/authentication-authorization/concept-08-federation",
+            "content_03_concepts/authentication-authorization/concept-09-jwt-bearer-grant",
           ]
         },
         {

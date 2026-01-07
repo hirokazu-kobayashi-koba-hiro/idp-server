@@ -18,6 +18,8 @@ package org.idp.server.core.openid.identity.device;
 
 import java.io.Serializable;
 import java.util.*;
+import org.idp.server.core.openid.identity.device.credential.DeviceCredential;
+import org.idp.server.core.openid.identity.device.credential.DeviceCredentials;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.notification.NotificationChannel;
 import org.idp.server.platform.notification.NotificationToken;
@@ -34,6 +36,7 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
   String notificationToken;
   List<String> availableMethods;
   Integer priority;
+  List<DeviceCredential> deviceCredentials;
 
   public AuthenticationDevice() {}
 
@@ -210,5 +213,24 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
       return availableMethods.contains("fido-uaf");
     }
     return false;
+  }
+
+  public DeviceCredentials deviceCredentials() {
+    if (deviceCredentials == null) {
+      return new DeviceCredentials();
+    }
+    return new DeviceCredentials(deviceCredentials);
+  }
+
+  public boolean hasDeviceCredentials() {
+    return deviceCredentials != null && !deviceCredentials.isEmpty();
+  }
+
+  public Optional<DeviceCredential> findActiveCredential() {
+    return deviceCredentials().findActiveCredential();
+  }
+
+  public Optional<DeviceCredential> findActiveCredentialByAlgorithm(String algorithm) {
+    return deviceCredentials().findActiveCredentialByAlgorithm(algorithm);
   }
 }

@@ -25,6 +25,9 @@ public class AvailableFederation implements JsonReadable {
   String type;
   String ssoProvider;
   boolean autoSelected = false;
+  String issuer;
+  boolean jwtBearerGrantEnabled = false;
+  String subjectClaimMapping;
 
   public AvailableFederation() {}
 
@@ -44,12 +47,46 @@ public class AvailableFederation implements JsonReadable {
     return autoSelected;
   }
 
+  public String issuer() {
+    return issuer;
+  }
+
+  public boolean hasIssuer() {
+    return issuer != null && !issuer.isEmpty();
+  }
+
+  public boolean jwtBearerGrantEnabled() {
+    return jwtBearerGrantEnabled;
+  }
+
+  public String subjectClaimMapping() {
+    return subjectClaimMapping;
+  }
+
+  public boolean hasSubjectClaimMapping() {
+    return subjectClaimMapping != null && !subjectClaimMapping.isEmpty();
+  }
+
+  public boolean isDeviceType() {
+    return "device".equals(type);
+  }
+
+  public boolean matchesIssuer(String issuerToMatch) {
+    if (!hasIssuer()) {
+      return false;
+    }
+    return issuer.equals(issuerToMatch);
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);
     map.put("type", type);
     map.put("sso_provider", ssoProvider);
     map.put("auto_selected", autoSelected);
+    if (hasIssuer()) map.put("issuer", issuer);
+    map.put("jwt_bearer_grant_enabled", jwtBearerGrantEnabled);
+    if (hasSubjectClaimMapping()) map.put("subject_claim_mapping", subjectClaimMapping);
     return map;
   }
 }
