@@ -53,6 +53,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
   TokenIntrospectionErrorHandler introspectionErrorHandler;
   TokenRevocationErrorHandler revocationErrorHandler;
   PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
+  JwtBearerUserFindingDelegate jwtBearerUserFindingDelegate;
   LoggerWrapper log = LoggerWrapper.getLogger(DefaultTokenProtocol.class);
 
   public DefaultTokenProtocol(
@@ -64,6 +65,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
+      JwtBearerUserFindingDelegate jwtBearerUserFindingDelegate,
       Map<GrantType, OAuthTokenCreationService> extensionOAuthTokenCreationServices) {
     this.tokenRequestHandler =
         new TokenRequestHandler(
@@ -105,6 +107,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
             clientConfigurationQueryRepository);
     this.revocationErrorHandler = new TokenRevocationErrorHandler();
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
+    this.jwtBearerUserFindingDelegate = jwtBearerUserFindingDelegate;
   }
 
   @Override
@@ -116,7 +119,10 @@ public class DefaultTokenProtocol implements TokenProtocol {
       TokenRequest tokenRequest, TokenUserFindingDelegate tokenUserFindingDelegate) {
     try {
       return tokenRequestHandler.handle(
-          tokenRequest, passwordCredentialsGrantDelegate, tokenUserFindingDelegate);
+          tokenRequest,
+          passwordCredentialsGrantDelegate,
+          tokenUserFindingDelegate,
+          jwtBearerUserFindingDelegate);
     } catch (Exception exception) {
       return errorHandler.handle(exception);
     }

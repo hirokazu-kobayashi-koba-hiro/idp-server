@@ -23,28 +23,42 @@ import java.util.Map;
  * Authentication device rule configuration for tenant-level device management.
  *
  * <p>This class defines the rules for managing authentication devices at the tenant level,
- * including maximum device limits and identity verification requirements.
+ * including maximum device limits, identity verification requirements, and device authentication
+ * method.
  *
  * <p>Previously defined per AuthenticationPolicy, now centralized at tenant level for consistency.
  *
  * @see TenantIdentityPolicy
+ * @see DeviceAuthenticationType
  */
 public class AuthenticationDeviceRule {
 
   private static final int DEFAULT_MAX_DEVICES = 5;
   private static final boolean DEFAULT_REQUIRED_IDENTITY_VERIFICATION = false;
+  private static final DeviceAuthenticationType DEFAULT_AUTHENTICATION_TYPE =
+      DeviceAuthenticationType.none;
 
   private int maxDevices;
   private boolean requiredIdentityVerification;
+  private DeviceAuthenticationType authenticationType;
 
   public AuthenticationDeviceRule() {
     this.maxDevices = DEFAULT_MAX_DEVICES;
     this.requiredIdentityVerification = DEFAULT_REQUIRED_IDENTITY_VERIFICATION;
+    this.authenticationType = DEFAULT_AUTHENTICATION_TYPE;
   }
 
   public AuthenticationDeviceRule(int maxDevices, boolean requiredIdentityVerification) {
+    this(maxDevices, requiredIdentityVerification, DEFAULT_AUTHENTICATION_TYPE);
+  }
+
+  public AuthenticationDeviceRule(
+      int maxDevices,
+      boolean requiredIdentityVerification,
+      DeviceAuthenticationType authenticationType) {
     this.maxDevices = maxDevices;
     this.requiredIdentityVerification = requiredIdentityVerification;
+    this.authenticationType = authenticationType;
   }
 
   /**
@@ -55,6 +69,7 @@ public class AuthenticationDeviceRule {
    * <ul>
    *   <li>max_devices: 5
    *   <li>required_identity_verification: false
+   *   <li>authentication_type: none
    * </ul>
    *
    * @return default authentication device rule
@@ -90,7 +105,20 @@ public class AuthenticationDeviceRule {
       }
     }
 
-    return new AuthenticationDeviceRule(maxDevices, requiredIdentityVerification);
+    DeviceAuthenticationType authenticationType = DEFAULT_AUTHENTICATION_TYPE;
+    if (map.containsKey("authentication_type")) {
+      Object value = map.get("authentication_type");
+      if (value instanceof String) {
+        try {
+          authenticationType = DeviceAuthenticationType.valueOf((String) value);
+        } catch (IllegalArgumentException e) {
+          // Keep default if invalid value
+        }
+      }
+    }
+
+    return new AuthenticationDeviceRule(
+        maxDevices, requiredIdentityVerification, authenticationType);
   }
 
   /**
@@ -112,6 +140,27 @@ public class AuthenticationDeviceRule {
   }
 
   /**
+   * Returns the authentication type required for device assertions.
+   *
+   * <p>This determines how devices must authenticate when making requests (e.g., JWT Bearer Grant
+   * with device-signed JWT).
+   *
+   * @return device authentication type
+   */
+  public DeviceAuthenticationType authenticationType() {
+    return authenticationType;
+  }
+
+  /**
+   * Returns whether device authentication is required (not none).
+   *
+   * @return true if authentication is required
+   */
+  public boolean requiresDeviceAuthentication() {
+    return authenticationType.requiresCredential();
+  }
+
+  /**
    * Converts this rule to a Map for JSON serialization.
    *
    * @return map representation
@@ -120,6 +169,7 @@ public class AuthenticationDeviceRule {
     Map<String, Object> map = new HashMap<>();
     map.put("max_devices", maxDevices);
     map.put("required_identity_verification", requiredIdentityVerification);
+    map.put("authentication_type", authenticationType.name());
     return map;
   }
 }

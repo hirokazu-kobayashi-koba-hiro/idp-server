@@ -25,6 +25,7 @@ public enum GrantType {
   client_credentials("client_credentials"),
   refresh_token("refresh_token"),
   ciba("urn:openid:params:grant-type:ciba"),
+  jwt_bearer("urn:ietf:params:oauth:grant-type:jwt-bearer"),
   unknown(""),
   undefined("");
 
@@ -52,5 +53,9 @@ public enum GrantType {
 
   public boolean isClientCredentials() {
     return this == client_credentials;
+  }
+
+  public boolean isJwtBearer() {
+    return this == jwt_bearer;
   }
 }

@@ -129,6 +129,8 @@ import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.session.repository.ClientSessionRepository;
 import org.idp.server.core.openid.session.repository.OPSessionRepository;
 import org.idp.server.core.openid.token.*;
+import org.idp.server.core.openid.token.JwtBearerUserFinder;
+import org.idp.server.core.openid.token.JwtBearerUserFindingDelegate;
 import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
 import org.idp.server.core.openid.userinfo.UserinfoProtocol;
@@ -440,6 +442,9 @@ public class IdpServerApplication {
     applicationComponentContainer.register(
         PasswordCredentialsGrantDelegate.class,
         new UserPasswordAuthenticator(userQueryRepository, passwordVerificationDelegation));
+
+    applicationComponentContainer.register(
+        JwtBearerUserFindingDelegate.class, new JwtBearerUserFinder(userQueryRepository));
 
     // OIDC Session Management
     // Must be registered before ProtocolContainerPluginLoader.load() as
