@@ -17,8 +17,10 @@
 package org.idp.server.core.openid.token;
 
 import java.util.Objects;
+import java.util.Optional;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
 import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
@@ -40,6 +42,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
   CustomProperties customProperties;
   PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
   TokenUserFindingDelegate tokenUserFindingDelegate;
+  JwtBearerUserFindingDelegate jwtBearerUserFindingDelegate;
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
 
@@ -51,6 +54,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
       CustomProperties customProperties,
       PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
       TokenUserFindingDelegate tokenUserFindingDelegate,
+      JwtBearerUserFindingDelegate jwtBearerUserFindingDelegate,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.tenant = tenant;
@@ -60,6 +64,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
     this.customProperties = customProperties;
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
     this.tokenUserFindingDelegate = tokenUserFindingDelegate;
+    this.jwtBearerUserFindingDelegate = jwtBearerUserFindingDelegate;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
   }
@@ -235,5 +240,29 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public boolean hasPassword() {
     return parameters.hasPassword();
+  }
+
+  public boolean hasAssertion() {
+    return parameters.hasAssertion();
+  }
+
+  public JwtBearerAssertion assertion() {
+    return parameters.assertion();
+  }
+
+  public Optional<AvailableFederation> findAvailableFederationByIssuer(String issuer) {
+    return clientConfiguration.findAvailableFederationByIssuer(issuer);
+  }
+
+  public Optional<AvailableFederation> findDeviceFederation() {
+    return clientConfiguration.findDeviceFederation();
+  }
+
+  public JwtBearerUserFindingDelegate jwtBearerUserFindingDelegate() {
+    return jwtBearerUserFindingDelegate;
+  }
+
+  public boolean isSupportedJwtBearerGrant() {
+    return Objects.nonNull(jwtBearerUserFindingDelegate);
   }
 }

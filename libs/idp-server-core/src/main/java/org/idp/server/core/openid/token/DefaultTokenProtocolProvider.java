@@ -54,6 +54,8 @@ public class DefaultTokenProtocolProvider implements ProtocolProvider<TokenProto
         container.resolve(OAuthTokenQueryRepository.class);
     PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate =
         container.resolve(PasswordCredentialsGrantDelegate.class);
+    JwtBearerUserFindingDelegate jwtBearerUserFindingDelegate =
+        container.resolve(JwtBearerUserFindingDelegate.class);
     Map<GrantType, OAuthTokenCreationService> extentions =
         OAuthTokenCreationServicePluginLoader.load(container);
 
@@ -65,6 +67,7 @@ public class DefaultTokenProtocolProvider implements ProtocolProvider<TokenProto
         authorizationServerConfigurationQueryRepository,
         clientConfigurationQueryRepository,
         passwordCredentialsGrantDelegate,
+        jwtBearerUserFindingDelegate,
         extentions);
   }
 }

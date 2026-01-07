@@ -214,6 +214,7 @@ export const requestToken = async ({
  username,
  password,
  authReqId,
+ assertion,
  clientId,
  clientSecret,
  clientAssertion,
@@ -249,6 +250,10 @@ export const requestToken = async ({
   }
   if (authReqId) {
     params.append("auth_req_id", authReqId);
+  }
+  // JWT Bearer Grant assertion (RFC 7523)
+  if (assertion) {
+    params.append("assertion", assertion);
   }
   if (clientId) {
     params.append("client_id", clientId);
