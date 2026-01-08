@@ -21,6 +21,7 @@ import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.service.JwtBearerGrantService;
 import org.idp.server.core.openid.token.service.OAuthTokenCreationService;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
+import org.idp.server.platform.http.HttpRequestExecutor;
 
 /**
  * Factory for creating JwtBearerGrantService instances.
@@ -37,6 +38,8 @@ public class JwtBearerGrantServiceFactory implements OAuthTokenCreationServiceFa
         container.resolve(OAuthTokenCommandRepository.class);
     DeviceCredentialQueryRepository deviceCredentialQueryRepository =
         container.resolve(DeviceCredentialQueryRepository.class);
-    return new JwtBearerGrantService(oAuthTokenCommandRepository, deviceCredentialQueryRepository);
+    HttpRequestExecutor httpRequestExecutor = container.resolve(HttpRequestExecutor.class);
+    return new JwtBearerGrantService(
+        oAuthTokenCommandRepository, deviceCredentialQueryRepository, httpRequestExecutor);
   }
 }

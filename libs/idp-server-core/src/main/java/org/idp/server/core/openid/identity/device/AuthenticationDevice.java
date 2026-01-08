@@ -63,7 +63,21 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     this.priority = priority;
   }
 
-  public String id() {
+    public AuthenticationDevice(String id, String appName, String platform, String os, String model, String locale, String notificationChannel, String notificationToken, List<String> availableMethods, Integer priority, List<DeviceCredential> deviceCredentials) {
+        this.id = id;
+        this.appName = appName;
+        this.platform = platform;
+        this.os = os;
+        this.model = model;
+        this.locale = locale;
+        this.notificationChannel = notificationChannel;
+        this.notificationToken = notificationToken;
+        this.availableMethods = availableMethods;
+        this.priority = priority;
+        this.deviceCredentials = deviceCredentials;
+    }
+
+    public String id() {
     return id;
   }
 
@@ -161,6 +175,26 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
         notificationToken,
         newAvailableMethods,
         priority);
+  }
+
+  public AuthenticationDevice withDeviceCredential(DeviceCredential credential) {
+    List<DeviceCredential> newCredentials =
+        deviceCredentials != null ? new ArrayList<>(deviceCredentials) : new ArrayList<>();
+    newCredentials.add(credential);
+    AuthenticationDevice device =
+        new AuthenticationDevice(
+            id,
+            appName,
+            platform,
+            os,
+            model,
+            locale,
+            notificationChannel,
+            notificationToken,
+            availableMethods,
+            priority);
+    device.deviceCredentials = newCredentials;
+    return device;
   }
 
   public AuthenticationDevice patchWith(AuthenticationDevice patchDevice) {
