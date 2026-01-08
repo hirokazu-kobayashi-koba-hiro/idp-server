@@ -26,4 +26,6 @@ public interface AuthenticationInteractionCommandRepository {
 
   <T> void update(
       Tenant tenant, AuthenticationTransactionIdentifier identifier, String key, T payload);
+
+  void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier, String key);
 }

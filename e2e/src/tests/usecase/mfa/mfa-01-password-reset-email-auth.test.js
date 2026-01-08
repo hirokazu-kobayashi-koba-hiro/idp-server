@@ -2035,6 +2035,342 @@ describe("Use Case: Password Reset with Email Authentication", () => {
     console.log("\nDocumentation is CORRECT: Higher priority number = Higher priority\n");
   });
 
+  it("should reject OTP replay attack - same code cannot be used twice", async () => {
+    console.log("\n=== OTP Replay Attack Prevention Test ===\n");
+
+    const timestamp = Date.now();
+    const testOrgId = uuidv4();
+    const testTenantId = uuidv4();
+    const testClientId = uuidv4();
+    const testClientSecret = `client-secret-${timestamp}`;
+    const redirectUri = `https://app.example.com/callback`;
+    const userEmail = faker.internet.email();
+    const userName = faker.person.fullName();
+    const initialPassword = `InitialPass${timestamp}!`;
+
+    console.log("=== Step 1: Create Test Organization and Tenant ===");
+
+    const { jwks } = await generateRS256KeyPair();
+
+    const onboardingRequest = {
+      organization: {
+        id: testOrgId,
+        name: `OTP Replay Test Org ${timestamp}`,
+        description: "Test organization for OTP replay attack prevention",
+      },
+      tenant: {
+        id: testTenantId,
+        name: `OTP Replay Tenant ${timestamp}`,
+        domain: backendUrl,
+        authorization_provider: "idp-server",
+        tenant_type: "ORGANIZER",
+      },
+      authorization_server: {
+        issuer: `${backendUrl}/${testTenantId}`,
+        authorization_endpoint: `${backendUrl}/${testTenantId}/v1/authorizations`,
+        token_endpoint: `${backendUrl}/${testTenantId}/v1/tokens`,
+        token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+        token_endpoint_auth_signing_alg_values_supported: ["RS256", "ES256"],
+        userinfo_endpoint: `${backendUrl}/${testTenantId}/v1/userinfo`,
+        jwks_uri: `${backendUrl}/${testTenantId}/v1/jwks`,
+        jwks: jwks,
+        grant_types_supported: ["authorization_code", "refresh_token", "password"],
+        token_signed_key_id: "signing_key_1",
+        id_token_signed_key_id: "signing_key_1",
+        scopes_supported: ["openid", "profile", "email", "management"],
+        response_types_supported: ["code"],
+        response_modes_supported: ["query", "fragment"],
+        subject_types_supported: ["public"],
+        id_token_signing_alg_values_supported: ["RS256", "ES256"],
+        claims_parameter_supported: true,
+        extension: {
+          access_token_type: "JWT",
+          token_signed_key_id: "signing_key_1",
+          id_token_signed_key_id: "signing_key_1",
+          access_token_duration: 3600,
+          id_token_duration: 3600,
+          refresh_token_duration: 86400,
+        },
+      },
+      user: {
+        sub: uuidv4(),
+        provider_id: "idp-server",
+        name: faker.internet.email(),
+        email: faker.internet.email(),
+        email_verified: true,
+        raw_password: `AdminPass${timestamp}!`,
+      },
+      client: {
+        client_id: uuidv4(),
+        client_id_alias: `admin-client-replay-${timestamp}`,
+        client_secret: `admin-secret-replay-${timestamp}`,
+        redirect_uris: [redirectUri],
+        response_types: ["code"],
+        grant_types: ["authorization_code", "refresh_token", "password"],
+        scope: "openid profile email management",
+        client_name: "Admin Client",
+        token_endpoint_auth_method: "client_secret_post",
+        application_type: "web",
+      },
+    };
+
+    const onboardingResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/onboarding`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+      body: onboardingRequest,
+    });
+
+    expect(onboardingResponse.status).toBe(201);
+    console.log("✓ Organization and tenant created\n");
+
+    // Get admin token
+    const createdClient = onboardingResponse.data.client;
+    const adminTokenResponse = await requestToken({
+      endpoint: `${backendUrl}/${testTenantId}/v1/tokens`,
+      grantType: "password",
+      username: onboardingRequest.user.email,
+      password: onboardingRequest.user.raw_password,
+      scope: "management",
+      clientId: createdClient.client_id,
+      clientSecret: createdClient.client_secret,
+    });
+
+    expect(adminTokenResponse.status).toBe(200);
+    const adminAccessToken = adminTokenResponse.data.access_token;
+    console.log("✓ Admin access token obtained\n");
+
+    // Step 2: Create Email Authentication Configuration (using no_action email sender)
+    console.log("=== Step 2: Create Email Authentication Configuration (no_action) ===");
+
+    const emailAuthConfigId = uuidv4();
+    const emailAuthConfigResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${testOrgId}/tenants/${testTenantId}/authentication-configurations`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+      body: {
+        id: emailAuthConfigId,
+        type: "email",
+        attributes: {},
+        metadata: {
+          type: "internal",
+          description: "Email authentication for OTP replay test (no_action sender)",
+          transaction_id_param: "transaction_id",
+          verification_code_param: "verification_code"
+        },
+        interactions: {
+          "email-authentication-challenge": {
+            request: {
+              schema: {
+                type: "object",
+                properties: {
+                  email: { type: "string" },
+                  template: { type: "string" }
+                }
+              }
+            },
+            pre_hook: {},
+            execution: {
+              function: "email_authentication_challenge",
+              details: {
+                function: "no_action",
+                sender: "test@example.com",
+                templates: {
+                  authentication: {
+                    subject: "Test OTP",
+                    body: "Your code is: {VERIFICATION_CODE}"
+                  }
+                },
+                retry_count_limitation: 5,
+                expire_seconds: 300
+              }
+            },
+            post_hook: {},
+            response: {
+              body_mapping_rules: [
+                { from: "$.response_body", to: "*" }
+              ]
+            }
+          },
+          "email-authentication": {
+            request: {
+              schema: {
+                type: "object",
+                properties: {
+                  verification_code: { type: "string" }
+                }
+              }
+            },
+            pre_hook: {},
+            execution: {
+              function: "email_authentication"
+            },
+            post_hook: {},
+            response: {
+              body_mapping_rules: [
+                { from: "$.response_body", to: "*" }
+              ]
+            }
+          }
+        }
+      }
+    });
+
+    expect(emailAuthConfigResponse.status).toBe(201);
+    console.log("✓ Email authentication configuration created (no_action)\n");
+
+    // Step 3: Create Test Client
+    console.log("=== Step 3: Create Test Client ===");
+
+    const createClientResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${testOrgId}/tenants/${testTenantId}/clients`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+      body: {
+        client_id: testClientId,
+        client_secret: testClientSecret,
+        client_name: "OTP Replay Test Client",
+        redirect_uris: [redirectUri],
+        grant_types: ["authorization_code", "password"],
+        response_types: ["code"],
+        scope: "openid profile email",
+        token_endpoint_auth_method: "client_secret_post",
+      },
+    });
+
+    expect(createClientResponse.status).toBe(201);
+    console.log("✓ Client created\n");
+
+    // Step 4: Register User
+    console.log("=== Step 4: Register User ===");
+
+    const authParams = new URLSearchParams({
+      response_type: "code",
+      client_id: testClientId,
+      redirect_uri: redirectUri,
+      scope: "openid profile email",
+      state: `state_${timestamp}`,
+    });
+
+    const authorizeResponse = await get({
+      url: `${backendUrl}/${testTenantId}/v1/authorizations?${authParams.toString()}`,
+      headers: {},
+    });
+
+    expect(authorizeResponse.status).toBe(302);
+    const location = authorizeResponse.headers.location;
+    const regAuthId = new URL(location, backendUrl).searchParams.get('id');
+
+    const registrationResponse = await postWithJson({
+      url: `${backendUrl}/${testTenantId}/v1/authorizations/${regAuthId}/initial-registration`,
+      body: { email: userEmail, password: initialPassword, name: userName },
+    });
+
+    expect(registrationResponse.status).toBe(200);
+
+    const authorizeCompleteResponse = await postWithJson({
+      url: `${backendUrl}/${testTenantId}/v1/authorizations/${regAuthId}/authorize`,
+      body: {},
+    });
+
+    expect(authorizeCompleteResponse.status).toBe(200);
+    console.log("✓ User registered\n");
+
+    // Step 5: Start new authorization for email authentication
+    console.log("=== Step 5: Start Email Authentication Flow ===");
+
+    const emailAuthParams = new URLSearchParams({
+      response_type: "code",
+      client_id: testClientId,
+      redirect_uri: redirectUri,
+      scope: "openid profile email",
+      state: `state_email_${timestamp}`,
+    });
+
+    const emailAuthorizeResponse = await get({
+      url: `${backendUrl}/${testTenantId}/v1/authorizations?${emailAuthParams.toString()}`,
+      headers: {},
+    });
+
+    expect(emailAuthorizeResponse.status).toBe(302);
+    const emailLocation = emailAuthorizeResponse.headers.location;
+    const emailAuthId = new URL(emailLocation, backendUrl).searchParams.get('id');
+    console.log("Authorization ID:", emailAuthId);
+
+    // Step 6: Send Email Challenge
+    console.log("=== Step 6: Send Email Challenge ===");
+
+    const emailChallengeResponse = await postWithJson({
+      url: `${backendUrl}/${testTenantId}/v1/authorizations/${emailAuthId}/email-authentication-challenge`,
+      body: { email: userEmail, template: "authentication" },
+    });
+
+    expect(emailChallengeResponse.status).toBe(200);
+    console.log("✓ Email challenge sent\n");
+
+    // Step 7: Get OTP code from Management API
+    console.log("=== Step 7: Get OTP Code from Management API ===");
+
+    // Get authentication transaction ID
+    const authTransactionResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${testOrgId}/tenants/${testTenantId}/authentication-transactions?authorization_id=${emailAuthId}`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+    });
+    expect(authTransactionResponse.status).toBe(200);
+    const transactionId = authTransactionResponse.data.list[0].id;
+    console.log("Transaction ID:", transactionId);
+
+    // Get OTP code from authentication interaction
+    const interactionResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${testOrgId}/tenants/${testTenantId}/authentication-interactions/${transactionId}/email-authentication-challenge`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+    });
+    expect(interactionResponse.status).toBe(200);
+    const verificationCode = interactionResponse.data.payload.verification_code;
+    console.log("✓ Got verification code from Management API:", verificationCode);
+
+    // Step 8: First OTP verification - should SUCCEED
+    console.log("\n=== Step 8: First OTP Verification (Should Succeed) ===");
+
+    const firstVerifyResponse = await postWithJson({
+      url: `${backendUrl}/${testTenantId}/v1/authorizations/${emailAuthId}/email-authentication`,
+      body: { verification_code: verificationCode },
+    });
+
+    console.log("First verification response:", firstVerifyResponse.status, firstVerifyResponse.data);
+    expect(firstVerifyResponse.status).toBe(200);
+    console.log("✓ First OTP verification succeeded\n");
+
+    // Step 9: Second OTP verification with SAME code - should FAIL (replay attack prevention)
+    console.log("=== Step 9: Second OTP Verification with Same Code (Should Fail - Replay Attack) ===");
+
+    const secondVerifyResponse = await postWithJson({
+      url: `${backendUrl}/${testTenantId}/v1/authorizations/${emailAuthId}/email-authentication`,
+      body: { verification_code: verificationCode },
+    });
+
+    console.log("Second verification response:", secondVerifyResponse.status, secondVerifyResponse.data);
+
+    // Should fail because challenge was deleted after first successful verification
+    // 404 = challenge not found (deleted), 400 = invalid request
+    expect([400, 404]).toContain(secondVerifyResponse.status);
+    expect(secondVerifyResponse.data.error).toBe("invalid_request");
+    console.log("✓ Second OTP verification correctly rejected (replay attack prevented)\n");
+
+    console.log("=== OTP Replay Attack Prevention Test Completed ===");
+    console.log("Summary:");
+    console.log("  - First OTP verification: SUCCESS");
+    console.log("  - Second OTP verification (same code): REJECTED");
+    console.log("  - Replay attack prevention: WORKING\n");
+  });
+
   it("should apply correct policy based on acr_values condition", async () => {
     const timestamp = Date.now();
     const testOrgId = uuidv4();

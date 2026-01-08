@@ -1637,6 +1637,130 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "fido2-registration-challenge",
+      "type": "http",
+      "documentation": "FIDO2 WebAuthn registration challenge endpoint",
+      "method": "post",
+      "endpoint": "fido2/registration-challenge",
+      "responses": [
+        {
+          "uuid": "fido2-reg-challenge-success",
+          "body": "{\n  \"challenge\": \"{{ uuid }}\",\n  \"rp\": {\n    \"name\": \"IDP Server Test\",\n    \"id\": \"localhost\"\n  },\n  \"user\": {\n    \"id\": \"{{ uuid }}\",\n    \"name\": \"{{ body 'username' }}\",\n    \"displayName\": \"{{ body 'displayName' }}\"\n  },\n  \"pubKeyCredParams\": [\n    { \"type\": \"public-key\", \"alg\": -7 },\n    { \"type\": \"public-key\", \"alg\": -257 }\n  ],\n  \"timeout\": 60000,\n  \"attestation\": \"none\",\n  \"authenticatorSelection\": {\n    \"authenticatorAttachment\": \"platform\",\n    \"requireResidentKey\": true,\n    \"userVerification\": \"required\"\n  }\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Success",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "fido2-registration",
+      "type": "http",
+      "documentation": "FIDO2 WebAuthn registration endpoint",
+      "method": "post",
+      "endpoint": "fido2/registration",
+      "responses": [
+        {
+          "uuid": "fido2-reg-success",
+          "body": "{\n  \"status\": \"ok\",\n  \"credential_id\": \"{{ uuid }}\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Success",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "fido2-authentication-challenge",
+      "type": "http",
+      "documentation": "FIDO2 WebAuthn authentication challenge endpoint",
+      "method": "post",
+      "endpoint": "fido2/authentication-challenge",
+      "responses": [
+        {
+          "uuid": "fido2-auth-challenge-success",
+          "body": "{\n  \"challenge\": \"{{ uuid }}\",\n  \"timeout\": 60000,\n  \"rpId\": \"localhost\",\n  \"userVerification\": \"required\",\n  \"allowCredentials\": []\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Success",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "fido2-authentication",
+      "type": "http",
+      "documentation": "FIDO2 WebAuthn authentication endpoint",
+      "method": "post",
+      "endpoint": "fido2/authentication",
+      "responses": [
+        {
+          "uuid": "fido2-auth-success",
+          "body": "{\n  \"status\": \"ok\",\n  \"verified\": true\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Success",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -1743,6 +1867,22 @@
     {
       "type": "route",
       "uuid": "ciba-notification-callback"
+    },
+    {
+      "type": "route",
+      "uuid": "fido2-registration-challenge"
+    },
+    {
+      "type": "route",
+      "uuid": "fido2-registration"
+    },
+    {
+      "type": "route",
+      "uuid": "fido2-authentication-challenge"
+    },
+    {
+      "type": "route",
+      "uuid": "fido2-authentication"
     }
   ],
   "proxyMode": false,

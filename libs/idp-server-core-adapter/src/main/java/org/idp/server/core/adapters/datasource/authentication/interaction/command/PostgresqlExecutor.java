@@ -86,4 +86,24 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
 
     sqlExecutor.execute(sqlTemplate, params);
   }
+
+  @Override
+  public void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier, String type) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+                DELETE FROM authentication_interactions
+                WHERE authentication_transaction_id = ?
+                AND tenant_id = ?::uuid
+                AND interaction_type = ?
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
+    params.add(type);
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
 }

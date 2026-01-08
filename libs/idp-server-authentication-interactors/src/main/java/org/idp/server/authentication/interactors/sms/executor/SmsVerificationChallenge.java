@@ -65,7 +65,7 @@ public class SmsVerificationChallenge implements Serializable, JsonReadable {
     if (isExpired()) {
       Map<String, Object> response = new HashMap<>();
       response.put("error", "invalid_request");
-      response.put("error_description", "email challenge is expired");
+      response.put("error_description", "SMS challenge is expired");
 
       return SmsVerificationResult.failure(response);
     }
@@ -75,7 +75,7 @@ public class SmsVerificationChallenge implements Serializable, JsonReadable {
       response.put("error", "invalid_request");
       response.put(
           "error_description",
-          "email challenge is reached limited to " + retryCountLimitation + " attempts");
+          "SMS challenge is reached limited to " + retryCountLimitation + " attempts");
 
       return SmsVerificationResult.failure(response);
     }
