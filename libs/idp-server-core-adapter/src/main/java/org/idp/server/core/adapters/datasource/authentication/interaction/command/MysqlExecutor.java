@@ -79,4 +79,24 @@ public class MysqlExecutor implements AuthenticationInteractionCommandSqlExecuto
 
     sqlExecutor.execute(sqlTemplate, params);
   }
+
+  @Override
+  public void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier, String type) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+                DELETE FROM authentication_interactions
+                WHERE authentication_transaction_id = ?
+                AND tenant_id = ?
+                AND interaction_type = ?
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(identifier.value());
+    params.add(tenant.identifierValue());
+    params.add(type);
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
 }

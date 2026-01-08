@@ -44,4 +44,9 @@ public class AuthenticationInteractionCommandDataSource
       Tenant tenant, AuthenticationTransactionIdentifier identifier, String type, T payload) {
     executor.update(tenant, identifier, type, payload);
   }
+
+  @Override
+  public void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier, String type) {
+    executor.delete(tenant, identifier, type);
+  }
 }

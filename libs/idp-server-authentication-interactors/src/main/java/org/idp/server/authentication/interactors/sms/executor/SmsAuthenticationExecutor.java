@@ -72,6 +72,9 @@ public class SmsAuthenticationExecutor implements AuthenticationExecutor {
       return AuthenticationExecutionResult.clientError(verificationResult.response());
     }
 
+    // Delete challenge after successful verification to prevent replay attacks
+    interactionCommandRepository.delete(tenant, identifier, "sms-authentication-challenge");
+
     return AuthenticationExecutionResult.success(Map.of());
   }
 }
