@@ -6424,6 +6424,14 @@ components:
           $ref: '#/components/schemas/AuthenticationResultConditionConfig'
         lock_conditions:
           $ref: '#/components/schemas/AuthenticationResultConditionConfig'
+        device_registration_conditions:
+          description: |
+            認証デバイス（FIDO2/FIDO-UAF）登録時に必要な認証レベル（ACR）を定義します。
+            この条件が設定されている場合、ユーザーは指定された認証方式を完了しないと
+            新しいFIDOデバイスを登録できません。
+            条件を満たさない場合は403 Forbidden、未認証の場合は401 Unauthorizedを返します。
+          allOf:
+            - $ref: '#/components/schemas/AuthenticationResultConditionConfig'
         step_definitions:
           type: array
           description: List of authentication step definitions

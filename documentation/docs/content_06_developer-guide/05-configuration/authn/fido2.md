@@ -92,6 +92,51 @@ FIDO2認証は以下の複数のインタラクションを連続的に実行す
 
 ---
 
+## デバイス登録の制約
+
+### 事前認証の必須要件
+
+FIDO2デバイスの登録（`fido2-registration-challenge` および `fido2-registration`）には、**事前にユーザー認証が完了している**必要があります。
+
+未認証状態でFIDO2デバイス登録を試みると、以下のエラーが返されます：
+
+```json
+{
+  "error": "unauthorized",
+  "error_description": "User must be authenticated before registering a FIDO2 device."
+}
+```
+
+この制約により、FIDO2デバイスのみでユーザー登録を完結することはできません。ユーザーは最初にパスワード認証やEmail認証など、他の認証方式で認証を行う必要があります。
+
+### device_registration_conditions ポリシー
+
+認証ポリシーの `device_registration_conditions` を設定することで、デバイス登録に必要な認証レベル（ACR）を強制できます。
+
+例えば、以下の設定ではEmail認証または既存のFIDO2デバイスでの認証を完了しないとデバイス登録ができません：
+
+```json
+{
+  "device_registration_conditions": {
+    "any_of": [
+      [{ "path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+      [{ "path": "$.fido2-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+    ]
+  }
+}
+```
+
+ポリシーを満たさない場合、以下のエラーが返されます：
+
+```json
+{
+  "error": "forbidden",
+  "error_description": "Current authentication level does not meet device registration requirements. Please complete required authentication steps (e.g., MFA or existing device authentication)."
+}
+```
+
+---
+
 ## 備考
 
 * WebAuthnはプラットフォーム認証器（デバイス内蔵）・ローミング認証器（セキュリティキー）に対応しています。

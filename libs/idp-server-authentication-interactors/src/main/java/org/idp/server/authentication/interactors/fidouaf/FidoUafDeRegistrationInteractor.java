@@ -28,6 +28,8 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
+import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
@@ -85,6 +87,49 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
 
     try {
       log.debug("FidoUafDeRegistrationInteractor called");
+
+      // Verify user is authenticated
+      if (!transaction.hasUser()) {
+        log.warn(
+            "FIDO-UAF deregistration rejected: no authenticated user in transaction, tenant={}",
+            tenant.identifier().value());
+
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("error", "unauthorized");
+        errorResponse.put(
+            "error_description",
+            "User must be authenticated before deregistering a FIDO-UAF device.");
+
+        return AuthenticationInteractionRequestResult.clientError(
+            errorResponse,
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.fido_uaf_deregistration_failure);
+      }
+
+      // Verify device registration ACR/MFA requirements (same policy applies to deregistration)
+      if (!isDeviceRegistrationPolicyMet(tenant, transaction)) {
+        log.warn(
+            "FIDO-UAF device deregistration policy check failed: user={}, tenant={}",
+            transaction.user().sub(),
+            tenant.identifier().value());
+
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("error", "forbidden");
+        errorResponse.put(
+            "error_description",
+            "Current authentication level does not meet device deregistration requirements. "
+                + "Please complete required authentication steps (e.g., MFA or existing device authentication).");
+
+        return AuthenticationInteractionRequestResult.clientError(
+            errorResponse,
+            type,
+            operationType(),
+            method(),
+            transaction.user(),
+            DefaultSecurityEventType.fido_uaf_deregistration_failure);
+      }
 
       AuthenticationConfiguration configuration =
           configurationQueryRepository.get(tenant, "fido-uaf");
@@ -172,5 +217,50 @@ public class FidoUafDeRegistrationInteractor implements AuthenticationInteractor
           method(),
           DefaultSecurityEventType.fido_uaf_deregistration_failure);
     }
+  }
+
+  /**
+   * Checks if device registration policy requirements are met.
+   *
+   * <p>Ensures that FIDO-UAF device deregistration requires authentication meeting configured
+   * policy, typically either:
+   *
+   * <ul>
+   *   <li>Authentication with existing FIDO-UAF device, OR
+   *   <li>Multi-factor authentication (password + TOTP)
+   * </ul>
+   *
+   * @param tenant the tenant
+   * @param transaction the authentication transaction
+   * @return true if policy is met or not configured, false if policy check fails
+   */
+  private boolean isDeviceRegistrationPolicyMet(
+      Tenant tenant, AuthenticationTransaction transaction) {
+
+    AuthenticationPolicy authPolicy = transaction.authenticationPolicy();
+
+    // Only verify if device_registration_conditions is configured
+    if (!authPolicy.hasDeviceRegistrationConditions()) {
+      log.debug(
+          "No device_registration_conditions configured, skipping ACR verification for FIDO-UAF deregistration");
+      return true;
+    }
+
+    AuthenticationInteractionResults interactionResults = transaction.interactionResults();
+    AuthenticationResultConditionConfig conditions = authPolicy.deviceRegistrationConditions();
+
+    // Evaluate conditions using existing MfaConditionEvaluator
+    boolean satisfied =
+        org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator
+            .isSuccessSatisfied(conditions, interactionResults);
+
+    if (satisfied) {
+      log.info(
+          "FIDO-UAF device deregistration policy check passed: user={}, tenant={}",
+          transaction.user().sub(),
+          tenant.identifier().value());
+    }
+
+    return satisfied;
   }
 }

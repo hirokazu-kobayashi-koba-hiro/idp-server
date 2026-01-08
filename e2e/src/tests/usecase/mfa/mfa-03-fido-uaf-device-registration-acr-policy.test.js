@@ -1064,4 +1064,353 @@ describe("Use Case: FIDO-UAF Device Registration with ACR Policy", () => {
     console.log("  3. device_registration_conditions policy is correctly enforced");
     console.log("  4. Security events (failure & success) are properly logged\n");
   });
+
+  test("should reject unauthenticated user even without device_registration_conditions", async () => {
+    console.log(
+      "\n=== FIDO-UAF Test: Unauthenticated User Rejection (No ACR Policy) ===\n"
+    );
+
+    // === Setup: Create tenant WITHOUT device_registration_conditions ===
+    const timestamp = Date.now();
+    const organizationId = uuidv4();
+    const tenantId = uuidv4();
+    const clientId = uuidv4();
+    const clientSecret = `client-secret-${timestamp}`;
+    const redirectUri = "https://app.example.com/callback";
+
+    const { jwks } = await generateRS256KeyPair();
+
+    // Step 1: Create Organization and Tenant via Onboarding
+    const onboardingRequest = {
+      organization: {
+        id: organizationId,
+        name: `FIDO-UAF No ACR Org ${timestamp}`,
+        description: "Test organization for FIDO-UAF unauthenticated rejection",
+      },
+      tenant: {
+        id: tenantId,
+        name: `FIDO-UAF No ACR Tenant ${timestamp}`,
+        domain: backendUrl,
+        authorization_provider: "idp-server",
+        tenant_type: "ORGANIZER",
+        security_event_log_config: {
+          format: "structured_json",
+          stage: "processed",
+          include_user_id: true,
+          include_client_id: true,
+          include_ip: true,
+          persistence_enabled: true,
+          include_detail: true,
+        },
+      },
+      authorization_server: {
+        issuer: `${backendUrl}/${tenantId}`,
+        authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+        token_endpoint_auth_signing_alg_values_supported: ["RS256", "ES256"],
+        userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+        jwks_uri: `${backendUrl}/${tenantId}/v1/jwks`,
+        jwks: jwks,
+        grant_types_supported: ["authorization_code", "refresh_token", "password"],
+        token_signed_key_id: "signing_key_1",
+        id_token_signed_key_id: "signing_key_1",
+        scopes_supported: ["openid", "profile", "email", "management"],
+        response_types_supported: ["code"],
+        response_modes_supported: ["query", "fragment"],
+        subject_types_supported: ["public"],
+        id_token_signing_alg_values_supported: ["RS256", "ES256"],
+        claims_parameter_supported: true,
+        extension: {
+          access_token_type: "JWT",
+          token_signed_key_id: "signing_key_1",
+          id_token_signed_key_id: "signing_key_1",
+          access_token_duration: 3600,
+          id_token_duration: 3600,
+          refresh_token_duration: 86400,
+        },
+      },
+      user: {
+        sub: uuidv4(),
+        provider_id: "idp-server",
+        name: faker.internet.email(),
+        email: faker.internet.email(),
+        email_verified: true,
+        raw_password: `AdminPass${timestamp}!`,
+      },
+      client: {
+        client_id: uuidv4(),
+        client_id_alias: `admin-client-noauth-${timestamp}`,
+        client_secret: `admin-secret-noauth-${timestamp}`,
+        redirect_uris: [redirectUri],
+        response_types: ["code"],
+        grant_types: ["authorization_code", "refresh_token", "password"],
+        scope: "openid profile email management",
+        client_name: "Admin Client",
+        token_endpoint_auth_method: "client_secret_post",
+        application_type: "web",
+      },
+    };
+
+    const onboardingResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/onboarding`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+      body: onboardingRequest,
+    });
+
+    console.log("Onboarding response:", onboardingResponse.status);
+    expect(onboardingResponse.status).toBe(201);
+    console.log("✓ Organization and tenant created (no ACR policy)");
+
+    // Get admin token
+    const createdClient = onboardingResponse.data.client;
+    const adminTokenResponse = await requestToken({
+      endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+      grantType: "password",
+      username: onboardingRequest.user.email,
+      password: onboardingRequest.user.raw_password,
+      scope: "management",
+      clientId: createdClient.client_id,
+      clientSecret: createdClient.client_secret,
+    });
+
+    expect(adminTokenResponse.status).toBe(200);
+    const adminAccessToken = adminTokenResponse.data.access_token;
+    console.log("✓ Admin access token obtained");
+
+    // Step 2: Create Password Authentication Configuration
+    console.log("=== Step 2: Create Password Authentication Configuration ===");
+
+    const passwordAuthConfigId = uuidv4();
+    const passwordAuthConfigResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-configurations`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+      body: {
+        id: passwordAuthConfigId,
+        type: "password",
+        attributes: {},
+        metadata: {
+          type: "internal",
+          description: "Password authentication"
+        },
+        interactions: {}
+      }
+    });
+
+    expect(passwordAuthConfigResponse.status).toBe(201);
+    console.log("✓ Password authentication configuration created");
+
+    // Step 3: Create FIDO-UAF Authentication Configuration
+    console.log("=== Step 3: Create FIDO-UAF Authentication Configuration ===");
+
+    const fidoUafAuthConfigId = uuidv4();
+    const fidoUafAuthConfigResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-configurations`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+      body: {
+        id: fidoUafAuthConfigId,
+        type: "fido-uaf",
+        attributes: {},
+        metadata: {
+          type: "external",
+          description: "FIDO-UAF authentication",
+        },
+        interactions: {
+          "fido-uaf-registration-challenge": {
+            request: {
+              schema: {
+                type: "object",
+                properties: {}
+              }
+            },
+            pre_hook: {},
+            execution: {
+              function: "http_request",
+              http_request: {
+                url: "http://host.docker.internal:4000/fido-uaf/registration-challenge",
+                method: "POST",
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" }
+                ],
+                body_mapping_rules: [
+                  { from: "$.request_body", to: "*" }
+                ]
+              },
+              http_request_store: {
+                key: "fido-uaf-registration-challenge",
+                interaction_mapping_rules: [
+                  { from: "$.response_body.challenge", to: "challenge" }
+                ]
+              }
+            },
+            post_hook: {},
+            response: {
+              body_mapping_rules: [
+                { from: "$.execution_http_request.response_body", to: "*" }
+              ]
+            }
+          },
+          "fido-uaf-registration": {
+            request: {
+              schema: {
+                type: "object",
+                properties: {}
+              }
+            },
+            pre_hook: {},
+            execution: {
+              function: "http_request",
+              previous_interaction: {
+                key: "fido-uaf-registration-challenge"
+              },
+              http_request: {
+                url: "http://host.docker.internal:4000/fido-uaf/registration",
+                method: "POST",
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" }
+                ],
+                body_mapping_rules: [
+                  { from: "$.request_body", to: "*" }
+                ]
+              }
+            },
+            post_hook: {},
+            response: {
+              body_mapping_rules: [
+                { from: "$.execution_http_request.response_body", to: "*" }
+              ]
+            }
+          }
+        }
+      }
+    });
+
+    expect(fidoUafAuthConfigResponse.status).toBe(201);
+    console.log("✓ FIDO-UAF authentication configuration created");
+
+    // Step 4: Create Authentication Policy WITHOUT device_registration_conditions
+    console.log("=== Step 4: Create Authentication Policy (NO device_registration_conditions) ===");
+
+    const authPolicyConfigId = uuidv4();
+    const authPolicyResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-policies`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+      body: {
+        id: authPolicyConfigId,
+        flow: "oauth",
+        enabled: true,
+        policies: [
+          {
+            description: "no_device_registration_conditions",
+            priority: 10,
+            conditions: {
+              scopes: ["openid"]
+            },
+            available_methods: ["password", "fido-uaf"],
+            success_conditions: {
+              any_of: [
+                [
+                  {
+                    path: "$.password-authentication.success_count",
+                    type: "integer",
+                    operation: "gte",
+                    value: 1
+                  }
+                ]
+              ]
+            }
+            // NOTE: No device_registration_conditions here - this is intentional
+          }
+        ]
+      }
+    });
+
+    console.log("Auth policy response:", authPolicyResponse.status);
+    expect(authPolicyResponse.status).toBe(201);
+    console.log("✓ Authentication policy created (NO device_registration_conditions)\n");
+
+    // Step 5: Create Test Client
+    console.log("=== Step 5: Create Test Client ===");
+
+    const createClientResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/clients`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+      body: {
+        client_id: clientId,
+        client_secret: clientSecret,
+        client_name: "FIDO-UAF No ACR Test Client",
+        redirect_uris: [redirectUri],
+        grant_types: ["authorization_code", "password"],
+        response_types: ["code"],
+        scope: "openid profile email",
+        token_endpoint_auth_method: "client_secret_post",
+      },
+    });
+
+    expect(createClientResponse.status).toBe(201);
+    console.log("✓ Client created\n");
+
+    // === Step 6: Start authorization without any authentication ===
+    console.log("=== Step 6: Start Authorization (No Authentication) ===");
+
+    const authParams = new URLSearchParams({
+      response_type: "code",
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: "openid profile email",
+      state: `state_${timestamp}`,
+    });
+
+    const authorizeResponse = await get({
+      url: `${backendUrl}/${tenantId}/v1/authorizations?${authParams.toString()}`,
+      headers: {},
+    });
+
+    expect(authorizeResponse.status).toBe(302);
+    const location = authorizeResponse.headers.location;
+    const authId = new URL(location, backendUrl).searchParams.get('id');
+    expect(authId).toBeDefined();
+    console.log("Authorization started:", authId);
+
+    // === Step 7: Attempt FIDO-UAF registration WITHOUT any prior authentication ===
+    console.log("\n=== Step 7: Attempt FIDO-UAF Registration (No Authentication) ===");
+
+    const challengeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/fido-uaf-registration-challenge`,
+      body: {},
+    });
+
+    console.log(
+      "FIDO-UAF challenge response (no auth):",
+      challengeResponse.status,
+      challengeResponse.data
+    );
+
+    // Should be rejected with "unauthorized" (not "forbidden")
+    // "unauthorized" means no user is authenticated at all
+    // "forbidden" would mean user is authenticated but ACR policy not satisfied
+    expect(challengeResponse.status).toBe(400);
+    expect(challengeResponse.data.error).toBe("unauthorized");
+    expect(challengeResponse.data.error_description).toContain(
+      "User must be authenticated"
+    );
+    console.log("✓ FIDO-UAF registration correctly rejected (no authenticated user)");
+
+    console.log("\n=== Test Completed: Unauthenticated User Rejection ===");
+    console.log("Summary:");
+    console.log("  - WITHOUT device_registration_conditions policy");
+    console.log("  - Unauthenticated users are rejected with 'unauthorized' error");
+    console.log("  - This is a fundamental security constraint (!transaction.hasUser() check)");
+    console.log("  - Distinct from 'forbidden' which indicates ACR policy violation\n");
+  });
 });

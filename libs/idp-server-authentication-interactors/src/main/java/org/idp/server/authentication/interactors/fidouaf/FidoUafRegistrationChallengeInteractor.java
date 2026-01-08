@@ -91,6 +91,25 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
 
     log.debug("FidoUafRegistrationChallengeInteractor called");
 
+    // Verify user is authenticated
+    if (!transaction.hasUser()) {
+      log.warn(
+          "FIDO-UAF registration challenge rejected: no authenticated user in transaction, tenant={}",
+          tenant.identifier().value());
+
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "unauthorized");
+      errorResponse.put(
+          "error_description", "User must be authenticated before registering a FIDO-UAF device.");
+
+      return AuthenticationInteractionRequestResult.clientError(
+          errorResponse,
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.fido_uaf_registration_challenge_failure);
+    }
+
     // Verify device registration ACR/MFA requirements
     if (!isDeviceRegistrationPolicyMet(tenant, transaction)) {
       log.warn(
