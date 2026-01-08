@@ -352,6 +352,21 @@
                 "type": "boolean",
                 "default": false,
                 "description": "Enable JWT Bearer Grant for this federation"
+              },
+              "jwks_uri": {
+                "type": "string",
+                "format": "uri",
+                "description": "JWKS URI for fetching federation's public keys (future support)"
+              },
+              "jwks": {
+                "type": "string",
+                "description": "Inline JWKS for validating JWT Bearer assertions from this federation"
+              },
+              "jwks_cache_ttl_seconds": {
+                "type": "integer",
+                "default": 3600,
+                "minimum": 60,
+                "description": "Cache TTL in seconds for JWKS fetched from jwks_uri"
               }
             },
             "required": ["type"]

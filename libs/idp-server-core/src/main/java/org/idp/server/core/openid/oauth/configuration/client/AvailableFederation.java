@@ -28,6 +28,9 @@ public class AvailableFederation implements JsonReadable {
   String issuer;
   boolean jwtBearerGrantEnabled = false;
   String subjectClaimMapping;
+  String jwksUri;
+  String jwks;
+  int jwksCacheTtlSeconds = 3600;
 
   public AvailableFederation() {}
 
@@ -71,6 +74,26 @@ public class AvailableFederation implements JsonReadable {
     return "device".equals(type);
   }
 
+  public String jwksUri() {
+    return jwksUri;
+  }
+
+  public boolean hasJwksUri() {
+    return jwksUri != null && !jwksUri.isEmpty();
+  }
+
+  public String jwks() {
+    return jwks;
+  }
+
+  public boolean hasJwks() {
+    return jwks != null && !jwks.isEmpty();
+  }
+
+  public int jwksCacheTtlSeconds() {
+    return jwksCacheTtlSeconds;
+  }
+
   public boolean matchesIssuer(String issuerToMatch) {
     if (!hasIssuer()) {
       return false;
@@ -87,6 +110,9 @@ public class AvailableFederation implements JsonReadable {
     if (hasIssuer()) map.put("issuer", issuer);
     map.put("jwt_bearer_grant_enabled", jwtBearerGrantEnabled);
     if (hasSubjectClaimMapping()) map.put("subject_claim_mapping", subjectClaimMapping);
+    if (hasJwksUri()) map.put("jwks_uri", jwksUri);
+    if (hasJwks()) map.put("jwks", jwks);
+    if (jwksCacheTtlSeconds > 0) map.put("jwks_cache_ttl_seconds", jwksCacheTtlSeconds);
     return map;
   }
 }

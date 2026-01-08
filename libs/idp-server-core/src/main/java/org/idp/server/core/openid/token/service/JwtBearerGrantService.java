@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.token.service;
 
+import java.net.URI;
+import java.net.http.HttpRequest;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -38,11 +40,14 @@ import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.validator.JwtBearerGrantValidator;
 import org.idp.server.core.openid.token.verifier.JwtBearerGrantVerifier;
+import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebSignatureVerifier;
 import org.idp.server.platform.jose.JsonWebSignatureVerifierFactory;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -54,15 +59,20 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  */
 public class JwtBearerGrantService implements OAuthTokenCreationService, RefreshTokenCreatable {
 
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(JwtBearerGrantService.class);
+
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
   DeviceCredentialQueryRepository deviceCredentialQueryRepository;
+  HttpRequestExecutor httpRequestExecutor;
   AccessTokenCreator accessTokenCreator;
 
   public JwtBearerGrantService(
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
-      DeviceCredentialQueryRepository deviceCredentialQueryRepository) {
+      DeviceCredentialQueryRepository deviceCredentialQueryRepository,
+      HttpRequestExecutor httpRequestExecutor) {
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.deviceCredentialQueryRepository = deviceCredentialQueryRepository;
+    this.httpRequestExecutor = httpRequestExecutor;
     this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
 
@@ -92,7 +102,7 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
       String subjectClaimMapping =
           federation.hasSubjectClaimMapping() ? federation.subjectClaimMapping() : "sub";
 
-      verifySignature(tenant, assertion, jws, serverConfiguration, federation);
+      verifySignature(tenant, assertion, jws, federation);
 
       String expectedAudience = serverConfiguration.tokenIssuer().value();
       JwtBearerGrantVerifier verifier = new JwtBearerGrantVerifier(claims, expectedAudience);
@@ -138,15 +148,18 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
 
       return oAuthToken;
 
+    } catch (TokenBadRequestException e) {
+      throw e;
     } catch (JoseInvalidException e) {
       throw new TokenBadRequestException(
           "invalid_grant", "Invalid JWT assertion: " + e.getMessage());
-    } catch (Exception e) {
-      if (e instanceof TokenBadRequestException) {
-        throw e;
-      }
+    } catch (IllegalArgumentException e) {
       throw new TokenBadRequestException(
-          "invalid_grant", "Failed to process JWT Bearer assertion: " + e.getMessage());
+          "invalid_request", "Invalid request parameter: " + e.getMessage());
+    } catch (RuntimeException e) {
+      log.error("Unexpected error processing JWT Bearer assertion", e);
+      throw new TokenBadRequestException(
+          "server_error", "Unexpected error processing JWT Bearer assertion");
     }
   }
 
@@ -175,13 +188,12 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
       Tenant tenant,
       JwtBearerAssertion assertion,
       JsonWebSignature jws,
-      AuthorizationServerConfiguration serverConfiguration,
       AvailableFederation federation) {
     try {
       if (federation.isDeviceType()) {
         verifyDeviceSignature(tenant, assertion, jws);
       } else {
-        verifyExternalIdpSignature(jws, serverConfiguration, federation);
+        verifyExternalIdpSignature(jws, federation);
       }
     } catch (TokenBadRequestException e) {
       throw e;
@@ -258,22 +270,60 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
     }
   }
 
-  private void verifyExternalIdpSignature(
-      JsonWebSignature jws,
-      AuthorizationServerConfiguration serverConfiguration,
-      AvailableFederation federation) {
-    // TODO: Use federation's jwks_uri or inline jwks instead of server's jwks
-    // For now, fall back to server's JWKS (will be enhanced in future)
+  private void verifyExternalIdpSignature(JsonWebSignature jws, AvailableFederation federation) {
     try {
-      String jwks = serverConfiguration.jwks();
+      String jwks = resolveJwks(federation);
 
       JsonWebSignatureVerifierFactory verifierFactory =
           new JsonWebSignatureVerifierFactory(jws, jwks, "");
       JsonWebSignatureVerifier verifier = verifierFactory.create().getLeft();
       verifier.verify(jws);
+    } catch (TokenBadRequestException e) {
+      throw e;
     } catch (Exception e) {
       throw new TokenBadRequestException(
           "invalid_grant", "External IdP signature verification failed: " + e.getMessage());
+    }
+  }
+
+  private String resolveJwks(AvailableFederation federation) {
+    if (federation.hasJwks()) {
+      return federation.jwks();
+    }
+    if (federation.hasJwksUri()) {
+      return fetchJwks(federation.jwksUri());
+    }
+    throw new TokenBadRequestException(
+        "invalid_grant",
+        String.format(
+            "Federation '%s' does not have JWKS configured (neither jwks nor jwks_uri)",
+            federation.issuer()));
+  }
+
+  private String fetchJwks(String jwksUri) {
+    try {
+      HttpRequest request =
+          HttpRequest.newBuilder()
+              .uri(URI.create(jwksUri))
+              .GET()
+              .header("Accept", "application/json")
+              .build();
+
+      HttpRequestResult result = httpRequestExecutor.execute(request);
+
+      if (result.isClientError() || result.isServerError()) {
+        throw new TokenBadRequestException(
+            "invalid_grant",
+            String.format("Failed to fetch JWKS from '%s': HTTP %d", jwksUri, result.statusCode()));
+      }
+
+      return result.body().toString();
+    } catch (TokenBadRequestException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new TokenBadRequestException(
+          "invalid_grant",
+          String.format("Failed to fetch JWKS from '%s': %s", jwksUri, e.getMessage()));
     }
   }
 }

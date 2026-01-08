@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -140,7 +141,7 @@ public class DeviceCredential implements Serializable, JsonReadable {
     if (!hasExpiresAt()) {
       return false;
     }
-    return LocalDateTime.now().isAfter(expiresAt);
+    return SystemDateTime.now().isAfter(expiresAt);
   }
 
   public boolean isActive() {
