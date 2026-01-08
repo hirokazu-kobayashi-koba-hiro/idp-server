@@ -27,6 +27,8 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
+import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
@@ -78,15 +80,74 @@ public class Fido2RegistrationChallengeInteractor implements AuthenticationInter
 
     log.debug("WebAuthnRegistrationChallengeInteractor called");
 
+    // FIDO2 registration requires authenticated session
+    if (!transaction.hasUser()) {
+      log.warn("FIDO2 registration challenge: unauthenticated request");
+
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "unauthorized");
+      errorResponse.put(
+          "error_description", "FIDO2 device registration requires authenticated session");
+
+      return AuthenticationInteractionRequestResult.clientError(
+          errorResponse,
+          type,
+          operationType(),
+          method(),
+          null,
+          DefaultSecurityEventType.fido2_registration_challenge_failure);
+    }
+
+    // Verify device registration ACR/MFA requirements
+    if (!isDeviceRegistrationPolicyMet(tenant, transaction)) {
+      log.warn(
+          "FIDO2 device registration policy check failed: user={}, tenant={}",
+          transaction.user().sub(),
+          tenant.identifier().value());
+
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "forbidden");
+      errorResponse.put(
+          "error_description",
+          "Current authentication level does not meet device registration requirements. "
+              + "Please complete required authentication steps (e.g., MFA or existing device authentication).");
+
+      return AuthenticationInteractionRequestResult.clientError(
+          errorResponse,
+          type,
+          operationType(),
+          method(),
+          transaction.user(),
+          DefaultSecurityEventType.fido2_registration_challenge_failure);
+    }
+
+    // Resolve username from request
+    Map<String, Object> requestMap = resolveUsernameFromRequest(tenant, transaction, request);
+    if (requestMap == null) {
+      // Username mismatch detected
+      log.warn(
+          "FIDO2 registration: username mismatch or resolution failed for user={}",
+          transaction.user().sub());
+
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "forbidden");
+      errorResponse.put("error_description", "Cannot register FIDO2 device for a different user");
+
+      return AuthenticationInteractionRequestResult.clientError(
+          errorResponse,
+          type,
+          operationType(),
+          method(),
+          transaction.user(),
+          DefaultSecurityEventType.fido2_registration_challenge_failure);
+    }
+
     AuthenticationConfiguration configuration = configurationRepository.get(tenant, "fido2");
     AuthenticationInteractionConfig authenticationInteractionConfig =
         configuration.getAuthenticationConfig("fido2-registration-challenge");
     AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
 
     AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
-
-    // Resolve username based on Tenant Identity Policy
-    Map<String, Object> requestMap = resolveUsernameFromRequest(tenant, transaction, request);
 
     AuthenticationExecutionRequest authenticationExecutionRequest =
         new AuthenticationExecutionRequest(requestMap);
@@ -163,7 +224,7 @@ public class Fido2RegistrationChallengeInteractor implements AuthenticationInter
    * @param tenant the tenant
    * @param transaction the authentication transaction
    * @param request the authentication interaction request
-   * @return request map with username resolved
+   * @return request map with username resolved, or null if username mismatch detected
    */
   private Map<String, Object> resolveUsernameFromRequest(
       Tenant tenant,
@@ -172,35 +233,88 @@ public class Fido2RegistrationChallengeInteractor implements AuthenticationInter
 
     Map<String, Object> requestMap = new HashMap<>(request.toMap());
 
-    // Strategy 1 : Resolve username from transaction.user() based on Tenant Identity Policy
-    if (transaction.hasUser()) {
+    // Resolve username from transaction.user() only (prevent username manipulation)
+    User authenticatedUser = transaction.user();
+    TenantIdentityPolicy identityPolicy = tenant.identityPolicyConfig();
+    String authenticatedUsername = resolveUsernameFromUser(authenticatedUser, identityPolicy);
 
-      User user = transaction.user();
-      TenantIdentityPolicy identityPolicy = tenant.identityPolicyConfig();
-      String username = resolveUsernameFromUser(user, identityPolicy);
-      if (username != null && !username.isEmpty()) {
-        log.debug(
-            "FIDO2 registration challenge: resolved username from user based on policy {}: {}",
-            identityPolicy.uniqueKeyType(),
-            username);
-        requestMap.put("username", username);
-
-        // Also add displayName if available
-        if (user.name() != null && !user.name().isEmpty()) {
-          requestMap.put("displayName", user.name());
-        }
-      }
-      return requestMap;
+    if (authenticatedUsername == null || authenticatedUsername.isEmpty()) {
+      log.warn("Cannot resolve username from authenticated user: {}", authenticatedUser.sub());
+      return null;
     }
 
-    // Strategy 2: Use username from request if available
+    // Verify username match if provided in request (prevent user impersonation)
     if (requestMap.containsKey("username")) {
-      log.debug(
-          "FIDO2 registration challenge: using username from request: {}",
-          requestMap.get("username"));
+      String requestedUsername = (String) requestMap.get("username");
+      if (!authenticatedUsername.equals(requestedUsername)) {
+        log.warn(
+            "FIDO2 registration: username mismatch detected. authenticated={}, requested={}",
+            authenticatedUsername,
+            requestedUsername);
+        return null;
+      }
     }
+
+    // Force authenticated username (prevent manipulation)
+    requestMap.put("username", authenticatedUsername);
+
+    // Add displayName if available
+    if (authenticatedUser.name() != null && !authenticatedUser.name().isEmpty()) {
+      requestMap.put("displayName", authenticatedUser.name());
+    }
+
+    log.info(
+        "FIDO2 registration challenge: authenticated user verified, username={}",
+        authenticatedUsername);
 
     return requestMap;
+  }
+
+  /**
+   * Checks if device registration policy requirements are met.
+   *
+   * <p>Penetration Test Issue #8: ACR-based access control bypass prevention
+   *
+   * <p>Ensures that FIDO2 device registration requires authentication meeting configured policy,
+   * typically either:
+   *
+   * <ul>
+   *   <li>Authentication with existing FIDO2 device, OR
+   *   <li>Multi-factor authentication (password + TOTP)
+   * </ul>
+   *
+   * @param tenant the tenant
+   * @param transaction the authentication transaction
+   * @return true if policy is met or not configured, false if policy check fails
+   */
+  private boolean isDeviceRegistrationPolicyMet(
+      Tenant tenant, AuthenticationTransaction transaction) {
+
+    AuthenticationPolicy authPolicy = transaction.authenticationPolicy();
+
+    // Only verify if device_registration_conditions is configured
+    if (!authPolicy.hasDeviceRegistrationConditions()) {
+      log.debug(
+          "No device_registration_conditions configured, skipping ACR verification for FIDO2 registration");
+      return true;
+    }
+
+    AuthenticationInteractionResults interactionResults = transaction.interactionResults();
+    AuthenticationResultConditionConfig conditions = authPolicy.deviceRegistrationConditions();
+
+    // Evaluate conditions using existing MfaConditionEvaluator
+    boolean satisfied =
+        org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator
+            .isSuccessSatisfied(conditions, interactionResults);
+
+    if (satisfied) {
+      log.info(
+          "FIDO2 device registration policy check passed: user={}, tenant={}",
+          transaction.user().sub(),
+          tenant.identifier().value());
+    }
+
+    return satisfied;
   }
 
   /**

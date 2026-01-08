@@ -37,6 +37,8 @@ public class AuthenticationPolicy implements JsonReadable {
   AuthenticationResultConditionConfig successConditions = new AuthenticationResultConditionConfig();
   AuthenticationResultConditionConfig failureConditions = new AuthenticationResultConditionConfig();
   AuthenticationResultConditionConfig lockConditions = new AuthenticationResultConditionConfig();
+  AuthenticationResultConditionConfig deviceRegistrationConditions =
+      new AuthenticationResultConditionConfig();
   List<AuthenticationStepDefinition> stepDefinitions = new ArrayList<>();
   boolean authSessionBindingRequired = true; // default: enabled for security
 
@@ -114,6 +116,14 @@ public class AuthenticationPolicy implements JsonReadable {
     return lockConditions != null;
   }
 
+  public AuthenticationResultConditionConfig deviceRegistrationConditions() {
+    return deviceRegistrationConditions;
+  }
+
+  public boolean hasDeviceRegistrationConditions() {
+    return deviceRegistrationConditions != null && deviceRegistrationConditions.exists();
+  }
+
   public List<AuthenticationStepDefinition> stepDefinitions() {
     return stepDefinitions;
   }
@@ -148,6 +158,8 @@ public class AuthenticationPolicy implements JsonReadable {
     if (hasSuccessConditions()) map.put("success_conditions", successConditions.toMap());
     if (hasFailureConditions()) map.put("failure_conditions", failureConditions.toMap());
     if (hasLockConditions()) map.put("lock_conditions", lockConditions.toMap());
+    if (hasDeviceRegistrationConditions())
+      map.put("device_registration_conditions", deviceRegistrationConditions.toMap());
     if (hasStepDefinitions()) map.put("step_definitions", stepDefinitionsAsMap());
     map.put("auth_session_binding_required", authSessionBindingRequired);
     return map;

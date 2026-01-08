@@ -29,6 +29,8 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
+import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -86,6 +88,29 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
       UserQueryRepository userQueryRepository) {
 
     log.debug("FidoUafRegistrationInteractor called");
+
+    // Verify device registration ACR/MFA requirements
+    if (!isDeviceRegistrationPolicyMet(tenant, transaction)) {
+      log.warn(
+          "FIDO-UAF device registration policy check failed: user={}, tenant={}",
+          transaction.user().sub(),
+          tenant.identifier().value());
+
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "forbidden");
+      errorResponse.put(
+          "error_description",
+          "Current authentication level does not meet device registration requirements. "
+              + "Please complete required authentication steps (e.g., MFA or existing device authentication).");
+
+      return AuthenticationInteractionRequestResult.clientError(
+          errorResponse,
+          type,
+          operationType(),
+          method(),
+          transaction.user(),
+          DefaultSecurityEventType.fido_uaf_registration_failure);
+    }
 
     AuthenticationConfiguration configuration =
         configurationQueryRepository.get(tenant, "fido-uaf");
@@ -217,5 +242,50 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
             priority);
 
     return user.addAuthenticationDevice(authenticationDevice);
+  }
+
+  /**
+   * Checks if device registration policy requirements are met.
+   *
+   * <p>Ensures that FIDO-UAF device registration requires authentication meeting configured policy,
+   * typically either:
+   *
+   * <ul>
+   *   <li>Authentication with existing FIDO-UAF device, OR
+   *   <li>Multi-factor authentication (password + TOTP)
+   * </ul>
+   *
+   * @param tenant the tenant
+   * @param transaction the authentication transaction
+   * @return true if policy is met or not configured, false if policy check fails
+   */
+  private boolean isDeviceRegistrationPolicyMet(
+      Tenant tenant, AuthenticationTransaction transaction) {
+
+    AuthenticationPolicy authPolicy = transaction.authenticationPolicy();
+
+    // Only verify if device_registration_conditions is configured
+    if (!authPolicy.hasDeviceRegistrationConditions()) {
+      log.debug(
+          "No device_registration_conditions configured, skipping ACR verification for FIDO-UAF registration");
+      return true;
+    }
+
+    AuthenticationInteractionResults interactionResults = transaction.interactionResults();
+    AuthenticationResultConditionConfig conditions = authPolicy.deviceRegistrationConditions();
+
+    // Evaluate conditions using existing MfaConditionEvaluator
+    boolean satisfied =
+        org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator
+            .isSuccessSatisfied(conditions, interactionResults);
+
+    if (satisfied) {
+      log.info(
+          "FIDO-UAF device registration policy check passed: user={}, tenant={}",
+          transaction.user().sub(),
+          tenant.identifier().value());
+    }
+
+    return satisfied;
   }
 }
