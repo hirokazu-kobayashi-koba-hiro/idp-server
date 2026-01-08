@@ -57,6 +57,24 @@ export const createJwtWithPrivateKey = ({
   });
 };
 
+/**
+ * Create JWT signed with a JWK private key
+ *
+ * @param {Object} params
+ * @param {Object} params.payload - JWT payload
+ * @param {Object} params.privateJwk - Private key in JWK format
+ * @param {Object} params.options - JWT options (algorithm, keyId)
+ * @returns {string} Signed JWT
+ */
+export const createJwtWithJwk = ({ payload, privateJwk, options }) => {
+  const secret = jwkToPem(privateJwk, { private: true });
+  const jwtOptions = {
+    algorithm: options.algorithm || privateJwk.alg,
+    keyid: options.keyId || privateJwk.kid,
+  };
+  return jwt.sign(payload, secret, jwtOptions);
+};
+
 export const decryptAndVerifyAndDecodeIdToken = async ({ idToken, privateKey, jwks }) => {
   const keyObject = await jose.importJWK(privateKey);
   console.log(keyObject);
@@ -185,4 +203,53 @@ export const generateECP256JWKS = async (options = {}) => {
 export const generateECP256JWKSObject = async (options = {}) => {
   const jwksString = await generateECP256JWKS(options);
   return JSON.parse(jwksString);
+};
+
+/**
+ * Generate EC P-256 keypair with separate public and private keys
+ * Useful for external IdP simulation where public key is shared and private key is used for signing
+ *
+ * @param {Object} options - Configuration options
+ * @param {string} options.kid - Key ID (default: "signing_key_1")
+ * @param {string} options.use - Key usage (default: "sig")
+ * @param {string} options.alg - Algorithm (default: "ES256")
+ * @returns {Promise<Object>} Object with publicJwks and privateJwk
+ *
+ * @example
+ * const { publicJwks, privateJwk } = await generateECP256KeyPair();
+ * // publicJwks: { keys: [{ kty: "EC", crv: "P-256", x, y, ... }] }  (no "d" parameter)
+ * // privateJwk: { kty: "EC", crv: "P-256", x, y, d, ... }  (includes "d" parameter)
+ */
+export const generateECP256KeyPair = async (options = {}) => {
+  const { kid = "signing_key_1", use = "sig", alg = "ES256" } = options;
+
+  // Generate EC P-256 keypair
+  const { publicKey, privateKey } = await jose.generateKeyPair("ES256", {
+    extractable: true,
+  });
+
+  // Export as JWK
+  const publicJwk = await jose.exportJWK(publicKey);
+  const privateJwk = await jose.exportJWK(privateKey);
+
+  // Add metadata to public key
+  const publicKeyWithMeta = {
+    ...publicJwk,
+    use,
+    kid,
+    alg,
+  };
+
+  // Add metadata to private key
+  const privateKeyWithMeta = {
+    ...privateJwk,
+    use,
+    kid,
+    alg,
+  };
+
+  return {
+    publicJwks: { keys: [publicKeyWithMeta] },
+    privateJwk: privateKeyWithMeta,
+  };
 };
