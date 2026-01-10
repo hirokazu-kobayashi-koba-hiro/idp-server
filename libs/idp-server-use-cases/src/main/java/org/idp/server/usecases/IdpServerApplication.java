@@ -173,6 +173,7 @@ import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsComma
 import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsQueryRepository;
 import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepository;
 import org.idp.server.platform.system.CachedSystemConfigurationResolver;
+import org.idp.server.platform.system.SystemConfigurationApi;
 import org.idp.server.platform.system.SystemConfigurationRepository;
 import org.idp.server.platform.system.SystemConfigurationResolver;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
@@ -239,6 +240,8 @@ public class IdpServerApplication {
   RoleManagementApi roleManagementApi;
   UserAuthenticationApi userAuthenticationApi;
   SystemConfigurationManagementApi systemConfigurationManagementApi;
+  SystemConfigurationResolver systemConfigurationResolver;
+  SystemConfigurationApi systemConfigurationApi;
 
   AdminUserAuthenticationApi adminUserAuthenticationApi;
 
@@ -435,16 +438,17 @@ public class IdpServerApplication {
     // System configuration resolver for SSRF protection and trusted proxy settings
     SystemConfigurationRepository systemConfigurationRepository =
         applicationComponentContainer.resolve(SystemConfigurationRepository.class);
-    SystemConfigurationResolver systemConfigurationResolver =
+    this.systemConfigurationResolver =
         new CachedSystemConfigurationResolver(systemConfigurationRepository, cacheStore);
     applicationComponentContainer.register(
-        SystemConfigurationResolver.class, systemConfigurationResolver);
-    dependencyContainer.register(SystemConfigurationResolver.class, systemConfigurationResolver);
+        SystemConfigurationResolver.class, this.systemConfigurationResolver);
+    dependencyContainer.register(
+        SystemConfigurationResolver.class, this.systemConfigurationResolver);
 
     HttpClient httpClient = HttpClientFactory.defaultClient();
     HttpRequestExecutor httpRequestExecutor =
         new HttpRequestExecutor(
-            httpClient, oAuthAuthorizationResolvers, systemConfigurationResolver);
+            httpClient, oAuthAuthorizationResolvers, this.systemConfigurationResolver);
     applicationComponentContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
     dependencyContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
 
@@ -732,6 +736,12 @@ public class IdpServerApplication {
         TenantAwareEntryServiceProxy.createProxy(
             new TenantMetaDataEntryService(tenantQueryRepository),
             TenantMetaDataApi.class,
+            databaseTypeProvider);
+
+    this.systemConfigurationApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new SystemConfigurationEntryService(this.systemConfigurationResolver),
+            SystemConfigurationApi.class,
             databaseTypeProvider);
 
     this.organizationTenantResolverApi =
@@ -1379,6 +1389,14 @@ public class IdpServerApplication {
 
   public SystemConfigurationManagementApi systemConfigurationManagementApi() {
     return systemConfigurationManagementApi;
+  }
+
+  public SystemConfigurationResolver systemConfigurationResolver() {
+    return systemConfigurationResolver;
+  }
+
+  public SystemConfigurationApi systemConfigurationApi() {
+    return systemConfigurationApi;
   }
 
   public AuthenticationTransactionManagementApi authenticationTransactionManagementApi() {
