@@ -23,11 +23,28 @@ import java.util.stream.Collectors;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class HttpRequestResult {
+
+  private static final int HTTP_FORBIDDEN = 403;
+
   int statusCode;
   Map<String, List<String>> headers;
   JsonNodeWrapper body;
 
   public HttpRequestResult() {}
+
+  /**
+   * Creates a result indicating the request was blocked by SSRF protection.
+   *
+   * @param reason the reason the request was blocked
+   * @return an HTTP result with 403 Forbidden status
+   */
+  public static HttpRequestResult ssrfBlocked(String reason) {
+    Map<String, Object> errorBody = new HashMap<>();
+    errorBody.put("error", "ssrf_protection_blocked");
+    errorBody.put("error_description", reason);
+
+    return new HttpRequestResult(HTTP_FORBIDDEN, Map.of(), JsonNodeWrapper.fromMap(errorBody));
+  }
 
   public HttpRequestResult(
       int statusCode, Map<String, List<String>> headers, JsonNodeWrapper body) {

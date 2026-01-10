@@ -1,0 +1,21 @@
+{
+  "ssrf_protection": {
+    "enabled": true,
+    "bypass_hosts": [],
+    "allowed_hosts": [
+      "api.example.com",
+      "identity-provider.example.com"
+    ]
+  },
+  "trusted_proxies": {
+    "enabled": true,
+    "addresses": [
+      "10.0.0.0/8"
+    ],
+    "trusted_headers": [
+      "X-Forwarded-For",
+      "X-Forwarded-Proto",
+      "X-Forwarded-Host"
+    ]
+  }
+}

@@ -106,6 +106,7 @@ const sidebars = {
             "content_03_concepts/security-extensions/concept-01-security-events",
             "content_03_concepts/security-extensions/concept-02-external-service-integration",
             "content_03_concepts/security-extensions/concept-03-schema-validation",
+            "content_03_concepts/security-extensions/concept-04-system-configuration",
           ]
         },
         {

@@ -1,0 +1,20 @@
+{
+  "ssrf_protection": {
+    "enabled": true,
+    "bypass_hosts": [
+      "localhost",
+      "127.0.0.1"
+    ],
+    "allowed_hosts": []
+  },
+  "trusted_proxies": {
+    "enabled": false,
+    "addresses": [],
+    "trusted_headers": [
+      "X-Forwarded-For",
+      "X-Forwarded-Proto",
+      "X-Forwarded-Host",
+      "X-Real-IP"
+    ]
+  }
+}

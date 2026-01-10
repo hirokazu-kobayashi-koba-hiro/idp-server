@@ -63,6 +63,7 @@ import org.idp.server.control_plane.management.security.hook_result.OrgSecurityE
 import org.idp.server.control_plane.management.security.hook_result.SecurityEventHookManagementApi;
 import org.idp.server.control_plane.management.statistics.OrgTenantStatisticsApi;
 import org.idp.server.control_plane.management.statistics.TenantStatisticsApi;
+import org.idp.server.control_plane.management.system.SystemConfigurationManagementApi;
 import org.idp.server.control_plane.management.tenant.OrgTenantManagementApi;
 import org.idp.server.control_plane.management.tenant.TenantManagementApi;
 import org.idp.server.control_plane.management.tenant.invitation.TenantInvitationManagementApi;
@@ -171,6 +172,9 @@ import org.idp.server.platform.statistics.repository.TenantStatisticsQueryReposi
 import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsCommandRepository;
 import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsQueryRepository;
 import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepository;
+import org.idp.server.platform.system.CachedSystemConfigurationResolver;
+import org.idp.server.platform.system.SystemConfigurationRepository;
+import org.idp.server.platform.system.SystemConfigurationResolver;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.enduser.AuthenticationDeviceLogEntryService;
@@ -183,6 +187,7 @@ import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMeta
 import org.idp.server.usecases.control_plane.organization_manager.*;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerOperationEntryService;
 import org.idp.server.usecases.control_plane.system_administrator.IdpServerStarterEntryService;
+import org.idp.server.usecases.control_plane.system_administrator.SystemConfigurationManagementEntryService;
 import org.idp.server.usecases.control_plane.system_manager.*;
 
 /** IdpServerApplication */
@@ -233,6 +238,7 @@ public class IdpServerApplication {
   PermissionManagementApi permissionManagementApi;
   RoleManagementApi roleManagementApi;
   UserAuthenticationApi userAuthenticationApi;
+  SystemConfigurationManagementApi systemConfigurationManagementApi;
 
   AdminUserAuthenticationApi adminUserAuthenticationApi;
 
@@ -426,9 +432,19 @@ public class IdpServerApplication {
     TenantYearlyStatisticsCommandRepository tenantYearlyStatisticsCommandRepository =
         applicationComponentContainer.resolve(TenantYearlyStatisticsCommandRepository.class);
 
+    // System configuration resolver for SSRF protection and trusted proxy settings
+    SystemConfigurationRepository systemConfigurationRepository =
+        applicationComponentContainer.resolve(SystemConfigurationRepository.class);
+    SystemConfigurationResolver systemConfigurationResolver =
+        new CachedSystemConfigurationResolver(systemConfigurationRepository, cacheStore);
+    applicationComponentContainer.register(
+        SystemConfigurationResolver.class, systemConfigurationResolver);
+    dependencyContainer.register(SystemConfigurationResolver.class, systemConfigurationResolver);
+
     HttpClient httpClient = HttpClientFactory.defaultClient();
     HttpRequestExecutor httpRequestExecutor =
-        new HttpRequestExecutor(httpClient, oAuthAuthorizationResolvers);
+        new HttpRequestExecutor(
+            httpClient, oAuthAuthorizationResolvers, systemConfigurationResolver);
     applicationComponentContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
     dependencyContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
 
@@ -996,6 +1012,13 @@ public class IdpServerApplication {
             RoleManagementApi.class,
             databaseTypeProvider);
 
+    this.systemConfigurationManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new SystemConfigurationManagementEntryService(
+                systemConfigurationRepository, systemConfigurationResolver, auditLogPublisher),
+            SystemConfigurationManagementApi.class,
+            databaseTypeProvider);
+
     // organization
     this.organizationUserAuthenticationApi =
         ManagementTypeEntryServiceProxy.createProxy(
@@ -1352,6 +1375,10 @@ public class IdpServerApplication {
 
   public RoleManagementApi roleManagementApi() {
     return roleManagementApi;
+  }
+
+  public SystemConfigurationManagementApi systemConfigurationManagementApi() {
+    return systemConfigurationManagementApi;
   }
 
   public AuthenticationTransactionManagementApi authenticationTransactionManagementApi() {
