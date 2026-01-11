@@ -1,0 +1,28 @@
+{
+  "ssrf_protection": {
+    "enabled": true,
+    "bypass_hosts": [
+      "api.local.dev",
+      "localhost",
+      "127.0.0.1",
+      "host.docker.internal",
+      "mock-service"
+    ],
+    "allowed_hosts": []
+  },
+  "trusted_proxies": {
+    "enabled": true,
+    "addresses": [
+      "127.0.0.1",
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16"
+    ],
+    "trusted_headers": [
+      "X-Forwarded-For",
+      "X-Forwarded-Proto",
+      "X-Forwarded-Host",
+      "X-Real-IP"
+    ]
+  }
+}

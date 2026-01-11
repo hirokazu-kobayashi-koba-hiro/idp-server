@@ -1,0 +1,261 @@
+openapi: 3.0.3
+info:
+  title: idp-server システムレベル管理 API
+  description: |
+    idp-server システムレベル管理 API 仕様書
+
+    システム全体に適用される設定を管理するAPIです。
+    これらのAPIはシステム管理者権限（`system:read`, `system:write`）が必要です。
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: system-configuration
+    description: システム設定管理（SSRF保護、信頼するプロキシ等）
+
+paths:
+  /v1/management/system-configurations:
+    get:
+      summary: システム設定を取得
+      description: |
+        現在のシステム設定を取得します。
+
+        **必要な権限**: `system:read`
+      tags:
+        - system-configuration
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: システム設定の取得に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemConfiguration'
+              example:
+                ssrf_protection:
+                  enabled: true
+                  bypass_hosts: []
+                  allowed_hosts:
+                    - api.example.com
+                trusted_proxies:
+                  enabled: true
+                  addresses:
+                    - 10.0.0.0/8
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: forbidden
+                error_description: "Insufficient permissions. Required: system:read"
+
+    put:
+      summary: システム設定を更新
+      description: |
+        システム設定を更新します。
+
+        **必要な権限**: `system:write`
+
+        **Dry Run**: `?dry_run=true` を指定すると、実際の更新は行わずにバリデーションのみ実行します。
+      tags:
+        - system-configuration
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SystemConfigurationUpdateRequest'
+            example:
+              ssrf_protection:
+                enabled: true
+                bypass_hosts: []
+                allowed_hosts:
+                  - api.trusted-service.com
+              trusted_proxies:
+                enabled: true
+                addresses:
+                  - 10.0.0.0/8
+      responses:
+        '200':
+          description: システム設定が正常に更新されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemConfigurationResponse'
+              example:
+                status: updated
+                dry_run: false
+                configuration:
+                  ssrf_protection:
+                    enabled: true
+                    bypass_hosts: []
+                    allowed_hosts:
+                      - api.trusted-service.com
+                  trusted_proxies:
+                    enabled: true
+                    addresses:
+                      - 10.0.0.0/8
+        '400':
+          description: 無効なリクエストデータ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: システム管理者のアクセストークン
+
+  parameters:
+    DryRun:
+      name: dry_run
+      in: query
+      description: trueの場合、バリデーションのみ実行し実際の更新は行いません
+      required: false
+      schema:
+        type: boolean
+        default: false
+
+  schemas:
+    SystemConfiguration:
+      type: object
+      description: システム設定
+      properties:
+        ssrf_protection:
+          $ref: '#/components/schemas/SsrfProtectionConfig'
+        trusted_proxies:
+          $ref: '#/components/schemas/TrustedProxyConfig'
+
+    SystemConfigurationUpdateRequest:
+      type: object
+      description: システム設定更新リクエスト
+      properties:
+        ssrf_protection:
+          $ref: '#/components/schemas/SsrfProtectionConfig'
+        trusted_proxies:
+          $ref: '#/components/schemas/TrustedProxyConfig'
+
+    SystemConfigurationResponse:
+      type: object
+      description: システム設定更新レスポンス
+      properties:
+        status:
+          type: string
+          description: 処理結果ステータス
+          enum:
+            - updated
+            - validation_passed
+            - error
+        dry_run:
+          type: boolean
+          description: Dry Runモードかどうか
+        configuration:
+          $ref: '#/components/schemas/SystemConfiguration'
+        error:
+          type: string
+          description: エラーメッセージ（エラー時のみ）
+
+    SsrfProtectionConfig:
+      type: object
+      description: |
+        SSRF（Server-Side Request Forgery）保護設定
+
+        外部HTTPリクエスト時にプライベートIPへのアクセスをブロックします。
+      properties:
+        enabled:
+          type: boolean
+          description: SSRF保護の有効/無効
+          default: false
+        bypass_hosts:
+          type: array
+          description: |
+            プライベートIP検証をスキップするホスト名リスト。
+            開発環境でlocalhostなどへのアクセスを許可する場合に使用します。
+          items:
+            type: string
+          example:
+            - localhost
+            - 127.0.0.1
+            - host.docker.internal
+        allowed_hosts:
+          type: array
+          description: |
+            許可するホスト名の明示的リスト（allowlist方式）。
+            設定時は、このリストに含まれるホストのみアクセス可能になります。
+            本番環境ではこちらの使用を推奨します。
+          items:
+            type: string
+          example:
+            - api.trusted-partner.com
+            - identity.external-idp.com
+
+    TrustedProxyConfig:
+      type: object
+      description: |
+        信頼するプロキシ設定
+
+        X-Forwarded-Forヘッダーからクライアントの実IPを取得する際の信頼設定です。
+        ロードバランサーやリバースプロキシの背後で動作する場合に設定します。
+      properties:
+        enabled:
+          type: boolean
+          description: プロキシ信頼の有効/無効
+          default: false
+        addresses:
+          type: array
+          description: |
+            信頼するプロキシのIPアドレスまたはCIDRレンジ。
+            このリストに含まれるIPからのリクエストでのみX-Forwarded-Forヘッダーを信頼します。
+          items:
+            type: string
+          example:
+            - 10.0.0.0/8
+            - 172.16.0.0/12
+            - 192.168.0.0/16
+
+    ErrorResponse:
+      type: object
+      description: エラーレスポンス
+      properties:
+        error:
+          type: string
+          description: エラーコード
+        error_description:
+          type: string
+          description: エラーの詳細説明
+
+security:
+  - bearerAuth: []

@@ -140,7 +140,9 @@ public class OnboardingService {
     ClientConfiguration clientConfiguration =
         jsonConverter.read(request.get("client"), ClientConfiguration.class);
 
-    Permissions permissions = DefaultAdminPermission.toPermissions();
+    // Use tenant-level permissions (excludes system:read/write)
+    // System permissions should only be granted to admin tenant operators
+    Permissions permissions = DefaultAdminPermission.toTenantPermissions();
     Roles roles = DefaultAdminRole.create(permissions);
 
     Organization organization = organizationRequest.toOrganization();

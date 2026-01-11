@@ -126,7 +126,10 @@ public enum DefaultAdminPermission {
       "authentication-interaction:read", "Admin Read authentication-interaction information"),
 
   SESSION_READ("session:read", "Admin Read user session information"),
-  SESSION_DELETE("session:delete", "Admin Delete user session");
+  SESSION_DELETE("session:delete", "Admin Delete user session"),
+
+  SYSTEM_READ("system:read", "Admin Read system configuration"),
+  SYSTEM_WRITE("system:write", "Admin Write system configuration");
 
   private final String value;
   private final String description;
@@ -200,5 +203,35 @@ public enum DefaultAdminPermission {
       permissions.add(defaultAdminPermission.toPermission());
     }
     return new Permissions(permissions);
+  }
+
+  /**
+   * Returns permissions for normal tenant onboarding.
+   *
+   * <p>Excludes system-level permissions (system:read, system:write) which should only be available
+   * to admin tenant operators.
+   *
+   * @return permissions excluding system-level permissions
+   */
+  public static Permissions toTenantPermissions() {
+    List<Permission> permissions = new ArrayList<>();
+    for (DefaultAdminPermission defaultAdminPermission : values()) {
+      if (!defaultAdminPermission.isSystemPermission()) {
+        permissions.add(defaultAdminPermission.toPermission());
+      }
+    }
+    return new Permissions(permissions);
+  }
+
+  /**
+   * Returns true if this is a system-level permission.
+   *
+   * <p>System-level permissions control system-wide configuration and should only be granted to
+   * admin tenant operators.
+   *
+   * @return true if system permission
+   */
+  public boolean isSystemPermission() {
+    return value.startsWith("system:");
   }
 }

@@ -36,9 +36,9 @@ public interface ParameterTransformable extends AuthorizationHeaderHandlerable {
 
   default RequestAttributes transform(HttpServletRequest request) {
 
+    // Use resolved IP from TrustedProxyFilter if available, fallback to remoteAddr
     String ip =
-        Optional.ofNullable(request.getHeader("X-Forwarded-For"))
-            .map(s -> s.split(",")[0].trim())
+        Optional.ofNullable((String) request.getAttribute("resolvedClientIp"))
             .orElse(request.getRemoteAddr());
 
     String userAgent = Optional.ofNullable(request.getHeader("User-Agent")).orElse("unknown");

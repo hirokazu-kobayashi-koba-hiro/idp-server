@@ -86,7 +86,7 @@ brew install k6
 #### local
 
 ```shell
-export BASE_URL=http://localhost:8080
+export BASE_URL=https://api.local.dev
 export TENANT_ID=67e7eae6-62b0-4500-9eff-87459f63fc66
 export CLIENT_ID=clientSecretPost
 export CLIENT_SECRET=clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890
