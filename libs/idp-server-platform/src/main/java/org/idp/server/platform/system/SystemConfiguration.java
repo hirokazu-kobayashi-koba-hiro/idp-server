@@ -39,16 +39,17 @@ import org.idp.server.platform.system.config.TrustedProxyConfig;
 public class SystemConfiguration implements JsonReadable {
 
   private SsrfProtectionConfig ssrfProtection;
-  private TrustedProxyConfig trustedProxy;
+  private TrustedProxyConfig trustedProxies;
 
   public SystemConfiguration() {
     this.ssrfProtection = SsrfProtectionConfig.defaultConfig();
-    this.trustedProxy = TrustedProxyConfig.defaultConfig();
+    this.trustedProxies = TrustedProxyConfig.defaultConfig();
   }
 
-  public SystemConfiguration(SsrfProtectionConfig ssrfProtection, TrustedProxyConfig trustedProxy) {
+  public SystemConfiguration(
+      SsrfProtectionConfig ssrfProtection, TrustedProxyConfig trustedProxies) {
     this.ssrfProtection = ssrfProtection;
-    this.trustedProxy = trustedProxy;
+    this.trustedProxies = trustedProxies;
   }
 
   /** Creates a default system configuration with all default values. */
@@ -94,13 +95,13 @@ public class SystemConfiguration implements JsonReadable {
   }
 
   public TrustedProxyConfig trustedProxies() {
-    return trustedProxy;
+    return trustedProxies;
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("ssrf_protection", ssrfProtection.toMap());
-    map.put("trusted_proxies", trustedProxy.toMap());
+    map.put("trusted_proxies", trustedProxies.toMap());
     return map;
   }
 }
