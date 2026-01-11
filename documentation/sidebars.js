@@ -386,7 +386,9 @@ const sidebars = {
                 "content_11_learning/postgresql/dev-03-indexes",
                 "content_11_learning/postgresql/dev-04-transactions",
                 "content_11_learning/postgresql/dev-05-query-optimization",
-                "content_11_learning/postgresql/dev-06-connection-pooling"
+                "content_11_learning/postgresql/dev-06-connection-pooling",
+                "content_11_learning/postgresql/dev-07-plpgsql-basics",
+                "content_11_learning/postgresql/dev-08-plpgsql-advanced"
               ]
             }
           ]
