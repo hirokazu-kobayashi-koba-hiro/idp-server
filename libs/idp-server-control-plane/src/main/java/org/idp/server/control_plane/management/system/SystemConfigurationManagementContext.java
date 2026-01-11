@@ -148,8 +148,8 @@ public class SystemConfigurationManagementContext implements AuditableContext {
 
   @Override
   public String targetTenantId() {
-    // System configuration is not tenant-specific, use "system"
-    return "system";
+    // Use admin's tenant ID for audit logging
+    return oAuthToken.tenantIdentifier().value();
   }
 
   @Override
