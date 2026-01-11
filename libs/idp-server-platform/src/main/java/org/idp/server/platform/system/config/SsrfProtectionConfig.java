@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.platform.json.JsonReadable;
 
 /**
  * Configuration for SSRF (Server-Side Request Forgery) protection.
@@ -34,7 +35,7 @@ import java.util.Set;
  *   <li><b>allowedHosts</b>: Explicit allowlist of external hosts (OWASP recommended)
  * </ul>
  */
-public class SsrfProtectionConfig {
+public class SsrfProtectionConfig implements JsonReadable {
 
   private boolean enabled;
   private Set<String> bypassHosts;

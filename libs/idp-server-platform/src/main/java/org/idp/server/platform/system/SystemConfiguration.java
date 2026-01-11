@@ -18,6 +18,7 @@ package org.idp.server.platform.system;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.system.config.SsrfProtectionConfig;
 import org.idp.server.platform.system.config.TrustedProxyConfig;
 
@@ -35,20 +36,19 @@ import org.idp.server.platform.system.config.TrustedProxyConfig;
  *   <li><b>Integrations</b>: External service configurations (future)
  * </ul>
  */
-public class SystemConfiguration {
+public class SystemConfiguration implements JsonReadable {
 
-  private SsrfProtectionConfig ssrfProtectionConfig;
-  private TrustedProxyConfig trustedProxyConfig;
+  private SsrfProtectionConfig ssrfProtection;
+  private TrustedProxyConfig trustedProxy;
 
   public SystemConfiguration() {
-    this.ssrfProtectionConfig = SsrfProtectionConfig.defaultConfig();
-    this.trustedProxyConfig = TrustedProxyConfig.defaultConfig();
+    this.ssrfProtection = SsrfProtectionConfig.defaultConfig();
+    this.trustedProxy = TrustedProxyConfig.defaultConfig();
   }
 
-  public SystemConfiguration(
-      SsrfProtectionConfig ssrfProtectionConfig, TrustedProxyConfig trustedProxyConfig) {
-    this.ssrfProtectionConfig = ssrfProtectionConfig;
-    this.trustedProxyConfig = trustedProxyConfig;
+  public SystemConfiguration(SsrfProtectionConfig ssrfProtection, TrustedProxyConfig trustedProxy) {
+    this.ssrfProtection = ssrfProtection;
+    this.trustedProxy = trustedProxy;
   }
 
   /** Creates a default system configuration with all default values. */
@@ -90,17 +90,17 @@ public class SystemConfiguration {
   }
 
   public SsrfProtectionConfig ssrf() {
-    return ssrfProtectionConfig;
+    return ssrfProtection;
   }
 
   public TrustedProxyConfig trustedProxies() {
-    return trustedProxyConfig;
+    return trustedProxy;
   }
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("ssrf_protection", ssrfProtectionConfig.toMap());
-    map.put("trusted_proxies", trustedProxyConfig.toMap());
+    map.put("ssrf_protection", ssrfProtection.toMap());
+    map.put("trusted_proxies", trustedProxy.toMap());
     return map;
   }
 }

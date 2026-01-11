@@ -44,9 +44,7 @@ public class SystemConfigurationDataSource implements SystemConfigurationReposit
       return SystemConfiguration.disabledConfiguration();
     }
 
-    @SuppressWarnings("unchecked")
-    Map<String, Object> configMap = jsonConverter.read(configurationJson, Map.class);
-    return SystemConfiguration.fromMap(configMap);
+    return jsonConverter.read(configurationJson, SystemConfiguration.class);
   }
 
   @Override

@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.idp.server.platform.json.JsonReadable;
 
 /**
  * Configuration for trusted proxy servers.
@@ -50,7 +51,7 @@ import java.util.Set;
  *   <li>The original host is extracted from X-Forwarded-Host
  * </ul>
  */
-public class TrustedProxyConfig {
+public class TrustedProxyConfig implements JsonReadable {
 
   private boolean enabled;
   private Set<String> addresses;
