@@ -185,7 +185,13 @@ paths:
       tags:
         - FIDO-UAF
       summary: FIDO-UAF 登録チャレンジ
-      description: FIDOサーバーから取得したチャレンジ情報をそのまま返却する。
+      description: |
+        FIDOサーバーから取得したチャレンジ情報をそのまま返却する。
+
+        **セキュリティ制約**:
+        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
+        - 認証ポリシーに`device_registration_conditions`が設定されている場合、
+          その条件を満たす必要があります（満たさない場合は403 Forbidden）
       parameters:
         - in: path
           name: tenant-id
@@ -213,6 +219,10 @@ paths:
                 type: object
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -222,7 +232,13 @@ paths:
       tags:
         - FIDO-UAF
       summary: FIDO-UAF 登録
-      description: クライアントから送信されたFIDO応答を受け取り、登録を完了させる。
+      description: |
+        クライアントから送信されたFIDO応答を受け取り、登録を完了させる。
+
+        **セキュリティ制約**:
+        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
+        - 認証ポリシーに`device_registration_conditions`が設定されている場合、
+          その条件を満たす必要があります（満たさない場合は403 Forbidden）
       parameters:
         - in: path
           name: tenant-id
@@ -255,6 +271,10 @@ paths:
                       デバイスID。認証デバイスの識別子。認証デバイス側に保存し、認証トランザクションの取得時などで利用します。
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -334,7 +354,13 @@ paths:
       tags:
         - FIDO-UAF
       summary: FIDO-UAF 解除
-      description: クライアントから送信されたFIDO応答を受け取り解除を完了させる。
+      description: |
+        クライアントから送信されたFIDO応答を受け取り解除を完了させる。
+
+        **セキュリティ制約**:
+        - ユーザーが認証済みである必要があります（未認証の場合は401 Unauthorized）
+        - 認証ポリシーに`device_registration_conditions`が設定されている場合、
+          その条件を満たす必要があります（満たさない場合は403 Forbidden）
       parameters:
         - in: path
           name: tenant-id
@@ -363,6 +389,10 @@ paths:
                 description: FIDOサーバーの仕様に沿った任意のレスポンスボディ
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -496,7 +526,7 @@ components:
                 error_description: FIDO2 authentication succeeded but user could not be resolved
     Unauthorized:
       description: |
-        認証エラー。アクセストークンが無効または期限切れ
+        認証エラー。ユーザーが未認証、またはアクセストークンが無効・期限切れ
       content:
         application/json:
           schema:
@@ -504,10 +534,28 @@ components:
             properties:
               error:
                 type: string
-                example: invalid_token
+                example: unauthorized
               error_description:
                 type: string
-                example: The access token is invalid or expired
+                example: >-
+                  User must be authenticated before registering a FIDO-UAF
+                  device.
+    Forbidden:
+      description: |
+        認可エラー。認証レベル（ACR）がデバイス登録ポリシーの要件を満たしていない
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: forbidden
+              error_description:
+                type: string
+                example: >-
+                  Current authentication level does not meet device registration
+                  requirements.
     NotFound:
       description: |
         認証トランザクションが存在しない、または有効期限切れ
