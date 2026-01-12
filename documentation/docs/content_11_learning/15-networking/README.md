@@ -20,6 +20,7 @@
 | 04 | [ssl-tls-certificates.md](04-ssl-tls-certificates.md) | SSL/TLS証明書管理（Let's Encrypt、openssl、自動更新） | 40分 |
 | 05 | [api-gateway-networking.md](05-api-gateway-networking.md) | リバースプロキシ（CORS、認証、レート制限） | 45分 |
 | 06 | [network-troubleshooting.md](06-network-troubleshooting.md) | ネットワークトラブルシューティング（診断、デバッグ） | 40分 |
+| 07 | [column-speed-of-light.md](07-column-speed-of-light.md) | コラム: 光は遅い（物理的制約、海底ケーブル） | 20分 |
 
 ---
 

@@ -537,6 +537,109 @@ const sidebars = {
               ]
             }
           ]
+        },
+        {
+          type: "category",
+          label: "ネットワーク",
+          items: [
+            "content_11_learning/networking/README",
+            {
+              type: "category",
+              label: "DNS",
+              collapsed: true,
+              items: [
+                "content_11_learning/networking/dns-fundamentals",
+                "content_11_learning/networking/dns-advanced"
+              ]
+            },
+            {
+              type: "category",
+              label: "インフラストラクチャ",
+              collapsed: true,
+              items: [
+                "content_11_learning/networking/load-balancing",
+                "content_11_learning/networking/ssl-tls-certificates",
+                "content_11_learning/networking/api-gateway-networking"
+              ]
+            },
+            {
+              type: "category",
+              label: "トラブルシューティング",
+              collapsed: true,
+              items: [
+                "content_11_learning/networking/network-troubleshooting"
+              ]
+            },
+            {
+              type: "category",
+              label: "コラム",
+              collapsed: true,
+              items: [
+                "content_11_learning/networking/column-speed-of-light",
+                "content_11_learning/networking/column-why-port-443"
+              ]
+            }
+          ]
+        },
+        {
+          type: "category",
+          label: "JVM",
+          items: [
+            "content_11_learning/jvm/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/jvm/jvm-01-overview",
+                "content_11_learning/jvm/jvm-02-classloading",
+                "content_11_learning/jvm/jvm-03-memory"
+              ]
+            },
+            {
+              type: "category",
+              label: "ガベージコレクション",
+              collapsed: true,
+              items: [
+                "content_11_learning/jvm/jvm-04-gc",
+                "content_11_learning/jvm/jvm-05-gc-tuning"
+              ]
+            },
+            {
+              type: "category",
+              label: "応用",
+              collapsed: true,
+              items: [
+                "content_11_learning/jvm/jvm-06-performance",
+                "content_11_learning/jvm/jvm-07-troubleshooting"
+              ]
+            },
+            {
+              type: "category",
+              label: "最新機能",
+              collapsed: true,
+              items: [
+                "content_11_learning/jvm/jvm-08-java21",
+                "content_11_learning/jvm/jvm-09-native-image"
+              ]
+            },
+            {
+              type: "category",
+              label: "コンパイル",
+              collapsed: true,
+              items: [
+                "content_11_learning/jvm/jvm-10-compilation"
+              ]
+            },
+            {
+              type: "category",
+              label: "リソース管理",
+              collapsed: true,
+              items: [
+                "content_11_learning/jvm/jvm-11-io-resources"
+              ]
+            }
+          ]
         }
       ]
     },
