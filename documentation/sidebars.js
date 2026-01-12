@@ -575,7 +575,8 @@ const sidebars = {
               label: "コラム",
               collapsed: true,
               items: [
-                "content_11_learning/networking/column-speed-of-light"
+                "content_11_learning/networking/column-speed-of-light",
+                "content_11_learning/networking/column-why-port-443"
               ]
             }
           ]
