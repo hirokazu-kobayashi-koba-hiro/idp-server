@@ -490,45 +490,6 @@ try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
 
 ---
 
-## idp-server での活用
-
-| 機能 | 活用シーン |
-|-----|-----------|
-| Virtual Threads | HTTP リクエスト処理、外部API呼び出し |
-| Record | DTO、値オブジェクト |
-| Pattern Matching | レスポンス処理、エラーハンドリング |
-| Sealed Classes | ドメインモデルの制約表現 |
-| Sequenced Collections | 順序付きデータ処理 |
-
-```java
-// idp-server での Record 活用例
-public record TokenResponse(
-    String accessToken,
-    String tokenType,
-    int expiresIn,
-    String refreshToken
-) {
-    public TokenResponse {
-        Objects.requireNonNull(accessToken, "accessToken must not be null");
-        Objects.requireNonNull(tokenType, "tokenType must not be null");
-    }
-}
-
-// Pattern Matching 活用例
-public String handleAuthResult(AuthResult result) {
-    return switch (result) {
-        case Success(var user, var token) ->
-            "Authenticated: " + user.name();
-        case Failure(var reason) when reason.isRetryable() ->
-            "Please retry: " + reason.message();
-        case Failure(var reason) ->
-            "Authentication failed: " + reason.message();
-    };
-}
-```
-
----
-
 ## まとめ
 
 | 機能 | ポイント |

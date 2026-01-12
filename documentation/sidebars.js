@@ -587,6 +587,14 @@ const sidebars = {
               items: [
                 "content_11_learning/jvm/jvm-10-compilation"
               ]
+            },
+            {
+              type: "category",
+              label: "リソース管理",
+              collapsed: true,
+              items: [
+                "content_11_learning/jvm/jvm-11-io-resources"
+              ]
             }
           ]
         }
