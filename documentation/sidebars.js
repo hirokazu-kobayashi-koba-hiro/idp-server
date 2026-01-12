@@ -548,8 +548,8 @@ const sidebars = {
               label: "DNS",
               collapsed: true,
               items: [
-                "content_11_learning/networking/01-dns-fundamentals",
-                "content_11_learning/networking/02-dns-advanced"
+                "content_11_learning/networking/dns-fundamentals",
+                "content_11_learning/networking/dns-advanced"
               ]
             },
             {
@@ -557,9 +557,9 @@ const sidebars = {
               label: "インフラストラクチャ",
               collapsed: true,
               items: [
-                "content_11_learning/networking/03-load-balancing",
-                "content_11_learning/networking/04-ssl-tls-certificates",
-                "content_11_learning/networking/05-api-gateway-networking"
+                "content_11_learning/networking/load-balancing",
+                "content_11_learning/networking/ssl-tls-certificates",
+                "content_11_learning/networking/api-gateway-networking"
               ]
             },
             {
@@ -567,7 +567,7 @@ const sidebars = {
               label: "トラブルシューティング",
               collapsed: true,
               items: [
-                "content_11_learning/networking/06-network-troubleshooting"
+                "content_11_learning/networking/network-troubleshooting"
               ]
             },
             {
@@ -575,7 +575,7 @@ const sidebars = {
               label: "コラム",
               collapsed: true,
               items: [
-                "content_11_learning/networking/07-column-speed-of-light"
+                "content_11_learning/networking/column-speed-of-light"
               ]
             }
           ]
