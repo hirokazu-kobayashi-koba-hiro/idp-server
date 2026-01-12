@@ -38,6 +38,9 @@ sidebar_position: 0
 
 | ドキュメント | 内容 |
 |-------------|------|
+| [エンコーディング基礎](./encoding-basics.md) | Base64, URLエンコーディング, UTF-8, Hex |
+| [時刻とタイムゾーン](./time-and-timezone.md) | Unix時間, UTC, ISO 8601, 2038年問題 |
+| [UUID](./uuid.md) | UUID v4/v7, 認証での使用, DB設計 |
 | [シリアライゼーション概要](./serialization-overview.md) | JSON, CBOR, ASN.1 の比較と使い分け |
 | [CBOR](./cbor.md) | CBOR の構造とエンコード方式 |
 | [COSE](./cose.md) | CBOR ベースの署名・暗号化 |
@@ -92,10 +95,19 @@ sidebar_position: 0
 ### 初めての方
 
 ```
-1. シリアライゼーション概要
+1. エンコーディング基礎
+   └── Base64, URLエンコーディング, UTF-8 を理解
+
+2. 時刻とタイムゾーン
+   └── Unix時間, UTC, JWTの時刻クレーム を理解
+
+3. UUID
+   └── 識別子生成、v4 vs v7 の使い分け
+
+4. シリアライゼーション概要
    └── なぜ複数のフォーマットがあるのか理解
 
-2. CBOR
+5. CBOR
    └── 現代のアイデンティティ技術で多用される
 ```
 
