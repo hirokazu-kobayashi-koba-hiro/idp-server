@@ -263,6 +263,164 @@ Object instance = clazz.getDeclaredConstructor().newInstance();
 
 ---
 
+## ServiceLoader（SPI）
+
+### サービスプロバイダインターフェース（SPI）とは
+
+ServiceLoaderは、Javaの標準的なプラグイン機構です。インターフェースの実装を実行時に動的に発見・ロードできます。
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    ServiceLoader の仕組み                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. サービスインターフェース定義                             │
+│     ┌────────────────────────────────────────────────────┐  │
+│     │ public interface PaymentProvider {                 │  │
+│     │     void processPayment(Payment payment);          │  │
+│     │ }                                                  │  │
+│     └────────────────────────────────────────────────────┘  │
+│                                                              │
+│  2. 実装クラス（プロバイダ）                                 │
+│     ┌────────────────────────────────────────────────────┐  │
+│     │ public class StripeProvider implements PaymentProvider│
+│     │ public class PayPalProvider implements PaymentProvider│
+│     └────────────────────────────────────────────────────┘  │
+│                                                              │
+│  3. META-INF/services で登録                                 │
+│     ┌────────────────────────────────────────────────────┐  │
+│     │ META-INF/services/com.example.PaymentProvider      │  │
+│     │ ─────────────────────────────────────────────────  │  │
+│     │ com.example.StripeProvider                         │  │
+│     │ com.example.PayPalProvider                         │  │
+│     └────────────────────────────────────────────────────┘  │
+│                                                              │
+│  4. ServiceLoader で発見・ロード                             │
+│     ┌────────────────────────────────────────────────────┐  │
+│     │ ServiceLoader.load(PaymentProvider.class)          │  │
+│     │ → 全ての実装を自動的に発見                         │  │
+│     └────────────────────────────────────────────────────┘  │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 基本的な使い方
+
+```java
+// 1. サービスインターフェース
+public interface MessageFormatter {
+    String format(String message);
+}
+
+// 2. 実装クラス
+public class JsonFormatter implements MessageFormatter {
+    @Override
+    public String format(String message) {
+        return "{\"message\": \"" + message + "\"}";
+    }
+}
+
+public class XmlFormatter implements MessageFormatter {
+    @Override
+    public String format(String message) {
+        return "<message>" + message + "</message>";
+    }
+}
+```
+
+```
+// 3. META-INF/services/com.example.MessageFormatter
+com.example.JsonFormatter
+com.example.XmlFormatter
+```
+
+```java
+// 4. ServiceLoader で使用
+ServiceLoader<MessageFormatter> loader = ServiceLoader.load(MessageFormatter.class);
+
+for (MessageFormatter formatter : loader) {
+    System.out.println(formatter.format("Hello"));
+}
+// 出力:
+// {"message": "Hello"}
+// <message>Hello</message>
+```
+
+### 代表的な使用例
+
+| ライブラリ/フレームワーク | SPI の用途 |
+|-------------------------|-----------|
+| JDBC | `java.sql.Driver` の自動登録 |
+| SLF4J | ロギング実装の発見 |
+| Jackson | モジュールの自動登録 |
+| Spring Boot | `AutoConfiguration` の発見 |
+| Servlet | `ServletContainerInitializer` |
+
+### JDBC での例
+
+```java
+// Java 6以降、DriverManager は ServiceLoader で自動的にドライバを発見
+// META-INF/services/java.sql.Driver に登録されているドライバが自動ロード
+
+// 明示的な Class.forName() は不要
+// Class.forName("com.mysql.cj.jdbc.Driver");  // 昔は必要だった
+
+Connection conn = DriverManager.getConnection(
+    "jdbc:mysql://localhost/db", "user", "password"
+);
+```
+
+### Java 9+ モジュールシステムとの統合
+
+Java 9以降は `module-info.java` で宣言的にサービスを定義できます。
+
+```java
+// サービスを提供するモジュール
+module payment.stripe {
+    requires payment.api;
+    provides com.example.PaymentProvider
+        with com.stripe.StripeProvider;
+}
+
+// サービスを使用するモジュール
+module payment.app {
+    requires payment.api;
+    uses com.example.PaymentProvider;
+}
+```
+
+### ServiceLoader のベストプラクティス
+
+```java
+// シングルトンでキャッシュ（毎回ロードしない）
+public class FormatterRegistry {
+    private static final ServiceLoader<MessageFormatter> loader =
+        ServiceLoader.load(MessageFormatter.class);
+
+    public static List<MessageFormatter> getFormatters() {
+        List<MessageFormatter> formatters = new ArrayList<>();
+        loader.forEach(formatters::add);
+        return formatters;
+    }
+
+    // リロードが必要な場合
+    public static void reload() {
+        loader.reload();
+    }
+}
+```
+
+### 注意点
+
+| 注意点 | 説明 |
+|-------|------|
+| インスタンス生成 | 毎回新しいインスタンスが生成される |
+| 引数なしコンストラクタ | 実装クラスには引数なしコンストラクタが必要 |
+| クラスパス依存 | クラスパス上のJARのみが対象 |
+| 順序不定 | 実装の発見順序は保証されない |
+
+---
+
 ## 遅延ロード（Lazy Loading）
 
 JVMはクラスを必要になるまでロードしません。
@@ -459,6 +617,7 @@ done
 | 3フェーズ | Loading → Linking → Initialization |
 | 親委譲モデル | 親クラスローダーに先に委譲してセキュリティ確保 |
 | クラスの一意性 | 完全修飾名 + ClassLoader で識別 |
+| ServiceLoader | META-INF/services でプラグイン機構を実現 |
 | 遅延ロード | 実際に必要になるまでロードしない |
 | Spring Boot | LaunchedURLClassLoaderで Fat JAR をサポート |
 

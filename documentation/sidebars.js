@@ -579,6 +579,14 @@ const sidebars = {
                 "content_11_learning/jvm/jvm-08-java21",
                 "content_11_learning/jvm/jvm-09-native-image"
               ]
+            },
+            {
+              type: "category",
+              label: "コンパイル",
+              collapsed: true,
+              items: [
+                "content_11_learning/jvm/jvm-10-compilation"
+              ]
             }
           ]
         }

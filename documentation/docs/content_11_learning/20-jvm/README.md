@@ -82,6 +82,12 @@ Java Virtual Machine（JVM）の仕組みと最適化に関する包括的な学
 | 08 | [Java 21新機能](jvm-08-java21.md) | Virtual Threads、Record、Pattern Matching | 60分 |
 | 09 | [Native Image](jvm-09-native-image.md) | GraalVM、AOTコンパイル、コンテナ最適化 | 60分 |
 
+### コンパイル
+
+| # | ドキュメント | 説明 | 所要時間 |
+|---|-------------|------|---------|
+| 10 | [Javaコンパイル](jvm-10-compilation.md) | javac、バイトコード、アノテーションプロセッサ | 45分 |
+
 ---
 
 ## 推奨学習パス
