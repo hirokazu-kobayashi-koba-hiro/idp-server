@@ -540,6 +540,48 @@ const sidebars = {
         },
         {
           type: "category",
+          label: "ネットワーク",
+          items: [
+            "content_11_learning/networking/README",
+            {
+              type: "category",
+              label: "DNS",
+              collapsed: true,
+              items: [
+                "content_11_learning/networking/01-dns-fundamentals",
+                "content_11_learning/networking/02-dns-advanced"
+              ]
+            },
+            {
+              type: "category",
+              label: "インフラストラクチャ",
+              collapsed: true,
+              items: [
+                "content_11_learning/networking/03-load-balancing",
+                "content_11_learning/networking/04-ssl-tls-certificates",
+                "content_11_learning/networking/05-api-gateway-networking"
+              ]
+            },
+            {
+              type: "category",
+              label: "トラブルシューティング",
+              collapsed: true,
+              items: [
+                "content_11_learning/networking/06-network-troubleshooting"
+              ]
+            },
+            {
+              type: "category",
+              label: "コラム",
+              collapsed: true,
+              items: [
+                "content_11_learning/networking/07-column-speed-of-light"
+              ]
+            }
+          ]
+        },
+        {
+          type: "category",
           label: "JVM",
           items: [
             "content_11_learning/jvm/README",
