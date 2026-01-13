@@ -44,9 +44,7 @@ public class ModelConverter {
         new VerifiedClaims(JsonNodeWrapper.fromString(map.get("verified_claims")));
     LocalDateTime verifiedAt = LocalDateTimeParser.parse(map.get("verified_at"));
     LocalDateTime verifiedUntil =
-        map.get("verified_until") != null
-            ? LocalDateTimeParser.parse(map.get("verified_until"))
-            : null;
+        map.get("valid_until") != null ? LocalDateTimeParser.parse(map.get("valid_until")) : null;
     IdentityVerificationSourceType source = IdentityVerificationSourceType.of(map.get("source"));
     IdentityVerificationSourceDetails sourceDetails =
         IdentityVerificationSourceDetails.fromJson(map.get("source_details"));
