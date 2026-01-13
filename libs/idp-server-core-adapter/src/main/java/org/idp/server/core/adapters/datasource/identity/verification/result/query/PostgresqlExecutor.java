@@ -72,12 +72,12 @@ public class PostgresqlExecutor implements IdentityVerificationResultSqlExecutor
     }
 
     if (queries.hasVerifiedUntilFrom()) {
-      sqlBuilder.append(" AND verified_until >= ?");
+      sqlBuilder.append(" AND valid_until >= ?");
       params.add(queries.verifiedUntilFrom());
     }
 
     if (queries.hasVerifiedUntilTo()) {
-      sqlBuilder.append(" AND verified_until <= ?");
+      sqlBuilder.append(" AND valid_until <= ?");
       params.add(queries.verifiedUntilTo());
     }
 
@@ -143,12 +143,12 @@ public class PostgresqlExecutor implements IdentityVerificationResultSqlExecutor
     }
 
     if (queries.hasVerifiedUntilFrom()) {
-      sqlBuilder.append(" AND verified_until >= ?");
+      sqlBuilder.append(" AND valid_until >= ?");
       params.add(queries.verifiedUntilFrom());
     }
 
     if (queries.hasVerifiedUntilTo()) {
-      sqlBuilder.append(" AND verified_until <= ?");
+      sqlBuilder.append(" AND valid_until <= ?");
       params.add(queries.verifiedUntilTo());
     }
 
