@@ -640,6 +640,50 @@ const sidebars = {
               ]
             }
           ]
+        },
+        {
+          type: "category",
+          label: "OS基礎",
+          items: [
+            "content_11_learning/os-fundamentals/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/os-fundamentals/os-overview",
+                "content_11_learning/os-fundamentals/process-and-thread",
+                "content_11_learning/os-fundamentals/memory-management"
+              ]
+            },
+            {
+              type: "category",
+              label: "I/O",
+              collapsed: true,
+              items: [
+                "content_11_learning/os-fundamentals/file-descriptors",
+                "content_11_learning/os-fundamentals/io-models"
+              ]
+            },
+            {
+              type: "category",
+              label: "プロセス間通信",
+              collapsed: true,
+              items: [
+                "content_11_learning/os-fundamentals/signals",
+                "content_11_learning/os-fundamentals/synchronization"
+              ]
+            },
+            {
+              type: "category",
+              label: "コラム",
+              collapsed: true,
+              items: [
+                "content_11_learning/os-fundamentals/column-why-4kb-page",
+                "content_11_learning/os-fundamentals/column-everything-is-a-file"
+              ]
+            }
+          ]
         }
       ]
     },
