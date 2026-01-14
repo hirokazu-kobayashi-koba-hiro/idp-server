@@ -50,7 +50,16 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
   }
 
   public EmailVerificationTemplate findTemplate(String templateKey) {
-    return templates.getOrDefault(templateKey, new EmailVerificationTemplate());
+    if (templates == null) {
+      return defaultTemplate();
+    }
+    return templates.getOrDefault(templateKey, defaultTemplate());
+  }
+
+  private EmailVerificationTemplate defaultTemplate() {
+    return new EmailVerificationTemplate(
+        "Verification Code",
+        "Your verification code is: {VERIFICATION_CODE}\nThis code expires in {EXPIRE_SECONDS} seconds.");
   }
 
   public EmailSenderConfiguration senderConfig() {
