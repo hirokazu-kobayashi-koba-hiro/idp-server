@@ -45,7 +45,16 @@ public class SmsAuthenticationConfiguration implements JsonReadable {
   }
 
   public SmslVerificationTemplate findTemplate(String templateKey) {
-    return templates.getOrDefault(templateKey, new SmslVerificationTemplate());
+    if (templates == null) {
+      return defaultTemplate();
+    }
+    return templates.getOrDefault(templateKey, defaultTemplate());
+  }
+
+  private SmslVerificationTemplate defaultTemplate() {
+    return new SmslVerificationTemplate(
+        "Verification Code",
+        "Your verification code is: {VERIFICATION_CODE}. Expires in {EXPIRE_SECONDS} seconds.");
   }
 
   public Map<String, Object> settings() {
