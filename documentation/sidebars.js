@@ -684,6 +684,72 @@ const sidebars = {
               ]
             }
           ]
+        },
+        {
+          type: "category",
+          label: "フレームワーク",
+          items: [
+            "content_11_learning/frameworks/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/frameworks/framework-introduction",
+                "content_11_learning/frameworks/ioc-and-di"
+              ]
+            },
+            {
+              type: "category",
+              label: "設計",
+              collapsed: true,
+              items: [
+                "content_11_learning/frameworks/design-principles",
+                "content_11_learning/frameworks/architecture-patterns"
+              ]
+            },
+            {
+              type: "category",
+              label: "実践",
+              collapsed: true,
+              items: [
+                "content_11_learning/frameworks/building-frameworks"
+              ]
+            },
+            {
+              type: "category",
+              label: "コラム",
+              collapsed: true,
+              items: [
+                "content_11_learning/frameworks/column-reinventing-the-wheel",
+                "content_11_learning/frameworks/column-graduating-from-frameworks"
+              ]
+            }
+          ]
+        },
+        {
+          type: "category",
+          label: "SDK",
+          items: [
+            "content_11_learning/sdk/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/sdk/sdk-introduction",
+                "content_11_learning/sdk/sdk-design-principles"
+              ]
+            },
+            {
+              type: "category",
+              label: "実装",
+              collapsed: true,
+              items: [
+                "content_11_learning/sdk/sdk-implementation-patterns"
+              ]
+            }
+          ]
         }
       ]
     },
