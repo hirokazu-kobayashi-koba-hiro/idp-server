@@ -715,6 +715,39 @@ const sidebars = {
               items: [
                 "content_11_learning/frameworks/building-frameworks"
               ]
+            },
+            {
+              type: "category",
+              label: "コラム",
+              collapsed: true,
+              items: [
+                "content_11_learning/frameworks/column-reinventing-the-wheel",
+                "content_11_learning/frameworks/column-graduating-from-frameworks"
+              ]
+            }
+          ]
+        },
+        {
+          type: "category",
+          label: "SDK",
+          items: [
+            "content_11_learning/sdk/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/sdk/sdk-introduction",
+                "content_11_learning/sdk/sdk-design-principles"
+              ]
+            },
+            {
+              type: "category",
+              label: "実装",
+              collapsed: true,
+              items: [
+                "content_11_learning/sdk/sdk-implementation-patterns"
+              ]
             }
           ]
         }
