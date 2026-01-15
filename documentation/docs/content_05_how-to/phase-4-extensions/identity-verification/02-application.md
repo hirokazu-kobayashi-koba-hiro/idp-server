@@ -16,6 +16,11 @@
 - リクエスト/レスポンスのマッピング
 - verified_claimsの登録フロー
 
+✅ **プロセス制御**
+- プロセス依存関係の定義とシーケンス制御
+- リトライ制御による再実行ポリシー
+- process_sequence検証による実行順序の強制
+
 ### 所要時間
 ⏱️ **約30分**
 
@@ -288,6 +293,279 @@ flowchart TD
     Z --> L
 ```
 
+## プロセス依存関係とシーケンス制御
+
+身元確認申込みでは、複数のプロセスを順序立てて実行する必要がある場合があります。
+例えば、「申込み (apply) → CRM登録 (crm-registration) → eKYC実施 (request-ekyc)」のように、前のプロセスが完了しないと次のプロセスを実行できない要件に対応できます。
+
+### 主な機能
+
+- **プロセス依存関係の定義**: 前提となるプロセスの完了を必須化
+- **リトライ制御**: プロセスごとに再実行の可否を設定
+- **自動検証**: `process_sequence` 検証タイプによる実行順序の強制
+
+### dependencies フィールド
+
+各プロセスに `dependencies` フィールドを追加することで、実行順序を制御できます。
+
+**設定項目**:
+
+| フィールド | 型 | 説明 | 必須 |
+|---------|---|------|-----|
+| `required_processes` | string[] | このプロセスを実行する前に完了が必要なプロセス名のリスト | - |
+| `allow_retry` | boolean | プロセスの再実行を許可するか (`true`: 許可, `false`: 不可) | ✅ |
+
+**設定例**:
+
+```json
+{
+  "processes": {
+    "apply": {
+      "dependencies": {
+        "required_processes": [],
+        "allow_retry": false
+      }
+    },
+    "crm-registration": {
+      "dependencies": {
+        "required_processes": ["apply"],
+        "allow_retry": false
+      }
+    },
+    "request-ekyc": {
+      "dependencies": {
+        "required_processes": ["crm-registration"],
+        "allow_retry": true
+      }
+    }
+  }
+}
+```
+
+### process_sequence 検証タイプ
+
+依存関係を強制するために、`pre_hook` の `verifications` に `process_sequence` タイプを追加します。
+
+**設定例**:
+
+```json
+{
+  "pre_hook": {
+    "verifications": [
+      {
+        "type": "process_sequence"
+      }
+    ]
+  }
+}
+```
+
+**検証内容**:
+
+1. **依存プロセスの完了チェック**: `required_processes` に指定されたプロセスがすべて正常完了しているか
+2. **リトライ制御**: `allow_retry: false` のプロセスが既に実行済みの場合、再実行を拒否
+
+**エラーレスポンス**:
+
+依存関係違反またはリトライ禁止違反の場合、以下のエラーが返されます:
+
+```json
+{
+  "error": "pre_hook_validation_failed",
+  "error_messages": [
+    "Process 'crm-registration' requires completion of: apply"
+  ]
+}
+```
+
+または
+
+```json
+{
+  "error": "pre_hook_validation_failed",
+  "error_messages": [
+    "Process 'apply' does not allow retry and has already been executed"
+  ]
+}
+```
+
+### 実行フロー例
+
+**シナリオ**: 証券口座開設における3段階プロセス
+
+1. **apply** (基本情報入力) - 依存なし、リトライ不可
+2. **crm-registration** (CRM登録) - `apply` 完了が必須、リトライ不可
+3. **request-ekyc** (eKYC実施) - `crm-registration` 完了が必須、リトライ可
+
+**正常な実行順序**:
+
+```
+1. POST /{tenant-id}/v1/me/identity-verification/applications/account-opening/apply
+   → 成功 (application_id: "abc-123" を取得)
+
+2. POST /{tenant-id}/v1/me/identity-verification/applications/account-opening/abc-123/crm-registration
+   → 成功
+
+3. POST /{tenant-id}/v1/me/identity-verification/applications/account-opening/abc-123/request-ekyc
+   → 成功
+
+4. POST /{tenant-id}/v1/me/identity-verification/applications/account-opening/abc-123/request-ekyc
+   → 成功 (allow_retry: true のため再実行可能)
+```
+
+**エラーケース**:
+
+```
+1. POST /{tenant-id}/v1/me/identity-verification/applications/account-opening/crm-registration
+   → 400 Bad Request
+   → "Process 'crm-registration' requires completion of: apply"
+
+2. apply実行後、再度 apply を実行
+   → 400 Bad Request
+   → "Process 'apply' does not allow retry and has already been executed"
+```
+
+### ユースケース
+
+| ユースケース | 設定 |
+|------------|------|
+| **線形フロー** | apply → ekyc → callback という順序を強制したい場合 |
+| **ワンタイム処理** | 基本情報入力は一度だけ実行させたい (`allow_retry: false`) |
+| **リトライ可能処理** | 本人確認書類の撮影失敗時に再実行を許可 (`allow_retry: true`) |
+| **複数依存** | プロセスDが「プロセスA」「プロセスB」「プロセスC」すべての完了を必要とする |
+
+### 完全な設定例
+
+```json
+{
+  "id": "uuid-here",
+  "type": "account-opening",
+  "processes": {
+    "apply": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "given_name": { "type": "string" },
+            "family_name": { "type": "string" }
+          },
+          "required": ["given_name", "family_name"]
+        }
+      },
+      "pre_hook": {
+        "verifications": [
+          {
+            "type": "process_sequence"
+          }
+        ]
+      },
+      "execution": {
+        "type": "no_action"
+      },
+      "dependencies": {
+        "required_processes": [],
+        "allow_retry": false
+      },
+      "transition": {
+        "applied": {
+          "any_of": [[
+            { "path": "$.request_body", "type": "object", "operation": "exists" }
+          ]]
+        }
+      },
+      "store": {
+        "application_details_mapping_rules": [
+          { "from": "$.request_body", "to": "*" }
+        ]
+      }
+    },
+    "crm-registration": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "crm_id": { "type": "string" }
+          },
+          "required": ["crm_id"]
+        }
+      },
+      "pre_hook": {
+        "verifications": [
+          {
+            "type": "process_sequence"
+          }
+        ]
+      },
+      "execution": {
+        "type": "no_action"
+      },
+      "dependencies": {
+        "required_processes": ["apply"],
+        "allow_retry": false
+      },
+      "transition": {
+        "applied": {
+          "any_of": [[
+            { "path": "$.request_body", "type": "object", "operation": "exists" }
+          ]]
+        }
+      },
+      "store": {
+        "application_details_mapping_rules": [
+          { "from": "$.request_body", "to": "crm_data" }
+        ]
+      }
+    },
+    "request-ekyc": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "ekyc_provider": { "type": "string" }
+          },
+          "required": ["ekyc_provider"]
+        }
+      },
+      "pre_hook": {
+        "verifications": [
+          {
+            "type": "process_sequence"
+          }
+        ]
+      },
+      "execution": {
+        "type": "no_action"
+      },
+      "dependencies": {
+        "required_processes": ["crm-registration"],
+        "allow_retry": true
+      },
+      "transition": {
+        "applied": {
+          "any_of": [[
+            { "path": "$.request_body", "type": "object", "operation": "exists" }
+          ]]
+        }
+      },
+      "store": {
+        "application_details_mapping_rules": [
+          { "from": "$.request_body", "to": "ekyc_data" }
+        ]
+      }
+    }
+  }
+}
+```
+
+### 注意事項
+
+1. **循環依存の禁止**: プロセスA → プロセスB → プロセスA のような循環依存は設定しないでください
+2. **依存チェーンの検証**: 依存関係が正しく設定されているか、設定後にテストしてください
+3. **リトライポリシーの設計**: ビジネス要件に応じて `allow_retry` を適切に設定してください
+4. **エラーハンドリング**: クライアント側で依存関係エラーを適切に処理し、ユーザーに案内してください
+
+---
+
 ## 各フェーズの詳細設定
 
 ### 1. Request フェーズ
@@ -417,12 +695,13 @@ flowchart TD
 
 **type 一覧**
 
-| type                          | 概要                     |
-|-------------------------------|------------------------|
-| `user_claim`                  | リクエスト内容とユーザークレームの一致確認。 |
-| `application_limitation` （予定） | 申込み可能数チェック。            |
-| `duplicate_application` （予定）  | 過去の申請と重複がないかをチェック。     |
-| `http_request`（予定）            | 外部APIと連携して検証を行う。       |
+| type                          | 概要                                            |
+|-------------------------------|-------------------------------------------------|
+| `process_sequence`            | プロセス依存関係とリトライ制御の検証。詳細は「プロセス依存関係とシーケンス制御」セクション参照。 |
+| `user_claim`                  | リクエスト内容とユーザークレームの一致確認。                        |
+| `application_limitation` （予定） | 申込み可能数チェック。                                   |
+| `duplicate_application` （予定）  | 過去の申請と重複がないかをチェック。                            |
+| `http_request`（予定）            | 外部APIと連携して検証を行う。                              |
 
 **user_claim の詳細構造**
 
