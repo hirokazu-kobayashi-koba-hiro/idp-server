@@ -684,6 +684,39 @@ const sidebars = {
               ]
             }
           ]
+        },
+        {
+          type: "category",
+          label: "フレームワーク",
+          items: [
+            "content_11_learning/frameworks/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/frameworks/framework-introduction",
+                "content_11_learning/frameworks/ioc-and-di"
+              ]
+            },
+            {
+              type: "category",
+              label: "設計",
+              collapsed: true,
+              items: [
+                "content_11_learning/frameworks/design-principles",
+                "content_11_learning/frameworks/architecture-patterns"
+              ]
+            },
+            {
+              type: "category",
+              label: "実践",
+              collapsed: true,
+              items: [
+                "content_11_learning/frameworks/building-frameworks"
+              ]
+            }
+          ]
         }
       ]
     },
