@@ -750,6 +750,43 @@ const sidebars = {
               ]
             }
           ]
+        },
+        {
+          type: "category",
+          label: "クリーンアーキテクチャ",
+          items: [
+            "content_11_learning/clean-architecture/README",
+            {
+              type: "category",
+              label: "本質",
+              collapsed: true,
+              items: [
+                "content_11_learning/clean-architecture/why-clean-architecture",
+                "content_11_learning/clean-architecture/dependency-rule",
+                "content_11_learning/clean-architecture/boundaries",
+                "content_11_learning/clean-architecture/architecture-variations"
+              ]
+            },
+            {
+              type: "category",
+              label: "実践",
+              collapsed: true,
+              items: [
+                "content_11_learning/clean-architecture/plugin-architecture",
+                "content_11_learning/clean-architecture/dependency-composition",
+                "content_11_learning/clean-architecture/plugin-system"
+              ]
+            },
+            {
+              type: "category",
+              label: "コラム",
+              collapsed: true,
+              items: [
+                "content_11_learning/clean-architecture/column-over-engineering",
+                "content_11_learning/clean-architecture/column-trade-offs"
+              ]
+            }
+          ]
         }
       ]
     },
