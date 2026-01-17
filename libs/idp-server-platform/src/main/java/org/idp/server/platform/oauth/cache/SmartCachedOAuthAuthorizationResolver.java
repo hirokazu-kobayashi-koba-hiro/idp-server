@@ -16,17 +16,14 @@
 
 package org.idp.server.platform.oauth.cache;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Optional;
 import org.idp.server.platform.datasource.cache.CacheStore;
-import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpNetworkErrorException;
 import org.idp.server.platform.http.HttpQueryParams;
+import org.idp.server.platform.http.SsrfProtectedHttpClient;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -39,7 +36,7 @@ public class SmartCachedOAuthAuthorizationResolver implements OAuthAuthorization
   private final CacheStore cacheStore;
   private final int bufferSeconds;
   private final int defaultTtlSeconds;
-  private final HttpClient httpClient;
+  private final SsrfProtectedHttpClient ssrfProtectedHttpClient;
   private final JsonConverter jsonConverter;
   private final LoggerWrapper log =
       LoggerWrapper.getLogger(SmartCachedOAuthAuthorizationResolver.class);
@@ -48,12 +45,13 @@ public class SmartCachedOAuthAuthorizationResolver implements OAuthAuthorization
       OAuthAuthorizationResolver delegate,
       CacheStore cacheStore,
       int bufferSeconds,
-      int defaultTtlSeconds) {
+      int defaultTtlSeconds,
+      SsrfProtectedHttpClient ssrfProtectedHttpClient) {
     this.delegate = delegate;
     this.cacheStore = cacheStore;
     this.bufferSeconds = bufferSeconds;
     this.defaultTtlSeconds = defaultTtlSeconds;
-    this.httpClient = HttpClientFactory.defaultClient();
+    this.ssrfProtectedHttpClient = ssrfProtectedHttpClient;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
@@ -116,14 +114,12 @@ public class SmartCachedOAuthAuthorizationResolver implements OAuthAuthorization
     }
   }
 
-  private OAuthTokenResponse executeTokenRequest(OAuthAuthorizationConfiguration config)
-      throws IOException, InterruptedException, URISyntaxException {
-
+  private OAuthTokenResponse executeTokenRequest(OAuthAuthorizationConfiguration config) {
     HttpQueryParams httpQueryParams = new HttpQueryParams(config.toRequestValues());
 
     HttpRequest.Builder builder =
         HttpRequest.newBuilder()
-            .uri(new URI(config.tokenEndpoint()))
+            .uri(URI.create(config.tokenEndpoint()))
             .header("Content-Type", "application/x-www-form-urlencoded")
             .header("Accept", "application/json")
             .POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
@@ -136,19 +132,17 @@ public class SmartCachedOAuthAuthorizationResolver implements OAuthAuthorization
 
     log.debug("Executing token request to: {}", config.tokenEndpoint());
 
-    HttpResponse<String> httpResponse =
-        httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-    String body = httpResponse.body();
+    HttpResponse<String> response = ssrfProtectedHttpClient.send(request);
 
-    log.debug("Token response status: {}", httpResponse.statusCode());
+    log.debug("Token response status: {}", response.statusCode());
 
-    if (httpResponse.statusCode() != 200) {
+    if (response.statusCode() >= 400) {
       throw new HttpNetworkErrorException(
-          "Token endpoint returned non-200 status: " + httpResponse.statusCode(),
-          new RuntimeException("HTTP status: " + httpResponse.statusCode()));
+          "Token endpoint returned non-200 status: " + response.statusCode(),
+          new RuntimeException("HTTP status: " + response.statusCode()));
     }
 
-    JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(body);
+    JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(response.body());
 
     OAuthTokenResponse tokenResponse = new OAuthTokenResponse();
     tokenResponse.setAccessToken(jsonNodeWrapper.getValueOrEmptyAsString("access_token"));

@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.http.SsrfProtectedHttpClient;
 import org.idp.server.platform.oauth.cache.SmartCachedOAuthAuthorizationResolver;
 
 public class OAuthAuthorizationResolvers {
@@ -28,45 +29,37 @@ public class OAuthAuthorizationResolvers {
   private final CacheStore cacheStore;
   private final int bufferSeconds;
   private final int defaultTtlSeconds;
-
-  public OAuthAuthorizationResolvers() {
-    this(null, 30, 3600);
-  }
-
-  public OAuthAuthorizationResolvers(Map<String, OAuthAuthorizationResolver> additionalResolvers) {
-    this(null, 30, 3600);
-    this.resolvers.putAll(additionalResolvers);
-  }
+  private final SsrfProtectedHttpClient ssrfProtectedHttpClient;
 
   public OAuthAuthorizationResolvers(
-      CacheStore cacheStore, int bufferSeconds, int defaultTtlSeconds) {
+      CacheStore cacheStore,
+      int bufferSeconds,
+      int defaultTtlSeconds,
+      SsrfProtectedHttpClient ssrfProtectedHttpClient) {
     this.cacheStore = cacheStore;
     this.bufferSeconds = bufferSeconds;
     this.defaultTtlSeconds = defaultTtlSeconds;
-    defaultResolvers();
-  }
-
-  @Deprecated
-  public OAuthAuthorizationResolvers(
-      CacheStore cacheStore, boolean cacheEnabled, int bufferSeconds, int defaultTtlSeconds) {
-    this.cacheStore = cacheStore;
-    this.bufferSeconds = bufferSeconds;
-    this.defaultTtlSeconds = defaultTtlSeconds;
+    this.ssrfProtectedHttpClient = ssrfProtectedHttpClient;
     defaultResolvers();
   }
 
   private void defaultResolvers() {
-    OAuthAuthorizationResolver clientCredentials = new ClientCredentialsAuthorizationResolver();
+    OAuthAuthorizationResolver clientCredentials =
+        new ClientCredentialsAuthorizationResolver(ssrfProtectedHttpClient);
     OAuthAuthorizationResolver password =
-        new ResourceOwnerPasswordCredentialsAuthorizationResolver();
+        new ResourceOwnerPasswordCredentialsAuthorizationResolver(ssrfProtectedHttpClient);
 
     if (cacheStore != null) {
       clientCredentials =
           new SmartCachedOAuthAuthorizationResolver(
-              clientCredentials, cacheStore, bufferSeconds, defaultTtlSeconds);
+              clientCredentials,
+              cacheStore,
+              bufferSeconds,
+              defaultTtlSeconds,
+              ssrfProtectedHttpClient);
       password =
           new SmartCachedOAuthAuthorizationResolver(
-              password, cacheStore, bufferSeconds, defaultTtlSeconds);
+              password, cacheStore, bufferSeconds, defaultTtlSeconds, ssrfProtectedHttpClient);
     }
 
     resolvers.put(clientCredentials.type(), clientCredentials);

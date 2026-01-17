@@ -229,15 +229,21 @@ public class HttpResponseResolver {
    * @return HTTP status code representing the exception type
    */
   private static int mapExceptionToStatusCode(Exception e) {
-    if (e instanceof java.net.ConnectException) {
+    // For HttpNetworkErrorException, check the cause for proper status code mapping
+    Throwable exceptionToCheck = e;
+    if (e instanceof HttpNetworkErrorException && e.getCause() != null) {
+      exceptionToCheck = e.getCause();
+    }
+
+    if (exceptionToCheck instanceof java.net.ConnectException) {
       return 503; // Service Unavailable
-    } else if (e instanceof java.net.SocketTimeoutException) {
+    } else if (exceptionToCheck instanceof java.net.SocketTimeoutException) {
       return 504; // Gateway Timeout
-    } else if (e instanceof java.net.http.HttpTimeoutException) {
+    } else if (exceptionToCheck instanceof java.net.http.HttpTimeoutException) {
       return 504; // Gateway Timeout
-    } else if (e instanceof InterruptedException) {
+    } else if (exceptionToCheck instanceof InterruptedException) {
       return 503; // Service Unavailable
-    } else if (e instanceof IOException) {
+    } else if (exceptionToCheck instanceof IOException) {
       return 502; // Bad Gateway
     } else {
       return 500; // Internal Server Error

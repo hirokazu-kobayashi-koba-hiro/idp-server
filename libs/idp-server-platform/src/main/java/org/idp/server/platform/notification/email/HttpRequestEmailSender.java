@@ -18,13 +18,11 @@ package org.idp.server.platform.notification.email;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpRequestBaseParams;
 import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
-import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
 
 public class HttpRequestEmailSender implements EmailSender {
 
@@ -41,20 +39,6 @@ public class HttpRequestEmailSender implements EmailSender {
   public HttpRequestEmailSender(HttpRequestExecutor httpRequestExecutor) {
     this.httpRequestExecutor = httpRequestExecutor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
-  }
-
-  /**
-   * Default constructor for legacy SPI compatibility.
-   *
-   * @deprecated Use {@link HttpRequestEmailSenderFactory} for proper DI and OAuth caching support.
-   *     This constructor creates OAuthAuthorizationResolvers without caching capability.
-   */
-  @Deprecated
-  public HttpRequestEmailSender() {
-    this(
-        new HttpRequestExecutor(
-            HttpClientFactory.defaultClient(),
-            new OAuthAuthorizationResolvers())); // No caching - legacy mode
   }
 
   @Override

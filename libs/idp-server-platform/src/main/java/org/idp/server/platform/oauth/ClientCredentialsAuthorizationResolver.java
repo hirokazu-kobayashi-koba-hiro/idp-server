@@ -16,27 +16,24 @@
 
 package org.idp.server.platform.oauth;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpNetworkErrorException;
 import org.idp.server.platform.http.HttpQueryParams;
+import org.idp.server.platform.http.SsrfProtectedHttpClient;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 
 public class ClientCredentialsAuthorizationResolver implements OAuthAuthorizationResolver {
 
-  HttpClient httpClient;
+  SsrfProtectedHttpClient ssrfProtectedHttpClient;
   JsonConverter jsonConverter;
   LoggerWrapper log = LoggerWrapper.getLogger(ClientCredentialsAuthorizationResolver.class);
 
-  public ClientCredentialsAuthorizationResolver() {
-    this.httpClient = HttpClientFactory.defaultClient();
+  public ClientCredentialsAuthorizationResolver(SsrfProtectedHttpClient ssrfProtectedHttpClient) {
+    this.ssrfProtectedHttpClient = ssrfProtectedHttpClient;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
@@ -47,43 +44,39 @@ public class ClientCredentialsAuthorizationResolver implements OAuthAuthorizatio
 
   @Override
   public String resolve(OAuthAuthorizationConfiguration config) {
-    try {
+    HttpQueryParams httpQueryParams = new HttpQueryParams(config.toRequestValues());
 
-      HttpQueryParams httpQueryParams = new HttpQueryParams(config.toRequestValues());
+    HttpRequest.Builder builder =
+        HttpRequest.newBuilder()
+            .uri(URI.create(config.tokenEndpoint()))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .header("Accept", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
 
-      HttpRequest.Builder builder =
-          HttpRequest.newBuilder()
-              .uri(new URI(config.tokenEndpoint()))
-              .header("Content-Type", "application/x-www-form-urlencoded")
-              .header("Accept", "application/json")
-              .POST(HttpRequest.BodyPublishers.ofString(httpQueryParams.params()));
-
-      if (config.isClientSecretBasic()) {
-        builder.header("Authorization", config.basicAuthenticationValue());
-      }
-
-      HttpRequest request = builder.build();
-
-      log.debug("Request headers: {}", request.headers());
-      if (request.bodyPublisher().isPresent()) {
-        log.debug("Request body: {}", request.bodyPublisher().get());
-      }
-
-      HttpResponse<String> httpResponse =
-          httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-      String body = httpResponse.body();
-
-      log.debug("Response status: {}", httpResponse.statusCode());
-      log.debug("Response body: {}", httpResponse.body());
-
-      JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(body);
-
-      String accessToken = jsonNodeWrapper.getValueOrEmptyAsString("access_token");
-
-      return accessToken;
-    } catch (IOException | InterruptedException | URISyntaxException e) {
-      log.error(e.getMessage(), e);
-      throw new HttpNetworkErrorException("unexpected network error", e);
+    if (config.isClientSecretBasic()) {
+      builder.header("Authorization", config.basicAuthenticationValue());
     }
+
+    HttpRequest request = builder.build();
+
+    log.debug("Request headers: {}", request.headers());
+
+    HttpResponse<String> response = ssrfProtectedHttpClient.send(request);
+
+    log.debug("Response status: {}", response.statusCode());
+    log.debug("Response body: {}", response.body());
+
+    if (response.statusCode() >= 400 && response.statusCode() < 500) {
+      throw new HttpNetworkErrorException(
+          "Token request failed: " + response.statusCode(), new RuntimeException(response.body()));
+    }
+
+    if (response.statusCode() >= 500) {
+      throw new HttpNetworkErrorException(
+          "Token request failed: " + response.statusCode(), new RuntimeException(response.body()));
+    }
+
+    JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(response.body());
+    return jsonNodeWrapper.getValueOrEmptyAsString("access_token");
   }
 }

@@ -22,33 +22,23 @@ import java.time.Duration;
 public class HttpClientFactory {
 
   /**
-   * Creates a default HTTP client optimized for external service communication.
+   * Creates a default HTTP client optimized for external service communication with SSRF
+   * protection.
    *
-   * <h3>HTTP/2 Configuration</h3>
+   * <h3>HTTP Version</h3>
    *
-   * <p>The client is configured to prefer HTTP/2 but provides automatic fallback:
+   * <p>The client is configured to use HTTP/1.1 for maximum compatibility.
    *
-   * <ul>
-   *   <li><strong>HTTP/2 servers:</strong> Uses multiplexing, HPACK header compression, and binary
-   *       protocol for optimal performance
-   *   <li><strong>HTTP/1.1-only servers:</strong> Automatically falls back to HTTP/1.1 without
-   *       errors
-   *   <li><strong>Legacy servers:</strong> Graceful degradation ensures compatibility with older
-   *       systems
-   * </ul>
+   * <h3>Redirect Behavior (SSRF Protection)</h3>
    *
-   * <h3>Redirect Behavior</h3>
-   *
-   * <p>Configured with {@code Redirect.NORMAL} policy:
+   * <p>Configured with {@code Redirect.NEVER} policy for SSRF protection:
    *
    * <ul>
-   *   <li><strong>3xx redirects:</strong> Automatically follows standard redirects (301, 302, 303,
-   *       307, 308)
-   *   <li><strong>Cross-protocol:</strong> Allows HTTPS → HTTP redirects (with security
-   *       implications)
-   *   <li><strong>Method preservation:</strong> GET/HEAD methods maintained, POST may become GET on
-   *       303
-   *   <li><strong>Redirect loops:</strong> Built-in protection against infinite redirects
+   *   <li><strong>Security:</strong> Prevents redirect-based SSRF attacks where an external URL
+   *       redirects to internal resources (e.g., 169.254.169.254, localhost)
+   *   <li><strong>Manual handling:</strong> Applications must explicitly handle redirects by
+   *       checking the Location header and re-validating the redirect URL through SSRF protection
+   *   <li><strong>Transparency:</strong> All redirect decisions are visible to application code
    * </ul>
    *
    * <h3>Timeout Configuration</h3>
@@ -74,13 +64,13 @@ public class HttpClientFactory {
    * </ul>
    *
    * @return configured HTTP client instance
-   * @see java.net.http.HttpClient.Version#HTTP_2
-   * @see java.net.http.HttpClient.Redirect#NORMAL
+   * @see java.net.http.HttpClient.Version#HTTP_1_1
+   * @see java.net.http.HttpClient.Redirect#NEVER
    */
   public static HttpClient defaultClient() {
     return HttpClient.newBuilder()
         .version(HttpClient.Version.HTTP_1_1)
-        .followRedirects(HttpClient.Redirect.NORMAL)
+        .followRedirects(HttpClient.Redirect.NEVER)
         .connectTimeout(Duration.ofSeconds(20))
         .build();
   }
