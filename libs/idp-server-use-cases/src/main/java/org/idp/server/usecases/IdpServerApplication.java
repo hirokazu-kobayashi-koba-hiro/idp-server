@@ -154,6 +154,7 @@ import org.idp.server.platform.dependency.protocol.ProtocolContainer;
 import org.idp.server.platform.health.HealthCheckApi;
 import org.idp.server.platform.http.HttpClientFactory;
 import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.http.SsrfProtectedHttpClient;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationTenantResolverApi;
 import org.idp.server.platform.multi_tenancy.tenant.*;
@@ -240,7 +241,6 @@ public class IdpServerApplication {
   RoleManagementApi roleManagementApi;
   UserAuthenticationApi userAuthenticationApi;
   SystemConfigurationManagementApi systemConfigurationManagementApi;
-  SystemConfigurationResolver systemConfigurationResolver;
   SystemConfigurationApi systemConfigurationApi;
 
   AdminUserAuthenticationApi adminUserAuthenticationApi;
@@ -301,9 +301,6 @@ public class IdpServerApplication {
     applicationComponentContainer.register(SessionCookieDelegate.class, sessionCookieDelegate);
     applicationComponentContainer.register(
         AuthSessionCookieDelegate.class, authSessionCookieDelegate);
-    OAuthAuthorizationResolvers oAuthAuthorizationResolvers =
-        applicationComponentContainer.resolve(OAuthAuthorizationResolvers.class);
-    dependencyContainer.register(OAuthAuthorizationResolvers.class, oAuthAuthorizationResolvers);
 
     AuthorizationServerConfigurationCommandRepository
         authorizationServerConfigurationCommandRepository =
@@ -438,17 +435,26 @@ public class IdpServerApplication {
     // System configuration resolver for SSRF protection and trusted proxy settings
     SystemConfigurationRepository systemConfigurationRepository =
         applicationComponentContainer.resolve(SystemConfigurationRepository.class);
-    this.systemConfigurationResolver =
+    SystemConfigurationResolver systemConfigurationResolver =
         new CachedSystemConfigurationResolver(systemConfigurationRepository, cacheStore);
     applicationComponentContainer.register(
-        SystemConfigurationResolver.class, this.systemConfigurationResolver);
-    dependencyContainer.register(
-        SystemConfigurationResolver.class, this.systemConfigurationResolver);
+        SystemConfigurationResolver.class, systemConfigurationResolver);
+    dependencyContainer.register(SystemConfigurationResolver.class, systemConfigurationResolver);
 
     HttpClient httpClient = HttpClientFactory.defaultClient();
+    SsrfProtectedHttpClient ssrfProtectedHttpClient =
+        new SsrfProtectedHttpClient(httpClient, systemConfigurationResolver);
+    applicationComponentContainer.register(SsrfProtectedHttpClient.class, ssrfProtectedHttpClient);
+    dependencyContainer.register(SsrfProtectedHttpClient.class, ssrfProtectedHttpClient);
+
+    OAuthAuthorizationResolvers oAuthAuthorizationResolvers =
+        new OAuthAuthorizationResolvers(cacheStore, 60, 3600, ssrfProtectedHttpClient);
+    applicationComponentContainer.register(
+        OAuthAuthorizationResolvers.class, oAuthAuthorizationResolvers);
+    dependencyContainer.register(OAuthAuthorizationResolvers.class, oAuthAuthorizationResolvers);
+
     HttpRequestExecutor httpRequestExecutor =
-        new HttpRequestExecutor(
-            httpClient, oAuthAuthorizationResolvers, this.systemConfigurationResolver);
+        new HttpRequestExecutor(ssrfProtectedHttpClient, oAuthAuthorizationResolvers);
     applicationComponentContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
     dependencyContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
 
@@ -740,7 +746,7 @@ public class IdpServerApplication {
 
     this.systemConfigurationApi =
         ManagementTypeEntryServiceProxy.createProxy(
-            new SystemConfigurationEntryService(this.systemConfigurationResolver),
+            new SystemConfigurationEntryService(systemConfigurationResolver),
             SystemConfigurationApi.class,
             databaseTypeProvider);
 
@@ -1389,10 +1395,6 @@ public class IdpServerApplication {
 
   public SystemConfigurationManagementApi systemConfigurationManagementApi() {
     return systemConfigurationManagementApi;
-  }
-
-  public SystemConfigurationResolver systemConfigurationResolver() {
-    return systemConfigurationResolver;
   }
 
   public SystemConfigurationApi systemConfigurationApi() {

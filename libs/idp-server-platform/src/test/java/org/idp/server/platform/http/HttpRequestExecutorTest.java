@@ -34,6 +34,9 @@ import java.util.Map;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
+import org.idp.server.platform.system.SystemConfiguration;
+import org.idp.server.platform.system.SystemConfigurationResolver;
+import org.idp.server.platform.system.config.SsrfProtectionConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,13 +49,21 @@ public class HttpRequestExecutorTest {
   @Mock private HttpClient httpClient;
   @Mock private OAuthAuthorizationResolvers oAuthAuthorizationResolvers;
   @Mock private HttpResponse<String> httpResponse;
+  @Mock private SystemConfigurationResolver systemConfigurationResolver;
+  @Mock private SystemConfiguration systemConfiguration;
 
+  private SsrfProtectedHttpClient ssrfProtectedHttpClient;
   private HttpRequestExecutor executor;
   private HttpRequest testRequest;
 
   @BeforeEach
   void setUp() {
-    executor = new HttpRequestExecutor(httpClient, oAuthAuthorizationResolvers);
+    // Configure mock to return disabled SSRF protection for testing
+    when(systemConfigurationResolver.resolve()).thenReturn(systemConfiguration);
+    when(systemConfiguration.ssrf()).thenReturn(SsrfProtectionConfig.disabled());
+
+    ssrfProtectedHttpClient = new SsrfProtectedHttpClient(httpClient, systemConfigurationResolver);
+    executor = new HttpRequestExecutor(ssrfProtectedHttpClient, oAuthAuthorizationResolvers);
     testRequest = HttpRequest.newBuilder().uri(URI.create("https://example.com/api")).GET().build();
   }
 

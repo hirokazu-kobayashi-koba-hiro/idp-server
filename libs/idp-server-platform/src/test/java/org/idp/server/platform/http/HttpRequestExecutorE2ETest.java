@@ -29,6 +29,9 @@ import java.net.http.HttpRequest;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolvers;
+import org.idp.server.platform.system.SystemConfiguration;
+import org.idp.server.platform.system.SystemConfigurationResolver;
+import org.idp.server.platform.system.config.SsrfProtectionConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,6 +62,8 @@ class HttpRequestExecutorE2ETest {
   private HttpRequestExecutor executor;
   private HttpClient httpClient;
   private String baseUrl;
+  private SystemConfigurationResolver systemConfigurationResolver;
+  private SsrfProtectedHttpClient ssrfProtectedHttpClient;
 
   @BeforeEach
   void setUp() {
@@ -73,7 +78,14 @@ class HttpRequestExecutorE2ETest {
     // Mock OAuth resolvers for testing
     OAuthAuthorizationResolvers mockOAuthResolvers = mock(OAuthAuthorizationResolvers.class);
 
-    executor = new HttpRequestExecutor(httpClient, mockOAuthResolvers);
+    // Mock SystemConfigurationResolver with disabled SSRF protection for testing
+    systemConfigurationResolver = mock(SystemConfigurationResolver.class);
+    SystemConfiguration mockConfig = mock(SystemConfiguration.class);
+    when(systemConfigurationResolver.resolve()).thenReturn(mockConfig);
+    when(mockConfig.ssrf()).thenReturn(SsrfProtectionConfig.disabled());
+
+    ssrfProtectedHttpClient = new SsrfProtectedHttpClient(httpClient, systemConfigurationResolver);
+    executor = new HttpRequestExecutor(ssrfProtectedHttpClient, mockOAuthResolvers);
   }
 
   @AfterEach
@@ -241,8 +253,10 @@ class HttpRequestExecutorE2ETest {
     HttpClient shortTimeoutClient =
         HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).build();
 
+    SsrfProtectedHttpClient shortTimeoutSsrfClient =
+        new SsrfProtectedHttpClient(shortTimeoutClient, systemConfigurationResolver);
     HttpRequestExecutor timeoutExecutor =
-        new HttpRequestExecutor(shortTimeoutClient, mock(OAuthAuthorizationResolvers.class));
+        new HttpRequestExecutor(shortTimeoutSsrfClient, mock(OAuthAuthorizationResolvers.class));
 
     HttpRequest timeoutRequest =
         HttpRequest.newBuilder()

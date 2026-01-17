@@ -44,7 +44,11 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
   LoggerWrapper log = LoggerWrapper.getLogger(ApnsNotifier.class);
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
   Map<String, JwtTokenCache> jwtTokenCache = new ConcurrentHashMap<>();
-  HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
+  HttpClient httpClient =
+      HttpClient.newBuilder()
+          .version(HttpClient.Version.HTTP_2)
+          .followRedirects(HttpClient.Redirect.NEVER)
+          .build();
   JsonWebSignatureFactory jwsFactory = new JsonWebSignatureFactory();
 
   private static final String PRODUCTION_URL = "https://api.push.apple.com";
