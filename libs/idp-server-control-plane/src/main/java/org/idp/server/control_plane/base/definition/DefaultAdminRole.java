@@ -24,7 +24,9 @@ import org.idp.server.core.openid.identity.role.Roles;
 
 public enum DefaultAdminRole {
   ADMINISTRATOR(
-      "administrator", "administrator has all permissions", DefaultAdminPermission.getAll());
+      "administrator",
+      "Administrator with full control plane access via wildcard permission",
+      DefaultAdminPermission.getWildcard());
 
   private final String name;
   private final String description;
