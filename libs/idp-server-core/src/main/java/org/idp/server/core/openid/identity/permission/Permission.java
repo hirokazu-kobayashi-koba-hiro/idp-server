@@ -65,6 +65,42 @@ public class Permission implements Serializable, UuidConvertable {
     return this.name.equals(permission.name());
   }
 
+  /**
+   * Checks if this permission matches the required permission using wildcard matching.
+   *
+   * <p>Supports patterns like:
+   *
+   * <ul>
+   *   <li>{@code *} - matches all permissions
+   *   <li>{@code idp:*} - matches all control plane permissions
+   *   <li>{@code idp:user:*} - matches all user management permissions
+   * </ul>
+   *
+   * @param requiredPermission the permission required for the operation
+   * @return true if this permission covers the required permission
+   */
+  public boolean matchWithWildcard(Permission requiredPermission) {
+    if (!exists() || requiredPermission == null || !requiredPermission.exists()) {
+      return false;
+    }
+
+    return PermissionMatcher.matches(this.name, requiredPermission.name());
+  }
+
+  /**
+   * Checks if this permission matches the required permission name using wildcard matching.
+   *
+   * @param requiredPermissionName the permission name required for the operation
+   * @return true if this permission covers the required permission
+   */
+  public boolean matchWithWildcard(String requiredPermissionName) {
+    if (!exists() || requiredPermissionName == null || requiredPermissionName.isEmpty()) {
+      return false;
+    }
+
+    return PermissionMatcher.matches(this.name, requiredPermissionName);
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);

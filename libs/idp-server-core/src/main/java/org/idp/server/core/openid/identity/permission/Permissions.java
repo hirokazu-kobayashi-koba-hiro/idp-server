@@ -37,8 +37,16 @@ public class Permissions implements Iterable<Permission> {
     return values != null && !values.isEmpty();
   }
 
+  /**
+   * Checks if the collection contains the given permission, with backward compatibility.
+   *
+   * @param permission the permission to check
+   * @return true if contained
+   */
   public boolean contains(Permission permission) {
-    return values.stream().anyMatch(value -> value.match((permission)));
+    String normalizedTarget = PermissionMatcher.normalize(permission.name());
+    return values.stream()
+        .anyMatch(value -> PermissionMatcher.normalize(value.name()).equals(normalizedTarget));
   }
 
   @Override
@@ -46,9 +54,24 @@ public class Permissions implements Iterable<Permission> {
     return values.iterator();
   }
 
+  /**
+   * Filters permissions by name with backward compatibility.
+   *
+   * <p>Uses normalized comparison to support both legacy format (organization:create) and new
+   * format (idp:organization:create).
+   *
+   * @param permissionNames list of permission names to filter by
+   * @return filtered permissions
+   */
   public Permissions filterByName(List<String> permissionNames) {
+    List<String> normalizedNames =
+        permissionNames.stream().map(PermissionMatcher::normalize).toList();
     return new Permissions(
-        values.stream().filter(permission -> permissionNames.contains(permission.name())).toList());
+        values.stream()
+            .filter(
+                permission ->
+                    normalizedNames.contains(PermissionMatcher.normalize(permission.name())))
+            .toList());
   }
 
   public Permissions filterById(List<String> permissionIds) {
@@ -60,10 +83,20 @@ public class Permissions implements Iterable<Permission> {
     return values;
   }
 
+  /**
+   * Filters permissions that do NOT match the given names, with backward compatibility.
+   *
+   * @param permissionNames list of permission names to exclude
+   * @return filtered permissions
+   */
   public Permissions filterNoneMatch(List<String> permissionNames) {
+    List<String> normalizedNames =
+        permissionNames.stream().map(PermissionMatcher::normalize).toList();
     return new Permissions(
         values.stream()
-            .filter(permission -> !permissionNames.contains(permission.name()))
+            .filter(
+                permission ->
+                    !normalizedNames.contains(PermissionMatcher.normalize(permission.name())))
             .toList());
   }
 

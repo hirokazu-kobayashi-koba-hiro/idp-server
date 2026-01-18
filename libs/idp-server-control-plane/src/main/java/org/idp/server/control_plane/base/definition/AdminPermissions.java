@@ -18,6 +18,7 @@ package org.idp.server.control_plane.base.definition;
 
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.idp.server.core.openid.identity.permission.PermissionMatcher;
 
 public class AdminPermissions {
   Set<DefaultAdminPermission> values;
@@ -34,7 +35,21 @@ public class AdminPermissions {
     return values.stream().map(DefaultAdminPermission::value).collect(Collectors.joining(","));
   }
 
+  /**
+   * Checks if user permissions include all required permissions.
+   *
+   * <p>Supports wildcard matching where user permissions like:
+   *
+   * <ul>
+   *   <li>{@code *} - matches all permissions
+   *   <li>{@code idp:*} - matches all control plane permissions
+   *   <li>{@code idp:user:*} - matches all user management permissions
+   * </ul>
+   *
+   * @param userPermissions set of permissions the user has
+   * @return true if user has all required permissions (considering wildcards)
+   */
   public boolean includesAll(Set<String> userPermissions) {
-    return userPermissions.containsAll(valuesAsSetString());
+    return PermissionMatcher.matchesAll(userPermissions, valuesAsSetString());
   }
 }
