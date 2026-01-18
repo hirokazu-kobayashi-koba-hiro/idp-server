@@ -106,6 +106,7 @@ import org.idp.server.core.openid.identity.authentication.PasswordVerificationDe
 import org.idp.server.core.openid.identity.authentication.UserPasswordAuthenticator;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogApi;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogEventPublisher;
+import org.idp.server.core.openid.identity.device.credential.repository.DeviceCredentialQueryRepository;
 import org.idp.server.core.openid.identity.event.*;
 import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
@@ -137,6 +138,8 @@ import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
 import org.idp.server.core.openid.token.JwtBearerUserFinder;
 import org.idp.server.core.openid.token.JwtBearerUserFindingDelegate;
+import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
+import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
 import org.idp.server.core.openid.userinfo.UserinfoProtocol;
 import org.idp.server.core.openid.userinfo.UserinfoProtocols;
@@ -668,12 +671,19 @@ public class IdpServerApplication {
             AuthenticationMetaDataApi.class,
             databaseTypeProvider);
 
+    OAuthTokenQueryRepository oAuthTokenQueryRepository =
+        applicationComponentContainer.resolve(OAuthTokenQueryRepository.class);
+    DeviceCredentialQueryRepository deviceCredentialQueryRepository =
+        applicationComponentContainer.resolve(DeviceCredentialQueryRepository.class);
+
     this.authenticationTransactionApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuthenticationTransactionEntryService(
                 tenantQueryRepository,
                 authenticationTransactionCommandRepository,
-                authenticationTransactionQueryRepository),
+                authenticationTransactionQueryRepository,
+                oAuthTokenQueryRepository,
+                deviceCredentialQueryRepository),
             AuthenticationTransactionApi.class,
             databaseTypeProvider);
 

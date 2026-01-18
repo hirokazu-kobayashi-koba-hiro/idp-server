@@ -124,9 +124,11 @@ describe("Device Credential Use Case: JWT Bearer Grant with Device Credentials",
             device_credentials: [
               {
                 id: credentialId,
-                type: "symmetric",
-                secret_value: deviceSecret,
-                algorithm: "HS256"
+                type: "jwt_bearer_symmetric",
+                type_specific_data: {
+                  secret_value: deviceSecret,
+                  algorithm: "HS256"
+                }
               }
             ]
           }
@@ -400,9 +402,11 @@ describe("Device Credential Use Case: JWT Bearer Grant with Device Credentials",
             device_credentials: [
               {
                 id: credentialId,
-                type: "symmetric",
-                secret_value: deviceSecret,
-                algorithm: "HS256"
+                type: "jwt_bearer_symmetric",
+                type_specific_data: {
+                  secret_value: deviceSecret,
+                  algorithm: "HS256"
+                }
               }
             ]
           }

@@ -54,7 +54,12 @@ public class DeviceCredentials implements Iterable<DeviceCredential> {
   public Optional<DeviceCredential> findActiveCredentialByAlgorithm(String algorithm) {
     return values.stream()
         .filter(DeviceCredential::isActive)
-        .filter(credential -> credential.hasAlgorithm() && credential.algorithm().equals(algorithm))
+        .filter(DeviceCredential::isJwtBearer)
+        .filter(
+            credential -> {
+              JwtBearerCredentialData data = credential.jwtBearerData();
+              return data.hasAlgorithm() && data.algorithm().equals(algorithm);
+            })
         .findFirst();
   }
 

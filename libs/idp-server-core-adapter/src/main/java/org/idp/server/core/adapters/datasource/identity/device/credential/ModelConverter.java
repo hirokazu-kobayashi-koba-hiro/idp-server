@@ -33,47 +33,28 @@ public class ModelConverter {
     String id = result.get("id");
     String credentialType = result.get("credential_type");
     String typeSpecificDataJson = result.get("type_specific_data");
-    String createdAtStr = result.get("created_at");
-    String expiresAtStr = result.get("expires_at");
-    String revokedAtStr = result.get("revoked_at");
 
     DeviceCredentialIdentifier identifier = new DeviceCredentialIdentifier(id);
     DeviceCredentialType type = DeviceCredentialType.valueOf(credentialType);
 
-    // Parse type_specific_data JSONB
-    String secretValue = null;
-    String jwks = null;
-    String algorithm = null;
-    if (typeSpecificDataJson != null && !typeSpecificDataJson.isEmpty()) {
-      Map<String, Object> typeSpecificData = jsonConverter.read(typeSpecificDataJson, Map.class);
-      secretValue = (String) typeSpecificData.get("secret_value");
-      Object jwksObj = typeSpecificData.get("jwks");
-      if (jwksObj != null) {
-        if (jwksObj instanceof String) {
-          jwks = (String) jwksObj;
-        } else {
-          jwks = jsonConverter.write(jwksObj);
-        }
-      }
-      algorithm = (String) typeSpecificData.get("algorithm");
-    }
-
-    LocalDateTime createdAt = null;
-    if (createdAtStr != null && !createdAtStr.isEmpty()) {
-      createdAt = LocalDateTimeParser.parse(createdAtStr);
-    }
-
-    LocalDateTime expiresAt = null;
-    if (expiresAtStr != null && !expiresAtStr.isEmpty()) {
-      expiresAt = LocalDateTimeParser.parse(expiresAtStr);
-    }
-
-    LocalDateTime revokedAt = null;
-    if (revokedAtStr != null && !revokedAtStr.isEmpty()) {
-      revokedAt = LocalDateTimeParser.parse(revokedAtStr);
-    }
+    Map<String, Object> typeSpecificData =
+        (typeSpecificDataJson != null && !typeSpecificDataJson.isEmpty())
+            ? jsonConverter.read(typeSpecificDataJson, Map.class)
+            : Map.of();
 
     return new DeviceCredential(
-        identifier, type, secretValue, jwks, algorithm, createdAt, expiresAt, revokedAt);
+        identifier,
+        type,
+        typeSpecificData,
+        parseDateTime(result.get("created_at")),
+        parseDateTime(result.get("expires_at")),
+        parseDateTime(result.get("revoked_at")));
+  }
+
+  private static LocalDateTime parseDateTime(String value) {
+    if (value == null || value.isEmpty()) {
+      return null;
+    }
+    return LocalDateTimeParser.parse(value);
   }
 }

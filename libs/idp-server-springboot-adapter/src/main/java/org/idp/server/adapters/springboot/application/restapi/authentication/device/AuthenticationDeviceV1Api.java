@@ -53,6 +53,7 @@ public class AuthenticationDeviceV1Api implements ParameterTransformable {
   public ResponseEntity<?> get(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("device-id") AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
@@ -62,6 +63,7 @@ public class AuthenticationDeviceV1Api implements ParameterTransformable {
         authenticationTransactionApi.findList(
             tenantIdentifier,
             authenticationDeviceIdentifier,
+            authorizationHeader,
             new AuthenticationTransactionQueries(queryParams),
             requestAttributes);
 
