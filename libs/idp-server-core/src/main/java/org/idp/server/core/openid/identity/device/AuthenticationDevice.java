@@ -63,21 +63,32 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     this.priority = priority;
   }
 
-    public AuthenticationDevice(String id, String appName, String platform, String os, String model, String locale, String notificationChannel, String notificationToken, List<String> availableMethods, Integer priority, List<DeviceCredential> deviceCredentials) {
-        this.id = id;
-        this.appName = appName;
-        this.platform = platform;
-        this.os = os;
-        this.model = model;
-        this.locale = locale;
-        this.notificationChannel = notificationChannel;
-        this.notificationToken = notificationToken;
-        this.availableMethods = availableMethods;
-        this.priority = priority;
-        this.deviceCredentials = deviceCredentials;
-    }
+  public AuthenticationDevice(
+      String id,
+      String appName,
+      String platform,
+      String os,
+      String model,
+      String locale,
+      String notificationChannel,
+      String notificationToken,
+      List<String> availableMethods,
+      Integer priority,
+      List<DeviceCredential> deviceCredentials) {
+    this.id = id;
+    this.appName = appName;
+    this.platform = platform;
+    this.os = os;
+    this.model = model;
+    this.locale = locale;
+    this.notificationChannel = notificationChannel;
+    this.notificationToken = notificationToken;
+    this.availableMethods = availableMethods;
+    this.priority = priority;
+    this.deviceCredentials = deviceCredentials;
+  }
 
-    public String id() {
+  public String id() {
     return id;
   }
 

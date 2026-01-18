@@ -25,12 +25,21 @@ import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonReadable;
 
+/**
+ * Device credential for authentication.
+ *
+ * <p>Generic credential container that holds type-specific data as a Map. Consumers should use
+ * type-specific data classes to extract relevant fields:
+ *
+ * <ul>
+ *   <li>{@link JwtBearerCredentialData} for JWT Bearer credentials
+ *   <li>{@link FidoCredentialData} for FIDO2/UAF credentials
+ * </ul>
+ */
 public class DeviceCredential implements Serializable, JsonReadable {
   String id;
   String type;
-  String secretValue;
-  String jwks;
-  String algorithm;
+  Map<String, Object> typeSpecificData;
   LocalDateTime createdAt;
   LocalDateTime expiresAt;
   LocalDateTime revokedAt;
@@ -40,35 +49,28 @@ public class DeviceCredential implements Serializable, JsonReadable {
   public DeviceCredential(
       String id,
       String type,
-      String secretValue,
-      String jwks,
-      String algorithm,
+      Map<String, Object> typeSpecificData,
       LocalDateTime createdAt,
-      LocalDateTime expiresAt) {
+      LocalDateTime expiresAt,
+      LocalDateTime revokedAt) {
     this.id = id;
     this.type = type;
-    this.secretValue = secretValue;
-    this.jwks = jwks;
-    this.algorithm = algorithm;
+    this.typeSpecificData = typeSpecificData != null ? typeSpecificData : new HashMap<>();
     this.createdAt = createdAt;
     this.expiresAt = expiresAt;
-    this.revokedAt = null;
+    this.revokedAt = revokedAt;
   }
 
   public DeviceCredential(
       DeviceCredentialIdentifier identifier,
       DeviceCredentialType credentialType,
-      String secretValue,
-      String jwks,
-      String algorithm,
+      Map<String, Object> typeSpecificData,
       LocalDateTime createdAt,
       LocalDateTime expiresAt,
       LocalDateTime revokedAt) {
     this.id = identifier.value();
     this.type = credentialType.name();
-    this.secretValue = secretValue;
-    this.jwks = jwks;
-    this.algorithm = algorithm;
+    this.typeSpecificData = typeSpecificData != null ? typeSpecificData : new HashMap<>();
     this.createdAt = createdAt;
     this.expiresAt = expiresAt;
     this.revokedAt = revokedAt;
@@ -84,7 +86,7 @@ public class DeviceCredential implements Serializable, JsonReadable {
 
   public DeviceCredentialType type() {
     if (type == null || type.isEmpty()) {
-      return DeviceCredentialType.symmetric;
+      return DeviceCredentialType.jwt_bearer_symmetric;
     }
     return DeviceCredentialType.valueOf(type);
   }
@@ -97,28 +99,34 @@ public class DeviceCredential implements Serializable, JsonReadable {
     return type().isAsymmetric();
   }
 
-  public String secretValue() {
-    return secretValue;
+  public boolean isJwtBearer() {
+    return type().isJwtBearer();
   }
 
-  public boolean hasSecretValue() {
-    return secretValue != null && !secretValue.isEmpty();
+  public boolean isFido() {
+    return type().isFido();
   }
 
-  public String jwks() {
-    return jwks;
+  public boolean isFido2() {
+    return type().isFido2();
   }
 
-  public boolean hasJwks() {
-    return jwks != null && !jwks.isEmpty();
+  public boolean isFidoUaf() {
+    return type().isFidoUaf();
   }
 
-  public String algorithm() {
-    return algorithm;
+  public Map<String, Object> typeSpecificData() {
+    return typeSpecificData != null ? typeSpecificData : new HashMap<>();
   }
 
-  public boolean hasAlgorithm() {
-    return algorithm != null && !algorithm.isEmpty();
+  /** Returns JWT Bearer specific data. Use only when isJwtBearer() is true. */
+  public JwtBearerCredentialData jwtBearerData() {
+    return JwtBearerCredentialData.from(typeSpecificData());
+  }
+
+  /** Returns FIDO specific data. Use only when isFido() is true. */
+  public FidoCredentialData fidoData() {
+    return FidoCredentialData.from(typeSpecificData());
   }
 
   public LocalDateTime createdAt() {
@@ -160,31 +168,18 @@ public class DeviceCredential implements Serializable, JsonReadable {
     return hasRevokedAt();
   }
 
-  public String jwksAsJson() {
-    return jwks;
-  }
-
-  public String typeSpecificDataAsJson() {
-    Map<String, Object> data = new HashMap<>();
-    if (hasAlgorithm()) {
-      data.put("algorithm", algorithm);
-    }
-    if (hasSecretValue()) {
-      data.put("secret_value", secretValue);
-    }
-    if (hasJwks()) {
-      data.put("jwks", jwks);
-    }
-    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-    return jsonConverter.write(data);
-  }
-
   public LocalDateTime expiresAtOrNull() {
     return expiresAt;
   }
 
   public boolean exists() {
     return id != null && !id.isEmpty();
+  }
+
+  /** Converts typeSpecificData to JSON for database storage. */
+  public String typeSpecificDataAsJson() {
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+    return jsonConverter.write(typeSpecificData());
   }
 
   @Override
@@ -202,10 +197,8 @@ public class DeviceCredential implements Serializable, JsonReadable {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);
-    map.put("type", type);
-    if (hasSecretValue()) map.put("secret_value", secretValue);
-    if (hasJwks()) map.put("jwks", jwks);
-    if (hasAlgorithm()) map.put("algorithm", algorithm);
+    map.put("credential_type", type);
+    map.put("type_specific_data", typeSpecificData());
     if (hasCreatedAt()) map.put("created_at", createdAt.toString());
     if (hasExpiresAt()) map.put("expires_at", expiresAt.toString());
     if (hasRevokedAt()) map.put("revoked_at", revokedAt.toString());

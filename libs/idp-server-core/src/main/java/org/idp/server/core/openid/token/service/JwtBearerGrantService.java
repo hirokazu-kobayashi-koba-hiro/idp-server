@@ -25,7 +25,7 @@ import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
-import org.idp.server.core.openid.identity.device.credential.DeviceCredential;
+import org.idp.server.core.openid.identity.device.authentication.DeviceAuthenticationVerifier;
 import org.idp.server.core.openid.identity.device.credential.repository.DeviceCredentialQueryRepository;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
@@ -44,9 +44,9 @@ import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebSignature;
-import org.idp.server.platform.jose.JsonWebSignatureVerifier;
-import org.idp.server.platform.jose.JsonWebSignatureVerifierFactory;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
+import org.idp.server.platform.jose.JwtCredential;
+import org.idp.server.platform.jose.JwtSignatureVerifier;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -62,7 +62,7 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
   private static final LoggerWrapper log = LoggerWrapper.getLogger(JwtBearerGrantService.class);
 
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
-  DeviceCredentialQueryRepository deviceCredentialQueryRepository;
+  DeviceAuthenticationVerifier deviceAuthenticationVerifier;
   HttpRequestExecutor httpRequestExecutor;
   AccessTokenCreator accessTokenCreator;
 
@@ -71,7 +71,8 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
       DeviceCredentialQueryRepository deviceCredentialQueryRepository,
       HttpRequestExecutor httpRequestExecutor) {
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
-    this.deviceCredentialQueryRepository = deviceCredentialQueryRepository;
+    this.deviceAuthenticationVerifier =
+        new DeviceAuthenticationVerifier(deviceCredentialQueryRepository);
     this.httpRequestExecutor = httpRequestExecutor;
     this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
@@ -207,77 +208,17 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
       Tenant tenant, JwtBearerAssertion assertion, JsonWebSignature jws)
       throws JoseInvalidException {
     String deviceId = assertion.extractDeviceId();
-    String algorithm = assertion.algorithm();
-
     AuthenticationDeviceIdentifier deviceIdentifier = new AuthenticationDeviceIdentifier(deviceId);
-    Optional<DeviceCredential> credentialOpt =
-        deviceCredentialQueryRepository.findActiveByDeviceIdAndAlgorithm(
-            tenant, deviceIdentifier, algorithm);
-
-    if (credentialOpt.isEmpty()) {
-      throw new TokenBadRequestException(
-          "invalid_grant",
-          String.format(
-              "No active credential found for device '%s' with algorithm '%s'",
-              deviceId, algorithm));
-    }
-
-    DeviceCredential credential = credentialOpt.get();
-
-    if (credential.isSymmetric()) {
-      verifySymmetricSignature(jws, credential);
-    } else if (credential.isAsymmetric()) {
-      verifyAsymmetricSignature(jws, credential);
-    } else {
-      throw new TokenBadRequestException(
-          "invalid_grant", "Unsupported credential type: " + credential.type());
-    }
-  }
-
-  private void verifySymmetricSignature(JsonWebSignature jws, DeviceCredential credential) {
-    if (!credential.hasSecretValue()) {
-      throw new TokenBadRequestException(
-          "invalid_grant", "Device credential does not have a secret value for symmetric signing");
-    }
-
-    try {
-      String secret = credential.secretValue();
-      JsonWebSignatureVerifierFactory verifierFactory =
-          new JsonWebSignatureVerifierFactory(jws, "", secret);
-      JsonWebSignatureVerifier verifier = verifierFactory.create().getLeft();
-      verifier.verify(jws);
-    } catch (Exception e) {
-      throw new TokenBadRequestException(
-          "invalid_grant", "Symmetric signature verification failed: " + e.getMessage());
-    }
-  }
-
-  private void verifyAsymmetricSignature(JsonWebSignature jws, DeviceCredential credential) {
-    if (!credential.hasJwks()) {
-      throw new TokenBadRequestException(
-          "invalid_grant", "Device credential does not have JWKS for asymmetric signing");
-    }
-
-    try {
-      String jwks = credential.jwks();
-      JsonWebSignatureVerifierFactory verifierFactory =
-          new JsonWebSignatureVerifierFactory(jws, jwks, "");
-      JsonWebSignatureVerifier verifier = verifierFactory.create().getLeft();
-      verifier.verify(jws);
-    } catch (Exception e) {
-      throw new TokenBadRequestException(
-          "invalid_grant", "Asymmetric signature verification failed: " + e.getMessage());
-    }
+    deviceAuthenticationVerifier.verifySignature(tenant, deviceIdentifier, jws);
   }
 
   private void verifyExternalIdpSignature(JsonWebSignature jws, AvailableFederation federation) {
     try {
       String jwks = resolveJwks(federation);
 
-      JsonWebSignatureVerifierFactory verifierFactory =
-          new JsonWebSignatureVerifierFactory(jws, jwks, "");
-      JsonWebSignatureVerifier verifier = verifierFactory.create().getLeft();
-      verifier.verify(jws);
+      JwtCredential jwtCredential = JwtCredential.asymmetric(jwks);
+      JwtSignatureVerifier signatureVerifier = new JwtSignatureVerifier();
+      signatureVerifier.verify(jws, jwtCredential);
     } catch (TokenBadRequestException e) {
       throw e;
     } catch (Exception e) {

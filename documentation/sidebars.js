@@ -78,6 +78,7 @@ const sidebars = {
             "content_03_concepts/authentication-authorization/concept-07-passwordless",
             "content_03_concepts/authentication-authorization/concept-08-federation",
             "content_03_concepts/authentication-authorization/concept-09-jwt-bearer-grant",
+            "content_03_concepts/authentication-authorization/concept-10-device-credential",
           ]
         },
         {

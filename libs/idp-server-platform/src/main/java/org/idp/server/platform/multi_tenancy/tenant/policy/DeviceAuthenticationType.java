@@ -30,6 +30,14 @@ public enum DeviceAuthenticationType {
   none,
 
   /**
+   * Device authenticates using an OAuth 2.0 access token.
+   *
+   * <p>The device obtains an access token through standard OAuth flows (e.g., authorization code,
+   * JWT Bearer Grant) and presents it in the Authorization header.
+   */
+  access_token,
+
+  /**
    * Device authenticates using a JWT signed with a symmetric key (HMAC).
    *
    * <p>Similar to client_secret_jwt in OAuth. The device uses a shared secret to sign the JWT
@@ -49,6 +57,10 @@ public enum DeviceAuthenticationType {
     return this == none;
   }
 
+  public boolean isAccessToken() {
+    return this == access_token;
+  }
+
   public boolean isDeviceSecretJwt() {
     return this == device_secret_jwt;
   }
@@ -59,6 +71,15 @@ public enum DeviceAuthenticationType {
 
   public boolean requiresCredential() {
     return this != none;
+  }
+
+  /**
+   * Returns true if this type uses device credential JWT (symmetric or asymmetric).
+   *
+   * @return true if device credential JWT
+   */
+  public boolean isDeviceCredentialJwt() {
+    return this == device_secret_jwt || this == private_key_jwt;
   }
 
   public boolean isSymmetric() {
