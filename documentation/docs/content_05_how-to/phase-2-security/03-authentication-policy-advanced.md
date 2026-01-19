@@ -17,7 +17,6 @@
 **組織レベルAPI**（このドキュメントでの表記）:
 ```
 POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies
-PUT  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies/{policy-id}
 ```
 
 **注意**: システムレベルAPIとの違い
@@ -31,17 +30,28 @@ PUT  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authenti
 ## 認証ポリシー詳細設定の全体像
 
 ```
-認証ポリシー
+認証ポリシー（policies配列内の各ポリシー）
+  ├─ priority: 優先度（高い値ほど優先）
+  ├─ conditions: ポリシー適用条件（スコープ、クライアントID、ACR値）
   ├─ available_methods: どの認証方式を許可するか
   ├─ success_conditions: 成功条件（どの認証が成功すれば完了か）
   ├─ failure_conditions: 失敗条件（何回失敗したら認証失敗か）
   ├─ lock_conditions: ロック条件（何回失敗したらアカウントロックか）
+  ├─ step_definitions: マルチステップ認証フロー制御（1st/2nd factor）
   └─ acr_mapping_rules: 認証方式 → ACRレベルのマッピング
 ```
 
+**このドキュメントで学べること**:
+- Level 1: JSONPath条件式の基礎
+- Level 2: success_conditions（成功条件）の詳細
+- Level 3: failure_conditions と lock_conditions（失敗・ロック条件）
+- Level 4: step_definitions（マルチステップ認証フロー制御）
+- Level 5: ACRマッピングルール（詳細）
+- Level 6: 条件によるポリシー分岐（クライアント別・スコープ別）
+
 ---
 
-## Level 1: JSONPath条件式の基礎（10分）
+## Level 1: JSONPath条件式の基礎
 
 ### JSONPath とは
 
@@ -101,7 +111,7 @@ PUT  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authenti
 
 ---
 
-## Level 2: success_conditionsの詳細（10分）
+## Level 2: success_conditions（成功条件）の詳細
 
 ### パターン1: シンプルな条件
 
@@ -247,7 +257,7 @@ Case 2: パスワード + SMS OTPで認証完了
 
 ---
 
-## Level 3: failure_conditions（失敗条件）
+## Level 3: failure_conditions と lock_conditions
 
 ### 失敗回数制限
 
@@ -304,9 +314,7 @@ Case 2: パスワード + SMS OTPで認証完了
 
 ---
 
-## Level 4: lock_conditions（アカウントロック）
-
-### アカウントロック条件
+### アカウントロック条件（lock_conditions）
 
 ```json
 {
@@ -387,127 +395,188 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 ---
 
-## 実例: エンタープライズ向け高度な認証ポリシー
+## Level 4: step_definitions（マルチステップ認証フロー制御）
 
-### 複数Federation + External Token認証の設定例
+### step_definitions とは
 
-**シナリオ**: 外部IdP連携とExternal Token認証を組み合わせた柔軟な認証
+**マルチステップ認証フローの詳細な動作を定義する機能**です。Keycloakの認証フローパターンに準拠しています。
+
+### 主要な設定項目
 
 ```json
 {
-  "flow": "oauth",
-  "enabled": true,
+  "step_definitions": [
+    {
+      "method": "email",              // 認証方式
+      "order": 1,                     // 実行順序
+      "requires_user": false,         // ユーザー識別済みである必要があるか（1st/2nd factor）
+      "allow_registration": true,     // リクエスト値での新規登録を許可するか
+      "user_identity_source": "email" // ユーザー識別に使用するフィールド
+    }
+  ]
+}
+```
+
+### 主要パラメータの説明
+
+| パラメータ | 説明 |
+|-----------|------|
+| `method` | 認証方式（`email`, `sms`, `password`, `fido2` 等） |
+| `order` | 実行順序（同じorder値は選択可能） |
+| `requires_user` | ユーザー識別済みである必要があるか（`false`=1st factor, `true`=2nd factor） |
+| `allow_registration` | **リクエスト値での新規登録を許可するか**<br />- `true`: リクエストのメール/電話番号で新規ユーザー作成可能<br />- `false`: 既存ユーザーのメール/電話番号と一致する必要 |
+| `user_identity_source` | ユーザー識別に使用するフィールド（`email`, `phone_number`, `username` 等） |
+
+### 1st Factor vs 2nd Factor
+
+| 項目 | 1st Factor | 2nd Factor |
+|------|-----------|-----------|
+| `requires_user` | `false` | `true` |
+| 役割 | ユーザー識別フェーズ | 認証検証フェーズ |
+| 新規ユーザー | リクエスト値で登録可能<br />（`allow_registration=true`） | 登録不可<br />（既存ユーザーのみ） |
+| 識別方法 | `user_identity_source` で指定 | 既に識別済みのユーザーを検証 |
+| 例 | Email/SMS challenge, Password, 新規登録 | OTP検証, FIDO認証 |
+
+**Keycloakの `requiresUser()` パターンを踏襲**:
+- [Keycloak Authenticator.requiresUser()](https://www.keycloak.org/docs-api/latest/javadocs/org/keycloak/authentication/Authenticator.html#requiresUser())
+
+---
+
+### 例1: Email（1st） → SMS（2nd）の2要素認証
+
+```json
+{
   "policies": [
     {
-      "description": "Enterprise Authentication Policy",
-      "priority": 1,
-      "conditions": {},
-      "available_methods": [
-        "oidc-external-idp",
-        "external-token",
-        "fido-uaf"
+      "description": "email_then_sms_2fa",
+      "priority": 10,
+      "conditions": { "scopes": ["openid"] },
+      "available_methods": ["email", "sms"],
+      "step_definitions": [
+        {
+          "method": "email",
+          "order": 1,
+          "requires_user": false,
+          "allow_registration": true,
+          "user_identity_source": "email"
+        },
+        {
+          "method": "sms",
+          "order": 2,
+          "requires_user": true,
+          "allow_registration": false,
+          "user_identity_source": "phone_number"
+        }
       ],
-      "acr_mapping_rules": {
-        "urn:mace:incommon:iap:gold": ["fido-uaf", "fido2"],
-        "urn:mace:incommon:iap:silver": ["oidc-external-idp"],
-        "urn:mace:incommon:iap:bronze": ["external-token"]
-      },
       "success_conditions": {
         "any_of": [
           [
-            {
-              "path": "$.oidc-external-idp.success_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 1
-            }
-          ],
-          [
-            {
-              "path": "$.external-token.success_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 1
-            }
-          ],
-          [
-            {
-              "path": "$.fido-uaf.success_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 1
-            }
+            { "path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 },
+            { "path": "$.sms-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
           ]
         ]
-      },
-      "failure_conditions": {
-        "any_of": [
-          [
-            {
-              "path": "$.oidc-external-idp.failure_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 5
-            }
-          ],
-          [
-            {
-              "path": "$.external-token.failure_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 5
-            }
-          ]
-        ]
-      },
-      "lock_conditions": {
-        "any_of": []
       }
     }
   ]
 }
 ```
 
-**解説**:
+**フロー**:
+```
+1. Email認証チャレンジ（1st factor）
+   - requires_user=false → ユーザー未識別でOK
+   - allow_registration=true → 新規ユーザー作成可能
+   - user_identity_source=email → メールアドレスでユーザー識別
+   ↓
+2. Email OTP検証
+   - ユーザーがトランザクションに紐付けられる
+   ↓
+3. SMS認証チャレンジ（2nd factor）
+   - requires_user=true → ユーザー識別済みである必要
+   - allow_registration=false → 新規ユーザー作成不可
+   - user_identity_source=phone_number → 電話番号でユーザー検証
+   ↓
+4. SMS OTP検証
+   ↓
+5. 認証完了（両方の success_count >= 1）
+```
 
-1. **available_methods**:
-   - 外部IdP（OIDC）連携
-   - External Token認証
-   - FIDO-UAF生体認証
+---
 
-2. **success_conditions**:
-   - 外部IdP成功 **OR** External Token成功 **OR** FIDO-UAF成功
-   - いずれか1つで認証完了
+### 例2: SSO（1st） → Email/SMS（2nd）の選択式2FA
 
-3. **failure_conditions**:
-   - 外部IdP 5回失敗 **OR** External Token 5回失敗
-   - → 認証失敗エラー
+```json
+{
+  "step_definitions": [
+    {
+      "method": "sso",
+      "order": 1,
+      "requires_user": false,
+      "allow_registration": true,
+      "user_identity_source": "sso"
+    },
+    {
+      "method": "email",
+      "order": 2,
+      "requires_user": true,
+      "allow_registration": false,
+      "user_identity_source": "email"
+    },
+    {
+      "method": "sms",
+      "order": 2,
+      "requires_user": true,
+      "allow_registration": false,
+      "user_identity_source": "phone_number"
+    }
+  ]
+}
+```
 
-4. **lock_conditions**:
-   - `any_of: []` → ロック条件なし
-   - アカウントはロックされない
+**フロー**:
+```
+1. SSO認証（1st factor, order=1）
+   ↓
+2. Email認証 OR SMS認証（2nd factor, order=2）
+   - 同じorderは選択可能（どちらか1つでOK）
+```
 
-5. **ACRマッピング**:
-   - FIDO UAF/FIDO2 → gold（高）
-   - Email/SMS → silver（中）
-   - Password/External Token → bronze（低）
+---
 
-**初学者へのアドバイス**:
-- まずは基礎編（Phase 1の07-authentication-policy）のシンプルなポリシーから始める
-- 必要に応じて段階的に複雑化
+### user_identity_source の種類
+
+| 値 | 意味 | 使用例 |
+|---|------|-------|
+| `email` | メールアドレスでユーザー識別 | Email認証 |
+| `phone_number` | 電話番号でユーザー識別 | SMS認証 |
+| `username` | ユーザー名でユーザー識別 | パスワード認証 |
+| `webauthn_credential` | WebAuthn資格情報でユーザー識別 | FIDO2認証 |
+| `sso` | SSO（外部IdP）でユーザー識別 | OIDC連携 |
+
+---
+
+### step_definitions を使うべきケース
+
+✅ **使うべき**:
+- マルチステップ認証フロー（Email → SMS等）を定義したい
+- 1st/2nd factorの制御が必要
+- 新規ユーザー登録を特定ステップでのみ許可したい
+- 認証順序を明示的に制御したい
+
+❌ **使わなくてよい**:
+- シンプルなMFA（success_conditionsだけで十分）
+- 認証順序の制御が不要
+- すべてのステップで登録を許可する場合
+
+**重要**: `step_definitions` は高度な機能です。通常のMFA設定では `success_conditions` のみで十分です。
 
 ---
 
 ## 条件式の詳細構文
 
-### any_of と all_of
-
-| 構文 | 意味 | 使用例 |
-|------|------|-------|
-| `any_of` | いずれか1つ満たせばOK（OR） | 複数認証方式の選択肢 |
-| `all_of` | 全て満たす必要あり（AND） | 複数条件の同時チェック |
-
 ### any_of の構造
+
+認証ポリシーでは **`any_of` のみサポート**されています（`all_of` は存在しません）。
 
 ```json
 "any_of": [
@@ -519,17 +588,70 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 **意味**: 条件A **OR** 条件B **OR** 条件C
 
-### all_of の構造
+**重要**:
+- 外側の配列 = **OR条件**（いずれか1つ満たせばOK）
+- 内側の配列 = **AND条件**（すべて満たす必要あり）
+- この組み合わせで複雑な論理式を表現可能
 
+---
+
+### なぜ `all_of` が不要なのか
+
+**`any_of` の内側配列がAND条件として機能するため、`all_of` は不要です。**
+
+#### ❌ もし `all_of` があった場合（他システムの例）
 ```json
 "all_of": [
-  [ 条件A ],
-  [ 条件B ],
-  [ 条件C ]
+  [ { "path": "$.password-authentication.success_count", "operation": "gte", "value": 1 } ],
+  [ { "path": "$.sms-authentication.success_count", "operation": "gte", "value": 1 } ]
 ]
 ```
+→ すべてのグループを満たす必要（AND）
 
-**意味**: 条件A **AND** 条件B **AND** 条件C
+#### ✅ `any_of` で同じことを実現
+```json
+"any_of": [
+  [
+    { "path": "$.password-authentication.success_count", "operation": "gte", "value": 1 },
+    { "path": "$.sms-authentication.success_count", "operation": "gte", "value": 1 }
+  ]
+]
+```
+→ 内側配列の複数条件 = すべて満たす必要（AND）
+
+**結論**: `any_of` の内側配列でAND条件を表現できるため、`all_of` は冗長です。
+
+#### 複雑な例: (A AND B) OR (C AND D)
+
+```json
+"any_of": [
+  [
+    { "path": "$.password-authentication.success_count", "operation": "gte", "value": 1 },
+    { "path": "$.sms-authentication.success_count", "operation": "gte", "value": 1 }
+  ],
+  [
+    { "path": "$.email-authentication.success_count", "operation": "gte", "value": 1 },
+    { "path": "$.fido2-authentication.success_count", "operation": "gte", "value": 1 }
+  ]
+]
+```
+→ (password AND sms) **OR** (email AND fido2)
+
+この設計により、シンプルかつ柔軟な条件定義が可能になっています。
+
+**重要**: パスの命名規則
+- **基本形式**: `$.{method}-authentication.{property}`
+  - ✅ `$.password-authentication.success_count`
+  - ✅ `$.sms-authentication.success_count`
+  - ✅ `$.email-authentication.success_count`
+  - ✅ `$.fido2-authentication.success_count`
+  - ✅ `$.fido-uaf-authentication.success_count`
+  - ❌ `$.password.success_count` （間違い）
+
+- **例外**: `external-token` と OIDC連携は `-authentication` サフィックスなし
+  - ✅ `$.external-token.success_count`
+  - ✅ `$.oidc-google.success_count`
+  - ✅ `$.oidc-facebook.success_count`
 
 ---
 
@@ -649,7 +771,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 ---
 
-## Level 3: ACRマッピングルール（詳細）
+## Level 5: ACRマッピングルール（詳細）
 
 ### ACR値の定義
 
@@ -729,7 +851,7 @@ acr_values=urn:mace:incommon:iap:gold"  # gold レベル必須
 
 ---
 
-## Level 4: 条件（conditions）によるポリシー分岐
+## Level 6: 条件（conditions）によるポリシー分岐
 
 ### クライアント別ポリシー
 
@@ -746,12 +868,26 @@ acr_values=urn:mace:incommon:iap:gold"  # gold レベル必須
       "conditions": {
         "client_ids": ["admin-app", "super-admin-app"]
       },
-      "available_methods": ["password", "fido2"],
+      "available_methods": ["password", "initial-registration", "fido2"],
       "success_conditions": {
         "any_of": [
           [
             {
               "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.fido2-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1
@@ -772,12 +908,26 @@ acr_values=urn:mace:incommon:iap:gold"  # gold レベル必須
       "conditions": {
         "client_ids": ["user-app"]
       },
-      "available_methods": ["password", "sms"],
+      "available_methods": ["password", "initial-registration", "sms"],
       "success_conditions": {
         "any_of": [
           [
             {
               "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.sms-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1
@@ -796,12 +946,20 @@ acr_values=urn:mace:incommon:iap:gold"  # gold レベル必須
       "description": "default - password only",
       "priority": 1,
       "conditions": {},
-      "available_methods": ["password"],
+      "available_methods": ["password", "initial-registration"],
       "success_conditions": {
         "any_of": [
           [
             {
               "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1
@@ -818,15 +976,18 @@ acr_values=urn:mace:incommon:iap:gold"  # gold レベル必須
 ```
 admin-app からのリクエスト
   → priority 100 にマッチ（client_ids条件、最高優先度）
-  → パスワード + FIDO2必須
+  → ログイン: パスワード + FIDO2必須
+  → 登録: 新規登録 + FIDO2必須
 
 user-app からのリクエスト
   → priority 50 にマッチ
-  → パスワード + SMS OTP必須
+  → ログイン: パスワード + SMS OTP必須
+  → 登録: 新規登録 + SMS OTP必須
 
 other-app からのリクエスト
   → priority 1 にマッチ（デフォルト、最低優先度）
-  → パスワードのみ
+  → ログイン: パスワードのみ
+  → 登録: 新規登録のみ
 ```
 
 ---
@@ -840,12 +1001,26 @@ other-app からのリクエスト
   "conditions": {
     "scopes": ["admin", "delete", "update_sensitive"]
   },
-  "available_methods": ["password", "fido2"],
+  "available_methods": ["password", "initial-registration", "fido2"],
   "success_conditions": {
     "any_of": [
       [
         {
           "path": "$.password-authentication.success_count",
+          "type": "integer",
+          "operation": "gte",
+          "value": 1
+        },
+        {
+          "path": "$.fido2-authentication.success_count",
+          "type": "integer",
+          "operation": "gte",
+          "value": 1
+        }
+      ],
+      [
+        {
+          "path": "$.initial-registration.success_count",
           "type": "integer",
           "operation": "gte",
           "value": 1
@@ -866,11 +1041,12 @@ other-app からのリクエスト
 ```
 scope=admin を要求
   → priority 100 にマッチ（最高優先度）
-  → パスワード + FIDO2必須（高セキュリティ）
+  → ログイン: パスワード + FIDO2必須（高セキュリティ）
+  → 登録: 新規登録 + FIDO2必須
 
 scope=read を要求
   → マッチせず、デフォルトポリシー（低いpriority）
-  → パスワードのみ
+  → パスワードのみ または 新規登録のみ
 ```
 
 ---
@@ -906,11 +1082,11 @@ scope=read を要求
 ```json
 {
   "error": "invalid_policy",
-  "error_description": "success_conditions must have 'any_of' or 'all_of'"
+  "error_description": "success_conditions must have 'any_of'"
 }
 ```
 
-**原因**: `any_of`の二重配列を忘れている
+**原因**: `any_of`の二重配列を忘れている、または `any_of` フィールド自体がない
 
 **例**:
 ```json
@@ -981,7 +1157,7 @@ scope=read を要求
 
 ---
 
-**最終更新**: 2025-10-13
+**最終更新**: 2025-01-19
 **難易度**: ⭐⭐⭐⭐☆（中級〜上級）
 **対象**: 複雑な認証ポリシーを設定する管理者・開発者
-**習得スキル**: JSONPath条件式、any_of/all_of、failure_conditions、lock_conditions、ACRマッピング詳細
+**習得スキル**: JSONPath条件式、any_of条件式、failure_conditions、lock_conditions、step_definitions、ACRマッピング詳細
