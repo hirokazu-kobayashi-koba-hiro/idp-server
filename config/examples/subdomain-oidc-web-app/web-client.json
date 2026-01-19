@@ -1,0 +1,20 @@
+{
+  "client_id": "8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f",
+  "client_id_alias": "subdomain-sample-web-app",
+  "client_secret": "local-dev-public-secret-32char",
+  "redirect_uris": [
+    "https://sample.local.dev/api/auth/callback/idp-server",
+    "https://sample.local.dev/api/security-test/callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email",
+  "client_name": "Subdomain Sample Web Application",
+  "token_endpoint_auth_method": "none",
+  "application_type": "web"
+}
