@@ -7,6 +7,7 @@ import PasswordChange from "@/components/PasswordChange";
 import UserDelete from "@/components/UserDelete";
 import LogoutButton from "@/components/LogoutButton";
 import SecurityIcon from "@mui/icons-material/Security";
+import FingerprintIcon from "@mui/icons-material/Fingerprint";
 
 const Home = async () => {
   const session = await auth();
@@ -24,6 +25,15 @@ const Home = async () => {
             ダッシュボード
           </Typography>
           <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              href="/fido2-rpid-demo"
+              variant="outlined"
+              color="primary"
+              startIcon={<FingerprintIcon />}
+              size="small"
+            >
+              FIDO2 rpIdデモ
+            </Button>
             <Button
               href="/security-demo"
               variant="outlined"

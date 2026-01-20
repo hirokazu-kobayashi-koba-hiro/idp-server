@@ -25,7 +25,8 @@
     "cors_config": {
       "allow_origins": [
         "https://auth.local.dev",
-        "https://api.local.dev"
+        "https://api.local.dev",
+        "https://sample.local.dev"
       ]
     },
     "security_event_log_config": {

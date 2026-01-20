@@ -102,6 +102,30 @@ npm run start -- --locale ja
                                    └────────────────┘
 ```
 
+## Sample Web Application
+
+Sample-web is a Next.js application demonstrating FIDO2/Passkey authentication.
+
+### Setup
+
+```bash
+# Setup subdomain tenant configuration
+./config/examples/subdomain-oidc-web-app/setup.sh
+```
+
+### Subdomain Configuration (macOS)
+
+```bash
+# Setup dnsmasq and mkcert for *.local.dev
+./scripts/setup-local-subdomain.sh
+```
+
+This script sets up:
+- dnsmasq for `*.local.dev` DNS resolution
+- mkcert for local SSL certificates
+
+Open https://sample.local.dev
+
 ## Development
 
 ### E2E Tests
