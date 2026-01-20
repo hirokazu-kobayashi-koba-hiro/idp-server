@@ -92,8 +92,8 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
 
       transactionCommandRepository.register(tenant, identifier, type().value(), context);
 
-      Map<String, Object> contents = new HashMap<>();
-      contents.put("challenge", webAuthn4jChallenge.challengeAsString());
+      // Build authentication challenge response
+      Map<String, Object> authChallengeResponse = new HashMap<>(challengeResponse.toMap());
 
       // Generate allowCredentials if username is provided
       if (request.containsKey("username")) {
@@ -106,7 +106,8 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
         List<Map<String, Object>> allowCredentials = credentials.toAllowCredentials();
 
         if (!allowCredentials.isEmpty()) {
-          contents.put("allow_credentials", allowCredentials);
+          // Add allowCredentials to the response for browser to identify the authenticator
+          authChallengeResponse.put("allowCredentials", allowCredentials);
           log.debug(
               "webauthn4j authentication challenge, generated {} allowCredentials",
               allowCredentials.size());
@@ -114,7 +115,7 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
       }
 
       Map<String, Object> response = new HashMap<>();
-      response.put("execution_webauthn4j", challengeResponse.toMap());
+      response.put("execution_webauthn4j", authChallengeResponse);
 
       log.info("webauthn4j authentication challenge generated successfully");
       return AuthenticationExecutionResult.success(response);

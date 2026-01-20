@@ -1,0 +1,82 @@
+{
+  "id": "a1b2c3d4-0002-4a03-ab78-6ed622289002",
+  "type": "email",
+  "attributes": {},
+  "metadata": {
+    "type": "no-action",
+    "description": "Email authentication for local development (no actual email sent)",
+    "transaction_id_param": "transaction_id",
+    "verification_code_param": "verification_code"
+  },
+  "interactions": {
+    "email-authentication-challenge": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string"
+            },
+            "template": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "pre_hook": {},
+      "execution": {
+        "function": "email_authentication_challenge",
+        "details": {
+          "function": "no_action",
+          "sender": "noreply@local.dev",
+          "templates": {
+            "registration": {
+              "subject": "[Local Dev] Your signup email confirmation code",
+              "body": "Hello,\n\nPlease enter the following verification code:\n\n{VERIFICATION_CODE}\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\n- Local Dev IDP"
+            },
+            "authentication": {
+              "subject": "[Local Dev] Your login email confirmation code",
+              "body": "Hello,\n\nPlease enter the following verification code:\n\n{VERIFICATION_CODE}\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\n- Local Dev IDP"
+            }
+          },
+          "retry_count_limitation": 5,
+          "expire_seconds": 300
+        }
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "email-authentication": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "verification_code": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "pre_hook": {},
+      "execution": {
+        "function": "email_authentication"
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    }
+  }
+}

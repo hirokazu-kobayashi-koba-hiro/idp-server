@@ -1,0 +1,48 @@
+{
+  "id": "a1b2c3d4-0003-4a03-ab78-6ed622289003",
+  "type": "initial-registration",
+  "attributes": {},
+  "metadata": {
+    "description": "Initial user registration for subdomain deployment"
+  },
+  "interactions": {
+    "initial-registration": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": [
+            "email",
+            "password",
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "maxLength": 255
+            },
+            "password": {
+              "type": "string",
+              "pattern": "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()]).+$",
+              "maxLength": 64,
+              "minLength": 8
+            },
+            "role_id": {
+              "type": "string"
+            },
+            "role_name": {
+              "type": "string"
+            },
+            "tenant_id": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

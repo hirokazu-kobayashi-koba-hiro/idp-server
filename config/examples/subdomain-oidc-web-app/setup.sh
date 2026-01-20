@@ -122,6 +122,143 @@ if [ "${HTTP_CODE}" = "201" ]; then
   fi
   echo ""
 
+  # Step 4: Create authentication configurations
+  echo "Step 4: Creating authentication configurations..."
+
+  # FIDO2 (WebAuthn4J) authentication config
+  FIDO2_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/fido2/webauthn4j.json"
+  if [ -f "${FIDO2_CONFIG_FILE}" ]; then
+    echo "   Registering FIDO2 (WebAuthn4J) config..."
+    FIDO2_CONFIG_JSON=$(cat "${FIDO2_CONFIG_FILE}")
+
+    FIDO2_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${FIDO2_CONFIG_JSON}")
+
+    FIDO2_HTTP_CODE=$(echo "${FIDO2_RESPONSE}" | tail -n1)
+    FIDO2_RESPONSE_BODY=$(echo "${FIDO2_RESPONSE}" | sed '$d')
+
+    if [ "${FIDO2_HTTP_CODE}" = "200" ] || [ "${FIDO2_HTTP_CODE}" = "201" ]; then
+      FIDO2_CONFIG_ID=$(echo "${FIDO2_RESPONSE_BODY}" | jq -r '.result.id')
+      echo "   FIDO2 config created: ${FIDO2_CONFIG_ID}"
+    else
+      echo "   Warning: FIDO2 config creation failed (HTTP ${FIDO2_HTTP_CODE})"
+      echo "   Response: ${FIDO2_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "   ${FIDO2_RESPONSE_BODY}"
+    fi
+  else
+    echo "   Skipping FIDO2 config (file not found)"
+  fi
+
+  # Initial registration config
+  INITIAL_REG_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/initial-registration/standard.json"
+  if [ -f "${INITIAL_REG_CONFIG_FILE}" ]; then
+    echo "   Registering Initial Registration config..."
+    INITIAL_REG_CONFIG_JSON=$(cat "${INITIAL_REG_CONFIG_FILE}")
+
+    INITIAL_REG_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${INITIAL_REG_CONFIG_JSON}")
+
+    INITIAL_REG_HTTP_CODE=$(echo "${INITIAL_REG_RESPONSE}" | tail -n1)
+    INITIAL_REG_RESPONSE_BODY=$(echo "${INITIAL_REG_RESPONSE}" | sed '$d')
+
+    if [ "${INITIAL_REG_HTTP_CODE}" = "200" ] || [ "${INITIAL_REG_HTTP_CODE}" = "201" ]; then
+      INITIAL_REG_CONFIG_ID=$(echo "${INITIAL_REG_RESPONSE_BODY}" | jq -r '.result.id')
+      echo "   Initial Registration config created: ${INITIAL_REG_CONFIG_ID}"
+    else
+      echo "   Warning: Initial Registration config creation failed (HTTP ${INITIAL_REG_HTTP_CODE})"
+      echo "   Response: ${INITIAL_REG_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "   ${INITIAL_REG_RESPONSE_BODY}"
+    fi
+  else
+    echo "   Skipping Initial Registration config (file not found)"
+  fi
+
+  # Email authentication config
+  EMAIL_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/email/no-action.json"
+  if [ -f "${EMAIL_CONFIG_FILE}" ]; then
+    echo "   Registering Email config..."
+    EMAIL_CONFIG_JSON=$(cat "${EMAIL_CONFIG_FILE}")
+
+    EMAIL_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${EMAIL_CONFIG_JSON}")
+
+    EMAIL_HTTP_CODE=$(echo "${EMAIL_RESPONSE}" | tail -n1)
+    EMAIL_RESPONSE_BODY=$(echo "${EMAIL_RESPONSE}" | sed '$d')
+
+    if [ "${EMAIL_HTTP_CODE}" = "200" ] || [ "${EMAIL_HTTP_CODE}" = "201" ]; then
+      EMAIL_CONFIG_ID=$(echo "${EMAIL_RESPONSE_BODY}" | jq -r '.result.id')
+      echo "   Email config created: ${EMAIL_CONFIG_ID}"
+    else
+      echo "   Warning: Email config creation failed (HTTP ${EMAIL_HTTP_CODE})"
+      echo "   Response: ${EMAIL_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "   ${EMAIL_RESPONSE_BODY}"
+    fi
+  else
+    echo "   Skipping Email config (file not found)"
+  fi
+  echo ""
+
+  # Step 5: Create authentication policy
+  echo "Step 5: Creating authentication policy..."
+
+  OAUTH_POLICY_FILE="${SCRIPT_DIR}/authentication-policy/oauth.json"
+  if [ -f "${OAUTH_POLICY_FILE}" ]; then
+    echo "   Registering OAuth authentication policy..."
+    OAUTH_POLICY_JSON=$(cat "${OAUTH_POLICY_FILE}")
+
+    POLICY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-policies" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${OAUTH_POLICY_JSON}")
+
+    POLICY_HTTP_CODE=$(echo "${POLICY_RESPONSE}" | tail -n1)
+    POLICY_RESPONSE_BODY=$(echo "${POLICY_RESPONSE}" | sed '$d')
+
+    if [ "${POLICY_HTTP_CODE}" = "200" ] || [ "${POLICY_HTTP_CODE}" = "201" ]; then
+      POLICY_ID=$(echo "${POLICY_RESPONSE_BODY}" | jq -r '.result.id')
+      echo "   OAuth policy created: ${POLICY_ID}"
+    else
+      echo "   Warning: OAuth policy creation failed (HTTP ${POLICY_HTTP_CODE})"
+      echo "   Response: ${POLICY_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "   ${POLICY_RESPONSE_BODY}"
+    fi
+  else
+    echo "   Skipping OAuth policy (file not found)"
+  fi
+
+  # FIDO2 Registration policy
+  FIDO2_REG_POLICY_FILE="${SCRIPT_DIR}/authentication-policy/fido2-registration.json"
+  if [ -f "${FIDO2_REG_POLICY_FILE}" ]; then
+    echo "   Registering FIDO2 Registration policy..."
+    FIDO2_REG_POLICY_JSON=$(cat "${FIDO2_REG_POLICY_FILE}")
+
+    FIDO2_REG_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-policies" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${FIDO2_REG_POLICY_JSON}")
+
+    FIDO2_REG_HTTP_CODE=$(echo "${FIDO2_REG_RESPONSE}" | tail -n1)
+    FIDO2_REG_RESPONSE_BODY=$(echo "${FIDO2_REG_RESPONSE}" | sed '$d')
+
+    if [ "${FIDO2_REG_HTTP_CODE}" = "200" ] || [ "${FIDO2_REG_HTTP_CODE}" = "201" ]; then
+      FIDO2_REG_POLICY_ID=$(echo "${FIDO2_REG_RESPONSE_BODY}" | jq -r '.result.id')
+      echo "   FIDO2 Registration policy created: ${FIDO2_REG_POLICY_ID}"
+    else
+      echo "   Warning: FIDO2 Registration policy creation failed (HTTP ${FIDO2_REG_HTTP_CODE})"
+      echo "   Response: ${FIDO2_REG_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "   ${FIDO2_REG_RESPONSE_BODY}"
+    fi
+  else
+    echo "   Skipping FIDO2 Registration policy (file not found)"
+  fi
+  echo ""
+
   echo "=========================================="
   echo "Setup Complete!"
   echo "=========================================="
@@ -169,6 +306,16 @@ if [ "${HTTP_CODE}" = "201" ]; then
     echo "   open https://sample.local.dev"
     echo ""
   fi
+
+  echo "Authentication Methods:"
+  echo "   - Password authentication"
+  echo "   - Email OTP (no-action mode for local dev)"
+  echo "   - Passkey/FIDO2 (WebAuthn4J)"
+  echo ""
+  echo "FIDO2/Passkey Configuration:"
+  echo "   RP ID:   local.dev"
+  echo "   Origin:  https://auth.local.dev"
+  echo ""
 else
   echo "Onboarding failed (HTTP ${HTTP_CODE})"
   echo ""

@@ -12,7 +12,7 @@
     "authorization_provider": "idp-server",
     "ui_config": {
       "base_url": "https://auth.local.dev",
-      "signin_page": "/signin/",
+      "signin_page": "/signin/fido2/",
       "signup_page": "/signup/"
     },
     "session_config": {
