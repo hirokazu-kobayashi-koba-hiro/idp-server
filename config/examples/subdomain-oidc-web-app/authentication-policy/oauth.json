@@ -85,6 +85,20 @@
               "operation": "gte",
               "value": 1
             }
+          ],
+          [
+            {
+              "path": "$.email-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.fido2-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
           ]
         ]
       },

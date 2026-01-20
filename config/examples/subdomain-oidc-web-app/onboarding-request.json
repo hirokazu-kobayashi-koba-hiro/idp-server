@@ -68,7 +68,8 @@
       "openid",
       "profile",
       "email",
-      "management"
+      "management",
+      "claims:authentication_devices"
     ],
     "response_types_supported": [
       "code"
@@ -84,6 +85,13 @@
       "ES256"
     ],
     "claims_parameter_supported": true,
+    "claims_supported": [
+      "sub",
+      "name",
+      "email",
+      "email_verified",
+      "authentication_devices"
+    ],
     "token_introspection_endpoint": "https://api.local.dev/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens/introspection",
     "token_revocation_endpoint": "https://api.local.dev/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens/revocation",
     "extension": {
@@ -92,7 +100,8 @@
       "id_token_signed_key_id": "signing_key_1",
       "access_token_duration": 3600,
       "id_token_duration": 3600,
-      "refresh_token_duration": 86400
+      "refresh_token_duration": 86400,
+      "custom_claims_scope_mapping": true
     }
   },
   "user": {

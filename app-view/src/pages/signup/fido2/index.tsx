@@ -16,6 +16,7 @@ import KeyIcon from "@mui/icons-material/Key";
 import { useRouter } from "next/router";
 import { backendUrl, useAppContext } from "@/pages/_app";
 import { SignupStepper } from "@/components/SignupStepper";
+import { AddPasskeyStepper } from "@/components/AddPasskeyStepper";
 
 /**
  * Convert Base64URL string to ArrayBuffer
@@ -25,6 +26,20 @@ const base64UrlToBuffer = (base64url: string): Uint8Array => {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
   const binaryString = atob(base64);
   return Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
+};
+
+/**
+ * Convert ArrayBuffer to Base64URL string
+ * Required for serializing WebAuthn responses
+ */
+const bufferToBase64Url = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 };
 
 interface ChallengeResponse {
@@ -51,8 +66,9 @@ export default function Fido2RegistrationPage() {
   const [message, setMessage] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const { email } = useAppContext();
-  const { id, tenant_id: tenantId } = router.query;
+  const { id, tenant_id: tenantId, flow } = router.query;
   const theme = useTheme();
+  const isAddPasskeyFlow = flow === "add-passkey";
 
   const handleRegister = async () => {
     // Prevent duplicate requests
@@ -177,16 +193,24 @@ export default function Fido2RegistrationPage() {
       }
 
       // Step 4: Serialize credential for transmission
-      // const response = credential.response as AuthenticatorAttestationResponse;
-      // const credentialData = {
-      //   id: credential.id,
-      //   rawId: bufferToBase64Url(credential.rawId),
-      //   type: credential.type,
-      //   response: {
-      //     clientDataJSON: bufferToBase64Url(response.clientDataJSON),
-      //     attestationObject: bufferToBase64Url(response.attestationObject),
-      //   },
-      // };
+      // PublicKeyCredential contains ArrayBuffer fields that don't serialize with JSON.stringify
+      // Safari especially requires manual serialization
+      const attestationResponse = credential.response as AuthenticatorAttestationResponse;
+      const credentialData = {
+        id: credential.id,
+        rawId: bufferToBase64Url(credential.rawId),
+        type: credential.type,
+        response: {
+          clientDataJSON: bufferToBase64Url(attestationResponse.clientDataJSON),
+          attestationObject: bufferToBase64Url(attestationResponse.attestationObject),
+          // Include transports if available (for better UX on future authentications)
+          transports: attestationResponse.getTransports ? attestationResponse.getTransports() : [],
+        },
+        // Include client extension results if available
+        clientExtensionResults: credential.getClientExtensionResults(),
+      };
+
+      console.log("Serialized credential data:", credentialData);
 
       // Step 5: Submit credential to server
       const registerRes = await fetch(
@@ -195,13 +219,20 @@ export default function Fido2RegistrationPage() {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(credential),
+          body: JSON.stringify(credentialData),
         },
       );
 
       if (registerRes.ok) {
         setMessage("Passkey registration successful!");
-        router.push(`/signup/authorize?id=${id}&tenant_id=${tenantId}`);
+        // Redirect based on flow
+        if (isAddPasskeyFlow) {
+          // For add-passkey flow, authorize and redirect back to client
+          router.push(`/signup/authorize?id=${id}&tenant_id=${tenantId}&flow=add-passkey`);
+        } else {
+          // For signup flow, continue to authorization
+          router.push(`/signup/authorize?id=${id}&tenant_id=${tenantId}`);
+        }
         return;
       }
 
@@ -255,14 +286,20 @@ export default function Fido2RegistrationPage() {
         }}
       >
         <Typography variant="h5" fontWeight={600} gutterBottom>
-          Passkey Registration
+          {isAddPasskeyFlow ? "Add New Passkey" : "Passkey Registration"}
         </Typography>
         <Typography variant="body2" color="text.secondary" mb={4}>
-          Secure your account with a passkey for fast and passwordless sign-in.
+          {isAddPasskeyFlow
+            ? "Register an additional passkey for backup or use on another device."
+            : "Secure your account with a passkey for fast and passwordless sign-in."}
         </Typography>
 
         <Stack spacing={3}>
-          <SignupStepper activeStep={2} />
+          {isAddPasskeyFlow ? (
+            <AddPasskeyStepper activeStep={2} />
+          ) : (
+            <SignupStepper activeStep={2} />
+          )}
 
           <Box display="flex" justifyContent="center">
             <KeyIcon sx={{ fontSize: 40, color: "primary.main" }} />

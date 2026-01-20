@@ -21,6 +21,20 @@ const base64UrlToBuffer = (base64url: string): Uint8Array => {
   return Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
 };
 
+/**
+ * Convert ArrayBuffer to Base64URL string
+ * Required for serializing WebAuthn responses (Safari compatibility)
+ */
+const bufferToBase64Url = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+};
+
 interface credential {
   id: string;
   type: string;
@@ -289,16 +303,23 @@ export default function Login() {
     }
 
     // Serialize credential for transmission
-    // const response = credential.response as AuthenticatorAssertionResponse;
-    // const authData = {
-    //   id: credential.id,
-    //   rawId: bufferToBase64Url(credential.rawId),
-    //   type: credential.type,
-    //   clientDataJSON: bufferToBase64Url(response.clientDataJSON),
-    //   authenticatorData: bufferToBase64Url(response.authenticatorData),
-    //   signature: bufferToBase64Url(response.signature),
-    //   userHandle: response.userHandle ? bufferToBase64Url(response.userHandle) : '',
-    // };
+    // PublicKeyCredential contains ArrayBuffer fields that don't serialize with JSON.stringify
+    // Safari especially requires manual serialization
+    const assertionResponse = credential.response as AuthenticatorAssertionResponse;
+    const credentialData = {
+      id: credential.id,
+      rawId: bufferToBase64Url(credential.rawId),
+      type: credential.type,
+      response: {
+        clientDataJSON: bufferToBase64Url(assertionResponse.clientDataJSON),
+        authenticatorData: bufferToBase64Url(assertionResponse.authenticatorData),
+        signature: bufferToBase64Url(assertionResponse.signature),
+        userHandle: assertionResponse.userHandle ? bufferToBase64Url(assertionResponse.userHandle) : null,
+      },
+      clientExtensionResults: credential.getClientExtensionResults(),
+    };
+
+    console.log("Serialized credential data:", credentialData);
 
     // Submit credential to server for verification
     const loginRes = await fetch(
@@ -307,7 +328,7 @@ export default function Login() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credential),
+        body: JSON.stringify(credentialData),
       },
     );
 

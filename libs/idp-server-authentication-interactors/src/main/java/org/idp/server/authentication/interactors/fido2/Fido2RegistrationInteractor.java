@@ -43,6 +43,7 @@ import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.DeviceInfo;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class Fido2RegistrationInteractor implements AuthenticationInteractor {
@@ -200,7 +201,8 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     String deviceId = UUID.randomUUID().toString();
     log.info("fido2 registration success deviceId: {}, userId: {}", deviceId, userId);
 
-    User addedDeviceUser = addAuthenticationDevice(baseUser, deviceId, transaction.attributes());
+    User addedDeviceUser =
+        addAuthenticationDevice(baseUser, deviceId, transaction.attributes(), requestAttributes);
 
     if (tenant.requiresIdentityVerificationForDeviceRegistration()) {
       addedDeviceUser.setStatus(UserStatus.IDENTITY_VERIFICATION_REQUIRED);
@@ -324,12 +326,18 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
   }
 
   private User addAuthenticationDevice(
-      User user, String deviceId, AuthenticationTransactionAttributes attributes) {
+      User user,
+      String deviceId,
+      AuthenticationTransactionAttributes attributes,
+      RequestAttributes requestAttributes) {
 
-    String appName = attributes.getValueOrEmpty("app_name");
-    String platform = attributes.getValueOrEmpty("platform");
-    String os = attributes.getValueOrEmpty("os");
-    String model = attributes.getValueOrEmpty("model");
+    // Extract device info from User-Agent if not provided in attributes
+    DeviceInfo deviceInfo = extractDeviceInfo(attributes, requestAttributes);
+
+    String appName = getOrDefault(attributes, "app_name", deviceInfo.toLabel());
+    String platform = getOrDefault(attributes, "platform", deviceInfo.platform());
+    String os = getOrDefault(attributes, "os", deviceInfo.os());
+    String model = getOrDefault(attributes, "model", deviceInfo.model());
     String locale = attributes.getValueOrEmpty("locale");
     String notificationChannel = attributes.getValueOrEmpty("notification_channel");
     String notificationToken = attributes.getValueOrEmpty("notification_token");
@@ -338,6 +346,14 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
         attributes.containsKey("priority")
             ? attributes.getValueAsInteger("priority")
             : user.authenticationDeviceNextCount();
+
+    log.debug(
+        "Creating authentication device: deviceId={}, appName={}, platform={}, os={}, model={}",
+        deviceId,
+        appName,
+        platform,
+        os,
+        model);
 
     AuthenticationDevice authenticationDevice =
         new AuthenticationDevice(
@@ -353,6 +369,39 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
             priority);
 
     return user.addAuthenticationDevice(authenticationDevice);
+  }
+
+  private DeviceInfo extractDeviceInfo(
+      AuthenticationTransactionAttributes attributes, RequestAttributes requestAttributes) {
+
+    // If attributes already have device info, skip parsing
+    if (hasDeviceAttributes(attributes)) {
+      return DeviceInfo.unknown();
+    }
+
+    // Parse User-Agent from request attributes
+    if (requestAttributes.hasUserAgent()) {
+      DeviceInfo deviceInfo = requestAttributes.getUserAgent().toDeviceInfo();
+      log.debug("Extracted device info from User-Agent: {}", deviceInfo);
+      return deviceInfo;
+    }
+
+    return DeviceInfo.unknown();
+  }
+
+  private boolean hasDeviceAttributes(AuthenticationTransactionAttributes attributes) {
+    return attributes.containsKey("platform")
+        || attributes.containsKey("os")
+        || attributes.containsKey("model");
+  }
+
+  private String getOrDefault(
+      AuthenticationTransactionAttributes attributes, String key, String defaultValue) {
+    String value = attributes.getValueOrEmpty(key);
+    if (value == null || value.isEmpty()) {
+      return defaultValue;
+    }
+    return value;
   }
 
   /**

@@ -15,6 +15,8 @@ import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
 import HomeIcon from "@mui/icons-material/Home";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
+import DevicesIcon from "@mui/icons-material/Devices";
+import KeyIcon from "@mui/icons-material/Key";
 
 interface UserInfoProps {
   session: Session;
@@ -120,6 +122,71 @@ const UserInfo = ({ session }: UserInfoProps) => {
               </Box>
             )}
           </Stack>
+
+          {/* 認証デバイス情報 */}
+          {idTokenClaims?.authentication_devices && idTokenClaims.authentication_devices.length > 0 && (
+            <>
+              <Divider />
+              <Box>
+                <Typography variant="subtitle1" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <DevicesIcon color="primary" />
+                  登録済みパスキー ({idTokenClaims.authentication_devices.length})
+                </Typography>
+                <Stack spacing={2}>
+                  {idTokenClaims.authentication_devices.map((device: {
+                    id: string;
+                    app_name?: string;
+                    platform?: string;
+                    os?: string;
+                    model?: string;
+                    available_methods?: string[];
+                    priority?: number;
+                  }, index: number) => (
+                    <Box
+                      key={device.id || index}
+                      sx={{
+                        p: 2,
+                        borderRadius: 1,
+                        backgroundColor: "grey.50",
+                        border: "1px solid",
+                        borderColor: "grey.200",
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                        <KeyIcon color="action" fontSize="small" />
+                        <Typography variant="body2" fontWeight="bold">
+                          パスキー #{index + 1}
+                        </Typography>
+                        {device.available_methods?.includes("fido2") && (
+                          <Chip label="FIDO2" size="small" color="primary" />
+                        )}
+                      </Stack>
+                      <Stack spacing={0.5}>
+                        {device.platform && (
+                          <Typography variant="caption" color="text.secondary">
+                            Platform: {device.platform}
+                          </Typography>
+                        )}
+                        {device.os && (
+                          <Typography variant="caption" color="text.secondary">
+                            OS: {device.os}
+                          </Typography>
+                        )}
+                        {device.model && (
+                          <Typography variant="caption" color="text.secondary">
+                            Model: {device.model}
+                          </Typography>
+                        )}
+                        <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace", wordBreak: "break-all" }}>
+                          ID: {device.id}
+                        </Typography>
+                      </Stack>
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            </>
+          )}
 
           {/* その他のクレーム */}
           {idTokenClaims && (
