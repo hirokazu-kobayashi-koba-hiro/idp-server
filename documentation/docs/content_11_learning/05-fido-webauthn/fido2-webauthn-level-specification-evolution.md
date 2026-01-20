@@ -1,3 +1,7 @@
+---
+sidebar_position: 6
+---
+
 # FIDO2・WebAuthn仕様の変遷（Level 1 → 2 → 3）
 
 ---

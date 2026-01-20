@@ -24,13 +24,18 @@ const base64UrlToBuffer = (base64url: string): Uint8Array => {
 interface credential {
   id: string;
   type: string;
+  transports?: AuthenticatorTransport[];
 }
 
 interface ChallengeResponse {
   challenge: string;
   timeout?: number;
   rp_id?: string;
-  allow_credentials?: credential[];
+  rp?: {
+    id?: string;
+    name?: string;
+  };
+  allowCredentials?: credential[];
   user_verification?: UserVerificationRequirement;
 }
 
@@ -170,9 +175,13 @@ export default function Login() {
         challenge,
         timeout = 60000,
         rp_id,
-        allow_credentials = [],
+        rp,
+        allowCredentials = [],
         user_verification = "required"
       } = challengeResponse;
+
+      // Extract rpId from either flat rp_id or nested rp.id
+      const rpId = rp_id || rp?.id;
 
       // Step 2: Build PublicKeyCredentialRequestOptions
       const publicKeyOptions: PublicKeyCredentialRequestOptions = {
@@ -181,17 +190,25 @@ export default function Login() {
         userVerification: user_verification,
       };
 
-      // Add rpId if provided by server
-      if (rp_id) {
-        publicKeyOptions.rpId = rp_id;
+      // Add rpId if provided by server (required for subdomain deployments)
+      if (rpId) {
+        publicKeyOptions.rpId = rpId;
       }
 
       // Add allowCredentials if provided by server
-      if (allow_credentials.length > 0) {
-        publicKeyOptions.allowCredentials = allow_credentials.map((cred) => ({
-          type: cred.type as PublicKeyCredentialType,
-          id: base64UrlToBuffer(cred.id),
-        }));
+      if (allowCredentials.length > 0) {
+        publicKeyOptions.allowCredentials = allowCredentials.map((cred) => {
+          const descriptor: PublicKeyCredentialDescriptor = {
+            type: cred.type as PublicKeyCredentialType,
+            id: base64UrlToBuffer(cred.id),
+          };
+          // Include transports if available - this helps the browser
+          // identify the correct authenticator (e.g., "internal" for Touch ID)
+          if (cred.transports && cred.transports.length > 0) {
+            descriptor.transports = cred.transports;
+          }
+          return descriptor;
+        });
       }
 
       // Step 3: Initiate authentication

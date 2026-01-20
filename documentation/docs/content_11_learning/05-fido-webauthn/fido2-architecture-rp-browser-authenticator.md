@@ -1,3 +1,7 @@
+---
+sidebar_position: 2
+---
+
 # FIDO2アーキテクチャ - RP・Webブラウザー・認証器の関係
 
 ---

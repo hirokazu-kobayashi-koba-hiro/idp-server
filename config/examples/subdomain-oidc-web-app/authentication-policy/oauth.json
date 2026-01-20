@@ -1,0 +1,149 @@
+{
+  "id": "a1b2c3d4-1001-4a03-ab78-6ed622289101",
+  "flow": "oauth",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "default_authentication_policy",
+      "priority": 100,
+      "conditions": {
+        "scopes": [
+          "openid"
+        ]
+      },
+      "available_methods": [
+        "password",
+        "email",
+        "fido2",
+        "initial-registration"
+      ],
+      "step_definitions": [
+        {
+          "method": "email",
+          "order": 1,
+          "requires_user": false,
+          "allow_registration": true,
+          "user_identity_source": "email"
+        }
+      ],
+      "acr_mapping_rules": {
+        "urn:mace:incommon:iap:gold": [
+          "fido2"
+        ],
+        "urn:mace:incommon:iap:silver": [
+          "email"
+        ],
+        "urn:mace:incommon:iap:bronze": [
+          "password"
+        ]
+      },
+      "level_of_authentication_scopes": {
+        "transfers": [
+          "fido2"
+        ]
+      },
+      "device_registration_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.email-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.fido2-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.email-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.email-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.fido2-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.email-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.fido2-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}
