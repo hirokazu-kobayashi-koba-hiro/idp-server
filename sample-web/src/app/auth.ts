@@ -24,7 +24,7 @@ const IdpServer = (options: IdpServerOptions): OAuthConfig<Record<string, unknow
     authorization: {
       url: `${issuer}/v1/authorizations`,
       params: {
-        scope: "openid profile phone email address",
+        scope: "openid profile phone email address claims:authentication_devices",
         client_id: process.env.NEXT_PUBLIC_IDP_CLIENT_ID,
         response_type: "code",
       },

@@ -102,6 +102,198 @@ idp-serverでは以下のパスワードレス認証方式に対応していま�
 
 **詳細**: [Passkeyの基礎](../basic/basic-17-fido2-passkey-discoverable-credential.md)
 
+---
+
+## ユーザーとパスキーの関係
+
+### データモデル
+
+idp-serverでは、ユーザーとパスキー（FIDO2クレデンシャル）は以下の関係で管理されます。
+
+```
+User (ユーザー)
+  └── AuthenticationDevice (認証デバイス) [1:N]
+        └── DeviceCredential (デバイスクレデンシャル) [1:N]
+              └── FidoCredentialData (FIDO2固有データ)
+                    - credential_id: クレデンシャルID
+                    - rp_id: Relying Party ID
+                    - fido_server_id: FIDOサーバーID
+```
+
+### 関係性
+
+| エンティティ | 説明 | 関係 |
+|:---|:---|:---|
+| **User** | ユーザーアカウント | 1ユーザーに複数の認証デバイスを登録可能 |
+| **AuthenticationDevice** | 認証に使用するデバイス（iPhone、Mac等） | 1デバイスに複数のクレデンシャルを保持可能 |
+| **DeviceCredential** | 認証資格情報（パスキー、JWT Bearer等） | FIDO2、FIDO UAF、JWT Bearerなど複数タイプに対応 |
+
+### 制約事項
+
+| 制約 | 内容 |
+|:---|:---|
+| **rpIdの一致** | 登録時のrpIdと認証時のrpIdが一致する必要がある |
+| **rpIdのスコープ** | rpIdは現在のドメインまたはその親ドメインのみ指定可能 |
+| **クレデンシャルの一意性** | 同一rpId内でcredential_idは一意 |
+| **デバイス紐付け** | パスキーは特定のAuthenticationDeviceに紐づく |
+
+### rpIdとサブドメインの関係
+
+WebAuthn仕様では、rpIdの有効性は以下のルールで判定されます。
+
+| ケース | 例 | 有効性 |
+|:---|:---|:---|
+| **完全一致** | ホスト: `auth.local.dev` / rpId: `auth.local.dev` | 有効 |
+| **親ドメイン** | ホスト: `auth.local.dev` / rpId: `local.dev` | 有効 |
+| **兄弟ドメイン** | ホスト: `auth.local.dev` / rpId: `api.local.dev` | 無効 |
+| **無関係なドメイン** | ホスト: `auth.local.dev` / rpId: `example.com` | 無効 |
+
+**推奨**: サブドメイン構成では、親ドメイン（例: `local.dev`）をrpIdとして設定することで、複数のサブドメイン間でパスキーを共有できます。
+
+### 1ユーザー複数パスキー
+
+ユーザーは複数のパスキーを登録できます：
+
+- **バックアップ用**: デバイス紛失時のリカバリー
+- **複数デバイス**: iPhone、Mac、セキュリティキーなど
+- **異なるrpId**: サブドメインごとに異なるパスキー（非推奨）
+
+```
+User: alice@example.com
+  ├── AuthenticationDevice: "iPhone 15"
+  │     └── DeviceCredential: Passkey (rpId: example.com)
+  ├── AuthenticationDevice: "MacBook Pro"
+  │     └── DeviceCredential: Passkey (rpId: example.com)
+  └── AuthenticationDevice: "YubiKey 5"
+        └── DeviceCredential: Passkey (rpId: example.com)
+```
+
+### デバイス情報の自動抽出
+
+パスキー登録時、idp-serverはHTTPリクエストの`User-Agent`ヘッダーを解析し、`AuthenticationDevice`のフィールドを自動設定します。これにより、ユーザーは登録済みパスキーを識別しやすくなります。
+
+#### User-Agent解析の仕組み
+
+```
+User-Agent ヘッダー
+         │
+         ▼
+    ┌─────────────────────────────────────┐
+    │          DeviceInfo.parse()         │
+    │  ┌──────────────────────────────┐   │
+    │  │ 1. デバイス種別判定          │   │
+    │  │ 2. OS判定 + バージョン抽出   │   │
+    │  │ 3. ブラウザ判定 + バージョン │   │
+    │  │ 4. モバイル判定              │   │
+    │  └──────────────────────────────┘   │
+    └─────────────────────────────────────┘
+         │
+         ▼
+    AuthenticationDevice フィールド設定
+```
+
+#### フィールドマッピング
+
+| AuthenticationDevice | DeviceInfo | 説明 | 例 |
+|:---|:---|:---|:---|
+| `app_name` | `toLabel()` | デバイスラベル | `"iPhone - Safari (iOS 17.2)"` |
+| `platform` | `platform()` | プラットフォーム | `"Mobile"` / `"Desktop"` |
+| `os` | `os()` | OS名 | `"iOS"`, `"macOS"`, `"Windows"` |
+| `model` | `model()` | ブラウザ＋バージョン | `"Safari 17.2"`, `"Chrome 120"` |
+
+#### User-Agent解析ルール
+
+**デバイス種別判定**:
+
+| User-Agent含有文字列 | デバイス |
+|:---|:---|
+| `iphone` | iPhone |
+| `ipad` | iPad |
+| `android` + `mobile` | Android Phone |
+| `android` | Android Tablet |
+| `macintosh`, `mac os` | Mac |
+| `windows` | Windows PC |
+| `linux` | Linux |
+
+**OS判定**:
+
+| User-Agent含有文字列 | OS |
+|:---|:---|
+| `iphone`, `ipad`, `ipod` | iOS |
+| `android` | Android |
+| `macintosh`, `mac os` | macOS |
+| `windows` | Windows |
+| `linux` | Linux |
+
+**OSバージョン抽出（正規表現）**:
+
+| OS | パターン | 例 | 抽出結果 |
+|:---|:---|:---|:---|
+| iOS | `(?:iPhone\|CPU) OS (\d+[_.]\d+(?:[_.]\d+)?)` | `iPhone OS 17_2_1` | `17.2.1` |
+| macOS | `Mac OS X (\d+[_.]\d+(?:[_.]\d+)?)` | `Mac OS X 10_15_7` | `10.15.7` |
+| Android | `Android (\d+(?:\.\d+)?)` | `Android 14` | `14` |
+| Windows | `Windows NT (\d+\.\d+)` | `Windows NT 10.0` | `10/11` |
+
+**ブラウザ判定（判定順序が重要）**:
+
+| 判定条件 | ブラウザ |
+|:---|:---|
+| `edg/` または `edge/` | Edge |
+| `firefox` | Firefox |
+| `chrome` かつ `edg`を含まない | Chrome |
+| `safari` かつ `chrome`, `chromium`を含まない | Safari |
+| `opera` または `opr/` | Opera |
+
+**ブラウザバージョン抽出**:
+
+| ブラウザ | パターン | 例 | 抽出結果 |
+|:---|:---|:---|:---|
+| Edge | `Edg/(\d+)` | `Edg/120.0.0.0` | `120` |
+| Firefox | `Firefox/(\d+(?:\.\d+)?)` | `Firefox/121.0` | `121` |
+| Chrome | `Chrome/(\d+)` | `Chrome/120.0.0.0` | `120` |
+| Safari | `Version/(\d+(?:\.\d+)?)` | `Version/17.2` | `17.2` |
+| Opera | `OPR/(\d+)` | `OPR/106.0` | `106` |
+
+#### 解析結果例
+
+**Safari on iPhone**:
+```
+User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 17_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1
+
+→ app_name: "iPhone - Safari (iOS 17.2.1)"
+→ platform: "Mobile"
+→ os: "iOS"
+→ model: "Safari 17.2"
+```
+
+**Chrome on Mac**:
+```
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
+
+→ app_name: "Mac - Chrome (macOS 10.15.7)"
+→ platform: "Desktop"
+→ os: "macOS"
+→ model: "Chrome 120"
+```
+
+**Edge on Windows**:
+```
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0
+
+→ app_name: "Windows PC - Edge (Windows 10/11)"
+→ platform: "Desktop"
+→ os: "Windows"
+→ model: "Edge 120"
+```
+
+#### 実装クラス
+
+- `DeviceInfo.java` - User-Agent解析とフィールド抽出
+- `UserAgent.java` - User-Agentラッパー、`toDeviceInfo()`メソッド
+- `Fido2RegistrationInteractor.java` - 登録時のデバイス情報設定
+
+---
+
 ### 3. FIDO UAF（CIBA連携）
 
 **FIDO UAF**（Universal Authentication Framework）は、モバイルアプリ向けの生体認証仕様です。idp-serverでは、**CIBA**（Client Initiated Backchannel Authentication）と組み合わせて使用できます。

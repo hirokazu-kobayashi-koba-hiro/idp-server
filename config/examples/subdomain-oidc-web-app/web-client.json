@@ -4,7 +4,8 @@
   "client_secret": "local-dev-public-secret-32char",
   "redirect_uris": [
     "https://sample.local.dev/api/auth/callback/idp-server",
-    "https://sample.local.dev/api/security-test/callback"
+    "https://sample.local.dev/api/security-test/callback",
+    "https://sample.local.dev/api/passkey-registration/callback/"
   ],
   "response_types": [
     "code"
@@ -13,7 +14,7 @@
     "authorization_code",
     "refresh_token"
   ],
-  "scope": "openid profile email",
+  "scope": "openid profile email claims:authentication_devices",
   "client_name": "Subdomain Sample Web Application",
   "token_endpoint_auth_method": "none",
   "application_type": "web"

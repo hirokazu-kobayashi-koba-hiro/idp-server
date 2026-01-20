@@ -3,11 +3,14 @@ import { auth } from "@/app/auth";
 import { redirect } from "next/navigation";
 import UserInfo from "@/components/UserInfo";
 import TokenViewer from "@/components/TokenViewer";
+import UserinfoViewer from "@/components/UserinfoViewer";
 import PasswordChange from "@/components/PasswordChange";
 import UserDelete from "@/components/UserDelete";
 import LogoutButton from "@/components/LogoutButton";
 import SecurityIcon from "@mui/icons-material/Security";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
+import AddIcon from "@mui/icons-material/Add";
+import PasskeyRegistrationStatus from "@/components/PasskeyRegistrationStatus";
 
 const Home = async () => {
   const session = await auth();
@@ -25,6 +28,15 @@ const Home = async () => {
             ダッシュボード
           </Typography>
           <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              href="/api/passkey-registration"
+              variant="contained"
+              color="success"
+              startIcon={<AddIcon />}
+              size="small"
+            >
+              パスキー追加
+            </Button>
             <Button
               href="/fido2-rpid-demo"
               variant="outlined"
@@ -47,11 +59,17 @@ const Home = async () => {
           </Box>
         </Stack>
 
+        {/* Passkey Registration Status */}
+        <PasskeyRegistrationStatus />
+
         {/* User Info */}
         <UserInfo session={session} />
 
         {/* Token Viewer */}
         <TokenViewer session={session} />
+
+        {/* Userinfo API Response */}
+        <UserinfoViewer accessToken={session.accessToken} />
 
         {/* Account Settings */}
         <Grid container spacing={3}>

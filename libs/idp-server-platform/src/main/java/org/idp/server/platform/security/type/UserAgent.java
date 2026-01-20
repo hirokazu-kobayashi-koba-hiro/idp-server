@@ -28,4 +28,17 @@ public class UserAgent {
   public String value() {
     return value;
   }
+
+  public boolean exists() {
+    return value != null && !value.isEmpty();
+  }
+
+  /**
+   * Parses the User-Agent string and returns device information.
+   *
+   * @return DeviceInfo extracted from User-Agent
+   */
+  public DeviceInfo toDeviceInfo() {
+    return DeviceInfo.parse(value);
+  }
 }

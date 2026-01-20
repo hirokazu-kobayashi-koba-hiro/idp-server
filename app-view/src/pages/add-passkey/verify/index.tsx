@@ -19,8 +19,8 @@ import {
 import { useRouter } from "next/router";
 import { backendUrl, useAppContext } from "@/pages/_app";
 import { useState } from "react";
-import { SignupStepper } from "@/components/SignupStepper";
-import { Email } from "@mui/icons-material";
+import { Email, Key } from "@mui/icons-material";
+import { AddPasskeyStepper } from "@/components/AddPasskeyStepper";
 
 interface ApiErrorResponse {
   error?: string;
@@ -28,9 +28,9 @@ interface ApiErrorResponse {
   message?: string;
 }
 
-export default function EmailVerificationPage() {
+export default function AddPasskeyVerifyPage() {
   const router = useRouter();
-  const { email } = useAppContext()
+  const { email } = useAppContext();
   const [verificationCode, setVerificationCode] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"error" | "success">("error");
@@ -116,7 +116,8 @@ export default function EmailVerificationPage() {
       }
 
       // Success - proceed to FIDO2 registration
-      router.push(`/signup/fido2?id=${id}&tenant_id=${tenantId}`);
+      // Use the same FIDO2 registration page as signup
+      router.push(`/signup/fido2?id=${id}&tenant_id=${tenantId}&flow=add-passkey`);
     } catch (error) {
       console.error("Verification error:", error);
       setMessageType("error");
@@ -125,6 +126,12 @@ export default function EmailVerificationPage() {
       setLoading(false);
     }
   };
+
+  // Redirect to email input if no email in context
+  if (!email && typeof window !== "undefined") {
+    router.push(`/add-passkey?id=${id}&tenant_id=${tenantId}`);
+    return null;
+  }
 
   return (
     <Container maxWidth="xs">
@@ -146,15 +153,18 @@ export default function EmailVerificationPage() {
               : "0 0 0 1px rgba(255,255,255,0.06)",
         }}
       >
-        <Typography variant="h5" fontWeight={600} gutterBottom>
-          Email Verification
-        </Typography>
+        <Box display="flex" alignItems="center" gap={1} mb={1}>
+          <Key color="primary" />
+          <Typography variant="h5" fontWeight={600}>
+            Verify Your Email
+          </Typography>
+        </Box>
         <Typography variant="body2" color="text.secondary" mb={4}>
-          Enter the 6-digit code we sent to your email.
+          Enter the 6-digit code we sent to <strong>{email}</strong>
         </Typography>
 
         <Stack spacing={3}>
-          <SignupStepper activeStep={1} />
+          <AddPasskeyStepper activeStep={1} />
 
           <TextField
             label="Verification Code"
@@ -162,6 +172,11 @@ export default function EmailVerificationPage() {
             placeholder="000000"
             value={verificationCode}
             onChange={(e) => setVerificationCode(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && verificationCode && !loading) {
+                handleNext();
+              }
+            }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -184,7 +199,7 @@ export default function EmailVerificationPage() {
               disabled={!verificationCode || loading}
               sx={{ textTransform: "none" }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : "Next"}
+              {loading ? <CircularProgress size={24} color="inherit" /> : "Verify & Continue"}
             </Button>
           </Box>
 

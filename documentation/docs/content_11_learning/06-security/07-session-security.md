@@ -436,6 +436,211 @@ BFFを挟んでセッションで管理する
 
 ---
 
+## ブラウザによるCookie制限の違い
+
+### 概要
+
+各ブラウザはプライバシー保護のため、サードパーティCookieに対して異なる制限を設けています。OAuth/OIDCフローでサブドメイン間のセッション管理を行う場合、これらの制限を理解することが重要です。
+
+### ブラウザ別の制限
+
+| ブラウザ | サードパーティCookie | 主な制限技術 |
+|---------|---------------------|-------------|
+| Safari | **厳格にブロック** | ITP (Intelligent Tracking Prevention) |
+| Firefox | ブロック傾向 | ETP (Enhanced Tracking Protection) |
+| Chrome | 段階的に廃止予定 | Privacy Sandbox |
+| Edge | Chromeに準拠 | - |
+
+### Safari ITP (Intelligent Tracking Prevention)
+
+Safariの**ITP**は最も厳格なCookie制限を持ちます。
+
+```
+ITPの主な制限:
+
+1. サードパーティCookieのブロック
+   - 異なるドメインからのCookieは基本的にブロック
+   - サブドメイン間でも制限される場合がある
+
+2. ファーストパーティCookieの有効期限制限
+   - JavaScriptで設定したCookieは7日で失効
+   - Cross-site trackingと判定されると24時間で失効
+
+3. リダイレクトチェーンでのCookie制限
+   - A → B → A のようなリダイレクトでBが設定したCookieをブロック
+```
+
+### OAuth/OIDCフローでの問題
+
+サブドメイン構成でのOAuthフローでは、SafariのITPが問題を引き起こすことがあります。
+
+```
+問題のあるフロー（サーバー間通信でCookie転送）:
+
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│ sample.local.dev│     │ api.local.dev   │     │ auth.local.dev  │
+│   (クライアント)  │     │   (認可サーバー) │     │   (認証画面)     │
+└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
+         │                       │                       │
+         │ 1. POST /api/passkey-registration             │
+         │─────────────────────────────────────────────>│
+         │                       │                       │
+         │ 2. サーバー間通信      │                       │
+         │   POST /v1/authorizations                     │
+         │       ─────────────────>│                     │
+         │                       │                       │
+         │       <─────────────────│                     │
+         │   Set-Cookie: AUTH_SESSION=xxx               │
+         │                       │                       │
+         │ 3. Cookie転送 + リダイレクト                   │
+         │   Set-Cookie: AUTH_SESSION=xxx (転送)         │
+         │   Location: auth.local.dev                   │
+         │<─────────────────────────────────────────────│
+         │                       │                       │
+         │                     ↑                        │
+         │              Safariがブロック！               │
+         │    (sample.local.devがapi.local.devの        │
+         │     Cookieを設定しようとしている)             │
+```
+
+**問題の原因**:
+- `sample.local.dev`のレスポンスで`api.local.dev`用のCookieを設定しようとしている
+- SafariはこれをサードパーティCookieとして拒否
+
+### 解決策：ブラウザ直接リダイレクト
+
+ブラウザが認可サーバーに**直接アクセス**することで、Cookieがファーストパーティとして扱われます。
+
+```
+正しいフロー（ブラウザ直接リダイレクト）:
+
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│ sample.local.dev│     │ api.local.dev   │     │ auth.local.dev  │
+│   (クライアント)  │     │   (認可サーバー) │     │   (認証画面)     │
+└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
+         │                       │                       │
+         │ 1. GET /api/passkey-registration              │
+         │────────>│             │                       │
+         │         │             │                       │
+         │ 2. 302 Redirect       │                       │
+         │    Location: api.local.dev/v1/authorizations  │
+         │<────────│             │                       │
+         │                       │                       │
+         │ 3. ブラウザが直接アクセス                      │
+         │    GET api.local.dev/v1/authorizations        │
+         │ ─────────────────────>│                       │
+         │                       │                       │
+         │ 4. 302 Redirect       │                       │
+         │    Set-Cookie: AUTH_SESSION=xxx               │
+         │    Location: auth.local.dev                   │
+         │<──────────────────────│                       │
+         │                       │                       │
+         │              ↑                                │
+         │     Cookieは受け入れられる！                   │
+         │   (api.local.devが自身のCookieを設定)         │
+         │                       │                       │
+         │ 5. ブラウザがauth.local.devにアクセス          │
+         │   Cookie: AUTH_SESSION=xxx                   │
+         │ ─────────────────────────────────────────────>│
+```
+
+**ポイント**:
+- ブラウザが`api.local.dev`に直接アクセス
+- `api.local.dev`が自身のドメインでCookieを設定
+- Safariはファーストパーティcookieとして受け入れる
+
+### 実装例
+
+**❌ 問題のある実装（サーバー間通信）**:
+```typescript
+// sample.local.dev のAPIルート
+export async function GET() {
+  // サーバー間通信でCookieを取得
+  const authResponse = await fetch(`${idpServer}/v1/authorizations`, {
+    method: "POST",
+    redirect: "manual",
+  });
+
+  const response = NextResponse.redirect(authViewUrl);
+
+  // Cookie転送 → Safariでブロックされる
+  const setCookie = authResponse.headers.get("set-cookie");
+  response.headers.append("Set-Cookie", setCookie);
+
+  return response;
+}
+```
+
+**✅ 正しい実装（ブラウザ直接リダイレクト）**:
+```typescript
+// sample.local.dev のAPIルート
+export async function GET() {
+  // 認可URLを構築
+  const authUrl = new URL(`${idpServer}/v1/authorizations`);
+  authUrl.searchParams.set("client_id", clientId);
+  authUrl.searchParams.set("response_type", "code");
+  authUrl.searchParams.set("redirect_uri", callbackUrl);
+  authUrl.searchParams.set("state", state);
+
+  // ブラウザを直接認可サーバーにリダイレクト
+  return NextResponse.redirect(authUrl.toString());
+}
+```
+
+### Cookie設定のベストプラクティス
+
+サブドメイン間でCookieを共有する場合:
+
+```
+推奨設定:
+┌────────────────────────────────────────────────────┐
+│ Set-Cookie: SESSION=xxx;                           │
+│             Domain=.local.dev;  ← サブドメイン共有  │
+│             SameSite=Lax;       ← トップレベルナビ可 │
+│             Secure;             ← HTTPS必須         │
+│             HttpOnly;           ← XSS対策           │
+│             Path=/                                 │
+└────────────────────────────────────────────────────┘
+```
+
+**SameSite属性の選択**:
+
+| 値 | Safari対応 | ユースケース |
+|----|-----------|-------------|
+| Strict | ○ | 最も安全だが外部リンクでログアウト状態 |
+| Lax | ○ | **推奨**：トップレベルナビゲーションでCookie送信 |
+| None | △ | Secureが必須、ITPの制限を受ける可能性 |
+
+### 開発時の確認方法
+
+Safariでの動作確認:
+
+```
+1. Safari → 設定 → プライバシー
+   - 「サイト越えトラッキングを防ぐ」が有効になっていることを確認
+
+2. 開発 → Webインスペクタ → ストレージ → Cookie
+   - Cookieが正しく設定されているか確認
+
+3. 開発 → Webインスペクタ → コンソール
+   - ITP関連の警告メッセージを確認
+```
+
+### まとめ
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Safari/ITP対応のポイント                                     │
+├─────────────────────────────────────────────────────────────┤
+│ 1. サーバー間通信でのCookie転送は避ける                       │
+│ 2. ブラウザを認可サーバーに直接リダイレクトする                 │
+│ 3. SameSite=Lax を使用する（Noneは避ける）                    │
+│ 4. 開発時は複数ブラウザでテストする                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## セキュリティチェックリスト
 
 ### セッションID
@@ -468,5 +673,5 @@ BFFを挟んでセッションで管理する
 
 ---
 
-**最終更新**: 2025-12-25
+**最終更新**: 2026-01-20
 **対象**: Webアプリケーション開発者
