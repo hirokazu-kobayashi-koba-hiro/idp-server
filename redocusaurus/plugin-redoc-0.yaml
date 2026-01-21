@@ -1854,6 +1854,19 @@ components:
           description: |
             PKCEで使用されるチャレンジ検証用の文字列。
             認可リクエストで code_challenge を指定した場合は必須。
+        client_assertion_type:
+          type: string
+          enum:
+            - urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
       required:
         - grant_type
         - code
@@ -1896,6 +1909,19 @@ components:
           description: |
             クライアントのシークレット。
             認証方式がclient_secret_postの場合に設定する。
+        client_assertion_type:
+          type: string
+          enum:
+            - urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
       required:
         - grant_type
         - username
@@ -1925,6 +1951,19 @@ components:
           description: |
             クライアントのシークレット。
             認証方式がclient_secret_postの場合に設定する。
+        client_assertion_type:
+          type: string
+          enum:
+            - urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
       required:
         - grant_type
         - scope
@@ -1953,6 +1992,19 @@ components:
           description: |
             クライアントのシークレット。
             認証方式がclient_secret_postの場合に設定する。
+        client_assertion_type:
+          type: string
+          enum:
+            - urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
       required:
         - grant_type
         - refresh_token
@@ -1985,6 +2037,19 @@ components:
           description: |
             クライアントのシークレット。
             認証方式がclient_secret_postの場合に設定する。
+        client_assertion_type:
+          type: string
+          enum:
+            - urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
       required:
         - grant_type
         - auth_req_id
