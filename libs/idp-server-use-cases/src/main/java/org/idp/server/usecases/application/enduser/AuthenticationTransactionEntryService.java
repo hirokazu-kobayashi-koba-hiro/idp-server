@@ -27,8 +27,9 @@ import org.idp.server.core.openid.authentication.io.AuthenticationTransactionFin
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.core.openid.identity.device.authentication.DeviceAuthenticationDeviceFinder;
 import org.idp.server.core.openid.identity.device.authentication.DeviceEndpointAuthenticationHandler;
-import org.idp.server.core.openid.identity.device.credential.repository.DeviceCredentialQueryRepository;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -61,13 +62,13 @@ public class AuthenticationTransactionEntryService implements AuthenticationTran
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
-      DeviceCredentialQueryRepository deviceCredentialQueryRepository) {
+      UserQueryRepository userQueryRepository) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
     this.deviceEndpointAuthenticationHandler =
         new DeviceEndpointAuthenticationHandler(
-            oAuthTokenQueryRepository, deviceCredentialQueryRepository);
+            oAuthTokenQueryRepository, new DeviceAuthenticationDeviceFinder(userQueryRepository));
   }
 
   public AuthenticationTransaction get(

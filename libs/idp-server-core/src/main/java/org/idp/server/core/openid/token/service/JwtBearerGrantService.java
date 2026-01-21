@@ -24,9 +24,9 @@ import java.util.UUID;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.device.authentication.DeviceAuthenticationVerifier;
-import org.idp.server.core.openid.identity.device.credential.repository.DeviceCredentialQueryRepository;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
@@ -68,11 +68,9 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
 
   public JwtBearerGrantService(
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
-      DeviceCredentialQueryRepository deviceCredentialQueryRepository,
       HttpRequestExecutor httpRequestExecutor) {
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
-    this.deviceAuthenticationVerifier =
-        new DeviceAuthenticationVerifier(deviceCredentialQueryRepository);
+    this.deviceAuthenticationVerifier = new DeviceAuthenticationVerifier();
     this.httpRequestExecutor = httpRequestExecutor;
     this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
@@ -103,7 +101,7 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
       String subjectClaimMapping =
           federation.hasSubjectClaimMapping() ? federation.subjectClaimMapping() : "sub";
 
-      verifySignature(tenant, assertion, jws, federation);
+      verifySignature(context, assertion, jws, federation);
 
       String expectedAudience = serverConfiguration.tokenIssuer().value();
       JwtBearerGrantVerifier verifier = new JwtBearerGrantVerifier(claims, expectedAudience);
@@ -186,13 +184,13 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
   }
 
   private void verifySignature(
-      Tenant tenant,
+      TokenRequestContext context,
       JwtBearerAssertion assertion,
       JsonWebSignature jws,
       AvailableFederation federation) {
     try {
       if (federation.isDeviceType()) {
-        verifyDeviceSignature(tenant, assertion, jws);
+        verifyDeviceSignature(context, assertion, jws);
       } else {
         verifyExternalIdpSignature(jws, federation);
       }
@@ -205,11 +203,21 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
   }
 
   private void verifyDeviceSignature(
-      Tenant tenant, JwtBearerAssertion assertion, JsonWebSignature jws)
+      TokenRequestContext context, JwtBearerAssertion assertion, JsonWebSignature jws)
       throws JoseInvalidException {
     String deviceId = assertion.extractDeviceId();
     AuthenticationDeviceIdentifier deviceIdentifier = new AuthenticationDeviceIdentifier(deviceId);
-    deviceAuthenticationVerifier.verifySignature(tenant, deviceIdentifier, jws);
+
+    JwtBearerUserFindingDelegate delegate = context.jwtBearerUserFindingDelegate();
+    AuthenticationDevice device =
+        delegate.findAuthenticationDevice(context.tenant(), deviceIdentifier);
+
+    if (!device.exists()) {
+      throw new JoseInvalidException(
+          String.format("Device '%s' not found", deviceIdentifier.value()));
+    }
+
+    deviceAuthenticationVerifier.verifySignature(device, jws);
   }
 
   private void verifyExternalIdpSignature(JsonWebSignature jws, AvailableFederation federation) {

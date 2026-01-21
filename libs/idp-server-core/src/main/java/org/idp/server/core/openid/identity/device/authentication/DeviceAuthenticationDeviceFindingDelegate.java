@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.identity.device.credential.repository;
+package org.idp.server.core.openid.identity.device.authentication;
 
-import java.util.Optional;
+import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
-import org.idp.server.core.openid.identity.device.credential.DeviceCredential;
-import org.idp.server.core.openid.identity.device.credential.DeviceCredentialIdentifier;
-import org.idp.server.core.openid.identity.device.credential.DeviceCredentials;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public interface DeviceCredentialQueryRepository {
+/**
+ * Delegate interface for finding authentication devices.
+ *
+ * <p>This delegate allows the Core layer to retrieve authentication device information from the
+ * UseCase layer during device authentication, following the Hexagonal Architecture principle.
+ */
+public interface DeviceAuthenticationDeviceFindingDelegate {
 
-  Optional<DeviceCredential> findById(Tenant tenant, DeviceCredentialIdentifier credentialId);
-
-  DeviceCredentials findByDeviceId(Tenant tenant, AuthenticationDeviceIdentifier deviceId);
-
-  Optional<DeviceCredential> findActiveByDeviceId(
+  /**
+   * Finds an authentication device by tenant and device identifier.
+   *
+   * @param tenant the tenant context
+   * @param deviceId the device identifier
+   * @return the authentication device (may be empty if not found)
+   */
+  AuthenticationDevice findAuthenticationDevice(
       Tenant tenant, AuthenticationDeviceIdentifier deviceId);
-
-  Optional<DeviceCredential> findActiveByDeviceIdAndAlgorithm(
-      Tenant tenant, AuthenticationDeviceIdentifier deviceId, String algorithm);
 }

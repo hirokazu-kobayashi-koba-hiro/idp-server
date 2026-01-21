@@ -50,4 +50,6 @@ public interface UserQueryRepository {
   User findByPreferredUsername(Tenant tenant, String providerId, String preferredUsername);
 
   User findByPreferredUsernameNoProvider(Tenant tenant, String preferredUsername);
+
+  User findByFidoCredentialId(Tenant tenant, String credentialId);
 }

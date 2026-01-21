@@ -55,4 +55,6 @@ public interface UserSqlExecutor {
   Map<String, String> selectAssignedOrganization(Tenant tenant, UserIdentifier userIdentifier);
 
   Map<String, String> selectAssignedTenant(Tenant tenant, UserIdentifier userIdentifier);
+
+  Map<String, String> selectByFidoCredentialId(Tenant tenant, String credentialId);
 }

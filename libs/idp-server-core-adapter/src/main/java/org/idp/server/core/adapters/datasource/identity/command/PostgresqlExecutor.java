@@ -22,7 +22,6 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserRole;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
-import org.idp.server.core.openid.identity.device.credential.DeviceCredential;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -464,7 +463,8 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
         """
         INSERT INTO idp_user_authentication_devices (
             id, tenant_id, user_id, os, model, platform, locale, app_name,
-            priority, available_methods, notification_token, notification_channel
+            priority, available_methods, notification_token, notification_channel,
+            credential_type, credential_id, credential_payload, credential_metadata
         ) VALUES
         """);
 
@@ -472,7 +472,8 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     List<Object> insertParams = new ArrayList<>();
 
     for (AuthenticationDevice device : devices) {
-      valuePlaceholders.add("(?::uuid, ?::uuid, ?::uuid, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?)");
+      valuePlaceholders.add(
+          "(?::uuid, ?::uuid, ?::uuid, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?::jsonb, ?::jsonb)");
       insertParams.add(device.idAsUuid());
       insertParams.add(tenant.identifierUUID());
       insertParams.add(user.subAsUuid());
@@ -486,76 +487,16 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
       insertParams.add(device.hasNotificationToken() ? device.notificationToken().value() : null);
       insertParams.add(
           device.hasNotificationChannel() ? device.optNotificationChannel("").name() : null);
-    }
-
-    insertSql.append(String.join(",", valuePlaceholders));
-    sqlExecutor.execute(insertSql.toString(), insertParams);
-
-    // Sync device credentials for each device
-    syncDeviceCredentials(tenant, user, devices);
-  }
-
-  /**
-   * Sync idp_user_authentication_device_credentials table. Uses DELETE + INSERT for full
-   * replacement.
-   */
-  private void syncDeviceCredentials(Tenant tenant, User user, List<AuthenticationDevice> devices) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-
-    // Delete existing credentials for all devices of this user
-    String deleteSql =
-        """
-        DELETE FROM idp_user_authentication_device_credentials
-        WHERE user_id = ?::uuid
-        AND tenant_id = ?::uuid
-        """;
-    List<Object> deleteParams = new ArrayList<>();
-    deleteParams.add(user.subAsUuid());
-    deleteParams.add(tenant.identifierUUID());
-    sqlExecutor.execute(deleteSql, deleteParams);
-
-    // Collect all credentials from all devices
-    List<CredentialWithDevice> credentialsToInsert = new ArrayList<>();
-    for (AuthenticationDevice device : devices) {
-      if (device.hasDeviceCredentials()) {
-        for (DeviceCredential credential : device.deviceCredentials()) {
-          if (credential.exists()) {
-            credentialsToInsert.add(new CredentialWithDevice(device, credential));
-          }
-        }
-      }
-    }
-
-    if (credentialsToInsert.isEmpty()) {
-      return;
-    }
-
-    StringBuilder insertSql = new StringBuilder();
-    insertSql.append(
-        """
-        INSERT INTO idp_user_authentication_device_credentials (
-            id, tenant_id, user_id, device_id, credential_type, type_specific_data, expires_at
-        ) VALUES
-        """);
-
-    List<String> valuePlaceholders = new ArrayList<>();
-    List<Object> insertParams = new ArrayList<>();
-
-    for (CredentialWithDevice cwd : credentialsToInsert) {
-      valuePlaceholders.add("(?, ?::uuid, ?::uuid, ?::uuid, ?, ?::jsonb, ?)");
-      insertParams.add(cwd.credential.id());
-      insertParams.add(tenant.identifierUUID());
-      insertParams.add(user.subAsUuid());
-      insertParams.add(cwd.device.idAsUuid());
-      insertParams.add(cwd.credential.type().name());
-      insertParams.add(cwd.credential.typeSpecificDataAsJson());
-      insertParams.add(cwd.credential.expiresAtOrNull());
+      // Integrated credential columns
+      insertParams.add(device.hasCredentialType() ? device.credentialType() : null);
+      insertParams.add(device.hasCredentialId() ? device.credentialId() : null);
+      insertParams.add(
+          device.hasCredentialPayload() ? jsonConverter.write(device.credentialPayload()) : null);
+      insertParams.add(
+          device.hasCredentialMetadata() ? jsonConverter.write(device.credentialMetadata()) : null);
     }
 
     insertSql.append(String.join(",", valuePlaceholders));
     sqlExecutor.execute(insertSql.toString(), insertParams);
   }
-
-  /** Helper class to associate a credential with its parent device. */
-  private record CredentialWithDevice(AuthenticationDevice device, DeviceCredential credential) {}
 }

@@ -18,6 +18,8 @@ package org.idp.server.core.openid.token;
 
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.device.AuthenticationDevice;
+import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -84,5 +86,17 @@ public class JwtBearerUserFinder implements JwtBearerUserFindingDelegate {
         // Default to external user ID lookup
         return userQueryRepository.findByExternalIdpSubject(tenant, subject, providerId);
     }
+  }
+
+  @Override
+  public AuthenticationDevice findAuthenticationDevice(
+      Tenant tenant, AuthenticationDeviceIdentifier deviceId) {
+    // Find user by device ID
+    User user = userQueryRepository.findByDeviceId(tenant, deviceId, "idp-server");
+    if (!user.exists()) {
+      return new AuthenticationDevice();
+    }
+    // Extract the authentication device from the user
+    return user.findAuthenticationDevice(deviceId.value());
   }
 }

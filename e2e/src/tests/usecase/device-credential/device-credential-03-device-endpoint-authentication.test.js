@@ -135,16 +135,13 @@ describe("Device Credential Use Case: Device Endpoint Authentication", () => {
             id: deviceId,
             app_name: "Device Auth Test App",
             priority: 1,
-            device_credentials: [
-              {
-                id: credentialId,
-                type: "jwt_bearer_symmetric",
-                type_specific_data: {
-                  secret_value: deviceSecret,
-                  algorithm: "HS256"
-                }
-              }
-            ]
+            credential_type: "jwt_bearer_symmetric",
+            credential_id: credentialId,
+            credential_payload: {
+              secret_value: deviceSecret,
+              algorithm: "HS256"
+            },
+            credential_metadata: {}
           }
         ]
       },
@@ -835,16 +832,13 @@ describe("Device Credential Use Case: Device Endpoint Authentication", () => {
             app_name: "Access Token Auth Test App",
             priority: 1,
             // Device credentials for JWT Bearer Grant
-            device_credentials: [
-              {
-                id: credentialId,
-                type: "jwt_bearer_symmetric",
-                type_specific_data: {
-                  secret_value: deviceSecret,
-                  algorithm: "HS256"
-                }
-              }
-            ]
+            credential_type: "jwt_bearer_symmetric",
+            credential_id: credentialId,
+            credential_payload: {
+              secret_value: deviceSecret,
+              algorithm: "HS256"
+            },
+            credential_metadata: {}
           }
         ]
       },
@@ -1136,16 +1130,13 @@ describe("Device Credential Use Case: Device Endpoint Authentication", () => {
             id: deviceId,
             app_name: "User A Device",
             priority: 1,
-            device_credentials: [
-              {
-                id: credentialId,
-                type: "jwt_bearer_symmetric",
-                type_specific_data: {
-                  secret_value: deviceSecret,
-                  algorithm: "HS256"
-                }
-              }
-            ]
+            credential_type: "jwt_bearer_symmetric",
+            credential_id: credentialId,
+            credential_payload: {
+              secret_value: deviceSecret,
+              algorithm: "HS256"
+            },
+            credential_metadata: {}
           }
         ]
       },

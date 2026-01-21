@@ -108,6 +108,29 @@ public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfi
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
+  @DeleteMapping("/authentication-devices/{device-id}")
+  public ResponseEntity<?> deleteAuthenticationDevice(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("device-id") AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
+      HttpServletRequest httpServletRequest) {
+
+    User user = resourceOwnerPrincipal.getUser();
+    OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserOperationResponse response =
+        userOperationApi.deleteAuthenticationDevice(
+            tenantIdentifier, user, oAuthToken, authenticationDeviceIdentifier, requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
   @DeleteMapping
   public ResponseEntity<?> delete(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,

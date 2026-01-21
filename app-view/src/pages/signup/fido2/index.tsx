@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Container,
   Typography,
@@ -69,6 +69,19 @@ export default function Fido2RegistrationPage() {
   const { id, tenant_id: tenantId, flow } = router.query;
   const theme = useTheme();
   const isAddPasskeyFlow = flow === "add-passkey";
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Cleanup any pending WebAuthn operations on mount and unmount
+  useEffect(() => {
+    // Create an AbortController on mount to handle any lingering operations
+    abortControllerRef.current = new AbortController();
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleRegister = async () => {
     // Prevent duplicate requests
@@ -76,6 +89,14 @@ export default function Fido2RegistrationPage() {
       console.warn("Registration already in progress");
       return;
     }
+
+    // Abort any previous operation and wait for cleanup
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      // Wait for browser to clean up the aborted operation
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    abortControllerRef.current = new AbortController();
 
     setLoading(true);
     setIsRegistering(true);
@@ -86,6 +107,16 @@ export default function Fido2RegistrationPage() {
       if (!window.PublicKeyCredential) {
         setMessage("Your browser does not support passkey registration. Please use a modern browser.");
         return;
+      }
+
+      // Cancel any active conditional mediation (passkey autofill) from other pages
+      // This is necessary because Chrome keeps conditional mediation active across page navigations
+      try {
+        await navigator.credentials.preventSilentAccess();
+        // Give browser time to clean up
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (e) {
+        console.log("preventSilentAccess not supported or failed:", e);
       }
 
       // Check if platform authenticator is available
@@ -183,10 +214,31 @@ export default function Fido2RegistrationPage() {
       // Debug: Log final options being sent to WebAuthn API
       console.log("Final publicKeyOptions:", publicKeyOptions);
 
-      // Step 3: Create credential
-      const credential = await navigator.credentials.create({
-        publicKey: publicKeyOptions,
-      }) as PublicKeyCredential;
+      // Step 3: Create credential with retry for "pending" error
+      let credential: PublicKeyCredential | null = null;
+      let retryCount = 0;
+      const maxRetries = 3;
+
+      while (!credential && retryCount < maxRetries) {
+        try {
+          credential = await navigator.credentials.create({
+            publicKey: publicKeyOptions,
+            signal: abortControllerRef.current?.signal,
+          }) as PublicKeyCredential;
+        } catch (createError) {
+          if (createError instanceof Error &&
+              createError.name === 'OperationError' &&
+              createError.message.includes('pending') &&
+              retryCount < maxRetries - 1) {
+            console.log(`WebAuthn pending error, retrying... (${retryCount + 1}/${maxRetries})`);
+            retryCount++;
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 500));
+          } else {
+            throw createError;
+          }
+        }
+      }
 
       if (!credential) {
         throw new Error("No credential received from authenticator");
@@ -244,7 +296,9 @@ export default function Fido2RegistrationPage() {
       // Handle WebAuthn-specific errors
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          setMessage("Registration was cancelled. Please try again.");
+          // Don't show error if abort was caused by component cleanup or user navigation
+          console.log("WebAuthn operation was aborted");
+          return;
         } else if (error.name === 'NotAllowedError') {
           setMessage("Registration was not allowed. Please ensure you have permission and try again.");
         } else if (error.name === 'InvalidStateError') {

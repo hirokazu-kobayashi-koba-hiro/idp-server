@@ -36,6 +36,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -201,8 +202,20 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     String deviceId = UUID.randomUUID().toString();
     log.info("fido2 registration success deviceId: {}, userId: {}", deviceId, userId);
 
+    // Get credentialId from request (sent by client from authenticator response)
+    String credentialId = request.getValueAsString("id");
+    // Get rpId from execution config
+    String rpId = (String) execution.details().get("rp_id");
+
     User addedDeviceUser =
-        addAuthenticationDevice(baseUser, deviceId, transaction.attributes(), requestAttributes);
+        addAuthenticationDevice(
+            baseUser,
+            deviceId,
+            transaction.attributes(),
+            requestAttributes,
+            credentialId,
+            rpId,
+            configuration.id());
 
     if (tenant.requiresIdentityVerificationForDeviceRegistration()) {
       addedDeviceUser.setStatus(UserStatus.IDENTITY_VERIFICATION_REQUIRED);
@@ -329,7 +342,10 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
       User user,
       String deviceId,
       AuthenticationTransactionAttributes attributes,
-      RequestAttributes requestAttributes) {
+      RequestAttributes requestAttributes,
+      String credentialId,
+      String rpId,
+      String fidoServerId) {
 
     // Extract device info from User-Agent if not provided in attributes
     DeviceInfo deviceInfo = extractDeviceInfo(attributes, requestAttributes);
@@ -367,6 +383,28 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
             notificationToken,
             availableAuthenticationMethods,
             priority);
+
+    // Set FIDO2 credential fields directly on authentication device
+    if (credentialId != null && !credentialId.isEmpty()) {
+      // credentialPayload: empty for now (will be populated by FIDO server on authentication)
+      Map<String, Object> credentialPayload = new HashMap<>();
+
+      // credentialMetadata: FIDO-specific metadata
+      Map<String, Object> credentialMetadata = new HashMap<>();
+      credentialMetadata.put("rp_id", rpId);
+      credentialMetadata.put("fido_server_id", fidoServerId);
+      credentialMetadata.put("created_at", SystemDateTime.now().toString());
+
+      authenticationDevice =
+          authenticationDevice.withCredential(
+              "fido2", credentialId, credentialPayload, credentialMetadata);
+
+      log.debug(
+          "Set FIDO2 credential on device: deviceId={}, credentialId={}, rpId={}",
+          deviceId,
+          credentialId,
+          rpId);
+    }
 
     return user.addAuthenticationDevice(authenticationDevice);
   }

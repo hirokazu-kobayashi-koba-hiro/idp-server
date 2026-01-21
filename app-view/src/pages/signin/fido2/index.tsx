@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Typography, Button, Stack, Link, Divider, Box, TextField } from "@mui/material";
 import { useRouter } from "next/router";
 import { backendUrl, useAppContext } from "@/pages/_app";
@@ -68,6 +68,8 @@ export default function Login() {
 
   // AbortController for managing concurrent authentication requests
   const [currentCredentialGetController, setCurrentCredentialGetController] = useState<AbortController | null>(null);
+  // Ref to track controller for cleanup (avoids stale closure in useEffect cleanup)
+  const controllerRef = useRef<AbortController | null>(null);
   // Flag to prevent duplicate challenge requests
   const [isFetching, setIsFetching] = useState(false);
 
@@ -257,6 +259,7 @@ export default function Login() {
       // Create new AbortController for this request
       const controller = new AbortController();
       setCurrentCredentialGetController(controller);
+      controllerRef.current = controller;
 
       const credential = await navigator.credentials.get({
         publicKey: authOptions,
@@ -422,6 +425,16 @@ export default function Login() {
       // Start conditional UI mode
       authChallenge(true);
     }
+
+    // Cleanup: abort any pending WebAuthn request when component unmounts
+    // This is critical for SPA navigation - without this, the conditional mediation
+    // stays active and blocks other WebAuthn operations on other pages
+    return () => {
+      if (controllerRef.current) {
+        controllerRef.current.abort();
+        controllerRef.current = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, router.isReady, tenantId, id]);
 

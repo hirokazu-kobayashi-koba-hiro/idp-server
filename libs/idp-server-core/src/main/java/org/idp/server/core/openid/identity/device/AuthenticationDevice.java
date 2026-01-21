@@ -18,8 +18,6 @@ package org.idp.server.core.openid.identity.device;
 
 import java.io.Serializable;
 import java.util.*;
-import org.idp.server.core.openid.identity.device.credential.DeviceCredential;
-import org.idp.server.core.openid.identity.device.credential.DeviceCredentials;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.notification.NotificationChannel;
 import org.idp.server.platform.notification.NotificationToken;
@@ -36,7 +34,11 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
   String notificationToken;
   List<String> availableMethods;
   Integer priority;
-  List<DeviceCredential> deviceCredentials;
+  // Integrated credential fields (1 device = 1 credential)
+  String credentialType;
+  String credentialId;
+  Map<String, Object> credentialPayload;
+  Map<String, Object> credentialMetadata;
 
   public AuthenticationDevice() {}
 
@@ -74,7 +76,10 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
       String notificationToken,
       List<String> availableMethods,
       Integer priority,
-      List<DeviceCredential> deviceCredentials) {
+      String credentialType,
+      String credentialId,
+      Map<String, Object> credentialPayload,
+      Map<String, Object> credentialMetadata) {
     this.id = id;
     this.appName = appName;
     this.platform = platform;
@@ -85,7 +90,10 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     this.notificationToken = notificationToken;
     this.availableMethods = availableMethods;
     this.priority = priority;
-    this.deviceCredentials = deviceCredentials;
+    this.credentialType = credentialType;
+    this.credentialId = credentialId;
+    this.credentialPayload = credentialPayload;
+    this.credentialMetadata = credentialMetadata;
   }
 
   public String id() {
@@ -172,6 +180,38 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     return priority != null;
   }
 
+  public String credentialType() {
+    return credentialType;
+  }
+
+  public boolean hasCredentialType() {
+    return credentialType != null && !credentialType.isEmpty();
+  }
+
+  public String credentialId() {
+    return credentialId;
+  }
+
+  public boolean hasCredentialId() {
+    return credentialId != null && !credentialId.isEmpty();
+  }
+
+  public Map<String, Object> credentialPayload() {
+    return credentialPayload != null ? credentialPayload : new HashMap<>();
+  }
+
+  public boolean hasCredentialPayload() {
+    return credentialPayload != null && !credentialPayload.isEmpty();
+  }
+
+  public Map<String, Object> credentialMetadata() {
+    return credentialMetadata != null ? credentialMetadata : new HashMap<>();
+  }
+
+  public boolean hasCredentialMetadata() {
+    return credentialMetadata != null && !credentialMetadata.isEmpty();
+  }
+
   public AuthenticationDevice withAvailableMethod(String method) {
     List<String> newAvailableMethods = new ArrayList<>(availableMethods);
     newAvailableMethods.add(method);
@@ -188,24 +228,26 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
         priority);
   }
 
-  public AuthenticationDevice withDeviceCredential(DeviceCredential credential) {
-    List<DeviceCredential> newCredentials =
-        deviceCredentials != null ? new ArrayList<>(deviceCredentials) : new ArrayList<>();
-    newCredentials.add(credential);
-    AuthenticationDevice device =
-        new AuthenticationDevice(
-            id,
-            appName,
-            platform,
-            os,
-            model,
-            locale,
-            notificationChannel,
-            notificationToken,
-            availableMethods,
-            priority);
-    device.deviceCredentials = newCredentials;
-    return device;
+  public AuthenticationDevice withCredential(
+      String credentialType,
+      String credentialId,
+      Map<String, Object> credentialPayload,
+      Map<String, Object> credentialMetadata) {
+    return new AuthenticationDevice(
+        id,
+        appName,
+        platform,
+        os,
+        model,
+        locale,
+        notificationChannel,
+        notificationToken,
+        availableMethods,
+        priority,
+        credentialType,
+        credentialId,
+        credentialPayload,
+        credentialMetadata);
   }
 
   public AuthenticationDevice patchWith(AuthenticationDevice patchDevice) {
@@ -250,6 +292,11 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     if (hasNotificationToken()) map.put("notification_token", notificationToken);
     if (hasAvailableMethods()) map.put("available_methods", availableMethods);
     if (hasPriority()) map.put("priority", priority);
+    // Integrated credential fields
+    if (hasCredentialType()) map.put("credential_type", credentialType);
+    if (hasCredentialId()) map.put("credential_id", credentialId);
+    if (hasCredentialPayload()) map.put("credential_payload", credentialPayload);
+    if (hasCredentialMetadata()) map.put("credential_metadata", credentialMetadata);
     return map;
   }
 
@@ -258,24 +305,5 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
       return availableMethods.contains("fido-uaf");
     }
     return false;
-  }
-
-  public DeviceCredentials deviceCredentials() {
-    if (deviceCredentials == null) {
-      return new DeviceCredentials();
-    }
-    return new DeviceCredentials(deviceCredentials);
-  }
-
-  public boolean hasDeviceCredentials() {
-    return deviceCredentials != null && !deviceCredentials.isEmpty();
-  }
-
-  public Optional<DeviceCredential> findActiveCredential() {
-    return deviceCredentials().findActiveCredential();
-  }
-
-  public Optional<DeviceCredential> findActiveCredentialByAlgorithm(String algorithm) {
-    return deviceCredentials().findActiveCredentialByAlgorithm(algorithm);
   }
 }

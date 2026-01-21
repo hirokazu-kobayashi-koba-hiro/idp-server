@@ -103,7 +103,6 @@ import org.idp.server.core.openid.identity.authentication.PasswordVerificationDe
 import org.idp.server.core.openid.identity.authentication.UserPasswordAuthenticator;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogApi;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogEventPublisher;
-import org.idp.server.core.openid.identity.device.credential.repository.DeviceCredentialQueryRepository;
 import org.idp.server.core.openid.identity.event.*;
 import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
@@ -664,8 +663,6 @@ public class IdpServerApplication {
 
     OAuthTokenQueryRepository oAuthTokenQueryRepository =
         applicationComponentContainer.resolve(OAuthTokenQueryRepository.class);
-    DeviceCredentialQueryRepository deviceCredentialQueryRepository =
-        applicationComponentContainer.resolve(DeviceCredentialQueryRepository.class);
 
     this.authenticationTransactionApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -674,7 +671,7 @@ public class IdpServerApplication {
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository,
                 oAuthTokenQueryRepository,
-                deviceCredentialQueryRepository),
+                userQueryRepository),
             AuthenticationTransactionApi.class,
             databaseTypeProvider);
 

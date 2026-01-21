@@ -6,6 +6,7 @@ org.idp.server.authentication.interactors.fido2.Fido2RegistrationIChallengeInter
 org.idp.server.authentication.interactors.fido2.Fido2RegistrationInteractorFactory
 org.idp.server.authentication.interactors.fido2.Fido2AuthenticationChallengeInteractorFactory
 org.idp.server.authentication.interactors.fido2.Fido2AuthenticationInteractorFactory
+org.idp.server.authentication.interactors.fido2.Fido2DeregistrationInteractorFactory
 org.idp.server.authentication.interactors.device.AuthenticationDeviceNotificationInteractorFactory
 org.idp.server.authentication.interactors.device.AuthenticationDeviceDeniedInteractorFactory
 org.idp.server.authentication.interactors.device.AuthenticationDeviceBindingMessageInteractorFactory

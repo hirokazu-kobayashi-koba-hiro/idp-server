@@ -17,6 +17,8 @@
 package org.idp.server.core.openid.token;
 
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.device.AuthenticationDevice;
+import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -47,4 +49,16 @@ public interface JwtBearerUserFindingDelegate {
    * @return the user object (may be empty if not found)
    */
   User findUser(Tenant tenant, String issuer, String subject, String subjectClaimMapping);
+
+  /**
+   * Finds an authentication device by device ID.
+   *
+   * <p>This method is used for device JWT signature verification in JWT Bearer grant.
+   *
+   * @param tenant the tenant context
+   * @param deviceId the device identifier
+   * @return the authentication device (may be empty if not found)
+   */
+  AuthenticationDevice findAuthenticationDevice(
+      Tenant tenant, AuthenticationDeviceIdentifier deviceId);
 }

@@ -236,6 +236,22 @@ public class UserQueryDataSource implements UserQueryRepository {
     }
   }
 
+  @Override
+  public User findByFidoCredentialId(Tenant tenant, String credentialId) {
+    try {
+      Map<String, String> result = executor.selectByFidoCredentialId(tenant, credentialId);
+
+      if (Objects.isNull(result) || result.isEmpty()) {
+        return User.notFound();
+      }
+
+      UserIdentifier userIdentifier = ModelConverter.extractUserIdentifier(result);
+      return collectAssignedDataAndConvert(tenant, userIdentifier, executor, result);
+    } catch (SqlTooManyResultsException exception) {
+      throw new UserTooManyFoundResultException(exception.getMessage());
+    }
+  }
+
   private User collectAssignedDataAndConvert(
       Tenant tenant,
       UserIdentifier userIdentifier,

@@ -137,6 +137,121 @@ User (ユーザー)
 | **クレデンシャルの一意性** | 同一rpId内でcredential_idは一意 |
 | **デバイス紐付け** | パスキーは特定のAuthenticationDeviceに紐づく |
 
+### FIDO2のusername
+
+パスキー登録・認証時に使用されるusernameの仕様です。
+
+> **WebAuthn仕様の詳細**: [FIDO2登録フローとインターフェース](../../content_11_learning/05-fido-webauthn/fido2-registration-flow-interface.md)を参照してください。
+
+#### アーキテクチャ
+
+idp-serverは、FIDOサーバーの実装を抽象化しています。
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     idp-server                              │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │     Fido2RegistrationInteractor                       │  │
+│  │     Fido2AuthenticationInteractor                     │  │
+│  │       └── username解決（TenantIdentityPolicy）         │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                           │                                 │
+│              ┌────────────┴────────────┐                    │
+│              ▼                         ▼                    │
+│  ┌─────────────────────┐   ┌─────────────────────────────┐  │
+│  │  WebAuthn4j Adapter │   │  External FIDO Server       │  │
+│  │  (built-in)         │   │  (http_request経由)          │  │
+│  └─────────────────────┘   └─────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### usernameの決定ルール
+
+**`TenantIdentityPolicy`の`uniqueKeyType`設定**に基づいてusernameを決定します。
+
+| uniqueKeyType | usernameの値 | 用途 |
+|:---|:---|:---|
+| `USERNAME` | `preferredUsername` | 社内システム（従業員ID） |
+| `EMAIL` | `email` | 一般向けWebサービス（**デフォルト**） |
+| `PHONE` | `phoneNumber` | モバイルアプリ（SMS認証） |
+| `EXTERNAL_USER_ID` | `externalUserId` | 外部IdP連携 |
+
+この解決は`Fido2RegistrationInteractor`で行われ、FIDOサーバーの実装（WebAuthn4j / 外部サーバー）に依存しません。
+
+#### usernameの流れ
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    パスキー登録フロー                          │
+├──────────────────────────────────────────────────────────────┤
+│  1. フロントエンド → idp-server                               │
+│     └── username を送信（TenantIdentityPolicyに基づく値）      │
+│                                                              │
+│  2. idp-server → FIDOサーバー                                 │
+│     └── username を含むリクエストを転送                        │
+│     └── WebAuthn4j または 外部FIDOサーバー                     │
+│                                                              │
+│  3. FIDOサーバー → 認証器                                     │
+│     └── user.name として認証器UIに表示・保存                   │
+│                                                              │
+│  4. FIDOサーバー → idp-server                                 │
+│     └── レスポンスにusernameを含める                          │
+│     └── metadata.username_param で取得キーを指定              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+#### FIDO2設定
+
+`metadata.username_param`で、FIDOサーバーのレスポンスからusernameを取得するパラメータ名を指定します。
+
+**WebAuthn4j Adapter（built-in）の場合**:
+```json
+{
+  "type": "fido2",
+  "metadata": {
+    "username_param": "username"
+  },
+  "interactions": {
+    "fido2-registration": {
+      "execution": {
+        "function": "webauthn4j_registration"
+      }
+    }
+  }
+}
+```
+
+**外部FIDOサーバーの場合**:
+```json
+{
+  "type": "fido2",
+  "metadata": {
+    "username_param": "user_id"
+  },
+  "interactions": {
+    "fido2-registration": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "https://fido-server.example.com/registration"
+        }
+      }
+    }
+  }
+}
+```
+
+外部FIDOサーバーを使用する場合、レスポンスのどのフィールドにusernameが含まれるかはサーバー実装に依存するため、`username_param`で適切に指定してください。
+
+#### 注意事項
+
+| 注意点 | 説明 |
+|:---|:---|
+| **一意性** | usernameはテナント内で一意である必要がある |
+| **不変性** | 登録後のusername変更は新規パスキー登録が必要 |
+| **64バイト制限** | WebAuthn仕様により、認証器で切り詰められる可能性あり |
+| **FIDOサーバー依存** | 外部サーバー使用時は`username_param`の設定が重要 |
+
 ### rpIdとサブドメインの関係
 
 WebAuthn仕様では、rpIdの有効性は以下のルールで判定されます。
