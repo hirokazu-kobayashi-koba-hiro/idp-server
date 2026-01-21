@@ -171,18 +171,48 @@ class ModelConverter {
         JsonNodeWrapper availableAuthenticationMethodsNodes = wrapper.getNode("available_methods");
         List<String> availableAuthenticationMethods = availableAuthenticationMethodsNodes.toList();
         Integer priority = wrapper.getValueAsInteger("priority");
-        AuthenticationDevice authenticationDevice =
-            new AuthenticationDevice(
-                id,
-                appName,
-                platform,
-                os,
-                model,
-                locale,
-                notificationChannel,
-                notificationToken,
-                availableAuthenticationMethods,
-                priority);
+
+        // Parse integrated credential fields
+        String credentialType = wrapper.getValueOrEmptyAsString("credential_type");
+        String credentialId = wrapper.getValueOrEmptyAsString("credential_id");
+        Map<String, Object> credentialPayload = parseJsonObjectField(wrapper, "credential_payload");
+        Map<String, Object> credentialMetadata =
+            parseJsonObjectField(wrapper, "credential_metadata");
+
+        AuthenticationDevice authenticationDevice;
+        if (credentialType != null && !credentialType.isEmpty()) {
+          // Use constructor with credential fields
+          authenticationDevice =
+              new AuthenticationDevice(
+                  id,
+                  appName,
+                  platform,
+                  os,
+                  model,
+                  locale,
+                  notificationChannel,
+                  notificationToken,
+                  availableAuthenticationMethods,
+                  priority,
+                  credentialType,
+                  credentialId,
+                  credentialPayload,
+                  credentialMetadata);
+        } else {
+          // Use constructor without credential fields (backward compatibility)
+          authenticationDevice =
+              new AuthenticationDevice(
+                  id,
+                  appName,
+                  platform,
+                  os,
+                  model,
+                  locale,
+                  notificationChannel,
+                  notificationToken,
+                  availableAuthenticationMethods,
+                  priority);
+        }
         authenticationDevices.add(authenticationDevice);
       }
       user.setAuthenticationDevices(authenticationDevices);
@@ -230,5 +260,21 @@ class ModelConverter {
 
     String normalized = value.toLowerCase().trim();
     return "t".equals(normalized) || "true".equals(normalized) || "1".equals(normalized);
+  }
+
+  /**
+   * Parses a JSON object field from JsonNodeWrapper.
+   *
+   * @param wrapper the JsonNodeWrapper containing the field
+   * @param fieldName the name of the field to parse
+   * @return the parsed Map, or empty Map if field is null/empty
+   */
+  private static Map<String, Object> parseJsonObjectField(
+      JsonNodeWrapper wrapper, String fieldName) {
+    JsonNodeWrapper fieldNode = wrapper.getNode(fieldName);
+    if (fieldNode == null || !fieldNode.existsWithValue()) {
+      return new HashMap<>();
+    }
+    return new HashMap<>(fieldNode.toMap());
   }
 }

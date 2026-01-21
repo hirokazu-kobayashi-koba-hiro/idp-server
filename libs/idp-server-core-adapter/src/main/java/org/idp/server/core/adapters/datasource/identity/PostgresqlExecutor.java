@@ -478,6 +478,28 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
+  @Override
+  public Map<String, String> selectByFidoCredentialId(Tenant tenant, String credentialId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    // Search by FIDO2 credential_id directly in authentication_devices table
+    String sqlTemplate =
+        String.format(
+            selectSql,
+            """
+                WHERE idp_user.id = (
+                    SELECT user_id FROM idp_user_authentication_devices
+                    WHERE tenant_id = ?::uuid
+                    AND credential_id = ?
+                )
+            """);
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(credentialId);
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
   String selectSql =
       """
           SELECT
@@ -516,7 +538,11 @@ public class PostgresqlExecutor implements UserSqlExecutor {
                   'priority', d.priority,
                   'available_methods', d.available_methods,
                   'notification_token', d.notification_token,
-                  'notification_channel', d.notification_channel
+                  'notification_channel', d.notification_channel,
+                  'credential_type', d.credential_type,
+                  'credential_id', d.credential_id,
+                  'credential_payload', d.credential_payload,
+                  'credential_metadata', d.credential_metadata
               )) FROM idp_user_authentication_devices d WHERE d.user_id = idp_user.id) AS authentication_devices,
               idp_user.verified_claims,
               idp_user.status,

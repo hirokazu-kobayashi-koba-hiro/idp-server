@@ -16,17 +16,16 @@
 
 package org.idp.server.core.openid.identity.device.authentication;
 
-import java.util.Optional;
-import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.device.credential.DeviceCredential;
+import org.idp.server.core.openid.identity.device.credential.DeviceCredentialIdentifier;
+import org.idp.server.core.openid.identity.device.credential.DeviceCredentialType;
 import org.idp.server.core.openid.identity.device.credential.JwtBearerCredentialData;
-import org.idp.server.core.openid.identity.device.credential.repository.DeviceCredentialQueryRepository;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JwtCredential;
 import org.idp.server.platform.jose.JwtSignatureVerifier;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.policy.DeviceAuthenticationType;
 
 /**
@@ -44,31 +43,22 @@ import org.idp.server.platform.multi_tenancy.tenant.policy.DeviceAuthenticationT
  */
 public class DeviceAuthenticationVerifier {
 
-  private final DeviceCredentialQueryRepository deviceCredentialQueryRepository;
-
-  public DeviceAuthenticationVerifier(
-      DeviceCredentialQueryRepository deviceCredentialQueryRepository) {
-    this.deviceCredentialQueryRepository = deviceCredentialQueryRepository;
-  }
+  public DeviceAuthenticationVerifier() {}
 
   /**
    * Verifies device authentication using JWT assertion (high-level API).
    *
-   * @param tenant the tenant
-   * @param deviceIdentifier the device identifier
+   * @param device the authentication device with integrated credential
    * @param assertion the JWT assertion
    * @param authenticationType the authentication type
    * @throws UnauthorizedException if verification fails
    */
   public void verify(
-      Tenant tenant,
-      AuthenticationDeviceIdentifier deviceIdentifier,
-      String assertion,
-      DeviceAuthenticationType authenticationType) {
+      AuthenticationDevice device, String assertion, DeviceAuthenticationType authenticationType) {
 
     try {
       JsonWebSignature jws = JsonWebSignature.parse(assertion);
-      verifySignature(tenant, deviceIdentifier, jws);
+      verifySignature(device, jws);
     } catch (JoseInvalidException e) {
       throw new UnauthorizedException("Invalid JWT assertion: " + e.getMessage());
     } catch (UnauthorizedException e) {
@@ -81,34 +71,50 @@ public class DeviceAuthenticationVerifier {
   /**
    * Verifies device JWT signature (low-level API).
    *
-   * <p>This method finds the device credential by device ID and algorithm, then verifies the
-   * signature. Use this for JWT Bearer Grant and other token operations where you need to control
-   * exception handling.
+   * <p>This method extracts the credential from the device and verifies the signature. Use this for
+   * JWT Bearer Grant and other token operations where you need to control exception handling.
    *
-   * @param tenant the tenant
-   * @param deviceIdentifier the device identifier
+   * @param device the authentication device with integrated credential
    * @param jws the parsed JSON Web Signature
    * @throws JoseInvalidException if signature verification fails or credential not found
    */
-  public void verifySignature(
-      Tenant tenant, AuthenticationDeviceIdentifier deviceIdentifier, JsonWebSignature jws)
+  public void verifySignature(AuthenticationDevice device, JsonWebSignature jws)
       throws JoseInvalidException {
 
-    String algorithm = jws.algorithm();
-
-    Optional<DeviceCredential> credentialOpt =
-        deviceCredentialQueryRepository.findActiveByDeviceIdAndAlgorithm(
-            tenant, deviceIdentifier, algorithm);
-
-    if (credentialOpt.isEmpty()) {
+    if (!device.hasCredentialType() || !device.hasCredentialPayload()) {
       throw new JoseInvalidException(
-          String.format(
-              "No active credential found for device '%s' with algorithm '%s'",
-              deviceIdentifier.value(), algorithm));
+          String.format("No credential found for device '%s'", device.id()));
     }
 
-    DeviceCredential credential = credentialOpt.get();
+    DeviceCredential credential = extractCredential(device);
+
+    // Verify algorithm matches
+    String jwtAlgorithm = jws.algorithm();
+    JwtBearerCredentialData credentialData = credential.jwtBearerData();
+    if (credentialData.hasAlgorithm() && !credentialData.algorithm().equals(jwtAlgorithm)) {
+      throw new JoseInvalidException(
+          String.format(
+              "Algorithm mismatch: JWT uses '%s' but credential expects '%s'",
+              jwtAlgorithm, credentialData.algorithm()));
+    }
+
     verifyWithCredential(jws, credential);
+  }
+
+  /**
+   * Extracts DeviceCredential from AuthenticationDevice's integrated credential fields.
+   *
+   * @param device the authentication device
+   * @return the device credential
+   */
+  private DeviceCredential extractCredential(AuthenticationDevice device) {
+    return new DeviceCredential(
+        new DeviceCredentialIdentifier(device.credentialId()),
+        DeviceCredentialType.valueOf(device.credentialType()),
+        device.credentialPayload(),
+        null,
+        null,
+        null);
   }
 
   /**

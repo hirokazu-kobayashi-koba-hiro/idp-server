@@ -16,8 +16,8 @@
 
 package org.idp.server.core.openid.identity.device.authentication;
 
+import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
-import org.idp.server.core.openid.identity.device.credential.repository.DeviceCredentialQueryRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -41,12 +41,14 @@ public class DeviceEndpointAuthenticationHandler {
 
   private final DeviceAccessTokenVerifier accessTokenVerifier;
   private final DeviceAuthenticationVerifier jwtVerifier;
+  private final DeviceAuthenticationDeviceFindingDelegate deviceFindingDelegate;
 
   public DeviceEndpointAuthenticationHandler(
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
-      DeviceCredentialQueryRepository deviceCredentialQueryRepository) {
+      DeviceAuthenticationDeviceFindingDelegate deviceFindingDelegate) {
     this.accessTokenVerifier = new DeviceAccessTokenVerifier(oAuthTokenQueryRepository);
-    this.jwtVerifier = new DeviceAuthenticationVerifier(deviceCredentialQueryRepository);
+    this.jwtVerifier = new DeviceAuthenticationVerifier();
+    this.deviceFindingDelegate = deviceFindingDelegate;
   }
 
   /**
@@ -73,7 +75,13 @@ public class DeviceEndpointAuthenticationHandler {
     if (authenticationType.isAccessToken()) {
       accessTokenVerifier.verify(tenant, deviceIdentifier, credential);
     } else if (authenticationType.isDeviceCredentialJwt()) {
-      jwtVerifier.verify(tenant, deviceIdentifier, credential, authenticationType);
+      AuthenticationDevice device =
+          deviceFindingDelegate.findAuthenticationDevice(tenant, deviceIdentifier);
+      if (!device.exists()) {
+        throw new UnauthorizedException(
+            String.format("Device '%s' not found", deviceIdentifier.value()));
+      }
+      jwtVerifier.verify(device, credential, authenticationType);
     } else {
       throw new UnauthorizedException(
           "Unsupported device authentication type: " + authenticationType);

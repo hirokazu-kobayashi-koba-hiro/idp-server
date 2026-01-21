@@ -38,13 +38,19 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
-public class Fido2AuthenticationInteractor implements AuthenticationInteractor {
+/**
+ * Interactor for FIDO2 credential deregistration (deletion).
+ *
+ * <p>This interactor handles the deletion of FIDO2/WebAuthn credentials. It requires an
+ * authenticated session and verifies that the credential belongs to the authenticated user.
+ */
+public class Fido2DeregistrationInteractor implements AuthenticationInteractor {
 
   AuthenticationConfigurationQueryRepository configurationRepository;
   AuthenticationExecutors authenticationExecutors;
-  LoggerWrapper log = LoggerWrapper.getLogger(Fido2AuthenticationInteractor.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(Fido2DeregistrationInteractor.class);
 
-  public Fido2AuthenticationInteractor(
+  public Fido2DeregistrationInteractor(
       AuthenticationConfigurationQueryRepository configurationRepository,
       AuthenticationExecutors authenticationExecutors) {
     this.configurationRepository = configurationRepository;
@@ -53,7 +59,7 @@ public class Fido2AuthenticationInteractor implements AuthenticationInteractor {
 
   @Override
   public AuthenticationInteractionType type() {
-    return StandardAuthenticationInteraction.FIDO2_AUTHENTICATION.toType();
+    return StandardAuthenticationInteraction.FIDO2_DEREGISTRATION.toType();
   }
 
   @Override
@@ -70,9 +76,29 @@ public class Fido2AuthenticationInteractor implements AuthenticationInteractor {
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
+    log.debug("Fido2DeregistrationInteractor called");
+
+    // FIDO2 deregistration requires authenticated session
+    if (!transaction.hasUser()) {
+      log.warn("FIDO2 deregistration: unauthenticated request");
+
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "unauthorized");
+      errorResponse.put(
+          "error_description", "FIDO2 credential deregistration requires authenticated session");
+
+      return AuthenticationInteractionRequestResult.clientError(
+          errorResponse,
+          type,
+          operationType(),
+          method(),
+          null,
+          DefaultSecurityEventType.fido2_deregistration_failure);
+    }
+
     AuthenticationConfiguration configuration = configurationRepository.get(tenant, "fido2");
     AuthenticationInteractionConfig authenticationInteractionConfig =
-        configuration.getAuthenticationConfig("fido2-authentication");
+        configuration.getAuthenticationConfig("fido2-deregistration");
     AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
 
     AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
@@ -93,56 +119,35 @@ public class Fido2AuthenticationInteractor implements AuthenticationInteractor {
     Map<String, Object> contents =
         MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
+    User user = transaction.user();
+
     if (executionResult.isClientError()) {
-      log.warn("Fido2 authentication is failed. Client error: {}", executionResult.contents());
-      // Issue #1021: Try to use transaction user for security event logging (2nd factor case)
-      User attemptedUser = transaction.hasUser() ? transaction.user() : null;
+      log.warn("FIDO2 deregistration failed. Client error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.clientError(
           contents,
           type,
           operationType(),
           method(),
-          attemptedUser,
-          DefaultSecurityEventType.fido2_authentication_failure);
+          user,
+          DefaultSecurityEventType.fido2_deregistration_failure);
     }
 
     if (executionResult.isServerError()) {
-      log.warn("Fido2 is authentication failed. Server error: {}", executionResult.contents());
-      // Issue #1021: Try to use transaction user for security event logging (2nd factor case)
-      User attemptedUser = transaction.hasUser() ? transaction.user() : null;
+      log.warn("FIDO2 deregistration failed. Server error: {}", executionResult.contents());
+
       return AuthenticationInteractionRequestResult.serverError(
           contents,
           type,
           operationType(),
           method(),
-          attemptedUser,
-          DefaultSecurityEventType.fido2_authentication_failure);
+          user,
+          DefaultSecurityEventType.fido2_deregistration_failure);
     }
 
-    // Resolve user from FIDO2 authentication by credentialId
-    // credentialId is sent in the request from the client (authenticator response)
-    String credentialId = request.getValueAsString("id");
-    User user = resolveUser(tenant, credentialId, userQueryRepository);
-
-    if (!user.exists()) {
-
-      log.warn("Fido2 user resolution failed. contents: {}", contents);
-
-      Map<String, Object> userErrorContents = new HashMap<>();
-      userErrorContents.put("error", "invalid_request");
-      userErrorContents.put(
-          "error_description", "FIDO2 authentication succeeded but user could not be resolved");
-
-      return AuthenticationInteractionRequestResult.clientError(
-          userErrorContents,
-          type,
-          operationType(),
-          method(),
-          DefaultSecurityEventType.fido2_authentication_failure);
-    }
-
-    Map<String, Object> response = new HashMap<>(contents);
-    response.put("user", user.toMinimalizedMap());
+    String credentialId = (String) contents.get("credential_id");
+    log.info(
+        "FIDO2 deregistration succeeded. credential_id: {}, user: {}", credentialId, user.sub());
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -150,38 +155,7 @@ public class Fido2AuthenticationInteractor implements AuthenticationInteractor {
         operationType(),
         method(),
         user,
-        response,
-        DefaultSecurityEventType.fido2_authentication_success);
-  }
-
-  /**
-   * Resolves user from FIDO2 authentication by credentialId.
-   *
-   * <p>This method looks up the user by the FIDO2 credentialId stored in the
-   * idp_user_authentication_devices table (credential_id column).
-   *
-   * @param tenant the tenant
-   * @param credentialId the FIDO2 credential ID from the authentication request
-   * @param userQueryRepository the user query repository
-   * @return the resolved user, or User.notFound() if resolution fails
-   */
-  private User resolveUser(
-      Tenant tenant, String credentialId, UserQueryRepository userQueryRepository) {
-
-    if (credentialId == null || credentialId.isEmpty()) {
-      log.warn("FIDO2 authentication: credentialId is missing from request");
-      return User.notFound();
-    }
-
-    log.debug("Resolving user by FIDO2 credentialId: {}", credentialId);
-
-    User user = userQueryRepository.findByFidoCredentialId(tenant, credentialId);
-    if (user.exists()) {
-      log.debug("User resolved by credentialId: {}, user: {}", credentialId, user.sub());
-      return user;
-    }
-
-    log.warn("User resolution failed. No user found for credentialId: {}", credentialId);
-    return User.notFound();
+        contents,
+        DefaultSecurityEventType.fido2_deregistration_success);
   }
 }

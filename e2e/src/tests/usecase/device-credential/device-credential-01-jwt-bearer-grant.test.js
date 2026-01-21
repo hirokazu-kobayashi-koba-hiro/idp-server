@@ -14,7 +14,7 @@ import crypto from "crypto";
  * can be used for JWT Bearer Grant authentication (RFC 7523).
  *
  * Test scenario:
- * 1. Create user with device including device_credentials (symmetric key)
+ * 1. Create user with device including integrated credential (symmetric key)
  * 2. Generate JWT signed with device secret (HS256)
  * 3. Request token using JWT Bearer Grant
  * 4. Verify access token is issued
@@ -115,22 +115,19 @@ describe("Device Credential Use Case: JWT Bearer Grant with Device Credentials",
         email: orgAdminEmail,
         raw_password: orgAdminPassword,
         username: orgAdminEmail,
-        // Register device with device credentials
+        // Register device with integrated credential (1 device = 1 credential)
         authentication_devices: [
           {
             id: deviceId,
             app_name: "Device Credential Test App",
             priority: 1,
-            device_credentials: [
-              {
-                id: credentialId,
-                type: "jwt_bearer_symmetric",
-                type_specific_data: {
-                  secret_value: deviceSecret,
-                  algorithm: "HS256"
-                }
-              }
-            ]
+            credential_type: "jwt_bearer_symmetric",
+            credential_id: credentialId,
+            credential_payload: {
+              secret_value: deviceSecret,
+              algorithm: "HS256"
+            },
+            credential_metadata: {}
           }
         ]
       },
@@ -399,16 +396,13 @@ describe("Device Credential Use Case: JWT Bearer Grant with Device Credentials",
             id: deviceId,
             app_name: "Device ID Mapping Test App",
             priority: 1,
-            device_credentials: [
-              {
-                id: credentialId,
-                type: "jwt_bearer_symmetric",
-                type_specific_data: {
-                  secret_value: deviceSecret,
-                  algorithm: "HS256"
-                }
-              }
-            ]
+            credential_type: "jwt_bearer_symmetric",
+            credential_id: credentialId,
+            credential_payload: {
+              secret_value: deviceSecret,
+              algorithm: "HS256"
+            },
+            credential_metadata: {}
           }
         ]
       },
