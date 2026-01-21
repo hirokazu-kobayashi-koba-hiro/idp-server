@@ -87,15 +87,11 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
       WebAuthn4jRegistrationChallengeResponse challengeResponse =
           WebAuthn4jRegistrationChallengeResponse.create(webAuthn4jChallenge, user, config);
 
-      WebAuthn4jChallengeContext context =
-          new WebAuthn4jChallengeContext(webAuthn4jChallenge, user);
-
-      transactionCommandRepository.register(tenant, identifier, type().value(), context);
-
       // Build authentication challenge response
       Map<String, Object> authChallengeResponse = new HashMap<>(challengeResponse.toMap());
 
       // Generate allowCredentials if username is provided
+      List<String> allowCredentialIds = null;
       if (request.containsKey("username")) {
         String username = request.getValueAsString("username");
         log.debug(
@@ -108,11 +104,19 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
         if (!allowCredentials.isEmpty()) {
           // Add allowCredentials to the response for browser to identify the authenticator
           authChallengeResponse.put("allowCredentials", allowCredentials);
+          // Store credential IDs for validation during authentication (CVE-2025-26788 mitigation)
+          allowCredentialIds = credentials.toCredentialIds();
           log.debug(
               "webauthn4j authentication challenge, generated {} allowCredentials",
               allowCredentials.size());
         }
       }
+
+      // Store context with allowCredentialIds for validation during authentication
+      WebAuthn4jChallengeContext context =
+          new WebAuthn4jChallengeContext(webAuthn4jChallenge, user, allowCredentialIds);
+
+      transactionCommandRepository.register(tenant, identifier, type().value(), context);
 
       Map<String, Object> response = new HashMap<>();
       response.put("execution_webauthn4j", authChallengeResponse);
@@ -142,22 +146,31 @@ public class WebAuthn4jAuthenticationChallengeExecutor implements Authentication
   /**
    * Extracts user information from the authentication request.
    *
-   * <p>This method follows the WebAuthn4j Spring Security pattern where user.id is generated from
-   * preferredUsername rather than random bytes. This allows deterministic user resolution during
-   * authentication.
+   * <p>This method supports two authentication flows:
    *
-   * <p>Pattern: user.id = Base64URL(preferredUsername)
+   * <ul>
+   *   <li><b>Non-Discoverable Credential flow</b>: When username is provided, generates
+   *       allowCredentials list for the specified user
+   *   <li><b>Discoverable Credential flow</b>: When username is omitted or empty, no
+   *       allowCredentials list is generated (passkey auto-discovery)
+   * </ul>
+   *
+   * <p>This follows the WebAuthn4j Spring Security pattern where user.id is generated from
+   * preferredUsername rather than random bytes. Pattern: user.id = Base64URL(preferredUsername)
    *
    * @param request the authentication execution request
-   * @return the WebAuthn4j user information
+   * @return the WebAuthn4j user information, or empty user for Discoverable Credential flow
    */
   private WebAuthn4jUser extractUserInfo(AuthenticationExecutionRequest request) {
-    String username = request.getValueAsString("username");
-    String displayName = request.optValueAsString("displayName", username);
+    // username is optional - if not provided or empty, use Discoverable Credential flow
+    String username = request.optValueAsString("username", null);
 
-    if (username == null || displayName == null) {
+    // Return empty user for Discoverable Credential flow (no allowCredentials)
+    if (username == null || username.isEmpty()) {
       return new WebAuthn4jUser();
     }
+
+    String displayName = request.optValueAsString("displayName", username);
     // Generate user ID from username (WebAuthn4j Spring Security pattern)
     // This allows credential.userId to be decoded back to preferredUsername for user resolution
     String userId =

@@ -6,6 +6,10 @@ import { adminServerConfig, backendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
 import { faker } from "@faker-js/faker";
 import { sleep } from "../../../lib/util";
+import {
+  generateValidCredentialFromChallenge,
+  generateValidAssertionFromChallenge,
+} from "../../../lib/fido/fido2";
 
 /**
  * Use Case: FIDO2 (WebAuthn) Device Registration with ACR Policy Enforcement
@@ -1401,4 +1405,584 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
     console.log("  - This protection works even WITHOUT device_registration_conditions policy");
     console.log("  - Security event is logged for the rejection\n");
   });
+
+  it("should complete FIDO2 registration and authentication flow with valid credentials", async () => {
+    const timestamp = Date.now();
+    const organizationId = uuidv4();
+    const tenantId = uuidv4();
+    const clientId = uuidv4();
+    const clientSecret = `client-secret-${timestamp}`;
+    const redirectUri = `https://app.example.com/callback`;
+
+    const userEmail = faker.internet.email();
+    const userName = faker.person.fullName();
+    const userPassword = `Password${timestamp}!`;
+
+    console.log("\n=== FIDO2 Full Registration & Authentication Flow Test ===\n");
+    console.log("This test verifies the complete FIDO2 flow:");
+    console.log("  1. Register user with password");
+    console.log("  2. Complete email MFA to satisfy device_registration_conditions");
+    console.log("  3. Register FIDO2 credential with valid cryptographic keys");
+    console.log("  4. Authenticate with FIDO2 in a new session\n");
+
+    const { jwks } = await generateRS256KeyPair();
+
+    // Setup tenant with full FIDO2 config (registration + authentication)
+    const onboardingRequest = {
+      organization: {
+        id: organizationId,
+        name: `FIDO2 Full Flow Test Org ${timestamp}`,
+        description: "Test organization for FIDO2 full flow",
+      },
+      tenant: {
+        id: tenantId,
+        name: `FIDO2 Full Flow Tenant ${timestamp}`,
+        domain: backendUrl,
+        authorization_provider: "idp-server",
+        tenant_type: "ORGANIZER",
+        security_event_log_config: {
+          format: "structured_json",
+          stage: "processed",
+          include_user_id: true,
+          include_client_id: true,
+          include_ip: true,
+          persistence_enabled: true,
+          include_detail: true,
+        },
+      },
+      authorization_server: {
+        issuer: `${backendUrl}/${tenantId}`,
+        authorization_endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+        token_endpoint_auth_signing_alg_values_supported: ["RS256", "ES256"],
+        userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+        jwks_uri: `${backendUrl}/${tenantId}/v1/jwks`,
+        jwks: jwks,
+        grant_types_supported: ["authorization_code", "refresh_token", "password"],
+        token_signed_key_id: "signing_key_1",
+        id_token_signed_key_id: "signing_key_1",
+        scopes_supported: ["openid", "profile", "email", "management"],
+        response_types_supported: ["code"],
+        response_modes_supported: ["query", "fragment"],
+        subject_types_supported: ["public"],
+        id_token_signing_alg_values_supported: ["RS256", "ES256"],
+        claims_parameter_supported: true,
+        extension: {
+          access_token_type: "JWT",
+          token_signed_key_id: "signing_key_1",
+          id_token_signed_key_id: "signing_key_1",
+          access_token_duration: 3600,
+          id_token_duration: 3600,
+          refresh_token_duration: 86400,
+        },
+      },
+      user: {
+        sub: uuidv4(),
+        provider_id: "idp-server",
+        name: faker.internet.email(),
+        email: faker.internet.email(),
+        email_verified: true,
+        raw_password: `AdminPass${timestamp}!`,
+      },
+      client: {
+        client_id: uuidv4(),
+        client_id_alias: `admin-client-fullflow-${timestamp}`,
+        client_secret: `admin-secret-fullflow-${timestamp}`,
+        redirect_uris: [redirectUri],
+        response_types: ["code"],
+        grant_types: ["authorization_code", "refresh_token", "password"],
+        scope: "openid profile email management",
+        client_name: "Admin Client",
+        token_endpoint_auth_method: "client_secret_post",
+        application_type: "web",
+      },
+    };
+
+    const onboardingResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/onboarding`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+      body: onboardingRequest,
+    });
+
+    expect(onboardingResponse.status).toBe(201);
+    console.log("✓ Organization and tenant created\n");
+
+    const createdClient = onboardingResponse.data.client;
+    const adminTokenResponse = await requestToken({
+      endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+      grantType: "password",
+      username: onboardingRequest.user.email,
+      password: onboardingRequest.user.raw_password,
+      scope: "management",
+      clientId: createdClient.client_id,
+      clientSecret: createdClient.client_secret,
+    });
+
+    expect(adminTokenResponse.status).toBe(200);
+    const adminAccessToken = adminTokenResponse.data.access_token;
+
+    // Create Password Authentication Configuration
+    const passwordAuthConfigId = uuidv4();
+    await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-configurations`,
+      headers: { Authorization: `Bearer ${adminAccessToken}` },
+      body: {
+        id: passwordAuthConfigId,
+        type: "password",
+        attributes: {},
+        metadata: { type: "internal", description: "Password authentication" },
+        interactions: {}
+      }
+    });
+    console.log("✓ Password auth config created");
+
+    // Create Email Authentication Configuration
+    const emailAuthConfigId = uuidv4();
+    await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-configurations`,
+      headers: { Authorization: `Bearer ${adminAccessToken}` },
+      body: {
+        id: emailAuthConfigId,
+        type: "email",
+        attributes: {},
+        metadata: {
+          type: "external",
+          description: "Email authentication for MFA",
+          sender: "test@gmail.com",
+          transaction_id_param: "transaction_id",
+          verification_code_param: "verification_code",
+          templates: {
+            registration: {
+              subject: "[ID Verification] Your signup email confirmation code",
+              body: "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\n– IDP Support"
+            },
+            authentication: {
+              subject: "[ID Verification] Your login email confirmation code",
+              body: "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\n– IDP Support"
+            }
+          },
+          settings: {
+            smtp: {
+              host: "smtp.gmail.com",
+              port: 587,
+              username: "test@gmail.com",
+              password: "test",
+              auth: true,
+              starttls: { enable: true }
+            }
+          },
+          retry_count_limitation: 5,
+          expire_seconds: 300
+        },
+        interactions: {
+          "email-authentication-challenge": {
+            request: { schema: { type: "object", properties: { email: { type: "string" } } } },
+            pre_hook: {},
+            execution: {
+              function: "http_request",
+              http_request: {
+                url: "http://host.docker.internal:4000/email-authentication-challenge",
+                method: "POST",
+                oauth_authorization: {
+                  type: "password",
+                  token_endpoint: "http://host.docker.internal:4000/token",
+                  client_id: "your-client-id",
+                  username: "username",
+                  password: "password",
+                  scope: "application"
+                },
+                header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+                body_mapping_rules: [{ from: "$.request_body", to: "*" }]
+              },
+              http_request_store: {
+                key: "email-authentication-challenge",
+                interaction_mapping_rules: [{ from: "$.response_body.transaction_id", to: "transaction_id" }]
+              }
+            },
+            post_hook: {},
+            response: { body_mapping_rules: [{ from: "$.execution_http_request.response_body", to: "*" }] }
+          },
+          "email-authentication": {
+            request: { schema: { type: "object", properties: { verification_code: { type: "string" } } } },
+            pre_hook: {},
+            execution: {
+              function: "http_request",
+              previous_interaction: { key: "email-authentication-challenge" },
+              http_request: {
+                url: "http://host.docker.internal:4000/email-authentication",
+                method: "POST",
+                oauth_authorization: {
+                  type: "password",
+                  token_endpoint: "http://host.docker.internal:4000/token",
+                  client_id: "your-client-id",
+                  username: "username",
+                  password: "password",
+                  scope: "application"
+                },
+                header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+                body_mapping_rules: [{ from: "$.request_body", to: "*" }]
+              }
+            },
+            post_hook: {},
+            response: { body_mapping_rules: [{ from: "$.execution_http_request.response_body", to: "*" }] }
+          }
+        }
+      }
+    });
+    console.log("✓ Email auth config created");
+
+    // Create FIDO2 Authentication Configuration with both registration AND authentication interactions
+    const fido2AuthConfigId = uuidv4();
+    const fido2Details = {
+      rp_id: "localhost",
+      origin: "http://localhost:3000",
+      rp_name: "FIDO2 Test RP",
+      token_binding_id: null,
+      require_resident_key: true,
+      attestation_preference: "none",
+      user_presence_required: true,
+      authenticator_attachment: "platform",
+      user_verification_required: true
+    };
+    await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-configurations`,
+      headers: { Authorization: `Bearer ${adminAccessToken}` },
+      body: {
+        id: fido2AuthConfigId,
+        type: "fido2",
+        attributes: {},
+        metadata: {},
+        interactions: {
+          "fido2-registration-challenge": {
+            execution: {
+              function: "webauthn4j_registration_challenge",
+              details: fido2Details
+            },
+            response: {
+              body_mapping_rules: [
+                { from: "$.execution_webauthn4j", to: "*" }
+              ]
+            }
+          },
+          "fido2-registration": {
+            execution: {
+              function: "webauthn4j_registration",
+              details: fido2Details
+            },
+            response: {
+              body_mapping_rules: [
+                { from: "$.execution_webauthn4j", to: "*" }
+              ]
+            }
+          },
+          "fido2-authentication-challenge": {
+            execution: {
+              function: "webauthn4j_authentication_challenge",
+              details: fido2Details
+            },
+            response: {
+              body_mapping_rules: [
+                { from: "$.execution_webauthn4j", to: "*" }
+              ]
+            }
+          },
+          "fido2-authentication": {
+            execution: {
+              function: "webauthn4j_authentication",
+              details: fido2Details
+            },
+            response: {
+              body_mapping_rules: [
+                { from: "$.execution_webauthn4j", to: "*" }
+              ]
+            }
+          }
+        }
+      }
+    });
+    console.log("✓ FIDO2 auth config created (with registration + authentication)\n");
+
+    // Create Authentication Policy with device_registration_conditions
+    const authPolicyConfigId = uuidv4();
+    await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-policies`,
+      headers: { Authorization: `Bearer ${adminAccessToken}` },
+      body: {
+        id: authPolicyConfigId,
+        flow: "oauth",
+        enabled: true,
+        policies: [
+          {
+            description: "mfa_or_fido2_for_login",
+            priority: 10,
+            conditions: { scopes: ["openid"] },
+            available_methods: ["password", "email", "fido2"],
+            success_conditions: {
+              any_of: [
+                // Password is sufficient
+                [{ path: "$.password-authentication.success_count", type: "integer", operation: "gte", value: 1 }],
+                // Email authentication is sufficient (for new user registration flow)
+                [{ path: "$.email-authentication.success_count", type: "integer", operation: "gte", value: 1 }],
+                // FIDO2 is also sufficient (for passkey login)
+                [{ path: "$.fido2-authentication.success_count", type: "integer", operation: "gte", value: 1 }]
+              ]
+            },
+            device_registration_conditions: {
+              any_of: [
+                [{ path: "$.email-authentication.success_count", type: "integer", operation: "gte", value: 1 }],
+                [{ path: "$.fido2-authentication.success_count", type: "integer", operation: "gte", value: 1 }]
+              ]
+            }
+          }
+        ]
+      }
+    });
+    console.log("✓ Authentication policy created");
+
+    // Create Client
+    await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/clients`,
+      headers: { Authorization: `Bearer ${adminAccessToken}` },
+      body: {
+        client_id: clientId,
+        client_secret: clientSecret,
+        client_name: "FIDO2 Full Flow Test Client",
+        redirect_uris: [redirectUri],
+        grant_types: ["authorization_code", "password"],
+        response_types: ["code"],
+        scope: "openid profile email",
+        token_endpoint_auth_method: "client_secret_post",
+      },
+    });
+    console.log("✓ Client created\n");
+
+    // ========================================
+    // Phase 1: Register user and complete MFA
+    // ========================================
+    console.log("=== Phase 1: Register User and Complete MFA ===");
+
+    const authParams = new URLSearchParams({
+      response_type: "code",
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: "openid profile email",
+      state: `state_${timestamp}`,
+    });
+
+    const authorizeResponse = await get({
+      url: `${backendUrl}/${tenantId}/v1/authorizations?${authParams.toString()}`,
+      headers: {},
+    });
+
+    expect(authorizeResponse.status).toBe(302);
+    const location = authorizeResponse.headers.location;
+    const authId = new URL(location, backendUrl).searchParams.get('id');
+    console.log("Authorization started:", authId);
+
+    // Register user with password
+    const registrationResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/initial-registration`,
+      body: {
+        email: userEmail,
+        password: userPassword,
+        name: userName,
+      },
+    });
+    expect(registrationResponse.status).toBe(200);
+    console.log("✓ User registered with password");
+
+    // Complete Email Authentication (MFA)
+    const emailChallengeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/email-authentication-challenge`,
+      body: {
+        email: userEmail,
+        provider_id: "idp-server",
+      },
+    });
+    expect(emailChallengeResponse.status).toBe(200);
+    console.log("✓ Email verification code sent");
+
+    const verificationCode = emailChallengeResponse.data.verification_code || "123456";
+
+    const emailAuthResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/email-authentication`,
+      body: {
+        code: verificationCode,
+      },
+    });
+    expect(emailAuthResponse.status).toBe(200);
+    console.log("✓ Email authentication completed (MFA satisfied)\n");
+
+    // ========================================
+    // Phase 2: Register FIDO2 Credential
+    // ========================================
+    console.log("=== Phase 2: Register FIDO2 Credential ===");
+
+    const fido2ChallengeRequestBody = {
+      username: userEmail,
+      displayName: userName,
+      authenticatorSelection: {
+        authenticatorAttachment: "platform",
+        requireResidentKey: true,
+        userVerification: "required",
+      },
+      attestation: "none",
+    };
+
+    const fido2ChallengeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/fido2-registration-challenge`,
+      body: fido2ChallengeRequestBody,
+    });
+
+    console.log("FIDO2 registration challenge response:", fido2ChallengeResponse.status);
+    expect(fido2ChallengeResponse.status).toBe(200);
+    expect(fido2ChallengeResponse.data).toHaveProperty("challenge");
+    console.log("✓ FIDO2 registration challenge received");
+
+    // Generate valid credential using cryptographic keys
+    const validCredential = generateValidCredentialFromChallenge(fido2ChallengeResponse.data);
+    console.log("✓ Generated valid FIDO2 credential with ES256 keys");
+    console.log("  Credential ID:", validCredential.id);
+
+    // Register the credential
+    const fido2RegistrationResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/fido2-registration`,
+      body: validCredential,
+    });
+
+    console.log("FIDO2 registration response:", fido2RegistrationResponse.status, fido2RegistrationResponse.data);
+    expect(fido2RegistrationResponse.status).toBe(200);
+    expect(fido2RegistrationResponse.data).toHaveProperty("id");
+    expect(fido2RegistrationResponse.data.id).toBe(validCredential.id);
+    console.log("✓ FIDO2 credential registered successfully");
+
+    const registeredCredentialId = validCredential.id;
+
+    // Complete authorization flow to persist user with authentication device
+    const completeAuthResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/authorize`,
+      body: {},
+    });
+    console.log("Authorization complete response:", completeAuthResponse.status);
+    expect(completeAuthResponse.status).toBe(200);
+    expect(completeAuthResponse.data).toHaveProperty("redirect_uri");
+    console.log("✓ Authorization flow completed (user data persisted)\n");
+
+    // ========================================
+    // Phase 3: New Session - FIDO2 Authentication
+    // ========================================
+    console.log("=== Phase 3: New Session - FIDO2 Authentication ===");
+
+    // Start a new authorization flow
+    const authParams2 = new URLSearchParams({
+      response_type: "code",
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: "openid profile email",
+      state: `state_${timestamp}_2`,
+    });
+
+    const authorizeResponse2 = await get({
+      url: `${backendUrl}/${tenantId}/v1/authorizations?${authParams2.toString()}`,
+      headers: {},
+    });
+
+    expect(authorizeResponse2.status).toBe(302);
+    const location2 = authorizeResponse2.headers.location;
+    const authId2 = new URL(location2, backendUrl).searchParams.get('id');
+    console.log("New authorization started:", authId2);
+
+    // Request FIDO2 authentication challenge
+    const fido2AuthChallengeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId2}/fido2-authentication-challenge`,
+      body: {
+        username: userEmail,
+      },
+    });
+
+    console.log("FIDO2 authentication challenge response:", fido2AuthChallengeResponse.status);
+    expect(fido2AuthChallengeResponse.status).toBe(200);
+    expect(fido2AuthChallengeResponse.data).toHaveProperty("challenge");
+    console.log("✓ FIDO2 authentication challenge received");
+
+    // Verify allowCredentials contains our registered credential
+    if (fido2AuthChallengeResponse.data.allowCredentials) {
+      console.log("  allowCredentials count:", fido2AuthChallengeResponse.data.allowCredentials.length);
+      const matchingCred = fido2AuthChallengeResponse.data.allowCredentials.find(
+        c => c.id === registeredCredentialId
+      );
+      expect(matchingCred).toBeDefined();
+      console.log("✓ Registered credential found in allowCredentials");
+    }
+
+    // Generate valid assertion using the same key pair
+    const validAssertion = generateValidAssertionFromChallenge(
+      fido2AuthChallengeResponse.data,
+      registeredCredentialId
+    );
+    console.log("✓ Generated valid FIDO2 assertion with ES256 signature");
+
+    // Authenticate with FIDO2
+    const fido2AuthResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId2}/fido2-authentication`,
+      body: validAssertion,
+    });
+
+    console.log("FIDO2 authentication response:", fido2AuthResponse.status, fido2AuthResponse.data);
+    expect(fido2AuthResponse.status).toBe(200);
+    expect(fido2AuthResponse.data.status).toBe("ok");
+    console.log("✓ FIDO2 authentication succeeded\n");
+
+    // ========================================
+    // Phase 4: Verify Security Events
+    // ========================================
+    console.log("=== Phase 4: Verify Security Events ===");
+
+    await sleep(1000);
+
+    // Verify FIDO2 registration success event
+    const regSuccessEventsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/security-events`,
+      headers: { Authorization: `Bearer ${adminAccessToken}` },
+      params: {
+        event_type: "fido2_registration_success",
+        limit: 10,
+      },
+    });
+
+    expect(regSuccessEventsResponse.status).toBe(200);
+    const regSuccessEvents = regSuccessEventsResponse.data.list || [];
+    console.log(`Found ${regSuccessEvents.length} fido2_registration_success event(s)`);
+    expect(regSuccessEvents.length).toBeGreaterThanOrEqual(1);
+    console.log("✓ Registration success security event logged");
+
+    // Verify FIDO2 authentication success event
+    const authSuccessEventsResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/security-events`,
+      headers: { Authorization: `Bearer ${adminAccessToken}` },
+      params: {
+        event_type: "fido2_authentication_success",
+        limit: 10,
+      },
+    });
+
+    expect(authSuccessEventsResponse.status).toBe(200);
+    const authSuccessEvents = authSuccessEventsResponse.data.list || [];
+    console.log(`Found ${authSuccessEvents.length} fido2_authentication_success event(s)`);
+    expect(authSuccessEvents.length).toBeGreaterThanOrEqual(1);
+    console.log("✓ Authentication success security event logged\n");
+
+    console.log("\n=== Test Completed: FIDO2 Full Registration & Authentication Flow ===\n");
+    console.log("Summary:");
+    console.log("  1. User registered with password");
+    console.log("  2. Email MFA completed to satisfy device_registration_conditions");
+    console.log("  3. FIDO2 credential registered with valid ES256 cryptographic keys");
+    console.log("  4. New session started");
+    console.log("  5. FIDO2 authentication completed with valid signature");
+    console.log("  6. Security events properly logged\n");
+  });
+
 });
