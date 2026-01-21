@@ -7,12 +7,8 @@ info:
     name: idp-server OSS
 
 servers:
-  - url: https://xxx/{tenant-id}
-    description: IdP Server API エンドポイント
-    variables:
-      tenant-id:
-        description: テナント識別子（UUID形式）
-        default: "67e7eae6-62b0-4500-9eff-87459f63fc66"
+  - url: https://api.local.dev
+    description: IdP Server API エンドポイント(ローカル)
 
 tags:
   - name: CIBAフロー
@@ -92,7 +88,7 @@ tags:
 
 
 paths:
-  /v1/authorizations/push:
+  /{tenant-id}/v1/authorizations/push:
     post:
       summary: Pushed Authorization Request (PAR)
       tags:
@@ -127,6 +123,7 @@ paths:
         認証に失敗した場合は `401 Unauthorized` が返されます。
 
       parameters:
+        - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
       requestBody:
         required: true
@@ -249,7 +246,7 @@ paths:
                   value:
                     error: "server_error"
                     error_description: "The authorization server encountered an unexpected condition"
-  /v1/backchannel/authentications:
+  /{tenant-id}/v1/backchannel/authentications:
     post:
       summary: バックチャンネル認証リクエスト
       tags:
@@ -273,6 +270,7 @@ paths:
           - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
           - `client_assertion`: 署名済みJWT
       parameters:
+        - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
       requestBody:
         required: true
@@ -309,7 +307,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/BackchannelAuthenticationForbiddenErrorResponse'
 
-  /v1/authorizations:
+  /{tenant-id}/v1/authorizations:
     get:
       summary: 認可リクエスト
       tags:
@@ -470,7 +468,7 @@ paths:
               description: 認証画面のURL
               example: "https://idp.example.com/{tenant-id}/v1/authorizations/authenticate?id={authorization-id}"
 
-  /v1/tokens:
+  /{tenant-id}/v1/tokens:
     post:
       summary: トークンリクエスト
       tags:
@@ -501,6 +499,7 @@ paths:
           - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
           - `client_assertion`: 署名済みJWT
       parameters:
+        - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
       requestBody:
         required: true
@@ -585,7 +584,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenInvalidClientErrorResponse'
 
-  /v1/tokens/introspection:
+  /{tenant-id}/v1/tokens/introspection:
     post:
       tags:
         - トークン
@@ -614,6 +613,7 @@ paths:
 
         認証に失敗した場合は `401 Unauthorized` が返されます。
       parameters:
+        - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
       requestBody:
         required: true
@@ -637,7 +637,7 @@ paths:
         '401':
           description: 認証エラー。クライアント認証に失敗した場合。
 
-  /v1/tokens/introspection-extensions:
+  /{tenant-id}/v1/tokens/introspection-extensions:
     post:
       tags:
         - トークン
@@ -674,6 +674,7 @@ paths:
 
         認証に失敗した場合は `401 Unauthorized` が返されます。
       parameters:
+        - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
       requestBody:
         required: true
@@ -697,7 +698,7 @@ paths:
         '401':
           description: 認証エラー。クライアント認証に失敗した場合。
 
-  /v1/tokens/revocation:
+  /{tenant-id}/v1/tokens/revocation:
     post:
       tags:
         - トークン
@@ -726,6 +727,7 @@ paths:
 
         認証に失敗した場合は `401 Unauthorized` が返されます。
       parameters:
+        - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
       requestBody:
         required: true
@@ -747,7 +749,7 @@ paths:
         '401':
           description: クライアント認証エラー。
 
-  /v1/userinfo:
+  /{tenant-id}/v1/userinfo:
     get:
       summary: ユーザーInfo
       tags:
@@ -825,7 +827,7 @@ paths:
               schema:
                 type: string
 
-  /.well-known/openid-configuration:
+  /{tenant-id}/.well-known/openid-configuration:
     get:
       summary: OpenID Connect Discovery
       tags:
@@ -857,12 +859,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenIDConfiguration'
 
-  /v1/jwks:
+  /{tenant-id}/v1/jwks:
     get:
       summary: JSON Web Key Set (JWKS)
       description: トークンの署名を検証するための公開鍵セット（JWK Set）を返します。
       tags:
         - OIDCメタデータ
+      parameters:
+        - $ref: '#/components/parameters/tenant-id'
       responses:
         '200':
           description: JWK Set response
@@ -872,7 +876,7 @@ paths:
                 $ref: '#/components/schemas/JWKS'
 
 
-  /v1/ssf/events/receive:
+  /{tenant-id}/v1/ssf/events/receive:
     post:
       summary: |
        SSF (Shared Signals Framework) Push Notification Receiver        
@@ -908,7 +912,7 @@ paths:
         '401':
           description: 認証エラー（トークンが無効、署名検証失敗）
 
-  /v1/logout:
+  /{tenant-id}/v1/logout:
     get:
       summary: RP-Initiated Logout エンドポイント
       description: |
@@ -936,6 +940,7 @@ paths:
       tags:
         - OIDC
       parameters:
+        - $ref: '#/components/parameters/tenant-id'
         - name: post_logout_redirect_uri
           in: query
           required: false
@@ -1122,7 +1127,7 @@ paths:
                     error: "server_error"
                     error_description: "An unexpected error occurred during logout processing"
 
-  /.well-known/ssf-configuration:
+  /{tenant-id}/.well-known/ssf-configuration:
     get:
       summary: SSF Discovery Configuration
       description: |
@@ -1165,12 +1170,14 @@ paths:
                     verification_endpoint: "https://idp-server.example.com/v1/ssf/verification"
                     critical_subject_members: ["sub", "email"]
 
-  /v1/ssf/jwks:
+  /{tenant-id}/v1/ssf/jwks:
     get:
       summary: JSON Web Key Set (JWKS)
       description: SETの署名を検証するための公開鍵セット（JWK Set）を返します。
       tags:
         - SSF
+      parameters:
+        - $ref: '#/components/parameters/tenant-id'
       responses:
         '200':
           description: JWK Set response
@@ -1230,6 +1237,16 @@ components:
         📘 関連仕様: [RFC 6749 Section 2.3 - Client Authentication](https://datatracker.ietf.org/doc/html/rfc6749#section-2.3)
 
   parameters:
+    tenant-id:
+      name: tenant-id
+      in: path
+      required: true
+      description: テナント識別子（UUID形式）
+      schema:
+        type: string
+        format: uuid
+        example: "67e7eae6-62b0-4500-9eff-87459f63fc66"
+
     Authorization:
       name: Authorization
       in: header
@@ -1347,8 +1364,22 @@ components:
       in: query
       required: false
       description: |
-        ユーザー識別のヒント（email、phone、ユーザー名など）。
-        ログインフォームの事前入力などに使用。
+        ユーザーを識別するヒント。IDやメールアドレスなど
+
+        ## login_hint
+
+        login_hint には複数の拡張形式をサポートし、柔軟なユーザー特定が可能です。
+
+        | フォーマット | 意味 | 例 |
+        |-------------|------|---|
+        | `sub:<subject>` | 内部ユーザーIDで直接識別 | `sub:abc123` |
+        | `ex-sub:<subject>,idp:<id-provider>` | 外部IdPのサブジェクトで識別 | `ex-sub:ex-idp123,idp:ex-idp` |
+        | `device:<deviceId>,idp:<id-provider>` | 認証デバイスで識別 | `device:device123,idp:ex-idp` |
+        | `email:<email>,idp:<id-provider>` | メールアドレスによる識別 | `email:foo@example.com,idp:idp-server` |
+        | `phone:<number>,idp:<id-provider>` | 電話番号による識別 | `phone:09012345678,idp:idp-server` |
+
+        idp-provider のデフォルト値は `idp-server`。
+      example: "email:user@example.com,idp:idp-server"
       schema:
         type: string
 
@@ -1538,6 +1569,18 @@ components:
           description: |
             PKCEで使用されるチャレンジ検証用の文字列。
             認可リクエストで code_challenge を指定した場合は必須。
+        client_assertion_type:
+          type: string
+          enum: [ "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" ]
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
       required:
         - grant_type
         - code
@@ -1576,6 +1619,18 @@ components:
           description: |
             クライアントのシークレット。
             認証方式がclient_secret_postの場合に設定する。
+        client_assertion_type:
+          type: string
+          enum: [ "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" ]
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
       required:
         - grant_type
         - username
@@ -1606,6 +1661,18 @@ components:
           description: |
             クライアントのシークレット。
             認証方式がclient_secret_postの場合に設定する。
+        client_assertion_type:
+          type: string
+          enum: [ "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" ]
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
       required:
         - grant_type
         - scope
@@ -1635,6 +1702,18 @@ components:
           description: |
             クライアントのシークレット。
             認証方式がclient_secret_postの場合に設定する。
+        client_assertion_type:
+          type: string
+          enum: [ "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" ]
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
       required:
         - grant_type
         - refresh_token
@@ -1666,6 +1745,18 @@ components:
           description: |
             クライアントのシークレット。
             認証方式がclient_secret_postの場合に設定する。
+        client_assertion_type:
+          type: string
+          enum: [ "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" ]
+          description: |
+            JWT認証（client_secret_jwt / private_key_jwt）で使用するアサーションタイプ。
+            固定値: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: |
+            JWT認証で使用する署名済みJWTアサーション。
+            client_secret_jwt: client_secretで署名
+            private_key_jwt: 登録済み秘密鍵で署名
       required:
         - grant_type
         - auth_req_id
@@ -2769,8 +2860,22 @@ components:
         login_hint:
           type: string
           description: |
-            ログイン識別子のヒント（メールアドレスなど）。
-          example: "user@example.com"
+            ユーザーを識別するヒント。IDやメールアドレスなど
+            
+            ## login_hint
+            
+            login_hint には複数の拡張形式をサポートし、柔軟なユーザー特定が可能です。
+            
+            | フォーマット | 意味 | 例 |
+            |-------------|------|---|
+            | `sub:<subject>` | 内部ユーザーIDで直接識別 | `sub:abc123` |
+            | `ex-sub:<subject>,idp:<id-provider>` | 外部IdPのサブジェクトで識別 | `ex-sub:ex-idp123,idp:ex-idp` |
+            | `device:<deviceId>,idp:<id-provider>` | 認証デバイスで識別 | `device:device123,idp:ex-idp` |
+            | `email:<email>,idp:<id-provider>` | メールアドレスによる識別 | `email:foo@example.com,idp:idp-server` |
+            | `phone:<number>,idp:<id-provider>` | 電話番号による識別 | `phone:09012345678,idp:idp-server` |
+            
+            idp-provider のデフォルト値は `idp-server`。
+          example: "email:user@example.com,idp:idp-server"
         acr_values:
           type: string
           description: |
