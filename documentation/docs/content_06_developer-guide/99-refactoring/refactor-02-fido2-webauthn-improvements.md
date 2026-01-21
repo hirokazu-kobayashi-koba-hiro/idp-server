@@ -55,7 +55,7 @@ FIDO2/WebAuthn実装の現状分析と残課題をまとめたドキュメント
 
 ### Phase 1: 高優先度
 
-#### 1.1 エラーハンドリング改善
+#### 1.1 エラーハンドリング改善 ✅
 
 **課題**: クレデンシャル検索失敗時のエラーハンドリングが不適切
 
@@ -89,7 +89,60 @@ try {
 
 ---
 
-#### 1.2 クレデンシャル一覧API
+#### 1.2 allowCredentials検証の追加（CVE-2025-26788対策） ✅
+
+**課題**: Non-Discoverable Credential認証時にallowCredentialsリストの検証がスキップされている
+
+**背景**:
+- CVE-2025-26788: StrongKey FIDO Serverで発見された脆弱性
+- 攻撃者がCredential IDを改ざんし、別ユーザーになりすます攻撃
+- 参考: https://blog.flatt.tech/entry/passkey_security_2
+
+**idp-serverの現状**:
+- **脆弱ではない**: ユーザー識別がCredential IDから逆引きされるため、攻撃者は自分自身としてしか認証できない
+- **ただし**: `allowCredentials`検証をスキップしており、Defense in Depthの観点で改善が必要
+
+**現状コード**:
+```java
+// WebAuthn4jAuthenticationManager.java:86
+List<byte[]> allowCredentials = null;  // 常にnull
+```
+
+**対象ファイル**:
+- `libs/idp-server-webauthn4j-adapter/src/main/java/org/idp/server/authenticators/webauthn4j/WebAuthn4jAuthenticationManager.java:86`
+- `libs/idp-server-webauthn4j-adapter/src/main/java/org/idp/server/authenticators/webauthn4j/WebAuthn4jChallenge.java`
+
+**改善案**:
+```java
+// WebAuthn4jChallenge.java
+public class WebAuthn4jChallenge implements Challenge {
+    // 既存フィールド
+    private List<byte[]> allowCredentials;  // 追加
+
+    public List<byte[]> getAllowCredentials() {
+        return allowCredentials;
+    }
+}
+
+// WebAuthn4jAuthenticationManager.java
+private AuthenticationParameters toAuthenticationParameters(
+    CredentialRecordImpl credentialRecord) {
+    // ...
+    List<byte[]> allowCredentials = challenge.getAllowCredentials();  // nullではなくチャレンジから取得
+    // ...
+}
+```
+
+**期待される動作**:
+- Non-Discoverable Credentialフローで、許可されていないCredential IDを拒否
+- Discoverable Credentialフローでは引き続きnull（仕様通り）
+- エラー時: `credential_not_allowed` エラーを返却
+
+**優先度**: 高（セキュリティ強化）
+
+---
+
+#### 1.4 クレデンシャル一覧API
 
 **課題**: 登録済みパスキーの一覧取得APIが未実装
 
@@ -123,7 +176,7 @@ try {
 
 ---
 
-#### 1.3 クレデンシャル削除API
+#### 1.5 クレデンシャル削除API
 
 **課題**: パスキー削除APIが未実装
 
@@ -302,3 +355,5 @@ try {
 | 日付 | 内容 |
 |------|------|
 | 2026-01-20 | 初版作成 |
+| 2026-01-21 | 1.2 allowCredentials検証追加（CVE-2025-26788対策）|
+| 2026-01-21 | 1.1, 1.2 実装完了 |

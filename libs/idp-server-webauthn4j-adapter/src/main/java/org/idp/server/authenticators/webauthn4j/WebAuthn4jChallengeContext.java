@@ -17,6 +17,7 @@
 package org.idp.server.authenticators.webauthn4j;
 
 import java.io.Serializable;
+import java.util.List;
 import org.idp.server.platform.json.JsonReadable;
 
 /**
@@ -67,6 +68,12 @@ public class WebAuthn4jChallengeContext implements Serializable, JsonReadable {
   /** The user information associated with this challenge. */
   WebAuthn4jUser user;
 
+  /**
+   * The allowed credential IDs for Non-Discoverable Credential authentication. Null for
+   * Discoverable Credential (Passkey) authentication.
+   */
+  List<String> allowCredentialIds;
+
   /** Default constructor for JSON deserialization. */
   public WebAuthn4jChallengeContext() {}
 
@@ -79,6 +86,22 @@ public class WebAuthn4jChallengeContext implements Serializable, JsonReadable {
   public WebAuthn4jChallengeContext(WebAuthn4jChallenge challenge, WebAuthn4jUser user) {
     this.challenge = challenge;
     this.user = user;
+    this.allowCredentialIds = null;
+  }
+
+  /**
+   * Constructs a WebAuthn4jChallengeContext with allowed credential IDs for Non-Discoverable
+   * Credential authentication.
+   *
+   * @param challenge the FIDO2 challenge
+   * @param user the user information
+   * @param allowCredentialIds the list of allowed credential IDs (Base64URL encoded)
+   */
+  public WebAuthn4jChallengeContext(
+      WebAuthn4jChallenge challenge, WebAuthn4jUser user, List<String> allowCredentialIds) {
+    this.challenge = challenge;
+    this.user = user;
+    this.allowCredentialIds = allowCredentialIds;
   }
 
   /**
@@ -97,5 +120,23 @@ public class WebAuthn4jChallengeContext implements Serializable, JsonReadable {
    */
   public WebAuthn4jUser user() {
     return user;
+  }
+
+  /**
+   * Returns the allowed credential IDs for Non-Discoverable Credential authentication.
+   *
+   * @return the list of allowed credential IDs, or null for Discoverable Credential authentication
+   */
+  public List<String> allowCredentialIds() {
+    return allowCredentialIds;
+  }
+
+  /**
+   * Checks if this context has allowed credential IDs (Non-Discoverable Credential flow).
+   *
+   * @return true if allowCredentialIds is set and not empty
+   */
+  public boolean hasAllowCredentialIds() {
+    return allowCredentialIds != null && !allowCredentialIds.isEmpty();
   }
 }

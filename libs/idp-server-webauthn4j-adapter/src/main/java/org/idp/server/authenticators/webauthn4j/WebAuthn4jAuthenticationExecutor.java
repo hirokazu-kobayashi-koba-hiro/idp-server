@@ -27,6 +27,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
+import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -84,6 +85,21 @@ public class WebAuthn4jAuthenticationExecutor implements AuthenticationExecutor 
       String id = request.optValueAsString("id", "");
       log.debug("webauthn4j authentication, retrieving credential with id: {}", id);
 
+      // CVE-2025-26788 mitigation: Validate credential ID against allowCredentials list
+      // This prevents an attacker from substituting their own credential ID in the response
+      if (context.hasAllowCredentialIds()) {
+        if (!context.allowCredentialIds().contains(id)) {
+          log.warn(
+              "webauthn4j authentication failed: credential ID not in allowCredentials list. "
+                  + "id={}, allowCredentialIds={}",
+              id,
+              context.allowCredentialIds());
+          throw new WebAuthn4jBadRequestException(
+              "Credential ID not in allowCredentials list. Possible credential substitution attack.");
+        }
+        log.debug("webauthn4j authentication, credential ID validated against allowCredentials");
+      }
+
       WebAuthn4jCredential webAuthn4jCredential = credentialRepository.get(tenant, id);
 
       log.debug(
@@ -131,16 +147,32 @@ public class WebAuthn4jAuthenticationExecutor implements AuthenticationExecutor 
 
     } catch (WebAuthn4jBadRequestException e) {
       log.error("webauthn4j authentication failed: {}", e.getMessage(), e);
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "authentication_failed");
+      contents.put("error_description", e.getMessage());
       Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "authentication_failed");
-      errorResponse.put("error_description", e.getMessage());
+      errorResponse.put("execution_webauthn4j", contents);
+      return AuthenticationExecutionResult.clientError(errorResponse);
+
+    } catch (NotFoundException e) {
+      log.warn(
+          "webauthn4j credential not found: tenant={}, message={}",
+          tenant.identifier(),
+          e.getMessage());
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "credential_not_found");
+      contents.put("error_description", "Credential not found");
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("execution_webauthn4j", contents);
       return AuthenticationExecutionResult.clientError(errorResponse);
 
     } catch (Exception e) {
       log.error("webauthn4j unexpected error during authentication", e);
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "server_error");
+      contents.put("error_description", "An unexpected error occurred during authentication");
       Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "server_error");
-      errorResponse.put("error_description", "An unexpected error occurred during authentication");
+      errorResponse.put("execution_webauthn4j", contents);
       return AuthenticationExecutionResult.serverError(errorResponse);
     }
   }
