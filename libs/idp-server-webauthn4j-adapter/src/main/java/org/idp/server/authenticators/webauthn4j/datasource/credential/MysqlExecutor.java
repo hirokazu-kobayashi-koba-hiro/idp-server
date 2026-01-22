@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredential;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class MysqlExecutor implements WebAuthn4jCredentialSqlExecutor {
@@ -28,14 +29,20 @@ public class MysqlExecutor implements WebAuthn4jCredentialSqlExecutor {
   @Override
   public void register(Tenant tenant, WebAuthn4jCredential credential) {
     SqlExecutor sqlExecutor = new SqlExecutor();
+    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+
     String sqlTemplate =
         """
             INSERT INTO webauthn_credentials (
               id, tenant_id, user_id, username, user_display_name,
               rp_id, aaguid, attested_credential_data, signature_algorithm, sign_count,
-              attestation_type, rk, cred_protect, transports, created_at
+              rk, backup_eligible, backup_state,
+              authenticator, attestation, extensions, device, metadata,
+              created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS JSON), FROM_UNIXTIME(? / 1000));
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    CAST(? AS JSON), CAST(? AS JSON), CAST(? AS JSON), CAST(? AS JSON), CAST(? AS JSON),
+                    FROM_UNIXTIME(? / 1000));
             """;
     List<Object> params = new ArrayList<>();
     params.add(credential.id());
@@ -49,18 +56,15 @@ public class MysqlExecutor implements WebAuthn4jCredentialSqlExecutor {
     params.add(credential.attestedCredentialData());
     params.add(credential.signatureAlgorithm());
     params.add(credential.signCount());
-    params.add(credential.attestationType());
     params.add(credential.rk());
-    params.add(credential.credProtect());
-    // Convert List<String> to JSON array string
-    String transportsJson =
-        credential.transports() != null
-            ? "["
-                + String.join(
-                    ",", credential.transports().stream().map(t -> "\"" + t + "\"").toList())
-                + "]"
-            : "[]";
-    params.add(transportsJson);
+    params.add(credential.backupEligible());
+    params.add(credential.backupState());
+    // JSON columns
+    params.add(jsonConverter.write(credential.authenticator()));
+    params.add(jsonConverter.write(credential.attestation()));
+    params.add(jsonConverter.write(credential.extensions()));
+    params.add(jsonConverter.write(credential.device()));
+    params.add(jsonConverter.write(credential.metadata()));
     params.add(credential.createdAt());
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -74,7 +78,8 @@ public class MysqlExecutor implements WebAuthn4jCredentialSqlExecutor {
         """
             SELECT id, user_id, username, user_display_name,
                    rp_id, aaguid, attested_credential_data, signature_algorithm, sign_count,
-                   attestation_type, rk, cred_protect, transports,
+                   rk, backup_eligible, backup_state,
+                   authenticator, attestation, extensions, device, metadata,
                    created_at, updated_at, authenticated_at
             FROM webauthn_credentials
             WHERE user_id = ?
@@ -95,7 +100,8 @@ public class MysqlExecutor implements WebAuthn4jCredentialSqlExecutor {
         """
             SELECT id, user_id, username, user_display_name,
                    rp_id, aaguid, attested_credential_data, signature_algorithm, sign_count,
-                   attestation_type, rk, cred_protect, transports,
+                   rk, backup_eligible, backup_state,
+                   authenticator, attestation, extensions, device, metadata,
                    created_at, updated_at, authenticated_at
             FROM webauthn_credentials
             WHERE username = ?
@@ -117,7 +123,8 @@ public class MysqlExecutor implements WebAuthn4jCredentialSqlExecutor {
         """
             SELECT id, user_id, username, user_display_name,
                    rp_id, aaguid, attested_credential_data, signature_algorithm, sign_count,
-                   attestation_type, rk, cred_protect, transports,
+                   rk, backup_eligible, backup_state,
+                   authenticator, attestation, extensions, device, metadata,
                    created_at, updated_at, authenticated_at
             FROM webauthn_credentials
             WHERE id = ?

@@ -138,7 +138,6 @@ export default function Fido2RegistrationPage() {
             username: email,
             displayName: email,
             authenticatorSelection: {
-              authenticatorAttachment: "platform",
               requireResidentKey: true,
               userVerification: "required"
             },
@@ -172,11 +171,6 @@ export default function Fido2RegistrationPage() {
 
       // Debug: Log what server sent
       console.log("Server authenticatorSelection:", authenticatorSelection);
-      console.log("Using authenticatorSelection:", {
-        authenticatorAttachment: "platform",
-        requireResidentKey: true,
-        userVerification: "required"
-      });
 
       // Step 2: Build PublicKeyCredentialCreationOptions
       const publicKeyOptions: PublicKeyCredentialCreationOptions = {
@@ -187,10 +181,10 @@ export default function Fido2RegistrationPage() {
           name: user.name,
           displayName: user.displayName,
         },
-        // Force platform authenticator (Touch ID, Face ID, Windows Hello)
-        // NOTE: Server sends cross-platform, but we override it here for better UX
+        // Allow both platform (Touch ID, Face ID, Windows Hello) and
+        // cross-platform (YubiKey, Titan Key) authenticators
+        // by not specifying authenticatorAttachment
         authenticatorSelection: {
-          authenticatorAttachment: "platform",
           requireResidentKey: true,
           userVerification: "required"
         },
@@ -208,8 +202,7 @@ export default function Fido2RegistrationPage() {
         publicKeyOptions.extensions = extensions;
       }
 
-      // NOTE: Intentionally NOT using server's authenticatorSelection
-      // because we want to force platform authenticator for better UX
+      // NOTE: Using client-side authenticatorSelection to allow all authenticator types
 
       // Debug: Log final options being sent to WebAuthn API
       console.log("Final publicKeyOptions:", publicKeyOptions);

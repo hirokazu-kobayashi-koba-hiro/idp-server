@@ -29,7 +29,9 @@ import com.webauthn4j.data.extension.CredentialProtectionPolicy;
 import com.webauthn4j.data.extension.authenticator.AuthenticationExtensionsAuthenticatorOutputs;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -110,11 +112,15 @@ public class WebAuthn4jRegistrationManager {
     String attestationType =
         attestationStatement != null ? attestationStatement.getFormat() : "none";
 
-    // Extract Resident Key flag from authenticator data
+    // Extract flags from authenticator data
     byte flags = verified.getAttestationObject().getAuthenticatorData().getFlags();
     boolean isUserPresent = (flags & 0x01) != 0; // UP bit
     boolean isUserVerified = (flags & 0x04) != 0; // UV bit
     Boolean rk = isUserPresent && isUserVerified;
+
+    // WebAuthn Level 3: Backup Flags
+    Boolean backupEligible = (flags & 0x08) != 0; // BE bit (bit 3)
+    Boolean backupState = (flags & 0x10) != 0; // BS bit (bit 4)
 
     // Extract credProtect from authenticator extensions
     Integer credProtect = null;
@@ -124,6 +130,35 @@ public class WebAuthn4jRegistrationManager {
       CredentialProtectionPolicy policy = authenticatorExtensions.getCredProtect();
       credProtect = (int) policy.toByte(); // 0x01, 0x02, or 0x03
     }
+
+    // Build JSON columns
+
+    // authenticator JSON: transports, attachment
+    Map<String, Object> authenticatorJson = new HashMap<>();
+    authenticatorJson.put("transports", transports);
+    // attachment can be inferred from transports (internal = platform, others = cross-platform)
+    if (transports.contains("internal")) {
+      authenticatorJson.put("attachment", "platform");
+    } else if (!transports.isEmpty()) {
+      authenticatorJson.put("attachment", "cross-platform");
+    }
+
+    // attestation JSON: type, format
+    Map<String, Object> attestationJson = new HashMap<>();
+    attestationJson.put("type", attestationType);
+    attestationJson.put("format", attestationType);
+
+    // extensions JSON: cred_protect, etc.
+    Map<String, Object> extensionsJson = new HashMap<>();
+    if (credProtect != null) {
+      extensionsJson.put("cred_protect", credProtect);
+    }
+
+    // device JSON: for future use (device name, registration context)
+    Map<String, Object> deviceJson = new HashMap<>();
+
+    // metadata JSON: for future extensions
+    Map<String, Object> metadataJson = new HashMap<>();
 
     // Current timestamp
     Long createdAt = System.currentTimeMillis();
@@ -138,10 +173,14 @@ public class WebAuthn4jRegistrationManager {
         attestationDataString,
         signatureAlgorithm,
         0, // signCount starts at 0
-        attestationType,
         rk,
-        credProtect, // Extracted from authenticator extensions
-        transports,
+        backupEligible, // WebAuthn Level 3 BE flag
+        backupState, // WebAuthn Level 3 BS flag
+        authenticatorJson, // JSON: transports, attachment
+        attestationJson, // JSON: attestation type/format
+        extensionsJson, // JSON: cred_protect, etc.
+        deviceJson, // JSON: device info (future)
+        metadataJson, // JSON: metadata (future)
         createdAt,
         null, // updatedAt - will be set on first update
         null // authenticatedAt - will be set on first authentication

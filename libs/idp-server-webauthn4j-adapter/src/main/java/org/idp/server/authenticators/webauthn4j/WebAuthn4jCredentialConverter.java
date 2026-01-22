@@ -45,7 +45,8 @@ public class WebAuthn4jCredentialConverter {
         attestedCredentialDataConverter.convert(
             urlDecoder.decode(credential.attestedCredentialData()));
 
-    // Restore transports from database (important for UX - browser can choose optimal transport)
+    // Restore transports from authenticator JSON (important for UX - browser can choose optimal
+    // transport)
     Set<AuthenticatorTransport> transports =
         credential.transports() != null
             ? credential.transports().stream()
@@ -54,7 +55,8 @@ public class WebAuthn4jCredentialConverter {
             : null;
 
     // Note: We use NoneAttestationStatement because:
-    // - We only store attestation_type (string) in DB, not the full attestation statement bytes
+    // - We only store attestation type (string) in attestation JSON, not the full attestation
+    // statement bytes
     // - Reconstructing original attestation statement requires attestation_object_bytes (not
     // stored)
     // - For authentication verification, only AttestedCredentialData and signCount are needed
@@ -62,14 +64,14 @@ public class WebAuthn4jCredentialConverter {
     return new CredentialRecordImpl(
         new NoneAttestationStatement(), // attestationStatement
         null, // uvInitialized - not stored in DB
-        null, // backupEligible - not stored in DB
-        null, // backupState - not stored in DB
+        credential.backupEligible(), // backupEligible - WebAuthn Level 3 BE flag
+        credential.backupState(), // backupState - WebAuthn Level 3 BS flag
         credential.signCount(), // counter
         deserializedAttestedCredentialData, // attestedCredentialData
         new AuthenticationExtensionsAuthenticatorOutputs<
             RegistrationExtensionAuthenticatorOutput>(), // authenticatorExtensions
         null, // clientData - not stored in DB
         null, // clientExtensions - not stored in DB
-        transports); // transports - restored from DB
+        transports); // transports - restored from authenticator JSON
   }
 }

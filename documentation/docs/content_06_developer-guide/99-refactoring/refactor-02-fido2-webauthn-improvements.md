@@ -244,6 +244,7 @@ private AuthenticationParameters toAuthenticationParameters(
 - `WebAuthn4jCredentialConverter.java:64-65` で `null` 設定
 
 **対象フラグ**:
+
 | フラグ | 説明 |
 |--------|------|
 | `backup_eligible` (BE) | iCloud Keychain等にバックアップ可能か |
@@ -262,6 +263,7 @@ private AuthenticationParameters toAuthenticationParameters(
 **課題**: FIDO2関連イベントがセキュリティイベントログに出力されていない
 
 **出力すべきイベント**:
+
 | イベント | 重要度 |
 |---------|--------|
 | `fido2.credential.registered` | INFO |
@@ -292,6 +294,7 @@ private AuthenticationParameters toAuthenticationParameters(
 **課題**: セキュリティ監査用の情報が不足
 
 **追加すべきフィールド**:
+
 | フィールド | 用途 |
 |-----------|------|
 | `registered_ip` | 登録時IPアドレス |

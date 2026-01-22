@@ -17,7 +17,6 @@
 package org.idp.server.authenticators.webauthn4j.datasource.credential;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredential;
 import org.idp.server.platform.date.SystemDateTime;
@@ -39,12 +38,18 @@ class ModelConverter {
     String attestedCredentialData = (String) result.get("attested_credential_data");
     Integer signatureAlgorithm = (Integer) result.get("signature_algorithm");
     Long signCount = (Long) result.get("sign_count");
-    String attestationType = (String) result.get("attestation_type");
     Boolean rk = (Boolean) result.get("rk");
-    Integer credProtect = (Integer) result.get("cred_protect");
 
-    // Handle transports - can be List<String> or JSON String depending on database
-    List<String> transports = parseTransports(result.get("transports"));
+    // WebAuthn Level 3: Backup Flags
+    Boolean backupEligible = (Boolean) result.get("backup_eligible");
+    Boolean backupState = (Boolean) result.get("backup_state");
+
+    // JSON columns
+    Map<String, Object> authenticator = parseJsonColumn(result.get("authenticator"));
+    Map<String, Object> attestation = parseJsonColumn(result.get("attestation"));
+    Map<String, Object> extensions = parseJsonColumn(result.get("extensions"));
+    Map<String, Object> device = parseJsonColumn(result.get("device"));
+    Map<String, Object> metadata = parseJsonColumn(result.get("metadata"));
 
     // Convert LocalDateTime to epoch milliseconds
     Long createdAt = convertToEpochMillis((LocalDateTime) result.get("created_at"));
@@ -61,10 +66,14 @@ class ModelConverter {
         attestedCredentialData,
         signatureAlgorithm,
         signCount,
-        attestationType,
         rk,
-        credProtect,
-        transports,
+        backupEligible,
+        backupState,
+        authenticator,
+        attestation,
+        extensions,
+        device,
+        metadata,
         createdAt,
         updatedAt,
         authenticatedAt);
@@ -78,58 +87,46 @@ class ModelConverter {
   }
 
   @SuppressWarnings("unchecked")
-  private static List<String> parseTransports(Object transportsValue) {
-    if (transportsValue == null) {
-      log.debug("parseTransports: value is null");
-      return null;
+  private static Map<String, Object> parseJsonColumn(Object value) {
+    if (value == null) {
+      return new java.util.HashMap<>();
     }
 
-    log.debug(
-        "parseTransports: type={}, value={}",
-        transportsValue.getClass().getName(),
-        transportsValue);
+    log.debug("parseJsonColumn: type={}, value={}", value.getClass().getName(), value);
 
-    if (transportsValue instanceof List) {
-      List<String> result = (List<String>) transportsValue;
-      log.debug("parseTransports: parsed as List, size={}", result.size());
-      return result;
+    if (value instanceof Map) {
+      return (Map<String, Object>) value;
     }
 
-    if (transportsValue instanceof String) {
-      String jsonString = (String) transportsValue;
+    if (value instanceof String) {
+      String jsonString = (String) value;
       if (jsonString.isEmpty() || jsonString.equals("null")) {
-        log.debug("parseTransports: empty or null string");
-        return null;
+        return new java.util.HashMap<>();
       }
       try {
         JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-        List<String> result = jsonConverter.read(jsonString, List.class);
-        log.debug("parseTransports: parsed JSON string, size={}", result.size());
-        return result;
+        return jsonConverter.read(jsonString, Map.class);
       } catch (Exception e) {
-        log.warn("parseTransports: failed to parse JSON string: {}", e.getMessage());
-        return null;
+        log.warn("parseJsonColumn: failed to parse JSON string: {}", e.getMessage());
+        return new java.util.HashMap<>();
       }
     }
 
     // Handle PostgreSQL PGobject for JSONB columns
-    String className = transportsValue.getClass().getName();
+    String className = value.getClass().getName();
     if (className.contains("PGobject") || className.contains("PgArray")) {
-      String stringValue = transportsValue.toString();
-      log.debug("parseTransports: PGobject detected, stringValue={}", stringValue);
+      String stringValue = value.toString();
       if (stringValue != null && !stringValue.isEmpty() && !stringValue.equals("null")) {
         try {
           JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-          List<String> result = jsonConverter.read(stringValue, List.class);
-          log.debug("parseTransports: parsed PGobject, size={}", result.size());
-          return result;
+          return jsonConverter.read(stringValue, Map.class);
         } catch (Exception e) {
-          log.warn("parseTransports: failed to parse PGobject: {}", e.getMessage());
+          log.warn("parseJsonColumn: failed to parse PGobject: {}", e.getMessage());
         }
       }
     }
 
-    log.warn("parseTransports: unhandled type {}", className);
-    return null;
+    log.warn("parseJsonColumn: unhandled type {}", className);
+    return new java.util.HashMap<>();
   }
 }

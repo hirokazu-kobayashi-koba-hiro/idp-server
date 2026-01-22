@@ -108,16 +108,20 @@ idp-serverでは以下のパスワードレス認証方式に対応していま�
 
 ### データモデル
 
-idp-serverでは、ユーザーとパスキー（FIDO2クレデンシャル）は以下の関係で管理されます。
+idp-serverでは、ユーザーとパスキー（FIDO2クレデンシャル）は以下の関係で管理されます。**1デバイス = 1クレデンシャル**の設計を採用しています。
 
 ```
 User (ユーザー)
   └── AuthenticationDevice (認証デバイス) [1:N]
-        └── DeviceCredential (デバイスクレデンシャル) [1:N]
-              └── FidoCredentialData (FIDO2固有データ)
-                    - credential_id: クレデンシャルID
-                    - rp_id: Relying Party ID
-                    - fido_server_id: FIDOサーバーID
+        ├── credential_type: クレデンシャルタイプ (fido2, jwt_bearer等)
+        ├── credential_id: クレデンシャルID
+        ├── credential_payload: クレデンシャル固有データ
+        │     └── FIDO2の場合:
+        │           - credential_id: WebAuthnクレデンシャルID
+        │           - rp_id: Relying Party ID
+        │           - fido_server_id: FIDOサーバーID
+        │           - public_key: 公開鍵
+        └── credential_metadata: メタデータ（登録日時等）
 ```
 
 ### 関係性
@@ -125,8 +129,20 @@ User (ユーザー)
 | エンティティ | 説明 | 関係 |
 |:---|:---|:---|
 | **User** | ユーザーアカウント | 1ユーザーに複数の認証デバイスを登録可能 |
-| **AuthenticationDevice** | 認証に使用するデバイス（iPhone、Mac等） | 1デバイスに複数のクレデンシャルを保持可能 |
-| **DeviceCredential** | 認証資格情報（パスキー、JWT Bearer等） | FIDO2、FIDO UAF、JWT Bearerなど複数タイプに対応 |
+| **AuthenticationDevice** | 認証に使用するデバイス（iPhone、Mac等） | **1デバイス = 1クレデンシャル**（統合設計） |
+
+### 1デバイス = 1クレデンシャル設計
+
+この設計には以下のメリットがあります：
+
+| メリット | 説明 |
+|:---|:---|
+| **シンプルなデータモデル** | デバイスとクレデンシャルの1:1対応で管理が容易 |
+| **直感的なUI** | ユーザーはデバイス単位でパスキーを管理 |
+| **効率的なクエリ** | JOINなしでデバイスとクレデンシャルを取得可能 |
+| **明確なライフサイクル** | デバイス削除 = クレデンシャル削除 |
+
+複数のパスキーを登録する場合は、それぞれ別のAuthenticationDeviceとして登録されます。
 
 ### 制約事項
 
@@ -135,7 +151,7 @@ User (ユーザー)
 | **rpIdの一致** | 登録時のrpIdと認証時のrpIdが一致する必要がある |
 | **rpIdのスコープ** | rpIdは現在のドメインまたはその親ドメインのみ指定可能 |
 | **クレデンシャルの一意性** | 同一rpId内でcredential_idは一意 |
-| **デバイス紐付け** | パスキーは特定のAuthenticationDeviceに紐づく |
+| **1:1対応** | 1つのAuthenticationDeviceに1つのクレデンシャルのみ |
 
 ### FIDO2のusername
 
@@ -267,7 +283,7 @@ WebAuthn仕様では、rpIdの有効性は以下のルールで判定されま�
 
 ### 1ユーザー複数パスキー
 
-ユーザーは複数のパスキーを登録できます：
+ユーザーは複数のパスキーを登録できます。各パスキーは個別のAuthenticationDeviceとして管理されます：
 
 - **バックアップ用**: デバイス紛失時のリカバリー
 - **複数デバイス**: iPhone、Mac、セキュリティキーなど
@@ -276,11 +292,14 @@ WebAuthn仕様では、rpIdの有効性は以下のルールで判定されま�
 ```
 User: alice@example.com
   ├── AuthenticationDevice: "iPhone 15"
-  │     └── DeviceCredential: Passkey (rpId: example.com)
+  │     ├── credential_type: "fido2"
+  │     └── credential_payload: { rp_id: "example.com", ... }
   ├── AuthenticationDevice: "MacBook Pro"
-  │     └── DeviceCredential: Passkey (rpId: example.com)
+  │     ├── credential_type: "fido2"
+  │     └── credential_payload: { rp_id: "example.com", ... }
   └── AuthenticationDevice: "YubiKey 5"
-        └── DeviceCredential: Passkey (rpId: example.com)
+        ├── credential_type: "fido2"
+        └── credential_payload: { rp_id: "example.com", ... }
 ```
 
 ### デバイス情報の自動抽出
@@ -409,6 +428,62 @@ User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 
 ---
 
+### パスキーの削除（登録解除）
+
+ユーザーは登録済みのパスキーを削除できます。idp-serverは**ステップアップ認証**をサポートしており、パスキー削除時に追加の認証を要求できます。
+
+#### 削除フロー
+
+```
+ユーザー          フロントエンド          idp-server
+   |                    |                    |
+   |--削除ボタン------->|                    |
+   |                    |--DELETE /me/authentication-devices/{id}-->|
+   |                    |                    |--ステップアップ認証が必要か判定
+   |                    |<--401 step_up_authentication_required-----|
+   |<--再認証要求-------|                    |
+   |--パスキー認証----->|                    |
+   |                    |--DELETE (認証済み)->|
+   |                    |                    |--デバイス削除
+   |                    |<--204 No Content---|
+   |<--削除完了---------|                    |
+```
+
+#### ステップアップ認証
+
+パスキー削除などのセキュリティ上重要な操作には、ステップアップ認証を要求できます。
+
+**レスポンス例（認証が必要な場合）**:
+```json
+{
+  "status": "step_up_authentication_required",
+  "message": "Additional authentication is required for this operation"
+}
+```
+
+**レスポンス例（成功）**:
+```json
+{
+  "status": "OK"
+}
+```
+
+#### 実装クラス
+
+- `Fido2DeregistrationInteractor.java` - パスキー削除のインターアクター
+- `WebAuthn4jDeregistrationExecutor.java` - WebAuthn4jでの削除実行
+- `UserOperationEntryService.java` - ステップアップ認証判定
+
+#### 注意事項
+
+| 注意点 | 説明 |
+|:---|:---|
+| **最後のパスキー** | 最後のパスキーを削除すると、パスワードレス認証ができなくなる |
+| **ステップアップ認証** | セキュリティ設定により、削除時に追加認証が必要な場合がある |
+| **FIDOサーバー連携** | 外部FIDOサーバー使用時は、サーバー側でも削除が必要な場合がある |
+
+---
+
 ### 3. FIDO UAF（CIBA連携）
 
 **FIDO UAF**（Universal Authentication Framework）は、モバイルアプリ向けの生体認証仕様です。idp-serverでは、**CIBA**（Client Initiated Backchannel Authentication）と組み合わせて使用できます。
@@ -469,6 +544,16 @@ FIDO2/WebAuthnは設計上フィッシング耐性があります：
 
 - **複数認証器の登録**: バックアップ用の認証器を推奨
 - **リカバリーフロー**: 管理者による認証器リセット機能
+
+### デバイス管理のセキュリティ
+
+パスキーの登録・削除は、セキュリティ上重要な操作です。idp-serverは以下のセキュリティ機能を提供します：
+
+| 機能 | 説明 |
+|:---|:---|
+| **ステップアップ認証** | デバイス削除時に追加認証を要求可能 |
+| **セキュリティイベント** | デバイス登録・削除をイベントとして記録 |
+| **監査ログ** | 操作履歴の追跡が可能 |
 
 ### 認証器の検証（Attestation）
 
