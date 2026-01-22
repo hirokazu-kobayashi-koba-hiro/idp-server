@@ -1,183 +1,317 @@
-# 📈 Performance Test Guide for idp-server
+# idp-server パフォーマンステストガイド
 
-This guide provides comprehensive steps and configurations to perform testing on the `idp-server`
-using [k6](https://k6.io/), PostgreSQL performance analytics, and synthetic test data.
+[k6](https://k6.io/)、PostgreSQLパフォーマンス分析、合成テストデータを使用した`idp-server`のパフォーマンステストガイド。
 
-> **Note**: For MySQL, see [README-mysql.md](./README-mysql.md)
+> **Note**: MySQLについては [README-mysql.md](./README-mysql.md) を参照
 
 ---
 
-## 📊 Performance Test Types
+## パフォーマンステストの種類
 
-To ensure the idp-server performs reliably under various conditions, different types of performance tests should be
-conducted. Each test type targets a specific system behavior:
+idp-serverがさまざまな条件下で確実に動作することを確認するため、異なる種類のパフォーマンステストを実施します。
 
-| Test Type    | Description                                                                                                                                                      |
-|--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ✅ **Load**   | Identify the system's maximum sustainable throughput under expected usage (e.g., 500 RPS). Focuses on **steady-state behavior**.                                 |
-| ✅ **Stress** | Push beyond the expected load to observe **failure modes**, **error rates**, and **graceful degradation**.                                                       |
-| **Spike**    | Test sudden and extreme load increases (e.g., from 0 to 1000 RPS instantly) to measure the system’s **burst tolerance**.                                         |
-| **Soak**     | Run the system under a typical load for an extended period (1 hour or more) to detect **memory leaks**, **GC issues**, or **performance degradation over time**. |
+| テスト種別 | 説明 |
+|-----------|------|
+| **Load（負荷）** | 想定される使用状況（例: 500 RPS）での最大持続スループットを特定。**定常状態の動作**に焦点 |
+| **Stress（ストレス）** | 想定負荷を超えて**障害モード**、**エラー率**、**グレースフルデグラデーション**を観察 |
+| **Spike（スパイク）** | 急激で極端な負荷増加（例: 0から1000 RPS）をテストし、**バースト耐性**を測定 |
+| **Soak（浸漬）** | 長時間（1時間以上）典型的な負荷で実行し、**メモリリーク**、**GC問題**、**経時的なパフォーマンス劣化**を検出 |
 
-* Running various performance test scenarios with k6
-* Analyzing database performance using `pg_stat_statements`
+---
 
-## Test Data Preparation
+## テストデータの準備
 
-### 🗃️ User Data Generation
+### ユーザーデータ生成
 
-Use `generate_users.py` to create test user data. This script generates:
-- User TSV file for `idp_user` table
-- Device TSV file for `idp_user_authentication_devices` table
-- Test users JSON file for k6 CIBA tests
+`generate_users.py`を使用してテストユーザーデータを作成します。
 
-#### Recommended: Combined Setup (1M + 9x100K)
+- `idp_user`テーブル用ユーザーTSVファイル
+- `idp_user_authentication_devices`テーブル用デバイスTSVファイル
+- k6 CIBAテスト用テストユーザーJSONファイル
 
-This configuration supports both large-scale single-tenant tests and multi-tenant tests:
+#### 推奨: 複合セットアップ（1M + 9x100K）
 
-```shell
-# 1. Register 10 tenants
+大規模シングルテナントテストとマルチテナントテストの両方をサポート：
+
+```bash
+# 1. 10テナントを登録
 ./performance-test/scripts/register-tenants.sh -n 10
 
-# 2. Generate: first tenant 1M users, other 9 tenants 100K each
+# 2. 生成: 最初のテナント100万ユーザー、他の9テナント各10万ユーザー
 python3 ./performance-test/scripts/generate_users.py \
   --tenants-file ./performance-test/data/performance-test-tenant.json \
   --users 100000 \
   --first-tenant-users 1000000
 
-# 3. Import to PostgreSQL
+# 3. PostgreSQLにインポート
 ./performance-test/scripts/import_users.sh multi_tenant_1m+9x100k
 
-# 4. Setup for k6 tests
+# 4. k6テスト用セットアップ
 cp ./performance-test/data/multi_tenant_1m+9x100k_test_users.json \
    ./performance-test/data/performance-test-multi-tenant-users.json
 ```
 
-**Result:**
-- Tenant 1: 1,000,000 users (for large-scale tests)
-- Tenant 2-10: 100,000 users each (for multi-tenant tests)
-- Total: 1,900,000 users
+**結果:**
+- テナント1: 1,000,000ユーザー（大規模テスト用）
+- テナント2-10: 各100,000ユーザー（マルチテナントテスト用）
+- 合計: 1,900,000ユーザー
 
-#### Alternative: Uniform Multi-Tenant (10 x 100K)
+---
 
-```shell
-python3 ./performance-test/scripts/generate_users.py --users 100000 \
-  --tenants-file ./performance-test/data/performance-test-tenant.json
-./performance-test/scripts/import_users.sh multi_tenant_10x100k
-```
+## k6のインストール
 
-#### Alternative: Single Tenant Only
+### 標準版k6
 
-```shell
-python3 ./performance-test/scripts/generate_users.py --users 1000000
-./performance-test/scripts/import_users.sh single_tenant_1m
-```
-
-## k6
-
-### install
-
-```shell
+```bash
 brew install k6
 ```
 
-### set env
+### SQLite対応版k6（FIDO2テスト用）
 
-#### local
+FIDO2のフルフローテストには、credentialを永続化するためSQLite対応版k6が必要です。
 
-```shell
+```bash
+# Goのインストール（未インストールの場合）
+brew install go
+
+# xk6ビルドツールのインストール
+go install go.k6.io/xk6/cmd/xk6@latest
+
+# SQLite対応版k6をビルド（CGO有効が必須）
+cd /path/to/idp-server
+CGO_ENABLED=1 ~/go/bin/xk6 build \
+  --with github.com/grafana/xk6-sql \
+  --with github.com/grafana/xk6-sql-driver-sqlite3 \
+  --output ./performance-test/k6-sqlite
+```
+
+> **Note**: go-sqlite3はCGOを必要とするため、`CGO_ENABLED=1`が必須です。
+
+---
+
+## 環境変数の設定
+
+### ローカル環境
+
+```bash
 export BASE_URL=https://api.local.dev
 export TENANT_ID=67e7eae6-62b0-4500-9eff-87459f63fc66
 export CLIENT_ID=clientSecretPost
-export CLIENT_SECRET=clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890
+export CLIENT_SECRET=clientSecretPostPassword1234567890...
 export REDIRECT_URI=https://www.certification.openid.net/test/a/idp_oidc_basic/callback
-export ACCESS_TOKEN=eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImlkX3Rva2VuX25leHRhdXRoIn0.eyJzdWIiOiI5MmU2ZmEwMy02NjgwLTQ3NDItOGQzOC0xYjU4NTFjMmJlYzciLCJzY29wZSI6InBob25lIG1hbmFnZW1lbnQgb3BlbmlkIHRyYW5zZmVycyBwcm9maWxlIGVtYWlsIGFjY291bnQiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvNjdlN2VhZTYtNjJiMC00NTAwLTllZmYtODc0NTlmNjNmYzY2IiwiZXhwIjoxNzQ5OTE5ODM1LCJpYXQiOjE3NDk5MTYyMzUsImNsaWVudF9pZCI6ImNsaWVudFNlY3JldFBvc3QiLCJqdGkiOiJmMzQ0Yjc0ZC1iNWJlLTQ4MjgtOWU3OS00YjVmNTRmMTFkNjkifQ.TWVEVEO172iHaBf13xr5Spcmh8wDcTY6HZlhnmpZkI8YI93L5kvpfJKtTrwxJqguYCaWXEkNKk9MlbOp0fF-keIyq1JS2ikfRkUSrYRg0SYt5Fsmvqf2re4YpxbPKlAOtD-DvNz6WQ0mQESMOTN5oYbd9togIIrqB7ReI1YYDntC6IQZKup4heYkbm6z4zn_2GjAnbOzF-gmaZ7Jm2iOhHjgvQLHSXykkUMHOb_JA3q_CachHNUh0mMhRk-3qpJlOxxCnlr6U5Q-QZS60DcKqp0ovmz6DTPZJy9aMRsDuqNwmbHpohBQz3Jzo-QG6nLsz40NGC00Plo4uaXsXTcJvA
 ```
 
-### run
+---
 
-### mkdir
+## テストの実行
 
-```shell
+### 結果ディレクトリの作成
+
+```bash
 mkdir -p performance-test/result/stress
 mkdir -p performance-test/result/load
 ```
 
-#### stress test
+### ストレステスト
 
-```shell
-k6 run --summary-export=./performance-test/result/stress/scenario-1-authorization-request.json ./performance-test/stress/scenario-1-authorization-request.js
+```bash
+# 認可リクエスト
+k6 run --summary-export=./performance-test/result/stress/scenario-1-authorization-request.json \
+  ./performance-test/stress/scenario-1-authorization-request.js
+
+# Backchannel Authentication
+k6 run --summary-export=./performance-test/result/stress/scenario-2-bc.json \
+  ./performance-test/stress/scenario-2-bc.js
+
+# CIBA（login_hintパターン別）
+k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-device.json \
+  ./performance-test/stress/scenario-3-ciba-device.js
+k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-sub.json \
+  ./performance-test/stress/scenario-3-ciba-sub.js
+k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-email.json \
+  ./performance-test/stress/scenario-3-ciba-email.js
+
+# トークン（パスワードグラント）
+k6 run --summary-export=./performance-test/result/stress/scenario-4-token-password.json \
+  ./performance-test/stress/scenario-4-token-password.js
+
+# トークン（クライアントクレデンシャル）
+k6 run --summary-export=./performance-test/result/stress/scenario-5-token-client-credentials.json \
+  ./performance-test/stress/scenario-5-token-client-credentials.js
+
+# JWKS
+k6 run --summary-export=./performance-test/result/stress/scenario-6-jwks.json \
+  ./performance-test/stress/scenario-6-jwks.js
+
+# トークンイントロスペクション
+k6 run --summary-export=./performance-test/result/stress/scenario-7-token-introspection.json \
+  ./performance-test/stress/scenario-7-token-introspection.js
+
+# デバイス認証
+k6 run --summary-export=./performance-test/result/stress/scenario-8-authentication-device.json \
+  ./performance-test/stress/scenario-8-authentication-device.js
+
+# 本人確認申請
+k6 run --summary-export=./performance-test/result/stress/scenario-9-identity-verification-application.json \
+  ./performance-test/stress/scenario-9-identity-verification-application.js
 ```
 
-```shell
-k6 run --summary-export=./performance-test/result/stress/scenario-2-bc.json ./performance-test/stress/scenario-2-bc.js
-```
+### 負荷テスト
 
-```shell
-# CIBA scenarios (login_hint patterns)
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-device.json ./performance-test/stress/scenario-3-ciba-device.js
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-sub.json ./performance-test/stress/scenario-3-ciba-sub.js
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-email.json ./performance-test/stress/scenario-3-ciba-email.js
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-phone.json ./performance-test/stress/scenario-3-ciba-phone.js
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-ex-sub.json ./performance-test/stress/scenario-3-ciba-ex-sub.js
-```
-
-```shell
-k6 run --summary-export=./performance-test/result/stress/scenario-4-token-password.json ./performance-test/stress/scenario-4-token-password.js
-```
-
-```shell
-k6 run --summary-export=./performance-test/result/stress/scenario-5-token-client-credentials.json ./performance-test/stress/scenario-5-token-client-credentials.js
-```
-
-```shell
-k6 run --summary-export=./performance-test/result/stress/scenario-6-jwks.json ./performance-test/stress/scenario-6-jwks.js
-```
-
-```shell
-k6 run --summary-export=./performance-test/result/stress/scenario-7-token-introspection.json ./performance-test/stress/scenario-7-token-introspection.js
-```
-
-```shell
-k6 run --summary-export=./performance-test/result/stress/scenario-8-authentication-device.json ./performance-test/stress/scenario-8-authentication-device.js
-```
-
-```shell
-k6 run --summary-export=./performance-test/result/stress/scenario-9-identity-verification-application.json ./performance-test/stress/scenario-9-identity-verification-application.js
-```
-
-#### load test
-
-```shell
+```bash
 k6 run ./performance-test/load/scenario-1-ciba-login.js
-```
-
-```shell
 k6 run ./performance-test/load/scenario-2-multi-ciba-login.js
-```
 
-```shell
-# Admin API credentials required for deleteExpiredData scenario
-# Get these from your idp-server admin configuration
+# deleteExpiredDataシナリオには管理API認証情報が必要
 export IDP_SERVER_API_KEY=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 export IDP_SERVER_API_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 k6 run ./performance-test/load/scenario-3-peak-login.js
-```
 
-```shell
 k6 run ./performance-test/load/scenario-4-authorization-code.js
 ```
 
+---
 
-## CPU Memory
+## FIDO2パフォーマンステスト
 
-```shell
+FIDO2（WebAuthn/Passkey）のフルフローテストは、ECDSA署名生成を含むため特別な対応が必要です。
+
+### アーキテクチャ
+
+```
+performance-test/
+├── k6-sqlite                      # SQLite対応k6バイナリ
+├── libs/
+│   ├── fido2.js                   # FIDO2暗号処理ライブラリ
+│   │                              # - CBOR エンコーディング
+│   │                              # - ES256 (P-256 ECDSA) 鍵生成・署名
+│   │                              # - AuthenticatorData生成
+│   │                              # - JWK形式での秘密鍵エクスポート
+│   └── credential-store.js        # SQLiteストレージ
+│                                  # - credentialの永続化
+│                                  # - signCount管理
+├── data/
+│   └── fido2-credentials.db       # 自動生成されるSQLiteデータベース
+└── stress/
+    ├── scenario-10-fido2-registration.js   # 登録フルフロー
+    └── scenario-11-fido2-authentication.js # 認証フルフロー
+```
+
+### SQLiteスキーマ
+
+```sql
+CREATE TABLE credentials (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  credential_id TEXT UNIQUE NOT NULL,  -- Base64URL形式
+  private_key_jwk TEXT NOT NULL,       -- JWK形式の秘密鍵（JSON）
+  email TEXT NOT NULL,
+  user_id TEXT,
+  sign_count INTEGER DEFAULT 0,        -- 認証のたびにインクリメント
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  last_used_at TEXT
+);
+```
+
+### テストの実行
+
+#### Step 1: FIDO2登録テスト（credentialをSQLiteに保存）
+
+```bash
+cd /path/to/idp-server
+
+# DBをクリアして新規登録（初回または再テスト時）
+./performance-test/k6-sqlite run -e CLEAR_DB=true \
+  ./performance-test/stress/scenario-10-fido2-registration.js
+
+# 追加登録（既存データを保持）
+./performance-test/k6-sqlite run \
+  ./performance-test/stress/scenario-10-fido2-registration.js
+```
+
+**テストフロー:**
+1. 認可開始
+2. ユーザー登録（initial-registration）
+3. Email MFA チャレンジ・検証
+4. FIDO2登録チャレンジ取得
+5. クレデンシャル生成（ECDSA鍵ペア）
+6. FIDO2登録完了
+7. **SQLiteに秘密鍵を保存**
+
+#### Step 2: FIDO2認証テスト（SQLiteからcredentialを読み込み）
+
+```bash
+./performance-test/k6-sqlite run \
+  ./performance-test/stress/scenario-11-fido2-authentication.js
+```
+
+**テストフロー:**
+1. SQLiteからcredentialを取得（VU/iterationでラウンドロビン）
+2. 認可開始
+3. FIDO2認証チャレンジ取得
+4. アサーション生成（保存された秘密鍵で署名）
+5. FIDO2認証完了
+6. **SQLiteのsignCountを更新**
+
+### 環境変数
+
+| 変数 | デフォルト値 | 説明 |
+|------|-------------|------|
+| `BASE_URL` | https://api.local.dev | idp-serverのベースURL |
+| `TENANT_ID` | (設定ファイルから) | テナントID |
+| `RP_ID` | local.dev | Relying Party ID |
+| `ORIGIN` | https://auth.local.dev | WebAuthnのorigin |
+| `VU_COUNT` | 10 | 同時仮想ユーザー数 |
+| `DURATION` | 30s | テスト期間 |
+| `CLEAR_DB` | false | trueで既存データをクリア |
+
+### signCountの管理
+
+FIDO2仕様では、認証のたびにsignCountがインクリメントされ、サーバー側で検証されます。
+
+- **登録時**: `sign_count = 0` でSQLiteに保存
+- **認証時**:
+  1. SQLiteから現在のsignCountを取得
+  2. `sign_count + 1` でassertion生成
+  3. 認証成功後、SQLiteのsignCountを更新
+
+これにより、同じcredentialを複数回認証してもsignCountが正しくインクリメントされます。
+
+### 出力例
+
+```
+=== FIDO2 Registration Full Flow Performance Summary ===
+Total Iterations: 385
+Iterations/sec: 12.58
+
+Step Durations (avg / p95):
+  Authorization:        36.10ms / 89.00ms
+  User Registration:    217.71ms / 375.80ms
+  Email MFA:            346.21ms / 520.40ms
+  FIDO2 Challenge:      32.93ms / 86.40ms
+  Credential Gen:       2.55ms / 6.00ms
+  FIDO2 Complete:       51.09ms / 115.00ms
+  Total:                687.02ms / 950.60ms
+
+Errors:
+  Authorization: 0
+  User Registration: 0
+  Email MFA: 0
+  FIDO2: 0
+```
+
+---
+
+## リソースモニタリング
+
+### CPU・メモリ使用量
+
+```bash
 docker stats $(docker compose ps -q idp-server)
 ```
 
-## 📄 App Logging
+### アプリケーションログ
 
-If you analyze execution time at each step, enable file logging in your application.yaml:
+各ステップの実行時間を分析する場合、application.yamlでファイルログを有効化：
 
 ```yaml
 logging:
@@ -190,12 +324,11 @@ logging:
       file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 ```
 
+---
 
-## 📊 analyze
+## 結果の分析
 
-### 📈 k6 Result Example
-
-You can expect an output like the following:
+### k6結果の例
 
 ```
 checks_total.......................: 13585  444.5355/s
@@ -205,92 +338,19 @@ http_req_duration..................: avg=223.44ms p(95)=512.14ms
 iterations.........................: 2717   88.91/s
 ```
 
-* `checks_total`: Total number of `check()` calls
-* `http_req_duration`: Time it took for HTTP requests to complete
-* `iterations`: Total number of full scenario iterations
-* `tps` (Throughput): Derived from `checks_total` per second or iterations per second depending on measurement point
+| メトリクス | 説明 |
+|-----------|------|
+| `checks_total` | `check()`呼び出しの総数 |
+| `http_req_duration` | HTTPリクエストの完了時間 |
+| `iterations` | シナリオ全体の反復回数 |
 
-Interpret the metrics in context of test goal, such as max TPS, latency, or error rate.
+### PostgreSQL: pg_stat_statements
 
----
+`pg_stat_statements`はすべてのクエリの実行統計を追跡する強力なPostgreSQL拡張機能です。
 
-### 🐘 PostgreSQL: Using `pg_stat_statements`
+#### 拡張機能の有効化
 
-`pg_stat_statements` is a powerful PostgreSQL extension that helps analyze SQL performance by tracking execution
-statistics of all queries.
-
----
-
-#### 🔧 1. Enable the Extension
-
-To enable `pg_stat_statements`, it must be preloaded by PostgreSQL. You can set it in `postgresql.conf`:
-
-```conf
-shared_preload_libraries = 'pg_stat_statements'
-```
-
-If you are using Docker (e.g., Docker Compose), you can pass it as a command-line argument:
-
-```yaml
-command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
-```
-
----
-
-#### 💥 2. Create the Extension (One-Time Setup)
-
-After the database is up and running, connect using `psql` and run:
-
-```sql
-CREATE
-EXTENSION pg_stat_statements;
-```
-
-This only needs to be done once per database.
-
----
-
-#### 🔍 3. View Query Statistics
-
-To check query performance:
-
-```sql
-SELECT query,
-       calls,
-       total_exec_time,
-       mean_exec_time, rows, shared_blks_hit, shared_blks_read
-FROM
-    pg_stat_statements
-ORDER BY
-    total_exec_time DESC
-    LIMIT 20;
-```
-
-#### 📌 Column Descriptions
-
-| Column             | Description                                         |
-|--------------------|-----------------------------------------------------|
-| `query`            | Normalized SQL (literals are replaced with `?`)     |
-| `calls`            | Number of times the query was executed              |
-| `total_exec_time`  | Total execution time in milliseconds                |
-| `mean_exec_time`   | Average execution time per call (ms)                |
-| `rows`             | Total number of rows returned                       |
-| `shared_blks_hit`  | Cache hits (higher is better)                       |
-| `shared_blks_read` | Disk reads (higher may indicate slower performance) |
-
----
-
-#### 🧼 4. Reset Statistics (Optional)
-
-To reset statistics before a performance test or benchmark:
-
-```sql
-SELECT pg_stat_statements_reset();
-```
-
----
-
-#### 📦 Docker Compose Example
+Docker Composeの場合：
 
 ```yaml
 services:
@@ -298,24 +358,57 @@ services:
     image: postgres:16
     environment:
       POSTGRES_PASSWORD: idpserver
-    command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
 ```
 
-This ensures that `pg_stat_statements` is enabled when PostgreSQL starts inside a Docker container.
+#### 拡張機能の作成（初回のみ）
+
+```sql
+CREATE EXTENSION pg_stat_statements;
+```
+
+#### クエリ統計の表示
+
+```sql
+SELECT query, calls, total_exec_time, mean_exec_time, rows,
+       shared_blks_hit, shared_blks_read
+FROM pg_stat_statements
+ORDER BY total_exec_time DESC
+LIMIT 20;
+```
+
+| カラム | 説明 |
+|--------|------|
+| `query` | 正規化されたSQL（リテラルは`?`に置換） |
+| `calls` | クエリの実行回数 |
+| `total_exec_time` | 総実行時間（ミリ秒） |
+| `mean_exec_time` | 平均実行時間（ミリ秒） |
+| `rows` | 返された行の総数 |
+| `shared_blks_hit` | キャッシュヒット（高いほど良い） |
+| `shared_blks_read` | ディスク読み取り（高いとパフォーマンス低下の可能性） |
+
+#### 統計のリセット
+
+パフォーマンステスト前に統計をリセット：
+
+```sql
+SELECT pg_stat_statements_reset();
+```
+
+---
 
 ## Tips
 
-* confirm disk
+### Dockerディスク使用量の確認
 
-```shell
+```bash
 docker system df
 ```
 
-* delete data at docker
+### Dockerデータのクリーンアップ
 
-```shell
+```bash
 docker system prune -a
 docker volume prune
 docker builder prune
 ```
-

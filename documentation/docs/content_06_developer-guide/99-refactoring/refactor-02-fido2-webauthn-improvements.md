@@ -236,41 +236,31 @@ private AuthenticationParameters toAuthenticationParameters(
 
 ### Phase 3: 低優先度
 
-#### 3.1 WebAuthn Level 3 Backup Flags対応
+#### 3.1 WebAuthn Level 3 Backup Flags対応 ✅
 
 **課題**: バックアップ関連フラグが保存されていない
 
-**現状**:
-- `WebAuthn4jCredentialConverter.java:64-65` で `null` 設定
-
-**対象フラグ**:
-
-| フラグ | 説明 |
-|--------|------|
-| `backup_eligible` (BE) | iCloud Keychain等にバックアップ可能か |
-| `backup_state` (BS) | 現在バックアップされているか |
-| `uv_initialized` | User Verification初期化済みか |
-
-**必要な作業**:
-1. DBスキーマ変更
-2. WebAuthn4jライブラリからフラグ抽出
-3. 認証時の検証ロジック追加
+**対応内容**:
+- Core + JSONB パターンでDDL再設計
+- `backup_eligible` (BE)、`backup_state` (BS) をCore Columnとして追加
+- 登録時にAuthenticator Dataからフラグを抽出
+- `WebAuthn4jCredentialConverter` でフラグを使用
 
 ---
 
-#### 3.2 セキュリティイベントログ連携
+#### 3.2 セキュリティイベントログ連携 ✅
 
 **課題**: FIDO2関連イベントがセキュリティイベントログに出力されていない
 
-**出力すべきイベント**:
+**対応内容**: 全Interactorで `DefaultSecurityEventType` を使用済み
 
-| イベント | 重要度 |
-|---------|--------|
-| `fido2.credential.registered` | INFO |
-| `fido2.credential.deleted` | WARNING |
-| `fido2.authentication.success` | INFO |
-| `fido2.authentication.failed` | WARNING |
-| `fido2.cloned_credential_detected` | CRITICAL |
+| Interactor | イベント |
+|------------|----------|
+| `Fido2RegistrationChallengeInteractor` | `fido2_registration_challenge_success/failure` |
+| `Fido2RegistrationInteractor` | `fido2_registration_success/failure` |
+| `Fido2AuthenticationChallengeInteractor` | `fido2_authentication_challenge_success/failure` |
+| `Fido2AuthenticationInteractor` | `fido2_authentication_success/failure` |
+| `Fido2DeregistrationInteractor` | `fido2_deregistration_success/failure` |
 
 ---
 
@@ -360,3 +350,5 @@ private AuthenticationParameters toAuthenticationParameters(
 | 2026-01-20 | 初版作成 |
 | 2026-01-21 | 1.2 allowCredentials検証追加（CVE-2025-26788対策）|
 | 2026-01-21 | 1.1, 1.2 実装完了 |
+| 2026-01-22 | 3.1 WebAuthn Level 3 Backup Flags対応（Core + JSONB DDL再設計）|
+| 2026-01-22 | 3.2 セキュリティイベントログ連携（実装済み確認）|
