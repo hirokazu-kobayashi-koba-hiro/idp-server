@@ -802,6 +802,20 @@ const sidebars = {
             "content_11_learning/ai-fundamentals/column-notebooklm-experience",
             "content_11_learning/ai-fundamentals/column-ai-paradox-fundamentals"
           ]
+        },
+        {
+          type: "category",
+          label: "マイクロサービス",
+          items: [
+            "content_11_learning/microservices/README",
+            "content_11_learning/microservices/microservices-fundamentals",
+            "content_11_learning/microservices/service-communication",
+            "content_11_learning/microservices/data-management",
+            "content_11_learning/microservices/observability",
+            "content_11_learning/microservices/microservices-on-kubernetes",
+            "content_11_learning/microservices/migration-strategy",
+            "content_11_learning/microservices/tradeoffs"
+          ]
         }
       ]
     },
