@@ -787,6 +787,21 @@ const sidebars = {
               ]
             }
           ]
+        },
+        {
+          type: "category",
+          label: "AI・機械学習基礎",
+          items: [
+            "content_11_learning/ai-fundamentals/README",
+            "content_11_learning/ai-fundamentals/ai-history-evolution",
+            "content_11_learning/ai-fundamentals/llm-fundamentals",
+            "content_11_learning/ai-fundamentals/prompt-engineering",
+            "content_11_learning/ai-fundamentals/rag-architecture",
+            "content_11_learning/ai-fundamentals/ai-agents",
+            "content_11_learning/ai-fundamentals/modern-ai-tools",
+            "content_11_learning/ai-fundamentals/column-notebooklm-experience",
+            "content_11_learning/ai-fundamentals/column-ai-paradox-fundamentals"
+          ]
         }
       ]
     },
