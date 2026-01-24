@@ -141,7 +141,7 @@ export default function Fido2RegistrationPage() {
               requireResidentKey: true,
               userVerification: "required"
             },
-            attestation: "none",
+            attestation: "direct",
             extensions: {
               credProps: true
             }
@@ -165,7 +165,7 @@ export default function Fido2RegistrationPage() {
         pubKeyCredParams,
         timeout = 60000,
         authenticatorSelection,
-        attestation = "none",
+        attestation = "direct",
         extensions
       } = challengeResponse;
 

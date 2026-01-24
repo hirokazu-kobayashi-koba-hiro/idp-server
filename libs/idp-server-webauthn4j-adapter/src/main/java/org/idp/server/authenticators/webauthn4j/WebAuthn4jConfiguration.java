@@ -23,6 +23,7 @@ import com.webauthn4j.server.ServerProperty;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.idp.server.authenticators.webauthn4j.mds.MdsConfiguration;
 import org.idp.server.platform.json.JsonReadable;
 
 public class WebAuthn4jConfiguration implements JsonReadable {
@@ -41,6 +42,14 @@ public class WebAuthn4jConfiguration implements JsonReadable {
 
   List<Integer> pubKeyCredAlgorithms;
   Long timeout;
+
+  // Attestation verification settings
+  String trustStorePath;
+  String trustStorePassword;
+  String trustStoreType;
+
+  // FIDO Metadata Service settings
+  MdsConfiguration mds;
 
   public WebAuthn4jConfiguration() {}
 
@@ -135,5 +144,21 @@ public class WebAuthn4jConfiguration implements JsonReadable {
 
   public Long timeout() {
     return timeout;
+  }
+
+  public String trustStorePath() {
+    return trustStorePath;
+  }
+
+  public String trustStorePassword() {
+    return trustStorePassword;
+  }
+
+  public String trustStoreType() {
+    return trustStoreType != null ? trustStoreType : "PKCS12";
+  }
+
+  public boolean hasTrustStore() {
+    return trustStorePath != null && !trustStorePath.isEmpty();
   }
 }

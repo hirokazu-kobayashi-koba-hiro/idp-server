@@ -16,17 +16,21 @@
 
 package org.idp.server.authenticators.webauthn4j;
 
-import com.webauthn4j.WebAuthnManager;
+import com.webauthn4j.WebAuthnRegistrationManager;
 import com.webauthn4j.converter.AttestedCredentialDataConverter;
 import com.webauthn4j.converter.util.ObjectConverter;
 import com.webauthn4j.data.AuthenticatorTransport;
 import com.webauthn4j.data.RegistrationData;
 import com.webauthn4j.data.RegistrationParameters;
+import com.webauthn4j.data.attestation.AttestationObject;
 import com.webauthn4j.data.attestation.authenticator.AAGUID;
 import com.webauthn4j.data.attestation.authenticator.AttestedCredentialData;
+import com.webauthn4j.data.attestation.authenticator.AuthenticatorData;
 import com.webauthn4j.data.attestation.statement.AttestationStatement;
+import com.webauthn4j.data.attestation.statement.CertificateBaseAttestationStatement;
 import com.webauthn4j.data.extension.CredentialProtectionPolicy;
 import com.webauthn4j.data.extension.authenticator.AuthenticationExtensionsAuthenticatorOutputs;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -35,10 +39,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class WebAuthn4jRegistrationManager {
 
-  WebAuthnManager webAuthnManager;
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(WebAuthn4jRegistrationManager.class);
+
+  WebAuthnRegistrationManager webAuthnRegistrationManager;
   WebAuthn4jConfiguration configuration;
   WebAuthn4jChallenge webAuthn4jChallenge;
   String request;
@@ -53,7 +61,8 @@ public class WebAuthn4jRegistrationManager {
       String userId,
       String username,
       String displayName) {
-    this.webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager();
+    WebAuthn4jManagerFactory factory = new WebAuthn4jManagerFactory(configuration);
+    this.webAuthnRegistrationManager = factory.createRegistrationManager();
     this.configuration = configuration;
     this.webAuthn4jChallenge = webAuthn4jChallenge;
     this.request = request;
@@ -64,11 +73,22 @@ public class WebAuthn4jRegistrationManager {
 
   public WebAuthn4jCredential verifyAndCreateCredential() {
 
+    log.debug("webauthn4j attestation verification starting for user: {}", username);
+
     RegistrationData registrationData = parseRequest();
+    logRegistrationDataBeforeVerification(registrationData);
+
     RegistrationParameters registrationParameters =
         configuration.toRegistrationParameters(webAuthn4jChallenge);
+    log.debug(
+        "webauthn4j attestation parameters: rpId={}, origin={}, userVerificationRequired={}",
+        configuration.rpId(),
+        configuration.origin(),
+        registrationParameters.isUserVerificationRequired());
 
     RegistrationData verified = verifyAndCreateCredential(registrationData, registrationParameters);
+    logVerificationSuccess(verified);
+
     byte[] credentialId = credentialId(verified);
 
     ObjectConverter objectConverter = new ObjectConverter();
@@ -204,19 +224,124 @@ public class WebAuthn4jRegistrationManager {
   private RegistrationData verifyAndCreateCredential(
       RegistrationData registrationData, RegistrationParameters registrationParameters) {
     try {
-      return webAuthnManager.verify(registrationData, registrationParameters);
+      log.debug("webauthn4j starting attestation verification");
+      return webAuthnRegistrationManager.verify(registrationData, registrationParameters);
     } catch (Exception e) {
-
+      log.debug(
+          "webauthn4j attestation verification failed: {} - {}",
+          e.getClass().getSimpleName(),
+          e.getMessage());
       throw new WebAuthn4jBadRequestException("webauthn verification is failed", e);
     }
   }
 
   private RegistrationData parseRequest() {
     try {
-      return webAuthnManager.parseRegistrationResponseJSON(request);
+      RegistrationData data = webAuthnRegistrationManager.parse(request);
+      log.debug("webauthn4j registration request parsed successfully");
+      return data;
     } catch (Exception e) {
-
+      log.debug("webauthn4j registration request parse failed: {}", e.getMessage());
       throw new WebAuthn4jBadRequestException("webauthn registration request is invalid", e);
+    }
+  }
+
+  private void logRegistrationDataBeforeVerification(RegistrationData registrationData) {
+    AttestationObject attestationObject = registrationData.getAttestationObject();
+    if (attestationObject == null) {
+      log.debug("webauthn4j attestation object is null");
+      return;
+    }
+
+    AttestationStatement attestationStatement = attestationObject.getAttestationStatement();
+    String format = attestationStatement != null ? attestationStatement.getFormat() : "unknown";
+    log.debug("webauthn4j attestation format: {}", format);
+
+    // Log certificate chain info if present
+    if (attestationStatement instanceof CertificateBaseAttestationStatement certStatement) {
+      var x5c = certStatement.getX5c();
+      if (x5c != null && !x5c.isEmpty()) {
+        log.debug("webauthn4j attestation certificate chain length: {}", x5c.size());
+        for (int i = 0; i < x5c.size(); i++) {
+          X509Certificate cert = x5c.get(i);
+          log.debug(
+              "webauthn4j attestation cert[{}]: subject={}, issuer={}",
+              i,
+              cert.getSubjectX500Principal().getName(),
+              cert.getIssuerX500Principal().getName());
+        }
+      } else {
+        log.debug("webauthn4j attestation has no certificate chain (self-attestation or none)");
+      }
+    }
+
+    AuthenticatorData<?> authData = attestationObject.getAuthenticatorData();
+    if (authData != null) {
+      AttestedCredentialData attestedCredData = authData.getAttestedCredentialData();
+      if (attestedCredData != null) {
+        AAGUID aaguid = attestedCredData.getAaguid();
+        log.debug(
+            "webauthn4j authenticator AAGUID: {}", aaguid != null ? aaguid.toString() : "null");
+      }
+
+      byte flags = authData.getFlags();
+      log.debug(
+          "webauthn4j authenticator flags: UP={}, UV={}, AT={}, ED={}, BE={}, BS={}",
+          (flags & 0x01) != 0, // User Present
+          (flags & 0x04) != 0, // User Verified
+          (flags & 0x40) != 0, // Attested credential data included
+          (flags & 0x80) != 0, // Extension data included
+          (flags & 0x08) != 0, // Backup Eligible
+          (flags & 0x10) != 0); // Backup State
+    }
+  }
+
+  private void logVerificationSuccess(RegistrationData verified) {
+    AttestationObject attestationObject = verified.getAttestationObject();
+    if (attestationObject == null) {
+      return;
+    }
+
+    AttestationStatement attestationStatement = attestationObject.getAttestationStatement();
+    String format = attestationStatement != null ? attestationStatement.getFormat() : "none";
+
+    AttestedCredentialData attestedCredData =
+        attestationObject.getAuthenticatorData().getAttestedCredentialData();
+    String aaguid =
+        attestedCredData != null && attestedCredData.getAaguid() != null
+            ? attestedCredData.getAaguid().toString()
+            : "unknown";
+
+    log.debug(
+        "webauthn4j attestation verification succeeded: format={}, aaguid={}", format, aaguid);
+
+    // Warn if "direct" attestation was expected but "none" was received
+    String attestationPreference = configuration.attestationPreference();
+    if ("direct".equalsIgnoreCase(attestationPreference)
+        || "enterprise".equalsIgnoreCase(attestationPreference)) {
+      if ("none".equals(format)) {
+        log.warn(
+            "webauthn4j attestation: requested '{}' but received 'none'. "
+                + "Platform authenticators (Touch ID/Face ID) may not support attestation. "
+                + "AAGUID: {}, consider using a security key for full attestation.",
+            attestationPreference,
+            aaguid);
+      }
+    }
+
+    // Log if certificate chain was verified
+    if (attestationStatement instanceof CertificateBaseAttestationStatement certStatement) {
+      var x5c = certStatement.getX5c();
+      if (x5c != null && !x5c.isEmpty()) {
+        log.debug("webauthn4j certificate chain verification passed ({} certs)", x5c.size());
+      }
+    }
+
+    Set<AuthenticatorTransport> transports = verified.getTransports();
+    if (transports != null && !transports.isEmpty()) {
+      log.debug(
+          "webauthn4j authenticator transports: {}",
+          transports.stream().map(AuthenticatorTransport::getValue).collect(Collectors.toList()));
     }
   }
 }

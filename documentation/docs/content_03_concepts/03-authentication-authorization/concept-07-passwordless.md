@@ -557,10 +557,181 @@ FIDO2/WebAuthnは設計上フィッシング耐性があります：
 
 ### 認証器の検証（Attestation）
 
-**Attestationレベル**:
-- **none**: 認証器の種類を検証しない（推奨）
-- **indirect**: 匿名化された検証
-- **direct**: 認証器の種類を厳密に検証
+**Attestation（アテステーション）**とは、パスキー登録時に認証器（Authenticator）の真正性を検証する仕組みです。認証器が生成した署名とともに、認証器自体の情報（メーカー、モデル、セキュリティ特性など）を証明するデータを提供します。
+
+#### Attestationの構成要素
+
+```
+認証器 ──[公開鍵 + Attestation Statement]──> サーバー
+                    │
+                    ├── format: アテステーション形式
+                    ├── attStmt: 署名データ
+                    └── authData: 認証器データ（AAGUID含む）
+```
+
+| 要素 | 説明 |
+|:---|:---|
+| **AAGUID** | 認証器モデルを識別する128bit UUID |
+| **Attestation Statement** | 認証器の署名（形式はformatで指定） |
+| **Attestation Format** | 署名形式（none, packed, tpm, android-key等） |
+
+#### Attestation形式（Format）
+
+登録時のレスポンスに含まれる署名形式です。
+
+| 形式 | 説明 | 対応認証器 |
+|:---|:---|:---|
+| **none** | アテステーションなし | プラットフォーム認証器（プライバシー保護） |
+| **packed** | FIDO2標準形式 | セキュリティキー（YubiKey等） |
+| **tpm** | TPMによる署名 | Windows Hello（TPM搭載PC） |
+| **android-key** | Android Keystore | Android端末 |
+| **android-safetynet** | SafetyNet API | 旧Android認証 |
+| **apple** | Apple Anonymous Attestation | Apple端末（iOS/macOS） |
+| **fido-u2f** | 旧U2F形式 | 旧型セキュリティキー |
+
+#### Attestation Conveyance（クライアントへの要求）
+
+サーバーからクライアントへの登録オプションで、アテステーションの要求レベルを指定します。
+
+| 値 | 説明 | ユースケース |
+|:---|:---|:---|
+| **none** | アテステーション不要 | 一般向けサービス（プライバシー優先） |
+| **indirect** | 匿名化されたアテステーション | 中間的なセキュリティ要件 |
+| **direct** | 完全なアテステーション | エンタープライズ（認証器種別の制限） |
+| **enterprise** | 企業向けアテステーション | 管理デバイスの識別 |
+
+> **注意**: `direct`や`enterprise`を要求しても、プラットフォーム認証器（Touch ID、Face ID等）はプライバシー保護のため`none`形式で応答することがあります。これはWebAuthn仕様で許容されており、正常な動作です。
+
+#### idp-serverでのAttestation検証パターン
+
+idp-serverは3つのアテステーション検証パターンをサポートします。
+
+| パターン | 説明 | 設定 |
+|:---|:---|:---|
+| **None（検証なし）** | アテステーションを検証しない | デフォルト、一般向けサービス |
+| **TrustStore** | 事前登録された証明書で検証 | 特定認証器のみ許可 |
+| **FIDO MDS** | FIDO Metadata Serviceで検証 | エンタープライズ、高セキュリティ |
+
+**1. None（検証なし）**
+
+アテステーションの検証を行わず、どの認証器でも登録を許可します。
+
+```json
+{
+  "webauthn4j": {
+    "attestation_preference": "none"
+  }
+}
+```
+
+- **メリット**: すべての認証器を許可、ユーザー体験を優先
+- **デメリット**: 認証器の信頼性を検証できない
+- **推奨**: 一般消費者向けサービス
+
+**2. TrustStore（証明書ベース）**
+
+事前に登録した証明書で認証器を検証します。
+
+```json
+{
+  "webauthn4j": {
+    "attestation_preference": "direct",
+    "trust_store": {
+      "certificates": [
+        "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+      ]
+    }
+  }
+}
+```
+
+- **メリット**: 特定の認証器のみ許可可能
+- **デメリット**: 証明書の管理が必要
+- **推奨**: 社内システム、特定セキュリティキーの強制
+
+**3. FIDO Metadata Service（MDS）**
+
+FIDO Allianceが提供するメタデータサービスを使用して認証器を検証します。
+
+```json
+{
+  "webauthn4j": {
+    "attestation_preference": "direct",
+    "mds": {
+      "enabled": true,
+      "cache_ttl_seconds": 86400
+    }
+  }
+}
+```
+
+- **メリット**: 最新の認証器情報、脆弱性情報を自動取得
+- **デメリット**: ネットワーク接続が必要、MDSに登録されていない認証器は検証不可
+- **推奨**: エンタープライズ、金融サービス
+
+#### FIDO Metadata Service（MDS）
+
+FIDO MDSは、FIDO Allianceが運営する認証器のメタデータ配信サービスです。
+
+**MDSで取得できる情報**:
+
+| 情報 | 説明 |
+|:---|:---|
+| **認証器名** | YubiKey 5 NFC、iPhone等 |
+| **アイコン** | 認証器のアイコン画像（Base64） |
+| **認証レベル** | FIDO認定レベル（L1, L2, L3） |
+| **ステータス** | 正常、脆弱性あり、失効等 |
+| **対応アルゴリズム** | ES256、RS256等 |
+
+**認証器ステータス**:
+
+| ステータス | 説明 | 対応 |
+|:---|:---|:---|
+| **FIDO_CERTIFIED** | FIDO認定済み | 許可 |
+| **FIDO_CERTIFIED_L1/L2/L3** | 認定レベル別 | 許可 |
+| **UPDATE_AVAILABLE** | ファームウェア更新あり | 警告 |
+| **ATTESTATION_KEY_COMPROMISE** | 鍵が漏洩 | **拒否** |
+| **USER_VERIFICATION_BYPASS** | UVバイパス脆弱性 | **拒否** |
+| **REVOKED** | 失効 | **拒否** |
+
+idp-serverは登録時にMDSをチェックし、危殆化した認証器を検出した場合は警告をログに出力します。
+
+**MDSキャッシュ**:
+
+MDSデータは`CacheStore`にキャッシュされ、不要なネットワーク通信を防ぎます。
+
+| キャッシュキー | 内容 | TTL |
+|:---|:---|:---|
+| `mds:entries` | 全認証器メタデータ | 24時間（設定可能） |
+| `mds:status:{aaguid}` | 認証器ステータス | 24時間（設定可能） |
+| `mds:last_fetch` | 最終取得時刻 | 24時間（設定可能） |
+
+#### プラットフォーム認証器の制限
+
+Apple（Touch ID、Face ID）やAndroid等のプラットフォーム認証器は、プライバシー保護のためアテステーションを提供しないことがあります。
+
+| プラットフォーム | アテステーション | 備考 |
+|:---|:---|:---|
+| **Apple（iOS/macOS）** | `none`または`apple`（匿名） | MDSに未登録 |
+| **Android** | `android-key` | 一部端末のみ |
+| **Windows Hello** | `tpm`（TPM搭載時） | TPM非搭載PCは`none` |
+
+> **重要**: `attestation: "direct"`を要求しても、プラットフォーム認証器が`none`で応答することは仕様上正常です。idp-serverはこのケースを適切に処理します。
+
+#### 推奨設定
+
+| ユースケース | 推奨設定 |
+|:---|:---|
+| **一般消費者向けサービス** | `attestation_preference: "none"`、MDS無効 |
+| **企業内システム** | `attestation_preference: "direct"`、TrustStoreで許可認証器を限定 |
+| **金融・医療など高セキュリティ** | `attestation_preference: "direct"`、MDS有効、危殆化チェック |
+| **政府・防衛** | `attestation_preference: "enterprise"`、MDS有効、FIDO認定必須 |
+
+#### 関連ドキュメント
+
+- [FIDO2 AAGUID - 認証器の識別](../../content_11_learning/05-fido-webauthn/fido2-aaguid-authenticator-identification.md)
+- [FIDO2 アテステーションタイプと検証](../../content_11_learning/05-fido-webauthn/fido2-attestation-types-and-verification.md)
+- [FIDO2 Metadata Service](../../content_11_learning/05-fido-webauthn/fido2-metadata-service.md)
 
 ---
 
