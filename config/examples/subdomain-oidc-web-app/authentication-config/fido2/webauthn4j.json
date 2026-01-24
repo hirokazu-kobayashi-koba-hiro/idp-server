@@ -12,7 +12,7 @@
           "rp_name": "Local Dev IDP",
           "token_binding_id": null,
           "require_resident_key": true,
-          "attestation_preference": "none",
+          "attestation_preference": "direct",
           "user_presence_required": true,
           "authenticator_attachment": "platform",
           "user_verification_required": true
@@ -36,7 +36,7 @@
           "rp_name": "Local Dev IDP",
           "token_binding_id": null,
           "require_resident_key": true,
-          "attestation_preference": "none",
+          "attestation_preference": "direct",
           "user_presence_required": true,
           "authenticator_attachment": "platform",
           "user_verification_required": true
@@ -60,7 +60,7 @@
           "rp_name": "Local Dev IDP",
           "token_binding_id": null,
           "require_resident_key": true,
-          "attestation_preference": "none",
+          "attestation_preference": "direct",
           "user_presence_required": true,
           "authenticator_attachment": "platform",
           "user_verification_required": true
@@ -84,7 +84,7 @@
           "rp_name": "Local Dev IDP",
           "token_binding_id": null,
           "require_resident_key": true,
-          "attestation_preference": "none",
+          "attestation_preference": "direct",
           "user_presence_required": true,
           "authenticator_attachment": "platform",
           "user_verification_required": true

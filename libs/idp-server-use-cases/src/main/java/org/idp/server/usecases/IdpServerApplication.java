@@ -24,6 +24,9 @@ import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditiona
 import org.idp.server.authentication.interactors.plugin.AuthenticationDeviceNotifiersPluginLoader;
 import org.idp.server.authentication.interactors.plugin.FidoUafAdditionalRequestResolverPluginLoader;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentialRepository;
+import org.idp.server.authenticators.webauthn4j.mds.MdsConfiguration;
+import org.idp.server.authenticators.webauthn4j.mds.MdsResolver;
+import org.idp.server.authenticators.webauthn4j.mds.MdsResolverFactory;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.base.AdminUserAuthenticationApi;
@@ -533,6 +536,12 @@ public class IdpServerApplication {
 
     authenticationDependencyContainer.register(
         WebAuthn4jCredentialRepository.class, webAuthn4jCredentialRepository);
+
+    // Register MDS resolver for FIDO Metadata Service integration
+    MdsConfiguration mdsConfiguration =
+        new MdsConfiguration(true); // Enable MDS with default 24h cache
+    MdsResolver mdsResolver = MdsResolverFactory.create(mdsConfiguration, cacheStore);
+    authenticationDependencyContainer.register(MdsResolver.class, mdsResolver);
 
     AuthenticationExecutors authenticationExecutors =
         AuthenticationExecutorPluginLoader.load(authenticationDependencyContainer);

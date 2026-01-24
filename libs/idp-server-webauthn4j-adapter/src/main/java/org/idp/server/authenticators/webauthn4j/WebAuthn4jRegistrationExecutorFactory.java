@@ -16,6 +16,7 @@
 
 package org.idp.server.authenticators.webauthn4j;
 
+import org.idp.server.authenticators.webauthn4j.mds.MdsResolver;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutorFactory;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
@@ -33,7 +34,12 @@ public class WebAuthn4jRegistrationExecutorFactory implements AuthenticationExec
         container.resolve(AuthenticationInteractionQueryRepository.class);
     WebAuthn4jCredentialRepository credentialRepository =
         container.resolve(WebAuthn4jCredentialRepository.class);
+    MdsResolver mdsResolver = container.resolve(MdsResolver.class);
+
     return new WebAuthn4jRegistrationExecutor(
-        interactionCommandRepository, interactionQueryRepository, credentialRepository);
+        interactionCommandRepository,
+        interactionQueryRepository,
+        credentialRepository,
+        mdsResolver);
   }
 }

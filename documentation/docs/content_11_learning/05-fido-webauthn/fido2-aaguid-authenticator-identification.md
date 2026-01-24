@@ -129,6 +129,8 @@ AT フラグが 1 の場合のみ attestedCredentialData（AAGUID を含む）�
 
 ## FIDO Metadata Service (MDS)
 
+> 📖 MDS の詳細（BLOB 構造、取得方法、実装パターン等）については [FIDO Metadata Service (MDS)](./fido2-metadata-service.md) を参照してください。
+
 ### MDS とは
 
 FIDO Metadata Service は、FIDO Alliance が運営する認証器メタデータのリポジトリです。
