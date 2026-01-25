@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Alert,
   Box,
@@ -17,6 +17,7 @@ import {
   Divider,
   IconButton,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { Session } from "next-auth";
@@ -28,6 +29,7 @@ import FingerprintIcon from "@mui/icons-material/Fingerprint";
 import DevicesIcon from "@mui/icons-material/Devices";
 import KeyIcon from "@mui/icons-material/Key";
 import DeleteIcon from "@mui/icons-material/Delete";
+import RefreshIcon from "@mui/icons-material/Refresh";
 
 interface AuthenticationDevice {
   id: string;
@@ -39,50 +41,87 @@ interface AuthenticationDevice {
   priority?: number;
 }
 
+interface UserinfoResponse {
+  sub?: string;
+  name?: string;
+  email?: string;
+  email_verified?: boolean;
+  phone_number?: string;
+  phone_number_verified?: boolean;
+  address?: Record<string, unknown>;
+  authentication_devices?: AuthenticationDevice[];
+  [key: string]: unknown;
+}
+
 interface UserInfoProps {
   session: Session;
 }
 
 const UserInfo = ({ session }: UserInfoProps) => {
-  const { user } = session;
+  const [userinfo, setUserinfo] = useState<UserinfoResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [deletedDeviceIds, setDeletedDeviceIds] = useState<Set<string>>(new Set());
   const [deletingDeviceId, setDeletingDeviceId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deviceToDelete, setDeviceToDelete] = useState<AuthenticationDevice | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // ID Tokenをデコード（簡易実装）
-  const decodeIdToken = (idToken: string | undefined) => {
-    if (!idToken) return null;
-    try {
-      const payload = idToken.split(".")[1];
-      const decoded = JSON.parse(atob(payload));
-      return decoded;
-    } catch (error) {
-      console.error("Failed to decode ID token", error);
-      return null;
+  const fetchUserinfo = useCallback(async () => {
+    if (!session.accessToken) {
+      setError("Access token is not available");
+      setLoading(false);
+      return;
     }
-  };
 
-  const idTokenClaims = decodeIdToken(session.idToken);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/userinfo", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch userinfo: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      setUserinfo(data);
+      // Reset deleted device IDs on successful refresh
+      setDeletedDeviceIds(new Set());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error occurred");
+    } finally {
+      setLoading(false);
+    }
+  }, [session.accessToken]);
+
+  useEffect(() => {
+    fetchUserinfo();
+  }, [fetchUserinfo]);
 
   const handleDeleteClick = (device: AuthenticationDevice) => {
     setDeviceToDelete(device);
     setDeleteDialogOpen(true);
-    setError(null);
+    setDeleteError(null);
   };
 
   const handleCloseDialog = () => {
     setDeleteDialogOpen(false);
     setDeviceToDelete(null);
-    setError(null);
+    setDeleteError(null);
   };
 
   const handleConfirmDelete = async () => {
     if (!deviceToDelete) return;
 
     setDeletingDeviceId(deviceToDelete.id);
-    setError(null);
+    setDeleteError(null);
 
     try {
       const response = await fetch(
@@ -94,17 +133,17 @@ const UserInfo = ({ session }: UserInfoProps) => {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error_description || "パスキーの削除に失敗しました。");
+        setDeleteError(data.error_description || "パスキーの削除に失敗しました。");
         setDeletingDeviceId(null);
         return;
       }
 
-      // Mark device as deleted
+      // Mark device as deleted locally
       setDeletedDeviceIds((prev) => new Set([...prev, deviceToDelete.id]));
       setDeleteDialogOpen(false);
       setDeviceToDelete(null);
     } catch {
-      setError("エラーが発生しました。もう一度お試しください。");
+      setDeleteError("エラーが発生しました。もう一度お試しください。");
     } finally {
       setDeletingDeviceId(null);
     }
@@ -112,21 +151,58 @@ const UserInfo = ({ session }: UserInfoProps) => {
 
   // Filter out deleted devices
   const authenticationDevices: AuthenticationDevice[] = (
-    idTokenClaims?.authentication_devices || []
+    userinfo?.authentication_devices || []
   ).filter((device: AuthenticationDevice) => !deletedDeviceIds.has(device.id));
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent>
+          <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+            <CircularProgress size={32} />
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+              ユーザー情報を取得中...
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+          <Button variant="outlined" onClick={fetchUserinfo} startIcon={<RefreshIcon />}>
+            再試行
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardContent>
         <Stack spacing={3}>
-          <Box>
-            <Typography variant="h5" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <AccountCircleIcon color="primary" />
-              ユーザー情報
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              ID Token Claims
-            </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Box>
+              <Typography variant="h5" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <AccountCircleIcon color="primary" />
+                ユーザー情報
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Userinfo Endpoint
+              </Typography>
+            </Box>
+            <Tooltip title="再取得">
+              <IconButton onClick={fetchUserinfo} disabled={loading} size="small">
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
 
           <Divider />
@@ -139,67 +215,67 @@ const UserInfo = ({ session }: UserInfoProps) => {
                 Subject (sub)
               </Typography>
               <Typography variant="body1" sx={{ fontFamily: "monospace", wordBreak: "break-all" }}>
-                {user.sub || idTokenClaims?.sub || "N/A"}
+                {userinfo?.sub || "N/A"}
               </Typography>
             </Box>
 
-            {(user.name || idTokenClaims?.name) && (
+            {userinfo?.name && (
               <Box>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <AccountCircleIcon fontSize="small" />
                   Name
                 </Typography>
                 <Typography variant="body1">
-                  {user.name || idTokenClaims?.name}
+                  {userinfo.name}
                 </Typography>
               </Box>
             )}
 
-            {(user.email || idTokenClaims?.email) && (
+            {userinfo?.email && (
               <Box>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <EmailIcon fontSize="small" />
                   Email
                 </Typography>
                 <Typography variant="body1">
-                  {user.email || idTokenClaims?.email}
-                  {idTokenClaims?.email_verified && (
+                  {userinfo.email}
+                  {userinfo.email_verified && (
                     <Chip label="Verified" size="small" color="success" sx={{ ml: 1 }} />
                   )}
                 </Typography>
               </Box>
             )}
 
-            {idTokenClaims?.phone_number && (
+            {userinfo?.phone_number && (
               <Box>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <PhoneIcon fontSize="small" />
                   Phone Number
                 </Typography>
                 <Typography variant="body1">
-                  {idTokenClaims.phone_number}
-                  {idTokenClaims?.phone_number_verified && (
+                  {userinfo.phone_number}
+                  {userinfo.phone_number_verified && (
                     <Chip label="Verified" size="small" color="success" sx={{ ml: 1 }} />
                   )}
                 </Typography>
               </Box>
             )}
 
-            {idTokenClaims?.address && (
+            {userinfo?.address && (
               <Box>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <HomeIcon fontSize="small" />
                   Address
                 </Typography>
                 <Typography variant="body2" component="pre" sx={{ whiteSpace: "pre-wrap", fontFamily: "monospace" }}>
-                  {JSON.stringify(idTokenClaims.address, null, 2)}
+                  {JSON.stringify(userinfo.address, null, 2)}
                 </Typography>
               </Box>
             )}
           </Stack>
 
           {/* 認証デバイス情報 */}
-          {idTokenClaims?.authentication_devices && idTokenClaims.authentication_devices.length > 0 && (
+          {userinfo?.authentication_devices && userinfo.authentication_devices.length > 0 && (
             <>
               <Divider />
               <Box>
@@ -210,7 +286,10 @@ const UserInfo = ({ session }: UserInfoProps) => {
 
                 {deletedDeviceIds.size > 0 && (
                   <Alert severity="info" sx={{ mb: 2 }}>
-                    パスキーを削除しました。変更を完全に反映するには、再ログインしてください。
+                    パスキーを削除しました。
+                    <Button size="small" onClick={fetchUserinfo} sx={{ ml: 1 }}>
+                      最新情報を取得
+                    </Button>
                     <br />
                     <Typography variant="caption" color="text.secondary">
                       ※ デバイス側のパスキーは手動で削除する必要があります（ブラウザ設定やOS設定から）
@@ -234,7 +313,7 @@ const UserInfo = ({ session }: UserInfoProps) => {
                         <Stack direction="row" alignItems="center" spacing={1}>
                           <KeyIcon color="action" fontSize="small" />
                           <Typography variant="body2" fontWeight="bold">
-                            パスキー #{index + 1}
+                            {device.app_name || `パスキー #${index + 1}`}
                           </Typography>
                           {device.available_methods?.includes("fido2") && (
                             <Chip label="FIDO2" size="small" color="primary" />
@@ -280,35 +359,12 @@ const UserInfo = ({ session }: UserInfoProps) => {
 
                 {authenticationDevices.length === 0 && (
                   <Alert severity="warning">
-                    すべてのパスキーが削除されました。再ログインすると、新しいパスキーを登録できます。
+                    すべてのパスキーが削除されました。
+                    <Button size="small" onClick={fetchUserinfo} sx={{ ml: 1 }}>
+                      最新情報を取得
+                    </Button>
                   </Alert>
                 )}
-              </Box>
-            </>
-          )}
-
-          {/* その他のクレーム */}
-          {idTokenClaims && (
-            <>
-              <Divider />
-              <Box>
-                <Typography variant="caption" color="text.secondary" gutterBottom>
-                  All ID Token Claims
-                </Typography>
-                <Box
-                  component="pre"
-                  sx={{
-                    backgroundColor: "grey.100",
-                    p: 2,
-                    borderRadius: 1,
-                    overflow: "auto",
-                    fontSize: "0.75rem",
-                    fontFamily: "monospace",
-                    maxHeight: "300px",
-                  }}
-                >
-                  {JSON.stringify(idTokenClaims, null, 2)}
-                </Box>
               </Box>
             </>
           )}
@@ -331,6 +387,9 @@ const UserInfo = ({ session }: UserInfoProps) => {
             {deviceToDelete && (
               <Box sx={{ mt: 2, p: 2, backgroundColor: "grey.100", borderRadius: 1 }}>
                 <Typography variant="body2">
+                  {deviceToDelete.app_name || "パスキー"}
+                </Typography>
+                <Typography variant="body2">
                   {deviceToDelete.platform && `Platform: ${deviceToDelete.platform}`}
                   {deviceToDelete.os && ` / OS: ${deviceToDelete.os}`}
                 </Typography>
@@ -340,9 +399,9 @@ const UserInfo = ({ session }: UserInfoProps) => {
               </Box>
             )}
           </DialogContentText>
-          {error && (
+          {deleteError && (
             <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
+              {deleteError}
             </Alert>
           )}
           <Alert severity="warning" sx={{ mt: 2 }}>
