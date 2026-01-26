@@ -38,9 +38,18 @@ const Home = async () => {
               パスキー追加
             </Button>
             <Button
-              href="/fido2-rpid-demo"
+              href="/fido2-attestation-demo"
               variant="outlined"
               color="primary"
+              startIcon={<FingerprintIcon />}
+              size="small"
+            >
+              FIDO2 登録デモ
+            </Button>
+            <Button
+              href="/fido2-rpid-demo"
+              variant="outlined"
+              color="info"
               startIcon={<FingerprintIcon />}
               size="small"
             >
