@@ -2,15 +2,15 @@
 
 idp-serverにおけるトークン管理の概念を説明します。
 
-> **基礎知識**: OAuth 2.0のトークンの種類については [OAuth 2.0のトークンの種類と用途](../basic/basic-10-oauth2-token-types.md) を参照してください。
+> **基礎知識**: OAuth 2.0のトークンの種類については [OAuth 2.0のトークンの種類と用途](../../content_11_learning/03-oauth-tokens/oauth2-token-types.md)) を参照してください。
 
 ## idp-serverのトークン管理でできること
 
 idp-serverでは、以下のトークン管理機能を提供します：
 
-- **トークン形式の選択**: 識別子型（Opaque）とJWT型の使い分け
-- **テナント単位の設定**: トークン有効期限をテナントごとに管理
-- **Refresh Token Rotation**: 使用のたびに新しいトークンを発行
+- **トークン形式の選択**: 識別子型（Opaque）とJWT型の使い分け(テナント単位で設定)
+- **トークン有効期限**: アクセストークンとリフレッシュトークンの有効期限をクライアント単位で設定可能
+- **Refresh Token Rotation**: 使用のたびに新しいトークンを発行(テナント単位で設定)
 
 ## トークン形式の選択
 
@@ -33,9 +33,30 @@ idp-serverでは、テナント単位およびクライアント単位でトー�
 | Refresh Token | 30分〜1日 | ユーザー体験とセキュリティのバランス |
 | ID Token | 5分〜1時間 | 認証情報の鮮度保持 |
 
+### Refresh Tokenの有効期限戦略
+
+Refresh Tokenの有効期限には2つの戦略があります。
+
+| 戦略 | 設定値 | 動作 |
+|------|--------|------|
+| **期限固定** | 固定の秒数（例: 86400秒 = 1日） | 発行から1日後に必ず期限切れ |
+| **期限延長** | 延長モード有効 + 最大期限 | 使用するたびに延長、ただし最大期限まで |
+
 ## Refresh Token Rotation
 
-idp-serverでは、Refresh Tokenは使用のたびに新しいトークンを発行し、古いトークンを無効化します。これにより、トークン盗難のリスクを軽減します。
+idp-serverでは、Refresh Tokenを使用のたびに新しいトークンを発行し、古いトークンを無効化する**Refresh Token Rotation**をサポートしています。
+
+これにより、トークン盗難のリスクを軽減し、セキュリティを強化します。
+
+| 設定 | 動作 | ユースケース |
+|------|------|-------------|
+| **Rotation有効** | 使用のたびに新しいRefresh Tokenを発行 | セキュリティ重視（推奨） |
+| **Rotation無効** | 同じRefresh Tokenを使い続ける | レガシーシステム対応 |
+
+**注意点**
+
+- **クライアント実装**: 新しいRefresh Tokenを毎回保存する必要がある
+- **並行リクエスト**: 複数のリクエストが同時にRefresh Tokenを使うと、1つ以外は失敗する
 
 ## イントロスペクション vs 自己完結型検証
 
@@ -50,7 +71,7 @@ idp-serverでは、Refresh Tokenは使用のたびに新しいトークンを発
 
 ## 関連ドキュメント
 
-- [トークン有効期限パターン](../../content_05_how-to/how-to-09-token-strategy.md) - 具体的な設定例
+- [トークン有効期限パターン](../../content_05_how-to/phase-2-security/02-token-strategy.md) - 具体的な設定例
 - [イントロスペクション](../../content_04_protocols/protocol-03-introspection.md) - イントロスペクション仕様
 - [セッション管理](../03-authentication-authorization/concept-03-session-management.md) - セッションとトークンの関係
 

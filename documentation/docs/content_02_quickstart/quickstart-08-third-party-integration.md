@@ -201,7 +201,9 @@ admin:users     - ユーザー管理（管理者のみ）
 ## 関連ドキュメント
 
 - [How-to: クライアント登録](../content_05_how-to/phase-1-foundation/04-client-registration.md)
+- [How-to: トークン戦略](../content_05_how-to/phase-2-security/02-token-strategy.md)
 - [Concept: OAuth 2.0認可](../content_03_concepts/03-authentication-authorization/concept-04-authorization.md)
+- [Concept: トークン管理](../content_03_concepts/04-tokens-claims/concept-02-token-management.md)
 - [Protocol: Authorization Code Flow](../content_04_protocols/protocol-01-authorization-code-flow.md)
 
 ---

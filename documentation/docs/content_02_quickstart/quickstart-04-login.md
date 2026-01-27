@@ -210,6 +210,8 @@
 - [How-to: ユーザー登録・パスワード認証](../content_05_how-to/phase-1-foundation/05-user-registration.md)
 - [How-to: 認証ポリシー設定](../content_05_how-to/phase-1-foundation/07-authentication-policy.md)
 - [How-to: 外部IdP連携](../content_05_how-to/phase-3-advanced/01-federation-setup.md)
+- [Concept: セッション管理](../content_03_concepts/03-authentication-authorization/concept-03-session-management.md)
+- [Concept: トークン管理](../content_03_concepts/04-tokens-claims/concept-02-token-management.md)
 
 ---
 
