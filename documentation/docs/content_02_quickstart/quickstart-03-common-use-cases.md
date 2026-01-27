@@ -8,7 +8,7 @@
 
 | ユースケース | できること | 詳細 |
 |------------|-----------|------|
-| **[ログイン](./quickstart-04-login.md)** | パスワード認証、外部IdP連携（Google、LINE等） | [詳細へ →](./quickstart-04-login.md) |
+| **[ログイン](./quickstart-04-login.md)** | パスワード認証、Socialログイン、エンタープライズ連携 | [詳細へ →](./quickstart-04-login.md) |
 | **[MFA](./quickstart-05-mfa.md)** | SMS/メール認証でセキュリティ強化 | [詳細へ →](./quickstart-05-mfa.md) |
 | **[パスワードレス認証](./quickstart-06-passwordless.md)** | 生体認証、セキュリティキー、モバイル承認 | [詳細へ →](./quickstart-06-passwordless.md) |
 | **[身元確認/eKYC](./quickstart-07-ekyc.md)** | 本人確認書類検証、確認済み情報の活用 | [詳細へ →](./quickstart-07-ekyc.md) |
@@ -22,7 +22,7 @@
 
 | 段階 | 機能 |
 |------|------|
-| **基本** | ログイン（パスワード + Google連携） |
+| **基本** | ログイン（パスワード + Socialログイン） |
 | **強化** | パスワードレス推奨（Passkey） |
 
 ### 金融サービス（ネット銀行）
