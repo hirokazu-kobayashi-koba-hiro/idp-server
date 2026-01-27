@@ -4,6 +4,60 @@
 
 ---
 
+## 全体像
+
+```mermaid
+graph TB
+    subgraph 基本
+        A[ログイン]
+        E[サードパーティ連携]
+    end
+
+    subgraph セキュリティ強化
+        B[MFA]
+        C[パスワードレス認証]
+    end
+
+    subgraph 高度な機能
+        D[身元確認/eKYC]
+    end
+
+    A -->|推奨導入順序| B
+    A -->|推奨導入順序| C
+    B -->|推奨導入順序| D
+    C -->|推奨導入順序| D
+
+    style A fill:#e1f5ff
+    style E fill:#e1f5ff
+    style B fill:#fff4e1
+    style C fill:#fff4e1
+    style D fill:#ffe1e1
+```
+
+**矢印の意味**: 推奨される導入順序を表しています。
+- まずログインを実装
+- 次にMFAまたはパスワードレスでセキュリティ強化
+- 最後に身元確認/eKYCで高度な機能を追加
+
+**サードパーティ連携**: 独立した機能なので、任意のタイミングで導入可能
+
+### 導入の流れ
+
+```
+Phase 1: 基本機能
+  - ログイン（パスワード認証、Socialログイン）
+  - サードパーティ連携（外部アプリへのAPI提供）
+  ↓
+Phase 2: セキュリティ強化
+  - MFA（多要素認証）
+  - パスワードレス認証
+  ↓
+Phase 3: 高度な機能
+  - 身元確認/eKYC
+```
+
+---
+
 ## ユースケース一覧
 
 | ユースケース | できること | 詳細 |
@@ -52,9 +106,7 @@
 
 ## 次のステップ
 
-- [Getting Started](./quickstart-01-getting-started.md) - サーバーのセットアップ
 - [How-to ガイド](../content_05_how-to/) - 各機能の設定手順
-- [初期設定テンプレート](./quickstart-02-setting-templates.md) - 業種別の推奨設定
 
 ---
 
