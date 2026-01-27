@@ -36,7 +36,20 @@ const sidebars = {
       collapsed: true,
       items: [
         "content_02_quickstart/quickstart-01-getting-started",
-        "content_02_quickstart/quickstart-02-setting-templates"
+        "content_02_quickstart/quickstart-02-setting-templates",
+        {
+          type: "category",
+          label: "主要ユースケース",
+          collapsed: true,
+          items: [
+            "content_02_quickstart/quickstart-03-common-use-cases",
+            "content_02_quickstart/quickstart-04-login",
+            "content_02_quickstart/quickstart-05-mfa",
+            "content_02_quickstart/quickstart-06-passwordless",
+            "content_02_quickstart/quickstart-07-ekyc",
+            "content_02_quickstart/quickstart-08-third-party-integration"
+          ]
+        }
       ]
     },
     {
