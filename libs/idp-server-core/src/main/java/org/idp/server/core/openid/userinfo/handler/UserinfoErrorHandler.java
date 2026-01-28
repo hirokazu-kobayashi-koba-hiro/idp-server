@@ -34,7 +34,9 @@ public class UserinfoErrorHandler {
 
   public UserinfoRequestResponse handle(Exception exception) {
     if (exception instanceof TokenInvalidException) {
-      log.info(exception.getMessage());
+      log.warn(
+          "Userinfo request failed: status=unauthorized, error=invalid_token, description={}",
+          exception.getMessage());
       return new UserinfoRequestResponse(
           UserinfoRequestStatus.UNAUTHORIZE,
           new UserinfoErrorResponse(
@@ -42,7 +44,9 @@ public class UserinfoErrorHandler {
     }
 
     if (exception instanceof UserNotFoundException) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "Userinfo request failed: status=unauthorized, error=invalid_token, description={}",
+          exception.getMessage());
       return new UserinfoRequestResponse(
           UserinfoRequestStatus.UNAUTHORIZE,
           new UserinfoErrorResponse(
@@ -50,7 +54,9 @@ public class UserinfoErrorHandler {
     }
 
     if (exception instanceof ClientUnAuthorizedException) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "Userinfo request failed: status=unauthorized, error=invalid_client, description={}",
+          exception.getMessage());
       return new UserinfoRequestResponse(
           UserinfoRequestStatus.UNAUTHORIZE,
           new UserinfoErrorResponse(
@@ -58,7 +64,9 @@ public class UserinfoErrorHandler {
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "Userinfo request failed: status=unauthorized, error=invalid_client, description={}",
+          exception.getMessage());
       return new UserinfoRequestResponse(
           UserinfoRequestStatus.UNAUTHORIZE,
           new UserinfoErrorResponse(
@@ -66,14 +74,19 @@ public class UserinfoErrorHandler {
     }
 
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "Userinfo request failed: status=bad_request, error=invalid_request, description={}",
+          exception.getMessage());
       return new UserinfoRequestResponse(
           UserinfoRequestStatus.BAD_REQUEST,
           new UserinfoErrorResponse(
               new Error("invalid_request"), new ErrorDescription(exception.getMessage())));
     }
 
-    log.error(exception.getMessage(), exception);
+    log.error(
+        "Userinfo request failed: status=server_error, error={}",
+        exception.getMessage(),
+        exception);
     Error error = new Error("server_error");
     ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
     UserinfoErrorResponse userinfoErrorResponse =

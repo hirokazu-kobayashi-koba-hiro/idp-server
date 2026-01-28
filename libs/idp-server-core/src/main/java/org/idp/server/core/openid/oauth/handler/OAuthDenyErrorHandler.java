@@ -36,20 +36,25 @@ public class OAuthDenyErrorHandler {
       AuthorizationErrorResponseCreator authorizationErrorResponseCreator =
           new AuthorizationErrorResponseCreator(redirectableBadRequestException);
       AuthorizationErrorResponse errorResponse = authorizationErrorResponseCreator.create();
-      log.warn(redirectableBadRequestException.getMessage());
+      log.warn(
+          "OAuth deny failed: status=redirectable_bad_request, error={}, description={}",
+          redirectableBadRequestException.error().value(),
+          redirectableBadRequestException.errorDescription().value());
       return new OAuthDenyResponse(OAuthDenyStatus.REDIRECABLE_BAD_REQUEST, errorResponse);
     }
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.warn("not found configuration");
-      log.warn(exception.getMessage());
+      log.warn(
+          "OAuth deny failed: status=bad_request, error=invalid_request, description={}",
+          exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new OAuthDenyResponse(
           OAuthDenyStatus.BAD_REQUEST, error.value(), errorDescription.value());
     }
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.warn("not found configuration");
-      log.warn(exception.getMessage());
+      log.warn(
+          "OAuth deny failed: status=bad_request, error=invalid_request, description={}",
+          exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new OAuthDenyResponse(
@@ -57,7 +62,8 @@ public class OAuthDenyErrorHandler {
     }
     Error error = new Error("server_error");
     ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
-    log.error(exception.getMessage(), exception);
+    log.error(
+        "OAuth deny failed: status=server_error, error={}", exception.getMessage(), exception);
     return new OAuthDenyResponse(
         OAuthDenyStatus.SERVER_ERROR, error.value(), errorDescription.value());
   }

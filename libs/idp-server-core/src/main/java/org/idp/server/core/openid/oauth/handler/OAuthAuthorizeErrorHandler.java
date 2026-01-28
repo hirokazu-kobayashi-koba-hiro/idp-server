@@ -36,8 +36,10 @@ public class OAuthAuthorizeErrorHandler {
   public OAuthAuthorizeResponse handle(Exception exception) {
 
     if (exception instanceof OAuthBadRequestException badRequestException) {
-
-      log.warn(badRequestException.getMessage());
+      log.warn(
+          "OAuth authorize failed: status=bad_request, error={}, description={}",
+          badRequestException.error().value(),
+          badRequestException.errorDescription().value());
       return new OAuthAuthorizeResponse(
           OAuthAuthorizeStatus.BAD_REQUEST,
           badRequestException.error().value(),
@@ -48,13 +50,19 @@ public class OAuthAuthorizeErrorHandler {
       AuthorizationErrorResponseCreator authorizationErrorResponseCreator =
           new AuthorizationErrorResponseCreator(redirectableBadRequestException);
       AuthorizationErrorResponse errorResponse = authorizationErrorResponseCreator.create();
-      log.warn(redirectableBadRequestException.getMessage());
+      log.warn(
+          "OAuth authorize failed: status=redirectable_bad_request, error={}, description={}",
+          redirectableBadRequestException.error().value(),
+          redirectableBadRequestException.errorDescription().value());
       return new OAuthAuthorizeResponse(
           OAuthAuthorizeStatus.REDIRECABLE_BAD_REQUEST, errorResponse);
     }
 
     if (exception instanceof OAuthAuthorizeBadRequestException badRequestException) {
-      log.warn(badRequestException.getMessage());
+      log.warn(
+          "OAuth authorize failed: status=bad_request, error={}, description={}",
+          badRequestException.error().value(),
+          badRequestException.errorDescription().value());
       return new OAuthAuthorizeResponse(
           OAuthAuthorizeStatus.BAD_REQUEST,
           badRequestException.error().value(),
@@ -62,8 +70,9 @@ public class OAuthAuthorizeErrorHandler {
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.warn("not found configuration");
-      log.warn(exception.getMessage());
+      log.warn(
+          "OAuth authorize failed: status=bad_request, error=invalid_request, description={}",
+          exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new OAuthAuthorizeResponse(
@@ -71,8 +80,9 @@ public class OAuthAuthorizeErrorHandler {
     }
 
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.warn("not found configuration");
-      log.warn(exception.getMessage());
+      log.warn(
+          "OAuth authorize failed: status=bad_request, error=invalid_request, description={}",
+          exception.getMessage());
       Error error = new Error("invalid_request");
       ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
       return new OAuthAuthorizeResponse(
@@ -81,7 +91,8 @@ public class OAuthAuthorizeErrorHandler {
 
     Error error = new Error("server_error");
     ErrorDescription errorDescription = new ErrorDescription(exception.getMessage());
-    log.error(exception.getMessage(), exception);
+    log.error(
+        "OAuth authorize failed: status=server_error, error={}", exception.getMessage(), exception);
     return new OAuthAuthorizeResponse(
         OAuthAuthorizeStatus.SERVER_ERROR, error.value(), errorDescription.value());
   }

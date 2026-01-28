@@ -60,7 +60,10 @@ public class TokenRevocationErrorHandler {
   public TokenRevocationResponse handle(Exception exception) {
     // RFC 7009: invalid_request (400)
     if (exception instanceof TokenRevocationBadRequestException badRequest) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "Token revocation failed: status=bad_request, error={}, description={}",
+          badRequest.error().value(),
+          badRequest.errorDescription().value());
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("error", badRequest.error().value());
@@ -71,7 +74,9 @@ public class TokenRevocationErrorHandler {
 
     // RFC 7009: invalid_client (401)
     if (exception instanceof ClientUnAuthorizedException) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "Token revocation failed: status=unauthorized, error=invalid_client, description={}",
+          exception.getMessage());
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("error", "invalid_client");
@@ -83,7 +88,9 @@ public class TokenRevocationErrorHandler {
     // Configuration errors (400)
     if (exception instanceof ClientConfigurationNotFoundException
         || exception instanceof ServerConfigurationNotFoundException) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "Token revocation failed: status=bad_request, error=invalid_client, description={}",
+          exception.getMessage());
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("error", "invalid_client");
@@ -93,7 +100,10 @@ public class TokenRevocationErrorHandler {
     }
 
     // Server error (500)
-    log.error(exception.getMessage(), exception);
+    log.error(
+        "Token revocation failed: status=server_error, error={}",
+        exception.getMessage(),
+        exception);
     Map<String, Object> contents = new HashMap<>();
     contents.put("error", "server_error");
     contents.put("error_description", exception.getMessage());

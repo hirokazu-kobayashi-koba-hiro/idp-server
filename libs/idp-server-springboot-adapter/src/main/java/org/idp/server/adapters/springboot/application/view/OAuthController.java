@@ -57,34 +57,52 @@ public class OAuthController implements ParameterTransformable {
 
     switch (response.status()) {
       case OK -> {
-        log.info("sessionEnable: false");
+        log.debug(
+            "oauth request: status={}, tenant={}, request_id={}",
+            response.status(),
+            tenantIdentifier.value(),
+            response.authorizationRequestId());
         return new RedirectView(
             String.format(
                 "/signin/index.html?id=%s&tenant_id=%s",
                 response.authorizationRequestId(), tenantIdentifier.value()));
       }
       case OK_SESSION_ENABLE -> {
-        log.info("sessionEnable: true");
+        log.debug(
+            "oauth request: status={}, tenant={}, request_id={}",
+            response.status(),
+            tenantIdentifier.value(),
+            response.authorizationRequestId());
         return new RedirectView(
             String.format(
                 "/signin/index.html?id=%s&tenant_id=%s",
                 response.authorizationRequestId(), tenantIdentifier.value()));
       }
       case OK_ACCOUNT_CREATION -> {
-        log.info("request creation account");
+        log.debug(
+            "oauth request: status={}, tenant={}, request_id={}",
+            response.status(),
+            tenantIdentifier.value(),
+            response.authorizationRequestId());
         return new RedirectView(
             String.format(
                 "/signup/index.html?id=%s&tenant_id=%s",
                 response.authorizationRequestId(), tenantIdentifier.value()));
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
-        log.info("redirect");
+        log.debug(
+            "oauth request: status={}, tenant={}, redirect_uri={}",
+            response.status(),
+            tenantIdentifier.value(),
+            response.redirectUri());
         return "redirect:" + response.redirectUri();
       }
       default -> {
         log.warn(
-            String.format(
-                "error: %s, description: %s", response.error(), response.errorDescription()));
+            "oauth request failed: tenant={}, error={}, description={}",
+            tenantIdentifier.value(),
+            response.error(),
+            response.errorDescription());
 
         return new RedirectView(
             String.format(
@@ -109,34 +127,52 @@ public class OAuthController implements ParameterTransformable {
 
     switch (response.status()) {
       case OK -> {
-        log.info("sessionEnable: false");
+        log.debug(
+            "oauth request: status={}, tenant={}, request_id={}",
+            response.status(),
+            tenantIdentifier.value(),
+            response.authorizationRequestId());
         return new RedirectView(
             String.format(
                 "/signin/index.html?id=%s&tenant_id=%s",
                 response.authorizationRequestId(), tenantIdentifier.value()));
       }
       case OK_SESSION_ENABLE -> {
-        log.info("sessionEnable: true");
+        log.debug(
+            "oauth request: status={}, tenant={}, request_id={}",
+            response.status(),
+            tenantIdentifier.value(),
+            response.authorizationRequestId());
         return new RedirectView(
             String.format(
                 "/signin/index.html?id=%s&tenant_id=%s",
                 response.authorizationRequestId(), tenantIdentifier.value()));
       }
       case OK_ACCOUNT_CREATION -> {
-        log.info("request creation account");
+        log.debug(
+            "oauth request: status={}, tenant={}, request_id={}",
+            response.status(),
+            tenantIdentifier.value(),
+            response.authorizationRequestId());
         return new RedirectView(
             String.format(
                 "/signup/index.html?id=%s&tenant_id=%s",
                 response.authorizationRequestId(), tenantIdentifier.value()));
       }
       case NO_INTERACTION_OK, REDIRECABLE_BAD_REQUEST -> {
-        log.info("redirect");
+        log.debug(
+            "oauth request: status={}, tenant={}, redirect_uri={}",
+            response.status(),
+            tenantIdentifier.value(),
+            response.redirectUri());
         return "redirect:" + response.redirectUri();
       }
       default -> {
         log.warn(
-            String.format(
-                "error: %s, description: %s", response.error(), response.errorDescription()));
+            "oauth request failed: tenant={}, error={}, description={}",
+            tenantIdentifier.value(),
+            response.error(),
+            response.errorDescription());
 
         return new RedirectView(
             String.format(

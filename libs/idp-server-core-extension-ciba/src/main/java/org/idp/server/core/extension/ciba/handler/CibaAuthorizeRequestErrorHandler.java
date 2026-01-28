@@ -32,13 +32,18 @@ public class CibaAuthorizeRequestErrorHandler {
 
   public CibaAuthorizeResponse handle(Exception exception) {
     if (exception instanceof CibaAuthorizeBadRequestException badRequest) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "CIBA authorize failed: status=bad_request, error={}, description={}",
+          badRequest.error().value(),
+          badRequest.errorDescription().value());
       return new CibaAuthorizeResponse(
           CibaAuthorizeStatus.BAD_REQUEST, badRequest.error(), badRequest.errorDescription());
     }
 
     if (exception instanceof CibaGrantNotFoundException cibaGrantNotFoundException) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "CIBA authorize failed: status=bad_request, error=invalid_request, description={}",
+          cibaGrantNotFoundException.getMessage());
       return new CibaAuthorizeResponse(
           CibaAuthorizeStatus.BAD_REQUEST,
           new Error("invalid_request"),
@@ -46,7 +51,9 @@ public class CibaAuthorizeRequestErrorHandler {
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "CIBA authorize failed: status=bad_request, error=invalid_client, description={}",
+          exception.getMessage());
       return new CibaAuthorizeResponse(
           CibaAuthorizeStatus.BAD_REQUEST,
           new Error("invalid_client"),
@@ -54,14 +61,17 @@ public class CibaAuthorizeRequestErrorHandler {
     }
 
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "CIBA authorize failed: status=bad_request, error=invalid_request, description={}",
+          exception.getMessage());
       return new CibaAuthorizeResponse(
           CibaAuthorizeStatus.BAD_REQUEST,
           new Error("invalid_request"),
           new ErrorDescription(exception.getMessage()));
     }
 
-    log.error(exception.getMessage(), exception);
+    log.error(
+        "CIBA authorize failed: status=server_error, error={}", exception.getMessage(), exception);
     return new CibaAuthorizeResponse(
         CibaAuthorizeStatus.SERVER_ERROR,
         new Error("server_error"),

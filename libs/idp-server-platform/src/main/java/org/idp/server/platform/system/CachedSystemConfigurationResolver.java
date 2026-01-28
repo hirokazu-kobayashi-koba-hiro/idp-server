@@ -61,7 +61,7 @@ public class CachedSystemConfigurationResolver implements SystemConfigurationRes
     Optional<SystemConfiguration> cached = cacheStore.find(CACHE_KEY, SystemConfiguration.class);
 
     if (cached.isPresent()) {
-      log.debug("Using cached system configuration");
+      log.trace("Using cached system configuration");
       return cached.get();
     }
 

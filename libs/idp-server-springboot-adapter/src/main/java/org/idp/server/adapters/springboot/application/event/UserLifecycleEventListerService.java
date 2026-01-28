@@ -47,9 +47,9 @@ public class UserLifecycleEventListerService {
     TenantLoggingContext.setTenant(userLifecycleEvent.tenantIdentifier());
     try {
       log.info(
-          "user: {}, onEvent: {}",
-          userLifecycleEvent.user().sub(),
-          userLifecycleEvent.lifecycleType().name());
+          "user lifecycle event: type={}, user={}",
+          userLifecycleEvent.lifecycleType().name(),
+          userLifecycleEvent.user().sub());
 
       taskExecutor.execute(
           new UserLifecycleEventRunnable(
