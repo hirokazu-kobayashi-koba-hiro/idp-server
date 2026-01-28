@@ -96,16 +96,19 @@ EntryService処理完了 → HTTPレスポンス返却
 │  1. SecurityEventLogService.logEvent()              │
 │     → security_event テーブルに記録                  │
 │                                                     │
-│  2. SecurityEventHookConfiguration取得               │
+│  2. updateStatistics() ※statistics_enabled時のみ    │
+│     → テナント統計データを更新（DAU/MAU/YAU等）        │
+│                                                     │
+│  3. SecurityEventHookConfiguration取得               │
 │     → 設定されたHookを取得                            │
 │                                                     │
-│  3. SecurityEventHook.shouldExecute()               │
+│  4. SecurityEventHook.shouldExecute()               │
 │     → イベントタイプフィルタリング                      │
 │                                                     │
-│  4. SecurityEventHook.execute()                     │
+│  5. SecurityEventHook.execute()                     │
 │     → 外部サービスに送信（Webhook/Slack/SIEM）        │
 │                                                     │
-│  5. SecurityEventHookResult保存                      │
+│  6. SecurityEventHookResult保存                      │
 │     → security_event_hook_results テーブル           │
 └─────────────────────────────────────────────────────┘
 ```
@@ -228,20 +231,26 @@ SecurityEvent処理はI/Oバウンド（DB書き込み、HTTP送信）なので�
 
 #### 設定変更方法
 
-`AsyncConfig.java` で設定を変更：
+環境変数で設定を変更できます：
 
-```java
-@Bean("securityEventTaskExecutor")
-public TaskExecutor securityEventTaskExecutor() {
-    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(5);    // 調整可能
-    executor.setMaxPoolSize(10);    // 調整可能
-    executor.setQueueCapacity(50);  // 調整可能
-    // ...
-}
+| 環境変数 | 説明 | デフォルト値 |
+|----------|------|-------------|
+| `SECURITY_EVENT_CORE_POOL_SIZE` | コアスレッド数 | `5` |
+| `SECURITY_EVENT_MAX_POOL_SIZE` | 最大スレッド数 | `20` |
+| `SECURITY_EVENT_QUEUE_CAPACITY` | キュー容量 | `100` |
+
+**application.yml での設定例**:
+
+```yaml
+idp:
+  async:
+    security-event:
+      core-pool-size: ${SECURITY_EVENT_CORE_POOL_SIZE:5}
+      max-pool-size: ${SECURITY_EVENT_MAX_POOL_SIZE:20}
+      queue-capacity: ${SECURITY_EVENT_QUEUE_CAPACITY:100}
 ```
 
-将来的には `application.yml` からの設定読み込みを検討中。
+**実装**: [AsyncConfig.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/AsyncConfig.java), [AsyncProperties.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/AsyncProperties.java)
 
 ---
 
@@ -405,6 +414,32 @@ eventPublisher.publish(
     result.eventType(),  // password_success or password_failure
     requestAttributes);
 ```
+
+---
+
+## 統計データ記録
+
+SecurityEventの処理時に、テナント統計データ（DAU/MAU/YAU、イベントカウント等）を記録できます。
+
+### 有効化設定
+
+テナントの`security_event_log_config`で`statistics_enabled`を`true`に設定します：
+
+```json
+{
+  "security_event_log_config": {
+    "statistics_enabled": true
+  }
+}
+```
+
+| 設定 | デフォルト | 説明 |
+|------|-----------|------|
+| `statistics_enabled` | `false` | 統計データ記録を有効化 |
+
+**注意**: 統計機能を有効にすると、セキュリティイベント発生時にデータベースへの書き込みが追加で発生します。
+
+**関連ドキュメント**: [テナント統計管理](../../content_03_concepts/07-operations/concept-03-tenant-statistics.md)
 
 ---
 

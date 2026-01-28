@@ -886,6 +886,7 @@ Cookieは設定元のホストにのみ送信される:
     "custom_tags": "",
     "tracing_enabled": false,
     "persistence_enabled": false,
+    "statistics_enabled": false,
     "detail_scrub_keys": ""
   }
 }
@@ -911,6 +912,7 @@ Cookieは設定元のホストにのみ送信される:
 | `custom_tags` | string | `""` | カスタムタグ（カンマ区切り） |
 | `tracing_enabled` | boolean | `false` | 分散トレーシングを有効化 |
 | `persistence_enabled` | boolean | `false` | データベース永続化を有効化 |
+| `statistics_enabled` | boolean | `false` | 統計データ記録を有効化 |
 | `detail_scrub_keys` | string | (必須キー) | スクラブするキー（カンマ区切り） |
 
 **デフォルトでスクラブされるキー**: `authorization`, `cookie`, `password`, `secret`, `token`, `access_token`, `refresh_token`, `api_key`, `api_secret`
