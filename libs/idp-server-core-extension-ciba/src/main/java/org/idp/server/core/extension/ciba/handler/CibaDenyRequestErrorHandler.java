@@ -32,13 +32,18 @@ public class CibaDenyRequestErrorHandler {
 
   public CibaDenyResponse handle(Exception exception) {
     if (exception instanceof CibaAuthorizeBadRequestException badRequest) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "CIBA deny failed: status=bad_request, error={}, description={}",
+          badRequest.error().value(),
+          badRequest.errorDescription().value());
       return new CibaDenyResponse(
           CibaDenyStatus.BAD_REQUEST, badRequest.error(), badRequest.errorDescription());
     }
 
     if (exception instanceof CibaGrantNotFoundException cibaGrantNotFoundException) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "CIBA deny failed: status=bad_request, error=invalid_request, description={}",
+          cibaGrantNotFoundException.getMessage());
       return new CibaDenyResponse(
           CibaDenyStatus.BAD_REQUEST,
           new Error("invalid_request"),
@@ -46,7 +51,9 @@ public class CibaDenyRequestErrorHandler {
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "CIBA deny failed: status=bad_request, error=invalid_client, description={}",
+          exception.getMessage());
       return new CibaDenyResponse(
           CibaDenyStatus.BAD_REQUEST,
           new Error("invalid_client"),
@@ -54,14 +61,16 @@ public class CibaDenyRequestErrorHandler {
     }
 
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.warn(exception.getMessage());
+      log.warn(
+          "CIBA deny failed: status=bad_request, error=invalid_request, description={}",
+          exception.getMessage());
       return new CibaDenyResponse(
           CibaDenyStatus.BAD_REQUEST,
           new Error("invalid_request"),
           new ErrorDescription(exception.getMessage()));
     }
 
-    log.error(exception.getMessage(), exception);
+    log.error("CIBA deny failed: status=server_error, error={}", exception.getMessage(), exception);
     return new CibaDenyResponse(
         CibaDenyStatus.SERVER_ERROR,
         new Error("server_error"),

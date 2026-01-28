@@ -36,21 +36,27 @@ public class OAuthLogoutErrorHandler {
 
   public OAuthLogoutResponse handle(Exception exception) {
     if (exception instanceof OAuthBadRequestException badRequestException) {
-      log.warn(badRequestException.getMessage());
+      log.warn(
+          "OAuth logout failed: status=bad_request, error={}, description={}",
+          badRequestException.error().value(),
+          badRequestException.errorDescription().value());
       return OAuthLogoutResponse.badRequest(
           badRequestException.error().value(), badRequestException.errorDescription().value());
     }
     if (exception instanceof ClientConfigurationNotFoundException) {
-      log.warn("not found client configuration");
-      log.warn(exception.getMessage());
+      log.warn(
+          "OAuth logout failed: status=bad_request, error=invalid_request, description={}",
+          exception.getMessage());
       return OAuthLogoutResponse.badRequest("invalid_request", exception.getMessage());
     }
     if (exception instanceof ServerConfigurationNotFoundException) {
-      log.warn("not found server configuration");
-      log.warn(exception.getMessage());
+      log.warn(
+          "OAuth logout failed: status=bad_request, error=invalid_request, description={}",
+          exception.getMessage());
       return OAuthLogoutResponse.badRequest("invalid_request", exception.getMessage());
     }
-    log.error(exception.getMessage(), exception);
+    log.error(
+        "OAuth logout failed: status=server_error, error={}", exception.getMessage(), exception);
     return OAuthLogoutResponse.serverError(exception.getMessage());
   }
 }
