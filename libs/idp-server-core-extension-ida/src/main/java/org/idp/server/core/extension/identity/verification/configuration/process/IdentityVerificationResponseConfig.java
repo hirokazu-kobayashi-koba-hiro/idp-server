@@ -48,7 +48,7 @@ public class IdentityVerificationResponseConfig implements JsonReadable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    if (hasBodyMappingRules()) map.put("bodyMappingRules", bodyMappingRulesMap());
+    if (hasBodyMappingRules()) map.put("body_mapping_rules", bodyMappingRulesMap());
     return map;
   }
 }

@@ -50,7 +50,7 @@ public class IdentityVerificationStoreConfig implements JsonReadable {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (hasApplicationDetailsMappingRules())
-      map.put("applicationDetailsMappingRules", applicationDetailsMappingRulesMap());
+      map.put("application_details_mapping_rules", applicationDetailsMappingRulesMap());
     return map;
   }
 }
