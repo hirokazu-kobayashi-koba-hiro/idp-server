@@ -16,6 +16,7 @@
 
 package org.idp.server.adapters.springboot.application.event;
 
+import jakarta.annotation.PreDestroy;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,9 +28,32 @@ import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+/**
+ * Retry scheduler for AuditLogs.
+ *
+ * <p>Periodically retries AuditLogs that were rejected due to ThreadPoolTaskExecutor queue being
+ * full.
+ *
+ * <h2>Retry Strategy</h2>
+ *
+ * <ul>
+ *   <li>Retry interval: 60 seconds
+ *   <li>Maximum retry attempts: 3
+ *   <li>On max retries exceeded: Log and discard
+ * </ul>
+ *
+ * <h2>Graceful Shutdown</h2>
+ *
+ * <p>On application shutdown ({@code @PreDestroy}), attempts to flush remaining logs in the retry
+ * queue. However, since DB connections may be closed during shutdown, processing of all logs is not
+ * guaranteed.
+ *
+ * @see AsyncConfig
+ */
 @Component
 public class AuditLogRetryScheduler {
 
+  /** Maximum retry attempts. Logs exceeding this count are discarded. */
   private static final int MAX_RETRIES = 3;
 
   LoggerWrapper log = LoggerWrapper.getLogger(AuditLogRetryScheduler.class);
@@ -46,6 +70,14 @@ public class AuditLogRetryScheduler {
   public void enqueue(AuditLog auditLog) {
     retryQueue.add(auditLog);
     retryCountMap.putIfAbsent(auditLog.id(), 0);
+  }
+
+  @PreDestroy
+  public void onShutdown() {
+    if (!retryQueue.isEmpty()) {
+      log.warn("shutdown with {} audit logs in retry queue, attempting flush", retryQueue.size());
+      resendFailedEvents();
+    }
   }
 
   @Scheduled(fixedDelay = 60_000)

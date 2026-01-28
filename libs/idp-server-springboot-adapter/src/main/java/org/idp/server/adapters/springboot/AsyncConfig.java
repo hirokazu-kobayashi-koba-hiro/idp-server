@@ -27,6 +27,48 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+/**
+ * Thread pool configuration for asynchronous event processing.
+ *
+ * <p>Provides three ThreadPoolTaskExecutors for asynchronous processing of SecurityEvent,
+ * UserLifecycleEvent, and AuditLog.
+ *
+ * <h2>Graceful Shutdown</h2>
+ *
+ * <p>Each executor supports graceful shutdown:
+ *
+ * <ul>
+ *   <li>{@code waitForTasksToCompleteOnShutdown=true}: Wait for queued tasks to complete on
+ *       shutdown
+ *   <li>{@code awaitTerminationSeconds=30}: Wait up to 30 seconds
+ * </ul>
+ *
+ * <h2>Container Stop Considerations</h2>
+ *
+ * <p>When stopping containers in Docker/Kubernetes, ensure sufficient timeout is configured:
+ *
+ * <pre>{@code
+ * # Docker Compose: default 10s is insufficient, 60s recommended
+ * docker compose stop -t 60 idp-server-1
+ *
+ * # Kubernetes: configure terminationGracePeriodSeconds
+ * spec:
+ *   terminationGracePeriodSeconds: 60
+ * }</pre>
+ *
+ * <h2>Shutdown Processing Order</h2>
+ *
+ * <ol>
+ *   <li>GracefulShutdownLifecycle: 5 second delay (waiting for Kubernetes endpoint removal)
+ *   <li>ThreadPoolTaskExecutor: Wait for queued tasks to complete (up to 30 seconds)
+ *   <li>RetryScheduler @PreDestroy: Attempt to flush retry queue
+ * </ol>
+ *
+ * @see SecurityEventRetryScheduler
+ * @see UserLifecycleEventRetryScheduler
+ * @see AuditLogRetryScheduler
+ * @see GracefulShutdownLifecycle
+ */
 @Configuration
 @EnableConfigurationProperties(AsyncProperties.class)
 public class AsyncConfig {
@@ -56,6 +98,8 @@ public class AsyncConfig {
     executor.setMaxPoolSize(props.getMaxPoolSize());
     executor.setQueueCapacity(props.getQueueCapacity());
     executor.setThreadNamePrefix("SecurityEvent-Async-");
+    executor.setWaitForTasksToCompleteOnShutdown(true);
+    executor.setAwaitTerminationSeconds(30);
 
     executor.setRejectedExecutionHandler(
         (r, executorRef) -> {
@@ -88,6 +132,8 @@ public class AsyncConfig {
     executor.setMaxPoolSize(props.getMaxPoolSize());
     executor.setQueueCapacity(props.getQueueCapacity());
     executor.setThreadNamePrefix("UserLifecycleEvent-Async-");
+    executor.setWaitForTasksToCompleteOnShutdown(true);
+    executor.setAwaitTerminationSeconds(30);
 
     executor.setRejectedExecutionHandler(
         (r, executorRef) -> {
@@ -120,6 +166,8 @@ public class AsyncConfig {
     executor.setMaxPoolSize(props.getMaxPoolSize());
     executor.setQueueCapacity(props.getQueueCapacity());
     executor.setThreadNamePrefix("AuditLog-Async-");
+    executor.setWaitForTasksToCompleteOnShutdown(true);
+    executor.setAwaitTerminationSeconds(30);
 
     executor.setRejectedExecutionHandler(
         (r, executorRef) -> {

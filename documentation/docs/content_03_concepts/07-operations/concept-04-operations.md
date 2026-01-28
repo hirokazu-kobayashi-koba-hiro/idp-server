@@ -83,6 +83,48 @@ GET /actuator/health
 → {"status": "UP"}
 ```
 
+### 4. グレースフルシャットダウン
+
+idp-serverは、アプリケーション停止時にデータロスを最小化するグレースフルシャットダウンをサポートします。
+
+```mermaid
+sequenceDiagram
+    participant K as Kubernetes/Docker
+    participant G as GracefulShutdownLifecycle
+    participant T as ThreadPoolTaskExecutor
+    participant R as RetryScheduler
+
+    K->>G: SIGTERM
+    G->>G: 5秒待機（endpoint削除待ち）
+    G->>T: シャットダウン開始
+    T->>T: キュー内タスク完了待機（最大30秒）
+    T->>R: @PreDestroy
+    R->>R: リトライキューのフラッシュ試行
+```
+
+**シャットダウン時の処理順序**:
+
+| 順序 | コンポーネント | 処理 | 時間 |
+|:---|:---|:---|:---|
+| 1 | GracefulShutdownLifecycle | 新規リクエスト停止、endpoint削除待機 | 5秒 |
+| 2 | ThreadPoolTaskExecutor | キュー内タスクの完了待機 | 最大30秒 |
+| 3 | RetryScheduler | リトライキューのフラッシュ試行 | 数秒 |
+
+**コンテナ停止時の注意**:
+
+Docker/Kubernetesでコンテナを停止する際は、十分なタイムアウトを設定してください。
+
+```bash
+# Docker Compose: デフォルト10秒では不足、60秒を推奨
+docker compose stop -t 60 idp-server-1
+
+# Kubernetes: terminationGracePeriodSecondsを設定
+# spec:
+#   terminationGracePeriodSeconds: 60
+```
+
+> **注意**: デフォルトのタイムアウト（10秒）では、グレースフルシャットダウンが完了する前にSIGKILLで強制終了される可能性があります。
+
 
 ## ユースケース
 
