@@ -413,6 +413,73 @@ describe("Organization Identity Verification Config Management API - Structured 
         });
       });
 
+      it("should return snake_case keys for response and store config in GET response", async () => {
+        // Create a config with response.body_mapping_rules and store.application_details_mapping_rules
+        const configId = uuidv4();
+        const createResponse = await postWithJson({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: {
+            id: configId,
+            type: uuidv4(),
+            attributes: {
+              enabled: true
+            },
+            processes: {
+              test_process: {
+                execution: {
+                  mock: {
+                    enabled: true,
+                    response: { status: "success" }
+                  }
+                },
+                response: {
+                  body_mapping_rules: [
+                    { from: "$.execution_http_request.response_body", to: "*" }
+                  ]
+                },
+                store: {
+                  application_details_mapping_rules: [
+                    { from: "$.execution_http_request.response_body.user_id", to: "$.user_id" }
+                  ]
+                }
+              }
+            }
+          }
+        });
+
+        expect(createResponse.status).toBe(201);
+
+        // Retrieve the config and verify snake_case keys
+        const response = await get({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+
+        expect(response.status).toBe(200);
+
+        // Verify processes structure with snake_case keys
+        const testProcess = response.data.processes.test_process;
+        expect(testProcess).toHaveProperty("response");
+        expect(testProcess).toHaveProperty("store");
+
+        // Verify response config uses snake_case key "body_mapping_rules" (not camelCase "bodyMappingRules")
+        expect(testProcess.response).toHaveProperty("body_mapping_rules");
+        expect(testProcess.response).not.toHaveProperty("bodyMappingRules");
+        expect(Array.isArray(testProcess.response.body_mapping_rules)).toBe(true);
+
+        // Verify store config uses snake_case key "application_details_mapping_rules" (not camelCase)
+        expect(testProcess.store).toHaveProperty("application_details_mapping_rules");
+        expect(testProcess.store).not.toHaveProperty("applicationDetailsMappingRules");
+        expect(Array.isArray(testProcess.store.application_details_mapping_rules)).toBe(true);
+
+        // Clean up
+        await deletion({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+      });
+
       it("should return 404 for non-existent identity verification config", async () => {
         const nonExistentId = "00000000-0000-0000-0000-000000000000";
         const response = await get({
