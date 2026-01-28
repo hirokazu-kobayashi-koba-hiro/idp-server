@@ -21,34 +21,40 @@ import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.security.SecurityEvent;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
+@EnableConfigurationProperties(AsyncProperties.class)
 public class AsyncConfig {
 
   LoggerWrapper logger = LoggerWrapper.getLogger(AsyncConfig.class);
   SecurityEventRetryScheduler securityEventRetryScheduler;
   UserLifecycleEventRetryScheduler userLifecycleEventRetryScheduler;
   AuditLogRetryScheduler auditLogRetryScheduler;
+  AsyncProperties asyncProperties;
 
   public AsyncConfig(
       SecurityEventRetryScheduler securityEventRetryScheduler,
       UserLifecycleEventRetryScheduler userLifecycleEventRetryScheduler,
-      AuditLogRetryScheduler auditLogRetryScheduler) {
+      AuditLogRetryScheduler auditLogRetryScheduler,
+      AsyncProperties asyncProperties) {
     this.securityEventRetryScheduler = securityEventRetryScheduler;
     this.userLifecycleEventRetryScheduler = userLifecycleEventRetryScheduler;
     this.auditLogRetryScheduler = auditLogRetryScheduler;
+    this.asyncProperties = asyncProperties;
   }
 
   @Bean("securityEventTaskExecutor")
   public TaskExecutor securityEventTaskExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(5);
-    executor.setMaxPoolSize(10);
-    executor.setQueueCapacity(50);
+    AsyncProperties.ExecutorProperties props = asyncProperties.getSecurityEvent();
+    executor.setCorePoolSize(props.getCorePoolSize());
+    executor.setMaxPoolSize(props.getMaxPoolSize());
+    executor.setQueueCapacity(props.getQueueCapacity());
     executor.setThreadNamePrefix("SecurityEvent-Async-");
 
     executor.setRejectedExecutionHandler(
@@ -77,9 +83,10 @@ public class AsyncConfig {
   @Bean("userLifecycleEventTaskExecutor")
   public TaskExecutor userLifecycleEventTaskExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(5);
-    executor.setMaxPoolSize(10);
-    executor.setQueueCapacity(50);
+    AsyncProperties.ExecutorProperties props = asyncProperties.getUserLifecycleEvent();
+    executor.setCorePoolSize(props.getCorePoolSize());
+    executor.setMaxPoolSize(props.getMaxPoolSize());
+    executor.setQueueCapacity(props.getQueueCapacity());
     executor.setThreadNamePrefix("UserLifecycleEvent-Async-");
 
     executor.setRejectedExecutionHandler(
@@ -108,9 +115,10 @@ public class AsyncConfig {
   @Bean("auditLogTaskExecutor")
   public TaskExecutor auditLogTaskExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(5);
-    executor.setMaxPoolSize(10);
-    executor.setQueueCapacity(50);
+    AsyncProperties.ExecutorProperties props = asyncProperties.getAuditLog();
+    executor.setCorePoolSize(props.getCorePoolSize());
+    executor.setMaxPoolSize(props.getMaxPoolSize());
+    executor.setQueueCapacity(props.getQueueCapacity());
     executor.setThreadNamePrefix("AuditLog-Async-");
 
     executor.setRejectedExecutionHandler(

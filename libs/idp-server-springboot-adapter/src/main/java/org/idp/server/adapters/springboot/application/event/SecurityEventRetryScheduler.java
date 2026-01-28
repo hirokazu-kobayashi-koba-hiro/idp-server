@@ -51,37 +51,64 @@ public class SecurityEventRetryScheduler {
   @Scheduled(fixedDelay = 60_000)
   public void resendFailedEvents() {
     int queueSize = retryQueue.size();
-    if (queueSize > 0) {
-      log.info("processing security event retry queue: {} events", queueSize);
+    if (queueSize == 0) {
+      log.debug("security event retry queue is empty, skipping");
+      return;
     }
+
+    log.info("processing security event retry queue: {} events", queueSize);
+
+    int successCount = 0;
+    int skippedCount = 0;
+    int requeuedCount = 0;
 
     while (!retryQueue.isEmpty()) {
       SecurityEvent securityEvent = retryQueue.poll();
       String eventId = securityEvent.identifier().value();
+      String eventType = securityEvent.type().value();
+      String tenantId = securityEvent.tenantIdentifierValue();
 
       try {
         int currentAttempt = retryCountMap.getOrDefault(eventId, 0) + 1;
-        log.info(
-            "retry security event (attempt {}/{}): {}",
+        log.debug(
+            "retry security event (attempt {}/{}): id={}, type={}, tenant={}",
             currentAttempt,
             MAX_RETRIES,
-            securityEvent.toMap());
+            eventId,
+            eventType,
+            tenantId);
         securityEventApi.handle(securityEvent.tenantIdentifier(), securityEvent);
         retryCountMap.remove(eventId);
+        successCount++;
       } catch (Exception e) {
         int count = retryCountMap.merge(eventId, 1, Integer::sum);
         if (count < MAX_RETRIES) {
           log.warn(
-              "retry security event scheduled ({}/{}): {}",
+              "retry security event scheduled ({}/{}): id={}, type={}, tenant={}",
               count,
               MAX_RETRIES,
-              securityEvent.identifier().value());
+              eventId,
+              eventType,
+              tenantId);
           retryQueue.add(securityEvent);
+          requeuedCount++;
         } else {
-          log.error("max retries exceeded, dropping security event: {}", securityEvent.toMap(), e);
+          log.error(
+              "max retries exceeded, dropping security event: id={}, type={}, tenant={}, error={}",
+              eventId,
+              eventType,
+              tenantId,
+              e.getMessage());
           retryCountMap.remove(eventId);
+          skippedCount++;
         }
       }
     }
+
+    log.info(
+        "security event retry completed: success={}, skipped={}, requeued={}",
+        successCount,
+        skippedCount,
+        requeuedCount);
   }
 }
