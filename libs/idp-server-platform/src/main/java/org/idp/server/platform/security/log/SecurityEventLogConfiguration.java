@@ -45,6 +45,7 @@ public class SecurityEventLogConfiguration {
   private final List<String> customTags;
   private final boolean tracingEnabled;
   private final boolean persistenceEnabled;
+  private final boolean statisticsEnabled;
   private final List<String> detailScrubKeys;
 
   private static final List<String> ESSENTIAL_SCRUB_KEYS =
@@ -78,6 +79,7 @@ public class SecurityEventLogConfiguration {
     this.customTags = List.of();
     this.tracingEnabled = false;
     this.persistenceEnabled = false;
+    this.statisticsEnabled = false;
     this.detailScrubKeys = ESSENTIAL_SCRUB_KEYS;
   }
 
@@ -103,6 +105,7 @@ public class SecurityEventLogConfiguration {
     this.customTags = extractCommaSeparatedList(safeValues, "custom_tags");
     this.tracingEnabled = extractBoolean(safeValues, "tracing_enabled", false);
     this.persistenceEnabled = extractBoolean(safeValues, "persistence_enabled", false);
+    this.statisticsEnabled = extractBoolean(safeValues, "statistics_enabled", false);
     this.detailScrubKeys =
         mergeWithEssentialKeys(extractCommaSeparatedList(safeValues, "detail_scrub_keys"));
   }
@@ -127,6 +130,7 @@ public class SecurityEventLogConfiguration {
     map.put("custom_tags", String.join(",", customTags));
     map.put("tracing_enabled", tracingEnabled);
     map.put("persistence_enabled", persistenceEnabled);
+    map.put("statistics_enabled", statisticsEnabled);
     map.put("detail_scrub_keys", String.join(",", detailScrubKeys));
     return map;
   }
@@ -213,6 +217,10 @@ public class SecurityEventLogConfiguration {
 
   public boolean isPersistenceEnabled() {
     return persistenceEnabled;
+  }
+
+  public boolean isStatisticsEnabled() {
+    return statisticsEnabled;
   }
 
   public List<String> getDetailScrubKeys() {

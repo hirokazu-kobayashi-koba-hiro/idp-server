@@ -7302,6 +7302,10 @@ components:
         persistence_enabled:
           type: boolean
           default: false
+        statistics_enabled:
+          type: boolean
+          default: false
+          description: 統計データ記録を有効化
         detail_scrub_keys:
           type: string
           default: "authorization,cookie,password,secret,token,access_token,refresh_token,api_key,api_secret"

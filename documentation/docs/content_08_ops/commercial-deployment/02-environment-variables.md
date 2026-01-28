@@ -220,6 +220,36 @@ IDP_LOGGING_REQUEST_RESPONSE_ENABLED=false
 | `spring.session.timeout` | `SESSION_TIMEOUT` | セッションタイムアウト | `3600s` | `7200s` |
 | `spring.lifecycle.timeout-per-shutdown-phase` | - | Shutdown phase タイムアウト | `30s` | `30s` |
 
+### idp.async (非同期処理スレッドプール設定)
+
+非同期処理（セキュリティイベント、ユーザーライフサイクルイベント、監査ログ）用のスレッドプール設定です。
+
+#### Security Event スレッドプール
+| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
+|-----------|----------|------|-------------|-----------|
+| `core-pool-size` | `SECURITY_EVENT_CORE_POOL_SIZE` | コアスレッド数 | `5` | `5` |
+| `max-pool-size` | `SECURITY_EVENT_MAX_POOL_SIZE` | 最大スレッド数 | `20` | `20` |
+| `queue-capacity` | `SECURITY_EVENT_QUEUE_CAPACITY` | キュー容量 | `100` | `100` |
+
+#### User Lifecycle Event スレッドプール
+| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
+|-----------|----------|------|-------------|-----------|
+| `core-pool-size` | `USER_LIFECYCLE_EVENT_CORE_POOL_SIZE` | コアスレッド数 | `5` | `5` |
+| `max-pool-size` | `USER_LIFECYCLE_EVENT_MAX_POOL_SIZE` | 最大スレッド数 | `10` | `10` |
+| `queue-capacity` | `USER_LIFECYCLE_EVENT_QUEUE_CAPACITY` | キュー容量 | `50` | `50` |
+
+#### Audit Log スレッドプール
+| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
+|-----------|----------|------|-------------|-----------|
+| `core-pool-size` | `AUDIT_LOG_CORE_POOL_SIZE` | コアスレッド数 | `5` | `5` |
+| `max-pool-size` | `AUDIT_LOG_MAX_POOL_SIZE` | 最大スレッド数 | `10` | `10` |
+| `queue-capacity` | `AUDIT_LOG_QUEUE_CAPACITY` | キュー容量 | `50` | `50` |
+
+**設計思想:**
+- **Security Event**: セキュリティイベント処理は高負荷になりやすいため、他より大きなプールサイズ
+- **User Lifecycle / Audit Log**: 比較的低頻度のため、コンパクトなプールサイズ
+- **キュー容量**: バーストトラフィックを吸収するためのバッファ
+
 ### server (Tomcat サーバー設定)
 
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値            |
