@@ -64,7 +64,9 @@ public class ApiExceptionHandler {
 
   @ExceptionHandler(UnauthorizedException.class)
   public ResponseEntity<?> handleException(UnauthorizedException exception) {
-    log.warn(exception.getMessage());
+    log.warn(
+        "API request failed: status=unauthorized, error=invalid_request, description={}",
+        exception.getMessage());
     Map<String, String> response =
         Map.of("error", "invalid_request", "error_description", exception.getMessage());
     return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
@@ -72,7 +74,9 @@ public class ApiExceptionHandler {
 
   @ExceptionHandler(ForbiddenException.class)
   public ResponseEntity<?> handleException(ForbiddenException exception) {
-    log.warn(exception.getMessage());
+    log.warn(
+        "API request failed: status=forbidden, error=invalid_request, description={}",
+        exception.getMessage());
     Map<String, String> response =
         Map.of("error", "invalid_request", "error_description", exception.getMessage());
     return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
@@ -80,7 +84,9 @@ public class ApiExceptionHandler {
 
   @ExceptionHandler(NotFoundException.class)
   public ResponseEntity<?> handleException(NotFoundException exception) {
-    log.warn(exception.getMessage());
+    log.warn(
+        "API request failed: status=not_found, error=invalid_request, description={}",
+        exception.getMessage());
     Map<String, String> response =
         Map.of("error", "invalid_request", "error_description", exception.getMessage());
     return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
@@ -88,7 +94,9 @@ public class ApiExceptionHandler {
 
   @ExceptionHandler(NoResourceFoundException.class)
   public ResponseEntity<?> handleException(NoResourceFoundException exception) {
-    log.warn(exception.getMessage());
+    log.warn(
+        "API request failed: status=not_found, error=invalid_request, description={}",
+        exception.getMessage());
     Map<String, String> response =
         Map.of("error", "invalid_request", "error_description", exception.getMessage());
     return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
@@ -104,7 +112,9 @@ public class ApiExceptionHandler {
 
   @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
   public ResponseEntity<?> handleException(HttpMediaTypeNotAcceptableException ex) {
-    log.warn(ex.getMessage());
+    log.warn(
+        "API request failed: status=not_acceptable, error=invalid_request, description={}",
+        ex.getMessage());
     Map<String, String> response =
         Map.of("error", "invalid_request", "error_description", ex.getMessage());
     return new ResponseEntity<>(response, HttpStatus.NOT_ACCEPTABLE);
@@ -112,7 +122,9 @@ public class ApiExceptionHandler {
 
   @ExceptionHandler(ConflictException.class)
   public ResponseEntity<?> handleException(ConflictException exception) {
-    log.warn(exception.getMessage());
+    log.warn(
+        "API request failed: status=conflict, error=invalid_request, description={}",
+        exception.getMessage());
     Map<String, String> response =
         Map.of("error", "invalid_request", "error_description", exception.getMessage());
     return new ResponseEntity<>(response, HttpStatus.CONFLICT);

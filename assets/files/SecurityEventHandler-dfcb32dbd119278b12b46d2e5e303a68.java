@@ -32,6 +32,7 @@ import org.idp.server.platform.security.hook.SecurityEventHook;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurations;
+import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogService;
 import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
@@ -88,7 +89,10 @@ public class SecurityEventHandler {
     logService.logEvent(tenant, securityEvent);
 
     // Update statistics synchronously (same transaction)
-    updateStatistics(tenant, securityEvent);
+    SecurityEventLogConfiguration config = tenant.securityEventLogConfiguration();
+    if (config.isStatisticsEnabled()) {
+      updateStatistics(tenant, securityEvent);
+    }
 
     SecurityEventHookConfigurations securityEventHookConfigurations =
         securityEventHookConfigurationQueryRepository.find(tenant);

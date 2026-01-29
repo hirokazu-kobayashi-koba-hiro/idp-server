@@ -57,12 +57,7 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
 
     try {
-      log.info(
-          "RequestURI: {}. {}, {}, {}",
-          request.getServerName(),
-          request.getServerPort(),
-          request.getRequestURI(),
-          request.getMethod());
+      log.info("CORS filter: method={}, uri={}", request.getMethod(), request.getRequestURI());
 
       Tenant tenant = resolveTenant(request);
       CorsConfiguration corsConfiguration = tenant.corsConfiguration();
