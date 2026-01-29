@@ -18,7 +18,8 @@
       "include_user_detail": false,
       "include_user_pii": false,
       "persistence_enabled": true,
-      "detail_scrub_keys": "authorization,cookie,set-cookie,proxy-authorization,password,secret,token,refresh_token,access_token,id_token,client_secret,api_key,bearer"
+      "detail_scrub_keys": "authorization,cookie,set-cookie,proxy-authorization,password,secret,token,refresh_token,access_token,id_token,client_secret,api_key,bearer",
+      "statistics_enabled": true
     },
     "identity_policy_config": {
       "identity_unique_key_type": "EMAIL",

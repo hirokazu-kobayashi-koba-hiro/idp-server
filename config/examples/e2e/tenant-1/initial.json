@@ -40,7 +40,8 @@
       "include_user_detail": false,
       "include_user_pii": false,
       "persistence_enabled": true,
-      "detail_scrub_keys": "authorization,cookie,password,secret,token"
+      "detail_scrub_keys": "authorization,cookie,password,secret,token",
+      "statistics_enabled": true
     },
     "security_event_user_config": {
       "include_id": true,

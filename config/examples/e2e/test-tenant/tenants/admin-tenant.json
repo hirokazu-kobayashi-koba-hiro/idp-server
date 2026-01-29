@@ -32,7 +32,8 @@
       "include_ip": true,
       "persistence_enabled": true,
       "include_detail": true,
-      "detail_scrub_keys": "authorization,cookie,set-cookie,proxy-authorization,password,secret,token,refresh_token,access_token,id_token,client_secret,api_key,bearer"
+      "detail_scrub_keys": "authorization,cookie,set-cookie,proxy-authorization,password,secret,token,refresh_token,access_token,id_token,client_secret,api_key,bearer",
+      "statistics_enabled": true
     },
     "security_event_user_config": {
       "include_phone_number": true,

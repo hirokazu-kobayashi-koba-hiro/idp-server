@@ -24,7 +24,8 @@
       "include_client_id": true,
       "include_ip": true,
       "persistence_enabled": false,
-      "include_detail": false
+      "include_detail": false,
+      "statistics_enabled": true
     },
     "identity_policy_config": {
       "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID",

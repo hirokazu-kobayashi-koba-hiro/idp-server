@@ -14,6 +14,9 @@ wal_level = replica
 max_wal_senders = 3
 max_replication_slots = 3
 hot_standby = on
+
+# Connection settings
+max_connections = 200
 EOF
 
 # Configure client authentication for replication

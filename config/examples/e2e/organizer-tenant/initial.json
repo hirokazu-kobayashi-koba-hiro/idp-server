@@ -30,7 +30,8 @@
       "include_client_id": true,
       "include_ip": true,
       "persistence_enabled": true,
-      "include_detail": true
+      "include_detail": true,
+      "statistics_enabled": true
     }
   },
   "authorization_server": {

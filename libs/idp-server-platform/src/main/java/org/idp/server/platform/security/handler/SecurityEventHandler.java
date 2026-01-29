@@ -37,6 +37,7 @@ import org.idp.server.platform.security.repository.SecurityEventCommandRepositor
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.statistics.FiscalYearCalculator;
+import org.idp.server.platform.statistics.StatisticsEventRecord;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.StatisticsEventsCommandRepository;
@@ -167,8 +168,11 @@ public class SecurityEventHandler {
     LocalDate yearStart =
         FiscalYearCalculator.calculateFiscalYearStart(eventDate, tenant.fiscalYearStartMonth());
 
-    // Increment the actual event type metric
-    incrementMetric(tenant, eventDate, eventType);
+    // Collect statistics records for batch upsert
+    List<StatisticsEventRecord> records = new ArrayList<>();
+
+    // Add the actual event type metric
+    records.add(new StatisticsEventRecord(tenant.identifier(), eventDate, eventType, 1));
 
     // Track DAU - add user to daily active users table and increment DAU count if new
     boolean isNewDailyUser =
@@ -181,13 +185,7 @@ public class SecurityEventHandler {
           tenant.identifierValue(),
           eventDate,
           userId.value());
-      statisticsEventsRepository.increment(tenant.identifier(), eventDate, "dau");
-    } else {
-      log.debug(
-          "User already active today: tenant={}, date={}, user={}",
-          tenant.identifierValue(),
-          eventDate,
-          userId.value());
+      records.add(new StatisticsEventRecord(tenant.identifier(), eventDate, "dau", 1));
     }
 
     // Track MAU - add user to monthly active users table and increment MAU count if new
@@ -201,13 +199,10 @@ public class SecurityEventHandler {
           tenant.identifierValue(),
           monthStart,
           userId.value());
-      statisticsEventsRepository.increment(tenant.identifier(), eventDate, "mau");
-    } else {
-      log.debug(
-          "User already active this month: tenant={}, month={}, user={}",
-          tenant.identifierValue(),
-          monthStart,
-          userId.value());
+      // Cumulative MAU for the month (stored at monthStart)
+      records.add(new StatisticsEventRecord(tenant.identifier(), monthStart, "mau", 1));
+      // Daily new MAU increment (for tracking daily growth)
+      records.add(new StatisticsEventRecord(tenant.identifier(), eventDate, "new_mau", 1));
     }
 
     // Track YAU - add user to yearly active users table and increment YAU count if new
@@ -221,14 +216,14 @@ public class SecurityEventHandler {
           tenant.identifierValue(),
           yearStart,
           userId.value());
-      statisticsEventsRepository.increment(tenant.identifier(), eventDate, "yau");
-    } else {
-      log.debug(
-          "User already active this year: tenant={}, year={}, user={}",
-          tenant.identifierValue(),
-          yearStart,
-          userId.value());
+      // Cumulative YAU for the fiscal year (stored at yearStart)
+      records.add(new StatisticsEventRecord(tenant.identifier(), yearStart, "yau", 1));
+      // Daily new YAU increment (for tracking daily growth)
+      records.add(new StatisticsEventRecord(tenant.identifier(), eventDate, "new_yau", 1));
     }
+
+    // Batch upsert all statistics records in a single query
+    statisticsEventsRepository.batchUpsert(records);
   }
 
   /**

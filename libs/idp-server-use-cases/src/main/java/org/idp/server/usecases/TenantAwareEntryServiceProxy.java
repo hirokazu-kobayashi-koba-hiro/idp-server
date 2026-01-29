@@ -129,7 +129,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
 
         long duration = System.currentTimeMillis() - startTime;
         if (duration > 1000) {
-          log.debug(
+          log.warn(
               "Long-running transaction completed: operation={}, service={}, method={}, duration={}ms",
               operationType,
               target.getClass().getSimpleName(),
