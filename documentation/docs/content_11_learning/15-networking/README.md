@@ -21,6 +21,10 @@
 | 05 | [api-gateway-networking.md](05-api-gateway-networking.md) | リバースプロキシ（CORS、認証、レート制限） | 45分 |
 | 06 | [network-troubleshooting.md](06-network-troubleshooting.md) | ネットワークトラブルシューティング（診断、デバッグ） | 40分 |
 | 07 | [column-speed-of-light.md](07-column-speed-of-light.md) | コラム: 光は遅い（物理的制約、海底ケーブル） | 20分 |
+| 08 | [https-termination.md](08-https-termination.md) | HTTPS終端（TLSハンドシェイク、秘密鍵の役割、復号の仕組み） | 40分 |
+| 09 | [tcp-fundamentals.md](09-tcp-fundamentals.md) | TCP基礎（3ウェイハンドシェイク、状態遷移、ポート） | 40分 |
+| 10 | [web-server-architecture.md](10-web-server-architecture.md) | Webサーバーアーキテクチャ（TCP処理、TLS、アプリ連携） | 50分 |
+| 11 | [connection-pooling.md](11-connection-pooling.md) | コネクションプーリング（HikariCP、HTTPクライアント、Redis） | 45分 |
 
 ---
 
@@ -147,6 +151,76 @@
 - curl -v での詳細診断
 - 証明書チェーンの検証
 - tcpdumpによるパケット分析
+
+### 08. HTTPS終端（SSL/TLS Termination）
+
+**対象**: バックエンド開発者、インフラエンジニア
+
+**学べること**:
+- HTTPS終端の基本概念と必要性
+- TLSハンドシェイクで何が起きているか（RSA/ECDHE）
+- なぜ秘密鍵があれば復号できるのか
+- セッション鍵がどう生成されるか
+- 終端パターン（エッジ終端、再暗号化、パススルー）の選択
+
+**実践内容**:
+- opensslコマンドでTLS接続を確認
+- セッション再利用のテスト
+- 証明書チェーンの検証
+
+### 09. TCP基礎
+
+**対象**: バックエンド開発者、インフラエンジニア
+
+**学べること**:
+- TCP/IPプロトコルスタックの概要
+- TCPの特徴（信頼性、順序保証、フロー制御）
+- 3ウェイハンドシェイク/4ウェイハンドシェイク
+- TCP状態遷移（ESTABLISHED、TIME_WAIT等）
+- ポート番号とソケットの概念
+- TCPとUDPの違いと使い分け
+
+**実践内容**:
+- netstat/ssコマンドで接続状態確認
+- TIME_WAIT状態の監視と対処
+- TCPカーネルパラメータのチューニング
+
+### 10. Webサーバーアーキテクチャ
+
+**対象**: バックエンド開発者、インフラエンジニア
+
+**学べること**:
+- WebサーバーがTCP接続をどう処理するか（listen/accept、backlog）
+- アーキテクチャパターン（プロセスベース、スレッドベース、イベント駆動）
+- Nginxのworkerモデルとepoll
+- TLS処理がどこで行われるか
+- アプリケーション連携パターン（リバースプロキシ、FastCGI、埋め込み）
+- Spring Boot組み込みTomcatの設定
+
+**実践内容**:
+- Nginx workerプロセスの確認
+- backlogサイズの確認と調整
+- Tomcatスレッドプール設定
+- 本番環境アーキテクチャの設計
+
+### 11. コネクションプーリング
+
+**対象**: バックエンド開発者、インフラエンジニア
+
+**学べること**:
+- なぜコネクションプーリングが必要か（TCP接続コスト、TIME_WAIT）
+- データベース接続プール（HikariCP）の仕組みと設定
+- 適切なプールサイズの決め方
+- コネクションプロキシ（PgBouncer）
+- HTTPクライアントのコネクションプール（RestTemplate、WebClient、OkHttp）
+- Redisコネクションプール（Lettuce、Jedis）
+- トラブルシューティング（リーク検出、接続枯渇）
+
+**実践内容**:
+- HikariCP設定の最適化
+- Spring Boot Actuatorでのメトリクス監視
+- 接続リークの検出と対処
+- 本番環境での設定例
 
 ---
 
