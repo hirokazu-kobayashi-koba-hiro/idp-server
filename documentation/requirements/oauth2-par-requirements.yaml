@@ -1,0 +1,455 @@
+spec_name: "OAuth 2.0 Pushed Authorization Requests (RFC 9126)"
+spec_url: "https://www.rfc-editor.org/rfc/rfc9126.html"
+extraction_timestamp: "2026-01-29T14:15:00Z"
+extractor_version: "1.1.0"
+
+summary:
+  total_requirements: 31
+  must_shall_requirements: 15
+  should_requirements: 6
+  optional_requirements: 10
+
+sections_covered:
+  - "Section 2: PAR Endpoint"
+  - "Section 2.1: Request Validation"
+  - "Section 2.2: Response Generation"
+  - "Section 2.3: Error Responses"
+  - "Section 2.4: Redirect URI Management"
+  - "Section 3: Request Object"
+  - "Section 4: Authorization Endpoint Integration"
+  - "Section 5: Server Metadata"
+  - "Section 6: Client Metadata"
+  - "Section 7: Security Considerations"
+
+requirements_by_category:
+  par_endpoint:
+    must_shall:
+      - section: "2"
+        requirement: "The PAR endpoint URL MUST use the 'https' scheme"
+        rationale: "Ensures secure communication for sensitive authorization data"
+        test_implication: "必須: http://でのPARエンドポイントアクセスを拒否"
+
+      - section: "2.3"
+        requirement: "If the request did not use the POST method, the authorization server responds with HTTP 405"
+        rationale: "Enforces proper HTTP semantics for pushed requests"
+        test_implication: "必須: GET/PUT等のメソッドでHTTP 405を返す"
+
+    should:
+      - section: "2"
+        requirement: "Authorization servers supporting PAR SHOULD include the URL of their pushed authorization request endpoint in their authorization server metadata"
+        rationale: "Enables client discovery of PAR capability"
+        test_implication: "推奨: /.well-known/oauth-authorization-serverにpushed_authorization_request_endpointを含む"
+
+  client_authentication:
+    must_shall:
+      - section: "2"
+        requirement: "The rules for client authentication as defined in RFC6749 for token endpoint requests apply for the PAR endpoint as well"
+        rationale: "Maintains consistent authentication mechanisms across OAuth endpoints"
+        test_implication: "必須: トークンエンドポイントと同じクライアント認証方式をサポート"
+
+      - section: "2"
+        requirement: "The authorization server MUST accept its issuer identifier, token endpoint URL, or pushed authorization request endpoint URL as audience values"
+        rationale: "Enables practical JWT validation flexibility"
+        test_implication: "必須: private_key_jwtのaud検証で3つのURL形式を受け入れ"
+
+    should:
+      - section: "2"
+        requirement: "The issuer identifier URL of the authorization server SHOULD be used as the value of the audience for JWT assertions"
+        rationale: "Clarifies JWT audience for interoperability"
+        test_implication: "推奨: private_key_jwtのaudにissuer URLを推奨"
+
+  request_validation:
+    must_shall:
+      - section: "2.1"
+        requirement: "Authenticate the client in the same way as at the token endpoint"
+        rationale: "Establishes client identity before processing authorization data"
+        test_implication: "必須: クライアント認証なしのPARリクエストを拒否"
+
+      - section: "2.1"
+        requirement: "Reject the request if the request_uri authorization request parameter is provided"
+        rationale: "Prevents nesting of request URIs"
+        test_implication: "必須: request_uriパラメータを含むPARリクエストを拒否"
+
+      - section: "2.1"
+        requirement: "Validate the pushed request as it would an authorization request sent to the authorization endpoint"
+        rationale: "Ensures authorization requests meet security and policy requirements early"
+        test_implication: "必須: redirect_uri、scope等の検証をPARエンドポイントで実施"
+
+    optional:
+      - section: "2.1"
+        requirement: "The authorization server MAY omit validation steps that it is unable to perform when processing the pushed request; however, such checks MUST then be performed at the authorization endpoint"
+        rationale: "Allows flexibility while ensuring complete validation occurs"
+        test_implication: "任意: 一部の検証を認可エンドポイントまで遅延可能（ただし必ず実施）"
+
+  request_uri_management:
+    must_shall:
+      - section: "2.2"
+        requirement: "If the verification is successful, the server MUST generate a request URI and provide it with a 201 HTTP status code"
+        rationale: "Provides standardized successful response format"
+        test_implication: "必須: PAR成功時にHTTP 201とrequest_uriを返す"
+
+      - section: "2.2"
+        requirement: "The request_uri MUST contain some part generated using a cryptographically strong pseudorandom algorithm"
+        rationale: "Prevents URI guessing attacks"
+        test_implication: "必須: request_uriに暗号学的に強い乱数を含む"
+
+      - section: "2.2"
+        requirement: "The request_uri value MUST be bound to the client that posted the authorization request"
+        rationale: "Prevents cross-client request URI reuse"
+        test_implication: "必須: 他のクライアントによるrequest_uriの使用を拒否"
+
+    optional:
+      - section: "2.2"
+        requirement: "The server MAY construct the request_uri value using the form urn:ietf:params:oauth:request_uri:<reference-value>"
+        rationale: "Provides recommended URI format pattern"
+        test_implication: "任意: urn:ietf:params:oauth:request_uri:形式のサポート"
+
+  request_object:
+    must_shall:
+      - section: "3"
+        requirement: "All other request parameters MUST appear as claims of the JWT representing the authorization request"
+        rationale: "Ensures proper JWT claim encapsulation"
+        test_implication: "必須: Request ObjectのJWT内にすべてのパラメータを含む"
+
+      - section: "3"
+        requirement: "Reject the request if the authenticated client_id does not match the client_id claim in the Request Object"
+        rationale: "Prevents client impersonation via JWT manipulation"
+        test_implication: "必須: 認証されたclient_idとJWT内のclient_idが一致しない場合拒否"
+
+    optional:
+      - section: "3"
+        requirement: "Clients MAY use the request parameter as defined in JAR to push a Request Object JWT"
+        rationale: "Enables JWT-based request confidentiality and integrity"
+        test_implication: "任意: Request Object JWT (JAR)のサポート"
+
+  authorization_endpoint:
+    must_shall:
+      - section: "4"
+        requirement: "The client MUST only use a request_uri value once"
+        rationale: "Prevents replay attacks"
+        test_implication: "必須: クライアント側でrequest_uriの再利用を禁止"
+
+      - section: "4"
+        requirement: "An expired request_uri MUST be rejected as invalid"
+        rationale: "Limits window for potential attacks"
+        test_implication: "必須: 有効期限切れのrequest_uriを拒否"
+
+      - section: "4"
+        requirement: "The authorization server MUST validate authorization requests arising from a pushed request as it would any other authorization request"
+        rationale: "Ensures consistent validation regardless of request origin"
+        test_implication: "必須: request_uriからの認可リクエストも通常通り検証"
+
+    should:
+      - section: "4"
+        requirement: "Authorization servers SHOULD treat request_uri values as one-time use"
+        rationale: "Enhances security against replay attacks"
+        test_implication: "推奨: request_uriの使用後は無効化"
+
+    optional:
+      - section: "4"
+        requirement: "Authorization server policy MAY dictate that PAR be the only means for a client to pass authorization request data"
+        rationale: "Allows enforced security policies requiring PAR usage"
+        test_implication: "任意: PARのみを許可するポリシー設定"
+
+  redirect_uri:
+    optional:
+      - section: "2.4"
+        requirement: "The authorization server MAY allow clients with authentication credentials to establish per-authorization-request redirect URIs"
+        rationale: "Provides flexibility for authenticated clients with established credentials"
+        test_implication: "任意: 認証済みクライアントの動的redirect_uri設定を許可"
+
+      - section: "2.4"
+        requirement: "The authorization server MAY allow such clients to specify redirect_uri values that were not previously registered"
+        rationale: "Enables runtime redirect URI flexibility for authenticated clients"
+        test_implication: "任意: 未登録のredirect_uriを認証済みクライアントに許可"
+
+    must_shall:
+      - section: "7.2"
+        requirement: "The authorization server MUST only accept new redirect URIs in the pushed authorization request from authenticated clients"
+        rationale: "Prevents open redirection attacks from unauthenticated actors"
+        test_implication: "必須: 新しいredirect_uriは認証済みクライアントのみから受け入れ"
+
+  error_handling:
+    must_shall:
+      - section: "2.3"
+        requirement: "The authorization server returns an error response with the same format as specified for error responses from the token endpoint"
+        rationale: "Ensures consistent error handling across OAuth endpoints"
+        test_implication: "必須: PARエラーレスポンスはトークンエンドポイントと同じJSON形式"
+
+      - section: "2.3"
+        requirement: "If signed Request Objects required, the authorization server MUST only accept requests complying with the definition and MUST refuse any other request with HTTP status code 400"
+        rationale: "Enforces client policy requirements for request integrity"
+        test_implication: "必須: Request Object必須ポリシー時に未署名リクエストをHTTP 400で拒否"
+
+      - section: "2.3"
+        requirement: "If the number of requests from a client exceeds the number allowed, respond with HTTP 429"
+        rationale: "Protects against request flooding attacks"
+        test_implication: "必須: レートリミット超過時にHTTP 429を返す"
+
+  security:
+    must_shall:
+      - section: "7.1"
+        requirement: "The authorization server MUST account for request URI entropy considerations from JAR specification"
+        rationale: "Prevents guessing and replay of request URIs"
+        test_implication: "必須: request_uriに十分なエントロピーを確保"
+
+    should:
+      - section: "7.3"
+        requirement: "The authorization server SHOULD make the request URIs one-time use"
+        rationale: "Prevents request URI replay attacks"
+        test_implication: "推奨: request_uriを1回使用後に無効化"
+
+      - section: "7.4"
+        requirement: "The authorization server should check the request parameter against the client policy when processing the authorization request"
+        rationale: "Detects policy changes between PAR and authorization requests"
+        test_implication: "推奨: 認可エンドポイントでクライアントポリシーを再確認"
+
+      - section: "7.5"
+        requirement: "Clients SHOULD make use of PKCE, unique state parameter, or OIDC nonce in the pushed Request Object"
+        rationale: "Prevents request URI substitution attacks"
+        test_implication: "推奨: PARリクエストにPKCE/state/nonceを含む"
+
+  metadata:
+    optional:
+      - section: "5"
+        requirement: "Servers MAY use metadata pushed_authorization_request_endpoint to signal PAR capability"
+        rationale: "Enables client discovery of supported endpoints"
+        test_implication: "任意: Discoveryメタデータにpushed_authorization_request_endpointを含む"
+
+      - section: "5"
+        requirement: "Boolean require_pushed_authorization_requests indicates if PAR is mandatory; default is false"
+        rationale: "Allows servers to enforce PAR-only policies"
+        test_implication: "任意: require_pushed_authorization_requests=trueでPAR必須化"
+
+      - section: "6"
+        requirement: "Client metadata parameter require_pushed_authorization_requests indicates PAR requirement; default is false"
+        rationale: "Allows clients to signal preferred usage patterns"
+        test_implication: "任意: クライアントメタデータでPAR優先を宣言"
+
+key_findings:
+  critical_must_requirements:
+    - "PAR endpoint MUST use HTTPS scheme"
+    - "PAR endpoint MUST use POST method only"
+    - "Client authentication MUST be performed on PAR endpoint"
+    - "request_uri parameter MUST be rejected in PAR requests (no nesting)"
+    - "request_uri MUST be cryptographically strong and client-bound"
+    - "request_uri MUST be one-time use (client side)"
+    - "Expired request_uri MUST be rejected"
+    - "Request Object client_id MUST match authenticated client_id"
+
+  security_critical:
+    - "PAR endpoint accessible only via HTTPS"
+    - "request_uri contains cryptographically strong random component"
+    - "request_uri bound to specific client"
+    - "request_uri should be one-time use (server side)"
+    - "New redirect_uri only from authenticated clients"
+    - "Rate limiting with HTTP 429 for excessive requests"
+    - "PKCE/state/nonce recommended in PAR requests"
+
+  error_responses:
+    http_405:
+      - "Non-POST method to PAR endpoint"
+    http_400:
+      - "Invalid authorization parameters"
+      - "request_uri parameter in PAR request"
+      - "Request Object required but not provided"
+      - "client_id mismatch between auth and JWT"
+    http_429:
+      - "Rate limit exceeded"
+    http_201:
+      - "Successful PAR request"
+
+  par_workflow:
+    step_1_par_request:
+      - "Client authenticates to PAR endpoint"
+      - "Client sends authorization parameters via POST"
+      - "Optional: Request Object JWT (JAR)"
+      - "MUST NOT include request_uri parameter"
+    step_2_par_response:
+      - "Server validates client authentication"
+      - "Server validates authorization parameters"
+      - "Server generates cryptographically strong request_uri"
+      - "Server binds request_uri to client"
+      - "Server returns HTTP 201 with request_uri and expires_in"
+    step_3_authorization_request:
+      - "Client redirects user to authorization endpoint"
+      - "Client includes only client_id and request_uri"
+      - "request_uri MUST be used only once"
+    step_4_authorization_response:
+      - "Server validates request_uri (not expired, bound to client, one-time use)"
+      - "Server retrieves stored authorization parameters"
+      - "Server processes authorization as normal"
+
+  integration_with_other_specs:
+    fapi_2_0:
+      - "FAPI 2.0 requires PAR (Section 5.3.2.2.2)"
+      - "FAPI 2.0 mandates client authentication on PAR (Section 5.3.2.2.4)"
+      - "FAPI 2.0 rejects non-PAR authorization requests (Section 5.3.2.2.3)"
+    jar:
+      - "PAR can transport Request Object JWT"
+      - "Request Object entropy considerations apply to request_uri"
+    pkce:
+      - "PKCE should be used in PAR requests for security"
+    oidc:
+      - "OIDC nonce should be included in PAR Request Object"
+
+test_mapping:
+  e2e_tests:
+    must_requirements:
+      - category: "必須テストケース"
+        priority: "P0"
+        examples:
+          - "HTTPS scheme enforcement on PAR endpoint"
+          - "POST method only (HTTP 405 for GET/PUT/DELETE)"
+          - "Client authentication required"
+          - "request_uri parameter rejection in PAR request"
+          - "request_uri cryptographic strength validation"
+          - "request_uri client binding validation"
+          - "request_uri one-time use enforcement (client)"
+          - "Expired request_uri rejection"
+          - "Request Object client_id matching"
+          - "HTTP 201 response on success with request_uri and expires_in"
+          - "Token endpoint error format for PAR errors"
+          - "HTTP 429 on rate limit exceeded"
+
+    should_requirements:
+      - category: "推奨テストケース"
+        priority: "P1"
+        examples:
+          - "PAR endpoint in server metadata (pushed_authorization_request_endpoint)"
+          - "Issuer URL as JWT audience"
+          - "request_uri one-time use enforcement (server side)"
+          - "Client policy validation at authorization endpoint"
+          - "PKCE/state/nonce in PAR requests"
+
+    security_requirements:
+      - category: "negative テストケース"
+        priority: "P0"
+        examples:
+          - "Reject HTTP PAR endpoint access"
+          - "Reject non-POST methods (HTTP 405)"
+          - "Reject unauthenticated PAR requests"
+          - "Reject request_uri in PAR request"
+          - "Reject weak request_uri (insufficient entropy)"
+          - "Reject request_uri from different client"
+          - "Reject reused request_uri"
+          - "Reject expired request_uri"
+          - "Reject Request Object with mismatched client_id"
+          - "Reject excessive requests (HTTP 429)"
+          - "Reject new redirect_uri from unauthenticated client"
+
+compliance_checklist:
+  par_endpoint:
+    - "HTTPS scheme only"
+    - "POST method only"
+    - "Client authentication (same as token endpoint)"
+    - "JWT audience acceptance (issuer, token endpoint, PAR endpoint)"
+    - "Request validation (same as authorization endpoint)"
+    - "request_uri parameter rejection"
+    - "HTTP 201 response on success"
+    - "Token endpoint error format"
+    - "Rate limiting (HTTP 429)"
+
+  request_uri:
+    - "Cryptographically strong random generation"
+    - "Client binding"
+    - "One-time use (client MUST)"
+    - "One-time use (server SHOULD)"
+    - "Expiration handling"
+    - "Optional URN format support"
+
+  request_object:
+    - "JAR support (MAY)"
+    - "All parameters as JWT claims"
+    - "client_id matching validation"
+
+  authorization_endpoint:
+    - "request_uri validation (expiration, binding, one-time use)"
+    - "Consistent validation with direct requests"
+    - "Optional PAR-only policy enforcement"
+
+  redirect_uri:
+    - "Dynamic redirect_uri for authenticated clients (MAY)"
+    - "New redirect_uri only from authenticated clients (MUST)"
+
+  metadata:
+    - "pushed_authorization_request_endpoint in server metadata (SHOULD)"
+    - "require_pushed_authorization_requests support (MAY)"
+
+gap_analysis_template:
+  requirement_id: "2"
+  requirement: "The PAR endpoint URL MUST use the 'https' scheme"
+  status:
+    - "implemented"      # Fully implemented
+    - "partial"          # Partially implemented
+    - "not_implemented"  # Not implemented
+    - "not_applicable"   # Not applicable to deployment
+  implementation_notes: "HTTPS enforcement via Spring Security configuration"
+  test_coverage: "E2E test for HTTP rejection exists"
+  priority: "P0"  # P0: Critical, P1: High, P2: Medium, P3: Low
+  effort_estimate: "Already implemented"
+  blockers: "None"
+
+related_specifications:
+  - name: "RFC 6749"
+    description: "OAuth 2.0 Authorization Framework"
+    url: "https://www.rfc-editor.org/rfc/rfc6749.html"
+    relationship: "Foundation specification; PAR extends authorization request handling"
+
+  - name: "RFC 9101"
+    description: "JWT Secured Authorization Request (JAR)"
+    url: "https://www.rfc-editor.org/rfc/rfc9101.html"
+    relationship: "PAR can transport Request Object JWT as defined in JAR"
+
+  - name: "RFC 7636"
+    description: "OAuth 2.0 PKCE"
+    url: "https://www.rfc-editor.org/rfc/rfc7636.html"
+    relationship: "PKCE should be used in PAR requests for enhanced security"
+
+  - name: "FAPI 2.0 Security Profile"
+    description: "Financial-grade API Security Profile 2.0"
+    url: "https://openid.net/specs/fapi-security-profile-2_0.html"
+    relationship: "FAPI 2.0 mandates PAR usage"
+
+  - name: "OpenID Connect Core 1.0"
+    description: "OpenID Connect Core 1.0"
+    url: "https://openid.net/specs/openid-connect-core-1_0.html"
+    relationship: "OIDC nonce should be included in PAR requests"
+
+notes:
+  - "PAR enhances OAuth 2.0 security by moving authorization parameters from front-channel (user-agent) to back-channel (direct HTTPS)"
+  - "PAR is mandatory in FAPI 2.0 Security Profile"
+  - "request_uri generated by PAR must be cryptographically strong and client-bound"
+  - "PAR endpoint uses same client authentication as token endpoint"
+  - "request_uri should be one-time use to prevent replay attacks"
+  - "Authorization server can enforce PAR-only policy via require_pushed_authorization_requests metadata"
+  - "PAR reduces URL length issues by moving large requests (e.g., Request Object JWT) to server-side"
+
+implementation_considerations:
+  par_endpoint_design:
+    - "Use same client authentication infrastructure as token endpoint"
+    - "Store pushed authorization data in secure, time-limited cache"
+    - "Generate request_uri with cryptographically strong PRNG"
+    - "Bind request_uri to client_id in storage"
+    - "Implement expiration mechanism (default: 90 seconds recommended)"
+    - "Track request_uri usage for one-time enforcement"
+
+  authorization_endpoint_modifications:
+    - "Accept request_uri parameter from PAR"
+    - "Retrieve stored authorization data by request_uri"
+    - "Validate request_uri (expiration, client binding, one-time use)"
+    - "Merge retrieved parameters with direct parameters (prefer stored)"
+    - "Support PAR-only mode via server policy"
+
+  security_enhancements:
+    - "Enforce HTTPS on PAR endpoint"
+    - "Implement rate limiting per client"
+    - "Use sufficient entropy for request_uri generation (128+ bits)"
+    - "Invalidate request_uri after first use"
+    - "Validate Request Object client_id matches authenticated client"
+    - "Reject request_uri parameter in PAR requests (no nesting)"
+
+version_history:
+  - version: "1.0.0"
+    date: "2026-01-29"
+    changes: "Initial extraction from RFC 9126"
