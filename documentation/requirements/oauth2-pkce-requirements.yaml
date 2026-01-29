@@ -1,0 +1,444 @@
+spec_name: "OAuth 2.0 Proof Key for Code Exchange (PKCE) - RFC 7636"
+spec_url: "https://www.rfc-editor.org/rfc/rfc7636.html"
+extraction_timestamp: "2026-01-29T15:40:00Z"
+extractor_version: "1.1.0"
+
+summary:
+  total_requirements: 28
+  must_shall_requirements: 14
+  should_requirements: 7
+  optional_requirements: 4
+  recommended_requirements: 3
+
+sections_covered:
+  - "Section 4.1: Code Verifier"
+  - "Section 4.2: Code Challenge"
+  - "Section 4.3: Client Creates Authorization Request"
+  - "Section 4.4: Server Processes Authorization Request"
+  - "Section 4.4.1: Error Responses"
+  - "Section 4.5: Client Sends Code Verifier to Token Endpoint"
+  - "Section 4.6: Server Verifies Code Verifier"
+  - "Section 5: Compatibility"
+  - "Section 6: IANA Considerations"
+  - "Section 7: Security Considerations"
+
+requirements_by_category:
+  code_verifier:
+    must_shall:
+      - section: "4.1"
+        requirement: "code_verifier = high-entropy cryptographic random STRING using the unreserved characters [A-Z] / [a-z] / [0-9] / '-' / '.' / '_' / '~' with a minimum length of 43 characters and a maximum length of 128 characters"
+        rationale: "Ensures sufficient entropy and proper character encoding for security"
+        test_implication: "必須: 42文字以下、129文字以上のcode_verifierを拒否"
+
+    should:
+      - section: "4.1"
+        requirement: "code verifier SHOULD have enough entropy to make it impractical to guess the value"
+        rationale: "Prevents attackers from brute-forcing the verifier value"
+        test_implication: "推奨: 弱いcode_verifier（低エントロピー）の検出"
+
+      - section: "7.1"
+        requirement: "code_verifier with a minimum of 256 bits of entropy"
+        rationale: "Establishes security baseline for entropy requirements"
+        test_implication: "推奨: 256ビット以上のエントロピー確保"
+
+    recommended:
+      - section: "4.1"
+        requirement: "output of a suitable random number generator be used to create a 32-octet sequence"
+        rationale: "Provides recommended entropy level for cryptographic randomness"
+        test_implication: "推奨: 32オクテット（256ビット）の乱数生成"
+
+  code_challenge:
+    must_shall:
+      - section: "4.2"
+        requirement: "If the client is capable of using S256, it MUST use S256"
+        rationale: "S256 is mandatory-to-implement and provides stronger security"
+        test_implication: "必須: クライアントはS256を優先的に使用"
+
+      - section: "4.2"
+        requirement: "S256 is Mandatory To Implement (MTI) on the server"
+        rationale: "Ensures consistent security implementation across servers"
+        test_implication: "必須: サーバーはS256メソッドをサポート"
+
+    optional:
+      - section: "4.2"
+        requirement: "Clients are permitted to use plain only if they cannot support S256 for some technical reason and know via out-of-band configuration that the server supports plain"
+        rationale: "Allows compatibility with constrained environments"
+        test_implication: "任意: plain メソッドのサポート（非推奨）"
+
+  authorization_request:
+    must_shall:
+      - section: "4.3"
+        requirement: "code_challenge REQUIRED. Code challenge"
+        rationale: "Essential parameter for initiating PKCE flow"
+        test_implication: "必須: code_challengeパラメータの存在確認"
+
+      - section: "4.4"
+        requirement: "server MUST associate the code_challenge and code_challenge_method values with the authorization code"
+        rationale: "Enables later verification during token exchange"
+        test_implication: "必須: 認可コードにcode_challengeとmethodをバインド"
+
+      - section: "4.4"
+        requirement: "server MUST NOT include the code_challenge value in client requests in a form that other entities can extract"
+        rationale: "Prevents disclosure to unauthorized parties"
+        test_implication: "必須: code_challengeの漏洩防止"
+
+    optional:
+      - section: "4.3"
+        requirement: "code_challenge_method OPTIONAL, defaults to plain if not present"
+        rationale: "Provides flexibility while maintaining default behavior"
+        test_implication: "任意: code_challenge_method省略時はplainとして扱う"
+
+  error_handling:
+    must_shall:
+      - section: "4.4.1"
+        requirement: "If server requires PKCE and client does not send code_challenge, authorization endpoint MUST return error with code set to invalid_request"
+        rationale: "Enforces PKCE implementation when required"
+        test_implication: "必須: PKCE必須時にcode_challengeなしでinvalid_requestエラー"
+
+      - section: "4.4.1"
+        requirement: "If server does not support requested transformation, endpoint MUST return error with code set to invalid_request"
+        rationale: "Communicates unsupported challenge methods"
+        test_implication: "必須: 未サポートのcode_challenge_methodでinvalid_requestエラー"
+
+    should:
+      - section: "4.4.1"
+        requirement: "error_description or error_uri SHOULD explain the nature of error"
+        rationale: "Aids client debugging and implementation"
+        test_implication: "推奨: エラー詳細を error_description に含む"
+
+  token_request:
+    must_shall:
+      - section: "4.5"
+        requirement: "code_verifier REQUIRED. Code verifier"
+        rationale: "Enables server verification of authorization code legitimacy"
+        test_implication: "必須: トークンリクエストにcode_verifierパラメータが必須"
+
+      - section: "4.5"
+        requirement: "code_challenge_method is bound to Authorization Code; token endpoint MUST use this method to verify code_verifier"
+        rationale: "Ensures consistent transformation method usage"
+        test_implication: "必須: 認可時のcode_challenge_methodを使用して検証"
+
+  server_verification:
+    must_shall:
+      - section: "4.6"
+        requirement: "If code_challenge_method was S256, received code_verifier hashed by SHA-256, base64url-encoded, compared to code_challenge"
+        rationale: "Implements cryptographic proof-of-possession verification"
+        test_implication: "必須: S256の場合、SHA-256(code_verifier)をbase64urlエンコードして比較"
+
+      - section: "4.6"
+        requirement: "If code_challenge_method was plain, verifier and challenge compared directly"
+        rationale: "Implements direct comparison verification"
+        test_implication: "必須: plainの場合、code_verifierとcode_challengeを直接比較"
+
+      - section: "4.6"
+        requirement: "If values are equal, token endpoint MUST continue processing as normal"
+        rationale: "Completes successful authentication flow"
+        test_implication: "必須: 検証成功時は通常のトークン発行処理を継続"
+
+      - section: "4.6"
+        requirement: "If values are not equal, error response indicating invalid_grant MUST be returned"
+        rationale: "Rejects compromised or tampered authorization codes"
+        test_implication: "必須: 検証失敗時はinvalid_grantエラーを返す"
+
+  compatibility:
+    optional:
+      - section: "5"
+        requirement: "Server implementations MAY accept OAuth 2.0 clients that do not implement this extension"
+        rationale: "Allows gradual adoption without breaking existing clients"
+        test_implication: "任意: PKCEなしのクライアントを受け入れ可能"
+
+    should:
+      - section: "5"
+        requirement: "Client implementations SHOULD send additional parameters to all servers"
+        rationale: "Enables transparent deployment without server detection"
+        test_implication: "推奨: クライアントは全てのサーバーにPKCEパラメータを送信"
+
+  security:
+    must_shall:
+      - section: "7.2"
+        requirement: "Clients MUST NOT downgrade to plain after trying S256"
+        rationale: "Prevents man-in-the-middle downgrade attacks"
+        test_implication: "必須: S256失敗後にplainへのダウングレード禁止"
+
+      - section: "7.2"
+        requirement: "If code challenge method is plain and returned inside authorization code for stateless server, it MUST be encrypted"
+        rationale: "Prevents disclosure in plain-method scenarios"
+        test_implication: "必須: plainメソッド使用時の暗号化（ステートレスサーバー）"
+
+    should:
+      - section: "7.2"
+        requirement: "plain SHOULD NOT be used and exists only for compatibility"
+        rationale: "Discourages use of weaker protection method"
+        test_implication: "推奨: plainメソッドの使用を避ける"
+
+      - section: "7.2"
+        requirement: "S256 code challenge method or cryptographically secure extension SHOULD be used"
+        rationale: "Establishes best practice for security"
+        test_implication: "推奨: S256メソッドを優先的に使用"
+
+  iana_registration:
+    recommended:
+      - section: "6.2.1"
+        requirement: "Method name RECOMMENDED to be short, not exceeding 8 characters without compelling reason"
+        rationale: "Maintains compact representation in protocol messages"
+        test_implication: "推奨: 新しいcode_challenge_methodは8文字以内"
+
+key_findings:
+  critical_must_requirements:
+    - "code_verifier must be 43-128 characters, using unreserved chars [A-Za-z0-9-._~]"
+    - "code_verifier must have minimum 256 bits of entropy (SHOULD)"
+    - "S256 method is Mandatory To Implement (MTI) on server"
+    - "Clients capable of S256 MUST use S256 (not plain)"
+    - "code_challenge is REQUIRED in authorization request"
+    - "code_verifier is REQUIRED in token request"
+    - "Server MUST bind code_challenge and method to authorization code"
+    - "Server MUST NOT expose code_challenge to unauthorized parties"
+    - "Verification failure MUST return invalid_grant error"
+
+  security_critical:
+    - "Clients MUST NOT downgrade from S256 to plain (prevents MITM attacks)"
+    - "plain method SHOULD NOT be used (compatibility only)"
+    - "S256 method SHOULD be used for all deployments"
+    - "code_verifier should have 256+ bits entropy"
+    - "32-octet random sequence recommended for code_verifier generation"
+    - "plain method with stateless server MUST encrypt code_challenge"
+
+  code_challenge_methods:
+    s256:
+      algorithm: "BASE64URL(SHA256(ASCII(code_verifier)))"
+      security: "Strong - cryptographic hash prevents reverse engineering"
+      status: "Mandatory To Implement (MTI)"
+      usage: "MUST use if client is capable"
+    plain:
+      algorithm: "code_challenge = code_verifier"
+      security: "Weak - provides limited protection"
+      status: "Optional for compatibility only"
+      usage: "SHOULD NOT use; only for constrained devices"
+
+  pkce_workflow:
+    step_1_authorization_request:
+      - "Client generates high-entropy code_verifier (43-128 chars)"
+      - "Client derives code_challenge from code_verifier"
+      - "Client sends code_challenge and code_challenge_method to authorization endpoint"
+      - "code_challenge_method defaults to 'plain' if omitted (but S256 SHOULD be used)"
+    step_2_authorization_response:
+      - "Server validates code_challenge format"
+      - "Server binds code_challenge and code_challenge_method to authorization code"
+      - "Server MUST NOT expose code_challenge in responses"
+      - "Server returns authorization code"
+    step_3_token_request:
+      - "Client sends authorization code and code_verifier to token endpoint"
+      - "code_verifier is REQUIRED parameter"
+    step_4_token_response:
+      - "Server retrieves bound code_challenge and method"
+      - "Server transforms code_verifier using bound method"
+      - "Server compares transformed value to stored code_challenge"
+      - "If match: issue tokens; if mismatch: return invalid_grant error"
+
+  error_responses:
+    invalid_request:
+      when:
+        - "code_challenge missing when PKCE required by server"
+        - "code_challenge_method not supported by server"
+      response: "HTTP 400 with error=invalid_request"
+    invalid_grant:
+      when:
+        - "code_verifier missing in token request"
+        - "code_verifier transformation does not match code_challenge"
+      response: "HTTP 400 with error=invalid_grant"
+
+  integration_with_other_specs:
+    fapi_2_0:
+      - "FAPI 2.0 requires PKCE with S256 method (Section 5.3.2.2.5)"
+      - "FAPI 2.0 mandates S256, prohibits plain method"
+    oauth_2_0:
+      - "PKCE extends OAuth 2.0 authorization code flow"
+      - "Backward compatible with OAuth 2.0 clients (server MAY accept non-PKCE)"
+    oauth_2_1:
+      - "OAuth 2.1 mandates PKCE for all authorization code flows"
+      - "OAuth 2.1 deprecates plain method"
+
+test_mapping:
+  e2e_tests:
+    must_requirements:
+      - category: "必須テストケース"
+        priority: "P0"
+        examples:
+          - "code_verifier length validation (43-128 chars)"
+          - "code_verifier character set validation ([A-Za-z0-9-._~])"
+          - "S256 method support on server"
+          - "code_challenge required in authorization request (when PKCE enforced)"
+          - "code_challenge binding to authorization code"
+          - "code_verifier required in token request"
+          - "S256 verification: SHA256(code_verifier) = code_challenge"
+          - "plain verification: code_verifier = code_challenge"
+          - "Verification success: issue tokens"
+          - "Verification failure: invalid_grant error"
+          - "code_challenge not exposed in responses"
+
+    should_requirements:
+      - category: "推奨テストケース"
+        priority: "P1"
+        examples:
+          - "code_verifier entropy validation (256+ bits)"
+          - "S256 method preferred over plain"
+          - "plain method discouraged"
+          - "error_description provided for PKCE errors"
+          - "Client sends PKCE to all servers"
+
+    security_requirements:
+      - category: "negative テストケース"
+        priority: "P0"
+        examples:
+          - "Reject code_verifier <43 chars"
+          - "Reject code_verifier >128 chars"
+          - "Reject code_verifier with invalid characters"
+          - "Reject token request without code_verifier"
+          - "Reject token request with wrong code_verifier"
+          - "Reject unsupported code_challenge_method"
+          - "Reject S256 to plain downgrade attempt"
+          - "Reject authorization code replay with different code_verifier"
+
+compliance_checklist:
+  client:
+    - "Generate code_verifier: 43-128 chars, [A-Za-z0-9-._~], 256+ bits entropy"
+    - "Use S256 method (MUST if capable)"
+    - "Only use plain if S256 impossible and server supports it"
+    - "Send code_challenge in authorization request"
+    - "Send code_challenge_method=S256 (or omit for plain default)"
+    - "Send code_verifier in token request"
+    - "MUST NOT downgrade from S256 to plain"
+    - "SHOULD send PKCE to all servers"
+
+  authorization_server:
+    - "Support S256 method (MTI)"
+    - "Optionally support plain method (for compatibility)"
+    - "Bind code_challenge and code_challenge_method to authorization code"
+    - "MUST NOT expose code_challenge in responses"
+    - "Return invalid_request if code_challenge missing (when PKCE required)"
+    - "Return invalid_request if code_challenge_method unsupported"
+    - "Validate code_verifier in token request"
+    - "Use bound code_challenge_method for verification"
+    - "Return invalid_grant if verification fails"
+    - "MAY accept non-PKCE clients (backward compatibility)"
+
+  verification_logic:
+    s256:
+      - "Transform: BASE64URL(SHA256(ASCII(code_verifier)))"
+      - "Compare transformed value to stored code_challenge"
+      - "Success: continue token issuance"
+      - "Failure: return invalid_grant"
+    plain:
+      - "Compare code_verifier directly to code_challenge"
+      - "Success: continue token issuance"
+      - "Failure: return invalid_grant"
+
+gap_analysis_template:
+  requirement_id: "4.2"
+  requirement: "If the client is capable of using S256, it MUST use S256"
+  status:
+    - "implemented"      # Fully implemented
+    - "partial"          # Partially implemented
+    - "not_implemented"  # Not implemented
+    - "not_applicable"   # Not applicable to deployment
+  implementation_notes: "S256 method fully supported, plain deprecated"
+  test_coverage: "E2E tests for S256 verification exist"
+  priority: "P0"  # P0: Critical, P1: High, P2: Medium, P3: Low
+  effort_estimate: "Already implemented"
+  blockers: "None"
+
+related_specifications:
+  - name: "RFC 6749"
+    description: "OAuth 2.0 Authorization Framework"
+    url: "https://www.rfc-editor.org/rfc/rfc6749.html"
+    relationship: "PKCE extends OAuth 2.0 authorization code flow"
+
+  - name: "OAuth 2.1"
+    description: "OAuth 2.1 (Draft)"
+    url: "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1"
+    relationship: "OAuth 2.1 mandates PKCE for all authorization code flows"
+
+  - name: "FAPI 2.0 Security Profile"
+    description: "Financial-grade API Security Profile 2.0"
+    url: "https://openid.net/specs/fapi-security-profile-2_0.html"
+    relationship: "FAPI 2.0 requires PKCE with S256 method"
+
+  - name: "RFC 4648"
+    description: "Base64 Encoding"
+    url: "https://www.rfc-editor.org/rfc/rfc4648.html"
+    relationship: "BASE64URL encoding used in S256 transformation"
+
+notes:
+  - "PKCE mitigates authorization code interception attack"
+  - "S256 method is Mandatory To Implement (MTI) on servers"
+  - "plain method exists only for compatibility with constrained devices"
+  - "code_verifier must have 43-128 characters with 256+ bits entropy"
+  - "Clients MUST use S256 if capable (MUST NOT use plain if S256 possible)"
+  - "Clients MUST NOT downgrade from S256 to plain (prevents MITM attacks)"
+  - "PKCE is mandatory in OAuth 2.1 and FAPI 2.0"
+  - "Server MAY accept non-PKCE clients for backward compatibility"
+
+implementation_considerations:
+  code_verifier_generation:
+    - "Use cryptographically secure random number generator"
+    - "Generate 32-octet (256-bit) random sequence"
+    - "Encode using unreserved characters [A-Za-z0-9-._~]"
+    - "Result: 43-character base64url-encoded string (recommended)"
+    - "Maximum length: 128 characters"
+
+  code_challenge_derivation:
+    s256_method:
+      - "Convert code_verifier to ASCII octets"
+      - "Hash using SHA-256"
+      - "Encode result using BASE64URL (no padding)"
+      - "Store result as code_challenge"
+    plain_method:
+      - "code_challenge = code_verifier (direct copy)"
+      - "Only use for constrained devices"
+
+  authorization_server_storage:
+    - "Store code_challenge bound to authorization code"
+    - "Store code_challenge_method bound to authorization code"
+    - "MUST NOT expose code_challenge in any response"
+    - "Encrypt if using stateless server with plain method"
+
+  token_endpoint_verification:
+    - "Retrieve stored code_challenge and method"
+    - "Apply method transformation to received code_verifier"
+    - "Compare transformed value to stored code_challenge"
+    - "Constant-time comparison recommended (timing attack mitigation)"
+    - "Success: continue token issuance"
+    - "Failure: return invalid_grant error"
+
+  security_hardening:
+    - "Enforce S256 method (reject plain)"
+    - "Require PKCE for all authorization code flows"
+    - "Validate code_verifier entropy (reject weak values)"
+    - "Implement rate limiting on token endpoint"
+    - "Log verification failures for security monitoring"
+
+attack_mitigations:
+  authorization_code_interception:
+    attack: "Attacker intercepts authorization code in redirect"
+    mitigation: "Without code_verifier, attacker cannot exchange code for tokens"
+    pkce_protection: "code_verifier known only to legitimate client"
+
+  mitm_downgrade:
+    attack: "MITM strips code_challenge, forcing non-PKCE flow"
+    mitigation: "Server requires PKCE (reject requests without code_challenge)"
+    pkce_protection: "Server policy enforcement"
+
+  mitm_s256_to_plain_downgrade:
+    attack: "MITM changes code_challenge_method from S256 to plain"
+    mitigation: "Client MUST NOT retry with plain after S256 failure"
+    pkce_protection: "Client-side downgrade prevention"
+
+  code_verifier_guessing:
+    attack: "Attacker tries to guess code_verifier value"
+    mitigation: "256+ bits entropy makes guessing impractical"
+    pkce_protection: "High-entropy random generation"
+
+version_history:
+  - version: "1.0.0"
+    date: "2026-01-29"
+    changes: "Initial extraction from RFC 7636"

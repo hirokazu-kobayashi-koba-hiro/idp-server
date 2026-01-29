@@ -1,0 +1,693 @@
+spec_name: "FAPI 2.0 Security Profile"
+spec_url: "https://openid.net/specs/fapi-security-profile-2_0.html"
+extraction_timestamp: "2026-01-29T13:45:00Z"
+extractor_version: "1.0.0"
+
+summary:
+  total_requirements: 94
+  must_shall_requirements: 76
+  should_requirements: 11
+  optional_requirements: 7
+
+sections_covered:
+  - "Section 5.2: Network Layer Protections"
+  - "Section 5.3: Security Profile"
+  - "Section 5.4: Cryptography & Secrets"
+  - "Section 6: Security Considerations"
+  - "Section 7: Privacy Considerations"
+  - "Section 8: IANA Registration"
+
+requirements_by_category:
+  network_layer_protections:
+    must_shall:
+      - section: "5.2.1.1"
+        requirement: "Only offer TLS protected endpoints and establish connections using TLS"
+        rationale: "Protect against network attacks"
+        test_implication: "必須: すべてのエンドポイントがTLS経由でのみアクセス可能であることを確認"
+
+      - section: "5.2.1.2"
+        requirement: "Set up TLS connections using TLS version 1.2 or later"
+        rationale: "Ensure modern cryptographic standards"
+        test_implication: "必須: TLS 1.1以下の接続を拒否することを確認"
+
+      - section: "5.2.1.3"
+        requirement: "Follow recommendations for Secure Use of TLS in BCP195"
+        rationale: "Industry best practices compliance"
+        test_implication: "必須: BCP195推奨の暗号スイートのみを使用"
+
+      - section: "5.2.1.5"
+        requirement: "Perform TLS server certificate check per RFC9525"
+        rationale: "Validate endpoint authenticity"
+        test_implication: "必須: サーバー証明書の検証を実施"
+
+      - section: "5.2.2.1"
+        requirement: "Permit only BCP195-recommended cipher suites with TLS 1.2"
+        rationale: "Enforce strong encryption"
+        test_implication: "必須: 弱い暗号スイートでの接続を拒否"
+
+      - section: "5.2.2.1.3"
+        requirement: "Use client metadata use_mtls_endpoint_aliases if present"
+        rationale: "Enable endpoint selection"
+        test_implication: "必須: use_mtls_endpoint_aliasesメタデータが存在する場合の動作確認"
+
+      - section: "5.2.3.2"
+        requirement: "Use only BCP195-allowed cipher suites with TLS 1.2"
+        rationale: "Protect browser connections"
+        test_implication: "必須: ブラウザエンドポイントでのTLS設定確認"
+
+      - section: "5.2.3.3"
+        requirement: "Not support CORS for authorization endpoint"
+        rationale: "Prevent client-side direct access"
+        test_implication: "必須: 認可エンドポイントでCORSヘッダーが返されないことを確認"
+
+    should:
+      - section: "5.2.1.4"
+        requirement: "Use DNSSEC to protect against DNS spoofing attacks"
+        rationale: "Mitigate rogue certificate issuance"
+        test_implication: "推奨: DNSSECサポートの確認"
+
+      - section: "5.2.2.2"
+        requirement: "Clients permit only BCP195-recommended cipher suites"
+        rationale: "Interoperability guidance"
+        test_implication: "推奨: クライアント側での暗号スイート制限"
+
+      - section: "5.2.3.1"
+        requirement: "Use methods to prevent TLS stripping (HSTS preload)"
+        rationale: "Block downgrade attacks"
+        test_implication: "推奨: HSTS preloadの設定確認"
+
+    optional:
+      - section: "5.2.2.1.1"
+        requirement: "Provide trust list of certificate authorities in MTLS ecosystems"
+        rationale: "Support mutual TLS deployments"
+        test_implication: "任意: MTLS環境でのCA信頼リスト提供"
+
+      - section: "5.2.2.1.2"
+        requirement: "Utilize mtls_endpoint_aliases metadata per RFC8705"
+        rationale: "Facilitate MTLS interoperability"
+        test_implication: "任意: mtls_endpoint_aliasesメタデータのサポート"
+
+  authorization_server:
+    must_shall:
+      - section: "5.3.2.1.1"
+        requirement: "Distribute discovery metadata via OIDD and RFC8414"
+        rationale: "Enable dynamic configuration"
+        test_implication: "必須: /.well-known/openid-configurationエンドポイントの実装確認"
+
+      - section: "5.3.2.1.2"
+        requirement: "Reject requests using resource owner password credentials grant"
+        rationale: "Block insecure auth flows"
+        test_implication: "必須: パスワードグラントでのトークン発行を拒否"
+
+      - section: "5.3.2.1.3"
+        requirement: "Only support confidential clients per RFC6749"
+        rationale: "Exclude public clients from scope"
+        test_implication: "必須: パブリッククライアントの登録・利用を拒否"
+
+      - section: "5.3.2.1.4"
+        requirement: "Only issue sender-constrained access tokens"
+        rationale: "Bind tokens to requestor"
+        test_implication: "必須: Bearerトークンのみの発行を拒否し、MTLS/DPoPのいずれかを強制"
+
+      - section: "5.3.2.1.5a"
+        requirement: "Use MTLS for sender-constrained access tokens per RFC8705"
+        rationale: "Support certificate binding"
+        test_implication: "必須: MTLS証明書バインディングの実装確認"
+
+      - section: "5.3.2.1.5b"
+        requirement: "Use DPoP for sender-constrained access tokens per RFC9449"
+        rationale: "Support proof-of-possession"
+        test_implication: "必須: DPoP proof-of-possessionの実装確認"
+
+      - section: "5.3.2.1.6a"
+        requirement: "Authenticate clients via MTLS (RFC8705 §2)"
+        rationale: "Enable mutual TLS auth"
+        test_implication: "必須: MTLSクライアント認証の実装確認"
+
+      - section: "5.3.2.1.6b"
+        requirement: "Authenticate clients via private_key_jwt (OIDC §9)"
+        rationale: "Enable JWT-based auth"
+        test_implication: "必須: private_key_jwtクライアント認証の実装確認"
+
+      - section: "5.3.2.1.7"
+        requirement: "Not expose open redirectors"
+        rationale: "Prevent URL manipulation attacks"
+        test_implication: "必須: オープンリダイレクタの脆弱性テスト"
+
+      - section: "5.3.2.1.8"
+        requirement: "Only accept issuer identifier as string in aud claim"
+        rationale: "Prevent audience confusion"
+        test_implication: "必須: aud配列形式のJWTを拒否"
+
+      - section: "5.3.2.1.9"
+        requirement: "Not use refresh token rotation except extraordinary circumstances"
+        rationale: "Maintain user experience"
+        test_implication: "必須: リフレッシュトークンローテーションのデフォルト無効化"
+
+      - section: "5.3.2.1.11"
+        requirement: "Issue authorization codes with max lifetime of 60 seconds"
+        rationale: "Limit code exposure window"
+        test_implication: "必須: 60秒超過した認可コードの拒否確認"
+
+      - section: "5.3.2.1.12"
+        requirement: "Support Authorization Code Binding to DPoP Key (RFC9449 §10.1)"
+        rationale: "Bind codes to keys"
+        test_implication: "必須: DPoP鍵への認可コードバインディング確認"
+
+      - section: "5.3.2.1.13"
+        requirement: "Accept JWTs with iat/nbf 0-10 seconds in future; reject >60 seconds"
+        rationale: "Handle clock skew tolerantly"
+        test_implication: "必須: 時刻スキュー許容範囲のテスト"
+
+      - section: "5.3.2.2.1"
+        requirement: "Require response_type value of 'code'"
+        rationale: "Enforce authorization code flow"
+        test_implication: "必須: implicitフローやhybridフローの拒否"
+
+      - section: "5.3.2.2.2"
+        requirement: "Support client-authenticated PAR per RFC9126"
+        rationale: "Enable secure request transmission"
+        test_implication: "必須: PARエンドポイントの実装確認"
+
+      - section: "5.3.2.2.3"
+        requirement: "Reject authorization requests sent without RFC9126"
+        rationale: "Mandate PAR usage"
+        test_implication: "必須: 通常の認可リクエスト(非PAR)を拒否"
+
+      - section: "5.3.2.2.4"
+        requirement: "Reject PAR requests without client authentication"
+        rationale: "Require client identity"
+        test_implication: "必須: クライアント認証なしのPARリクエストを拒否"
+
+      - section: "5.3.2.2.5"
+        requirement: "Require PKCE with S256 as code challenge method"
+        rationale: "Enforce proof-key exchange"
+        test_implication: "必須: plainメソッドやPKCEなしのリクエストを拒否"
+
+      - section: "5.3.2.2.6"
+        requirement: "Require redirect_uri parameter in PAR requests"
+        rationale: "Prevent redirect manipulation"
+        test_implication: "必須: redirect_uriなしのPARリクエストを拒否"
+
+      - section: "5.3.2.2.7"
+        requirement: "Return iss parameter in authorization response per RFC9207"
+        rationale: "Enable issuer validation"
+        test_implication: "必須: 認可レスポンスにissパラメータが含まれることを確認"
+
+      - section: "5.3.2.2.8"
+        requirement: "Not transmit responses over unencrypted connections; allow http only for loopback"
+        rationale: "Protect authorization response"
+        test_implication: "必須: http://でのリダイレクトを拒否(localhostを除く)"
+
+      - section: "5.3.2.2.9"
+        requirement: "Reject authorization code if previously used"
+        rationale: "Prevent code replay"
+        test_implication: "必須: 認可コードの再利用検出と拒否"
+
+      - section: "5.3.2.2.10"
+        requirement: "Not use HTTP 307 status for credential redirects"
+        rationale: "Prevent credential forwarding"
+        test_implication: "必須: 307リダイレクトの禁止確認"
+
+      - section: "5.3.2.2.12"
+        requirement: "Issue PAR request_uri with expires_in <600 seconds"
+        rationale: "Limit URI validity"
+        test_implication: "必須: PARのexpires_inが600秒以下であることを確認"
+
+      - section: "5.3.2.2.14"
+        requirement: "Support nonce values up to 64 characters; may reject longer"
+        rationale: "Ensure nonce handling"
+        test_implication: "必須: 64文字までのnonceをサポート"
+
+      - section: "5.3.2.3.1"
+        requirement: "Support OpenID Connect to provide authenticated user identifier"
+        rationale: "Enable identity assertion"
+        test_implication: "必須: OpenID Connectのサポート確認"
+
+    should:
+      - section: "5.3.2.1.14"
+        requirement: "Restrict privileges to minimum required per use case"
+        rationale: "Apply least privilege"
+        test_implication: "推奨: スコープの最小化確認"
+
+      - section: "5.3.2.2.11"
+        requirement: "Use HTTP 303 status when redirecting user agent"
+        rationale: "Follow HTTP best practices"
+        test_implication: "推奨: 303リダイレクトの使用確認"
+
+      - section: "5.3.2.2.13"
+        requirement: "Provide end-user all necessary consent information"
+        rationale: "Enable informed decisions"
+        test_implication: "推奨: 同意画面の情報充実度確認"
+
+    optional:
+      - section: "5.3.2.1.10"
+        requirement: "Use server-provided nonce mechanism with DPoP per RFC9449 §8"
+        rationale: "Enable replay prevention"
+        test_implication: "任意: DPoPサーバーnonceのサポート"
+
+  client:
+    must_shall:
+      - section: "5.3.3.1.1a"
+        requirement: "Support sender-constrained tokens via MTLS per RFC8705"
+        rationale: "Enable token binding"
+        test_implication: "必須: MTLS sender-constrainedトークンのサポート"
+
+      - section: "5.3.3.1.1b"
+        requirement: "Support sender-constrained tokens via DPoP per RFC9449"
+        rationale: "Enable proof-of-possession"
+        test_implication: "必須: DPoP sender-constrainedトークンのサポート"
+
+      - section: "5.3.3.1.2a"
+        requirement: "Support client authentication via MTLS (RFC8705 §2)"
+        rationale: "Enable cert-based auth"
+        test_implication: "必須: MTLSクライアント認証のサポート"
+
+      - section: "5.3.3.1.2b"
+        requirement: "Support client authentication via private_key_jwt (OIDC §9)"
+        rationale: "Enable JWT-based auth"
+        test_implication: "必須: private_key_jwtクライアント認証のサポート"
+
+      - section: "5.3.3.1.3"
+        requirement: "Send access tokens in HTTP header per RFC6750 §2.1 or DPoP §7.1"
+        rationale: "Enforce token transmission method"
+        test_implication: "必須: トークンのヘッダー送信確認"
+
+      - section: "5.3.3.1.4"
+        requirement: "Not expose open redirectors"
+        rationale: "Prevent redirect manipulation"
+        test_implication: "必須: オープンリダイレクタの脆弱性テスト"
+
+      - section: "5.3.3.1.5"
+        requirement: "Use issuer identifier as string (not array) in aud for private_key_jwt"
+        rationale: "Ensure audience clarity"
+        test_implication: "必須: private_key_jwtのaud形式確認"
+
+      - section: "5.3.3.1.6"
+        requirement: "Support refresh tokens and their rotation"
+        rationale: "Enable grant renewal"
+        test_implication: "必須: リフレッシュトークンのサポート"
+
+      - section: "5.3.3.1.7"
+        requirement: "Support mtls_endpoint_aliases when using MTLS"
+        rationale: "Enable endpoint discovery"
+        test_implication: "必須: mtls_endpoint_aliasesのサポート"
+
+      - section: "5.3.3.1.8"
+        requirement: "Support server-provided nonce mechanism with DPoP (RFC9449 §8)"
+        rationale: "Enable replay prevention"
+        test_implication: "必須: DPoPサーバーnonceのサポート"
+
+      - section: "5.3.3.1.9"
+        requirement: "Only use metadata from OIDD and RFC8414 discovery"
+        rationale: "Prevent metadata spoofing"
+        test_implication: "必須: Discoveryメタデータの使用確認"
+
+      - section: "5.3.3.1.10"
+        requirement: "Ensure issuer URL from authoritative secure source (unchangeable)"
+        rationale: "Prevent issuer hijacking"
+        test_implication: "必須: issuer URLの安全な取得確認"
+
+      - section: "5.3.3.1.11"
+        requirement: "Verify issuer URL matches obtained metadata issuer value"
+        rationale: "Validate issuer consistency"
+        test_implication: "必須: issuerメタデータの整合性確認"
+
+      - section: "5.3.3.1.12"
+        requirement: "Initiate authorization with end-user consent; protect against CSRF"
+        rationale: "Ensure user awareness"
+        test_implication: "必須: CSRF保護の実装確認"
+
+      - section: "5.3.3.2.1"
+        requirement: "Use authorization code grant per RFC6749"
+        rationale: "Employ standard OAuth flow"
+        test_implication: "必須: 認可コードフローの使用確認"
+
+      - section: "5.3.3.2.2"
+        requirement: "Use PAR per RFC9126"
+        rationale: "Mandate secure request channel"
+        test_implication: "必須: PARの使用確認"
+
+      - section: "5.3.3.2.3"
+        requirement: "Use PKCE with S256 code challenge method"
+        rationale: "Enforce proof-key exchange"
+        test_implication: "必須: PKCE S256の使用確認"
+
+      - section: "5.3.3.2.4"
+        requirement: "Generate PKCE challenge per-request; bind to client and user agent"
+        rationale: "Prevent code interception"
+        test_implication: "必須: PKCEチャレンジの一意性確認"
+
+      - section: "5.3.3.2.5"
+        requirement: "Verify iss parameter in response per RFC9207"
+        rationale: "Prevent mix-up attacks"
+        test_implication: "必須: issパラメータの検証確認"
+
+      - section: "5.3.3.2.6"
+        requirement: "Send only client_id and request_uri to authorization endpoint"
+        rationale: "Enforce PAR usage"
+        test_implication: "必須: 認可エンドポイントへの送信パラメータ確認"
+
+    should:
+      - section: "5.3.3.1.13"
+        requirement: "Request authorization with least required privileges"
+        rationale: "Apply least privilege"
+        test_implication: "推奨: スコープの最小化確認"
+
+      - section: "5.3.3.2.7"
+        requirement: "Not use nonce values longer than 64 characters with OIDC"
+        rationale: "Support interoperability"
+        test_implication: "推奨: nonce長の制限確認"
+
+  resource_server:
+    must_shall:
+      - section: "5.3.4.1"
+        requirement: "Accept access tokens in HTTP header per RFC6750 §2.1 or DPoP §7.1"
+        rationale: "Enable token transmission"
+        test_implication: "必須: ヘッダー経由のトークン受信確認"
+
+      - section: "5.3.4.2"
+        requirement: "Not accept tokens in query parameters per RFC6750 §2.3"
+        rationale: "Prevent token logging"
+        test_implication: "必須: クエリパラメータ経由のトークンを拒否"
+
+      - section: "5.3.4.3"
+        requirement: "Verify token validity, integrity, expiration, revocation status"
+        rationale: "Ensure token authenticity"
+        test_implication: "必須: トークン検証の実装確認"
+
+      - section: "5.3.4.4"
+        requirement: "Verify authorization sufficiency for resource; return RFC6750 §3.1 errors"
+        rationale: "Enforce access control"
+        test_implication: "必須: スコープベースのアクセス制御確認"
+
+      - section: "5.3.4.5a"
+        requirement: "Support/verify MTLS sender-constrained tokens per RFC8705"
+        rationale: "Enable cert binding"
+        test_implication: "必須: MTLS sender-constrainedトークンの検証確認"
+
+      - section: "5.3.4.5b"
+        requirement: "Support/verify DPoP sender-constrained tokens per RFC9449"
+        rationale: "Enable proof-of-possession"
+        test_implication: "必須: DPoP sender-constrainedトークンの検証確認"
+
+  cryptography:
+    must_shall:
+      - section: "5.4.1.1a"
+        requirement: "Adhere to RFC8725 when creating/processing JWTs"
+        rationale: "Follow JWT best practices"
+        test_implication: "必須: RFC8725のベストプラクティス準拠確認"
+
+      - section: "5.4.1.1b"
+        requirement: "Use PS256, ES256, or EdDSA (Ed25519) algorithms"
+        rationale: "Enforce strong algorithms"
+        test_implication: "必須: 弱いアルゴリズム(RS256等)の拒否"
+
+      - section: "5.4.1.1c"
+        requirement: "Not use or accept the 'none' algorithm"
+        rationale: "Prevent algorithm bypass"
+        test_implication: "必須: noneアルゴリズムの拒否確認"
+
+      - section: "5.4.1.2"
+        requirement: "RSA keys have minimum 2048-bit length"
+        rationale: "Ensure RSA strength"
+        test_implication: "必須: 2048ビット未満のRSA鍵を拒否"
+
+      - section: "5.4.1.3"
+        requirement: "Elliptic curve keys have minimum 224-bit length"
+        rationale: "Ensure EC strength"
+        test_implication: "必須: 224ビット未満のEC鍵を拒否"
+
+      - section: "5.4.1.4"
+        requirement: "Credentials have ≥128 bits entropy (unguessable)"
+        rationale: "Prevent brute-force"
+        test_implication: "必須: 弱いクレデンシャルの拒否"
+
+      - section: "5.4.2.1"
+        requirement: "Serve jwks_uri endpoint only over TLS"
+        rationale: "Protect key distribution"
+        test_implication: "必須: jwks_uriのTLS保護確認"
+
+      - section: "5.4.3.1"
+        requirement: "Match kid in JOSE header; if multiple found, filter by kty/use/alg/crv"
+        rationale: "Resolve key ambiguity"
+        test_implication: "必須: kid重複時の鍵選択ロジック確認"
+
+    should:
+      - section: "5.4.2.2"
+        requirement: "Not use JOSE headers x5u and jku"
+        rationale: "Prevent header injection"
+        test_implication: "推奨: x5u/jkuヘッダーの不使用確認"
+
+      - section: "5.4.2.3"
+        requirement: "Not serve JWK set with multiple keys having same kid"
+        rationale: "Avoid key ambiguity"
+        test_implication: "推奨: kidユニーク性の確認"
+
+key_findings:
+  critical_must_requirements:
+    - "TLS 1.2+ must be used for all communications with BCP195-recommended cipher suites"
+    - "Only sender-constrained access tokens (MTLS or DPoP) are permitted"
+    - "PAR (RFC9126) is mandatory for all authorization requests"
+    - "PKCE with S256 method is required for all authorization code flows"
+    - "Only confidential clients are supported (no public clients)"
+    - "Authorization codes must have max 60-second lifetime"
+    - "JWT algorithms limited to PS256, ES256, or EdDSA (Ed25519)"
+    - "Resource owner password credentials grant must be rejected"
+
+  security_critical:
+    - "No CORS support for authorization endpoint"
+    - "No open redirectors allowed"
+    - "Authorization codes can only be used once"
+    - "HTTP 307 redirects prohibited for credential forwarding"
+    - "Tokens must not be sent in query parameters"
+    - "JWT 'none' algorithm must be rejected"
+    - "RSA keys must be at least 2048 bits"
+    - "Credentials must have at least 128 bits of entropy"
+
+  client_authentication:
+    mandatory_methods:
+      - "MTLS (RFC8705 §2)"
+      - "private_key_jwt (OIDC §9)"
+    prohibited_methods:
+      - "client_secret_basic"
+      - "client_secret_post"
+      - "none (public clients)"
+
+  sender_constrained_tokens:
+    mandatory_mechanisms:
+      - "MTLS (RFC8705)"
+      - "DPoP (RFC9449)"
+    prohibited:
+      - "Bearer tokens without binding"
+
+  flow_requirements:
+    authorization_code_flow:
+      mandatory:
+        - "response_type: code"
+        - "PAR usage (RFC9126)"
+        - "PKCE with S256"
+        - "Client authentication on PAR endpoint"
+        - "Client authentication on token endpoint"
+        - "redirect_uri in PAR request"
+        - "iss parameter in authorization response (RFC9207)"
+      prohibited:
+        - "Implicit flow (response_type: token, id_token)"
+        - "Hybrid flow (response_type: code id_token, etc.)"
+        - "Direct authorization endpoint requests (non-PAR)"
+        - "PKCE plain method"
+        - "Unencrypted redirect URIs (except loopback)"
+
+  jwt_requirements:
+    mandatory_algorithms:
+      - "PS256 (RSA-PSS with SHA-256)"
+      - "ES256 (ECDSA with P-256 and SHA-256)"
+      - "EdDSA (Ed25519)"
+    prohibited_algorithms:
+      - "none"
+      - "HS256 (symmetric algorithms)"
+      - "RS256 (weaker than PS256)"
+    clock_skew_tolerance:
+      acceptable: "0-10 seconds in future"
+      rejected: ">60 seconds in future"
+
+  discovery_requirements:
+    mandatory:
+      - "OpenID Connect Discovery (OIDD)"
+      - "RFC8414 OAuth 2.0 Authorization Server Metadata"
+      - "Issuer validation (iss parameter in response)"
+      - "Metadata must be from authoritative source"
+    metadata_fields:
+      - "mtls_endpoint_aliases (when using MTLS)"
+      - "issuer"
+      - "authorization_endpoint"
+      - "token_endpoint"
+      - "jwks_uri"
+      - "par_endpoint (RFC9126)"
+
+  privacy_considerations:
+    assessments_required:
+      - "Privacy impact assessment per ISO29100/ISO29134"
+    areas_to_address:
+      - "Inadequate privacy notices and consent"
+      - "Data collection/minimization violations"
+      - "Authorization server/client tracking"
+      - "Personal data exposure in requests/responses"
+      - "Data breaches at servers/clients"
+
+test_mapping:
+  e2e_tests:
+    must_requirements:
+      - category: "必須テストケース"
+        priority: "P0"
+        examples:
+          - "TLS 1.2+ with strong ciphers enforcement"
+          - "PAR-only authorization (reject direct requests)"
+          - "PKCE S256 enforcement (reject plain/missing)"
+          - "Sender-constrained tokens (MTLS/DPoP)"
+          - "Confidential client-only support"
+          - "Authorization code 60-second expiry"
+          - "Strong JWT algorithms (PS256/ES256/EdDSA)"
+          - "Resource owner password grant rejection"
+          - "CORS blocked on authorization endpoint"
+          - "Authorization code single-use enforcement"
+
+    should_requirements:
+      - category: "推奨テストケース"
+        priority: "P1"
+        examples:
+          - "DNSSEC support"
+          - "HSTS preload for TLS stripping prevention"
+          - "HTTP 303 redirects"
+          - "Comprehensive consent screens"
+          - "Least privilege scope requests"
+          - "No x5u/jku headers in JWTs"
+          - "Unique kid values in JWKS"
+
+    security_requirements:
+      - category: "negative テストケース"
+        priority: "P0"
+        examples:
+          - "Reject TLS 1.1 and below"
+          - "Reject weak cipher suites"
+          - "Reject non-PAR authorization requests"
+          - "Reject PKCE plain method"
+          - "Reject public clients"
+          - "Reject bearer tokens (non-sender-constrained)"
+          - "Reject implicit/hybrid flows"
+          - "Reject JWT 'none' algorithm"
+          - "Reject authorization code reuse"
+          - "Reject tokens in query parameters"
+          - "Reject HTTP redirects (non-loopback)"
+          - "Reject HTTP 307 redirects with credentials"
+          - "Reject expired authorization codes (>60s)"
+          - "Reject JWTs with >60s future iat/nbf"
+          - "Reject weak RSA keys (<2048 bits)"
+          - "Reject weak credentials (<128 bits entropy)"
+
+compliance_checklist:
+  network_layer:
+    - "TLS 1.2+ with BCP195 cipher suites"
+    - "HSTS for browser endpoints"
+    - "No CORS on authorization endpoint"
+    - "Server certificate validation per RFC9525"
+
+  authorization_server:
+    - "OpenID Connect Discovery support"
+    - "PAR endpoint (RFC9126)"
+    - "Confidential clients only"
+    - "Sender-constrained tokens (MTLS/DPoP)"
+    - "MTLS client authentication"
+    - "private_key_jwt client authentication"
+    - "PKCE with S256"
+    - "60-second authorization code lifetime"
+    - "iss parameter in authorization response"
+    - "No open redirectors"
+
+  client:
+    - "PAR usage (RFC9126)"
+    - "PKCE with S256"
+    - "MTLS or private_key_jwt authentication"
+    - "MTLS or DPoP sender-constrained tokens"
+    - "Discovery metadata usage only"
+    - "Issuer validation (iss parameter)"
+    - "CSRF protection"
+
+  resource_server:
+    - "Token validation (validity, integrity, expiration, revocation)"
+    - "MTLS sender-constrained token verification"
+    - "DPoP sender-constrained token verification"
+    - "No query parameter token acceptance"
+    - "Scope-based access control"
+
+  cryptography:
+    - "RFC8725 JWT best practices"
+    - "PS256, ES256, or EdDSA algorithms"
+    - "No 'none' algorithm"
+    - "RSA keys ≥2048 bits"
+    - "EC keys ≥224 bits"
+    - "Credentials ≥128 bits entropy"
+    - "jwks_uri over TLS only"
+
+gap_analysis_template:
+  # Use this template to compare current implementation against FAPI 2.0 requirements
+  requirement_id: "5.3.2.1.4"
+  requirement: "Only issue sender-constrained access tokens"
+  status:
+    - "implemented"      # Fully implemented
+    - "partial"          # Partially implemented
+    - "not_implemented"  # Not implemented
+    - "not_applicable"   # Not applicable to deployment
+  implementation_notes: "DPoP fully implemented, MTLS in progress"
+  test_coverage: "DPoP E2E tests exist, MTLS tests pending"
+  priority: "P0"  # P0: Critical, P1: High, P2: Medium, P3: Low
+  effort_estimate: "3 days"
+  blockers: "MTLS infrastructure setup required"
+
+related_specifications:
+  - name: "RFC6749"
+    description: "OAuth 2.0 Authorization Framework"
+    url: "https://www.rfc-editor.org/rfc/rfc6749.html"
+
+  - name: "RFC8705"
+    description: "OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens"
+    url: "https://www.rfc-editor.org/rfc/rfc8705.html"
+
+  - name: "RFC9449"
+    description: "OAuth 2.0 Demonstrating Proof of Possession (DPoP)"
+    url: "https://www.rfc-editor.org/rfc/rfc9449.html"
+
+  - name: "RFC9126"
+    description: "OAuth 2.0 Pushed Authorization Requests (PAR)"
+    url: "https://www.rfc-editor.org/rfc/rfc9126.html"
+
+  - name: "RFC9207"
+    description: "OAuth 2.0 Authorization Server Issuer Identification"
+    url: "https://www.rfc-editor.org/rfc/rfc9207.html"
+
+  - name: "RFC8725"
+    description: "JSON Web Token Best Current Practices"
+    url: "https://www.rfc-editor.org/rfc/rfc8725.html"
+
+  - name: "OpenID Connect Core 1.0"
+    description: "OpenID Connect Core 1.0"
+    url: "https://openid.net/specs/openid-connect-core-1_0.html"
+
+  - name: "OpenID Connect Discovery 1.0"
+    description: "OpenID Connect Discovery 1.0"
+    url: "https://openid.net/specs/openid-connect-discovery-1_0.html"
+
+notes:
+  - "FAPI 2.0 Security Profile is a highly restrictive profile designed for financial-grade APIs"
+  - "All MUST requirements are mandatory for FAPI 2.0 compliance"
+  - "SHOULD requirements are strongly recommended and deviations should be documented"
+  - "This profile requires both authorization server and client implementations to be compliant"
+  - "Resource servers must support sender-constrained token verification"
+  - "Public clients are explicitly excluded from FAPI 2.0 scope"
+  - "Bearer tokens (non-sender-constrained) are prohibited"
+  - "Privacy impact assessments are required per ISO29100/ISO29134"
+
+version_history:
+  - version: "1.0.0"
+    date: "2026-01-29"
+    changes: "Initial extraction from FAPI 2.0 Security Profile"
