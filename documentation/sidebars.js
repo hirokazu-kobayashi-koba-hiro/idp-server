@@ -558,6 +558,14 @@ const sidebars = {
             "content_11_learning/networking/README",
             {
               type: "category",
+              label: "プロトコル基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/networking/tcp-fundamentals"
+              ]
+            },
+            {
+              type: "category",
               label: "DNS",
               collapsed: true,
               items: [
@@ -572,6 +580,9 @@ const sidebars = {
               items: [
                 "content_11_learning/networking/load-balancing",
                 "content_11_learning/networking/ssl-tls-certificates",
+                "content_11_learning/networking/https-termination",
+                "content_11_learning/networking/web-server-architecture",
+                "content_11_learning/networking/connection-pooling",
                 "content_11_learning/networking/api-gateway-networking"
               ]
             },
