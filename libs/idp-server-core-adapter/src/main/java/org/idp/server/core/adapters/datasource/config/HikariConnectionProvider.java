@@ -50,7 +50,7 @@ public class HikariConnectionProvider implements DbConnectionProvider {
               : adminDatabaseConfig.writerConfigs().get(databaseType);
       try {
 
-        log.debug(
+        log.trace(
             "DB connection for "
                 + databaseType
                 + " url: "

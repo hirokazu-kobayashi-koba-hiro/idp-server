@@ -120,7 +120,7 @@ public class OrgManagementFilter extends OncePerRequestFilter {
           new OrganizationOperatorPrincipal(authenticationContext, authorities);
       SecurityContextHolder.getContext().setAuthentication(principal);
 
-      logger.info(
+      logger.debug(
           "Organization management authentication successful - org: {}, user: {}, tenant: {}",
           organizationId.value(),
           user.userIdentifier().value(),
