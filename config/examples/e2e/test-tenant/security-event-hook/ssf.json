@@ -4,7 +4,7 @@
   "execution_order": 2,
   "triggers": [
     "fido_uaf_registration_success",
-    "user_delete"
+    "user_self_delete"
   ],
   "attributes": {
     "label": "Security Event Framework",
@@ -56,7 +56,7 @@
         }
       }
     },
-    "user_delete": {
+    "user_self_delete": {
       "execution": {
         "function": "ssf",
         "details": {
@@ -68,7 +68,7 @@
           },
           "security_event_token_additional_payload_mapping_rules": [
             { "from": "$.user.name", "to": "username" },
-            { "static_value": "user_delete", "to": "description" }
+            { "static_value": "user_self_delete", "to": "description" }
           ]
         }
       }

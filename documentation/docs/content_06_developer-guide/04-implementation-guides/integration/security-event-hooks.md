@@ -298,8 +298,9 @@ CREATE TABLE security_event_hook_results
 - `user_create` - ユーザー作成
 - `user_get` - ユーザー情報取得
 - `user_edit` - ユーザー編集
-- `user_delete` - ユーザー削除
-- `user_deletion` - ユーザー削除
+- `user_delete` - ユーザー削除（Admin操作）
+- `user_self_delete` - ユーザー自身による削除
+- `user_deletion` - ユーザー削除（内部イベント）
 - `user_lock` - ユーザーロック
 - `user_disabled` - ユーザー無効化
 - `user_enabled` - ユーザー有効化

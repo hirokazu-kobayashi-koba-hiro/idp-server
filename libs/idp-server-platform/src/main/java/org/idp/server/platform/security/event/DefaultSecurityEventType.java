@@ -23,6 +23,7 @@ public enum DefaultSecurityEventType {
   user_disabled("User disabled"),
   user_enabled("User enabled"),
   user_deletion("User deleted"),
+  user_self_delete("User deleted their own account"),
   password_success("User successfully authenticated with a password"),
   password_failure("User failed authentication with a password"),
   fido_uaf_registration_challenge_success("User challenge registration fido-uaf"),

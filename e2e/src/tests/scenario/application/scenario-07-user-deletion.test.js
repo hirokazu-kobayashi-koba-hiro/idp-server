@@ -77,7 +77,7 @@ describe("User lifecycle", () => {
 
       // Get security event list for user deletion
       const securityEventListResponse = await get({
-        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/security-events?external_user_id=${user.ex_sub}&event_type=user_delete&limit=1`,
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/security-events?external_user_id=${user.ex_sub}&event_type=user_self_delete&limit=1`,
         headers: {
           Authorization: `Bearer ${adminAccessToken}`
         }
@@ -85,13 +85,13 @@ describe("User lifecycle", () => {
       console.log("Security Event List:", JSON.stringify(securityEventListResponse.data, null, 2));
       expect(securityEventListResponse.status).toBe(200);
       expect(securityEventListResponse.data.total_count).toBe(1);
-      expect(securityEventListResponse.data.list[0].type).toEqual("user_delete");
+      expect(securityEventListResponse.data.list[0].type).toEqual("user_self_delete");
 
       const securityEventId = securityEventListResponse.data.list[0].id;
 
       // Get security event hook execution result
       const securityEventHookListResponse = await get({
-        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/security-event-hooks?security_event_id=${securityEventId}&event_type=user_delete&limit=1`,
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/security-event-hooks?security_event_id=${securityEventId}&event_type=user_self_delete&limit=1`,
         headers: {
           Authorization: `Bearer ${adminAccessToken}`
         }
