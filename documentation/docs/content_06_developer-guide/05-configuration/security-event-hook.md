@@ -229,7 +229,8 @@ SSFでもOAuth 2.0認証のキャッシュを利用できます：
 - `oauth_authorize` - Authorization Code発行
 - `token_request_success` - トークン発行
 - `user_locked` - アカウントロック
-- `user_delete` - ユーザー削除
+- `user_delete` - ユーザー削除（Admin操作）
+- `user_self_delete` - ユーザー自身による削除
 
 **完全なリスト**: [DefaultSecurityEventType.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/event/DefaultSecurityEventType.java)
 
