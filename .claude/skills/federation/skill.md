@@ -10,6 +10,7 @@ description: 外部IdP連携（Federation/SSO）機能の開発・設定を行�
 - `documentation/docs/content_05_how-to/phase-3-advanced/01-federation-setup.md` - 設定ガイド
 - `documentation/docs/content_06_developer-guide/03-application-plane/08-federation.md` - 実装ガイド
 - `documentation/docs/content_06_developer-guide/05-configuration/federation.md` - 設定リファレンス
+- `documentation/docs/content_10_ai_developer/ai-43-federation-oidc.md` - AI開発者向けガイド
 
 ## モジュール構成
 
@@ -92,7 +93,7 @@ UserInfoMapper.map()
 }
 ```
 
-**実装箇所**: `StandardOidcExecutor.java:134`
+**実装箇所**: `StandardOidcExecutor` クラスの `requestUserInfo()` メソッド
 ```java
 return UserinfoExecutionResult.success(Map.of("http_request", map));
 ```
@@ -196,13 +197,15 @@ config/templates/federation/
 
 ```
 e2e/src/tests/
-├── integration/federation/           # 統合テスト
-│   ├── integration-01-federation-crud.test.js
-│   └── ...
-├── usecase/advance/
-│   └── advance-01-federation-security-event-user-name.test.js
-└── scenario/control_plane/organization/
-    └── organization_federation_configuration_management.test.js
+├── scenario/control_plane/
+│   ├── organization/
+│   │   ├── organization_federation_config_management.test.js
+│   │   └── organization_federation_config_management_structured.test.js
+│   └── system/
+│       └── federation_management.test.js
+│
+└── usecase/advance/
+    └── advance-01-federation-security-event-user-name.test.js
 ```
 
 ## コマンド
@@ -213,6 +216,7 @@ e2e/src/tests/
 
 # テスト
 cd e2e && npm test -- --grep "federation"
+cd e2e && npm test -- scenario/control_plane/organization/organization_federation_config_management.test.js
 ```
 
 ## トラブルシューティング
