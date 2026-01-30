@@ -110,10 +110,10 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
       "redirect_uri": "http://localhost:8080/${TENANT_ID}/v1/authorizations/federations/oidc/callback",
       "scopes_supported": ["openid", "profile", "email"],
       "userinfo_mapping_rules": [
-        {"from": "$.sub", "to": "external_idp_user_id"},
-        {"from": "$.email", "to": "email"},
-        {"from": "$.name", "to": "name"},
-        {"from": "$.picture", "to": "picture"}
+        {"from": "$.http_request.response_body.sub", "to": "external_user_id"},
+        {"from": "$.http_request.response_body.email", "to": "email"},
+        {"from": "$.http_request.response_body.name", "to": "name"},
+        {"from": "$.http_request.response_body.picture", "to": "picture"}
       ]
     }
   }'
@@ -124,7 +124,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 - `payload.provider`: Executorタイプ（`standard`/`oauth-extension`/`facebook`）
 - `payload.issuer_name`: IdP識別名（ユーザーの`external_idp_issuer`に設定される）
 - `payload.redirect_uri`: コールバックURL（外部IdPに登録するURL）
-- `payload.userinfo_mapping_rules`: UserInfo→idp-serverユーザーへのマッピング
+- `payload.userinfo_mapping_rules`: UserInfo→idp-serverユーザーへのマッピング（詳細は[userinfo_mapping_rulesの詳細](#userinfo_mapping_rules-の詳細)を参照）
 
 **レスポンス**:
 ```json
@@ -312,9 +312,10 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
     "redirect_uri": "http://localhost:8080/${TENANT_ID}/v1/authorizations/federations/oidc/callback",
     "scopes_supported": ["openid", "profile", "email"],
     "userinfo_mapping_rules": [
-      {"from": "$.sub", "to": "external_idp_user_id"},
-      {"from": "$.email", "to": "email"},
-      {"from": "$.name", "to": "name"}
+      {"from": "$.http_request.response_body.sub", "to": "external_user_id"},
+      {"from": "$.http_request.response_body.email", "to": "email"},
+      {"from": "$.http_request.response_body.name", "to": "name"},
+      {"from": "$.http_request.response_body.preferred_username", "to": "preferred_username"}
     ]
   }
 }
@@ -340,10 +341,11 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
     "redirect_uri": "http://localhost:8080/${TENANT_ID}/v1/authorizations/federations/oidc/callback",
     "scopes_supported": ["openid", "profile", "email"],
     "userinfo_mapping_rules": [
-      {"from": "$.sub", "to": "external_idp_user_id"},
-      {"from": "$.email", "to": "email"},
-      {"from": "$.name", "to": "name"},
-      {"from": "$.custom_claims.department", "to": "custom_properties.department"}
+      {"from": "$.http_request.response_body.sub", "to": "external_user_id"},
+      {"from": "$.http_request.response_body.email", "to": "email"},
+      {"from": "$.http_request.response_body.name", "to": "name"},
+      {"from": "$.http_request.response_body.custom_claims.department", "to": "custom_properties.department"},
+      {"from": "$.http_request.response_body.custom_claims.employee_id", "to": "custom_properties.employee_id"}
     ]
   }
 }
@@ -464,39 +466,146 @@ ID Token検証時:
 
 **通常は`standard`を使用**してください。`oauth-extension`は`userinfo_execution`でカスタムHTTPリクエストが必要な場合に使用します。
 
-⚠️ **注意**: 無効なprovider値を指定すると**500エラー**（`No OidcSsoExecutor found for provider xxx`）になります。値は**大文字小文字を区別**します。
+⚠️ **注意**: 無効なprovider値を指定すると**404エラー**が返されます。値は**大文字小文字を区別**します。
 
-### カスタム属性マッピング
+```json
+{
+  "error": "invalid_request",
+  "error_description": "No OidcSsoExecutor found for provider xxx"
+}
+```
+
+### userinfo_mapping_rules の詳細
+
+`userinfo_mapping_rules` は JSONPath を使用して外部IdPのユーザー情報をidp-serverのユーザー属性にマッピングします。
+
+#### provider別のJSONPath形式
+
+| provider | JSONPath形式 | 説明 |
+|----------|-------------|------|
+| `standard` | `$.http_request.response_body.{field}` | 標準OIDCプロバイダー |
+| `oauth-extension` (単一リクエスト) | `$.userinfo_execution_http_request.response_body.{field}` | カスタム単一HTTPリクエスト |
+| `oauth-extension` (複数リクエスト) | `$.userinfo_execution_http_requests[index].response_body.{field}` | カスタム複数HTTPリクエスト |
+
+#### standard プロバイダーの例
+
+Google, Azure AD, カスタムOIDCなど標準的なプロバイダーの場合:
 
 ```json
 {
   "payload": {
+    "provider": "standard",
     "userinfo_mapping_rules": [
-      {"from": "$.sub", "to": "external_idp_user_id"},
-      {"from": "$.email", "to": "email"},
-      {"from": "$.name", "to": "name"},
-      {"from": "$.picture", "to": "picture"},
-      {"from": "$.custom_claims.department", "to": "custom_properties.department"},
-      {"from": "$.custom_claims.employee_id", "to": "custom_properties.employee_id"}
+      {"from": "$.http_request.response_body.sub", "to": "external_user_id"},
+      {"from": "$.http_request.response_body.email", "to": "email"},
+      {"from": "$.http_request.response_body.name", "to": "name"},
+      {"from": "$.http_request.response_body.picture", "to": "picture"},
+      {"from": "$.http_request.response_body.custom_claims.department", "to": "custom_properties.department"}
     ]
   }
 }
 ```
 
-**JSONPath**で柔軟にマッピング:
-- `$.email` - ルート直下の`email`
-- `$.custom_claims.department` - ネストした属性
+#### oauth-extension プロバイダーの例
 
-**重要な`to`フィールド**:
-- `external_idp_user_id` - 外部IdPでのユーザーID（**必須**）
-- `email`, `name`, `picture` - 標準ユーザー属性
-- `custom_properties.xxx` - カスタム属性
+カスタムHTTPリクエストでユーザー情報を取得する場合:
 
-### 複数HTTPリクエスト（高度）
+**単一リクエスト（http_request）**:
+```json
+{
+  "payload": {
+    "provider": "oauth-extension",
+    "userinfo_execution": {
+      "function": "http_request",
+      "http_request": {
+        "url": "https://api.example.com/user/profile",
+        "method": "GET",
+        "header_mapping_rules": [
+          {
+            "from": "$.request_body.access_token",
+            "to": "Authorization",
+            "functions": [{"name": "format", "args": {"template": "Bearer {{value}}"}}]
+          }
+        ]
+      }
+    },
+    "userinfo_mapping_rules": [
+      {"from": "$.userinfo_execution_http_request.response_body.user_id", "to": "external_user_id"},
+      {"from": "$.userinfo_execution_http_request.response_body.mail", "to": "email"},
+      {"from": "$.userinfo_execution_http_request.response_body.display_name", "to": "name"}
+    ]
+  }
+}
+```
 
-標準的なOIDC IdPでは不要ですが、一部のIdPでは複数API呼び出しが必要な場合があります。
+**ポイント**:
+- `$.request_body.access_token`で事前に取得したアクセストークンを参照
+- `format`関数で`Bearer `プレフィックスを追加してAuthorizationヘッダーに設定
 
-**詳細**: [Federation実装ガイド](../content_06_developer-guide/03-application-plane/08-federation.md)、[Federation設定ガイド](../content_06_developer-guide/05-configuration/federation.md)
+**複数リクエスト（http_requests）**:
+```json
+{
+  "payload": {
+    "provider": "oauth-extension",
+    "userinfo_execution": {
+      "function": "http_requests",
+      "http_requests": [
+        {
+          "url": "https://api.example.com/user/overview",
+          "method": "POST",
+          "header_mapping_rules": [
+            {
+              "from": "$.request_body.access_token",
+              "to": "Authorization",
+              "functions": [{"name": "format", "args": {"template": "Bearer {{value}}"}}]
+            }
+          ]
+        },
+        {
+          "url": "https://api.example.com/user/details",
+          "method": "POST",
+          "header_mapping_rules": [
+            {
+              "from": "$.request_body.access_token",
+              "to": "Authorization",
+              "functions": [{"name": "format", "args": {"template": "Bearer {{value}}"}}]
+            }
+          ]
+        }
+      ]
+    },
+    "userinfo_mapping_rules": [
+      {"from": "$.userinfo_execution_http_requests[0].response_body.id", "to": "external_user_id"},
+      {"from": "$.userinfo_execution_http_requests[0].response_body.email", "to": "email"},
+      {"from": "$.userinfo_execution_http_requests[1].response_body.birthdate", "to": "birthdate"},
+      {"from": "$.userinfo_execution_http_requests[1].response_body.phone_number", "to": "phone_number"},
+      {"from": "$.userinfo_execution_http_requests[1].response_body.role", "to": "custom_properties.role"}
+    ]
+  }
+}
+```
+
+#### 静的値のマッピング
+
+`from`の代わりに`static_value`を使用して固定値を設定できます:
+```json
+{"static_value": "my-provider", "to": "provider_id"}
+```
+
+#### 重要な`to`フィールド
+
+| フィールド | 説明 | 必須 |
+|-----------|------|------|
+| `external_user_id` | 外部IdPでのユーザーID | **必須** |
+| `email` | メールアドレス | - |
+| `name` | 表示名 | - |
+| `picture` | プロフィール画像URL | - |
+| `preferred_username` | ユーザー名 | - |
+| `birthdate` | 生年月日 | - |
+| `phone_number` | 電話番号 | - |
+| `custom_properties.{key}` | カスタム属性 | - |
+
+**詳細**: [Federation実装ガイド](../../content_06_developer-guide/03-application-plane/08-federation.md)、[Federation設定ガイド](../../content_06_developer-guide/05-configuration/federation.md)
 
 ---
 
