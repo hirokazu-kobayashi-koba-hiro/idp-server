@@ -11,6 +11,13 @@
 | `setup-pg-cron-jobs.sql` | pg_cronジョブ登録 | db_owner |
 | `aggregate_historical_statistics.sql` | 過去データの統計集計 | db_owner |
 
+## ドキュメント一覧
+
+| ドキュメント | 説明 |
+|-------------|------|
+| [statistics-maintenance.md](./statistics-maintenance.md) | 統計データメンテナンスガイド |
+| [statistics-events-migration/](./statistics-events-migration/) | statistics_events テーブル移行 |
+
 ---
 
 ## データベース構築手順（手動）
