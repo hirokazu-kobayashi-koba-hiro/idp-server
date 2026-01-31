@@ -93,8 +93,10 @@ documentation/docs/content_01_intro/ # イントロダクション
 #### Step 1.2: コンセプトを理解する
 ```
 documentation/docs/content_03_concepts/
-├── 01-system-overview/             # システム概要
-│   └── concept-02-multi-tenant.md  # マルチテナント
+├── 01-foundation/                  # 基盤
+│   ├── concept-01-multi-tenant.md  # マルチテナント
+│   ├── concept-02-control-plane.md # 管理API
+│   └── concept-03-client.md        # クライアント
 ├── 02-identity-management/         # ID管理
 ├── 03-authentication-authorization/ # 認証・認可
 │   ├── concept-01-authentication-policy.md
@@ -105,8 +107,10 @@ documentation/docs/content_03_concepts/
 #### Step 1.3: OAuth 2.0/OIDC基礎（未経験の場合）
 ```
 documentation/docs/content_04_protocols/
-├── oauth2/                         # OAuth 2.0
-└── oidc/                          # OpenID Connect
+├── protocol-01-authorization-code-flow.md  # 認可コードフロー
+├── protocol-02-ciba-flow.md                # CIBAフロー
+├── protocol-03-introspection.md            # トークンイントロスペクション
+└── protocol-06-client-authentication.md    # クライアント認証
 ```
 
 ---
@@ -158,11 +162,14 @@ documentation/docs/content_04_protocols/
 #### Step 2.3: 開発者ガイドを読む
 ```
 documentation/docs/content_06_developer-guide/
-├── 01-architecture/                # アーキテクチャ詳細
+├── 01-getting-started/             # 入門（サービス概要、アーキテクチャ、設計原則）
 ├── 02-control-plane/               # 管理API
 ├── 03-application-plane/           # OAuth/OIDCエンドポイント
 ├── 04-implementation-guides/       # 実装ガイド
-└── 05-configuration/               # 設定
+├── 05-configuration/               # 設定
+├── 06-patterns/                    # 共通パターン
+├── 07-troubleshooting/             # トラブルシューティング
+└── 08-reference/                   # リファレンス
 ```
 
 ---
@@ -221,14 +228,14 @@ npm test
 
 #### Step 4.1: 認可フローを追う（推奨開始点）
 
-1. **エントリーポイント**: `AuthorizationController`
+1. **エントリーポイント**: `OAuthV1Api`
 2. **EntryService**: `OAuthFlowEntryService.authorize()`
 3. **Handler**: `AuthorizationRequestHandler`
 4. **レスポンス生成**: `AuthorizationResponse`
 
 ```
 libs/idp-server-springboot-adapter/
-└── .../controller/OAuthController.java
+└── .../restapi/oauth/OAuthV1Api.java
 
 libs/idp-server-use-cases/
 └── .../application/enduser/OAuthFlowEntryService.java
@@ -239,7 +246,7 @@ libs/idp-server-core/
 
 #### Step 4.2: トークン発行フローを追う
 
-1. `TokenController` → `TokenEndpointEntryService`
+1. `TokenV1Api` → `TokenEndpointEntryService`
 2. `TokenRequestHandler` → 各GrantService
 3. `OAuthTokenCreationServices` → トークン生成
 
