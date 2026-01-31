@@ -116,7 +116,42 @@ cd idp-server
 - dnsmasq による `*.local.dev` のローカルDNS解決
 - mkcert によるローカルSSL証明書の生成
 
-> **Note**: macOS を前提としています。他のOSでは手動設定が必要です。
+> **Note**: macOS を前提としています。他のOSでは手動設定が必要です（下記参照）。
+
+#### 設定の確認
+
+スクリプト実行後、以下のコマンドでDNS解決が正常に動作しているか確認します：
+
+```shell
+# DNS解決の確認
+ping -c 1 api.local.dev
+ping -c 1 auth.local.dev
+
+# または nslookup で確認
+nslookup api.local.dev
+```
+
+`127.0.0.1` が返されれば正常です。
+
+#### 手動設定（他のOS / dnsmasqが使えない場合）
+
+dnsmasqを使用できない環境では、`/etc/hosts` に直接追記することで代替できます：
+
+```shell
+# Linux / macOS
+sudo sh -c 'echo "127.0.0.1 api.local.dev auth.local.dev sample.local.dev" >> /etc/hosts'
+
+# Windows (管理者権限のPowerShell)
+Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 api.local.dev auth.local.dev sample.local.dev"
+```
+
+#### トラブルシューティング
+
+| 問題 | 原因 | 解決策 |
+|------|------|--------|
+| `ping api.local.dev` が失敗 | dnsmasq が動作していない | `brew services restart dnsmasq` を実行、または `/etc/hosts` で手動設定 |
+| DNS解決が `127.0.0.1` 以外を返す | 他のDNSリゾルバが優先されている | `/etc/resolver/local.dev` ファイルが存在するか確認 |
+| SSL証明書エラー | mkcert のルートCAが未インストール | `mkcert -install` を実行 |
 
 ### 3. 環境変数の設定
 
