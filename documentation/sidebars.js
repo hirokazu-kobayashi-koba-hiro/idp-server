@@ -811,6 +811,35 @@ const sidebars = {
               ]
             }
           ]
+        },
+        {
+          type: "category",
+          label: "AI・機械学習基礎",
+          items: [
+            "content_11_learning/ai-fundamentals/README",
+            "content_11_learning/ai-fundamentals/ai-history-evolution",
+            "content_11_learning/ai-fundamentals/llm-fundamentals",
+            "content_11_learning/ai-fundamentals/prompt-engineering",
+            "content_11_learning/ai-fundamentals/rag-architecture",
+            "content_11_learning/ai-fundamentals/ai-agents",
+            "content_11_learning/ai-fundamentals/modern-ai-tools",
+            "content_11_learning/ai-fundamentals/column-notebooklm-experience",
+            "content_11_learning/ai-fundamentals/column-ai-paradox-fundamentals"
+          ]
+        },
+        {
+          type: "category",
+          label: "マイクロサービス",
+          items: [
+            "content_11_learning/microservices/README",
+            "content_11_learning/microservices/microservices-fundamentals",
+            "content_11_learning/microservices/service-communication",
+            "content_11_learning/microservices/data-management",
+            "content_11_learning/microservices/observability",
+            "content_11_learning/microservices/microservices-on-kubernetes",
+            "content_11_learning/microservices/migration-strategy",
+            "content_11_learning/microservices/tradeoffs"
+          ]
         }
       ]
     },
