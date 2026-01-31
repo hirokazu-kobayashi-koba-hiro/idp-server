@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.system.config.SsrfProtectionConfig;
 import org.idp.server.platform.system.config.TrustedProxyConfig;
@@ -118,6 +120,7 @@ class CachedSystemConfigurationResolverTest {
   /** Simple in-memory cache store for testing */
   private static class InMemoryCacheStore implements CacheStore {
     private final Map<String, Object> cache = new HashMap<>();
+    private final Map<String, Long> counters = new HashMap<>();
 
     @Override
     public <T> void put(String key, T value) {
@@ -148,6 +151,33 @@ class CachedSystemConfigurationResolverTest {
     @Override
     public void delete(String key) {
       cache.remove(key);
+    }
+
+    @Override
+    public long incrementBy(String key, long delta) {
+      return counters.merge(key, delta, Long::sum);
+    }
+
+    @Override
+    public long incrementBy(String key, long delta, int timeToLiveSeconds) {
+      // Ignore TTL for testing
+      return counters.merge(key, delta, Long::sum);
+    }
+
+    @Override
+    public Set<String> keys(String pattern) {
+      // Convert glob pattern to regex
+      String regex = pattern.replace(".", "\\.").replace("*", ".*").replace("?", ".");
+      Pattern compiledPattern = Pattern.compile(regex);
+      return counters.keySet().stream()
+          .filter(key -> compiledPattern.matcher(key).matches())
+          .collect(Collectors.toSet());
+    }
+
+    @Override
+    public long getAndDelete(String key) {
+      Long value = counters.remove(key);
+      return value != null ? value : 0;
     }
   }
 

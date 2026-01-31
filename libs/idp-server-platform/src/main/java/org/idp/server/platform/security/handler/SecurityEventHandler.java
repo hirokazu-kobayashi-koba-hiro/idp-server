@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.security.event.SecurityEventUser;
@@ -37,7 +38,7 @@ import org.idp.server.platform.security.repository.SecurityEventCommandRepositor
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.statistics.FiscalYearCalculator;
-import org.idp.server.platform.statistics.StatisticsEventRecord;
+import org.idp.server.platform.statistics.buffer.StatisticsBufferManager;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.StatisticsEventsCommandRepository;
@@ -54,6 +55,7 @@ public class SecurityEventHandler {
   DailyActiveUserCommandRepository dailyActiveUserRepository;
   MonthlyActiveUserCommandRepository monthlyActiveUserRepository;
   YearlyActiveUserCommandRepository yearlyActiveUserRepository;
+  StatisticsBufferManager statisticsBufferManager;
 
   LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHandler.class);
 
@@ -65,7 +67,8 @@ public class SecurityEventHandler {
       StatisticsEventsCommandRepository statisticsEventsRepository,
       DailyActiveUserCommandRepository dailyActiveUserRepository,
       MonthlyActiveUserCommandRepository monthlyActiveUserRepository,
-      YearlyActiveUserCommandRepository yearlyActiveUserRepository) {
+      YearlyActiveUserCommandRepository yearlyActiveUserRepository,
+      StatisticsBufferManager statisticsBufferManager) {
     this.securityEventHooks = securityEventHooks;
     this.resultsCommandRepository = resultsCommandRepository;
     this.securityEventHookConfigurationQueryRepository =
@@ -75,6 +78,7 @@ public class SecurityEventHandler {
     this.dailyActiveUserRepository = dailyActiveUserRepository;
     this.monthlyActiveUserRepository = monthlyActiveUserRepository;
     this.yearlyActiveUserRepository = yearlyActiveUserRepository;
+    this.statisticsBufferManager = statisticsBufferManager;
   }
 
   public void handle(Tenant tenant, SecurityEvent securityEvent) {
@@ -156,78 +160,69 @@ public class SecurityEventHandler {
    * <p>Increments the event type metric (e.g., login_success, issue_token_success) and tracks
    * unique daily/monthly/yearly active users (DAU/MAU/YAU). An active user event is defined by
    * {@link DefaultSecurityEventType#isActiveUserEvent()}.
+   *
+   * <p>Uses in-memory buffering for statistics counts. Active user tracking uses DB directly with
+   * INSERT ON CONFLICT for deduplication (scalable to millions of users).
    */
   private void handleActiveUserEvent(
       Tenant tenant, SecurityEventUser securityEventUser, LocalDate eventDate, String eventType) {
 
     SecurityEventUserIdentifier userId = securityEventUser.securityEventUserIdentifier();
     String userName = securityEventUser.name();
+    TenantIdentifier tenantId = tenant.identifier();
 
     // Derive month and year from eventDate for statistics grouping
     LocalDate monthStart = eventDate.withDayOfMonth(1);
     LocalDate yearStart =
         FiscalYearCalculator.calculateFiscalYearStart(eventDate, tenant.fiscalYearStartMonth());
 
-    // Collect statistics records for batch upsert
-    List<StatisticsEventRecord> records = new ArrayList<>();
+    // Add the actual event type metric to buffer
+    statisticsBufferManager.increment(tenantId, eventDate, eventType);
 
-    // Add the actual event type metric
-    records.add(new StatisticsEventRecord(tenant.identifier(), eventDate, eventType, 1));
-
-    // Track DAU - add user to daily active users table and increment DAU count if new
+    // Track DAU - DB handles deduplication via INSERT ON CONFLICT
     boolean isNewDailyUser =
         dailyActiveUserRepository.addActiveUserAndReturnIfNew(
-            tenant.identifier(), eventDate, userId, userName);
-
+            tenantId, eventDate, userId, userName);
     if (isNewDailyUser) {
       log.debug(
           "New daily active user: tenant={}, date={}, user={}",
           tenant.identifierValue(),
           eventDate,
           userId.value());
-      records.add(new StatisticsEventRecord(tenant.identifier(), eventDate, "dau", 1));
+      statisticsBufferManager.increment(tenantId, eventDate, "dau");
     }
 
-    // Track MAU - add user to monthly active users table and increment MAU count if new
+    // Track MAU - DB handles deduplication via INSERT ON CONFLICT
     boolean isNewMonthlyUser =
         monthlyActiveUserRepository.addActiveUserAndReturnIfNew(
-            tenant.identifier(), monthStart, userId, userName);
-
+            tenantId, monthStart, userId, userName);
     if (isNewMonthlyUser) {
       log.debug(
           "New monthly active user: tenant={}, month={}, user={}",
           tenant.identifierValue(),
           monthStart,
           userId.value());
-      // Cumulative MAU for the month (stored at monthStart)
-      records.add(new StatisticsEventRecord(tenant.identifier(), monthStart, "mau", 1));
-      // Daily new MAU increment (for tracking daily growth)
-      records.add(new StatisticsEventRecord(tenant.identifier(), eventDate, "new_mau", 1));
+      statisticsBufferManager.increment(tenantId, monthStart, "mau");
+      statisticsBufferManager.increment(tenantId, eventDate, "new_mau");
     }
 
-    // Track YAU - add user to yearly active users table and increment YAU count if new
+    // Track YAU - DB handles deduplication via INSERT ON CONFLICT
     boolean isNewYearlyUser =
         yearlyActiveUserRepository.addActiveUserAndReturnIfNew(
-            tenant.identifier(), yearStart, userId, userName);
-
+            tenantId, yearStart, userId, userName);
     if (isNewYearlyUser) {
       log.debug(
           "New yearly active user: tenant={}, year={}, user={}",
           tenant.identifierValue(),
           yearStart,
           userId.value());
-      // Cumulative YAU for the fiscal year (stored at yearStart)
-      records.add(new StatisticsEventRecord(tenant.identifier(), yearStart, "yau", 1));
-      // Daily new YAU increment (for tracking daily growth)
-      records.add(new StatisticsEventRecord(tenant.identifier(), eventDate, "new_yau", 1));
+      statisticsBufferManager.increment(tenantId, yearStart, "yau");
+      statisticsBufferManager.increment(tenantId, eventDate, "new_yau");
     }
-
-    // Batch upsert all statistics records in a single query
-    statisticsEventsRepository.batchUpsert(records);
   }
 
   /**
-   * Increment a metric in the statistics_events table
+   * Increment a metric in the statistics buffer
    *
    * @param tenant the tenant
    * @param date statistics date
@@ -235,11 +230,21 @@ public class SecurityEventHandler {
    */
   private void incrementMetric(Tenant tenant, LocalDate date, String eventType) {
     log.debug(
-        "Incrementing metric: tenant={}, date={}, eventType={}",
+        "Buffering metric: tenant={}, date={}, eventType={}",
         tenant.identifierValue(),
         date,
         eventType);
 
-    statisticsEventsRepository.increment(tenant.identifier(), date, eventType);
+    TenantIdentifier tenantId = tenant.identifier();
+    statisticsBufferManager.increment(tenantId, date, eventType);
+  }
+
+  /**
+   * Get the buffer manager for external flush operations (e.g., scheduled tasks).
+   *
+   * @return the statistics buffer manager
+   */
+  public StatisticsBufferManager getStatisticsBufferManager() {
+    return statisticsBufferManager;
   }
 }

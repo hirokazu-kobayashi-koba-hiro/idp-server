@@ -23,7 +23,7 @@
       "include_user_name": true,
       "include_client_id": true,
       "include_ip": true,
-      "persistence_enabled": false,
+      "persistence_enabled": true,
       "include_detail": false,
       "statistics_enabled": true
     },

@@ -145,6 +145,7 @@ import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.datasource.DatabaseTypeConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
 import org.idp.server.platform.datasource.session.SessionStore;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.date.TimeConfig;
@@ -166,6 +167,12 @@ import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.SecurityEventPublisher;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.repository.*;
+import org.idp.server.platform.statistics.StatisticsBufferFlushApi;
+import org.idp.server.platform.statistics.buffer.CacheBackedStatisticsBufferFlushService;
+import org.idp.server.platform.statistics.buffer.CacheBackedStatisticsBufferManager;
+import org.idp.server.platform.statistics.buffer.StatisticsBufferFlushService;
+import org.idp.server.platform.statistics.buffer.StatisticsBufferManager;
+import org.idp.server.platform.statistics.buffer.TenantStatisticsBufferManager;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.StatisticsEventsCommandRepository;
@@ -262,6 +269,9 @@ public class IdpServerApplication {
   OrgAuditLogManagementApi orgAuditLogManagementApi;
   OrganizationUserAuthenticationApi organizationUserAuthenticationApi;
   OrgSecurityEventHookManagementApi orgSecurityEventHookManagementApi;
+
+  StatisticsBufferManager statisticsBufferManager;
+  StatisticsBufferFlushApi statisticsBufferFlushApi;
 
   public IdpServerApplication(
       String adminTenantId,
@@ -428,6 +438,32 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(MonthlyActiveUserCommandRepository.class);
     YearlyActiveUserCommandRepository yearlyActiveUserCommandRepository =
         applicationComponentContainer.resolve(YearlyActiveUserCommandRepository.class);
+
+    // Statistics buffer manager and flush service (shared singleton for buffering statistics
+    // writes)
+    // Use cache-backed implementation if CacheStore is enabled (e.g., Redis),
+    // otherwise use memory-based implementation
+    StatisticsBufferFlushApi flushApiImpl;
+    if (!(cacheStore instanceof NoOperationCacheStore)) {
+      // Cache enabled (e.g., Redis) - use cache-backed for durability
+      CacheBackedStatisticsBufferManager cacheBackedManager =
+          new CacheBackedStatisticsBufferManager(cacheStore);
+      this.statisticsBufferManager = cacheBackedManager;
+      CacheBackedStatisticsBufferFlushService cacheBackedFlushService =
+          new CacheBackedStatisticsBufferFlushService(
+              cacheBackedManager, statisticsEventsCommandRepository);
+      flushApiImpl = new StatisticsBufferFlushEntryService(cacheBackedFlushService);
+    } else {
+      // Cache disabled - use memory-based
+      TenantStatisticsBufferManager memoryManager = new TenantStatisticsBufferManager();
+      this.statisticsBufferManager = memoryManager;
+      StatisticsBufferFlushService memoryFlushService =
+          new StatisticsBufferFlushService(memoryManager, statisticsEventsCommandRepository);
+      flushApiImpl = new StatisticsBufferFlushEntryService(memoryFlushService);
+    }
+    this.statisticsBufferFlushApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            flushApiImpl, StatisticsBufferFlushApi.class, databaseTypeProvider);
 
     // System configuration resolver for SSRF protection and trusted proxy settings
     SystemConfigurationRepository systemConfigurationRepository =
@@ -717,7 +753,8 @@ public class IdpServerApplication {
                 statisticsEventsCommandRepository,
                 dailyActiveUserCommandRepository,
                 monthlyActiveUserCommandRepository,
-                yearlyActiveUserCommandRepository),
+                yearlyActiveUserCommandRepository,
+                statisticsBufferManager),
             SecurityEventApi.class,
             databaseTypeProvider);
 
@@ -1479,5 +1516,29 @@ public class IdpServerApplication {
 
   public HealthCheckApi healthCheckApi() {
     return healthCheckApi;
+  }
+
+  /**
+   * Get the statistics buffer manager for periodic flush operations.
+   *
+   * <p>Use this to schedule periodic flush tasks (e.g., every 5 seconds) to write buffered
+   * statistics to the database.
+   *
+   * @return the shared statistics buffer manager
+   */
+  public StatisticsBufferManager statisticsBufferManager() {
+    return statisticsBufferManager;
+  }
+
+  /**
+   * Get the statistics buffer flush API for periodic flush operations.
+   *
+   * <p>Use this to schedule periodic flush tasks (e.g., every 5 seconds) to write buffered
+   * statistics to the database. This API is wrapped with a proxy for proper DB connection handling.
+   *
+   * @return the statistics buffer flush API (proxied)
+   */
+  public StatisticsBufferFlushApi statisticsBufferFlushApi() {
+    return statisticsBufferFlushApi;
   }
 }

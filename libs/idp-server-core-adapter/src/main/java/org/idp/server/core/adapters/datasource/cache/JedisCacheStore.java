@@ -16,7 +16,9 @@
 
 package org.idp.server.core.adapters.datasource.cache;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import org.idp.server.platform.datasource.cache.CacheConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.json.JsonConverter;
@@ -24,6 +26,8 @@ import org.idp.server.platform.log.LoggerWrapper;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.params.ScanParams;
+import redis.clients.jedis.resps.ScanResult;
 
 public class JedisCacheStore implements CacheStore {
 
@@ -115,6 +119,74 @@ public class JedisCacheStore implements CacheStore {
       resource.del(key);
     } catch (Exception e) {
       log.error("Failed to delete cache", e);
+    }
+  }
+
+  @Override
+  public long incrementBy(String key, long delta) {
+    try (Jedis resource = jedisPool.getResource()) {
+      return resource.incrBy(key, delta);
+    } catch (Exception e) {
+      log.error("Failed to increment cache key: {}", key, e);
+      return 0;
+    }
+  }
+
+  @Override
+  public long incrementBy(String key, long delta, int timeToLiveSeconds) {
+    try (Jedis resource = jedisPool.getResource()) {
+      long result = resource.incrBy(key, delta);
+      // Set TTL only for newly created keys
+      if (result == delta) {
+        resource.expire(key, timeToLiveSeconds);
+      }
+      return result;
+    } catch (Exception e) {
+      log.error("Failed to increment cache key: {}", key, e);
+      return 0;
+    }
+  }
+
+  @Override
+  public Set<String> keys(String pattern) {
+    Set<String> allKeys = new HashSet<>();
+    try (Jedis resource = jedisPool.getResource()) {
+      // Use SCAN for safe iteration (avoid blocking with KEYS on large datasets)
+      ScanParams scanParams = new ScanParams().match(pattern).count(1000);
+      String cursor = ScanParams.SCAN_POINTER_START;
+
+      do {
+        ScanResult<String> scanResult = resource.scan(cursor, scanParams);
+        allKeys.addAll(scanResult.getResult());
+        cursor = scanResult.getCursor();
+      } while (!cursor.equals(ScanParams.SCAN_POINTER_START));
+
+    } catch (Exception e) {
+      log.error("Failed to scan keys with pattern: {}", pattern, e);
+    }
+    return allKeys;
+  }
+
+  @Override
+  public long getAndDelete(String key) {
+    // Use Lua script for atomicity
+    String script =
+        "local value = redis.call('GET', KEYS[1]) "
+            + "if value then "
+            + "  redis.call('DEL', KEYS[1]) "
+            + "  return value "
+            + "end "
+            + "return '0'";
+
+    try (Jedis resource = jedisPool.getResource()) {
+      Object result = resource.eval(script, 1, key);
+      if (result != null) {
+        return Long.parseLong(result.toString());
+      }
+      return 0;
+    } catch (Exception e) {
+      log.error("Failed to get and delete cache key: {}", key, e);
+      return 0;
     }
   }
 }

@@ -16,7 +16,9 @@
 
 package org.idp.server.platform.datasource.cache;
 
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 
 public class NoOperationCacheStore implements CacheStore {
 
@@ -38,4 +40,24 @@ public class NoOperationCacheStore implements CacheStore {
 
   @Override
   public void delete(String key) {}
+
+  @Override
+  public long incrementBy(String key, long delta) {
+    return delta;
+  }
+
+  @Override
+  public long incrementBy(String key, long delta, int timeToLiveSeconds) {
+    return delta;
+  }
+
+  @Override
+  public Set<String> keys(String pattern) {
+    return Collections.emptySet();
+  }
+
+  @Override
+  public long getAndDelete(String key) {
+    return 0;
+  }
 }
