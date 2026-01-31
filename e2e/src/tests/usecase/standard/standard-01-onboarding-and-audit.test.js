@@ -73,6 +73,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
           include_ip: true,
           persistence_enabled: true,
           include_detail: true,
+          statistics_enabled: true,
         },
       },
       authorization_server: {
@@ -570,6 +571,7 @@ describe("Standard Use Case: Onboarding Flow with Audit Log Tracking", () => {
           format: "structured_json",
           stage: "processed",
           persistence_enabled: true,
+          statistics_enabled: true,
         },
       },
       authorization_server: {

@@ -231,7 +231,7 @@ echo "federation-config oidc"
 federation_config_files=(
   facebook.json
   google.json
-  oauth-extenstion.json
+  oauth-extension.json
 )
 
 for federation_config_file in "${federation_config_files[@]}"; do
