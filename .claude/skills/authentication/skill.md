@@ -35,15 +35,19 @@ libs/
 │       └── AuthenticationTransactionQueryRepository.java
 │
 ├── idp-server-authentication-interactors/   # 認証Interactor実装
-│   └── .../authentication/interactor/
-│       ├── PasswordAuthenticationInteractor.java
-│       ├── SmsAuthenticationInteractor.java
-│       ├── EmailAuthenticationInteractor.java
+│   └── .../authentication/interactors/
+│       ├── password/
+│       │   └── PasswordAuthenticationInteractor.java
+│       ├── sms/
+│       │   └── SmsAuthenticationInteractor.java
+│       ├── email/
+│       │   └── EmailAuthenticationInteractor.java
+│       ├── fido2/
+│       │   ├── Fido2AuthenticationInteractor.java
+│       │   └── Fido2RegistrationInteractor.java
+│       ├── fidouaf/
+│       │   └── FidoUafAuthenticationInteractor.java
 │       └── ... (各認証方式の実装)
-│
-├── idp-server-webauthn4j-adapter/           # FIDO2/WebAuthn実装
-│   └── .../webauthn4j/
-│       └── WebAuthnAuthenticationInteractor.java
 │
 └── idp-server-control-plane/                # 管理API
     └── .../management/authentication/

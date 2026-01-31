@@ -24,17 +24,18 @@ Control Planeは、idp-serverの管理API層。システム全体の設定管理
 ```
 libs/
 ├── idp-server-control-plane/                # 管理API契約定義
-│   └── .../management/
-│       ├── system/                          # システムレベルAPI
-│       │   ├── OrganizationManagementApi.java
-│       │   └── handler/
-│       ├── organization/                    # 組織レベルAPI
-│       │   ├── TenantManagementApi.java
-│       │   ├── ClientManagementApi.java
-│       │   ├── ScopeManagementApi.java
-│       │   ├── AuthenticationPolicyManagementApi.java
-│       │   └── handler/
-│       └── common/
+│   └── .../control_plane/management/
+│       ├── organization/                    # 組織管理API
+│       │   └── OrganizationManagementApi.java
+│       ├── tenant/                          # テナント管理API
+│       │   └── TenantManagementApi.java
+│       ├── oidc/client/                     # クライアント管理API
+│       │   └── ClientManagementApi.java
+│       ├── authentication/                  # 認証ポリシー管理API
+│       │   └── AuthenticationPolicyManagementApi.java
+│       ├── identity/user/                   # ユーザー管理API
+│       │   └── UserManagementApi.java
+│       └── ... (各ドメイン別)
 │
 ├── idp-server-use-cases/                    # EntryService実装
 │   └── .../management/

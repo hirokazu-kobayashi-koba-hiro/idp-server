@@ -35,10 +35,11 @@ libs/
 │       ├── repository/
 │       │   ├── OAuthTokenCommandRepository.java
 │       │   └── OAuthTokenQueryRepository.java
-│       ├── introspection/
-│       │   └── TokenIntrospectionHandler.java
-│       └── revocation/
-│           └── TokenRevocationHandler.java
+│       └── handler/
+│           ├── tokenintrospection/
+│           │   └── TokenIntrospectionHandler.java
+│           └── tokenrevocation/
+│               └── TokenRevocationHandler.java
 │
 └── idp-server-control-plane/               # 管理API
     └── .../management/token/

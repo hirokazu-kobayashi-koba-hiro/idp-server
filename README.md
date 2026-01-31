@@ -102,6 +102,22 @@ npm run start -- --locale ja
                                    └────────────────┘
 ```
 
+## AI-Assisted Development
+
+This project supports [Claude Code](https://claude.ai/claude-code) for AI-assisted development.
+
+```bash
+# Example skills
+/onboarding      # Getting started guide for newcomers
+/architecture    # Architecture & layer structure
+/authentication  # Authentication implementation
+/federation      # External IdP integration
+```
+
+See `.claude/skills/` for all available skills and `CLAUDE.md` for project context.
+
+---
+
 ## Development
 
 ### E2E Tests

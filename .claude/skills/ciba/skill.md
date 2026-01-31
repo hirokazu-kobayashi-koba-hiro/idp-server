@@ -26,7 +26,7 @@ CIBAは、クライアントがバックチャネル経由でユーザー認証�
 ```
 libs/
 ├── idp-server-core-extension-ciba/          # CIBA拡張モジュール
-│   └── .../extension/ciba/
+│   └── .../core/extension/ciba/
 │       ├── handler/
 │       │   └── CibaRequestHandler.java     # CIBA認証リクエスト処理
 │       ├── CibaRequestContext.java         # CIBAリクエストコンテキスト
@@ -52,7 +52,7 @@ libs/
 
 ## CIBA認証リクエスト処理
 
-`idp-server-core-extension-ciba/handler/CibaRequestHandler.java` 内:
+`idp-server-core-extension-ciba/.../core/extension/ciba/handler/CibaRequestHandler.java` 内:
 
 CibaRequestHandlerは、BackchannelAuthenticationRequestを処理し、
 BackchannelAuthenticationResponseを生成します。
