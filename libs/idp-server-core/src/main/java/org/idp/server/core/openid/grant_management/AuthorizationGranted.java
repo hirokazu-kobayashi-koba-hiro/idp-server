@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.grant_management;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
 import org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims;
@@ -83,5 +85,40 @@ public class AuthorizationGranted {
 
   public boolean isConsentedClaims(ConsentClaims requestedConsentClaims) {
     return authorizationGrant.isConsentedClaims(requestedConsentClaims);
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", identifier.value());
+
+    if (authorizationGrant != null) {
+      Map<String, Object> userMap = new HashMap<>();
+      if (authorizationGrant.user() != null && authorizationGrant.user().exists()) {
+        userMap.put("sub", authorizationGrant.user().sub());
+        userMap.put("name", authorizationGrant.user().name());
+        userMap.put("email", authorizationGrant.user().email());
+      }
+      map.put("user", userMap);
+
+      Map<String, Object> clientMap = new HashMap<>();
+      if (authorizationGrant.clientAttributes() != null) {
+        clientMap.put("client_id", authorizationGrant.clientIdentifierValue());
+        if (authorizationGrant.clientName() != null) {
+          clientMap.put("client_name", authorizationGrant.clientName().value());
+        }
+      }
+      map.put("client", clientMap);
+
+      if (authorizationGrant.scopes() != null) {
+        map.put("scopes", authorizationGrant.scopes().toStringList());
+      }
+
+      if (authorizationGrant.consentClaims() != null
+          && authorizationGrant.consentClaims().exists()) {
+        map.put("consent_claims", authorizationGrant.consentClaims().toMap());
+      }
+    }
+
+    return map;
   }
 }

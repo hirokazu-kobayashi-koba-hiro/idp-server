@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.token.repository;
 
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -24,4 +26,6 @@ public interface OAuthTokenCommandRepository {
   void register(Tenant tenant, OAuthToken oAuthToken);
 
   void delete(Tenant tenant, OAuthToken oAuthToken);
+
+  void deleteByUserAndClient(Tenant tenant, User user, RequestedClientId clientId);
 }

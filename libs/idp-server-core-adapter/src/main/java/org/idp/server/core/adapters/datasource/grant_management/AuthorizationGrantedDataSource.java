@@ -18,6 +18,7 @@ package org.idp.server.core.adapters.datasource.grant_management;
 
 import java.util.*;
 import org.idp.server.core.openid.grant_management.AuthorizationGranted;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedIdentifier;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -54,6 +55,11 @@ public class AuthorizationGrantedDataSource implements AuthorizationGrantedRepos
   @Override
   public void update(Tenant tenant, AuthorizationGranted authorizationGranted) {
     executor.update(tenant, authorizationGranted);
+  }
+
+  @Override
+  public void delete(Tenant tenant, AuthorizationGrantedIdentifier identifier) {
+    executor.delete(tenant.identifier(), identifier);
   }
 
   private String toJson(Object value) {

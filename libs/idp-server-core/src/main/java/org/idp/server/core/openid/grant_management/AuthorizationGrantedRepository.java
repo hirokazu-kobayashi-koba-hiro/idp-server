@@ -27,4 +27,6 @@ public interface AuthorizationGrantedRepository {
   AuthorizationGranted find(Tenant tenant, RequestedClientId requestedClientId, User user);
 
   void update(Tenant tenant, AuthorizationGranted authorizationGranted);
+
+  void delete(Tenant tenant, AuthorizationGrantedIdentifier identifier);
 }

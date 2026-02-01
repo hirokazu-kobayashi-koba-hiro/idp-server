@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.grant_management.AuthorizationGranted;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedIdentifier;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedQueries;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -215,6 +217,153 @@ public class MysqlExecutor implements AuthorizationGrantedSqlExecutor {
 
     params.add(authorizationGranted.identifier().value());
     params.add(authorizationGrant.tenantIdentifier().value());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public Map<String, String> selectById(
+      TenantIdentifier tenantIdentifier, AuthorizationGrantedIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+            SELECT
+            id,
+            tenant_id,
+            user_id,
+            user_payload,
+            authentication,
+            client_id,
+            client_payload,
+            grant_type,
+            scopes,
+            id_token_claims,
+            userinfo_claims,
+            custom_properties,
+            authorization_details,
+            consent_claims,
+            created_at,
+            updated_at
+            FROM authorization_granted
+            WHERE tenant_id = ?
+            AND id = ?;
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(tenantIdentifier.value());
+    params.add(identifier.value());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
+  public List<Map<String, String>> selectList(
+      TenantIdentifier tenantIdentifier, AuthorizationGrantedQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder sql = new StringBuilder();
+    sql.append(
+        """
+            SELECT
+            id,
+            tenant_id,
+            user_id,
+            user_payload,
+            authentication,
+            client_id,
+            client_payload,
+            grant_type,
+            scopes,
+            id_token_claims,
+            userinfo_claims,
+            custom_properties,
+            authorization_details,
+            consent_claims,
+            created_at,
+            updated_at
+            FROM authorization_granted
+            WHERE tenant_id = ?
+            """);
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenantIdentifier.value());
+
+    if (queries.hasUserId()) {
+      sql.append(" AND user_id = ?");
+      params.add(queries.userId());
+    }
+
+    if (queries.hasClientId()) {
+      sql.append(" AND client_id = ?");
+      params.add(queries.clientId());
+    }
+
+    if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    sql.append(" ORDER BY updated_at DESC");
+    sql.append(" LIMIT ? OFFSET ?");
+    params.add(queries.limit());
+    params.add(queries.offset());
+
+    return sqlExecutor.selectList(sql.toString(), params);
+  }
+
+  @Override
+  public long selectCount(TenantIdentifier tenantIdentifier, AuthorizationGrantedQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder sql = new StringBuilder();
+    sql.append("SELECT COUNT(*) as count FROM authorization_granted WHERE tenant_id = ?");
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenantIdentifier.value());
+
+    if (queries.hasUserId()) {
+      sql.append(" AND user_id = ?");
+      params.add(queries.userId());
+    }
+
+    if (queries.hasClientId()) {
+      sql.append(" AND client_id = ?");
+      params.add(queries.clientId());
+    }
+
+    if (queries.hasFrom()) {
+      sql.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      sql.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    Map<String, String> result = sqlExecutor.selectOne(sql.toString(), params);
+    return Long.parseLong(result.get("count"));
+  }
+
+  @Override
+  public void delete(TenantIdentifier tenantIdentifier, AuthorizationGrantedIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+            DELETE FROM authorization_granted
+            WHERE tenant_id = ?
+            AND id = ?;
+            """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenantIdentifier.value());
+    params.add(identifier.value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

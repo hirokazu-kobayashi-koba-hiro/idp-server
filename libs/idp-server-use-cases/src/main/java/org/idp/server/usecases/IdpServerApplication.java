@@ -49,6 +49,7 @@ import org.idp.server.control_plane.management.oidc.authorization.AuthorizationS
 import org.idp.server.control_plane.management.oidc.authorization.OrgAuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.oidc.client.OrgClientManagementApi;
+import org.idp.server.control_plane.management.oidc.grant.OrgGrantManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.organization.OrganizationManagementApi;
 import org.idp.server.control_plane.management.permission.OrgPermissionManagementApi;
@@ -97,6 +98,8 @@ import org.idp.server.core.openid.federation.FederationInteractors;
 import org.idp.server.core.openid.federation.plugin.FederationDependencyContainer;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedQueryRepository;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.identity.*;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
@@ -130,6 +133,7 @@ import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.session.repository.ClientSessionRepository;
 import org.idp.server.core.openid.session.repository.OPSessionRepository;
 import org.idp.server.core.openid.token.*;
+import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
 import org.idp.server.core.openid.userinfo.UserinfoProtocol;
@@ -262,6 +266,7 @@ public class IdpServerApplication {
   OrgAuditLogManagementApi orgAuditLogManagementApi;
   OrganizationUserAuthenticationApi organizationUserAuthenticationApi;
   OrgSecurityEventHookManagementApi orgSecurityEventHookManagementApi;
+  OrgGrantManagementApi orgGrantManagementApi;
 
   public IdpServerApplication(
       String adminTenantId,
@@ -428,6 +433,12 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(MonthlyActiveUserCommandRepository.class);
     YearlyActiveUserCommandRepository yearlyActiveUserCommandRepository =
         applicationComponentContainer.resolve(YearlyActiveUserCommandRepository.class);
+    AuthorizationGrantedQueryRepository authorizationGrantedQueryRepository =
+        applicationComponentContainer.resolve(AuthorizationGrantedQueryRepository.class);
+    AuthorizationGrantedRepository authorizationGrantedRepository =
+        applicationComponentContainer.resolve(AuthorizationGrantedRepository.class);
+    OAuthTokenCommandRepository oAuthTokenCommandRepository =
+        applicationComponentContainer.resolve(OAuthTokenCommandRepository.class);
 
     // System configuration resolver for SSRF protection and trusted proxy settings
     SystemConfigurationRepository systemConfigurationRepository =
@@ -1076,6 +1087,17 @@ public class IdpServerApplication {
             OrgClientManagementApi.class,
             databaseTypeProvider);
 
+    this.orgGrantManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new OrgGrantManagementEntryService(
+                tenantQueryRepository,
+                authorizationGrantedQueryRepository,
+                authorizationGrantedRepository,
+                oAuthTokenCommandRepository,
+                auditLogPublisher),
+            OrgGrantManagementApi.class,
+            databaseTypeProvider);
+
     this.orgUserManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new OrgUserManagementEntryService(
@@ -1419,6 +1441,10 @@ public class IdpServerApplication {
 
   public OrgClientManagementApi orgClientManagementApi() {
     return orgClientManagementApi;
+  }
+
+  public OrgGrantManagementApi orgGrantManagementApi() {
+    return orgGrantManagementApi;
   }
 
   public OrgUserManagementApi orgUserManagementApi() {

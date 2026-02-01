@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token.command;
+package org.idp.server.core.openid.grant_management;
 
-import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.crypto.AesCipher;
-import org.idp.server.platform.crypto.HmacHasher;
+import java.util.List;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public interface OAuthTokenSqlExecutor {
+/** Query repository for authorization granted search operations. */
+public interface AuthorizationGrantedQueryRepository {
 
-  void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
+  AuthorizationGranted find(Tenant tenant, AuthorizationGrantedIdentifier identifier);
 
-  void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
+  List<AuthorizationGranted> findList(Tenant tenant, AuthorizationGrantedQueries queries);
 
-  void deleteByUserAndClient(String tenantId, String userId, String clientId);
+  long findTotalCount(Tenant tenant, AuthorizationGrantedQueries queries);
 }

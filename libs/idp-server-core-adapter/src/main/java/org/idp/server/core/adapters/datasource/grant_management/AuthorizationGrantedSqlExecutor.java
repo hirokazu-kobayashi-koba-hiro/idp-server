@@ -16,8 +16,11 @@
 
 package org.idp.server.core.adapters.datasource.grant_management;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.grant_management.AuthorizationGranted;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedIdentifier;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedQueries;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -30,5 +33,15 @@ public interface AuthorizationGrantedSqlExecutor {
   Map<String, String> selectOne(
       TenantIdentifier tenantIdentifier, RequestedClientId requestedClientId, User user);
 
+  Map<String, String> selectById(
+      TenantIdentifier tenantIdentifier, AuthorizationGrantedIdentifier identifier);
+
+  List<Map<String, String>> selectList(
+      TenantIdentifier tenantIdentifier, AuthorizationGrantedQueries queries);
+
+  long selectCount(TenantIdentifier tenantIdentifier, AuthorizationGrantedQueries queries);
+
   void update(Tenant tenant, AuthorizationGranted authorizationGranted);
+
+  void delete(TenantIdentifier tenantIdentifier, AuthorizationGrantedIdentifier identifier);
 }
