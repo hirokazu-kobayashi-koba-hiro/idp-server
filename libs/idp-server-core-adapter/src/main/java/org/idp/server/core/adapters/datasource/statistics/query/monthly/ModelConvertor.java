@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.statistics.query.monthly;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -81,8 +82,10 @@ public class ModelConvertor {
       }
     }
 
+    String deterministicId = generateDeterministicId(tenantId, monthStart);
+
     return TenantStatistics.builder()
-        .id(new TenantStatisticsIdentifier(UUID.randomUUID().toString()))
+        .id(new TenantStatisticsIdentifier(deterministicId))
         .tenantId(tenantId)
         .statMonth(monthStart.toString())
         .monthlySummary(monthlySummary)
@@ -90,6 +93,21 @@ public class ModelConvertor {
         .createdAt(minCreatedAt != null ? minCreatedAt : Instant.now())
         .updatedAt(maxUpdatedAt != null ? maxUpdatedAt : Instant.now())
         .build();
+  }
+
+  /**
+   * Generates a deterministic UUID based on tenant ID and month.
+   *
+   * <p>This ensures the same tenant and month always produce the same ID, which is important for
+   * caching and idempotent operations.
+   *
+   * @param tenantId the tenant identifier
+   * @param monthStart the first day of the month
+   * @return deterministic UUID string
+   */
+  private static String generateDeterministicId(TenantIdentifier tenantId, LocalDate monthStart) {
+    String seed = tenantId.value() + "-" + monthStart.toString();
+    return UUID.nameUUIDFromBytes(seed.getBytes(StandardCharsets.UTF_8)).toString();
   }
 
   /**

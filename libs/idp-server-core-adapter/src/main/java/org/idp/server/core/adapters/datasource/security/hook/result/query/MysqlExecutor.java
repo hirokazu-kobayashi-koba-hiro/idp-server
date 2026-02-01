@@ -89,8 +89,9 @@ public class MysqlExecutor implements SecurityEventHookResultSqlExecutor {
     }
 
     if (queries.hasUserName()) {
-      sql.append(" AND JSON_UNQUOTE(JSON_EXTRACT(security_event_payload, '$.user.name')) LIKE ?");
-      params.add("%" + queries.userName() + "%");
+      sql.append(
+          " AND JSON_UNQUOTE(JSON_EXTRACT(security_event_payload, '$.user.name')) LIKE ? ESCAPE '\\\\'");
+      params.add("%" + queries.userNameForLikeSearch() + "%");
     }
 
     if (queries.hasExternalUserId()) {
@@ -181,8 +182,9 @@ public class MysqlExecutor implements SecurityEventHookResultSqlExecutor {
     }
 
     if (queries.hasUserName()) {
-      sql.append(" AND JSON_UNQUOTE(JSON_EXTRACT(security_event_payload, '$.user.name')) LIKE ?");
-      params.add("%" + queries.userName() + "%");
+      sql.append(
+          " AND JSON_UNQUOTE(JSON_EXTRACT(security_event_payload, '$.user.name')) LIKE ? ESCAPE '\\\\'");
+      params.add("%" + queries.userNameForLikeSearch() + "%");
     }
 
     if (queries.hasExternalUserId()) {

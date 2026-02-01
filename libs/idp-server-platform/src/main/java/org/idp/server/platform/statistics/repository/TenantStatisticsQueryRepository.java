@@ -18,10 +18,8 @@ package org.idp.server.platform.statistics.repository;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.statistics.TenantStatistics;
-import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
 
 /**
@@ -37,10 +35,7 @@ import org.idp.server.platform.statistics.TenantStatisticsQueries;
  *     Map.of("from", "2025-01", "to", "2025-03", "limit", "10", "offset", "0")
  * );
  * List<TenantStatistics> stats = repository.findByMonthRange(tenant, queries);
- * long totalCount = repository.countByMonthRange(tenant, "2025-01", "2025-03");
- *
- * // Get specific month
- * Optional<TenantStatistics> janStats = repository.findByMonth(tenant, "2025-01");
+ * long totalCount = repository.countByMonthRange(tenant, fromDate, toDate);
  * }</pre>
  *
  * @see TenantStatistics
@@ -58,34 +53,6 @@ public interface TenantStatisticsQueryRepository {
   List<TenantStatistics> findByMonthRange(Tenant tenant, TenantStatisticsQueries queries);
 
   /**
-   * Find statistics for specific month
-   *
-   * @param tenant tenant
-   * @param statMonth target month as LocalDate (first day of month, e.g., 2025-01-01)
-   * @return optional statistics (empty if not found)
-   */
-  Optional<TenantStatistics> findByMonth(Tenant tenant, LocalDate statMonth);
-
-  /**
-   * Get statistics by ID
-   *
-   * @param tenant tenant
-   * @param id statistics identifier
-   * @return statistics
-   * @throws org.idp.server.platform.exception.ResourceNotFoundException if not found
-   */
-  TenantStatistics get(Tenant tenant, TenantStatisticsIdentifier id);
-
-  /**
-   * Find statistics by ID
-   *
-   * @param tenant tenant
-   * @param id statistics identifier
-   * @return optional statistics (empty if not found)
-   */
-  Optional<TenantStatistics> find(Tenant tenant, TenantStatisticsIdentifier id);
-
-  /**
    * Count statistics records in month range
    *
    * @param tenant tenant
@@ -94,21 +61,4 @@ public interface TenantStatisticsQueryRepository {
    * @return total count
    */
   long countByMonthRange(Tenant tenant, LocalDate fromMonth, LocalDate toMonth);
-
-  /**
-   * Find latest statistics
-   *
-   * @param tenant tenant
-   * @return optional latest statistics (empty if no data exists)
-   */
-  Optional<TenantStatistics> findLatest(Tenant tenant);
-
-  /**
-   * Check if statistics exists for month
-   *
-   * @param tenant tenant
-   * @param statMonth target month as LocalDate (first day of month)
-   * @return true if exists
-   */
-  boolean exists(Tenant tenant, LocalDate statMonth);
 }

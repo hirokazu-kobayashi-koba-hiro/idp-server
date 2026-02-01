@@ -52,21 +52,4 @@ public interface TenantStatisticsSqlExecutor {
    */
   Map<String, String> selectCountDistinctMonths(
       TenantIdentifier tenantId, LocalDate fromMonth, LocalDate toMonth);
-
-  /**
-   * Find the latest date with data.
-   *
-   * @param tenantId tenant identifier
-   * @return result map containing "latest_date" key, or empty map if no data
-   */
-  Map<String, String> selectLatestDate(TenantIdentifier tenantId);
-
-  /**
-   * Check if any events exist in a month.
-   *
-   * @param tenantId tenant identifier
-   * @param monthStart first day of the month
-   * @return result map containing "count" key
-   */
-  Map<String, String> selectExistsInMonth(TenantIdentifier tenantId, LocalDate monthStart);
 }

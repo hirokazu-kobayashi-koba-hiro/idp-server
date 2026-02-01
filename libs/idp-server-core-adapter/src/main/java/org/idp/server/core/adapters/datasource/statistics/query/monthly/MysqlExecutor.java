@@ -79,45 +79,4 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
     Map<String, String> result = sqlExecutor.selectOne(sql, params);
     return result != null ? result : Map.of();
   }
-
-  @Override
-  public Map<String, String> selectLatestDate(TenantIdentifier tenantId) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-    String sql =
-        """
-            SELECT MAX(stat_date) as latest_date
-            FROM statistics_events
-            WHERE tenant_id = ?
-            """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-
-    Map<String, String> result = sqlExecutor.selectOne(sql, params);
-    return result != null ? result : Map.of();
-  }
-
-  @Override
-  public Map<String, String> selectExistsInMonth(TenantIdentifier tenantId, LocalDate monthStart) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-    LocalDate nextMonthStart = monthStart.plusMonths(1);
-
-    String sql =
-        """
-            SELECT COUNT(*) as count
-            FROM statistics_events
-            WHERE tenant_id = ?
-              AND stat_date >= ?
-              AND stat_date < ?
-            LIMIT 1
-            """;
-
-    List<Object> params = new ArrayList<>();
-    params.add(tenantId.value());
-    params.add(monthStart);
-    params.add(nextMonthStart);
-
-    Map<String, String> result = sqlExecutor.selectOne(sql, params);
-    return result != null ? result : Map.of();
-  }
 }

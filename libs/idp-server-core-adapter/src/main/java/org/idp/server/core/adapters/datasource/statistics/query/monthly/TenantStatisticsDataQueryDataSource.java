@@ -20,11 +20,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.statistics.TenantStatistics;
-import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
 import org.idp.server.platform.statistics.TenantStatisticsQueries;
 import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
 
@@ -75,32 +72,6 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsQuer
   }
 
   @Override
-  public Optional<TenantStatistics> findByMonth(Tenant tenant, LocalDate statMonth) {
-    LocalDate monthStart = statMonth.withDayOfMonth(1);
-    LocalDate monthEnd = monthStart.plusMonths(1);
-
-    List<Map<String, String>> rawEvents =
-        executor.selectEvents(tenant.identifier(), monthStart, monthEnd);
-
-    if (rawEvents == null || rawEvents.isEmpty()) {
-      return Optional.empty();
-    }
-
-    return Optional.of(ModelConvertor.convert(tenant.identifier(), monthStart, rawEvents));
-  }
-
-  @Override
-  public TenantStatistics get(Tenant tenant, TenantStatisticsIdentifier id) {
-    throw new NotFoundException(
-        "ID-based lookup not supported for event-based statistics: " + id.value());
-  }
-
-  @Override
-  public Optional<TenantStatistics> find(Tenant tenant, TenantStatisticsIdentifier id) {
-    return Optional.empty();
-  }
-
-  @Override
   public long countByMonthRange(Tenant tenant, LocalDate fromMonth, LocalDate toMonth) {
     Map<String, String> result =
         executor.selectCountDistinctMonths(tenant.identifier(), fromMonth, toMonth);
@@ -110,29 +81,5 @@ public class TenantStatisticsDataQueryDataSource implements TenantStatisticsQuer
     }
 
     return Long.parseLong(result.get("count"));
-  }
-
-  @Override
-  public Optional<TenantStatistics> findLatest(Tenant tenant) {
-    Map<String, String> result = executor.selectLatestDate(tenant.identifier());
-
-    if (result == null || result.isEmpty() || result.get("latest_date") == null) {
-      return Optional.empty();
-    }
-
-    LocalDate latestDate = LocalDate.parse(result.get("latest_date"));
-    return findByMonth(tenant, latestDate);
-  }
-
-  @Override
-  public boolean exists(Tenant tenant, LocalDate statMonth) {
-    LocalDate monthStart = statMonth.withDayOfMonth(1);
-    Map<String, String> result = executor.selectExistsInMonth(tenant.identifier(), monthStart);
-
-    if (result == null || result.isEmpty() || result.get("count") == null) {
-      return false;
-    }
-
-    return Long.parseLong(result.get("count")) > 0;
   }
 }

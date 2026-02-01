@@ -89,8 +89,8 @@ public class PostgresqlExecutor implements SecurityEventHookResultSqlExecutor {
     }
 
     if (queries.hasUserName()) {
-      sql.append(" AND security_event_payload->'user'->>'name' ILIKE ?");
-      params.add("%" + queries.userName() + "%");
+      sql.append(" AND security_event_payload->'user'->>'name' ILIKE ? ESCAPE '\\'");
+      params.add("%" + queries.userNameForLikeSearch() + "%");
     }
 
     if (queries.hasExternalUserId()) {
@@ -181,8 +181,8 @@ public class PostgresqlExecutor implements SecurityEventHookResultSqlExecutor {
     }
 
     if (queries.hasUserName()) {
-      sql.append(" AND security_event_payload->'user'->>'name' ILIKE ?");
-      params.add("%" + queries.userName() + "%");
+      sql.append(" AND security_event_payload->'user'->>'name' ILIKE ? ESCAPE '\\'");
+      params.add("%" + queries.userNameForLikeSearch() + "%");
     }
 
     if (queries.hasExternalUserId()) {
