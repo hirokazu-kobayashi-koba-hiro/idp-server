@@ -879,6 +879,52 @@ const sidebars = {
               ]
             }
           ]
+        },
+        {
+          type: "category",
+          label: "パフォーマンス・チューニング",
+          items: [
+            "content_11_learning/performance-tuning/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/performance-tuning/first-step",
+                "content_11_learning/performance-tuning/basics",
+                "content_11_learning/performance-tuning/basics-advanced",
+                "content_11_learning/performance-tuning/finding-bottlenecks"
+              ]
+            },
+            {
+              type: "category",
+              label: "計測",
+              collapsed: true,
+              items: [
+                "content_11_learning/performance-tuning/measurement",
+                "content_11_learning/performance-tuning/load-testing"
+              ]
+            },
+            {
+              type: "category",
+              label: "レイヤー別チューニング",
+              collapsed: true,
+              items: [
+                "content_11_learning/performance-tuning/application-layer",
+                "content_11_learning/performance-tuning/database-layer",
+                "content_11_learning/performance-tuning/network-layer",
+                "content_11_learning/performance-tuning/os-layer"
+              ]
+            },
+            {
+              type: "category",
+              label: "コラム",
+              collapsed: true,
+              items: [
+                "content_11_learning/performance-tuning/column-premature-optimization"
+              ]
+            }
+          ]
         }
       ]
     },
