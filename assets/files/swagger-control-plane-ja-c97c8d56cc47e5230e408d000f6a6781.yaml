@@ -1375,6 +1375,25 @@ paths:
             type: string
             enum: [SUCCESS, FAILURE, RETRY_SUCCESS, RETRY_FAILURE]
           description: 実行ステータスでフィルタリング
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: ユーザーID（sub）で完全一致フィルタリング
+        - name: user_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ユーザー名で部分一致フィルタリング
+        - name: external_user_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 外部ユーザーID（ex_sub）で完全一致フィルタリング
       responses:
         '200':
           description: セキュリティイベントフック実行結果一覧

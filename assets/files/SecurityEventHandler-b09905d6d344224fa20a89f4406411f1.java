@@ -18,9 +18,9 @@ package org.idp.server.platform.security.handler;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
@@ -38,24 +38,20 @@ import org.idp.server.platform.security.repository.SecurityEventCommandRepositor
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.statistics.FiscalYearCalculator;
+import org.idp.server.platform.statistics.StatisticsEventRecord;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
-import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
-import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsCommandRepository;
+import org.idp.server.platform.statistics.repository.StatisticsEventsCommandRepository;
 import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepository;
 
 public class SecurityEventHandler {
-
-  // Note: YEAR_FORMATTER and MONTH_FORMATTER are kept for logging purposes only
-  private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
   SecurityEventCommandRepository securityEventCommandRepository;
   SecurityEventHookResultCommandRepository resultsCommandRepository;
   SecurityEventHooks securityEventHooks;
   SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
   SecurityEventLogService logService;
-  TenantStatisticsCommandRepository statisticsRepository;
-  TenantYearlyStatisticsCommandRepository yearlyStatisticsRepository;
+  StatisticsEventsCommandRepository statisticsEventsRepository;
   DailyActiveUserCommandRepository dailyActiveUserRepository;
   MonthlyActiveUserCommandRepository monthlyActiveUserRepository;
   YearlyActiveUserCommandRepository yearlyActiveUserRepository;
@@ -67,8 +63,7 @@ public class SecurityEventHandler {
       SecurityEventHookResultCommandRepository resultsCommandRepository,
       SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository,
       SecurityEventLogService logService,
-      TenantStatisticsCommandRepository statisticsRepository,
-      TenantYearlyStatisticsCommandRepository yearlyStatisticsRepository,
+      StatisticsEventsCommandRepository statisticsEventsRepository,
       DailyActiveUserCommandRepository dailyActiveUserRepository,
       MonthlyActiveUserCommandRepository monthlyActiveUserRepository,
       YearlyActiveUserCommandRepository yearlyActiveUserRepository) {
@@ -77,8 +72,7 @@ public class SecurityEventHandler {
     this.securityEventHookConfigurationQueryRepository =
         securityEventHookConfigurationQueryRepository;
     this.logService = logService;
-    this.statisticsRepository = statisticsRepository;
-    this.yearlyStatisticsRepository = yearlyStatisticsRepository;
+    this.statisticsEventsRepository = statisticsEventsRepository;
     this.dailyActiveUserRepository = dailyActiveUserRepository;
     this.monthlyActiveUserRepository = monthlyActiveUserRepository;
     this.yearlyActiveUserRepository = yearlyActiveUserRepository;
@@ -100,8 +94,18 @@ public class SecurityEventHandler {
     List<SecurityEventHookResult> results = new ArrayList<>();
     for (SecurityEventHookConfiguration hookConfiguration : securityEventHookConfigurations) {
 
-      SecurityEventHook securityEventHookExecutor =
-          securityEventHooks.get(hookConfiguration.hookType());
+      Optional<SecurityEventHook> optionalExecutor =
+          securityEventHooks.find(hookConfiguration.hookType());
+
+      if (optionalExecutor.isEmpty()) {
+        log.warn(
+            "Skipping unsupported security event hook type: {} for tenant: {}",
+            hookConfiguration.hookType().name(),
+            tenant.identifierValue());
+        continue;
+      }
+
+      SecurityEventHook securityEventHookExecutor = optionalExecutor.get();
 
       if (securityEventHookExecutor.shouldExecute(tenant, securityEvent, hookConfiguration)) {
         log.info(
@@ -127,8 +131,8 @@ public class SecurityEventHandler {
   /**
    * Update tenant statistics based on security event
    *
-   * <p>Processes security events and incrementally updates daily/monthly/yearly statistics metrics
-   * such as DAU, MAU, YAU, login counts, token issuance, etc.
+   * <p>Processes security events and incrementally updates statistics in the statistics_events
+   * table. Tracks DAU, MAU, YAU, login counts, token issuance, etc.
    *
    * @param tenant the tenant
    * @param securityEvent the security event
@@ -149,11 +153,9 @@ public class SecurityEventHandler {
             .toLocalDate();
 
     DefaultSecurityEventType eventType = DefaultSecurityEventType.findByValue(eventTypeValue);
-    String day = eventDate.format(DATE_FORMATTER);
 
     if (eventType != null && eventType.isActiveUserEvent() && securityEvent.hasUser()) {
-
-      handleActiveUserEvent(tenant, securityEvent.user(), eventDate, day, eventTypeValue);
+      handleActiveUserEvent(tenant, securityEvent.user(), eventDate, eventTypeValue);
     } else {
       incrementMetric(tenant, eventDate, eventTypeValue);
     }
@@ -167,11 +169,7 @@ public class SecurityEventHandler {
    * {@link DefaultSecurityEventType#isActiveUserEvent()}.
    */
   private void handleActiveUserEvent(
-      Tenant tenant,
-      SecurityEventUser securityEventUser,
-      LocalDate eventDate,
-      String day,
-      String eventType) {
+      Tenant tenant, SecurityEventUser securityEventUser, LocalDate eventDate, String eventType) {
 
     SecurityEventUserIdentifier userId = securityEventUser.securityEventUserIdentifier();
     String userName = securityEventUser.name();
@@ -181,8 +179,11 @@ public class SecurityEventHandler {
     LocalDate yearStart =
         FiscalYearCalculator.calculateFiscalYearStart(eventDate, tenant.fiscalYearStartMonth());
 
-    // Increment the actual event type metric (both daily and monthly)
-    incrementMetric(tenant, eventDate, eventType);
+    // Collect statistics records for batch upsert
+    List<StatisticsEventRecord> records = new ArrayList<>();
+
+    // Add the actual event type metric
+    records.add(new StatisticsEventRecord(tenant.identifier(), eventDate, eventType, 1));
 
     // Track DAU - add user to daily active users table and increment DAU count if new
     boolean isNewDailyUser =
@@ -195,14 +196,7 @@ public class SecurityEventHandler {
           tenant.identifierValue(),
           eventDate,
           userId.value());
-      // DAU is daily-only metric, not aggregated to monthly_summary
-      statisticsRepository.incrementDailyMetric(tenant.identifier(), monthStart, day, "dau", 1);
-    } else {
-      log.debug(
-          "User already active today: tenant={}, date={}, user={}",
-          tenant.identifierValue(),
-          eventDate,
-          userId.value());
+      records.add(new StatisticsEventRecord(tenant.identifier(), eventDate, "dau", 1));
     }
 
     // Track MAU - add user to monthly active users table and increment MAU count if new
@@ -216,14 +210,10 @@ public class SecurityEventHandler {
           tenant.identifierValue(),
           monthStart,
           userId.value());
-      // Increment monthly_summary.mau and set cumulative MAU in daily_metrics[day].mau
-      statisticsRepository.incrementMauWithDailyCumulative(tenant.identifier(), monthStart, day, 1);
-    } else {
-      log.debug(
-          "User already active this month: tenant={}, month={}, user={}",
-          tenant.identifierValue(),
-          monthStart,
-          userId.value());
+      // Cumulative MAU for the month (stored at monthStart)
+      records.add(new StatisticsEventRecord(tenant.identifier(), monthStart, "mau", 1));
+      // Daily new MAU increment (for tracking daily growth)
+      records.add(new StatisticsEventRecord(tenant.identifier(), eventDate, "new_mau", 1));
     }
 
     // Track YAU - add user to yearly active users table and increment YAU count if new
@@ -237,49 +227,30 @@ public class SecurityEventHandler {
           tenant.identifierValue(),
           yearStart,
           userId.value());
-      // Increment yearly_summary.yau
-      yearlyStatisticsRepository.incrementYau(tenant.identifier(), yearStart, 1);
-    } else {
-      log.debug(
-          "User already active this year: tenant={}, year={}, user={}",
-          tenant.identifierValue(),
-          yearStart,
-          userId.value());
+      // Cumulative YAU for the fiscal year (stored at yearStart)
+      records.add(new StatisticsEventRecord(tenant.identifier(), yearStart, "yau", 1));
+      // Daily new YAU increment (for tracking daily growth)
+      records.add(new StatisticsEventRecord(tenant.identifier(), eventDate, "new_yau", 1));
     }
+
+    // Batch upsert all statistics records in a single query
+    statisticsEventsRepository.batchUpsert(records);
   }
 
   /**
-   * Increment a metric in both daily_metrics and monthly_summary
-   *
-   * <p>Updates both the daily_metrics JSONB field (for daily breakdown) and monthly_summary JSONB
-   * field (for monthly totals) within the monthly statistics record. Also updates yearly_summary.
+   * Increment a metric in the statistics_events table
    *
    * @param tenant the tenant
    * @param date statistics date
-   * @param metricName metric name to increment
+   * @param eventType event type to increment
    */
-  private void incrementMetric(Tenant tenant, LocalDate date, String metricName) {
-    LocalDate monthStart = date.withDayOfMonth(1);
-    LocalDate yearStart =
-        FiscalYearCalculator.calculateFiscalYearStart(date, tenant.fiscalYearStartMonth());
-    String day = date.format(DATE_FORMATTER);
-
+  private void incrementMetric(Tenant tenant, LocalDate date, String eventType) {
     log.debug(
-        "Incrementing metric: tenant={}, month={}, day={}, metric={}",
+        "Incrementing metric: tenant={}, date={}, eventType={}",
         tenant.identifierValue(),
-        monthStart,
-        day,
-        metricName);
+        date,
+        eventType);
 
-    // Update daily breakdown
-    statisticsRepository.incrementDailyMetric(tenant.identifier(), monthStart, day, metricName, 1);
-
-    // Update monthly total
-    statisticsRepository.incrementMonthlySummaryMetric(
-        tenant.identifier(), monthStart, metricName, 1);
-
-    // Update yearly total
-    yearlyStatisticsRepository.incrementYearlySummaryMetric(
-        tenant.identifier(), yearStart, metricName, 1);
+    statisticsEventsRepository.increment(tenant.identifier(), date, eventType);
   }
 }
