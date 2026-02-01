@@ -59,6 +59,7 @@ org.idp.server.core.adapters.datasource.statistics.command.daily.DailyActiveUser
 org.idp.server.core.adapters.datasource.statistics.command.monthly.MonthlyActiveUserCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.statistics.command.yearly.YearlyActiveUserCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.statistics.command.yearly.TenantYearlyStatisticsCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.statistics.command.events.StatisticsEventsCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.statistics.query.yearly.TenantYearlyStatisticsQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.session.OPSessionRepositoryProvider
 org.idp.server.core.adapters.datasource.session.ClientSessionRepositoryProvider

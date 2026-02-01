@@ -30,8 +30,7 @@ import org.idp.server.platform.security.repository.SecurityEventHookConfiguratio
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
-import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
-import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsCommandRepository;
+import org.idp.server.platform.statistics.repository.StatisticsEventsCommandRepository;
 import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepository;
 
 @Transaction
@@ -46,8 +45,7 @@ public class SecurityEventEntryService implements SecurityEventApi {
       SecurityEventHookResultCommandRepository securityEventHookResultCommandRepository,
       SecurityEventHookConfigurationQueryRepository hookQueryRepository,
       TenantQueryRepository tenantQueryRepository,
-      TenantStatisticsCommandRepository statisticsRepository,
-      TenantYearlyStatisticsCommandRepository yearlyStatisticsRepository,
+      StatisticsEventsCommandRepository statisticsEventsRepository,
       DailyActiveUserCommandRepository dailyActiveUserRepository,
       MonthlyActiveUserCommandRepository monthlyActiveUserRepository,
       YearlyActiveUserCommandRepository yearlyActiveUserRepository) {
@@ -57,8 +55,7 @@ public class SecurityEventEntryService implements SecurityEventApi {
             securityEventHookResultCommandRepository,
             hookQueryRepository,
             new SecurityEventLogService(securityEventCommandRepository),
-            statisticsRepository,
-            yearlyStatisticsRepository,
+            statisticsEventsRepository,
             dailyActiveUserRepository,
             monthlyActiveUserRepository,
             yearlyActiveUserRepository);

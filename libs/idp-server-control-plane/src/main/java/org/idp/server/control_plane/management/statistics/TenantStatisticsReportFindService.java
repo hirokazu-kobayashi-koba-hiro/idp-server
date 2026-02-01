@@ -16,6 +16,7 @@
 
 package org.idp.server.control_plane.management.statistics;
 
+import java.time.LocalDate;
 import java.util.*;
 import org.idp.server.control_plane.management.statistics.handler.TenantStatisticsManagementService;
 import org.idp.server.core.openid.identity.User;
@@ -52,12 +53,29 @@ public class TenantStatisticsReportFindService
       TenantStatisticsReportQuery query,
       RequestAttributes requestAttributes) {
 
+    // Calculate fiscal year start based on tenant configuration
+    int fiscalYearStartMonth = tenant.attributes().fiscalYearStartMonth();
+    int requestedYear = Integer.parseInt(query.year());
+
+    // Create a date in the middle of the requested year to determine fiscal year
+    LocalDate referenceDate = LocalDate.of(requestedYear, fiscalYearStartMonth, 1);
+    LocalDate fiscalYearStart =
+        FiscalYearCalculator.calculateFiscalYearStart(referenceDate, fiscalYearStartMonth);
+    LocalDate fiscalYearEnd =
+        FiscalYearCalculator.calculateFiscalYearEnd(referenceDate, fiscalYearStartMonth);
+
     Optional<TenantYearlyStatistics> yearlyOpt =
-        yearlyRepository.findByYear(tenant, query.yearAsLocalDate());
+        yearlyRepository.findByYear(tenant, fiscalYearStart);
+
+    // Build monthly query range based on fiscal year
+    String fromMonth =
+        String.format("%04d-%02d", fiscalYearStart.getYear(), fiscalYearStart.getMonthValue());
+    String toMonth =
+        String.format("%04d-%02d", fiscalYearEnd.getYear(), fiscalYearEnd.getMonthValue());
 
     Map<String, String> queryParams = new HashMap<>();
-    queryParams.put("from", query.fromMonth());
-    queryParams.put("to", query.toMonth());
+    queryParams.put("from", fromMonth);
+    queryParams.put("to", toMonth);
     queryParams.put("limit", "12");
     queryParams.put("offset", "0");
     TenantStatisticsQueries monthlyQueries = new TenantStatisticsQueries(queryParams);

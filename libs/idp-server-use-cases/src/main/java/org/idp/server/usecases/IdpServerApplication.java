@@ -168,9 +168,8 @@ import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.repository.*;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
 import org.idp.server.platform.statistics.repository.MonthlyActiveUserCommandRepository;
-import org.idp.server.platform.statistics.repository.TenantStatisticsCommandRepository;
+import org.idp.server.platform.statistics.repository.StatisticsEventsCommandRepository;
 import org.idp.server.platform.statistics.repository.TenantStatisticsQueryRepository;
-import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsCommandRepository;
 import org.idp.server.platform.statistics.repository.TenantYearlyStatisticsQueryRepository;
 import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepository;
 import org.idp.server.platform.system.CachedSystemConfigurationResolver;
@@ -417,20 +416,18 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(AuthenticationInteractionQueryRepository.class);
     WebAuthn4jCredentialRepository webAuthn4jCredentialRepository =
         applicationComponentContainer.resolve(WebAuthn4jCredentialRepository.class);
-    TenantStatisticsCommandRepository tenantStatisticsCommandRepository =
-        applicationComponentContainer.resolve(TenantStatisticsCommandRepository.class);
     TenantStatisticsQueryRepository tenantStatisticsQueryRepository =
         applicationComponentContainer.resolve(TenantStatisticsQueryRepository.class);
     TenantYearlyStatisticsQueryRepository tenantYearlyStatisticsQueryRepository =
         applicationComponentContainer.resolve(TenantYearlyStatisticsQueryRepository.class);
+    StatisticsEventsCommandRepository statisticsEventsCommandRepository =
+        applicationComponentContainer.resolve(StatisticsEventsCommandRepository.class);
     DailyActiveUserCommandRepository dailyActiveUserCommandRepository =
         applicationComponentContainer.resolve(DailyActiveUserCommandRepository.class);
     MonthlyActiveUserCommandRepository monthlyActiveUserCommandRepository =
         applicationComponentContainer.resolve(MonthlyActiveUserCommandRepository.class);
     YearlyActiveUserCommandRepository yearlyActiveUserCommandRepository =
         applicationComponentContainer.resolve(YearlyActiveUserCommandRepository.class);
-    TenantYearlyStatisticsCommandRepository tenantYearlyStatisticsCommandRepository =
-        applicationComponentContainer.resolve(TenantYearlyStatisticsCommandRepository.class);
 
     // System configuration resolver for SSRF protection and trusted proxy settings
     SystemConfigurationRepository systemConfigurationRepository =
@@ -717,8 +714,7 @@ public class IdpServerApplication {
                 securityEventHookResultCommandRepository,
                 hookQueryRepository,
                 tenantQueryRepository,
-                tenantStatisticsCommandRepository,
-                tenantYearlyStatisticsCommandRepository,
+                statisticsEventsCommandRepository,
                 dailyActiveUserCommandRepository,
                 monthlyActiveUserCommandRepository,
                 yearlyActiveUserCommandRepository),
