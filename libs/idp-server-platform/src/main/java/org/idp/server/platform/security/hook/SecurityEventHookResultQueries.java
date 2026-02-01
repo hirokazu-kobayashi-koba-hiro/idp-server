@@ -115,6 +115,37 @@ public class SecurityEventHookResultQueries implements UuidConvertable {
     return values.get("status");
   }
 
+  public boolean hasUserId() {
+    String value = values.get("user_id");
+    return value != null && !value.isEmpty();
+  }
+
+  public String userId() {
+    return values.get("user_id");
+  }
+
+  public UUID userIdAsUuid() {
+    return convertUuid(userId());
+  }
+
+  public boolean hasUserName() {
+    String value = values.get("user_name");
+    return value != null && !value.isEmpty();
+  }
+
+  public String userName() {
+    return values.get("user_name");
+  }
+
+  public boolean hasExternalUserId() {
+    String value = values.get("external_user_id");
+    return value != null && !value.isEmpty();
+  }
+
+  public String externalUserId() {
+    return values.get("external_user_id");
+  }
+
   public boolean hasSecurityEventPayload() {
     return !securityEventPayload().isEmpty();
   }

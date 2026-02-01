@@ -220,7 +220,7 @@ describe("organization security event hook management api", () => {
         console.log("Security event detail response:", detailResponse.data);
         expect(detailResponse.status).toBe(200);
         expect(detailResponse.data).toHaveProperty("id", eventId);
-        expect(detailResponse.data).toHaveProperty("event_type");
+        expect(detailResponse.data).toHaveProperty("type");
       } else {
         console.log("No security events available for detail testing");
       }

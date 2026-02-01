@@ -83,6 +83,21 @@ public class MysqlExecutor implements SecurityEventHookResultSqlExecutor {
       params.add(queries.status());
     }
 
+    if (queries.hasUserId()) {
+      sql.append(" AND JSON_UNQUOTE(JSON_EXTRACT(security_event_payload, '$.user.sub')) = ?");
+      params.add(queries.userId());
+    }
+
+    if (queries.hasUserName()) {
+      sql.append(" AND JSON_UNQUOTE(JSON_EXTRACT(security_event_payload, '$.user.name')) LIKE ?");
+      params.add("%" + queries.userName() + "%");
+    }
+
+    if (queries.hasExternalUserId()) {
+      sql.append(" AND JSON_UNQUOTE(JSON_EXTRACT(security_event_payload, '$.user.ex_sub')) = ?");
+      params.add(queries.externalUserId());
+    }
+
     if (queries.hasSecurityEventPayload()) {
       for (Map.Entry<String, String> entry : queries.securityEventPayload().entrySet()) {
         String key = entry.getKey();
@@ -158,6 +173,21 @@ public class MysqlExecutor implements SecurityEventHookResultSqlExecutor {
     if (queries.hasStatus()) {
       sql.append(" AND status = ?");
       params.add(queries.status());
+    }
+
+    if (queries.hasUserId()) {
+      sql.append(" AND JSON_UNQUOTE(JSON_EXTRACT(security_event_payload, '$.user.sub')) = ?");
+      params.add(queries.userId());
+    }
+
+    if (queries.hasUserName()) {
+      sql.append(" AND JSON_UNQUOTE(JSON_EXTRACT(security_event_payload, '$.user.name')) LIKE ?");
+      params.add("%" + queries.userName() + "%");
+    }
+
+    if (queries.hasExternalUserId()) {
+      sql.append(" AND JSON_UNQUOTE(JSON_EXTRACT(security_event_payload, '$.user.ex_sub')) = ?");
+      params.add(queries.externalUserId());
     }
 
     if (queries.hasSecurityEventPayload()) {

@@ -20,22 +20,53 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.statistics.TenantStatisticsIdentifier;
-import org.idp.server.platform.statistics.TenantStatisticsQueries;
 
+/**
+ * SQL executor for statistics queries.
+ *
+ * <p>This interface is responsible only for executing SQL queries and returning raw data as
+ * Map&lt;String, String&gt;. No aggregation or business logic should be implemented here.
+ *
+ * <p>Implementations are database-specific (PostgreSQL, MySQL).
+ */
 public interface TenantStatisticsSqlExecutor {
 
-  Map<String, String> selectOne(TenantStatisticsIdentifier id);
+  /**
+   * Select raw events for a date range.
+   *
+   * @param tenantId tenant identifier
+   * @param fromDate start date (inclusive)
+   * @param toDate end date (exclusive)
+   * @return list of raw event rows as Map
+   */
+  List<Map<String, String>> selectEvents(
+      TenantIdentifier tenantId, LocalDate fromDate, LocalDate toDate);
 
-  Map<String, String> selectByMonth(TenantIdentifier tenantId, LocalDate statMonth);
-
-  List<Map<String, String>> selectByMonthRange(
-      TenantIdentifier tenantId, TenantStatisticsQueries queries);
-
-  Map<String, String> selectCount(
+  /**
+   * Count distinct months with data in a date range.
+   *
+   * @param tenantId tenant identifier
+   * @param fromMonth start month (first day)
+   * @param toMonth end month (first day)
+   * @return result map containing "count" key
+   */
+  Map<String, String> selectCountDistinctMonths(
       TenantIdentifier tenantId, LocalDate fromMonth, LocalDate toMonth);
 
-  Map<String, String> selectLatest(TenantIdentifier tenantId);
+  /**
+   * Find the latest date with data.
+   *
+   * @param tenantId tenant identifier
+   * @return result map containing "latest_date" key, or empty map if no data
+   */
+  Map<String, String> selectLatestDate(TenantIdentifier tenantId);
 
-  Map<String, String> selectExists(TenantIdentifier tenantId, LocalDate statMonth);
+  /**
+   * Check if any events exist in a month.
+   *
+   * @param tenantId tenant identifier
+   * @param monthStart first day of the month
+   * @return result map containing "count" key
+   */
+  Map<String, String> selectExistsInMonth(TenantIdentifier tenantId, LocalDate monthStart);
 }
