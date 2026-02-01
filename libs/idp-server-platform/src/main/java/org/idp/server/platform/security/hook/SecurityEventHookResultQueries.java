@@ -115,6 +115,48 @@ public class SecurityEventHookResultQueries implements UuidConvertable {
     return values.get("status");
   }
 
+  public boolean hasUserId() {
+    String value = values.get("user_id");
+    return value != null && !value.isEmpty();
+  }
+
+  public String userId() {
+    return values.get("user_id");
+  }
+
+  public boolean hasUserName() {
+    String value = values.get("user_name");
+    return value != null && !value.isEmpty();
+  }
+
+  public String userName() {
+    return values.get("user_name");
+  }
+
+  /**
+   * Returns the user name with LIKE special characters escaped for safe SQL LIKE search.
+   *
+   * <p>Escapes '%' and '_' characters which have special meaning in SQL LIKE patterns.
+   *
+   * @return escaped user name for LIKE search
+   */
+  public String userNameForLikeSearch() {
+    String name = userName();
+    if (name == null) {
+      return null;
+    }
+    return name.replace("%", "\\%").replace("_", "\\_");
+  }
+
+  public boolean hasExternalUserId() {
+    String value = values.get("external_user_id");
+    return value != null && !value.isEmpty();
+  }
+
+  public String externalUserId() {
+    return values.get("external_user_id");
+  }
+
   public boolean hasSecurityEventPayload() {
     return !securityEventPayload().isEmpty();
   }

@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
@@ -93,8 +94,18 @@ public class SecurityEventHandler {
     List<SecurityEventHookResult> results = new ArrayList<>();
     for (SecurityEventHookConfiguration hookConfiguration : securityEventHookConfigurations) {
 
-      SecurityEventHook securityEventHookExecutor =
-          securityEventHooks.get(hookConfiguration.hookType());
+      Optional<SecurityEventHook> optionalExecutor =
+          securityEventHooks.find(hookConfiguration.hookType());
+
+      if (optionalExecutor.isEmpty()) {
+        log.warn(
+            "Skipping unsupported security event hook type: {} for tenant: {}",
+            hookConfiguration.hookType().name(),
+            tenant.identifierValue());
+        continue;
+      }
+
+      SecurityEventHook securityEventHookExecutor = optionalExecutor.get();
 
       if (securityEventHookExecutor.shouldExecute(tenant, securityEvent, hookConfiguration)) {
         log.info(

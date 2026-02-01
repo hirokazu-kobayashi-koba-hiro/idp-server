@@ -17,6 +17,7 @@
 package org.idp.server.platform.security.hook;
 
 import java.util.Map;
+import java.util.Optional;
 import org.idp.server.platform.exception.UnSupportedException;
 
 public class SecurityEventHooks {
@@ -36,5 +37,9 @@ public class SecurityEventHooks {
     }
 
     return securityEventHookExecutor;
+  }
+
+  public Optional<SecurityEventHook> find(SecurityEventHookType type) {
+    return Optional.ofNullable(values.get(type));
   }
 }

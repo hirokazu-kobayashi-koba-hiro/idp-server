@@ -17,47 +17,71 @@
 package org.idp.server.core.adapters.datasource.statistics.query.yearly;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.statistics.TenantYearlyStatistics;
 import org.idp.server.platform.statistics.TenantYearlyStatisticsIdentifier;
 
+/**
+ * Converts aggregated statistics data from SqlExecutor to TenantYearlyStatistics domain model.
+ *
+ * <p>The SqlExecutor already performs aggregation from statistics_events table, so this class only
+ * handles the domain conversion.
+ */
 public class ModelConvertor {
 
+  private static final JsonConverter jsonConverter = JsonConverter.defaultInstance();
+
+  /**
+   * Converts aggregated yearly statistics map to TenantYearlyStatistics domain object.
+   *
+   * @param values aggregated statistics from SqlExecutor
+   * @return TenantYearlyStatistics domain object
+   */
   @SuppressWarnings("unchecked")
   static TenantYearlyStatistics convert(Map<String, String> values) {
-    JsonConverter jsonConverter = JsonConverter.defaultInstance();
-
     String id = values.get("id");
     String tenantId = values.get("tenant_id");
     String statYear = values.get("stat_year");
-    String yearlySummary = values.get("yearly_summary");
-    String createdAt = values.get("created_at");
-    String updatedAt = values.get("updated_at");
+    String yearlySummaryJson = values.get("yearly_summary");
+    String createdAtStr = values.get("created_at");
+    String updatedAtStr = values.get("updated_at");
 
-    Map<String, Object> yearlySummaryMap =
-        yearlySummary != null && !yearlySummary.isEmpty()
-            ? jsonConverter.read(yearlySummary, Map.class)
+    Map<String, Object> yearlySummary =
+        yearlySummaryJson != null && !yearlySummaryJson.isEmpty()
+            ? jsonConverter.read(yearlySummaryJson, Map.class)
             : new HashMap<>();
 
-    LocalDateTime createdAtLocalDateTime = LocalDateTimeParser.parse(createdAt);
-    Instant createdAtInstant = createdAtLocalDateTime.atZone(ZoneOffset.UTC).toInstant();
-
-    LocalDateTime updatedAtLocalDateTime = LocalDateTimeParser.parse(updatedAt);
-    Instant updatedAtInstant = updatedAtLocalDateTime.atZone(ZoneOffset.UTC).toInstant();
+    Instant createdAt = parseTimestamp(createdAtStr);
+    Instant updatedAt = parseTimestamp(updatedAtStr);
 
     return TenantYearlyStatistics.builder()
         .id(new TenantYearlyStatisticsIdentifier(id))
         .tenantId(new TenantIdentifier(tenantId))
         .statYear(statYear)
-        .yearlySummary(yearlySummaryMap)
-        .createdAt(createdAtInstant)
-        .updatedAt(updatedAtInstant)
+        .yearlySummary(yearlySummary)
+        .createdAt(createdAt)
+        .updatedAt(updatedAt)
         .build();
+  }
+
+  private static Instant parseTimestamp(String timestamp) {
+    if (timestamp == null || timestamp.isEmpty()) {
+      return Instant.now();
+    }
+    try {
+      // Handle both PostgreSQL and MySQL timestamp formats
+      if (timestamp.contains(" ") && !timestamp.contains("T")) {
+        timestamp = timestamp.replace(" ", "T");
+      }
+      if (!timestamp.endsWith("Z") && !timestamp.contains("+")) {
+        timestamp = timestamp + "Z";
+      }
+      return Instant.parse(timestamp);
+    } catch (Exception e) {
+      return Instant.now();
+    }
   }
 }
