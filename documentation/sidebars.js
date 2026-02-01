@@ -667,6 +667,63 @@ const sidebars = {
         },
         {
           type: "category",
+          label: "Java",
+          items: [
+            "content_11_learning/java/README",
+            "content_11_learning/java/java-00-introduction",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/java/java-01-syntax",
+                "content_11_learning/java/java-02-oop"
+              ]
+            },
+            {
+              type: "category",
+              label: "中級",
+              collapsed: true,
+              items: [
+                "content_11_learning/java/java-03-generics",
+                "content_11_learning/java/java-04-collections",
+                "content_11_learning/java/java-05-exceptions",
+                "content_11_learning/java/java-06-streams",
+                "content_11_learning/java/java-07-lambda"
+              ]
+            },
+            {
+              type: "category",
+              label: "上級",
+              collapsed: true,
+              items: [
+                "content_11_learning/java/java-08-concurrency",
+                "content_11_learning/java/java-09-records",
+                "content_11_learning/java/java-10-sealed",
+                "content_11_learning/java/java-11-pattern-matching"
+              ]
+            },
+            {
+              type: "category",
+              label: "実践",
+              collapsed: true,
+              items: [
+                "content_11_learning/java/java-12-idp-patterns",
+                "content_11_learning/java/java-13-pitfalls"
+              ]
+            },
+            {
+              type: "category",
+              label: "コラム",
+              collapsed: true,
+              items: [
+                "content_11_learning/java/java-99-column-one-language"
+              ]
+            }
+          ]
+        },
+        {
+          type: "category",
           label: "OS基礎",
           items: [
             "content_11_learning/os-fundamentals/README",
@@ -747,6 +804,17 @@ const sidebars = {
               items: [
                 "content_11_learning/frameworks/column-reinventing-the-wheel",
                 "content_11_learning/frameworks/column-graduating-from-frameworks"
+              ]
+            },
+            {
+              type: "category",
+              label: "具体技術",
+              collapsed: true,
+              items: [
+                "content_11_learning/frameworks/java-servlet",
+                "content_11_learning/frameworks/spring-boot",
+                "content_11_learning/frameworks/servlet-container",
+                "content_11_learning/frameworks/cgi-to-servlet"
               ]
             }
           ]
