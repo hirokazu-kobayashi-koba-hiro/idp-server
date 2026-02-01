@@ -5,11 +5,15 @@
 # Imports generated user and device data into PostgreSQL.
 #
 # Usage:
-#   ./import_users.sh <prefix>
+#   ./import_users.sh <prefix> [-y]
+#
+# Options:
+#   -y    Skip confirmation prompt (auto-confirm)
 #
 # Examples:
 #   ./import_users.sh single_tenant_1m      # Import 1M single tenant users
 #   ./import_users.sh multi_tenant_10x100k  # Import multi-tenant users
+#   ./import_users.sh multi_tenant_1m+9x100k -y  # Import with auto-confirm
 #
 # Prerequisites:
 #   - Docker container 'postgres-primary' running
@@ -19,6 +23,22 @@
 set -e
 
 PREFIX="${1:-single_tenant_1m}"
+AUTO_CONFIRM=false
+
+# Parse options
+shift || true
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -y|--yes)
+            AUTO_CONFIRM=true
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
 DATA_DIR="./performance-test/data"
 
 USERS_FILE="${DATA_DIR}/${PREFIX}_users.tsv"
@@ -65,11 +85,13 @@ echo "  Devices: $DEVICES_FILE ($DEVICE_COUNT records)"
 echo ""
 
 # Confirm before import
-read -p "Proceed with import? (y/N) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Import cancelled."
-    exit 0
+if [ "$AUTO_CONFIRM" = false ]; then
+    read -p "Proceed with import? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Import cancelled."
+        exit 0
+    fi
 fi
 
 echo ""
