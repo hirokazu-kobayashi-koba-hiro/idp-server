@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.grant_management;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
+import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -81,7 +83,21 @@ class ModelConverter {
             authorizationDetails,
             consentClaims);
 
-    return new AuthorizationGranted(identifier, authorizationGrant);
+    LocalDateTime createdAt = parseLocalDateTime(stringMap.get("created_at"));
+    LocalDateTime updatedAt = parseLocalDateTime(stringMap.get("updated_at"));
+
+    return new AuthorizationGranted(identifier, authorizationGrant, createdAt, updatedAt);
+  }
+
+  private static LocalDateTime parseLocalDateTime(String value) {
+    if (value == null || value.isEmpty()) {
+      return null;
+    }
+    try {
+      return LocalDateTimeParser.parse(value);
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   private static RequestedClaimsPayload convertClaimsPayload(String value) {

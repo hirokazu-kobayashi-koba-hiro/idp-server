@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.grant_management;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
@@ -27,6 +28,8 @@ import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 public class AuthorizationGranted {
   AuthorizationGrantedIdentifier identifier;
   AuthorizationGrant authorizationGrant;
+  LocalDateTime createdAt;
+  LocalDateTime updatedAt;
 
   public AuthorizationGranted() {}
 
@@ -34,6 +37,17 @@ public class AuthorizationGranted {
       AuthorizationGrantedIdentifier identifier, AuthorizationGrant authorizationGrant) {
     this.identifier = identifier;
     this.authorizationGrant = authorizationGrant;
+  }
+
+  public AuthorizationGranted(
+      AuthorizationGrantedIdentifier identifier,
+      AuthorizationGrant authorizationGrant,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt) {
+    this.identifier = identifier;
+    this.authorizationGrant = authorizationGrant;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
   }
 
   public AuthorizationGrantedIdentifier identifier() {
@@ -117,6 +131,13 @@ public class AuthorizationGranted {
           && authorizationGrant.consentClaims().exists()) {
         map.put("consent_claims", authorizationGrant.consentClaims().toMap());
       }
+    }
+
+    if (createdAt != null) {
+      map.put("created_at", createdAt.toString());
+    }
+    if (updatedAt != null) {
+      map.put("updated_at", updatedAt.toString());
     }
 
     return map;

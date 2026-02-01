@@ -73,7 +73,8 @@ public class AuthorizationGrantedQueries {
       return 20;
     }
     try {
-      return Integer.parseInt(values.get("limit"));
+      int limit = Integer.parseInt(values.get("limit"));
+      return Math.min(limit, 1000);
     } catch (NumberFormatException e) {
       return 20;
     }

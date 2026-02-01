@@ -290,12 +290,12 @@ components:
     Limit:
       name: limit
       in: query
-      description: "返却する最大件数（デフォルト: 20、最大: 100）"
+      description: "返却する最大件数（デフォルト: 20、最大: 1000）"
       required: false
       schema:
         type: integer
         minimum: 1
-        maximum: 100
+        maximum: 1000
         default: 20
       example: 20
 

@@ -224,8 +224,11 @@ describe("Standard Use Case: Grant Revocation with Token Deletion", () => {
     });
 
     console.log(`Revoke response status: ${revokeResponse.status}`);
+    console.log(`Revoke response data: ${JSON.stringify(revokeResponse.data)}`);
     expect(revokeResponse.status).toBe(204);
-    console.log(`✅ Grant revoked successfully`);
+    // 204 No Content should have no body (empty string, undefined, or null)
+    expect(revokeResponse.data === "" || revokeResponse.data === undefined || revokeResponse.data === null).toBe(true);
+    console.log(`✅ Grant revoked successfully (204 No Content)`);
 
     await sleep(500);
 
