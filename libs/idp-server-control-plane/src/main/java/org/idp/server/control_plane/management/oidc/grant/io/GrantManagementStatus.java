@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token.command;
+package org.idp.server.control_plane.management.oidc.grant.io;
 
-import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.crypto.AesCipher;
-import org.idp.server.platform.crypto.HmacHasher;
+public enum GrantManagementStatus {
+  OK(200),
+  NO_CONTENT(204),
+  INVALID_REQUEST(400),
+  FORBIDDEN(403),
+  NOT_FOUND(404);
 
-public interface OAuthTokenSqlExecutor {
+  private final int statusCode;
 
-  void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
+  GrantManagementStatus(int statusCode) {
+    this.statusCode = statusCode;
+  }
 
-  void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
-
-  void deleteByUserAndClient(String tenantId, String userId, String clientId);
+  public int statusCode() {
+    return statusCode;
+  }
 }

@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token.command;
+package org.idp.server.control_plane.management.oidc.grant.io;
 
-import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.crypto.AesCipher;
-import org.idp.server.platform.crypto.HmacHasher;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedQueries;
 
-public interface OAuthTokenSqlExecutor {
+public class GrantFindListRequest implements GrantManagementRequest {
+  AuthorizationGrantedQueries queries;
 
-  void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
+  public GrantFindListRequest() {}
 
-  void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
+  public GrantFindListRequest(AuthorizationGrantedQueries queries) {
+    this.queries = queries;
+  }
 
-  void deleteByUserAndClient(String tenantId, String userId, String clientId);
+  public AuthorizationGrantedQueries queries() {
+    return queries;
+  }
 }

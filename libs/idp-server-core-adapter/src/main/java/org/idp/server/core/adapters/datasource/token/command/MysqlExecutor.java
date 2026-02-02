@@ -213,4 +213,19 @@ public class MysqlExecutor implements OAuthTokenSqlExecutor {
 
     sqlExecutor.execute(sqlTemplate, params);
   }
+
+  @Override
+  public void deleteByUserAndClient(String tenantId, String userId, String clientId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+            DELETE FROM oauth_token
+            WHERE tenant_id = ?
+              AND user_id = ?
+              AND client_id = ?;
+            """;
+    List<Object> params = List.of(tenantId, userId, clientId);
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
 }

@@ -137,6 +137,9 @@ public enum DefaultAdminPermission {
   SESSION_READ("idp:session:read", "Admin Read user session information"),
   SESSION_DELETE("idp:session:delete", "Admin Delete user session"),
 
+  GRANT_READ("idp:grant:read", "Admin Read authorization grant information"),
+  GRANT_DELETE("idp:grant:delete", "Admin Delete/revoke authorization grant"),
+
   SYSTEM_READ("idp:system:read", "Admin Read system configuration"),
   SYSTEM_WRITE("idp:system:write", "Admin Write system configuration");
 

@@ -1,0 +1,431 @@
+openapi: 3.0.3
+info:
+  title: idp-server Grant管理 API
+  description: |
+    idp-server Grant管理 API 仕様書
+
+    ## 概要
+
+    Grant（認可付与）は、ユーザーがクライアントに対して与えた認可を表します。
+    ユーザーが特定のクライアントにアクセスを許可すると、Grantレコードが作成されます。
+
+    ### Grantが作成されるタイミング
+
+    - Authorization Code Flow での同意時
+    - Password Grant でのトークン発行時
+    - その他のGrant Type でのトークン発行時
+
+    ### スコープのマージ
+
+    同じユーザー・クライアントの組み合わせで複数回トークンを発行すると、
+    スコープは累積的にマージされます。
+
+    ### Grant取り消し時の動作
+
+    Grantを取り消すと、そのユーザー・クライアントに関連する**全てのトークン**
+    （アクセストークン、リフレッシュトークン）も同時に削除されます。
+    これはAuth0と同様の動作です。
+
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: organization-grant
+    description: 組織レベルGrant管理
+
+paths:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/grants:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: Grant一覧取得
+      description: |
+        組織内の特定のテナントに存在するGrant（認可付与）の一覧を取得します。
+
+        クエリパラメータを使用して、特定のユーザーやクライアントでフィルタリングできます。
+      tags:
+        - organization-grant
+      operationId: listGrants
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: user_id
+          in: query
+          description: ユーザーIDでフィルタリング
+          required: false
+          schema:
+            type: string
+            format: uuid
+          example: "8d8822f0-cf68-455a-aa82-3ccfbc07b060"
+        - name: client_id
+          in: query
+          description: クライアントIDでフィルタリング
+          required: false
+          schema:
+            type: string
+          example: "my-client-app"
+        - name: from
+          in: query
+          description: 作成日時の開始範囲（ISO 8601形式）
+          required: false
+          schema:
+            type: string
+            format: date-time
+          example: "2025-01-01T00:00:00Z"
+        - name: to
+          in: query
+          description: 作成日時の終了範囲（ISO 8601形式）
+          required: false
+          schema:
+            type: string
+            format: date-time
+          example: "2025-12-31T23:59:59Z"
+      responses:
+        '200':
+          description: Grant一覧の取得が成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrantListResponse'
+              example:
+                list:
+                  - id: "6afc99ca-d50a-4a4f-b32b-a93026cda6dc"
+                    user:
+                      sub: "8d8822f0-cf68-455a-aa82-3ccfbc07b060"
+                      name: "Taro Yamada"
+                      email: "taro@example.com"
+                    client:
+                      client_id: "my-client-app"
+                      client_name: "My Application"
+                    scopes:
+                      - "openid"
+                      - "profile"
+                      - "email"
+                    created_at: "2025-01-15T10:30:00Z"
+                    updated_at: "2025-01-20T14:00:00Z"
+                total_count: 1
+                limit: 20
+                offset: 0
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/grants/{grant-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/GrantId'
+    get:
+      summary: Grant詳細取得
+      description: 指定されたGrant（認可付与）の詳細情報を取得します
+      tags:
+        - organization-grant
+      operationId: getGrant
+      responses:
+        '200':
+          description: Grantの取得が成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Grant'
+              example:
+                id: "6afc99ca-d50a-4a4f-b32b-a93026cda6dc"
+                user:
+                  sub: "8d8822f0-cf68-455a-aa82-3ccfbc07b060"
+                  name: "Taro Yamada"
+                  email: "taro@example.com"
+                client:
+                  client_id: "my-client-app"
+                  client_name: "My Application"
+                scopes:
+                  - "openid"
+                  - "profile"
+                  - "email"
+                created_at: "2025-01-15T10:30:00Z"
+                updated_at: "2025-01-20T14:00:00Z"
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Grantが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+    delete:
+      summary: Grant取り消し（Revocation）
+      description: |
+        指定されたGrant（認可付与）を取り消します。
+
+        **重要**: Grantを取り消すと、そのユーザー・クライアントに関連する
+        **全てのトークン**（アクセストークン、リフレッシュトークン）も
+        同時に削除されます。
+
+        ### dry_runモード
+
+        `dry_run=true` を指定すると、実際の削除は行わずに
+        削除対象の情報を返します。本番実行前の確認に使用してください。
+      tags:
+        - organization-grant
+      operationId: revokeGrant
+      parameters:
+        - name: dry_run
+          in: query
+          description: |
+            trueの場合、実際の削除は行わずシミュレーション結果を返します
+          required: false
+          schema:
+            type: boolean
+            default: false
+          example: false
+      responses:
+        '204':
+          description: Grantが正常に取り消されました（dry_run=falseの場合）
+        '200':
+          description: Dry-runが正常に完了しました（dry_run=trueの場合）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrantRevocationDryRunResponse'
+              example:
+                dry_run: true
+                grant_id: "6afc99ca-d50a-4a4f-b32b-a93026cda6dc"
+                message: "Revocation simulated successfully"
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Grantが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        OAuth 2.0 アクセストークン。
+        `org-management` スコープが必要です。
+
+  parameters:
+    OrganizationId:
+      name: organization-id
+      in: path
+      required: true
+      description: 組織ID
+      schema:
+        type: string
+        format: uuid
+      example: "72cf4a12-8da3-40fb-8ae4-a77e3cda95e2"
+
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      description: テナントID
+      schema:
+        type: string
+        format: uuid
+      example: "952f6906-3e95-4ed3-86b2-981f90f785f9"
+
+    GrantId:
+      name: grant-id
+      in: path
+      required: true
+      description: Grant ID
+      schema:
+        type: string
+        format: uuid
+      example: "6afc99ca-d50a-4a4f-b32b-a93026cda6dc"
+
+    Limit:
+      name: limit
+      in: query
+      description: "返却する最大件数（デフォルト: 20、最大: 1000）"
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 20
+      example: 20
+
+    Offset:
+      name: offset
+      in: query
+      description: スキップする件数（ページネーション用）
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      example: 0
+
+  schemas:
+    Grant:
+      type: object
+      description: Grant（認可付与）を表すオブジェクト
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Grant ID
+        user:
+          $ref: '#/components/schemas/GrantUser'
+        client:
+          $ref: '#/components/schemas/GrantClient'
+        scopes:
+          type: array
+          items:
+            type: string
+          description: 付与されたスコープの一覧
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 最終更新日時
+      required:
+        - id
+        - user
+        - client
+        - scopes
+
+    GrantUser:
+      type: object
+      description: Grantに関連するユーザー情報
+      properties:
+        sub:
+          type: string
+          description: ユーザー識別子（Subject）
+        name:
+          type: string
+          description: ユーザー名
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+      required:
+        - sub
+
+    GrantClient:
+      type: object
+      description: Grantに関連するクライアント情報
+      properties:
+        client_id:
+          type: string
+          description: クライアントID
+        client_name:
+          type: string
+          description: クライアント名
+      required:
+        - client_id
+
+    GrantListResponse:
+      type: object
+      description: Grant一覧のレスポンス
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Grant'
+          description: Grantの配列
+        total_count:
+          type: integer
+          description: 条件に一致するGrantの総数
+        limit:
+          type: integer
+          description: 返却された最大件数
+        offset:
+          type: integer
+          description: スキップされた件数
+      required:
+        - list
+        - total_count
+        - limit
+        - offset
+
+    GrantRevocationDryRunResponse:
+      type: object
+      description: Grant取り消しのdry-run結果
+      properties:
+        dry_run:
+          type: boolean
+          description: dry-runモードかどうか（常にtrue）
+        grant_id:
+          type: string
+          format: uuid
+          description: 取り消し対象のGrant ID
+        message:
+          type: string
+          description: シミュレーション結果のメッセージ
+      required:
+        - dry_run
+        - grant_id
+        - message
+
+    ErrorResponse:
+      type: object
+      description: エラーレスポンス
+      properties:
+        error:
+          type: string
+          description: エラーコード
+          example: "invalid_request"
+        error_description:
+          type: string
+          description: エラーの詳細説明
+          example: "Grant not found"
+      required:
+        - error

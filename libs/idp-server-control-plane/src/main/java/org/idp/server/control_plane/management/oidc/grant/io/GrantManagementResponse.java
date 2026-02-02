@@ -14,17 +14,30 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token.command;
+package org.idp.server.control_plane.management.oidc.grant.io;
 
-import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.crypto.AesCipher;
-import org.idp.server.platform.crypto.HmacHasher;
+import java.util.Map;
 
-public interface OAuthTokenSqlExecutor {
+public class GrantManagementResponse {
+  GrantManagementStatus status;
+  Map<String, Object> contents;
 
-  void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
+  public GrantManagementResponse() {}
 
-  void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
+  public GrantManagementResponse(GrantManagementStatus status, Map<String, Object> contents) {
+    this.status = status;
+    this.contents = contents;
+  }
 
-  void deleteByUserAndClient(String tenantId, String userId, String clientId);
+  public GrantManagementStatus status() {
+    return status;
+  }
+
+  public int statusCode() {
+    return status.statusCode();
+  }
+
+  public Map<String, Object> contents() {
+    return contents;
+  }
 }

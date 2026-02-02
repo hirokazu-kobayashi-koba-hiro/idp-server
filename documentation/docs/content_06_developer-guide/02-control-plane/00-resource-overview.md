@@ -2,7 +2,7 @@
 
 ## このドキュメントの目的
 
-**36個の管理API**の全体像を把握し、どのAPIをいつ使うかを理解することが目標です。
+**37個の管理API**の全体像を把握し、どのAPIをいつ使うかを理解することが目標です。
 
 ### 所要時間
 ⏱️ **約15分**（参照用）
@@ -60,6 +60,7 @@
 | | OrgAuthenticationTransactionManagement | 認証トランザクション |
 | | OrgFederationConfigManagement | フェデレーション設定 |
 | | OrgIdentityVerificationConfigManagement | 身元確認設定 |
+| **認可管理** | OrgGrantManagement | Grant（認可付与） |
 | **セキュリティ** | OrgSecurityEventManagement | セキュリティイベント |
 | | OrgSecurityEventHookManagement | セキュリティイベントフック |
 | | OrgSecurityEventHookConfigManagement | フック設定 |
@@ -143,6 +144,7 @@ DELETE /v1/management/tenants/{tenant-id}/clients/{id}    # client:delete
 ### 個別機能
 - [Authentication Configuration](../04-implementation-guides/impl-05-authentication-policy.md) - 認証設定
 - [Security Event Hooks](../04-implementation-guides/impl-15-security-event-hooks.md) - イベントフック
+- [Grant Management API](../../../../openapi/swagger-grant-management-ja.yaml) - Grant管理（OpenAPI仕様）
 
 ---
 

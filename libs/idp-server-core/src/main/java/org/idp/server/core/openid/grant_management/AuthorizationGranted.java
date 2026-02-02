@@ -16,6 +16,9 @@
 
 package org.idp.server.core.openid.grant_management;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
 import org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims;
@@ -25,6 +28,8 @@ import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 public class AuthorizationGranted {
   AuthorizationGrantedIdentifier identifier;
   AuthorizationGrant authorizationGrant;
+  LocalDateTime createdAt;
+  LocalDateTime updatedAt;
 
   public AuthorizationGranted() {}
 
@@ -32,6 +37,17 @@ public class AuthorizationGranted {
       AuthorizationGrantedIdentifier identifier, AuthorizationGrant authorizationGrant) {
     this.identifier = identifier;
     this.authorizationGrant = authorizationGrant;
+  }
+
+  public AuthorizationGranted(
+      AuthorizationGrantedIdentifier identifier,
+      AuthorizationGrant authorizationGrant,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt) {
+    this.identifier = identifier;
+    this.authorizationGrant = authorizationGrant;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
   }
 
   public AuthorizationGrantedIdentifier identifier() {
@@ -83,5 +99,47 @@ public class AuthorizationGranted {
 
   public boolean isConsentedClaims(ConsentClaims requestedConsentClaims) {
     return authorizationGrant.isConsentedClaims(requestedConsentClaims);
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", identifier.value());
+
+    if (authorizationGrant != null) {
+      Map<String, Object> userMap = new HashMap<>();
+      if (authorizationGrant.user() != null && authorizationGrant.user().exists()) {
+        userMap.put("sub", authorizationGrant.user().sub());
+        userMap.put("name", authorizationGrant.user().name());
+        userMap.put("email", authorizationGrant.user().email());
+      }
+      map.put("user", userMap);
+
+      Map<String, Object> clientMap = new HashMap<>();
+      if (authorizationGrant.clientAttributes() != null) {
+        clientMap.put("client_id", authorizationGrant.clientIdentifierValue());
+        if (authorizationGrant.clientName() != null) {
+          clientMap.put("client_name", authorizationGrant.clientName().value());
+        }
+      }
+      map.put("client", clientMap);
+
+      if (authorizationGrant.scopes() != null) {
+        map.put("scopes", authorizationGrant.scopes().toStringList());
+      }
+
+      if (authorizationGrant.consentClaims() != null
+          && authorizationGrant.consentClaims().exists()) {
+        map.put("consent_claims", authorizationGrant.consentClaims().toMap());
+      }
+    }
+
+    if (createdAt != null) {
+      map.put("created_at", createdAt.toString());
+    }
+    if (updatedAt != null) {
+      map.put("updated_at", updatedAt.toString());
+    }
+
+    return map;
   }
 }

@@ -14,17 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.token.command;
+package org.idp.server.control_plane.management.oidc.grant.io;
 
-import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.platform.crypto.AesCipher;
-import org.idp.server.platform.crypto.HmacHasher;
-
-public interface OAuthTokenSqlExecutor {
-
-  void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
-
-  void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
-
-  void deleteByUserAndClient(String tenantId, String userId, String clientId);
-}
+/** Marker interface for grant management requests. */
+public interface GrantManagementRequest {}

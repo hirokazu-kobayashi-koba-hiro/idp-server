@@ -8,6 +8,7 @@ org.idp.server.core.adapters.datasource.oidc.configuration.client.query.ClientCo
 org.idp.server.core.adapters.datasource.oidc.configuration.client.command.ClientConfigurationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.verifiable_credentials.VerifiableCredentialTransactionDataSourceProvider
 org.idp.server.core.adapters.datasource.grant_management.AuthorizationGrantedDataSourceProvider
+org.idp.server.core.adapters.datasource.grant_management.AuthorizationGrantedQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.permission.command.PermissionCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.role.command.RoleCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.UserDataSourceProvider

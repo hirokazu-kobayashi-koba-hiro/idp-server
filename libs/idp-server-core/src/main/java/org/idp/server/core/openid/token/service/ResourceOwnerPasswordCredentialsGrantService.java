@@ -18,6 +18,9 @@ package org.idp.server.core.openid.token.service;
 
 import java.util.UUID;
 import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.grant_management.AuthorizationGranted;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedIdentifier;
+import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrantBuilder;
 import org.idp.server.core.openid.identity.User;
@@ -58,12 +61,15 @@ public class ResourceOwnerPasswordCredentialsGrantService
     implements OAuthTokenCreationService, RefreshTokenCreatable {
 
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
+  AuthorizationGrantedRepository authorizationGrantedRepository;
   IdTokenCreator idTokenCreator;
   AccessTokenCreator accessTokenCreator;
 
   public ResourceOwnerPasswordCredentialsGrantService(
-      OAuthTokenCommandRepository oAuthTokenCommandRepository) {
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
+      AuthorizationGrantedRepository authorizationGrantedRepository) {
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
+    this.authorizationGrantedRepository = authorizationGrantedRepository;
     this.idTokenCreator = IdTokenCreator.getInstance();
     this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
@@ -131,6 +137,25 @@ public class ResourceOwnerPasswordCredentialsGrantService
 
     OAuthToken oAuthToken = oAuthTokenBuilder.build();
     oAuthTokenCommandRepository.register(tenant, oAuthToken);
+    registerOrUpdateAuthorizationGranted(tenant, authorizationGrant);
     return oAuthToken;
+  }
+
+  private void registerOrUpdateAuthorizationGranted(
+      Tenant tenant, AuthorizationGrant authorizationGrant) {
+    AuthorizationGranted latest =
+        authorizationGrantedRepository.find(
+            tenant, authorizationGrant.requestedClientId(), authorizationGrant.user());
+
+    if (latest.exists()) {
+      AuthorizationGranted merge = latest.merge(authorizationGrant);
+      authorizationGrantedRepository.update(tenant, merge);
+      return;
+    }
+    AuthorizationGrantedIdentifier authorizationGrantedIdentifier =
+        new AuthorizationGrantedIdentifier(UUID.randomUUID().toString());
+    AuthorizationGranted authorizationGranted =
+        new AuthorizationGranted(authorizationGrantedIdentifier, authorizationGrant);
+    authorizationGrantedRepository.register(tenant, authorizationGranted);
   }
 }
