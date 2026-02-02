@@ -72,7 +72,7 @@ public class HikariConnectionProvider implements DbConnectionProvider {
             : appDatabaseConfig.writerConfigs().get(databaseType);
     try {
 
-      log.debug(
+      log.trace(
           "DB connection for "
               + databaseType
               + " url: "
