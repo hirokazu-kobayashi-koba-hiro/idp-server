@@ -19,9 +19,11 @@ package org.idp.server.adapters.springboot.application.property;
 public class HikariConfig {
   int maximumPoolSize = 10;
   int minimumIdle = 2;
-  long connectionTimeout = 3000;
+  long connectionTimeout = 30_000;
   long idleTimeout = 600_000;
   long maxLifetime = 1_800_000;
+  long keepaliveTime = 180_000;
+  long validationTimeout = 5_000;
 
   public int getMaximumPoolSize() {
     return maximumPoolSize;
@@ -61,5 +63,21 @@ public class HikariConfig {
 
   public void setMaxLifetime(long maxLifetime) {
     this.maxLifetime = maxLifetime;
+  }
+
+  public long getKeepaliveTime() {
+    return keepaliveTime;
+  }
+
+  public void setKeepaliveTime(long keepaliveTime) {
+    this.keepaliveTime = keepaliveTime;
+  }
+
+  public long getValidationTimeout() {
+    return validationTimeout;
+  }
+
+  public void setValidationTimeout(long validationTimeout) {
+    this.validationTimeout = validationTimeout;
   }
 }

@@ -282,6 +282,133 @@ npm test
 
 約800ケースのテストが実行され、正常に動作することが確認できます。
 
+## ローカル環境のリソースチューニング
+
+ローカル環境で負荷テストやパフォーマンス検証を行う場合、デフォルト設定では十分なスループットが得られないことがあります。
+以下の設定を調整することで、ローカル環境でもより高い負荷に対応できます。
+
+### Docker リソース割り当て
+
+`docker-compose.yaml` で各コンテナのリソース制限を設定できます。
+
+```yaml
+services:
+  idp-server-1:
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'    # CPU制限（コア数）
+          memory: 2048M  # メモリ制限
+```
+
+**推奨設定（負荷テスト用）**:
+- idp-server: CPU 2.0〜3.0コア、メモリ 2GB
+- PostgreSQL: CPU 2.0コア、メモリ 2GB
+- nginx: CPU 1.0コア、メモリ 512MB
+
+> **Note**: Docker Desktop の設定で十分なリソースが割り当てられていることを確認してください（推奨: 6コア以上、8GB以上のメモリ）。
+
+### PostgreSQL チューニング
+
+`docker-compose.yaml` の PostgreSQL コマンドでパフォーマンスパラメータを調整できます。
+
+```yaml
+postgres-primary:
+  command:
+    - "postgres"
+    - "-c"
+    - "shared_buffers=1GB"           # 共有バッファ（デフォルト: 128MB）
+    - "-c"
+    - "work_mem=64MB"                # 作業メモリ（デフォルト: 4MB）
+    - "-c"
+    - "effective_cache_size=2GB"     # 実効キャッシュサイズ
+    - "-c"
+    - "max_parallel_workers_per_gather=4"  # 並列ワーカー数
+```
+
+| パラメータ | デフォルト | 推奨値 | 説明 |
+|-----------|----------|--------|------|
+| `shared_buffers` | 128MB | 1GB | PostgreSQLが使用する共有メモリ |
+| `work_mem` | 4MB | 64MB | ソート・ハッシュ操作用メモリ |
+| `effective_cache_size` | - | 2GB | OSキャッシュ見積もり（プランナー用） |
+| `max_parallel_workers_per_gather` | 2 | 4 | 並列クエリワーカー数 |
+
+> **Note**: 設定変更後は `docker compose up -d postgres-primary` でコンテナを再作成する必要があります（`restart` では反映されません）。
+
+### HikariCP（コネクションプール）設定
+
+`application.yaml` で HikariCP のコネクションプール設定を環境変数で調整できます。
+
+```yaml
+idp:
+  datasource:
+    app:
+      writer:
+        hikari:
+          connection-timeout: ${DB_WRITER_TIMEOUT:30000}      # 接続取得タイムアウト（ms）
+          maximum-pool-size: ${DB_WRITER_MAX_POOL_SIZE:30}    # 最大プール数
+          minimum-idle: ${DB_WRITER_MIN_IDLE:10}              # 最小アイドル接続数
+          idle-timeout: ${DB_WRITER_IDLE_TIMEOUT:600000}      # アイドルタイムアウト（ms）
+          max-lifetime: ${DB_WRITER_MAX_LIFETIME:1800000}     # 接続最大生存時間（ms）
+          keepalive-time: ${DB_WRITER_KEEPALIVE_TIME:180000}  # キープアライブ間隔（ms）
+          validation-timeout: ${DB_WRITER_VALIDATION_TIMEOUT:5000}  # 検証タイムアウト（ms）
+```
+
+| パラメータ | デフォルト | 説明 |
+|-----------|----------|------|
+| `connection-timeout` | 30000ms | プールから接続を取得する最大待機時間 |
+| `maximum-pool-size` | 30 | 最大コネクション数 |
+| `minimum-idle` | 10 | アイドル時に維持する最小コネクション数 |
+| `keepalive-time` | 180000ms | DB接続のキープアライブ間隔（Aurora等のtcp_keepalive_idle未満に設定） |
+| `validation-timeout` | 5000ms | 接続検証のタイムアウト |
+
+### nginx チューニング
+
+`docker/nginx/nginx.conf` でnginxのパフォーマンスを調整できます。
+
+```nginx
+worker_processes auto;
+
+events {
+    worker_connections 4096;  # ワーカーあたりの最大接続数
+    multi_accept on;          # 複数接続の同時受付
+    use epoll;                # イベント駆動モデル（Linux）
+}
+
+http {
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    keepalive_requests 10000;  # キープアライブあたりのリクエスト数
+
+    upstream idp_backend {
+        keepalive 100;  # バックエンドへのキープアライブ接続数
+        server idp-server-1:8080;
+        server idp-server-2:8080;
+    }
+}
+```
+
+### リソースモニタリング
+
+負荷テスト中は `docker stats` でリソース使用状況を監視し、ボトルネックを特定します。
+
+```bash
+docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+```
+
+**典型的なボトルネックパターン**:
+
+| 症状 | 原因 | 対策 |
+|------|------|------|
+| PostgreSQL CPU > 100% | DBがボトルネック | shared_buffers/work_mem増加、インデックス確認 |
+| idp-server CPU > 100% | JVM処理限界 | CPU割り当て増加、インスタンス追加 |
+| nginx CPU高負荷 | 接続処理限界 | worker_connections増加 |
+| メモリ使用率高 | ヒープ不足 | コンテナメモリ制限増加 |
+
+> **Tip**: 詳細なパフォーマンスチューニングガイドは [パフォーマンスチューニング](../content_11_learning/26-performance-tuning/) を参照してください。
+
 ## 次のステップ
 
 クイックスタートはこれで完了です。次のステップとして以下を参照してください：

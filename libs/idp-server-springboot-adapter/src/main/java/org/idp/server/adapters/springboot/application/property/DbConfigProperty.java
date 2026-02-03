@@ -65,6 +65,8 @@ public class DbConfigProperty {
         hikari.getMinimumIdle(),
         hikari.getConnectionTimeout(),
         hikari.getIdleTimeout(),
-        hikari.getMaxLifetime());
+        hikari.getMaxLifetime(),
+        hikari.getKeepaliveTime(),
+        hikari.getValidationTimeout());
   }
 }

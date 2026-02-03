@@ -918,6 +918,16 @@ const sidebars = {
             },
             {
               type: "category",
+              label: "実践",
+              collapsed: true,
+              items: [
+                "content_11_learning/performance-tuning/local-vs-cloud",
+                "content_11_learning/performance-tuning/measurement-techniques",
+                "content_11_learning/performance-tuning/load-test-simulation"
+              ]
+            },
+            {
+              type: "category",
               label: "コラム",
               collapsed: true,
               items: [
