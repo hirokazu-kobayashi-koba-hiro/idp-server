@@ -16,6 +16,8 @@
 
 package org.idp.server.core.adapters.datasource.token.command;
 
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.crypto.AesCipher;
@@ -43,5 +45,10 @@ public class OAuthTokenCommandDataSource implements OAuthTokenCommandRepository 
   @Override
   public void delete(Tenant tenant, OAuthToken oAuthToken) {
     executor.delete(oAuthToken, aesCipher, hmacHasher);
+  }
+
+  @Override
+  public void deleteByUserAndClient(Tenant tenant, User user, RequestedClientId clientId) {
+    executor.deleteByUserAndClient(tenant.identifierValue(), user.sub(), clientId.value());
   }
 }

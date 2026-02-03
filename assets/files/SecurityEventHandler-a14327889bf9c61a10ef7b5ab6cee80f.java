@@ -34,7 +34,6 @@ import org.idp.server.platform.security.hook.configuration.SecurityEventHookConf
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurations;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogService;
-import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.statistics.FiscalYearCalculator;
@@ -46,7 +45,6 @@ import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepo
 
 public class SecurityEventHandler {
 
-  SecurityEventCommandRepository securityEventCommandRepository;
   SecurityEventHookResultCommandRepository resultsCommandRepository;
   SecurityEventHooks securityEventHooks;
   SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
@@ -138,7 +136,12 @@ public class SecurityEventHandler {
    * @param securityEvent the security event
    */
   private void updateStatistics(Tenant tenant, SecurityEvent securityEvent) {
-    if (securityEvent == null) {
+
+    // to reduce statistics event
+    if (securityEvent == null
+        || DefaultSecurityEventType.inspect_token_success
+            .toEventType()
+            .equals(securityEvent.type())) {
       return;
     }
 
@@ -191,7 +194,7 @@ public class SecurityEventHandler {
             tenant.identifier(), eventDate, userId, userName);
 
     if (isNewDailyUser) {
-      log.debug(
+      log.trace(
           "New daily active user: tenant={}, date={}, user={}",
           tenant.identifierValue(),
           eventDate,
@@ -205,7 +208,7 @@ public class SecurityEventHandler {
             tenant.identifier(), monthStart, userId, userName);
 
     if (isNewMonthlyUser) {
-      log.debug(
+      log.trace(
           "New monthly active user: tenant={}, month={}, user={}",
           tenant.identifierValue(),
           monthStart,
@@ -222,7 +225,7 @@ public class SecurityEventHandler {
             tenant.identifier(), yearStart, userId, userName);
 
     if (isNewYearlyUser) {
-      log.debug(
+      log.trace(
           "New yearly active user: tenant={}, year={}, user={}",
           tenant.identifierValue(),
           yearStart,
@@ -245,7 +248,7 @@ public class SecurityEventHandler {
    * @param eventType event type to increment
    */
   private void incrementMetric(Tenant tenant, LocalDate date, String eventType) {
-    log.debug(
+    log.trace(
         "Incrementing metric: tenant={}, date={}, eventType={}",
         tenant.identifierValue(),
         date,
