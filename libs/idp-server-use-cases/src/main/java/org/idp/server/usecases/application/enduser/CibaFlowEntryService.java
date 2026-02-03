@@ -133,13 +133,17 @@ public class CibaFlowEntryService implements CibaFlowApi {
         authenticationTransaction.updateWith(interactionRequestResult);
     authenticationTransactionCommandRepository.register(tenant, updatedTransaction);
 
-    eventPublisher.publish(
-        tenant,
-        issueResponse.request(),
-        issueResponse.user(),
-        interactionRequestResult.eventType(),
-        requestAttributes,
-        issueResponse.clientAttributes());
+    // to reduce unnecessary security event
+    if (!OperationType.NO_ACTION.equals(authenticationInteractor.operationType())) {
+      eventPublisher.publish(
+          tenant,
+          issueResponse.request(),
+          issueResponse.user(),
+          interactionRequestResult.eventType(),
+          requestAttributes,
+          issueResponse.clientAttributes());
+    }
+
     return issueResponse.toResponse();
   }
 
