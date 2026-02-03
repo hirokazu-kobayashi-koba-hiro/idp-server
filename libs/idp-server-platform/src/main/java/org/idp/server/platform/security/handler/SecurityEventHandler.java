@@ -34,7 +34,6 @@ import org.idp.server.platform.security.hook.configuration.SecurityEventHookConf
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurations;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogService;
-import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
 import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.statistics.FiscalYearCalculator;
@@ -46,7 +45,6 @@ import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepo
 
 public class SecurityEventHandler {
 
-  SecurityEventCommandRepository securityEventCommandRepository;
   SecurityEventHookResultCommandRepository resultsCommandRepository;
   SecurityEventHooks securityEventHooks;
   SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;

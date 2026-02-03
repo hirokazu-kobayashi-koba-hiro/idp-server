@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.security.hook.configuration.query;
 
 import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
@@ -34,8 +35,9 @@ public class SecurityEventHookConfigurationDataSourceProvider
       ApplicationComponentDependencyContainer container) {
     ApplicationDatabaseTypeProvider databaseTypeProvider =
         container.resolve(ApplicationDatabaseTypeProvider.class);
+    CacheStore cacheStore = container.resolve(CacheStore.class);
     SecurityEventHookConfigSqlExecutors executors = new SecurityEventHookConfigSqlExecutors();
     SecurityEventHookConfigSqlExecutor executor = executors.get(databaseTypeProvider.provide());
-    return new SecurityEventHookConfigurationQueryDataSource(executor);
+    return new SecurityEventHookConfigurationQueryDataSource(executor, cacheStore);
   }
 }
