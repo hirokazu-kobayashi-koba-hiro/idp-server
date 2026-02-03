@@ -16,6 +16,8 @@
 
 package org.idp.server.core.adapters.datasource.security.hook.configuration.command;
 
+import org.idp.server.core.adapters.datasource.security.hook.configuration.query.SecurityEventHookConfigurationQueryDataSource;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
@@ -26,25 +28,35 @@ public class SecurityEventHookConfigurationCommandDataSource
 
   SecurityEventHookConfigSqlExecutor executor;
   JsonConverter converter;
+  CacheStore cacheStore;
 
   public SecurityEventHookConfigurationCommandDataSource(
-      SecurityEventHookConfigSqlExecutor executor) {
+      SecurityEventHookConfigSqlExecutor executor, CacheStore cacheStore) {
     this.executor = executor;
     this.converter = JsonConverter.snakeCaseInstance();
+    this.cacheStore = cacheStore;
   }
 
   @Override
   public void register(Tenant tenant, SecurityEventHookConfiguration configuration) {
+    invalidateCache(tenant);
     executor.insert(tenant, configuration);
   }
 
   @Override
   public void update(Tenant tenant, SecurityEventHookConfiguration configuration) {
+    invalidateCache(tenant);
     executor.update(tenant, configuration);
   }
 
   @Override
   public void delete(Tenant tenant, SecurityEventHookConfiguration configuration) {
+    invalidateCache(tenant);
     executor.delete(tenant, configuration);
+  }
+
+  private void invalidateCache(Tenant tenant) {
+    String cacheKey = SecurityEventHookConfigurationQueryDataSource.cacheKey(tenant);
+    cacheStore.delete(cacheKey);
   }
 }

@@ -18,6 +18,8 @@ package org.idp.server.core.adapters.datasource.security.hook.configuration.quer
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
@@ -28,17 +30,30 @@ import org.idp.server.platform.security.repository.SecurityEventHookConfiguratio
 public class SecurityEventHookConfigurationQueryDataSource
     implements SecurityEventHookConfigurationQueryRepository {
 
+  private static final String CACHE_KEY_PREFIX = "security_event_hook_config:";
+  private static final int CACHE_TTL_SECONDS = 300; // 5 minutes
+
   SecurityEventHookConfigSqlExecutor executor;
   JsonConverter jsonConverter;
+  CacheStore cacheStore;
 
   public SecurityEventHookConfigurationQueryDataSource(
-      SecurityEventHookConfigSqlExecutor executor) {
+      SecurityEventHookConfigSqlExecutor executor, CacheStore cacheStore) {
     this.executor = executor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
+    this.cacheStore = cacheStore;
   }
 
   @Override
   public SecurityEventHookConfigurations find(Tenant tenant) {
+    String cacheKey = cacheKey(tenant);
+    Optional<SecurityEventHookConfigurations> cached =
+        cacheStore.find(cacheKey, SecurityEventHookConfigurations.class);
+
+    if (cached.isPresent()) {
+      return cached.get();
+    }
+
     List<Map<String, String>> results = executor.selectListBy(tenant);
 
     if (results == null || results.isEmpty()) {
@@ -52,7 +67,14 @@ public class SecurityEventHookConfigurationQueryDataSource
                     jsonConverter.read(result.get("payload"), SecurityEventHookConfiguration.class))
             .toList();
 
-    return new SecurityEventHookConfigurations(list);
+    SecurityEventHookConfigurations configurations = new SecurityEventHookConfigurations(list);
+    cacheStore.put(cacheKey, configurations, CACHE_TTL_SECONDS);
+
+    return configurations;
+  }
+
+  public static String cacheKey(Tenant tenant) {
+    return CACHE_KEY_PREFIX + tenant.identifierValue();
   }
 
   @Override

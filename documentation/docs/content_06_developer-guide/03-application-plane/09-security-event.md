@@ -100,7 +100,7 @@ EntryService処理完了 → HTTPレスポンス返却
 │     → テナント統計データを更新（DAU/MAU/YAU等）        │
 │                                                     │
 │  3. SecurityEventHookConfiguration取得               │
-│     → 設定されたHookを取得                            │
+│     → 設定されたHookを取得（キャッシュ使用、TTL 5分）   │
 │                                                     │
 │  4. SecurityEventHook.shouldExecute()               │
 │     → イベントタイプフィルタリング                      │
@@ -547,6 +547,22 @@ POST /v1/management/tenants/{tenant-id}/security-event-hooks
 
 将来的には設定ファイル（`application.yml`）から読み込む形式への変更を検討中です。
 
+### Q4: Hook設定を変更したのに反映されない？
+
+**原因**: Hook設定はパフォーマンス向上のためキャッシュされています（TTL 5分）。
+
+**キャッシュの動作**:
+- **読み取り時**: Adapter層（`SecurityEventHookConfigurationQueryDataSource`）でキャッシュ
+- **更新時**: 設定の登録/更新/削除時にキャッシュが自動無効化
+
+**設定変更が反映されないケース**:
+- 通常は即座に反映（Management APIでの更新時にキャッシュ無効化）
+- DBを直接更新した場合は最大5分待つか、サーバー再起動が必要
+
+**実装**:
+- Query: [SecurityEventHookConfigurationQueryDataSource.java](../../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/security/hook/configuration/query/SecurityEventHookConfigurationQueryDataSource.java)
+- Command: [SecurityEventHookConfigurationCommandDataSource.java](../../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/security/hook/configuration/command/SecurityEventHookConfigurationCommandDataSource.java)
+
 ---
 
 ## 関連ドキュメント
@@ -563,4 +579,4 @@ POST /v1/management/tenants/{tenant-id}/security-event-hooks
 - [SecurityEventPublisher.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/event/SecurityEventPublisher.java)
 - [SecurityEventRetryScheduler.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/event/SecurityEventRetryScheduler.java)
 
-**最終更新**: 2025-12-26
+**最終更新**: 2026-02-03
