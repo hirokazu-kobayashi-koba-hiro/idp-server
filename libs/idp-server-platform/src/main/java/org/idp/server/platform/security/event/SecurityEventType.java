@@ -16,6 +16,8 @@
 
 package org.idp.server.platform.security.event;
 
+import java.util.Objects;
+
 public class SecurityEventType {
 
   String value;
@@ -32,5 +34,18 @@ public class SecurityEventType {
 
   public boolean isFailure() {
     return value != null && value.contains("failure");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    SecurityEventType that = (SecurityEventType) o;
+    return Objects.equals(value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(value);
   }
 }
