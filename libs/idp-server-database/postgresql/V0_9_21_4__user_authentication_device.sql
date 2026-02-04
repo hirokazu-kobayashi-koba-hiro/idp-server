@@ -29,8 +29,8 @@ CREATE TABLE idp_user_authentication_devices (
     available_methods       JSONB DEFAULT '[]'::jsonb,
     notification_token      TEXT,
     notification_channel    VARCHAR(50),
-    created_at              TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at              TIMESTAMP DEFAULT now() NOT NULL,
+    created_at              TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at              TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES idp_user (id) ON DELETE CASCADE
 );

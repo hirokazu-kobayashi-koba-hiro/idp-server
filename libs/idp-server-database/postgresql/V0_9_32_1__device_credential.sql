@@ -1,5 +1,5 @@
 -- ============================================================================
--- V0_9_27_1__device_credential.sql
+-- V0_9_32_1__device_credential.sql
 -- Authentication Device Credential Support
 --
 -- Summary:
