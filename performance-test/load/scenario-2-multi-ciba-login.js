@@ -42,7 +42,7 @@ export function multiTenantLogin() {
 
 
 function login(index) {
-  const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+  const baseUrl = __ENV.BASE_URL || 'https://api.local.dev';
   const testData = data[index];
   const clientId = testData.clientId;
   const clientSecret = testData.clientSecret;

@@ -105,55 +105,64 @@ export REDIRECT_URI=https://www.certification.openid.net/test/a/idp_oidc_basic/c
 
 ## テストの実行
 
-### 結果ディレクトリの作成
-
-```bash
-mkdir -p performance-test/result/stress
-mkdir -p performance-test/result/load
-```
-
 ### ストレステスト
 
+実行スクリプトを使用すると、結果が日付ディレクトリに自動的に整理され、実行時間も記録されます。
+
 ```bash
-# 認可リクエスト
-k6 run --summary-export=./performance-test/result/stress/scenario-1-authorization-request.json \
-  ./performance-test/stress/scenario-1-authorization-request.js
+# 単一シナリオ実行
+./performance-test/scripts/run-stress-test.sh scenario-5-token-client-credentials
 
-# Backchannel Authentication
-k6 run --summary-export=./performance-test/result/stress/scenario-2-bc.json \
-  ./performance-test/stress/scenario-2-bc.js
+# 全シナリオ実行
+./performance-test/scripts/run-stress-test.sh all
 
-# CIBA（login_hintパターン別）
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-device.json \
-  ./performance-test/stress/scenario-3-ciba-device.js
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-sub.json \
-  ./performance-test/stress/scenario-3-ciba-sub.js
-k6 run --summary-export=./performance-test/result/stress/scenario-3-ciba-email.json \
-  ./performance-test/stress/scenario-3-ciba-email.js
+# VU数・実行時間を指定
+VU_COUNT=200 DURATION=60s ./performance-test/scripts/run-stress-test.sh all
+```
 
-# トークン（パスワードグラント）
-k6 run --summary-export=./performance-test/result/stress/scenario-4-token-password.json \
-  ./performance-test/stress/scenario-4-token-password.js
+#### 結果ディレクトリ構成
 
-# トークン（クライアントクレデンシャル）
-k6 run --summary-export=./performance-test/result/stress/scenario-5-token-client-credentials.json \
-  ./performance-test/stress/scenario-5-token-client-credentials.js
+```
+performance-test/result/stress/
+└── 2026-02-04/                                              # 日付ディレクトリ
+    ├── scenario-1-authorization-request-20260204-103045.json
+    ├── scenario-5-token-client-credentials-20260204-103245.json
+    ├── execution-log.json                                   # 実行履歴
+    └── daily-report.md                                      # 日報レポート
+```
 
-# JWKS
-k6 run --summary-export=./performance-test/result/stress/scenario-6-jwks.json \
-  ./performance-test/stress/scenario-6-jwks.js
+#### 利用可能なシナリオ
 
-# トークンイントロスペクション
-k6 run --summary-export=./performance-test/result/stress/scenario-7-token-introspection.json \
-  ./performance-test/stress/scenario-7-token-introspection.js
+| シナリオ名 | 説明 |
+|-----------|------|
+| `scenario-1-authorization-request` | 認可リクエスト |
+| `scenario-2-bc` | Backchannel Authentication |
+| `scenario-3-ciba-device` | CIBA (device) |
+| `scenario-3-ciba-sub` | CIBA (sub) |
+| `scenario-3-ciba-email` | CIBA (email) |
+| `scenario-3-ciba-phone` | CIBA (phone) |
+| `scenario-3-ciba-ex-sub` | CIBA (ex-sub) |
+| `scenario-4-token-password` | Token (password grant) |
+| `scenario-5-token-client-credentials` | Token (client_credentials) |
+| `scenario-6-jwks` | JWKS |
+| `scenario-7-token-introspection` | Token Introspection |
+| `scenario-8-authentication-device` | デバイス認証 |
+| `scenario-9-identity-verification-application` | 本人確認申請 |
 
-# デバイス認証
-k6 run --summary-export=./performance-test/result/stress/scenario-8-authentication-device.json \
-  ./performance-test/stress/scenario-8-authentication-device.js
+#### 日報レポート生成
 
-# 本人確認申請
-k6 run --summary-export=./performance-test/result/stress/scenario-9-identity-verification-application.json \
-  ./performance-test/stress/scenario-9-identity-verification-application.js
+```bash
+# 今日の結果をレポート
+./performance-test/scripts/generate-daily-report.sh
+
+# 特定日の結果をレポート
+./performance-test/scripts/generate-daily-report.sh 2026-02-04
+```
+
+#### 個別ファイルのレポート生成
+
+```bash
+./performance-test/scripts/generate-report.sh ./performance-test/result/stress/2026-02-04/scenario-5-token-client-credentials-20260204-103245.json
 ```
 
 ### 負荷テスト
