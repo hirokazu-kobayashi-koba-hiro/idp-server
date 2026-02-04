@@ -36,12 +36,15 @@ import org.idp.server.core.openid.authentication.repository.AuthenticationIntera
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
+import org.idp.server.core.openid.identity.device.DeviceSecretIssuer;
+import org.idp.server.core.openid.identity.device.DeviceSecretIssuer.DeviceSecretIssuanceResult;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.policy.AuthenticationDeviceRule;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -203,19 +206,41 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
             ? DefaultSecurityEventType.fido_uaf_reset_success
             : DefaultSecurityEventType.fido_uaf_registration_success;
 
-    User addedDeviceUser = addAuthenticationDevice(baseUser, deviceId, transaction.attributes());
+    // Create authentication device
+    AuthenticationDevice authenticationDevice =
+        createAuthenticationDevice(deviceId, transaction.attributes(), baseUser);
+
+    // Issue device secret if configured in tenant policy
+    AuthenticationDeviceRule deviceRule =
+        tenant.identityPolicyConfig() != null
+            ? tenant.identityPolicyConfig().authenticationDeviceRule()
+            : AuthenticationDeviceRule.defaultRule();
+
+    DeviceSecretIssuer deviceSecretIssuer = new DeviceSecretIssuer();
+    DeviceSecretIssuanceResult issuanceResult =
+        deviceSecretIssuer.issue(authenticationDevice, deviceRule);
+
+    User addedDeviceUser = baseUser.addAuthenticationDevice(issuanceResult.device());
 
     if (tenant.requiresIdentityVerificationForDeviceRegistration()) {
       addedDeviceUser.setStatus(UserStatus.IDENTITY_VERIFICATION_REQUIRED);
     }
 
     log.debug(
-        "FIDO-UAF registration succeeded for user: {}, device: {}",
+        "FIDO-UAF registration succeeded for user: {}, device: {}, device_secret_issued: {}",
         addedDeviceUser.sub(),
-        deviceId);
+        deviceId,
+        issuanceResult.hasDeviceSecret());
 
     Map<String, Object> responseContents = new HashMap<>(contents);
     responseContents.put("device_id", deviceId);
+
+    // Include device secret in response if issued
+    if (issuanceResult.hasDeviceSecret()) {
+      responseContents.put("device_secret", issuanceResult.deviceSecret());
+      responseContents.put("device_secret_algorithm", issuanceResult.algorithm());
+      responseContents.put("device_secret_jwt_issuer", "device:" + deviceId);
+    }
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -231,8 +256,8 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
     return "reset".equals(transaction.attributes().getValueOrEmpty("action"));
   }
 
-  private User addAuthenticationDevice(
-      User user, String deviceId, AuthenticationTransactionAttributes attributes) {
+  private AuthenticationDevice createAuthenticationDevice(
+      String deviceId, AuthenticationTransactionAttributes attributes, User user) {
 
     String appName = attributes.getValueOrEmpty("app_name");
     String platform = attributes.getValueOrEmpty("platform");
@@ -247,20 +272,17 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
             ? attributes.getValueAsInteger("priority")
             : user.authenticationDeviceNextCount();
 
-    AuthenticationDevice authenticationDevice =
-        new AuthenticationDevice(
-            deviceId,
-            appName,
-            platform,
-            os,
-            model,
-            locale,
-            notificationChannel,
-            notificationToken,
-            availableAuthenticationMethods,
-            priority);
-
-    return user.addAuthenticationDevice(authenticationDevice);
+    return new AuthenticationDevice(
+        deviceId,
+        appName,
+        platform,
+        os,
+        model,
+        locale,
+        notificationChannel,
+        notificationToken,
+        availableAuthenticationMethods,
+        priority);
   }
 
   /**

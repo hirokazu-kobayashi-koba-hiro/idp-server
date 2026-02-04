@@ -33,6 +33,17 @@ libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authenti
 └── Fido2CredentialNotFoundException.java
 ```
 
+## デバイスシークレット発行
+
+```
+libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/device/
+├── DeviceSecretIssuer.java           # シークレット発行ロジック
+└── AuthenticationDevice.java         # 認証デバイスエンティティ
+
+libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/policy/
+└── AuthenticationDeviceRule.java     # テナントポリシー設定
+```
+
 ## How-toドキュメント
 
 ```
@@ -79,6 +90,9 @@ documentation/docs/content_06_developer-guide/
 e2e/src/tests/usecase/mfa/
 ├── mfa-05-fido2.test.js                        # 基本フロー
 └── mfa-06-fido2-attestation-verification.test.js  # アテステーション検証
+
+e2e/src/tests/usecase/device-credential/
+└── device-credential-04-device-secret-issuance.test.js  # デバイスシークレット自動発行
 
 e2e/src/lib/fido/
 └── fido2.js                                    # テスト用ヘルパー

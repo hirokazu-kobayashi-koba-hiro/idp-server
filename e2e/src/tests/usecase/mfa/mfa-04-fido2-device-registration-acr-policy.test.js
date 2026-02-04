@@ -1859,6 +1859,12 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
     expect(fido2RegistrationResponse.data.id).toBe(validCredential.id);
     console.log("✓ FIDO2 credential registered successfully");
 
+    // Verify device_secret is NOT issued (tenant policy does not have issue_device_secret: true)
+    expect(fido2RegistrationResponse.data).not.toHaveProperty("device_secret");
+    expect(fido2RegistrationResponse.data).not.toHaveProperty("device_secret_algorithm");
+    expect(fido2RegistrationResponse.data).not.toHaveProperty("device_secret_jwt_issuer");
+    console.log("✓ Verified: device_secret is NOT issued (issue_device_secret not configured)");
+
     const registeredCredentialId = validCredential.id;
 
     // Complete authorization flow to persist user with authentication device
@@ -1980,9 +1986,10 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
     console.log("  1. User registered with password");
     console.log("  2. Email MFA completed to satisfy device_registration_conditions");
     console.log("  3. FIDO2 credential registered with valid ES256 cryptographic keys");
-    console.log("  4. New session started");
-    console.log("  5. FIDO2 authentication completed with valid signature");
-    console.log("  6. Security events properly logged\n");
+    console.log("  4. Verified: device_secret NOT issued (issue_device_secret not configured)");
+    console.log("  5. New session started");
+    console.log("  6. FIDO2 authentication completed with valid signature");
+    console.log("  7. Security events properly logged\n");
   });
 
 });

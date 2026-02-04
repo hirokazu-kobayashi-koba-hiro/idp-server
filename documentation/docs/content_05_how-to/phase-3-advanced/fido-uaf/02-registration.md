@@ -39,7 +39,11 @@ Content-Type: application/json
       "identity_unique_key_type": "EMAIL",
       "authentication_device_rule": {
         "max_devices": 100,
-        "required_identity_verification": true
+        "required_identity_verification": false,
+        "authentication_type": "device_secret_jwt",
+        "issue_device_secret": true,
+        "device_secret_algorithm": "HS256",
+        "device_secret_expires_in_seconds": 31536000
       }
     }
   }
@@ -48,8 +52,16 @@ Content-Type: application/json
 
 #### 主要パラメータ
 
-- `max_devices`: ユーザーあたりの最大デバイス登録数 (デフォルト: 5)
-- `required_identity_verification`: デバイス登録時に身元確認必須フラグ (デフォルト: false)
+| パラメータ | 説明 | デフォルト |
+|-----------|------|-----------|
+| `max_devices` | ユーザーあたりの最大デバイス登録数 | 5 |
+| `required_identity_verification` | デバイス登録時に身元確認必須フラグ | false |
+| `authentication_type` | デバイスエンドポイントへのアクセス認証方式<br/>`none`: 認証不要<br/>`device_secret_jwt`: JWT認証を要求 | none |
+| `issue_device_secret` | FIDO-UAF登録時にデバイスシークレットを自動発行 | false |
+| `device_secret_algorithm` | 署名アルゴリズム（HS256/HS384/HS512） | HS256 |
+| `device_secret_expires_in_seconds` | シークレットの有効期限（秒）、null=無期限 | null |
+
+> **Note**: CIBAフローでデバイス認証を行う場合は、`authentication_type: "device_secret_jwt"` と `issue_device_secret: true` を設定してください。詳細は[デバイスクレデンシャル管理](../../../content_03_concepts/03-authentication-authorization/concept-10-device-credential.md)を参照してください。
 
 ### 2. 認証ポリシーの登録
 
@@ -257,9 +269,22 @@ POST {tenant-id}/v1/authentications/{id}/fido-uaf-registration
 
   ```json
   {
-    "device_id": "UUID"
+    "status": "success",
+    "device_id": "device_abc123",
+    "device_secret": "base64url-encoded-random-secret",
+    "device_secret_algorithm": "HS256",
+    "device_secret_jwt_issuer": "device:device_abc123"
   }
   ```
+
+| フィールド | 説明 |
+|-----------|------|
+| `device_id` | 登録されたデバイスのID |
+| `device_secret` | 署名用シークレット（`issue_device_secret: true`の場合のみ） |
+| `device_secret_algorithm` | JWT署名アルゴリズム |
+| `device_secret_jwt_issuer` | JWT生成時の`iss`クレームに使用する値 |
+
+> **Important**: `device_secret`はこのレスポンスでのみ返却されます。モバイルアプリはSecure Storage（iOS: Keychain、Android: Keystore）に安全に保存してください。
 
 ---
 
