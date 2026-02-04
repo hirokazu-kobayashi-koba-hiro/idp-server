@@ -32,7 +32,23 @@ import org.idp.server.platform.random.RandomStringGenerator;
  */
 public class DeviceSecretIssuer {
 
-  private static final int SECRET_BYTES = 32; // 256 bits
+  /**
+   * Returns the minimum secret byte length for the given HMAC algorithm per OIDC Core Section
+   * 16.19.
+   *
+   * <ul>
+   *   <li>HS256: 32 bytes (256 bits)
+   *   <li>HS384: 48 bytes (384 bits)
+   *   <li>HS512: 64 bytes (512 bits)
+   * </ul>
+   */
+  private static int getSecretBytesForAlgorithm(String algorithm) {
+    return switch (algorithm) {
+      case "HS384" -> 48;
+      case "HS512" -> 64;
+      default -> 32; // HS256 or fallback
+    };
+  }
 
   /**
    * Issues device secret if configured in the device rule.
@@ -48,8 +64,9 @@ public class DeviceSecretIssuer {
       return DeviceSecretIssuanceResult.noSecret(device);
     }
 
-    String deviceSecret = new RandomStringGenerator(SECRET_BYTES).generate();
     String algorithm = deviceRule.deviceSecretAlgorithm();
+    int secretBytes = getSecretBytesForAlgorithm(algorithm);
+    String deviceSecret = new RandomStringGenerator(secretBytes).generate();
 
     Map<String, Object> credentialPayload = new HashMap<>();
     credentialPayload.put("algorithm", algorithm);
