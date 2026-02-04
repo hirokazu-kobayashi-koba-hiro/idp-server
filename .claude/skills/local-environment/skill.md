@@ -8,6 +8,8 @@ description: ローカル開発環境の構築・設定を行う際に使用。D
 ## ドキュメント
 
 - `documentation/docs/content_02_quickstart/quickstart-01-getting-started.md` - クイックスタート
+  - 「ローカル環境のリソースチューニング」セクション - Docker/PostgreSQL/HikariCP/nginx設定
+- `documentation/docs/content_11_learning/26-performance-tuning/` - パフォーマンスチューニングガイド
 - `docker-compose.yaml` - PostgreSQL構成
 - `docker-compose-mysql.yaml` - MySQL構成
 

@@ -24,7 +24,9 @@ public record DbConfig(
     int minimumIdle,
     long connectionTimeout,
     long idleTimeout,
-    long maxLifetime) {
+    long maxLifetime,
+    long keepaliveTime,
+    long validationTimeout) {
 
   public static DbConfig defaultConfig(String url, String username, String password) {
     return new DbConfig(
@@ -33,9 +35,12 @@ public record DbConfig(
         password,
         10, // maximumPoolSize
         2, // minimumIdle
-        3000, // connectionTimeout
-        600000, // idleTimeout
-        1800000 // maxLifetime
+        30000, // connectionTimeout (30 seconds) - HikariCP default
+        600000, // idleTimeout (10 minutes)
+        1800000, // maxLifetime (30 minutes)
+        180000, // keepaliveTime (3 minutes) - should be less than Aurora tcp_keepalives_idle (5
+        // min)
+        5000 // validationTimeout (5 seconds)
         );
   }
 }

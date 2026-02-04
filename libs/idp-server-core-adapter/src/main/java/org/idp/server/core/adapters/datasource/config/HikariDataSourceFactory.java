@@ -46,6 +46,8 @@ public class HikariDataSourceFactory {
     hikariConfig.setConnectionTimeout(config.connectionTimeout());
     hikariConfig.setIdleTimeout(config.idleTimeout());
     hikariConfig.setMaxLifetime(config.maxLifetime());
+    hikariConfig.setKeepaliveTime(config.keepaliveTime());
+    hikariConfig.setValidationTimeout(config.validationTimeout());
     return hikariConfig;
   }
 }
