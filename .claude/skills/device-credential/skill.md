@@ -1,0 +1,158 @@
+---
+name: device-credential
+description: デバイスクレデンシャル（Device Credential）機能の開発・修正を行う際に使用。デバイスシークレット発行、JWT Bearer Grant、CIBAデバイス認証、セキュリティ実装時に役立つ。
+---
+
+# デバイスクレデンシャル開発ガイド
+
+## ドキュメント
+
+- `documentation/docs/content_03_concepts/03-authentication-authorization/concept-10-device-credential.md` - デバイスクレデンシャル管理（概念）
+- `documentation/docs/content_03_concepts/03-authentication-authorization/concept-09-jwt-bearer-grant.md` - JWT Bearer Grant
+- `documentation/docs/content_04_how-to/fido-uaf/02-registration.md` - FIDO-UAF登録（シークレット発行含む）
+
+## 機能概要
+
+デバイスクレデンシャルは、モバイルアプリがIdPサーバーと安全に通信するための認証情報です。
+
+### 利用パターン
+
+| パターン | 説明 | ユーザー操作 |
+|---------|------|-------------|
+| **CIBAフロー** | デバイスエンドポイント認証 + FIDO-UAF本人確認 | 必要（生体認証） |
+| **JWT Bearer Grant** | アクセストークンを直接取得（RFC 7523） | 不要 |
+
+### 主要機能
+
+1. **デバイスシークレット自動発行**: FIDO-UAF登録時に`device_secret`を発行
+2. **デバイスエンドポイント認証**: `device_secret_jwt`でAPIアクセスを認証
+3. **JWT Bearer Grant**: デバイスシークレットでアクセストークンを直接取得
+
+## テナントポリシー設定
+
+`identity_policy_config.authentication_device_rule`:
+
+```json
+{
+  "identity_policy_config": {
+    "authentication_device_rule": {
+      "max_devices": 5,
+      "required_identity_verification": false,
+      "authentication_type": "device_secret_jwt",
+      "issue_device_secret": true,
+      "device_secret_algorithm": "HS256",
+      "device_secret_expires_in_seconds": 31536000
+    }
+  }
+}
+```
+
+| パラメータ | 説明 | デフォルト |
+|-----------|------|-----------|
+| `authentication_type` | `device_secret_jwt`: JWT認証を要求 / `none`: 認証不要 | `none` |
+| `issue_device_secret` | FIDO-UAF登録時にシークレットを自動発行 | `false` |
+| `device_secret_algorithm` | 署名アルゴリズム（HS256/HS384/HS512） | `HS256` |
+| `device_secret_expires_in_seconds` | 有効期限（秒）、null=無期限 | `null` |
+
+## FIDO-UAF登録時の発行レスポンス
+
+```json
+{
+  "status": "success",
+  "device_id": "device_abc123",
+  "device_secret": "base64url-encoded-random-secret",
+  "device_secret_algorithm": "HS256",
+  "device_secret_jwt_issuer": "device:device_abc123"
+}
+```
+
+## セキュリティ考慮事項
+
+### credential_payload の露出防止
+
+`AuthenticationDevice.toMap()` は外部出力（Userinfo、ID Token、Access Token）に使用されます。
+**credential_payload は含めてはいけません**（`secret_value`が含まれるため）。
+
+```java
+// AuthenticationDevice.java
+public Map<String, Object> toMap() {
+    // ... other fields ...
+    // SECURITY: credential_payload is NOT included - it contains secret_value
+    // SECURITY: credential_metadata is safe - only contains issued_at and expires_at
+    if (hasCredentialMetadata()) map.put("credential_metadata", credentialMetadata);
+    return map;
+}
+```
+
+### 露出チェック対象
+
+| 出力先 | credential_payload | 検証 |
+|--------|-------------------|------|
+| Userinfo | 除外必須 | E2Eテストで検証 |
+| Access Token | 除外必須 | E2Eテストで検証 |
+| ID Token | 除外必須 | E2Eテストで検証 |
+
+## モジュール構成
+
+```
+libs/idp-server-core/
+└── .../core/openid/identity/device/
+    ├── AuthenticationDevice.java           # デバイスエンティティ
+    ├── AuthenticationDevices.java          # デバイスコレクション
+    ├── AuthenticationDeviceIdentifier.java # デバイスID値オブジェクト
+    └── DeviceSecretIssuer.java             # シークレット発行
+
+libs/idp-server-core/
+└── .../core/openid/identity/
+    └── AuthenticationDeviceRule.java       # テナントポリシー設定
+
+libs/idp-server-core-extension-ciba/
+└── .../extension/ciba/
+    └── handler/                            # CIBAでのデバイス認証処理
+```
+
+## E2Eテスト
+
+```
+e2e/src/tests/usecase/device-credential/
+├── device-credential-04-device-secret-issuance.test.js  # デバイスシークレット発行+セキュリティ検証
+```
+
+### セキュリティテストの検証項目
+
+1. **Userinfo**: `credential_payload`が含まれていないこと
+2. **Access Token**: `credential_payload`が含まれていないこと
+3. **ID Token**: `credential_payload`が含まれていないこと
+4. **secret_value**: 文字列が含まれていないこと
+5. **実際のdeviceSecret値**: 含まれていないこと
+
+## コマンド
+
+```bash
+# ビルド
+./gradlew :libs:idp-server-core:compileJava
+
+# E2Eテスト
+cd e2e && npm test -- usecase/device-credential/device-credential-04-device-secret-issuance.test.js
+```
+
+## 関連スキル
+
+- `ciba` - CIBAフローでのデバイスシークレット認証
+- `passwordless` - FIDO-UAF登録（シークレット発行トリガー）
+- `authentication` - 認証ポリシー設定
+
+## トラブルシューティング
+
+### device_secretが発行されない
+- テナントポリシーで`issue_device_secret: true`が設定されているか確認
+- `device_secret_algorithm`が設定されているか確認
+
+### デバイスエンドポイントで401エラー
+- `authentication_type: "device_secret_jwt"`が設定されている場合、JWTが必要
+- JWTの`iss`が`device:{deviceId}`形式になっているか確認
+- JWTの署名が正しいか確認
+
+### credential_payloadが露出している
+- `AuthenticationDevice.toMap()`の実装を確認
+- バックエンドを再ビルド・再デプロイ

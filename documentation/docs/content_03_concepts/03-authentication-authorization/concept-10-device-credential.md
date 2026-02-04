@@ -4,7 +4,18 @@
 
 **デバイスクレデンシャル**は、モバイルアプリがIdPサーバーと安全に通信するための認証情報です。
 
-主なユースケースは**CIBAフロー**です。Webアプリからの操作承認リクエストをモバイルアプリで受信・認証する際、以下の2段階認証を実現します：
+### 利用パターン
+
+デバイスシークレットには2つの利用パターンがあります：
+
+| パターン | 説明 | ユーザー操作 |
+|---------|------|-------------|
+| **CIBAフロー** | デバイスエンドポイント認証 + FIDO-UAF本人確認 | 必要（生体認証） |
+| **JWT Bearer Grant** | アクセストークンを直接取得（RFC 7523） | 不要 |
+
+### CIBAフロー（推奨）
+
+Webアプリからの操作承認リクエストをモバイルアプリで受信・認証する際、以下の2段階認証を実現します：
 
 1. **デバイス認証**: デバイスシークレット（JWT）で「正規のデバイス」であることを証明
 2. **本人認証**: FIDO-UAF（生体認証）で「正規のユーザー」であることを証明
@@ -197,12 +208,46 @@ HTTP/1.1 200 OK
 
 ---
 
+## （参考）JWT Bearer Grantによるトークン取得
+
+CIBAフローとは別に、デバイスシークレットを使ってアクセストークンを直接取得することも可能です（RFC 7523）。
+
+> **詳細**: [JWT認可グラント（JWT Bearer Grant）](concept-09-jwt-bearer-grant.md)を参照してください。クライアント設定、Subject Claim Mapping、外部IdP連携などの詳細が記載されています。
+
+```mermaid
+sequenceDiagram
+    participant App as モバイルアプリ
+    participant IdP as IdP Server
+
+    App->>App: 1. device_secretでJWT生成
+    Note over App: iss: device:{deviceId}<br/>sub: {userId}<br/>aud: {issuer}
+    App->>IdP: 2. POST /oauth/token<br/>grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer<br/>assertion={signed_jwt}
+    IdP->>IdP: 3. JWT署名検証
+    IdP->>App: 4. Access Token
+```
+
+### リクエスト例
+
+```http
+POST /oauth/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
+&assertion=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+&scope=openid profile
+```
+
+> **Note**: このパターンはCIBAフローのデバイスエンドポイント認証とは異なり、ユーザー操作なしでアクセストークンを取得します。セキュリティ要件に応じて使い分けてください。
+
+---
+
 ## ユースケース
 
 | シナリオ | 説明 |
 |---------|------|
-| **モバイルバンキング** | 別デバイスからの送金をスマホアプリで承認 |
-| **2要素承認** | Webでの重要操作をモバイルアプリで承認 |
+| **モバイルバンキング** | 別デバイスからの送金をスマホアプリで承認（CIBAフロー） |
+| **2要素承認** | Webでの重要操作をモバイルアプリで承認（CIBAフロー） |
+| **バックグラウンド処理** | アプリがバックグラウンドでAPIアクセス（JWT Bearer Grant） |
 | **IoTデバイス連携** | スマートデバイスの操作承認 |
 
 ---
@@ -233,6 +278,7 @@ HTTP/1.1 200 OK
 
 ## 関連ドキュメント
 
+- [JWT認可グラント（JWT Bearer Grant）](concept-09-jwt-bearer-grant.md) - JWT Bearer Grantの詳細（クライアント設定、Subject Claim Mapping等）
 - [CIBA（Client Initiated Backchannel Authentication）](concept-05-ciba.md)
 - [パスワードレス認証](concept-07-passwordless.md)
 - [認証ポリシー](concept-01-authentication-policy.md)

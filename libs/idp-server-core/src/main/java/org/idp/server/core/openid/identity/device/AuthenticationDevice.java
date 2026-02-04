@@ -280,6 +280,14 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     return id != null && !id.isEmpty();
   }
 
+  /**
+   * Converts this device to a Map representation for external output (Userinfo, ID Token).
+   *
+   * <p>SECURITY: credential_payload is intentionally excluded because it contains sensitive data
+   * (e.g., secret_value for JWT Bearer authentication). Only non-sensitive metadata is included.
+   *
+   * @return Map representation safe for external output
+   */
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);
@@ -292,10 +300,11 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     if (hasNotificationToken()) map.put("notification_token", notificationToken);
     if (hasAvailableMethods()) map.put("available_methods", availableMethods);
     if (hasPriority()) map.put("priority", priority);
-    // Integrated credential fields
+    // Credential type and ID are safe to expose (non-sensitive)
     if (hasCredentialType()) map.put("credential_type", credentialType);
     if (hasCredentialId()) map.put("credential_id", credentialId);
-    if (hasCredentialPayload()) map.put("credential_payload", credentialPayload);
+    // SECURITY: credential_payload is NOT included - it contains secret_value
+    // SECURITY: credential_metadata is safe - only contains issued_at and expires_at
     if (hasCredentialMetadata()) map.put("credential_metadata", credentialMetadata);
     return map;
   }

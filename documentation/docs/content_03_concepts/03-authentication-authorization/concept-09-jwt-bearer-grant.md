@@ -42,28 +42,35 @@ sequenceDiagram
 
 ## デバイスクレデンシャル
 
-認証デバイスに紐づく署名用の資格情報です。ユーザー登録時に一緒に登録できます。
+認証デバイスに紐づく署名用の資格情報です。
 
-**対応アルゴリズム**:
+### 取得方法
+
+| 方法 | 説明 |
+|-----|------|
+| **FIDO-UAF登録時に自動発行** | テナントポリシーで`issue_device_secret: true`を設定すると、FIDO-UAF登録時にシークレットが自動発行される（推奨） |
+| **手動登録** | ユーザー登録時にデバイスクレデンシャルを一緒に登録 |
+
+> **推奨**: FIDO-UAF登録時の自動発行を使用してください。詳細は[デバイスクレデンシャル管理](concept-10-device-credential.md)を参照。
+
+### 対応アルゴリズム
+
 - 対称鍵: HS256, HS384, HS512
 - 非対称鍵: RS256, ES256, PS256
 
+### FIDO-UAF登録時の自動発行レスポンス
+
 ```json
 {
-  "authentication_devices": [
-    {
-      "id": "device-456",
-      "device_credentials": [
-        {
-          "type": "symmetric",
-          "secret_value": "base64-encoded-secret",
-          "algorithm": "HS256"
-        }
-      ]
-    }
-  ]
+  "status": "success",
+  "device_id": "device_abc123",
+  "device_secret": "base64url-encoded-random-secret",
+  "device_secret_algorithm": "HS256",
+  "device_secret_jwt_issuer": "device:device_abc123"
 }
 ```
+
+`device_secret_jwt_issuer`の値をJWTの`iss`クレームに使用します。
 
 ---
 

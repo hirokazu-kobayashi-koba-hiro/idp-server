@@ -6,7 +6,7 @@ import {
   getAuthenticationDeviceAuthenticationTransaction,
   postAuthenticationDeviceInteraction,
 } from "../../../api/oauthClient";
-import { generateRS256KeyPair, createJwt, generateJti } from "../../../lib/jose";
+import { generateRS256KeyPair, createJwt, generateJti, verifyAndDecodeJwt } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import { toEpocTime } from "../../../lib/util";
 import { v4 as uuidv4 } from "uuid";
@@ -117,11 +117,12 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
         ],
         token_signed_key_id: "signing_key_1",
         id_token_signed_key_id: "signing_key_1",
-        scopes_supported: ["openid", "profile", "email", "management"],
+        scopes_supported: ["openid", "profile", "email", "management", "claims:authentication_devices"],
         response_types_supported: ["code"],
         response_modes_supported: ["query"],
         subject_types_supported: ["public"],
         id_token_signing_alg_values_supported: ["RS256", "ES256"],
+        claims_supported: ["sub", "name", "email", "email_verified", "authentication_devices"],
         // CIBA configuration
         backchannel_authentication_endpoint: `${backendUrl}/${tenantId}/v1/backchannel/authentications`,
         backchannel_token_delivery_modes_supported: ["poll"],
@@ -133,6 +134,8 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
           refresh_token_duration: 86400,
           backchannel_authentication_polling_interval: 5,
           backchannel_authentication_request_expires_in: 300,
+          id_token_strict_mode: false,
+          custom_claims_scope_mapping: true,
         },
       },
       user: {
@@ -149,8 +152,8 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
         client_secret: `admin-secret-${timestamp}`,
         redirect_uris: [redirectUri],
         response_types: ["code"],
-        grant_types: ["authorization_code", "refresh_token", "password"],
-        scope: "openid profile email management",
+        grant_types: ["authorization_code", "refresh_token", "password", "urn:ietf:params:oauth:grant-type:jwt-bearer"],
+        scope: "openid profile email management claims:authentication_devices",
         client_name: "Admin Client",
         token_endpoint_auth_method: "client_secret_post",
         application_type: "web",
@@ -419,7 +422,7 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
           "urn:openid:params:grant-type:ciba",
         ],
         response_types: ["code"],
-        scope: "openid profile email",
+        scope: "openid profile email claims:authentication_devices",
         token_endpoint_auth_method: "client_secret_post",
         backchannel_token_delivery_mode: "poll",
         backchannel_user_code_parameter: true,
@@ -445,7 +448,7 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
       response_type: "code",
       client_id: clientId,
       redirect_uri: redirectUri,
-      scope: "openid profile email",
+      scope: "openid profile email claims:authentication_devices",
       state: `state_${timestamp}`,
     });
 
@@ -563,8 +566,75 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
     });
 
     console.log("Token exchange status:", tokenExchangeResponse.status);
+    console.log(tokenExchangeResponse.data);
     expect(tokenExchangeResponse.status).toBe(200);
+    const authCodeAccessToken = tokenExchangeResponse.data.access_token;
     console.log("✅ User and device persisted to database\n");
+
+    // Step 11.5: SECURITY CHECK - Verify device_secret is NOT exposed in Userinfo
+    console.log("\n=== Step 11.5: SECURITY CHECK - Verify device_secret is NOT in Userinfo ===");
+
+    const userinfoResponse = await get({
+      url: `${backendUrl}/${tenantId}/v1/userinfo`,
+      headers: {
+        Authorization: `Bearer ${authCodeAccessToken}`,
+      },
+    });
+
+    console.log("Userinfo response:", userinfoResponse.status);
+    console.log("Userinfo data:", JSON.stringify(userinfoResponse.data, null, 2));
+    expect(userinfoResponse.status).toBe(200);
+
+    // Verify authentication_devices is returned with claims:authentication_devices scope
+    expect(userinfoResponse.data).toHaveProperty("authentication_devices");
+    expect(Array.isArray(userinfoResponse.data.authentication_devices)).toBe(true);
+    expect(userinfoResponse.data.authentication_devices.length).toBe(1); // 1 device registered
+
+    const devices = userinfoResponse.data.authentication_devices;
+    for (const device of devices) {
+      // SECURITY: credential_payload must NOT be present (contains secret_value)
+      expect(device).not.toHaveProperty("credential_payload");
+      // SECURITY: secret_value must NOT be present anywhere
+      expect(JSON.stringify(device)).not.toContain("secret_value");
+      expect(JSON.stringify(device)).not.toContain(deviceSecret);
+      console.log(`✅ Device ${device.id}: No secret_value exposed`);
+    }
+    console.log("✅ SECURITY VERIFIED: device_secret is NOT exposed in Userinfo\n");
+
+    // Step 11.6: SECURITY CHECK - Verify device_secret is NOT exposed in Access Token and ID Token
+    console.log("=== Step 11.6: SECURITY CHECK - Verify device_secret is NOT in Access Token / ID Token ===");
+
+    const parsedJwks = JSON.parse(jwks);
+    const { payload: accessTokenPayload } = verifyAndDecodeJwt({
+      jwt: tokenExchangeResponse.data.access_token,
+      jwks: parsedJwks,
+    });
+    console.log("Access Token payload:", JSON.stringify(accessTokenPayload, null, 2));
+
+    if (accessTokenPayload.authentication_devices) {
+      for (const device of accessTokenPayload.authentication_devices) {
+        expect(device).not.toHaveProperty("credential_payload");
+        expect(JSON.stringify(device)).not.toContain("secret_value");
+        expect(JSON.stringify(device)).not.toContain(deviceSecret);
+      }
+      console.log("✅ Access Token: No secret_value exposed");
+    }
+
+    const { payload: idTokenPayload } = verifyAndDecodeJwt({
+      jwt: tokenExchangeResponse.data.id_token,
+      jwks: parsedJwks,
+    });
+    console.log("ID Token payload:", JSON.stringify(idTokenPayload, null, 2));
+
+    if (idTokenPayload.authentication_devices) {
+      for (const device of idTokenPayload.authentication_devices) {
+        expect(device).not.toHaveProperty("credential_payload");
+        expect(JSON.stringify(device)).not.toContain("secret_value");
+        expect(JSON.stringify(device)).not.toContain(deviceSecret);
+      }
+      console.log("✅ ID Token: No secret_value exposed");
+    }
+    console.log("✅ SECURITY VERIFIED: device_secret is NOT exposed in Access Token / ID Token\n");
 
     // Step 12: Use Device Secret for JWT Bearer Grant
     console.log("\n=== Step 12: Use Device Secret for JWT Bearer Grant ===");
@@ -589,12 +659,13 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
       endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
       grantType: "urn:ietf:params:oauth:grant-type:jwt-bearer",
       assertion: assertion,
-      scope: "openid profile email",
+      scope: "openid profile email claims:authentication_devices",
       clientId: clientId,
       clientSecret: clientSecret,
     });
 
     console.log("JWT Bearer Grant response:", jwtBearerResponse.status);
+    console.log("JWT Bearer Grant data:", JSON.stringify(jwtBearerResponse.data, null, 2));
     if (jwtBearerResponse.status !== 200) {
       console.log("JWT Bearer Grant error:", JSON.stringify(jwtBearerResponse.data, null, 2));
     }
@@ -602,6 +673,36 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
     expect(jwtBearerResponse.status).toBe(200);
     expect(jwtBearerResponse.data).toHaveProperty("access_token");
     console.log("✅ Access token obtained via JWT Bearer Grant with issued device secret\n");
+
+    // Step 12.5: SECURITY CHECK - Verify device_secret is NOT exposed in Userinfo (JWT Bearer token)
+    console.log("\n=== Step 12.5: SECURITY CHECK - Verify device_secret is NOT in Userinfo ===");
+
+    const jwtBearerUserinfoResponse = await get({
+      url: `${backendUrl}/${tenantId}/v1/userinfo`,
+      headers: {
+        Authorization: `Bearer ${jwtBearerResponse.data.access_token}`,
+      },
+    });
+
+    console.log("Userinfo response:", jwtBearerUserinfoResponse.status);
+    console.log("Userinfo data:", JSON.stringify(jwtBearerUserinfoResponse.data, null, 2));
+    expect(jwtBearerUserinfoResponse.status).toBe(200);
+
+    // Verify authentication_devices is returned with claims:authentication_devices scope
+    expect(jwtBearerUserinfoResponse.data).toHaveProperty("authentication_devices");
+    expect(Array.isArray(jwtBearerUserinfoResponse.data.authentication_devices)).toBe(true);
+    expect(jwtBearerUserinfoResponse.data.authentication_devices.length).toBe(1); // 1 device registered
+
+    const jwtBearerDevices = jwtBearerUserinfoResponse.data.authentication_devices;
+    for (const device of jwtBearerDevices) {
+      // SECURITY: credential_payload must NOT be present (contains secret_value)
+      expect(device).not.toHaveProperty("credential_payload");
+      // SECURITY: secret_value must NOT be present anywhere
+      expect(JSON.stringify(device)).not.toContain("secret_value");
+      expect(JSON.stringify(device)).not.toContain(deviceSecret);
+      console.log(`✅ Device ${device.id}: No secret_value exposed`);
+    }
+    console.log("✅ SECURITY VERIFIED: device_secret is NOT exposed in Userinfo (JWT Bearer)\n");
 
     // Step 13: CIBA Flow with Device Secret
     console.log("\n=== Step 13: CIBA Flow with Device Secret ===");
