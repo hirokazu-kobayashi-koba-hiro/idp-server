@@ -131,7 +131,7 @@ logging:
           adapters.springboot: "${LOGGING_LEVEL_IDP_SERVER_ADAPTERS_SPRING_BOOT:info}"
           usecases: "${LOGGING_LEVEL_IDP_SERVER_USECASES:info}"
           authenticators.webauthn4j: "${LOGGING_LEVEL_IDP_SERVER_AUTHENTICATORS_WEBAUTHN4J:info}"
-    org.idp.server.platform.http.HttpRequestExecutor: "${LOGGING_LEVEL_IDP_SERVER_HTTP_REQUEST_EXECUTOR:debug}"
+    org.idp.server.platform.http.HttpRequestExecutor: "${LOGGING_LEVEL_IDP_SERVER_HTTP_REQUEST_EXECUTOR:info}"
     org.idp.server.adapters.springboot.logging.RequestResponseLoggingFilter: "${LOGGING_LEVEL_REQUEST_RESPONSE_LOGGING_FILTER:info}"
 
 spring:
