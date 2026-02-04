@@ -9,7 +9,9 @@ description: デバイスクレデンシャル（Device Credential）機能の�
 
 - `documentation/docs/content_03_concepts/03-authentication-authorization/concept-10-device-credential.md` - デバイスクレデンシャル管理（概念）
 - `documentation/docs/content_03_concepts/03-authentication-authorization/concept-09-jwt-bearer-grant.md` - JWT Bearer Grant
-- `documentation/docs/content_04_how-to/fido-uaf/02-registration.md` - FIDO-UAF登録（シークレット発行含む）
+- `documentation/docs/content_05_how-to/phase-3-advanced/fido-uaf/01-ciba-flow.md` - CIBA + FIDO-UAFフロー
+- `documentation/docs/content_05_how-to/phase-3-advanced/fido-uaf/02-registration.md` - FIDO-UAF登録（シークレット発行含む）
+- `documentation/openapi/swagger-authentication-device-ja.yaml` - 認証デバイスAPI（OpenAPI仕様）
 
 ## 機能概要
 
@@ -92,6 +94,23 @@ public Map<String, Object> toMap() {
 | Access Token | 除外必須 | E2Eテストで検証 |
 | ID Token | 除外必須 | E2Eテストで検証 |
 
+### 認証トランザクションのレスポンス制御
+
+デバイス認証の有無によって、認証トランザクションのレスポンスに含まれる情報が制御されます。
+
+| 認証設定 | `context`フィールド | 説明 |
+|---------|-------------------|------|
+| `authentication_type: "none"` | 除外 | 認証なしでアクセス可能。機密情報は除外 |
+| `authentication_type: "access_token"` | 含む | アクセストークン認証成功後のみ詳細情報を返却 |
+| `authentication_type: "device_secret_jwt"` | 含む | 対称鍵JWT（HMAC）認証成功後のみ詳細情報を返却 |
+| `authentication_type: "private_key_jwt"` | 含む | 非対称鍵JWT（RSA/EC）認証成功後のみ詳細情報を返却 |
+
+**関連ファイル**:
+- `AuthenticationRequest.toMapForPublic(boolean isDeviceAuthenticated)`
+- `AuthenticationTransaction.toRequestMap(boolean isDeviceAuthenticated)`
+- `DeviceEndpointAuthenticationHandler.verifyAndIsAuthenticated()`
+- `AuthenticationTransactionEntryService.findList()`
+
 ## モジュール構成
 
 ```
@@ -125,6 +144,8 @@ e2e/src/tests/usecase/device-credential/
 3. **ID Token**: `credential_payload`が含まれていないこと
 4. **secret_value**: 文字列が含まれていないこと
 5. **実際のdeviceSecret値**: 含まれていないこと
+6. **認証トランザクション（認証なし）**: `context`が含まれていないこと
+7. **認証トランザクション（認証あり）**: `context`が含まれていること
 
 ## コマンド
 

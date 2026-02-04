@@ -90,8 +90,9 @@ public class AuthenticationTransactionEntryService implements AuthenticationTran
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    deviceEndpointAuthenticationHandler.verify(
-        tenant, authenticationDeviceIdentifier, authorizationHeader);
+    boolean isDeviceAuthenticated =
+        deviceEndpointAuthenticationHandler.verifyAndIsAuthenticated(
+            tenant, authenticationDeviceIdentifier, authorizationHeader);
 
     long totalCount =
         authenticationTransactionQueryRepository.findTotalCount(
@@ -114,7 +115,9 @@ public class AuthenticationTransactionEntryService implements AuthenticationTran
     Map<String, Object> contents = new HashMap<>();
     contents.put(
         "list",
-        authenticationTransactions.stream().map(AuthenticationTransaction::toRequestMap).toList());
+        authenticationTransactions.stream()
+            .map(tx -> tx.toRequestMap(isDeviceAuthenticated))
+            .toList());
     contents.put("total_count", totalCount);
     contents.put("limit", queries.limit());
     contents.put("offset", queries.offset());

@@ -236,6 +236,11 @@ describe("Standard Use Case: Minimal Client CIBA Security Event (Issue #1035)", 
     const authenticationTransaction = deviceTransactions.data.list[0];
     console.log(`  Transaction ID: ${authenticationTransaction.id}`);
 
+    // SECURITY: Verify context is NOT included when device authentication is not performed
+    // (authentication_type: "none" is the default, so context should be excluded)
+    expect(authenticationTransaction).not.toHaveProperty("context");
+    console.log("✅ Context correctly excluded (device authentication not required)");
+
     const completeResponse = await postAuthenticationDeviceInteraction({
       endpoint: `${backendUrl}/${tenantId}/v1/authentications/{id}/`,
       flowType: authenticationTransaction.flow,

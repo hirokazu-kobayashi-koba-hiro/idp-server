@@ -241,6 +241,77 @@ grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
 
 ---
 
+## 認証トランザクションのレスポンス制御
+
+デバイスエンドポイントから取得する認証トランザクションのレスポンス内容は、**デバイス認証の有無**によって制御されます。
+
+### レスポンス内容の違い
+
+| 認証設定 | `context`フィールド | 説明 |
+|---------|-------------------|------|
+| `authentication_type: "none"` | **含まれない** | 認証なしでアクセス可能。機密情報は除外 |
+| `authentication_type: "access_token"` | **含まれる** | アクセストークン認証成功後のみ詳細情報を返却 |
+| `authentication_type: "device_secret_jwt"` | **含まれる** | 対称鍵JWT（HMAC）認証成功後のみ詳細情報を返却 |
+| `authentication_type: "private_key_jwt"` | **含まれる** | 非対称鍵JWT（RSA/EC）認証成功後のみ詳細情報を返却 |
+
+### contextに含まれる情報
+
+`context`フィールドには、認証リクエストの詳細情報が含まれます：
+
+| フィールド | 説明 |
+|-----------|------|
+| `scopes` | 要求されたスコープ |
+| `acr_values` | 要求された認証コンテキストクラス |
+| `binding_message` | CIBAバインディングメッセージ |
+| `authorization_details` | Rich Authorization Requests（RAR）の詳細 |
+
+### レスポンス例
+
+**デバイス認証あり（`authentication_type: "device_secret_jwt"`）：**
+
+```json
+{
+  "list": [
+    {
+      "id": "auth_123",
+      "flow": "ciba",
+      "tenant_id": "tenant_abc",
+      "client_id": "client_xyz",
+      "context": {
+        "scopes": "openid profile payment",
+        "binding_message": "送金承認: ¥10,000",
+        "acr_values": "urn:example:acr:mfa"
+      },
+      "created_at": "2024-01-01T00:00:00",
+      "expires_at": "2024-01-01T00:05:00"
+    }
+  ],
+  "total_count": 1
+}
+```
+
+**デバイス認証なし（`authentication_type: "none"`）：**
+
+```json
+{
+  "list": [
+    {
+      "id": "auth_123",
+      "flow": "ciba",
+      "tenant_id": "tenant_abc",
+      "client_id": "client_xyz",
+      "created_at": "2024-01-01T00:00:00",
+      "expires_at": "2024-01-01T00:05:00"
+    }
+  ],
+  "total_count": 1
+}
+```
+
+> **セキュリティ**: `context`フィールドには、スコープやバインディングメッセージなど、認証リクエストの詳細情報が含まれます。デバイス認証なしでこれらの情報が漏洩すると、リクエストの内容を推測される可能性があるため、認証されたデバイスにのみ返却します。
+
+---
+
 ## ユースケース
 
 | シナリオ | 説明 |
@@ -282,6 +353,8 @@ grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
 - [CIBA（Client Initiated Backchannel Authentication）](concept-05-ciba.md)
 - [パスワードレス認証](concept-07-passwordless.md)
 - [認証ポリシー](concept-01-authentication-policy.md)
+- [CIBA + FIDO-UAF How-to](../../content_05_how-to/phase-3-advanced/fido-uaf/01-ciba-flow.md) - CIBAフローでのFIDO-UAF認証の実装手順
+- [Authentication Device API（OpenAPI）](../../../openapi/swagger-authentication-device-ja.yaml) - 認証デバイスAPIのOpenAPI仕様
 
 ## 参考仕様
 

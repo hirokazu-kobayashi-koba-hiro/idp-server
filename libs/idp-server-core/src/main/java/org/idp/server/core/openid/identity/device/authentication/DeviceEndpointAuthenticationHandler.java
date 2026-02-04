@@ -88,6 +88,50 @@ public class DeviceEndpointAuthenticationHandler {
     }
   }
 
+  /**
+   * Verifies device authentication and returns whether authentication was performed.
+   *
+   * <p>This method does not throw an exception when authentication is not required (authentication
+   * type is "none"). Instead, it returns false to indicate that no authentication was performed.
+   *
+   * @param tenant the tenant
+   * @param deviceIdentifier the device identifier
+   * @param authorizationHeader the Authorization header value (may be null)
+   * @return true if device authentication was successfully performed, false if authentication is
+   *     not required
+   * @throws UnauthorizedException if authentication is required but fails
+   */
+  public boolean verifyAndIsAuthenticated(
+      Tenant tenant, AuthenticationDeviceIdentifier deviceIdentifier, String authorizationHeader) {
+
+    TenantIdentityPolicy identityPolicy = tenant.identityPolicyConfig();
+    DeviceAuthenticationType authenticationType =
+        identityPolicy.authenticationDeviceRule().authenticationType();
+
+    if (authenticationType.isNone()) {
+      return false;
+    }
+
+    String credential = extractBearerCredential(authorizationHeader);
+
+    if (authenticationType.isAccessToken()) {
+      accessTokenVerifier.verify(tenant, deviceIdentifier, credential);
+      return true;
+    } else if (authenticationType.isDeviceCredentialJwt()) {
+      AuthenticationDevice device =
+          deviceFindingDelegate.findAuthenticationDevice(tenant, deviceIdentifier);
+      if (!device.exists()) {
+        throw new UnauthorizedException(
+            String.format("Device '%s' not found", deviceIdentifier.value()));
+      }
+      jwtVerifier.verify(device, credential, authenticationType);
+      return true;
+    } else {
+      throw new UnauthorizedException(
+          "Unsupported device authentication type: " + authenticationType);
+    }
+  }
+
   private String extractBearerCredential(String authorizationHeader) {
     if (authorizationHeader == null || authorizationHeader.isEmpty()) {
       throw new UnauthorizedException("Authorization header is required for device authentication");

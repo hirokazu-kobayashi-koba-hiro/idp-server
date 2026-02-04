@@ -248,21 +248,29 @@ GET {tenant-id}/v1/authentication-devices/{device-id}/authentications?client_id=
 | `client_attributes.contacts`    | `string`            | クライアントの連絡先（例: メールアドレス）                      | -  |
 | `client_attributes.tos_uri`     | `string`            | 利用規約ページURL                                  | -  |
 | `client_attributes.policy_uri`  | `string`            | プライバシーポリシーURL                               | -  |
+| `context`                       | `object`            | 認証リクエストのコンテキスト情報（※条件付き）                     | -  |
 | `context.acr_values`            | `string`            | 認証コンテキストクラス。例: `urn:mace:incommon:iap:gold` | -  |
 | `context.binding_message`       | `string`            | 認証デバイスに表示される確認用メッセージ                        | -  |
-| `context.scopes`                | `string`            | 要求されたスコープ（スペース区切り）                          | ✅  |
-| `user.sub`                      | `string`            | ユーザー識別子（Subject）                            | ✅  |
-| `user.provider_id`              | `string`            | Idプロバイダー識別子                                 | ✅  |
-| `user.external_user_id`         | `string`            | 外部IdPのユーザー識別子                               | -  |
-| `user.name`                     | `string`            | ユーザー名                                       | -  |
-| `user.email`                    | `string`            | email                                       | -  |
-| `user.locale`                   | `string`            | 言語設定。（例：ja, en）                             | -  |
-| `user.phone_number`             | `string`            | 電話番号                                        | -  |
-| `user.status`                   | `string`            | ユーザーステータス                                   | ✅  |
+| `context.scopes`                | `string`            | 要求されたスコープ（スペース区切り）                          | -  |
+| `context.authorization_details` | `array`             | Rich Authorization Requests（RAR）の詳細         | -  |
+| `user.sub`                      | `string`            | ユーザー識別子（Subject）                            | -  |
+| `user.status`                   | `string`            | ユーザーステータス                                   | -  |
+| `authentication_device`         | `object`            | 認証デバイス情報                                    | -  |
 | `created_at`                    | `string` (ISO-8601) | トランザクション作成日時                                | ✅  |
 | `expires_at`                    | `string` (ISO-8601) | トランザクション有効期限                                | ✅  |
 
-※オブジェクト構造は変更する可能性があります。
+#### デバイス認証によるレスポンス制御
+
+`context`フィールドは、テナントの`identity_policy_config.authentication_device_rule.authentication_type`設定に基づいて返却が制御されます。
+
+| 認証設定 | `context`フィールド | 説明 |
+|---------|-------------------|------|
+| `none` | 含まれない | 認証なしでアクセス可能。機密情報は除外 |
+| `access_token` | 含まれる | アクセストークン認証成功後のみ詳細情報を返却 |
+| `device_secret_jwt` | 含まれる | 対称鍵JWT（HMAC）認証成功後のみ詳細情報を返却 |
+| `private_key_jwt` | 含まれる | 非対称鍵JWT（RSA/EC）認証成功後のみ詳細情報を返却 |
+
+> **セキュリティ**: `context`フィールドには、スコープやバインディングメッセージなど、認証リクエストの詳細情報が含まれます。デバイス認証なしでこれらの情報が漏洩すると、リクエストの内容を推測される可能性があるため、認証されたデバイスにのみ返却します。
 
 
 
@@ -411,3 +419,11 @@ IDトークン検証後、`amr`（Authentication Method Reference）クレーム
 
 を同時に実現できます。
 
+---
+
+## 関連ドキュメント
+
+- [デバイスクレデンシャル管理](../../../content_03_concepts/03-authentication-authorization/concept-10-device-credential.md) - デバイスシークレット、JWT認証の概念
+- [FIDO-UAF登録](./02-registration.md) - デバイス登録手順
+- [FIDO-UAF解除](./03-deregistration.md) - デバイス解除手順
+- [Authentication Device API（OpenAPI）](../../../../openapi/swagger-authentication-device-ja.yaml) - 認証デバイスAPIのOpenAPI仕様

@@ -770,6 +770,12 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
     const authTransaction = authTransactionResponse.data.list[0];
     console.log("✅ Authentication transaction retrieved:", authTransaction.id);
 
+    // SECURITY: Verify context IS included when device authentication is performed
+    // (authentication_type: "device_secret_jwt" requires JWT, so context should be included)
+    expect(authTransaction).toHaveProperty("context");
+    expect(authTransaction.context).toHaveProperty("scopes");
+    console.log("✅ Context correctly included (device authentication performed)");
+
     // 13.4: Complete authentication using FIDO-UAF (two-step: challenge then authentication)
     // Step 1: Request FIDO-UAF authentication challenge
     const fidoUafChallengeResponse = await postAuthenticationDeviceInteraction({
