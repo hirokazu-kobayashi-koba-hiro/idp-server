@@ -172,7 +172,9 @@ public class UserOperationEntryService implements UserOperationApi {
     }
 
     if (updatedTransaction.isSuccess()) {
-      // TODO to be more correctly. no verification update is danger.
+      // IMPORTANT: User is MUTABLE - addAuthenticationDevice() modifies the same instance
+      // authenticationTransaction.user(), updatedTransaction.user(), and result.user()
+      // all reference the same User instance, so any of them will have the updated devices.
       userCommandRepository.update(tenant, authenticationTransaction.user());
     }
 

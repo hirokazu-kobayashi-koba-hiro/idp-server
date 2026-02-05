@@ -189,9 +189,45 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
           DefaultSecurityEventType.fido2_registration_failure);
     }
 
-    // Handle reset action: remove existing FIDO-UAF devices before adding new one
+    // Handle reset action: remove existing FIDO2 devices before adding new one
     if (isRestAction(transaction)) {
       baseUser = baseUser.removeAllAuthenticationDevicesOfType("fido2");
+    }
+
+    // Verify device count limit (skip for reset action as it replaces devices)
+    // IMPORTANT: Fetch latest user state from DB to prevent TOCTOU race condition
+    // (transaction.user() may have stale device count if another registration completed)
+    if (!isRestAction(transaction)) {
+      User latestUser =
+          userQueryRepository.findById(
+              tenant, new org.idp.server.core.openid.identity.UserIdentifier(baseUser.sub()));
+      int authenticationDeviceCount =
+          latestUser.exists() ? latestUser.authenticationDeviceCount() : 0;
+      int maxDevices = tenant.maxDevicesForAuthentication();
+
+      if (authenticationDeviceCount >= maxDevices) {
+        log.warn(
+            "FIDO2 registration rejected: device limit reached. user={}, current={}, max={}",
+            baseUser.sub(),
+            authenticationDeviceCount,
+            maxDevices);
+
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("error", "invalid_request");
+        errorResponse.put(
+            "error_description",
+            String.format(
+                "Maximum number of devices reached %d, user has already %d devices.",
+                maxDevices, authenticationDeviceCount));
+
+        return AuthenticationInteractionRequestResult.clientError(
+            errorResponse,
+            type,
+            operationType(),
+            method(),
+            baseUser,
+            DefaultSecurityEventType.fido2_registration_failure);
+      }
     }
 
     DefaultSecurityEventType eventType =
