@@ -57,6 +57,13 @@ public interface UserOperationApi {
       AuthenticationDevicePatchRequest request,
       RequestAttributes requestAttributes);
 
+  UserOperationResponse deleteAuthenticationDevice(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      RequestAttributes requestAttributes);
+
   UserOperationResponse delete(
       TenantIdentifier tenantIdentifier,
       User user,

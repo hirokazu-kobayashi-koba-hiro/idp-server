@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Container,
   Typography,
@@ -16,6 +16,7 @@ import KeyIcon from "@mui/icons-material/Key";
 import { useRouter } from "next/router";
 import { backendUrl, useAppContext } from "@/pages/_app";
 import { SignupStepper } from "@/components/SignupStepper";
+import { AddPasskeyStepper } from "@/components/AddPasskeyStepper";
 
 /**
  * Convert Base64URL string to ArrayBuffer
@@ -25,6 +26,20 @@ const base64UrlToBuffer = (base64url: string): Uint8Array => {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
   const binaryString = atob(base64);
   return Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
+};
+
+/**
+ * Convert ArrayBuffer to Base64URL string
+ * Required for serializing WebAuthn responses
+ */
+const bufferToBase64Url = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 };
 
 interface ChallengeResponse {
@@ -51,8 +66,22 @@ export default function Fido2RegistrationPage() {
   const [message, setMessage] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const { email } = useAppContext();
-  const { id, tenant_id: tenantId } = router.query;
+  const { id, tenant_id: tenantId, flow } = router.query;
   const theme = useTheme();
+  const isAddPasskeyFlow = flow === "add-passkey";
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Cleanup any pending WebAuthn operations on mount and unmount
+  useEffect(() => {
+    // Create an AbortController on mount to handle any lingering operations
+    abortControllerRef.current = new AbortController();
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleRegister = async () => {
     // Prevent duplicate requests
@@ -60,6 +89,14 @@ export default function Fido2RegistrationPage() {
       console.warn("Registration already in progress");
       return;
     }
+
+    // Abort any previous operation and wait for cleanup
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      // Wait for browser to clean up the aborted operation
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    abortControllerRef.current = new AbortController();
 
     setLoading(true);
     setIsRegistering(true);
@@ -70,6 +107,16 @@ export default function Fido2RegistrationPage() {
       if (!window.PublicKeyCredential) {
         setMessage("Your browser does not support passkey registration. Please use a modern browser.");
         return;
+      }
+
+      // Cancel any active conditional mediation (passkey autofill) from other pages
+      // This is necessary because Chrome keeps conditional mediation active across page navigations
+      try {
+        await navigator.credentials.preventSilentAccess();
+        // Give browser time to clean up
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (e) {
+        console.log("preventSilentAccess not supported or failed:", e);
       }
 
       // Check if platform authenticator is available
@@ -91,11 +138,10 @@ export default function Fido2RegistrationPage() {
             username: email,
             displayName: email,
             authenticatorSelection: {
-              authenticatorAttachment: "platform",
               requireResidentKey: true,
               userVerification: "required"
             },
-            attestation: "none",
+            attestation: "direct",
             extensions: {
               credProps: true
             }
@@ -119,17 +165,12 @@ export default function Fido2RegistrationPage() {
         pubKeyCredParams,
         timeout = 60000,
         authenticatorSelection,
-        attestation = "none",
+        attestation = "direct",
         extensions
       } = challengeResponse;
 
       // Debug: Log what server sent
       console.log("Server authenticatorSelection:", authenticatorSelection);
-      console.log("Using authenticatorSelection:", {
-        authenticatorAttachment: "platform",
-        requireResidentKey: true,
-        userVerification: "required"
-      });
 
       // Step 2: Build PublicKeyCredentialCreationOptions
       const publicKeyOptions: PublicKeyCredentialCreationOptions = {
@@ -140,10 +181,10 @@ export default function Fido2RegistrationPage() {
           name: user.name,
           displayName: user.displayName,
         },
-        // Force platform authenticator (Touch ID, Face ID, Windows Hello)
-        // NOTE: Server sends cross-platform, but we override it here for better UX
+        // Allow both platform (Touch ID, Face ID, Windows Hello) and
+        // cross-platform (YubiKey, Titan Key) authenticators
+        // by not specifying authenticatorAttachment
         authenticatorSelection: {
-          authenticatorAttachment: "platform",
           requireResidentKey: true,
           userVerification: "required"
         },
@@ -161,32 +202,60 @@ export default function Fido2RegistrationPage() {
         publicKeyOptions.extensions = extensions;
       }
 
-      // NOTE: Intentionally NOT using server's authenticatorSelection
-      // because we want to force platform authenticator for better UX
+      // NOTE: Using client-side authenticatorSelection to allow all authenticator types
 
       // Debug: Log final options being sent to WebAuthn API
       console.log("Final publicKeyOptions:", publicKeyOptions);
 
-      // Step 3: Create credential
-      const credential = await navigator.credentials.create({
-        publicKey: publicKeyOptions,
-      }) as PublicKeyCredential;
+      // Step 3: Create credential with retry for "pending" error
+      let credential: PublicKeyCredential | null = null;
+      let retryCount = 0;
+      const maxRetries = 3;
+
+      while (!credential && retryCount < maxRetries) {
+        try {
+          credential = await navigator.credentials.create({
+            publicKey: publicKeyOptions,
+            signal: abortControllerRef.current?.signal,
+          }) as PublicKeyCredential;
+        } catch (createError) {
+          if (createError instanceof Error &&
+              createError.name === 'OperationError' &&
+              createError.message.includes('pending') &&
+              retryCount < maxRetries - 1) {
+            console.log(`WebAuthn pending error, retrying... (${retryCount + 1}/${maxRetries})`);
+            retryCount++;
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 500));
+          } else {
+            throw createError;
+          }
+        }
+      }
 
       if (!credential) {
         throw new Error("No credential received from authenticator");
       }
 
       // Step 4: Serialize credential for transmission
-      // const response = credential.response as AuthenticatorAttestationResponse;
-      // const credentialData = {
-      //   id: credential.id,
-      //   rawId: bufferToBase64Url(credential.rawId),
-      //   type: credential.type,
-      //   response: {
-      //     clientDataJSON: bufferToBase64Url(response.clientDataJSON),
-      //     attestationObject: bufferToBase64Url(response.attestationObject),
-      //   },
-      // };
+      // PublicKeyCredential contains ArrayBuffer fields that don't serialize with JSON.stringify
+      // Safari especially requires manual serialization
+      const attestationResponse = credential.response as AuthenticatorAttestationResponse;
+      const credentialData = {
+        id: credential.id,
+        rawId: bufferToBase64Url(credential.rawId),
+        type: credential.type,
+        response: {
+          clientDataJSON: bufferToBase64Url(attestationResponse.clientDataJSON),
+          attestationObject: bufferToBase64Url(attestationResponse.attestationObject),
+          // Include transports if available (for better UX on future authentications)
+          transports: attestationResponse.getTransports ? attestationResponse.getTransports() : [],
+        },
+        // Include client extension results if available
+        clientExtensionResults: credential.getClientExtensionResults(),
+      };
+
+      console.log("Serialized credential data:", credentialData);
 
       // Step 5: Submit credential to server
       const registerRes = await fetch(
@@ -195,13 +264,20 @@ export default function Fido2RegistrationPage() {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(credential),
+          body: JSON.stringify(credentialData),
         },
       );
 
       if (registerRes.ok) {
         setMessage("Passkey registration successful!");
-        router.push(`/signup/authorize?id=${id}&tenant_id=${tenantId}`);
+        // Redirect based on flow
+        if (isAddPasskeyFlow) {
+          // For add-passkey flow, authorize and redirect back to client
+          router.push(`/signup/authorize?id=${id}&tenant_id=${tenantId}&flow=add-passkey`);
+        } else {
+          // For signup flow, continue to authorization
+          router.push(`/signup/authorize?id=${id}&tenant_id=${tenantId}`);
+        }
         return;
       }
 
@@ -213,7 +289,9 @@ export default function Fido2RegistrationPage() {
       // Handle WebAuthn-specific errors
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          setMessage("Registration was cancelled. Please try again.");
+          // Don't show error if abort was caused by component cleanup or user navigation
+          console.log("WebAuthn operation was aborted");
+          return;
         } else if (error.name === 'NotAllowedError') {
           setMessage("Registration was not allowed. Please ensure you have permission and try again.");
         } else if (error.name === 'InvalidStateError') {
@@ -255,14 +333,20 @@ export default function Fido2RegistrationPage() {
         }}
       >
         <Typography variant="h5" fontWeight={600} gutterBottom>
-          Passkey Registration
+          {isAddPasskeyFlow ? "Add New Passkey" : "Passkey Registration"}
         </Typography>
         <Typography variant="body2" color="text.secondary" mb={4}>
-          Secure your account with a passkey for fast and passwordless sign-in.
+          {isAddPasskeyFlow
+            ? "Register an additional passkey for backup or use on another device."
+            : "Secure your account with a passkey for fast and passwordless sign-in."}
         </Typography>
 
         <Stack spacing={3}>
-          <SignupStepper activeStep={2} />
+          {isAddPasskeyFlow ? (
+            <AddPasskeyStepper activeStep={2} />
+          ) : (
+            <SignupStepper activeStep={2} />
+          )}
 
           <Box display="flex" justifyContent="center">
             <KeyIcon sx={{ fontSize: 40, color: "primary.main" }} />

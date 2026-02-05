@@ -172,7 +172,9 @@ public class UserOperationEntryService implements UserOperationApi {
     }
 
     if (updatedTransaction.isSuccess()) {
-      // TODO to be more correctly. no verification update is danger.
+      // IMPORTANT: User is MUTABLE - addAuthenticationDevice() modifies the same instance
+      // authenticationTransaction.user(), updatedTransaction.user(), and result.user()
+      // all reference the same User instance, so any of them will have the updated devices.
       userCommandRepository.update(tenant, authenticationTransaction.user());
     }
 
@@ -240,6 +242,60 @@ public class UserOperationEntryService implements UserOperationApi {
     userCommandRepository.update(tenant, patched);
 
     return UserOperationResponse.success(null);
+  }
+
+  @Override
+  public UserOperationResponse deleteAuthenticationDevice(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      RequestAttributes requestAttributes) {
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    // Scope validation - RFC 6750 Section 3.1
+    if (!oAuthToken.scopes().contains("claims:authentication_devices")) {
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "insufficient_scope");
+      contents.put(
+          "error_description", "The request requires 'claims:authentication_devices' scope");
+      contents.put("scope", "claims:authentication_devices");
+      eventPublisher.publish(
+          tenant,
+          oAuthToken,
+          DefaultSecurityEventType.authentication_device_deregistration_failure,
+          contents,
+          requestAttributes);
+      return UserOperationResponse.insufficientScope(contents);
+    }
+
+    if (!user.hasAuthenticationDevice(authenticationDeviceIdentifier)) {
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "invalid_request");
+      contents.put(
+          "error_description",
+          String.format(
+              "User does not have authentication device (%s).",
+              authenticationDeviceIdentifier.value()));
+      eventPublisher.publish(
+          tenant,
+          oAuthToken,
+          DefaultSecurityEventType.authentication_device_deregistration_failure,
+          contents,
+          requestAttributes);
+      return UserOperationResponse.notFound(contents);
+    }
+
+    User updated = user.removeAuthenticationDevice(authenticationDeviceIdentifier.value());
+    userCommandRepository.update(tenant, updated);
+
+    eventPublisher.publish(
+        tenant,
+        oAuthToken,
+        DefaultSecurityEventType.authentication_device_deregistration_success,
+        requestAttributes);
+
+    return new UserOperationResponse(UserOperationStatus.NO_CONTENT, null);
   }
 
   @Override

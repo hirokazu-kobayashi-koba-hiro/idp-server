@@ -39,7 +39,7 @@ export function multiTenantAuthCodeFlow() {
 }
 
 function authCodeFlow(index) {
-  const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+  const baseUrl = __ENV.BASE_URL || 'https://api.local.dev';
   const testData = tenantData[index];
   const tenantId = testData.tenantId;
   const clientId = testData.clientId;

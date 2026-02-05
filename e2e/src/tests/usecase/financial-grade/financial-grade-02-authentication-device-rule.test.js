@@ -1442,3 +1442,546 @@ describe("Financial Grade: Identity Verification Required (Issue #728)", () => {
     console.log("   - User status changes to IDENTITY_VERIFICATION_REQUIRED");
   });
 });
+
+/**
+ * TOCTOU (Time-of-check to time-of-use) Vulnerability Prevention Test
+ *
+ * This test verifies that the device limit is enforced at REGISTRATION COMPLETION time,
+ * not just at challenge request time. This prevents a race condition where:
+ * 1. User has (max_devices - 1) devices
+ * 2. Two registration challenges are requested concurrently (both pass the check)
+ * 3. First registration completes (user now at max_devices)
+ * 4. Second registration should FAIL even though its challenge was already issued
+ *
+ * This is the security fix added in FidoUafRegistrationInteractor and Fido2RegistrationInteractor.
+ */
+describe("Financial Grade: TOCTOU Device Limit Prevention (Security Fix)", () => {
+  let systemAccessToken;
+  let organizationId;
+  let organizerTenantId;
+  let toctoTenantId;
+  let toctoClientId;
+  let userId;
+  let userAccessToken;
+  let orgAdminToken;
+
+  // Load configuration files as templates
+  const configDir = path.join(process.cwd(), "../config/examples/financial-grade");
+  const onboardingTemplate = JSON.parse(
+    fs.readFileSync(path.join(configDir, "onboarding-request.json"), "utf8")
+  );
+  const financialTenantTemplate = JSON.parse(
+    fs.readFileSync(path.join(configDir, "financial-tenant.json"), "utf8")
+  );
+  const financialClientTemplate = JSON.parse(
+    fs.readFileSync(path.join(configDir, "financial-client.json"), "utf8")
+  );
+  const initialRegConfigTemplate = JSON.parse(
+    fs.readFileSync(path.join(configDir, "authentication-config/initial-registration/standard.json"), "utf8")
+  );
+  const smsConfigTemplate = JSON.parse(
+    fs.readFileSync(path.join(configDir, "authentication-config/sms/external.json"), "utf8")
+  );
+  const fidoUafConfigTemplate = JSON.parse(
+    fs.readFileSync(path.join(configDir, "authentication-config/fido-uaf/external.json"), "utf8")
+  );
+  const authPolicyTemplate = JSON.parse(
+    fs.readFileSync(path.join(configDir, "authentication-policy/oauth.json"), "utf8")
+  );
+  const fidoUafRegistrationPolicyTemplate = JSON.parse(
+    fs.readFileSync(path.join(configDir, "authentication-policy/fido-uaf-registration.json"), "utf8")
+  );
+
+  let onboardingConfig;
+  let toctoTenantConfig;
+  let toctoClientConfig;
+  let initialRegConfig;
+  let smsConfig;
+  let fidoUafConfig;
+  let authPolicyConfig;
+  let fidoUafRegPolicyConfig;
+  let clientCertPath;
+  let clientKeyPath;
+  let userEmail;
+  let userPassword;
+
+  // Generate unique IDs
+  const initialRegConfigId = uuidv4();
+  const smsConfigId = uuidv4();
+  const fidoUafConfigId = uuidv4();
+  const authPolicyId = uuidv4();
+  const fidoUafRegPolicyId = uuidv4();
+
+  beforeAll(async () => {
+    // Get system admin token
+    const tokenResponse = await requestToken({
+      endpoint: adminServerConfig.tokenEndpoint,
+      grantType: "password",
+      username: adminServerConfig.oauth.username,
+      password: adminServerConfig.oauth.password,
+      scope: adminServerConfig.adminClient.scope,
+      clientId: adminServerConfig.adminClient.clientId,
+      clientSecret: adminServerConfig.adminClient.clientSecret,
+    });
+    expect(tokenResponse.status).toBe(200);
+    systemAccessToken = tokenResponse.data.access_token;
+
+    // Generate unique IDs for this test run
+    organizationId = uuidv4();
+    organizerTenantId = uuidv4();
+    toctoTenantId = uuidv4();
+    toctoClientId = uuidv4();
+    userEmail = `test-toctou-${Date.now()}@example.com`;
+    userPassword = "TestPassword123!";
+
+    // Client certificate paths
+    clientCertPath = path.join(configDir, "certs/client-cert.pem");
+    clientKeyPath = path.join(configDir, "certs/client-key.pem");
+
+    // Prepare onboarding config
+    onboardingConfig = JSON.parse(JSON.stringify(onboardingTemplate));
+    onboardingConfig.organization.id = organizationId;
+    onboardingConfig.organization.name = `TOCTOU Test Org ${Date.now()}`;
+    onboardingConfig.tenant.id = organizerTenantId;
+    onboardingConfig.tenant.name = "TOCTOU Organizer Tenant";
+    onboardingConfig.tenant.domain = `${backendUrl}/${organizerTenantId}`;
+    onboardingConfig.client.client_id = uuidv4();
+    onboardingConfig.user.sub = uuidv4();
+    onboardingConfig.user.email = `admin-toctou-${Date.now()}@example.com`;
+    onboardingConfig.authorization_server.issuer = `${backendUrl}/${organizerTenantId}`;
+    onboardingConfig.authorization_server.authorization_endpoint = `${backendUrl}/${organizerTenantId}/v1/authorizations`;
+    onboardingConfig.authorization_server.token_endpoint = `${backendUrl}/${organizerTenantId}/v1/tokens`;
+    onboardingConfig.authorization_server.userinfo_endpoint = `${backendUrl}/${organizerTenantId}/v1/userinfo`;
+    onboardingConfig.authorization_server.jwks_uri = `${backendUrl}/${organizerTenantId}/v1/jwks`;
+    onboardingConfig.authorization_server.introspection_endpoint = `${backendUrl}/${organizerTenantId}/v1/tokens/introspection`;
+    onboardingConfig.authorization_server.revocation_endpoint = `${backendUrl}/${organizerTenantId}/v1/tokens/revocation`;
+    onboardingConfig.authorization_server.backchannel_authentication_endpoint = `${backendUrl}/${organizerTenantId}/v1/backchannel/authentications`;
+
+    // Create tenant config with max_devices = 1 (strict limit for TOCTOU test)
+    toctoTenantConfig = JSON.parse(JSON.stringify(financialTenantTemplate));
+    toctoTenantConfig.tenant.id = toctoTenantId;
+    toctoTenantConfig.tenant.name = "TOCTOU Test Tenant";
+    toctoTenantConfig.tenant.identity_policy_config = {
+      identity_unique_key_type: "EMAIL",
+      authentication_device_rule: {
+        max_devices: 1,  // Only 1 device allowed - strict for TOCTOU test
+        required_identity_verification: false,
+      },
+    };
+    toctoTenantConfig.authorization_server.issuer = `${backendUrl}/${toctoTenantId}`;
+    toctoTenantConfig.authorization_server.authorization_endpoint = `${backendUrl}/${toctoTenantId}/v1/authorizations`;
+    toctoTenantConfig.authorization_server.token_endpoint = `${backendUrl}/${toctoTenantId}/v1/tokens`;
+    toctoTenantConfig.authorization_server.userinfo_endpoint = `${backendUrl}/${toctoTenantId}/v1/userinfo`;
+    toctoTenantConfig.authorization_server.jwks_uri = `${backendUrl}/${toctoTenantId}/v1/jwks`;
+    toctoTenantConfig.authorization_server.introspection_endpoint = `${backendUrl}/${toctoTenantId}/v1/tokens/introspection`;
+    toctoTenantConfig.authorization_server.revocation_endpoint = `${backendUrl}/${toctoTenantId}/v1/tokens/revocation`;
+    toctoTenantConfig.authorization_server.backchannel_authentication_endpoint = `${backendUrl}/${toctoTenantId}/v1/backchannel/authentications`;
+
+    // Client config
+    toctoClientConfig = JSON.parse(JSON.stringify(financialClientTemplate));
+    toctoClientConfig.client_id = toctoClientId;
+
+    // Authentication configs
+    initialRegConfig = JSON.parse(JSON.stringify(initialRegConfigTemplate));
+    initialRegConfig.id = initialRegConfigId;
+
+    smsConfig = JSON.parse(JSON.stringify(smsConfigTemplate));
+    smsConfig.id = smsConfigId;
+
+    fidoUafConfig = JSON.parse(JSON.stringify(fidoUafConfigTemplate));
+    fidoUafConfig.id = fidoUafConfigId;
+
+    // Authentication policies
+    authPolicyConfig = JSON.parse(JSON.stringify(authPolicyTemplate));
+    authPolicyConfig.id = authPolicyId;
+
+    fidoUafRegPolicyConfig = JSON.parse(JSON.stringify(fidoUafRegistrationPolicyTemplate));
+    fidoUafRegPolicyConfig.id = fidoUafRegPolicyId;
+  });
+
+  afterAll(async () => {
+    // Cleanup
+    console.log("\n=== Cleanup ===");
+
+    if (toctoClientId && toctoTenantId) {
+      await deletion({
+        url: `${backendUrl}/v1/management/tenants/${toctoTenantId}/clients/${toctoClientId}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+
+    if (userId && toctoTenantId) {
+      await deletion({
+        url: `${backendUrl}/v1/management/tenants/${toctoTenantId}/users/${userId}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+
+    if (toctoTenantId && authPolicyConfig) {
+      await deletion({
+        url: `${backendUrl}/v1/management/tenants/${toctoTenantId}/authentication-policies/${authPolicyConfig.id}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+
+    if (toctoTenantId && fidoUafRegPolicyConfig) {
+      await deletion({
+        url: `${backendUrl}/v1/management/tenants/${toctoTenantId}/authentication-policies/${fidoUafRegPolicyConfig.id}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+
+    if (toctoTenantId && initialRegConfig) {
+      await deletion({
+        url: `${backendUrl}/v1/management/tenants/${toctoTenantId}/authentication-configurations/${initialRegConfig.id}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+
+    if (toctoTenantId && smsConfig) {
+      await deletion({
+        url: `${backendUrl}/v1/management/tenants/${toctoTenantId}/authentication-configurations/${smsConfig.id}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+
+    if (toctoTenantId && fidoUafConfig) {
+      await deletion({
+        url: `${backendUrl}/v1/management/tenants/${toctoTenantId}/authentication-configurations/${fidoUafConfig.id}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+
+    if (toctoTenantId) {
+      await deletion({
+        url: `${backendUrl}/v1/management/tenants/${toctoTenantId}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+
+    const adminClientId = onboardingConfig.client.client_id;
+    if (adminClientId && organizerTenantId) {
+      await deletion({
+        url: `${backendUrl}/v1/management/tenants/${organizerTenantId}/clients/${adminClientId}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+
+    const adminUserId = onboardingConfig.user.sub;
+    if (adminUserId && organizerTenantId) {
+      await deletion({
+        url: `${backendUrl}/v1/management/tenants/${organizerTenantId}/users/${adminUserId}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+
+    if (organizerTenantId) {
+      await deletion({
+        url: `${backendUrl}/v1/management/tenants/${organizerTenantId}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+
+    if (organizationId) {
+      await deletion({
+        url: `${backendUrl}/v1/management/orgs/${organizationId}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      }).catch(() => {});
+    }
+  });
+
+  it("should reject second registration at completion time when first registration filled the limit (TOCTOU prevention)", async () => {
+    // Skip if client certificate not found
+    if (!fs.existsSync(clientCertPath) || !fs.existsSync(clientKeyPath)) {
+      console.log("⚠️  Client certificate not found, skipping test");
+      return;
+    }
+
+    // Step 1: Create organization
+    console.log("\n=== [TOCTOU] Step 1: Creating Organization ===");
+    const orgResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/onboarding`,
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
+      body: onboardingConfig,
+    });
+    expect(orgResponse.status).toBe(201);
+    console.log(`✅ Organization created: ${organizationId}`);
+
+    // Step 2: Get org admin token
+    console.log("\n=== [TOCTOU] Step 2: Getting Org Admin Token ===");
+    const orgAdminTokenResponse = await requestToken({
+      endpoint: `${backendUrl}/${organizerTenantId}/v1/tokens`,
+      grantType: "password",
+      username: onboardingConfig.user.email,
+      password: onboardingConfig.user.raw_password,
+      scope: "openid profile email management",
+      clientId: onboardingConfig.client.client_id,
+      clientSecret: onboardingConfig.client.client_secret,
+    });
+    expect(orgAdminTokenResponse.status).toBe(200);
+    orgAdminToken = orgAdminTokenResponse.data.access_token;
+
+    // Step 3: Create tenant with max_devices = 1
+    console.log("\n=== [TOCTOU] Step 3: Creating Tenant with max_devices = 1 ===");
+    const tenantResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants`,
+      headers: { Authorization: `Bearer ${orgAdminToken}` },
+      body: toctoTenantConfig,
+    });
+    expect(tenantResponse.status).toBe(201);
+    console.log(`✅ Tenant created with max_devices = 1`);
+
+    // Step 4: Create client
+    console.log("\n=== [TOCTOU] Step 4: Creating Client ===");
+    const clientResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${toctoTenantId}/clients`,
+      headers: { Authorization: `Bearer ${orgAdminToken}` },
+      body: toctoClientConfig,
+    });
+    expect(clientResponse.status).toBe(201);
+
+    // Step 5: Create authentication configurations
+    console.log("\n=== [TOCTOU] Step 5: Creating Authentication Configurations ===");
+    await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${toctoTenantId}/authentication-configurations`,
+      headers: { Authorization: `Bearer ${orgAdminToken}` },
+      body: initialRegConfig,
+    });
+    await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${toctoTenantId}/authentication-configurations`,
+      headers: { Authorization: `Bearer ${orgAdminToken}` },
+      body: smsConfig,
+    });
+    await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${toctoTenantId}/authentication-configurations`,
+      headers: { Authorization: `Bearer ${orgAdminToken}` },
+      body: fidoUafConfig,
+    });
+    console.log("✅ Authentication configurations created");
+
+    // Step 6: Create authentication policies
+    console.log("\n=== [TOCTOU] Step 6: Creating Authentication Policies ===");
+    await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${toctoTenantId}/authentication-policies`,
+      headers: { Authorization: `Bearer ${orgAdminToken}` },
+      body: authPolicyConfig,
+    });
+    await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${toctoTenantId}/authentication-policies`,
+      headers: { Authorization: `Bearer ${orgAdminToken}` },
+      body: fidoUafRegPolicyConfig,
+    });
+    console.log("✅ Authentication policies created");
+
+    // Step 7: Register user and get access token
+    console.log("\n=== [TOCTOU] Step 7: Registering User ===");
+    const codeVerifier = generateCodeVerifier(64);
+    const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
+    const nonce = crypto.randomBytes(16).toString("base64url");
+    const state = crypto.randomBytes(16).toString("hex");
+
+    const clientJwks = JSON.parse(toctoClientConfig.jwks);
+    const clientPrivateKey = clientJwks.keys[0];
+    const issuer = `${backendUrl}/${toctoTenantId}`;
+
+    const requestObject = createJwtWithPrivateKey({
+      payload: {
+        response_type: "code",
+        client_id: toctoClientId,
+        redirect_uri: toctoClientConfig.redirect_uris[0],
+        scope: "openid profile transfers",
+        state: state,
+        nonce: nonce,
+        code_challenge: codeChallenge,
+        code_challenge_method: "S256",
+        response_mode: "jwt",
+        aud: issuer,
+        iss: toctoClientId,
+        exp: toEpocTime({ adjusted: 300 }),
+        iat: toEpocTime({}),
+        nbf: toEpocTime({}),
+        jti: generateJti(),
+      },
+      privateKey: clientPrivateKey,
+    });
+
+    const authzParams = new URLSearchParams({
+      request: requestObject,
+      client_id: toctoClientId,
+    });
+
+    const authzResponse = await get({
+      url: `${backendUrl}/${toctoTenantId}/v1/authorizations?${authzParams.toString()}`,
+    });
+    expect(authzResponse.status).toBe(302);
+    const authTxId = new URL(authzResponse.headers.location).searchParams.get("id");
+
+    // Register user
+    const registrationResponse = await postWithJson({
+      url: `${backendUrl}/${toctoTenantId}/v1/authorizations/${authTxId}/initial-registration`,
+      body: {
+        email: userEmail,
+        name: "TOCTOU Test User",
+        phone_number: "+81-90-1111-2222",
+        password: userPassword,
+        birthdate: "1990-01-01",
+        address: { country: "JP", postal_code: "100-0001", region: "Tokyo", locality: "Chiyoda" },
+      },
+    });
+    expect(registrationResponse.status).toBe(200);
+    userId = registrationResponse.data.user.sub;
+    console.log(`✅ User registered: ${userId}`);
+
+    // SMS authentication
+    await postWithJson({
+      url: `${backendUrl}/${toctoTenantId}/v1/authorizations/${authTxId}/sms-authentication-challenge`,
+      body: { phone_number: "+81-90-1111-2222", template: "authentication" },
+    });
+    await postWithJson({
+      url: `${backendUrl}/${toctoTenantId}/v1/authorizations/${authTxId}/sms-authentication`,
+      body: { verification_code: "123456" },
+    });
+
+    // Authorize and get token
+    const authorizeResponse = await postWithJson({
+      url: `${backendUrl}/${toctoTenantId}/v1/authorizations/${authTxId}/authorize`,
+      body: {},
+    });
+    const authRedirectUri = new URL(authorizeResponse.data.redirect_uri);
+    const jarmResponse = authRedirectUri.searchParams.get("response");
+    const jwksResponse = await getJwks({ endpoint: `${backendUrl}/${toctoTenantId}/v1/jwks` });
+    const decodedJarm = verifyAndDecodeJwt({ jwt: jarmResponse, jwks: jwksResponse.data });
+    const authorizationCode = decodedJarm.payload.code;
+
+    const tokenParams = new URLSearchParams({
+      grant_type: "authorization_code",
+      code: authorizationCode,
+      redirect_uri: toctoClientConfig.redirect_uris[0],
+      client_id: toctoClientId,
+      code_verifier: codeVerifier,
+    });
+    const tokenResponse = await mtlsPost({
+      url: `${mtlBackendUrl}/${toctoTenantId}/v1/tokens`,
+      body: tokenParams.toString(),
+      certPath: clientCertPath,
+      keyPath: clientKeyPath,
+    });
+    expect(tokenResponse.status).toBe(200);
+    userAccessToken = tokenResponse.data.access_token;
+    console.log("✅ User access token obtained");
+
+    // Step 8: TOCTOU Test - Start TWO registration flows CONCURRENTLY
+    console.log("\n=== [TOCTOU] Step 8: Starting TWO Registration Flows Concurrently ===");
+    console.log("   (Both should pass the Verifier check since user has 0 devices < max_devices=1)");
+
+    // Start first registration flow
+    const mfaResponse1 = await mtlsPostWithJson({
+      url: `${mtlBackendUrl}/${toctoTenantId}/v1/me/mfa/fido-uaf-registration`,
+      body: {
+        app_name: "device-1-toctou",
+        platform: "Android",
+        os: "Android15",
+        model: "Device 1",
+        locale: "ja",
+        notification_channel: "fcm",
+        notification_token: "token1",
+        priority: 1,
+      },
+      headers: { Authorization: `Bearer ${userAccessToken}` },
+      certPath: clientCertPath,
+      keyPath: clientKeyPath,
+    });
+    expect(mfaResponse1.status).toBe(200);
+    const transactionId1 = mfaResponse1.data.id;
+    console.log(`✅ First registration flow started: ${transactionId1}`);
+
+    // Start second registration flow (both pass because user still has 0 devices)
+    const mfaResponse2 = await mtlsPostWithJson({
+      url: `${mtlBackendUrl}/${toctoTenantId}/v1/me/mfa/fido-uaf-registration`,
+      body: {
+        app_name: "device-2-toctou",
+        platform: "iOS",
+        os: "iOS18",
+        model: "Device 2",
+        locale: "en",
+        notification_channel: "apns",
+        notification_token: "token2",
+        priority: 2,
+      },
+      headers: { Authorization: `Bearer ${userAccessToken}` },
+      certPath: clientCertPath,
+      keyPath: clientKeyPath,
+    });
+    expect(mfaResponse2.status).toBe(200);
+    const transactionId2 = mfaResponse2.data.id;
+    console.log(`✅ Second registration flow started: ${transactionId2}`);
+
+    // Step 9: Get challenges for BOTH registrations
+    console.log("\n=== [TOCTOU] Step 9: Getting Challenges for Both Registrations ===");
+    const authenticationDeviceEndpoint = `${backendUrl}/${toctoTenantId}/v1/authentications/{id}/`;
+
+    const challengeResponse1 = await postAuthenticationDeviceInteraction({
+      endpoint: authenticationDeviceEndpoint,
+      id: transactionId1,
+      interactionType: "fido-uaf-registration-challenge",
+      body: {},
+    });
+    expect(challengeResponse1.status).toBe(200);
+    console.log(`✅ Challenge 1 obtained`);
+
+    const challengeResponse2 = await postAuthenticationDeviceInteraction({
+      endpoint: authenticationDeviceEndpoint,
+      id: transactionId2,
+      interactionType: "fido-uaf-registration-challenge",
+      body: {},
+    });
+    expect(challengeResponse2.status).toBe(200);
+    console.log(`✅ Challenge 2 obtained`);
+
+    // Step 10: Complete FIRST registration (user now has 1 device = max_devices)
+    console.log("\n=== [TOCTOU] Step 10: Completing First Registration ===");
+    const registrationResult1 = await postAuthenticationDeviceInteraction({
+      endpoint: authenticationDeviceEndpoint,
+      id: transactionId1,
+      interactionType: "fido-uaf-registration",
+      body: {},
+    });
+    expect(registrationResult1.status).toBe(200);
+    expect(registrationResult1.data.device_id).toBeDefined();
+    console.log(`✅ First device registered: ${registrationResult1.data.device_id}`);
+    console.log(`   User now has 1 device (= max_devices)`);
+
+    // Wait for DB commit to complete before attempting second registration
+    console.log("   Waiting for DB commit...");
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Step 11: Try to complete SECOND registration - this should FAIL
+    console.log("\n=== [TOCTOU] Step 11: Attempting to Complete Second Registration ===");
+    console.log("   (Should FAIL because user already has max_devices, even though challenge was valid)");
+
+    const registrationResult2 = await postAuthenticationDeviceInteraction({
+      endpoint: authenticationDeviceEndpoint,
+      id: transactionId2,
+      interactionType: "fido-uaf-registration",
+      body: {},
+    });
+
+    console.log("Response:", JSON.stringify(registrationResult2.data, null, 2));
+
+    // Verify that registration is rejected at COMPLETION time (not challenge time)
+    expect(registrationResult2.status).toBe(400);
+    expect(registrationResult2.data.error).toBe("invalid_request");
+    expect(registrationResult2.data.error_description).toContain("Maximum number of devices reached");
+    expect(registrationResult2.data.error_description).toContain("1");
+
+    console.log("✅ Second registration correctly rejected at COMPLETION time");
+    console.log(`   Error: ${registrationResult2.data.error}`);
+    console.log(`   Description: ${registrationResult2.data.error_description}`);
+
+    console.log("\n=== [TOCTOU] TOCTOU Prevention Test PASSED ===");
+    console.log("✅ Security fix verified:");
+    console.log("   - Challenge can be issued when user has < max_devices");
+    console.log("   - Registration completion is blocked if another registration filled the limit");
+    console.log("   - Race condition (TOCTOU) vulnerability is prevented");
+  });
+});

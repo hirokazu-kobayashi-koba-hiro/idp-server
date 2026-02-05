@@ -143,6 +143,20 @@ public class AuthenticationRequest {
   }
 
   public Map<String, Object> toMapForPublic() {
+    return toMapForPublic(true);
+  }
+
+  /**
+   * Converts this request to a map for public API response.
+   *
+   * <p>When {@code isDeviceAuthenticated} is false, sensitive context information (scopes,
+   * acr_values, binding_message, authorization_details) is excluded from the response. This
+   * prevents information disclosure when the device has not been authenticated.
+   *
+   * @param isDeviceAuthenticated true if device authentication was successfully performed
+   * @return map representation for public API response
+   */
+  public Map<String, Object> toMapForPublic(boolean isDeviceAuthenticated) {
     Map<String, Object> map = new HashMap<>();
     map.put("flow", authFlow.name());
     map.put("tenant_id", tenantIdentifier.value());
@@ -151,7 +165,8 @@ public class AuthenticationRequest {
     map.put("client_attributes", clientAttributes.toMap());
     if (hasUser()) map.put("user", user.toMinimalizedMap());
     if (hasAuthenticationDevice()) map.put("authentication_device", authenticationDevice.toMap());
-    if (hasContext()) map.put("context", context.toMap());
+    // SECURITY: Only include context when device is authenticated
+    if (isDeviceAuthenticated && hasContext()) map.put("context", context.toMap());
     map.put("created_at", createdAt.toString());
     map.put("expires_at", expiresAt.toString());
     return map;

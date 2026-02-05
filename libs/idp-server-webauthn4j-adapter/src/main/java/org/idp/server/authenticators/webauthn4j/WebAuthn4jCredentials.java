@@ -68,4 +68,19 @@ public class WebAuthn4jCredentials implements Iterable<WebAuthn4jCredential> {
             })
         .collect(java.util.stream.Collectors.toList());
   }
+
+  /**
+   * Extracts credential IDs from credentials.
+   *
+   * <p>Returns the Base64URL-encoded credential IDs for use in allowCredentials validation during
+   * authentication. This is used to verify that the credential ID in the authentication response
+   * was in the original allowCredentials list (CVE-2025-26788 mitigation).
+   *
+   * @return List of credential IDs (Base64URL encoded), or empty list if no credentials
+   */
+  public List<String> toCredentialIds() {
+    return values.stream()
+        .map(WebAuthn4jCredential::id)
+        .collect(java.util.stream.Collectors.toList());
+  }
 }

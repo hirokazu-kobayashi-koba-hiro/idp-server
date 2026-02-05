@@ -463,7 +463,8 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
         """
         INSERT INTO idp_user_authentication_devices (
             id, tenant_id, user_id, os, model, platform, locale, app_name,
-            priority, available_methods, notification_token, notification_channel
+            priority, available_methods, notification_token, notification_channel,
+            credential_type, credential_id, credential_payload, credential_metadata
         ) VALUES
         """);
 
@@ -471,7 +472,8 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     List<Object> insertParams = new ArrayList<>();
 
     for (AuthenticationDevice device : devices) {
-      valuePlaceholders.add("(?::uuid, ?::uuid, ?::uuid, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?)");
+      valuePlaceholders.add(
+          "(?::uuid, ?::uuid, ?::uuid, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?::jsonb, ?::jsonb)");
       insertParams.add(device.idAsUuid());
       insertParams.add(tenant.identifierUUID());
       insertParams.add(user.subAsUuid());
@@ -485,6 +487,13 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
       insertParams.add(device.hasNotificationToken() ? device.notificationToken().value() : null);
       insertParams.add(
           device.hasNotificationChannel() ? device.optNotificationChannel("").name() : null);
+      // Integrated credential columns
+      insertParams.add(device.hasCredentialType() ? device.credentialType() : null);
+      insertParams.add(device.hasCredentialId() ? device.credentialId() : null);
+      insertParams.add(
+          device.hasCredentialPayload() ? jsonConverter.write(device.credentialPayload()) : null);
+      insertParams.add(
+          device.hasCredentialMetadata() ? jsonConverter.write(device.credentialMetadata()) : null);
     }
 
     insertSql.append(String.join(",", valuePlaceholders));

@@ -263,19 +263,33 @@ public class WebAuthn4jCredential {
   // Relying Party
   String rpId;
 
-  // Authenticator Information
+  // Core Authenticator Information
   String aaguid;
   String attestedCredentialData;
   Integer signatureAlgorithm;
   long signCount;
 
-  // Attestation
-  String attestationType;
-
-  // WebAuthn Features
+  // Core WebAuthn Features
   Boolean rk;
-  Integer credProtect;
-  List<String> transports;
+
+  // WebAuthn Level 3: Backup Flags
+  Boolean backupEligible;
+  Boolean backupState;
+
+  // JSON: Authenticator metadata (transports, attachment)
+  Map<String, Object> authenticator;
+
+  // JSON: Attestation information (type, format)
+  Map<String, Object> attestation;
+
+  // JSON: WebAuthn extensions (credProtect, prf, largeBlob)
+  Map<String, Object> extensions;
+
+  // JSON: Device/registration context
+  Map<String, Object> device;
+
+  // JSON: Future extensions
+  Map<String, Object> metadata;
 
   // Timestamps
   Long createdAt;
@@ -284,10 +298,17 @@ public class WebAuthn4jCredential {
 
   private static final Base64.Decoder urlDecoder = Base64.getUrlDecoder();
 
-  public WebAuthn4jCredential() {}
+  public WebAuthn4jCredential() {
+    this.authenticator = new HashMap<>();
+    this.attestation = new HashMap<>();
+    this.extensions = new HashMap<>();
+    this.device = new HashMap<>();
+    this.metadata = new HashMap<>();
+  }
 
   public WebAuthn4jCredential(
       String id, String userId, String rpId, String attestedCredentialData, long signCount) {
+    this();
     this.id = id;
     this.userId = userId;
     this.rpId = rpId;
@@ -305,10 +326,14 @@ public class WebAuthn4jCredential {
       String attestedCredentialData,
       Integer signatureAlgorithm,
       long signCount,
-      String attestationType,
       Boolean rk,
-      Integer credProtect,
-      List<String> transports,
+      Boolean backupEligible,
+      Boolean backupState,
+      Map<String, Object> authenticator,
+      Map<String, Object> attestation,
+      Map<String, Object> extensions,
+      Map<String, Object> device,
+      Map<String, Object> metadata,
       Long createdAt,
       Long updatedAt,
       Long authenticatedAt) {
@@ -321,10 +346,14 @@ public class WebAuthn4jCredential {
     this.attestedCredentialData = attestedCredentialData;
     this.signatureAlgorithm = signatureAlgorithm;
     this.signCount = signCount;
-    this.attestationType = attestationType;
     this.rk = rk;
-    this.credProtect = credProtect;
-    this.transports = transports;
+    this.backupEligible = backupEligible;
+    this.backupState = backupState;
+    this.authenticator = authenticator != null ? authenticator : new HashMap<>();
+    this.attestation = attestation != null ? attestation : new HashMap<>();
+    this.extensions = extensions != null ? extensions : new HashMap<>();
+    this.device = device != null ? device : new HashMap<>();
+    this.metadata = metadata != null ? metadata : new HashMap<>();
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.authenticatedAt = authenticatedAt;
@@ -374,20 +403,60 @@ public class WebAuthn4jCredential {
     return signCount;
   }
 
-  public String attestationType() {
-    return attestationType;
-  }
-
   public Boolean rk() {
     return rk;
   }
 
-  public Integer credProtect() {
-    return credProtect;
+  public Boolean backupEligible() {
+    return backupEligible;
   }
 
+  public Boolean backupState() {
+    return backupState;
+  }
+
+  public Map<String, Object> authenticator() {
+    return authenticator;
+  }
+
+  public Map<String, Object> attestation() {
+    return attestation;
+  }
+
+  public Map<String, Object> extensions() {
+    return extensions;
+  }
+
+  public Map<String, Object> device() {
+    return device;
+  }
+
+  public Map<String, Object> metadata() {
+    return metadata;
+  }
+
+  // Convenience methods for commonly accessed fields from JSON
+
+  @SuppressWarnings("unchecked")
   public List<String> transports() {
-    return transports;
+    Object transports = authenticator.get("transports");
+    if (transports instanceof List) {
+      return (List<String>) transports;
+    }
+    return List.of();
+  }
+
+  public String attestationType() {
+    Object type = attestation.get("type");
+    return type != null ? type.toString() : null;
+  }
+
+  public Integer credProtect() {
+    Object credProtect = extensions.get("cred_protect");
+    if (credProtect instanceof Number) {
+      return ((Number) credProtect).intValue();
+    }
+    return null;
   }
 
   public Long createdAt() {
@@ -413,10 +482,14 @@ public class WebAuthn4jCredential {
     result.put("attested_credential_data", attestedCredentialData);
     result.put("signature_algorithm", signatureAlgorithm);
     result.put("sign_count", signCount);
-    result.put("attestation_type", attestationType);
     result.put("rk", rk);
-    result.put("cred_protect", credProtect);
-    result.put("transports", transports);
+    result.put("backup_eligible", backupEligible);
+    result.put("backup_state", backupState);
+    result.put("authenticator", authenticator);
+    result.put("attestation", attestation);
+    result.put("extensions", extensions);
+    result.put("device", device);
+    result.put("metadata", metadata);
     result.put("created_at", createdAt);
     result.put("updated_at", updatedAt);
     result.put("authenticated_at", authenticatedAt);

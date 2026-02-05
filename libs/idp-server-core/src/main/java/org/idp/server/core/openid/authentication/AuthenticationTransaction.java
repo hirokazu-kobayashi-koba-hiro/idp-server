@@ -231,9 +231,19 @@ public class AuthenticationTransaction {
   }
 
   public Map<String, Object> toRequestMap() {
+    return toRequestMap(true);
+  }
+
+  /**
+   * Converts this transaction to a map for public API response.
+   *
+   * @param isDeviceAuthenticated true if device authentication was successfully performed
+   * @return map representation for public API response
+   */
+  public Map<String, Object> toRequestMap(boolean isDeviceAuthenticated) {
     Map<String, Object> map = new HashMap<>();
     map.put("id", identifier.value());
-    map.putAll(request.toMapForPublic());
+    map.putAll(request.toMapForPublic(isDeviceAuthenticated));
     return map;
   }
 

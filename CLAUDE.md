@@ -28,6 +28,19 @@ Controller → UseCase (EntryService) → Core (Handler-Service-Repository) → 
 cd e2e && npm test
 ```
 
+## ローカル環境でのコード変更反映
+
+**重要**: Javaコードを変更した場合、Docker imageを再ビルドしないと変更が反映されない。
+
+```bash
+# Docker imageビルド + コンテナ再起動（ビルドはDocker内で実行される）
+docker compose up -d --build idp-server-1 idp-server-2
+```
+
+- Dockerfileがマルチステージビルドのため、`./gradlew bootJar`は不要
+- `docker compose restart`だけでは新しいコードは反映されない
+- `--build`フラグが必須
+
 ## Issue作業開始手順
 
 1. **開発者ガイドを読む**（該当ドメイン）

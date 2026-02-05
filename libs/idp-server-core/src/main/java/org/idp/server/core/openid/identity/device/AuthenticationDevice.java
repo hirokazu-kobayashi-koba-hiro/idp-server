@@ -34,6 +34,11 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
   String notificationToken;
   List<String> availableMethods;
   Integer priority;
+  // Integrated credential fields (1 device = 1 credential)
+  String credentialType;
+  String credentialId;
+  Map<String, Object> credentialPayload;
+  Map<String, Object> credentialMetadata;
 
   public AuthenticationDevice() {}
 
@@ -58,6 +63,37 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     this.notificationToken = notificationToken;
     this.availableMethods = availableMethods;
     this.priority = priority;
+  }
+
+  public AuthenticationDevice(
+      String id,
+      String appName,
+      String platform,
+      String os,
+      String model,
+      String locale,
+      String notificationChannel,
+      String notificationToken,
+      List<String> availableMethods,
+      Integer priority,
+      String credentialType,
+      String credentialId,
+      Map<String, Object> credentialPayload,
+      Map<String, Object> credentialMetadata) {
+    this.id = id;
+    this.appName = appName;
+    this.platform = platform;
+    this.os = os;
+    this.model = model;
+    this.locale = locale;
+    this.notificationChannel = notificationChannel;
+    this.notificationToken = notificationToken;
+    this.availableMethods = availableMethods;
+    this.priority = priority;
+    this.credentialType = credentialType;
+    this.credentialId = credentialId;
+    this.credentialPayload = credentialPayload;
+    this.credentialMetadata = credentialMetadata;
   }
 
   public String id() {
@@ -144,6 +180,38 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     return priority != null;
   }
 
+  public String credentialType() {
+    return credentialType;
+  }
+
+  public boolean hasCredentialType() {
+    return credentialType != null && !credentialType.isEmpty();
+  }
+
+  public String credentialId() {
+    return credentialId;
+  }
+
+  public boolean hasCredentialId() {
+    return credentialId != null && !credentialId.isEmpty();
+  }
+
+  public Map<String, Object> credentialPayload() {
+    return credentialPayload != null ? credentialPayload : new HashMap<>();
+  }
+
+  public boolean hasCredentialPayload() {
+    return credentialPayload != null && !credentialPayload.isEmpty();
+  }
+
+  public Map<String, Object> credentialMetadata() {
+    return credentialMetadata != null ? credentialMetadata : new HashMap<>();
+  }
+
+  public boolean hasCredentialMetadata() {
+    return credentialMetadata != null && !credentialMetadata.isEmpty();
+  }
+
   public AuthenticationDevice withAvailableMethod(String method) {
     List<String> newAvailableMethods = new ArrayList<>(availableMethods);
     newAvailableMethods.add(method);
@@ -158,6 +226,28 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
         notificationToken,
         newAvailableMethods,
         priority);
+  }
+
+  public AuthenticationDevice withCredential(
+      String credentialType,
+      String credentialId,
+      Map<String, Object> credentialPayload,
+      Map<String, Object> credentialMetadata) {
+    return new AuthenticationDevice(
+        id,
+        appName,
+        platform,
+        os,
+        model,
+        locale,
+        notificationChannel,
+        notificationToken,
+        availableMethods,
+        priority,
+        credentialType,
+        credentialId,
+        credentialPayload,
+        credentialMetadata);
   }
 
   public AuthenticationDevice patchWith(AuthenticationDevice patchDevice) {
@@ -190,6 +280,14 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     return id != null && !id.isEmpty();
   }
 
+  /**
+   * Converts this device to a Map representation for external output (Userinfo, ID Token).
+   *
+   * <p>SECURITY: credential_payload is intentionally excluded because it contains sensitive data
+   * (e.g., secret_value for JWT Bearer authentication). Only non-sensitive metadata is included.
+   *
+   * @return Map representation safe for external output
+   */
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);
@@ -202,6 +300,12 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
     if (hasNotificationToken()) map.put("notification_token", notificationToken);
     if (hasAvailableMethods()) map.put("available_methods", availableMethods);
     if (hasPriority()) map.put("priority", priority);
+    // Credential type and ID are safe to expose (non-sensitive)
+    if (hasCredentialType()) map.put("credential_type", credentialType);
+    if (hasCredentialId()) map.put("credential_id", credentialId);
+    // SECURITY: credential_payload is NOT included - it contains secret_value
+    // SECURITY: credential_metadata is safe - only contains issued_at and expires_at
+    if (hasCredentialMetadata()) map.put("credential_metadata", credentialMetadata);
     return map;
   }
 

@@ -13,6 +13,8 @@ import {
   useTheme,
   alpha,
   InputAdornment,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import { useRouter } from "next/router";
 import { backendUrl, useAppContext } from "@/pages/_app";
@@ -20,48 +22,108 @@ import { useState } from "react";
 import { SignupStepper } from "@/components/SignupStepper";
 import { Email } from "@mui/icons-material";
 
+interface ApiErrorResponse {
+  error?: string;
+  error_description?: string;
+  message?: string;
+}
+
 export default function EmailVerificationPage() {
   const router = useRouter();
   const { email } = useAppContext()
   const [verificationCode, setVerificationCode] = useState("");
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"error" | "success">("error");
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const { id, tenant_id: tenantId } = router.query;
   const theme = useTheme();
 
+  const getErrorMessage = (status: number, data: ApiErrorResponse): string => {
+    if (data.error_description) {
+      return data.error_description;
+    }
+    if (data.message) {
+      return data.message;
+    }
+    switch (status) {
+      case 400:
+        return "Invalid verification code. Please check and try again.";
+      case 401:
+        return "Session expired. Please start over.";
+      case 404:
+        return "Verification session not found. Please start over.";
+      case 429:
+        return "Too many attempts. Please wait a moment and try again.";
+      default:
+        return "Verification failed. Please try again.";
+    }
+  };
+
   const handleReSend = async () => {
-    const response = await fetch(
-      `${backendUrl}/${tenantId}/v1/authorizations/${id}/email-authentication-challenge`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email }),
-      },
-    );
-    if (!response.ok) {
-      throw new Error("sending email verification code is failed");
+    setResending(true);
+    setMessage("");
+    try {
+      const response = await fetch(
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/email-authentication-challenge`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email }),
+        },
+      );
+      if (!response.ok) {
+        const errorData: ApiErrorResponse = await response.json().catch(() => ({}));
+        setMessageType("error");
+        setMessage(getErrorMessage(response.status, errorData));
+        return;
+      }
+      setMessageType("success");
+      setMessage("Verification code sent! Please check your email.");
+    } catch (error) {
+      console.error("Resend error:", error);
+      setMessageType("error");
+      setMessage("Failed to send verification code. Please try again.");
+    } finally {
+      setResending(false);
     }
   };
 
   const handleNext = async () => {
-    const response = await fetch(
-      `${backendUrl}/${tenantId}/v1/authorizations/${id}/email-authentication`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
+    setLoading(true);
+    setMessage("");
+    try {
+      const response = await fetch(
+        `${backendUrl}/${tenantId}/v1/authorizations/${id}/email-authentication`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            verification_code: verificationCode,
+          }),
         },
-        body: JSON.stringify({
-          verification_code: verificationCode,
-        }),
-      },
-    );
+      );
 
-    if (!response.ok) {
-      setMessage("failed email verification");
+      if (!response.ok) {
+        const errorData: ApiErrorResponse = await response.json().catch(() => ({}));
+        setMessageType("error");
+        setMessage(getErrorMessage(response.status, errorData));
+        return;
+      }
+
+      // Success - proceed to FIDO2 registration
+      router.push(`/signup/fido2?id=${id}&tenant_id=${tenantId}`);
+    } catch (error) {
+      console.error("Verification error:", error);
+      setMessageType("error");
+      setMessage("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    router.push(`/signup/fido2?id=${id}&tenant_id=${tenantId}`);
   };
 
   return (
@@ -110,27 +172,35 @@ export default function EmailVerificationPage() {
           />
 
           {message && (
-            <Typography mt={2} color="error" align="center">
+            <Alert severity={messageType} onClose={() => setMessage("")}>
               {message}
-            </Typography>
+            </Alert>
           )}
 
           <Box display="flex" justifyContent="flex-end">
             <Button
               variant="contained"
               onClick={handleNext}
-              disabled={!verificationCode}
+              disabled={!verificationCode || loading}
               sx={{ textTransform: "none" }}
             >
-              Next
+              {loading ? <CircularProgress size={24} color="inherit" /> : "Next"}
             </Button>
           </Box>
 
           <Divider sx={{ my: 2 }} />
 
           <Box display="flex" justifyContent="center">
-            <Link onClick={handleReSend} sx={{ cursor: "pointer" }}>
-              Didn’t get the code? Resend
+            <Link
+              onClick={handleReSend}
+              sx={{
+                cursor: resending ? "not-allowed" : "pointer",
+                opacity: resending ? 0.5 : 1,
+              }}
+              component="button"
+              disabled={resending}
+            >
+              {resending ? "Sending..." : "Didn't get the code? Resend"}
             </Link>
           </Box>
         </Stack>

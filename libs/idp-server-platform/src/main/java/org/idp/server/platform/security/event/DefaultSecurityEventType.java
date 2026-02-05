@@ -49,6 +49,8 @@ public enum DefaultSecurityEventType {
   fido2_authentication_challenge_failure("User failed challenge authentication using FIDO2"),
   fido2_authentication_success("User successfully authenticated using FIDO2"),
   fido2_authentication_failure("User failed authentication using FIDO2"),
+  fido2_deregistration_success("User successfully deregistered FIDO2 credential"),
+  fido2_deregistration_failure("User failed to deregister FIDO2 credential"),
   email_verification_request_success("User request verified their email is success"),
   email_verification_request_failure("User request verified their email is failed"),
   email_verification_success("User successfully verified their email"),

@@ -25,6 +25,13 @@ public class AvailableFederation implements JsonReadable {
   String type;
   String ssoProvider;
   boolean autoSelected = false;
+  String issuer;
+  String providerId;
+  boolean jwtBearerGrantEnabled = false;
+  String subjectClaimMapping;
+  String jwksUri;
+  String jwks;
+  int jwksCacheTtlSeconds = 3600;
 
   public AvailableFederation() {}
 
@@ -44,12 +51,91 @@ public class AvailableFederation implements JsonReadable {
     return autoSelected;
   }
 
+  public String issuer() {
+    return issuer;
+  }
+
+  public boolean hasIssuer() {
+    return issuer != null && !issuer.isEmpty();
+  }
+
+  public String providerId() {
+    return providerId;
+  }
+
+  public boolean hasProviderId() {
+    return providerId != null && !providerId.isEmpty();
+  }
+
+  /**
+   * Returns the provider ID for user lookup. If provider_id is not explicitly set, falls back to
+   * issuer for backward compatibility.
+   *
+   * @return the provider ID or issuer as fallback
+   */
+  public String resolveProviderId() {
+    if (hasProviderId()) {
+      return providerId;
+    }
+    return issuer;
+  }
+
+  public boolean jwtBearerGrantEnabled() {
+    return jwtBearerGrantEnabled;
+  }
+
+  public String subjectClaimMapping() {
+    return subjectClaimMapping;
+  }
+
+  public boolean hasSubjectClaimMapping() {
+    return subjectClaimMapping != null && !subjectClaimMapping.isEmpty();
+  }
+
+  public boolean isDeviceType() {
+    return "device".equals(type);
+  }
+
+  public String jwksUri() {
+    return jwksUri;
+  }
+
+  public boolean hasJwksUri() {
+    return jwksUri != null && !jwksUri.isEmpty();
+  }
+
+  public String jwks() {
+    return jwks;
+  }
+
+  public boolean hasJwks() {
+    return jwks != null && !jwks.isEmpty();
+  }
+
+  public int jwksCacheTtlSeconds() {
+    return jwksCacheTtlSeconds;
+  }
+
+  public boolean matchesIssuer(String issuerToMatch) {
+    if (!hasIssuer()) {
+      return false;
+    }
+    return issuer.equals(issuerToMatch);
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", id);
     map.put("type", type);
     map.put("sso_provider", ssoProvider);
     map.put("auto_selected", autoSelected);
+    if (hasIssuer()) map.put("issuer", issuer);
+    if (hasProviderId()) map.put("provider_id", providerId);
+    map.put("jwt_bearer_grant_enabled", jwtBearerGrantEnabled);
+    if (hasSubjectClaimMapping()) map.put("subject_claim_mapping", subjectClaimMapping);
+    if (hasJwksUri()) map.put("jwks_uri", jwksUri);
+    if (hasJwks()) map.put("jwks", jwks);
+    if (jwksCacheTtlSeconds > 0) map.put("jwks_cache_ttl_seconds", jwksCacheTtlSeconds);
     return map;
   }
 }

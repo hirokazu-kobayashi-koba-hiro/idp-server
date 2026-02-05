@@ -70,3 +70,6 @@ sample-web/.env.*.local
 docker/nginx/certs/*.pem
 !docker/nginx/certs/.gitkeep
 !docker/nginx/certs/client-ca-bundle.pem
+performance-test/k6-sqlite
+performance-test/data/*.db
+identifier.sqlite

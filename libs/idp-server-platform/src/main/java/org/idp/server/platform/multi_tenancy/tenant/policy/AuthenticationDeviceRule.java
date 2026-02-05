@@ -23,28 +23,70 @@ import java.util.Map;
  * Authentication device rule configuration for tenant-level device management.
  *
  * <p>This class defines the rules for managing authentication devices at the tenant level,
- * including maximum device limits and identity verification requirements.
+ * including maximum device limits, identity verification requirements, and device authentication
+ * method.
  *
  * <p>Previously defined per AuthenticationPolicy, now centralized at tenant level for consistency.
  *
  * @see TenantIdentityPolicy
+ * @see DeviceAuthenticationType
  */
 public class AuthenticationDeviceRule {
 
   private static final int DEFAULT_MAX_DEVICES = 5;
   private static final boolean DEFAULT_REQUIRED_IDENTITY_VERIFICATION = false;
+  private static final DeviceAuthenticationType DEFAULT_AUTHENTICATION_TYPE =
+      DeviceAuthenticationType.none;
+  private static final boolean DEFAULT_ISSUE_DEVICE_SECRET = false;
+  private static final String DEFAULT_DEVICE_SECRET_ALGORITHM = "HS256";
 
   private int maxDevices;
   private boolean requiredIdentityVerification;
+  private DeviceAuthenticationType authenticationType;
+  private boolean issueDeviceSecret;
+  private String deviceSecretAlgorithm;
+  private Long deviceSecretExpiresInSeconds;
 
   public AuthenticationDeviceRule() {
     this.maxDevices = DEFAULT_MAX_DEVICES;
     this.requiredIdentityVerification = DEFAULT_REQUIRED_IDENTITY_VERIFICATION;
+    this.authenticationType = DEFAULT_AUTHENTICATION_TYPE;
+    this.issueDeviceSecret = DEFAULT_ISSUE_DEVICE_SECRET;
+    this.deviceSecretAlgorithm = DEFAULT_DEVICE_SECRET_ALGORITHM;
+    this.deviceSecretExpiresInSeconds = null;
   }
 
   public AuthenticationDeviceRule(int maxDevices, boolean requiredIdentityVerification) {
+    this(maxDevices, requiredIdentityVerification, DEFAULT_AUTHENTICATION_TYPE);
+  }
+
+  public AuthenticationDeviceRule(
+      int maxDevices,
+      boolean requiredIdentityVerification,
+      DeviceAuthenticationType authenticationType) {
+    this(
+        maxDevices,
+        requiredIdentityVerification,
+        authenticationType,
+        DEFAULT_ISSUE_DEVICE_SECRET,
+        DEFAULT_DEVICE_SECRET_ALGORITHM,
+        null);
+  }
+
+  public AuthenticationDeviceRule(
+      int maxDevices,
+      boolean requiredIdentityVerification,
+      DeviceAuthenticationType authenticationType,
+      boolean issueDeviceSecret,
+      String deviceSecretAlgorithm,
+      Long deviceSecretExpiresInSeconds) {
     this.maxDevices = maxDevices;
     this.requiredIdentityVerification = requiredIdentityVerification;
+    this.authenticationType = authenticationType;
+    this.issueDeviceSecret = issueDeviceSecret;
+    this.deviceSecretAlgorithm =
+        deviceSecretAlgorithm != null ? deviceSecretAlgorithm : DEFAULT_DEVICE_SECRET_ALGORITHM;
+    this.deviceSecretExpiresInSeconds = deviceSecretExpiresInSeconds;
   }
 
   /**
@@ -55,6 +97,7 @@ public class AuthenticationDeviceRule {
    * <ul>
    *   <li>max_devices: 5
    *   <li>required_identity_verification: false
+   *   <li>authentication_type: none
    * </ul>
    *
    * @return default authentication device rule
@@ -90,7 +133,49 @@ public class AuthenticationDeviceRule {
       }
     }
 
-    return new AuthenticationDeviceRule(maxDevices, requiredIdentityVerification);
+    DeviceAuthenticationType authenticationType = DEFAULT_AUTHENTICATION_TYPE;
+    if (map.containsKey("authentication_type")) {
+      Object value = map.get("authentication_type");
+      if (value instanceof String) {
+        try {
+          authenticationType = DeviceAuthenticationType.valueOf((String) value);
+        } catch (IllegalArgumentException e) {
+          // Keep default if invalid value
+        }
+      }
+    }
+
+    boolean issueDeviceSecret = DEFAULT_ISSUE_DEVICE_SECRET;
+    if (map.containsKey("issue_device_secret")) {
+      Object value = map.get("issue_device_secret");
+      if (value instanceof Boolean) {
+        issueDeviceSecret = (Boolean) value;
+      }
+    }
+
+    String deviceSecretAlgorithm = DEFAULT_DEVICE_SECRET_ALGORITHM;
+    if (map.containsKey("device_secret_algorithm")) {
+      Object value = map.get("device_secret_algorithm");
+      if (value instanceof String) {
+        deviceSecretAlgorithm = (String) value;
+      }
+    }
+
+    Long deviceSecretExpiresInSeconds = null;
+    if (map.containsKey("device_secret_expires_in_seconds")) {
+      Object value = map.get("device_secret_expires_in_seconds");
+      if (value instanceof Number) {
+        deviceSecretExpiresInSeconds = ((Number) value).longValue();
+      }
+    }
+
+    return new AuthenticationDeviceRule(
+        maxDevices,
+        requiredIdentityVerification,
+        authenticationType,
+        issueDeviceSecret,
+        deviceSecretAlgorithm,
+        deviceSecretExpiresInSeconds);
   }
 
   /**
@@ -112,6 +197,68 @@ public class AuthenticationDeviceRule {
   }
 
   /**
+   * Returns the authentication type required for device assertions.
+   *
+   * <p>This determines how devices must authenticate when making requests (e.g., JWT Bearer Grant
+   * with device-signed JWT).
+   *
+   * @return device authentication type
+   */
+  public DeviceAuthenticationType authenticationType() {
+    return authenticationType;
+  }
+
+  /**
+   * Returns whether device authentication is required (not none).
+   *
+   * @return true if authentication is required
+   */
+  public boolean requiresDeviceAuthentication() {
+    return authenticationType.requiresCredential();
+  }
+
+  /**
+   * Returns whether device secret should be issued on device registration.
+   *
+   * <p>When enabled, idp-server generates a symmetric key (HMAC secret) during device registration
+   * and returns it in the response. This secret can be used for JWT Bearer Grant authentication.
+   *
+   * @return true if device secret should be issued
+   */
+  public boolean issueDeviceSecret() {
+    return issueDeviceSecret;
+  }
+
+  /**
+   * Returns the algorithm for device secret JWT signing.
+   *
+   * <p>Supported values: HS256, HS384, HS512
+   *
+   * @return device secret algorithm (default: HS256)
+   */
+  public String deviceSecretAlgorithm() {
+    return deviceSecretAlgorithm;
+  }
+
+  /**
+   * Returns the expiration time in seconds for device secrets.
+   *
+   * @return expiration time in seconds, or null for no expiration
+   */
+  public Long deviceSecretExpiresInSeconds() {
+    return deviceSecretExpiresInSeconds;
+  }
+
+  /**
+   * Returns whether device secret has expiration.
+   *
+   * @return true if device secret expires
+   */
+  public boolean hasDeviceSecretExpiration() {
+    return deviceSecretExpiresInSeconds != null && deviceSecretExpiresInSeconds > 0;
+  }
+
+  /**
    * Converts this rule to a Map for JSON serialization.
    *
    * @return map representation
@@ -120,6 +267,12 @@ public class AuthenticationDeviceRule {
     Map<String, Object> map = new HashMap<>();
     map.put("max_devices", maxDevices);
     map.put("required_identity_verification", requiredIdentityVerification);
+    map.put("authentication_type", authenticationType.name());
+    map.put("issue_device_secret", issueDeviceSecret);
+    map.put("device_secret_algorithm", deviceSecretAlgorithm);
+    if (deviceSecretExpiresInSeconds != null) {
+      map.put("device_secret_expires_in_seconds", deviceSecretExpiresInSeconds);
+    }
     return map;
   }
 }

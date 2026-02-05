@@ -2,3 +2,4 @@ org.idp.server.authenticators.webauthn4j.WebAuthn4jAuthenticationChallengeExecut
 org.idp.server.authenticators.webauthn4j.WebAuthn4jAuthenticationExecutorFactory
 org.idp.server.authenticators.webauthn4j.WebAuthn4jRegistrationChallengeExecutorFactory
 org.idp.server.authenticators.webauthn4j.WebAuthn4jRegistrationExecutorFactory
+org.idp.server.authenticators.webauthn4j.WebAuthn4jDeregistrationExecutorFactory

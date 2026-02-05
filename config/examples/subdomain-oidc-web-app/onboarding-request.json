@@ -12,7 +12,7 @@
     "authorization_provider": "idp-server",
     "ui_config": {
       "base_url": "https://auth.local.dev",
-      "signin_page": "/signin/",
+      "signin_page": "/signin/fido2/",
       "signup_page": "/signup/"
     },
     "session_config": {
@@ -25,7 +25,8 @@
     "cors_config": {
       "allow_origins": [
         "https://auth.local.dev",
-        "https://api.local.dev"
+        "https://api.local.dev",
+        "https://sample.local.dev"
       ]
     },
     "security_event_log_config": {
@@ -38,6 +39,17 @@
       "include_ip": true,
       "persistence_enabled": true,
       "include_detail": true
+    },
+    "identity_policy_config": {
+      "identity_unique_key_type": "EMAIL",
+      "authentication_device_rule": {
+        "max_devices": 10,
+        "required_identity_verification": false,
+        "authentication_type": "device_secret_jwt",
+        "issue_device_secret": true,
+        "device_secret_algorithm": "HS256",
+        "device_secret_expires_in_seconds": 31536000
+      }
     }
   },
   "authorization_server": {
@@ -45,6 +57,7 @@
     "authorization_endpoint": "https://api.local.dev/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/authorizations",
     "token_endpoint": "https://api.local.dev/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens",
     "token_endpoint_auth_methods_supported": [
+      "none",
       "client_secret_post",
       "client_secret_basic"
     ],
@@ -58,15 +71,21 @@
     "grant_types_supported": [
       "authorization_code",
       "refresh_token",
-      "password"
+      "password",
+      "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      "urn:openid:params:grant-type:ciba"
     ],
+    "backchannel_authentication_endpoint": "https://api.local.dev/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/backchannel/authentications",
+    "backchannel_token_delivery_modes_supported": ["poll"],
+    "backchannel_user_code_parameter_supported": true,
     "token_signed_key_id": "signing_key_1",
     "id_token_signed_key_id": "signing_key_1",
     "scopes_supported": [
       "openid",
       "profile",
       "email",
-      "management"
+      "management",
+      "claims:authentication_devices"
     ],
     "response_types_supported": [
       "code"
@@ -82,6 +101,13 @@
       "ES256"
     ],
     "claims_parameter_supported": true,
+    "claims_supported": [
+      "sub",
+      "name",
+      "email",
+      "email_verified",
+      "authentication_devices"
+    ],
     "token_introspection_endpoint": "https://api.local.dev/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens/introspection",
     "token_revocation_endpoint": "https://api.local.dev/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/tokens/revocation",
     "extension": {
@@ -90,7 +116,10 @@
       "id_token_signed_key_id": "signing_key_1",
       "access_token_duration": 3600,
       "id_token_duration": 3600,
-      "refresh_token_duration": 86400
+      "refresh_token_duration": 86400,
+      "custom_claims_scope_mapping": true,
+      "backchannel_authentication_polling_interval": 5,
+      "backchannel_authentication_request_expires_in": 300
     }
   },
   "user": {

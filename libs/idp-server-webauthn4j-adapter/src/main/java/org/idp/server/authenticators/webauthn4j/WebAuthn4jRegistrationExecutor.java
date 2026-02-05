@@ -16,9 +16,12 @@
 
 package org.idp.server.authenticators.webauthn4j;
 
+import com.webauthn4j.metadata.data.statement.MetadataStatement;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.idp.server.authentication.interactors.fido2.Fido2ExecutorType;
+import org.idp.server.authenticators.webauthn4j.mds.MdsResolver;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionRequest;
@@ -38,15 +41,25 @@ public class WebAuthn4jRegistrationExecutor implements AuthenticationExecutor {
   AuthenticationInteractionCommandRepository transactionCommandRepository;
   AuthenticationInteractionQueryRepository transactionQueryRepository;
   WebAuthn4jCredentialRepository credentialRepository;
+  MdsResolver mdsResolver;
   JsonConverter jsonConverter;
 
   public WebAuthn4jRegistrationExecutor(
       AuthenticationInteractionCommandRepository transactionCommandRepository,
       AuthenticationInteractionQueryRepository transactionQueryRepository,
       WebAuthn4jCredentialRepository credentialRepository) {
+    this(transactionCommandRepository, transactionQueryRepository, credentialRepository, null);
+  }
+
+  public WebAuthn4jRegistrationExecutor(
+      AuthenticationInteractionCommandRepository transactionCommandRepository,
+      AuthenticationInteractionQueryRepository transactionQueryRepository,
+      WebAuthn4jCredentialRepository credentialRepository,
+      MdsResolver mdsResolver) {
     this.transactionCommandRepository = transactionCommandRepository;
     this.transactionQueryRepository = transactionQueryRepository;
     this.credentialRepository = credentialRepository;
+    this.mdsResolver = mdsResolver;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
@@ -115,6 +128,9 @@ public class WebAuthn4jRegistrationExecutor implements AuthenticationExecutor {
       log.debug(
           "webauthn4j registration, credential created with id: {}", webAuthn4jCredential.id());
 
+      // Enrich credential with MDS metadata
+      enrichWithMdsMetadata(webAuthn4jCredential);
+
       credentialRepository.register(tenant, webAuthn4jCredential);
 
       Map<String, Object> response = new HashMap<>();
@@ -140,6 +156,58 @@ public class WebAuthn4jRegistrationExecutor implements AuthenticationExecutor {
       errorResponse.put("error", "server_error");
       errorResponse.put("error_description", "An unexpected error occurred during registration");
       return AuthenticationExecutionResult.serverError(errorResponse);
+    }
+  }
+
+  /**
+   * Enriches credential metadata with FIDO MDS information.
+   *
+   * <p>Fetches authenticator metadata from FIDO Metadata Service using the AAGUID and stores
+   * relevant information in the credential's metadata field.
+   */
+  private void enrichWithMdsMetadata(WebAuthn4jCredential credential) {
+    if (mdsResolver == null) {
+      log.debug("MDS resolver not configured, skipping metadata enrichment");
+      return;
+    }
+
+    String aaguid = credential.aaguid();
+    if (aaguid == null || aaguid.isEmpty()) {
+      log.debug("No AAGUID available, skipping MDS metadata enrichment");
+      return;
+    }
+
+    try {
+      Optional<MetadataStatement> metadataOpt = mdsResolver.resolve(aaguid);
+      Map<String, Object> metadata = credential.metadata();
+
+      if (metadataOpt.isPresent()) {
+        MetadataStatement statement = metadataOpt.get();
+
+        // Store authenticator information from MDS
+        metadata.put("authenticator_name", statement.getDescription());
+        if (statement.getIcon() != null) {
+          metadata.put("authenticator_icon", statement.getIcon());
+        }
+
+        log.info(
+            "MDS metadata enriched for AAGUID {}: name={}", aaguid, statement.getDescription());
+      } else {
+        log.debug("No MDS metadata found for AAGUID: {}", aaguid);
+      }
+
+      // Check authenticator status (compromised, revoked, etc.)
+      boolean isCompromised = mdsResolver.isCompromised(aaguid);
+      metadata.put("is_compromised", isCompromised);
+      if (isCompromised) {
+        log.warn("Authenticator with AAGUID {} is marked as COMPROMISED in MDS", aaguid);
+      }
+
+      metadata.put("mds_fetched_at", System.currentTimeMillis());
+
+    } catch (Exception e) {
+      log.warn("Failed to fetch MDS metadata for AAGUID {}: {}", aaguid, e.getMessage());
+      // Don't fail registration if MDS lookup fails
     }
   }
 }

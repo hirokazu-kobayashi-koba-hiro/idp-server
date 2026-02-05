@@ -3,10 +3,15 @@ import { auth } from "@/app/auth";
 import { redirect } from "next/navigation";
 import UserInfo from "@/components/UserInfo";
 import TokenViewer from "@/components/TokenViewer";
+import UserinfoViewer from "@/components/UserinfoViewer";
 import PasswordChange from "@/components/PasswordChange";
 import UserDelete from "@/components/UserDelete";
 import LogoutButton from "@/components/LogoutButton";
 import SecurityIcon from "@mui/icons-material/Security";
+import FingerprintIcon from "@mui/icons-material/Fingerprint";
+import AddIcon from "@mui/icons-material/Add";
+import PhoneAndroidIcon from "@mui/icons-material/PhoneAndroid";
+import PasskeyRegistrationStatus from "@/components/PasskeyRegistrationStatus";
 
 const Home = async () => {
   const session = await auth();
@@ -25,6 +30,42 @@ const Home = async () => {
           </Typography>
           <Box sx={{ display: "flex", gap: 2 }}>
             <Button
+              href="/api/passkey-registration"
+              variant="contained"
+              color="success"
+              startIcon={<AddIcon />}
+              size="small"
+            >
+              パスキー追加
+            </Button>
+            <Button
+              href="/fido2-attestation-demo"
+              variant="outlined"
+              color="primary"
+              startIcon={<FingerprintIcon />}
+              size="small"
+            >
+              FIDO2 登録デモ
+            </Button>
+            <Button
+              href="/fido2-rpid-demo"
+              variant="outlined"
+              color="info"
+              startIcon={<FingerprintIcon />}
+              size="small"
+            >
+              FIDO2 rpIdデモ
+            </Button>
+            <Button
+              href="/fido-uaf-device-demo"
+              variant="outlined"
+              color="success"
+              startIcon={<PhoneAndroidIcon />}
+              size="small"
+            >
+              デバイス認証デモ
+            </Button>
+            <Button
               href="/security-demo"
               variant="outlined"
               color="warning"
@@ -37,11 +78,17 @@ const Home = async () => {
           </Box>
         </Stack>
 
+        {/* Passkey Registration Status */}
+        <PasskeyRegistrationStatus />
+
         {/* User Info */}
         <UserInfo session={session} />
 
         {/* Token Viewer */}
         <TokenViewer session={session} />
+
+        {/* Userinfo API Response */}
+        <UserinfoViewer accessToken={session.accessToken} />
 
         {/* Account Settings */}
         <Grid container spacing={3}>

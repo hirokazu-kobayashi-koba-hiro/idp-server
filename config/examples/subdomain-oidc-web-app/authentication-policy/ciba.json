@@ -1,0 +1,27 @@
+{
+  "id": "a1b2c3d4-1003-4a03-ab78-6ed622289103",
+  "flow": "ciba",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "CIBA authentication with FIDO-UAF",
+      "priority": 10,
+      "conditions": {
+        "scopes": ["openid"]
+      },
+      "available_methods": ["fido-uaf"],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

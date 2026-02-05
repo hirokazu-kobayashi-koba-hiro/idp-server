@@ -119,10 +119,10 @@ public class Fido2AuthenticationInteractor implements AuthenticationInteractor {
           DefaultSecurityEventType.fido2_authentication_failure);
     }
 
-    // Resolve user from FIDO2 authentication result
-    // For WebAuthn4j: username (preferredUsername) is returned in the execution result
-    // For other FIDO2 implementations: deviceId might be used
-    User user = resolveUser(tenant, contents, configuration, userQueryRepository);
+    // Resolve user from FIDO2 authentication by credentialId
+    // credentialId is sent in the request from the client (authenticator response)
+    String credentialId = request.getValueAsString("id");
+    User user = resolveUser(tenant, credentialId, userQueryRepository);
 
     if (!user.exists()) {
 
@@ -155,42 +155,33 @@ public class Fido2AuthenticationInteractor implements AuthenticationInteractor {
   }
 
   /**
-   * Resolves user from FIDO2 authentication result.
+   * Resolves user from FIDO2 authentication by credentialId.
    *
-   * <p>This method supports multiple user resolution strategies:
-   *
-   * <ul>
-   *   <li>WebAuthn4j: Uses 'username' field (preferredUsername decoded from credential.userId)
-   *   <li>FIDO UAF: Uses deviceId from authentication device
-   *   <li>Custom: Uses metadata configuration to specify the resolution field
-   * </ul>
+   * <p>This method looks up the user by the FIDO2 credentialId stored in the
+   * idp_user_authentication_devices table (credential_id column).
    *
    * @param tenant the tenant
-   * @param contents the authentication execution result contents
-   * @param configuration the FIDO2 authentication configuration
+   * @param credentialId the FIDO2 credential ID from the authentication request
    * @param userQueryRepository the user query repository
    * @return the resolved user, or User.notFound() if resolution fails
    */
   private User resolveUser(
-      Tenant tenant,
-      Map<String, Object> contents,
-      AuthenticationConfiguration configuration,
-      UserQueryRepository userQueryRepository) {
+      Tenant tenant, String credentialId, UserQueryRepository userQueryRepository) {
 
-    // Strategy 1: Try username resolution (WebAuthn4j pattern)
-    if (contents.containsKey("username")) {
-      String preferredUsername = contents.get("username").toString();
-      log.debug("Resolving user by preferredUsername: {}", preferredUsername);
-
-      User user = userQueryRepository.findByPreferredUsernameNoProvider(tenant, preferredUsername);
-      if (user.exists()) {
-        log.debug("User resolved by preferredUsername: {}", preferredUsername);
-        return user;
-      }
+    if (credentialId == null || credentialId.isEmpty()) {
+      log.warn("FIDO2 authentication: credentialId is missing from request");
+      return User.notFound();
     }
 
-    log.warn(
-        "User resolution failed. No valid username or deviceId found in contents: {}", contents);
+    log.debug("Resolving user by FIDO2 credentialId: {}", credentialId);
+
+    User user = userQueryRepository.findByFidoCredentialId(tenant, credentialId);
+    if (user.exists()) {
+      log.debug("User resolved by credentialId: {}, user: {}", credentialId, user.sub());
+      return user;
+    }
+
+    log.warn("User resolution failed. No user found for credentialId: {}", credentialId);
     return User.notFound();
   }
 }

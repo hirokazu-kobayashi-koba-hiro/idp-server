@@ -24,6 +24,9 @@ import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditiona
 import org.idp.server.authentication.interactors.plugin.AuthenticationDeviceNotifiersPluginLoader;
 import org.idp.server.authentication.interactors.plugin.FidoUafAdditionalRequestResolverPluginLoader;
 import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentialRepository;
+import org.idp.server.authenticators.webauthn4j.mds.MdsConfiguration;
+import org.idp.server.authenticators.webauthn4j.mds.MdsResolver;
+import org.idp.server.authenticators.webauthn4j.mds.MdsResolverFactory;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.base.AdminUserAuthenticationApi;
@@ -133,8 +136,11 @@ import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.session.repository.ClientSessionRepository;
 import org.idp.server.core.openid.session.repository.OPSessionRepository;
 import org.idp.server.core.openid.token.*;
+import org.idp.server.core.openid.token.JwtBearerUserFinder;
+import org.idp.server.core.openid.token.JwtBearerUserFindingDelegate;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
+import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
 import org.idp.server.core.openid.userinfo.UserinfoProtocol;
 import org.idp.server.core.openid.userinfo.UserinfoProtocols;
@@ -475,6 +481,9 @@ public class IdpServerApplication {
         PasswordCredentialsGrantDelegate.class,
         new UserPasswordAuthenticator(userQueryRepository, passwordVerificationDelegation));
 
+    applicationComponentContainer.register(
+        JwtBearerUserFindingDelegate.class, new JwtBearerUserFinder(userQueryRepository));
+
     // OIDC Session Management
     // Must be registered before ProtocolContainerPluginLoader.load() as
     // DefaultOAuthProtocolProvider
@@ -526,6 +535,12 @@ public class IdpServerApplication {
 
     authenticationDependencyContainer.register(
         WebAuthn4jCredentialRepository.class, webAuthn4jCredentialRepository);
+
+    // Register MDS resolver for FIDO Metadata Service integration
+    MdsConfiguration mdsConfiguration =
+        new MdsConfiguration(true); // Enable MDS with default 24h cache
+    MdsResolver mdsResolver = MdsResolverFactory.create(mdsConfiguration, cacheStore);
+    authenticationDependencyContainer.register(MdsResolver.class, mdsResolver);
 
     AuthenticationExecutors authenticationExecutors =
         AuthenticationExecutorPluginLoader.load(authenticationDependencyContainer);
@@ -663,12 +678,17 @@ public class IdpServerApplication {
             AuthenticationMetaDataApi.class,
             databaseTypeProvider);
 
+    OAuthTokenQueryRepository oAuthTokenQueryRepository =
+        applicationComponentContainer.resolve(OAuthTokenQueryRepository.class);
+
     this.authenticationTransactionApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuthenticationTransactionEntryService(
                 tenantQueryRepository,
                 authenticationTransactionCommandRepository,
-                authenticationTransactionQueryRepository),
+                authenticationTransactionQueryRepository,
+                oAuthTokenQueryRepository,
+                userQueryRepository),
             AuthenticationTransactionApi.class,
             databaseTypeProvider);
 

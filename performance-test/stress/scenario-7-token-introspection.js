@@ -27,7 +27,7 @@ function createBasicAuthHeaderValue({ username, password }) {
 }
 
 export default function () {
-  const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+  const baseUrl = __ENV.BASE_URL || 'https://api.local.dev';
   const tenantId = config.tenantId;
   const token = __ENV.ACCESS_TOKEN;
   const clientId = config.clientId;

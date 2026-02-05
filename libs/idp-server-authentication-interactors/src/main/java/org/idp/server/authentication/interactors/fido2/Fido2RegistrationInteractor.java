@@ -36,6 +36,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -43,6 +44,7 @@ import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.security.type.DeviceInfo;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class Fido2RegistrationInteractor implements AuthenticationInteractor {
@@ -187,9 +189,45 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
           DefaultSecurityEventType.fido2_registration_failure);
     }
 
-    // Handle reset action: remove existing FIDO-UAF devices before adding new one
+    // Handle reset action: remove existing FIDO2 devices before adding new one
     if (isRestAction(transaction)) {
       baseUser = baseUser.removeAllAuthenticationDevicesOfType("fido2");
+    }
+
+    // Verify device count limit (skip for reset action as it replaces devices)
+    // IMPORTANT: Fetch latest user state from DB to prevent TOCTOU race condition
+    // (transaction.user() may have stale device count if another registration completed)
+    if (!isRestAction(transaction)) {
+      User latestUser =
+          userQueryRepository.findById(
+              tenant, new org.idp.server.core.openid.identity.UserIdentifier(baseUser.sub()));
+      int authenticationDeviceCount =
+          latestUser.exists() ? latestUser.authenticationDeviceCount() : 0;
+      int maxDevices = tenant.maxDevicesForAuthentication();
+
+      if (authenticationDeviceCount >= maxDevices) {
+        log.warn(
+            "FIDO2 registration rejected: device limit reached. user={}, current={}, max={}",
+            baseUser.sub(),
+            authenticationDeviceCount,
+            maxDevices);
+
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("error", "invalid_request");
+        errorResponse.put(
+            "error_description",
+            String.format(
+                "Maximum number of devices reached %d, user has already %d devices.",
+                maxDevices, authenticationDeviceCount));
+
+        return AuthenticationInteractionRequestResult.clientError(
+            errorResponse,
+            type,
+            operationType(),
+            method(),
+            baseUser,
+            DefaultSecurityEventType.fido2_registration_failure);
+      }
     }
 
     DefaultSecurityEventType eventType =
@@ -200,7 +238,20 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     String deviceId = UUID.randomUUID().toString();
     log.info("fido2 registration success deviceId: {}, userId: {}", deviceId, userId);
 
-    User addedDeviceUser = addAuthenticationDevice(baseUser, deviceId, transaction.attributes());
+    // Get credentialId from request (sent by client from authenticator response)
+    String credentialId = request.getValueAsString("id");
+    // Get rpId from execution config
+    String rpId = (String) execution.details().get("rp_id");
+
+    User addedDeviceUser =
+        addAuthenticationDevice(
+            baseUser,
+            deviceId,
+            transaction.attributes(),
+            requestAttributes,
+            credentialId,
+            rpId,
+            configuration.id());
 
     if (tenant.requiresIdentityVerificationForDeviceRegistration()) {
       addedDeviceUser.setStatus(UserStatus.IDENTITY_VERIFICATION_REQUIRED);
@@ -324,12 +375,21 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
   }
 
   private User addAuthenticationDevice(
-      User user, String deviceId, AuthenticationTransactionAttributes attributes) {
+      User user,
+      String deviceId,
+      AuthenticationTransactionAttributes attributes,
+      RequestAttributes requestAttributes,
+      String credentialId,
+      String rpId,
+      String fidoServerId) {
 
-    String appName = attributes.getValueOrEmpty("app_name");
-    String platform = attributes.getValueOrEmpty("platform");
-    String os = attributes.getValueOrEmpty("os");
-    String model = attributes.getValueOrEmpty("model");
+    // Extract device info from User-Agent if not provided in attributes
+    DeviceInfo deviceInfo = extractDeviceInfo(attributes, requestAttributes);
+
+    String appName = getOrDefault(attributes, "app_name", deviceInfo.toLabel());
+    String platform = getOrDefault(attributes, "platform", deviceInfo.platform());
+    String os = getOrDefault(attributes, "os", deviceInfo.os());
+    String model = getOrDefault(attributes, "model", deviceInfo.model());
     String locale = attributes.getValueOrEmpty("locale");
     String notificationChannel = attributes.getValueOrEmpty("notification_channel");
     String notificationToken = attributes.getValueOrEmpty("notification_token");
@@ -338,6 +398,14 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
         attributes.containsKey("priority")
             ? attributes.getValueAsInteger("priority")
             : user.authenticationDeviceNextCount();
+
+    log.debug(
+        "Creating authentication device: deviceId={}, appName={}, platform={}, os={}, model={}",
+        deviceId,
+        appName,
+        platform,
+        os,
+        model);
 
     AuthenticationDevice authenticationDevice =
         new AuthenticationDevice(
@@ -352,7 +420,62 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
             availableAuthenticationMethods,
             priority);
 
+    // Set FIDO2 credential fields directly on authentication device
+    if (credentialId != null && !credentialId.isEmpty()) {
+      // credentialPayload: empty for now (will be populated by FIDO server on authentication)
+      Map<String, Object> credentialPayload = new HashMap<>();
+
+      // credentialMetadata: FIDO-specific metadata
+      Map<String, Object> credentialMetadata = new HashMap<>();
+      credentialMetadata.put("rp_id", rpId);
+      credentialMetadata.put("fido_server_id", fidoServerId);
+      credentialMetadata.put("created_at", SystemDateTime.now().toString());
+
+      authenticationDevice =
+          authenticationDevice.withCredential(
+              "fido2", credentialId, credentialPayload, credentialMetadata);
+
+      log.debug(
+          "Set FIDO2 credential on device: deviceId={}, credentialId={}, rpId={}",
+          deviceId,
+          credentialId,
+          rpId);
+    }
+
     return user.addAuthenticationDevice(authenticationDevice);
+  }
+
+  private DeviceInfo extractDeviceInfo(
+      AuthenticationTransactionAttributes attributes, RequestAttributes requestAttributes) {
+
+    // If attributes already have device info, skip parsing
+    if (hasDeviceAttributes(attributes)) {
+      return DeviceInfo.unknown();
+    }
+
+    // Parse User-Agent from request attributes
+    if (requestAttributes.hasUserAgent()) {
+      DeviceInfo deviceInfo = requestAttributes.getUserAgent().toDeviceInfo();
+      log.debug("Extracted device info from User-Agent: {}", deviceInfo);
+      return deviceInfo;
+    }
+
+    return DeviceInfo.unknown();
+  }
+
+  private boolean hasDeviceAttributes(AuthenticationTransactionAttributes attributes) {
+    return attributes.containsKey("platform")
+        || attributes.containsKey("os")
+        || attributes.containsKey("model");
+  }
+
+  private String getOrDefault(
+      AuthenticationTransactionAttributes attributes, String key, String defaultValue) {
+    String value = attributes.getValueOrEmpty(key);
+    if (value == null || value.isEmpty()) {
+      return defaultValue;
+    }
+    return value;
   }
 
   /**

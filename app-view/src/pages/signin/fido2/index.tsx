@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Typography, Button, Stack, Link, Divider, Box, TextField } from "@mui/material";
 import { useRouter } from "next/router";
 import { backendUrl, useAppContext } from "@/pages/_app";
@@ -21,16 +21,35 @@ const base64UrlToBuffer = (base64url: string): Uint8Array => {
   return Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
 };
 
+/**
+ * Convert ArrayBuffer to Base64URL string
+ * Required for serializing WebAuthn responses (Safari compatibility)
+ */
+const bufferToBase64Url = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+};
+
 interface credential {
   id: string;
   type: string;
+  transports?: AuthenticatorTransport[];
 }
 
 interface ChallengeResponse {
   challenge: string;
   timeout?: number;
   rp_id?: string;
-  allow_credentials?: credential[];
+  rp?: {
+    id?: string;
+    name?: string;
+  };
+  allowCredentials?: credential[];
   user_verification?: UserVerificationRequirement;
 }
 
@@ -49,6 +68,8 @@ export default function Login() {
 
   // AbortController for managing concurrent authentication requests
   const [currentCredentialGetController, setCurrentCredentialGetController] = useState<AbortController | null>(null);
+  // Ref to track controller for cleanup (avoids stale closure in useEffect cleanup)
+  const controllerRef = useRef<AbortController | null>(null);
   // Flag to prevent duplicate challenge requests
   const [isFetching, setIsFetching] = useState(false);
 
@@ -170,9 +191,13 @@ export default function Login() {
         challenge,
         timeout = 60000,
         rp_id,
-        allow_credentials = [],
+        rp,
+        allowCredentials = [],
         user_verification = "required"
       } = challengeResponse;
+
+      // Extract rpId from either flat rp_id or nested rp.id
+      const rpId = rp_id || rp?.id;
 
       // Step 2: Build PublicKeyCredentialRequestOptions
       const publicKeyOptions: PublicKeyCredentialRequestOptions = {
@@ -181,17 +206,25 @@ export default function Login() {
         userVerification: user_verification,
       };
 
-      // Add rpId if provided by server
-      if (rp_id) {
-        publicKeyOptions.rpId = rp_id;
+      // Add rpId if provided by server (required for subdomain deployments)
+      if (rpId) {
+        publicKeyOptions.rpId = rpId;
       }
 
       // Add allowCredentials if provided by server
-      if (allow_credentials.length > 0) {
-        publicKeyOptions.allowCredentials = allow_credentials.map((cred) => ({
-          type: cred.type as PublicKeyCredentialType,
-          id: base64UrlToBuffer(cred.id),
-        }));
+      if (allowCredentials.length > 0) {
+        publicKeyOptions.allowCredentials = allowCredentials.map((cred) => {
+          const descriptor: PublicKeyCredentialDescriptor = {
+            type: cred.type as PublicKeyCredentialType,
+            id: base64UrlToBuffer(cred.id),
+          };
+          // Include transports if available - this helps the browser
+          // identify the correct authenticator (e.g., "internal" for Touch ID)
+          if (cred.transports && cred.transports.length > 0) {
+            descriptor.transports = cred.transports;
+          }
+          return descriptor;
+        });
       }
 
       // Step 3: Initiate authentication
@@ -226,6 +259,7 @@ export default function Login() {
       // Create new AbortController for this request
       const controller = new AbortController();
       setCurrentCredentialGetController(controller);
+      controllerRef.current = controller;
 
       const credential = await navigator.credentials.get({
         publicKey: authOptions,
@@ -272,16 +306,23 @@ export default function Login() {
     }
 
     // Serialize credential for transmission
-    // const response = credential.response as AuthenticatorAssertionResponse;
-    // const authData = {
-    //   id: credential.id,
-    //   rawId: bufferToBase64Url(credential.rawId),
-    //   type: credential.type,
-    //   clientDataJSON: bufferToBase64Url(response.clientDataJSON),
-    //   authenticatorData: bufferToBase64Url(response.authenticatorData),
-    //   signature: bufferToBase64Url(response.signature),
-    //   userHandle: response.userHandle ? bufferToBase64Url(response.userHandle) : '',
-    // };
+    // PublicKeyCredential contains ArrayBuffer fields that don't serialize with JSON.stringify
+    // Safari especially requires manual serialization
+    const assertionResponse = credential.response as AuthenticatorAssertionResponse;
+    const credentialData = {
+      id: credential.id,
+      rawId: bufferToBase64Url(credential.rawId),
+      type: credential.type,
+      response: {
+        clientDataJSON: bufferToBase64Url(assertionResponse.clientDataJSON),
+        authenticatorData: bufferToBase64Url(assertionResponse.authenticatorData),
+        signature: bufferToBase64Url(assertionResponse.signature),
+        userHandle: assertionResponse.userHandle ? bufferToBase64Url(assertionResponse.userHandle) : null,
+      },
+      clientExtensionResults: credential.getClientExtensionResults(),
+    };
+
+    console.log("Serialized credential data:", credentialData);
 
     // Submit credential to server for verification
     const loginRes = await fetch(
@@ -290,7 +331,7 @@ export default function Login() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credential),
+        body: JSON.stringify(credentialData),
       },
     );
 
@@ -384,6 +425,16 @@ export default function Login() {
       // Start conditional UI mode
       authChallenge(true);
     }
+
+    // Cleanup: abort any pending WebAuthn request when component unmounts
+    // This is critical for SPA navigation - without this, the conditional mediation
+    // stays active and blocks other WebAuthn operations on other pages
+    return () => {
+      if (controllerRef.current) {
+        controllerRef.current.abort();
+        controllerRef.current = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, router.isReady, tenantId, id]);
 

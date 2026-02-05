@@ -30,6 +30,7 @@ public interface AuthenticationTransactionApi {
   AuthenticationTransactionFindingResponse findList(
       TenantIdentifier tenantIdentifier,
       AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      String authorizationHeader,
       AuthenticationTransactionQueries queries,
       RequestAttributes requestAttributes);
 }

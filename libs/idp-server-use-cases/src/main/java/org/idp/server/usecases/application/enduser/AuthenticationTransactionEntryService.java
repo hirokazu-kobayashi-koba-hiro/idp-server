@@ -27,6 +27,10 @@ import org.idp.server.core.openid.authentication.io.AuthenticationTransactionFin
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.core.openid.identity.device.authentication.DeviceAuthenticationDeviceFinder;
+import org.idp.server.core.openid.identity.device.authentication.DeviceEndpointAuthenticationHandler;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -51,14 +55,20 @@ public class AuthenticationTransactionEntryService implements AuthenticationTran
   TenantQueryRepository tenantQueryRepository;
   AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
+  DeviceEndpointAuthenticationHandler deviceEndpointAuthenticationHandler;
 
   public AuthenticationTransactionEntryService(
       TenantQueryRepository tenantQueryRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
-      AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository) {
+      AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
+      OAuthTokenQueryRepository oAuthTokenQueryRepository,
+      UserQueryRepository userQueryRepository) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
+    this.deviceEndpointAuthenticationHandler =
+        new DeviceEndpointAuthenticationHandler(
+            oAuthTokenQueryRepository, new DeviceAuthenticationDeviceFinder(userQueryRepository));
   }
 
   public AuthenticationTransaction get(
@@ -74,10 +84,15 @@ public class AuthenticationTransactionEntryService implements AuthenticationTran
   public AuthenticationTransactionFindingResponse findList(
       TenantIdentifier tenantIdentifier,
       AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
+      String authorizationHeader,
       AuthenticationTransactionQueries queries,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    boolean isDeviceAuthenticated =
+        deviceEndpointAuthenticationHandler.verifyAndIsAuthenticated(
+            tenant, authenticationDeviceIdentifier, authorizationHeader);
 
     long totalCount =
         authenticationTransactionQueryRepository.findTotalCount(
@@ -100,7 +115,9 @@ public class AuthenticationTransactionEntryService implements AuthenticationTran
     Map<String, Object> contents = new HashMap<>();
     contents.put(
         "list",
-        authenticationTransactions.stream().map(AuthenticationTransaction::toRequestMap).toList());
+        authenticationTransactions.stream()
+            .map(tx -> tx.toRequestMap(isDeviceAuthenticated))
+            .toList());
     contents.put("total_count", totalCount);
     contents.put("limit", queries.limit());
     contents.put("offset", queries.offset());

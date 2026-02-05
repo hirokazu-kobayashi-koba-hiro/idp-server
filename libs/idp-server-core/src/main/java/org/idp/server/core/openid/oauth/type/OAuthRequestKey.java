@@ -45,6 +45,7 @@ public enum OAuthRequestKey {
   token_type_hint,
   client_assertion,
   client_assertion_type,
+  assertion,
   refresh_token,
   client_notification_token,
   login_hint_token,

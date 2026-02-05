@@ -1,3 +1,7 @@
+---
+sidebar_position: 3
+---
+
 # FIDO2・パスキー・Discoverable Credentialの基本
 
 ---

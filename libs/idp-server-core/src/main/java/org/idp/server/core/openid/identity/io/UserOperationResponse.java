@@ -40,6 +40,10 @@ public class UserOperationResponse {
     return new UserOperationResponse(UserOperationStatus.FORBIDDEN, contents);
   }
 
+  public static UserOperationResponse notFound(Map<String, Object> contents) {
+    return new UserOperationResponse(UserOperationStatus.NOT_FOUND, contents);
+  }
+
   public int statusCode() {
     return status.statusCode();
   }

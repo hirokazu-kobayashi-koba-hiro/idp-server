@@ -1,6 +1,7 @@
 import {
   Button,
   Divider,
+  IconButton,
   InputAdornment,
   Link,
   Stack,
@@ -12,7 +13,7 @@ import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
 import { backendUrl } from "@/pages/_app";
 import { Loading } from "@/components/Loading";
-import { Email, Lock } from "@mui/icons-material";
+import { Email, Lock, Visibility, VisibilityOff, Key } from "@mui/icons-material";
 import { useMediaQuery, useTheme } from "@mui/material";
 import { BaseLayout } from "@/components/layout/BaseLayout";
 import { getUserAgentData, parseUserAgent } from "@/functions/device";
@@ -25,6 +26,7 @@ export default function SignIn() {
   const [, setAuthSessionTenantId] = useAtom(authSessionTenantIdAtom);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const { id, tenant_id: tenantId } = router.query;
   const theme = useTheme();
@@ -162,7 +164,7 @@ export default function SignIn() {
           />
           <TextField
             placeholder="Your password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             fullWidth
             required
             // variant="standard"
@@ -177,6 +179,18 @@ export default function SignIn() {
               startAdornment: (
                 <InputAdornment position="start">
                   <Lock sx={{ color: "gray" }} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                    size="small"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
                 </InputAdornment>
               ),
             }}
@@ -241,6 +255,29 @@ export default function SignIn() {
             }}
           >
             Sign Up
+          </Link>
+        </Stack>
+
+        <Stack
+          spacing={1}
+          direction="row"
+          justifyContent="center"
+          alignItems="center"
+        >
+          <Key sx={{ fontSize: 16, color: "text.secondary" }} />
+          <Typography variant="body2">Want to add a backup passkey?</Typography>
+          <Link
+            onClick={() =>
+              router.push(`/add-passkey?id=${id}&tenant_id=${tenantId}`)
+            }
+            sx={{
+              fontWeight: "bold",
+              cursor: "pointer",
+              color: "success.main",
+              fontSize: 16,
+            }}
+          >
+            Add Passkey
           </Link>
         </Stack>
 

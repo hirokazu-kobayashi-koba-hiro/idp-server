@@ -15,11 +15,45 @@ description: CIBA（Client Initiated Backchannel Authentication）機能の開�
 
 CIBAは、クライアントがバックチャネル経由でユーザー認証を要求するフロー。
 - **3つのモード**: Poll（ポーリング）、Push（通知）、Ping（通知+ポーリング）
-- **Login Hint解決**: sub:, email:, phone: プレフィックスでユーザー特定
+- **Login Hint解決**: sub:, email:, phone:, device: プレフィックスでユーザー特定
 - **Binding Message**: ユーザーへの確認メッセージ表示
 - **ID Token Hint**: 既存ID Tokenでユーザー特定
 - **User Code**: ユーザー入力コードによる認証
 - **デバイス通知**: FCM push通知
+- **デバイスシークレット認証**: device_secret_jwtによるデバイスエンドポイント認証
+
+## デバイスシークレット認証（CIBAフロー）
+
+CIBAフローでモバイルアプリがデバイスエンドポイントにアクセスする際、デバイスシークレットJWTによる認証を要求できます。
+
+### 設定（テナントポリシー）
+
+```json
+{
+  "identity_policy_config": {
+    "authentication_device_rule": {
+      "authentication_type": "device_secret_jwt",
+      "issue_device_secret": true,
+      "device_secret_algorithm": "HS256"
+    }
+  }
+}
+```
+
+### フロー
+
+1. **FIDO-UAF登録時**: `device_secret`が自動発行される
+2. **CIBAリクエスト**: `login_hint=device:{deviceId}`でデバイス指定
+3. **デバイスエンドポイントアクセス**: `Authorization: Bearer {device_secret_jwt}`で認証
+4. **FIDO-UAF認証**: 生体認証で本人確認
+
+### 関連ドキュメント
+
+- `documentation/docs/content_03_concepts/03-authentication-authorization/concept-10-device-credential.md` - デバイスクレデンシャル管理（詳細）
+
+### 関連E2Eテスト
+
+- `e2e/src/tests/usecase/device-credential/device-credential-04-device-secret-issuance.test.js` - デバイスシークレット発行+CIBA認証
 
 ## モジュール構成
 

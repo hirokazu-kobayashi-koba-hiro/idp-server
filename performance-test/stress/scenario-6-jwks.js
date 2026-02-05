@@ -21,7 +21,7 @@ const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
 const config = tenantData[tenantIndex];
 
 export default function () {
-  const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+  const baseUrl = __ENV.BASE_URL || 'https://api.local.dev';
   const tenantId = config.tenantId;
 
   const jwksResponse = http.get(`${baseUrl}/${tenantId}/v1/jwks`);
