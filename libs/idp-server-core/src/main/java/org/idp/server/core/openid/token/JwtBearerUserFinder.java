@@ -40,14 +40,15 @@ public class JwtBearerUserFinder implements JwtBearerUserFindingDelegate {
   }
 
   @Override
-  public User findUser(Tenant tenant, String issuer, String subject, String subjectClaimMapping) {
+  public User findUser(
+      Tenant tenant, String providerId, String subject, String subjectClaimMapping) {
     // For device-issued JWTs, use the claim mapping
-    if (issuer != null && issuer.startsWith("device:")) {
+    if (providerId != null && providerId.startsWith("device")) {
       return findByDeviceClaimMapping(tenant, subject, subjectClaimMapping);
     }
 
     // For external IdP JWTs, use the claim mapping
-    return findByClaimMapping(tenant, issuer, subject, subjectClaimMapping);
+    return findByClaimMapping(tenant, providerId, subject, subjectClaimMapping);
   }
 
   private User findByDeviceClaimMapping(Tenant tenant, String subject, String subjectClaimMapping) {
@@ -56,24 +57,22 @@ public class JwtBearerUserFinder implements JwtBearerUserFindingDelegate {
     }
 
     switch (subjectClaimMapping) {
-      case "device_id":
-        // Lookup user by authentication device ID
-        return userQueryRepository.findByAuthenticationDevice(tenant, subject);
       case "sub":
-      default:
-        // Default: treat subject as user ID
+        // Treat subject as user ID
         return userQueryRepository.findById(tenant, new UserIdentifier(subject));
+      case "device_id":
+      default:
+        // Default for device: lookup user by authentication device ID
+        // This is more secure as the device can only authenticate as its registered owner
+        return userQueryRepository.findByAuthenticationDevice(tenant, subject);
     }
   }
 
   private User findByClaimMapping(
-      Tenant tenant, String issuer, String subject, String subjectClaimMapping) {
+      Tenant tenant, String providerId, String subject, String subjectClaimMapping) {
     if (subject == null || subject.isEmpty()) {
       return User.notFound();
     }
-
-    // Use the claim mapping to determine how to look up the user
-    String providerId = issuer != null ? issuer : "external";
 
     switch (subjectClaimMapping) {
       case "sub":

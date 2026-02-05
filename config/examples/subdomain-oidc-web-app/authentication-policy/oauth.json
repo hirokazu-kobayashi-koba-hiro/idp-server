@@ -15,6 +15,7 @@
         "password",
         "email",
         "fido2",
+        "fido-uaf",
         "initial-registration"
       ],
       "step_definitions": [
@@ -47,6 +48,14 @@
           [
             {
               "path": "$.email-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1
@@ -95,6 +104,20 @@
             },
             {
               "path": "$.fido2-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.fido-uaf-registration.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1

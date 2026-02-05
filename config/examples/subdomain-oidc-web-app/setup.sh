@@ -177,6 +177,32 @@ if [ "${HTTP_CODE}" = "201" ]; then
     echo "   Skipping Initial Registration config (file not found)"
   fi
 
+  # FIDO-UAF authentication config (for device credential demo)
+  FIDO_UAF_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/fido-uaf/mock-server.json"
+  if [ -f "${FIDO_UAF_CONFIG_FILE}" ]; then
+    echo "   Registering FIDO-UAF config..."
+    FIDO_UAF_CONFIG_JSON=$(cat "${FIDO_UAF_CONFIG_FILE}")
+
+    FIDO_UAF_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${FIDO_UAF_CONFIG_JSON}")
+
+    FIDO_UAF_HTTP_CODE=$(echo "${FIDO_UAF_RESPONSE}" | tail -n1)
+    FIDO_UAF_RESPONSE_BODY=$(echo "${FIDO_UAF_RESPONSE}" | sed '$d')
+
+    if [ "${FIDO_UAF_HTTP_CODE}" = "200" ] || [ "${FIDO_UAF_HTTP_CODE}" = "201" ]; then
+      FIDO_UAF_CONFIG_ID=$(echo "${FIDO_UAF_RESPONSE_BODY}" | jq -r '.result.id')
+      echo "   FIDO-UAF config created: ${FIDO_UAF_CONFIG_ID}"
+    else
+      echo "   Warning: FIDO-UAF config creation failed (HTTP ${FIDO_UAF_HTTP_CODE})"
+      echo "   Response: ${FIDO_UAF_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "   ${FIDO_UAF_RESPONSE_BODY}"
+    fi
+  else
+    echo "   Skipping FIDO-UAF config (file not found)"
+  fi
+
   # Email authentication config
   EMAIL_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/email/no-action.json"
   if [ -f "${EMAIL_CONFIG_FILE}" ]; then
@@ -230,6 +256,32 @@ if [ "${HTTP_CODE}" = "201" ]; then
     fi
   else
     echo "   Skipping OAuth policy (file not found)"
+  fi
+
+  # CIBA policy (for device credential demo)
+  CIBA_POLICY_FILE="${SCRIPT_DIR}/authentication-policy/ciba.json"
+  if [ -f "${CIBA_POLICY_FILE}" ]; then
+    echo "   Registering CIBA authentication policy..."
+    CIBA_POLICY_JSON=$(cat "${CIBA_POLICY_FILE}")
+
+    CIBA_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-policies" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${CIBA_POLICY_JSON}")
+
+    CIBA_HTTP_CODE=$(echo "${CIBA_RESPONSE}" | tail -n1)
+    CIBA_RESPONSE_BODY=$(echo "${CIBA_RESPONSE}" | sed '$d')
+
+    if [ "${CIBA_HTTP_CODE}" = "200" ] || [ "${CIBA_HTTP_CODE}" = "201" ]; then
+      CIBA_POLICY_ID=$(echo "${CIBA_RESPONSE_BODY}" | jq -r '.result.id')
+      echo "   CIBA policy created: ${CIBA_POLICY_ID}"
+    else
+      echo "   Warning: CIBA policy creation failed (HTTP ${CIBA_HTTP_CODE})"
+      echo "   Response: ${CIBA_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "   ${CIBA_RESPONSE_BODY}"
+    fi
+  else
+    echo "   Skipping CIBA policy (file not found)"
   fi
 
   # FIDO2 Registration policy

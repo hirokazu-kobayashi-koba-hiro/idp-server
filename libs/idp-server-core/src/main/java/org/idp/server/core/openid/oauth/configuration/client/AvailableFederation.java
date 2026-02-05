@@ -26,6 +26,7 @@ public class AvailableFederation implements JsonReadable {
   String ssoProvider;
   boolean autoSelected = false;
   String issuer;
+  String providerId;
   boolean jwtBearerGrantEnabled = false;
   String subjectClaimMapping;
   String jwksUri;
@@ -56,6 +57,27 @@ public class AvailableFederation implements JsonReadable {
 
   public boolean hasIssuer() {
     return issuer != null && !issuer.isEmpty();
+  }
+
+  public String providerId() {
+    return providerId;
+  }
+
+  public boolean hasProviderId() {
+    return providerId != null && !providerId.isEmpty();
+  }
+
+  /**
+   * Returns the provider ID for user lookup. If provider_id is not explicitly set, falls back to
+   * issuer for backward compatibility.
+   *
+   * @return the provider ID or issuer as fallback
+   */
+  public String resolveProviderId() {
+    if (hasProviderId()) {
+      return providerId;
+    }
+    return issuer;
   }
 
   public boolean jwtBearerGrantEnabled() {
@@ -108,6 +130,7 @@ public class AvailableFederation implements JsonReadable {
     map.put("sso_provider", ssoProvider);
     map.put("auto_selected", autoSelected);
     if (hasIssuer()) map.put("issuer", issuer);
+    if (hasProviderId()) map.put("provider_id", providerId);
     map.put("jwt_bearer_grant_enabled", jwtBearerGrantEnabled);
     if (hasSubjectClaimMapping()) map.put("subject_claim_mapping", subjectClaimMapping);
     if (hasJwksUri()) map.put("jwks_uri", jwksUri);

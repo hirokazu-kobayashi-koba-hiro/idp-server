@@ -39,6 +39,17 @@
       "include_ip": true,
       "persistence_enabled": true,
       "include_detail": true
+    },
+    "identity_policy_config": {
+      "identity_unique_key_type": "EMAIL",
+      "authentication_device_rule": {
+        "max_devices": 10,
+        "required_identity_verification": false,
+        "authentication_type": "device_secret_jwt",
+        "issue_device_secret": true,
+        "device_secret_algorithm": "HS256",
+        "device_secret_expires_in_seconds": 31536000
+      }
     }
   },
   "authorization_server": {
@@ -60,8 +71,13 @@
     "grant_types_supported": [
       "authorization_code",
       "refresh_token",
-      "password"
+      "password",
+      "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      "urn:openid:params:grant-type:ciba"
     ],
+    "backchannel_authentication_endpoint": "https://api.local.dev/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d/v1/backchannel/authentications",
+    "backchannel_token_delivery_modes_supported": ["poll"],
+    "backchannel_user_code_parameter_supported": true,
     "token_signed_key_id": "signing_key_1",
     "id_token_signed_key_id": "signing_key_1",
     "scopes_supported": [
@@ -101,7 +117,9 @@
       "access_token_duration": 3600,
       "id_token_duration": 3600,
       "refresh_token_duration": 86400,
-      "custom_claims_scope_mapping": true
+      "custom_claims_scope_mapping": true,
+      "backchannel_authentication_polling_interval": 5,
+      "backchannel_authentication_request_expires_in": 300
     }
   },
   "user": {

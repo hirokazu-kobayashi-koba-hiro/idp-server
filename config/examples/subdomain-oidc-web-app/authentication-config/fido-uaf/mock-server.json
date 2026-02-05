@@ -1,0 +1,88 @@
+{
+  "id": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+  "type": "fido-uaf",
+  "attributes": {},
+  "metadata": {
+    "type": "external",
+    "description": "FIDO-UAF authentication with device secret issuance (mock server)"
+  },
+  "interactions": {
+    "fido-uaf-registration-challenge": {
+      "request": { "schema": { "type": "object", "properties": {} } },
+      "pre_hook": {},
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido-uaf/registration-challenge",
+          "method": "POST",
+          "header_mapping_rules": [{ "static_value": "application/json", "to": "Content-Type" }],
+          "body_mapping_rules": [{ "from": "$.request_body", "to": "*" }]
+        },
+        "http_request_store": {
+          "key": "fido-uaf-registration-challenge",
+          "interaction_mapping_rules": [
+            { "from": "$.response_body.challenge", "to": "challenge" },
+            { "from": "$.response_body.device_id", "to": "device_id" }
+          ]
+        }
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [{ "from": "$.execution_http_request.response_body", "to": "*" }]
+      }
+    },
+    "fido-uaf-registration": {
+      "request": { "schema": { "type": "object", "properties": {} } },
+      "pre_hook": {},
+      "execution": {
+        "function": "http_request",
+        "previous_interaction": { "key": "fido-uaf-registration-challenge" },
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido-uaf/registration",
+          "method": "POST",
+          "header_mapping_rules": [{ "static_value": "application/json", "to": "Content-Type" }],
+          "body_mapping_rules": [{ "from": "$.request_body", "to": "*" }]
+        }
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [{ "from": "$.execution_http_request.response_body", "to": "*" }]
+      }
+    },
+    "fido-uaf-authentication-challenge": {
+      "request": { "schema": { "type": "object", "properties": {} } },
+      "pre_hook": {},
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido-uaf/authentication-challenge",
+          "method": "POST",
+          "header_mapping_rules": [{ "static_value": "application/json", "to": "Content-Type" }],
+          "body_mapping_rules": [{ "from": "$.request_body", "to": "*" }]
+        }
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [{ "from": "$.execution_http_request.response_body", "to": "*" }]
+      }
+    },
+    "fido-uaf-authentication": {
+      "request": { "schema": { "type": "object", "properties": {} } },
+      "pre_hook": {},
+      "execution": {
+        "function": "http_request",
+        "previous_interaction": { "key": "fido-uaf-authentication-challenge" },
+        "http_request": {
+          "url": "http://host.docker.internal:4000/fido-uaf/authentication",
+          "method": "POST",
+          "header_mapping_rules": [{ "static_value": "application/json", "to": "Content-Type" }],
+          "body_mapping_rules": [{ "from": "$.request_body", "to": "*" }]
+        }
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [{ "from": "$.execution_http_request.response_body", "to": "*" }]
+      }
+    }
+  }
+}

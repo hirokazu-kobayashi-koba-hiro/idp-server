@@ -38,12 +38,15 @@ const IdpServer = (options: IdpServerOptions): OAuthConfig<Record<string, unknow
           grant_type: "authorization_code",
           code,
           redirect_uri: `${frontendUrl}/api/auth/callback/idp-server`,
-          client_id: process.env.NEXT_PUBLIC_IDP_CLIENT_ID as string,
         });
+        const clientId = process.env.NEXT_PUBLIC_IDP_CLIENT_ID as string;
+        const clientSecret = process.env.NEXT_IDP_CLIENT_SECRET as string;
+        const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
         const response = await fetch(`${internalIssuer}/v1/tokens`, {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": `Basic ${basicAuth}`,
           },
           body: params,
         });

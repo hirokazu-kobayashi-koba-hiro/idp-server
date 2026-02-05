@@ -10,6 +10,7 @@ import LogoutButton from "@/components/LogoutButton";
 import SecurityIcon from "@mui/icons-material/Security";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
 import AddIcon from "@mui/icons-material/Add";
+import PhoneAndroidIcon from "@mui/icons-material/PhoneAndroid";
 import PasskeyRegistrationStatus from "@/components/PasskeyRegistrationStatus";
 
 const Home = async () => {
@@ -54,6 +55,15 @@ const Home = async () => {
               size="small"
             >
               FIDO2 rpIdデモ
+            </Button>
+            <Button
+              href="/fido-uaf-device-demo"
+              variant="outlined"
+              color="success"
+              startIcon={<PhoneAndroidIcon />}
+              size="small"
+            >
+              デバイス認証デモ
             </Button>
             <Button
               href="/security-demo"

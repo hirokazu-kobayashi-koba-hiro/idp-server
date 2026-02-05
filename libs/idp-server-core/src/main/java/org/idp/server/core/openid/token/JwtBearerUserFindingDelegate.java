@@ -32,7 +32,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 public interface JwtBearerUserFindingDelegate {
 
   /**
-   * Finds a user by tenant, issuer, subject, and claim mapping.
+   * Finds a user by tenant, provider ID, subject, and claim mapping.
    *
    * <p>The implementation should use the subjectClaimMapping to determine which JWT claim value to
    * use for user lookup. For example:
@@ -40,15 +40,17 @@ public interface JwtBearerUserFindingDelegate {
    * <ul>
    *   <li>"sub" - use the JWT sub claim directly as user ID
    *   <li>"email" - lookup user by email address from JWT claims
+   *   <li>"device_id" - use the JWT sub as device ID and find the device owner
    * </ul>
    *
    * @param tenant the tenant context
-   * @param issuer the JWT issuer (iss claim)
+   * @param providerId the provider ID from federation configuration (used for external IdP user
+   *     lookup)
    * @param subject the JWT subject (sub claim)
-   * @param subjectClaimMapping the claim mapping configuration (e.g., "email", "sub")
+   * @param subjectClaimMapping the claim mapping configuration (e.g., "email", "sub", "device_id")
    * @return the user object (may be empty if not found)
    */
-  User findUser(Tenant tenant, String issuer, String subject, String subjectClaimMapping);
+  User findUser(Tenant tenant, String providerId, String subject, String subjectClaimMapping);
 
   /**
    * Finds an authentication device by device ID.

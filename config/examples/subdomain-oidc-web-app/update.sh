@@ -210,6 +210,31 @@ if [ -f "${EMAIL_CONFIG_FILE}" ]; then
     echo "   Response: ${EMAIL_BODY}" | jq '.' 2>/dev/null || echo "   ${EMAIL_BODY}"
   fi
 fi
+
+# FIDO-UAF config
+FIDO_UAF_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/fido-uaf/mock-server.json"
+if [ -f "${FIDO_UAF_CONFIG_FILE}" ]; then
+  FIDO_UAF_CONFIG_JSON=$(cat "${FIDO_UAF_CONFIG_FILE}")
+  FIDO_UAF_CONFIG_ID=$(echo "${FIDO_UAF_CONFIG_JSON}" | jq -r '.id')
+
+  echo "   Updating FIDO-UAF config: ${FIDO_UAF_CONFIG_ID}..."
+
+  FIDO_UAF_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations/${FIDO_UAF_CONFIG_ID}" \
+    -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "${FIDO_UAF_CONFIG_JSON}")
+
+  FIDO_UAF_HTTP_CODE=$(echo "${FIDO_UAF_RESPONSE}" | tail -n1)
+  FIDO_UAF_BODY=$(echo "${FIDO_UAF_RESPONSE}" | sed '$d')
+
+  if [ "${FIDO_UAF_HTTP_CODE}" = "200" ]; then
+    echo "   FIDO-UAF config updated"
+  else
+    echo "   Warning: FIDO-UAF config update failed (HTTP ${FIDO_UAF_HTTP_CODE})"
+    echo "   Response: ${FIDO_UAF_BODY}" | jq '.' 2>/dev/null || echo "   ${FIDO_UAF_BODY}"
+  fi
+fi
 echo ""
 
 # Step 6: Update authentication policies
@@ -262,6 +287,31 @@ if [ -f "${FIDO2_REG_POLICY_FILE}" ]; then
   else
     echo "   Warning: FIDO2 Registration policy update failed (HTTP ${FIDO2_REG_HTTP_CODE})"
     echo "   Response: ${FIDO2_REG_BODY}" | jq '.' 2>/dev/null || echo "   ${FIDO2_REG_BODY}"
+  fi
+fi
+
+# CIBA policy
+CIBA_POLICY_FILE="${SCRIPT_DIR}/authentication-policy/ciba.json"
+if [ -f "${CIBA_POLICY_FILE}" ]; then
+  CIBA_POLICY_JSON=$(cat "${CIBA_POLICY_FILE}")
+  CIBA_POLICY_ID=$(echo "${CIBA_POLICY_JSON}" | jq -r '.id')
+
+  echo "   Updating CIBA policy: ${CIBA_POLICY_ID}..."
+
+  CIBA_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-policies/${CIBA_POLICY_ID}" \
+    -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "${CIBA_POLICY_JSON}")
+
+  CIBA_HTTP_CODE=$(echo "${CIBA_RESPONSE}" | tail -n1)
+  CIBA_BODY=$(echo "${CIBA_RESPONSE}" | sed '$d')
+
+  if [ "${CIBA_HTTP_CODE}" = "200" ]; then
+    echo "   CIBA policy updated"
+  else
+    echo "   Warning: CIBA policy update failed (HTTP ${CIBA_HTTP_CODE})"
+    echo "   Response: ${CIBA_BODY}" | jq '.' 2>/dev/null || echo "   ${CIBA_BODY}"
   fi
 fi
 echo ""

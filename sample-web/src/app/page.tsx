@@ -11,6 +11,9 @@ import {
 import { signIn } from "next-auth/react";
 import LoginIcon from "@mui/icons-material/Login";
 import LockIcon from "@mui/icons-material/Lock";
+import FingerprintIcon from "@mui/icons-material/Fingerprint";
+import PhoneAndroidIcon from "@mui/icons-material/PhoneAndroid";
+import Link from "next/link";
 
 const Login = () => {
   const handleSignIn = async () => {
@@ -85,6 +88,33 @@ const Login = () => {
             >
               Sign in with Passkey
             </Button>
+
+            {/* デモリンク */}
+            <Box sx={{ borderTop: 1, borderColor: "divider", my: 2 }} />
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Demo Pages (no login required)
+            </Typography>
+            <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap">
+              <Button
+                component={Link}
+                href="/fido2-attestation-demo"
+                variant="outlined"
+                size="small"
+                startIcon={<FingerprintIcon />}
+              >
+                FIDO2 Attestation
+              </Button>
+              <Button
+                component={Link}
+                href="/fido-uaf-device-demo"
+                variant="outlined"
+                size="small"
+                color="success"
+                startIcon={<PhoneAndroidIcon />}
+              >
+                Device Credential
+              </Button>
+            </Stack>
 
             {/* フッター */}
             <Typography variant="caption" color="text.secondary" sx={{ mt: 4 }}>

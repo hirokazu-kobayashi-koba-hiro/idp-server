@@ -98,8 +98,10 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
       String subject = claims.getSub();
 
       AvailableFederation federation = findFederation(context, issuer);
+      // Default: device_id for device federations, sub for external IdP
+      String defaultMapping = federation.isDeviceType() ? "device_id" : "sub";
       String subjectClaimMapping =
-          federation.hasSubjectClaimMapping() ? federation.subjectClaimMapping() : "sub";
+          federation.hasSubjectClaimMapping() ? federation.subjectClaimMapping() : defaultMapping;
 
       verifySignature(context, assertion, jws, federation);
 
@@ -108,7 +110,8 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
       verifier.verify();
 
       JwtBearerUserFindingDelegate delegate = context.jwtBearerUserFindingDelegate();
-      User user = delegate.findUser(tenant, issuer, subject, subjectClaimMapping);
+      String providerId = federation.resolveProviderId();
+      User user = delegate.findUser(tenant, providerId, subject, subjectClaimMapping);
 
       if (!user.exists()) {
         throw new TokenBadRequestException(

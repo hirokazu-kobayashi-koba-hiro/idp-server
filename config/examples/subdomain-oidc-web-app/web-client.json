@@ -5,17 +5,32 @@
   "redirect_uris": [
     "https://sample.local.dev/api/auth/callback/idp-server",
     "https://sample.local.dev/api/security-test/callback",
-    "https://sample.local.dev/api/passkey-registration/callback/"
+    "https://sample.local.dev/api/passkey-registration/callback/",
+    "https://sample.local.dev/api/fido-uaf-device-test/callback"
   ],
   "response_types": [
     "code"
   ],
   "grant_types": [
     "authorization_code",
-    "refresh_token"
+    "refresh_token",
+    "urn:ietf:params:oauth:grant-type:jwt-bearer",
+    "urn:openid:params:grant-type:ciba"
   ],
   "scope": "openid profile email claims:authentication_devices",
   "client_name": "Subdomain Sample Web Application",
-  "token_endpoint_auth_method": "none",
-  "application_type": "web"
+  "token_endpoint_auth_method": "client_secret_basic",
+  "application_type": "web",
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_user_code_parameter": true,
+  "extension": {
+    "available_federations": [
+      {
+        "issuer": "device",
+        "type": "device",
+        "jwt_bearer_grant_enabled": true
+      }
+    ],
+    "default_ciba_authentication_interaction_type": "authentication-device-notification-no-action"
+  }
 }
