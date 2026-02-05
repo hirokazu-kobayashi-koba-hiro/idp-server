@@ -2720,4 +2720,232 @@ describe("Use Case: Password Reset with Email Authentication", () => {
     console.log("  - no acr_values     → priority 1 (default_basic_policy) ✓");
     console.log("\nacr_values condition routing is working correctly!\n");
   });
+
+  it("should return 404 when authentication executor function not found (Issue #1241)", async () => {
+    /**
+     * Issue #1241: AuthenticationExecutorが見つからない場合に404エラーを返すように修正
+     *
+     * When execution.function specifies a non-existent executor (e.g., "non_existent_executor"),
+     * the system should return 404 (NotFoundException) instead of 500 (UnSupportedException).
+     */
+    const timestamp = Date.now();
+    const testOrgId = uuidv4();
+    const testTenantId = uuidv4();
+    const testClientId = uuidv4();
+    const testClientSecret = `client-secret-${timestamp}`;
+    const redirectUri = `https://app.example.com/callback`;
+
+    console.log("\n=== Issue #1241: Non-existent Executor Function Test ===\n");
+
+    // Step 1: Create organization and tenant
+    console.log("Step 1: Create test organization and tenant");
+    const { jwks } = await generateRS256KeyPair();
+
+    const onboardingResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/onboarding`,
+      headers: {
+        Authorization: `Bearer ${systemAccessToken}`,
+      },
+      body: {
+        organization: {
+          id: testOrgId,
+          name: `Executor Test Org ${timestamp}`,
+          description: "Test organization for executor not found test",
+        },
+        tenant: {
+          id: testTenantId,
+          name: `Executor Test Tenant ${timestamp}`,
+          domain: backendUrl,
+          authorization_provider: "idp-server",
+          tenant_type: "ORGANIZER",
+        },
+        authorization_server: {
+          issuer: `${backendUrl}/${testTenantId}`,
+          authorization_endpoint: `${backendUrl}/${testTenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${testTenantId}/v1/tokens`,
+          token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+          token_endpoint_auth_signing_alg_values_supported: ["RS256", "ES256"],
+          userinfo_endpoint: `${backendUrl}/${testTenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${testTenantId}/v1/jwks`,
+          jwks: jwks,
+          grant_types_supported: ["authorization_code", "password"],
+          token_signed_key_id: "signing_key_1",
+          id_token_signed_key_id: "signing_key_1",
+          scopes_supported: ["openid", "profile", "email", "management"],
+          response_types_supported: ["code"],
+          response_modes_supported: ["query", "fragment"],
+          subject_types_supported: ["public"],
+          id_token_signing_alg_values_supported: ["RS256", "ES256"],
+          claims_parameter_supported: true,
+          token_introspection_endpoint: `${backendUrl}/${testTenantId}/v1/tokens/introspection`,
+          token_revocation_endpoint: `${backendUrl}/${testTenantId}/v1/tokens/revocation`,
+          extension: {
+            access_token_type: "JWT",
+            token_signed_key_id: "signing_key_1",
+            id_token_signed_key_id: "signing_key_1",
+            access_token_duration: 3600,
+            id_token_duration: 3600,
+            refresh_token_duration: 86400,
+          },
+        },
+        user: {
+          sub: uuidv4(),
+          provider_id: "idp-server",
+          name: "Test User",
+          email: `executor-test-${timestamp}@example.com`,
+          email_verified: true,
+          raw_password: "TestPassword123!",
+        },
+        client: {
+          client_id: testClientId,
+          client_id_alias: `executor-test-client-${timestamp}`,
+          client_secret: testClientSecret,
+          redirect_uris: [redirectUri],
+          response_types: ["code"],
+          grant_types: ["authorization_code", "password"],
+          scope: "openid profile email management",
+          client_name: "Executor Test Client",
+          token_endpoint_auth_method: "client_secret_post",
+          application_type: "web",
+        },
+      },
+    });
+    console.log("Onboarding response:", onboardingResponse.status);
+    expect(onboardingResponse.status).toBe(201);
+    console.log("✓ Organization and tenant created\n");
+
+    // Get admin token for the new tenant
+    const userEmail = `executor-test-${timestamp}@example.com`;
+    const userPassword = "TestPassword123!";
+    const adminTokenResponse = await requestToken({
+      endpoint: `${backendUrl}/${testTenantId}/v1/tokens`,
+      grantType: "password",
+      username: userEmail,
+      password: userPassword,
+      scope: "management",
+      clientId: testClientId,
+      clientSecret: testClientSecret,
+    });
+    expect(adminTokenResponse.status).toBe(200);
+    const adminAccessToken = adminTokenResponse.data.access_token;
+    console.log("✓ Admin access token obtained\n");
+
+    // Step 2: Create authentication configuration with non-existent executor function
+    console.log("Step 2: Create authentication config with non-existent executor function");
+    const authConfigId = uuidv4();
+    const authConfigResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${testOrgId}/tenants/${testTenantId}/authentication-configurations`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+      body: {
+        id: authConfigId,
+        type: "password",
+        attributes: {},
+        metadata: {
+          type: "external",
+          description: "Test config with non-existent executor",
+        },
+        interactions: {
+          "password-authentication": {
+            request: {
+              schema: {
+                type: "object",
+                properties: {
+                  test_param: { type: "string" }
+                }
+              }
+            },
+            pre_hook: {},
+            execution: {
+              // This executor function does not exist - should trigger NotFoundException (404)
+              function: "non_existent_executor"
+            },
+            post_hook: {},
+            response: {
+              body_mapping_rules: []
+            }
+          }
+        }
+      },
+    });
+    expect(authConfigResponse.status).toBe(201);
+    console.log("✓ Authentication configuration with non-existent executor created\n");
+
+    // Step 3: Create authentication policy
+    console.log("Step 3: Create authentication policy");
+    const policyResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${testOrgId}/tenants/${testTenantId}/authentication-policies`,
+      headers: {
+        Authorization: `Bearer ${adminAccessToken}`,
+      },
+      body: {
+        id: uuidv4(),
+        flow: "oauth",
+        enabled: true,
+        policies: [
+          {
+            description: "test_executor_policy",
+            priority: 1,
+            conditions: {
+              scopes: ["openid"]
+            },
+            available_methods: ["custom"],
+            success_conditions: {
+              any_of: [
+                [
+                  {
+                    path: "$.test-interaction.success_count",
+                    type: "integer",
+                    operation: "gte",
+                    value: 1
+                  }
+                ]
+              ]
+            }
+          }
+        ]
+      },
+    });
+    console.log("Policy response:", policyResponse.status, JSON.stringify(policyResponse.data, null, 2));
+    expect(policyResponse.status).toBe(201);
+    console.log("✓ Authentication policy created\n");
+
+    // Step 4: Start authorization request
+    console.log("Step 4: Start authorization request");
+    const authorizeResponse = await get({
+      url: `${backendUrl}/${testTenantId}/v1/authorizations?` +
+        `response_type=code&` +
+        `client_id=${testClientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `scope=openid&` +
+        `state=test123`,
+      headers: {},
+    });
+    expect(authorizeResponse.status).toBe(302);
+    const location = authorizeResponse.headers.location;
+    const authId = new URL(location, backendUrl).searchParams.get('id');
+    expect(authId).toBeDefined();
+    console.log(`✓ Authorization started, id: ${authId}\n`);
+
+    // Step 5: Call the interaction with non-existent executor
+    console.log("Step 5: Call interaction with non-existent executor function");
+    const interactionResponse = await postWithJson({
+      url: `${backendUrl}/${testTenantId}/v1/authorizations/${authId}/password-authentication`,
+      headers: {},
+      body: {
+        test_param: "test_value"
+      },
+    });
+
+    console.log("Interaction response status:", interactionResponse.status);
+    console.log("Interaction response data:", JSON.stringify(interactionResponse.data, null, 2));
+
+    // Verify: Should return 404 (not 500) - Issue #1241 fix
+    expect(interactionResponse.status).toBe(404);
+    expect(interactionResponse.data).toHaveProperty("error");
+    expect(interactionResponse.data.error_description).toContain("No authentication executor found");
+
+    console.log("\n✓ Issue #1241 verified: Correctly returned 404 for non-existent executor function\n");
+  });
 });
