@@ -168,3 +168,69 @@ cd e2e && npm test -- security/session_fixation_password_auth.test.js
 ### セッションが期限切れ
 - OPSessionの有効期限設定を確認
 - Redisなどのセッションストレージが正常か確認
+
+## Cookie Path設定（API Gateway対応）
+
+### 背景
+
+API Gateway経由でidp-serverをデプロイする場合、コンテキストパス（例: `/idp-admin`）が追加されることがあります。この場合、Cookieのパスを適切に設定しないと、ブラウザがCookieを送信せず `auth_session_mismatch` エラーが発生します。
+
+### 問題の例
+
+```
+# API Gateway構成
+https://api.example.com/idp-admin/* → idp-server (/)
+
+# デフォルトのCookieパス
+Path=/{tenant_id}/
+
+# ブラウザがアクセスするパス
+/idp-admin/{tenant_id}/v1/authorizations
+
+# → パスが一致しないためCookieが送信されない
+```
+
+### 解決方法
+
+テナントの `session_config.cookie_path` を設定します:
+
+```json
+{
+  "tenant": {
+    "session_config": {
+      "cookie_name": "CONTEXT_PATH_SESSION",
+      "cookie_path": "/idp-admin",
+      "cookie_same_site": "None",
+      "use_secure_cookie": true,
+      "timeout_seconds": 3600
+    }
+  }
+}
+```
+
+これにより、Cookieパスは `/idp-admin/{tenant_id}/` となり、API Gateway経由のリクエストでもCookieが正しく送信されます。
+
+### 設定例
+
+`config/examples/oidcc-cross-site-context-path/` にAPI Gateway + コンテキストパスの設定例があります:
+
+- `onboarding-request.json` - テナント設定（cookie_path含む）
+- `oidc-test/*.json` - OIDC Conformance Suite用設定
+
+### 関連ファイル
+
+- `AuthSessionCookieService.java` - AUTH_SESSION Cookie設定
+- `SessionCookieService.java` - IDP_IDENTITY/IDP_SESSION Cookie設定
+- `SessionConfiguration.java` - session_config値オブジェクト
+
+### ローカルテスト環境
+
+docker-compose.yamlの `app-view-context-path` サービスと nginx.conf の `/idp-admin/` ルーティングを使用してAPI Gateway動作をシミュレートできます。
+
+```bash
+# コンテキストパス対応のapp-viewを起動
+docker compose up -d --build app-view-context-path nginx
+
+# テナント設定を更新
+bash config/examples/oidcc-cross-site-context-path/update.sh
+```

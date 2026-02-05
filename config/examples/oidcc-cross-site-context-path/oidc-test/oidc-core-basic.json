@@ -1,0 +1,17 @@
+{
+  "alias": "oidc-core-basic-context-path",
+  "description": "Context Path Test - cookie_path verification",
+  "server": {
+    "issuer": "https://api.local.dev/76ec54ab-8923-468d-b04b-0d8d0a5eaade",
+    "jwks_uri": "https://api.local.dev/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/jwks",
+    "authorization_endpoint": "https://api.local.dev/idp-admin/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/authorizations",
+    "token_endpoint": "https://api.local.dev/idp-admin/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/tokens",
+    "userinfo_endpoint": "https://api.local.dev/idp-admin/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/userinfo",
+    "acr_values": "urn:mace:incommon:iap:bronze",
+    "login_hint": "context-path-test"
+  },
+  "client": {
+    "client_id": "context-path-client",
+    "client_secret": "context-path-secret-32characters1"
+  }
+}

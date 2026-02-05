@@ -62,7 +62,7 @@ public class SessionCookieService implements SessionCookieDelegate {
   @Override
   public void registerSessionCookies(
       Tenant tenant, String identityToken, String sessionHash, long maxAgeSeconds) {
-    String cookiePath = "/" + tenant.identifierValue() + "/";
+    String cookiePath = resolveCookiePath(tenant);
     String cookieDomain = getCookieDomain(tenant);
     boolean secureCookie = getSecureCookie(tenant);
     String sameSite = getSameSite(tenant);
@@ -104,7 +104,7 @@ public class SessionCookieService implements SessionCookieDelegate {
 
   @Override
   public void clearSessionCookies(Tenant tenant) {
-    String cookiePath = "/" + tenant.identifierValue() + "/";
+    String cookiePath = resolveCookiePath(tenant);
     String cookieDomain = getCookieDomain(tenant);
     boolean secureCookie = getSecureCookie(tenant);
     String sameSite = getSameSite(tenant);
@@ -196,5 +196,35 @@ public class SessionCookieService implements SessionCookieDelegate {
       return tenant.sessionConfiguration().cookieSameSite();
     }
     return DEFAULT_SAME_SITE;
+  }
+
+  /**
+   * Resolves cookie path considering deployment context path.
+   *
+   * <p>When deployed behind API Gateway or reverse proxy with a context path (e.g., /idp-admin),
+   * the cookie path must include this prefix for the browser to send cookies correctly.
+   *
+   * <p>Resolution order:
+   *
+   * <ol>
+   *   <li>If session_config.cookie_path is set (not "/" default), use it as base path
+   *   <li>Otherwise, use servlet context path from request
+   * </ol>
+   *
+   * @param tenant the tenant
+   * @return cookie path in format: {basePath}/{tenantId}/
+   */
+  private String resolveCookiePath(Tenant tenant) {
+    String basePath = "";
+    if (tenant.sessionConfiguration() != null) {
+      String configuredPath = tenant.sessionConfiguration().cookiePath();
+      if (configuredPath != null && !configuredPath.equals("/")) {
+        basePath = configuredPath;
+      }
+    }
+    if (basePath.isEmpty()) {
+      basePath = httpServletRequest.getContextPath();
+    }
+    return basePath + "/" + tenant.identifierValue() + "/";
   }
 }

@@ -744,7 +744,7 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 | `cookie_same_site` | string | `None` | SameSite属性 (`None`, `Lax`, `Strict`) |
 | `use_secure_cookie` | boolean | `true` | Secure属性を使用 |
 | `use_http_only_cookie` | boolean | `true` | HttpOnly属性を使用 |
-| `cookie_path` | string | `/` | Cookieのパス |
+| `cookie_path` | string | `/` | Cookieのパス（API Gateway対応、詳細は下記参照） |
 | `timeout_seconds` | number | `3600` | セッションタイムアウト（秒） |
 | `switch_policy` | string | `SWITCH_ALLOWED` | セッション切替ポリシー |
 
@@ -853,6 +853,46 @@ Cookieは設定元のホストにのみ送信される:
 }
 ```
 → Cross-Siteからの全リクエストでCookie送信を拒否
+
+#### cookie_path - API Gateway対応
+
+**背景**: idp-serverをAPI Gateway経由でデプロイする場合、コンテキストパス（例: `/idp-admin`）が追加されることがあります。この場合、Cookieのパスを適切に設定しないと、ブラウザがCookieを送信せず認証エラーが発生します。
+
+**問題の例**:
+```
+# API Gateway構成
+https://api.example.com/idp-admin/* → idp-server (/)
+
+# デフォルトのCookieパス（cookie_path未設定）
+Set-Cookie: IDP_AUTH_SESSION=xxx; Path=/{tenant_id}/
+
+# ブラウザがアクセスするパス
+/idp-admin/{tenant_id}/v1/authorizations
+
+# → パスが一致しないためCookieが送信されない → auth_session_mismatch エラー
+```
+
+**解決策**: `cookie_path`にAPI Gatewayのコンテキストパスを設定
+
+```json
+{
+  "session_config": {
+    "cookie_path": "/idp-admin",
+    "cookie_same_site": "None",
+    "use_secure_cookie": true
+  }
+}
+```
+
+**設定後のCookieパス**:
+```
+Set-Cookie: IDP_AUTH_SESSION=xxx; Path=/idp-admin/{tenant_id}/
+```
+→ API Gateway経由のリクエストでもCookieが正しく送信される
+
+**設定例**: `config/examples/oidcc-cross-site-context-path/` にAPI Gateway + コンテキストパスの完全な設定例があります。
+
+**ローカルテスト**: docker-compose.yamlの`app-view-context-path`サービスとnginx.confの`/idp-admin/`ルーティングを使用してAPI Gateway動作をシミュレートできます。
 
 **実装**: [SessionConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/SessionConfiguration.java)
 
