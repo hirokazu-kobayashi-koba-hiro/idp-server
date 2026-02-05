@@ -411,6 +411,22 @@ services:
     depends_on:
       - idp-server-1
 
+  # Cross-site Auth UI with API Gateway context path
+  # Access via https://auth.idp.local (port 3001 internally)
+  # Tests cookie_path configuration when IDP is behind API Gateway with /idp-admin context path
+  app-view-context-path:
+    build:
+      context: .
+      dockerfile: docker/app-view/Dockerfile
+      args:
+        BASE_PATH: ""
+        NEXT_PUBLIC_BACKEND_URL: "https://api.local.dev/idp-admin"
+    container_name: app-view-context-path
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - idp-server-1
+
   sample-web:
     build:
       context: .

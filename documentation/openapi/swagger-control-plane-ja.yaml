@@ -7205,7 +7205,15 @@ components:
         cookie_path:
           type: string
           default: /
-          description: Cookieのパス
+          description: |
+            Cookieのパス。API Gateway経由でコンテキストパス付きでデプロイする場合に設定します。
+
+            **API Gateway対応例:**
+            API Gatewayで `/idp-admin/*` → idp-server にルーティングする場合、
+            `cookie_path: "/idp-admin"` を設定すると、Cookieパスが `/idp-admin/{tenant_id}/` となり、
+            ブラウザがCookieを正しく送信します。
+
+            未設定または `/` の場合は、Cookieパスは `/{tenant_id}/` となります。
         timeout_seconds:
           type: integer
           default: 3600

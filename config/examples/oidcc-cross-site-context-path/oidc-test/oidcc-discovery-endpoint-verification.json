@@ -1,0 +1,11 @@
+{
+  "alias": "oidcc-discovery-endpoint-verification-context-path",
+  "description": "Context Path Test - discovery endpoint verification",
+  "server": {
+    "discoveryUrl": "https://api.local.dev/76ec54ab-8923-468d-b04b-0d8d0a5eaade/.well-known/openid-configuration"
+  },
+  "client": {
+    "client_id": "context-path-client",
+    "client_secret": "context-path-secret-32characters1"
+  }
+}

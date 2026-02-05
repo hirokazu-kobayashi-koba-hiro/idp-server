@@ -83,7 +83,7 @@ public class AuthSessionCookieService implements AuthSessionCookieDelegate {
   @Override
   public void setAuthSessionCookie(Tenant tenant, String authSessionId, long maxAgeSeconds) {
     SessionConfiguration sessionConfiguration = tenant.sessionConfiguration();
-    String cookiePath = "/" + tenant.identifierValue() + "/";
+    String cookiePath = resolveCookiePath(tenant, sessionConfiguration);
     String cookieDomain = resolveCookieDomain(sessionConfiguration);
     boolean secure = resolveSecure(sessionConfiguration);
     String sameSiteValue = resolveSameSite(sessionConfiguration);
@@ -129,7 +129,7 @@ public class AuthSessionCookieService implements AuthSessionCookieDelegate {
   @Override
   public void clearAuthSessionCookie(Tenant tenant) {
     SessionConfiguration sessionConfiguration = tenant.sessionConfiguration();
-    String cookiePath = "/" + tenant.identifierValue() + "/";
+    String cookiePath = resolveCookiePath(tenant, sessionConfiguration);
     String cookieDomain = resolveCookieDomain(sessionConfiguration);
     boolean secure = resolveSecure(sessionConfiguration);
     String sameSiteValue = resolveSameSite(sessionConfiguration);
@@ -195,6 +195,37 @@ public class AuthSessionCookieService implements AuthSessionCookieDelegate {
       return sessionConfiguration.cookieSameSite();
     }
     return sameSite;
+  }
+
+  /**
+   * Resolves cookie path considering deployment context path.
+   *
+   * <p>When deployed behind API Gateway or reverse proxy with a context path (e.g., /idp-admin),
+   * the cookie path must include this prefix for the browser to send cookies correctly.
+   *
+   * <p>Resolution order:
+   *
+   * <ol>
+   *   <li>If session_config.cookie_path is set (not "/" default), use it as base path
+   *   <li>Otherwise, use servlet context path from request
+   * </ol>
+   *
+   * @param tenant the tenant
+   * @param sessionConfiguration session configuration
+   * @return cookie path in format: {basePath}/{tenantId}/
+   */
+  private String resolveCookiePath(Tenant tenant, SessionConfiguration sessionConfiguration) {
+    String basePath = "";
+    if (sessionConfiguration != null) {
+      String configuredPath = sessionConfiguration.cookiePath();
+      if (configuredPath != null && !configuredPath.equals("/")) {
+        basePath = configuredPath;
+      }
+    }
+    if (basePath.isEmpty()) {
+      basePath = httpServletRequest.getContextPath();
+    }
+    return basePath + "/" + tenant.identifierValue() + "/";
   }
 
   /**
