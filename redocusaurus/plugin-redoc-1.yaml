@@ -14,7 +14,37 @@ paths:
       tags:
         - 認証
       summary: 認証トランザクションの取得
-      description: 認証デバイスに紐づく認証トランザクション情報（フロー、スコープ、ユーザー情報など）を取得する。
+      description: >
+        認証デバイスに紐づく認証トランザクション情報（フロー、スコープ、ユーザー情報など）を取得する。
+
+
+        **デバイス認証によるレスポンス制御**:
+
+
+        テナントの
+        `identity_policy_config.authentication_device_rule.authentication_type`
+        設定により、
+
+        レスポンスに含まれる情報が制御されます。
+
+
+        | 認証設定 | `context`フィールド | 説明 |
+
+        |---------|-------------------|------|
+
+        | `none` | 含まれない | 認証なしでアクセス可能。機密情報は除外 |
+
+        | `access_token` | 含まれる | アクセストークン認証成功後のみ詳細情報を返却 |
+
+        | `device_secret_jwt` | 含まれる | 対称鍵JWT（HMAC）認証成功後のみ詳細情報を返却 |
+
+        | `private_key_jwt` | 含まれる | 非対称鍵JWT（RSA/EC）認証成功後のみ詳細情報を返却 |
+
+
+        `context`フィールドには
+        `scopes`、`acr_values`、`binding_message`、`authorization_details` などの
+
+        認証リクエストの詳細情報が含まれるため、認証されていないデバイスには返却されません。
       parameters:
         - in: path
           name: tenant-id
@@ -681,6 +711,11 @@ components:
               description: プライバシーポリシーURL
         context:
           type: object
+          description: |
+            認証リクエストのコンテキスト情報。
+
+            **セキュリティ注意**: このフィールドはデバイス認証が行われた場合のみ返却されます。
+            `authentication_type: "none"` の場合は、このフィールドはレスポンスに含まれません。
           properties:
             acr_values:
               type: string
@@ -691,33 +726,89 @@ components:
             scopes:
               type: string
               description: 要求されたスコープ（スペース区切り）
+            authorization_details:
+              type: array
+              description: Rich Authorization Requests（RAR）の詳細
+              items:
+                type: object
         user:
           type: object
+          description: |
+            認証トランザクションに紐づくユーザー情報（最小化された情報のみ）。
+            プライバシー保護のため、`sub`と`status`のみが返却されます。
           properties:
             sub:
               type: string
               description: ユーザー識別子（Subject）
-            provider_id:
-              type: string
-              description: Idプロバイダー識別子
-            external_user_id:
-              type: string
-              description: 外部IdPのユーザー識別子
-            name:
-              type: string
-              description: ユーザー名
-            email:
-              type: string
-              description: email
-            locale:
-              type: string
-              description: 言語設定（例：ja, en）
-            phone_number:
-              type: string
-              description: 電話番号
             status:
               type: string
+              enum:
+                - UNREGISTERED
+                - INITIALIZED
+                - FEDERATED
+                - REGISTERED
+                - IDENTITY_VERIFIED
+                - IDENTITY_VERIFICATION_REQUIRED
+                - LOCKED
+                - DISABLED
+                - SUSPENDED
+                - DEACTIVATED
+                - DELETED_PENDING
+                - DELETED
+                - UNKNOWN
               description: ユーザーステータス
+        authentication_device:
+          type: object
+          description: 認証トランザクションに紐づく認証デバイス情報
+          properties:
+            id:
+              type: string
+              description: デバイス識別子
+            app_name:
+              type: string
+              description: アプリ名
+            platform:
+              type: string
+              description: プラットフォーム（iOS, Android等）
+            os:
+              type: string
+              description: OS情報
+            model:
+              type: string
+              description: デバイスモデル
+            locale:
+              type: string
+              description: 言語設定
+            notification_channel:
+              type: string
+              description: 通知チャネル（fcm等）
+            notification_token:
+              type: string
+              description: 通知トークン
+            available_methods:
+              type: array
+              items:
+                type: string
+              description: 利用可能な認証方式（fido-uaf等）
+            priority:
+              type: integer
+              description: 優先度
+            credential_type:
+              type: string
+              description: クレデンシャルタイプ
+            credential_id:
+              type: string
+              description: クレデンシャルID
+            credential_metadata:
+              type: object
+              description: クレデンシャルメタデータ（発行日時、有効期限等）
+              properties:
+                issued_at:
+                  type: string
+                  format: date-time
+                expires_at:
+                  type: string
+                  format: date-time
         created_at:
           type: string
           format: date-time

@@ -6836,8 +6836,14 @@ components:
       description: |
         認証デバイス登録ルール設定（テナントのidentity_policy_configで設定）
 
+        CIBAフローでのデバイス認証とシークレット自動発行を制御します。
+
         - max_devices: ユーザーあたりの最大デバイス登録数
         - required_identity_verification: デバイス登録時に身元確認を必須とするか
+        - authentication_type: デバイスエンドポイントへのアクセス認証方式
+        - issue_device_secret: FIDO-UAF登録時にデバイスシークレットを自動発行するか
+        - device_secret_algorithm: デバイスシークレットの署名アルゴリズム
+        - device_secret_expires_in_seconds: デバイスシークレットの有効期限（秒）
       properties:
         max_devices:
           type: integer
@@ -6850,6 +6856,46 @@ components:
           default: false
           description: デバイス登録時に身元確認（KYC）を必須とするか
           example: false
+        authentication_type:
+          type: string
+          enum:
+            - none
+            - device_secret_jwt
+          default: none
+          description: |
+            デバイスエンドポイントへのアクセス認証方式
+
+            - none: 認証不要
+            - device_secret_jwt: デバイスシークレットで署名したJWTによる認証を要求
+          example: device_secret_jwt
+        issue_device_secret:
+          type: boolean
+          default: false
+          description: |
+            FIDO-UAF登録時にデバイスシークレットを自動発行するか
+
+            trueの場合、登録レスポンスにdevice_secret、device_secret_algorithm、
+            device_secret_jwt_issuerが含まれます。
+          example: true
+        device_secret_algorithm:
+          type: string
+          enum:
+            - HS256
+            - HS384
+            - HS512
+          default: HS256
+          description: デバイスシークレットの署名アルゴリズム
+          example: HS256
+        device_secret_expires_in_seconds:
+          type: integer
+          minimum: 0
+          nullable: true
+          default: null
+          description: |
+            デバイスシークレットの有効期限（秒）
+
+            nullの場合は無期限。1年（31536000秒）以内を推奨。
+          example: 31536000
       additionalProperties: true
     AuthenticationStepDefinition:
       type: object
@@ -7891,6 +7937,10 @@ components:
         authentication_device_rule:
           max_devices: 5
           required_identity_verification: false
+          authentication_type: device_secret_jwt
+          issue_device_secret: true
+          device_secret_algorithm: HS256
+          device_secret_expires_in_seconds: 31536000
   responses:
     BadRequest:
       description: Bad Request - Invalid input parameters
