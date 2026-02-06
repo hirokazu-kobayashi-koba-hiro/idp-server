@@ -18,7 +18,7 @@ package org.idp.server.core.openid.authentication.interaction.execution;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.exception.NotFoundException;
 
 public class AuthenticationExecutors {
 
@@ -36,7 +36,7 @@ public class AuthenticationExecutors {
     AuthenticationExecutor executor = executors.get(type);
 
     if (executor == null) {
-      throw new UnSupportedException("No authentication executor found for type: " + type);
+      throw new NotFoundException("No authentication executor found for type: " + type);
     }
 
     return executor;
