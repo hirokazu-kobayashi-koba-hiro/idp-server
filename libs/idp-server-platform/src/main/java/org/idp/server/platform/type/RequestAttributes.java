@@ -40,7 +40,7 @@ public class RequestAttributes implements BasicAuthConvertable {
   }
 
   public boolean exists() {
-    return jsonNodeWrapper != null && !jsonNodeWrapper.exists();
+    return jsonNodeWrapper != null && jsonNodeWrapper.exists();
   }
 
   public String optValueAsString(String key, String defaultValue) {

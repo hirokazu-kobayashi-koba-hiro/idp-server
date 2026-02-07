@@ -50,7 +50,7 @@ public class AuthenticationDevicePatchRequest {
   }
 
   public boolean exists() {
-    return jsonNodeWrapper != null && !jsonNodeWrapper.exists();
+    return jsonNodeWrapper != null && jsonNodeWrapper.exists();
   }
 
   public AuthenticationDevice toAuthenticationDevice(AuthenticationDeviceIdentifier identifier) {

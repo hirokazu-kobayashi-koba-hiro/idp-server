@@ -199,7 +199,7 @@ public class JsonSchemaValidator {
       errors.add(composedFiledName + " minimum is " + schemaProperty.minimum());
     }
 
-    if (schemaProperty.hasMaxLength() && value > schemaProperty.maximum()) {
+    if (schemaProperty.hasMaximum() && value > schemaProperty.maximum()) {
       errors.add(composedFiledName + " maximum is " + schemaProperty.maximum());
     }
   }
