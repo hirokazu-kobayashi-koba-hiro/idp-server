@@ -179,6 +179,18 @@ public class ApiExceptionHandler {
         HttpStatus.BAD_REQUEST);
   }
 
+  @ExceptionHandler(InvalidConfigurationException.class)
+  public ResponseEntity<?> handleException(InvalidConfigurationException exception) {
+    log.error("Invalid configuration detected: description={}", exception.getMessage(), exception);
+    Map<String, String> response =
+        Map.of(
+            "error",
+            "server_error",
+            "error_description",
+            "The server has a configuration error. Please contact the administrator.");
+    return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
   @ExceptionHandler
   public ResponseEntity<?> handleException(Exception exception) {
     log.error(exception.getMessage(), exception);
