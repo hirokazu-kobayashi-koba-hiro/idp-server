@@ -93,24 +93,15 @@ public class Fido2AuthenticationInteractor implements AuthenticationInteractor {
     Map<String, Object> contents =
         MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
-    if (executionResult.isClientError()) {
-      log.warn("Fido2 authentication is failed. Client error: {}", executionResult.contents());
+    if (!executionResult.isSuccess()) {
+      log.warn(
+          "Fido2 authentication failed. status={}, contents={}",
+          executionResult.statusCode(),
+          executionResult.contents());
       // Issue #1021: Try to use transaction user for security event logging (2nd factor case)
       User attemptedUser = transaction.hasUser() ? transaction.user() : null;
-      return AuthenticationInteractionRequestResult.clientError(
-          contents,
-          type,
-          operationType(),
-          method(),
-          attemptedUser,
-          DefaultSecurityEventType.fido2_authentication_failure);
-    }
-
-    if (executionResult.isServerError()) {
-      log.warn("Fido2 is authentication failed. Server error: {}", executionResult.contents());
-      // Issue #1021: Try to use transaction user for security event logging (2nd factor case)
-      User attemptedUser = transaction.hasUser() ? transaction.user() : null;
-      return AuthenticationInteractionRequestResult.serverError(
+      return AuthenticationInteractionRequestResult.error(
+          executionResult.statusCode(),
           contents,
           type,
           operationType(),

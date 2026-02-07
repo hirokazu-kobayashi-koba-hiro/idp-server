@@ -19,9 +19,12 @@ package org.idp.server.platform.http;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.util.Set;
 import org.idp.server.platform.security.ssrf.SsrfProtectionException;
 import org.idp.server.platform.system.SystemConfiguration;
@@ -256,6 +259,70 @@ class SsrfProtectedHttpClientTest {
           assertThrows(SsrfProtectionException.class, () -> ssrfProtectedHttpClient.send(request));
 
       assertNotNull(ex);
+    }
+  }
+
+  @Nested
+  @DisplayName("Exception Handling")
+  class ExceptionHandlingTests {
+
+    @BeforeEach
+    void setUpDisabledProtection() {
+      when(systemConfigurationResolver.resolve()).thenReturn(systemConfiguration);
+      when(systemConfiguration.ssrf()).thenReturn(SsrfProtectionConfig.disabled());
+    }
+
+    @Test
+    @DisplayName(
+        "Should throw HttpNetworkErrorException with timeout message when HttpTimeoutException occurs")
+    void shouldHandleHttpTimeoutException() throws Exception {
+      HttpRequest request =
+          HttpRequest.newBuilder().uri(URI.create("https://api.example.com/data")).GET().build();
+
+      when(httpClient.send(eq(request), any(HttpResponse.BodyHandler.class)))
+          .thenThrow(new HttpTimeoutException("request timed out"));
+
+      HttpNetworkErrorException ex =
+          assertThrows(
+              HttpNetworkErrorException.class, () -> ssrfProtectedHttpClient.send(request));
+
+      assertEquals("HTTP request timed out", ex.getMessage());
+      assertInstanceOf(HttpTimeoutException.class, ex.getCause());
+    }
+
+    @Test
+    @DisplayName(
+        "Should throw HttpNetworkErrorException with failed message when IOException occurs")
+    void shouldHandleIOException() throws Exception {
+      HttpRequest request =
+          HttpRequest.newBuilder().uri(URI.create("https://api.example.com/data")).GET().build();
+
+      when(httpClient.send(eq(request), any(HttpResponse.BodyHandler.class)))
+          .thenThrow(new IOException("connection reset"));
+
+      HttpNetworkErrorException ex =
+          assertThrows(
+              HttpNetworkErrorException.class, () -> ssrfProtectedHttpClient.send(request));
+
+      assertEquals("HTTP request failed", ex.getMessage());
+      assertInstanceOf(IOException.class, ex.getCause());
+    }
+
+    @Test
+    @DisplayName("Should map HttpTimeoutException to 504 via HttpResponseResolver")
+    void shouldMapHttpTimeoutExceptionTo504() throws Exception {
+      HttpRequest request =
+          HttpRequest.newBuilder().uri(URI.create("https://api.example.com/data")).GET().build();
+
+      when(httpClient.send(eq(request), any(HttpResponse.BodyHandler.class)))
+          .thenThrow(new HttpTimeoutException("request timed out"));
+
+      HttpNetworkErrorException ex =
+          assertThrows(
+              HttpNetworkErrorException.class, () -> ssrfProtectedHttpClient.send(request));
+
+      HttpRequestResult result = HttpResponseResolver.resolveException(ex);
+      assertEquals(504, result.statusCode());
     }
   }
 

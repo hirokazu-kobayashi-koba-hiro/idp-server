@@ -125,9 +125,10 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
       Map<String, Object> contents =
           MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
-      if (executionResult.isClientError()) {
+      if (!executionResult.isSuccess()) {
         log.warn(
-            "Email verification execution failed (client error). method={}, contents={}",
+            "Email verification execution failed. status={}, method={}, contents={}",
+            executionResult.statusCode(),
             method(),
             contents);
         // Issue #1034: Try to resolve user for security event logging
@@ -135,26 +136,8 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
             transaction.hasUser()
                 ? transaction.user()
                 : tryResolveUserForLogging(tenant, email, providerId, userQueryRepository);
-        return AuthenticationInteractionRequestResult.clientError(
-            contents,
-            type,
-            operationType(),
-            method(),
-            attemptedUser,
-            DefaultSecurityEventType.email_verification_request_failure);
-      }
-
-      if (executionResult.isServerError()) {
-        log.error(
-            "Email verification execution failed (server error). method={}, contents={}",
-            method(),
-            contents);
-        // Issue #1034: Try to resolve user for security event logging
-        User attemptedUser =
-            transaction.hasUser()
-                ? transaction.user()
-                : tryResolveUserForLogging(tenant, email, providerId, userQueryRepository);
-        return AuthenticationInteractionRequestResult.serverError(
+        return AuthenticationInteractionRequestResult.error(
+            executionResult.statusCode(),
             contents,
             type,
             operationType(),

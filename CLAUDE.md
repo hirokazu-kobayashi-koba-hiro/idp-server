@@ -28,6 +28,21 @@ Controller → UseCase (EntryService) → Core (Handler-Service-Repository) → 
 cd e2e && npm test
 ```
 
+## E2Eテスト実行時の注意
+
+**`npx jest` ではなく `npm test` 経由で実行すること。**
+
+`package.json` の `test` スクリプトが `NODE_EXTRA_CA_CERTS` で mkcert のルートCAを設定している。
+`npx jest` 直接実行だとこの設定が抜け、自己署名証明書の検証エラー（`UNABLE_TO_VERIFY_LEAF_SIGNATURE`）でリクエストが失敗する。
+
+```bash
+# 正しい実行方法
+cd e2e && npm test -- --testPathPattern="integration-05" --testNamePattern="テスト名"
+
+# NG: TLSエラーになる
+cd e2e && npx jest src/tests/integration/...
+```
+
 ## ローカル環境でのコード変更反映
 
 **重要**: Javaコードを変更した場合、Docker imageを再ビルドしないと変更が反映されない。

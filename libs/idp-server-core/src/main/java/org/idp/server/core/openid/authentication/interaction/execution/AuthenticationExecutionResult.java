@@ -43,6 +43,11 @@ public class AuthenticationExecutionResult {
     return new AuthenticationExecutionResult(AuthenticationExecutionStatus.SERVER_ERROR, contents);
   }
 
+  public static AuthenticationExecutionResult error(int statusCode, Map<String, Object> contents) {
+    return new AuthenticationExecutionResult(
+        AuthenticationExecutionStatus.fromStatusCode(statusCode), contents);
+  }
+
   public AuthenticationExecutionStatus status() {
     return status;
   }

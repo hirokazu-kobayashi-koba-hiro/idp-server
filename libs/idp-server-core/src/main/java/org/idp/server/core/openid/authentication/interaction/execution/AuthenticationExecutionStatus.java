@@ -19,7 +19,16 @@ package org.idp.server.core.openid.authentication.interaction.execution;
 public enum AuthenticationExecutionStatus {
   OK(200),
   CLIENT_ERROR(400),
-  SERVER_ERROR(500);
+  UNAUTHORIZED(401),
+  FORBIDDEN(403),
+  NOT_FOUND(404),
+  REQUEST_TIMEOUT(408),
+  CONFLICT(409),
+  TOO_MANY_REQUESTS(429),
+  SERVER_ERROR(500),
+  BAD_GATEWAY(502),
+  SERVICE_UNAVAILABLE(503),
+  GATEWAY_TIMEOUT(504);
 
   int statusCode;
 
@@ -32,14 +41,26 @@ public enum AuthenticationExecutionStatus {
   }
 
   public boolean isClientError() {
-    return this == CLIENT_ERROR;
+    return statusCode >= 400 && statusCode < 500;
   }
 
   public boolean isServerError() {
-    return this == SERVER_ERROR;
+    return statusCode >= 500;
   }
 
   public int code() {
     return statusCode;
+  }
+
+  public static AuthenticationExecutionStatus fromStatusCode(int statusCode) {
+    for (AuthenticationExecutionStatus status : values()) {
+      if (status.statusCode == statusCode) {
+        return status;
+      }
+    }
+    if (statusCode >= 400 && statusCode < 500) {
+      return CLIENT_ERROR;
+    }
+    return SERVER_ERROR;
   }
 }

@@ -165,25 +165,15 @@ public class Fido2RegistrationChallengeInteractor implements AuthenticationInter
     Map<String, Object> contents =
         MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
-    if (executionResult.isClientError()) {
+    if (!executionResult.isSuccess()) {
 
       log.warn(
-          "Fido2 registration challenge is failed. Client error: {}", executionResult.contents());
+          "Fido2 registration challenge failed. status={}, contents={}",
+          executionResult.statusCode(),
+          executionResult.contents());
 
-      return AuthenticationInteractionRequestResult.clientError(
-          contents,
-          type,
-          operationType(),
-          method(),
-          DefaultSecurityEventType.fido2_registration_challenge_failure);
-    }
-
-    if (executionResult.isServerError()) {
-
-      log.warn(
-          "Fido2 registration challenge is failed. Server error: {}", executionResult.contents());
-
-      return AuthenticationInteractionRequestResult.serverError(
+      return AuthenticationInteractionRequestResult.error(
+          executionResult.statusCode(),
           contents,
           type,
           operationType(),

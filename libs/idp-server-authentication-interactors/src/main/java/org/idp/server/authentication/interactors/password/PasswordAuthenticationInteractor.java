@@ -157,26 +157,16 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
           MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
     }
 
-    if (executionResult.isClientError()) {
-      log.warn("Password authentication failed. Client error: {}", executionResult.contents());
+    if (!executionResult.isSuccess()) {
+      log.warn(
+          "Password authentication failed. status={}, contents={}",
+          executionResult.statusCode(),
+          executionResult.contents());
       // Issue #1021: Try to resolve user for security event logging
       User attemptedUser =
           tryResolveUserForLogging(tenant, username, providerId, userQueryRepository);
-      return AuthenticationInteractionRequestResult.clientError(
-          contents,
-          type,
-          operationType(),
-          method(),
-          attemptedUser,
-          DefaultSecurityEventType.password_failure);
-    }
-
-    if (executionResult.isServerError()) {
-      log.warn("Password authentication failed. Server error: {}", executionResult.contents());
-      // Issue #1021: Try to resolve user for security event logging
-      User attemptedUser =
-          tryResolveUserForLogging(tenant, username, providerId, userQueryRepository);
-      return AuthenticationInteractionRequestResult.serverError(
+      return AuthenticationInteractionRequestResult.error(
+          executionResult.statusCode(),
           contents,
           type,
           operationType(),
