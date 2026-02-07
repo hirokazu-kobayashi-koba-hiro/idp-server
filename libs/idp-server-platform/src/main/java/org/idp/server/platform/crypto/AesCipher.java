@@ -61,7 +61,7 @@ public class AesCipher {
         | NoSuchPaddingException
         | NoSuchAlgorithmException exception) {
 
-      throw new AesCryptoRuntimeException("Error while encrypting data: " + plainText, exception);
+      throw new AesCryptoRuntimeException("Error while encrypting data", exception);
     }
   }
 

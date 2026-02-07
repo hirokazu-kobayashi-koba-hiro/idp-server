@@ -57,6 +57,7 @@ public class JsonConverter {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
     objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+    objectMapper.registerModule(javaTimeModule);
     // TODO compatibility - client configuration contacts is string array, but it was string at
     // 2025-09-17.
     objectMapper
