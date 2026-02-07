@@ -90,6 +90,9 @@ public class SsrfProtectedHttpClient {
     try {
       log.debug("Sending request to: {}", request.uri());
       return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    } catch (java.net.http.HttpTimeoutException e) {
+      log.warn("HTTP request timed out: {}", e.getMessage(), e);
+      throw new HttpNetworkErrorException("HTTP request timed out", e);
     } catch (InterruptedException e) {
       // Restore the interrupt flag cleared by InterruptedException,
       // so that callers (e.g. ExecutorService shutdown) can detect the interruption.

@@ -802,6 +802,128 @@ describe("Identity Verification Error Handling", () => {
 
   });
 
+  describe("HTTP Client Timeout (HttpTimeoutException → 504)", () => {
+    let timeoutTestConfigId;
+    let timeoutTestConfigType;
+
+    beforeAll(async () => {
+      console.log("\n🔧 Setup: Creating HTTP client timeout test configuration...");
+
+      timeoutTestConfigId = uuidv4();
+      timeoutTestConfigType = `timeout-test-${uuidv4()}`;
+
+      // Configuration that points to a slow mock endpoint (5s delay)
+      // with a short request_timeout_seconds (1s) to trigger HttpTimeoutException
+      const configurationData = {
+        "id": timeoutTestConfigId,
+        "type": timeoutTestConfigType,
+        "attributes": {
+          "enabled": true,
+          "description": "Test configuration for HTTP client timeout"
+        },
+        "common": {
+          "callback_application_id_param": "app_id",
+          "auth_type": "none"
+        },
+        "processes": {
+          "apply": {
+            "request": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" }
+                },
+                "required": ["name"]
+              }
+            },
+            "execution": {
+              "type": "http_request",
+              "http_request": {
+                "url": `${mockApiBaseUrl}/e2e/retry/timeout`,
+                "method": "GET",
+                "auth_type": "none",
+                "request_timeout_seconds": 1
+              }
+            },
+            "transition": {
+              "applying": {
+                "any_of": [[]]
+              }
+            },
+            "store": {
+              "application_details_mapping_rules": [
+                {
+                  "from": "$.request_body",
+                  "to": "*"
+                }
+              ]
+            }
+          }
+        }
+      };
+
+      const configUrl = `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`;
+
+      const configResponse = await postWithJson({
+        url: configUrl,
+        body: configurationData,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${orgAccessToken}`
+        }
+      });
+
+      console.log(`✅ Timeout test configuration created: ${timeoutTestConfigType}`);
+      expect(configResponse.status).toBe(201);
+    });
+
+    afterAll(async () => {
+      if (timeoutTestConfigId) {
+        await deletion({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${timeoutTestConfigId}`,
+          headers: { Authorization: `Bearer ${orgAccessToken}` }
+        });
+        console.log(`🧹 Cleaned up timeout test configuration: ${timeoutTestConfigId}`);
+      }
+    });
+
+    it("should return 504 when HTTP client times out waiting for external service response", async () => {
+      console.log("\n🧪 Test: HTTP client timeout (HttpTimeoutException) → 504 Gateway Timeout");
+
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${timeoutTestConfigType}/apply`;
+
+      const response = await postWithJson({
+        url: applyUrl,
+        body: { "name": "Test User" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log(`Response status: ${response.status}`);
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      // HttpTimeoutException should be mapped to 504 Gateway Timeout
+      expect(response.status).toBe(504);
+      expect(response.data).toHaveProperty("error", "execution_failed");
+      expect(response.data).toHaveProperty("error_description");
+      expect(response.data.error_description).toContain("execution failed");
+      expect(response.data).toHaveProperty("error_details");
+      expect(response.data.error_details).toHaveProperty("execution_type", "http_request");
+      expect(response.data.error_details).toHaveProperty("status_category", "server_error");
+      expect(response.data.error_details).toHaveProperty("status_code", 504);
+      expect(response.data).toHaveProperty("error_messages");
+
+      // Verify network error details from HttpResponseResolver.resolveException()
+      expect(response.data.error_details).toHaveProperty("response_body");
+      expect(response.data.error_details.response_body).toHaveProperty("error", "network_error");
+      expect(response.data.error_details.response_body.error_description).toContain("timed out");
+
+      console.log("✅ HTTP client timeout correctly mapped to 504 Gateway Timeout");
+    });
+  });
+
   describe("External Service Error Handling", () => {
     let errorTestConfigId;
     let errorTestConfigType;
