@@ -66,7 +66,6 @@ public class HttpHmacAuthorizationHeaderCreator {
             .collect(Collectors.joining("\n"));
 
     String signature = hmacHasher.hash(payload);
-    log.debug("HMAC Signature: {}", signature);
 
     return signatureFormat.replace("{signature}", signature);
   }

@@ -16,6 +16,8 @@
 
 package org.idp.server.platform.http;
 
+import org.idp.server.platform.exception.InvalidConfigurationException;
+
 public enum HttpMethod {
   GET,
   POST,
@@ -31,7 +33,7 @@ public enum HttpMethod {
       }
     }
 
-    return POST;
+    throw new InvalidConfigurationException("Unsupported HTTP method: " + method);
   }
 
   public boolean isGet() {

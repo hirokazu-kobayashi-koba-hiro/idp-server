@@ -21,6 +21,7 @@ public class HttpServerErrorException extends RuntimeException {
 
   public HttpServerErrorException(String message, int statusCode) {
     super(message);
+    this.statusCode = statusCode;
   }
 
   public int statusCode() {

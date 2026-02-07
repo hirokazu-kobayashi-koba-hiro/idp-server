@@ -22,6 +22,7 @@ public class HttpClientErrorException extends RuntimeException {
 
   public HttpClientErrorException(String message, int statusCode) {
     super(message);
+    this.statusCode = statusCode;
   }
 
   public int statusCode() {
