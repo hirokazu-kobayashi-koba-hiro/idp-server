@@ -121,22 +121,14 @@ public class Fido2DeregistrationInteractor implements AuthenticationInteractor {
 
     User user = transaction.user();
 
-    if (executionResult.isClientError()) {
-      log.warn("FIDO2 deregistration failed. Client error: {}", executionResult.contents());
+    if (!executionResult.isSuccess()) {
+      log.warn(
+          "FIDO2 deregistration failed. status={}, contents={}",
+          executionResult.statusCode(),
+          executionResult.contents());
 
-      return AuthenticationInteractionRequestResult.clientError(
-          contents,
-          type,
-          operationType(),
-          method(),
-          user,
-          DefaultSecurityEventType.fido2_deregistration_failure);
-    }
-
-    if (executionResult.isServerError()) {
-      log.warn("FIDO2 deregistration failed. Server error: {}", executionResult.contents());
-
-      return AuthenticationInteractionRequestResult.serverError(
+      return AuthenticationInteractionRequestResult.error(
+          executionResult.statusCode(),
           contents,
           type,
           operationType(),

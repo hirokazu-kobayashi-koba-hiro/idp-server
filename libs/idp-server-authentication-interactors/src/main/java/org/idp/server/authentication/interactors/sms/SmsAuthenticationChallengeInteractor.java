@@ -128,9 +128,10 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
       Map<String, Object> contents =
           MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
-      if (executionResult.isClientError()) {
+      if (!executionResult.isSuccess()) {
         log.warn(
-            "SMS verification execution failed (client error). method={}, contents={}",
+            "SMS verification execution failed. status={}, method={}, contents={}",
+            executionResult.statusCode(),
             method(),
             contents);
         // Issue #1034: Try to resolve user for security event logging
@@ -138,26 +139,8 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
             transaction.hasUser()
                 ? transaction.user()
                 : tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
-        return AuthenticationInteractionRequestResult.clientError(
-            contents,
-            type,
-            operationType(),
-            method(),
-            attemptedUser,
-            DefaultSecurityEventType.sms_verification_challenge_failure);
-      }
-
-      if (executionResult.isServerError()) {
-        log.error(
-            "SMS verification execution failed (server error). method={}, contents={}",
-            method(),
-            contents);
-        // Issue #1034: Try to resolve user for security event logging
-        User attemptedUser =
-            transaction.hasUser()
-                ? transaction.user()
-                : tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
-        return AuthenticationInteractionRequestResult.serverError(
+        return AuthenticationInteractionRequestResult.error(
+            executionResult.statusCode(),
             contents,
             type,
             operationType(),

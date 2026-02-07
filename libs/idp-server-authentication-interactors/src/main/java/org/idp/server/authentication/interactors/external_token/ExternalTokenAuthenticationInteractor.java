@@ -90,17 +90,9 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
             requestAttributes,
             executionConfig);
 
-    if (executionResult.isClientError()) {
-      return AuthenticationInteractionRequestResult.clientError(
-          executionResult.contents(),
-          type,
-          operationType(),
-          method(),
-          DefaultSecurityEventType.external_token_authentication_failure);
-    }
-
-    if (executionResult.isServerError()) {
-      return AuthenticationInteractionRequestResult.serverError(
+    if (!executionResult.isSuccess()) {
+      return AuthenticationInteractionRequestResult.error(
+          executionResult.statusCode(),
           executionResult.contents(),
           type,
           operationType(),

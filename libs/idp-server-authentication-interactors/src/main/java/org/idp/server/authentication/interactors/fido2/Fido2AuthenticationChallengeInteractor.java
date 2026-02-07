@@ -98,25 +98,15 @@ public class Fido2AuthenticationChallengeInteractor implements AuthenticationInt
     Map<String, Object> contents =
         MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
-    if (executionResult.isClientError()) {
+    if (!executionResult.isSuccess()) {
 
       log.warn(
-          "Fido2 authentication challenge is failed. Client error: {}", executionResult.contents());
+          "Fido2 authentication challenge failed. status={}, contents={}",
+          executionResult.statusCode(),
+          executionResult.contents());
 
-      return AuthenticationInteractionRequestResult.clientError(
-          contents,
-          type,
-          operationType(),
-          method(),
-          DefaultSecurityEventType.fido2_authentication_challenge_failure);
-    }
-
-    if (executionResult.isServerError()) {
-
-      log.warn(
-          "Fido2 authentication challenge is failed. Server error: {}", executionResult.contents());
-
-      return AuthenticationInteractionRequestResult.serverError(
+      return AuthenticationInteractionRequestResult.error(
+          executionResult.statusCode(),
           contents,
           type,
           operationType(),

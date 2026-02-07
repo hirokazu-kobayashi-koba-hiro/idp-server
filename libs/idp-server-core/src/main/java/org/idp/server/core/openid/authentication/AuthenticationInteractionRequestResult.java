@@ -126,6 +126,40 @@ public class AuthenticationInteractionRequestResult {
         eventType);
   }
 
+  public static AuthenticationInteractionRequestResult error(
+      int statusCode,
+      Map<String, Object> response,
+      AuthenticationInteractionType type,
+      OperationType operationType,
+      String method,
+      DefaultSecurityEventType eventType) {
+    return new AuthenticationInteractionRequestResult(
+        AuthenticationInteractionStatus.fromStatusCode(statusCode),
+        type,
+        operationType,
+        method,
+        response,
+        eventType);
+  }
+
+  public static AuthenticationInteractionRequestResult error(
+      int statusCode,
+      Map<String, Object> response,
+      AuthenticationInteractionType type,
+      OperationType operationType,
+      String method,
+      User user,
+      DefaultSecurityEventType eventType) {
+    return new AuthenticationInteractionRequestResult(
+        AuthenticationInteractionStatus.fromStatusCode(statusCode),
+        type,
+        operationType,
+        method,
+        user,
+        response,
+        eventType);
+  }
+
   public AuthenticationInteractionRequestResult(
       AuthenticationInteractionStatus status,
       AuthenticationInteractionType type,
@@ -220,6 +254,6 @@ public class AuthenticationInteractionRequestResult {
   }
 
   public int statusCode() {
-    return this.status.statusCode();
+    return status.statusCode();
   }
 }

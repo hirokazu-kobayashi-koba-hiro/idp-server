@@ -166,25 +166,15 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
     Map<String, Object> contents =
         MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
-    if (executionResult.isClientError()) {
+    if (!executionResult.isSuccess()) {
 
       log.warn(
-          "FIDO-UAF registration challenge failed. Client error: {}", executionResult.contents());
+          "FIDO-UAF registration challenge failed. status={}, contents={}",
+          executionResult.statusCode(),
+          executionResult.contents());
 
-      return AuthenticationInteractionRequestResult.clientError(
-          contents,
-          type,
-          operationType(),
-          method(),
-          DefaultSecurityEventType.fido_uaf_registration_challenge_failure);
-    }
-
-    if (executionResult.isServerError()) {
-
-      log.warn(
-          "FIDO-UAF registration challenge failed. Server error: {}", executionResult.contents());
-
-      return AuthenticationInteractionRequestResult.serverError(
+      return AuthenticationInteractionRequestResult.error(
+          executionResult.statusCode(),
           contents,
           type,
           operationType(),

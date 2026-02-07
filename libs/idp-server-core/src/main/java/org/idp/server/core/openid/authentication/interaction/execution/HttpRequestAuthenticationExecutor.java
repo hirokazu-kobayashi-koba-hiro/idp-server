@@ -99,14 +99,10 @@ public class HttpRequestAuthenticationExecutor implements AuthenticationExecutor
     Map<String, Object> response = new HashMap<>();
     response.put("execution_http_request", httpResult.toMap());
 
-    if (httpResult.isClientError()) {
-      return AuthenticationExecutionResult.clientError(response);
+    if (httpResult.isSuccess()) {
+      return AuthenticationExecutionResult.success(response);
     }
 
-    if (httpResult.isServerError()) {
-      return AuthenticationExecutionResult.serverError(response);
-    }
-
-    return AuthenticationExecutionResult.success(response);
+    return AuthenticationExecutionResult.error(httpResult.statusCode(), response);
   }
 }
