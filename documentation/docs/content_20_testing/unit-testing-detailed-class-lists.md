@@ -74,12 +74,11 @@
 | `SecurityEventLogConfiguration` | セキュリティイベントログ設定 | • ログ設定管理<br />• フィルタリング<br />• 出力制御 |
 | `SecurityEventHookConfiguration` | セキュリティイベントフック設定 | • フック設定管理<br />• 配信設定<br />• エラーハンドリング |
 
-##### **Data & Transaction Management** (高優先 - 4 classes)
+##### **Data & Transaction Management** (高優先 - 3 classes)
 
 | クラス名 | 責任範囲 | 主要検証ポイント |
 |---------|----------|------------------|
 | `TransactionManager` | トランザクション管理 | • ACID保証<br />• 分散トランザクション<br />• ロールバック処理 |
-| `ReaderTransactionManager` | 読み取り専用トランザクション管理 | • 読み取り分離<br />• パフォーマンス最適化<br />• 接続管理 |
 | `SqlExecutor` | SQL実行 | • SQL実行処理<br />• パラメータ管理<br />• 例外処理 |
 | `SqlErrorClassifier` | SQLエラー分類 | • エラー分類<br />• リトライ可否判定<br />• ログ出力 |
 
