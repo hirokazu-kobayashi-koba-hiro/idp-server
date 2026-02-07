@@ -109,7 +109,7 @@ public class HttpRequestBuilder {
             .uri(URI.create(urlWithQueryParams))
             .timeout(Duration.ofSeconds(configuration.requestTimeoutSeconds()));
 
-    setHeaders(httpRequestBuilder, headers);
+    setHeaders(httpRequestBuilder, headers, HttpMethod.GET);
     setParams(httpRequestBuilder, HttpMethod.GET, headers, Map.of());
 
     return httpRequestBuilder.build();
@@ -164,19 +164,19 @@ public class HttpRequestBuilder {
             .uri(URI.create(interpolatedUrl.value()))
             .timeout(Duration.ofSeconds(configuration.requestTimeoutSeconds()));
 
-    setHeaders(httpRequestBuilder, headers);
+    setHeaders(httpRequestBuilder, headers, configuration.httpMethod());
     setParams(httpRequestBuilder, configuration.httpMethod(), headers, requestBody);
 
     return httpRequestBuilder.build();
   }
 
   private void setHeaders(
-      HttpRequest.Builder httpRequestBuilder, Map<String, String> httpRequestStaticHeaders) {
-
-    log.debug("Http Request headers: {}", jsonConverter.write(httpRequestStaticHeaders));
+      HttpRequest.Builder httpRequestBuilder,
+      Map<String, String> httpRequestStaticHeaders,
+      HttpMethod httpMethod) {
 
     httpRequestStaticHeaders.forEach(httpRequestBuilder::header);
-    if (!httpRequestStaticHeaders.containsKey("Content-Type")) {
+    if (!httpMethod.isGet() && !httpRequestStaticHeaders.containsKey("Content-Type")) {
       httpRequestBuilder.setHeader("Content-Type", "application/json");
     }
   }

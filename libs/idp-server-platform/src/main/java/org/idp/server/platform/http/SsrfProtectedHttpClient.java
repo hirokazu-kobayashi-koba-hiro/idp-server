@@ -90,7 +90,13 @@ public class SsrfProtectedHttpClient {
     try {
       log.debug("Sending request to: {}", request.uri());
       return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-    } catch (IOException | InterruptedException e) {
+    } catch (InterruptedException e) {
+      // Restore the interrupt flag cleared by InterruptedException,
+      // so that callers (e.g. ExecutorService shutdown) can detect the interruption.
+      Thread.currentThread().interrupt();
+      log.error("HTTP request interrupted: {}", e.getMessage(), e);
+      throw new HttpNetworkErrorException("HTTP request interrupted", e);
+    } catch (IOException e) {
       log.error("HTTP request failed: {}", e.getMessage(), e);
       throw new HttpNetworkErrorException("HTTP request failed", e);
     }
