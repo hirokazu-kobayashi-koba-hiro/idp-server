@@ -117,7 +117,7 @@ public class UserCreationService implements UserManagementService<UserRegistrati
     userCommandRepository.register(tenant, user);
 
     // 7. Security event publishing
-    managementEventPublisher.publish(
+    managementEventPublisher.publishSync(
         tenant,
         operator,
         user,

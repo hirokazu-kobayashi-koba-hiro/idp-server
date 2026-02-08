@@ -320,7 +320,7 @@ public class UserOperationEntryService implements UserOperationApi {
     UserLifecycleEvent userLifecycleEvent =
         new UserLifecycleEvent(tenant, user, UserLifecycleType.DELETE);
     userLifecycleEventPublisher.publish(userLifecycleEvent);
-    eventPublisher.publish(
+    eventPublisher.publishSync(
         tenant, oAuthToken, DefaultSecurityEventType.user_self_delete, requestAttributes);
 
     return new UserOperationResponse(UserOperationStatus.NO_CONTENT, null);

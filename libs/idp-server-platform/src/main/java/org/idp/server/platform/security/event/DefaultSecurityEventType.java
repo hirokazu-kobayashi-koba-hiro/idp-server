@@ -16,140 +16,202 @@
 
 package org.idp.server.platform.security.event;
 
+/**
+ * Default security event types used throughout the IdP server.
+ *
+ * <p>Each event type has a human-readable description and a processing mode flag ({@link
+ * #synchronous}). When {@code synchronous} is {@code true}, the event is processed in the same
+ * thread/transaction as the caller via {@code SecurityEventPublisher.publishSync()}, so that log
+ * persistence, statistics updates, and hook execution complete before the HTTP response is
+ * returned.
+ *
+ * <h3>Synchronous processing criteria</h3>
+ *
+ * An event should be marked as synchronous when <em>both</em> of the following conditions are met:
+ *
+ * <ol>
+ *   <li>The API consumer is an <strong>administrator</strong> (Management API) or the operation is
+ *       <strong>irreversible</strong> for the end-user (e.g. account deletion, identity
+ *       verification approval/rejection).
+ *   <li>The caller needs confirmation that event-side processing (audit log, webhook, etc.) has
+ *       completed before the response is sent.
+ * </ol>
+ *
+ * <p>All other events are processed asynchronously (fire-and-forget) via Spring's
+ * {@code @Async @EventListener}.
+ *
+ * @see org.idp.server.platform.security.SecurityEventPublisher
+ * @see org.idp.server.platform.security.SecurityEvent
+ */
 public enum DefaultSecurityEventType {
-  user_signup("User signed up"),
-  user_signup_failure("User signed up failure"),
-  user_signup_conflict("User signed up conflict"),
-  user_disabled("User disabled"),
-  user_enabled("User enabled"),
-  user_deletion("User deleted"),
-  user_self_delete("User deleted their own account"),
-  password_success("User successfully authenticated with a password"),
-  password_failure("User failed authentication with a password"),
-  fido_uaf_registration_challenge_success("User challenge registration fido-uaf"),
-  fido_uaf_registration_challenge_failure("User challenge failed registration fido-uaf"),
-  fido_uaf_registration_success("User successfully registration fido-uaf"),
-  fido_uaf_reset_success("User successfully reset fido-uaf"),
-  fido_uaf_registration_failure("User failed registration fido-uaf"),
-  fido_uaf_authentication_challenge_success(
-      "User challenge authentication using fido-uaf is success"),
-  fido_uaf_authentication_challenge_failure("User challenge authentication using fido-uaf is "),
-  fido_uaf_authentication_success("User successfully authenticated using fido-uaf"),
-  fido_uaf_authentication_failure("User failed authentication using fido-uaf"),
-  fido_uaf_deregistration_success("User successfully deregistration fido-uaf"),
-  fido_uaf_deregistration_failure("User failed deregistration fido-uaf"),
-  fido_uaf_cancel_success("User successfully cancel fido-uaf"),
-  fido_uaf_cancel_failure("User failed to cancel fido-uaf"),
-  fido2_registration_challenge_success("User successfully challenge registration FIDO2"),
-  fido2_registration_challenge_failure("User failed challenge registration FIDO2"),
-  fido2_registration_success("User successfully registration FIDO2"),
-  fido2_registration_failure("User failed registration FIDO2"),
-  fido2_reset_success("User successfully reset fido2"),
-  fido2_authentication_challenge_success("User successfully challenge authentication using FIDO2"),
-  fido2_authentication_challenge_failure("User failed challenge authentication using FIDO2"),
-  fido2_authentication_success("User successfully authenticated using FIDO2"),
-  fido2_authentication_failure("User failed authentication using FIDO2"),
-  fido2_deregistration_success("User successfully deregistered FIDO2 credential"),
-  fido2_deregistration_failure("User failed to deregister FIDO2 credential"),
-  email_verification_request_success("User request verified their email is success"),
-  email_verification_request_failure("User request verified their email is failed"),
-  email_verification_success("User successfully verified their email"),
-  email_verification_failure("User failed email verification"),
-  sms_verification_challenge_success("User request verified their phone number is success"),
-  sms_verification_challenge_failure("User request verified their phone number is success"),
-  sms_verification_success("User successfully verified their phone number"),
-  sms_verification_failure("User failed phone number verification"),
-  legacy_authentication_success("User legacy ID authentication verified"),
-  legacy_authentication_failure("User failed legacy ID authentication verified"),
-  external_token_authentication_success("User request verified their token is success"),
-  external_token_authentication_failure("User request verified their token is failed"),
-  federation_request("Federation request"),
-  federation_success("Federation success"),
-  federation_failure("Federation failed"),
-  authorize_failure("Authorize failure"),
-  oauth_authorize("OAuth Authorize success"),
-  oauth_authorize_with_session("OAuth Authorize success with a session"),
-  oauth_authorize_with_session_expired("OAuth Authorize failed due to session expired"),
+
+  // User lifecycle
+  user_signup("User account was created via self-registration"),
+  user_signup_failure("Self-registration failed"),
+  user_signup_conflict("Self-registration rejected due to duplicate account"),
+  user_self_delete("User deleted their own account (irreversible)", true),
+
+  // Password authentication
+  password_success("Password authentication succeeded at login"),
+  password_failure("Password authentication failed at login"),
+
+  // FIDO UAF (biometric) registration
+  fido_uaf_registration_challenge_success("FIDO UAF registration challenge was issued"),
+  fido_uaf_registration_challenge_failure("FIDO UAF registration challenge failed to issue"),
+  fido_uaf_registration_success("FIDO UAF biometric credential was registered"),
+  fido_uaf_registration_failure("FIDO UAF biometric credential registration failed"),
+  fido_uaf_reset_success("FIDO UAF credentials were reset"),
+
+  // FIDO UAF authentication
+  fido_uaf_authentication_challenge_success("FIDO UAF authentication challenge was issued"),
+  fido_uaf_authentication_challenge_failure("FIDO UAF authentication challenge failed to issue"),
+  fido_uaf_authentication_success("FIDO UAF biometric authentication succeeded at login"),
+  fido_uaf_authentication_failure("FIDO UAF biometric authentication failed at login"),
+
+  // FIDO UAF deregistration / cancel
+  fido_uaf_deregistration_success("FIDO UAF credential was deregistered"),
+  fido_uaf_deregistration_failure("FIDO UAF credential deregistration failed"),
+  fido_uaf_cancel_success("FIDO UAF operation was cancelled"),
+  fido_uaf_cancel_failure("FIDO UAF operation cancellation failed"),
+
+  // FIDO2 (security key) registration
+  fido2_registration_challenge_success("FIDO2 registration challenge was issued"),
+  fido2_registration_challenge_failure("FIDO2 registration challenge failed to issue"),
+  fido2_registration_success("FIDO2 security key was registered"),
+  fido2_registration_failure("FIDO2 security key registration failed"),
+  fido2_reset_success("FIDO2 credentials were reset"),
+
+  // FIDO2 authentication
+  fido2_authentication_challenge_success("FIDO2 authentication challenge was issued"),
+  fido2_authentication_challenge_failure("FIDO2 authentication challenge failed to issue"),
+  fido2_authentication_success("FIDO2 security key authentication succeeded at login"),
+  fido2_authentication_failure("FIDO2 security key authentication failed at login"),
+
+  // FIDO2 deregistration
+  fido2_deregistration_success("FIDO2 security key was deregistered"),
+  fido2_deregistration_failure("FIDO2 security key deregistration failed"),
+
+  // Email verification
+  email_verification_request_success("Email verification code was sent"),
+  email_verification_request_failure("Email verification code failed to send"),
+  email_verification_success("Email verification code was verified"),
+  email_verification_failure("Email verification code was rejected"),
+
+  // SMS verification
+  sms_verification_challenge_success("SMS verification code was sent"),
+  sms_verification_challenge_failure("SMS verification code failed to send"),
+  sms_verification_success("SMS verification code was verified"),
+  sms_verification_failure("SMS verification code was rejected"),
+
+  // Legacy / external authentication
+  legacy_authentication_success("Legacy authentication succeeded"),
+  legacy_authentication_failure("Legacy authentication failed"),
+  external_token_authentication_success("External token authentication succeeded"),
+  external_token_authentication_failure("External token authentication failed"),
+
+  // Federation (social login)
+  federation_request("Redirect to external IdP was initiated"),
+  federation_success("Callback from external IdP was processed successfully"),
+  federation_failure("Callback from external IdP processing failed"),
+
+  // OAuth authorization
+  authorize_failure("Authorization request failed"),
+  oauth_authorize("Authorization code was issued after user consent"),
+  oauth_authorize_with_session("Authorization was granted using existing session"),
+  oauth_authorize_with_session_expired("Authorization failed because session had expired"),
   oauth_authorize_with_session_acr_mismatch(
-      "OAuth Authorize failed due to session acr not matching requested acr_values"),
+      "Authorization failed because session ACR did not match requested acr_values"),
   oauth_authorize_with_session_policy_mismatch(
-      "OAuth Authorize failed due to session not satisfying authentication policy"),
-  oauth_deny("OAuth Deny success"),
-  issue_token_success("Issue token success"),
-  issue_token_failure("Issue token failure"),
-  refresh_token_success("Refresh token success"),
-  refresh_token_failure("Refresh token failure"),
-  login_success("User logged in"),
-  logout("User logged out"),
-  userinfo_success("Userinfo success"),
-  userinfo_failure("Userinfo failure"),
-  inspect_token_success("Inspect token success"),
-  inspect_token_failure("Inspect token failure"),
-  inspect_token_expired("Inspect token expired"),
-  revoke_token_success("Revoke token success"),
-  revoke_token_failure("Revoke token failure"),
-  authentication_device_notification_success("User successfully received a device notification"),
-  authentication_device_notification_cancel("User canceled a device notification"),
-  authentication_device_notification_failure("User failed to receive a device notification"),
+      "Authorization failed because session did not satisfy authentication policy"),
+  oauth_deny("User denied the authorization request"),
+
+  // Token
+  issue_token_success("Access token was issued"),
+  issue_token_failure("Access token issuance failed"),
+  refresh_token_success("Access token was refreshed"),
+  refresh_token_failure("Access token refresh failed"),
+  login_success("User session was created"),
+  logout("User session was terminated"),
+  userinfo_success("UserInfo was retrieved with access token"),
+  userinfo_failure("UserInfo retrieval failed"),
+  inspect_token_success("Token introspection confirmed token is active"),
+  inspect_token_failure("Token introspection failed"),
+  inspect_token_expired("Token introspection found token expired"),
+  revoke_token_success("Token was revoked"),
+  revoke_token_failure("Token revocation failed"),
+
+  // CIBA device notification
+  authentication_device_notification_success("Push notification was delivered to user device"),
+  authentication_device_notification_cancel("Push notification to user device was cancelled"),
+  authentication_device_notification_failure("Push notification to user device failed"),
   authentication_device_notification_no_action_success(
-      "Authentication device notification is no action"),
-  authentication_device_deny_success("User successfully denied a device authentication"),
-  authentication_device_deny_failure("User failed to deny a device authentication"),
-  authentication_cancel_success("User successfully cancel a authentication"),
-  authentication_cancel_failure("User failed to cancel a authentication"),
-  authentication_device_allow_success("User successfully allowed a device notification"),
-  authentication_device_allow_failure("User failed to allow a device notification"),
-  authentication_device_binding_message_success("User successfully binding a device notification"),
-  authentication_device_binding_message_failure("User failed to bind a device notification"),
-  authentication_device_registration_success("User successfully registered a device"),
-  authentication_device_registration_failure("User failed to register a device"),
-  authentication_device_deregistration_success("User successfully deregistered a device"),
-  authentication_device_deregistration_failure("User failed to deregister a device"),
+      "Push notification completed with no user action required"),
+
+  // CIBA device interaction
+  authentication_device_deny_success("User denied authentication on their device"),
+  authentication_device_deny_failure("User denial on device failed to process"),
+  authentication_cancel_success("Authentication was cancelled"),
+  authentication_cancel_failure("Authentication cancellation failed"),
+  authentication_device_allow_success("User approved authentication on their device"),
+  authentication_device_allow_failure("User approval on device failed to process"),
+  authentication_device_binding_message_success("Binding message was verified on device"),
+  authentication_device_binding_message_failure("Binding message verification failed on device"),
+
+  // Authentication device registration
+  authentication_device_registration_success("Authentication device was registered"),
+  authentication_device_registration_failure("Authentication device registration failed"),
+  authentication_device_deregistration_success("Authentication device was deregistered"),
+  authentication_device_deregistration_failure("Authentication device deregistration failed"),
   authentication_device_registration_challenge_success(
-      "User successfully challenge a device registration"),
-  authentication_device_log("Authentication device log from client"),
-  backchannel_authentication_request_success(
-      "User successfully authenticated with a backchannel authentication"),
-  backchannel_authentication_request_failure(
-      "User failed authentication with a backchannel authentication"),
-  backchannel_authentication_authorize("User authorized with a backchannel authentication"),
-  backchannel_authentication_deny("User denied with a backchannel authentication"),
-  password_reset("User reset their password"),
-  password_reset_success("User successfully reset their password"),
-  password_reset_failure("User failed to reset their password"),
-  password_change("User changed their password"),
-  password_change_success("User successfully changed their password"),
-  password_change_failure("User failed to change their password"),
-  identity_verification_application_apply("identity verification application was applied"),
-  identity_verification_application_failure("identity verification application was failed"),
-  identity_verification_application_cancel("identity verification application was canceled"),
-  identity_verification_application_delete("identity verification application was deleted"),
-  identity_verification_application_findList("identity verification application was foundList"),
-  identity_verification_application_approved("identity verification application was approved"),
-  identity_verification_application_rejected("identity verification application was rejected"),
-  identity_verification_application_cancelled("identity verification application was cancelled"),
-  identity_verification_result_findList("identity verification result was foundList"),
-  server_create("Server instance was created"),
-  server_get("Server details were retrieved"),
-  server_edit("Server configuration was updated"),
-  server_delete("Server instance was deleted"),
-  application_create("Server instance was created"),
-  application_get("Server details were retrieved"),
-  application_edit("Server configuration was updated"),
-  application_delete("Server instance was deleted"),
-  user_create("New user account was created"),
-  user_get("User details were retrieved"),
-  user_edit("User details were updated"),
+      "Authentication device registration challenge was issued"),
+  authentication_device_log("Client application sent device log"),
+
+  // CIBA backchannel authentication
+  backchannel_authentication_request_success("CIBA authentication request was accepted"),
+  backchannel_authentication_request_failure("CIBA authentication request was rejected"),
+  backchannel_authentication_authorize("User authorized the CIBA authentication request"),
+  backchannel_authentication_deny("User denied the CIBA authentication request"),
+
+  // End-user password management
+  password_reset("Password was reset via recovery flow"),
+  password_reset_success("Password reset succeeded"),
+  password_reset_failure("Password reset failed"),
+  password_change("Administrator changed user password", true),
+  password_change_success("User changed their own password"),
+  password_change_failure("User password change failed"),
+
+  // Identity verification (eKYC)
+  identity_verification_application_apply("Identity verification application was submitted"),
+  identity_verification_application_failure("Identity verification application processing failed"),
+  identity_verification_application_cancel("Identity verification application was cancelled"),
+  identity_verification_application_delete("Identity verification application was deleted"),
+  identity_verification_application_findList("Identity verification applications were listed"),
+  identity_verification_application_approved(
+      "Identity verification was approved, user trust level elevated (irreversible)", true),
+  identity_verification_application_rejected(
+      "Identity verification was rejected (irreversible)", true),
+  identity_verification_application_cancelled(
+      "Identity verification was cancelled by external service"),
+  identity_verification_result_findList("Identity verification results were listed"),
+
+  // Management API - user
+  user_create("User account was created by administrator", true),
+  user_get("User details were retrieved by administrator"),
+  user_edit("User details were updated by administrator", true),
   user_lock("User account was locked"),
-  user_delete("User account was deleted"),
-  member_invite("A member was invited to the organization"),
-  member_join("A member joined the organization"),
-  member_leave("A member left the organization");
+  user_delete("User account was deleted by administrator (irreversible)", true);
 
   String description;
+  boolean synchronous;
 
   DefaultSecurityEventType(String description) {
     this.description = description;
+    this.synchronous = false;
+  }
+
+  DefaultSecurityEventType(String description, boolean synchronous) {
+    this.description = description;
+    this.synchronous = synchronous;
   }
 
   public SecurityEventType toEventType() {
@@ -158,6 +220,10 @@ public enum DefaultSecurityEventType {
 
   public SecurityEventDescription toEventDescription() {
     return new SecurityEventDescription(description);
+  }
+
+  public boolean isSynchronous() {
+    return synchronous;
   }
 
   public boolean isIdentifyUserEventType() {

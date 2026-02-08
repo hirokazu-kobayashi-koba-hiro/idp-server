@@ -123,7 +123,7 @@ public class UserPatchService implements UserManagementService<UserUpdateRequest
         Map.of("result", updatedUser.toMap(), "diff", actualDiff, "dry_run", dryRun);
 
     // 9. Security event publishing
-    managementEventPublisher.publish(
+    managementEventPublisher.publishSync(
         tenant,
         operator,
         updatedUser,

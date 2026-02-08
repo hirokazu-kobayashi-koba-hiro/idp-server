@@ -124,7 +124,7 @@ public class UserUpdateService implements UserManagementService<UserUpdateReques
         Map.of("result", updatedUser.toMap(), "diff", actualDiff, "dry_run", dryRun);
 
     // 9. Security event publishing
-    managementEventPublisher.publish(
+    managementEventPublisher.publishSync(
         tenant,
         operator,
         updatedUser,

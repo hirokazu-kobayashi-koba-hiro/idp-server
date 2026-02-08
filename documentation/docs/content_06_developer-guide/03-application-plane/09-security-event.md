@@ -122,6 +122,106 @@ EntryService処理完了 → HTTPレスポンス返却
 
 ---
 
+## 同期処理と非同期処理
+
+SecurityEventの発行には **非同期（`publish`）** と **同期（`publishSync`）** の2つのモードがあります。
+
+### 使い分け
+
+| モード | メソッド | 用途 |
+|--------|---------|------|
+| **非同期** | `publish()` | Application Plane（認証・認可・トークン発行等） |
+| **同期** | `publishSync()` | Control Plane（ユーザー作成・更新・削除等の管理API） |
+
+**非同期**: APIレスポンスを高速に返したい場合。イベント処理の成否はレスポンスに影響しない。
+
+**同期**: イベント処理（ログ保存、統計更新、フック実行）が完了してからレスポンスを返したい場合。管理APIではイベント処理の完了を保証する必要がある。
+
+### スレッドとトランザクションの違い
+
+```
+【非同期: publish()】
+
+リクエストスレッド                    イベント処理スレッド
+──────────────────                  ──────────────────
+ManagementEntryServiceProxy         SecurityEventListerService
+  │ beginTransaction()                │
+  │ ┌─────────────────────┐           │
+  │ │ Transaction A       │           │
+  │ │                     │           │
+  │ │ UserCreationService │           │
+  │ │   register(user)    │           │
+  │ │   publish(event) ───────────→ @Async @EventListener
+  │ │                     │           │ beginTransaction()
+  │ │                     │           │ ┌──────────────────┐
+  │ └─────────────────────┘           │ │ Transaction B    │
+  │ commitTransaction()               │ │                  │
+  │                                    │ │ SecurityEvent    │
+  ↓ HTTPレスポンス返却                  │ │ Handler.handle() │
+  （イベント処理完了を待たない）          │ └──────────────────┘
+                                       │ commitTransaction()
+                                       ↓
+
+
+【同期: publishSync()】
+
+リクエストスレッド（同一スレッドで全処理）
+──────────────────────────────────────
+ManagementEntryServiceProxy
+  │ beginTransaction()
+  │ ┌───────────────────────────────┐
+  │ │ Transaction A                 │
+  │ │                               │
+  │ │ UserCreationService           │
+  │ │   register(user)              │
+  │ │   publishSync(event)          │
+  │ │     │                         │
+  │ │     ↓                         │
+  │ │   rawSecurityEventApi         │
+  │ │     .handle()                 │
+  │ │     │                         │
+  │ │     ↓                         │
+  │ │   SecurityEventHandler        │
+  │ │     .handle()                 │
+  │ │     - logEvent()              │
+  │ │     - updateStatistics()      │
+  │ │     - executeHooks()          │
+  │ │                               │
+  │ └───────────────────────────────┘
+  │ commitTransaction()
+  ↓ HTTPレスポンス返却
+  （イベント処理完了後に返す）
+```
+
+| 項目 | 非同期（`publish`） | 同期（`publishSync`） |
+|------|--------------------|-----------------------|
+| **スレッド** | 別スレッド（TaskExecutor経由） | 同一スレッド |
+| **トランザクション** | 別トランザクション | 同一トランザクション |
+| **プロキシ** | `securityEventApi`（Proxy経由） | `rawSecurityEventApi`（Proxy不要） |
+| **ログコンテキスト** | 再設定が必要 | リクエストスレッドで設定済み |
+| **エラー時** | 呼び出し元に影響なし | 呼び出し元にも例外伝搬 |
+| **ロールバック** | イベント処理のみロールバック | ユーザー操作ごとロールバック |
+
+### rawSecurityEventApi が必要な理由
+
+`securityEventApi()` は `TenantAwareEntryServiceProxy` でラップされており、呼び出し時に `TransactionManager.beginTransaction()` を実行します。同期パスでは既にトランザクションが開始されているため、二重に `beginTransaction()` が走り `SqlRuntimeException: Transaction already started` が発生します。
+
+```
+securityEventApi()          → Proxy → beginTransaction() → ❌ 二重トランザクション
+rawSecurityEventApi()       → 直接  → 既存コネクション再利用 → ✅ 正常動作
+```
+
+`rawSecurityEventApi()` はプロキシを経由しない生の `SecurityEventEntryService` を返します。内部の Repository 呼び出しは `TransactionManager.getConnection()` で既存のコネクションを取得するため、外側のトランザクション内で正常に動作します。
+
+### 実装
+
+- Publisher インターフェース: [SecurityEventPublisher.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/SecurityEventPublisher.java)
+- Publisher 実装（Adapter層）: [SecurityEventPublisherService.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/event/SecurityEventPublisherService.java)
+- Management用 Publisher: [ManagementEventPublisher.java](../../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/identity/user/ManagementEventPublisher.java)
+- rawSecurityEventApi 提供: [IdpServerApplication.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/IdpServerApplication.java)
+
+---
+
 ## ThreadPool設定
 
 | 設定 | 値 | 説明 |
@@ -520,15 +620,18 @@ POST /v1/management/tenants/{tenant-id}/security-event-hooks
 
 ### Q1: イベントは同期？非同期？
 
-| 処理 | 同期/非同期 | 説明 |
-|------|-----------|------|
-| **イベント発行** | 同期 | `eventPublisher.publish()` |
-| **イベント保存** | 同期 | DBに即座に記録 |
-| **Hook送信** | 非同期 | 別スレッドで実行 |
+2つのモードがあります：
 
-**理由**:
-- イベント記録は即座に完了（監査証跡）
-- 外部サービス通知は非同期（パフォーマンス影響を避ける）
+| モード | 用途 | イベント処理 | トランザクション |
+|--------|------|-------------|----------------|
+| **非同期**（`publish`） | Application Plane | 別スレッド | 別トランザクション |
+| **同期**（`publishSync`） | Control Plane管理API | 同一スレッド | 同一トランザクション |
+
+**非同期の理由**: Application Planeではレスポンス速度が重要。イベント処理の遅延がAPIに影響しない。
+
+**同期の理由**: 管理APIではイベント処理（ログ保存、統計更新）の完了を保証してからレスポンスを返す。
+
+詳細は「[同期処理と非同期処理](#同期処理と非同期処理)」セクションを参照。
 
 ### Q2: イベント発行失敗時は？
 
@@ -579,4 +682,4 @@ POST /v1/management/tenants/{tenant-id}/security-event-hooks
 - [SecurityEventPublisher.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/event/SecurityEventPublisher.java)
 - [SecurityEventRetryScheduler.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/event/SecurityEventRetryScheduler.java)
 
-**最終更新**: 2026-02-03
+**最終更新**: 2026-02-08

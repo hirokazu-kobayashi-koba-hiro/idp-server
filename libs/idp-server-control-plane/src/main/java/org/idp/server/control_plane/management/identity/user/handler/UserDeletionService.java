@@ -109,7 +109,7 @@ public class UserDeletionService implements UserManagementService<UserDeleteRequ
     userLifecycleEventPublisher.publish(userLifecycleEvent);
 
     // 6. Security event publishing
-    managementEventPublisher.publish(
+    managementEventPublisher.publishSync(
         tenant,
         operator,
         user,
