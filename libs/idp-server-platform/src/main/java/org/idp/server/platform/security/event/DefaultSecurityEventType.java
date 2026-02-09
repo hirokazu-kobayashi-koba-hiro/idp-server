@@ -63,16 +63,14 @@ public enum DefaultSecurityEventType {
   password_failure("Password authentication failed at login"),
 
   // FIDO UAF (biometric) registration
-  fido_uaf_registration_challenge_success(
-      "FIDO UAF registration challenge was issued", false, true),
+  fido_uaf_registration_challenge_success("FIDO UAF registration challenge was issued"),
   fido_uaf_registration_challenge_failure("FIDO UAF registration challenge failed to issue"),
   fido_uaf_registration_success("FIDO UAF biometric credential was registered"),
   fido_uaf_registration_failure("FIDO UAF biometric credential registration failed"),
   fido_uaf_reset_success("FIDO UAF credentials were reset"),
 
   // FIDO UAF authentication
-  fido_uaf_authentication_challenge_success(
-      "FIDO UAF authentication challenge was issued", false, true),
+  fido_uaf_authentication_challenge_success("FIDO UAF authentication challenge was issued"),
   fido_uaf_authentication_challenge_failure("FIDO UAF authentication challenge failed to issue"),
   fido_uaf_authentication_success("FIDO UAF biometric authentication succeeded at login"),
   fido_uaf_authentication_failure("FIDO UAF biometric authentication failed at login"),
@@ -84,14 +82,14 @@ public enum DefaultSecurityEventType {
   fido_uaf_cancel_failure("FIDO UAF operation cancellation failed"),
 
   // FIDO2 (security key) registration
-  fido2_registration_challenge_success("FIDO2 registration challenge was issued", false, true),
+  fido2_registration_challenge_success("FIDO2 registration challenge was issued"),
   fido2_registration_challenge_failure("FIDO2 registration challenge failed to issue"),
   fido2_registration_success("FIDO2 security key was registered"),
   fido2_registration_failure("FIDO2 security key registration failed"),
   fido2_reset_success("FIDO2 credentials were reset"),
 
   // FIDO2 authentication
-  fido2_authentication_challenge_success("FIDO2 authentication challenge was issued", false, true),
+  fido2_authentication_challenge_success("FIDO2 authentication challenge was issued"),
   fido2_authentication_challenge_failure("FIDO2 authentication challenge failed to issue"),
   fido2_authentication_success("FIDO2 security key authentication succeeded at login"),
   fido2_authentication_failure("FIDO2 security key authentication failed at login"),
@@ -101,13 +99,13 @@ public enum DefaultSecurityEventType {
   fido2_deregistration_failure("FIDO2 security key deregistration failed"),
 
   // Email verification
-  email_verification_request_success("Email verification code was sent", false, true),
+  email_verification_request_success("Email verification code was sent"),
   email_verification_request_failure("Email verification code failed to send"),
   email_verification_success("Email verification code was verified"),
   email_verification_failure("Email verification code was rejected"),
 
   // SMS verification
-  sms_verification_challenge_success("SMS verification code was sent", false, true),
+  sms_verification_challenge_success("SMS verification code was sent"),
   sms_verification_challenge_failure("SMS verification code failed to send"),
   sms_verification_success("SMS verification code was verified"),
   sms_verification_failure("SMS verification code was rejected"),
@@ -172,8 +170,8 @@ public enum DefaultSecurityEventType {
   authentication_device_deregistration_success("Authentication device was deregistered"),
   authentication_device_deregistration_failure("Authentication device deregistration failed"),
   authentication_device_registration_challenge_success(
-      "Authentication device registration challenge was issued", false, true),
-  authentication_device_log("Client application sent device log", false, true),
+      "Authentication device registration challenge was issued"),
+  authentication_device_log("Client application sent device log"),
 
   // CIBA backchannel authentication
   backchannel_authentication_request_success("CIBA authentication request was accepted"),
