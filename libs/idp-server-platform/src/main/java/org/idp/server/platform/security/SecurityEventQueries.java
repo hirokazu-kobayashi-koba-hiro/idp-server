@@ -16,8 +16,10 @@
 
 package org.idp.server.platform.security;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -166,6 +168,27 @@ public class SecurityEventQueries implements UuidConvertable {
       return 0;
     }
     return Integer.parseInt(values.get("offset"));
+  }
+
+  public boolean hasCursor() {
+    String value = values.get("cursor");
+    return value != null && !value.isEmpty();
+  }
+
+  public String cursor() {
+    return values.get("cursor");
+  }
+
+  public LocalDateTime cursorCreatedAt() {
+    String decoded = new String(Base64.getDecoder().decode(cursor()), StandardCharsets.UTF_8);
+    String createdAtPart = decoded.split("\\|")[0];
+    return LocalDateTimeParser.parse(createdAtPart);
+  }
+
+  public UUID cursorId() {
+    String decoded = new String(Base64.getDecoder().decode(cursor()), StandardCharsets.UTF_8);
+    String idPart = decoded.split("\\|")[1];
+    return UUID.fromString(idPart);
   }
 
   public Map<String, Object> toMap() {

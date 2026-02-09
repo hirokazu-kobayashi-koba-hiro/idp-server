@@ -24,8 +24,6 @@ import org.idp.server.platform.security.event.SecurityEventIdentifier;
 
 public interface SecurityEventQueryRepository {
 
-  long findTotalCount(Tenant tenant, SecurityEventQueries queries);
-
   List<SecurityEvent> findList(Tenant tenant, SecurityEventQueries queries);
 
   SecurityEvent find(Tenant tenant, SecurityEventIdentifier identifier);

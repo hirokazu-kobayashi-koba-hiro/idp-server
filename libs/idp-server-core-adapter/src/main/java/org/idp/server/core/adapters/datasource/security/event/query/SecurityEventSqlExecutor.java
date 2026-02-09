@@ -23,7 +23,6 @@ import org.idp.server.platform.security.SecurityEventQueries;
 import org.idp.server.platform.security.event.SecurityEventIdentifier;
 
 public interface SecurityEventSqlExecutor {
-  Map<String, String> selectCount(Tenant tenant, SecurityEventQueries queries);
 
   List<Map<String, String>> selectList(Tenant tenant, SecurityEventQueries queries);
 

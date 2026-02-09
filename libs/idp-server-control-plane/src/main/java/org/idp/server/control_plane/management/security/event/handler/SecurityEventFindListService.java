@@ -16,6 +16,8 @@
 
 package org.idp.server.control_plane.management.security.event.handler;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,23 +68,27 @@ public class SecurityEventFindListService
 
     new SecurityEventQueryValidator(queries).validate();
 
-    long totalCount = securityEventQueryRepository.findTotalCount(targetTenant, queries);
-    if (totalCount == 0) {
-      Map<String, Object> response = new HashMap<>();
-      response.put("list", List.of());
-      response.put("total_count", 0);
-      response.put("limit", queries.limit());
-      response.put("offset", queries.offset());
-      return new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, response);
-    }
-
     List<SecurityEvent> events = securityEventQueryRepository.findList(targetTenant, queries);
 
+    int limit = queries.limit();
+    boolean hasMore = events.size() > limit;
+
+    List<SecurityEvent> resultEvents = hasMore ? events.subList(0, limit) : events;
+
     Map<String, Object> response = new HashMap<>();
-    response.put("list", events.stream().map(SecurityEvent::toMap).toList());
-    response.put("total_count", totalCount);
-    response.put("limit", queries.limit());
+    response.put("list", resultEvents.stream().map(SecurityEvent::toMap).toList());
+    response.put("has_more", hasMore);
+    response.put("limit", limit);
     response.put("offset", queries.offset());
+
+    if (hasMore) {
+      SecurityEvent lastEvent = resultEvents.get(resultEvents.size() - 1);
+      String cursorValue =
+          lastEvent.createdAt().valueAsString() + "|" + lastEvent.identifier().value();
+      String nextCursor =
+          Base64.getEncoder().encodeToString(cursorValue.getBytes(StandardCharsets.UTF_8));
+      response.put("next_cursor", nextCursor);
+    }
 
     return new SecurityEventManagementResponse(SecurityEventManagementStatus.OK, response);
   }

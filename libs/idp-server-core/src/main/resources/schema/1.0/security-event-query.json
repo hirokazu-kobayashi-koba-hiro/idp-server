@@ -57,6 +57,11 @@
       "type": "string",
       "pattern": "^(0|[1-9][0-9]*)$",
       "description": "Number of events to skip for pagination (>=0)"
+    },
+    "cursor": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Cursor for keyset pagination (Base64 encoded). When specified, offset is ignored."
     }
   },
   "additionalProperties": true

@@ -84,7 +84,7 @@ describe("User lifecycle", () => {
       });
       console.log("Security Event List:", JSON.stringify(securityEventListResponse.data, null, 2));
       expect(securityEventListResponse.status).toBe(200);
-      expect(securityEventListResponse.data.total_count).toBe(1);
+      expect(securityEventListResponse.data.list.length).toBe(1);
       expect(securityEventListResponse.data.list[0].type).toEqual("user_self_delete");
 
       const securityEventId = securityEventListResponse.data.list[0].id;

@@ -35,7 +35,7 @@ describe("organization security event management api", () => {
       expect(listResponse.status).toBe(200);
       expect(listResponse.data).toHaveProperty("list");
       expect(Array.isArray(listResponse.data.list)).toBe(true);
-      expect(listResponse.data).toHaveProperty("total_count");
+      expect(listResponse.data).toHaveProperty("has_more");
       expect(listResponse.data).toHaveProperty("limit", 10);
       expect(listResponse.data).toHaveProperty("offset", 0);
     });
@@ -65,7 +65,7 @@ describe("organization security event management api", () => {
       console.log("Paginated response:", JSON.stringify(paginatedResponse.data, null, 2));
       expect(paginatedResponse.status).toBe(200);
       expect(paginatedResponse.data).toHaveProperty("list");
-      expect(paginatedResponse.data).toHaveProperty("total_count");
+      expect(paginatedResponse.data).toHaveProperty("has_more");
       expect(paginatedResponse.data).toHaveProperty("limit", 5);
       expect(paginatedResponse.data).toHaveProperty("offset", 0);
       expect(Array.isArray(paginatedResponse.data.list)).toBe(true);
@@ -290,10 +290,10 @@ describe("organization security event management api", () => {
           Authorization: `Bearer ${accessToken}`
         }
       });
-      console.log("Without from/to response:", response.status, "total_count:", response.data.total_count);
+      console.log("Without from/to response:", response.status, "has_more:", response.data.has_more);
       expect(response.status).toBe(200);
       expect(response.data).toHaveProperty("list");
-      expect(response.data).toHaveProperty("total_count");
+      expect(response.data).toHaveProperty("has_more");
     });
 
     it("from/to parameter - with time range filters events", async () => {
@@ -317,7 +317,7 @@ describe("organization security event management api", () => {
           Authorization: `Bearer ${accessToken}`
         }
       });
-      console.log("With from/to response:", response.status, "total_count:", response.data.total_count);
+      console.log("With from/to response:", response.status, "has_more:", response.data.has_more);
       expect(response.status).toBe(200);
       expect(response.data).toHaveProperty("list");
     });
@@ -429,7 +429,7 @@ describe("organization security event management api", () => {
       console.log("List response for event lookup:", listResponse.data);
       expect(listResponse.status).toBe(200);
 
-      if (listResponse.data.total_count > 0) {
+      if (listResponse.data.list.length > 0) {
         const firstEvent = listResponse.data.list[0];
         const eventId = firstEvent.id;
 
