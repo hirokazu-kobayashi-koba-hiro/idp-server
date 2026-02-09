@@ -161,6 +161,7 @@
 
 - [クエリ最適化](../11-postgresql/dev-05-query-optimization.md)
 - [接続プーリング](../11-postgresql/dev-06-connection-pooling.md)
+- [大量データの検索パターン](../11-postgresql/dev-09-large-data-search.md)
 - [実行計画](../11-postgresql/dba-08-planner.md)
 
 ### Linux
