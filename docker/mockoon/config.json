@@ -1454,6 +1454,70 @@
           "callbacks": []
         },
         {
+          "uuid": "error-401-plain-text",
+          "body": "Authentication required",
+          "latency": 50,
+          "statusCode": 401,
+          "label": "401 Unauthorized (Plain Text)",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "text/plain"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "401_text",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "error-503-html",
+          "body": "<html><body><h1>503 Service Unavailable</h1></body></html>",
+          "latency": 50,
+          "statusCode": 503,
+          "label": "503 Service Unavailable (HTML)",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "text/html"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "status",
+              "value": "503_html",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
           "uuid": "error-default-200",
           "body": "{\n  \"status\": \"success\",\n  \"application_id\": \"{{ uuid }}\",\n  \"verification_status\": \"pending\"\n}",
           "latency": 50,

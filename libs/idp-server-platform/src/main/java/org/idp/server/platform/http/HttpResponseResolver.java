@@ -24,9 +24,13 @@ import java.util.stream.Collectors;
 import org.idp.server.platform.condition.ConditionEvaluator;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.json.JsonRuntimeException;
 import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public class HttpResponseResolver {
+
+  static LoggerWrapper log = LoggerWrapper.getLogger(HttpResponseResolver.class);
 
   /**
    * Resolves HTTP response using the provided configurations.
@@ -99,8 +103,17 @@ public class HttpResponseResolver {
     if (httpResponse.body() == null || httpResponse.body().isEmpty()) {
       return JsonNodeWrapper.empty();
     }
-
-    return JsonNodeWrapper.fromString(httpResponse.body());
+    try {
+      return JsonNodeWrapper.fromString(httpResponse.body());
+    } catch (JsonRuntimeException e) {
+      log.warn(
+          "non-JSON response body received, wrapping as raw_body: status={}, body={}",
+          httpResponse.statusCode(),
+          httpResponse.body());
+      Map<String, Object> rawBody = new HashMap<>();
+      rawBody.put("raw_body", httpResponse.body());
+      return JsonNodeWrapper.fromObject(rawBody);
+    }
   }
 
   /**

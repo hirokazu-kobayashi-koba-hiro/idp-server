@@ -366,6 +366,37 @@ describe("Authentication Interactor: External Service Error Code Propagation", (
     }
   );
 
+  it.each([
+    {
+      statusCode: "401_text",
+      expectedStatus: 401,
+      description: "plain text response",
+    },
+    {
+      statusCode: "503_html",
+      expectedStatus: 503,
+      description: "HTML response",
+    },
+  ])(
+    "should propagate $expectedStatus from external service returning $description without 500 error",
+    async ({ statusCode, expectedStatus }) => {
+      const authId = await startAuthorizationAndRegister();
+
+      const response = await sendFidoUafRegistrationWithStatus(
+        authId,
+        statusCode
+      );
+
+      console.log(
+        `Response status: ${response.status} (expected: ${expectedStatus})`
+      );
+      console.log("Response data:", JSON.stringify(response.data, null, 2));
+
+      expect(response.status).toBe(expectedStatus);
+      expect(response.status).not.toBe(500);
+    }
+  );
+
   it("should return 200 when external FIDO-UAF service succeeds", async () => {
     const authId = await startAuthorizationAndRegister();
 
