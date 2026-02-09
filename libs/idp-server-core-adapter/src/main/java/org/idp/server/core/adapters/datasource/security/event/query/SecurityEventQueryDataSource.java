@@ -34,17 +34,6 @@ public class SecurityEventQueryDataSource implements SecurityEventQueryRepositor
   }
 
   @Override
-  public long findTotalCount(Tenant tenant, SecurityEventQueries queries) {
-    Map<String, String> result = executor.selectCount(tenant, queries);
-
-    if (result == null || result.isEmpty()) {
-      return 0;
-    }
-
-    return Long.parseLong(result.get("count"));
-  }
-
-  @Override
   public List<SecurityEvent> findList(Tenant tenant, SecurityEventQueries queries) {
     List<Map<String, String>> results = executor.selectList(tenant, queries);
 

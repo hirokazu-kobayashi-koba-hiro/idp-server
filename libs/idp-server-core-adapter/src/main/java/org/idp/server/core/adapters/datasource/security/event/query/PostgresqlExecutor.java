@@ -28,91 +28,6 @@ import org.idp.server.platform.security.event.SecurityEventIdentifier;
 public class PostgresqlExecutor implements SecurityEventSqlExecutor {
 
   @Override
-  public Map<String, String> selectCount(Tenant tenant, SecurityEventQueries queries) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-    String selectSql = """
-            SELECT COUNT(*) FROM security_event
-            """;
-    StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?::uuid");
-    List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierValue());
-
-    if (queries.hasFrom() && queries.hasTo()) {
-      sql.append(" AND created_at BETWEEN ? AND ?");
-      params.add(queries.from());
-      params.add(queries.to());
-    } else if (queries.hasFrom()) {
-      sql.append(" AND created_at >= ?");
-      params.add(queries.from());
-    } else if (queries.hasTo()) {
-      sql.append(" AND created_at <= ?");
-      params.add(queries.to());
-    }
-
-    if (queries.hasId()) {
-      sql.append(" AND id = ?::uuid");
-      params.add(queries.idAsUuid());
-    }
-
-    if (queries.hasClientId()) {
-      sql.append(" AND client_id = ?");
-      params.add(queries.clientId());
-    }
-
-    if (queries.hasUserId()) {
-      sql.append(" AND user_id = ?::uuid");
-      params.add(queries.userIdAsUuid());
-    }
-
-    if (queries.hasExternalUserId()) {
-      sql.append(" AND external_user_id = ?");
-      params.add(queries.externalUserId());
-    }
-
-    if (queries.hasUserName()) {
-      sql.append(" AND user_name LIKE ?");
-      params.add("%" + queries.userName() + "%");
-    }
-
-    if (queries.hasEventType()) {
-      List<String> eventTypes = queries.eventTypes();
-      if (!eventTypes.isEmpty()) {
-        if (eventTypes.size() == 1) {
-          sql.append(" AND type = ?");
-          params.add(eventTypes.get(0));
-        } else {
-          sql.append(" AND type IN (");
-          sql.append(String.join(",", Collections.nCopies(eventTypes.size(), "?")));
-          sql.append(")");
-          params.addAll(eventTypes);
-        }
-      }
-    }
-
-    if (queries.hasIpAddress()) {
-      sql.append(" AND ip_address = ?::inet");
-      params.add(queries.ipAddress());
-    }
-
-    if (queries.hasUserAgent()) {
-      sql.append(" AND user_agent LIKE ?");
-      params.add("%" + queries.userAgent() + "%");
-    }
-
-    if (queries.hasDetails()) {
-      for (Map.Entry<String, String> entry : queries.details().entrySet()) {
-        String key = entry.getKey();
-        String value = entry.getValue();
-        sql.append(" AND detail ->> ? = ?");
-        params.add(key);
-        params.add(value);
-      }
-    }
-
-    return sqlExecutor.selectOne(sql.toString(), params);
-  }
-
-  @Override
   public List<Map<String, String>> selectList(Tenant tenant, SecurityEventQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
@@ -192,11 +107,20 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
       }
     }
 
-    sql.append(" ORDER BY created_at DESC");
+    if (queries.hasCursor()) {
+      sql.append(" AND (created_at, id) < (?::timestamp, ?::uuid)");
+      params.add(queries.cursorCreatedAt());
+      params.add(queries.cursorId());
+    }
+
+    sql.append(" ORDER BY created_at DESC, id DESC");
     sql.append(" LIMIT ?");
-    sql.append(" OFFSET ?");
-    params.add(queries.limit());
-    params.add(queries.offset());
+    params.add(queries.limit() + 1);
+
+    if (!queries.hasCursor()) {
+      sql.append(" OFFSET ?");
+      params.add(queries.offset());
+    }
 
     return sqlExecutor.selectList(sql.toString(), params);
   }

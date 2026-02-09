@@ -18,7 +18,7 @@ import { describe, expect, it, beforeAll } from "@jest/globals";
 import { get } from "../../../../lib/http";
 import { requestToken } from "../../../../api/oauthClient";
 import { backendUrl } from "../../../testConfig";
-import { validateSecurityEvent, validateListResponse } from "../../../../lib/schemaValidation";
+import { validateSecurityEvent } from "../../../../lib/schemaValidation";
 
 describe("Organization Security Event Management API - Structured Tests", () => {
   const orgId = "72cf4a12-8da3-40fb-8ae4-a77e3cda95e2";
@@ -56,18 +56,22 @@ describe("Organization Security Event Management API - Structured Tests", () => 
 
         expect([200]).toContain(response.status);
         expect(response.data).toHaveProperty("list");
-        expect(response.data).toHaveProperty("total_count");
+        expect(response.data).toHaveProperty("has_more");
         expect(response.data).toHaveProperty("limit", 10);
         expect(response.data).toHaveProperty("offset", 0);
         expect(Array.isArray(response.data.list)).toBe(true);
-        expect(typeof response.data.total_count).toBe("number");
+        expect(typeof response.data.has_more).toBe("boolean");
 
-        // OpenAPI schema validation
-        const validation = validateListResponse(response.data, validateSecurityEvent);
-        if (!validation.valid) {
-          console.log("Schema validation errors:", validation.errors);
+        // Validate each item in the list
+        if (response.data.list.length > 0) {
+          response.data.list.forEach((item, index) => {
+            const validation = validateSecurityEvent(item);
+            if (!validation.valid) {
+              console.log(`Schema validation errors for item ${index}:`, validation.errors);
+            }
+            expect(validation.valid).toBe(true);
+          });
         }
-        expect(validation.valid).toBe(true);
       });
 
       it("should return correct response structure for security event detail when event exists", async () => {
@@ -143,7 +147,7 @@ describe("Organization Security Event Management API - Structured Tests", () => 
         expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("list");
         expect(Array.isArray(response.data.list)).toBe(true);
-        expect(typeof response.data.total_count).toBe("number");
+        expect(typeof response.data.has_more).toBe("boolean");
         
       });
 
@@ -309,14 +313,14 @@ describe("Organization Security Event Management API - Structured Tests", () => 
           }
 
           expect(response.data).toHaveProperty("list");
-          expect(response.data).toHaveProperty("total_count");
+          expect(response.data).toHaveProperty("has_more");
           expect(response.data).toHaveProperty("limit", limit);
           expect(response.data).toHaveProperty("offset", offset);
 
           allEvents = allEvents.concat(response.data.list);
 
           // Check if there are more events
-          if (response.data.list.length < limit || allEvents.length >= response.data.total_count) {
+          if (!response.data.has_more) {
             hasMoreEvents = false;
           } else {
             offset += limit;
@@ -399,7 +403,7 @@ describe("Organization Security Event Management API - Structured Tests", () => 
 
         expect(response.status).toBe(200);
         expect(response.data).toHaveProperty("list");
-        expect(response.data).toHaveProperty("total_count");
+        expect(response.data).toHaveProperty("has_more");
         expect(Array.isArray(response.data.list)).toBe(true);
       });
     });
