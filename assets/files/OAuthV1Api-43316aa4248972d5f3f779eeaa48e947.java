@@ -237,18 +237,8 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
     httpHeaders.setCacheControl("no-store, private");
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
 
-    switch (result.status()) {
-      case SUCCESS -> {
-        return new ResponseEntity<>(result.response(), httpHeaders, HttpStatus.OK);
-      }
-      case CLIENT_ERROR -> {
-        return new ResponseEntity<>(result.response(), httpHeaders, HttpStatus.BAD_REQUEST);
-      }
-      default -> {
-        return new ResponseEntity<>(
-            result.response(), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-    }
+    return new ResponseEntity<>(
+        result.response(), httpHeaders, HttpStatus.valueOf(result.statusCode()));
   }
 
   @PostMapping("/{id}/authorize-with-session")

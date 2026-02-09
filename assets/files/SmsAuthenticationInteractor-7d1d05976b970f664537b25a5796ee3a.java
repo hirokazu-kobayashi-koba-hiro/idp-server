@@ -148,32 +148,19 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
     Map<String, Object> contents =
         MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
-    if (executionResult.isClientError()) {
-      log.warn("SMS authentication failed. Client error: {}", executionResult.contents());
+    if (!executionResult.isSuccess()) {
+      log.warn(
+          "SMS authentication failed. status={}, contents={}",
+          executionResult.statusCode(),
+          executionResult.contents());
       // Issue #1034: Check transaction user first (for registration flow),
       // then try database lookup (for login flow)
       User attemptedUser =
           transaction.hasUser()
               ? transaction.user()
               : tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
-      return AuthenticationInteractionRequestResult.clientError(
-          contents,
-          type,
-          operationType(),
-          method(),
-          attemptedUser,
-          DefaultSecurityEventType.sms_verification_failure);
-    }
-
-    if (executionResult.isServerError()) {
-      log.warn("SMS authentication failed. Server error: {}", executionResult.contents());
-      // Issue #1034: Check transaction user first (for registration flow),
-      // then try database lookup (for login flow)
-      User attemptedUser =
-          transaction.hasUser()
-              ? transaction.user()
-              : tryResolveUserForLogging(tenant, phoneNumber, providerId, userQueryRepository);
-      return AuthenticationInteractionRequestResult.serverError(
+      return AuthenticationInteractionRequestResult.error(
+          executionResult.statusCode(),
           contents,
           type,
           operationType(),
