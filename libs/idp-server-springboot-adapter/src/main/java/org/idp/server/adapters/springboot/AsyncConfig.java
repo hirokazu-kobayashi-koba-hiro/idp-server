@@ -21,6 +21,7 @@ import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.security.SecurityEvent;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -105,14 +106,27 @@ public class AsyncConfig {
         (r, executorRef) -> {
           if (r instanceof SecurityEventRunnable) {
             SecurityEvent securityEvent = ((SecurityEventRunnable) r).getEvent();
-            logger.warn(
-                "security event rejected, queuing for retry: id={}, type={}, pool=[active={}, queue={}, completed={}]",
-                securityEvent.identifier().value(),
-                securityEvent.type().value(),
-                executor.getActiveCount(),
-                executor.getThreadPoolExecutor().getQueue().size(),
-                executor.getThreadPoolExecutor().getCompletedTaskCount());
-            securityEventRetryScheduler.enqueue(securityEvent);
+            DefaultSecurityEventType eventType =
+                DefaultSecurityEventType.findByValue(securityEvent.type().value());
+
+            if (eventType != null && eventType.isDiscardable()) {
+              logger.info(
+                  "security event discarded (low priority): id={}, type={}, pool=[active={}, queue={}, completed={}]",
+                  securityEvent.identifier().value(),
+                  securityEvent.type().value(),
+                  executor.getActiveCount(),
+                  executor.getThreadPoolExecutor().getQueue().size(),
+                  executor.getThreadPoolExecutor().getCompletedTaskCount());
+            } else {
+              logger.warn(
+                  "security event rejected, queuing for retry: id={}, type={}, pool=[active={}, queue={}, completed={}]",
+                  securityEvent.identifier().value(),
+                  securityEvent.type().value(),
+                  executor.getActiveCount(),
+                  executor.getThreadPoolExecutor().getQueue().size(),
+                  executor.getThreadPoolExecutor().getCompletedTaskCount());
+              securityEventRetryScheduler.enqueue(securityEvent);
+            }
           } else {
             logger.error(
                 "unknown runnable rejected from security event executor: {}",

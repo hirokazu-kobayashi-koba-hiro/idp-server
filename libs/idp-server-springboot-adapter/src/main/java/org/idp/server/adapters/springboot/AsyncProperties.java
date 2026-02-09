@@ -21,9 +21,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "idp.async")
 public class AsyncProperties {
 
-  private ExecutorProperties securityEvent = new ExecutorProperties(5, 20, 100);
-  private ExecutorProperties userLifecycleEvent = new ExecutorProperties(5, 10, 50);
-  private ExecutorProperties auditLog = new ExecutorProperties(5, 10, 50);
+  private ExecutorProperties securityEvent = new ExecutorProperties(5, 30, 5000);
+  private ExecutorProperties userLifecycleEvent = new ExecutorProperties(5, 10, 1000);
+  private ExecutorProperties auditLog = new ExecutorProperties(5, 30, 5000);
 
   public ExecutorProperties getSecurityEvent() {
     return securityEvent;
@@ -54,6 +54,7 @@ public class AsyncProperties {
     private int corePoolSize;
     private int maxPoolSize;
     private int queueCapacity;
+    private int retryQueueCapacity = 5000;
 
     public ExecutorProperties() {}
 
@@ -85,6 +86,14 @@ public class AsyncProperties {
 
     public void setQueueCapacity(int queueCapacity) {
       this.queueCapacity = queueCapacity;
+    }
+
+    public int getRetryQueueCapacity() {
+      return retryQueueCapacity;
+    }
+
+    public void setRetryQueueCapacity(int retryQueueCapacity) {
+      this.retryQueueCapacity = retryQueueCapacity;
     }
   }
 }

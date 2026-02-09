@@ -24,7 +24,6 @@ import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -41,7 +40,6 @@ public class SecurityEventListerService {
     this.securityEventApi = idpServerApplication.securityEventApi();
   }
 
-  @Async
   @EventListener
   public void onEvent(SecurityEvent securityEvent) {
     TenantLoggingContext.setTenant(securityEvent.tenantIdentifier());
