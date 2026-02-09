@@ -298,7 +298,7 @@ public class IdentityVerificationApplicationEntryService
           user.transitStatus(UserStatus.IDENTITY_VERIFIED)
               .mergeVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
       userCommandRepository.update(tenant, verifiedUser);
-      eventPublisher.publish(
+      eventPublisher.publishSync(
           tenant,
           oAuthToken,
           DefaultSecurityEventType.identity_verification_application_approved,
@@ -309,7 +309,7 @@ public class IdentityVerificationApplicationEntryService
     }
 
     if (updated.isRejected()) {
-      eventPublisher.publish(
+      eventPublisher.publishSync(
           tenant,
           oAuthToken,
           DefaultSecurityEventType.identity_verification_application_rejected,

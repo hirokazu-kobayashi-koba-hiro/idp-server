@@ -25,7 +25,6 @@ import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 /**
@@ -52,7 +51,6 @@ public class AuditLogEventListener {
     this.auditLogApi = idpServerApplication.auditLogApi();
   }
 
-  @Async
   @EventListener
   public void onAuditLogEvent(AuditLog auditLog) {
     TenantIdentifier tenantIdentifier = new TenantIdentifier(auditLog.tenantId());

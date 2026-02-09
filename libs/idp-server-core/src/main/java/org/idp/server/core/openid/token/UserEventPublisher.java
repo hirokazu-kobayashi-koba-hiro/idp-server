@@ -46,6 +46,17 @@ public class UserEventPublisher implements SecurityEventUserCreatable {
     securityEventPublisher.publish(securityEvent);
   }
 
+  public void publishSync(
+      Tenant tenant,
+      OAuthToken oAuthToken,
+      DefaultSecurityEventType type,
+      RequestAttributes requestAttributes) {
+    UserEventCreator eventCreator =
+        new UserEventCreator(tenant, oAuthToken, type, requestAttributes);
+    SecurityEvent securityEvent = eventCreator.create();
+    securityEventPublisher.publishSync(securityEvent);
+  }
+
   public void publish(
       Tenant tenant,
       OAuthToken oAuthToken,
@@ -94,6 +105,41 @@ public class UserEventPublisher implements SecurityEventUserCreatable {
     securityEventPublisher.publish(securityEvent);
   }
 
+  public void publishSync(
+      Tenant tenant,
+      RequestedClientId requestedClientId,
+      User user,
+      SecurityEventType type,
+      RequestAttributes requestAttributes) {
+    HashMap<String, Object> detailsMap = new HashMap<>();
+    SecurityEventBuilder builder = new SecurityEventBuilder();
+    builder.add(type);
+    builder.add(new SecurityEventDescription(type.value()));
+
+    SecurityEventTenant securityEventTenant =
+        new SecurityEventTenant(
+            tenant.identifier().value(), tenant.tokenIssuer(), tenant.name().value());
+    builder.add(securityEventTenant);
+
+    SecurityEventClient securityEventClient =
+        new SecurityEventClient(requestedClientId.value(), "");
+    builder.add(securityEventClient);
+
+    SecurityEventUser securityEventUser = createSecurityEventUser(user);
+    builder.add(securityEventUser);
+    detailsMap.put("user", toDetailWithSensitiveData(user, tenant));
+
+    builder.add(requestAttributes.getIpAddress());
+    builder.add(requestAttributes.getUserAgent());
+    detailsMap.putAll(requestAttributes.toMap());
+
+    SecurityEventDetail securityEventDetail =
+        createSecurityEventDetailWithScrubbing(detailsMap, tenant);
+    builder.add(securityEventDetail);
+    SecurityEvent securityEvent = builder.build();
+    securityEventPublisher.publishSync(securityEvent);
+  }
+
   public void publish(
       Tenant tenant,
       OAuthToken oAuthToken,
@@ -106,6 +152,20 @@ public class UserEventPublisher implements SecurityEventUserCreatable {
             tenant, oAuthToken, securityEventType, securityEventDescription, requestAttributes);
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
+  }
+
+  public void publishSync(
+      Tenant tenant,
+      OAuthToken oAuthToken,
+      SecurityEventType securityEventType,
+      RequestAttributes requestAttributes) {
+    SecurityEventDescription securityEventDescription =
+        new SecurityEventDescription(securityEventType.value());
+    UserEventCreator eventCreator =
+        new UserEventCreator(
+            tenant, oAuthToken, securityEventType, securityEventDescription, requestAttributes);
+    SecurityEvent securityEvent = eventCreator.create();
+    securityEventPublisher.publishSync(securityEvent);
   }
 
   public void publish(

@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.idp.server.adapters.springboot.AsyncProperties;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventApi;
@@ -39,7 +41,8 @@ import org.springframework.stereotype.Component;
  * <ul>
  *   <li>Retry interval: 60 seconds
  *   <li>Maximum retry attempts: 3
- *   <li>On max retries exceeded: Log and discard
+ *   <li>Retry queue capacity: configurable (default 1000), prevents unbounded memory growth
+ *   <li>On max retries or queue full: Log and discard
  * </ul>
  *
  * <h2>Graceful Shutdown</h2>
@@ -60,15 +63,30 @@ public class SecurityEventRetryScheduler {
 
   Queue<SecurityEvent> retryQueue = new ConcurrentLinkedQueue<>();
   Map<String, Integer> retryCountMap = new ConcurrentHashMap<>();
+  AtomicInteger queueSize = new AtomicInteger(0);
 
   SecurityEventApi securityEventApi;
+  int maxRetryQueueSize;
 
-  public SecurityEventRetryScheduler(IdpServerApplication idpServerApplication) {
+  public SecurityEventRetryScheduler(
+      IdpServerApplication idpServerApplication, AsyncProperties asyncProperties) {
     this.securityEventApi = idpServerApplication.securityEventApi();
+    this.maxRetryQueueSize = asyncProperties.getSecurityEvent().getRetryQueueCapacity();
   }
 
   public void enqueue(SecurityEvent securityEvent) {
+    if (queueSize.get() >= maxRetryQueueSize) {
+      log.error(
+          "retry queue full ({}/{}), dropping security event: id={}, type={}, tenant={}",
+          queueSize.get(),
+          maxRetryQueueSize,
+          securityEvent.identifier().value(),
+          securityEvent.type().value(),
+          securityEvent.tenantIdentifierValue());
+      return;
+    }
     retryQueue.add(securityEvent);
+    queueSize.incrementAndGet();
     retryCountMap.putIfAbsent(securityEvent.identifier().value(), 0);
   }
 
@@ -83,13 +101,13 @@ public class SecurityEventRetryScheduler {
 
   @Scheduled(fixedDelay = 60_000)
   public void resendFailedEvents() {
-    int queueSize = retryQueue.size();
-    if (queueSize == 0) {
+    int currentSize = retryQueue.size();
+    if (currentSize == 0) {
       log.debug("security event retry queue is empty, skipping");
       return;
     }
 
-    log.info("processing security event retry queue: {} events", queueSize);
+    log.info("processing security event retry queue: {} events", currentSize);
 
     int successCount = 0;
     int skippedCount = 0;
@@ -97,6 +115,7 @@ public class SecurityEventRetryScheduler {
 
     while (!retryQueue.isEmpty()) {
       SecurityEvent securityEvent = retryQueue.poll();
+      queueSize.decrementAndGet();
       String eventId = securityEvent.identifier().value();
       String eventType = securityEvent.type().value();
       String tenantId = securityEvent.tenantIdentifierValue();
@@ -124,6 +143,7 @@ public class SecurityEventRetryScheduler {
               eventType,
               tenantId);
           retryQueue.add(securityEvent);
+          queueSize.incrementAndGet();
           requeuedCount++;
         } else {
           log.error(

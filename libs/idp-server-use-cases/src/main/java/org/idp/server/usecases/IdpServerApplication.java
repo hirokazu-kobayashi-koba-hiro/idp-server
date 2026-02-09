@@ -217,6 +217,7 @@ public class IdpServerApplication {
   IdentityVerificationCallbackApi identityVerificationCallbackApi;
   IdentityVerificationApi identityVerificationApi;
   SecurityEventApi securityEventApi;
+  SecurityEventApi rawSecurityEventApi;
   AuditLogApi auditLogApi;
   SharedSignalsFrameworkMetaDataApi sharedSignalsFrameworkMetaDataApi;
   TenantMetaDataApi tenantMetaDataApi;
@@ -737,20 +738,21 @@ public class IdpServerApplication {
             IdentityVerificationApi.class,
             databaseTypeProvider);
 
+    SecurityEventEntryService securityEventEntryService =
+        new SecurityEventEntryService(
+            securityEventHooks,
+            securityEventCommandRepository,
+            securityEventHookResultCommandRepository,
+            hookQueryRepository,
+            tenantQueryRepository,
+            statisticsEventsCommandRepository,
+            dailyActiveUserCommandRepository,
+            monthlyActiveUserCommandRepository,
+            yearlyActiveUserCommandRepository);
+    this.rawSecurityEventApi = securityEventEntryService;
     this.securityEventApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new SecurityEventEntryService(
-                securityEventHooks,
-                securityEventCommandRepository,
-                securityEventHookResultCommandRepository,
-                hookQueryRepository,
-                tenantQueryRepository,
-                statisticsEventsCommandRepository,
-                dailyActiveUserCommandRepository,
-                monthlyActiveUserCommandRepository,
-                yearlyActiveUserCommandRepository),
-            SecurityEventApi.class,
-            databaseTypeProvider);
+            securityEventEntryService, SecurityEventApi.class, databaseTypeProvider);
 
     this.auditLogApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -1316,6 +1318,10 @@ public class IdpServerApplication {
 
   public SecurityEventApi securityEventApi() {
     return securityEventApi;
+  }
+
+  public SecurityEventApi rawSecurityEventApi() {
+    return rawSecurityEventApi;
   }
 
   public AuditLogApi auditLogApi() {

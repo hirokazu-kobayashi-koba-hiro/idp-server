@@ -62,4 +62,18 @@ public class ManagementEventPublisher {
     SecurityEvent securityEvent = eventCreator.create();
     securityEventPublisher.publish(securityEvent);
   }
+
+  public void publishSync(
+      Tenant tenant,
+      User operator,
+      User targetUser,
+      OAuthToken oAuthToken,
+      SecurityEventType securityEventType,
+      RequestAttributes requestAttributes) {
+    ManagementEventCreator eventCreator =
+        new ManagementEventCreator(
+            tenant, operator, targetUser, oAuthToken, securityEventType, requestAttributes);
+    SecurityEvent securityEvent = eventCreator.create();
+    securityEventPublisher.publishSync(securityEvent);
+  }
 }

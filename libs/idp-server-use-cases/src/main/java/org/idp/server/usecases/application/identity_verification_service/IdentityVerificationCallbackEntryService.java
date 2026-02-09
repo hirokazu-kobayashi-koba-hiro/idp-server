@@ -207,7 +207,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
 
       userCommandRepository.update(tenant, verifiedUser);
 
-      eventPublisher.publish(
+      eventPublisher.publishSync(
           tenant,
           application.requestedClientId(),
           user,
@@ -224,7 +224,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     }
 
     if (updatedApplication.isRejected()) {
-      eventPublisher.publish(
+      eventPublisher.publishSync(
           tenant,
           application.requestedClientId(),
           user,

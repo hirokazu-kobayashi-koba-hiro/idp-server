@@ -137,7 +137,7 @@ public class UserPasswordUpdateService implements UserManagementService<UserUpda
         Map.of("result", updatedUser.toMap(), "diff", actualDiff, "dry_run", dryRun);
 
     // 9. Security event publishing (password change event)
-    managementEventPublisher.publish(
+    managementEventPublisher.publishSync(
         tenant,
         operator,
         updatedUser,

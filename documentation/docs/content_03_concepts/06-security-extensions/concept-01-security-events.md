@@ -52,45 +52,199 @@ public void authenticate() {
 
 ---
 
-## 主要なセキュリティイベント
+## イベント発行タイミングと処理モード
 
-idp-serverでは、以下のようなセキュリティイベントを発行します。
+### 処理モードの設計方針
 
-### 認証関連イベント
+セキュリティイベントの処理モードは **APIの利用者が誰か** と **操作の不可逆性** で決まる。
 
-| イベントタイプ | 説明 | 典型的な用途 |
-|:---|:---|:---|
-| `oauth_authorize` | OAuth認可成功 | 認可リクエストの監視 |
-| `password_success` | パスワード認証成功 | ログイン成功の追跡 |
-| `password_failure` | パスワード認証失敗 | アカウントロックトリガー |
-| `fido2_authentication_success` | FIDO2認証成功 | FIDO認証利用状況 |
-| `fido2_authentication_failure` | FIDO2認証失敗 | 不正アクセス検知 |
+```
+エンドユーザー向けAPI（Application Plane） → 原則、非同期
+  ログイン画面の応答が遅くなるのはNG。
+  ログ保存が数秒遅れても問題ない。
 
-### ユーザー操作イベント
+  ただし、不可逆な操作は同期:
+    - アカウント削除（user_self_delete）
+    - 身元確認の最終判定（approved / rejected）
 
-| イベントタイプ | 説明 | 典型的な用途 |
-|:---|:---|:---|
-| `user_signup` | ユーザー登録 | 新規ユーザー通知 |
-| `login_success` | ユーザーログイン | ログイン通知 |
-| `logout` | ユーザーログアウト | セッション管理 |
-| `user_lock` | アカウントロック | セキュリティアラート |
-| `user_deletion` | ユーザー削除 | 監査ログ |
+管理者向けAPI（Control Plane）             → 同期
+  管理画面の応答が少し遅くなるのは許容できる。
+  「ユーザーを削除したのにログが残っていない」は許容できない。
+```
 
-### フェデレーション関連イベント
+### エンドユーザー向けAPI — 非同期
 
-| イベントタイプ | 説明 | 典型的な用途 |
-|:---|:---|:---|
-| `federation_success` | 外部IdP認証成功 | フェデレーション利用状況 |
-| `federation_failure` | 外部IdP認証失敗 | 外部IdP連携エラー検知 |
+イベント処理はバックグラウンドで実行される。APIレスポンスはイベント処理の完了を待たない。
 
-### トークン関連イベント
+#### ログイン
 
-| イベントタイプ | 説明 | 典型的な用途 |
-|:---|:---|:---|
-| `issue_token_success` | トークン発行成功 | トークン発行監視 |
-| `revoke_token_success` | トークン失効成功 | セキュリティ監視 |
-| `refresh_token_success` | トークン更新成功 | トークン管理 |
-| `inspect_token_success` | トークン検証成功 | トークン利用状況 |
+ユーザーがログイン画面で認証操作を行ったとき。
+
+| シナリオ | イベント |
+|---------|---------|
+| ID/パスワードを入力して送信した | `password_success` / `password_failure` |
+| FIDO2セキュリティキーをタッチした | `fido2_authentication_success` / `failure` |
+| FIDO2チャレンジを要求した | `fido2_authentication_challenge_success` / `failure` |
+| FIDO UAF（生体認証）で認証した | `fido_uaf_authentication_success` / `failure` |
+| FIDO UAFチャレンジを要求した | `fido_uaf_authentication_challenge_success` / `failure` |
+| メールに送られたコードを入力した | `email_verification_success` / `failure` |
+| メール認証コードの送信を要求した | `email_verification_request_success` / `failure` |
+| SMSに送られたコードを入力した | `sms_verification_success` / `failure` |
+| SMS認証コードの送信を要求した | `sms_verification_challenge_success` / `failure` |
+| 外部サービスのトークンで認証した | `external_token_authentication_success` / `failure` |
+
+#### 認可・セッション
+
+認証後、アプリケーションへのアクセス許可を判断するとき。
+
+| シナリオ | イベント |
+|---------|---------|
+| 同意画面で「許可」を押した | `oauth_authorize` |
+| 同意画面で「拒否」を押した | `oauth_deny` |
+| ログイン済みセッションで自動的に認可された | `oauth_authorize_with_session` |
+| セッションの期限が切れていた | `oauth_authorize_with_session_expired` |
+| セッションの認証レベルが要求と合わなかった | `oauth_authorize_with_session_acr_mismatch` |
+| セッションのポリシーが要求と合わなかった | `oauth_authorize_with_session_policy_mismatch` |
+| 認可処理中にエラーが発生した | `authorize_failure` |
+| ログアウトした | `logout` |
+
+#### ソーシャルログイン（フェデレーション）
+
+Google/Apple等の外部IdPで認証するとき。
+
+| シナリオ | イベント |
+|---------|---------|
+| 「Googleでログイン」を押して外部IdPに遷移した | `federation_request` |
+| 外部IdPから戻ってきて認証情報の紐付けに成功した | `federation_success` |
+| 外部IdPから戻ってきたが処理に失敗した | `federation_failure` |
+
+#### トークン
+
+アプリケーションがトークンを取得・検証・失効させるとき。
+
+| シナリオ | イベント |
+|---------|---------|
+| 認可コードをトークンに交換した | `issue_token_success` / `failure` |
+| リフレッシュトークンでアクセストークンを再取得した | `refresh_token_success` / `failure` |
+| リソースサーバーがトークンの有効性を確認した | `inspect_token_success` / `failure` |
+| 有効期限切れのトークンを検証しようとした | `inspect_token_expired` |
+| アプリがトークンを無効化した | `revoke_token_success` / `failure` |
+
+#### CIBA（プッシュ認証）
+
+RPがバックチャネル経由で認証リクエストを送り、ユーザーのデバイスに通知が届くとき。
+
+| シナリオ | イベント |
+|---------|---------|
+| RPがCIBA認証リクエストを送信した | `backchannel_authentication_request_success` / `failure` |
+| ユーザーのデバイスにプッシュ通知が届いた | `authentication_device_notification_success` / `failure` |
+| プッシュ通知がキャンセルされた | `authentication_device_notification_cancel` |
+| ユーザーがデバイスで「許可」を押した | `authentication_device_allow_success` / `failure` |
+| ユーザーがデバイスで「拒否」を押した | `authentication_device_deny_success` / `failure` |
+| バインディングメッセージの照合が行われた | `authentication_device_binding_message_success` / `failure` |
+| CIBA認可が完了した | `backchannel_authentication_authorize` |
+| CIBA認可が拒否された | `backchannel_authentication_deny` |
+
+#### アカウント操作
+
+ユーザー自身がマイページ等で自分のアカウントを操作するとき。
+
+| シナリオ | イベント | 処理 |
+|---------|---------|------|
+| パスワードを変更した（現在のパスワードを入力して変更） | `password_change_success` / `failure` | 非同期 |
+| パスワードをリセットした（メール等で再設定） | `password_reset_success` / `failure` | 非同期 |
+| アカウントを自分で削除した | `user_self_delete` | **同期** |
+| 認証デバイス（セキュリティキー等）を登録解除した | `authentication_device_deregistration_success` / `failure` | 非同期 |
+
+`user_self_delete` はアカウント削除という不可逆な操作のため、監査記録の欠落を防ぐ目的で同期処理する。
+
+#### FIDOデバイス登録
+
+ユーザーが新しいセキュリティキーや生体認証を登録するとき。
+
+| シナリオ | イベント |
+|---------|---------|
+| FIDO2デバイスの登録チャレンジを取得した | `fido2_registration_challenge_success` / `failure` |
+| FIDO2デバイスを登録した | `fido2_registration_success` / `failure` |
+| FIDO2デバイスを登録解除した | `fido2_deregistration_success` / `failure` |
+| FIDO UAFデバイスの登録チャレンジを取得した | `fido_uaf_registration_challenge_success` / `failure` |
+| FIDO UAFデバイスを登録した | `fido_uaf_registration_success` / `failure` |
+| FIDO UAFデバイスを登録解除した | `fido_uaf_deregistration_success` / `failure` |
+
+#### UserInfo
+
+リソースサーバーがアクセストークンでユーザー情報を取得するとき。
+
+| シナリオ | イベント |
+|---------|---------|
+| UserInfoエンドポイントからユーザー情報を取得した | `userinfo_success` / `failure` |
+
+#### デバイスログ
+
+モバイルアプリ等のクライアントが認証デバイスのログを送信してきたとき。
+
+| シナリオ | イベント |
+|---------|---------|
+| クライアントアプリからデバイスログが送信された | `authentication_device_log` |
+
+#### 身元確認（eKYC）
+
+ユーザーが本人確認書類を提出し、審査が行われるとき。
+
+**デフォルトイベント** — どの身元確認タイプでも共通で発火する。
+
+| シナリオ | イベント | 処理 |
+|---------|---------|------|
+| 身元確認の申請を提出した | `identity_verification_application_apply` | 非同期 |
+| 申請の処理中にエラーが発生した | `identity_verification_application_failure` | 非同期 |
+| 審査の結果、承認された | `identity_verification_application_approved` | **同期** |
+| 審査の結果、却下された | `identity_verification_application_rejected` | **同期** |
+| 申請をキャンセルした | `identity_verification_application_cancel` | 非同期 |
+| 申請を削除した | `identity_verification_application_delete` | 非同期 |
+| 申請一覧を取得した | `identity_verification_application_findList` | 非同期 |
+
+`identity_verification_application_approved` と `identity_verification_application_rejected` は身元確認の最終判定であり、不可逆な決定のため、監査記録の欠落を防ぐ目的で同期処理する。カスタムイベント（`{type}_approved` / `{type}_rejected`）は非同期で処理される。
+
+**カスタムイベント** — デフォルトイベントに加えて、身元確認タイプ（`IdentityVerificationType`）とプロセス（`IdentityVerificationProcess`）の名前から動的に生成されるイベントも同時に発火する。
+
+テナントの身元確認設定で `type = "document_verification"`、`process = "ocr"` と定義した場合、以下のようなイベントが生成される。
+
+| シナリオ | デフォルトイベント | カスタムイベント |
+|---------|------------------|----------------|
+| 申請を提出した | `identity_verification_application_apply` | `document_verification_application_success` |
+| 申請に失敗した | `identity_verification_application_failure` | `document_verification_application_failure` |
+| OCR処理に成功した | — | `document_verification_ocr_success` |
+| OCR処理に失敗した | — | `document_verification_ocr_failure` |
+| 審査で承認された | `identity_verification_application_approved` | `document_verification_approved` |
+| 審査で却下された | `identity_verification_application_rejected` | `document_verification_rejected` |
+
+**命名パターン**:
+```
+{type}_application_success       申請成功
+{type}_application_failure       申請失敗
+{type}_{process}_success         プロセス実行成功
+{type}_{process}_failure         プロセス実行失敗
+{type}_approved                  最終承認
+{type}_rejected                  最終却下
+```
+
+Security Event Hooksでカスタムイベント名をフィルタに設定すれば、特定の身元確認タイプやプロセスの結果だけを外部サービスに通知できる。
+
+### 管理者向けAPI — 同期
+
+イベント処理（ログ保存・統計更新・フック実行）が完了してからAPIレスポンスを返す。
+イベント処理が失敗した場合、メイン操作もロールバックされる。
+
+#### ユーザー管理
+
+管理者が管理画面やAPIでユーザーを操作するとき。
+
+| シナリオ | イベント |
+|---------|---------|
+| 管理者がユーザーを新規作成した | `user_create` |
+| 管理者がユーザー情報を編集した | `user_edit` |
+| 管理者がユーザーを削除した | `user_delete` |
+| 管理者がユーザーのパスワードを変更した | `password_change` |
 
 ---
 

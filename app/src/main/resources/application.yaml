@@ -2,16 +2,17 @@ idp:
   async:
     security-event:
       core-pool-size: ${SECURITY_EVENT_CORE_POOL_SIZE:5}
-      max-pool-size: ${SECURITY_EVENT_MAX_POOL_SIZE:20}
-      queue-capacity: ${SECURITY_EVENT_QUEUE_CAPACITY:100}
+      max-pool-size: ${SECURITY_EVENT_MAX_POOL_SIZE:30}
+      queue-capacity: ${SECURITY_EVENT_QUEUE_CAPACITY:5000}
+      retry-queue-capacity: ${SECURITY_EVENT_RETRY_QUEUE_CAPACITY:5000}
     user-lifecycle-event:
       core-pool-size: ${USER_LIFECYCLE_EVENT_CORE_POOL_SIZE:5}
       max-pool-size: ${USER_LIFECYCLE_EVENT_MAX_POOL_SIZE:10}
-      queue-capacity: ${USER_LIFECYCLE_EVENT_QUEUE_CAPACITY:50}
+      queue-capacity: ${USER_LIFECYCLE_EVENT_QUEUE_CAPACITY:1000}
     audit-log:
       core-pool-size: ${AUDIT_LOG_CORE_POOL_SIZE:5}
-      max-pool-size: ${AUDIT_LOG_MAX_POOL_SIZE:10}
-      queue-capacity: ${AUDIT_LOG_QUEUE_CAPACITY:50}
+      max-pool-size: ${AUDIT_LOG_MAX_POOL_SIZE:30}
+      queue-capacity: ${AUDIT_LOG_QUEUE_CAPACITY:5000}
   configurations:
    adminTenantId: "${ADMIN_TENANT_ID:67e7eae6-62b0-4500-9eff-87459f63fc66}"
    apiKey: ${IDP_SERVER_API_KEY}

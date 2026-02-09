@@ -16,7 +16,30 @@
 
 package org.idp.server.platform.security;
 
+/**
+ * Publishes {@link SecurityEvent}s for audit logging, statistics, and hook execution.
+ *
+ * <p>Implementations provide two processing modes:
+ *
+ * <ul>
+ *   <li>{@link #publish} — asynchronous (fire-and-forget). The caller does not wait for event
+ *       processing to complete.
+ *   <li>{@link #publishSync} — synchronous. Event processing (log persistence, statistics update,
+ *       hook invocation) completes within the caller's thread and transaction before the HTTP
+ *       response is returned.
+ * </ul>
+ *
+ * @see SecurityEvent
+ * @see org.idp.server.platform.security.event.DefaultSecurityEventType#isSynchronous()
+ */
 public interface SecurityEventPublisher {
 
+  /** Publish the event asynchronously. The caller returns immediately. */
   void publish(SecurityEvent securityEvent);
+
+  /**
+   * Publish the event synchronously. The caller blocks until all event handlers (audit log,
+   * statistics, hooks) have finished processing.
+   */
+  void publishSync(SecurityEvent securityEvent);
 }
