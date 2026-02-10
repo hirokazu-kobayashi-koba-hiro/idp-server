@@ -31,7 +31,7 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
   public Map<String, String> selectCount(Tenant tenant, SecurityEventQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String selectSql = """
-            SELECT COUNT(*) as count FROM security_event
+            SELECT 1 FROM security_event
             """;
     StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?");
     List<Object> params = new ArrayList<>();
@@ -109,7 +109,8 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
       }
     }
 
-    return sqlExecutor.selectOne(sql.toString(), params);
+    String countSql = "SELECT COUNT(*) as count FROM (" + sql.toString() + " LIMIT 1000001) t";
+    return sqlExecutor.selectOne(countSql, params);
   }
 
   @Override
