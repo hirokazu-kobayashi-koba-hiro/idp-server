@@ -31,7 +31,7 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
   public Map<String, String> selectCount(Tenant tenant, SecurityEventQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String selectSql = """
-            SELECT COUNT(*) FROM security_event
+            SELECT 1 FROM security_event
             """;
     StringBuilder sql = new StringBuilder(selectSql).append(" WHERE tenant_id = ?::uuid");
     List<Object> params = new ArrayList<>();
@@ -109,7 +109,8 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
       }
     }
 
-    return sqlExecutor.selectOne(sql.toString(), params);
+    String countSql = "SELECT COUNT(*) FROM (" + sql.toString() + " LIMIT 1000001) t";
+    return sqlExecutor.selectOne(countSql, params);
   }
 
   @Override
