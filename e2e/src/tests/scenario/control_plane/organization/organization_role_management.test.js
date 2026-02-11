@@ -435,34 +435,20 @@ describe("organization role management api", () => {
       expect(getBeforeResponse.status).toBe(200);
       const originalRole = getBeforeResponse.data;
 
-      // Step 5: PUT the GET response body, filtering out null, empty string, and server-managed fields
-      const serverManagedFields = ["created_at", "updated_at"];
-      const filterNullAndEmpty = (obj) => {
-        if (obj === null || obj === undefined) return undefined;
-        if (typeof obj !== "object" || Array.isArray(obj)) return obj;
-        const filtered = {};
-        for (const [key, value] of Object.entries(obj)) {
-          if (value === null || value === "" || serverManagedFields.includes(key)) continue;
-          const filteredValue = filterNullAndEmpty(value);
-          if (filteredValue !== undefined) filtered[key] = filteredValue;
-        }
-        return Object.keys(filtered).length > 0 ? filtered : undefined;
-      };
-      const filteredRole = filterNullAndEmpty(originalRole);
+      // Step 5: PUT the GET response body directly
       // Workaround: GET returns permissions as object array [{name, description, id}],
       // but PUT expects string array of permission IDs ["id1", "id2"]
-      if (Array.isArray(filteredRole.permissions) && filteredRole.permissions.length > 0 && typeof filteredRole.permissions[0] === "object") {
-        filteredRole.permissions = filteredRole.permissions.map(p => p.id);
+      const roleBody = { ...originalRole };
+      if (Array.isArray(roleBody.permissions) && roleBody.permissions.length > 0 && typeof roleBody.permissions[0] === "object") {
+        roleBody.permissions = roleBody.permissions.map(p => p.id);
       }
-      console.log("GET role response:", JSON.stringify(originalRole, null, 2));
-      console.log("Filtered role body:", JSON.stringify(filteredRole, null, 2));
 
       const updateResponse = await putWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/roles/${roleId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-        body: filteredRole
+        body: roleBody
       });
       console.log("PUT response status:", updateResponse.status);
       console.log("PUT response body:", JSON.stringify(updateResponse.data, null, 2));

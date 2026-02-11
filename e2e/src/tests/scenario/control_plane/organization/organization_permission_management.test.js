@@ -294,27 +294,13 @@ describe("organization permission management api", () => {
       expect(getBeforeResponse.status).toBe(200);
       const originalPermission = getBeforeResponse.data;
 
-      // Step 4: PUT the GET response body, filtering out null, empty string, and server-managed fields
-      const serverManagedFields = ["created_at", "updated_at"];
-      const filterNullAndEmpty = (obj) => {
-        if (obj === null || obj === undefined) return undefined;
-        if (typeof obj !== "object" || Array.isArray(obj)) return obj;
-        const filtered = {};
-        for (const [key, value] of Object.entries(obj)) {
-          if (value === null || value === "" || serverManagedFields.includes(key)) continue;
-          const filteredValue = filterNullAndEmpty(value);
-          if (filteredValue !== undefined) filtered[key] = filteredValue;
-        }
-        return Object.keys(filtered).length > 0 ? filtered : undefined;
-      };
-      const filteredPermission = filterNullAndEmpty(originalPermission);
-
+      // Step 4: PUT the GET response body directly
       const updateResponse = await putWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/permissions/${permissionId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-        body: filteredPermission
+        body: originalPermission
       });
       expect(updateResponse.status).toBe(200);
 
