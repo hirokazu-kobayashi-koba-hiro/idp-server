@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.email;
+package org.idp.server.platform.random;
 
 import java.util.Objects;
 

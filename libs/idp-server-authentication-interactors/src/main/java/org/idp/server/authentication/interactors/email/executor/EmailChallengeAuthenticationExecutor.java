@@ -17,7 +17,9 @@
 package org.idp.server.authentication.interactors.email.executor;
 
 import java.util.Map;
-import org.idp.server.authentication.interactors.email.*;
+import org.idp.server.authentication.interactors.email.EmailAuthenticationConfiguration;
+import org.idp.server.authentication.interactors.email.EmailVerificationChallenge;
+import org.idp.server.authentication.interactors.email.EmailVerificationTemplate;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionRequest;
@@ -31,6 +33,8 @@ import org.idp.server.platform.notification.email.EmailSendResult;
 import org.idp.server.platform.notification.email.EmailSender;
 import org.idp.server.platform.notification.email.EmailSenders;
 import org.idp.server.platform.notification.email.EmailSendingRequest;
+import org.idp.server.platform.random.OneTimePassword;
+import org.idp.server.platform.random.OneTimePasswordGenerator;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class EmailChallengeAuthenticationExecutor implements AuthenticationExecutor {

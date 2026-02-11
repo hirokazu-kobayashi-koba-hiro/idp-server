@@ -21,9 +21,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.idp.server.authentication.interactors.email.OneTimePassword;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.random.OneTimePassword;
 
 public class SmsVerificationChallenge implements Serializable, JsonReadable {
 
