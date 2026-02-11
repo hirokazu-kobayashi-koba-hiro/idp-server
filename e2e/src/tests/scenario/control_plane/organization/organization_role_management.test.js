@@ -347,6 +347,143 @@ describe("organization role management api", () => {
       console.log("🎉 All organization role management tests passed!");
     });
 
+    it("GET response can be used directly as UPDATE request body (roundtrip)", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Step 1: Create a new tenant for this test
+      const newTenantId = uuidv4();
+      const createTenantResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          tenant: {
+            "id": newTenantId,
+            "name": `Role Roundtrip Test Tenant ${Date.now()}`,
+            "domain": "http://localhost:8080",
+            "description": "Test tenant for role roundtrip test",
+            "authorization_provider": "idp-server",
+            "tenant_type": "BUSINESS"
+          },
+          authorization_server: {
+            "issuer": `http://localhost:8080/${newTenantId}`,
+            "authorization_endpoint": `http://localhost:8080/${newTenantId}/v1/authorizations`,
+            "token_endpoint": `http://localhost:8080/${newTenantId}/v1/tokens`,
+            "userinfo_endpoint": `http://localhost:8080/${newTenantId}/v1/userinfo`,
+            "jwks_uri": `http://localhost:8080/${newTenantId}/v1/jwks`,
+            "scopes_supported": ["openid", "profile", "email"],
+            "response_types_supported": ["code"],
+            "response_modes_supported": ["query", "fragment"],
+            "subject_types_supported": ["public"],
+            "grant_types_supported": ["authorization_code", "refresh_token"],
+            "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"]
+          }
+        }
+      });
+      expect(createTenantResponse.status).toBe(201);
+
+      // Step 2: Create a permission (required for role creation)
+      const permissionName = `roundtrip-permission-${generateRandomString(8)}`;
+      const createPermissionResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/permissions`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "name": permissionName,
+          "description": "Permission for role roundtrip test"
+        }
+      });
+      expect(createPermissionResponse.status).toBe(201);
+      const permissionId = createPermissionResponse.data.result.id;
+
+      // Step 3: Create a role
+      const roleName = `roundtrip-role-${generateRandomString(10)}`;
+      const createRoleResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/roles`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "name": roleName,
+          "description": "Test role for roundtrip verification",
+          "permissions": [permissionId]
+        }
+      });
+      expect(createRoleResponse.status).toBe(201);
+      const roleId = createRoleResponse.data.result.id;
+
+      // Step 4: GET the role
+      const getBeforeResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/roles/${roleId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(getBeforeResponse.status).toBe(200);
+      const originalRole = getBeforeResponse.data;
+
+      // Step 5: PUT the GET response body directly
+      // Workaround: GET returns permissions as object array [{name, description, id}],
+      // but PUT expects string array of permission IDs ["id1", "id2"]
+      const roleBody = { ...originalRole };
+      if (Array.isArray(roleBody.permissions) && roleBody.permissions.length > 0 && typeof roleBody.permissions[0] === "object") {
+        roleBody.permissions = roleBody.permissions.map(p => p.id);
+      }
+
+      const updateResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/roles/${roleId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: roleBody
+      });
+      console.log("PUT response status:", updateResponse.status);
+      console.log("PUT response body:", JSON.stringify(updateResponse.data, null, 2));
+      expect(updateResponse.status).toBe(200);
+
+      // Step 6: GET again and verify nothing changed
+      const getAfterResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/roles/${roleId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(getAfterResponse.status).toBe(200);
+      const updatedRole = getAfterResponse.data;
+
+      // Compare original and updated configurations (excluding updated_at which changes on every PUT)
+      const { updated_at: _origUpdatedAt, ...originalComparable } = originalRole;
+      const { updated_at: _updatedUpdatedAt, ...updatedComparable } = updatedRole;
+      expect(JSON.stringify(updatedComparable)).toBe(JSON.stringify(originalComparable));
+
+      // Cleanup: delete role, then tenant (permissions are deleted with tenant)
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/roles/${roleId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+    });
+
     it("error scenarios", async () => {
       // Get OAuth token
       const tokenResponse = await requestToken({

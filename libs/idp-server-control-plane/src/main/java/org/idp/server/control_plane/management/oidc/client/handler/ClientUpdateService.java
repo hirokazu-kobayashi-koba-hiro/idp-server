@@ -102,9 +102,11 @@ public class ClientUpdateService implements ClientManagementService<ClientUpdate
 
   private ClientConfiguration updateClientConfiguration(
       ClientRegistrationRequest request, ClientConfiguration before) {
-    // Build ClientConfiguration (add client_id if missing)
+    // Build ClientConfiguration (add client_id if missing, remove server-managed fields)
     Map<String, Object> map = new HashMap<>(request.toMap());
     map.put("client_id", before.clientIdValue());
+    map.remove("created_at");
+    map.remove("updated_at");
     ClientConfiguration clientConfiguration = jsonConverter.read(map, ClientConfiguration.class);
     clientConfiguration.setCreatedAt(before.createdAt());
     clientConfiguration.setUpdatedAt(SystemDateTime.now());

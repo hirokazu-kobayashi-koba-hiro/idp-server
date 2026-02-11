@@ -215,6 +215,94 @@ describe("organization authentication config management api", () => {
       expect(dryRunDeleteResponse.status).toBe(404);
 
     });
+
+    it("GET response can be used directly as UPDATE request body (roundtrip)", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Step 1: Create a new authentication configuration
+      const timestamp = Date.now();
+      const configId = uuidv4();
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "id": configId,
+          "type": configId,
+          "attributes": {
+            "min_length": 8,
+            "require_uppercase": true,
+            "require_lowercase": true,
+            "require_digits": true,
+            "require_special_chars": false
+          },
+          "metadata": {
+            "name": `Roundtrip Auth Config ${timestamp}`,
+            "description": "Test authentication configuration for roundtrip test"
+          },
+          "interactions": {}
+        }
+      });
+      expect(createResponse.status).toBe(201);
+      const createdConfigId = createResponse.data.result.id;
+
+      // Step 2: GET the authentication configuration
+      const getResponse1 = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${createdConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      expect(getResponse1.status).toBe(200);
+      const getBody = getResponse1.data;
+      console.log("GET response (roundtrip):", JSON.stringify(getBody, null, 2));
+
+      // Step 3: PUT the GET response body directly back
+      const updateResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${createdConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: getBody
+      });
+      console.log("PUT roundtrip response:", updateResponse.data);
+      expect(updateResponse.status).toBe(200);
+
+      // Step 4: GET again and verify values unchanged (except updated_at)
+      const getResponse2 = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${createdConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      expect(getResponse2.status).toBe(200);
+
+      const before = { ...getBody };
+      const after = { ...getResponse2.data };
+      delete before.updated_at;
+      delete after.updated_at;
+      expect(after).toEqual(before);
+
+      // Cleanup
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations/${createdConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+    });
   });
 
   describe("error pattern", () => {

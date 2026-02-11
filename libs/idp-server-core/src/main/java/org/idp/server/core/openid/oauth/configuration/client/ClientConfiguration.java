@@ -496,8 +496,8 @@ public class ClientConfiguration implements JsonReadable, Configurable {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("client_id", clientId);
-    map.put("client_id_alias", clientIdAlias);
-    map.put("client_secret", clientSecret);
+    if (clientIdAlias != null) map.put("client_id_alias", clientIdAlias);
+    if (clientSecret != null) map.put("client_secret", clientSecret);
     map.put("redirect_uris", redirectUris);
     map.put("post_logout_redirect_uris", postLogoutRedirectUris);
     map.put("token_endpoint_auth_method", tokenEndpointAuthMethod);
@@ -510,9 +510,9 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     map.put("contacts", contacts);
     map.put("tos_uri", tosUri);
     map.put("policy_uri", policyUri);
-    map.put("jwks_uri", jwksUri);
-    map.put("jwks", jwks);
-    map.put("software_id", softwareId);
+    if (jwksUri != null) map.put("jwks_uri", jwksUri);
+    if (jwks != null) map.put("jwks", jwks);
+    if (softwareId != null && !softwareId.isEmpty()) map.put("software_id", softwareId);
     map.put("software_version", softwareVersion);
     map.put("request_uris", requestUris);
     map.put("backchannel_token_delivery_mode", backchannelTokenDeliveryMode);
@@ -522,21 +522,27 @@ public class ClientConfiguration implements JsonReadable, Configurable {
         backchannelAuthenticationRequestSigningAlg);
     map.put("backchannel_user_code_parameter", backchannelUserCodeParameter);
     map.put("application_type", applicationType);
-    map.put("id_token_encrypted_response_alg", idTokenEncryptedResponseAlg);
-    map.put("id_token_encrypted_response_enc", idTokenEncryptedResponseEnc);
+    if (idTokenEncryptedResponseAlg != null)
+      map.put("id_token_encrypted_response_alg", idTokenEncryptedResponseAlg);
+    if (idTokenEncryptedResponseEnc != null)
+      map.put("id_token_encrypted_response_enc", idTokenEncryptedResponseEnc);
     map.put("authorization_details_types", authorizationDetailsTypes);
-    map.put("tls_client_auth_subject_dn", tlsClientAuthSubjectDn);
-    map.put("tls_client_auth_san_dns", tlsClientAuthSanDns);
-    map.put("tls_client_auth_san_uri", tlsClientAuthSanUri);
-    map.put("tls_client_auth_san_ip", tlsClientAuthSanIp);
-    map.put("tls_client_auth_san_email", tlsClientAuthSanEmail);
+    if (tlsClientAuthSubjectDn != null)
+      map.put("tls_client_auth_subject_dn", tlsClientAuthSubjectDn);
+    if (tlsClientAuthSanDns != null) map.put("tls_client_auth_san_dns", tlsClientAuthSanDns);
+    if (tlsClientAuthSanUri != null) map.put("tls_client_auth_san_uri", tlsClientAuthSanUri);
+    if (tlsClientAuthSanIp != null) map.put("tls_client_auth_san_ip", tlsClientAuthSanIp);
+    if (tlsClientAuthSanEmail != null) map.put("tls_client_auth_san_email", tlsClientAuthSanEmail);
     map.put("tls_client_certificate_bound_access_tokens", tlsClientCertificateBoundAccessTokens);
-    map.put("authorization_signed_response_alg", authorizationSignedResponseAlg);
-    map.put("authorization_encrypted_response_alg", authorizationEncryptedResponseAlg);
-    map.put("authorization_encrypted_response_enc", authorizationEncryptedResponseEnc);
-    map.put("backchannel_logout_uri", backchannelLogoutUri);
+    if (authorizationSignedResponseAlg != null)
+      map.put("authorization_signed_response_alg", authorizationSignedResponseAlg);
+    if (authorizationEncryptedResponseAlg != null)
+      map.put("authorization_encrypted_response_alg", authorizationEncryptedResponseAlg);
+    if (authorizationEncryptedResponseEnc != null)
+      map.put("authorization_encrypted_response_enc", authorizationEncryptedResponseEnc);
+    if (backchannelLogoutUri != null) map.put("backchannel_logout_uri", backchannelLogoutUri);
     map.put("backchannel_logout_session_required", backchannelLogoutSessionRequired);
-    map.put("frontchannel_logout_uri", frontchannelLogoutUri);
+    if (frontchannelLogoutUri != null) map.put("frontchannel_logout_uri", frontchannelLogoutUri);
     map.put("frontchannel_logout_session_required", frontchannelLogoutSessionRequired);
     map.put("enabled", enabled);
     if (hasCreatedAt()) map.put("created_at", createdAt.toString());

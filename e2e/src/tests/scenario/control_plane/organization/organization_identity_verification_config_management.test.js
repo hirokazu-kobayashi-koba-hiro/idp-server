@@ -421,6 +421,99 @@ describe("Organization Identity Verification Config Management API Test", () => 
     });
   });
 
+  test("GET response can be used directly as UPDATE request body (roundtrip)", async () => {
+    const configId = uuidv4();
+    const configType = uuidv4();
+
+    // Create a config
+    const createRequest = {
+      id: configId,
+      type: configType,
+      enabled: true,
+      processes: {
+        email_verification: {
+          request: {
+            basic_auth: {
+              username: "test_user",
+              password: "test_pass"
+            },
+            schema: {
+              type: "object",
+              properties: {
+                email: { type: "string" }
+              }
+            }
+          },
+          execution: {
+            mock: {
+              enabled: true,
+              response: { status: "success" }
+            }
+          }
+        }
+      },
+      metadata: {
+        created_by: "system",
+        purpose: "roundtrip_test"
+      }
+    };
+
+    const createResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      body: createRequest,
+    });
+    expect(createResponse.status).toBe(201);
+
+    // Step 1: GET the config
+    const getBeforeResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+      headers: {
+        Authorization: authHeader,
+      },
+    });
+    expect(getBeforeResponse.status).toBe(200);
+    const originalConfig = getBeforeResponse.data;
+
+    // Step 2: PUT the GET response body directly
+    const updateResponse = await putWithJson({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      body: originalConfig,
+    });
+    expect(updateResponse.status).toBe(200);
+
+    // Step 3: GET again and verify nothing changed
+    const getAfterResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+      headers: {
+        Authorization: authHeader,
+      },
+    });
+    expect(getAfterResponse.status).toBe(200);
+    const updatedConfig = getAfterResponse.data;
+
+    // Compare original and updated configurations (excluding updated_at which changes on every PUT)
+    const { updated_at: _origUpdatedAt, ...originalComparable } = originalConfig;
+    const { updated_at: _updatedUpdatedAt, ...updatedComparable } = updatedConfig;
+    expect(JSON.stringify(updatedComparable)).toBe(JSON.stringify(originalComparable));
+
+    // Cleanup
+    const deleteResponse = await deletion({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+      headers: {
+        Authorization: authHeader,
+      },
+    });
+    expect(deleteResponse.status).toBe(204);
+  });
+
   test("should handle non-existent identity verification configuration", async () => {
     const nonExistentId = uuidv4();
 
