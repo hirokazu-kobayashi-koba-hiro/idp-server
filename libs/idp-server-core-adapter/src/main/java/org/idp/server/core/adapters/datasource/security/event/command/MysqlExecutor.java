@@ -44,9 +44,11 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
                external_user_id,
                ip_address,
                user_agent,
-               detail
+               detail,
+               created_at
                )
                VALUES (
+               ?,
                ?,
                ?,
                ?,
@@ -85,6 +87,7 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
     params.add(securityEvent.userAgentValue());
 
     params.add(converter.write(securityEvent.detail().toMap()));
+    params.add(securityEvent.createdAt().value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }

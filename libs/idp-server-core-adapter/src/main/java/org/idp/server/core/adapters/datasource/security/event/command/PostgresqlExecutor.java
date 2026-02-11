@@ -44,7 +44,8 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
                 external_user_id,
                 ip_address,
                 user_agent,
-                detail
+                detail,
+                created_at
                 )
                 VALUES (
                 ?::uuid,
@@ -59,7 +60,8 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
                 ?,
                 ?::INET,
                 ?,
-                ?::jsonb
+                ?::jsonb,
+                ?
                 ) ON CONFLICT DO NOTHING;
                 """;
     List<Object> params = new ArrayList<>();
@@ -85,6 +87,7 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
     params.add(securityEvent.userAgentValue());
 
     params.add(converter.write(securityEvent.detail().toMap()));
+    params.add(securityEvent.createdAt().value());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
