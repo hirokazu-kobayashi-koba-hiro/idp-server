@@ -340,6 +340,101 @@ describe("organization client management api", () => {
       });
     });
 
+    it("GET response can be used directly as UPDATE request body (roundtrip)", async () => {
+      // Get OAuth token with org-management scope
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Step 1: Create a client
+      const clientId = uuidv4();
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "client_id": clientId,
+          "client_name": `Roundtrip Test Client ${Date.now()}`,
+          "client_type": "CONFIDENTIAL",
+          "grant_types": [
+            "authorization_code",
+            "refresh_token"
+          ],
+          "redirect_uris": [
+            "http://localhost:3000/callback"
+          ],
+          "response_types": [
+            "code"
+          ],
+          "scope": "openid profile email",
+          "token_endpoint_auth_method": "client_secret_post",
+          "application_type": "web",
+          "client_description": "Test client for GET-UPDATE roundtrip verification"
+        }
+      });
+      expect(createResponse.status).toBe(201);
+      console.log("✅ Roundtrip test client created");
+
+      // Step 2: GET client details
+      const getBeforeResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients/${clientId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      expect(getBeforeResponse.status).toBe(200);
+      const originalClient = getBeforeResponse.data;
+      console.log("✅ GET client configuration:", JSON.stringify(originalClient, null, 2));
+
+      // Step 3: PUT the GET response body directly (server ignores created_at/updated_at)
+      const updateResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients/${clientId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: originalClient
+      });
+      console.log("PUT response status:", updateResponse.status);
+      console.log("PUT response body:", JSON.stringify(updateResponse.data, null, 2));
+      expect(updateResponse.status).toBe(200);
+      console.log("✅ PUT with GET response body succeeded (no validation error)");
+
+      // Step 4: GET again and verify nothing changed
+      const getAfterResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients/${clientId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      expect(getAfterResponse.status).toBe(200);
+      const updatedClient = getAfterResponse.data;
+
+      // Compare original and updated configurations (excluding updated_at which changes on every PUT)
+      const { updated_at: _origUpdatedAt, ...originalComparable } = originalClient;
+      const { updated_at: _updatedUpdatedAt, ...updatedComparable } = updatedClient;
+      expect(JSON.stringify(updatedComparable)).toBe(JSON.stringify(originalComparable));
+      console.log("✅ Client configuration unchanged after GET→UPDATE roundtrip");
+
+      // Step 5: Clean up
+      const deleteResponse = await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients/${clientId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      expect(deleteResponse.status).toBe(204);
+      console.log("✅ Roundtrip test client deleted");
+    });
+
     it("pagination support", async () => {
       // Get OAuth token with org-management scope
       const tokenResponse = await requestToken({

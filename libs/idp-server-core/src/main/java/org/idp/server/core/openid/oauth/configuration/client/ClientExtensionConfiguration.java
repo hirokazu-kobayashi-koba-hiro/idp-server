@@ -83,8 +83,8 @@ public class ClientExtensionConfiguration implements JsonReadable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
-    map.put("access_token_duration", accessTokenDuration);
-    map.put("refresh_token_duration", refreshTokenDuration);
+    if (hasAccessTokenDuration()) map.put("access_token_duration", accessTokenDuration);
+    if (hasRefreshTokenDuration()) map.put("refresh_token_duration", refreshTokenDuration);
     map.put("supported_jar", supportedJar);
     if (hasAvailableFederations())
       map.put("available_federations", availableFederationsAsMapList());
