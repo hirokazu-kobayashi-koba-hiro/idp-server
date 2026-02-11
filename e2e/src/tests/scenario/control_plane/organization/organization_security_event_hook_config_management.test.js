@@ -365,6 +365,114 @@ describe("organization security event hook configuration management api", () => 
       });
     });
 
+    it("GET response can be used directly as UPDATE request body (roundtrip)", async () => {
+      // Get OAuth token
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Step 1: Create a security event hook config
+      const hookConfigId = uuidv4();
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "id": hookConfigId,
+          "type": hookConfigId,
+          triggers: [
+            "user_signin_failure"
+          ],
+          events: {
+            "user_signin_failure": {
+              execution: {
+                function: "http_request",
+                http_request: {
+                  url: "https://hmac.example.com/webhook",
+                  method: "POST",
+                  auth_type: "HMAC_SHA256",
+                  hmac_authentication: {
+                    api_key: "hmac-api-key",
+                    secret: "super-secret-hmac-key",
+                    signature_format: "SHA256",
+                    signing_fields: ["timestamp", "payload"]
+                  }
+                }
+              }
+            }
+          },
+          enabled: true
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // Step 2: GET the config
+      const getBeforeResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${hookConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(getBeforeResponse.status).toBe(200);
+      const originalConfig = getBeforeResponse.data;
+
+      // Step 3: PUT the GET response body, filtering out null, empty string, and server-managed fields
+      const serverManagedFields = ["created_at", "updated_at"];
+      const filterNullAndEmpty = (obj) => {
+        if (obj === null || obj === undefined) return undefined;
+        if (typeof obj !== "object" || Array.isArray(obj)) return obj;
+        const filtered = {};
+        for (const [key, value] of Object.entries(obj)) {
+          if (value === null || value === "" || serverManagedFields.includes(key)) continue;
+          const filteredValue = filterNullAndEmpty(value);
+          if (filteredValue !== undefined) filtered[key] = filteredValue;
+        }
+        return Object.keys(filtered).length > 0 ? filtered : undefined;
+      };
+      const filteredConfig = filterNullAndEmpty(originalConfig);
+
+      const updateResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${hookConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: filteredConfig
+      });
+      expect(updateResponse.status).toBe(200);
+
+      // Step 4: GET again and verify nothing changed
+      const getAfterResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${hookConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(getAfterResponse.status).toBe(200);
+      const updatedConfig = getAfterResponse.data;
+
+      // Compare original and updated configurations (excluding updated_at which changes on every PUT)
+      const { updated_at: _origUpdatedAt, ...originalComparable } = originalConfig;
+      const { updated_at: _updatedUpdatedAt, ...updatedComparable } = updatedConfig;
+      expect(JSON.stringify(updatedComparable)).toBe(JSON.stringify(originalComparable));
+
+      // Cleanup
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-event-hook-configurations/${hookConfigId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+    });
+
     it("error scenarios", async () => {
       // Get OAuth token
       const tokenResponse = await requestToken({

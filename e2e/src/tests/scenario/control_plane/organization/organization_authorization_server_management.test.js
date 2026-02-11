@@ -512,5 +512,104 @@ describe("organization authorization server management api", () => {
 
       console.log("🎉 OpenAPI specification field verification completed!");
     });
+
+    it("GET response can be used directly as UPDATE request body (roundtrip)", async () => {
+      // Get OAuth token
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      // Step 1: Create a test tenant
+      const newTenantId = uuidv4();
+      const createTenantResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          tenant: {
+            "id": newTenantId,
+            "name": `Roundtrip Test Tenant ${Date.now()}`,
+            "domain": "http://localhost:8080",
+            "description": "Test tenant for GET-UPDATE roundtrip verification",
+            "authorization_provider": "idp-server",
+            "tenant_type": "BUSINESS"
+          },
+          authorization_server: {
+            "issuer": `http://localhost:8080/${newTenantId}`,
+            "authorization_endpoint": `http://localhost:8080/${newTenantId}/v1/authorizations`,
+            "token_endpoint": `http://localhost:8080/${newTenantId}/v1/tokens`,
+            "userinfo_endpoint": `http://localhost:8080/${newTenantId}/v1/userinfo`,
+            "jwks_uri": `http://localhost:8080/${newTenantId}/v1/jwks`,
+            "scopes_supported": ["openid", "profile", "email"],
+            "response_types_supported": ["code"],
+            "response_modes_supported": ["query", "fragment"],
+            "subject_types_supported": ["public"],
+            "grant_types_supported": ["authorization_code", "refresh_token"],
+            "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"]
+          }
+        }
+      });
+      expect(createTenantResponse.status).toBe(201);
+      console.log("✅ Roundtrip test tenant created");
+
+      // Step 2: GET authorization server configuration
+      const getBeforeResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/authorization-server`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      expect(getBeforeResponse.status).toBe(200);
+      const originalConfig = getBeforeResponse.data;
+      console.log("✅ GET authorization server configuration:", JSON.stringify(originalConfig, null, 2));
+
+      // Step 3: PUT the GET response body directly as the update request body
+      const updateResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/authorization-server`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: originalConfig
+      });
+      console.log("PUT response status:", updateResponse.status);
+      console.log("PUT response body:", JSON.stringify(updateResponse.data, null, 2));
+      expect(updateResponse.status).toBe(200);
+      console.log("✅ PUT with GET response body succeeded (no validation error)");
+
+      // Step 4: GET again and verify nothing changed
+      const getAfterResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/authorization-server`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      expect(getAfterResponse.status).toBe(200);
+      const updatedConfig = getAfterResponse.data;
+
+      // Compare original and updated configurations
+      const originalJson = JSON.stringify(originalConfig);
+      const updatedJson = JSON.stringify(updatedConfig);
+      expect(updatedJson).toBe(originalJson);
+      console.log("✅ Configuration unchanged after GET→UPDATE roundtrip");
+
+      // Step 5: Clean up
+      const deleteTenantResponse = await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      expect(deleteTenantResponse.status).toBe(204);
+      console.log("✅ Roundtrip test tenant deleted");
+    });
   });
 });

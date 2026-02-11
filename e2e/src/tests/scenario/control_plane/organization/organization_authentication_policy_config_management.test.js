@@ -171,6 +171,95 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     expect(verifyDeleteResponse.status).toBe(404);
   });
 
+  test("GET response can be used directly as UPDATE request body (roundtrip)", async () => {
+    const configId = uuidv4();
+
+    // Step 1: Create a new authentication policy configuration
+    const createRequest = {
+      id: configId,
+      flow: uuidv4(),
+      enabled: true,
+      policies: [
+        {
+          description: "roundtrip_test_policy",
+          priority: 1,
+          conditions: {
+            scopes: ["openid"]
+          },
+          available_methods: ["password"],
+          success_conditions: {
+            any_of: [
+              [
+                {
+                  path: "$.password-authentication.success_count",
+                  type: "integer",
+                  operation: "gte",
+                  value: 1
+                }
+              ]
+            ]
+          }
+        }
+      ]
+    };
+
+    const createResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies`,
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      body: createRequest,
+    });
+    expect(createResponse.status).toBe(201);
+
+    // Step 2: GET the authentication policy configuration
+    const getResponse1 = await get({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
+      headers: {
+        Authorization: authHeader,
+      },
+    });
+    expect(getResponse1.status).toBe(200);
+    const getBody = getResponse1.data;
+    console.log("GET response (roundtrip):", JSON.stringify(getBody, null, 2));
+
+    // Step 3: PUT the GET response body directly back
+    const updateResponse = await putWithJson({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      body: getBody,
+    });
+    console.log("PUT roundtrip response:", updateResponse.data);
+    expect(updateResponse.status).toBe(200);
+
+    // Step 4: GET again and verify values unchanged (except updated_at)
+    const getResponse2 = await get({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
+      headers: {
+        Authorization: authHeader,
+      },
+    });
+    expect(getResponse2.status).toBe(200);
+
+    const before = { ...getBody };
+    const after = { ...getResponse2.data };
+    delete before.updated_at;
+    delete after.updated_at;
+    expect(after).toEqual(before);
+
+    // Cleanup
+    await deletion({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
+      headers: {
+        Authorization: authHeader,
+      },
+    });
+  });
+
   test("should support dry-run for create operation", async () => {
     const configId = uuidv4();
 
