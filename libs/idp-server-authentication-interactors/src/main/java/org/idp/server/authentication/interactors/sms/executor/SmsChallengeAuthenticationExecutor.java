@@ -18,8 +18,6 @@ package org.idp.server.authentication.interactors.sms.executor;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.authentication.interactors.email.OneTimePassword;
-import org.idp.server.authentication.interactors.email.OneTimePasswordGenerator;
 import org.idp.server.authentication.interactors.sms.SmsAuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.authentication.config.AuthenticationExecutionConfig;
@@ -34,6 +32,8 @@ import org.idp.server.platform.notification.sms.SmsSendResult;
 import org.idp.server.platform.notification.sms.SmsSender;
 import org.idp.server.platform.notification.sms.SmsSenders;
 import org.idp.server.platform.notification.sms.SmsSendingRequest;
+import org.idp.server.platform.random.OneTimePassword;
+import org.idp.server.platform.random.OneTimePasswordGenerator;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class SmsChallengeAuthenticationExecutor implements AuthenticationExecutor {

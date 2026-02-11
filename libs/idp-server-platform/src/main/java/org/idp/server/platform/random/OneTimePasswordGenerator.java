@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package org.idp.server.authentication.interactors.email;
+package org.idp.server.platform.random;
 
-import java.util.Random;
+import java.security.SecureRandom;
 
 public class OneTimePasswordGenerator {
 
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
   public static OneTimePassword generate() {
-    Random random = new Random();
-    int randomValue = random.nextInt(999999);
+    int randomValue = SECURE_RANDOM.nextInt(1_000_000);
     String value = String.format("%06d", randomValue);
     return new OneTimePassword(value);
   }
