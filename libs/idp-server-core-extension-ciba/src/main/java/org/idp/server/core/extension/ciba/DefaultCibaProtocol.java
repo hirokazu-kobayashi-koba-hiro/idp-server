@@ -159,7 +159,11 @@ public class DefaultCibaProtocol implements CibaProtocol {
       TenantLoggingContext.setUserId(user.sub());
 
       if (user.hasExternalUserId()) {
-        TenantLoggingContext.setUserId(user.externalUserId());
+        TenantLoggingContext.setUserExSub(user.externalUserId());
+      }
+
+      if (user.hasPreferredUsername()) {
+        TenantLoggingContext.setUserName(user.preferredUsername());
       }
     }
   }
