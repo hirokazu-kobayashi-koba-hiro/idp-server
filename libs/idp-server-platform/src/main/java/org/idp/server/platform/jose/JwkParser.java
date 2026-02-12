@@ -49,7 +49,6 @@ public class JwkParser {
     }
   }
 
-  // FIXME consider where should is implementing
   public static Map<String, Object> parsePublicKeys(String value)
       throws JsonWebKeyInvalidException {
     if (value == null || value.trim().isEmpty()) {

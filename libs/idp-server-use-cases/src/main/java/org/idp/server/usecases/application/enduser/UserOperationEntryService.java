@@ -115,7 +115,6 @@ public class UserOperationEntryService implements UserOperationApi {
     AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
         authenticationPolicyConfigurationQueryRepository.get(tenant, authFlow);
 
-    // TODO to be more correct getting client attributes
     AuthenticationTransaction authenticationTransaction =
         MfaRegistrationTransactionCreator.create(
             tenant, user, token, authFlow, request, authenticationPolicyConfiguration);

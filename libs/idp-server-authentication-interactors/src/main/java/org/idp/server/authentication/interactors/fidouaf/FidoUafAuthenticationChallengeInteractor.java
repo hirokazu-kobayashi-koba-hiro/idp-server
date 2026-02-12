@@ -123,7 +123,7 @@ public class FidoUafAuthenticationChallengeInteractor implements AuthenticationI
           "fido-uaf-authentication-challenge",
           fidoUafInteraction);
 
-      // TODO pre_hook
+      // TODO pre_hook https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/298
       Map<String, Object> executionRequest = new HashMap<>();
       executionRequest.put("device_id", deviceId);
 

@@ -42,7 +42,7 @@ public class BatchCredentialRequestParameters implements VerifiableCredentialReq
     return values.containsKey("credential_requests");
   }
 
-  // FIXME
+  // TODO refactor VC batch credential handling (#1267)
   public BatchCredentialRequests toBatchCredentialRequest() {
     try {
       return transformBatchRequest(credentialRequests());

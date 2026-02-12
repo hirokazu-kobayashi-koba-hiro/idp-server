@@ -63,10 +63,10 @@ public class OAuthAuthorizeResponse {
       return authorizationResponse.redirectUriValue();
     }
     if (status.isRedirectableBadRequest()) {
-      errorResponse.redirectUriValue();
+      return errorResponse.redirectUriValue();
     }
-    // FIXME
-    return "";
+    throw new IllegalStateException(
+        "redirectUriValue is not available for status: " + status.name());
   }
 
   public String error() {

@@ -35,7 +35,6 @@ import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.idp.server.platform.exception.UnSupportedException;
 
-// FIXME refactor
 public class JsonWebSignatureFactory {
 
   public JsonWebSignatureFactory() {}

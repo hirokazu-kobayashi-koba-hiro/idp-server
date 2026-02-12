@@ -31,7 +31,7 @@ public class JarmVerifier implements AuthorizationRequestExtensionVerifier {
   public void verify(OAuthRequestContext oAuthRequestContext) {
     ResponseMode responseMode = oAuthRequestContext.responseMode();
 
-    // TODO support
+    // TODO post-v1.0.0: implement form_post.jwt response mode (#1266)
     if (responseMode.isFormPostJwt()) {
       throw new OAuthRedirectableBadRequestException(
           "unauthorized_client", "response_mode form_post_jwt is unsupported", oAuthRequestContext);

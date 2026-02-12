@@ -45,7 +45,6 @@ class ModelConverter {
 
   private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
-  // TODO refactor
   static OAuthToken convert(Map<String, String> stringMap, AesCipher aesCipher) {
     OAuthTokenIdentifier id = new OAuthTokenIdentifier(stringMap.get("id"));
     TenantIdentifier tenantIdentifier = new TenantIdentifier(stringMap.get("tenant_id"));

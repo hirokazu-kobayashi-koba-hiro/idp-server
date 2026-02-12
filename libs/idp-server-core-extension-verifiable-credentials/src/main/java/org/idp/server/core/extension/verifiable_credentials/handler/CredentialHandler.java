@@ -128,7 +128,7 @@ public class CredentialHandler {
         clientConfigurationQueryRepository.get(tenant, accessToken.clientIdentifier());
     BatchCredentialRequests batchCredentialRequests = parameters.toBatchCredentialRequest();
 
-    // FIXME
+    // TODO refactor VC batch issuance logic (#1267)
     BatchVerifiableCredentialResponsesBuilder batchVerifiableCredentialResponsesBuilder =
         new BatchVerifiableCredentialResponsesBuilder();
     List<BatchVerifiableCredentialResponse> responsesList = new ArrayList<>();

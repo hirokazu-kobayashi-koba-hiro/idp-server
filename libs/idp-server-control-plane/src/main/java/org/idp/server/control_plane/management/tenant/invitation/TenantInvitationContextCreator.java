@@ -51,7 +51,6 @@ public class TenantInvitationContextCreator {
     String roleId = request.getValueAsString("role_id");
     String roleName = request.getValueAsString("role_name");
 
-    // TODO improve determining path
     HttpQueryParams httpQueryParams = new HttpQueryParams();
     httpQueryParams.add("invitation_id", id);
     httpQueryParams.add("invitation_tenant_id", tenantId);
