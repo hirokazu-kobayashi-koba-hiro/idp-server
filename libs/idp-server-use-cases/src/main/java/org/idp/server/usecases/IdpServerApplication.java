@@ -192,7 +192,7 @@ import org.idp.server.usecases.application.enduser.AuthenticationDeviceLogEntryS
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationCallbackEntryService;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationEntryService;
 import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
-import org.idp.server.usecases.application.relying_party.SharedSignalsFrameworkMetaDataEntryService;
+import org.idp.server.usecases.application.ssf_receiver.SharedSignalsFrameworkMetaDataEntryService;
 import org.idp.server.usecases.application.system.*;
 import org.idp.server.usecases.application.tenant_invitator.TenantInvitationMetaDataEntryService;
 import org.idp.server.usecases.control_plane.organization_manager.*;

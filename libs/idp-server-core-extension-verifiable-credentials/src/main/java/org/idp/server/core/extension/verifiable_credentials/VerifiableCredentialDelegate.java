@@ -23,7 +23,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface VerifiableCredentialDelegate {
 
-  // FIXME
+  // TODO refactor VC delegate interface design (#1267)
   CredentialDelegateResponse getCredential(
       Tenant tenant, Subject subject, List<CredentialDefinition> credentialDefinitions);
 }

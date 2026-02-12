@@ -200,7 +200,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
               updatedApplication, context, verificationConfiguration);
       resultCommandRepository.register(tenant, identityVerificationResult);
 
-      // TODO dynamic lifecycle management
+      // TODO dynamic lifecycle management (#1268)
       User verifiedUser =
           user.transitStatus(UserStatus.IDENTITY_VERIFIED)
               .mergeVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());

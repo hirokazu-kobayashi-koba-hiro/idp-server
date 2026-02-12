@@ -28,7 +28,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
-// TODO reconsider logic
+// TODO reconsider CDD logic (#1268)
 public class ContinuousCustomerDueDiligenceParameterResolver
     implements AdditionalRequestParameterResolver {
 

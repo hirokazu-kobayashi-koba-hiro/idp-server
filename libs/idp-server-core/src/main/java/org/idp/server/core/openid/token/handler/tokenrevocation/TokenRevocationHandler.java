@@ -81,7 +81,6 @@ public class TokenRevocationHandler {
     return new TokenRevocationResponse(TokenRevocationRequestStatus.OK, oAuthToken, Map.of());
   }
 
-  // TODO consider, because duplicated method token introspection handler
   OAuthToken find(TokenRevocationRequest request) {
     TokenRevocationRequestParameters parameters = request.toParameters();
     AccessTokenEntity accessTokenEntity = parameters.accessToken();

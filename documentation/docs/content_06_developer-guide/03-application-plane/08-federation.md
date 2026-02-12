@@ -331,7 +331,7 @@ OAuthFlowEntryService.callbackFederation()
 │ 7. AuthenticationTransaction更新                    │
 ├─────────────────────────────────────────────────────┤
 │  interactionResults: {                             │
-│    "oidc_federation": {successCount: 1, ...}       │
+│    "oidc-google": {successCount: 1, ...}           │
 │  }                                                  │
 │  isSuccess(): true  ← 認証完了                       │
 └─────────────────────────────────────────────────────┘

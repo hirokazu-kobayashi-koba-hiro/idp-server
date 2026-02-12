@@ -106,7 +106,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       return validationResult.errorResponse();
     }
 
-    // TODO to be more correct
+    // TODO improve type-safe request parameter access (#1268)
     UserIdentifier userIdentifier = new UserIdentifier(request.getValueAsString("user_id"));
     User user = userQueryRepository.get(tenant, userIdentifier);
 
@@ -130,7 +130,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     resultCommandRepository.register(tenant, identityVerificationResult);
 
-    // TODO dynamic lifecycle management
+    // TODO dynamic lifecycle management (#1268)
     User verifiedUser =
         user.transitStatus(UserStatus.IDENTITY_VERIFIED).setVerifiedClaims(verifiedClaims.toMap());
 

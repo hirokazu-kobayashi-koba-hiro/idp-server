@@ -158,7 +158,6 @@ public class FederationInteractionResult {
     return tenantIdentifier;
   }
 
-  // TODO more consider
   public String interactionTypeName() {
     return federationType.name() + "-" + ssoProvider.name();
   }

@@ -84,16 +84,6 @@ public class TokenIntrospectionRequestContext implements BackchannelRequestConte
     return clientSecretBasic.clientId();
   }
 
-  public boolean isSupportedGrantTypeWithServer(GrantType grantType) {
-    // FIXME server and client isSupportedGrantType
-    return true;
-  }
-
-  public boolean isSupportedGrantTypeWithClient(GrantType grantType) {
-    // FIXME server and client isSupportedGrantType
-    return true;
-  }
-
   public boolean matchClientSecret(ClientSecret clientSecret) {
     return clientConfiguration.clientSecretValue().equals(clientSecret.value());
   }

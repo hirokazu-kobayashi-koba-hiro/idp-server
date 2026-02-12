@@ -102,7 +102,6 @@ public class AuthorizationResponseBuilder {
   }
 
   public AuthorizationResponse build() {
-    // TODO consider
     if (jarmPayload.exists()) {
       this.httpQueryParams = new HttpQueryParams();
       this.httpQueryParams.add("response", jarmPayload.value());

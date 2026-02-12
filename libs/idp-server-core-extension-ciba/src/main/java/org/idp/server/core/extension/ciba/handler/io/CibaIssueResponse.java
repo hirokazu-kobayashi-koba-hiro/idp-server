@@ -31,7 +31,6 @@ import org.idp.server.core.openid.oauth.type.oauth.ExpiresIn;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.oauth.type.oidc.AcrValues;
 
-// TODO to be more readable name
 public class CibaIssueResponse {
   CibaRequestStatus status;
   CibaRequestContext cibaRequestContext;

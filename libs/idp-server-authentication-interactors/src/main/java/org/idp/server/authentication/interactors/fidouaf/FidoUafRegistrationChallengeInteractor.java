@@ -144,6 +144,7 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
         AuthenticationDeviceIdentifier.generate();
 
     // TODO to be more flexible
+    // https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/298
     Map<String, Object> executionRequest =
         new HashMap<>(Map.of("device_id", authenticationDeviceIdentifier.value()));
     Map<String, Object> additionalRequests =

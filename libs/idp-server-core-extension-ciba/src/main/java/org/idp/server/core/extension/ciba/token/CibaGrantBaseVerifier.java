@@ -138,7 +138,7 @@ public class CibaGrantBaseVerifier implements CibaGrantVerifierInterface {
     }
   }
 
-  // TODO move to FAPI_CIBA module to use plugin pattern
+  // consider moving to FAPI_CIBA module to use plugin pattern
   void throwExceptionIfFapiCibaAndCertificateBoundRequiredButMissing(
       TokenRequestContext context, ClientCredentials clientCredentials) {
     AuthorizationServerConfiguration serverConfiguration = context.serverConfiguration();

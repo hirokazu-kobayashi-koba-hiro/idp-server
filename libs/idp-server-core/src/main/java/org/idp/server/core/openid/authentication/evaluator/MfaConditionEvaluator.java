@@ -45,7 +45,6 @@ public class MfaConditionEvaluator {
       return false;
     }
 
-    // TODO to be more correct
     if (results.containsDenyInteraction()) {
       return true;
     }

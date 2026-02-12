@@ -69,7 +69,6 @@ public class UserEventPublisher implements SecurityEventUserCreatable {
     securityEventPublisher.publish(securityEvent);
   }
 
-  // TODO to be more correct
   public void publish(
       Tenant tenant,
       RequestedClientId requestedClientId,

@@ -142,19 +142,4 @@ public class OAuthRequestResponse {
   public boolean isNoInteractionOK() {
     return status.isNoInteractionOK();
   }
-
-  // FIXME bad code
-  //  public AuthenticationPolicy findSatisfiedAuthenticationPolicy() {
-  //    List<AuthenticationPolicy> authenticationPolicies =
-  //        authorizationServerConfiguration.authenticationPolicies();
-  //    return authenticationPolicies.stream()
-  //        .filter(
-  //            authenticationPolicy ->
-  //                authenticationPolicy.anyMatch(
-  //                    AuthFlow.OAUTH,
-  //                    authorizationRequest.acrValues(),
-  //                    authorizationRequest.scopes()))
-  //        .max(Comparator.comparingInt(AuthenticationPolicy::priority))
-  //        .orElse(new AuthenticationPolicy());
-  //  }
 }

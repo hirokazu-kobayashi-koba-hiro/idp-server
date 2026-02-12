@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.usecases.application.relying_party;
+package org.idp.server.usecases.application.ssf_receiver;
 
 import java.util.Map;
 import org.idp.server.platform.datasource.Transaction;
@@ -32,7 +32,6 @@ import org.idp.server.security.event.hook.ssf.io.SharedSignalsFrameworkConfigura
 import org.idp.server.security.event.hook.ssf.io.SharedSignalsFrameworkJwksRequestResponse;
 import org.idp.server.security.event.hook.ssf.io.SharedSignalsFrameworkJwksRequestStatus;
 
-// TODO to be more correct place
 @Transaction(readOnly = true)
 public class SharedSignalsFrameworkMetaDataEntryService
     implements SharedSignalsFrameworkMetaDataApi {

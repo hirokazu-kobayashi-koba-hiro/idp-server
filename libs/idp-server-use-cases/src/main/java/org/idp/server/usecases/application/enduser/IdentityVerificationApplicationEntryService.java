@@ -293,7 +293,7 @@ public class IdentityVerificationApplicationEntryService
               updated, applyingResult.applicationContext(), verificationConfiguration);
       resultCommandRepository.register(tenant, identityVerificationResult);
 
-      // TODO dynamic lifecycle management
+      // TODO dynamic lifecycle management (#1268)
       User verifiedUser =
           user.transitStatus(UserStatus.IDENTITY_VERIFIED)
               .mergeVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());

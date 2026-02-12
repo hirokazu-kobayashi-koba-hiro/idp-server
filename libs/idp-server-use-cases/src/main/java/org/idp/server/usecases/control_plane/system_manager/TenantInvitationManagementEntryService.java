@@ -77,7 +77,7 @@ public class TenantInvitationManagementEntryService implements TenantInvitationM
       return validate.errorResponse();
     }
 
-    // TODO tenant config
+    // TODO post-v1.0.0: requires tenant configuration API to store admin_dashboard_url first
     TenantInvitationContextCreator contextCreator =
         new TenantInvitationContextCreator(tenant, request, new AdminDashboardUrl("TODO"), dryRun);
     TenantInvitationContext context = contextCreator.create();
@@ -88,7 +88,8 @@ public class TenantInvitationManagementEntryService implements TenantInvitationM
 
     tenantInvitationCommandRepository.register(tenant, context.tenantInvitation());
 
-    // TODO send email
+    // TODO post-v1.0.0: requires tenant configuration API to store email templates first, then
+    // send invitation email via EmailSender plugin
 
     return context.toResponse();
   }
@@ -151,7 +152,7 @@ public class TenantInvitationManagementEntryService implements TenantInvitationM
       return validate.errorResponse();
     }
 
-    // TODO tenant config
+    // TODO post-v1.0.0: requires tenant configuration API to store admin_dashboard_url first
     TenantInvitationContextCreator contextCreator =
         new TenantInvitationContextCreator(tenant, request, new AdminDashboardUrl("TODO"), dryRun);
     TenantInvitationContext context = contextCreator.create();

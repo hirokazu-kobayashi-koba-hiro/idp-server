@@ -180,7 +180,7 @@ public class IdentityVerificationApplication {
     IdentityVerificationApplicationDetails mergedApplicationDetails =
         applicationDetails.merge(context, processConfig.store().applicationDetailsMappingRules());
 
-    // TODO to be more correct
+    // TODO improve process result merge strategy (#1268)
     Map<String, IdentityVerificationApplicationProcessResult> resultMap = processes.toMap();
     if (processes.contains(process.name())) {
 

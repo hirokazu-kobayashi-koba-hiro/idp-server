@@ -205,7 +205,6 @@ public class AuthorizationGrant {
         consentClaims);
   }
 
-  // TODO
   public AuthorizationGrant merge(AuthorizationGrant newAuthorizationGrant) {
     User newUser = newAuthorizationGrant.user();
     Authentication newAuthentication = newAuthorizationGrant.authentication();

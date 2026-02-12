@@ -49,6 +49,14 @@ public class JsonConverter {
     this.objectMapper = objectMapper;
   }
 
+  /**
+   * Creates a default JsonConverter instance.
+   *
+   * <p>Collection coercion is configured to handle backward compatibility: the client configuration
+   * "contacts" field was changed from String to String[] on 2025-09-17. When a plain string value
+   * is encountered where a collection is expected, it is coerced to null instead of throwing an
+   * error.
+   */
   private static JsonConverter create() {
     JavaTimeModule javaTimeModule = new JavaTimeModule();
     javaTimeModule.addDeserializer(
@@ -58,8 +66,6 @@ public class JsonConverter {
     objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
     objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
     objectMapper.registerModule(javaTimeModule);
-    // TODO compatibility - client configuration contacts is string array, but it was string at
-    // 2025-09-17.
     objectMapper
         .coercionConfigFor(LogicalType.Collection)
         .setCoercion(CoercionInputShape.String, CoercionAction.AsNull)
@@ -67,6 +73,7 @@ public class JsonConverter {
     return new JsonConverter(objectMapper);
   }
 
+  /** Creates a snake_case JsonConverter instance. See {@link #create()} for coercion details. */
   private static JsonConverter createWithSnakeCaseStrategy() {
     JavaTimeModule javaTimeModule = new JavaTimeModule();
     javaTimeModule.addDeserializer(
@@ -77,8 +84,6 @@ public class JsonConverter {
     objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
     objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     objectMapper.registerModule(javaTimeModule);
-    // TODO compatibility - client configuration contacts is string array, but it was string at
-    // 2025-09-17.
     objectMapper
         .coercionConfigFor(LogicalType.Collection)
         .setCoercion(CoercionInputShape.String, CoercionAction.AsNull)
