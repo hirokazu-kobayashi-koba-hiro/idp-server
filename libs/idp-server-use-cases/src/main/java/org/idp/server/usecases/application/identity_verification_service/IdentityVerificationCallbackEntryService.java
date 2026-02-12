@@ -240,6 +240,23 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
           requestAttributes);
     }
 
+    if (updatedApplication.isCancelled()) {
+      eventPublisher.publishSync(
+          tenant,
+          application.requestedClientId(),
+          user,
+          DefaultSecurityEventType.identity_verification_application_cancelled.toEventType(),
+          requestAttributes);
+      SecurityEventType typeSpecificCancelledEvent =
+          new SecurityEventType(type.name() + "_cancelled");
+      eventPublisher.publish(
+          tenant,
+          application.requestedClientId(),
+          user,
+          typeSpecificCancelledEvent,
+          requestAttributes);
+    }
+
     return IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
         context, processConfiguration.response());
   }
