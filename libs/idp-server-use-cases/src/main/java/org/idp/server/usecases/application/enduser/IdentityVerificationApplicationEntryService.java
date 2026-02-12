@@ -319,6 +319,17 @@ public class IdentityVerificationApplicationEntryService
       eventPublisher.publish(tenant, oAuthToken, typeSpecificRejectedEvent, requestAttributes);
     }
 
+    if (updated.isCancelled()) {
+      eventPublisher.publishSync(
+          tenant,
+          oAuthToken,
+          DefaultSecurityEventType.identity_verification_application_cancelled,
+          requestAttributes);
+      SecurityEventType typeSpecificCancelledEvent =
+          new SecurityEventType(type.name() + "_cancelled");
+      eventPublisher.publish(tenant, oAuthToken, typeSpecificCancelledEvent, requestAttributes);
+    }
+
     IdentityVerificationContext updatedContext =
         new IdentityVerificationContextBuilder()
             .previousContext(applyingResult.applicationContext())
