@@ -26,8 +26,6 @@ import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogApi;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogRequest;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogResponse;
-import org.idp.server.platform.json.JsonNodeWrapper;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;
@@ -42,7 +40,6 @@ public class AuthenticationDeviceV1Api implements ParameterTransformable {
 
   AuthenticationTransactionApi authenticationTransactionApi;
   AuthenticationDeviceLogApi authenticationDeviceLogApi;
-  LoggerWrapper log = LoggerWrapper.getLogger(AuthenticationDeviceV1Api.class);
 
   public AuthenticationDeviceV1Api(IdpServerApplication idpServerApplication) {
     this.authenticationTransactionApi = idpServerApplication.authenticationApi();
@@ -78,9 +75,6 @@ public class AuthenticationDeviceV1Api implements ParameterTransformable {
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestBody Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
-
-    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(requestBody);
-    log.info(jsonNodeWrapper.toJson());
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
     AuthenticationDeviceLogRequest request = new AuthenticationDeviceLogRequest(requestBody);
