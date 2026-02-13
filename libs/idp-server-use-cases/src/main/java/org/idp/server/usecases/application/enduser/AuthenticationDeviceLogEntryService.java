@@ -24,7 +24,9 @@ import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogRequest
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogResponse;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.log.TenantLoggingContext;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -62,8 +64,15 @@ public class AuthenticationDeviceLogEntryService implements AuthenticationDevice
       log.debug(
           "Skipping security event publish - no user found for tenant: {}",
           tenantIdentifier.value());
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
+      log.info(jsonNodeWrapper.toJson());
       return AuthenticationDeviceLogResponse.ok();
     }
+
+    setUserContext(user);
+
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(request.toMap());
+    log.info(jsonNodeWrapper.toJson());
 
     eventPublisher.publish(
         tenant,
@@ -91,5 +100,15 @@ public class AuthenticationDeviceLogEntryService implements AuthenticationDevice
     }
 
     return null;
+  }
+
+  private void setUserContext(User user) {
+    TenantLoggingContext.setUserId(user.sub());
+    if (user.hasExternalUserId()) {
+      TenantLoggingContext.setUserExSub(user.externalUserId());
+    }
+    if (user.hasPreferredUsername()) {
+      TenantLoggingContext.setUserName(user.preferredUsername());
+    }
   }
 }
