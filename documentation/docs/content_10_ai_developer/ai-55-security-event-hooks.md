@@ -53,18 +53,18 @@ public interface SecurityEventHook {
 
 ## WebHookSecurityEventExecutor - Webhook実装
 
-**情報源**: [WebHookSecurityEventExecutor.java:35](../../../libs/idp-server-security-event-hooks/src/main/java/org/idp/server/security/event/hooks/webhook/WebHookSecurityEventExecutor.java#L35)
+**情報源**: [WebHookSecurityEventExecutor.java:36](../../../libs/idp-server-security-event-hooks/src/main/java/org/idp/server/security/event/hooks/webhook/WebHookSecurityEventExecutor.java#L36)
 
 ```java
 /**
  * Webhook実装（RFC 8935準拠）
- * 確認方法: 実ファイルの35-80行目
+ * SSFと同じ設定パターン: hookConfiguration.getEvent()でイベント設定を取得
+ * HttpRequestExecutor.execute(config, params)経由でリトライ・認証・タイムアウトを自動処理
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8935">RFC 8935 - Push-Based SET Delivery</a>
  */
 public class WebHookSecurityEventExecutor implements SecurityEventHook {
 
   HttpRequestExecutor httpRequestExecutor;
-  JsonConverter jsonConverter;
 
   @Override
   public SecurityEventHookType type() {
@@ -80,57 +80,42 @@ public class WebHookSecurityEventExecutor implements SecurityEventHook {
     long startTime = System.currentTimeMillis();
 
     try {
-      // 1. 設定取得
-      WebHookConfiguration configuration =
-          jsonConverter.read(hookConfiguration, WebHookConfiguration.class);
+      // 1. イベントタイプ別の設定取得（SSFと同じパターン）
+      SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
+      SecurityEventExecutionConfig executionConfig = securityEventConfig.execution();
+      HttpRequestExecutionConfig httpRequestConfig = executionConfig.httpRequest();
 
-      // 2. イベントタイプ別の設定取得
-      HttpRequestUrl httpRequestUrl = configuration.httpRequestUrl(securityEvent.type());
-      HttpMethod httpMethod = configuration.httpMethod(securityEvent.type());
-      HttpRequestStaticHeaders httpRequestStaticHeaders =
-          configuration.httpRequestHeaders(securityEvent.type());
-      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys =
-          configuration.httpRequestDynamicBodyKeys(securityEvent.type());
-      HttpRequestStaticBody httpRequestStaticBody =
-          configuration.httpRequestStaticBody(securityEvent.type());
-
-      // 3. リクエストボディ生成（動的マッピング）
-      HttpRequestBodyCreator requestBodyCreator =
-          new HttpRequestBodyCreator(
-              new HttpRequestBaseParams(securityEvent.toMap()),
-              httpRequestDynamicBodyKeys,
-              httpRequestStaticBody);
-      Map<String, Object> requestBody = requestBodyCreator.create();
-
-      // 4. HTTPリクエスト実行
-      HttpRequest httpRequest = HttpRequest.newBuilder()
-          .uri(new URI(httpRequestUrl.value()))
-          .method(httpMethod.value(), /* body */)
-          .headers(httpRequestStaticHeaders.toArray())
-          .build();
-
-      HttpRequestResult result = httpRequestExecutor.execute(httpRequest);
-
+      // 2. HTTPリクエスト実行（リトライ・認証・タイムアウト自動処理）
+      HttpRequestBaseParams params = new HttpRequestBaseParams(securityEvent.toMap());
+      HttpRequestResult httpResult = httpRequestExecutor.execute(httpRequestConfig, params);
       long executionDurationMs = System.currentTimeMillis() - startTime;
 
-      if (result.isSuccess()) {
-        return SecurityEventHookResult.success(securityEvent, result, executionDurationMs);
+      Map<String, Object> responseBody = httpResult.toMap();
+
+      if (httpResult.isSuccess()) {
+        return SecurityEventHookResult.successWithContext(
+            hookConfiguration, securityEvent, responseBody, executionDurationMs);
       } else {
-        return SecurityEventHookResult.failure(securityEvent, result, executionDurationMs);
+        return SecurityEventHookResult.failureWithContext(
+            hookConfiguration, securityEvent, responseBody, executionDurationMs,
+            "HTTP_ERROR", "HTTP request failed with status: " + httpResult.statusCode());
       }
 
     } catch (Exception e) {
       long executionDurationMs = System.currentTimeMillis() - startTime;
-      return SecurityEventHookResult.error(securityEvent, e, executionDurationMs);
+      return SecurityEventHookResult.failureWithContext(
+          hookConfiguration, securityEvent, null, executionDurationMs,
+          e.getClass().getSimpleName(), "Webhook request failed: " + e.getMessage());
     }
   }
 }
 ```
 
 **重要ポイント**:
+- ✅ **SSFと同じ設定パターン**: `hookConfiguration.getEvent(eventType)` → `SecurityEventConfig` → `HttpRequestExecutionConfig`
+- ✅ **HttpRequestExecutor.execute(config, params)経由**: リトライ（指数バックオフ）・OAuth2/HMAC認証・タイムアウト・SSRF保護を自動処理
 - ✅ **Tenant第一引数**: マルチテナント分離
 - ✅ **実行時間計測**: `executionDurationMs`でパフォーマンス監視
-- ✅ **動的設定**: イベントタイプ別にURL/メソッド/ヘッダー/ボディを設定可能
 - ✅ **例外ハンドリング**: 成功/失敗/エラーを明確に区別
 
 ## SlackSecurityEventHookExecutor - Slack実装
