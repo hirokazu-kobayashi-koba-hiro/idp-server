@@ -70,26 +70,55 @@ eventPublisher.publish(
 {
   "type": "SLACK",
   "triggers": [
-    "user_signup"
+    "user_signup",
+    "user_deletion"
   ],
   "enabled": true,
-  "store_execution_payload": true,  // 🆕 実行結果ペイロード保存設定
-  "details": {
-    "base": {
-      "description": "slack共通通知",
-      "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
-      "message_template": "🔐 type: ${trigger} / user: ${user.id} / tenant: ${tenant.id} / clientAttributes: ${clientAttributes.id}"
+  "store_execution_payload": true,
+  "events": {
+    "default": {
+      "execution": {
+        "function": "slack_notification",
+        "details": {
+          "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
+          "message_template": "type: ${trigger} / user: ${user.id} / tenant: ${tenant.id}"
+        }
+      }
     },
-    "overlays": {
-      "user_deletion": {
-        "description": "ユーザー削除通知",
-        "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
-        "message_template": "⚠ user_deletion: ${user.email}"
+    "user_deletion": {
+      "execution": {
+        "function": "slack_notification",
+        "details": {
+          "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
+          "message_template": "user_deletion: ${user.email}"
+        }
       }
     }
   }
 }
 ```
+
+#### `triggers` と `events` の関係
+
+`triggers` はフックを**実行するかどうか**（IF）を制御し、`events` は**どう実行するか**（HOW）を制御します。
+
+```
+SecurityEvent発生
+  ↓
+shouldExecute(): triggers リストにイベントタイプが含まれるか？
+  ├─ NO  → スキップ（フック実行しない）
+  └─ YES → execute()
+              ↓
+           getEvent(): events マップからイベント設定を取得
+              ├─ events に該当イベントタイプのキーあり → その設定を使用
+              ├─ events に該当キーなし、"default" あり → default 設定を使用
+              └─ どちらもなし → 空の設定（実質何もしない）
+```
+
+上記の設定例では:
+- `user_signup` イベント → `triggers` に含まれるので実行。`events` に個別キーがないため `default` の設定が使われる
+- `user_deletion` イベント → `triggers` に含まれるので実行。`events` に `user_deletion` キーがあるためその設定が使われる
+- `login_success` イベント → `triggers` に含まれないためスキップ
 
 ### 2. SecurityEventHookExecutor
 
@@ -159,9 +188,13 @@ CREATE TABLE security_event_hook_results
 ```json
 {
   "type": "SLACK",
-  "store_execution_payload": true,   // デフォルト: true
+  "store_execution_payload": true,
   "triggers": ["user_login_success"],
-  "details": { ... }
+  "events": {
+    "default": {
+      "execution": { "..." : "..." }
+    }
+  }
 }
 ```
 
@@ -347,17 +380,22 @@ CREATE TABLE security_event_hook_results
   "type": "SLACK",
   "triggers": [
     "password_failure",
-    "fido_uaf_authentication_failure", 
+    "fido_uaf_authentication_failure",
     "oauth_deny",
     "user_signup",
     "login_success"
   ],
   "enabled": true,
   "store_execution_payload": true,
-  "details": {
-    "base": {
-      "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
-      "message_template": "🚨 Event: ${trigger} | User: ${user.email} | IP: ${detail.ip_address}"
+  "events": {
+    "default": {
+      "execution": {
+        "function": "slack_notification",
+        "details": {
+          "incoming_webhook_url": "https://hooks.slack.com/services/xxx",
+          "message_template": "Event: ${trigger} | User: ${user.email} | IP: ${detail.ip_address}"
+        }
+      }
     }
   }
 }
