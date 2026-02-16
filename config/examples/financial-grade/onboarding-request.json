@@ -18,7 +18,7 @@
     },
     "session_config": {
       "cookie_name": "FAPI_CIBA_SESSION",
-      "cookie_same_site": "none",
+      "cookie_same_site": "Lax",
       "use_secure_cookie": true,
       "use_http_only_cookie": true,
       "cookie_path": "/"

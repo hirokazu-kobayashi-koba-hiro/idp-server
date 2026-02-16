@@ -192,6 +192,124 @@ cd e2e && npm test -- spec/rfc9126_par.test.js
 cd e2e && npm test -- usecase/financial-grade/
 ```
 
+## OIDF適合性テスト（OIDF Conformance Test Suite）
+
+### 概要
+
+OpenID Foundation (OIDF) が提供する適合性テストスイートで、FAPI仕様への準拠を自動検証する。
+テストスイートURL: `https://www.certification.openid.net/`
+
+本プロジェクトでは以下の2つのテストプランを実行:
+
+| テストプラン | 内容 | テスト数 |
+|-------------|------|---------|
+| **FAPI 1.0 Advanced Final** (`fapi1-advanced-final-test-plan`) | 認可フロー、Request Object検証、JARM、mTLS、エラーハンドリング | ~30テスト |
+| **FAPI-CIBA ID1** (`fapi-ciba-id1-test-plan`) | CIBAフロー、poll/pingモード、Request Object検証、Refresh Token | ~30テスト |
+
+### テスト環境の構成
+
+```
+OIDF Conformance Suite (https://www.certification.openid.net/)
+    ↕ HTTPS
+ローカル idp-server (api.local.dev / mtls.api.local.dev)
+    ↕
+Financial-grade テナント (tenant_id: c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8)
+```
+
+OIDFテストスイートがローカルサーバーにHTTPSでアクセスするため、ローカル環境が外部からアクセス可能である必要がある（ngrok等のトンネリングまたはDNS設定）。
+
+### financial-gradeテナントのセットアップ
+
+```bash
+# 1. ローカル環境起動
+docker compose up -d
+
+# 2. financial-gradeテナント作成（管理APIで組織・テナント・クライアント一括作成）
+cd config/examples/financial-grade
+./setup.sh
+
+# 3. テナント設定の更新（既存テナントの設定変更時）
+./update.sh
+
+# 4. テナント削除（クリーンアップ）
+./delete.sh
+```
+
+**setup.sh が行うこと:**
+1. `.env`から管理者認証情報を読み込み、アクセストークンを取得
+2. `onboarding-request.json`を使って組織+テナント+クライアント群を一括作成
+3. 認証ポリシー、認証設定（FIDO2等）を個別APIで設定
+4. テストユーザーを作成
+
+**主要設定ファイル:**
+
+| ファイル | 内容 |
+|---------|------|
+| `onboarding-request.json` | テナント定義 + 全クライアント定義（一括オンボーディング） |
+| `financial-tenant.json` | テナント設定のリファレンス（discovery応答に反映される値） |
+| `tls-client-auth-client.json` | tls_client_auth方式クライアント |
+| `tls-client-auth-client-2.json` | tls_client_auth方式クライアント（2nd client for OIDF） |
+| `private-key-jwt-client.json` | private_key_jwt方式クライアント |
+| `financial-client.json` | self_signed_tls_client_auth方式クライアント |
+| `authentication-policy/oauth.json` | FAPI用認証ポリシー |
+| `certs/` | mTLSクライアント証明書・CA証明書 |
+
+### OIDF テスト設定ファイル
+
+OIDFテストスイートにインポートするJSON設定:
+
+```
+config/examples/financial-grade/oidc-test/
+├── fapi/
+│   └── tls_client_auth.json          # FAPI 1.0 Advanced Final (tls_client_auth)
+└── fapi-ciba/
+    ├── tls_client_auth_poll.json      # FAPI-CIBA (tls_client_auth + poll)
+    ├── private_key_jwt_poll.json      # FAPI-CIBA (private_key_jwt + poll)
+    └── FAPI-CIBA-test-cases.md        # テストケース詳細ドキュメント
+```
+
+**設定ファイルの構造:**
+```json
+{
+  "alias": "テスト計画の識別名",
+  "server": {
+    "discoveryUrl": "https://api.local.dev/{tenant_id}/.well-known/openid-configuration"
+  },
+  "client": { "client_id": "...", "scope": "...", "jwks": {...} },
+  "client2": { "client_id": "...", "scope": "...", "jwks": {...} },
+  "mtls": { "key": "...", "cert": "..." },
+  "mtls2": { "key": "...", "cert": "..." },
+  "resource": {
+    "resourceUrl": "https://mtls.api.local.dev/{tenant_id}/v1/me/identity-verification/applications"
+  }
+}
+```
+
+**注意:**
+- `discoveryUrl`は通常エンドポイント (`api.local.dev`)
+- `resourceUrl`はmTLSエンドポイント (`mtls.api.local.dev`) — sender-constrainedトークン検証にクライアント証明書が必要
+- `client`と`client2`は2クライアントテスト用（証明書バインドアクセストークンの交差検証等）
+- `mtls`/`mtls2`はそれぞれのクライアントのTLSクライアント証明書
+
+### FAPI-CIBAテスト時の追加要件
+
+CIBAテストではユーザーがデバイスで認証を承認する必要がある:
+
+```bash
+# CIBAデバイス認証シミュレーション（テスト中に手動実行）
+cd config/examples/financial-grade
+./ciba-device-auth.sh
+```
+
+このスクリプトはCIBAバックチャネル認証リクエストに対して、ユーザーの認証承認をシミュレートする。
+
+### Gap分析ドキュメント
+
+`documentation/requirements/fapi-1.0-gap-analysis.yaml` にOIDF適合性テスト結果と修正記録を管理:
+- 各GAP項目のID、仕様参照、修正状態、修正内容を記録
+- テナント設定・クライアント設定の要件充足分析も含む
+- 新しいGAPが見つかった場合はこのファイルに追記する
+
 ## トラブルシューティング
 
 ### PKCE S256エラー
@@ -209,3 +327,8 @@ cd e2e && npm test -- usecase/financial-grade/
 ### JARM署名検証失敗
 - Authorization Serverの署名鍵（JWK）を確認
 - `response`パラメータのJWT形式を確認
+
+### OIDFテスト discoveryUrl エラー
+- `discoveryUrl`が`api.local.dev`(通常エンドポイント)を指しているか確認
+- `resourceUrl`が`mtls.api.local.dev`(mTLSエンドポイント)を指しているか確認
+- `host.docker.internal:8445`等の旧URL形式が残っていないか確認

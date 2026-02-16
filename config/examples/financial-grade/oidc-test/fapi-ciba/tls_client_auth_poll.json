@@ -8,7 +8,7 @@
     "client_id": "f6a7b8c9-d0e1-f2a3-b4c5-d6e7f8a9b0c1",
     "scope": "openid read identity_verification_application",
     "hint_type": "login_hint",
-    "hint_value": "email:fapi-test@example.com,idp:idp-server",
+    "hint_value": "email:fapi-ciba-test@example.com,idp:idp-server",
     "jwks": {
       "keys": [
         {

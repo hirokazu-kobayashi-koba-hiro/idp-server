@@ -1092,6 +1092,18 @@ fapi_ciba:
       implementation: "FapiCibaVerifier:211-227"
       e2e_test: "fapi_ciba.test.js (lines 1330-1409)"
 
+    - id: "CIBA-7.1.1-1"
+      requirement: "shall require jti claim in request object (CIBA Core 1.0 Section 7.1.1)"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:throwExceptionIfMissingJti()"
+      conformance_test_result: "FAILURE - fapi-ciba-id1-ensure-request-object-missing-jti-fails"
+      fix_status: "FIXED"
+      fix_description: |
+        GAP-005でFAPI 1.0 Advanced向けにRequestObjectVerifyable.throwExceptionIfInvalidJti()をno-opにしたが、
+        FAPI-CIBA (CIBA Core 1.0 Section 7.1.1)ではjtiが必須。
+        FapiCibaVerifierにthrowExceptionIfMissingJti()を追加し、CIBA固有の検証として実装。
+      e2e_test: "OIDF適合性テストで検証"
+
 # ============================================================
 # Configuration Attention Items
 # ============================================================
