@@ -96,7 +96,7 @@ public class OAuthRequestHandler {
 
     OAuthRequestContext context =
         oAuthRequestContextCreator.create(
-            tenant, requestParameters, authorizationServerConfiguration, clientConfiguration);
+            tenant, requestParameters, authorizationServerConfiguration, clientConfiguration, true);
     verifier.verify(context);
 
     OAuthPushedRequestContext oAuthPushedRequestContext =
@@ -139,7 +139,7 @@ public class OAuthRequestHandler {
 
     OAuthRequestContext context =
         oAuthRequestContextCreator.create(
-            tenant, parameters, authorizationServerConfiguration, clientConfiguration);
+            tenant, parameters, authorizationServerConfiguration, clientConfiguration, false);
     verifier.verify(context);
 
     if (!context.isPushedRequest()) {

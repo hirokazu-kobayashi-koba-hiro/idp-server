@@ -340,6 +340,7 @@ describe("organization authorization server management api", () => {
           "id_token_strict_mode": true,
           "default_max_age": 43200,
           "authorization_response_duration": 120,
+          "pushed_authorization_request_expires_in": 60,
           "backchannel_authentication_request_expires_in": 600,
           "backchannel_authentication_polling_interval": 10,
           "required_backchannel_auth_user_code": true,

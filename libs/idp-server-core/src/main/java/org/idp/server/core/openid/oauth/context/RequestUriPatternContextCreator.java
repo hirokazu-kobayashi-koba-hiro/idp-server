@@ -52,7 +52,8 @@ public class RequestUriPatternContextCreator implements OAuthRequestContextCreat
       Tenant tenant,
       OAuthRequestParameters parameters,
       AuthorizationServerConfiguration authorizationServerConfiguration,
-      ClientConfiguration clientConfiguration) {
+      ClientConfiguration clientConfiguration,
+      boolean isPushed) {
     try {
 
       if (!clientConfiguration.isRegisteredRequestUri(parameters.requestUri().value())) {
@@ -90,7 +91,8 @@ public class RequestUriPatternContextCreator implements OAuthRequestContextCreat
               joseContext,
               filteredScopes,
               authorizationServerConfiguration,
-              clientConfiguration);
+              clientConfiguration,
+              isPushed);
 
       return new OAuthRequestContext(
           tenant,
@@ -101,8 +103,11 @@ public class RequestUriPatternContextCreator implements OAuthRequestContextCreat
           authorizationServerConfiguration,
           clientConfiguration);
     } catch (JoseInvalidException exception) {
+      // JAR (RFC 9101) Section 6.2:
+      // "the authorization server MUST return an error response with error set to
+      // invalid_request_object"
       throw new OAuthBadRequestException(
-          "invalid_request", exception.getMessage(), exception, tenant);
+          "invalid_request_object", exception.getMessage(), exception, tenant);
     }
   }
 }

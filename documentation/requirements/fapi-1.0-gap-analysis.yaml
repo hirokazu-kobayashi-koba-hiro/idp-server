@@ -1325,6 +1325,36 @@ fapi_ciba:
     e2e_test_needed: false
     e2e_test_description: "OIDF適合性テストで検証"
 
+  - id: "GAP-020"
+    title: "JAR - Request Object署名検証失敗時のエラーコードがinvalid_requestになっている"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "RFC 9101 (JAR) Section 6.2"
+    requirement: |
+      RFC 9101 Section 6.2: "the authorization server MUST return an error response
+      with error set to invalid_request_object"
+      Request Objectの署名検証に失敗した場合、エラーコードはinvalid_request_objectでなければならない。
+    current_behavior: |
+      RequestObjectPatternContextCreator, RequestUriPatternContextCreatorにおいて
+      JoseInvalidExceptionキャッチ時にinvalid_requestエラーを返していた。
+    expected_behavior: |
+      Request Object署名検証失敗時にinvalid_request_objectエラーを返す。
+    conformance_test_result: "FAILURE - fapi1-advanced-final-ensure-request-object-with-invalid-signature-fails (JAR-6.2: EnsurePARInvalidRequestObjectError)"
+    fix_status: "FIXED"
+    fix_description: |
+      RequestObjectPatternContextCreator, RequestUriPatternContextCreatorの
+      JoseInvalidExceptionキャッチ時のエラーコードをinvalid_request→invalid_request_objectに修正。
+    affected_files:
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/context/RequestObjectPatternContextCreator.java"
+        action: "modified"
+        detail: "JoseInvalidExceptionキャッチ時のエラーコードをinvalid_request_objectに変更"
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/context/RequestUriPatternContextCreator.java"
+        action: "modified"
+        detail: "JoseInvalidExceptionキャッチ時のエラーコードをinvalid_request_objectに変更"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テストで検証"
+
   - id: "GAP-012"
     title: "PAR - request_uriのワンタイム無効化タイミングの確認"
     priority: "P3"

@@ -225,7 +225,8 @@
       "required_identity_verification_scopes": [
         "transfers"
       ],
-      "oauth_authorization_request_expires_in": 60
+      "oauth_authorization_request_expires_in": 300,
+      "pushed_authorization_request_expires_in": 60
     }
   }
 }

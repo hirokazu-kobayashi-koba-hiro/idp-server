@@ -36,7 +36,8 @@ public interface OAuthRequestContextCreator {
       Tenant tenant,
       OAuthRequestParameters parameters,
       AuthorizationServerConfiguration authorizationServerConfiguration,
-      ClientConfiguration clientConfiguration);
+      ClientConfiguration clientConfiguration,
+      boolean isPushed);
 
   default AuthorizationProfile analyze(
       Set<String> filteredScopes,
