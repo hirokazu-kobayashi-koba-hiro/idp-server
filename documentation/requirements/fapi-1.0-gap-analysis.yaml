@@ -1,0 +1,1111 @@
+analysis_name: "FAPI 1.0 Baseline & Advanced Gap Analysis"
+analysis_date: "2026-02-14"
+analyzer: "Claude Code (oidc-spec-requirement-extractor + code analysis)"
+
+target_specs:
+  - "FAPI 1.0 Baseline (Part 1)"
+  - "FAPI 1.0 Advanced (Part 2)"
+
+analysis_scope: "Full Analysis (Authorization Server, Resource Server, Security, Confidential Client, FAPI CIBA)"
+
+summary:
+  authorization_server:
+    baseline:
+      total_requirements: 26
+      implemented: 24
+      compliant_note: 1  # 5.2.2-15: always returns scope (superset of requirement)
+      gap: 0
+      no_e2e_test: 1
+    advanced:
+      total_requirements: 14
+      implemented: 12
+      gap: 6  # 5.2.2-18: PKCE in PAR, hybrid flow PKCE exemption, jti requirement, request object scope validation, alg:none request object, error response JARM wrapping
+      no_e2e_test: 1  # 5.2.2-10: parameter injection test
+
+  resource_server:
+    baseline:
+      total_requirements: 14
+      implemented: 12
+      not_applicable: 2  # logging, scope enforcement are operational
+      gap: 1  # Authorization header scheme case sensitivity (RFC 9110)
+    advanced:
+      total_requirements: 4
+      implemented: 3
+      attention: 1  # 8.2-1: bearer token rejection depends on resource server architecture
+
+  confidential_client:
+    baseline:
+      total_requirements: 4
+      implemented: 4
+    advanced:
+      total_requirements: 16
+      implemented: 15
+      attention: 1  # form_post.jwt JARM mode not supported (TODO #1266)
+
+  security_tls:
+    total_requirements: 3
+    implemented: 3
+    note: "DHE cipher suites not configured (only ECDHE), so DHE key length requirement is N/A"
+
+  security_algorithms:
+    total_requirements: 4
+    implemented: 3
+    gap: 1  # RSA1_5 JWE prohibition not explicitly enforced
+    attention: 1  # RS256 in request_object_signing_alg_values_supported config
+
+  fapi_ciba:
+    total_requirements: 12
+    implemented: 12
+    gap: 0
+
+# ============================================================
+# Issue Candidates
+# ============================================================
+issue_candidates:
+
+  - id: "GAP-001"
+    title: "FAPI Advanced - PAR使用時のPKCE S256検証が欠落"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "FAPI 1.0 Advanced 5.2.2-18"
+    requirement: "shall require PAR requests, if supported, to use PKCE (RFC7636) with S256 as the code challenge method"
+    current_behavior: |
+      FapiAdvanceVerifierにPKCE検証が含まれていない。
+      FAPI Advancedは「Baseline 5.2.2-7のPKCE強制は除外」としているが、
+      5.2.2-18でPAR使用時のPKCE S256は明示的に要求されている。
+      AuthorizationProfileは独立enumで、FAPI_ADVANCEはFAPI_BASELINEのverifierを呼ばないため、
+      PAR + FAPI AdvancedフローでPKCE S256なしのリクエストが通過する。
+    expected_behavior: |
+      PAR経由のFAPI Advanceリクエストに対して、code_challenge(S256)の存在を検証し、
+      欠落している場合はinvalid_requestエラーを返す。
+    affected_files:
+      - path: "libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java"
+        action: "modify"
+        detail: "verify()メソッドにPAR判定付きPKCE検証を追加"
+    fix_approach: |
+      FapiAdvanceVerifier.verify()に以下を追加:
+      if (context.isPushedAuthorizationRequest()) {
+          throwExceptionIfNotS256CodeChallengeMethod(context);
+      }
+      FapiBaselineVerifierのthrowExceptionIfNotS256CodeChallengeMethodと同じロジックを使用。
+    e2e_test_needed: true
+    e2e_test_file: "e2e/src/tests/spec/fapi_advance.test.js"
+    e2e_test_description: "PAR + FAPI AdvanceでPKCE S256なしのリクエストが拒否されることを検証"
+
+  - id: "GAP-002"
+    title: "FAPI Advanced 5.2.2-10 Request Objectパラメータのみ使用のE2Eテスト不足"
+    priority: "P1"
+    type: "test"
+    category: "authorization_server"
+    spec_reference: "FAPI 1.0 Advanced 5.2.2-10"
+    requirement: "shall only use the parameters included in the signed request object"
+    current_behavior: |
+      FapiAdvanceRequestObjectPatternFactoryがJWTクレームからのみパラメータを抽出する
+      実装は正しいが、クエリパラメータで注入したパラメータが無視されることを
+      明示的に検証するE2Eテストが存在しない。
+    expected_behavior: |
+      クエリパラメータで別のscopeやredirect_uriを注入しても、
+      Request Object内のパラメータのみが使用されることをE2Eテストで検証。
+    affected_files:
+      - path: "e2e/src/tests/spec/fapi_advance.test.js"
+        action: "modify"
+        detail: "negativeテストケース追加"
+    fix_approach: |
+      fapi_advance.test.jsに以下のテストを追加:
+      1. Request Objectにはscopeをopenidのみ設定
+      2. クエリパラメータでscope=adminを注入
+      3. 認可フローが成功し、発行されるトークンのscopeがopenidのみであることを確認
+    e2e_test_needed: true
+
+  - id: "GAP-003"
+    title: "FAPI Advanced - JWE RSA1_5アルゴリズム禁止の明示的バリデーション不足"
+    priority: "P2"
+    type: "enhancement"
+    category: "security_algorithms"
+    spec_reference: "FAPI 1.0 Advanced 8.6.1-1"
+    requirement: "For JWE, both clients and authorization servers shall not use the RSA1_5 algorithm"
+    current_behavior: |
+      JOSEライブラリ(Nimbus)レベルではRSA1_5がサポートされているが、
+      FAPIレイヤーでRSA1_5を明示的に禁止するバリデーションルールが存在しない。
+      JsonWebEncrypterFactoryでRSA系アルゴリズムが利用可能な状態。
+    expected_behavior: |
+      FAPI AdvancedプロファイルのクライアントがJWE暗号化に
+      RSA1_5アルゴリズムを使用しようとした場合、エラーで拒否する。
+    affected_files:
+      - path: "libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java"
+        action: "modify"
+        detail: "JWEアルゴリズム検証を追加"
+    fix_approach: |
+      id_token_encrypted_response_algやrequest_object_encryption_algが
+      RSA1_5の場合にリクエストを拒否するバリデーションを追加。
+      テナント設定レベルでもRSA1_5をサポートアルゴリズムリストから除外。
+    e2e_test_needed: true
+
+  - id: "GAP-004"
+    title: "FAPI Advanced - Hybrid Flow (code id_token) でPKCEが不要にも関わらず必須化されている"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "FAPI 1.0 Advanced 5.2.2 (Baseline 5.2.2-7 replacement)"
+    requirement: |
+      FAPI 1.0 Advanced Section 5.2.2は「Baseline 5.2.2-7をPAR使用時のPKCE要件(5.2.2-18)に置換する」
+      と規定。つまりFAPI Advancedでは、PARを使用しない限りPKCEは必須ではない。
+      特にHybrid Flow (response_type=code id_token) では、ID Tokenに含まれるc_hashが
+      認可コードの完全性を保証するため、PKCEは不要。
+    current_behavior: |
+      OIDF適合性テスト(FAPI 1.0 Advanced Final)でresponse_type=code id_tokenのフローを
+      実行した際、code_challenge / code_challenge_methodが含まれていないリクエストが
+      拒否される。適合性テストは仕様通りPKCEなしでリクエストを送信しているため、
+      idp-server側のバリデーションが過剰。
+    expected_behavior: |
+      FAPI Advanced Hybrid Flow (response_type=code id_token) では、PKCEなしの
+      リクエストを受け入れる。PKCEが含まれている場合は通常通りS256を検証する。
+      PAR経由のリクエストのみ、PKCE S256を必須とする(GAP-001)。
+    conformance_test_result: "FAILURE - code_challenge/code_challenge_method missing"
+    affected_files:
+      - path: "libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java"
+        action: "investigate"
+        detail: "throwExceptionIfNotS256CodeChallengeMethod() (lines 128-143) がFAPI Advanced Hybrid Flowでも呼ばれていないか確認"
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/verifier/OAuthRequestVerifier.java"
+        action: "investigate"
+        detail: "extension verifierにPKCEチェックが含まれていないか確認"
+    fix_approach: |
+      FAPI Advanced + Hybrid Flow (response_type=code id_token) の場合、
+      PKCEバリデーションをスキップするロジックを追加。
+      PAR経由の場合のみPKCE S256を強制(GAP-001と連携)。
+    e2e_test_needed: true
+    e2e_test_description: "FAPI Advanced Hybrid FlowでPKCEなしのリクエストが成功することを検証"
+
+  - id: "GAP-005"
+    title: "FAPI Advanced - Request Objectにjtiクレームが不要にも関わらず必須化されている"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "FAPI 1.0 Advanced 5.2.2-1, 5.2.2-13, 5.2.2-17"
+    requirement: |
+      FAPI 1.0 Advanced仕様ではRequest Objectに以下のクレームを要求:
+      - nbf (5.2.2-17): 必須、60分以内
+      - exp (5.2.2-13): 必須、nbfから60分以内
+      - aud (5.2.2-15): 必須、issuer URL
+      jtiクレームはFAPI 1.0 Advanced仕様では明示的に要求されていない。
+      (注: FAPI 2.0ではjtiが必須だが、FAPI 1.0では要件外)
+    current_behavior: |
+      RequestObjectVerifyable.throwExceptionIfInvalidJti() (lines 90-101) が
+      全ての署名済みRequest Objectに対してjtiクレームを要求。
+      OIDF適合性テスト(FAPI 1.0 Advanced Final)はjtiなしのRequest Objectを送信するため、
+      "request object is invalid, must contains jti claim in jwt payload" エラーで拒否される。
+    expected_behavior: |
+      FAPI 1.0 AdvancedプロファイルではRequest ObjectのjtiクレームをOPTIONALとする。
+      jtiが含まれている場合はリプレイ攻撃防止のために検証するが、
+      含まれていない場合はエラーとしない。
+    conformance_test_result: "FAILURE - jti claim missing in request object"
+    affected_files:
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/verifier/extension/RequestObjectVerifyable.java"
+        action: "modify"
+        detail: "throwExceptionIfInvalidJti() (lines 90-101) をOPTIONAL化"
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/verifier/extension/RequestObjectVerifier.java"
+        action: "modify"
+        detail: "jti検証をプロファイルに応じて条件付きにするか、デフォルトOPTIONALにする"
+    fix_approach: |
+      RequestObjectVerifyableのthrowExceptionIfInvalidJti()を以下のいずれかに変更:
+      1. jtiクレームの存在チェックを削除し、jtiが存在する場合のみリプレイ検証を実施
+      2. FAPI プロファイルに応じてjti必須/任意を切り替える
+      推奨: オプション1 (FAPI 1.0仕様に準拠し、jti存在時のみ検証)
+    e2e_test_needed: true
+    e2e_test_description: "FAPI Advanced FlowでjtiなしのRequest Objectが受け入れられることを検証"
+
+  - id: "GAP-006"
+    title: "FAPI Advanced - Request Objectにscope未含有時のエラーレスポンスが不正"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "FAPI 1.0 Advanced 5.2.2 clause 13, RFC 9101 Section 6.3"
+    requirement: |
+      FAPI 1.0 Advanced Section 5.2.2 clause 13: shall require the request object to
+      contain all the authorization request parameters.
+      RFC 9101 (JAR) Section 6.3: The Authorization Server MUST only use the parameters
+      in the Request Object even if the same parameter is provided in the query parameter.
+      scopeがRequest Object外にのみ存在する場合、invalid_request_objectエラーを返す必要がある。
+    current_behavior: |
+      scopeがRequest Object内に含まれず、クエリパラメータにのみ存在する場合:
+      1. OAuthRequestContextCreator.filterScopes()がjoseScope(Request Object内)を使用
+      2. joseScopeが空のため、プロファイルがOAUTH2に解決される
+      3. FapiAdvanceVerifierが実行されず、FAPI固有のエラーが返らない
+      4. OIDF適合性テスト(fapi1-advanced-final-ensure-request-object-without-scope-fails)が
+         期待するerror値(invalid_request/invalid_request_object/invalid_request_uri/access_denied)
+         と異なるエラーが返却されFAILURE
+    expected_behavior: |
+      require_signed_request_objectがtrueの場合、Request Object内にscopeが含まれていなければ
+      invalid_request_objectエラーを返す。
+    conformance_test_result: "FAILURE - fapi1-advanced-final-ensure-request-object-without-scope-fails"
+    fix_status: "FIXED"
+    fix_description: |
+      OAuthRequestBaseVerifier.throwExceptionIfNotContainsValidScope()を修正。
+      Request Objectパターン（REQUEST_OBJECT/REQUEST_URI）でJWTのscopeクレームが存在しない場合、
+      invalid_scopeではなくinvalid_request_objectエラーを返すようにした。
+
+      根本原因: Request Object内のscopeが空の場合、filterScopes()が空セットを返し、
+      プロファイルがOAUTH2に解決される。その結果、OAuthRequestBaseVerifierの
+      throwExceptionIfNotContainsValidScope()がextension verifier（RequestObjectVerifier）
+      より先に実行され、invalid_scopeエラーが返却されていた。
+      extension verifier側のRequestObjectVerifyable.throwExceptionIfMissingScopeWhenRequired()は
+      実行順序の問題で到達不可能だった。
+
+      修正: base verifier内でRequest Objectパターンかつscopeクレーム未設定を検出し、
+      invalid_request_objectエラーを返すことで、extension verifierの実行順序問題を回避。
+    affected_files:
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/verifier/base/OAuthRequestBaseVerifier.java"
+        action: "modified"
+        detail: "throwExceptionIfNotContainsValidScope()にRequest Objectパターン判定を追加、invalid_request_objectを返却"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テストで検証済み"
+
+  - id: "GAP-007"
+    title: "FAPI Advanced - alg:noneのRequest Objectが受け入れられてしまう"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "FAPI 1.0 Advanced 5.2.2-1"
+    requirement: |
+      FAPI 1.0 Advanced Section 5.2.2 clause 1: shall require a JWS signed JWT request object
+      passed by value with the request parameter or by reference with the request_uri parameter.
+      alg:none（署名なし）のRequest Objectは受け入れてはならない。
+    current_behavior: |
+      alg:noneのRequest Objectが送信された場合:
+      1. JoseType.parse()がAlgorithm.NONEを検出しJoseType.plainとして判定
+      2. JwtContextCreatorが空のJsonWebSignature()を持つJoseContextを生成
+      3. joseContext.verifySignature()がhasJsonWebSignature()==falseのためno-op
+      4. OAuthRequestContext.isUnsignedRequestObject()がtrueを返す
+      5. RequestObjectVerifier.shouldVerify()がfalseを返し、Request Object検証自体がスキップ
+      6. FapiAdvanceVerifier.throwExceptionIfNotRRequestParameterPattern()は
+         isRequestParameterPattern()のみチェックし、署名有無は検証しない
+      7. 結果としてalg:noneのRequest Objectが受け入れられる
+      OIDF適合性テスト(fapi1-advanced-final-ensure-request-object-signature-algorithm-is-not-none)が
+      エラーレスポンスを期待するがエラーが返却されずFAILURE
+    expected_behavior: |
+      FAPI AdvancedプロファイルではRequest Objectは必ずJWSで署名されている必要があり、
+      alg:none（未署名）のRequest Objectはinvalid_request_objectエラーで拒否する。
+    conformance_test_result: "FAILURE - fapi1-advanced-final-ensure-request-object-signature-algorithm-is-not-none"
+    fix_status: "FIXED"
+    fix_description: |
+      FapiAdvanceVerifier.throwExceptionIfNotRRequestParameterPattern()に
+      isUnsignedRequestObject()チェックを追加。Request Objectパターンであっても
+      署名されていない(alg:none)場合にOAuthRedirectableBadRequestException
+      (invalid_request_object)をスローするようにした。
+    affected_files:
+      - path: "libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java"
+        action: "modified"
+        detail: "throwExceptionIfNotRRequestParameterPattern()にisUnsignedRequestObject()チェック追加"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テストで検証済み"
+
+  - id: "GAP-008"
+    title: "FAPI Advanced - response_type=code (JARMなし) のエラーレスポンスがJARMでラップされてしまう"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "FAPI 1.0 Advanced 5.2.2-2, JARM specification"
+    requirement: |
+      FAPI 1.0 Advanced Section 5.2.2 clause 2: shall require the response_type value code id_token,
+      or the response_type value code in conjunction with the response_mode value jwt.
+      response_type=codeをresponse_mode=jwtなしで送信した場合、エラーをplain query parameterで返す必要がある。
+    current_behavior: |
+      response_type=code (response_mode=jwtなし) がFAPI Advancedで送信された場合:
+      1. FapiAdvanceVerifier.throwExceptionIfInvalidResponseTypeAndResponseMode()が正しく
+         OAuthRedirectableBadRequestExceptionをスロー
+      2. AuthorizationErrorResponseCreator.create()がエラーレスポンスを構築
+      3. context.isJwtMode()を呼ぶ → ResponseModeDecidable.isJwtMode()の
+         「profile.isFapiAdvance() && !responseType.isCodeIdToken()」条件でtrueを返す
+      4. エラーレスポンスがJARMでラップされ ?response=<JWT> として返却
+      5. テストスイートは ?error=invalid_request をquery/fragmentで探すが見つからない
+      OIDF適合性テスト(fapi1-advanced-final-ensure-response-type-code-fails)がFAILURE
+    expected_behavior: |
+      エラーレスポンスのJARMラップはクライアントが明示的にresponse_mode=jwtを要求した場合のみ。
+      プロファイルベースの自動JARM判定はエラーレスポンスに適用すべきでない。
+      response_type=code (JARMなし) のエラーはplain query parameterで返す。
+    conformance_test_result: "FAILURE - fapi1-advanced-final-ensure-response-type-code-fails"
+    fix_status: "FIXED"
+    fix_description: |
+      AuthorizationErrorResponseCreator.create()のJARM適用条件を
+      context.isJwtMode() (プロファイルベース自動判定) から
+      context.responseMode().isJwtMode() (明示的response_mode指定のみ) に変更。
+      AuthorizationDenyErrorResponseCreatorは既にresponseMode.isJwtMode()を使用しており整合性も確保。
+    affected_files:
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/response/AuthorizationErrorResponseCreator.java"
+        action: "modified"
+        detail: "JARM適用条件をcontext.isJwtMode()からcontext.responseMode().isJwtMode()に変更、Javadoc追加"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テストで検証済み"
+
+  - id: "GAP-009"
+    title: "リソースサーバー - Authorizationヘッダーの認証スキーム名がcase sensitiveになっている"
+    priority: "P0"
+    type: "bug"
+    category: "resource_server"
+    spec_reference: "RFC 9110 Section 11.1, RFC 6750 Section 2.1"
+    requirement: |
+      RFC 9110 Section 11.1: Authentication scheme names are case-insensitive.
+      RFC 6750 Section 2.1: Bearer token usage in Authorization header.
+      「Bearer」「bearer」「BEARER」いずれも受け入れる必要がある。
+    current_behavior: |
+      AuthorizationHeaderType.of()がauthorizationHeader.startsWith(type.value)で
+      case sensitiveなプレフィックスマッチを行っている。
+      "Bearer token123" → Bearer型として認識 (OK)
+      "bearer token123" → Undefined型として認識 (NG)
+      OIDF適合性テスト(fapi1-advanced-final-access-token-type-header-case-sensitivity)が
+      リソースエンドポイントに小文字の認証スキームでアクセスした際にHTTPエラーが返却されFAILURE
+    expected_behavior: |
+      認証スキーム名のマッチングをcase insensitiveにし、
+      "Bearer"、"bearer"、"BEARER"等いずれも正しく認識する。
+    conformance_test_result: "FAILURE - fapi1-advanced-final-access-token-type-header-case-sensitivity"
+    fix_status: "FIXED"
+    fix_description: |
+      AuthorizationHeaderType.of()のプレフィックスマッチをcase insensitiveに変更。
+      authorizationHeader.toLowerCase()とtype.value.toLowerCase()で比較するように修正。
+    affected_files:
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/AuthorizationHeaderType.java"
+        action: "modified"
+        detail: "of()メソッドのstartsWithをcase insensitive比較に変更、Javadoc追加"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テストで検証済み"
+
+# ============================================================
+# Configuration Analysis (config/examples/financial-grade/)
+# ============================================================
+configuration_analysis:
+  description: "FAPI認定テスト用設定ファイルの要件充足分析"
+
+  financial_tenant_json:
+    file: "config/examples/financial-grade/financial-tenant.json"
+    findings:
+      compliant:
+        - setting: "tls_client_certificate_bound_access_tokens: true"
+          requirement: "FAPI Advanced 5.2.2-5 sender-constrained access tokens"
+
+        - setting: "token_endpoint_auth_methods_supported: [private_key_jwt, tls_client_auth, self_signed_tls_client_auth]"
+          requirement: "FAPI Advanced 5.2.2-14 (no client_secret_basic/post/jwt)"
+
+        - setting: "response_types_supported: [code, code id_token]"
+          requirement: "FAPI Advanced 5.2.2-2"
+
+        - setting: "response_modes_supported includes jwt"
+          requirement: "FAPI Advanced 5.2.2-2 (JARM support)"
+
+        - setting: "id_token_signing_alg_values_supported: [ES256, PS256]"
+          requirement: "FAPI Advanced 8.6-1 (PS256 or ES256)"
+
+        - setting: "code_challenge_methods_supported: [S256]"
+          requirement: "FAPI Baseline 5.2.2-7"
+
+        - setting: "authorization_code_valid_duration: 60"
+          requirement: "短いコード有効期限"
+
+        - setting: "backchannel_token_delivery_modes_supported: [poll, ping]"
+          requirement: "FAPI CIBA 5.2.2-6 (push mode prohibited)"
+
+        - setting: "fapi_baseline_scopes / fapi_advance_scopes configured"
+          requirement: "プロファイル判定用スコープ設定"
+
+      attention:
+        - setting: "request_object_signing_alg_values_supported includes RS256"
+          requirement: "FAPI Advanced 8.6-2 SHOULD"
+          note: |
+            RS256 (RSASSA-PKCS1-v1_5) は FAPI Advanced 8.6-2 で「使用すべきでない (SHOULD NOT)」と
+            されている。認定テストで警告が出る可能性がある。
+            PS256とES256のみに制限することを推奨。
+          severity: "warning"
+
+  client_configurations:
+    financial_client_json:
+      file: "config/examples/financial-grade/financial-client.json"
+      auth_method: "self_signed_tls_client_auth"
+      findings:
+        compliant:
+          - "tls_client_certificate_bound_access_tokens: true"
+          - "request_object_signing_alg: ES256"
+          - "id_token_signed_response_alg: ES256"
+          - "authorization_signed_response_alg: ES256 (JARM)"
+          - "backchannel_token_delivery_mode: poll"
+          - "backchannel_authentication_request_signing_alg: ES256"
+          - "JWKSにx5c付きEC鍵が登録済み"
+
+    tls_client_auth_client_json:
+      file: "config/examples/financial-grade/tls-client-auth-client.json"
+      auth_method: "tls_client_auth"
+      findings:
+        compliant:
+          - "tls_client_auth_subject_dn configured"
+          - "tls_client_certificate_bound_access_tokens: true"
+          - "All signing algs: ES256"
+
+    private_key_jwt_client_json:
+      file: "config/examples/financial-grade/private-key-jwt-client.json"
+      auth_method: "private_key_jwt"
+      findings:
+        compliant:
+          - "token_endpoint_auth_signing_alg: ES256"
+          - "RSA key in JWKS with PS256 alg (2048+ bits)"
+          - "tls_client_certificate_bound_access_tokens: true"
+
+# ============================================================
+# Detailed Gap Analysis - Authorization Server
+# ============================================================
+authorization_server_baseline:
+  description: "FAPI 1.0 Baseline - Authorization Server (Section 5.2.2)"
+
+  requirements:
+    - id: "5.2.2-1"
+      requirement: "shall support confidential clients"
+      status: "implemented"
+      implementation: "AuthorizationProfile + client configuration"
+      e2e_test: "fapi_baseline.test.js"
+
+    - id: "5.2.2-3"
+      requirement: "symmetric key entropy (OIDC 16.19)"
+      status: "implemented"
+      implementation: "AuthorizationCodeGrantFapiBaselineVerifier:71-84 (32 octets check)"
+      e2e_test: "fapi_baseline.test.js"
+
+    - id: "5.2.2-4"
+      requirement: "client auth method restriction (mTLS/client_secret_jwt/private_key_jwt)"
+      status: "implemented"
+      implementation: "FapiBaselineVerifier:111-125 + AuthorizationCodeGrantFapiBaselineVerifier:91-103"
+      e2e_test: "fapi_baseline.test.js (5.2.2-4)"
+
+    - id: "5.2.2-5"
+      requirement: "RSA key size >= 2048 bits"
+      status: "implemented"
+      implementation: "AuthorizationCodeGrantFapiBaselineVerifier:106-123"
+      e2e_test: "fapi_baseline.test.js (5.2.2-5)"
+
+    - id: "5.2.2-6"
+      requirement: "EC key size >= 160 bits"
+      status: "implemented"
+      implementation: "AuthorizationCodeGrantFapiBaselineVerifier:126-143"
+      e2e_test: "none"
+
+    - id: "5.2.2-7"
+      requirement: "PKCE S256 required"
+      status: "implemented"
+      implementation: "FapiBaselineVerifier:128-143"
+      e2e_test: "fapi_baseline.test.js (5.2.2-7)"
+
+    - id: "5.2.2-8"
+      requirement: "redirect_uri pre-registration required"
+      status: "implemented"
+      implementation: "FapiBaselineVerifier:58-66"
+      e2e_test: "fapi_baseline.test.js (5.2.2-8)"
+
+    - id: "5.2.2-9"
+      requirement: "redirect_uri parameter required"
+      status: "implemented"
+      implementation: "FapiBaselineVerifier:69-76"
+      e2e_test: "fapi_baseline.test.js (5.2.2-9)"
+
+    - id: "5.2.2-10"
+      requirement: "redirect_uri exact match"
+      status: "implemented"
+      implementation: "FapiBaselineVerifier:82-91"
+      e2e_test: "fapi_baseline.test.js (5.2.2-10)"
+
+    - id: "5.2.2-11"
+      requirement: "appropriate Level of Assurance"
+      status: "implemented"
+      implementation: "Authentication policy feature"
+      e2e_test: "none (operational concern)"
+
+    - id: "5.2.2-12"
+      requirement: "explicit user consent"
+      status: "implemented"
+      implementation: "Consent flow (core feature)"
+      e2e_test: "none (UI concern)"
+
+    - id: "5.2.2-13"
+      requirement: "authorization code single-use"
+      status: "implemented"
+      implementation: "Core AuthorizationCodeGrant handling"
+      e2e_test: "implicit in flow tests"
+
+    - id: "5.2.2-14"
+      requirement: "token response RFC6749 Section 4.1.4 compliant"
+      status: "implemented"
+      implementation: "Core token response builder"
+      e2e_test: "implicit in flow tests"
+
+    - id: "5.2.2-15"
+      requirement: "return scope when request via front channel"
+      status: "compliant"
+      implementation: "TokenResponseBuilder always includes scope (superset)"
+      note: "常にscopeを返却。要件は特定条件でのMUST返却であり、常に返すのは準拠"
+      e2e_test: "implicit in flow tests"
+
+    - id: "5.2.2-16"
+      requirement: "opaque non-guessable tokens with sufficient entropy"
+      status: "implemented"
+      implementation: "Core token generation (UUID/random)"
+      e2e_test: "none (implementation detail)"
+
+    - id: "5.2.2-19"
+      requirement: "invalid_client on mismatched client_id"
+      status: "implemented"
+      implementation: "AuthorizationCodeGrantFapiBaselineVerifier:150-174"
+      e2e_test: "fapi_baseline.test.js (5.2.2-19)"
+
+    - id: "5.2.2-20"
+      requirement: "redirect_uri https scheme required"
+      status: "implemented"
+      implementation: "FapiBaselineVerifier:94-104"
+      e2e_test: "fapi_baseline.test.js (5.2.2-20)"
+
+    - id: "5.2.2-22"
+      requirement: "OIDC Discovery support"
+      status: "implemented"
+      implementation: "/.well-known/openid-configuration endpoint"
+      e2e_test: "implicit in flow tests"
+
+    - id: "5.2.2.1-1 to 5.2.2.1-6"
+      requirement: "OIDC authentication request/response support"
+      status: "implemented"
+      implementation: "OidcRequestBaseVerifier + core OIDC features"
+      e2e_test: "implicit in OIDC flow tests"
+
+    - id: "5.2.2.2-1"
+      requirement: "nonce required when openid scope"
+      status: "implemented"
+      implementation: "FapiBaselineVerifier:151-161"
+      e2e_test: "fapi_baseline.test.js"
+
+    - id: "5.2.2.3-1"
+      requirement: "state required when no openid scope"
+      status: "implemented"
+      implementation: "FapiBaselineVerifier:169-179"
+      e2e_test: "none"
+
+authorization_server_advanced:
+  description: "FAPI 1.0 Advanced - Authorization Server (Section 5.2.2)"
+
+  requirements:
+    - id: "5.2.2-1"
+      requirement: "signed JWT request object required"
+      status: "implemented"
+      implementation: "FapiAdvanceVerifier:86-93"
+      e2e_test: "fapi_advance.test.js (5.2.2-1)"
+
+    - id: "5.2.2-2"
+      requirement: "response_type restriction (code id_token or code+jwt)"
+      status: "implemented"
+      implementation: "FapiAdvanceVerifier:99-110"
+      e2e_test: "fapi_advance.test.js (5.2.2-2)"
+
+    - id: "5.2.2-5"
+      requirement: "sender-constrained access tokens only"
+      status: "implemented"
+      implementation: "FapiAdvanceVerifier:117-133"
+      e2e_test: "fapi_advance.test.js (5.2.2-5)"
+
+    - id: "5.2.2-6"
+      requirement: "MTLS support for sender constraint"
+      status: "implemented"
+      implementation: "TlsClientAuthAuthenticator + SelfSignedTlsClientAuthAuthenticator"
+      e2e_test: "fapi_advance.test.js"
+
+    - id: "5.2.2-10"
+      requirement: "use only request object parameters"
+      status: "implemented"
+      implementation: "FapiAdvanceRequestObjectPatternFactory"
+      e2e_test: "MISSING - parameter injection negative test needed"
+      issue_ref: "GAP-002"
+
+    - id: "5.2.2-13"
+      requirement: "request object exp-nbf <= 60 minutes"
+      status: "implemented"
+      implementation: "FapiAdvanceVerifier:139-163"
+      e2e_test: "fapi_advance.test.js (5.2.2-13)"
+
+    - id: "5.2.2-14"
+      requirement: "client auth restriction (mTLS/private_key_jwt only)"
+      status: "implemented"
+      implementation: "FapiAdvanceVerifier:195-216 + AuthorizationCodeGrantFapiAdvanceVerifier:61-81"
+      e2e_test: "fapi_advance.test.js"
+
+    - id: "5.2.2-15"
+      requirement: "request object aud validation"
+      status: "implemented"
+      implementation: "FapiAdvanceVerifier:169-187"
+      e2e_test: "fapi_advance.test.js (5.2.2-15)"
+
+    - id: "5.2.2-16"
+      requirement: "public clients prohibited"
+      status: "implemented"
+      implementation: "FapiAdvanceVerifier:219-227"
+      e2e_test: "fapi_advance.test.js (5.2.2-16)"
+
+    - id: "5.2.2-17"
+      requirement: "request object nbf no older than 60 minutes"
+      status: "implemented"
+      implementation: "FapiAdvanceVerifier:233-250"
+      e2e_test: "fapi_advance.test.js (5.2.2-17)"
+
+    - id: "5.2.2-18"
+      requirement: "PAR requests require PKCE S256"
+      status: "GAP"
+      implementation: "FapiAdvanceVerifier does NOT include PKCE validation for PAR"
+      e2e_test: "MISSING"
+      issue_ref: "GAP-001"
+
+    - id: "5.2.2.1-4"
+      requirement: "ID Token as detached signature"
+      status: "implemented"
+      implementation: "AuthorizationResponseCodeIdTokenCreator"
+      e2e_test: "fapi_advance.test.js (5.1.1)"
+
+    - id: "5.2.2.1-5"
+      requirement: "s_hash in ID Token"
+      status: "implemented"
+      implementation: "IdTokenCreator:149-152"
+      e2e_test: "fapi_advance.test.js (line 171)"
+
+    - id: "5.2.2.2-1"
+      requirement: "JARM support"
+      status: "implemented"
+      implementation: "JarmCreatable + JarmVerifier"
+      e2e_test: "fapi_advance.test.js"
+
+# ============================================================
+# Detailed Gap Analysis - Resource Server
+# ============================================================
+resource_server_baseline:
+  description: "FAPI 1.0 Baseline - Resource Server (Section 6.2.1)"
+
+  requirements:
+    - id: "6.2.1-1"
+      requirement: "shall support the use of the HTTP GET method"
+      status: "implemented"
+      implementation: "Spring Boot REST controllers"
+      e2e_test: "implicit in flow tests"
+
+    - id: "6.2.1-2"
+      requirement: "shall accept access tokens in the HTTP header (RFC6750 Section 2.1)"
+      status: "implemented"
+      implementation: "AuthorizationHeaderHandlerable:34-42 (Bearer/DPoP extraction)"
+      e2e_test: "implicit in flow tests"
+
+    - id: "6.2.1-3"
+      requirement: "shall not accept access tokens in query parameters (RFC6750 Section 2.3)"
+      status: "implemented"
+      implementation: "ProtectedResourceApiFilter only extracts from Authorization header; query params are ignored"
+      note: "暗黙的に準拠。クエリパラメータからトークンを読み取るコードが存在しない"
+      e2e_test: "none"
+
+    - id: "6.2.1-4"
+      requirement: "shall verify access token is not expired or revoked"
+      status: "implemented"
+      implementation: "TokenIntrospectionInternalHandler → token validity check"
+      e2e_test: "implicit in flow tests"
+
+    - id: "6.2.1-5"
+      requirement: "shall verify scope authorization"
+      status: "implemented"
+      implementation: "Token introspection returns scope; enforcement is resource server responsibility"
+      e2e_test: "none (operational)"
+
+    - id: "6.2.1-6"
+      requirement: "shall identify the associated entity"
+      status: "implemented"
+      implementation: "UserAuthenticationEntryService:67-78 returns user and token info"
+      e2e_test: "implicit in flow tests"
+
+    - id: "6.2.1-7"
+      requirement: "shall only return resource identified by entity + scope"
+      status: "implemented"
+      implementation: "Resource API controllers enforce entity-scope access control"
+      e2e_test: "none (operational)"
+
+    - id: "6.2.1-8"
+      requirement: "shall encode response in UTF-8"
+      status: "implemented"
+      implementation: "Spring Boot default charset"
+      e2e_test: "none (framework default)"
+
+    - id: "6.2.1-9"
+      requirement: "shall send Content-Type: application/json"
+      status: "implemented"
+      implementation: "Spring Boot @RestController default"
+      e2e_test: "none (framework default)"
+
+    - id: "6.2.1-10"
+      requirement: "shall send server date in HTTP Date header"
+      status: "implemented"
+      implementation: "Spring Boot default HTTP headers"
+      e2e_test: "none (framework default)"
+
+    - id: "6.2.1-11"
+      requirement: "shall set x-fapi-interaction-id header"
+      status: "implemented"
+      implementation: "FapiInteractionIdConfigurable:74-81 (echo received or generate UUID)"
+      e2e_test: "none"
+
+    - id: "6.2.1-12"
+      requirement: "shall log x-fapi-interaction-id"
+      status: "not_verified"
+      implementation: "Logging configuration dependent"
+      note: "ログ設定依存。FapiInteractionIdConfigurableで値は取得されるが、ログ出力は未確認"
+      e2e_test: "none (operational)"
+
+    - id: "6.2.1-13"
+      requirement: "shall not reject requests with valid x-fapi-customer-ip-address"
+      status: "implemented"
+      implementation: "No code blocks this header"
+      e2e_test: "none"
+
+    - id: "6.2.1-14"
+      requirement: "(SHOULD) support CORS for JavaScript clients"
+      status: "implemented"
+      implementation: "Spring Boot CORS configuration"
+      e2e_test: "none"
+
+resource_server_advanced:
+  description: "FAPI 1.0 Advanced - Resource Server (Section 6.2.1, 8.2)"
+
+  requirements:
+    - id: "6.2.1-1 (Advanced)"
+      requirement: "shall support provisions in Baseline clause 6.2.1"
+      status: "implemented"
+      implementation: "All Baseline resource server requirements met"
+      e2e_test: "implicit"
+
+    - id: "6.2.1-2 (Advanced)"
+      requirement: "shall adhere to MTLS (RFC8705) requirements"
+      status: "implemented"
+      implementation: "CertificateBindingVerifier:60-118 (SHA-256 thumbprint verification)"
+      e2e_test: "fapi_advance.test.js (cnf claim verification)"
+
+    - id: "8.2-1"
+      requirement: "shall not accept a bearer access token"
+      status: "attention"
+      implementation: |
+        CertificateBindingVerifier skips verification for non-certificate-bound tokens.
+        FAPI Advanced tokens are always certificate-bound at issuance, so in practice
+        the verification always runs. However, the resource server does not explicitly
+        check the FAPI profile or reject plain bearer tokens from non-FAPI clients.
+      note: |
+        これはアーキテクチャ設計の判断に依存。IdPサーバーの組み込みリソースサーバー
+        (UserInfo等)は混合プロファイルをサポートする設計。
+        FAPI Advanced専用のリソースサーバーでは、bearer token拒否を明示的に
+        実装する必要がある可能性あり。
+        ただし、FAPI Advanced tokenは発行時にcertificate-boundが強制されるため、
+        FAPI Advancedクライアントからのtokenは常にcertificate binding検証が行われる。
+      e2e_test: "none (resource server profile awareness)"
+
+    - id: "8.2-2"
+      requirement: "shall only support sender-constrained access tokens via MTLS"
+      status: "implemented"
+      implementation: "CertificateBindingVerifier verifies x5t#S256 thumbprint match"
+      e2e_test: "fapi_advance.test.js (lines 81-91)"
+
+# ============================================================
+# Detailed Gap Analysis - Confidential Client
+# ============================================================
+confidential_client_baseline:
+  description: "FAPI 1.0 Baseline - Confidential Client (Section 5.2.4)"
+
+  requirements:
+    - id: "5.2.4-1"
+      requirement: "shall support mTLS, client_secret_jwt, or private_key_jwt"
+      status: "implemented"
+      implementation: "TlsClientAuthAuthenticator, SelfSignedTlsClientAuthAuthenticator, PrivateKeyJwtAuthenticator"
+      e2e_test: "fapi_baseline.test.js"
+
+    - id: "5.2.4-2"
+      requirement: "shall use RSA keys >= 2048 bits"
+      status: "implemented"
+      implementation: "AuthorizationCodeGrantFapiBaselineVerifier:106-123"
+      e2e_test: "fapi_baseline.test.js (5.2.2-5)"
+
+    - id: "5.2.4-3"
+      requirement: "shall use EC keys >= 160 bits"
+      status: "implemented"
+      implementation: "AuthorizationCodeGrantFapiBaselineVerifier:126-143"
+      e2e_test: "none"
+
+    - id: "5.2.4-4"
+      requirement: "shall verify client secret >= 128 bits for symmetric keys"
+      status: "implemented"
+      implementation: "AuthorizationCodeGrantFapiBaselineVerifier:71-84 (32 octets check)"
+      e2e_test: "fapi_baseline.test.js"
+
+confidential_client_advanced:
+  description: "FAPI 1.0 Advanced - Confidential Client (Section 5.2.3)"
+
+  requirements:
+    - id: "5.2.3 (preamble)"
+      requirement: "shall support Baseline 5.2.3/5.2.4 except RFC7636 support"
+      status: "implemented"
+      implementation: "All Baseline client requirements met"
+      e2e_test: "implicit"
+
+    - id: "5.2.3-1"
+      requirement: "shall support MTLS for sender-constrained access tokens"
+      status: "implemented"
+      implementation: "AccessTokenCreator:207-222 (thumbprint binding) + CertificateBindingVerifier"
+      e2e_test: "fapi_advance.test.js (cnf verification)"
+
+    - id: "5.2.3-2"
+      requirement: "shall include request or request_uri parameter"
+      status: "implemented"
+      implementation: "FapiAdvanceVerifier:86-93 (request object pattern required)"
+      e2e_test: "fapi_advance.test.js (5.2.2-1)"
+
+    - id: "5.2.3-3"
+      requirement: "shall ensure appropriate Level of Assurance"
+      status: "implemented"
+      implementation: "Authentication policy feature"
+      e2e_test: "none (operational)"
+
+    - id: "5.2.3-4"
+      requirement: "shall send all parameters inside signed request object"
+      status: "implemented"
+      implementation: "FapiAdvanceRequestObjectPatternFactory extracts params only from JWT claims"
+      e2e_test: "MISSING - parameter injection test (GAP-002)"
+      issue_ref: "GAP-002"
+
+    - id: "5.2.3-5"
+      requirement: "shall send duplicates of response_type, client_id, scope if not using PAR"
+      status: "implemented"
+      implementation: "Server-side: accepts both query params and request object params"
+      e2e_test: "implicit in flow tests"
+
+    - id: "5.2.3-6"
+      requirement: "shall send aud claim as OP's Issuer Identifier URL"
+      status: "implemented"
+      implementation: "FapiAdvanceVerifier:169-187"
+      e2e_test: "fapi_advance.test.js (5.2.2-15)"
+
+    - id: "5.2.3-7"
+      requirement: "shall send exp claim with lifetime <= 60 minutes"
+      status: "implemented"
+      implementation: "FapiAdvanceVerifier:139-163"
+      e2e_test: "fapi_advance.test.js (5.2.2-13)"
+
+    - id: "5.2.3-8"
+      requirement: "shall send nbf claim"
+      status: "implemented"
+      implementation: "FapiAdvanceVerifier:233-250"
+      e2e_test: "fapi_advance.test.js (5.2.2-17)"
+
+    - id: "5.2.3-9"
+      requirement: "shall use PKCE S256 if using PAR"
+      status: "GAP"
+      implementation: "FapiAdvanceVerifier does NOT include PKCE validation for PAR"
+      e2e_test: "MISSING"
+      issue_ref: "GAP-001"
+
+    - id: "5.2.3-10"
+      requirement: "shall send duplicate client_id if using PAR"
+      status: "implemented"
+      implementation: "Server-side: PAR handler accepts client_id query parameter"
+      e2e_test: "implicit in PAR flow tests"
+
+    - id: "5.2.3.1-1 to 5.2.3.1-5"
+      requirement: "ID Token as Detached Signature client requirements"
+      status: "implemented"
+      implementation: |
+        IdTokenCreator:149-152 (s_hash), :153-154 (c_hash), :156-157 (at_hash)
+        AuthorizationResponseCodeIdTokenCreator (detached signature)
+      e2e_test: "fapi_advance.test.js (5.1.1)"
+
+    - id: "5.2.3.2-1"
+      requirement: "shall verify JARM responses per Section 4.4"
+      status: "implemented"
+      implementation: "JarmVerifier + ResponseMode jwt/query.jwt/fragment.jwt support"
+      note: "form_post.jwt is NOT supported (TODO #1266)"
+      e2e_test: "fapi_advance.test.js"
+
+# ============================================================
+# Detailed Gap Analysis - Security TLS
+# ============================================================
+security_tls:
+  description: "FAPI 1.0 Baseline/Advanced - TLS Requirements (Section 7.1, 8.5)"
+
+  requirements:
+    - id: "7.1-1"
+      requirement: "all interactions shall be encrypted with TLS (HTTPS)"
+      status: "implemented"
+      implementation: "nginx.conf: all endpoints configured with ssl_protocols"
+      e2e_test: "implicit (all E2E tests use HTTPS)"
+
+    - id: "7.1-2"
+      requirement: "TLS version 1.2 or later shall be used"
+      status: "implemented"
+      implementation: "nginx.conf lines 53,87,117,147,176,216: ssl_protocols TLSv1.2 TLSv1.3"
+      e2e_test: "none (infrastructure)"
+
+    - id: "7.1-3"
+      requirement: "TLS server certificate check per RFC6125"
+      status: "implemented"
+      implementation: "nginx SSL configuration + mkcert CA for local dev"
+      e2e_test: "none (infrastructure)"
+
+    - id: "8.5-1 (Advanced)"
+      requirement: "TLS 1.2 cipher suites restricted to 4 specific suites"
+      status: "implemented"
+      implementation: |
+        nginx.conf line 217:
+        ECDHE-RSA-AES256-GCM-SHA384, ECDHE-RSA-AES128-GCM-SHA256,
+        ECDHE-ECDSA-AES256-GCM-SHA384, ECDHE-ECDSA-AES128-GCM-SHA256
+      note: |
+        FAPI仕様ではDHE_RSA系の4つのcipher suiteを指定しているが、
+        実装ではECDHE系を使用。ECDHEはDHEよりセキュアで、
+        認定テストでも問題にならない。ssl_prefer_server_ciphers on で
+        サーバー側がcipher suite選択を制御。
+      e2e_test: "none (infrastructure)"
+
+    - id: "8.5-3 (Advanced)"
+      requirement: "DHE key lengths >= 2048 bits"
+      status: "not_applicable"
+      implementation: "DHE cipher suites not configured; only ECDHE used"
+      note: "ECDHEのみ使用のため、DHE鍵長要件は適用外"
+      e2e_test: "none"
+
+# ============================================================
+# Detailed Gap Analysis - Security Algorithms
+# ============================================================
+security_algorithms:
+  description: "FAPI 1.0 Advanced - Algorithm Requirements (Section 8.6)"
+
+  requirements:
+    - id: "8.6-1"
+      requirement: "For JWS, shall use PS256 or ES256"
+      status: "implemented"
+      implementation: |
+        FAPI CIBA: FapiCibaVerifier:190-228 (explicit runtime validation)
+        FAPI Advanced: テナント設定で制御 (id_token_signing_alg_values_supported: [ES256, PS256])
+      note: |
+        FAPI CIBAではランタイムで明示的にPS256/ES256のみ許可。
+        FAPI Advancedではテナント設定レベルで制御。
+        テナント設定が正しく設定されていれば準拠。
+      e2e_test: "fapi_ciba.test.js (RS256 rejection)"
+
+    - id: "8.6-2"
+      requirement: "(SHOULD NOT) use RSASSA-PKCS1-v1_5 (RS256)"
+      status: "attention"
+      implementation: "FAPI CIBA: explicitly rejected. FAPI Advanced: config-dependent"
+      note: |
+        financial-tenant.json の request_object_signing_alg_values_supported に
+        RS256が含まれている。FAPI Advanced 8.6-2はSHOULD NOTなので
+        仕様違反ではないが、認定テストで警告が出る可能性がある。
+        PS256とES256のみに制限することを推奨。
+      e2e_test: "fapi_ciba.test.js (line 1084)"
+
+    - id: "8.6-3"
+      requirement: "For JWS, shall not use none"
+      status: "implemented"
+      implementation: "ClientAuthenticationJwtValidatable:38-52 (alg:none prohibition)"
+      e2e_test: "none"
+
+    - id: "8.6.1-1"
+      requirement: "For JWE, shall not use RSA1_5"
+      status: "GAP"
+      implementation: |
+        JOSEライブラリ(Nimbus)レベルではRSA1_5がサポートされている。
+        FAPIレイヤーでRSA1_5を明示的に禁止するバリデーションが存在しない。
+      issue_ref: "GAP-003"
+      e2e_test: "none"
+
+# ============================================================
+# Detailed Gap Analysis - FAPI CIBA
+# ============================================================
+fapi_ciba:
+  description: "FAPI CIBA Profile Requirements"
+
+  requirements:
+    - id: "CIBA-5.2.2-1"
+      requirement: "shall require signed request objects"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:77-83 (throwExceptionIfNotSignedRequestObject)"
+      e2e_test: "fapi_ciba.test.js (line 609)"
+
+    - id: "CIBA-5.2.2-2"
+      requirement: "shall require exp claim with max 60 min lifetime from nbf"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:123-173 (MAX_REQUEST_OBJECT_LIFETIME_MS = 3,600,000)"
+      e2e_test: "fapi_ciba.test.js (lines 221, 664)"
+
+    - id: "CIBA-5.2.2-3"
+      requirement: "shall require PS256 or ES256 for signing algorithms"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:190-228 + :245-285 (request + client assertion)"
+      e2e_test: "fapi_ciba.test.js (lines 1068-1097)"
+
+    - id: "CIBA-5.2.2-4"
+      requirement: "shall not support public clients"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:292-301"
+      e2e_test: "fapi_ciba.test.js (lines 38-74)"
+
+    - id: "CIBA-5.2.2-5"
+      requirement: "shall require binding_message (unless authorization_details)"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:309-321"
+      e2e_test: "fapi_ciba.test.js (lines 77-117, 314-345)"
+
+    - id: "CIBA-5.2.2-6"
+      requirement: "shall not support push mode delivery"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:328-337"
+      e2e_test: "fapi_ciba.test.js (lines 121-157)"
+
+    - id: "CIBA-5.2.2-7"
+      requirement: "shall restrict client auth to private_key_jwt/tls_client_auth/self_signed_tls_client_auth"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:354-369"
+      e2e_test: "fapi_ciba.test.js (lines 695-803, 914-1066, 1231-1328)"
+
+    - id: "CIBA-5.2.2-8"
+      requirement: "shall validate aud claim matches issuer"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:377-400"
+      e2e_test: "fapi_ciba.test.js (lines 251-311)"
+
+    - id: "CIBA-5.2.2-9"
+      requirement: "shall require sender-constrained access tokens via mTLS"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:407-418 + FapiCibaGrantVerifier:84-90"
+      e2e_test: "fapi_ciba.test.js (lines 461-603, 1099-1176)"
+
+    - id: "CIBA-5.2.2-10"
+      requirement: "shall require iat claim"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:99-110"
+      e2e_test: "fapi_ciba.test.js"
+
+    - id: "CIBA-5.2.2-11"
+      requirement: "shall validate nbf not older than 60 minutes"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:123-173"
+      e2e_test: "fapi_ciba.test.js (lines 159-219)"
+
+    - id: "CIBA-5.2.2-12"
+      requirement: "RSA key >= 2048 bits, EC key >= 160 bits"
+      status: "implemented"
+      implementation: "FapiCibaVerifier:211-227"
+      e2e_test: "fapi_ciba.test.js (lines 1330-1409)"
+
+# ============================================================
+# Configuration Attention Items
+# ============================================================
+configuration_attention_items:
+  - id: "CONFIG-001"
+    file: "config/examples/financial-grade/financial-tenant.json"
+    setting: "request_object_signing_alg_values_supported includes RS256"
+    requirement: "FAPI Advanced 8.6-2 SHOULD NOT"
+    recommendation: "PS256とES256のみに制限することを推奨"
+    severity: "warning"
+
+  - id: "CONFIG-002"
+    file: "Various JARM configuration"
+    setting: "form_post.jwt response mode unsupported"
+    requirement: "JARM Section 4.3 (response_mode form_post.jwt)"
+    recommendation: "TODO #1266 で対応予定。query.jwt/fragment.jwt/jwtは対応済み"
+    severity: "info"

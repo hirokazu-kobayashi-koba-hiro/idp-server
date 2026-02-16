@@ -34,6 +34,26 @@ public class AuthorizationErrorResponseCreator
     this.exception = exception;
   }
 
+  /**
+   * Creates an authorization error response to redirect the user-agent back to the client.
+   *
+   * <p>JARM (JWT Secured Authorization Response Mode) wrapping is applied only when the client
+   * explicitly requested a JWT response mode (jwt, query.jwt, fragment.jwt, form_post.jwt). Unlike
+   * success responses, error responses must NOT use profile-based JARM auto-detection
+   * (context.isJwtMode()), because the request itself may be invalid (e.g., response_type=code
+   * without response_mode=jwt in FAPI Advanced). In such cases, the error must be returned as plain
+   * query/fragment parameters so that the client can parse it.
+   *
+   * <p>FAPI 1.0 Advanced Final, Section 5.2.2 (clause 2): shall require the response_type value
+   * code id_token, or the response_type value code in conjunction with the response_mode value jwt.
+   * When this requirement is violated, the error response should use plain query parameters, not
+   * JARM.
+   *
+   * @see <a
+   *     href="https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server">FAPI
+   *     1.0 Advanced Final Section 5.2.2</a>
+   * @see <a href="https://openid.net/specs/oauth-v2-jarm-final.html">JARM specification</a>
+   */
   public AuthorizationErrorResponse create() {
     OAuthRequestContext context = exception.oAuthRequestContext();
     RedirectUri redirectUri = context.redirectUri();
@@ -47,7 +67,7 @@ public class AuthorizationErrorResponseCreator
             .add(state)
             .add(exception.error())
             .add(exception.errorDescription());
-    if (context.isJwtMode()) {
+    if (context.responseMode().isJwtMode()) {
       AuthorizationErrorResponse errorResponse = builder.build();
       JarmPayload jarmPayload =
           createResponse(

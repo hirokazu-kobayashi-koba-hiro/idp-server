@@ -31,12 +31,22 @@ public enum AuthorizationHeaderType {
     this.value = value;
   }
 
+  /**
+   * Parses the Authorization header value to determine its type.
+   *
+   * <p>Per RFC 9110 Section 11.1, the authentication scheme name is case-insensitive. This method
+   * performs a case-insensitive prefix match so that "Bearer", "bearer", and "BEARER" are all
+   * recognized as the Bearer scheme.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9110#section-11.1">RFC 9110 Section 11.1</a>
+   */
   public static AuthorizationHeaderType of(String authorizationHeader) {
     if (Objects.isNull(authorizationHeader) || authorizationHeader.isEmpty()) {
       return Unknown;
     }
+    String lowerCaseHeader = authorizationHeader.toLowerCase();
     for (AuthorizationHeaderType type : AuthorizationHeaderType.values()) {
-      if (authorizationHeader.startsWith(type.value)) {
+      if (!type.value.isEmpty() && lowerCaseHeader.startsWith(type.value.toLowerCase())) {
         return type;
       }
     }

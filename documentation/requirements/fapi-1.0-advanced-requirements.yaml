@@ -1,0 +1,743 @@
+spec_name: "Financial-grade API Security Profile 1.0 - Part 2: Advanced"
+spec_url: "https://openid.net/specs/openid-financial-api-part-2-1_0.html"
+extraction_timestamp: "2026-02-14"
+extractor_version: "1.1.0"
+spec_date: "2021-03-12"
+spec_status: "Final"
+
+summary:
+  total_requirements: 68
+  must_shall_requirements: 48
+  should_requirements: 8
+  optional_requirements: 3
+  must_not_requirements: 9
+
+sections_covered:
+  - "Section 5.1: Introduction"
+  - "Section 5.1.1: ID Token as Detached Signature"
+  - "Section 5.1.2: JWT Secured Authorization Response Mode (JARM)"
+  - "Section 5.2: Advanced Security Provisions"
+  - "Section 5.2.2: Authorization Server"
+  - "Section 5.2.2.1: ID Token as Detached Signature (AS)"
+  - "Section 5.2.2.2: JARM (AS)"
+  - "Section 5.2.3: Confidential Client"
+  - "Section 5.2.3.1: ID Token as Detached Signature (Client)"
+  - "Section 5.2.3.2: JARM (Client)"
+  - "Section 6.2.1: Protected Resources Provisions"
+  - "Section 6.2.2: Client Provisions"
+  - "Section 8: Security Considerations"
+  - "Section 8.2: Uncertainty of Resource Server Handling of Access Tokens"
+  - "Section 8.5: TLS Considerations"
+  - "Section 8.6: Algorithm Considerations"
+  - "Section 8.6.1: Encryption Algorithm Considerations"
+  - "Section 8.8: Session Fixation"
+  - "Section 8.9: JWKS URIs"
+  - "Section 8.11: Duplicate Key Identifiers"
+  - "Section 9: Privacy Considerations"
+
+baseline_reference:
+  spec_name: "Financial-grade API Security Profile 1.0 - Part 1: Baseline"
+  spec_url: "https://openid.net/specs/openid-financial-api-part-1-1_0.html"
+  note: "FAPI 1.0 Advanced builds on top of Part 1: Baseline. All Baseline requirements apply unless explicitly overridden. The Advanced profile overrides the Baseline requirement for RFC7636 enforcement (Baseline 5.2.2-7) as it uses request objects instead."
+
+requirements_by_category:
+  authorization_server:
+    must_shall:
+      - section: "5.2.2 (preamble)"
+        requirement: "shall support the provisions specified in clause 5.2.2 of Financial-grade API Security Profile 1.0 - Part 1: Baseline, with the exception that Section 5.2.2-7 (enforcement of RFC7636) is not required"
+        rationale: "Inherit all Baseline AS requirements; PKCE enforcement replaced by request object requirement"
+        test_implication: "All Baseline AS tests must pass except PKCE-only enforcement"
+
+      - section: "5.2.2-1"
+        requirement: "shall require a JWS signed JWT request object passed by value with the request parameter or by reference with the request_uri parameter"
+        rationale: "Protect authorization request integrity via signed request objects (JAR)"
+        test_implication: "Must reject authorization requests without a signed JWT request object"
+
+      - section: "5.2.2-2"
+        requirement: "shall require the response_type value code id_token, or the response_type value code in conjunction with the response_mode value jwt"
+        rationale: "Require either Hybrid Flow with detached signature or JARM for response integrity protection"
+        test_implication: "Must reject response_type values other than 'code id_token' or 'code' with response_mode 'jwt'"
+
+      - section: "5.2.2-5"
+        requirement: "shall only issue sender-constrained access tokens"
+        rationale: "Prevent token theft and replay by binding tokens to the legitimate client"
+        test_implication: "Must never issue bearer (non-sender-constrained) access tokens"
+
+      - section: "5.2.2-6"
+        requirement: "shall support MTLS as mechanism for constraining the legitimate senders of access tokens"
+        rationale: "MTLS certificate binding is mandatory sender-constraint mechanism"
+        test_implication: "Must support MTLS certificate-bound access tokens per RFC8705"
+
+      - section: "5.2.2-10"
+        requirement: "shall only use the parameters included in the signed request object passed via the request or request_uri parameter"
+        rationale: "Prevent parameter injection by only trusting signed request object contents"
+        test_implication: "Must ignore any parameters outside the signed request object"
+
+      - section: "5.2.2-13"
+        requirement: "shall require the request object to contain an exp claim that has a lifetime of no longer than 60 minutes after the nbf claim"
+        rationale: "Limit request object validity window to prevent replay attacks"
+        test_implication: "Must reject request objects with exp - nbf > 60 minutes"
+
+      - section: "5.2.2-14"
+        requirement: "shall authenticate the confidential client using one of the following methods: tls_client_auth or self_signed_tls_client_auth (MTLS), or private_key_jwt (OIDC)"
+        rationale: "Only allow strong asymmetric client authentication methods"
+        test_implication: "Must reject client_secret_basic, client_secret_post, and other weak authentication methods"
+
+      - section: "5.2.2-15"
+        requirement: "shall require the aud claim in the request object to be, or to be an array containing, the OP's Issuer Identifier URL"
+        rationale: "Prevent request object confusion attacks across different authorization servers"
+        test_implication: "Must reject request objects where aud does not match the OP's Issuer Identifier"
+
+      - section: "5.2.2-17"
+        requirement: "shall require the request object to contain an nbf claim that is no longer than 60 minutes in the past"
+        rationale: "Ensure request objects are fresh and prevent stale request replay"
+        test_implication: "Must reject request objects with nbf more than 60 minutes in the past"
+
+      - section: "5.2.2-18"
+        requirement: "shall require PAR requests, if supported, to use PKCE (RFC7636) with S256 as the code challenge method"
+        rationale: "Additional protection when PAR is used to prevent authorization code interception"
+        test_implication: "If PAR is supported, must reject PAR requests without PKCE S256"
+
+    should: []
+
+    optional:
+      - section: "5.2.2-11"
+        requirement: "may support the pushed authorization request endpoint as described in PAR (RFC9126)"
+        rationale: "PAR provides additional security by transmitting request objects directly to the AS"
+        test_implication: "Optional: test PAR endpoint support if implemented"
+
+    must_not:
+      - section: "5.2.2-16"
+        requirement: "shall not support public clients"
+        rationale: "Public clients cannot be securely authenticated and are inappropriate for financial-grade APIs"
+        test_implication: "Must reject any authorization requests from public (unauthenticated) clients"
+
+  authorization_server_id_token_detached_signature:
+    must_shall:
+      - section: "5.2.2.1-1"
+        requirement: "shall support OIDC"
+        rationale: "OpenID Connect is required for ID Token issuance in the detached signature flow"
+        test_implication: "Must support OpenID Connect protocol"
+
+      - section: "5.2.2.1-2"
+        requirement: "shall support signed ID Tokens"
+        rationale: "Signed ID Tokens provide integrity protection for the detached signature"
+        test_implication: "Must issue JWS-signed ID Tokens"
+
+      - section: "5.2.2.1-4"
+        requirement: "shall return ID Token as a detached signature to the authorization response"
+        rationale: "ID Token in authorization response acts as integrity proof for response parameters"
+        test_implication: "Must include id_token in the authorization response for code id_token flow"
+
+      - section: "5.2.2.1-5"
+        requirement: "shall include state hash, s_hash, in the ID Token to protect the state value if the client supplied a value for state"
+        rationale: "s_hash binds the state parameter to the ID Token, preventing state manipulation"
+        test_implication: "Must include s_hash claim in authorization response ID Token when state is present"
+
+    should:
+      - section: "5.2.2.1-3"
+        requirement: "should support signed and encrypted ID Tokens"
+        rationale: "Encryption provides confidentiality protection for ID Token contents"
+        test_implication: "Recommended: test encrypted ID Token support"
+
+      - section: "5.2.2.1-6"
+        requirement: "should not return sensitive PII in the ID Token in the authorization response, but if it needs to, then it should encrypt the ID Token"
+        rationale: "Authorization response passes through user agent; PII exposure risk"
+        test_implication: "Recommended: verify no sensitive PII in unencrypted authorization response ID Token"
+
+    optional: []
+    must_not: []
+
+  authorization_server_jarm:
+    must_shall:
+      - section: "5.2.2.2-1"
+        requirement: "shall create JWT-secured authorization responses as specified in JARM, Section 4.3"
+        rationale: "JARM provides integrity and authenticity protection for the entire authorization response"
+        test_implication: "Must return JWT-encoded authorization responses when response_mode is jwt"
+
+    should: []
+    optional: []
+    must_not: []
+
+  confidential_client:
+    must_shall:
+      - section: "5.2.3 (preamble)"
+        requirement: "shall support the provisions specified in clause 5.2.3 and 5.2.4 of Financial-grade API Security Profile 1.0 - Part 1: Baseline, except the support of RFC7636"
+        rationale: "Inherit all Baseline client requirements; PKCE replaced by request object"
+        test_implication: "All Baseline client tests must pass except PKCE-only requirement"
+
+      - section: "5.2.3-1"
+        requirement: "shall support MTLS as mechanism for sender-constrained access tokens"
+        rationale: "MTLS certificate binding is mandatory for token sender constraint"
+        test_implication: "Client must support MTLS certificate-bound access tokens"
+
+      - section: "5.2.3-2"
+        requirement: "shall include the request or request_uri parameter as defined in Section 6 of OIDC in the authentication request"
+        rationale: "All authorization parameters must be conveyed via signed request object"
+        test_implication: "Client must always include request or request_uri in authorization requests"
+
+      - section: "5.2.3-3"
+        requirement: "shall ensure the Authorization Server has authenticated the user to an appropriate Level of Assurance for the operations the client is going to perform"
+        rationale: "Ensure authentication strength matches the risk level of requested operations"
+        test_implication: "Client must request and verify appropriate authentication context"
+
+      - section: "5.2.3-4"
+        requirement: "shall send all parameters inside the authorization request's signed request object"
+        rationale: "Prevent parameter tampering by including all parameters in the signed JWT"
+        test_implication: "Client must not rely on unsigned query parameters"
+
+      - section: "5.2.3-5"
+        requirement: "shall additionally send duplicates of the response_type, client_id, and scope parameters/values using the OAuth 2.0 request syntax as required by Section 6.1 of OIDC if not using PAR"
+        rationale: "OIDC requires certain parameters outside the request object for backward compatibility"
+        test_implication: "When not using PAR, must send response_type, client_id, and scope as query parameters too"
+
+      - section: "5.2.3-6"
+        requirement: "shall send the aud claim in the request object as the OP's Issuer Identifier URL"
+        rationale: "Bind the request object to the intended authorization server"
+        test_implication: "Client must set aud to the OP's Issuer Identifier in the request object"
+
+      - section: "5.2.3-7"
+        requirement: "shall send an exp claim in the request object that has a lifetime of no longer than 60 minutes"
+        rationale: "Prevent stale request objects from being replayed"
+        test_implication: "Client must set exp within 60 minutes of the current time"
+
+      - section: "5.2.3-8"
+        requirement: "shall send a nbf claim in the request object"
+        rationale: "Establish the earliest time the request object is valid"
+        test_implication: "Client must include nbf claim in request object"
+
+      - section: "5.2.3-9"
+        requirement: "shall use PKCE (RFC7636) with S256 as the code challenge method if using PAR"
+        rationale: "Additional code interception protection when using PAR"
+        test_implication: "When using PAR, client must include code_challenge with S256 method"
+
+      - section: "5.2.3-10"
+        requirement: "shall additionally send a duplicate of the client_id parameter/value using the OAuth 2.0 request syntax to the authorization endpoint if using PAR"
+        rationale: "Authorization endpoint needs client_id to look up the PAR request"
+        test_implication: "When using PAR, client must include client_id as a query parameter"
+
+    should: []
+    optional: []
+    must_not: []
+
+  confidential_client_id_token_detached_signature:
+    must_shall:
+      - section: "5.2.3.1-1"
+        requirement: "shall include the value openid into the scope parameter in order to activate OIDC support"
+        rationale: "OpenID Connect requires the openid scope to trigger ID Token issuance"
+        test_implication: "Client must include 'openid' in scope for detached signature flow"
+
+      - section: "5.2.3.1-2"
+        requirement: "shall require JWS signed ID Token be returned from endpoints"
+        rationale: "Unsigned ID Tokens provide no integrity guarantee"
+        test_implication: "Client must reject unsigned ID Tokens"
+
+      - section: "5.2.3.1-3"
+        requirement: "shall verify that the authorization response was not tampered using ID Token as the detached signature"
+        rationale: "Core security mechanism of the detached signature approach"
+        test_implication: "Client must verify c_hash against the authorization code"
+
+      - section: "5.2.3.1-4"
+        requirement: "shall verify that s_hash value is equal to the value calculated from the state value in the authorization response in addition to all the requirements in 3.3.2.12 of OIDC"
+        rationale: "Verify state integrity and perform all OIDC hybrid flow ID Token validations"
+        test_implication: "Client must verify s_hash and all OIDC 3.3.2.12 requirements"
+
+      - section: "5.2.3.1-5"
+        requirement: "shall support both signed and signed & encrypted ID Tokens"
+        rationale: "Must handle both signed-only and signed-then-encrypted ID Tokens"
+        test_implication: "Client must correctly process encrypted ID Tokens"
+
+    should: []
+    optional: []
+    must_not: []
+
+  confidential_client_jarm:
+    must_shall:
+      - section: "5.2.3.2-1"
+        requirement: "shall verify the authorization responses as specified in JARM, Section 4.4"
+        rationale: "JARM response verification ensures authorization response integrity"
+        test_implication: "Client must validate JWT-secured authorization responses per JARM"
+
+    should: []
+    optional: []
+    must_not: []
+
+  resource_server:
+    must_shall:
+      - section: "6.2.1-1"
+        requirement: "shall support the provisions specified in clause 6.2.1 of Financial-grade API Security Profile 1.0 - Part 1: Baseline"
+        rationale: "Inherit all Baseline protected resource requirements"
+        test_implication: "All Baseline resource server tests must pass"
+
+      - section: "6.2.1-2"
+        requirement: "shall adhere to the requirements in MTLS (RFC8705)"
+        rationale: "Resource server must verify MTLS certificate binding on access tokens"
+        test_implication: "Must verify that the client presenting the token holds the bound certificate"
+
+      - section: "8.2-1"
+        requirement: "shall not accept a bearer access token"
+        rationale: "Bearer tokens lack sender constraint and are vulnerable to theft"
+        test_implication: "Must reject access tokens without MTLS certificate binding"
+
+      - section: "8.2-2"
+        requirement: "shall only support sender-constrained access tokens via MTLS"
+        rationale: "Only MTLS-bound tokens provide sufficient security for financial-grade APIs"
+        test_implication: "Must verify MTLS certificate binding for every token presentation"
+
+    should: []
+    optional: []
+    must_not: []
+
+  client_resource_access:
+    must_shall:
+      - section: "6.2.2-1"
+        requirement: "shall support the provisions specified in clause 6.2.2 of Financial-grade API Security Profile 1.0 - Part 1: Baseline"
+        rationale: "Inherit all Baseline client resource access requirements"
+        test_implication: "All Baseline client resource access tests must pass"
+
+    should: []
+    optional: []
+    must_not: []
+
+  security_tls:
+    must_shall:
+      - section: "8.5-1"
+        requirement: "For TLS versions below 1.3, only the following 4 cipher suites shall be permitted: TLS_DHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, TLS_DHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+        rationale: "Restrict to strong AEAD cipher suites for TLS 1.2"
+        test_implication: "Must reject TLS 1.2 connections using cipher suites outside this list"
+
+      - section: "8.5-3"
+        requirement: "When using the DHE cipher suites, key lengths of at least 2048 bits are required"
+        rationale: "Prevent weak Diffie-Hellman key exchange"
+        test_implication: "Must enforce minimum 2048-bit DHE key length"
+
+    should: []
+
+    optional:
+      - section: "8.5-2"
+        requirement: "For the authorization_endpoint, the authorization server MAY allow additional cipher suites that are permitted by the latest version of BCP195"
+        rationale: "Browser interoperability may require broader cipher suite support on authorization endpoint"
+        test_implication: "Optional: authorization endpoint may support additional BCP195 cipher suites"
+
+    must_not: []
+
+  security_algorithms:
+    must_shall:
+      - section: "8.6-1"
+        requirement: "For JWS, both clients and authorization servers shall use PS256 or ES256 algorithms"
+        rationale: "PS256 and ES256 are strong asymmetric signature algorithms"
+        test_implication: "Must use PS256 or ES256 for all JWS operations"
+
+    should:
+      - section: "8.6-2"
+        requirement: "For JWS, both clients and authorization servers should not use algorithms that use RSASSA-PKCS1-v1_5 (e.g. RS256)"
+        rationale: "RSASSA-PKCS1-v1_5 has known vulnerabilities compared to RSA-PSS"
+        test_implication: "Recommended: reject RS256 and other PKCS1-v1_5 based algorithms"
+
+    optional: []
+
+    must_not:
+      - section: "8.6-3"
+        requirement: "For JWS, both clients and authorization servers shall not use none"
+        rationale: "The 'none' algorithm provides no integrity protection"
+        test_implication: "Must reject JWS with alg=none"
+
+      - section: "8.6.1-1"
+        requirement: "For JWE, both clients and authorization servers shall not use the RSA1_5 algorithm"
+        rationale: "RSA PKCS#1 v1.5 encryption is vulnerable to Bleichenbacher-style attacks"
+        test_implication: "Must reject JWE with alg=RSA1_5"
+
+  security_session:
+    must_shall:
+      - section: "8.8-1"
+        requirement: "Implementers shall ensure any action is executed using the access token issued by the authorization process"
+        rationale: "Prevent session fixation by ensuring actions happen after token issuance, not during authorization"
+        test_implication: "Must not execute sensitive actions (e.g., payments) during the authorization flow"
+
+    should: []
+    optional: []
+    must_not: []
+
+  security_jwks:
+    must_shall:
+      - section: "8.9-1"
+        requirement: "jwks_uri endpoints shall be served over TLS"
+        rationale: "Protect public key distribution from MITM attacks"
+        test_implication: "Must serve JWKS endpoints over HTTPS only"
+
+      - section: "8.11-1"
+        requirement: "The verifier shall consider other JWK attributes, such as kty, use, alg, crv, when selecting the verification key for a given kid"
+        rationale: "Handle duplicate kid values gracefully by using additional JWK attributes for disambiguation"
+        test_implication: "Must implement multi-attribute key selection algorithm when multiple keys match kid"
+
+    should:
+      - section: "8.9-2"
+        requirement: "JOSE headers for x5u and jku should not be used"
+        rationale: "x5u and jku headers introduce additional URL-fetching attack surface"
+        test_implication: "Recommended: reject JWTs containing x5u or jku headers"
+
+      - section: "8.9-3"
+        requirement: "The JWK set should not contain multiple keys with the same kid"
+        rationale: "Duplicate kid values create ambiguity in key selection"
+        test_implication: "Recommended: ensure JWKS kid uniqueness"
+
+    optional: []
+    must_not: []
+
+  security_key_sharing:
+    must_shall: []
+
+    should:
+      - section: "8.10-1"
+        requirement: "Implementers should be aware that if a certificate issued at the organizational level is shared across multiple clients, compromise of one client compromises all clients sharing the same key"
+        rationale: "Organizational-level certificates create shared risk across clients"
+        test_implication: "Recommended: use per-client certificates rather than organizational certificates"
+
+    optional: []
+    must_not: []
+
+key_findings:
+  critical_must_requirements:
+    - "Signed JWT request objects (JAR) are mandatory for all authorization requests"
+    - "Only sender-constrained access tokens via MTLS are permitted (no bearer tokens)"
+    - "Public clients are explicitly prohibited"
+    - "Response type must be 'code id_token' (detached signature) or 'code' with response_mode 'jwt' (JARM)"
+    - "Client authentication limited to MTLS (tls_client_auth/self_signed_tls_client_auth) or private_key_jwt"
+    - "Request object must contain exp (max 60 min lifetime) and nbf (max 60 min in past) claims"
+    - "Request object aud must match OP's Issuer Identifier URL"
+    - "Only parameters from the signed request object shall be used"
+    - "JWS algorithms restricted to PS256 or ES256"
+    - "Protected resources must reject bearer tokens and only accept MTLS-bound tokens"
+
+  security_critical:
+    - "Request object signing prevents authorization request parameter injection"
+    - "Detached signature (ID Token) or JARM prevents authorization response tampering"
+    - "MTLS sender constraint prevents access token phishing and replay"
+    - "s_hash in ID Token prevents state manipulation attacks"
+    - "Algorithm 'none' is explicitly prohibited for JWS"
+    - "RSA1_5 is explicitly prohibited for JWE"
+    - "RSASSA-PKCS1-v1_5 (RS256) should not be used for JWS"
+    - "TLS 1.2 restricted to 4 specific AEAD cipher suites"
+    - "DHE key lengths must be at least 2048 bits"
+    - "Session fixation prevention: actions must use access tokens, not execute during authorization"
+
+  differences_from_baseline:
+    - "Baseline RFC7636 (PKCE) enforcement is NOT required (replaced by request object requirement)"
+    - "Signed JWT request objects are MANDATORY (Baseline does not require this)"
+    - "Response type restricted to 'code id_token' or 'code' + JARM (Baseline allows plain 'code')"
+    - "Sender-constrained access tokens are MANDATORY (Baseline may allow bearer tokens)"
+    - "MTLS support is MANDATORY for both AS and clients (Baseline may not require this)"
+    - "Client authentication restricted to MTLS or private_key_jwt (Baseline allows client_secret methods)"
+    - "Public clients are explicitly prohibited (Baseline may allow public clients with PKCE)"
+    - "Request object exp/nbf claims with specific timing constraints are required"
+    - "Request object aud claim validation is required"
+    - "s_hash claim in ID Token is required for state protection"
+    - "JWS algorithms restricted to PS256/ES256 (Baseline may allow RS256)"
+    - "Algorithm 'none' explicitly prohibited (may not be specified in Baseline)"
+    - "RSA1_5 encryption explicitly prohibited"
+    - "TLS cipher suites restricted to 4 specific suites for TLS 1.2"
+    - "PKCE with S256 is required only when PAR is used (conditional requirement)"
+
+  response_mode_options:
+    option_a:
+      name: "ID Token as Detached Signature"
+      response_type: "code id_token"
+      mechanism: "ID Token in authorization response contains c_hash, s_hash for integrity verification"
+      additional_as_requirements:
+        - "Support OIDC"
+        - "Support signed ID Tokens"
+        - "Return ID Token as detached signature"
+        - "Include s_hash when state is present"
+      additional_client_requirements:
+        - "Include openid in scope"
+        - "Require JWS signed ID Tokens"
+        - "Verify detached signature (c_hash)"
+        - "Verify s_hash against state"
+        - "Support signed and signed+encrypted ID Tokens"
+    option_b:
+      name: "JWT Secured Authorization Response Mode (JARM)"
+      response_type: "code"
+      response_mode: "jwt"
+      mechanism: "Entire authorization response encoded as signed JWT"
+      additional_as_requirements:
+        - "Create JWT-secured authorization responses per JARM Section 4.3"
+      additional_client_requirements:
+        - "Verify authorization responses per JARM Section 4.4"
+
+test_mapping:
+  e2e_tests:
+    must_requirements:
+      description: "Required test cases for MUST/SHALL requirements"
+      priority: "P0"
+      test_cases:
+        - name: "Reject authorization request without signed request object"
+          requirement: "5.2.2-1"
+          type: "negative"
+
+        - name: "Accept authorization request with request parameter (signed JWT by value)"
+          requirement: "5.2.2-1"
+          type: "positive"
+
+        - name: "Accept authorization request with request_uri parameter (signed JWT by reference)"
+          requirement: "5.2.2-1"
+          type: "positive"
+
+        - name: "Accept response_type code id_token"
+          requirement: "5.2.2-2"
+          type: "positive"
+
+        - name: "Accept response_type code with response_mode jwt"
+          requirement: "5.2.2-2"
+          type: "positive"
+
+        - name: "Reject unsupported response_type values (e.g., token, code token)"
+          requirement: "5.2.2-2"
+          type: "negative"
+
+        - name: "Issue only MTLS certificate-bound access tokens"
+          requirement: "5.2.2-5, 5.2.2-6"
+          type: "positive"
+
+        - name: "Reject bearer token at protected resource"
+          requirement: "8.2-1"
+          type: "negative"
+
+        - name: "Ignore parameters outside signed request object"
+          requirement: "5.2.2-10"
+          type: "negative"
+
+        - name: "Reject request object with exp - nbf > 60 minutes"
+          requirement: "5.2.2-13"
+          type: "negative"
+
+        - name: "Reject request object with nbf > 60 minutes in the past"
+          requirement: "5.2.2-17"
+          type: "negative"
+
+        - name: "Accept tls_client_auth authentication"
+          requirement: "5.2.2-14"
+          type: "positive"
+
+        - name: "Accept self_signed_tls_client_auth authentication"
+          requirement: "5.2.2-14"
+          type: "positive"
+
+        - name: "Accept private_key_jwt authentication"
+          requirement: "5.2.2-14"
+          type: "positive"
+
+        - name: "Reject client_secret_basic authentication"
+          requirement: "5.2.2-14"
+          type: "negative"
+
+        - name: "Reject client_secret_post authentication"
+          requirement: "5.2.2-14"
+          type: "negative"
+
+        - name: "Reject request object with incorrect aud claim"
+          requirement: "5.2.2-15"
+          type: "negative"
+
+        - name: "Reject public client registration/requests"
+          requirement: "5.2.2-16"
+          type: "negative"
+
+        - name: "Reject PAR request without PKCE S256 (if PAR supported)"
+          requirement: "5.2.2-18"
+          type: "negative"
+
+        - name: "Include s_hash in authorization response ID Token when state is present"
+          requirement: "5.2.2.1-5"
+          type: "positive"
+
+        - name: "Return signed ID Token in authorization response (detached signature)"
+          requirement: "5.2.2.1-4"
+          type: "positive"
+
+        - name: "Return JWT-secured authorization response (JARM)"
+          requirement: "5.2.2.2-1"
+          type: "positive"
+
+        - name: "Use only PS256 or ES256 for JWS signing"
+          requirement: "8.6-1"
+          type: "positive"
+
+        - name: "Reject JWS with alg=none"
+          requirement: "8.6-3"
+          type: "negative"
+
+        - name: "Reject JWE with alg=RSA1_5"
+          requirement: "8.6.1-1"
+          type: "negative"
+
+        - name: "Serve JWKS URI over TLS"
+          requirement: "8.9-1"
+          type: "positive"
+
+        - name: "Verify MTLS certificate binding at resource server"
+          requirement: "6.2.1-2, 8.2-2"
+          type: "positive"
+
+    should_requirements:
+      description: "Recommended test cases for SHOULD requirements"
+      priority: "P1"
+      test_cases:
+        - name: "Support signed and encrypted ID Tokens"
+          requirement: "5.2.2.1-3"
+          type: "positive"
+
+        - name: "No sensitive PII in unencrypted authorization response ID Token"
+          requirement: "5.2.2.1-6"
+          type: "validation"
+
+        - name: "Avoid RSASSA-PKCS1-v1_5 algorithms (RS256)"
+          requirement: "8.6-2"
+          type: "negative"
+
+        - name: "No x5u or jku in JOSE headers"
+          requirement: "8.9-2"
+          type: "validation"
+
+        - name: "No duplicate kid in JWKS"
+          requirement: "8.9-3"
+          type: "validation"
+
+    security_requirements:
+      description: "Security-focused negative test cases"
+      priority: "P0"
+      test_cases:
+        - name: "Reject unsigned authorization request (no request object)"
+          requirement: "5.2.2-1"
+          type: "negative"
+          attack: "Authorization request parameter injection"
+
+        - name: "Reject tampered request object signature"
+          requirement: "5.2.2-1"
+          type: "negative"
+          attack: "Request object forgery"
+
+        - name: "Reject parameters outside signed request object"
+          requirement: "5.2.2-10"
+          type: "negative"
+          attack: "Parameter injection bypass"
+
+        - name: "Reject bearer tokens at resource server"
+          requirement: "8.2-1"
+          type: "negative"
+          attack: "Access token phishing"
+
+        - name: "Reject expired request objects"
+          requirement: "5.2.2-13"
+          type: "negative"
+          attack: "Request object replay"
+
+        - name: "Reject future-dated nbf in request objects"
+          requirement: "5.2.2-17"
+          type: "negative"
+          attack: "Request object replay"
+
+        - name: "Reject wrong aud in request object"
+          requirement: "5.2.2-15"
+          type: "negative"
+          attack: "Request object confusion / IdP mix-up"
+
+        - name: "Reject JWS alg=none"
+          requirement: "8.6-3"
+          type: "negative"
+          attack: "Algorithm bypass"
+
+        - name: "Reject JWE alg=RSA1_5"
+          requirement: "8.6.1-1"
+          type: "negative"
+          attack: "Bleichenbacher attack"
+
+        - name: "Reject weak TLS cipher suites (TLS 1.2)"
+          requirement: "8.5-1"
+          type: "negative"
+          attack: "Downgrade / weak cipher exploitation"
+
+        - name: "Reject public client authorization"
+          requirement: "5.2.2-16"
+          type: "negative"
+          attack: "Client impersonation"
+
+        - name: "Reject weak client authentication methods"
+          requirement: "5.2.2-14"
+          type: "negative"
+          attack: "Client credential theft"
+
+        - name: "Verify s_hash protects state value"
+          requirement: "5.2.2.1-5"
+          type: "negative"
+          attack: "State manipulation / CSRF"
+
+        - name: "Verify JARM JWT integrity"
+          requirement: "5.2.2.2-1"
+          type: "negative"
+          attack: "Authorization response tampering"
+
+related_specifications:
+  - name: "RFC6749"
+    description: "The OAuth 2.0 Authorization Framework"
+    url: "https://www.rfc-editor.org/rfc/rfc6749.html"
+
+  - name: "RFC6750"
+    description: "The OAuth 2.0 Authorization Framework: Bearer Token Usage"
+    url: "https://www.rfc-editor.org/rfc/rfc6750.html"
+
+  - name: "RFC7636"
+    description: "Proof Key for Code Exchange by OAuth Public Clients (PKCE)"
+    url: "https://www.rfc-editor.org/rfc/rfc7636.html"
+
+  - name: "RFC8705"
+    description: "OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens"
+    url: "https://www.rfc-editor.org/rfc/rfc8705.html"
+
+  - name: "RFC9126"
+    description: "OAuth 2.0 Pushed Authorization Requests (PAR)"
+    url: "https://www.rfc-editor.org/rfc/rfc9126.html"
+
+  - name: "OpenID Connect Core 1.0"
+    description: "OpenID Connect Core 1.0 incorporating errata set 2"
+    url: "https://openid.net/specs/openid-connect-core-1_0.html"
+
+  - name: "FAPI 1.0 Part 1: Baseline"
+    description: "Financial-grade API Security Profile 1.0 - Part 1: Baseline"
+    url: "https://openid.net/specs/openid-financial-api-part-1-1_0.html"
+
+  - name: "JARM"
+    description: "JWT Secured Authorization Response Mode for OAuth 2.0"
+    url: "https://openid.net/specs/oauth-v2-jarm-final.html"
+
+  - name: "JAR (RFC9101)"
+    description: "The OAuth 2.0 Authorization Framework: JWT-Secured Authorization Request"
+    url: "https://www.rfc-editor.org/rfc/rfc9101.html"
+
+  - name: "BCP195"
+    description: "Recommendations for Secure Use of Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)"
+    url: "https://www.rfc-editor.org/info/bcp195"
+
+  - name: "RFC6819"
+    description: "OAuth 2.0 Threat Model and Security Considerations"
+    url: "https://www.rfc-editor.org/rfc/rfc6819.html"
+
+notes:
+  - "FAPI 1.0 Advanced (Part 2) builds on top of FAPI 1.0 Baseline (Part 1)"
+  - "This profile does NOT support public clients - only confidential clients"
+  - "Two alternative response protection mechanisms: (a) ID Token as Detached Signature with code id_token, or (b) JARM with code + response_mode jwt"
+  - "MTLS is the only sender-constraint mechanism specified (unlike FAPI 2.0 which also supports DPoP)"
+  - "PAR is optional in FAPI 1.0 Advanced (mandatory in FAPI 2.0)"
+  - "Request objects (JAR) are mandatory for all authorization requests"
+  - "s_hash is a new claim defined by this specification for state value protection"
+  - "Sections 5.2.4, 5.2.5, 7 are withdrawn in the final version"
+  - "Items 3, 4, 7, 8, 9, 12 in section 5.2.2 were either moved to subsections or withdrawn"
+  - "The specification defines a key selection algorithm for handling duplicate kid values (section 8.11)"
+  - "All MUST/SHALL requirements are mandatory for FAPI 1.0 Advanced compliance"
+  - "SHOULD requirements are strongly recommended; deviations should be documented"
+  - "Privacy impact assessments are recommended but not normatively required"
+  - "OpenID Foundation provides certification tools for FAPI compliance testing"
+
+version_history:
+  - version: "1.1.0"
+    date: "2026-02-14"
+    changes: "Initial extraction from FAPI 1.0 Advanced Security Profile (Final, 2021-03-12)"
