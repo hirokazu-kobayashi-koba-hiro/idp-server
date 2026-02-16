@@ -219,21 +219,19 @@ export default function SignIn() {
           >
             Next
           </Button>
-          {data.show_cancel && (
-            <Button
-              variant="outlined"
-              onClick={handleCancel}
-              sx={{
-                textTransform: "none",
-                fontSize: 16,
-                fontWeight: "medium",
-                color: "#505050",
-                borderColor: "rgba(0, 0, 0, 0.2)",
-              }}
-            >
-              Cancel
-            </Button>
-          )}
+          <Button
+            variant="outlined"
+            onClick={handleCancel}
+            sx={{
+              textTransform: "none",
+              fontSize: 16,
+              fontWeight: "medium",
+              color: "#505050",
+              borderColor: "rgba(0, 0, 0, 0.2)",
+            }}
+          >
+            Cancel
+          </Button>
         </Stack>
 
         <Stack

@@ -40,7 +40,7 @@ if [ -f "${ENV_FILE}" ]; then
 fi
 
 # Use backend URL (without mTLS) for device authentication
-BASE_URL="${AUTHORIZATION_SERVER_URL:-https://host.docker.internal:8445}"
+BASE_URL="${AUTHORIZATION_SERVER_URL:-https://api.local.dev}"
 
 echo "   Server:    ${BASE_URL}"
 echo "   Tenant:    ${TENANT_ID}"

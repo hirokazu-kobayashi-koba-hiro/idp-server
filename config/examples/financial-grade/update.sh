@@ -211,9 +211,66 @@ if [ -n "${FINANCIAL_TENANT_ID}" ]; then
   echo ""
 fi
 
-# Step 6: Update authentication policies
+# Step 6: Update authentication configurations
 if [ -n "${FINANCIAL_TENANT_ID}" ]; then
-  echo "🔄 Step 6: Updating authentication policies..."
+  echo "🔄 Step 6: Updating authentication configurations..."
+
+  # FIDO2 (WebAuthn4J) authentication config
+  FIDO2_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/fido2/webauthn4j.json"
+  if [ -f "${FIDO2_CONFIG_FILE}" ]; then
+    FIDO2_CONFIG_JSON=$(cat "${FIDO2_CONFIG_FILE}")
+    FIDO2_CONFIG_ID=$(echo "${FIDO2_CONFIG_JSON}" | jq -r '.id')
+
+    echo "   📝 Updating FIDO2 config: ${FIDO2_CONFIG_ID}..."
+
+    FIDO2_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${FINANCIAL_TENANT_ID}/authentication-configurations/${FIDO2_CONFIG_ID}" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${FIDO2_CONFIG_JSON}")
+
+    FIDO2_HTTP_CODE=$(echo "${FIDO2_RESPONSE}" | tail -n1)
+    FIDO2_BODY=$(echo "${FIDO2_RESPONSE}" | sed '$d')
+
+    if [ "${FIDO2_HTTP_CODE}" = "200" ]; then
+      echo "   ✅ FIDO2 config updated"
+    else
+      echo "   ⚠️  FIDO2 config update failed (HTTP ${FIDO2_HTTP_CODE})"
+      echo "   Response: ${FIDO2_BODY}" | jq '.' 2>/dev/null || echo "   ${FIDO2_BODY}"
+    fi
+  fi
+
+  # Email authentication config
+  EMAIL_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/email/no-action.json"
+  if [ -f "${EMAIL_CONFIG_FILE}" ]; then
+    EMAIL_CONFIG_JSON=$(cat "${EMAIL_CONFIG_FILE}")
+    EMAIL_CONFIG_ID=$(echo "${EMAIL_CONFIG_JSON}" | jq -r '.id')
+
+    echo "   📝 Updating Email config: ${EMAIL_CONFIG_ID}..."
+
+    EMAIL_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${FINANCIAL_TENANT_ID}/authentication-configurations/${EMAIL_CONFIG_ID}" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${EMAIL_CONFIG_JSON}")
+
+    EMAIL_HTTP_CODE=$(echo "${EMAIL_RESPONSE}" | tail -n1)
+    EMAIL_BODY=$(echo "${EMAIL_RESPONSE}" | sed '$d')
+
+    if [ "${EMAIL_HTTP_CODE}" = "200" ]; then
+      echo "   ✅ Email config updated"
+    else
+      echo "   ⚠️  Email config update failed (HTTP ${EMAIL_HTTP_CODE})"
+      echo "   Response: ${EMAIL_BODY}" | jq '.' 2>/dev/null || echo "   ${EMAIL_BODY}"
+    fi
+  fi
+
+  echo ""
+fi
+
+# Step 7: Update authentication policies
+if [ -n "${FINANCIAL_TENANT_ID}" ]; then
+  echo "🔄 Step 7: Updating authentication policies..."
 
   # Define authentication policy files to update
   AUTH_POLICY_FILES=(
@@ -256,10 +313,10 @@ if [ -n "${FINANCIAL_TENANT_ID}" ]; then
   echo ""
 fi
 
-# Step 7: Update test user
+# Step 8: Update test user
 FINANCIAL_USER_FILE="${SCRIPT_DIR}/financial-user.json"
 if [ -n "${FINANCIAL_TENANT_ID}" ] && [ -f "${FINANCIAL_USER_FILE}" ]; then
-  echo "🔄 Step 7: Updating test user..."
+  echo "🔄 Step 8: Updating test user..."
 
   FINANCIAL_USER_JSON=$(cat "${FINANCIAL_USER_FILE}")
   FINANCIAL_USER_ID=$(echo "${FINANCIAL_USER_JSON}" | jq -r '.sub')

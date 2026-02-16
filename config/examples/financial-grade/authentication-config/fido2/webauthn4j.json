@@ -1,0 +1,117 @@
+{
+  "id": "b2c3d4e5-0001-4a03-ab78-7fe733390001",
+  "type": "fido2",
+  "metadata": {},
+  "interactions": {
+    "fido2-registration-challenge": {
+      "execution": {
+        "function": "webauthn4j_registration_challenge",
+        "details": {
+          "rp_id": "local.dev",
+          "allowed_origins": ["https://auth.local.dev", "https://sample.local.dev"],
+          "rp_name": "Local Dev IDP",
+          "token_binding_id": null,
+          "require_resident_key": true,
+          "attestation_preference": "direct",
+          "user_presence_required": true,
+          "authenticator_attachment": "platform",
+          "user_verification_required": true
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_webauthn4j",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido2-registration": {
+      "execution": {
+        "function": "webauthn4j_registration",
+        "details": {
+          "rp_id": "local.dev",
+          "allowed_origins": ["https://auth.local.dev", "https://sample.local.dev"],
+          "rp_name": "Local Dev IDP",
+          "token_binding_id": null,
+          "require_resident_key": true,
+          "attestation_preference": "direct",
+          "user_presence_required": true,
+          "authenticator_attachment": "platform",
+          "user_verification_required": true
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_webauthn4j",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido2-authentication-challenge": {
+      "execution": {
+        "function": "webauthn4j_authentication_challenge",
+        "details": {
+          "rp_id": "local.dev",
+          "allowed_origins": ["https://auth.local.dev", "https://sample.local.dev"],
+          "rp_name": "Local Dev IDP",
+          "token_binding_id": null,
+          "require_resident_key": true,
+          "attestation_preference": "direct",
+          "user_presence_required": true,
+          "authenticator_attachment": "platform",
+          "user_verification_required": true
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_webauthn4j",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido2-authentication": {
+      "execution": {
+        "function": "webauthn4j_authentication",
+        "details": {
+          "rp_id": "local.dev",
+          "allowed_origins": ["https://auth.local.dev", "https://sample.local.dev"],
+          "rp_name": "Local Dev IDP",
+          "token_binding_id": null,
+          "require_resident_key": true,
+          "attestation_preference": "direct",
+          "user_presence_required": true,
+          "authenticator_attachment": "platform",
+          "user_verification_required": true
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_webauthn4j",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "fido2-deregistration": {
+      "execution": {
+        "function": "webauthn4j_deregistration",
+        "details": {}
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_webauthn4j",
+            "to": "*"
+          }
+        ]
+      }
+    }
+  }
+}

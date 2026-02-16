@@ -92,9 +92,44 @@ if [ -n "${FINANCIAL_CLIENT_ID}" ]; then
 fi
 echo ""
 
-# Step 2: Delete authentication policy (in Financial Tenant) - Using System API
+# Step 2: Delete test user (in Financial Tenant) - Using System API
 if [ -n "${FINANCIAL_TENANT_ID}" ]; then
-  echo "🗑️  Step 2: Deleting authentication policy (in Financial Tenant)..."
+  echo "🗑️  Step 2: Deleting test user (in Financial Tenant)..."
+
+  FINANCIAL_USER_FILE="${SCRIPT_DIR}/financial-user.json"
+  if [ -f "${FINANCIAL_USER_FILE}" ]; then
+    FINANCIAL_USER_ID=$(jq -r '.sub' "${FINANCIAL_USER_FILE}")
+
+    FINANCIAL_USER_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${FINANCIAL_TENANT_ID}/users/${FINANCIAL_USER_ID}" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
+
+    FINANCIAL_USER_DELETE_HTTP_CODE=$(echo "${FINANCIAL_USER_DELETE_RESPONSE}" | tail -n1)
+    FINANCIAL_USER_DELETE_BODY=$(echo "${FINANCIAL_USER_DELETE_RESPONSE}" | sed '$d')
+
+    if [ "${FINANCIAL_USER_DELETE_HTTP_CODE}" = "200" ] || [ "${FINANCIAL_USER_DELETE_HTTP_CODE}" = "204" ]; then
+      echo "✅ Test user deleted successfully"
+    elif [ "${FINANCIAL_USER_DELETE_HTTP_CODE}" = "404" ]; then
+      echo "⚠️  Test user not found (may already be deleted)"
+    else
+      echo "⚠️  Test user deletion failed (HTTP ${FINANCIAL_USER_DELETE_HTTP_CODE})"
+      if [ -n "${FINANCIAL_USER_DELETE_BODY}" ]; then
+        echo "Response: ${FINANCIAL_USER_DELETE_BODY}" | jq '.' || echo "${FINANCIAL_USER_DELETE_BODY}"
+      fi
+    fi
+  else
+    echo "⏭️  Financial user file not found, skipping"
+  fi
+
+  echo ""
+else
+  echo "⏭️  Step 2: Skipping test user deletion (Financial Tenant not configured)"
+  echo ""
+fi
+
+# Step 3: Delete authentication policy (in Financial Tenant) - Using System API
+if [ -n "${FINANCIAL_TENANT_ID}" ]; then
+  echo "🗑️  Step 3: Deleting authentication policy (in Financial Tenant)..."
 
   AUTH_POLICY_FILE="${SCRIPT_DIR}/authentication-policy/oauth.json"
   if [ -f "${AUTH_POLICY_FILE}" ]; then
@@ -123,13 +158,13 @@ if [ -n "${FINANCIAL_TENANT_ID}" ]; then
 
   echo ""
 else
-  echo "⏭️  Step 2: Skipping authentication policy deletion (Financial Tenant not configured)"
+  echo "⏭️  Step 3: Skipping authentication policy deletion (Financial Tenant not configured)"
   echo ""
 fi
 
-# Step 3: Delete financial clients (in Financial Tenant) - Using System API
+# Step 4: Delete financial clients (in Financial Tenant) - Using System API
 if [ -n "${FINANCIAL_TENANT_ID}" ]; then
-  echo "🗑️  Step 3: Deleting financial web app clients (in Financial Tenant)..."
+  echo "🗑️  Step 4: Deleting financial web app clients (in Financial Tenant)..."
 
   # Define client files to delete
   CLIENT_FILES=(
@@ -173,13 +208,13 @@ if [ -n "${FINANCIAL_TENANT_ID}" ]; then
 
   echo ""
 else
-  echo "⏭️  Step 3: Skipping financial client deletion (not configured)"
+  echo "⏭️  Step 4: Skipping financial client deletion (not configured)"
   echo ""
 fi
 
-# Step 4: Delete financial tenant - Using System API
+# Step 5: Delete financial tenant - Using System API
 if [ -n "${FINANCIAL_TENANT_ID}" ]; then
-  echo "🗑️  Step 4: Deleting financial tenant..."
+  echo "🗑️  Step 5: Deleting financial tenant..."
   FINANCIAL_TENANT_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
     "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${FINANCIAL_TENANT_ID}" \
     -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
@@ -200,12 +235,12 @@ if [ -n "${FINANCIAL_TENANT_ID}" ]; then
 
   echo ""
 else
-  echo "⏭️  Step 4: Skipping financial tenant deletion (not configured)"
+  echo "⏭️  Step 5: Skipping financial tenant deletion (not configured)"
   echo ""
 fi
 
-# Step 5: Delete admin client (in Organizer Tenant)
-echo "🗑️  Step 5: Deleting admin client (in Organizer Tenant)..."
+# Step 6: Delete admin client (in Organizer Tenant)
+echo "🗑️  Step 6: Deleting admin client (in Organizer Tenant)..."
 ADMIN_CLIENT_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
   "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${ORGANIZER_TENANT_ID}/clients/${ADMIN_CLIENT_ID}" \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
@@ -226,8 +261,8 @@ fi
 
 echo ""
 
-# Step 6: Delete user (in Organizer Tenant)
-echo "🗑️  Step 6: Deleting user (in Organizer Tenant)..."
+# Step 7: Delete user (in Organizer Tenant)
+echo "🗑️  Step 7: Deleting user (in Organizer Tenant)..."
 USER_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
   "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${ORGANIZER_TENANT_ID}/users/${USER_ID}" \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
@@ -248,8 +283,8 @@ fi
 
 echo ""
 
-# Step 7: Delete organizer tenant
-echo "🗑️  Step 7: Deleting organizer tenant..."
+# Step 8: Delete organizer tenant
+echo "🗑️  Step 8: Deleting organizer tenant..."
 ORGANIZER_TENANT_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
   "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${ORGANIZER_TENANT_ID}" \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
@@ -272,8 +307,8 @@ fi
 
 echo ""
 
-# Step 8: Delete organization
-echo "🗑️  Step 8: Deleting organization..."
+# Step 9: Delete organization
+echo "🗑️  Step 9: Deleting organization..."
 ORG_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
   "${AUTHORIZATION_SERVER_URL}/v1/management/orgs/${ORG_ID}" \
   -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")

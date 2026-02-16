@@ -10,6 +10,8 @@ description: FAPI（Financial-grade API）機能の開発・修正を行う際�
 - `documentation/docs/content_06_developer-guide/04-implementation-guides/oauth-oidc/fapi.md` - FAPI実装ガイド
 - `documentation/docs/content_03_concepts/03-authentication-authorization/concept-06-fapi.md` - FAPI概念
 - `documentation/docs/content_10_ai_developer/ai-32-extension-fapi.md` - AI開発者向けFAPIガイド
+- `documentation/docs/content_06_developer-guide/03-application-plane/02-01-authorization-request-verification.md` - 認可リクエスト検証フロー詳細（プロファイル決定、検証チェーン、エラーハンドリング）
+- `documentation/requirements/fapi-1.0-gap-analysis.yaml` - FAPI 1.0 Gap分析（OIDF適合性テスト結果と修正記録）
 
 ## 機能概要
 

@@ -460,14 +460,14 @@ describe("Financial Grade: Setup Verification", () => {
     // Session security settings
     const sessionConfig = tenant.session_config;
     expect(sessionConfig.cookie_name).toBe("FAPI_CIBA_SESSION");
-    expect(sessionConfig.cookie_same_site).toBe("none");
+    expect(sessionConfig.cookie_same_site).toBe("Lax");
     expect(sessionConfig.use_secure_cookie).toBe(true);
     expect(sessionConfig.use_http_only_cookie).toBe(true);
     expect(sessionConfig.cookie_path).toBe("/");
 
     // CORS configuration
     const corsConfig = tenant.cors_config;
-    expect(corsConfig.allow_origins).toEqual(["https://localhost.emobix.co.uk:8443", "https://host.docker.internal:8445"]);
+    expect(corsConfig.allow_origins).toEqual(["https://localhost.emobix.co.uk:8443", "https://api.local.dev", "https://mtls.api.local.dev", "https://auth.local.dev"]);
     expect(corsConfig.allow_headers).toContain("Authorization");
     expect(corsConfig.allow_headers).toContain("Content-Type");
     expect(corsConfig.allow_methods).toContain("GET");

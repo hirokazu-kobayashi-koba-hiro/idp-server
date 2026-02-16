@@ -3,7 +3,9 @@
   "client_id_alias": "fapi-ciba-tls-client-auth-client-2",
   "redirect_uris": [
     "https://localhost.emobix.co.uk:8443/test/a/fapi-ciba/callback",
-    "https://localhost.emobix.co.uk:8443/test/a/fapi-ciba/callback?dummy1=lorem&dummy2=ipsum"
+    "https://localhost.emobix.co.uk:8443/test/a/fapi-ciba/callback?dummy1=lorem&dummy2=ipsum",
+    "https://localhost.emobix.co.uk:8443/test/a/idp-server-fapi-mtls/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp-server-fapi-mtls/callback?dummy1=lorem&dummy2=ipsum"
   ],
   "response_types": [
     "code",

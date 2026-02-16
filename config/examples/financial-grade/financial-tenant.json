@@ -3,12 +3,17 @@
     "id": "c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8",
     "name": "FAPI-CIBA Certification Tenant",
     "type": "PUBLIC",
-    "domain": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8",
+    "domain": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8",
     "authorization_provider": "idp-server",
     "database_type": "postgresql",
+    "ui_config": {
+      "base_url": "https://auth.local.dev",
+      "signin_page": "/signin/fido2/",
+      "signup_page": "/signup/"
+    },
     "session_config": {
       "cookie_name": "FAPI_CIBA_SESSION",
-      "cookie_same_site": "none",
+      "cookie_same_site": "Lax",
       "use_secure_cookie": true,
       "use_http_only_cookie": true,
       "cookie_path": "/"
@@ -16,7 +21,9 @@
     "cors_config": {
       "allow_origins": [
         "https://localhost.emobix.co.uk:8443",
-        "https://host.docker.internal:8445"
+        "https://api.local.dev",
+        "https://mtls.api.local.dev",
+        "https://auth.local.dev"
       ],
       "allow_headers": "Authorization, Content-Type, Accept, x-device-id, X-SSL-Client-Cert",
       "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
@@ -75,20 +82,20 @@
     }
   },
   "authorization_server": {
-    "issuer": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8",
-    "authorization_endpoint": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/authorizations",
-    "token_endpoint": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens",
-    "userinfo_endpoint": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/userinfo",
-    "jwks_uri": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/jwks",
-    "introspection_endpoint": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens/introspection",
-    "revocation_endpoint": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens/revocation",
-    "backchannel_authentication_endpoint": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/backchannel/authentications",
+    "issuer": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8",
+    "authorization_endpoint": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/authorizations",
+    "token_endpoint": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens",
+    "userinfo_endpoint": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/userinfo",
+    "jwks_uri": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/jwks",
+    "introspection_endpoint": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens/introspection",
+    "revocation_endpoint": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens/revocation",
+    "backchannel_authentication_endpoint": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/backchannel/authentications",
     "mtls_endpoint_aliases": {
-      "token_endpoint": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens",
-      "userinfo_endpoint": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/userinfo",
-      "introspection_endpoint": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens/introspection",
-      "revocation_endpoint": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens/revocation",
-      "backchannel_authentication_endpoint": "https://host.docker.internal:8445/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/backchannel/authentications"
+      "token_endpoint": "https://mtls.api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens",
+      "userinfo_endpoint": "https://mtls.api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/userinfo",
+      "introspection_endpoint": "https://mtls.api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens/introspection",
+      "revocation_endpoint": "https://mtls.api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens/revocation",
+      "backchannel_authentication_endpoint": "https://mtls.api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/backchannel/authentications"
     },
     "jwks": "{\n    \"keys\": [\n        {\n            \"kty\": \"EC\",\n            \"d\": \"Wh2Pf0GAI3k2ZHzrEKTnw_b95G4HMj2kBrMVBcQ2wv4\",\n            \"use\": \"sig\",\n            \"crv\": \"P-256\",\n            \"kid\": \"fapi_ciba_signing_key\",\n            \"x\": \"jrH5P7mYupCq2S4wxW1gnc0JcRK-t6zTaKJD4JEvnpE\",\n            \"y\": \"E3u7BNXn2yWf9uXq2ahV_XJBEuNYNMGOPnuz5GP84r8\",\n            \"alg\": \"ES256\"\n        }\n    ]\n}",
     "token_endpoint_auth_methods_supported": [

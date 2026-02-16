@@ -125,6 +125,7 @@ services:
     extra_hosts:
       - "api.local.dev:host-gateway"
       - "auth.local.dev:host-gateway"
+      - "mtls.api.local.dev:host-gateway"
 
   idp-server-2:
     build: .
@@ -237,6 +238,7 @@ services:
     extra_hosts:
       - "api.local.dev:host-gateway"
       - "auth.local.dev:host-gateway"
+      - "mtls.api.local.dev:host-gateway"
 
   nginx:
     build: ./docker/nginx
@@ -253,7 +255,6 @@ services:
     ports:
       - "80:80"       # HTTP (redirects to HTTPS)
       - "443:443"     # HTTPS
-      - "8445:8443"   # HTTPS + mTLS
 
   postgres-primary:
     build:
