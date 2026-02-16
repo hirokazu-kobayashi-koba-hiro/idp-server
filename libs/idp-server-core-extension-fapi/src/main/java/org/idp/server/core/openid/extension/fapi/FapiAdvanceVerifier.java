@@ -24,6 +24,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.openid.oauth.exception.OAuthRedirectableBadRequestException;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.verifier.AuthorizationRequestVerifier;
 import org.idp.server.core.openid.oauth.verifier.base.OAuthRequestBaseVerifier;
@@ -82,6 +83,9 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
       throwExceptionIfNotContainExpAndNbfAndExp60minutesLongerThanNbf(context);
       throwExceptionIfNotContainsAud(context);
       throwExceptionIfNotContainNbfAnd60minutesLongerThan(context);
+    }
+    if (context.isPushedRequest()) {
+      throwExceptionIfNotS256CodeChallengeMethodForPAR(context);
     }
     throwExceptionIfClientSecretPostOrClientSecretBasicOrClientSecretJwt(context);
     throwExceptionIfPublicClient(context);
@@ -265,6 +269,33 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
       throw new OAuthRedirectableBadRequestException(
           "unauthorized_client",
           "When FAPI Advance profile, client_secret_jwt MUST not used",
+          context);
+    }
+  }
+
+  /**
+   * FAPI 1.0 Advanced Final Section 5.2.2-18:
+   *
+   * <p>"shall require PAR requests, if supported, to use PKCE (RFC7636) with S256 as the code
+   * challenge method"
+   *
+   * <p>This replaces the Baseline 5.2.2-7 PKCE requirement. In FAPI Advanced, PKCE is only required
+   * when PAR is used. For non-PAR requests (e.g., Hybrid Flow with code id_token), PKCE is not
+   * required because the ID Token's c_hash provides authorization code integrity protection.
+   */
+  void throwExceptionIfNotS256CodeChallengeMethodForPAR(OAuthRequestContext context) {
+    AuthorizationRequest authorizationRequest = context.authorizationRequest();
+    if (!authorizationRequest.hasCodeChallenge()
+        || !authorizationRequest.hasCodeChallengeMethod()) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request",
+          "When FAPI Advance profile with PAR, shall require PKCE (RFC7636) with S256 as the code challenge method",
+          context);
+    }
+    if (!authorizationRequest.codeChallengeMethod().isS256()) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request",
+          "When FAPI Advance profile with PAR, shall require S256 as the code challenge method",
           context);
     }
   }

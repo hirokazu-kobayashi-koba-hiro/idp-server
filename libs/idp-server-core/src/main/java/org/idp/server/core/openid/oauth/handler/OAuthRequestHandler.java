@@ -32,6 +32,7 @@ import org.idp.server.core.openid.oauth.io.OAuthPushedRequest;
 import org.idp.server.core.openid.oauth.io.OAuthRequest;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
+import org.idp.server.core.openid.oauth.validator.OAuthPushedRequestValidator;
 import org.idp.server.core.openid.oauth.validator.OAuthRequestValidator;
 import org.idp.server.core.openid.oauth.verifier.OAuthRequestVerifier;
 import org.idp.server.core.openid.session.OPSession;
@@ -80,6 +81,9 @@ public class OAuthRequestHandler {
         requestParameters.responseType().value());
     OAuthRequestValidator validator = new OAuthRequestValidator(tenant, requestParameters);
     validator.validate();
+    OAuthPushedRequestValidator pushedRequestValidator =
+        new OAuthPushedRequestValidator(tenant, requestParameters);
+    pushedRequestValidator.validate();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
