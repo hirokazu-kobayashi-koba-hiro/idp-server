@@ -27,7 +27,7 @@ sample_web[🌐 sample-web<br>sample.local.dev<br>サンプルRP]
 end
 
 subgraph Nginx["Nginx Reverse Proxy"]
-nginx[🔀 nginx<br>api.local.dev:443]
+nginx[🔀 nginx<br>api.local.dev:443<br>mtls.api.local.dev:443]
 end
 
 subgraph App["App Cluster"]
@@ -69,6 +69,7 @@ idp2 --> mockoon
 | サブドメイン | サービス | 説明 |
 |------------|---------|------|
 | `api.local.dev` | nginx → idp-server | IDP Server API エンドポイント |
+| `mtls.api.local.dev` | nginx → idp-server | mTLSエンドポイント（クライアント証明書検証、sender-constrainedトークン） |
 | `auth.local.dev` | app-view | 認可UI（ログイン画面等） |
 | `sample.local.dev` | sample-web | サンプルRPアプリケーション |
 
@@ -76,7 +77,7 @@ idp2 --> mockoon
 
 | コンポーネント | 説明 |
 |---------------|------|
-| 🔀 **nginx** | リバースプロキシ。`api.local.dev` へのリクエストを idp-server クラスタにルーティング |
+| 🔀 **nginx** | リバースプロキシ。`api.local.dev` / `mtls.api.local.dev` へのリクエストを idp-server クラスタにルーティング。mTLSドメインではクライアント証明書を検証・転送 |
 | 🔥 **idp-server-1/2** | idp-server 本体。クラスタ構成でスケーラビリティ・冗長性を確認（ポート 8081/8082） |
 | 🖥️ **app-view** | Next.js製の認可UI。ログイン・同意画面などを提供 |
 | 🌐 **sample-web** | サンプルRPアプリ。OIDC連携のデモ・テスト用 |
@@ -139,10 +140,10 @@ dnsmasqを使用できない環境では、`/etc/hosts` に直接追記するこ
 
 ```shell
 # Linux / macOS
-sudo sh -c 'echo "127.0.0.1 api.local.dev auth.local.dev sample.local.dev" >> /etc/hosts'
+sudo sh -c 'echo "127.0.0.1 api.local.dev mtls.api.local.dev auth.local.dev sample.local.dev" >> /etc/hosts'
 
 # Windows (管理者権限のPowerShell)
-Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 api.local.dev auth.local.dev sample.local.dev"
+Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 api.local.dev mtls.api.local.dev auth.local.dev sample.local.dev"
 ```
 
 #### トラブルシューティング

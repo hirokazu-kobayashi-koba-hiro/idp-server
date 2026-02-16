@@ -6,25 +6,39 @@
 
 ```
 docker/nginx/
-├── Dockerfile          # nginxイメージビルド定義
-├── nginx.conf          # メイン設定（ロードバランサー + mTLS include）
-├── ssl.conf            # HTTPS設定（port 443）
-├── mtls.conf           # mTLS設定（port 8443）
-├── server.crt          # サーバー証明書
-├── server.key          # サーバー秘密鍵
-├── test-client.pem     # テスト用クライアント証明書
-├── test-client.key     # テスト用クライアント秘密鍵
-├── test-mtls.sh        # mTLS疎通確認スクリプト
-└── README.md           # このファイル
+├── Dockerfile              # nginxイメージビルド定義
+├── nginx.conf              # メイン設定（ロードバランサー + mTLS、ドメインベース分離）
+├── nginx-localhost.conf    # localhost用設定（ポートベース分離）
+├── mtls.conf               # localhost用mTLS設定（port 8443、nginx-localhost.confからinclude）
+├── ssl.conf                # HTTPS設定（port 443）
+├── server.crt              # サーバー証明書
+├── server.key              # サーバー秘密鍵
+├── test-client.pem         # テスト用クライアント証明書
+├── test-client.key         # テスト用クライアント秘密鍵
+├── test-mtls.sh            # mTLS疎通確認スクリプト
+└── README.md               # このファイル
 ```
 
-## ポート構成
+## ドメイン・ポート構成
+
+### メイン構成（docker-compose.yaml + nginx.conf）
+
+mTLSはサブドメインで分離（RFC 8705 `mtls_endpoint_aliases` パターン）:
+
+| ドメイン | ポート | 用途 | クライアント認証 |
+|---------|-------|------|----------------|
+| `api.local.dev` | 443 | 通常HTTPS | なし |
+| `mtls.api.local.dev` | 443 | mTLS | optional |
+
+### localhost構成（docker-compose-localhost.yaml + nginx-localhost.conf）
+
+DNS設定不要のポートベース分離:
 
 | ポート | プロトコル | 用途 | クライアント認証 |
 |-------|----------|------|----------------|
 | 80 | HTTP | 通常アクセス | なし |
 | 443 | HTTPS | SSL/TLS | なし |
-| 8443 | HTTPS | mTLS | **必須** |
+| 8443 | HTTPS | mTLS | optional |
 
 ## mTLS設定内容
 
@@ -66,12 +80,12 @@ cd docker/nginx
 
 **期待される出力**:
 ```
-Testing mTLS connection to https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66/health
+Testing mTLS connection to https://mtls.api.local.dev/67e7eae6-62b0-4500-9eff-87459f63fc66/health
 
-1. Without client certificate (expected: SSL error)
-curl: (35) error:14094410:SSL routines:ssl3_read_bytes:sslv3 alert handshake failure
+1. Without client certificate (expected: 200 OK, no cert forwarded)
+{"status":"UP"}
 
-2. With client certificate (expected: 200 OK)
+2. With client certificate (expected: 200 OK, cert forwarded)
 {"status":"UP"}
 ```
 
@@ -80,24 +94,25 @@ curl: (35) error:14094410:SSL routines:ssl3_read_bytes:sslv3 alert handshake fai
 ### ✅ 成功パターン
 
 ```bash
-# Health check
-curl -v -k \
+# Health check（mTLSドメイン経由）
+curl -v \
   --cert test-client.pem \
   --key test-client.key \
-  https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/health
+  https://mtls.api.local.dev/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/health
 
 # OpenID Configuration
-curl -k \
+curl \
   --cert test-client.pem \
   --key test-client.key \
-  https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration
+  https://mtls.api.local.dev/67e7eae6-62b0-4500-9eff-87459f63fc66/.well-known/openid-configuration
 ```
 
 ### ❌ 失敗パターン
 
 ```bash
-# クライアント証明書なし → SSL handshake failure
-curl -k https://localhost:8443/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/health
+# クライアント証明書なしでmTLSエンドポイントにアクセス → 証明書は転送されないが接続は成功（ssl_verify_client optional）
+# sender-constrainedトークンの検証時にサーバー側でエラーになる
+curl https://mtls.api.local.dev/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens -d "..."
 ```
 
 ## トラブルシューティング
@@ -114,7 +129,7 @@ curl: (35) SSL peer certificate or SSH remote key was not OK
 **解決**: `--cert` と `--key` オプションを追加
 
 ```bash
-curl --cert client.pem --key client.key https://localhost:8443/...
+curl --cert client.pem --key client.key https://mtls.api.local.dev/...
 ```
 
 ### 2. Certificate verify failed
@@ -129,7 +144,7 @@ SSL certificate problem: unable to get local issuer certificate
 **解決**: `-k` オプションで証明書検証をスキップ（開発環境のみ）
 
 ```bash
-curl -k --cert client.pem --key client.key https://localhost:8443/...
+curl -k --cert client.pem --key client.key https://mtls.api.local.dev/...
 ```
 
 ### 3. nginx起動失敗
