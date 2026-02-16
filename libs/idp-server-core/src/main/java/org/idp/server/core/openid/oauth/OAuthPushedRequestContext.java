@@ -100,6 +100,6 @@ public class OAuthPushedRequestContext implements BackchannelRequestContext {
         "request_uri", RequestUri.createPushedRequestUri(authorizationRequestIdentifier.value()));
     contents.put("expires_in", expiresIn.value());
 
-    return new OAuthPushedRequestResponse(OAuthPushedRequestStatus.OK, contents);
+    return new OAuthPushedRequestResponse(OAuthPushedRequestStatus.CREATED, contents);
   }
 }

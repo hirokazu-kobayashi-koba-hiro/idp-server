@@ -159,6 +159,18 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     OAuthRequestResponse requestResponse = oAuthProtocol.request(oAuthRequest);
 
     if (requestResponse.isRequiredInteraction()) {
+      // For PAR-based requests, delete any existing AuthenticationTransaction before creating
+      // a new one (delete-insert pattern). PAR reuses the same stored authorization request
+      // (and thus the same authorization_id) across multiple visits to the authorization endpoint
+      // with the same request_uri. Without cleanup, duplicate records cause
+      // SqlTooManyResultsException on subsequent queries.
+      if (requestResponse.isPushedRequest()) {
+        AuthorizationIdentifier authorizationIdentifier =
+            requestResponse.authorizationRequestIdentifier().toAuthorizationIdentifier();
+        authenticationTransactionCommandRepository.deleteByAuthorizationIdentifier(
+            tenant, authorizationIdentifier);
+      }
+
       // Generate AUTH_SESSION for browser session binding (prevents session fixation attacks)
       AuthSessionId authSessionId = AuthSessionId.generate();
 

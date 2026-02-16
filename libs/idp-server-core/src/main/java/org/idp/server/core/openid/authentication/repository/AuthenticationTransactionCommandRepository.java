@@ -18,6 +18,7 @@ package org.idp.server.core.openid.authentication.repository;
 
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.AuthorizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationTransactionCommandRepository {
@@ -27,4 +28,6 @@ public interface AuthenticationTransactionCommandRepository {
   void update(Tenant tenant, AuthenticationTransaction authenticationTransaction);
 
   void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier);
+
+  void deleteByAuthorizationIdentifier(Tenant tenant, AuthorizationIdentifier identifier);
 }

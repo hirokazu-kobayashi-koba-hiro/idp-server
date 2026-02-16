@@ -89,8 +89,10 @@
     "jwks_uri": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/jwks",
     "introspection_endpoint": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens/introspection",
     "revocation_endpoint": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens/revocation",
+    "pushed_authorization_request_endpoint": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/authorizations/push",
     "backchannel_authentication_endpoint": "https://api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/backchannel/authentications",
     "mtls_endpoint_aliases": {
+      "pushed_authorization_request_endpoint": "https://mtls.api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/authorizations/push",
       "token_endpoint": "https://mtls.api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens",
       "userinfo_endpoint": "https://mtls.api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/userinfo",
       "introspection_endpoint": "https://mtls.api.local.dev/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/v1/tokens/introspection",

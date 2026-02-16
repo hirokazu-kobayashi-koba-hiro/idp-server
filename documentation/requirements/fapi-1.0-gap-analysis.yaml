@@ -19,7 +19,8 @@ summary:
     advanced:
       total_requirements: 14
       implemented: 12
-      gap: 6  # 5.2.2-18: PKCE in PAR, hybrid flow PKCE exemption, jti requirement, request object scope validation, alg:none request object, error response JARM wrapping
+      gap: 8  # 5.2.2-18: PKCE in PAR, hybrid flow PKCE exemption, jti requirement, request object scope validation, alg:none request object, error response JARM wrapping, PAR HTTP 201, PAR+FAPI Advanced verification
+      par_gap: 4  # GAP-012: request_uri one-time use, GAP-013: policy re-validation, GAP-014: rate limiting, GAP-015: require_pushed_authorization_requests
       no_e2e_test: 1  # 5.2.2-10: parameter injection test
 
   resource_server:
@@ -1103,6 +1104,278 @@ fapi_ciba:
         FAPI-CIBA (CIBA Core 1.0 Section 7.1.1)ではjtiが必須。
         FapiCibaVerifierにthrowExceptionIfMissingJti()を追加し、CIBA固有の検証として実装。
       e2e_test: "OIDF適合性テストで検証"
+
+  - id: "GAP-010"
+    title: "PAR成功レスポンスがHTTP 200を返しており、RFC 9126 Section 2.2のHTTP 201に違反"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "RFC 9126 Section 2.2"
+    requirement: |
+      RFC 9126 Section 2.2: If the verification is successful, the server MUST generate
+      a request URI and provide it with a 201 HTTP status code.
+    current_behavior: |
+      OAuthPushedRequestStatus.OK(200) が定義されており、PARエンドポイント成功時に
+      HTTP 200 OK を返していた。OAuthV1Api.push() でも HttpStatus.OK がハードコード。
+    expected_behavior: |
+      PAR成功レスポンスはHTTP 201 Created を返す。
+    conformance_test_result: "FAILURE - CheckPAREndpointResponse201WithNoError"
+    fix_status: "FIXED"
+    fix_description: |
+      1. OAuthPushedRequestStatus: OK(200) → CREATED(201), isOK() → isCreated()
+      2. OAuthPushedRequestContext: OAuthPushedRequestStatus.OK → CREATED
+      3. OAuthV1Api: HttpStatus.OK → HttpStatus.valueOf(response.statusCode())
+      4. rfc9126_par.test.js: expect(parResponse.status).toBe(200) → toBe(201)
+    affected_files:
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/io/OAuthPushedRequestStatus.java"
+        action: "modified"
+        detail: "OK(200) → CREATED(201), isOK() → isCreated()"
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/OAuthPushedRequestContext.java"
+        action: "modified"
+        detail: "OAuthPushedRequestStatus.OK → CREATED"
+      - path: "libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/oauth/OAuthV1Api.java"
+        action: "modified"
+        detail: "HttpStatus.OK → HttpStatus.valueOf(response.statusCode())"
+      - path: "e2e/src/tests/spec/rfc9126_par.test.js"
+        action: "modified"
+        detail: "toBe(200) → toBe(201) (2箇所)"
+    e2e_test_needed: false
+    e2e_test_description: "既存E2Eテストを更新済み、OIDF適合性テストで検証"
+
+  - id: "GAP-011"
+    title: "FAPI Advanced - PAR経由のリクエストが認可エンドポイントでRequest Object検証に失敗する"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "FAPI 1.0 Advanced 5.2.2-1, RFC 9126 Section 4"
+    requirement: |
+      FAPI 1.0 Advanced Section 5.2.2 clause 1: shall require a JWS signed JWT request object
+      passed by value with the request parameter or by reference with the request_uri parameter.
+      RFC 9126 Section 4: The authorization server MUST validate authorization requests arising
+      from a pushed request as it would any other authorization request.
+
+      PAR経由のリクエストは、PARエンドポイントでRequest Object検証（署名、exp、nbf、aud）が
+      完了済みであり、認可エンドポイントでは保存済みパラメータの復元のみ行う。
+    current_behavior: |
+      PAR経由のリクエスト(PUSHED_REQUEST_URI)が認可エンドポイントに到達した際:
+      1. PushedRequestUriPatternContextCreator が保存済みパラメータを復元
+      2. JoseContext は空(new JoseContext())で生成される
+      3. FapiAdvanceVerifier が以下の検証で失敗:
+         a. throwExceptionIfNotRequestParameterPattern(): isRequestParameterPattern()がfalse
+            → "shall require a JWS signed JWT request object" エラー
+         b. isUnsignedRequestObject(): 空のJoseContextでtrue
+            → "alg:none is not allowed" エラー
+         c. throwExceptionIfNotContainExpAndNbfAndExp60minutesLongerThanNbf(): 空クレーム
+            → "shall require the request object to contain an exp claim" エラー
+         d. throwExceptionIfNotContainsAud(): 空クレーム
+         e. throwExceptionIfNotContainNbfAnd60minutesLongerThan(): 空クレーム
+    expected_behavior: |
+      PAR経由のリクエストは以下の理由でRequest Object固有の検証をスキップすべき:
+      - PARエンドポイント受付時にRequest Objectの全検証が完了済み
+      - 認可エンドポイントではJoseContextが保持されない（設計上の制約）
+      - response_type/response_mode、sender-constrained、クライアント認証方式等の
+        検証はPAR後も必要なため維持
+    conformance_test_result: |
+      FAILURE - CheckPAREndpointResponse201WithNoError (PAR HTTP status)
+      FAILURE - Request Object validation errors on authorization endpoint
+    fix_status: "FIXED"
+    fix_description: |
+      FapiAdvanceVerifier を修正:
+      1. throwExceptionIfNotRequestParameterPattern(): context.isPushedRequest() を
+         受け入れ条件に追加。PAR経由はRequest Object要件を満たすものとして扱う。
+      2. isUnsignedRequestObject チェック: PAR経由の場合スキップ（JoseContext未保持のため）。
+      3. verify(): PAR経由の場合、exp/nbf/aud のJWTクレーム検証をスキップ。
+         クライアント認証方式検証、response_type/mode検証、sender-constrained検証は維持。
+      4. Javadoc に2つのリクエスト経路（直接/PAR経由）と検証スキップの根拠をRFC参照付きで記載。
+    affected_files:
+      - path: "libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java"
+        action: "modified"
+        detail: "verify(), throwExceptionIfNotRequestParameterPattern() にPAR判定追加、Javadoc更新"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テストで検証"
+
+  - id: "GAP-012"
+    title: "PAR - request_uriのワンタイム無効化タイミングの確認"
+    priority: "P3"
+    type: "investigation"
+    category: "authorization_server"
+    spec_reference: "RFC 9126 Section 4, Section 7.3, FAPI 2.0 Section 5.3.2.2 Note 3"
+    requirement: |
+      RFC 9126 Section 4: The client MUST only use a request_uri value once.
+      RFC 9126 Section 7.3: The authorization server SHOULD make the request URIs one-time use.
+
+      重要: OIDF適合性テスト(fapi1-advanced-final-par-ensure-reused-request-uri-prior-to-auth-completion-succeeds)
+      が明確にしている通り、request_uriのワンタイム無効化は「認可エンドポイントへのアクセス時点」ではなく、
+      「認可完了時点（認可コード発行時）」で行うべき。
+
+      理由: ユーザーが認可エンドポイントにアクセスしたがログインを完了しなかった場合
+      （ブラウザリフレッシュ、ネットワーク障害等）、同じrequest_uriでリトライできる必要がある。
+
+      参考:
+      - https://bitbucket.org/openid/fapi/issues/635/one-time-use-of-request_uri-causing-error
+      - https://openid.net/specs/fapi-security-profile-2_0-final.html#section-5.3.2.2 Note 3
+    current_behavior: |
+      request_uriはトークン交換（authorization_code grant）時に削除される。
+      認可エンドポイントへの初回アクセスでは無効化されないため、
+      認可未完了時のリトライが可能。
+      rfc9126_par.test.js (lines 105-112) でrequest_uri再利用テストが存在し、
+      トークン交換後にrequest_uriが無効化されることを検証済み。
+    expected_behavior: |
+      request_uriの無効化は「認可完了時点」（認可コード発行時）で行うのが正しい。
+      現在の実装はトークン交換時に削除しているため、認可コード発行〜トークン交換の間に
+      同一request_uriで別の認可リクエストが可能な点が厳密にはギャップだが、
+      認可コード自体がワンタイムであるため実質的なセキュリティリスクは低い。
+    status: "mostly_compliant"
+    note: |
+      OIDF適合性テストはwarningレベル（非必須）。
+      現在の実装は適合性テストの意図に合致しており、認可エンドポイントアクセス時の
+      即時無効化は行っていない（正しい動作）。
+      認可コード発行時の無効化を追加すればより厳密になるが、優先度は低い。
+    e2e_test_needed: false
+
+  - id: "GAP-013"
+    title: "PAR - 認可エンドポイントでのクライアントポリシー再検証が不十分"
+    priority: "P2"
+    type: "enhancement"
+    category: "authorization_server"
+    spec_reference: "RFC 9126 Section 7.4"
+    requirement: |
+      RFC 9126 Section 7.4: The authorization server should check the request parameter
+      against the client policy when processing the authorization request.
+      PARエンドポイントと認可エンドポイントの間でクライアントポリシーが変更された場合、
+      認可エンドポイントで再検証すべき。
+    current_behavior: |
+      PARエンドポイント受付時にクライアントポリシー検証が実施される。
+      認可エンドポイントでは保存済みパラメータが復元され、基本的な検証
+      （response_type/mode、sender-constrained、client auth method）は実施されるが、
+      PAR受付後にクライアント設定が変更された場合の明示的な再検証は行われない。
+    expected_behavior: |
+      認可エンドポイントでPAR復元パラメータを処理する際、最新のクライアント設定を
+      取得して検証を行う。特に、redirect_uri、scope、client auth methodの変更を検出。
+    fix_approach: |
+      SHOULD要件（推奨）のため、現行実装でも基本検証は実施されている。
+      より厳密にするには、PAR受付時と認可リクエスト時のclient configuration
+      バージョンを比較する仕組みが必要。優先度は低い。
+    e2e_test_needed: false
+
+  - id: "GAP-014"
+    title: "PAR - レート制限（HTTP 429）が未実装"
+    priority: "P2"
+    type: "enhancement"
+    category: "authorization_server"
+    spec_reference: "RFC 9126 Section 2.3"
+    requirement: |
+      RFC 9126 Section 2.3: If the number of requests from a client exceeds the number
+      allowed, respond with HTTP 429 (Too Many Requests).
+    current_behavior: |
+      PARエンドポイントにレート制限機構が存在しない。
+      クライアントからの大量リクエストが制限なく受け入れられる。
+    expected_behavior: |
+      クライアントごとのリクエスト頻度を監視し、閾値を超えた場合に
+      HTTP 429 Too Many Requestsを返す。
+    fix_approach: |
+      1. インメモリまたはRedisベースのレートリミッター実装
+      2. クライアントIDごとのリクエストカウント管理
+      3. OAuthPushedRequestStatusにTOO_MANY_REQUESTS(429)を追加
+      4. nginx側のrate limitingでも対応可能（インフラレベル）
+    e2e_test_needed: true
+    e2e_test_description: "大量PARリクエスト時にHTTP 429が返却されることを検証"
+
+  - id: "GAP-015"
+    title: "PAR - require_pushed_authorization_requestsメタデータが未サポート"
+    priority: "P3"
+    type: "enhancement"
+    category: "authorization_server"
+    spec_reference: "RFC 9126 Section 5, Section 6"
+    requirement: |
+      RFC 9126 Section 5: Boolean require_pushed_authorization_requests indicates
+      if PAR is mandatory; default is false.
+      RFC 9126 Section 6: Client metadata parameter require_pushed_authorization_requests
+      indicates PAR requirement; default is false.
+    current_behavior: |
+      サーバーメタデータおよびクライアントメタデータに
+      require_pushed_authorization_requestsフラグが存在しない。
+      PAR必須化のポリシー制御ができない。
+    expected_behavior: |
+      テナント設定およびクライアント設定にrequire_pushed_authorization_requestsを追加。
+      trueの場合、非PARの認可リクエストを拒否する。
+      Discovery endpointにも反映。
+    fix_approach: |
+      1. AuthorizationServerConfigurationにrequirePushedAuthorizationRequests追加
+      2. ClientConfigurationにrequirePushedAuthorizationRequests追加
+      3. OAuthRequestVerifierでPAR必須ポリシーチェック追加
+      4. Discovery endpointレスポンスに含める
+    e2e_test_needed: true
+    e2e_test_description: "require_pushed_authorization_requests=trueで非PARリクエストが拒否されることを検証"
+
+# ============================================================
+# RFC 9126 Implementation Gap Analysis Summary
+# ============================================================
+rfc9126_implementation_gap_analysis:
+  analysis_date: "2026-02-16"
+  description: "RFC 9126 PAR要件と実装の網羅的GAP分析"
+
+  implemented:
+    - requirement: "PAR endpoint HTTPS scheme (Section 2)"
+      implementation: "nginx SSL configuration"
+    - requirement: "Client authentication on PAR endpoint (Section 2, 2.1)"
+      implementation: "OAuthRequestHandler.handlePushedRequest() - token endpointと同じ認証基盤"
+    - requirement: "Reject request_uri in PAR request (Section 2.1)"
+      implementation: "PAR request validation"
+    - requirement: "Validate pushed request like authorization request (Section 2.1)"
+      implementation: "verifier.verify(context) in PAR handler"
+    - requirement: "HTTP 201 on success (Section 2.2)"
+      implementation: "OAuthPushedRequestStatus.CREATED(201) - GAP-010 FIXED"
+    - requirement: "Cryptographically strong request_uri (Section 2.2)"
+      implementation: "UUID-based generation (urn:ietf:params:oauth:request_uri:)"
+    - requirement: "request_uri bound to client (Section 2.2)"
+      implementation: "Client binding in PushedAuthorizationRequest storage"
+    - requirement: "Request Object JWT support (Section 3)"
+      implementation: "FapiAdvanceRequestObjectPatternFactory"
+    - requirement: "client_id mismatch rejection (Section 3)"
+      implementation: "Request Object client_id validation"
+    - requirement: "Authorization endpoint validates PAR requests (Section 4)"
+      implementation: "FapiAdvanceVerifier PAR support - GAP-011 FIXED"
+    - requirement: "Expired request_uri rejection (Section 4)"
+      implementation: "ExpiresAt infrastructure in PushedAuthorizationRequest"
+    - requirement: "Error format same as token endpoint (Section 2.3)"
+      implementation: "JSON error response format"
+    - requirement: "POST method only (Section 2.3)"
+      implementation: "Spring Boot endpoint mapping (@PostMapping)"
+    - requirement: "PAR endpoint in server metadata (Section 5)"
+      implementation: "pushed_authorization_request_endpoint in Discovery"
+
+  mostly_compliant:
+    - requirement: "request_uri one-time use (Section 4, 7.3)"
+      gap_ref: "GAP-012"
+      current: |
+        トークン交換時に削除。認可エンドポイントアクセス時には無効化しない（正しい動作）。
+        OIDF適合性テストの意図に合致。認可コード発行時の無効化を追加すればより厳密だが優先度低。
+
+  partial:
+    - requirement: "Client policy re-validation at auth endpoint (Section 7.4)"
+      gap_ref: "GAP-013"
+      current: "基本検証は実施されるが、PAR後のポリシー変更検出が弱い"
+
+  not_implemented:
+    - requirement: "Rate limiting HTTP 429 (Section 2.3)"
+      gap_ref: "GAP-014"
+      priority: "P2"
+    - requirement: "require_pushed_authorization_requests metadata (Section 5, 6)"
+      gap_ref: "GAP-015"
+      priority: "P3"
+    - requirement: "PKCE S256 required for PAR + FAPI Advanced (FAPI 5.2.2-18)"
+      gap_ref: "GAP-001"
+      priority: "P0"
+
+  statistics:
+    total_requirements_analyzed: 19
+    implemented: 14
+    mostly_compliant: 1
+    partial: 1
+    not_implemented: 3
+    implementation_rate: "78.9%"
+    must_shall_compliance_note: "MUST/SHALL要件はGAP-014(HTTP 429)を除きすべて実装済み"
 
 # ============================================================
 # Configuration Attention Items

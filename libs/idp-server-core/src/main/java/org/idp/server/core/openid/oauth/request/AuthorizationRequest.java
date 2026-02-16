@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth.request;
 
+import java.time.LocalDateTime;
 import org.idp.server.core.openid.identity.id_token.RequestedClaimsPayload;
 import org.idp.server.core.openid.identity.id_token.RequestedIdTokenClaims;
 import org.idp.server.core.openid.identity.id_token.RequestedUserinfoClaims;
@@ -356,6 +357,10 @@ public class AuthorizationRequest {
 
   public boolean exists() {
     return identifier.exists();
+  }
+
+  public boolean isExpired(LocalDateTime now) {
+    return expiresAt.isExpire(now);
   }
 
   public boolean isPkceRequest() {

@@ -20,6 +20,35 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 
+/**
+ * Creates the OpenID Connect Discovery response (/.well-known/openid-configuration).
+ *
+ * <p>Converts {@link AuthorizationServerConfiguration} into a JSON-compatible Map following the
+ * OpenID Connect Discovery 1.0 specification.
+ *
+ * <p>The response includes metadata from multiple specifications:
+ *
+ * <ul>
+ *   <li><b>OpenID Connect Discovery 1.0</b> - Core discovery metadata (issuer, endpoints, supported
+ *       algorithms, claims)
+ *   <li><b>RFC 8414</b> - OAuth 2.0 Authorization Server Metadata
+ *       (code_challenge_methods_supported, introspection/revocation endpoints)
+ *   <li><b>RFC 9126</b> - Pushed Authorization Requests (PAR endpoint)
+ *   <li><b>RFC 9101</b> - JAR (require_signed_request_object)
+ *   <li><b>RFC 9207</b> - Authorization Response Issuer Identifier
+ *       (authorization_response_iss_parameter_supported)
+ *   <li><b>RFC 8705</b> - mTLS (tls_client_certificate_bound_access_tokens, mtls_endpoint_aliases)
+ *   <li><b>RFC 9396</b> - RAR (authorization_details_types_supported)
+ *   <li><b>JARM</b> - JWT Secured Authorization Response Mode
+ *       (authorization_signing_alg_values_supported)
+ *   <li><b>CIBA Core 1.0</b> - Backchannel authentication metadata
+ *   <li><b>OpenID Connect for IDA</b> - Identity assurance metadata (verified_claims_supported)
+ * </ul>
+ *
+ * @see <a href="https://openid.net/specs/openid-connect-discovery-1_0.html">OpenID Connect
+ *     Discovery 1.0</a>
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc8414">RFC 8414</a>
+ */
 public class ServerConfigurationResponseCreator {
   AuthorizationServerConfiguration authorizationServerConfiguration;
 
@@ -30,6 +59,8 @@ public class ServerConfigurationResponseCreator {
 
   public Map<String, Object> create() {
     Map<String, Object> map = new HashMap<>();
+
+    // OpenID Connect Discovery 1.0 - Core metadata
     map.put("issuer", authorizationServerConfiguration.issuer());
     map.put("authorization_endpoint", authorizationServerConfiguration.authorizationEndpoint());
     if (authorizationServerConfiguration.hasTokenEndpoint()) {
@@ -60,6 +91,8 @@ public class ServerConfigurationResponseCreator {
       map.put("acr_values_supported", authorizationServerConfiguration.acrValuesSupported());
     }
     map.put("subject_types_supported", authorizationServerConfiguration.subjectTypesSupported());
+
+    // OpenID Connect Discovery 1.0 - Algorithm metadata
     map.put(
         "id_token_signing_alg_values_supported",
         authorizationServerConfiguration.idTokenSigningAlgValuesSupported());
@@ -88,6 +121,8 @@ public class ServerConfigurationResponseCreator {
           "userinfo_encryption_enc_values_supported",
           authorizationServerConfiguration.userinfoEncryptionEncValuesSupported());
     }
+
+    // RFC 9101 - JAR (JWT-Secured Authorization Request)
     if (authorizationServerConfiguration.hasRequestObjectSigningAlgValuesSupported()) {
       map.put(
           "request_object_signing_alg_values_supported",
@@ -103,6 +138,8 @@ public class ServerConfigurationResponseCreator {
           "request_object_encryption_enc_values_supported",
           authorizationServerConfiguration.requestObjectEncryptionEncValuesSupported());
     }
+
+    // OpenID Connect Discovery 1.0 - Client authentication
     if (authorizationServerConfiguration.hasTokenEndpointAuthMethodsSupported()) {
       map.put(
           "token_endpoint_auth_methods_supported",
@@ -113,6 +150,8 @@ public class ServerConfigurationResponseCreator {
           "token_endpoint_auth_signing_alg_values_supported",
           authorizationServerConfiguration.tokenEndpointAuthSigningAlgValuesSupported());
     }
+
+    // OpenID Connect Discovery 1.0 - Display, claims, request parameters
     if (authorizationServerConfiguration.hasDisplayValuesSupported()) {
       map.put(
           "display_values_supported", authorizationServerConfiguration.displayValuesSupported());
@@ -134,6 +173,39 @@ public class ServerConfigurationResponseCreator {
     map.put(
         "require_request_uri_registration",
         authorizationServerConfiguration.requireRequestUriRegistration());
+
+    // RFC 9126 - Pushed Authorization Requests (PAR)
+    if (authorizationServerConfiguration.hasPushedAuthorizationRequestEndpoint()) {
+      map.put(
+          "pushed_authorization_request_endpoint",
+          authorizationServerConfiguration.pushedAuthorizationRequestEndpoint());
+    }
+
+    // RFC 8414 - PKCE code challenge methods
+    if (authorizationServerConfiguration.hasCodeChallengeMethodsSupported()) {
+      map.put(
+          "code_challenge_methods_supported",
+          authorizationServerConfiguration.codeChallengeMethodsSupported());
+    }
+
+    // RFC 9101 - Require signed request object
+    map.put(
+        "require_signed_request_object",
+        authorizationServerConfiguration.requireSignedRequestObject());
+
+    // RFC 9207 - Authorization response issuer identifier
+    map.put(
+        "authorization_response_iss_parameter_supported",
+        authorizationServerConfiguration.authorizationResponseIssParameterSupported());
+
+    // JARM - JWT Secured Authorization Response Mode
+    if (authorizationServerConfiguration.hasAuthorizationSigningAlgValuesSupported()) {
+      map.put(
+          "authorization_signing_alg_values_supported",
+          authorizationServerConfiguration.authorizationSigningAlgValuesSupported());
+    }
+
+    // RFC 8705 - mTLS
     map.put(
         "tls_client_certificate_bound_access_tokens",
         authorizationServerConfiguration.isTlsClientCertificateBoundAccessTokens());
@@ -141,7 +213,7 @@ public class ServerConfigurationResponseCreator {
       map.put("mtls_endpoint_aliases", authorizationServerConfiguration.mtlsEndpointAliases());
     }
 
-    // Introspection and Revocation endpoints
+    // RFC 8414 - Introspection and Revocation endpoints
     if (authorizationServerConfiguration.hasIntrospectionEndpoint()) {
       map.put("introspection_endpoint", authorizationServerConfiguration.introspectionEndpoint());
     }
@@ -149,13 +221,14 @@ public class ServerConfigurationResponseCreator {
       map.put("revocation_endpoint", authorizationServerConfiguration.revocationEndpoint());
     }
 
-    // Authorization details types (RAR - RFC 9396)
+    // RFC 9396 - Rich Authorization Requests (RAR)
     if (!authorizationServerConfiguration.authorizationDetailsTypesSupported().isEmpty()) {
       map.put(
           "authorization_details_types_supported",
           authorizationServerConfiguration.authorizationDetailsTypesSupported());
     }
 
+    // CIBA Core 1.0 - Backchannel authentication
     if (authorizationServerConfiguration.hasBackchannelTokenDeliveryModesSupported()) {
       map.put(
           "backchannel_token_delivery_modes_supported",
@@ -179,7 +252,7 @@ public class ServerConfigurationResponseCreator {
           authorizationServerConfiguration.backchannelUserCodeParameterSupported());
     }
 
-    // ida
+    // OpenID Connect for Identity Assurance (IDA)
     map.put(
         "verified_claims_supported", authorizationServerConfiguration.verifiedClaimsSupported());
     if (authorizationServerConfiguration.verifiedClaimsSupported()) {

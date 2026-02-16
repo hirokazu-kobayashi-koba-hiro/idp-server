@@ -158,6 +158,66 @@ PAR実装は以下のクラスで構成:
 - `OAuthPushedRequest` - リクエスト表現
 - `OAuthPushedRequestResponse` - レスポンス表現
 
+### PARレスポンスのHTTPステータスコード
+
+RFC 9126 Section 2.2 に従い、PAR成功レスポンスは **HTTP 201 Created** を返す。
+
+- `OAuthPushedRequestStatus.CREATED(201)` - 成功ステータス
+- `OAuthV1Api` のPARエンドポイントは `response.statusCode()` でステータスを動的に決定
+
+### PAR + FAPI Advanced の検証アーキテクチャ
+
+FAPI Advanced では認可リクエストに JWS 署名付き Request Object が必須（Section 5.2.2 clause 1）。
+PAR 経由のリクエストでは、以下の2段階で検証が分離される:
+
+**1. PARエンドポイント（`OAuthRequestHandler.handlePushedRequest`）**
+- クライアントは plain パラメータ または Request Object（JWT）を PAR エンドポイントに POST
+- `OAuthRequestPattern` が `NORMAL` または `REQUEST_OBJECT` として解析される
+- `OAuthRequestVerifier.verify()` で FAPI Advanced の全検証を実行（署名、exp、nbf、aud 含む）
+- 検証通過後、`AuthorizationRequest` をリポジトリに保存
+- `request_uri`（`urn:ietf:params:oauth:request_uri:...`）を発行
+
+**2. 認可エンドポイント（`OAuthRequestHandler.handleRequest`）**
+- クライアントは `client_id` + `request_uri` で認可エンドポイントにアクセス
+- `OAuthRequestPattern` が `PUSHED_REQUEST_URI` として解析される
+- `PushedRequestUriPatternContextCreator` が保存済みパラメータを復元
+- **JoseContext は空**（保存時に JoseContext 情報は保持されない）
+- `FapiAdvanceVerifier` は PAR 経由の場合、以下の検証をスキップ:
+  - Request Object 署名検証（`isUnsignedRequestObject`）
+  - JWT クレーム検証（exp、nbf、aud）
+- 以下の検証は PAR 経由でも実行:
+  - JARM 設定チェック
+  - response_type / response_mode 検証
+  - sender-constrained access token 検証
+  - クライアント認証方式検証
+  - public client 拒否
+
+```
+PARエンドポイント                    認可エンドポイント
+┌─────────────────────┐            ┌─────────────────────┐
+│ パラメータ受信        │            │ request_uri 受信      │
+│ ↓                   │            │ ↓                   │
+│ パターン解析          │            │ PUSHED_REQUEST_URI   │
+│ (NORMAL/REQUEST_OBJ) │            │ ↓                   │
+│ ↓                   │            │ 保存済みパラメータ復元  │
+│ FAPI Advanced 全検証  │            │ (JoseContext は空)    │
+│ (署名,exp,nbf,aud)   │            │ ↓                   │
+│ ↓                   │            │ FAPI Advanced 検証    │
+│ クライアント認証       │            │ (JWT検証はスキップ)   │
+│ ↓                   │            │ ↓                   │
+│ AuthzRequest 保存     │            │ 認可処理続行          │
+│ ↓                   │            └─────────────────────┘
+│ request_uri 発行      │
+└─────────────────────┘
+```
+
+**関連ファイル:**
+- `FapiAdvanceVerifier.java` - PAR判定とスキップロジック
+- `OAuthRequestHandler.java` - PAR/認可の2段階ハンドリング
+- `PushedRequestUriPatternContextCreator.java` - PAR復元時の空JoseContext生成
+- `OAuthRequestPattern.java` - NORMAL / REQUEST_OBJECT / REQUEST_URI / PUSHED_REQUEST_URI の4パターン
+- `OAuthPushedRequestStatus.java` - CREATED(201) / BAD_REQUEST(400) / UNAUTHORIZED(401) / SERVER_ERROR(500)
+
 ## JARM（JWT-secured Authorization Response Mode）
 
 `idp-server-core/oauth/response/` 内:

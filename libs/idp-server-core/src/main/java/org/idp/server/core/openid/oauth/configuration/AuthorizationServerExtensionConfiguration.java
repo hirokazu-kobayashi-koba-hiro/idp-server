@@ -46,6 +46,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   String backchannelAuthUserCodeType = "password";
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification";
   int oauthAuthorizationRequestExpiresIn = 1800;
+  int pushedAuthorizationRequestExpiresIn = 90;
   boolean customClaimsScopeMapping = false;
   boolean accessTokenSelectiveUserCustomProperties = false;
   boolean accessTokenVerifiedClaims = false;
@@ -145,6 +146,10 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return oauthAuthorizationRequestExpiresIn;
   }
 
+  public int pushedAuthorizationRequestExpiresIn() {
+    return pushedAuthorizationRequestExpiresIn;
+  }
+
   public List<String> fapiBaselineScopes() {
     return fapiBaselineScopes;
   }
@@ -204,6 +209,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     map.put(
         "default_ciba_authentication_interaction_type", defaultCibaAuthenticationInteractionType);
     map.put("oauth_authorization_request_expires_in", oauthAuthorizationRequestExpiresIn);
+    map.put("pushed_authorization_request_expires_in", pushedAuthorizationRequestExpiresIn);
     map.put("fapi_baseline_scopes", fapiBaselineScopes);
     map.put("fapi_advance_scopes", fapiAdvanceScopes);
     map.put("required_identity_verification_scopes", requiredIdentityVerificationScopes);

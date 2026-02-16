@@ -18,7 +18,7 @@ package org.idp.server.core.openid.oauth.io;
 
 /** OAuthPushedRequestStatus */
 public enum OAuthPushedRequestStatus {
-  OK(200),
+  CREATED(201),
   BAD_REQUEST(400),
   UNAUTHORIZED(401),
   SERVER_ERROR(500);
@@ -33,8 +33,8 @@ public enum OAuthPushedRequestStatus {
     return statusCode;
   }
 
-  public boolean isOK() {
-    return this == OK;
+  public boolean isCreated() {
+    return this == CREATED;
   }
 
   public boolean isError() {

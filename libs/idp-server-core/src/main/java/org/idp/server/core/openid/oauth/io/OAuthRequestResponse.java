@@ -19,6 +19,7 @@ package org.idp.server.core.openid.oauth.io;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.OAuthRequestContext;
+import org.idp.server.core.openid.oauth.OAuthRequestPattern;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
@@ -31,6 +32,7 @@ import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 /** OAuthRequestResponse */
 public class OAuthRequestResponse {
   OAuthRequestStatus status;
+  OAuthRequestPattern pattern;
   AuthorizationRequest authorizationRequest;
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
@@ -47,6 +49,7 @@ public class OAuthRequestResponse {
   public OAuthRequestResponse(
       OAuthRequestStatus status, OAuthRequestContext context, String frontUrl) {
     this.status = status;
+    this.pattern = context.pattern();
     this.authorizationRequest = context.authorizationRequest();
     this.authorizationServerConfiguration = context.serverConfiguration();
     this.clientConfiguration = context.clientConfiguration();
@@ -66,6 +69,7 @@ public class OAuthRequestResponse {
   public OAuthRequestResponse(
       OAuthRequestStatus status, OAuthRequestContext context, AuthorizationResponse response) {
     this.status = status;
+    this.pattern = context.pattern();
     this.authorizationRequest = context.authorizationRequest();
     this.authorizationServerConfiguration = context.serverConfiguration();
     this.clientConfiguration = context.clientConfiguration();
@@ -141,5 +145,9 @@ public class OAuthRequestResponse {
 
   public boolean isNoInteractionOK() {
     return status.isNoInteractionOK();
+  }
+
+  public boolean isPushedRequest() {
+    return pattern != null && pattern.isPushed();
   }
 }

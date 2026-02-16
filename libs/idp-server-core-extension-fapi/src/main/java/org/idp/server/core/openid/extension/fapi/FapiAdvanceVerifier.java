@@ -40,6 +40,30 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     return AuthorizationProfile.FAPI_ADVANCE;
   }
 
+  /**
+   * Verifies authorization server requirements defined in FAPI 1.0 Advanced Final Section 5.2.2.
+   *
+   * <p>This method is invoked during authorization request verification. Requests arrive via two
+   * paths:
+   *
+   * <ol>
+   *   <li><b>Direct request</b>: via {@code request} parameter (JWT) or {@code request_uri}
+   *       parameter. The JoseContext contains the Request Object signature and claims, so all
+   *       validations are executed.
+   *   <li><b>PAR-based request (RFC 9126)</b>: parameters are submitted to the PAR endpoint in
+   *       advance, and the authorization endpoint is accessed with the issued {@code request_uri}
+   *       (urn:ietf:params:oauth:request_uri:...). Request Object validation (signature, exp, nbf,
+   *       aud) is already completed at PAR endpoint acceptance. Since the authorization endpoint
+   *       restores stored parameters, the JoseContext is empty. Therefore, Request Object specific
+   *       claim validations (exp, nbf, aud, signature) are skipped.
+   * </ol>
+   *
+   * @see <a
+   *     href="https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server">
+   *     FAPI 1.0 Advanced Final Section 5.2.2</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9126">RFC 9126 - OAuth 2.0 Pushed Authorization
+   *     Requests</a>
+   */
   @Override
   public void verify(OAuthRequestContext context) {
     throwIfExceptionInvalidConfig(context);
@@ -51,11 +75,16 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     throwExceptionIfNotRequestParameterPattern(context);
     throwExceptionIfInvalidResponseTypeAndResponseMode(context);
     throwIfNotSenderConstrainedAccessToken(context);
-    throwExceptionIfNotContainExpAndNbfAndExp60minutesLongerThanNbf(context);
-    throwExceptionIfNotContainsAud(context);
+    // Skip Request Object JWT claim validations for PAR-based requests.
+    // PAR (RFC 9126) completes Request Object validation at PAR endpoint acceptance,
+    // and the JoseContext is empty when restoring stored parameters at authorization endpoint.
+    if (!context.isPushedRequest()) {
+      throwExceptionIfNotContainExpAndNbfAndExp60minutesLongerThanNbf(context);
+      throwExceptionIfNotContainsAud(context);
+      throwExceptionIfNotContainNbfAnd60minutesLongerThan(context);
+    }
     throwExceptionIfClientSecretPostOrClientSecretBasicOrClientSecretJwt(context);
     throwExceptionIfPublicClient(context);
-    throwExceptionIfNotContainNbfAnd60minutesLongerThan(context);
   }
 
   void throwIfExceptionInvalidConfig(OAuthRequestContext context) {
@@ -80,24 +109,36 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
   }
 
   /**
-   * shall require a JWS signed JWT request object passed by value with the request parameter or by
-   * reference with the request_uri parameter;
+   * FAPI 1.0 Advanced Final Section 5.2.2 clause 1: shall require a JWS signed JWT request object
+   * passed by value with the request parameter or by reference with the request_uri parameter.
    *
-   * <p>FAPI 1.0 Advanced Final, Section 5.2.2 (clause 1): shall require a JWS signed JWT request
-   * object. Request objects with alg:none (unsigned) are not acceptable.
+   * <p>Accepted request patterns:
+   *
+   * <ul>
+   *   <li>{@code request} parameter (REQUEST_OBJECT): JWS-signed JWT Request Object
+   *   <li>{@code request_uri} parameter (REQUEST_URI): reference to a JWS-signed JWT Request Object
+   *   <li>PAR {@code request_uri} (PUSHED_REQUEST_URI): Pushed Authorization Request per RFC 9126.
+   *       Request Object signature validation is already completed at the PAR endpoint, so the
+   *       empty JoseContext at the authorization endpoint is acceptable.
+   * </ul>
+   *
+   * <p>Request Objects with alg:none (unsigned) are rejected. However, for PAR-based requests the
+   * unsigned check is skipped because the JoseContext is not preserved after PAR storage (already
+   * validated at the PAR endpoint).
    *
    * @see <a
-   *     href="https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server">FAPI
-   *     1.0 Advanced Final Section 5.2.2</a>
+   *     href="https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server">
+   *     FAPI 1.0 Advanced Final Section 5.2.2</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9126#section-2">RFC 9126 Section 2</a>
    */
   void throwExceptionIfNotRequestParameterPattern(OAuthRequestContext context) {
-    if (!context.isRequestParameterPattern()) {
+    if (!context.isRequestParameterPattern() && !context.isPushedRequest()) {
       throw new OAuthRedirectableBadRequestException(
           "invalid_request",
           "When FAPI Advance profile, shall require a JWS signed JWT request object passed by value with the request parameter or by reference with the request_uri parameter",
           context);
     }
-    if (context.isUnsignedRequestObject()) {
+    if (!context.isPushedRequest() && context.isUnsignedRequestObject()) {
       throw new OAuthRedirectableBadRequestException(
           "invalid_request_object",
           "When FAPI Advance profile, request object must be signed with a JWS algorithm, alg:none is not allowed",
