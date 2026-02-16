@@ -57,6 +57,7 @@ public class FapiCibaVerifier {
 
   public void verify(CibaRequestContext context, ClientCredentials clientCredentials) {
     throwExceptionIfNotSignedRequestObject(context);
+    throwExceptionIfMissingJti(context);
     throwExceptionIfMissingIat(context);
     throwExceptionIfInvalidRequestObjectLifetime(context);
     throwExceptionIfInvalidSigningAlgorithm(context);
@@ -79,6 +80,32 @@ public class FapiCibaVerifier {
       throw new BackchannelAuthenticationBadRequestException(
           "invalid_request",
           "FAPI CIBA Profile requires signed request object. Request must include 'request' parameter with a signed JWT.");
+    }
+  }
+
+  /**
+   * Validates 'jti' claim presence in request object.
+   *
+   * <p>CIBA Core 1.0 Section 7.1.1 requires the signed authentication request to contain a 'jti'
+   * claim. After signature verification, claims including jti must be validated.
+   *
+   * <p>Note: This differs from FAPI 1.0 Advanced where jti is OPTIONAL. In FAPI-CIBA, jti is
+   * MANDATORY per the CIBA Core specification.
+   *
+   * @see <a
+   *     href="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1.1">CIBA
+   *     Core 1.0 Section 7.1.1</a>
+   */
+  void throwExceptionIfMissingJti(CibaRequestContext context) {
+    JoseContext joseContext = context.joseContext();
+    if (!joseContext.exists()) {
+      return; // Will be caught by other validators
+    }
+
+    JsonWebTokenClaims claims = joseContext.claims();
+    if (!claims.hasJti()) {
+      throw new BackchannelAuthenticationBadRequestException(
+          "invalid_request", "FAPI CIBA Profile requires 'jti' claim in request object.");
     }
   }
 

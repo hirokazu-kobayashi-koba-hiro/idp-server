@@ -14,12 +14,20 @@
       },
       "available_methods": [
         "fido2",
-        "fido-uaf"
+        "fido-uaf",
+        "email"
       ],
       "step_definitions": [
         {
-          "method": "fido2",
+          "method": "email",
           "order": 1,
+          "requires_user": false,
+          "allow_registration": true,
+          "user_identity_source": "email"
+        },
+        {
+          "method": "fido2",
+          "order": 2,
           "requires_user": true,
           "allow_registration": false,
           "user_identity_source": "sub"
@@ -29,16 +37,21 @@
         "urn:mace:incommon:iap:gold": [
           "fido-uaf",
           "fido2"
+        ],
+        "urn:mace:incommon:iap:silver": [
+          "email"
         ]
       },
       "level_of_authentication_scopes": {
         "transfers": [
           "fido-uaf",
-          "fido2"
+          "fido2",
+          "email"
         ],
         "write": [
           "fido-uaf",
-          "fido2"
+          "fido2",
+          "email"
         ]
       },
       "success_conditions": {
@@ -54,6 +67,14 @@
           [
             {
               "path": "$.fido-uaf-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.email-authentication.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1
@@ -78,6 +99,14 @@
               "operation": "gte",
               "value": 3
             }
+          ],
+          [
+            {
+              "path": "$.email-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
           ]
         ]
       },
@@ -94,6 +123,14 @@
           [
             {
               "path": "$.fido-uaf-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ],
+          [
+            {
+              "path": "$.email-authentication.failure_count",
               "type": "integer",
               "operation": "gte",
               "value": 5

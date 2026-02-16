@@ -204,9 +204,67 @@ if [ "${HTTP_CODE}" = "201" ]; then
     echo ""
   fi
 
-  # Step 6: Create authentication policies
+  # Step 6: Create authentication configurations
   if [ -n "${FINANCIAL_TENANT_ID}" ]; then
-    echo "🔒 Step 6: Creating financial grade authentication policies..."
+    echo "🔧 Step 6: Creating authentication configurations..."
+
+    # FIDO2 (WebAuthn4J) authentication config
+    FIDO2_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/fido2/webauthn4j.json"
+    if [ -f "${FIDO2_CONFIG_FILE}" ]; then
+      echo "   📝 Registering FIDO2 (WebAuthn4J) authentication config..."
+      FIDO2_CONFIG_JSON=$(cat "${FIDO2_CONFIG_FILE}")
+
+      FIDO2_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+        "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${FINANCIAL_TENANT_ID}/authentication-configurations" \
+        -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${FIDO2_CONFIG_JSON}")
+
+      FIDO2_HTTP_CODE=$(echo "${FIDO2_RESPONSE}" | tail -n1)
+      FIDO2_RESPONSE_BODY=$(echo "${FIDO2_RESPONSE}" | sed '$d')
+
+      if [ "${FIDO2_HTTP_CODE}" = "200" ] || [ "${FIDO2_HTTP_CODE}" = "201" ]; then
+        FIDO2_CONFIG_ID=$(echo "${FIDO2_RESPONSE_BODY}" | jq -r '.result.id')
+        echo "   ✅ FIDO2 config created: ${FIDO2_CONFIG_ID}"
+      else
+        echo "   ⚠️  FIDO2 config creation failed (HTTP ${FIDO2_HTTP_CODE})"
+        echo "   Response: ${FIDO2_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "   ${FIDO2_RESPONSE_BODY}"
+      fi
+    else
+      echo "   ⚠️  FIDO2 config file not found, skipping..."
+    fi
+
+    # Email authentication config
+    EMAIL_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/email/no-action.json"
+    if [ -f "${EMAIL_CONFIG_FILE}" ]; then
+      echo "   📝 Registering Email authentication config..."
+      EMAIL_CONFIG_JSON=$(cat "${EMAIL_CONFIG_FILE}")
+
+      EMAIL_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+        "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${FINANCIAL_TENANT_ID}/authentication-configurations" \
+        -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${EMAIL_CONFIG_JSON}")
+
+      EMAIL_HTTP_CODE=$(echo "${EMAIL_RESPONSE}" | tail -n1)
+      EMAIL_RESPONSE_BODY=$(echo "${EMAIL_RESPONSE}" | sed '$d')
+
+      if [ "${EMAIL_HTTP_CODE}" = "200" ] || [ "${EMAIL_HTTP_CODE}" = "201" ]; then
+        EMAIL_CONFIG_ID=$(echo "${EMAIL_RESPONSE_BODY}" | jq -r '.result.id')
+        echo "   ✅ Email config created: ${EMAIL_CONFIG_ID}"
+      else
+        echo "   ⚠️  Email config creation failed (HTTP ${EMAIL_HTTP_CODE})"
+        echo "   Response: ${EMAIL_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "   ${EMAIL_RESPONSE_BODY}"
+      fi
+    else
+      echo "   ⚠️  Email config file not found, skipping..."
+    fi
+    echo ""
+  fi
+
+  # Step 7: Create authentication policies
+  if [ -n "${FINANCIAL_TENANT_ID}" ]; then
+    echo "🔒 Step 7: Creating financial grade authentication policies..."
 
     # Define authentication policy files to register
     AUTH_POLICY_FILES=(
@@ -247,9 +305,9 @@ if [ "${HTTP_CODE}" = "201" ]; then
     echo ""
   fi
 
-  # Step 7: Create test user for CIBA
+  # Step 8: Create test user for CIBA
   if [ -n "${FINANCIAL_TENANT_ID}" ]; then
-    echo "👤 Step 7: Creating test user for CIBA..."
+    echo "👤 Step 8: Creating test user for CIBA..."
 
     FINANCIAL_USER_FILE="${SCRIPT_DIR}/financial-user.json"
     if [ ! -f "${FINANCIAL_USER_FILE}" ]; then

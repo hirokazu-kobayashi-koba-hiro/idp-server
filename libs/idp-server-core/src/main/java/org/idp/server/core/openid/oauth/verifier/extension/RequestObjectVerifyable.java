@@ -37,6 +37,8 @@ public interface RequestObjectVerifyable {
     throwExceptionIfInvalidAud(joseContext, authorizationServerConfiguration, clientConfiguration);
     throwExceptionIfInvalidJti(joseContext, authorizationServerConfiguration, clientConfiguration);
     throwExceptionIfInvalidExp(joseContext, authorizationServerConfiguration, clientConfiguration);
+    throwExceptionIfMissingScopeWhenRequired(
+        joseContext, authorizationServerConfiguration, clientConfiguration);
   }
 
   default void throwExceptionIfSymmetricKey(
@@ -87,16 +89,47 @@ public interface RequestObjectVerifyable {
         "invalid_request_object", "request object is invalid, aud claim must be issuer");
   }
 
+  /**
+   * jti claim is OPTIONAL per FAPI 1.0 Advanced (only nbf/exp/aud are required). If present, it can
+   * be used for replay detection, but its absence should not cause a rejection.
+   */
   default void throwExceptionIfInvalidJti(
       JoseContext joseContext,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration)
       throws RequestObjectInvalidException {
+    // jti is optional - no validation needed if absent
+  }
+
+  /**
+   * When require_signed_request_object is true, all authorization request parameters must be
+   * included in the signed request object, including scope.
+   *
+   * <p>FAPI 1.0 Advanced Final, Section 5.2.2 (clause 13): shall require the request object to
+   * contain all the authorization request parameters.
+   *
+   * <p>RFC 9101 (JAR) Section 6.3: The Authorization Server MUST only use the parameters in the
+   * Request Object even if the same parameter is provided in the query parameter.
+   *
+   * @see <a
+   *     href="https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server">FAPI
+   *     1.0 Advanced Final Section 5.2.2</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9101#section-6.3">RFC 9101 Section 6.3</a>
+   */
+  default void throwExceptionIfMissingScopeWhenRequired(
+      JoseContext joseContext,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration)
+      throws RequestObjectInvalidException {
+    if (!authorizationServerConfiguration.requireSignedRequestObject()) {
+      return;
+    }
     JsonWebTokenClaims claims = joseContext.claims();
-    if (!claims.hasJti()) {
+    String scope = claims.getValue("scope");
+    if (scope == null || scope.isEmpty()) {
       throw new RequestObjectInvalidException(
           "invalid_request_object",
-          "request object is invalid, must contains jti claim in jwt payload");
+          "request object is invalid, when require_signed_request_object is true, scope must be included in the request object");
     }
   }
 

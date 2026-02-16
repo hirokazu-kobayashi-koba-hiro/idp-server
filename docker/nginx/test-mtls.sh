@@ -6,7 +6,7 @@
 #
 
 TENANT_ID="${1:-67e7eae6-62b0-4500-9eff-87459f63fc66}"
-BASE_URL="https://localhost:8443"
+BASE_URL="${MTLS_BASE_URL:-https://mtls.api.local.dev}"
 
 echo "Testing mTLS connection to ${BASE_URL}/${TENANT_ID}/health"
 echo ""

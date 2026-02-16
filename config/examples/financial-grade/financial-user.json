@@ -4,7 +4,7 @@
   "name": "FAPI Test User",
   "given_name": "Test",
   "family_name": "User",
-  "email": "fapi-test@example.com",
+  "email": "fapi-ciba-test@example.com",
   "email_verified": true,
   "phone_number": "+81-90-1234-5678",
   "phone_number_verified": true,

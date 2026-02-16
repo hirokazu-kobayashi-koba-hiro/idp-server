@@ -124,13 +124,27 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
    *
    * <p>invalid_scope The requested scope is invalid, unknown, or malformed.
    *
+   * <p>When the authorization request uses a Request Object (JWT) and the scope claim is missing
+   * from the JWT payload, the error code is "invalid_request_object" rather than "invalid_scope",
+   * because the Request Object itself is malformed. This distinction is important for FAPI 1.0
+   * Advanced conformance, where the scope claim is required in the signed Request Object.
+   *
    * @param context
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.3">3.3. Access Token Scope</a>
-   * @see <a herf="https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2.1">invalid_scope</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-4.1.2.1">invalid_scope</a>
+   * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#RequestObject">OIDC Core
+   *     Section 6.1 - Request Object</a>
    */
   void throwExceptionIfNotContainsValidScope(OAuthRequestContext context) {
     Scopes scopes = context.scopes();
     if (!scopes.exists()) {
+      if (context.isRequestParameterPattern()
+          && !context.joseContext().claims().contains("scope")) {
+        throw new OAuthRedirectableBadRequestException(
+            "invalid_request_object",
+            "request object is invalid, scope claim must be included in the request object",
+            context);
+      }
       throw new OAuthRedirectableBadRequestException(
           "invalid_scope",
           String.format(

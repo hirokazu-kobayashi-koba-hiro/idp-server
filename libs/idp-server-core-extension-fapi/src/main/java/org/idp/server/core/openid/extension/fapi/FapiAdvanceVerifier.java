@@ -48,7 +48,7 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     } else {
       oAuthRequestBaseVerifier.verify(context);
     }
-    throwExceptionIfNotRRequestParameterPattern(context);
+    throwExceptionIfNotRequestParameterPattern(context);
     throwExceptionIfInvalidResponseTypeAndResponseMode(context);
     throwIfNotSenderConstrainedAccessToken(context);
     throwExceptionIfNotContainExpAndNbfAndExp60minutesLongerThanNbf(context);
@@ -82,12 +82,25 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
   /**
    * shall require a JWS signed JWT request object passed by value with the request parameter or by
    * reference with the request_uri parameter;
+   *
+   * <p>FAPI 1.0 Advanced Final, Section 5.2.2 (clause 1): shall require a JWS signed JWT request
+   * object. Request objects with alg:none (unsigned) are not acceptable.
+   *
+   * @see <a
+   *     href="https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server">FAPI
+   *     1.0 Advanced Final Section 5.2.2</a>
    */
-  void throwExceptionIfNotRRequestParameterPattern(OAuthRequestContext context) {
+  void throwExceptionIfNotRequestParameterPattern(OAuthRequestContext context) {
     if (!context.isRequestParameterPattern()) {
       throw new OAuthRedirectableBadRequestException(
           "invalid_request",
           "When FAPI Advance profile, shall require a JWS signed JWT request object passed by value with the request parameter or by reference with the request_uri parameter",
+          context);
+    }
+    if (context.isUnsignedRequestObject()) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request_object",
+          "When FAPI Advance profile, request object must be signed with a JWS algorithm, alg:none is not allowed",
           context);
     }
   }

@@ -1,0 +1,633 @@
+spec_name: "Financial-grade API Security Profile 1.0 - Part 1: Baseline"
+spec_url: "https://openid.net/specs/openid-financial-api-part-1-1_0.html"
+extraction_timestamp: "2026-02-14"
+extractor_version: "1.1.0"
+
+summary:
+  total_requirements: 68
+  must_shall_requirements: 55
+  should_requirements: 5
+  optional_requirements: 3
+  must_not_requirements: 0
+  shall_not_requirements: 5
+
+sections_covered:
+  - "Section 5: Baseline Security Profile"
+  - "Section 5.2.2: Authorization Server"
+  - "Section 5.2.2.1: Returning Authenticated User's Identifier"
+  - "Section 5.2.2.2: Client Requesting openid Scope"
+  - "Section 5.2.2.3: Clients Not Requesting openid Scope"
+  - "Section 5.2.3: Public Client"
+  - "Section 5.2.4: Confidential Client"
+  - "Section 6: Accessing Protected Resources"
+  - "Section 6.2.1: Protected Resources Provisions"
+  - "Section 6.2.2: Client Provisions"
+  - "Section 7: Security Considerations"
+  - "Section 7.1: TLS and DNSSEC Considerations"
+  - "Section 7.5: Native Apps"
+  - "Section 7.7: Discovery & Multiple Brands"
+  - "Section 8: Privacy Considerations"
+
+requirements_by_category:
+  authorization_server:
+    must_shall:
+      - section: "5.2.2-1"
+        requirement: "shall support confidential clients"
+        rationale: "Confidential clients provide stronger security guarantees through client authentication"
+        test_implication: "必須: コンフィデンシャルクライアントの登録・利用がサポートされていることを確認"
+
+      - section: "5.2.2-3"
+        requirement: "shall provide client secret that adheres to the requirements in Section 16.19 of OIDC if it uses symmetric key cryptography"
+        rationale: "Ensures minimum entropy for symmetric key material"
+        test_implication: "必須: 対称鍵利用時にOIDC Section 16.19準拠のクライアントシークレットが提供されることを確認"
+
+      - section: "5.2.2-4"
+        requirement: "shall authenticate the confidential client using one of the following methods: (a) Mutual TLS for OAuth Client Authentication as specified in Section 2 of MTLS, or (b) client_secret_jwt or private_key_jwt as specified in Section 9 of OIDC"
+        rationale: "Ensures strong client authentication beyond basic client_secret_post/basic"
+        test_implication: "必須: client_secret_basicおよびclient_secret_postの拒否、mTLS/client_secret_jwt/private_key_jwtの受入を確認"
+
+      - section: "5.2.2-5"
+        requirement: "shall require and use a key of size 2048 bits or larger for RSA algorithms"
+        rationale: "Minimum RSA key size to ensure cryptographic strength"
+        test_implication: "必須: 2048ビット未満のRSA鍵を拒否することを確認"
+
+      - section: "5.2.2-6"
+        requirement: "shall require and use a key of size 160 bits or larger for elliptic curve algorithms"
+        rationale: "Minimum EC key size to ensure cryptographic strength"
+        test_implication: "必須: 160ビット未満のEC鍵を拒否することを確認"
+
+      - section: "5.2.2-7"
+        requirement: "shall require RFC7636 with S256 as the code challenge method"
+        rationale: "PKCE with S256 prevents authorization code interception attacks"
+        test_implication: "必須: code_challengeなし・plainメソッドのリクエストを拒否し、S256のみ受け入れることを確認"
+
+      - section: "5.2.2-8"
+        requirement: "shall require redirect URIs to be pre-registered"
+        rationale: "Prevents open redirect attacks"
+        test_implication: "必須: 事前登録されていないredirect_uriを拒否することを確認"
+
+      - section: "5.2.2-9"
+        requirement: "shall require the redirect_uri in the authorization request"
+        rationale: "Ensures redirect URI is always explicitly specified"
+        test_implication: "必須: redirect_uriパラメータなしの認可リクエストを拒否することを確認"
+
+      - section: "5.2.2-10"
+        requirement: "shall require the value of redirect_uri to exactly match one of the pre-registered redirect URIs"
+        rationale: "Prevents redirect URI manipulation attacks through exact matching"
+        test_implication: "必須: 登録済みURIと完全一致しないredirect_uriを拒否することを確認"
+
+      - section: "5.2.2-11"
+        requirement: "shall require user authentication to an appropriate Level of Assurance for the operations the client will be authorized to perform on behalf of the user"
+        rationale: "Ensures authentication strength matches operation risk level"
+        test_implication: "必須: 操作リスクレベルに応じた認証レベルが要求されることを確認"
+
+      - section: "5.2.2-12"
+        requirement: "shall require explicit approval by the user to authorize the requested scope if it has not been previously authorized"
+        rationale: "User consent is mandatory for scope authorization"
+        test_implication: "必須: 未承認スコープに対するユーザー同意画面の表示を確認"
+
+      - section: "5.2.2-13"
+        requirement: "shall reject an authorization code (Section 1.3.1 of RFC6749) if it has been previously used"
+        rationale: "Prevents authorization code replay attacks"
+        test_implication: "必須: 使用済み認可コードによるトークンリクエストの拒否を確認"
+
+      - section: "5.2.2-14"
+        requirement: "shall return token responses that conform to Section 4.1.4 of RFC6749"
+        rationale: "Ensures token response format compliance with OAuth 2.0"
+        test_implication: "必須: トークンレスポンスがRFC6749 Section 4.1.4に準拠していることを確認"
+
+      - section: "5.2.2-15"
+        requirement: "shall return the list of granted scopes with the issued access token if the request was passed in the front channel and was not integrity protected"
+        rationale: "Client must be able to verify granted scopes when request may have been tampered"
+        test_implication: "必須: フロントチャネル経由のリクエスト時にscopeパラメータがトークンレスポンスに含まれることを確認"
+
+      - section: "5.2.2-16"
+        requirement: "shall provide opaque non-guessable access tokens, authorization codes, and refresh token that are resistant to replay with sufficient entropy that it is computationally infeasible to guess, as per Section 10.10 of RFC6749"
+        rationale: "Prevents token guessing and replay attacks"
+        test_implication: "必須: トークン・認可コードが十分なエントロピーを持ち推測不可能であることを確認"
+
+      - section: "5.2.2-19"
+        requirement: "shall return an invalid_client error as defined in 5.2 of RFC6749 when mis-matched client identifiers were provided through the client authentication methods that permits sending the client identifier in more than one way"
+        rationale: "Detects and prevents client impersonation via inconsistent identifiers"
+        test_implication: "必須: 複数の認証方法で異なるclient_idを送信した場合にinvalid_clientエラーが返されることを確認"
+
+      - section: "5.2.2-20"
+        requirement: "shall require redirect URIs to use the https scheme"
+        rationale: "Prevents credential leakage over unencrypted connections"
+        test_implication: "必須: http://スキームのredirect_uriを拒否することを確認"
+
+      - section: "5.2.2-22"
+        requirement: "shall support OIDD (OpenID Connect Discovery), may support RFC8414, and shall not distribute discovery metadata by any other means"
+        rationale: "Ensures consistent and verifiable metadata distribution"
+        test_implication: "必須: /.well-known/openid-configurationエンドポイントの実装確認"
+
+      - section: "5.2.2.1-1"
+        requirement: "shall support the authentication request as in Section 3.1.2.1 of OIDC"
+        rationale: "Enables returning authenticated user identifiers via OpenID Connect"
+        test_implication: "必須: OIDC認証リクエストのサポートを確認"
+
+      - section: "5.2.2.1-2"
+        requirement: "shall perform the authentication request verification as in Section 3.1.2.2 of OIDC"
+        rationale: "Validates authentication request parameters per OIDC requirements"
+        test_implication: "必須: 認証リクエストの検証がOIDC Section 3.1.2.2に従って実施されることを確認"
+
+      - section: "5.2.2.1-3"
+        requirement: "shall authenticate the user as in Section 3.1.2.2 and 3.1.2.3 of OIDC"
+        rationale: "Ensures proper user authentication flow"
+        test_implication: "必須: ユーザー認証がOIDC仕様に従って実施されることを確認"
+
+      - section: "5.2.2.1-4"
+        requirement: "shall provide the authentication response as in Section 3.1.2.4 and 3.1.2.5 of OIDC"
+        rationale: "Returns authentication results per OIDC requirements"
+        test_implication: "必須: 認証レスポンスがOIDC Section 3.1.2.4/3.1.2.5に準拠していることを確認"
+
+      - section: "5.2.2.1-5"
+        requirement: "shall perform the token request verification as in Section 3.1.3.2 of OIDC"
+        rationale: "Validates token requests per OIDC token endpoint requirements"
+        test_implication: "必須: トークンリクエストの検証がOIDC Section 3.1.3.2に従って実施されることを確認"
+
+      - section: "5.2.2.1-6"
+        requirement: "shall issue an ID Token in the token response when openid was included in the requested scope as in Section 3.1.3.3 of OIDC with its sub value corresponding to the authenticated user"
+        rationale: "ID Token with correct subject is required when openid scope is requested"
+        test_implication: "必須: openidスコープ指定時にIDトークンが発行され、sub値が認証ユーザーと一致することを確認"
+
+      - section: "5.2.2.2-1"
+        requirement: "shall require the nonce parameter defined in Section 3.1.2.1 of OIDC in the authentication request"
+        rationale: "Nonce prevents ID Token replay attacks when openid scope is used"
+        test_implication: "必須: openidスコープ利用時にnonceパラメータなしのリクエストを拒否することを確認"
+
+      - section: "5.2.2.3-1"
+        requirement: "shall require the state parameter defined in Section 4.1.1 of RFC6749"
+        rationale: "State parameter provides CSRF protection when openid scope is not used"
+        test_implication: "必須: openidスコープなしの場合にstateパラメータなしのリクエストを拒否することを確認"
+
+    should:
+      - section: "5.2.2-2"
+        requirement: "should support public clients"
+        rationale: "Public clients are common in mobile and SPA deployments"
+        test_implication: "推奨: パブリッククライアントのサポートを確認"
+
+      - section: "5.2.2-17"
+        requirement: "should clearly identify long-term grants to the user during authorization as in 16.18 of OIDC"
+        rationale: "Informed consent requires clear grant details display"
+        test_implication: "推奨: 認可画面でグラントの詳細が明確に表示されることを確認"
+
+      - section: "5.2.2-18"
+        requirement: "should provide a mechanism for the end-user to revoke access tokens and refresh tokens granted to a client as in 16.18 of OIDC"
+        rationale: "User control over granted tokens improves security and privacy"
+        test_implication: "推奨: エンドユーザーがトークンを取り消すメカニズムが提供されていることを確認"
+
+      - section: "5.2.2-21"
+        requirement: "should issue access tokens with a lifetime of under 10 minutes unless the tokens are sender-constrained"
+        rationale: "Short-lived bearer tokens reduce the window for token theft exploitation"
+        test_implication: "推奨: ベアラートークンの有効期限が10分未満であることを確認"
+
+    shall_not:
+      - section: "5.2.2-22b"
+        requirement: "shall not distribute discovery metadata by any other means than OIDD or RFC8414"
+        rationale: "Prevents metadata tampering through unverified distribution channels"
+        test_implication: "必須: ディスカバリーメタデータがOIDD/RFC8414以外で配布されていないことを確認"
+
+    must_not: []
+    optional: []
+
+  public_client:
+    must_shall:
+      - section: "5.2.3-1"
+        requirement: "shall support RFC7636 (PKCE)"
+        rationale: "PKCE is critical for public clients that cannot securely store client secrets"
+        test_implication: "必須: パブリッククライアントがPKCEをサポートしていることを確認"
+
+      - section: "5.2.3-2"
+        requirement: "shall use S256 as the code challenge method for the RFC7636"
+        rationale: "S256 provides code_verifier confidentiality unlike plain method"
+        test_implication: "必須: code_challenge_methodにS256が使用されていることを確認"
+
+      - section: "5.2.3-3"
+        requirement: "shall use separate and distinct redirect URI for each authorization server that it talks to"
+        rationale: "Prevents mix-up attacks across authorization servers"
+        test_implication: "必須: 認可サーバーごとに異なるredirect_uriが使用されていることを確認"
+
+      - section: "5.2.3-4"
+        requirement: "shall store the redirect URI value in the resource owner's user-agents (such as browser) session and compare it with the redirect URI that the authorization response was received at, where, if the URIs do not match, the client shall terminate the process with error"
+        rationale: "Detects authorization response injection attacks"
+        test_implication: "必須: セッションに保存されたredirect_uriとレスポンス受信URIの比較検証を確認"
+
+      - section: "5.2.3-5"
+        requirement: "(withdrawn)"
+        rationale: "This requirement was withdrawn from the specification"
+        test_implication: "N/A: 撤回された要件"
+
+      - section: "5.2.3-6"
+        requirement: "shall implement an effective CSRF protection"
+        rationale: "Prevents cross-site request forgery in the authorization flow"
+        test_implication: "必須: CSRF対策（state/nonce/PKCEによる）が実装されていることを確認"
+
+      - section: "5.2.3-7"
+        requirement: "shall include openid in the scope value in order to obtain a persistent identifier of the authenticated user (sub claim) via the ID token"
+        rationale: "openid scope triggers ID Token issuance containing user identifier"
+        test_implication: "必須: ユーザー識別子取得時にopenidスコープが含まれることを確認"
+
+      - section: "5.2.3-8"
+        requirement: "shall include the nonce parameter defined in Section 3.1.2.1 of OIDC in the authentication request if openid is in scope"
+        rationale: "Nonce binds ID Token to the authentication session"
+        test_implication: "必須: openidスコープ利用時にnonceパラメータが含まれることを確認"
+
+      - section: "5.2.3-9"
+        requirement: "shall include the state parameter defined in Section 4.1.1 of RFC6749 if openid is not in scope"
+        rationale: "State provides CSRF protection when nonce is not available"
+        test_implication: "必須: openidスコープなしの場合にstateパラメータが含まれることを確認"
+
+      - section: "5.2.3-10"
+        requirement: "shall verify that the scope received in the token response is either an exact match, or contains a subset of the scope sent in the authorization request"
+        rationale: "Detects scope elevation attacks"
+        test_implication: "必須: トークンレスポンスのスコープが要求スコープと一致またはサブセットであることの検証を確認"
+
+      - section: "5.2.3-11"
+        requirement: "shall only use Authorization Server metadata obtained from the metadata document published by the Authorization Server as defined in OIDD or RFC8414"
+        rationale: "Prevents metadata injection from untrusted sources"
+        test_implication: "必須: ディスカバリードキュメントから取得したメタデータのみが使用されていることを確認"
+
+    should: []
+    must_not: []
+    shall_not: []
+    optional: []
+    note: "Requirement 5.2.3-5 has been withdrawn from the specification"
+
+  confidential_client:
+    must_shall:
+      - section: "5.2.4-1"
+        requirement: "shall support the following methods to authenticate against the token endpoint: (a) Mutual TLS for OAuth Client Authentication as specified in Section 2 of MTLS, or (b) client_secret_jwt or private_key_jwt as specified in Section 9 of OIDC"
+        rationale: "Strong client authentication methods are required for confidential clients"
+        test_implication: "必須: mTLS/client_secret_jwt/private_key_jwtのいずれかでトークンエンドポイントに認証できることを確認"
+
+      - section: "5.2.4-2"
+        requirement: "shall use RSA keys with a minimum 2048 bits if using RSA cryptography"
+        rationale: "Ensures minimum RSA key strength for confidential client operations"
+        test_implication: "必須: RSA暗号利用時に2048ビット以上の鍵が使用されていることを確認"
+
+      - section: "5.2.4-3"
+        requirement: "shall use elliptic curve keys with a minimum of 160 bits if using Elliptic Curve cryptography"
+        rationale: "Ensures minimum EC key strength for confidential client operations"
+        test_implication: "必須: EC暗号利用時に160ビット以上の鍵が使用されていることを確認"
+
+      - section: "5.2.4-4"
+        requirement: "shall verify that its client secret has a minimum of 128 bits if using symmetric key cryptography"
+        rationale: "Ensures minimum entropy for symmetric client secrets"
+        test_implication: "必須: 対称鍵暗号利用時にクライアントシークレットが128ビット以上であることを確認"
+
+    should: []
+    must_not: []
+    shall_not: []
+    optional: []
+    note: "Confidential clients must also comply with all public client requirements from Section 5.2.3"
+
+  resource_server:
+    must_shall:
+      - section: "6.2.1-1"
+        requirement: "shall support the use of the HTTP GET method as in Section 4.3.1 of RFC7231"
+        rationale: "HTTP GET is the primary method for resource access"
+        test_implication: "必須: HTTP GETメソッドでのリソースアクセスがサポートされていることを確認"
+
+      - section: "6.2.1-2"
+        requirement: "shall accept access tokens in the HTTP header as in Section 2.1 of OAuth 2.0 Bearer Token Usage (RFC6750)"
+        rationale: "Authorization header is the preferred and most secure token transport"
+        test_implication: "必須: AuthorizationヘッダーのBearerトークンが受け入れられることを確認"
+
+      - section: "6.2.1-4"
+        requirement: "shall verify that the access token is neither expired nor revoked"
+        rationale: "Prevents use of invalid or compromised tokens"
+        test_implication: "必須: 期限切れ・取り消し済みトークンが拒否されることを確認"
+
+      - section: "6.2.1-5"
+        requirement: "shall verify that the scope associated with the access token authorizes the reading of the resource it is being requested"
+        rationale: "Enforces scope-based access control"
+        test_implication: "必須: スコープベースのアクセス制御が実施されていることを確認"
+
+      - section: "6.2.1-6"
+        requirement: "shall identify the associated entity to the access token"
+        rationale: "Resource server must know which entity the token represents"
+        test_implication: "必須: アクセストークンに関連付けられたエンティティが識別されることを確認"
+
+      - section: "6.2.1-7"
+        requirement: "shall only return the resource identified by the combination of the entity implicit in the access token and the granted scope and otherwise return errors as in section 3.1 of RFC6750"
+        rationale: "Prevents resource access beyond the granted entity and scope"
+        test_implication: "必須: エンティティとスコープの組み合わせに基づくリソースのみが返されることを確認"
+
+      - section: "6.2.1-8"
+        requirement: "shall encode the response in UTF-8 if applicable"
+        rationale: "Consistent encoding prevents character set-based attacks"
+        test_implication: "必須: レスポンスがUTF-8でエンコードされていることを確認"
+
+      - section: "6.2.1-9"
+        requirement: "shall send the Content-Type header set to application/json if applicable"
+        rationale: "Proper content type prevents MIME sniffing attacks"
+        test_implication: "必須: Content-Typeヘッダーがapplication/jsonに設定されていることを確認"
+
+      - section: "6.2.1-10"
+        requirement: "shall send the server date in HTTP Date header as in section 7.1.1.2 of RFC7231"
+        rationale: "Provides timestamp for response freshness verification"
+        test_implication: "必須: HTTPレスポンスにDateヘッダーが含まれることを確認"
+
+      - section: "6.2.1-11"
+        requirement: "shall set the response header x-fapi-interaction-id to the value received from the corresponding fapi client request header or to a RFC4122 UUID value if the request header was not provided to track the interaction"
+        rationale: "Enables end-to-end request tracing for debugging and audit"
+        test_implication: "必須: x-fapi-interaction-idヘッダーがリクエスト値またはUUIDとして返されることを確認"
+
+      - section: "6.2.1-12"
+        requirement: "shall log the value of x-fapi-interaction-id in the log entry"
+        rationale: "Audit trail for interaction tracking"
+        test_implication: "必須: x-fapi-interaction-idの値がログに記録されていることを確認"
+
+    should:
+      - section: "6.2.1-14"
+        requirement: "should support Cross Origin Resource Sharing (CORS) or other methods as appropriate to enable JavaScript clients to access the endpoint if it decides to provide access to JavaScript clients"
+        rationale: "Browser-based clients require CORS support for API access"
+        test_implication: "推奨: JavaScriptクライアントへのアクセス提供時にCORSがサポートされていることを確認"
+
+    shall_not:
+      - section: "6.2.1-3"
+        requirement: "shall not accept access tokens in the query parameters stated in Section 2.3 of OAuth 2.0 Bearer Token Usage (RFC6750)"
+        rationale: "Query parameters are logged and leaked via referrer headers"
+        test_implication: "必須: クエリパラメータでのアクセストークン送信が拒否されることを確認"
+
+      - section: "6.2.1-13"
+        requirement: "shall not reject requests with a x-fapi-customer-ip-address header containing a valid IPv4 or IPv6 address"
+        rationale: "Resource server must tolerate optional customer IP header"
+        test_implication: "必須: 有効なIPアドレスを含むx-fapi-customer-ip-addressヘッダー付きリクエストが拒否されないことを確認"
+
+    must_not: []
+    optional: []
+
+  client_resource_access:
+    must_shall:
+      - section: "6.2.2-1"
+        requirement: "shall send access tokens in the HTTP header as in Section 2.1 of OAuth 2.0 Bearer Token Usage (RFC6750)"
+        rationale: "Authorization header is the required token transport mechanism"
+        test_implication: "必須: アクセストークンがAuthorizationヘッダーで送信されることを確認"
+
+    should: []
+    must_not: []
+    shall_not: []
+    optional:
+      - section: "6.2.2-3"
+        requirement: "may send the last time the customer logged into the client in the x-fapi-auth-date header where the value is supplied as a HTTP-date as in section 7.1.1.1 of RFC7231"
+        rationale: "Optional metadata to help resource server assess session freshness"
+        test_implication: "任意: x-fapi-auth-dateヘッダーの送信サポートを確認"
+
+      - section: "6.2.2-4"
+        requirement: "may send the customer's IP address if this data is available in the x-fapi-customer-ip-address header where the value is a valid IPv4 or IPv6 address"
+        rationale: "Optional metadata for risk assessment by resource server"
+        test_implication: "任意: x-fapi-customer-ip-addressヘッダーの送信サポートを確認"
+
+      - section: "6.2.2-5"
+        requirement: "may send the x-fapi-interaction-id request header whose value is a RFC4122 UUID to the server to help correlate log entries between client and server"
+        rationale: "Optional but recommended for request tracing and debugging"
+        test_implication: "任意: x-fapi-interaction-idヘッダーの送信サポートを確認"
+
+    note: "Requirement 6.2.2-2 has been withdrawn from the specification"
+
+  security_tls:
+    must_shall:
+      - section: "7.1-1"
+        requirement: "all interactions shall be encrypted with TLS (HTTPS)"
+        rationale: "All communications must be protected against eavesdropping"
+        test_implication: "必須: すべてのエンドポイントがHTTPS経由でのみアクセス可能であることを確認"
+
+      - section: "7.1-2"
+        requirement: "TLS version 1.2 or later shall be used for all communications"
+        rationale: "TLS 1.2 is the minimum acceptable version for secure communications"
+        test_implication: "必須: TLS 1.1以下の接続を拒否することを確認"
+
+      - section: "7.1-3"
+        requirement: "A TLS server certificate check shall be performed, as per RFC6125"
+        rationale: "Certificate verification prevents man-in-the-middle attacks"
+        test_implication: "必須: TLSサーバー証明書の検証がRFC6125に従って実施されることを確認"
+
+    should: []
+    must_not: []
+    shall_not: []
+    optional: []
+
+  security_native_apps:
+    must_shall:
+      - section: "7.5-1"
+        requirement: "shall follow the recommendations for OAuth 2.0 for Native Apps in BCP212"
+        rationale: "Native apps have unique security considerations addressed by BCP212"
+        test_implication: "必須: ネイティブアプリがBCP212の推奨事項に従っていることを確認"
+
+    should: []
+    must_not: []
+    shall_not:
+      - section: "7.5-2"
+        requirement: "authorization servers shall not support Private-Use URI Scheme Redirection"
+        rationale: "Private-Use URI schemes can be intercepted by malicious apps"
+        test_implication: "必須: カスタムURIスキーム（例: myapp://）のリダイレクトが拒否されることを確認"
+
+      - section: "7.5-3"
+        requirement: "authorization servers shall not support Loopback Interface Redirection"
+        rationale: "Loopback redirection is vulnerable to port-based interception"
+        test_implication: "必須: ループバック（http://127.0.0.1:port）リダイレクトが拒否されることを確認"
+
+    optional: []
+
+  discovery:
+    must_shall:
+      - section: "7.7-1"
+        requirement: "clients shall only use metadata values obtained via metadata documents as defined in OIDD or RFC8414"
+        rationale: "Ensures metadata integrity through verified discovery mechanisms"
+        test_implication: "必須: クライアントがOIDD/RFC8414のディスカバリードキュメントからのみメタデータを取得していることを確認"
+
+    should: []
+    must_not: []
+    shall_not: []
+    optional: []
+
+key_findings:
+  critical_must_requirements:
+    - "PKCE with S256 is mandatory for all clients (RFC7636)"
+    - "Client authentication must use mTLS, client_secret_jwt, or private_key_jwt (no basic/post)"
+    - "Redirect URIs must be pre-registered, required in requests, and exactly matched"
+    - "Redirect URIs must use https scheme"
+    - "Authorization codes must be single-use (reject if previously used)"
+    - "RSA keys must be 2048 bits or larger"
+    - "Elliptic curve keys must be 160 bits or larger"
+    - "TLS 1.2 or later is mandatory for all communications"
+    - "Access tokens must not be accepted in query parameters by resource servers"
+    - "Nonce is required when openid scope is requested"
+    - "State is required when openid scope is not requested"
+    - "Discovery metadata must only be distributed via OIDD or RFC8414"
+
+  security_critical:
+    - "Authorization code replay prevention (single-use codes)"
+    - "PKCE S256 prevents authorization code interception"
+    - "Strong client authentication prevents client impersonation"
+    - "Exact redirect URI matching prevents open redirect attacks"
+    - "HTTPS-only redirect URIs prevent credential leakage"
+    - "Access tokens should have lifetime under 10 minutes unless sender-constrained"
+    - "Native apps must not use Private-Use URI schemes or loopback redirection"
+    - "Non-guessable tokens with sufficient entropy prevent token guessing"
+    - "x-fapi-interaction-id must be logged for audit trail"
+    - "Resource servers must not accept tokens in query parameters"
+
+  withdrawn_requirements:
+    - "5.2.3-5: Withdrawn from public client requirements"
+    - "6.2.2-2: Withdrawn from client resource access provisions"
+
+  confidential_client_inherits_public:
+    description: "Section 5.2.4 states 'In addition to the provisions for a public client' - confidential clients must meet ALL public client requirements plus their own additional requirements"
+
+  comparison_with_fapi_2_0:
+    - "FAPI 2.0 removes support for public clients entirely"
+    - "FAPI 2.0 requires PAR (RFC9126) which is not in FAPI 1.0 Baseline"
+    - "FAPI 2.0 requires sender-constrained access tokens (mTLS or DPoP); FAPI 1.0 only recommends short-lived bearer tokens"
+    - "FAPI 2.0 requires iss parameter in authorization response (RFC9207)"
+    - "FAPI 2.0 has stricter authorization code lifetime (60 seconds)"
+    - "FAPI 1.0 Baseline allows client_secret_jwt; FAPI 2.0 only allows mTLS and private_key_jwt"
+
+test_mapping:
+  e2e_tests:
+    must_requirements: "All SHALL/MUST requirements require mandatory positive test cases verifying compliant behavior"
+    should_requirements: "SHOULD requirements require recommended test cases but are not blocking for compliance"
+    security_requirements: "All security-critical requirements require negative test cases verifying rejection of non-compliant requests"
+
+  test_categories:
+    pkce_tests:
+      - "Verify S256 code challenge method is required"
+      - "Reject authorization requests without code_challenge"
+      - "Reject authorization requests with plain code_challenge_method"
+      - "Verify code_verifier is validated at token endpoint"
+
+    client_authentication_tests:
+      - "Verify client_secret_basic is rejected for FAPI clients"
+      - "Verify client_secret_post is rejected for FAPI clients"
+      - "Accept mTLS client authentication"
+      - "Accept private_key_jwt client authentication"
+      - "Accept client_secret_jwt client authentication"
+      - "Reject mismatched client identifiers with invalid_client error"
+
+    redirect_uri_tests:
+      - "Reject authorization request without redirect_uri"
+      - "Reject authorization request with unregistered redirect_uri"
+      - "Reject redirect_uri that does not exactly match registered URI"
+      - "Reject non-https redirect_uri (http:// scheme)"
+      - "Reject Private-Use URI scheme redirect_uri"
+      - "Reject loopback interface redirect_uri"
+
+    authorization_code_tests:
+      - "Reject reused authorization code"
+      - "Verify authorization code has sufficient entropy"
+      - "Verify token response conforms to RFC6749 Section 4.1.4"
+      - "Verify scope is returned when request sent via front channel"
+
+    token_tests:
+      - "Verify access tokens are non-guessable with sufficient entropy"
+      - "Verify access token lifetime (should be under 10 minutes for bearer tokens)"
+
+    openid_scope_tests:
+      - "Require nonce when openid scope is requested"
+      - "Issue ID Token with correct sub when openid scope is requested"
+      - "Require state when openid scope is not requested"
+      - "Verify ID Token issued in token response per OIDC Section 3.1.3.3"
+
+    key_size_tests:
+      - "Reject RSA keys smaller than 2048 bits"
+      - "Reject EC keys smaller than 160 bits"
+      - "Verify client secret has minimum 128 bits for symmetric keys"
+
+    resource_server_tests:
+      - "Accept access token in Authorization header"
+      - "Reject access token in query parameters"
+      - "Verify expired token is rejected"
+      - "Verify revoked token is rejected"
+      - "Verify scope enforcement for resource access"
+      - "Verify x-fapi-interaction-id header is returned"
+      - "Verify x-fapi-interaction-id is logged"
+      - "Verify response includes Content-Type application/json"
+      - "Verify response includes Date header"
+      - "Verify UTF-8 encoding"
+      - "Accept requests with valid x-fapi-customer-ip-address"
+
+    tls_tests:
+      - "Verify TLS 1.2 or later is required"
+      - "Verify TLS certificate validation per RFC6125"
+      - "Reject connections with TLS versions below 1.2"
+
+    native_app_tests:
+      - "Reject Private-Use URI scheme redirects"
+      - "Reject loopback interface redirects"
+      - "Verify only claimed https scheme URI redirection is supported"
+
+    discovery_tests:
+      - "Verify OIDC Discovery (OIDD) is supported"
+      - "Verify metadata is only served via discovery endpoints"
+
+gap_analysis_template:
+  requirement_id: "5.2.2-7"
+  requirement: "shall require RFC7636 with S256 as the code challenge method"
+  status:
+    - "implemented"
+    - "partial"
+    - "not_implemented"
+    - "not_applicable"
+  implementation_notes: ""
+  test_coverage: ""
+  priority: "P0"
+  effort_estimate: ""
+  blockers: ""
+
+related_specifications:
+  - name: "RFC6749"
+    description: "OAuth 2.0 Authorization Framework"
+    url: "https://www.rfc-editor.org/rfc/rfc6749.html"
+
+  - name: "RFC6750"
+    description: "OAuth 2.0 Bearer Token Usage"
+    url: "https://www.rfc-editor.org/rfc/rfc6750.html"
+
+  - name: "RFC7636"
+    description: "Proof Key for Code Exchange by OAuth Public Clients (PKCE)"
+    url: "https://www.rfc-editor.org/rfc/rfc7636.html"
+
+  - name: "RFC8705"
+    description: "OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens"
+    url: "https://www.rfc-editor.org/rfc/rfc8705.html"
+
+  - name: "RFC6125"
+    description: "Representation and Verification of Domain-Based Application Service Identity within Internet Public Key Infrastructure"
+    url: "https://www.rfc-editor.org/rfc/rfc6125.html"
+
+  - name: "RFC8414"
+    description: "OAuth 2.0 Authorization Server Metadata"
+    url: "https://www.rfc-editor.org/rfc/rfc8414.html"
+
+  - name: "BCP212"
+    description: "OAuth 2.0 for Native Apps"
+    url: "https://www.rfc-editor.org/info/bcp212"
+
+  - name: "OpenID Connect Core 1.0"
+    description: "OpenID Connect Core 1.0"
+    url: "https://openid.net/specs/openid-connect-core-1_0.html"
+
+  - name: "OpenID Connect Discovery 1.0"
+    description: "OpenID Connect Discovery 1.0"
+    url: "https://openid.net/specs/openid-connect-discovery-1_0.html"
+
+  - name: "FAPI 1.0 Part 2: Advanced"
+    description: "Financial-grade API Security Profile 1.0 - Part 2: Advanced"
+    url: "https://openid.net/specs/openid-financial-api-part-2-1_0.html"
+
+notes:
+  - "FAPI 1.0 Baseline Security Profile is designed for read-only financial API access"
+  - "For read-write access, FAPI 1.0 Part 2: Advanced provides additional protections"
+  - "All SHALL requirements are mandatory for FAPI 1.0 Baseline compliance"
+  - "SHOULD requirements are strongly recommended and deviations should be documented"
+  - "This profile supports both confidential and public clients"
+  - "Confidential clients inherit all public client requirements plus additional ones"
+  - "Requirements 5.2.3-5 and 6.2.2-2 have been withdrawn from the specification"
+  - "FAPI 2.0 Security Profile supersedes this specification with stricter requirements"
+
+version_history:
+  - version: "1.1.0"
+    date: "2026-02-14"
+    changes: "Initial extraction from FAPI 1.0 Baseline Security Profile (Part 1)"
