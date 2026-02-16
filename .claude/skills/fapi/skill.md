@@ -21,6 +21,21 @@ FAPIは、金融グレードのセキュリティを実現するOIDC/OAuth 2.0�
 - **FAPI CIBA Profile**: CIBAとFAPIの組み合わせ
 - **Sender-constrained Access Token**: mTLSバインディング
 
+## プロファイル適用条件
+
+FAPIプロファイルは**リクエストのスコープ**と**テナントの`extension`設定**で自動決定される。
+
+| 優先度 | 条件 | プロファイル |
+|--------|------|-------------|
+| 1 | テナント`extension.fapi_advance_scopes`に該当するスコープあり | FAPI_ADVANCE |
+| 2 | テナント`extension.fapi_baseline_scopes`に該当するスコープあり | FAPI_BASELINE |
+| 3 | `openid`スコープを含む | OIDC |
+| 4 | 上記以外 | OAUTH2 |
+
+CIBAフローではbaseline/advanceどちらのスコープでも `FAPI_CIBA` になる。
+
+**詳細**: `content_06_developer-guide/03-application-plane/02-01-authorization-request-verification.md` セクション2.3〜3（プロファイル決定、検証チェーン、エラーハンドリング）
+
 ## モジュール構成
 
 ```
