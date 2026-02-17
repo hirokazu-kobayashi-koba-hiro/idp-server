@@ -1514,6 +1514,73 @@ fapi_ciba:
     e2e_test_needed: false
     e2e_test_description: "OIDF適合性テストで検証"
 
+  - id: "GAP-025"
+    title: "PAR - private_key_jwtでclient_idパラメータ省略時にclient_id解決ができない"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "RFC 7521 Section 4.2, RFC 7523 Section 3, RFC 9126 Section 2.1"
+    requirement: |
+      RFC 7521 Section 4.2: JWT-basedクライアント認証使用時、client_idパラメータはOPTIONAL。
+      client_assertion JWTのissクレームからクライアントを識別できる。
+      RFC 9126 Section 2.1: PARエンドポイントはトークンエンドポイントと同じクライアント認証規則を適用。
+    current_behavior: |
+      OAuthRequestHandlerがOAuthRequestParameters（生パラメータ）のclient_idのみ参照。
+      OAuthRequestValidatorが生パラメータのclient_id存在を検証し、client_assertionからの
+      フォールバック解決が行われない。private_key_jwtでclient_id省略時に400エラー。
+    expected_behavior: |
+      CIBAパターンと同様に、OAuthPushedRequestのclient_id()メソッド（3段フォールバック:
+      明示パラメータ → Basic Auth → client_assertion JWT iss）を使用してclient_idを解決する。
+    conformance_test_result: "FAILURE - fapi1-advanced-final (pushed, private_key_jwt variant) - CheckPAREndpointResponse201WithNoError"
+    fix_status: "FIXED"
+    fix_description: |
+      OAuthPushedRequestにhasClientId()追加。OAuthPushedRequestValidatorを
+      OAuthPushedRequestを受け取る形にリファクタリングし、CibaNormalRequestValidatorと
+      同じパターンに統一。client_id解決（フォールバック付き）+ 重複チェック +
+      authorization_details + request_uri禁止を一括バリデーション。
+      OAuthRequestHandlerのhandlePushedRequestを簡潔化。
+    affected_files:
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/io/OAuthPushedRequest.java"
+        action: "modified"
+        detail: "hasClientId()追加"
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/validator/OAuthPushedRequestValidator.java"
+        action: "modified"
+        detail: "OAuthPushedRequest受け取り、全PAR固有バリデーションを統合"
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/handler/OAuthRequestHandler.java"
+        action: "modified"
+        detail: "handlePushedRequestでOAuthPushedRequestValidatorに一本化、resolvedClientId使用"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テストで検証"
+
+  - id: "GAP-026"
+    title: "private_key_jwt - client_assertion audクレームでPARエンドポイントURLが未検証"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "RFC 9126 Section 2.1, RFC 7523 Section 3, RFC 8705 Section 5"
+    requirement: |
+      RFC 7523 Section 3: audクレームには認可サーバーを特定する値を含めなければならない。
+      RFC 9126 Section 2.1: PARエンドポイントはトークンエンドポイントと同じクライアント認証規則を適用。
+      PARエンドポイントURLは認可サーバーの一部であり、client_assertionのaud値として妥当。
+    current_behavior: |
+      ClientAuthenticationJwtValidatable.throwExceptionIfInvalidAudがissuer,
+      tokenEndpoint, backchannelAuthenticationEndpoint、およびそのmTLSエイリアスのみ検証。
+      PARエンドポイントURL（pushed_authorization_request_endpoint）が未検証。
+    expected_behavior: |
+      pushed_authorization_request_endpointおよびそのmTLSエイリアスも
+      有効なaud値として受け入れる。
+    conformance_test_result: "FAILURE - fapi1-advanced-final-par-test-pushed-authorization-url-as-audience-for-client-JWT-assertion"
+    fix_status: "FIXED"
+    fix_description: |
+      ClientAuthenticationJwtValidatable.throwExceptionIfInvalidAudに
+      pushedAuthorizationRequestEndpointとそのmTLSエイリアスのチェックを追加。
+    affected_files:
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/clientauthenticator/ClientAuthenticationJwtValidatable.java"
+        action: "modified"
+        detail: "throwExceptionIfInvalidAudにPARエンドポイントURLとmTLSエイリアスのチェックを追加"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テストで検証"
+
   - id: "GAP-012"
     title: "PAR - request_uriのワンタイム無効化タイミングの確認"
     priority: "P3"

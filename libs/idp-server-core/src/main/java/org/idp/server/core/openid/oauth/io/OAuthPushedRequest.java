@@ -99,6 +99,10 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
     return new RequestedClientId();
   }
 
+  public boolean hasClientId() {
+    return clientId().exists();
+  }
+
   public ClientSecretBasic clientSecretBasic() {
     if (isBasicAuth(authorizationHeaders)) {
       return new ClientSecretBasic(convertBasicAuth(authorizationHeaders));

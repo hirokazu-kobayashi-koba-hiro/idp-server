@@ -32,6 +32,7 @@ import org.idp.server.core.openid.oauth.io.OAuthPushedRequest;
 import org.idp.server.core.openid.oauth.io.OAuthRequest;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.validator.OAuthPushedRequestValidator;
 import org.idp.server.core.openid.oauth.validator.OAuthRequestValidator;
 import org.idp.server.core.openid.oauth.verifier.OAuthRequestVerifier;
@@ -71,24 +72,30 @@ public class OAuthRequestHandler {
     this.grantedRepository = grantedRepository;
   }
 
+  /**
+   * Handles a pushed authorization request (PAR).
+   *
+   * <p>Per RFC 9126 Section 2.1, the PAR endpoint applies the same client authentication rules as
+   * the token endpoint. Per RFC 7521 Section 4.2, client_id is resolved with fallback: explicit
+   * parameter → Basic Auth → client_assertion JWT iss claim.
+   */
   public OAuthPushedRequestContext handlePushedRequest(OAuthPushedRequest pushedRequest) {
     OAuthRequestParameters requestParameters = pushedRequest.toOAuthRequestParameters();
     Tenant tenant = pushedRequest.tenant();
+    RequestedClientId clientId = pushedRequest.clientId();
 
     log.trace(
         "OAuth pushed request started: client={}, response_type={}",
-        requestParameters.clientId().value(),
+        clientId.value(),
         requestParameters.responseType().value());
-    OAuthRequestValidator validator = new OAuthRequestValidator(tenant, requestParameters);
+
+    OAuthPushedRequestValidator validator = new OAuthPushedRequestValidator(tenant, pushedRequest);
     validator.validate();
-    OAuthPushedRequestValidator pushedRequestValidator =
-        new OAuthPushedRequestValidator(tenant, requestParameters);
-    pushedRequestValidator.validate();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, requestParameters.clientId());
+        clientConfigurationQueryRepository.get(tenant, clientId);
 
     OAuthRequestPattern oAuthRequestPattern = requestParameters.analyzePattern();
     OAuthRequestContextCreator oAuthRequestContextCreator =
@@ -111,7 +118,7 @@ public class OAuthRequestHandler {
 
     log.info(
         "OAuth pushed request completed: client={}, request_uri={}",
-        requestParameters.clientId().value(),
+        clientId.value(),
         context.authorizationRequest().identifier().value());
 
     return oAuthPushedRequestContext;

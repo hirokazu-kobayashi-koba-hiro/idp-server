@@ -108,12 +108,17 @@ public interface ClientAuthenticationJwtValidatable {
    * Validates the aud claim in the client assertion JWT.
    *
    * <p>Per RFC 7523 Section 3, the JWT MUST contain an "aud" claim containing a value that
-   * identifies the authorization server as an intended audience. The token endpoint URL MAY be used
-   * as an audience value.
+   * identifies the authorization server as an intended audience.
    *
-   * <p>Per CIBA Core Section 7.1, to facilitate interoperability, the OP MUST accept its Issuer
-   * Identifier, Token Endpoint URL, or Backchannel Authentication Endpoint URL as values that
-   * identify it as an intended audience.
+   * <p>Accepted audience values:
+   *
+   * <ul>
+   *   <li>Issuer Identifier (RFC 7523 Section 3)
+   *   <li>Token Endpoint URL (RFC 7523 Section 3)
+   *   <li>Backchannel Authentication Endpoint URL (CIBA Core Section 7.1)
+   *   <li>Pushed Authorization Request Endpoint URL (RFC 9126 Section 2.1)
+   *   <li>mTLS endpoint aliases for the above (RFC 8705 Section 5)
+   * </ul>
    *
    * @param joseContext the parsed JWT context
    * @param context the backchannel request context
@@ -139,6 +144,11 @@ public interface ClientAuthenticationJwtValidatable {
     if (aud.contains(serverConfig.backchannelAuthenticationEndpoint())) {
       return;
     }
+    // RFC 9126 Section 2.1: Pushed authorization request endpoint URL
+    if (serverConfig.hasPushedAuthorizationRequestEndpoint()
+        && aud.contains(serverConfig.pushedAuthorizationRequestEndpoint())) {
+      return;
+    }
     // RFC 8705 Section 5: mTLS endpoint aliases
     if (serverConfig.hasMtlsEndpointAliases()) {
       Map<String, String> aliases = serverConfig.mtlsEndpointAliases();
@@ -148,9 +158,12 @@ public interface ClientAuthenticationJwtValidatable {
       if (aud.contains(aliases.get("backchannel_authentication_endpoint"))) {
         return;
       }
+      if (aud.contains(aliases.get("pushed_authorization_request_endpoint"))) {
+        return;
+      }
     }
     throw new ClientUnAuthorizedException(
-        "client assertion is invalid, aud claim must be issuer, tokenEndpoint, or backchannelAuthenticationEndpoint");
+        "client assertion is invalid, aud claim must identify the authorization server (issuer, token_endpoint, backchannel_authentication_endpoint, or pushed_authorization_request_endpoint)");
   }
 
   default void throwExceptionIfInvalidJti(
