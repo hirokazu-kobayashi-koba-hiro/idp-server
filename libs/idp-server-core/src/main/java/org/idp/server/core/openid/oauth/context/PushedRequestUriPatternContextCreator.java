@@ -44,7 +44,8 @@ public class PushedRequestUriPatternContextCreator implements OAuthRequestContex
       Tenant tenant,
       OAuthRequestParameters parameters,
       AuthorizationServerConfiguration authorizationServerConfiguration,
-      ClientConfiguration clientConfiguration) {
+      ClientConfiguration clientConfiguration,
+      boolean isPushed) {
 
     OAuthRequestPattern pattern = OAuthRequestPattern.PUSHED_REQUEST_URI;
     RequestUri requestUri = parameters.requestUri();

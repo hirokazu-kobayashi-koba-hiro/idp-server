@@ -35,6 +35,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   String jwksUri;
   String registrationEndpoint = "";
   String endSessionEndpoint = "";
+  String pushedAuthorizationRequestEndpoint = "";
   List<String> scopesSupported = new ArrayList<>();
   List<String> responseTypesSupported = new ArrayList<>();
   List<String> responseModesSupported = new ArrayList<>();
@@ -386,6 +387,15 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return Objects.nonNull(endSessionEndpoint) && !endSessionEndpoint.isEmpty();
   }
 
+  public String pushedAuthorizationRequestEndpoint() {
+    return pushedAuthorizationRequestEndpoint;
+  }
+
+  public boolean hasPushedAuthorizationRequestEndpoint() {
+    return Objects.nonNull(pushedAuthorizationRequestEndpoint)
+        && !pushedAuthorizationRequestEndpoint.isEmpty();
+  }
+
   public boolean isSupportedResponseType(ResponseType responseType) {
     return responseTypesSupported.contains(responseType.value());
   }
@@ -599,6 +609,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return extension.oauthAuthorizationRequestExpiresIn();
   }
 
+  public int pushedAuthorizationRequestExpiresIn() {
+    return extension.pushedAuthorizationRequestExpiresIn();
+  }
+
   public boolean enabledCustomClaimsScopeMapping() {
     return extension.enabledCustomClaimsScopeMapping();
   }
@@ -742,11 +756,23 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     map.put("request_parameter_supported", requestParameterSupported);
     map.put("request_uri_parameter_supported", requestUriParameterSupported);
     map.put("require_request_uri_registration", requireRequestUriRegistration);
+    if (hasPushedAuthorizationRequestEndpoint()) {
+      map.put("pushed_authorization_request_endpoint", pushedAuthorizationRequestEndpoint);
+    }
+    if (hasCodeChallengeMethodsSupported()) {
+      map.put("code_challenge_methods_supported", codeChallengeMethodsSupported);
+    }
+    map.put("require_signed_request_object", requireSignedRequestObject);
+    map.put(
+        "authorization_response_iss_parameter_supported",
+        authorizationResponseIssParameterSupported);
+    if (hasAuthorizationSigningAlgValuesSupported()) {
+      map.put("authorization_signing_alg_values_supported", authorizationSigningAlgValuesSupported);
+    }
     map.put("tls_client_certificate_bound_access_tokens", tlsClientCertificateBoundAccessTokens);
     if (hasMtlsEndpointAliases()) {
       map.put("mtls_endpoint_aliases", mtlsEndpointAliases);
     }
-
     if (hasBackchannelTokenDeliveryModesSupported()) {
       map.put("backchannel_token_delivery_modes_supported", backchannelTokenDeliveryModesSupported);
     }

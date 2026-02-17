@@ -6,7 +6,7 @@
   },
   "client": {
     "client_id": "f6a7b8c9-d0e1-f2a3-b4c5-d6e7f8a9b0c1",
-    "scope": "openid write",
+    "scope": "openid write identity_verification_application",
     "jwks": {
       "keys": [
         {

@@ -281,6 +281,27 @@ key_findings:
       - "Server processes authorization as normal"
 
   integration_with_other_specs:
+    fapi_1_0_advanced:
+      description: "FAPI 1.0 Advanced Final requires signed Request Object (Section 5.2.2 clause 1)"
+      par_flow:
+        - "PAR endpoint accepts plain parameters or Request Object JWT"
+        - "All FAPI Advanced validations (signature, exp, nbf, aud) are performed at PAR endpoint"
+        - "AuthorizationRequest is stored after validation"
+        - "Authorization endpoint receives request_uri (PUSHED_REQUEST_URI pattern)"
+        - "PushedRequestUriPatternContextCreator restores stored parameters with empty JoseContext"
+        - "FapiAdvanceVerifier skips Request Object JWT claim validations for PAR-based requests"
+      skipped_at_authorization_endpoint:
+        - "Request Object signature verification (isUnsignedRequestObject)"
+        - "exp claim validation"
+        - "nbf claim validation"
+        - "aud claim validation"
+      retained_at_authorization_endpoint:
+        - "JARM configuration check"
+        - "response_type / response_mode validation"
+        - "sender-constrained access token validation"
+        - "client authentication method validation"
+        - "public client rejection"
+      gap_analysis_ref: "GAP-011 in fapi-1.0-gap-analysis.yaml"
     fapi_2_0:
       - "FAPI 2.0 requires PAR (Section 5.3.2.2.2)"
       - "FAPI 2.0 mandates client authentication on PAR (Section 5.3.2.2.4)"
@@ -449,7 +470,145 @@ implementation_considerations:
     - "Validate Request Object client_id matches authenticated client"
     - "Reject request_uri parameter in PAR requests (no nesting)"
 
+implementation_gap_analysis:
+  analysis_date: "2026-02-16"
+  description: "RFC 9126要件ごとの実装状況"
+
+  par_endpoint:
+    must_shall:
+      - section: "2"
+        requirement: "PAR endpoint MUST use HTTPS scheme"
+        status: "implemented"
+        implementation: "nginx SSL configuration (ssl_protocols TLSv1.2 TLSv1.3)"
+
+      - section: "2"
+        requirement: "Client authentication same as token endpoint"
+        status: "implemented"
+        implementation: "OAuthRequestHandler.handlePushedRequest() uses same authenticator pipeline"
+
+      - section: "2"
+        requirement: "Accept issuer identifier, token endpoint URL, or PAR endpoint URL as JWT audience"
+        status: "implemented"
+        implementation: "PrivateKeyJwtAuthenticator audience validation"
+
+      - section: "2.1"
+        requirement: "Reject request_uri parameter in PAR request"
+        status: "implemented"
+        implementation: "PAR request validation rejects nested request_uri"
+
+      - section: "2.1"
+        requirement: "Validate pushed request like authorization request"
+        status: "implemented"
+        implementation: "verifier.verify(context) in OAuthRequestHandler.handlePushedRequest()"
+
+      - section: "2.2"
+        requirement: "Return HTTP 201 with request_uri on success"
+        status: "implemented"
+        implementation: "OAuthPushedRequestStatus.CREATED(201) - GAP-010 FIXED"
+        gap_ref: "GAP-010"
+
+      - section: "2.2"
+        requirement: "request_uri contains cryptographically strong random component"
+        status: "implemented"
+        implementation: "UUID-based generation (urn:ietf:params:oauth:request_uri:{uuid})"
+
+      - section: "2.2"
+        requirement: "request_uri bound to posting client"
+        status: "implemented"
+        implementation: "PushedAuthorizationRequest stores client_id binding"
+
+      - section: "2.3"
+        requirement: "Non-POST method returns HTTP 405"
+        status: "implemented"
+        implementation: "Spring Boot @PostMapping enforces POST only"
+
+      - section: "2.3"
+        requirement: "Error response format same as token endpoint"
+        status: "implemented"
+        implementation: "JSON {error, error_description} format"
+
+      - section: "2.3"
+        requirement: "Rate limiting with HTTP 429"
+        status: "not_implemented"
+        gap_ref: "GAP-014"
+        note: "P2 priority - can be handled at nginx level as interim"
+
+      - section: "3"
+        requirement: "Request Object client_id must match authenticated client_id"
+        status: "implemented"
+        implementation: "Request Object client_id validation in PAR flow"
+
+      - section: "7.2"
+        requirement: "New redirect_uri only from authenticated clients"
+        status: "implemented"
+        implementation: "PAR always requires client authentication"
+
+  authorization_endpoint:
+    must_shall:
+      - section: "4"
+        requirement: "Validate PAR-based requests like normal authorization requests"
+        status: "implemented"
+        implementation: "FapiAdvanceVerifier PAR support (response_type, sender-constrained, client auth) - GAP-011 FIXED"
+        gap_ref: "GAP-011"
+
+      - section: "4"
+        requirement: "Reject expired request_uri"
+        status: "implemented"
+        implementation: "ExpiresAt in PushedAuthorizationRequest"
+
+    should:
+      - section: "4"
+        requirement: "request_uri one-time use (server side)"
+        status: "mostly_compliant"
+        gap_ref: "GAP-012"
+        note: |
+          Deleted at token exchange. Not invalidated at authorization endpoint access (correct behavior).
+          OIDF conformance test expects request_uri to remain valid until authorization completion,
+          not at initial authorization endpoint visit.
+
+      - section: "7.4"
+        requirement: "Re-validate client policy at authorization endpoint"
+        status: "partial"
+        gap_ref: "GAP-013"
+        note: "Basic validation performed, but policy change detection between PAR and auth is weak"
+
+    optional:
+      - section: "4"
+        requirement: "PAR-only mode (require_pushed_authorization_requests)"
+        status: "not_implemented"
+        gap_ref: "GAP-015"
+        note: "P3 priority - optional feature"
+
+  metadata:
+    optional:
+      - section: "5"
+        requirement: "pushed_authorization_request_endpoint in server metadata"
+        status: "implemented"
+        implementation: "Discovery endpoint includes pushed_authorization_request_endpoint"
+
+      - section: "5"
+        requirement: "require_pushed_authorization_requests server metadata"
+        status: "not_implemented"
+        gap_ref: "GAP-015"
+
+      - section: "6"
+        requirement: "require_pushed_authorization_requests client metadata"
+        status: "not_implemented"
+        gap_ref: "GAP-015"
+
+  statistics:
+    total_requirements_analyzed: 19
+    implemented: 14
+    partial: 2
+    not_implemented: 3
+    implementation_rate: "73.7%"
+    must_shall_compliance_note: "MUST/SHALL要件はGAP-014(HTTP 429)を除きすべて実装済み"
+
 version_history:
+  - version: "1.1.0"
+    date: "2026-02-16"
+    changes: "Added implementation_gap_analysis section with per-requirement status"
+
   - version: "1.0.0"
     date: "2026-01-29"
     changes: "Initial extraction from RFC 9126"

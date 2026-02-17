@@ -41,7 +41,8 @@ public interface AuthorizationRequestFactory {
       JoseContext joseContext,
       Set<String> filteredScopes,
       AuthorizationServerConfiguration authorizationServerConfiguration,
-      ClientConfiguration clientConfiguration);
+      ClientConfiguration clientConfiguration,
+      boolean isPushed);
 
   default AuthorizationRequestIdentifier createIdentifier() {
     return new AuthorizationRequestIdentifier(UUID.randomUUID().toString());

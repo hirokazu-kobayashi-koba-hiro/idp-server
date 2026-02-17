@@ -33,12 +33,39 @@ public interface RequestObjectVerifyable {
       throws RequestObjectInvalidException {
     throwExceptionIfSymmetricKey(
         joseContext, authorizationServerConfiguration, clientConfiguration);
+    throwExceptionIfContainsRequestOrRequestUri(
+        joseContext, authorizationServerConfiguration, clientConfiguration);
     throwExceptionIfInvalidIss(joseContext, authorizationServerConfiguration, clientConfiguration);
     throwExceptionIfInvalidAud(joseContext, authorizationServerConfiguration, clientConfiguration);
     throwExceptionIfInvalidJti(joseContext, authorizationServerConfiguration, clientConfiguration);
     throwExceptionIfInvalidExp(joseContext, authorizationServerConfiguration, clientConfiguration);
     throwExceptionIfMissingScopeWhenRequired(
         joseContext, authorizationServerConfiguration, clientConfiguration);
+  }
+
+  /**
+   * JAR (RFC 9101) Section 6.2:
+   *
+   * <p>"request and request_uri parameters MUST NOT be included in Request Objects."
+   *
+   * <p>Including these parameters inside the Request Object JWT is circular and invalid.
+   */
+  default void throwExceptionIfContainsRequestOrRequestUri(
+      JoseContext joseContext,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration)
+      throws RequestObjectInvalidException {
+    JsonWebTokenClaims claims = joseContext.claims();
+    if (claims.getValue("request") != null && !claims.getValue("request").isEmpty()) {
+      throw new RequestObjectInvalidException(
+          "invalid_request_object",
+          "request object must not contain request parameter (JAR Section 6.2)");
+    }
+    if (claims.getValue("request_uri") != null && !claims.getValue("request_uri").isEmpty()) {
+      throw new RequestObjectInvalidException(
+          "invalid_request_object",
+          "request object must not contain request_uri parameter (JAR Section 6.2)");
+    }
   }
 
   default void throwExceptionIfSymmetricKey(

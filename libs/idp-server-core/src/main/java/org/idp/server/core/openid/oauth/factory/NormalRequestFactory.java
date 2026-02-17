@@ -42,7 +42,8 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
       JoseContext joseContext,
       Set<String> filteredScopes,
       AuthorizationServerConfiguration authorizationServerConfiguration,
-      ClientConfiguration clientConfiguration) {
+      ClientConfiguration clientConfiguration,
+      boolean isPushed) {
 
     AuthorizationRequestBuilder builder = new AuthorizationRequestBuilder();
     builder.add(createIdentifier());
@@ -75,13 +76,12 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
     builder.add(parameters.codeChallengeMethod());
     builder.add(convertAuthorizationDetails(parameters.authorizationDetailsValue()));
     builder.add(parameters.customParams());
-    builder.add(
-        new ExpiresIn(authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn()));
-    builder.add(
-        new ExpiresAt(
-            SystemDateTime.now()
-                .plusSeconds(
-                    authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn())));
+    int expiresIn =
+        isPushed
+            ? authorizationServerConfiguration.pushedAuthorizationRequestExpiresIn()
+            : authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn();
+    builder.add(new ExpiresIn(expiresIn));
+    builder.add(new ExpiresAt(SystemDateTime.now().plusSeconds(expiresIn)));
     return builder.build();
   }
 }

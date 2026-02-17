@@ -18,6 +18,7 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.comma
 
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.AuthorizationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -44,5 +45,10 @@ public class AuthenticationTransactionCommandDataSource
   @Override
   public void delete(Tenant tenant, AuthenticationTransactionIdentifier identifier) {
     executor.delete(tenant, identifier);
+  }
+
+  @Override
+  public void deleteByAuthorizationIdentifier(Tenant tenant, AuthorizationIdentifier identifier) {
+    executor.deleteByAuthorizationIdentifier(tenant, identifier);
   }
 }

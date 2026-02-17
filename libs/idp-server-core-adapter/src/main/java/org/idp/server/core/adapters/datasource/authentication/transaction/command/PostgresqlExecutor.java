@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
+import org.idp.server.core.openid.authentication.AuthorizationIdentifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.platform.datasource.SqlExecutor;
@@ -184,6 +185,24 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
         """
         DELETE FROM authentication_transaction
         WHERE id = ?::uuid
+        AND tenant_id = ?::uuid
+    """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void deleteByAuthorizationIdentifier(Tenant tenant, AuthorizationIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+        DELETE FROM authentication_transaction
+        WHERE authorization_id = ?::uuid
         AND tenant_id = ?::uuid
     """;
 

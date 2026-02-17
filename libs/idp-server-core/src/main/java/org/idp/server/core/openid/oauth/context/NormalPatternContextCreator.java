@@ -38,7 +38,8 @@ public class NormalPatternContextCreator implements OAuthRequestContextCreator {
       Tenant tenant,
       OAuthRequestParameters parameters,
       AuthorizationServerConfiguration authorizationServerConfiguration,
-      ClientConfiguration clientConfiguration) {
+      ClientConfiguration clientConfiguration,
+      boolean isPushed) {
 
     JoseContext joseContext = new JoseContext();
     OAuthRequestPattern pattern = OAuthRequestPattern.NORMAL;
@@ -54,7 +55,8 @@ public class NormalPatternContextCreator implements OAuthRequestContextCreator {
             joseContext,
             filteredScopes,
             authorizationServerConfiguration,
-            clientConfiguration);
+            clientConfiguration,
+            isPushed);
 
     return new OAuthRequestContext(
         tenant,

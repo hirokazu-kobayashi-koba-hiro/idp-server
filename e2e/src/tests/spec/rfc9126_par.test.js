@@ -67,7 +67,7 @@ describe("rfc9126 OAuth 2.0 Pushed Authorization Requests", () => {
     });
 
     console.log(parResponse.data);
-    expect(parResponse.status).toBe(200);
+    expect(parResponse.status).toBe(201);
 
     const { request_uri } = parResponse.data;
 
@@ -180,7 +180,7 @@ describe("rfc9126 OAuth 2.0 Pushed Authorization Requests", () => {
     });
 
     console.log(parResponse.data);
-    expect(parResponse.status).toBe(200);
+    expect(parResponse.status).toBe(201);
 
     const { request_uri } = parResponse.data;
 

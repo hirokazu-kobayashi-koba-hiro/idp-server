@@ -54,13 +54,26 @@ public class AuthorizationCodeGrantPkceVerifier
     log.debug("AuthorizationCodeGrantPkceVerifier verification end");
   }
 
+  /**
+   * RFC 7636 Section 4.6:
+   *
+   * <p>If the server requires Proof Key for Code Exchange (PKCE) and the client does not send the
+   * "code_verifier" in the Token Request, the authorization server MUST return an "invalid_grant"
+   * error.
+   */
   void throwExceptionIfNotContainsCodeVerifier(TokenRequestContext tokenRequestContext) {
     if (!tokenRequestContext.hasCodeVerifier()) {
       throw new TokenBadRequestException(
+          "invalid_grant",
           "authorization request has code_challenge, but token request does not contains code verifier");
     }
   }
 
+  /**
+   * RFC 7636 Section 4.6:
+   *
+   * <p>If the values are not equal, return an "invalid_grant" error response.
+   */
   void throwExceptionIfUnMatchCodeVerifier(
       TokenRequestContext tokenRequestContext, AuthorizationRequest authorizationRequest) {
     if (authorizationRequest.isPkceWithS256()) {
@@ -69,6 +82,7 @@ public class AuthorizationCodeGrantPkceVerifier
       CodeChallenge codeChallenge = codeChallengeCalculator.calculateWithS256();
       if (!codeChallenge.equals(authorizationRequest.codeChallenge())) {
         throw new TokenBadRequestException(
+            "invalid_grant",
             "code_verifier of token request does not match code_challenge of authorization request");
       }
       return;
@@ -78,6 +92,7 @@ public class AuthorizationCodeGrantPkceVerifier
     CodeChallenge codeChallenge = codeChallengeCalculator.calculateWithPlain();
     if (!codeChallenge.equals(authorizationRequest.codeChallenge())) {
       throw new TokenBadRequestException(
+          "invalid_grant",
           "code_verifier of token request does not match code_challenge of authorization request");
     }
   }
@@ -85,14 +100,17 @@ public class AuthorizationCodeGrantPkceVerifier
   void throwExceptionIfInvalidCodeVerifierFormat(TokenRequestContext tokenRequestContext) {
     CodeVerifier codeVerifier = tokenRequestContext.codeVerifier();
     if (codeVerifier.isShorterThan43()) {
-      throw new TokenBadRequestException("code_verifier must be at least 43 characters");
+      throw new TokenBadRequestException(
+          "invalid_grant", "code_verifier must be at least 43 characters");
     }
 
     if (codeVerifier.isLongerThan128()) {
-      throw new TokenBadRequestException("code_verifier must be at most 128 characters");
+      throw new TokenBadRequestException(
+          "invalid_grant", "code_verifier must be at most 128 characters");
     }
     if (!codeVerifier.value().matches("^[A-Za-z0-9\\-._~]+$")) {
-      throw new TokenBadRequestException("code_verifier contains invalid characters");
+      throw new TokenBadRequestException(
+          "invalid_grant", "code_verifier contains invalid characters");
     }
   }
 }

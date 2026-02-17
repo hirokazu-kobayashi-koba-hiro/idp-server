@@ -63,7 +63,9 @@ public class RequestObjectPatternFactory implements AuthorizationRequestObjectFa
       JoseContext joseContext,
       Set<String> filteredScopes,
       AuthorizationServerConfiguration authorizationServerConfiguration,
-      ClientConfiguration clientConfiguration) {
+      ClientConfiguration clientConfiguration,
+      boolean isPushed) {
+
     JsonWebTokenClaims jsonWebTokenClaims = joseContext.claims();
     RequestObjectParameters requestObjectParameters =
         new RequestObjectParameters(jsonWebTokenClaims.payload());
@@ -166,13 +168,12 @@ public class RequestObjectPatternFactory implements AuthorizationRequestObjectFa
     builder.add(codeChallengeMethod);
     builder.add(convertAuthorizationDetails(authorizationDetailsEntity));
     builder.add(parameters.customParams());
-    builder.add(
-        new ExpiresIn(authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn()));
-    builder.add(
-        new ExpiresAt(
-            SystemDateTime.now()
-                .plusSeconds(
-                    authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn())));
+    int expiresIn =
+        isPushed
+            ? authorizationServerConfiguration.pushedAuthorizationRequestExpiresIn()
+            : authorizationServerConfiguration.oauthAuthorizationRequestExpiresIn();
+    builder.add(new ExpiresIn(expiresIn));
+    builder.add(new ExpiresAt(SystemDateTime.now().plusSeconds(expiresIn)));
     return builder.build();
   }
 }
