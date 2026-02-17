@@ -65,6 +65,21 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
     return new OAuthRequestParameters(params);
   }
 
+  /**
+   * Extracts the client_id from the request.
+   *
+   * <p>Per RFC 7521 Section 4.2, when using JWT-based client authentication (private_key_jwt or
+   * client_secret_jwt), the client_id parameter is OPTIONAL because the client can be identified by
+   * the issuer (iss) claim within the client_assertion JWT.
+   *
+   * <p>The extraction follows this priority order:
+   *
+   * <ol>
+   *   <li>Explicit client_id parameter in request body
+   *   <li>HTTP Basic Authentication header (username)
+   *   <li>Issuer (iss) claim from client_assertion JWT (RFC 7523)
+   * </ol>
+   */
   public RequestedClientId clientId() {
     OAuthPushedRequestParameters parameters = toBackchannelParameters();
     if (parameters.hasClientId()) {
@@ -73,6 +88,13 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
     if (isBasicAuth(authorizationHeaders)) {
       BasicAuth basicAuth = convertBasicAuth(authorizationHeaders);
       return new RequestedClientId(basicAuth.username());
+    }
+    // RFC 7521/7523: Extract client_id from client_assertion JWT's iss claim
+    if (parameters.hasClientAssertion()) {
+      String issuer = parameters.clientAssertion().extractIssuer();
+      if (!issuer.isEmpty()) {
+        return new RequestedClientId(issuer);
+      }
     }
     return new RequestedClientId();
   }
