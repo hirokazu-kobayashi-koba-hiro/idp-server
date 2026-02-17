@@ -81,6 +81,7 @@ import org.idp.server.platform.jose.JsonWebTokenClaims;
  *   <li>5.2.2-15: request object aud validation
  *   <li>5.2.2-16: public clients prohibited
  *   <li>5.2.2-17: request object nbf not older than 60 minutes
+ *   <li>8.6: signing algorithm restrictions (PS256/ES256 only)
  * </ul>
  *
  * @see <a
@@ -89,6 +90,8 @@ import org.idp.server.platform.jose.JsonWebTokenClaims;
  * @see FapiBaselineVerifier
  */
 public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
+
+  private static final long SIXTY_MINUTES_IN_MILLIS = 60 * 60 * 1000L;
 
   OAuthRequestBaseVerifier oAuthRequestBaseVerifier = new OAuthRequestBaseVerifier();
   OidcRequestBaseVerifier oidcRequestBaseVerifier = new OidcRequestBaseVerifier();
@@ -153,6 +156,10 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     // --- Advanced-specific requirements ---
     // 5.2.2-1: signed JWT request object required
     throwExceptionIfNotRequestParameterPattern(context);
+    // 8.6: signing algorithm restrictions (PS256/ES256 only, skipped for PAR)
+    if (!context.isPushedRequest()) {
+      throwExceptionIfInvalidSigningAlgorithm(context);
+    }
     // 5.2.2-2: response_type restriction (code id_token or code+jwt)
     throwExceptionIfInvalidResponseTypeAndResponseMode(context);
     // 5.2.2-5/6: sender-constrained access tokens via mTLS
@@ -288,7 +295,7 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     }
     Date exp = claims.getExp();
     Date nbf = claims.getNbf();
-    if (exp.getTime() - nbf.getTime() > 3600001) {
+    if (exp.getTime() - nbf.getTime() > SIXTY_MINUTES_IN_MILLIS) {
       throw new OAuthRedirectableBadRequestException(
           "invalid_request_object",
           "When FAPI Advance profile, shall require the request object to contain an exp claim that has a lifetime of no longer than 60 minutes after the nbf claim",
@@ -436,6 +443,28 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
   }
 
   /**
+   * FAPI 1.0 Advanced Section 8.6: Algorithm restrictions for JWS.
+   *
+   * <p>shall use PS256 or ES256 algorithms; shall not use algorithms that use RSASSA-PKCS1-v1_5
+   * (e.g. RS256); shall not use none.
+   */
+  void throwExceptionIfInvalidSigningAlgorithm(OAuthRequestContext context) {
+    JoseContext joseContext = context.joseContext();
+    if (!joseContext.hasJsonWebSignature()) {
+      return;
+    }
+    String algorithm = joseContext.jsonWebSignature().algorithm();
+    if (!"PS256".equals(algorithm) && !"ES256".equals(algorithm)) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request_object",
+          String.format(
+              "When FAPI Advance profile, request object signing algorithm must be PS256 or ES256 (Section 8.6). Current algorithm: %s",
+              algorithm),
+          context);
+    }
+  }
+
+  /**
    * shall require the request object to contain an nbf claim that is no longer than 60 minutes in
    * the past; and
    */
@@ -450,7 +479,7 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     }
     Date now = new Date();
     Date nbf = claims.getNbf();
-    if (now.getTime() - nbf.getTime() > 3600001) {
+    if (now.getTime() - nbf.getTime() > SIXTY_MINUTES_IN_MILLIS) {
       throw new OAuthRedirectableBadRequestException(
           "invalid_request_object",
           "When FAPI Advance profile, shall require the request object to contain an nbf claim that is no longer than 60 minutes in the past",

@@ -17,6 +17,8 @@
 package org.idp.server.core.openid.oauth.clientauthenticator;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -125,16 +127,27 @@ public interface ClientAuthenticationJwtValidatable {
           "client assertion is invalid, must contains aud claim in jwt payload");
     }
     AuthorizationServerConfiguration serverConfig = context.serverConfiguration();
+    List<String> aud = claims.getAud();
     // RFC 7523 Section 3: Token endpoint URL or issuer identifier
-    if (claims.getAud().contains(serverConfig.tokenIssuer().value())) {
+    if (aud.contains(serverConfig.tokenIssuer().value())) {
       return;
     }
-    if (claims.getAud().contains(serverConfig.tokenEndpoint())) {
+    if (aud.contains(serverConfig.tokenEndpoint())) {
       return;
     }
     // CIBA Core Section 7.1: Backchannel authentication endpoint URL
-    if (claims.getAud().contains(serverConfig.backchannelAuthenticationEndpoint())) {
+    if (aud.contains(serverConfig.backchannelAuthenticationEndpoint())) {
       return;
+    }
+    // RFC 8705 Section 5: mTLS endpoint aliases
+    if (serverConfig.hasMtlsEndpointAliases()) {
+      Map<String, String> aliases = serverConfig.mtlsEndpointAliases();
+      if (aud.contains(aliases.get("token_endpoint"))) {
+        return;
+      }
+      if (aud.contains(aliases.get("backchannel_authentication_endpoint"))) {
+        return;
+      }
     }
     throw new ClientUnAuthorizedException(
         "client assertion is invalid, aud claim must be issuer, tokenEndpoint, or backchannelAuthenticationEndpoint");

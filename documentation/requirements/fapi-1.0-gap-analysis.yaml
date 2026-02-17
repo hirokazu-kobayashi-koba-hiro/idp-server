@@ -1389,6 +1389,131 @@ fapi_ciba:
     e2e_test_needed: false
     e2e_test_description: "OIDF適合性テストで検証"
 
+  - id: "GAP-021"
+    title: "private_key_jwt - client_assertion audクレームでmTLSエンドポイントエイリアスが未検証"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "RFC 7523 Section 3, RFC 8705 Section 5"
+    requirement: |
+      RFC 7523 Section 3: audクレームには認可サーバーを特定する値を含めなければならない。
+      RFC 8705 Section 5: mTLSエンドポイントエイリアスはトークンエンドポイント等の
+      代替URLであり、audクレームの妥当な値として受け入れるべき。
+    current_behavior: |
+      ClientAuthenticationJwtValidatable.throwExceptionIfInvalidAudでissuer,
+      tokenEndpoint, backchannelAuthenticationEndpointのみチェック。
+      mtlsEndpointAliasesのtoken_endpoint, backchannel_authentication_endpointが未検証。
+    expected_behavior: |
+      mtlsEndpointAliasesのtoken_endpoint, backchannel_authentication_endpointも
+      有効なaud値として受け入れる。
+    conformance_test_result: "FAILURE - fapi1-advanced-final (private_key_jwt variant)"
+    fix_status: "FIXED"
+    fix_description: |
+      ClientAuthenticationJwtValidatable.throwExceptionIfInvalidAudに
+      serverConfig.hasMtlsEndpointAliases()チェックを追加。
+      mtlsEndpointAliasesのtoken_endpointとbackchannel_authentication_endpointを
+      有効なaud値として受け入れるよう修正。
+    affected_files:
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/clientauthenticator/ClientAuthenticationJwtValidatable.java"
+        action: "modified"
+        detail: "throwExceptionIfInvalidAudにmTLSエンドポイントエイリアスのチェックを追加"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テストで検証"
+
+  - id: "GAP-022"
+    title: "FAPI Advanced - Request Object署名アルゴリズム制限（PS256/ES256のみ）が未実装"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "FAPI 1.0 Advanced Section 8.6"
+    requirement: |
+      FAPI 1.0 Advanced Section 8.6: shall use PS256 or ES256 algorithms.
+      shall not use algorithms that use RSASSA-PKCS1-v1_5 (e.g. RS256).
+      Request Objectの署名アルゴリズムをPS256/ES256に制限する。
+    current_behavior: |
+      FapiAdvanceVerifierでRequest Objectの署名アルゴリズムチェックがなく、
+      RS256署名のRequest Objectを受け入れていた。
+    expected_behavior: |
+      RS256等のRSASSA-PKCS1-v1_5アルゴリズムを使用したRequest Objectを拒否する。
+    conformance_test_result: "FAILURE - fapi1-advanced-final-ensure-signed-request-object-with-RS256-fails"
+    fix_status: "FIXED"
+    fix_description: |
+      FapiAdvanceVerifierにthrowExceptionIfInvalidSigningAlgorithmを追加。
+      PS256/ES256以外の署名アルゴリズムを拒否。PARリクエスト時はスキップ
+      （PARではサーバー側で署名するため）。
+    affected_files:
+      - path: "libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java"
+        action: "modified"
+        detail: "throwExceptionIfInvalidSigningAlgorithm追加"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テストで検証"
+
+  - id: "GAP-023"
+    title: "FAPI Advanced - トークンエンドポイントでのclient_assertion署名アルゴリズム制限が未実装"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "FAPI 1.0 Advanced Section 8.6"
+    requirement: |
+      FAPI 1.0 Advanced Section 8.6: shall use PS256 or ES256 algorithms.
+      client_assertionのJWS署名アルゴリズムもPS256/ES256に制限する。
+      RSA鍵は2048ビット以上、EC鍵は160ビット以上が必要。
+    current_behavior: |
+      AuthorizationCodeGrantFapiAdvanceVerifierでclient_assertionの
+      署名アルゴリズムチェックがなかった。
+    expected_behavior: |
+      private_key_jwt認証時にclient_assertionの署名アルゴリズムがPS256/ES256でない場合、
+      invalid_clientエラーを返す。鍵サイズの最小要件も検証する。
+    conformance_test_result: "SUCCESS - fapi1-advanced-final-ensure-signed-client-assertion-with-RS256-fails（鍵型不一致で暗黙的に拒否されていたが、明示的検証を追加）"
+    fix_status: "FIXED"
+    fix_description: |
+      AuthorizationCodeGrantFapiAdvanceVerifierに
+      throwExceptionIfInvalidSigningAlgorithmForClientAssertionを追加。
+      アルゴリズムチェック（PS256/ES256のみ）と鍵サイズ検証を実装。
+    affected_files:
+      - path: "libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/AuthorizationCodeGrantFapiAdvanceVerifier.java"
+        action: "modified"
+        detail: "throwExceptionIfInvalidSigningAlgorithmForClientAssertion追加"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テストで検証"
+
+  - id: "GAP-024"
+    title: "リフレッシュトークン - sender-constrainedトークンのproof of possession未検証"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "RFC 8705 Section 4, Section 7.1"
+    requirement: |
+      RFC 8705: certificate-boundアクセストークンをリフレッシュする際、
+      クライアント証明書のproof of possessionが必要。
+      tls_client_auth方式ではクライアント認証で暗黙的に担保されるが、
+      private_key_jwt方式ではクライアント認証にmTLS証明書を使用しないため、
+      明示的な証明書存在検証が必要。
+    current_behavior: |
+      RefreshTokenVerifierはトークン存在、client_id一致、有効期限のみ検証。
+      sender-constrainedトークンのリフレッシュ時に証明書の存在を検証していない。
+      private_key_jwt方式で証明書なしのリフレッシュが成功してしまう。
+    expected_behavior: |
+      元のアクセストークンがsender-constrained（cnf.x5t#S256付き）の場合、
+      リフレッシュリクエストにクライアント証明書が存在しなければinvalid_grantを返す。
+      設定ベースではなくトークン状態ベースで判断する（設定変更後も安全性を担保）。
+    conformance_test_result: "FAILURE - fapi1-advanced-final-refresh-token (private_key_jwt variant) - CheckTokenEndpointHttpStatus400or401"
+    fix_status: "FIXED"
+    fix_description: |
+      RefreshTokenVerifierにthrowExceptionIfSenderConstrainedButNoCertificateを追加。
+      元のAccessToken.isSenderConstrained()をチェックし、証明書が提示されない場合は
+      invalid_grantエラーを返す。設定ではなくトークン状態に基づく判断により、
+      設定変更後もセキュリティを維持する設計。
+    affected_files:
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/verifier/RefreshTokenVerifier.java"
+        action: "modified"
+        detail: "ClientCredentialsパラメータ追加、throwExceptionIfSenderConstrainedButNoCertificate追加"
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/service/RefreshTokenGrantService.java"
+        action: "modified"
+        detail: "RefreshTokenVerifierコンストラクタにclientCredentialsを渡すよう変更"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テストで検証"
+
   - id: "GAP-012"
     title: "PAR - request_uriのワンタイム無効化タイミングの確認"
     priority: "P3"

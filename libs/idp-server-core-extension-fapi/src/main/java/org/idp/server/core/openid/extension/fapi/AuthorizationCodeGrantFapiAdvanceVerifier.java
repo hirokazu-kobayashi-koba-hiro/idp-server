@@ -18,6 +18,8 @@ package org.idp.server.core.openid.extension.fapi;
 
 import org.idp.server.core.openid.grant_management.grant.AuthorizationCodeGrant;
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAssertionJwt;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
@@ -47,6 +49,8 @@ public class AuthorizationCodeGrantFapiAdvanceVerifier
     baseVerifier.verify(tokenRequestContext, authorizationRequest, authorizationCodeGrant);
     throwExceptionIfClientSecretPostOrClientSecretBasicOrClientSecretJwtOrPublicClient(
         tokenRequestContext);
+    throwExceptionIfInvalidSigningAlgorithmForClientAssertion(
+        tokenRequestContext, clientCredentials);
     throwExceptionIfCertificateBoundRequiredButMissing(tokenRequestContext, clientCredentials);
   }
 
@@ -77,6 +81,50 @@ public class AuthorizationCodeGrantFapiAdvanceVerifier
     if (clientAuthenticationType.isNone()) {
       throw new TokenBadRequestException(
           "unauthorized_client", "When FAPI Baseline profile, shall not support public clients");
+    }
+  }
+
+  /**
+   * FAPI 1.0 Advanced Section 8.6: Algorithm restrictions for client assertion JWS.
+   *
+   * <p>shall use PS256 or ES256 algorithms; shall not use algorithms that use RSASSA-PKCS1-v1_5
+   * (e.g. RS256).
+   */
+  void throwExceptionIfInvalidSigningAlgorithmForClientAssertion(
+      TokenRequestContext tokenRequestContext, ClientCredentials clientCredentials) {
+    if (!tokenRequestContext.clientAuthenticationType().isPrivateKeyJwt()) {
+      return;
+    }
+
+    ClientAssertionJwt clientAssertionJwt = clientCredentials.clientAssertionJwt();
+    String algorithm = clientAssertionJwt.algorithm();
+
+    if (!"PS256".equals(algorithm) && !"ES256".equals(algorithm)) {
+      throw new TokenBadRequestException(
+          "invalid_client",
+          String.format(
+              "When FAPI Advance profile, client assertion signing algorithm must be PS256 or ES256 (Section 8.6). Current algorithm: %s",
+              algorithm));
+    }
+
+    ClientAuthenticationPublicKey clientAuthenticationPublicKey =
+        clientCredentials.clientAuthenticationPublicKey();
+    int keySize = clientAuthenticationPublicKey.size();
+
+    if ("PS256".equals(algorithm) && keySize < 2048) {
+      throw new TokenBadRequestException(
+          "invalid_client",
+          String.format(
+              "When FAPI Advance profile, RSA key size must be 2048 bits or larger. Current key size: %d bits",
+              keySize));
+    }
+
+    if ("ES256".equals(algorithm) && keySize < 160) {
+      throw new TokenBadRequestException(
+          "invalid_client",
+          String.format(
+              "When FAPI Advance profile, elliptic curve key size must be 160 bits or larger. Current key size: %d bits",
+              keySize));
     }
   }
 

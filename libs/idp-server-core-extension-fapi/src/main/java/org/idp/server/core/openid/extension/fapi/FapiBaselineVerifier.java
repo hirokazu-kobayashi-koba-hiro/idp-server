@@ -210,7 +210,7 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
     if (!context.authorizationRequest().hasState()) {
       throw new OAuthRedirectableBadRequestException(
           "invalid_request",
-          "When FAPI Baseline profile, shall require the nonce parameter defined in Section 3.1.2.1 of OIDC in the authentication request.",
+          "When FAPI Baseline profile, shall require the state parameter defined in Section 4.1.1 of RFC 6749.",
           context);
     }
   }
