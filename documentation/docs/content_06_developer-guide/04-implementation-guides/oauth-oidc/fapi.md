@@ -718,6 +718,93 @@ if (context.responseType().isCode() && context.responseMode().isJwt()) {
 
 ---
 
+## 📐 仕様階層と要件の継承関係
+
+FAPI仕様は、既存のOAuth 2.0/OIDC仕様の上に追加要件を積み上げる階層構造をとります。
+
+```
+OAuth 2.0 (RFC 6749)
+  └─ OIDC Core 1.0
+       └─ FAPI 1.0 Baseline (Part 1)
+            └─ FAPI 1.0 Advanced (Part 2)
+```
+
+### 要件の継承と置換
+
+FAPI 1.0 Advanced は Baseline の全要件を**継承**し、一部を**置換**します。
+
+| カテゴリ | 要件 | Baseline | Advanced |
+|---------|------|----------|----------|
+| **継承** | redirect_uri 事前登録/必須/完全一致 (5.2.2-8/9/10) | ✅ | ✅ (そのまま継承) |
+| **継承** | redirect_uri https必須 (5.2.2-20) | ✅ | ✅ (そのまま継承) |
+| **継承** | nonce必須 - openidスコープ時 (5.2.2.2) | ✅ | ✅ (そのまま継承) |
+| **継承** | state必須 - 非openidスコープ時 (5.2.2.3) | ✅ | ✅ (そのまま継承) |
+| **置換** | クライアント認証方式 | 5.2.2-4: mTLS/client_secret_jwt/private_key_jwt | 5.2.2-14: mTLS/private_key_jwt のみ |
+| **置換** | PKCE要件 | 5.2.2-7: S256必須 | 5.2.2-18: PAR時S256必須 |
+| **固有** | Request Object必須 (5.2.2-1) | - | ✅ |
+| **固有** | response_type制限 (5.2.2-2) | - | ✅ |
+| **固有** | sender-constrained tokens (5.2.2-5/6) | - | ✅ |
+| **固有** | Request Object exp/nbf/aud (5.2.2-13/15/17) | - | ✅ |
+| **固有** | Public client禁止 (5.2.2-16) | - | ✅ |
+
+### 関連RFC一覧
+
+| RFC/仕様 | 正式名称 | FAPI での役割 |
+|---------|---------|--------------|
+| RFC 6749 | The OAuth 2.0 Authorization Framework | 基盤プロトコル |
+| OIDC Core 1.0 | OpenID Connect Core 1.0 | ID Token、UserInfo |
+| RFC 7523 | JWT Profile for OAuth 2.0 Client Authentication | private_key_jwt認証 |
+| RFC 7636 | Proof Key for Code Exchange (PKCE) | PKCE S256 |
+| RFC 8705 | OAuth 2.0 Mutual-TLS | mTLS認証、Certificate-Bound Token |
+| RFC 9101 | JWT-Secured Authorization Request (JAR) | Request Object |
+| RFC 9126 | Pushed Authorization Requests (PAR) | PAR エンドポイント |
+| RFC 9110 | HTTP Semantics | Bearer トークンヘッダー |
+
+---
+
+## 🧪 OIDF適合性テスト マッピング
+
+OIDF適合性テストスイート (`fapi1-advanced-final-test-plan`) の63テストは、各RFCの要件を検証します。
+
+### テスト分類サマリー
+
+| 仕様 | テスト数 | 主な検証内容 |
+|------|---------|-------------|
+| FAPI 1.0 Advanced 5.2.2 | 22 | Request Object、response_type、mTLS、PKCE |
+| FAPI 1.0 Advanced 8.6 | 2 | アルゴリズム制限 (PS256/ES256) |
+| FAPI 1.0 Baseline 5.2.2 | 5 | redirect_uri、nonce |
+| RFC 6749 | 7 | 認可コード、scope、state |
+| RFC 7523 | 7 | JWT Client Assertion |
+| RFC 7636 | 4 | PKCE |
+| RFC 8705 | 3 | mTLS |
+| RFC 9126 | 8 | PAR |
+| エッジケース | 3 | 長いnonce/state |
+| プロファイル固有 | 5 | UK Open Banking、Brazil等 |
+
+### 主要テストと仕様要件の対応
+
+**Happy path テスト** (`#2 fapi1-advanced-final`):
+- FAPI 1.0 Advanced 5.2.2-5/6 (sender-constrained tokens)
+- FAPI 1.0 Advanced 5.1 (s_hash, c_hash, at_hash)
+- RFC 8705 Section 3 (Certificate-Bound Access Token)
+- RFC 6749 Section 3.1.2 (redirect_uriクエリ保持)
+
+**Request Object 検証テスト** (#15-29):
+- 5.2.2-1: 署名必須 → `#26`, `#27`, `#28`, `#29`
+- 5.2.2-10: RO内パラメータのみ使用 → `#10`, `#17`, `#18`, `#19`
+- 5.2.2-13: exp-nbf <= 60分 → `#15`, `#21`, `#23`
+- 5.2.2-15: aud検証 → `#4`, `#22`, `#55`
+- 5.2.2-17: nbf 60分以内 → `#16`, `#24`
+
+**PAR テスト** (#47-59):
+- RFC 9126 Section 5: エンドポイント要件 → `#53`, `#54`, `#57`
+- RFC 9126 Section 7.3: request_uri管理 → `#47`, `#48`, `#49`, `#52`
+- 5.2.2-18: PKCE S256 → `#59`, `#60`, `#61`, `#62`
+
+詳細なマッピング表は [fapi-1.0-advanced-op-test-mapping.md](../../../../requirements/fapi-1.0-advanced-op-test-mapping.md) を参照。
+
+---
+
 ## 🔗 関連ドキュメント
 
 **概念・基礎**:
@@ -742,5 +829,5 @@ if (context.responseType().isCode() && context.responseMode().isJwt()) {
 
 ---
 
-**最終更新**: 2025-12-07
+**最終更新**: 2026-02-17
 **難易度**: ⭐⭐⭐⭐ (上級)
