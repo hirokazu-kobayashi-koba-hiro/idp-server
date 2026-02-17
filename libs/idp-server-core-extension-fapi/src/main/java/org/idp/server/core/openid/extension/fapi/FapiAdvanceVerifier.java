@@ -26,12 +26,68 @@ import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.openid.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
+import org.idp.server.core.openid.oauth.type.oauth.RedirectUri;
 import org.idp.server.core.openid.oauth.verifier.AuthorizationRequestVerifier;
 import org.idp.server.core.openid.oauth.verifier.base.OAuthRequestBaseVerifier;
 import org.idp.server.core.openid.oauth.verifier.base.OidcRequestBaseVerifier;
 import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
 
+/**
+ * FAPI 1.0 Advanced (Part 2) Section 5.2.2 - Authorization Server requirements.
+ *
+ * <p>Specification hierarchy:
+ *
+ * <pre>
+ * OAuth 2.0 (RFC 6749)
+ *   └─ OIDC Core 1.0
+ *        └─ FAPI 1.0 Baseline (Part 1)  → FapiBaselineVerifier
+ *             └─ FAPI 1.0 Advanced (Part 2)  ← this class
+ * </pre>
+ *
+ * <p>FAPI 1.0 Advanced Section 5.2.2 states: "In addition to the provisions in Section 5.2.2 of
+ * [FAPI1-BASE], the authorization server SHALL ..."
+ *
+ * <p>This means Advanced inherits ALL Baseline requirements, with some replacements. This class
+ * does NOT delegate to {@link FapiBaselineVerifier} to allow explicit control over which Baseline
+ * requirements are inherited versus replaced. Each requirement is explicitly listed in {@link
+ * #verify(OAuthRequestContext)} with comments indicating its origin.
+ *
+ * <p><b>Inherited from Baseline (unchanged):</b>
+ *
+ * <ul>
+ *   <li>5.2.2-8: redirect_uri pre-registration → covered by {@link OidcRequestBaseVerifier}
+ *   <li>5.2.2-9: redirect_uri parameter required → covered by {@link OidcRequestBaseVerifier}
+ *   <li>5.2.2-10: redirect_uri exact match → covered by {@link OidcRequestBaseVerifier}
+ *   <li>5.2.2-20: redirect_uri https scheme required
+ *   <li>5.2.2.2: nonce required when openid scope
+ *   <li>5.2.2.3: state required when no openid scope
+ * </ul>
+ *
+ * <p><b>Replaced from Baseline:</b>
+ *
+ * <ul>
+ *   <li>5.2.2-4 → 5.2.2-14: client auth restriction (adds client_secret_jwt prohibition)
+ *   <li>5.2.2-7 → 5.2.2-18: PKCE S256 (always required → PAR only)
+ * </ul>
+ *
+ * <p><b>Advanced-specific:</b>
+ *
+ * <ul>
+ *   <li>5.2.2-1: signed JWT request object required
+ *   <li>5.2.2-2: response_type restriction (code id_token or code+jwt)
+ *   <li>5.2.2-5/6: sender-constrained access tokens via mTLS
+ *   <li>5.2.2-13: request object exp-nbf <= 60 minutes
+ *   <li>5.2.2-15: request object aud validation
+ *   <li>5.2.2-16: public clients prohibited
+ *   <li>5.2.2-17: request object nbf not older than 60 minutes
+ * </ul>
+ *
+ * @see <a
+ *     href="https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server">
+ *     FAPI 1.0 Advanced Final Section 5.2.2</a>
+ * @see FapiBaselineVerifier
+ */
 public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
 
   OAuthRequestBaseVerifier oAuthRequestBaseVerifier = new OAuthRequestBaseVerifier();
@@ -68,27 +124,47 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
   @Override
   public void verify(OAuthRequestContext context) {
     throwIfExceptionInvalidConfig(context);
+
+    // --- OAuth 2.0 / OIDC base requirements ---
     if (context.isOidcRequest()) {
       oidcRequestBaseVerifier.verify(context);
     } else {
       oAuthRequestBaseVerifier.verify(context);
     }
+
+    // --- Inherited from Baseline (unchanged) ---
+    // 5.2.2-8/9/10: redirect_uri pre-registration, required, exact match
+    //   → covered by OidcRequestBaseVerifier / OAuthRequestBaseVerifier above
+    // 5.2.2-20: redirect_uri https scheme required
+    throwExceptionIfNotHttpsRedirectUri(context);
+    // 5.2.2.2: nonce required when openid scope
+    throwExceptionIfHasOpenidScopeAndNotContainsNonce(context);
+    // 5.2.2.3: state required when no openid scope
+    throwExceptionIfNotHasOpenidScopeAndNotContainsState(context);
+
+    // --- Replaced from Baseline ---
+    // 5.2.2-14 (replaces Baseline 5.2.2-4): client auth restriction (+client_secret_jwt)
+    throwExceptionIfClientSecretPostOrClientSecretBasicOrClientSecretJwt(context);
+    // 5.2.2-18 (replaces Baseline 5.2.2-7): PKCE S256 required only for PAR
+    if (context.isPushedRequest()) {
+      throwExceptionIfNotS256CodeChallengeMethodForPAR(context);
+    }
+
+    // --- Advanced-specific requirements ---
+    // 5.2.2-1: signed JWT request object required
     throwExceptionIfNotRequestParameterPattern(context);
+    // 5.2.2-2: response_type restriction (code id_token or code+jwt)
     throwExceptionIfInvalidResponseTypeAndResponseMode(context);
+    // 5.2.2-5/6: sender-constrained access tokens via mTLS
     throwIfNotSenderConstrainedAccessToken(context);
-    // Skip Request Object JWT claim validations for PAR-based requests.
-    // PAR (RFC 9126) completes Request Object validation at PAR endpoint acceptance,
-    // and the JoseContext is empty when restoring stored parameters at authorization endpoint.
+    // 5.2.2-16: public clients prohibited
+    throwExceptionIfPublicClient(context);
+    // 5.2.2-13/15/17: Request Object claims validation (skipped for PAR)
     if (!context.isPushedRequest()) {
       throwExceptionIfNotContainExpAndNbfAndExp60minutesLongerThanNbf(context);
       throwExceptionIfNotContainsAud(context);
       throwExceptionIfNotContainNbfAnd60minutesLongerThan(context);
     }
-    if (context.isPushedRequest()) {
-      throwExceptionIfNotS256CodeChallengeMethodForPAR(context);
-    }
-    throwExceptionIfClientSecretPostOrClientSecretBasicOrClientSecretJwt(context);
-    throwExceptionIfPublicClient(context);
   }
 
   void throwIfExceptionInvalidConfig(OAuthRequestContext context) {
@@ -300,7 +376,55 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
     }
   }
 
-  /** shall not support public clients; */
+  /**
+   * Inherited from FAPI 1.0 Baseline 5.2.2-20: shall require redirect URIs to use the https scheme.
+   */
+  void throwExceptionIfNotHttpsRedirectUri(OAuthRequestContext context) {
+    RedirectUri redirectUri = context.redirectUri();
+    if (!redirectUri.isHttps()) {
+      throw new OAuthBadRequestException(
+          "invalid_request",
+          String.format(
+              "When FAPI Advance profile, shall require redirect URIs to use the https scheme (%s)",
+              context.redirectUri().value()),
+          context.tenant());
+    }
+  }
+
+  /**
+   * Inherited from FAPI 1.0 Baseline 5.2.2.2: If the client requests the openid scope, the
+   * authorization server shall require the nonce parameter defined in Section 3.1.2.1 of OIDC in
+   * the authentication request.
+   */
+  void throwExceptionIfHasOpenidScopeAndNotContainsNonce(OAuthRequestContext context) {
+    if (!context.hasOpenidScope()) {
+      return;
+    }
+    if (!context.authorizationRequest().hasNonce()) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request",
+          "When FAPI Advance profile, shall require the nonce parameter defined in Section 3.1.2.1 of OIDC in the authentication request (inherited from FAPI Baseline 5.2.2.2).",
+          context);
+    }
+  }
+
+  /**
+   * Inherited from FAPI 1.0 Baseline 5.2.2.3: If the client does not request the openid scope, the
+   * authorization server shall require the state parameter defined in Section 4.1.1 of RFC 6749.
+   */
+  void throwExceptionIfNotHasOpenidScopeAndNotContainsState(OAuthRequestContext context) {
+    if (context.hasOpenidScope()) {
+      return;
+    }
+    if (!context.authorizationRequest().hasState()) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request",
+          "When FAPI Advance profile, shall require the state parameter defined in Section 4.1.1 of RFC 6749 (inherited from FAPI Baseline 5.2.2.3).",
+          context);
+    }
+  }
+
+  /** 5.2.2-16: shall not support public clients. */
   void throwExceptionIfPublicClient(OAuthRequestContext context) {
     ClientAuthenticationType clientAuthenticationType = context.clientAuthenticationType();
     if (clientAuthenticationType.isNone()) {

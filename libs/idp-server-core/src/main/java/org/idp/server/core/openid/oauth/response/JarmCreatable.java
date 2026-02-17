@@ -95,6 +95,9 @@ public interface JarmCreatable {
       payload.put("aud", clientConfiguration.clientIdValue());
       payload.put("iat", createdAt.toEpochSecondWithUtc());
       payload.put("exp", expiresAt.toEpochSecondWithUtc());
+      if (errorResponse.hasState()) {
+        payload.put("state", errorResponse.state().value());
+      }
       payload.put("error", errorResponse.error().value());
       payload.put("error_description", errorResponse.errorDescription().value());
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();

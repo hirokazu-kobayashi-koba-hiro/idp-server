@@ -376,6 +376,40 @@ issue_candidates:
     e2e_test_needed: false
     e2e_test_description: "OIDF適合性テストで検証済み"
 
+  - id: "GAP-021"
+    title: "JARM - クエリパラメータ付きリダイレクトURIでのresponseパラメータ区切り文字が不正"
+    priority: "P0"
+    type: "bug"
+    category: "authorization_server"
+    spec_reference: "RFC 6749 Section 3.1.2, JARM Section 2.3.1"
+    requirement: |
+      RFC 6749 Section 3.1.2: リダイレクトURIにはクエリコンポーネントを含めることができ、
+      追加パラメータ付加時にはそれを保持しなければならない（MUST be retained）。
+      リダイレクトURIに既存のクエリパラメータがある場合、追加パラメータは&で連結する必要がある。
+    current_behavior: |
+      AuthorizationResponse.redirectUriValue()とAuthorizationErrorResponse.redirectUriValue()が
+      responseModeValue（query系では"?"）を無条件に使用。リダイレクトURIに既にクエリパラメータが
+      含まれる場合、URLが不正になる:
+      https://example.com/callback?dummy1=lorem&dummy2=ipsum?response=eyJ...
+    expected_behavior: |
+      リダイレクトURIに既に"?"が含まれている場合は"&"を区切り文字として使用:
+      https://example.com/callback?dummy1=lorem&dummy2=ipsum&response=eyJ...
+    conformance_test_result: "FAILURE - fapi1-advanced-final (2nd client JARM) ExtractJARMFromURLQuery"
+    fix_status: "FIXED"
+    fix_description: |
+      AuthorizationResponse.redirectUriValue()とAuthorizationErrorResponse.redirectUriValue()の
+      両方で、responseModeValueが"?"かつリダイレクトURIに既に"?"が含まれる場合に
+      区切り文字を"&"に切り替えるロジックを追加。fragment系("#")は影響なし。
+    affected_files:
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/response/AuthorizationResponse.java"
+        action: "modified"
+        detail: "redirectUriValue()にクエリパラメータ存在時の区切り文字切り替えロジック追加"
+      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/response/AuthorizationErrorResponse.java"
+        action: "modified"
+        detail: "redirectUriValue()に同様の修正を適用"
+    e2e_test_needed: false
+    e2e_test_description: "OIDF適合性テスト(fapi1-advanced-final ExtractJARMFromURLQuery)で検証"
+
 # ============================================================
 # Configuration Analysis (config/examples/financial-grade/)
 # ============================================================
