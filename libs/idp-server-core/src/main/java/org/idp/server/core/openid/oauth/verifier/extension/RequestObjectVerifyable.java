@@ -17,6 +17,8 @@
 package org.idp.server.core.openid.oauth.verifier.extension;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.exception.RequestObjectInvalidException;
@@ -98,6 +100,21 @@ public interface RequestObjectVerifyable {
     }
   }
 
+  /**
+   * Validates the aud claim in the Request Object JWT.
+   *
+   * <p>Accepted audience values:
+   *
+   * <ul>
+   *   <li>Issuer Identifier (JAR Section 6.3, FAPI 1.0 Advanced Section 5.2.2-15)
+   *   <li>Pushed Authorization Request Endpoint URL (RFC 9126 - when Request Object is sent to PAR
+   *       endpoint)
+   *   <li>mTLS alias of the PAR endpoint (RFC 8705 Section 5)
+   * </ul>
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9101#section-6.3">JAR Section 6.3</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9126#section-2.1">RFC 9126 Section 2.1</a>
+   */
   default void throwExceptionIfInvalidAud(
       JoseContext joseContext,
       AuthorizationServerConfiguration authorizationServerConfiguration,
@@ -109,11 +126,26 @@ public interface RequestObjectVerifyable {
           "invalid_request_object",
           "request object is invalid, must contains aud claim in jwt payload");
     }
-    if (claims.getAud().contains(authorizationServerConfiguration.tokenIssuer().value())) {
+    List<String> aud = claims.getAud();
+    // JAR Section 6.3: Issuer Identifier
+    if (aud.contains(authorizationServerConfiguration.tokenIssuer().value())) {
       return;
     }
+    // RFC 9126: PAR endpoint URL (when Request Object is sent to PAR endpoint)
+    if (authorizationServerConfiguration.hasPushedAuthorizationRequestEndpoint()
+        && aud.contains(authorizationServerConfiguration.pushedAuthorizationRequestEndpoint())) {
+      return;
+    }
+    // RFC 8705 Section 5: mTLS alias of PAR endpoint
+    if (authorizationServerConfiguration.hasMtlsEndpointAliases()) {
+      Map<String, String> aliases = authorizationServerConfiguration.mtlsEndpointAliases();
+      if (aud.contains(aliases.get("pushed_authorization_request_endpoint"))) {
+        return;
+      }
+    }
     throw new RequestObjectInvalidException(
-        "invalid_request_object", "request object is invalid, aud claim must be issuer");
+        "invalid_request_object",
+        "request object is invalid, aud claim must contain issuer identifier or pushed_authorization_request_endpoint");
   }
 
   /**

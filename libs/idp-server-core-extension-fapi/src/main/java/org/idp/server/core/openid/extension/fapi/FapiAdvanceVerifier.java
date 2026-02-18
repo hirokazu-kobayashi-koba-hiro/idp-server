@@ -18,6 +18,7 @@ package org.idp.server.core.openid.extension.fapi;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.OAuthRequestContext;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
@@ -304,8 +305,15 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
   }
 
   /**
-   * shall require the aud claim in the request object to be, or to be an array containing, the OP's
-   * Issuer Identifier URL;
+   * FAPI 1.0 Advanced Section 5.2.2-15: shall require the aud claim in the request object to be, or
+   * to be an array containing, the OP's Issuer Identifier URL.
+   *
+   * <p>Also accepts:
+   *
+   * <ul>
+   *   <li>PAR endpoint URL (RFC 9126 - when Request Object is sent to PAR endpoint)
+   *   <li>mTLS alias of PAR endpoint (RFC 8705 Section 5)
+   * </ul>
    */
   void throwExceptionIfNotContainsAud(OAuthRequestContext context) {
     JoseContext joseContext = context.joseContext();
@@ -317,14 +325,29 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
           context);
     }
     List<String> aud = claims.getAud();
-    if (!aud.contains(context.tokenIssuer().value())) {
-      throw new OAuthRedirectableBadRequestException(
-          "invalid_request_object",
-          String.format(
-              "When FAPI Advance profile, shall require the aud claim in the request object to be, or to be an array containing, the OP's Issuer Identifier URL (%s)",
-              String.join(" ", aud)),
-          context);
+    AuthorizationServerConfiguration serverConfig = context.serverConfiguration();
+    // FAPI 1.0 Advanced Section 5.2.2-15: Issuer Identifier
+    if (aud.contains(context.tokenIssuer().value())) {
+      return;
     }
+    // RFC 9126: PAR endpoint URL
+    if (serverConfig.hasPushedAuthorizationRequestEndpoint()
+        && aud.contains(serverConfig.pushedAuthorizationRequestEndpoint())) {
+      return;
+    }
+    // RFC 8705 Section 5: mTLS alias of PAR endpoint
+    if (serverConfig.hasMtlsEndpointAliases()) {
+      Map<String, String> aliases = serverConfig.mtlsEndpointAliases();
+      if (aud.contains(aliases.get("pushed_authorization_request_endpoint"))) {
+        return;
+      }
+    }
+    throw new OAuthRedirectableBadRequestException(
+        "invalid_request_object",
+        String.format(
+            "When FAPI Advance profile, shall require the aud claim in the request object to be, or to be an array containing, the OP's Issuer Identifier URL or pushed_authorization_request_endpoint (%s)",
+            String.join(" ", aud)),
+        context);
   }
 
   /**

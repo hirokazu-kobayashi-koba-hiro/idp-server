@@ -704,7 +704,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       console.log(authorizationResponse.data);
       expect(authorizationResponse.error).toEqual("invalid_request_object");
       expect(authorizationResponse.errorDescription).toEqual(
-        "request object is invalid, aud claim must be issuer"
+        "request object is invalid, aud claim must contain issuer identifier or pushed_authorization_request_endpoint"
       );
     });
   });

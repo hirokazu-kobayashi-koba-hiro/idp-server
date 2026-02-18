@@ -242,7 +242,7 @@ describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core
         );
         expect(
           backchannelAuthenticationResponse.data.error_description
-        ).toEqual("request object is invalid, aud claim must be issuer");
+        ).toEqual("request object is invalid, aud claim must contain issuer identifier or pushed_authorization_request_endpoint");
       });
 
       it("iss The Issuer claim MUST be the client_id of the OAuth Client.", async () => {
