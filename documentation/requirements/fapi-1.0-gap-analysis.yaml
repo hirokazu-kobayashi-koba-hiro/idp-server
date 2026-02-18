@@ -1592,38 +1592,6 @@ fapi_ciba:
     e2e_test_needed: false
     e2e_test_description: "OIDF適合性テストで検証"
 
-  - id: "GAP-027"
-    title: "Request Object audクレームでPARエンドポイントURLが未検証"
-    priority: "P0"
-    type: "bug"
-    category: "authorization_server"
-    spec_reference: "JAR (RFC 9101) Section 6.3, FAPI 1.0 Advanced Section 5.2.2-15, RFC 9126 Section 2.1, RFC 8705 Section 5"
-    requirement: |
-      JAR Section 6.3: audクレームの値は認可サーバーのissuer identifierであるべき。
-      FAPI 1.0 Advanced Section 5.2.2-15: audクレームにOPのIssuer Identifier URLを含むことを要求。
-      RFC 9126: Request ObjectがPARエンドポイントに送信される場合、PARエンドポイントURLも
-      有効なaud値として受け入れるべき（client_assertion audと同様のパターン）。
-    current_behavior: |
-      RequestObjectVerifyable.throwExceptionIfInvalidAudとFapiAdvanceVerifier.throwExceptionIfNotContainsAud
-      がissuer identifierのみを有効なaud値として検証。PARエンドポイントURLは拒否される。
-    expected_behavior: |
-      issuer identifierに加え、pushed_authorization_request_endpointおよびそのmTLSエイリアスも
-      有効なaud値として受け入れる。
-    conformance_test_result: "EXPECTED FAILURE - fapi1-advanced-final-par-pushed-authorization-url-as-audience-in-request-object"
-    fix_status: "FIXED"
-    fix_description: |
-      RequestObjectVerifyable.throwExceptionIfInvalidAudとFapiAdvanceVerifier.throwExceptionIfNotContainsAudに
-      PARエンドポイントURLとそのmTLSエイリアスのチェックを追加。GAP-026（client_assertion aud）と同じパターン。
-    affected_files:
-      - path: "libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/verifier/extension/RequestObjectVerifyable.java"
-        action: "modified"
-        detail: "throwExceptionIfInvalidAudにPARエンドポイントURLとmTLSエイリアスのチェックを追加"
-      - path: "libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java"
-        action: "modified"
-        detail: "throwExceptionIfNotContainsAudにPARエンドポイントURLとmTLSエイリアスのチェックを追加"
-    e2e_test_needed: false
-    e2e_test_description: "OIDF適合性テストで検証"
-
   - id: "GAP-012"
     title: "PAR - request_uriのワンタイム無効化タイミングの確認"
     priority: "P3"

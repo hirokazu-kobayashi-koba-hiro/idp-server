@@ -223,7 +223,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       );
       expect(
         authorizationResponse.errorDescription
-      ).toEqual("request object is invalid, aud claim must contain issuer identifier or pushed_authorization_request_endpoint");
+      ).toEqual("request object is invalid, aud claim must be issuer");
     });
 
     xit("iss The Issuer claim MUST be the client_id of the OAuth Client.", async () => {

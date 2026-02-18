@@ -104,7 +104,6 @@ public class OAuthRequestHandler {
     OAuthRequestContext context =
         oAuthRequestContextCreator.create(
             tenant, requestParameters, authorizationServerConfiguration, clientConfiguration, true);
-    verifier.verify(context);
 
     OAuthPushedRequestContext oAuthPushedRequestContext =
         new OAuthPushedRequestContext(
@@ -113,6 +112,8 @@ public class OAuthRequestHandler {
             pushedRequest.toClientCert(),
             pushedRequest.toBackchannelParameters());
     clientAuthenticationHandler.authenticate(oAuthPushedRequestContext);
+
+    verifier.verify(context);
 
     authorizationRequestRepository.register(tenant, context.authorizationRequest());
 
