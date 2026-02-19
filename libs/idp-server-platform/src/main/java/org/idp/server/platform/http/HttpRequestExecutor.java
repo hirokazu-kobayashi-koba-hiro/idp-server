@@ -191,8 +191,7 @@ public class HttpRequestExecutor {
 
       HttpResponse<String> httpResponse = ssrfProtectedHttpClient.send(httpRequest);
 
-      log.debug("Http Response status: {}", httpResponse.statusCode());
-      log.debug("Http Response body: {}", httpResponse.body());
+      logResponse(httpResponse);
 
       JsonNodeWrapper jsonResponse = HttpResponseResolver.resolveResponseBody(httpResponse);
 
@@ -201,6 +200,16 @@ public class HttpRequestExecutor {
     } catch (HttpNetworkErrorException e) {
       log.warn("Http request was error: {}", e.getMessage(), e);
       return HttpResponseResolver.resolveException(e);
+    }
+  }
+
+  private void logResponse(HttpResponse<String> httpResponse) {
+    if (httpResponse.statusCode() >= 400) {
+      log.warn(
+          "Http Response status: {}, body: {}", httpResponse.statusCode(), httpResponse.body());
+    } else {
+      log.debug(
+          "Http Response status: {}, body: {}", httpResponse.statusCode(), httpResponse.body());
     }
   }
 
@@ -222,8 +231,7 @@ public class HttpRequestExecutor {
 
       HttpResponse<String> httpResponse = ssrfProtectedHttpClient.send(httpRequest);
 
-      log.debug("Http Response status: {}", httpResponse.statusCode());
-      log.debug("Http Response body: {}", httpResponse.body());
+      logResponse(httpResponse);
 
       return HttpResponseResolver.resolve(httpResponse, resolveConfigs);
     } catch (HttpNetworkErrorException e) {

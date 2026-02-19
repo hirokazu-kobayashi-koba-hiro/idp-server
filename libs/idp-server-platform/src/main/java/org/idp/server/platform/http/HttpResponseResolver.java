@@ -59,6 +59,14 @@ public class HttpResponseResolver {
       return new HttpRequestResult(httpResponse.statusCode(), httpResponse.headers().map(), body);
     }
 
+    if (matchedConfig.mappedStatusCode() >= 400
+        && matchedConfig.mappedStatusCode() != httpResponse.statusCode()) {
+      log.warn(
+          "Http Response mapped status: {}, body: {}",
+          matchedConfig.mappedStatusCode(),
+          httpResponse.body());
+    }
+
     return new HttpRequestResult(
         matchedConfig.mappedStatusCode(), httpResponse.headers().map(), body);
   }
