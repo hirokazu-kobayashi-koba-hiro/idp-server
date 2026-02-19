@@ -53,9 +53,10 @@ package org.idp.server.platform.security.event;
 public enum DefaultSecurityEventType {
 
   // User lifecycle
+  user_initial_registration_success("Initial registration form was completed successfully"),
   user_signup("User account was created via self-registration"),
-  user_signup_failure("Self-registration failed"),
-  user_signup_conflict("Self-registration rejected due to duplicate account"),
+  user_initial_registration_failure("Initial registration form validation failed"),
+  user_initial_registration_conflict("Initial registration rejected due to duplicate account"),
   user_self_delete("User deleted their own account (irreversible)", true),
 
   // Password authentication

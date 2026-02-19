@@ -33,7 +33,7 @@ public class UserRegistrator {
     this.userVerifier = new UserVerifier(userQueryRepository);
   }
 
-  public User registerOrUpdate(Tenant tenant, User user) {
+  public UserRegistrationResult registerOrUpdate(Tenant tenant, User user) {
 
     User existingUser = userQueryRepository.findById(tenant, user.userIdentifier());
 
@@ -41,7 +41,7 @@ public class UserRegistrator {
       User updatedUser = existingUser.updateWith(user);
       applyIdentityPolicyIfNeeded(tenant, updatedUser);
       userCommandRepository.update(tenant, updatedUser);
-      return updatedUser;
+      return new UserRegistrationResult(updatedUser, false);
     }
 
     // Apply identity policy to set preferred_username if not set
@@ -56,7 +56,7 @@ public class UserRegistrator {
 
     userCommandRepository.register(tenant, user);
 
-    return user;
+    return new UserRegistrationResult(user, true);
   }
 
   /**
