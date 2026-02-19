@@ -17,17 +17,31 @@
 package org.idp.server.platform.log;
 
 import java.util.Objects;
+import java.util.UUID;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.slf4j.MDC;
 
 public class TenantLoggingContext {
 
+  private static final String REQUEST_ID_KEY = "request_id";
   private static final String TENANT_ID_KEY = "tenant_id";
   private static final String CLIENT_ID_KEY = "client_id";
   private static final String USER_ID_KEY = "user_id";
   private static final String USER_EX_SUB_KEY = "user_ex_sub";
   private static final String USER_NAME_KEY = "user_name";
   private static final String LOG_TYPE_KEY = "log_type";
+
+  public static void setRequestId() {
+    MDC.put(REQUEST_ID_KEY, UUID.randomUUID().toString());
+  }
+
+  public static String getCurrentRequestId() {
+    return MDC.get(REQUEST_ID_KEY);
+  }
+
+  public static void clearRequestId() {
+    MDC.remove(REQUEST_ID_KEY);
+  }
 
   public static void setTenant(TenantIdentifier tenantIdentifier) {
     if (Objects.nonNull(tenantIdentifier) && tenantIdentifier.exists()) {
