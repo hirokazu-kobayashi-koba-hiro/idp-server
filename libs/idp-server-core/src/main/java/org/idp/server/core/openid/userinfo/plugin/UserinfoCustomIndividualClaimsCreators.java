@@ -52,7 +52,7 @@ public class UserinfoCustomIndividualClaimsCreators {
           if (creator.shouldCreate(
               user, authorizationGrant, authorizationServerConfiguration, clientConfiguration)) {
 
-            log.info(
+            log.debug(
                 "Execute UserinfoCustomIndividualClaimsCreator : " + creator.getClass().getName());
             Map<String, Object> customIndividualClaims =
                 creator.create(

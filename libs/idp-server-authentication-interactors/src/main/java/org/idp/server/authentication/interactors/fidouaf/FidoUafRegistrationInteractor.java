@@ -254,9 +254,10 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
       addedDeviceUser.setStatus(UserStatus.IDENTITY_VERIFICATION_REQUIRED);
     }
 
-    log.debug(
-        "FIDO-UAF registration succeeded for user: {}, device: {}, device_secret_issued: {}",
+    log.info(
+        "FIDO-UAF registration succeeded for user: {}, username: {}, device: {}, device_secret_issued: {}",
         addedDeviceUser.sub(),
+        addedDeviceUser.preferredUsername(),
         deviceId,
         issuanceResult.hasDeviceSecret());
 

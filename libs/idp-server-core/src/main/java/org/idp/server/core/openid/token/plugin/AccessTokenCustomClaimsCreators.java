@@ -52,7 +52,7 @@ public class AccessTokenCustomClaimsCreators {
               authorizationServerConfiguration,
               clientConfiguration,
               clientCredentials)) {
-            log.info("Execute AccessTokenCustomClaimsCreators : {}", creator.getClass().getName());
+            log.debug("Execute AccessTokenCustomClaimsCreators : {}", creator.getClass().getName());
             Map<String, Object> claims =
                 creator.create(
                     authorizationGrant,
