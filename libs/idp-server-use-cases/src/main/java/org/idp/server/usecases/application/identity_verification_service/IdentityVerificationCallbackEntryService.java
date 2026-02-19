@@ -39,6 +39,7 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -58,6 +59,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
   UserQueryRepository userQueryRepository;
   UserCommandRepository userCommandRepository;
   UserEventPublisher eventPublisher;
+  LoggerWrapper log = LoggerWrapper.getLogger(IdentityVerificationCallbackEntryService.class);
 
   public IdentityVerificationCallbackEntryService(
       IdentityVerificationConfigurationQueryRepository configurationQueryRepository,
@@ -111,6 +113,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
 
     String applicationIdParams = verificationConfiguration.getCallbackApplicationId(process);
     String applicationId = request.getValueAsString(applicationIdParams);
+    log.info("IdentityVerification callback received {}: {}", applicationIdParams, applicationId);
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, applicationIdParams, applicationId);
 
