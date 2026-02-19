@@ -65,6 +65,10 @@ public class AuthorizationErrorResponse {
     return state;
   }
 
+  public boolean hasState() {
+    return state != null && state.exists();
+  }
+
   public TokenIssuer tokenIssuer() {
     return tokenIssuer;
   }
@@ -85,8 +89,24 @@ public class AuthorizationErrorResponse {
     return httpQueryParams;
   }
 
+  /**
+   * RFC 6749 Section 3.1.2:
+   *
+   * <p>The redirection endpoint URI MUST NOT include a fragment component. The endpoint URI MAY
+   * include an "application/x-www-form-urlencoded" formatted query component, which MUST be
+   * retained when adding additional query parameters.
+   *
+   * <p>When the redirect URI already contains query parameters (e.g. {@code
+   * https://example.com/callback?dummy1=lorem}), additional parameters such as {@code error} must
+   * be appended with "&" instead of "?".
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2">RFC 6749 Section 3.1.2</a>
+   */
   public String redirectUriValue() {
-    return String.format(
-        "%s%s%s", redirectUri.value(), responseModeValue.value(), httpQueryParams.params());
+    String separator = responseModeValue.value();
+    if ("?".equals(separator) && redirectUri.value().contains("?")) {
+      separator = "&";
+    }
+    return String.format("%s%s%s", redirectUri.value(), separator, httpQueryParams.params());
   }
 }

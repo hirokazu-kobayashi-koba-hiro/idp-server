@@ -198,7 +198,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 request object", ()
       );
     });
 
-    xit("aud The Audience claim MUST contain the value of the Issuer Identifier for the OP, which identifies the Authorization Server as an intended audience.", async () => {
+    it("aud The Audience claim MUST contain the value of the Issuer Identifier for the OP, which identifies the Authorization Server as an intended audience.", async () => {
       const request = createJwtWithPrivateKey({
         payload: {
           client_id: clientSecretPostClient.clientId,

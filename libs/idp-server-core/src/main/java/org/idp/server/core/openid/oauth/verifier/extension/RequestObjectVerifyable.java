@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.oauth.verifier.extension;
 
 import java.util.Date;
+import java.util.List;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.exception.RequestObjectInvalidException;
@@ -98,6 +99,17 @@ public interface RequestObjectVerifyable {
     }
   }
 
+  /**
+   * Validates the aud claim in the Request Object JWT.
+   *
+   * <p>JAR (RFC 9101) Section 6.3: The aud claim SHOULD be the value of the Issuer Identifier of
+   * the authorization server.
+   *
+   * <p>FAPI 1.0 Advanced Section 5.2.2-15: shall require the aud claim in the request object to be,
+   * or to be an array containing, the OP's Issuer Identifier URL.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9101#section-6.3">JAR Section 6.3</a>
+   */
   default void throwExceptionIfInvalidAud(
       JoseContext joseContext,
       AuthorizationServerConfiguration authorizationServerConfiguration,
@@ -109,7 +121,8 @@ public interface RequestObjectVerifyable {
           "invalid_request_object",
           "request object is invalid, must contains aud claim in jwt payload");
     }
-    if (claims.getAud().contains(authorizationServerConfiguration.tokenIssuer().value())) {
+    List<String> aud = claims.getAud();
+    if (aud.contains(authorizationServerConfiguration.tokenIssuer().value())) {
       return;
     }
     throw new RequestObjectInvalidException(

@@ -56,6 +56,10 @@ docker compose up -d --build idp-server-1 idp-server-2
 - `docker compose restart`だけでは新しいコードは反映されない
 - `--build`フラグが必須
 
+## スキル活用
+- 実装・修正タスクを開始する前に、関連するスキル（`.claude/skills/`）の有無を確認し、該当するスキルがあれば先にロードしてから作業を開始すること
+- 単純な修正（typo、1行変更等）では不要
+
 ## Issue作業開始手順
 
 1. **開発者ガイドを読む**（該当ドメイン）

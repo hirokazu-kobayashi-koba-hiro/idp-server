@@ -17,6 +17,8 @@
 package org.idp.server.core.openid.token.verifier;
 
 import java.time.LocalDateTime;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
+import org.idp.server.core.openid.token.AccessToken;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
@@ -26,15 +28,19 @@ public class RefreshTokenVerifier {
 
   TokenRequestContext context;
   OAuthToken oAuthToken;
+  ClientCredentials clientCredentials;
 
-  public RefreshTokenVerifier(TokenRequestContext context, OAuthToken oAuthToken) {
+  public RefreshTokenVerifier(
+      TokenRequestContext context, OAuthToken oAuthToken, ClientCredentials clientCredentials) {
     this.context = context;
     this.oAuthToken = oAuthToken;
+    this.clientCredentials = clientCredentials;
   }
 
   public void verify() {
     throwIfNotFoundToken();
     throwExceptionIfExpiredToken();
+    throwExceptionIfSenderConstrainedButNoCertificate();
   }
 
   void throwIfNotFoundToken() {
@@ -50,6 +56,23 @@ public class RefreshTokenVerifier {
     LocalDateTime now = SystemDateTime.now();
     if (oAuthToken.isExpiredRefreshToken(now)) {
       throw new TokenBadRequestException("invalid_grant", "refresh token is expired");
+    }
+  }
+
+  /**
+   * RFC 8705 - If the original access token was sender-constrained (certificate-bound), the client
+   * certificate MUST be present in the refresh token request.
+   *
+   * <p>This check is based on the actual token state, not server/client configuration, because a
+   * token that was issued with certificate binding must always require proof of possession
+   * regardless of current configuration.
+   */
+  void throwExceptionIfSenderConstrainedButNoCertificate() {
+    AccessToken originalAccessToken = oAuthToken.accessToken();
+    if (originalAccessToken.isSenderConstrained() && !clientCredentials.hasClientCertification()) {
+      throw new TokenBadRequestException(
+          "invalid_grant",
+          "original access token is sender-constrained, client certificate MUST be present in refresh token request");
     }
   }
 }

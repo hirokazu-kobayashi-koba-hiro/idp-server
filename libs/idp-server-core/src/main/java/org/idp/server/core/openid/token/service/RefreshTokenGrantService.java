@@ -63,7 +63,8 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
     ClientConfiguration clientConfiguration = context.clientConfiguration();
     OAuthToken oAuthToken = oAuthTokenQueryRepository.find(context.tenant(), refreshTokenEntity);
 
-    RefreshTokenVerifier refreshTokenVerifier = new RefreshTokenVerifier(context, oAuthToken);
+    RefreshTokenVerifier refreshTokenVerifier =
+        new RefreshTokenVerifier(context, oAuthToken, clientCredentials);
     refreshTokenVerifier.verify();
 
     TokenUserFindingDelegate delegate = context.refreshTokenGrantDelegate();
