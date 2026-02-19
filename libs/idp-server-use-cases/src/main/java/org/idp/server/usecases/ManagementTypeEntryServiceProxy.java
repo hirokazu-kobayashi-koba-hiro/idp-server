@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import org.idp.server.platform.datasource.*;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.log.TenantLoggingContext;
 
 /**
  * Management-type entry service proxy for Organization-level Control Plane APIs.
@@ -116,6 +117,7 @@ public class ManagementTypeEntryServiceProxy implements InvocationHandler {
     if (isTransactional && operationType == OperationType.READ) {
       try {
         OperationContext.set(operationType);
+        TenantLoggingContext.setRequestId();
         log.trace("READ start: class={}, method={}", target.getClass().getName(), method.getName());
 
         DatabaseType databaseType = applicationDatabaseTypeProvider.provide();
@@ -141,11 +143,13 @@ public class ManagementTypeEntryServiceProxy implements InvocationHandler {
             e);
         throw e;
       } finally {
+        TenantLoggingContext.clearAll();
         TransactionManager.closeConnection();
       }
     } else if (isTransactional && operationType == OperationType.WRITE) {
       try {
         OperationContext.set(operationType);
+        TenantLoggingContext.setRequestId();
         log.trace(
             "WRITE start: class={}, method={}", target.getClass().getName(), method.getName());
 
@@ -186,6 +190,7 @@ public class ManagementTypeEntryServiceProxy implements InvocationHandler {
             e);
         throw e;
       } finally {
+        TenantLoggingContext.clearAll();
         TransactionManager.closeConnection();
       }
     } else {

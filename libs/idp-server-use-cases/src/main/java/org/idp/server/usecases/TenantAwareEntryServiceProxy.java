@@ -105,6 +105,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
       long startTime = System.currentTimeMillis();
       try {
         OperationContext.set(operationType);
+        TenantLoggingContext.setRequestId();
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TenantLoggingContext.setTenant(tenantIdentifier);
 
@@ -162,6 +163,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
       long startTime = System.currentTimeMillis();
       try {
         OperationContext.set(operationType);
+        TenantLoggingContext.setRequestId();
         TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
         TenantLoggingContext.setTenant(tenantIdentifier);
 
