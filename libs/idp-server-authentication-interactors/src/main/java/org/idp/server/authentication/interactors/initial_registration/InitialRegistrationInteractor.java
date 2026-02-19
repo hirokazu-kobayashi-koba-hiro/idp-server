@@ -93,7 +93,11 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
       response.put("error_messages", validationResult.errors());
 
       return AuthenticationInteractionRequestResult.clientError(
-          response, type, operationType(), method(), DefaultSecurityEventType.user_signup_failure);
+          response,
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.user_initial_registration_failure);
     }
 
     String email = request.optValueAsString("email", "");
@@ -107,7 +111,11 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
       response.put("error_description", "user is conflict with username and password");
 
       return AuthenticationInteractionRequestResult.clientError(
-          response, type, operationType(), method(), DefaultSecurityEventType.user_signup_conflict);
+          response,
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.user_initial_registration_conflict);
     }
 
     // Validate password against tenant password policy
@@ -133,7 +141,7 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
               type,
               operationType(),
               method(),
-              DefaultSecurityEventType.user_signup_failure);
+              DefaultSecurityEventType.user_initial_registration_failure);
         }
         log.debug("Password policy validation succeeded for initial registration");
       } catch (IllegalArgumentException validationException) {
@@ -149,7 +157,7 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
             type,
             operationType(),
             method(),
-            DefaultSecurityEventType.user_signup_failure);
+            DefaultSecurityEventType.user_initial_registration_failure);
       }
     }
 
@@ -168,7 +176,7 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
         method(),
         user,
         response,
-        DefaultSecurityEventType.user_signup);
+        DefaultSecurityEventType.user_initial_registration_success);
   }
 
   /**

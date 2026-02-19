@@ -41,6 +41,7 @@ import org.idp.server.core.openid.federation.io.FederationRequestResponse;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.UserRegistrationResult;
 import org.idp.server.core.openid.identity.UserRegistrator;
 import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
@@ -430,7 +431,16 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     OAuthAuthorizeResponse authorize = oAuthProtocol.authorize(oAuthAuthorizeRequest);
 
     if (authorize.isOk()) {
-      userRegistrator.registerOrUpdate(tenant, user);
+      UserRegistrationResult registrationResult = userRegistrator.registerOrUpdate(tenant, user);
+
+      if (registrationResult.isNewRegistration()) {
+        eventPublisher.publish(
+            tenant,
+            authorizationRequest,
+            user,
+            DefaultSecurityEventType.user_signup.toEventType(),
+            requestAttributes);
+      }
 
       authenticationTransactionCommandRepository.delete(
           tenant, authenticationTransaction.identifier());
