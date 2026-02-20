@@ -98,9 +98,13 @@ interact()メソッドを実装し、AuthenticationInteractionRequestResultを�
 
 パスワード検証の概念:
 - トランザクションとリクエストを受け取る
+- ブルートフォースチェック（CacheStoreによるRedisカウンター）
 - ユーザーリポジトリからユーザー情報を取得
 - パスワードエンコーダーで検証
+- 成功時にカウンターリセット
 - 成功/失敗の結果をAuthenticationInteractionRequestResultで返却
+
+詳細は `documentation/docs/content_06_developer-guide/05-configuration/authn/password.md` のブルートフォース対策セクションを参照。
 
 ## FIDO2/WebAuthn認証
 

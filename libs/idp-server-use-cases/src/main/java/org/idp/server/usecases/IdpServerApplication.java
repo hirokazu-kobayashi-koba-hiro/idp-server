@@ -512,6 +512,7 @@ public class IdpServerApplication {
         PasswordEncodeDelegation.class, passwordEncodeDelegation);
     authenticationDependencyContainer.register(
         PasswordVerificationDelegation.class, passwordVerificationDelegation);
+    authenticationDependencyContainer.register(CacheStore.class, cacheStore);
     authenticationDependencyContainer.register(EmailSenders.class, emailSenders);
 
     authenticationDependencyContainer.register(SmsSenders.class, smsSenders);

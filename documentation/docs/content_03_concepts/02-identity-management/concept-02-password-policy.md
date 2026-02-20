@@ -49,6 +49,8 @@
 | `require_special_char` | boolean | false | 記号（`!@#$%^&*(),.?\":{}|&lt;&gt;`）を含む必要があるか |
 | `custom_regex` | string | null | カスタム正規表現パターン（高度な検証） |
 | `custom_regex_error_message` | string | null | カスタム正規表現エラー時のメッセージ |
+| `max_attempts` | integer | 5 | ブルートフォース対策: 最大連続失敗回数（0で無制限） |
+| `lockout_duration_seconds` | integer | 900 | ブルートフォース対策: ロックアウト期間（秒、デフォルト15分） |
 
 ## デフォルトポリシー
 
@@ -142,7 +144,9 @@ NIST（アメリカ国立標準技術研究所）は、**複雑性要件より�
     "require_uppercase": true,
     "require_lowercase": true,
     "require_number": true,
-    "require_special_char": true
+    "require_special_char": true,
+    "max_attempts": 3,
+    "lockout_duration_seconds": 1800
   }
 }
 ```
@@ -150,6 +154,7 @@ NIST（アメリカ国立標準技術研究所）は、**複雑性要件より�
 **特徴**:
 - 12文字以上
 - 大文字・小文字・数字・記号すべて必須
+- 3回失敗で30分ロックアウト
 - コンプライアンス要件（PCI DSS、HIPAA）に対応
 
 **受け入れられるパスワード**:
@@ -379,6 +384,33 @@ Content-Type: application/json
   "error": "invalid_current_password"
 }
 ```
+
+## ブルートフォース対策
+
+パスワードポリシーには、ブルートフォース攻撃（総当たり攻撃）を防ぐためのアカウントロックアウト機能が含まれています。
+
+### 仕組み
+
+- テナント+ユーザー単位で、パスワード認証の連続失敗回数を追跡
+- `max_attempts` を超過すると、`lockout_duration_seconds` の間そのユーザーの認証を拒否
+- 認証成功時にカウンターはリセット
+- ロックアウト期間経過後に自動的にリセット
+
+### 設定例
+
+```json
+{
+  "password_policy": {
+    "max_attempts": 5,
+    "lockout_duration_seconds": 900
+  }
+}
+```
+
+### 注意事項
+
+- `max_attempts` を `0` に設定するとブルートフォース対策が無効になります
+- Redis（CacheStore）が有効な環境でのみ動作します
 
 ## ベストプラクティス
 

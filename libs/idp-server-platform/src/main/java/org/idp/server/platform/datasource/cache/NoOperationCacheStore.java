@@ -38,4 +38,9 @@ public class NoOperationCacheStore implements CacheStore {
 
   @Override
   public void delete(String key) {}
+
+  @Override
+  public long increment(String key, int timeToLiveSeconds) {
+    return 0;
+  }
 }

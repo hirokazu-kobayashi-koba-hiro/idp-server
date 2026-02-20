@@ -103,9 +103,19 @@ public class CorsConfiguration {
 ```java
 public class TenantIdentityPolicy {
     IdentityUniqueKeyType identityUniqueKeyType;  // EMAIL_OR_EXTERNAL_USER_ID等
-    PasswordPolicyConfig passwordPolicy;
+    PasswordPolicyConfig passwordPolicy;           // パスワードポリシー（複雑性+ブルートフォース対策）
 }
 ```
+
+**PasswordPolicyConfig フィールド**:
+
+| フィールド | デフォルト | 説明 |
+|-----------|----------|------|
+| `min_length` | 8 | パスワード最小文字数 |
+| `max_attempts` | 5 | 最大連続失敗回数（0で無制限） |
+| `lockout_duration_seconds` | 900 | ロックアウト期間（秒） |
+
+詳細は `documentation/docs/content_06_developer-guide/05-configuration/authn/password.md` を参照。
 
 ## 構成パターン
 

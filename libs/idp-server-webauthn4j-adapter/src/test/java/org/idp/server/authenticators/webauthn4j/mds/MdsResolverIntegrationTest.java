@@ -333,5 +333,10 @@ class MdsResolverIntegrationTest {
     public void delete(String key) {
       cache.remove(key);
     }
+
+    @Override
+    public long increment(String key, int timeToLiveSeconds) {
+      return 0;
+    }
   }
 }

@@ -154,25 +154,91 @@ Content-Type: application/json
 
 ---
 
+## ブルートフォース対策
+
+パスワード認証には、テナント単位で設定可能なブルートフォース攻撃対策が組み込まれています。
+
+### 仕組み
+
+Redisのアトミックインクリメント（INCR）を使用して、テナント+ユーザー単位で失敗回数を追跡します。
+
+```
+キーフォーマット: password_attempt:{tenant_id}:{username}
+```
+
+1. パスワード認証リクエストのたびにカウンターをインクリメント
+2. カウンターが `max_attempts` を超過した場合、認証を拒否（`too_many_attempts` エラー）
+3. 認証成功時にカウンターをリセット（削除）
+4. TTL（`lockout_duration_seconds`）の経過で自動リセット
+
+### 設定
+
+テナントの `identity_policy_config.password_policy` で設定します。
+
+| フィールド | デフォルト | 説明 |
+|-----------|----------|------|
+| `max_attempts` | `5` | 最大連続失敗回数（0で無制限） |
+| `lockout_duration_seconds` | `900` | ロックアウト期間（秒、デフォルト15分） |
+
+### エラーレスポンス（ロックアウト時）
+
+```json
+{
+  "error": "too_many_attempts",
+  "error_description": "Too many failed attempts. Please try again later."
+}
+```
+
+### 関連する3つの設定の関係
+
+パスワード認証に関わる設定は3つのレイヤーに分かれています。
+
+| 設定 | 管理対象 | 役割 |
+|------|---------|------|
+| **認証コンフィグ** (`authentication-config`) | 認証の動作定義 | interactions、execution function（`password_verification`）、リクエストスキーマ、レスポンスマッピングを定義 |
+| **パスワードポリシー** (`identity_policy_config.password_policy`) | テナント全体のポリシー | パスワード複雑性要件（文字数、文字種）とブルートフォース対策（`max_attempts`）を定義 |
+| **認証ポリシー** (`authentication-policy`) | 認証フローの制御 | 認証ステップの順序、`lock_conditions` によるセッション内ロックを定義 |
+
+ブルートフォース対策については、2つのロックアウト機構があります。
+
+| 項目 | `password_policy.max_attempts` | `authentication_policy.lock_conditions` |
+|------|-------------------------------|----------------------------------------|
+| **追跡単位** | テナント + ユーザー名（セッション横断） | 認証トランザクション内の `failure_count` |
+| **追跡方法** | Redis カウンター（INCR + TTL） | セッション内の状態管理 |
+| **リセット** | 認証成功時 or TTL経過 | 認証トランザクション終了時 |
+| **用途** | ブルートフォース攻撃（セッション横断の総当たり） | 1セッション内での連続失敗によるロック |
+
+`password_policy.max_attempts` はセッションをまたいだ攻撃を防ぎ、`lock_conditions` は1つの認証フロー内での失敗回数を制御します。両方を設定することで多層防御が可能です。
+
+### 注意事項
+
+- Redis未使用環境（`NoOperationCacheStore`）ではブルートフォース対策は無効になります（フェイルオープン）
+- カウンターはセッション横断で追跡されるため、異なるセッションからの攻撃にも有効です
+
+---
+
 ## 内部ロジック
 
-1. **ユーザー検索**
-   `userQueryRepository.findByEmail(...)` により、テナント + ユーザーID + provider\_id でユーザー情報を検索。
+1. **ブルートフォースチェック**
+   Redisカウンター（`password_attempt:{tenant_id}:{username}`）をインクリメントし、`max_attempts`超過時は認証を拒否。
 
-2. **パスワード検証**
+2. **ユーザー検索**
+   `userQueryRepository.findByPreferredUsername(...)` により、テナント + ユーザー名 + provider\_id でユーザー情報を検索。
+
+3. **パスワード検証**
    `passwordVerificationDelegation.verify(password, user.hashedPassword())` によって、入力されたパスワードをハッシュと比較。
 
-3. **認証失敗時の応答**
+4. **認証失敗時の応答**
    ユーザーが存在しない、またはパスワードが不一致の場合は `CLIENT_ERROR` を返し、`password_failure` イベントを発行。
 
-4. **認証成功処理**
-   成功時には以下の情報で `Authentication` オブジェクトを構成：
+5. **認証成功処理**
+   カウンターをリセットし、以下の情報で `Authentication` オブジェクトを構成：
 
     * `time`: 現在時刻（SystemDateTime）
     * `methods`: `["pwd"]`
     * `acr_values`: `["urn:mace:incommon:iap:silver"]`
 
-5. **成功レスポンス**
+6. **成功レスポンス**
    `user` と `authentication` を含むレスポンスを生成し、`password_success` イベントを発行。
 
 ---
