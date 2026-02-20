@@ -120,12 +120,15 @@ public class JedisCacheStore implements CacheStore {
 
   @Override
   public long increment(String key, int timeToLiveSeconds) {
+    String luaScript =
+        "local count = redis.call('incr', KEYS[1]) "
+            + "if redis.call('ttl', KEYS[1]) == -1 then "
+            + "redis.call('expire', KEYS[1], ARGV[1]) "
+            + "end "
+            + "return count";
     try (Jedis resource = jedisPool.getResource()) {
-      long count = resource.incr(key);
-      if (count == 1) {
-        resource.expire(key, timeToLiveSeconds);
-      }
-      return count;
+      Object result = resource.eval(luaScript, 1, key, String.valueOf(timeToLiveSeconds));
+      return (Long) result;
     } catch (Exception e) {
       log.error("Failed to increment cache", e);
       return 0;
