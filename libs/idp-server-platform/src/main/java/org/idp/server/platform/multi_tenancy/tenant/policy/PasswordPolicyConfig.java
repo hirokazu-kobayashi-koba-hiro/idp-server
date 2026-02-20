@@ -32,6 +32,8 @@ public class PasswordPolicyConfig {
 
   private static final int DEFAULT_MIN_LENGTH = 8;
   private static final int DEFAULT_MAX_LENGTH = 72; // BCrypt limitation
+  private static final int DEFAULT_MAX_ATTEMPTS = 5;
+  private static final int DEFAULT_LOCKOUT_DURATION_SECONDS = 900; // 15 minutes
 
   private int minLength;
   private int maxLength;
@@ -42,6 +44,8 @@ public class PasswordPolicyConfig {
   private String customRegex;
   private String customRegexErrorMessage;
   private int maxHistory; // For future use (Issue #741 Phase 2)
+  private int maxAttempts;
+  private int lockoutDurationSeconds;
 
   public PasswordPolicyConfig() {
     this.minLength = DEFAULT_MIN_LENGTH;
@@ -53,6 +57,8 @@ public class PasswordPolicyConfig {
     this.customRegex = null;
     this.customRegexErrorMessage = null;
     this.maxHistory = 0;
+    this.maxAttempts = DEFAULT_MAX_ATTEMPTS;
+    this.lockoutDurationSeconds = DEFAULT_LOCKOUT_DURATION_SECONDS;
   }
 
   public PasswordPolicyConfig(
@@ -114,6 +120,33 @@ public class PasswordPolicyConfig {
     this.customRegex = customRegex;
     this.customRegexErrorMessage = customRegexErrorMessage;
     this.maxHistory = maxHistory;
+    this.maxAttempts = DEFAULT_MAX_ATTEMPTS;
+    this.lockoutDurationSeconds = DEFAULT_LOCKOUT_DURATION_SECONDS;
+  }
+
+  public PasswordPolicyConfig(
+      int minLength,
+      int maxLength,
+      boolean requireUppercase,
+      boolean requireLowercase,
+      boolean requireNumber,
+      boolean requireSpecialChar,
+      String customRegex,
+      String customRegexErrorMessage,
+      int maxHistory,
+      int maxAttempts,
+      int lockoutDurationSeconds) {
+    this.minLength = minLength;
+    this.maxLength = maxLength;
+    this.requireUppercase = requireUppercase;
+    this.requireLowercase = requireLowercase;
+    this.requireNumber = requireNumber;
+    this.requireSpecialChar = requireSpecialChar;
+    this.customRegex = customRegex;
+    this.customRegexErrorMessage = customRegexErrorMessage;
+    this.maxHistory = maxHistory;
+    this.maxAttempts = maxAttempts;
+    this.lockoutDurationSeconds = lockoutDurationSeconds;
   }
 
   /**
@@ -146,6 +179,9 @@ public class PasswordPolicyConfig {
     String customRegex = getStringValue(map, "custom_regex", null);
     String customRegexErrorMessage = getStringValue(map, "custom_regex_error_message", null);
     int maxHistory = getIntValue(map, "max_history", 0);
+    int maxAttempts = getIntValue(map, "max_attempts", DEFAULT_MAX_ATTEMPTS);
+    int lockoutDurationSeconds =
+        getIntValue(map, "lockout_duration_seconds", DEFAULT_LOCKOUT_DURATION_SECONDS);
 
     return new PasswordPolicyConfig(
         minLength,
@@ -156,7 +192,9 @@ public class PasswordPolicyConfig {
         requireSpecialChar,
         customRegex,
         customRegexErrorMessage,
-        maxHistory);
+        maxHistory,
+        maxAttempts,
+        lockoutDurationSeconds);
   }
 
   private static int getIntValue(Map<String, Object> map, String key, int defaultValue) {
@@ -220,6 +258,18 @@ public class PasswordPolicyConfig {
     return maxHistory;
   }
 
+  public int maxAttempts() {
+    return maxAttempts;
+  }
+
+  public int lockoutDurationSeconds() {
+    return lockoutDurationSeconds;
+  }
+
+  public boolean hasBruteForceProtection() {
+    return maxAttempts > 0;
+  }
+
   /**
    * Converts this config to a Map for JSON serialization.
    *
@@ -240,6 +290,8 @@ public class PasswordPolicyConfig {
       map.put("custom_regex_error_message", customRegexErrorMessage);
     }
     map.put("max_history", maxHistory);
+    map.put("max_attempts", maxAttempts);
+    map.put("lockout_duration_seconds", lockoutDurationSeconds);
     return map;
   }
 

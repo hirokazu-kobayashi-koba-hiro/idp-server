@@ -117,4 +117,18 @@ public class JedisCacheStore implements CacheStore {
       log.error("Failed to delete cache", e);
     }
   }
+
+  @Override
+  public long increment(String key, int timeToLiveSeconds) {
+    try (Jedis resource = jedisPool.getResource()) {
+      long count = resource.incr(key);
+      if (count == 1) {
+        resource.expire(key, timeToLiveSeconds);
+      }
+      return count;
+    } catch (Exception e) {
+      log.error("Failed to increment cache", e);
+      return 0;
+    }
+  }
 }

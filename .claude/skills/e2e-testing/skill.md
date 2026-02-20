@@ -71,7 +71,7 @@ scenario/
 
 ```
 usecase/
-├── standard/       # 標準機能
+├── standard/       # 標準機能（brute-force-protection等）
 ├── advance/        # 高度な機能
 ├── ciba/           # CIBA詳細テスト
 ├── mfa/            # MFA詳細テスト

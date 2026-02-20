@@ -149,6 +149,11 @@ class CachedSystemConfigurationResolverTest {
     public void delete(String key) {
       cache.remove(key);
     }
+
+    @Override
+    public long increment(String key, int timeToLiveSeconds) {
+      return 0;
+    }
   }
 
   /** Repository that counts how many times find() is called */

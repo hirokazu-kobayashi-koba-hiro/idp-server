@@ -76,15 +76,20 @@ private String key(TenantIdentifier tenantIdentifier) {
 
 ```java
 public interface CacheStore {
-  <T> void put(String key, T value);           // キャッシュ格納
-  <T> Optional<T> find(String key, Class<T> type);  // キャッシュ検索
-  void delete(String key);                     // キャッシュ削除
+  <T> void put(String key, T value);                  // キャッシュ格納
+  <T> void put(String key, T value, int ttlSeconds);  // キャッシュ格納（TTL指定）
+  <T> Optional<T> find(String key, Class<T> type);    // キャッシュ検索
+  boolean exists(String key);                         // 存在確認
+  void delete(String key);                            // キャッシュ削除
+  long increment(String key, int ttlSeconds);         // アトミックインクリメント
 }
 ```
 
+**`increment`メソッド**: Redis `INCR` によるアトミックなカウンター操作。初回インクリメント時にTTLを設定し、固定ウィンドウで自動リセットされます。パスワード認証のブルートフォース対策（失敗回数カウント）で使用されます。
+
 **実装クラス**:
-- `RedisCacheStore`: Redis実装（本番環境）
-- `NoOperationCacheStore`: キャッシュ無効化実装（テスト・開発環境）
+- `JedisCacheStore`: Redis実装（本番環境）
+- `NoOperationCacheStore`: キャッシュ無効化実装（テスト・開発環境、`increment`は常に`0`を返却）
 
 ---
 
@@ -97,8 +102,9 @@ public interface CacheStore {
 | **Tenant** | `tenant:{tenant_id}` | TenantQueryDataSource | 全リクエストで参照される基本設定 |
 | **ClientConfiguration** | `client:{tenant_id}:{client_id}` | ClientConfigurationQueryDataSource | OAuth/OIDCリクエスト検証 |
 | **AuthorizationServerConfiguration** | `authz_server:{tenant_id}` | AuthorizationServerConfigurationQueryDataSource | トークン発行設定 |
+| **パスワード試行カウンター** | `password_attempt:{tenant_id}:{username}` | PasswordAuthenticationExecutor | ブルートフォース対策（`increment`使用） |
 
-**TTL**: デフォルト5分（CacheConfiguration で設定可能）
+**TTL**: デフォルト5分（CacheConfiguration で設定可能）。パスワード試行カウンターはテナントの `password_policy.lockout_duration_seconds`（デフォルト900秒）を使用。
 
 ---
 
@@ -249,7 +255,7 @@ idp.cache.enabled=false
 
 | 項目 | 記載内容 | 実装確認 | 状態 |
 |------|---------|---------|------|
-| **CacheStore interface** | 3メソッド | ✅ [CacheStore.java:21-27](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/cache/CacheStore.java#L21-L27) | ✅ 完全一致 |
+| **CacheStore interface** | 6メソッド（put x2, find, exists, delete, increment） | ✅ [CacheStore.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/cache/CacheStore.java) | ✅ 完全一致 |
 | **Cache-Aside実装** | TenantQueryDataSource | ✅ [TenantQueryDataSource.java:40-60](../../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/multi_tenancy/tenant/query/TenantQueryDataSource.java#L40-L60) | ✅ 完全一致 |
 | **NoOperationCacheStore** | テスト用実装 | ✅ 実装確認 | ✅ 正確 |
 | **キャッシュキー** | `tenant:{id}`, `client:{tenant}:{client}` | ✅ 実装確認 | ✅ 正確 |

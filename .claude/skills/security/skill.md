@@ -22,6 +22,7 @@ description: セキュリティ・脆弱性対策の開発・テストを行う�
 | 認可コード再利用 | CWE-294 | High | 使用後即時削除 |
 | マルチテナント分離違反 | CWE-284 | Critical | Tenant第一引数パターン |
 | SSRF | CWE-918 | High | プライベートIP/メタデータブロック |
+| パスワードブルートフォース | CWE-307 | High | Redisカウンター（INCR+TTL） |
 
 ---
 

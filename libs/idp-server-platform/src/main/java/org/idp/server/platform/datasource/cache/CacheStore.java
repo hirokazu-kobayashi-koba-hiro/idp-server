@@ -28,4 +28,6 @@ public interface CacheStore {
   boolean exists(String key);
 
   void delete(String key);
+
+  long increment(String key, int timeToLiveSeconds);
 }

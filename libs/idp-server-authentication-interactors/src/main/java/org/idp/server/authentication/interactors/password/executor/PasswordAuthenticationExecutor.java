@@ -26,8 +26,10 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.policy.PasswordPolicyConfig;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
@@ -57,13 +59,16 @@ public class PasswordAuthenticationExecutor implements AuthenticationExecutor {
 
   UserQueryRepository userQueryRepository;
   PasswordVerificationDelegation passwordVerificationDelegation;
+  CacheStore cacheStore;
   LoggerWrapper log = LoggerWrapper.getLogger(PasswordAuthenticationExecutor.class);
 
   public PasswordAuthenticationExecutor(
       UserQueryRepository userQueryRepository,
-      PasswordVerificationDelegation passwordVerificationDelegation) {
+      PasswordVerificationDelegation passwordVerificationDelegation,
+      CacheStore cacheStore) {
     this.userQueryRepository = userQueryRepository;
     this.passwordVerificationDelegation = passwordVerificationDelegation;
+    this.cacheStore = cacheStore;
   }
 
   @Override
@@ -87,6 +92,27 @@ public class PasswordAuthenticationExecutor implements AuthenticationExecutor {
         "Password authentication executor called. username={}, providerId={}",
         username,
         providerId);
+
+    PasswordPolicyConfig passwordPolicyConfig =
+        tenant.identityPolicyConfig().passwordPolicyConfig();
+    String attemptKey = String.format("password_attempt:%s:%s", tenant.identifierValue(), username);
+
+    if (passwordPolicyConfig.hasBruteForceProtection()) {
+      long attemptCount =
+          cacheStore.increment(attemptKey, passwordPolicyConfig.lockoutDurationSeconds());
+      if (attemptCount > passwordPolicyConfig.maxAttempts()) {
+        log.warn(
+            "Password authentication locked out due to too many attempts. username={}, attemptCount={}",
+            username,
+            attemptCount);
+
+        Map<String, Object> errorContents = new HashMap<>();
+        errorContents.put("error", "too_many_attempts");
+        errorContents.put("error_description", "Too many failed attempts. Please try again later.");
+
+        return AuthenticationExecutionResult.clientError(errorContents);
+      }
+    }
 
     // Issue #897: Search by preferred_username instead of email
     User user = userQueryRepository.findByPreferredUsername(tenant, providerId, username);
@@ -114,6 +140,8 @@ public class PasswordAuthenticationExecutor implements AuthenticationExecutor {
 
       return AuthenticationExecutionResult.clientError(errorContents);
     }
+
+    cacheStore.delete(attemptKey);
 
     log.debug("Password authentication succeeded. username={}, sub={}", username, user.sub());
 

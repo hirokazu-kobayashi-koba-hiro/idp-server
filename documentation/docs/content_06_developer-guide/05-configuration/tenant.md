@@ -1045,7 +1045,9 @@ Set-Cookie: IDP_AUTH_SESSION=xxx; Path=/idp-admin/{tenant_id}/
       "require_lowercase": false,
       "require_number": false,
       "require_special_char": false,
-      "max_history": 0
+      "max_history": 0,
+      "max_attempts": 5,
+      "lockout_duration_seconds": 900
     }
   }
 }
@@ -1098,8 +1100,12 @@ Set-Cookie: IDP_AUTH_SESSION=xxx; Path=/idp-admin/{tenant_id}/
 | `require_number` | boolean | `false` | 数字必須 |
 | `require_special_char` | boolean | `false` | 特殊文字必須 |
 | `max_history` | number | `0` | パスワード履歴保持数（将来対応 Issue #741） |
+| `max_attempts` | number | `5` | ブルートフォース対策: 最大連続失敗回数（0で無制限） |
+| `lockout_duration_seconds` | number | `900` | ブルートフォース対策: ロックアウト期間（秒、デフォルト15分） |
 
 **NIST推奨**: 最小8文字、複雑性要件なし（ユーザビリティ優先）
+
+**ブルートフォース対策**: `max_attempts`回連続でパスワード認証に失敗すると、`lockout_duration_seconds`の間そのユーザーの認証を拒否します。Redisのアトミックカウンター（INCR + TTL）で実装されており、認証成功時にカウンターはリセットされます。
 
 **使用例**:
 
@@ -1129,7 +1135,9 @@ Set-Cookie: IDP_AUTH_SESSION=xxx; Path=/idp-admin/{tenant_id}/
       "require_uppercase": true,
       "require_lowercase": true,
       "require_number": true,
-      "require_special_char": true
+      "require_special_char": true,
+      "max_attempts": 3,
+      "lockout_duration_seconds": 1800
     }
   }
 }
@@ -1156,6 +1164,19 @@ Set-Cookie: IDP_AUTH_SESSION=xxx; Path=/idp-admin/{tenant_id}/
   }
 }
 ```
+
+**パターン5: ブルートフォース対策のみカスタマイズ**
+```json
+{
+  "identity_policy_config": {
+    "password_policy": {
+      "max_attempts": 10,
+      "lockout_duration_seconds": 600
+    }
+  }
+}
+```
+→ パスワード複雑性はデフォルト（NIST推奨）のまま、10回失敗で10分ロックアウト
 
 **実装リファレンス**:
 - [TenantIdentityPolicy.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/policy/TenantIdentityPolicy.java)

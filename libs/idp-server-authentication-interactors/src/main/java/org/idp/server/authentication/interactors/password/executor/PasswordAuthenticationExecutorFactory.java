@@ -21,6 +21,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.platform.datasource.cache.CacheStore;
 
 public class PasswordAuthenticationExecutorFactory implements AuthenticationExecutorFactory {
 
@@ -30,7 +31,9 @@ public class PasswordAuthenticationExecutorFactory implements AuthenticationExec
     UserQueryRepository userQueryRepository = container.resolve(UserQueryRepository.class);
     PasswordVerificationDelegation passwordVerificationDelegation =
         container.resolve(PasswordVerificationDelegation.class);
+    CacheStore cacheStore = container.resolve(CacheStore.class);
 
-    return new PasswordAuthenticationExecutor(userQueryRepository, passwordVerificationDelegation);
+    return new PasswordAuthenticationExecutor(
+        userQueryRepository, passwordVerificationDelegation, cacheStore);
   }
 }
