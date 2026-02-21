@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.token.command;
 
 import java.util.List;
+import org.idp.server.core.adapters.datasource.token.OAuthTokenCacheKeyBuilder;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -29,8 +30,6 @@ import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthTokenCommandDataSource implements OAuthTokenCommandRepository {
-
-  private static final String CACHE_KEY_PREFIX = "oauth_token:at:";
 
   OAuthTokenSqlExecutor executor;
   AesCipher aesCipher;
@@ -71,8 +70,8 @@ public class OAuthTokenCommandDataSource implements OAuthTokenCommandRepository 
             tenant.identifierValue(), user.sub(), clientId.value());
 
     for (String hashedAccessToken : hashedAccessTokens) {
-      String cacheKey = CACHE_KEY_PREFIX + tenant.identifierValue() + ":" + hashedAccessToken;
-      cacheStore.delete(cacheKey);
+      cacheStore.delete(
+          OAuthTokenCacheKeyBuilder.build(tenant.identifierValue(), hashedAccessToken));
     }
 
     executor.deleteByUserAndClient(tenant.identifierValue(), user.sub(), clientId.value());
@@ -80,7 +79,6 @@ public class OAuthTokenCommandDataSource implements OAuthTokenCommandRepository 
 
   private void evictCache(Tenant tenant, AccessTokenEntity accessTokenEntity) {
     String tokenHash = hmacHasher.hash(accessTokenEntity.value());
-    String cacheKey = CACHE_KEY_PREFIX + tenant.identifierValue() + ":" + tokenHash;
-    cacheStore.delete(cacheKey);
+    cacheStore.delete(OAuthTokenCacheKeyBuilder.build(tenant.identifierValue(), tokenHash));
   }
 }

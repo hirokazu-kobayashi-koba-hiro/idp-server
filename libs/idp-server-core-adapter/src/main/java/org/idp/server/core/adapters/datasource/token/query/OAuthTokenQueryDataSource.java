@@ -19,6 +19,7 @@ package org.idp.server.core.adapters.datasource.token.query;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import org.idp.server.core.adapters.datasource.token.OAuthTokenCacheKeyBuilder;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -32,7 +33,6 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthTokenQueryDataSource implements OAuthTokenQueryRepository {
 
-  private static final String CACHE_KEY_PREFIX = "oauth_token:at:";
   private static final int DEFAULT_CACHE_TTL_SECONDS = 60;
 
   OAuthTokenSqlExecutor executor;
@@ -100,6 +100,6 @@ public class OAuthTokenQueryDataSource implements OAuthTokenQueryRepository {
 
   private String buildCacheKey(Tenant tenant, AccessTokenEntity accessTokenEntity) {
     String tokenHash = hmacHasher.hash(accessTokenEntity.value());
-    return CACHE_KEY_PREFIX + tenant.identifierValue() + ":" + tokenHash;
+    return OAuthTokenCacheKeyBuilder.build(tenant.identifierValue(), tokenHash);
   }
 }
