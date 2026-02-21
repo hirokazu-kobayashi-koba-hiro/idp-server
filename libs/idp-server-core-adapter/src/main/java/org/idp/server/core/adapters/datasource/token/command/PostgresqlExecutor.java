@@ -18,6 +18,7 @@ package org.idp.server.core.adapters.datasource.token.command;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.crypto.AesCipher;
@@ -216,6 +217,22 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
     List<Object> params = List.of(oAuthToken.identifier().value());
 
     sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public List<String> selectHashedAccessTokensByUserAndClient(
+      String tenantId, String userId, String clientId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+            SELECT hashed_access_token FROM oauth_token
+            WHERE tenant_id = ?::uuid
+              AND user_id = ?::uuid
+              AND client_id = ?;
+            """;
+    List<Object> params = List.of(tenantId, userId, clientId);
+    List<Map<String, String>> results = sqlExecutor.selectList(sqlTemplate, params);
+    return results.stream().map(row -> row.get("hashed_access_token")).toList();
   }
 
   @Override

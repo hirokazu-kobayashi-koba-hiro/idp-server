@@ -20,6 +20,7 @@ import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -39,6 +40,7 @@ public class OAuthTokenDataSourceProvider
     OAuthTokenSqlExecutor executor = executors.get(databaseTypeProvider.provide());
     AesCipher aesCipher = container.resolve(AesCipher.class);
     HmacHasher hmacHasher = container.resolve(HmacHasher.class);
-    return new OAuthTokenCommandDataSource(executor, aesCipher, hmacHasher);
+    CacheStore cacheStore = container.resolve(CacheStore.class);
+    return new OAuthTokenCommandDataSource(executor, aesCipher, hmacHasher, cacheStore);
   }
 }

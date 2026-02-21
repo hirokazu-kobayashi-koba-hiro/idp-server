@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.token.command;
 
+import java.util.List;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.HmacHasher;
@@ -25,6 +26,9 @@ public interface OAuthTokenSqlExecutor {
   void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
 
   void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
+
+  List<String> selectHashedAccessTokensByUserAndClient(
+      String tenantId, String userId, String clientId);
 
   void deleteByUserAndClient(String tenantId, String userId, String clientId);
 }
