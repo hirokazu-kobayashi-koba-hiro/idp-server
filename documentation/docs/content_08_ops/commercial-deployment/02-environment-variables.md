@@ -148,6 +148,14 @@ idp-server の設定は `application.yaml` で定義され、環境変数で上�
 | `maxIdle` | `REDIS_MAX_IDLE` | 最大アイドル接続数 | `3` | `10` |
 | `minIdle` | `REDIS_MIN_IDLE` | 最小アイドル接続数 | `2` | `5` |
 
+### トークンキャッシュ設定
+
+| パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
+|-----------|----------|------|-------------|-----------|
+| - | `TOKEN_CACHE_ENABLED` | トークンイントロスペクションのRedisキャッシュ有効化 | `false` | `true`（高負荷環境） |
+
+**注意**: `CACHE_ENABLE=true`（Redis有効）が前提条件。`TOKEN_CACHE_ENABLED=true` に設定すると、アクセストークンのイントロスペクション結果をRedisにキャッシュ（TTL 60秒）し、DB負荷を軽減します。中〜高負荷環境（100+ VU）でIntrospection p95が63-74%改善されます。
+
 ### logging.level (ログレベル設定)
 
 | パラメータ | 環境変数 | 説明 | デフォルト値 | 本番推奨値 |
