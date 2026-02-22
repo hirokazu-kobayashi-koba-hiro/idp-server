@@ -7297,6 +7297,16 @@ components:
           enum: [USER_LOGOUT, ADMIN_REVOCATION, TIMEOUT, SESSION_LIMIT_EXCEEDED]
           description: セッション終了理由（終了している場合のみ）
           example: null
+        ip_address:
+          type: string
+          nullable: true
+          description: 認証時のIPアドレス
+          example: "192.168.1.100"
+        user_agent:
+          type: string
+          nullable: true
+          description: 認証時のUser-Agent
+          example: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 
     UserSessionListResponse:
       type: object

@@ -45,6 +45,8 @@ public class OPSession implements Serializable {
   private SessionStatus status;
   private Instant terminatedAt;
   private TerminationReason terminationReason;
+  private String ipAddress;
+  private String userAgent;
 
   /** Default constructor for JSON deserialization. */
   public OPSession() {
@@ -62,7 +64,9 @@ public class OPSession implements Serializable {
       BrowserState browserState,
       Instant createdAt,
       Instant expiresAt,
-      Instant lastAccessedAt) {
+      Instant lastAccessedAt,
+      String ipAddress,
+      String userAgent) {
     this.id = id;
     this.tenantId = tenantId;
     this.user = user;
@@ -75,6 +79,8 @@ public class OPSession implements Serializable {
     this.expiresAt = expiresAt;
     this.lastAccessedAt = lastAccessedAt;
     this.status = SessionStatus.ACTIVE;
+    this.ipAddress = ipAddress;
+    this.userAgent = userAgent;
   }
 
   public static OPSession create(
@@ -84,7 +90,9 @@ public class OPSession implements Serializable {
       String acr,
       List<String> amr,
       Map<String, Map<String, Object>> interactionResults,
-      long sessionTimeoutSeconds) {
+      long sessionTimeoutSeconds,
+      String ipAddress,
+      String userAgent) {
     Instant now = Instant.now();
     return new OPSession(
         OPSessionIdentifier.generate(),
@@ -97,7 +105,9 @@ public class OPSession implements Serializable {
         BrowserState.generate(),
         now,
         now.plusSeconds(sessionTimeoutSeconds),
-        now);
+        now,
+        ipAddress,
+        userAgent);
   }
 
   public OPSessionIdentifier id() {
@@ -182,6 +192,14 @@ public class OPSession implements Serializable {
     return terminationReason;
   }
 
+  public String ipAddress() {
+    return ipAddress;
+  }
+
+  public String userAgent() {
+    return userAgent;
+  }
+
   public boolean exists() {
     return id != null && id.exists();
   }
@@ -231,6 +249,8 @@ public class OPSession implements Serializable {
     map.put("status", status != null ? status.name() : null);
     map.put("terminated_at", terminatedAt != null ? terminatedAt.toString() : null);
     map.put("termination_reason", terminationReason != null ? terminationReason.name() : null);
+    map.put("ip_address", ipAddress);
+    map.put("user_agent", userAgent);
     return map;
   }
 
