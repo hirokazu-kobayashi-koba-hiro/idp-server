@@ -1,9 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { requestBackchannelAuthentications, requestToken } from "../../api/oauthClient";
+import { postWithJson } from "../../lib/http";
 import { clientSecretPostClient, serverConfig } from "../testConfig";
 
-describe("Null byte injection protection", () => {
+describe("MaliciousRequestRejectFilter", () => {
   const ciba = serverConfig.ciba;
 
   describe("CIBA backchannel authentication request", () => {
@@ -70,6 +71,20 @@ describe("Null byte injection protection", () => {
       expect(response.status).toBe(400);
       expect(response.data.error).toBe("invalid_request");
       expect(response.data.error_description).toBe("Invalid parameter value");
+    });
+  });
+
+  describe("Oversized request body", () => {
+    it("should reject JSON body exceeding 10MB with 413", async () => {
+      const oversizedBody = { data: "x".repeat(11 * 1024 * 1024) };
+      const response = await postWithJson({
+        url: serverConfig.tokenEndpoint,
+        body: oversizedBody,
+      });
+      console.log(response.data);
+      expect(response.status).toBe(413);
+      expect(response.data.error).toBe("invalid_request");
+      expect(response.data.error_description).toBe("Request body too large");
     });
   });
 });

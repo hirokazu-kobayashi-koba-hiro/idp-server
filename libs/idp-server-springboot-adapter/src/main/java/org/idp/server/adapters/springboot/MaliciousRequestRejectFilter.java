@@ -48,9 +48,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 5)
-public class NullByteRejectFilter extends OncePerRequestFilter {
+public class MaliciousRequestRejectFilter extends OncePerRequestFilter {
 
-  private static final LoggerWrapper log = LoggerWrapper.getLogger(NullByteRejectFilter.class);
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(MaliciousRequestRejectFilter.class);
+  private static final int MAX_BODY_SIZE = 10 * 1024 * 1024;
 
   @Override
   protected void doFilterInternal(
@@ -73,6 +75,11 @@ public class NullByteRejectFilter extends OncePerRequestFilter {
 
     // For non-form-urlencoded body (e.g. JSON), read and check the body
     if (hasNonFormBody(request)) {
+      int contentLength = request.getContentLength();
+      if (contentLength > MAX_BODY_SIZE) {
+        rejectPayloadTooLarge(request, response);
+        return;
+      }
       byte[] body = request.getInputStream().readAllBytes();
       if (containsNullByte(body)) {
         rejectRequest(request, response, "request_body");
@@ -123,13 +130,29 @@ public class NullByteRejectFilter extends OncePerRequestFilter {
       return false;
     }
     int contentLength = request.getContentLength();
-    if (contentLength == 0) {
+    if (contentLength <= 0) {
       return false;
     }
     // form-urlencoded body is already covered by getParameterNames() above
     String contentType = request.getContentType();
     return contentType != null
         && !contentType.toLowerCase().startsWith("application/x-www-form-urlencoded");
+  }
+
+  private void rejectPayloadTooLarge(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
+    log.warn(
+        "Request body too large: content_length={}, uri={}, method={}",
+        request.getContentLength(),
+        request.getRequestURI(),
+        request.getMethod());
+
+    response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+    response
+        .getWriter()
+        .write("{\"error\":\"invalid_request\",\"error_description\":\"Request body too large\"}");
   }
 
   private void rejectRequest(

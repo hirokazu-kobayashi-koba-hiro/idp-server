@@ -23,9 +23,9 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-class NullByteRejectFilterTest {
+class MaliciousRequestRejectFilterTest {
 
-  private final NullByteRejectFilter filter = new NullByteRejectFilter();
+  private final MaliciousRequestRejectFilter filter = new MaliciousRequestRejectFilter();
 
   @Test
   void normalRequest_passesThrough() throws Exception {
@@ -154,5 +154,21 @@ class NullByteRejectFilterTest {
 
     assertEquals(200, response.getStatus());
     assertNotNull(filterChain.getRequest());
+  }
+
+  @Test
+  void oversizedJsonBody_returns413() throws Exception {
+    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/test");
+    request.setContentType("application/json");
+    byte[] largeBody = new byte[11 * 1024 * 1024]; // 11MB
+    request.setContent(largeBody);
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    MockFilterChain filterChain = new MockFilterChain();
+
+    filter.doFilterInternal(request, response, filterChain);
+
+    assertEquals(413, response.getStatus());
+    assertTrue(response.getContentAsString().contains("Request body too large"));
+    assertNull(filterChain.getRequest());
   }
 }
