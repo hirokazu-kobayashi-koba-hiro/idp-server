@@ -76,4 +76,8 @@ public class MaliciousInputException extends RuntimeException {
   public static MaliciousInputException unsafeCharacters(String value) {
     return new MaliciousInputException("unsafe_characters", value);
   }
+
+  public static MaliciousInputException nullByteInjection(String key) {
+    return new MaliciousInputException("null_byte_injection", key);
+  }
 }
