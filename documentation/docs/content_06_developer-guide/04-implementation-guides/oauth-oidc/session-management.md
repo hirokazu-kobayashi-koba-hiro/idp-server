@@ -88,6 +88,8 @@ public class OPSession {
   private final Set<String> amr;              // 認証方式
   private final Instant createdAt;
   private final Instant expiresAt;
+  private final String ipAddress;             // 認証時のIPアドレス
+  private final String userAgent;             // 認証時のUser-Agent
 
   public boolean isExpired() {
     return Instant.now().isAfter(expiresAt);
@@ -121,9 +123,11 @@ public class ClientSession {
 ```java
 public class OIDCSessionHandler {
 
-  // 認証成功時にOPSessionを作成
+  // 認証成功時にOPSessionを作成（RequestAttributesからIP/UAを抽出）
   public OPSession onAuthenticationSuccess(
-      Tenant tenant, User user, Authentication authentication);
+      Tenant tenant, User user, Authentication authentication,
+      Map<String, Map<String, Object>> interactionResults,
+      OPSession existingSession, RequestAttributes requestAttributes);
 
   // 認可時にClientSessionを作成（sidを返す）
   public ClientSessionIdentifier onAuthorize(
@@ -177,7 +181,9 @@ public class OIDCSessionHandler {
 if (updatedTransaction.isSuccess()) {
   Authentication authentication = updatedTransaction.authentication();
   OPSession opSession = oidcSessionHandler.onAuthenticationSuccess(
-      tenant, updatedTransaction.user(), authentication);
+      tenant, updatedTransaction.user(), authentication,
+      updatedTransaction.interactionResults().toStorageMap(),
+      existingSession, requestAttributes);
 
   // Cookie設定（OIDCSessionHandlerに委譲）
   oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
@@ -584,7 +590,8 @@ public OPSession onAuthenticationSuccess(
     User user,
     Authentication authentication,
     Map<String, Map<String, Object>> interactionResults,
-    OPSession existingSession) {
+    OPSession existingSession,
+    RequestAttributes requestAttributes) {
 
   if (existingSession != null && existingSession.isActive()) {
     String existingSub = existingSession.sub();
@@ -613,7 +620,8 @@ public OPSession onAuthenticationSuccess(
     }
   }
 
-  return createNewOPSession(tenant, user, authentication, interactionResults);
+  // RequestAttributesからIPアドレス・User-Agentを抽出してOPSessionに保存
+  return createNewOPSession(tenant, user, authentication, interactionResults, requestAttributes);
 }
 ```
 
@@ -713,12 +721,17 @@ idp-serverでは、Keycloakの高度なセッション管理機能を参考に�
 
 セッションにデバイス情報を紐付けて管理する機能。
 
-| 項目 | 説明 |
-|-----|------|
-| `device` | デバイス種別（Desktop, Mobile等） |
-| `browser` | ブラウザ名・バージョン |
-| `os` | OS名・バージョン |
-| `ipAddress` | IPアドレス |
+**実装済み**: OPSessionに`ipAddress`と`userAgent`が保存されます。認証時の`RequestAttributes`から抽出され、セッション一覧APIのレスポンスに`ip_address`・`user_agent`として含まれます。
+
+**今後の拡張予定**:
+
+| 項目 | 説明 | 状態 |
+|-----|------|------|
+| `ipAddress` | IPアドレス | 実装済み |
+| `userAgent` | User-Agent文字列 | 実装済み |
+| `device` | デバイス種別（Desktop, Mobile等） | 未実装 |
+| `browser` | ブラウザ名・バージョン | 未実装 |
+| `os` | OS名・バージョン | 未実装 |
 
 ### DPoP（Demonstrating Proof of Possession）
 

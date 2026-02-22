@@ -61,6 +61,8 @@ public class OPSession {
     private Instant expiresAt;
     private Instant lastAccessedAt;
     private SessionStatus status;
+    private String ipAddress;    // 認証時のIPアドレス
+    private String userAgent;    // 認証時のUser-Agent
 
     // セッション再利用可否判定（概念的）
     public boolean canReuseFor(Acr requiredAcr) {
@@ -105,10 +107,11 @@ public class OIDCSessionHandler {
         User user,
         Authentication authentication,
         Map<String, Map<String, Object>> interactionResults,
-        OPSession existingSession
+        OPSession existingSession,
+        RequestAttributes requestAttributes
     ) {
         // セッション再利用または新規作成ロジック
-        // ...
+        // RequestAttributesからIPアドレス・User-Agentを抽出してOPSessionに保存
     }
 }
 ```

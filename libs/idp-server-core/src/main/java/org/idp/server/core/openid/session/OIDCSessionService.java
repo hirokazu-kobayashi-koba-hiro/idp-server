@@ -45,7 +45,9 @@ public class OIDCSessionService {
       String acr,
       List<String> amr,
       Map<String, Map<String, Object>> interactionResults,
-      long sessionTimeoutSeconds) {
+      long sessionTimeoutSeconds,
+      String ipAddress,
+      String userAgent) {
     OPSession session =
         OPSession.create(
             tenant.identifier(),
@@ -54,7 +56,9 @@ public class OIDCSessionService {
             acr,
             amr,
             interactionResults,
-            sessionTimeoutSeconds);
+            sessionTimeoutSeconds,
+            ipAddress,
+            userAgent);
     opSessionRepository.register(tenant, session);
     return session;
   }

@@ -279,7 +279,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
               updatedTransaction.user(),
               authentication,
               updatedTransaction.interactionResults().toStorageMap(),
-              existingSession);
+              existingSession,
+              requestAttributes);
       oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
     }
 
@@ -381,7 +382,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
               updatedTransaction.user(),
               authentication,
               updatedTransaction.interactionResults().toStorageMap(),
-              existingSession);
+              existingSession,
+              requestAttributes);
       oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
     }
 

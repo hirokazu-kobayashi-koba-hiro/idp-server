@@ -1265,6 +1265,14 @@ describe("SSO Session Management", () => {
       expect(session).toHaveProperty("sub");
       expect(session.sub).toBe(userSub);
 
+      // Verify ip_address and user_agent are included in response
+      expect(session).toHaveProperty("ip_address");
+      expect(session).toHaveProperty("user_agent");
+      console.log("- IP Address:", session.ip_address);
+      console.log("- User Agent:", session.user_agent);
+      expect(session.ip_address).toBeDefined();
+      expect(session.user_agent).toBeDefined();
+
       console.log("\n=== SUCCESS: Session listing via Management API works! ===");
     });
 

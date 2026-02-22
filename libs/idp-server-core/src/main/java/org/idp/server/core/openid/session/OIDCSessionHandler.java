@@ -27,6 +27,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.type.RequestAttributes;
 
 /**
  * OIDCSessionHandler
@@ -85,7 +86,8 @@ public class OIDCSessionHandler {
       User user,
       Authentication authentication,
       Map<String, Map<String, Object>> interactionResults,
-      OPSession existingSession) {
+      OPSession existingSession,
+      RequestAttributes requestAttributes) {
 
     // Check if we have an active existing session
     if (existingSession != null && existingSession.isActive()) {
@@ -134,18 +136,28 @@ public class OIDCSessionHandler {
     }
 
     // Create new session
-    return createNewOPSession(tenant, user, authentication, interactionResults);
+    return createNewOPSession(tenant, user, authentication, interactionResults, requestAttributes);
   }
 
   private OPSession createNewOPSession(
       Tenant tenant,
       User user,
       Authentication authentication,
-      Map<String, Map<String, Object>> interactionResults) {
+      Map<String, Map<String, Object>> interactionResults,
+      RequestAttributes requestAttributes) {
     Instant authTime =
         authentication.hasAuthenticationTime()
             ? authentication.time().atZone(ZoneOffset.UTC).toInstant()
             : Instant.now();
+
+    String ipAddress =
+        requestAttributes != null && requestAttributes.hasIpAddress()
+            ? requestAttributes.getIpAddress().value()
+            : null;
+    String userAgent =
+        requestAttributes != null && requestAttributes.hasUserAgent()
+            ? requestAttributes.getUserAgent().value()
+            : null;
 
     long sessionTimeoutSeconds = getSessionTimeoutSeconds(tenant);
     return sessionService.createOPSession(
@@ -155,7 +167,9 @@ public class OIDCSessionHandler {
         authentication.acr(),
         authentication.methods(),
         interactionResults,
-        sessionTimeoutSeconds);
+        sessionTimeoutSeconds,
+        ipAddress,
+        userAgent);
   }
 
   /**
