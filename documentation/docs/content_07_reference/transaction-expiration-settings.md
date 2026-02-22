@@ -54,8 +54,8 @@
 
 | パラメータ | デフォルト | 説明 |
 |---|---|---|
-| `refresh_token_strategy` | `FIXED` | `FIXED`: 元の有効期限を維持。`EXTENDS`: 使用ごとに有効期限を延長 |
-| `rotate_refresh_token` | `true` | 使用ごとに新しいリフレッシュトークンを発行するかどうか |
+| `refresh_token_strategy` | `FIXED` | `FIXED`: 元の有効期限を維持。`EXTENDS`: 使用ごとに有効期限を延長。クライアント別オーバーライド: 可 |
+| `rotate_refresh_token` | `true` | 使用ごとに新しいリフレッシュトークンを発行するかどうか。クライアント別オーバーライド: 可 |
 
 ### IDトークン (`id_token_duration`)
 
@@ -65,7 +65,7 @@
 - **設定元**: `IdTokenCreator.createIdToken()`
 - **検証箇所**: クライアント側でJWTの `exp` クレームを検証
 - **RFC**: OIDC Core Section 3.1.3.3
-- **クライアント別オーバーライド**: 不可
+- **クライアント別オーバーライド**: 可 - `ClientConfiguration.idTokenDuration` がサーバーデフォルトを上書き
 
 ### 認可レスポンス - JARM (`authorization_response_duration`)
 
@@ -121,14 +121,17 @@
 
 ## クライアントレベルのオーバーライド
 
-以下のパラメータは `ClientConfiguration` でクライアントごとに上書き可能:
+以下のパラメータは `ClientConfiguration.extension` でクライアントごとに上書き可能:
 
-| パラメータ | サーバーJSONキー | クライアントJSONキー |
-|---|---|---|
-| アクセストークンの有効期限 | `access_token_duration` | `access_token_duration` |
-| リフレッシュトークンの有効期限 | `refresh_token_duration` | `refresh_token_duration` |
+| パラメータ | サーバーJSONキー | クライアントJSONキー | 値 |
+|---|---|---|---|
+| アクセストークンの有効期限 | `access_token_duration` | `access_token_duration` | 秒（正の整数） |
+| リフレッシュトークンの有効期限 | `refresh_token_duration` | `refresh_token_duration` | 秒（正の整数） |
+| IDトークンの有効期限 | `id_token_duration` | `id_token_duration` | 秒（正の整数） |
+| リフレッシュトークン戦略 | `refresh_token_strategy` | `refresh_token_strategy` | `"FIXED"` / `"EXTENDS"` |
+| リフレッシュトークンローテーション | `rotate_refresh_token` | `rotate_refresh_token` | `true` / `false` |
 
-クライアントに設定された場合、クライアントの値がサーバーデフォルトより優先される。
+クライアントに設定された場合、クライアントの値がサーバーデフォルトより優先される。未設定（null）の場合はテナント設定にフォールバックする。
 
 ## 認可リクエストライフサイクルの関連テーブル
 

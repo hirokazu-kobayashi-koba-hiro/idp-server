@@ -285,12 +285,25 @@ Client登録・更新のAPI詳細仕様（リクエスト/レスポンススキ�
 {
   "extension": {
     "access_token_duration": 7200,
-    "refresh_token_duration": 172800
+    "refresh_token_duration": 172800,
+    "id_token_duration": 1800,
+    "refresh_token_strategy": "EXTENDS",
+    "rotate_refresh_token": false
   }
 }
 ```
 
 **デフォルト値**: Tenant設定の値を継承
+
+| フィールド | 説明 | 設定値 |
+|-----------|------|--------|
+| `access_token_duration` | アクセストークンの有効期限（秒） | 正の整数 |
+| `refresh_token_duration` | リフレッシュトークンの有効期限（秒） | 正の整数 |
+| `id_token_duration` | IDトークンの有効期限（秒） | 正の整数 |
+| `refresh_token_strategy` | リフレッシュトークンの有効期限戦略 | `"FIXED"` / `"EXTENDS"` |
+| `rotate_refresh_token` | リフレッシュトークンのローテーション有無 | `true` / `false` |
+
+すべてオプションで、未設定時はTenant設定にフォールバックします。
 
 #### アプリケーション種類別の推奨値
 
@@ -635,6 +648,9 @@ CIBAリクエスト時に、authorization_details（RAR: Rich Authorization Requ
 |-----------|------------|------|
 | `access_token_duration` | Tenant設定を継承 | 秒 |
 | `refresh_token_duration` | Tenant設定を継承 | 秒 |
+| `id_token_duration` | Tenant設定を継承 | 秒 |
+| `refresh_token_strategy` | Tenant設定を継承 | - |
+| `rotate_refresh_token` | Tenant設定を継承 | - |
 
 ---
 

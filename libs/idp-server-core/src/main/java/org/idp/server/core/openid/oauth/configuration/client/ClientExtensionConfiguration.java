@@ -20,12 +20,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
+import org.idp.server.core.openid.oauth.configuration.RefreshTokenStrategy;
 import org.idp.server.platform.json.JsonReadable;
 
 public class ClientExtensionConfiguration implements JsonReadable {
 
   Long accessTokenDuration;
   Long refreshTokenDuration;
+  String refreshTokenStrategy;
+  Boolean rotateRefreshToken;
+  Long idTokenDuration;
   boolean supportedJar = false;
   List<AvailableFederation> availableFederations;
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification-no-action";
@@ -47,6 +51,36 @@ public class ClientExtensionConfiguration implements JsonReadable {
 
   public boolean hasRefreshTokenDuration() {
     return refreshTokenDuration != null && refreshTokenDuration > 0;
+  }
+
+  /** Returns {@code true} if a client-level refresh token strategy override is configured. */
+  public boolean hasRefreshTokenStrategy() {
+    return refreshTokenStrategy != null && !refreshTokenStrategy.isEmpty();
+  }
+
+  /** Returns the client-level refresh token strategy (FIXED or EXTENDS). */
+  public RefreshTokenStrategy refreshTokenStrategy() {
+    return RefreshTokenStrategy.of(refreshTokenStrategy);
+  }
+
+  /** Returns {@code true} if a client-level rotate_refresh_token override is configured. */
+  public boolean hasRotateRefreshToken() {
+    return rotateRefreshToken != null;
+  }
+
+  /** Returns whether refresh tokens should be rotated on use for this client. */
+  public boolean isRotateRefreshToken() {
+    return rotateRefreshToken;
+  }
+
+  /** Returns {@code true} if a client-level id_token_duration override is configured. */
+  public boolean hasIdTokenDuration() {
+    return idTokenDuration != null && idTokenDuration > 0;
+  }
+
+  /** Returns the client-level ID token duration in seconds. */
+  public long idTokenDuration() {
+    return idTokenDuration;
   }
 
   public boolean isSupportedJar() {
@@ -85,6 +119,9 @@ public class ClientExtensionConfiguration implements JsonReadable {
     Map<String, Object> map = new HashMap<>();
     if (hasAccessTokenDuration()) map.put("access_token_duration", accessTokenDuration);
     if (hasRefreshTokenDuration()) map.put("refresh_token_duration", refreshTokenDuration);
+    if (hasRefreshTokenStrategy()) map.put("refresh_token_strategy", refreshTokenStrategy);
+    if (hasRotateRefreshToken()) map.put("rotate_refresh_token", rotateRefreshToken);
+    if (hasIdTokenDuration()) map.put("id_token_duration", idTokenDuration);
     map.put("supported_jar", supportedJar);
     if (hasAvailableFederations())
       map.put("available_federations", availableFederationsAsMapList());
