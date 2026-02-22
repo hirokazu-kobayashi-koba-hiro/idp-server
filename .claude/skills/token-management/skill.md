@@ -41,6 +41,15 @@ libs/
 │           └── tokenrevocation/
 │               └── TokenRevocationHandler.java
 │
+├── idp-server-core-adapter/                 # アダプター（キャッシュ含む）
+│   └── .../datasource/token/
+│       ├── OAuthTokenCacheKeyBuilder.java   # キャッシュキー生成（共有）
+│       ├── OAuthTokenCacheStoreResolver.java # TOKEN_CACHE_ENABLED制御
+│       ├── command/
+│       │   └── OAuthTokenCommandDataSource.java  # 削除時キャッシュ連動
+│       └── query/
+│           └── OAuthTokenQueryDataSource.java    # Introspection時キャッシュ
+│
 └── idp-server-control-plane/               # 管理API
     └── .../management/token/
         └── TokenConfigManagementApi.java
@@ -202,11 +211,31 @@ JWTの`sub`クレームからユーザーを解決する方法を設定できま
 
 トークンのメタデータを検証し、active/inactiveを返却します。
 
+### Introspectionキャッシュ
+
+`TOKEN_CACHE_ENABLED=true`（環境変数）かつRedis有効時、Introspection結果をRedisにキャッシュします。
+
+- **パターン**: Cache-Aside（初回Introspection時にキャッシュ格納）
+- **キー**: `oauth_token:at:{tenant_id}:{hmac(access_token)}`（`OAuthTokenCacheKeyBuilder`で生成）
+- **TTL**: 60秒固定
+- **デフォルト**: OFF（opt-in）。`OAuthTokenCacheStoreResolver`が`TOKEN_CACHE_ENABLED`を参照し、OFFの場合は`NoOperationCacheStore`を使用
+
+### キャッシュ削除の連鎖
+
+トークンが削除される全パターンでキャッシュも連動して削除されます:
+
+| 削除トリガー | 処理 |
+|-------------|------|
+| **Token Revocation** | DB DELETE + キャッシュ削除 |
+| **認可グラント削除**（管理API） | GrantRevocationService → deleteByUserAndClient → SELECT hashed tokens → キャッシュ削除 → DB DELETE |
+| **ログアウト等の一括失効** | deleteByUserAndClient → SELECT hashed tokens → キャッシュ削除 → DB DELETE |
+| **TTL経過** | キャッシュ自動削除（60秒） |
+
 ## Token Revocation（RFC 7009）
 
 `idp-server-core/token/revocation/` 内:
 
-トークンを無効化します。OAuthTokenCommandRepository.delete()を使用します。
+トークンを無効化します。OAuthTokenCommandRepository.delete()を使用します。キャッシュが有効な場合、DB削除と同時にキャッシュも削除されます。
 
 ## E2Eテスト
 
@@ -250,6 +279,16 @@ cd e2e && npm test -- usecase/device-credential/device-credential-04-device-secr
 ### Introspectionでinactive
 - トークンが有効期限内か確認
 - OAuthTokenが正しく保存されているか確認
+
+### Introspectionキャッシュが効かない
+- `TOKEN_CACHE_ENABLED=true`が環境変数に設定されているか確認
+- `CACHE_ENABLE=true`（Redis自体）が有効か確認
+- `OAuthTokenCacheStoreResolver`が`NoOperationCacheStore`を返していないか確認
+
+### トークン失効後もIntrospectionでactiveが返る
+- キャッシュTTL（60秒）以内の場合、古いキャッシュが返される可能性がある
+- 通常はRevocation/削除時にキャッシュも連動削除されるため発生しない
+- 直接DBを操作した場合のみ不整合が起きうる（最大60秒で自動解消）
 
 ### Revocationが失敗
 - クライアント認証が成功しているか確認

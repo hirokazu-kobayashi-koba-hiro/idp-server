@@ -16,12 +16,17 @@
 
 package org.idp.server.core.adapters.datasource.token.command;
 
+import java.util.List;
+import org.idp.server.core.adapters.datasource.token.OAuthTokenCacheKeyBuilder;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.HmacHasher;
+import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthTokenCommandDataSource implements OAuthTokenCommandRepository {
@@ -29,12 +34,22 @@ public class OAuthTokenCommandDataSource implements OAuthTokenCommandRepository 
   OAuthTokenSqlExecutor executor;
   AesCipher aesCipher;
   HmacHasher hmacHasher;
+  CacheStore cacheStore;
 
   public OAuthTokenCommandDataSource(
       OAuthTokenSqlExecutor executor, AesCipher aesCipher, HmacHasher hmacHasher) {
+    this(executor, aesCipher, hmacHasher, new NoOperationCacheStore());
+  }
+
+  public OAuthTokenCommandDataSource(
+      OAuthTokenSqlExecutor executor,
+      AesCipher aesCipher,
+      HmacHasher hmacHasher,
+      CacheStore cacheStore) {
     this.executor = executor;
     this.aesCipher = aesCipher;
     this.hmacHasher = hmacHasher;
+    this.cacheStore = cacheStore;
   }
 
   @Override
@@ -45,10 +60,25 @@ public class OAuthTokenCommandDataSource implements OAuthTokenCommandRepository 
   @Override
   public void delete(Tenant tenant, OAuthToken oAuthToken) {
     executor.delete(oAuthToken, aesCipher, hmacHasher);
+    evictCache(tenant, oAuthToken.accessTokenEntity());
   }
 
   @Override
   public void deleteByUserAndClient(Tenant tenant, User user, RequestedClientId clientId) {
+    List<String> hashedAccessTokens =
+        executor.selectHashedAccessTokensByUserAndClient(
+            tenant.identifierValue(), user.sub(), clientId.value());
+
+    for (String hashedAccessToken : hashedAccessTokens) {
+      cacheStore.delete(
+          OAuthTokenCacheKeyBuilder.build(tenant.identifierValue(), hashedAccessToken));
+    }
+
     executor.deleteByUserAndClient(tenant.identifierValue(), user.sub(), clientId.value());
+  }
+
+  private void evictCache(Tenant tenant, AccessTokenEntity accessTokenEntity) {
+    String tokenHash = hmacHasher.hash(accessTokenEntity.value());
+    cacheStore.delete(OAuthTokenCacheKeyBuilder.build(tenant.identifierValue(), tokenHash));
   }
 }
