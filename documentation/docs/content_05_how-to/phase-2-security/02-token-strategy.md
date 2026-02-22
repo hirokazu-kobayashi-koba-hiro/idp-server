@@ -166,7 +166,7 @@ gantt
 ### Management API での設定例
 
 ```bash
-curl -X PUT https://idp-server/v1/management/tenants/{tenant-id}/authorization-server \
+curl -X PUT https://api.local.dev/v1/management/tenants/{tenant-id}/authorization-server \
   -H "Content-Type: application/json" \
   -d '{
     "extension": {
@@ -182,6 +182,36 @@ curl -X PUT https://idp-server/v1/management/tenants/{tenant-id}/authorization-s
 設定を省略した場合、最もセキュアな **ローテーション＋固定パターン** が適用されます：
 - `refresh_token_strategy`: `"FIXED"`
 - `rotate_refresh_token`: `true`
+
+---
+
+## クライアントレベルのオーバーライド
+
+テナントレベルの設定に加えて、クライアントごとにトークン戦略をオーバーライドできます。
+
+クライアントの `extension` オブジェクトに設定することで、そのクライアントだけ異なる戦略を適用できます。未設定の場合はテナント設定にフォールバックします。
+
+### 設定例
+
+```bash
+curl -X PUT https://api.local.dev/v1/management/tenants/{tenant-id}/clients/{client-id} \
+  -H "Content-Type: application/json" \
+  -d '{
+    "extension": {
+      "refresh_token_strategy": "EXTENDS",
+      "rotate_refresh_token": true,
+      "refresh_token_duration": 2592000
+    }
+  }'
+```
+
+### ユースケース
+
+| シナリオ | テナント設定 | クライアントオーバーライド | 理由 |
+|---------|------------|----------------------|------|
+| モバイルアプリ | FIXED + rotate | EXTENDS + rotate | 長期ログイン維持 |
+| 管理画面 | EXTENDS + rotate | FIXED + rotate | セキュリティ強化 |
+| バッチ処理 | FIXED + rotate | FIXED + !rotate | トークン値の固定化 |
 
 ---
 

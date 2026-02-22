@@ -9,6 +9,9 @@ description: トークン管理（Token Management）機能の開発・修正を
 
 - `documentation/docs/content_06_developer-guide/03-application-plane/03-token-endpoint.md` - トークンエンドポイント実装ガイド
 - `documentation/docs/content_03_concepts/04-tokens-claims/concept-02-token-management.md` - トークン管理概念
+- `documentation/docs/content_05_how-to/phase-2-security/02-token-strategy.md` - トークン有効期限パターン（4パターン、クライアントレベルオーバーライド）
+- `documentation/docs/content_07_reference/transaction-expiration-settings.md` - トランザクションデータの有効期限設定リファレンス
+- `documentation/docs/content_06_developer-guide/05-configuration/client.md` - Client設定ガイド（Extension設定のトークン関連項目）
 
 ## 機能概要
 

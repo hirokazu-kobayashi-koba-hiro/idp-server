@@ -455,6 +455,41 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return extension.refreshTokenDuration();
   }
 
+  /** Returns {@code true} if a client-level refresh token strategy override is configured. */
+  public boolean hasRefreshTokenStrategy() {
+    return extension.hasRefreshTokenStrategy();
+  }
+
+  /** Returns {@code true} if the client-level refresh token strategy is FIXED. */
+  public boolean isFixedRefreshTokenStrategy() {
+    return extension.refreshTokenStrategy().isFixed();
+  }
+
+  /** Returns {@code true} if the client-level refresh token strategy is EXTENDS. */
+  public boolean isExtendsRefreshTokenStrategy() {
+    return extension.refreshTokenStrategy().isExtends();
+  }
+
+  /** Returns {@code true} if a client-level rotate_refresh_token override is configured. */
+  public boolean hasRotateRefreshToken() {
+    return extension.hasRotateRefreshToken();
+  }
+
+  /** Returns whether refresh tokens should be rotated on use for this client. */
+  public boolean isRotateRefreshToken() {
+    return extension.isRotateRefreshToken();
+  }
+
+  /** Returns {@code true} if a client-level id_token_duration override is configured. */
+  public boolean hasIdTokenDuration() {
+    return extension.hasIdTokenDuration();
+  }
+
+  /** Returns the client-level ID token duration in seconds. */
+  public long idTokenDuration() {
+    return extension.idTokenDuration();
+  }
+
   public boolean hasAvailableFederations() {
     return extension.hasAvailableFederations();
   }

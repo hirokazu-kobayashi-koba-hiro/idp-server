@@ -71,6 +71,11 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
       ClientConfiguration clientConfiguration) {
     try {
 
+      long idTokenDuration =
+          clientConfiguration.hasIdTokenDuration()
+              ? clientConfiguration.idTokenDuration()
+              : authorizationServerConfiguration.idTokenDuration();
+
       Map<String, Object> standardClaims =
           createIndividualClaims(
               user,
@@ -79,7 +84,7 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
               authorizationGrant,
               requestedClaimsPayload,
               authorizationServerConfiguration.tokenIssuer(),
-              authorizationServerConfiguration.idTokenDuration(),
+              idTokenDuration,
               authorizationServerConfiguration.isIdTokenStrictMode());
 
       Map<String, Object> customIndividualClaims =
