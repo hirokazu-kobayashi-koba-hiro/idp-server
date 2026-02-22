@@ -219,17 +219,42 @@ class RefreshTokenCreatableTest {
   class DurationFallback {
 
     @Test
-    @DisplayName("クライアントにrefreshTokenDuration設定あり: クライアント値を使用")
+    @DisplayName("クライアントにrefreshTokenDuration設定あり: クライアント値(86400s)がテナント値(3600s)より優先される")
     void usesClientDuration() {
-      AuthorizationServerConfiguration serverConfig = createServerConfig("EXTENDS", false, 3600);
-      ClientConfiguration clientConfig = createClientConfigWithOverride(null, null, 86400L);
+      long tenantDuration = 3600;
+      long clientDuration = 86400;
+      AuthorizationServerConfiguration serverConfig =
+          createServerConfig("EXTENDS", false, tenantDuration);
+      ClientConfiguration clientConfig = createClientConfigWithOverride(null, null, clientDuration);
       RefreshToken oldToken = createOldRefreshToken();
 
       RefreshToken result = creator.refresh(oldToken, serverConfig, clientConfig);
 
       assertEquals(OLD_TOKEN_VALUE, result.refreshTokenEntity().value());
-      // クライアントの86400秒が使用されることを検証（テナントの3600秒ではない）
-      assertNotEquals(oldToken.expiresAt(), result.expiresAt());
+
+      // expiresAt = now + duration なので、createdAtからの差分でどちらのdurationが使われたか判定
+      long actualDuration =
+          java.time.Duration.between(result.createdAt().value(), result.expiresAt().value())
+              .getSeconds();
+      // クライアント値(86400)が使用されていることを検証（テナント値3600ではない）
+      assertEquals(clientDuration, actualDuration);
+    }
+
+    @Test
+    @DisplayName("クライアントにrefreshTokenDuration未設定: テナント値にフォールバック")
+    void fallsBackToTenantDuration() {
+      long tenantDuration = 7200;
+      AuthorizationServerConfiguration serverConfig =
+          createServerConfig("EXTENDS", false, tenantDuration);
+      ClientConfiguration clientConfig = createClientConfig();
+      RefreshToken oldToken = createOldRefreshToken();
+
+      RefreshToken result = creator.refresh(oldToken, serverConfig, clientConfig);
+
+      long actualDuration =
+          java.time.Duration.between(result.createdAt().value(), result.expiresAt().value())
+              .getSeconds();
+      assertEquals(tenantDuration, actualDuration);
     }
   }
 }
