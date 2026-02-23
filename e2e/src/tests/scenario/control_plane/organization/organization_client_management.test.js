@@ -435,6 +435,106 @@ describe("organization client management api", () => {
       console.log("✅ Roundtrip test client deleted");
     });
 
+    it("extension custom_properties preserved through create/get/update roundtrip", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const clientId = uuidv4();
+
+      // Step 1: Create client with custom_properties in extension
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "client_id": clientId,
+          "client_name": `Custom Props Test ${Date.now()}`,
+          "client_type": "CONFIDENTIAL",
+          "grant_types": ["authorization_code"],
+          "redirect_uris": ["http://localhost:3000/callback"],
+          "response_types": ["code"],
+          "scope": "openid profile",
+          "token_endpoint_auth_method": "client_secret_post",
+          "application_type": "web",
+          "extension": {
+            "custom_properties": {
+              "app_label": "my-app",
+              "feature_flags": {"dark_mode": true, "beta": false},
+              "max_sessions": 5
+            }
+          }
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // Step 2: GET and verify custom_properties are preserved
+      const getResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients/${clientId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(getResponse.status).toBe(200);
+      expect(getResponse.data.extension).toHaveProperty("custom_properties");
+      const customProps = getResponse.data.extension.custom_properties;
+      expect(customProps.app_label).toBe("my-app");
+      expect(customProps.feature_flags).toEqual({"dark_mode": true, "beta": false});
+      expect(customProps.max_sessions).toBe(5);
+
+      // Step 3: Update with GET response body (roundtrip), modifying custom_properties
+      const updateBody = { ...getResponse.data };
+      delete updateBody.created_at;
+      delete updateBody.updated_at;
+      updateBody.extension = {
+        ...updateBody.extension,
+        "custom_properties": {
+          ...customProps,
+          "app_label": "updated-app",
+          "new_key": "added"
+        }
+      };
+      const updateResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients/${clientId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: updateBody
+      });
+      expect(updateResponse.status).toBe(200);
+
+      // Step 4: GET again and verify updated custom_properties
+      const getAfterUpdate = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients/${clientId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(getAfterUpdate.status).toBe(200);
+      const updatedCustomProps = getAfterUpdate.data.extension.custom_properties;
+      expect(updatedCustomProps.app_label).toBe("updated-app");
+      expect(updatedCustomProps.new_key).toBe("added");
+      expect(updatedCustomProps.feature_flags).toEqual({"dark_mode": true, "beta": false});
+      expect(updatedCustomProps.max_sessions).toBe(5);
+
+      // Cleanup
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/clients/${clientId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+    });
+
     it("pagination support", async () => {
       // Get OAuth token with org-management scope
       const tokenResponse = await requestToken({

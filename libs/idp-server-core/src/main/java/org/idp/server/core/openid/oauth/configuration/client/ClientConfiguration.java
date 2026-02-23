@@ -528,6 +528,14 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return extension.isCibaRequireRar();
   }
 
+  public boolean hasCustomProperties() {
+    return extension.hasCustomProperties();
+  }
+
+  public Map<String, Object> customProperties() {
+    return extension.customProperties();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("client_id", clientId);
