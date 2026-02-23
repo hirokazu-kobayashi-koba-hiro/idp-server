@@ -1533,6 +1533,33 @@ components:
         error: "invalid_request"
         error_description: "The post_logout_redirect_uri parameter is invalid"
 
+    MaliciousRequestErrorResponse:
+      type: object
+      description: |
+        MaliciousRequestRejectFilter により検出された不正リクエストに対するエラーレスポンス。
+        全エンドポイント共通で適用されます。
+
+        **検出対象**:
+        - パラメータ値やリクエストボディ内のnull byte（0x00）— `400 Bad Request`
+        - 10MBを超えるリクエストボディ — `413 Payload Too Large`
+      properties:
+        error:
+          type: string
+          enum:
+            - invalid_request
+          description: エラーコード。常に `invalid_request`。
+          example: "invalid_request"
+        error_description:
+          type: string
+          description: |
+            エラーの詳細説明。
+            - `"Invalid parameter value"` — null byte検出時
+            - `"Request body too large"` — ボディサイズ超過時
+          example: "Invalid parameter value"
+      required:
+        - error
+        - error_description
+
     AuthorizationCodeTokenRequest:
       type: object
       description: |
