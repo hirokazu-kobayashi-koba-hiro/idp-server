@@ -200,6 +200,69 @@ OAuthFlowEntryService.request()
 
 ---
 
+### View Data API（認可画面データ取得）
+
+**目的**: 認可画面（SPA）がクライアント情報・スコープ情報等を取得し、UIを構築する
+
+Phase 1完了後、ログイン画面にリダイレクトされたSPAが認可画面を描画するために呼び出します。
+
+```
+GET /{tenant-id}/v1/authorizations/{authReqId}/view-data
+    ↓
+OAuthFlowEntryService.getViewData()
+    ├─ AuthorizationRequest取得
+    ├─ ClientConfiguration取得
+    ├─ OPSession取得（SSO判定用）
+    └─ OAuthViewDataCreator.create()
+        ├─ クライアント情報抽出（client_id, client_name, logo_uri等）
+        ├─ スコープ一覧
+        ├─ セッション有効判定
+        ├─ 利用可能フェデレーション一覧
+        ├─ カスタムパラメータ
+        └─ client_custom_properties（設定時のみ）
+
+→ レスポンス: 認可画面描画用データ（JSON）
+```
+
+**レスポンス例**:
+```json
+{
+  "client_id": "client123",
+  "client_name": "サンプルアプリケーション",
+  "client_uri": "https://client.example.com",
+  "logo_uri": "https://client.example.com/logo.png",
+  "contacts": ["support@client.example.com"],
+  "tos_uri": "https://client.example.com/terms",
+  "policy_uri": "https://client.example.com/privacy",
+  "scopes": ["openid", "profile", "email"],
+  "session_enabled": false,
+  "available_federations": [],
+  "custom_params": {},
+  "client_custom_properties": {
+    "app_label": "my-custom-app",
+    "feature_flags": { "dark_mode": true }
+  }
+}
+```
+
+**主要フィールド**:
+
+| フィールド | 説明 |
+|-----------|------|
+| `client_id` / `client_name` | クライアント識別情報 |
+| `logo_uri` / `tos_uri` / `policy_uri` | 認可画面に表示するクライアントメタデータ |
+| `scopes` | 要求されているスコープ一覧 |
+| `session_enabled` | 既存セッションで認証スキップ可能か（SSO判定） |
+| `available_federations` | 利用可能な外部IdP連携（Google、Azure AD等） |
+| `custom_params` | 認可リクエストのカスタムパラメータ |
+| `client_custom_properties` | クライアントのextension.custom_propertiesに設定した任意データ（未設定時は含まれない） |
+
+`session_enabled`が`true`の場合、SPAは再認証をスキップして直接`/authorize`を呼び出すことができます。
+
+**実装**: [OAuthViewDataCreator.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/view/OAuthViewDataCreator.java)
+
+---
+
 ### Phase 2: User Authentication（ユーザー認証）
 
 **目的**: ユーザー本人確認

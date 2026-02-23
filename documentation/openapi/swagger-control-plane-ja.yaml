@@ -4732,6 +4732,19 @@ components:
                 - authentication-device-notification
               default: authentication-device-notification
               description: OPTIONAL. Default CIBA authentication interaction type
+            custom_properties:
+              type: object
+              additionalProperties: true
+              description: |
+                OPTIONAL. 任意のキー・バリューデータ。
+                認可画面のview-data APIレスポンスにclient_custom_propertiesとして反映されます。
+                アプリ固有のUI設定、フィーチャーフラグ、ブランディング情報などに利用できます。
+              example:
+                app_label: "my-custom-app"
+                feature_flags:
+                  dark_mode: true
+                  beta_features: false
+                max_sessions: 5
 
 
     AuthenticationConfig:

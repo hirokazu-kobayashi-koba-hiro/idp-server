@@ -59,6 +59,10 @@ public class OAuthViewDataCreator {
     List<Map<String, Object>> availableFederationsAsMapList =
         clientConfiguration.availableFederationsAsMapList();
 
+    if (clientConfiguration.hasCustomProperties()) {
+      additionalViewData.put("client_custom_properties", clientConfiguration.customProperties());
+    }
+
     return new OAuthViewData(
         clientId,
         clientName,

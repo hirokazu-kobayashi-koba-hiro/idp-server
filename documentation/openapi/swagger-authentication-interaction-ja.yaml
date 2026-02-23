@@ -297,6 +297,21 @@ paths:
                     custom_params:
                       organization_id: "org123"
                       organization_name: "テスト組織"
+                custom-properties-enabled:
+                  summary: カスタムプロパティ設定時の認可画面データ
+                  value:
+                    client_id: "client123"
+                    client_name: "カスタムアプリ"
+                    scopes: ["openid", "profile", "email"]
+                    session_enabled: false
+                    custom_params: {}
+                    client_custom_properties:
+                      app_label: "my-custom-app"
+                      feature_flags:
+                        dark_mode: true
+                        beta_features: false
+                      max_sessions: 5
+                      tags: ["internal", "pilot"]
                 federation-enabled:
                   summary: フェデレーション有効時の認可画面データ
                   value:
@@ -972,6 +987,18 @@ components:
           example:
             organization_id: "org123"
             organization_name: "テスト組織"
+        client_custom_properties:
+          type: object
+          additionalProperties: true
+          description: |
+            クライアントのextension.custom_propertiesに設定された任意のキー・バリューデータ。
+            管理APIでクライアントに設定されている場合のみ含まれます。
+          example:
+            app_label: "my-custom-app"
+            feature_flags:
+              dark_mode: true
+              beta_features: false
+            max_sessions: 5
 
     FederationInfo:
       type: object
