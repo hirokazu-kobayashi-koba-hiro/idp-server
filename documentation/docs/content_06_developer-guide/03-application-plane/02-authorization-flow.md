@@ -231,7 +231,7 @@ OAuthFlowEntryService.getViewData()
   "client_name": "サンプルアプリケーション",
   "client_uri": "https://client.example.com",
   "logo_uri": "https://client.example.com/logo.png",
-  "contacts": "support@client.example.com",
+  "contacts": ["support@client.example.com"],
   "tos_uri": "https://client.example.com/terms",
   "policy_uri": "https://client.example.com/privacy",
   "scopes": ["openid", "profile", "email"],
