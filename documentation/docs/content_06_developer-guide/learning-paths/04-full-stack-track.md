@@ -72,10 +72,6 @@ Magic Link認証を0から実装する例：
 
 ### アーキテクチャ設計
 
-#### 読むべきドキュメント
-- [ ] [AI開発者向け: 全モジュールガイド](../content_10_ai_developer/ai-01-index.md)
-- [ ] [AI開発者向け: Lessons Learned](../content_10_ai_developer/ai-02-lessons-learned.md)
-
 #### 実践課題: 大規模機能を設計・実装
 
 以下のいずれかを0から設計・実装：
@@ -230,8 +226,6 @@ public void updateConfig(...) {
 
 ## 🔗 関連リソース
 
-- [AI開発者向け: 全モジュールガイド](../content_10_ai_developer/ai-01-index.md)
-- [AI開発者向け: Lessons Learned](../content_10_ai_developer/ai-02-lessons-learned.md)
 - [開発者ガイドTOC](../DEVELOPER_GUIDE_TOC.md)
 - [Control Plane概念](../../content_03_concepts/01-foundation/concept-02-control-plane.md)
 

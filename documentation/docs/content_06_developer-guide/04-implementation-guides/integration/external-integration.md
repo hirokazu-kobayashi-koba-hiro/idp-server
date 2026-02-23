@@ -409,7 +409,6 @@ RetryConfiguration retryConfig = RetryConfiguration.builder()
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: Platform - HttpRequestExecutor](../content_10_ai_developer/ai-12-platform.md#httprequestexecutor---http通信)
 - [developer-guide: HTTP Request Executor詳細](../developer-guide/http-request-executor.md)
 
 ---

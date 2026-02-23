@@ -352,7 +352,6 @@ describe('Client Management API', () => {
 ### ✅ Phase 16: ドキュメント更新
 
 - [ ] **API変更**: OpenAPI仕様更新（該当する場合）
-- [ ] **設計変更**: [AI開発者向けドキュメント](../content_10_ai_developer/)更新
 - [ ] **README更新**: 新機能説明追加
 
 ---
@@ -410,10 +409,6 @@ PR作成前に、以下を最終確認：
 ## 次のステップ
 
 ✅ セルフレビュー完了！PR作成の準備が整いました。
-
-### 📖 関連ドキュメント
-
-- [AI開発者向け: Lessons Learned](../content_10_ai_developer/ai-02-lessons-learned.md) - 過去の失敗事例
 
 ### 🔗 PR作成後
 

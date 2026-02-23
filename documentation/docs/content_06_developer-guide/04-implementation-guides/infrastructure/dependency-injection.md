@@ -171,8 +171,6 @@ interactors.put(PASSWORD, container.resolve(PASSWORD));
 interactors.put(WEBAUTHN, container.resolve(WEBAUTHN));
 ```
 
-**詳細実装**: [AI開発者向け - Platform DI](../content_10_ai_developer/ai-12-platform.md#dependency-injection---diコンテナ)
-
 ---
 
 ## 🧩 拡張ポイント - PluginLoader との連携

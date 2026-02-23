@@ -442,7 +442,6 @@ scope: 'openid profile email'  // profile, emailスコープ追加
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: Core - UserInfo](../../content_10_ai_developer/ai-11-core.md#userinfo---userinfoエンドポイント)
 - [OpenID Connect Core 1.0 Section 5.3](https://openid.net/specs/openid-connect-core-1_0.html#UserInfo)
 
 ---

@@ -815,7 +815,6 @@ CIBA実装時の確認項目：
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: CIBA Extension](../../content_10_ai_developer/ai-31-extension-ciba.md)
 - [OpenID Connect CIBA Core 1.0](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html)
 
 ---

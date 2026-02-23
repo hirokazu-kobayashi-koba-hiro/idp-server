@@ -1104,7 +1104,6 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_REQUES
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: Core - OAuth](../../content_10_ai_developer/ai-11-core.md#oauth---oauth-20コア)
 - [RFC 6749 Section 4.1](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1) - Authorization Code Grant
 
 ---

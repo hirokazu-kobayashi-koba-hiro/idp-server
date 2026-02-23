@@ -425,7 +425,6 @@ curl -X GET https://localhost:8443/v1/management/tenants/d49fa8d0-00f1-4c5b-b1e8
 - [RFC 6749: OAuth 2.0 Authorization Framework](https://datatracker.ietf.org/doc/html/rfc6749)
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
 - [RFC 7519: JSON Web Token (JWT)](https://datatracker.ietf.org/doc/html/rfc7519)
-- AI開発者ガイド: `documentation/docs/content_10_ai_developer/ai-13-control-plane.md`
 - E2Eテスト参考実装: `e2e/src/tests/usecase/standard/standard-01-onboarding-and-audit.test.js`
 
 ## ライセンス

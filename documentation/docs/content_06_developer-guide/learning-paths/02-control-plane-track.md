@@ -169,12 +169,6 @@ Control Plane Track完了後の進路：
 
 ---
 
-## 🔗 関連リソース
-
-- [AI開発者向けモジュールガイド](../../content_10_ai_developer/ai-10-use-cases.md) - UseCase層の詳細
-- [Control Plane詳細](../../content_10_ai_developer/ai-13-control-plane.md) - Control Plane層の詳細
-- [Adapter層詳細](../../content_10_ai_developer/ai-20-adapters.md) - Repository実装の詳細
-
 ---
 
 **最終更新**: 2025-12-18

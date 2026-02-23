@@ -171,10 +171,6 @@
 
 ## 📚 関連ドキュメント
 
-### 技術詳細
-- [AI開発者向け: Core - Authentication](../content_10_ai_developer/ai-11-core.md#authentication---認証ドメイン) - 認証ドメインロジック詳細
-- [AI開発者向け: 認証インタラクター](../content_10_ai_developer/ai-41-authentication.md) - 認証方式実装パターン
-
 ### 実装ガイド
 - [開発者ガイド: Authentication Interactions](./authentication-interactions.md) - 認証インタラクション実装
 

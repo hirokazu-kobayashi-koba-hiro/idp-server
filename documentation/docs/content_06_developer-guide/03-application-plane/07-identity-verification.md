@@ -450,7 +450,6 @@ describe('Identity Verification Application', () => {
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: IDA Extension](../../content_10_ai_developer/ai-33-extension-ida.md)
 - [実装ガイド: HTTP Request Executor](../04-implementation-guides/impl-16-http-request-executor.md)
 
 ---

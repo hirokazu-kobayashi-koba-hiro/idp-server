@@ -145,9 +145,5 @@ eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2lkcC5leGFtcGxlLmNvbSI
 
 ## 📚 関連ドキュメント
 
-### 技術詳細
-- [AI開発者向け: Core - Token](../../content_10_ai_developer/ai-11-core.md#token---トークンドメイン) - トークン発行・検証ロジック
-- [AI開発者向け: Core - OAuth](../../content_10_ai_developer/ai-11-core.md#oauth---oauth-20コア) - OAuth 2.0仕様準拠実装
-
 ### 仕様
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html) - ID Token仕様

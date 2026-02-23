@@ -933,5 +933,3 @@ public void handleResult(HttpRequestResult result) {
 - [設定管理 API](configuration-management-api.md)
 - [タスクガイド: 外部サービス連携](../04-implementation-guides/impl-17-external-integration.md) - HttpRequestExecutor実践ガイド
 
-### 技術詳細
-- [AI開発者向け: Platform - HttpRequestExecutor](../content_10_ai_developer/ai-12-platform.md#httprequestexecutor---http通信) - HTTP通信詳細実装

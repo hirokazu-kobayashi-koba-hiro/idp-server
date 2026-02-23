@@ -9,11 +9,10 @@ idp-serverの**コア機能の実装方法**を説明する技術ドキュメン
 - **アーキテクチャ理解者**: システム内部の仕組みを深く理解したい開発者
 - **保守担当者**: 既存実装の動作原理を把握したい開発者
 
-### AI開発者向けドキュメントとの違い
+### ドキュメント種別の違い
 
 | ドキュメント種別 | 対象 | 焦点 | 詳細度 |
 |--------------|------|------|--------|
-| **AI開発者向け** ([content_10_ai_developer](../content_10_ai_developer/)) | AI・新規参画者 | モジュール構造・パターン・アンチパターン | 高（全20モジュール網羅） |
 | **実装ガイド** (本ディレクトリ) | 機能実装者 | 特定機能の実装手順・設定例 | 中（実践的） |
 | **How-To** ([content_05_how-to](../../content_05_how-to/)) | エンドユーザー | 機能の使い方・設定方法 | 低（使い方のみ） |
 
@@ -140,12 +139,6 @@ idp-serverの**コア機能の実装方法**を説明する技術ドキュメン
 ---
 
 ## 🔗 関連ドキュメント
-
-### AI開発者向け詳細ドキュメント
-- [モジュールガイド索引](../content_10_ai_developer/index.md) - 全20モジュール詳解
-- [idp-server-core](../content_10_ai_developer/core.md) - OAuth/OIDCコアエンジン
-- [idp-server-platform](../content_10_ai_developer/platform.md) - プラットフォーム基盤
-- [idp-server-use-cases](../content_10_ai_developer/use-cases.md) - EntryServiceパターン
 
 ### 開発者ガイド
 - [01-architecture-overview.md](../01-architecture-overview.md) - アーキテクチャ概要
