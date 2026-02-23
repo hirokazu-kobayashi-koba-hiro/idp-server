@@ -108,11 +108,12 @@ docker compose up -d --build idp-server-1 idp-server-2
 
 ## 詳細リファレンス（深掘り時に参照）
 
-| トピック | ドキュメント |
-|---------|-------------|
-| 実装パターン詳細 | `content_10_ai_developer/ai-11-core.md` |
-| EntryService | `content_10_ai_developer/ai-10-use-cases.md` |
-| DB実装差異 | `content_10_ai_developer/adapters.md` |
+| トピック | 参照先 |
+|---------|--------|
+| 実装パターン詳細 | skill: `architecture` |
+| プラットフォーム基盤 | skill: `platform` |
+| DB実装差異 | skill: `database-adapter` |
+| Spring Boot統合 | skill: `springboot-adapter` |
 | 商用デプロイ | `content_08_ops/commercial-deployment/` |
 
 ## 実装チェックリスト
@@ -129,3 +130,24 @@ docker compose up -d --build idp-server-1 idp-server-2
 - Util濫用、Map濫用、DTO肥大化
 - 永続化層でのビジネスロジック
 - 想像でのドキュメント作成（コード確認必須）
+
+## ドキュメント・コード記載ルール（想像禁止）
+
+**鉄則: ドキュメント作成は「調査」であり「創作」ではない**
+
+### 禁止事項
+- 実装確認前の記載（「たぶん」「だろう」思考）
+- 一般論適用（「〜ライブラリなら通常は...」）
+- パターン推測（「他のクラスにあるから...」）
+- 存在しないクラス名・メソッド名の記載
+
+### 必須手順
+1. **クラス存在確認**: `Glob` でファイル検索
+2. **メソッド確認**: `Grep "public"` でメソッド一覧
+3. **Javadoc確認**: `Read` でクラス先頭を確認
+4. **使用箇所確認**: Use Cases層で実際の呼び出しパターンを確認
+
+### 危険信号（即座に作業停止）
+- 「まあ、こんな感じだろう」と思った
+- ファイル存在確認をしていない
+- 「一般的には...」で補完している

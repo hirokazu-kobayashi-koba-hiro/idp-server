@@ -10,9 +10,6 @@ description: アーキテクチャ（Hexagonal Architecture + DDD）の開発・
 - `documentation/docs/content_06_developer-guide/01-getting-started/02-architecture-overview.md` - アーキテクチャ概要
 - `documentation/docs/content_06_developer-guide/01-getting-started/03-design-principles.md` - 設計原則
 - `documentation/docs/content_06_developer-guide/06-patterns/common-patterns.md` - 共通実装パターン
-- `documentation/docs/content_10_ai_developer/ai-10-use-cases.md` - UseCase層詳細
-- `documentation/docs/content_10_ai_developer/ai-11-core.md` - Core層詳細
-- `documentation/docs/content_10_ai_developer/ai-20-adapters.md` - Adapter層詳細
 
 ## 機能概要
 
@@ -726,3 +723,40 @@ cd e2e && npm test -- scenario/control_plane/
 **A:**
 - `get()`: 必須存在（存在しない場合は例外）
 - `find()`: 任意存在（空オブジェクトを返す、Null Object Pattern）
+
+---
+
+## 拡張モジュール（Extension Modules）
+
+Core 層の機能を Plugin アーキテクチャで拡張する仕組み。`PluginLoader` (ServiceLoader ベース) で動的にロードされる。
+
+### 拡張モジュール一覧
+
+| モジュール | 責務 | 主要仕様 |
+|-----------|------|---------|
+| `idp-server-core-extension-ciba` | バックチャネル認証 | OIDC CIBA Core 1.0 |
+| `idp-server-core-extension-fapi` | 金融グレード API セキュリティ | FAPI 1.0 Baseline/Advanced |
+| `idp-server-core-extension-ida` | 身元確認 | OIDC IDA |
+| `idp-server-core-extension-pkce` | 認可コード横取り防止 | RFC 7636 |
+| `idp-server-core-extension-vc` | Verifiable Credentials 発行 | OID4VCI |
+
+### Plugin 登録パターン
+
+```
+libs/idp-server-core-extension-{name}/
+  src/main/
+    java/.../extension/{name}/    # 実装
+    resources/META-INF/services/  # ServiceLoader 登録
+```
+
+拡張モジュールは `META-INF/services/` にインターフェース名のファイルを配置し、`PluginLoader.loadFromInternalModule(T.class)` で Core 層からロードされる。
+
+### AuthorizationProfile による分岐
+
+```java
+// Core 層で Profile に応じた Verifier を切り替え
+AuthorizationProfile profile = context.authorizationProfile();
+// FAPI_BASELINE → FapiBaselineVerifier
+// FAPI_ADVANCE  → FapiAdvanceVerifier
+// DEFAULT       → 標準検証
+```
