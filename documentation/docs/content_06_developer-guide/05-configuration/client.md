@@ -41,8 +41,7 @@
 Client登録・更新のAPI詳細仕様（リクエスト/レスポンススキーマ、全パラメータ説明）は、OpenAPI仕様書を参照してください。
 
 **📖 OpenAPI仕様書**:
-- [swagger-control-plane-ja.yaml](../../openapi/swagger-control-plane-ja.yaml) - 日本語版
-- [swagger-control-plane-en.yaml](../../openapi/swagger-control-plane-en.yaml) - 英語版
+- [swagger-cp-client-ja.yaml](../../openapi/swagger-cp-client-ja.yaml) - クライアント管理API仕様
 
 ---
 
@@ -659,7 +658,7 @@ CIBAリクエスト時に、authorization_details（RAR: Rich Authorization Requ
 | `scope` | ❌ | デフォルトスコープ | - |
 | `token_endpoint_auth_method` | ❌ | トークンエンドポイント認証方式 | `client_secret_basic` |
 
-**OpenAPI仕様**: [swagger-control-plane-ja.yaml:4686-4702](../../openapi/swagger-control-plane-ja.yaml#L4686-L4702)
+**OpenAPI仕様**: [swagger-cp-client-ja.yaml](../../openapi/swagger-cp-client-ja.yaml)
 
 ---
 

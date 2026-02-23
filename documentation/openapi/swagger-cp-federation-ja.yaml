@@ -1,0 +1,493 @@
+openapi: 3.0.3
+info:
+  title: idp-server コントロールプレーン フェデレーション設定管理 API
+  description: フェデレーション設定の管理API仕様書
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+servers:
+- url: http://localhost:8080
+paths:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/federation-configurations:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    post:
+      summary: Create federation configuration within organization tenant
+      description: 組織内の特定のテナントに対して新しいフェデレーション設定を作成します
+      tags:
+      - organization-federation-config
+      parameters:
+      - name: dry_run
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+        description: ドライランモード（実際の作成は行わない）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationFederationConfigCreateRequest'
+      responses:
+        '201':
+          description: フェデレーション設定作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: ドライランかどうか
+                  result:
+                    $ref: '#/components/schemas/OrganizationFederationConfig'
+                required:
+                - dry_run
+                - result
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 同じIDのフェデレーション設定が既に存在します
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List federation configurations within organization tenant
+      description: 組織内の特定のテナントのフェデレーション設定一覧を取得します
+      tags:
+      - organization-federation-config
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      - name: enabled
+        in: query
+        required: false
+        schema:
+          type: boolean
+        description: フィルター - 有効な設定のみ取得
+      responses:
+        '200':
+          description: フェデレーション設定一覧取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrganizationFederationConfig'
+                  total_count:
+                    type: integer
+                    description: フェデレーション設定の総数
+                  limit:
+                    type: integer
+                    description: 要求されたアイテム数
+                  offset:
+                    type: integer
+                    description: スキップされたアイテム数
+                required:
+                - list
+                - total_count
+                - limit
+                - offset
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/federation-configurations/{config-id}:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - name: config-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: フェデレーション設定ID
+    get:
+      summary: Get specific federation configuration
+      description: IDで特定のフェデレーション設定を取得します
+      tags:
+      - organization-federation-config
+      responses:
+        '200':
+          description: フェデレーション設定取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationFederationConfig'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、またはフェデレーション設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update federation configuration
+      description: 既存のフェデレーション設定を更新します
+      tags:
+      - organization-federation-config
+      parameters:
+      - name: dry_run
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+        description: ドライランモード（実際の更新は行わない）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationFederationConfigUpdateRequest'
+      responses:
+        '200':
+          description: フェデレーション設定更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: ドライランかどうか
+                  result:
+                    $ref: '#/components/schemas/OrganizationFederationConfig'
+                required:
+                - dry_run
+                - result
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、またはフェデレーション設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete federation configuration
+      description: 既存のフェデレーション設定を削除します
+      tags:
+      - organization-federation-config
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: ドライラン削除成功（dry_run=trueの場合）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: 削除シミュレーション成功メッセージ
+                  config_id:
+                    type: string
+                    format: uuid
+                    description: 削除対象の設定ID
+                  dry_run:
+                    type: boolean
+                    description: ドライランフラグ（常にtrue）
+        '204':
+          description: フェデレーション設定削除成功（実際の削除）
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、またはフェデレーション設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: テナントの識別子
+    OrganizationId:
+      name: organization-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 組織の識別子
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+      description: trueの場合、リクエストの検証のみで実行はされません
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 20
+      description: 返すアイテムの最大数
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: アイテムを返す開始インデックス
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        error_description:
+          type: string
+          description: Human-readable error description
+        error_messages:
+          type: array
+          items:
+            type: string
+            description: Human-readable validation error message.
+        error_details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+    OrganizationFederationConfig:
+      type: object
+      required:
+      - id
+      - type
+      - sso_provider
+      - enabled
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Federation configuration ID
+          example: 473b4179-6bed-4465-b64e-ab8969a3e8ae
+        type:
+          type: string
+          enum:
+          - oauth2
+          - saml2
+          - oidc
+          description: Federation type
+          example: oidc
+        sso_provider:
+          type: string
+          description: SSO provider identifier
+          example: google-oidc
+        payload:
+          type: object
+          description: Federation-specific configuration payload
+          properties:
+            client_id:
+              type: string
+              description: OAuth2/OIDC client ID
+            client_secret:
+              type: string
+              description: OAuth2/OIDC client secret
+            issuer:
+              type: string
+              format: uri
+              description: OIDC issuer URL
+            authorization_endpoint:
+              type: string
+              format: uri
+              description: OAuth2/OIDC authorization endpoint
+            token_endpoint:
+              type: string
+              format: uri
+              description: OAuth2/OIDC token endpoint
+            userinfo_endpoint:
+              type: string
+              format: uri
+              description: OIDC userinfo endpoint
+            jwks_uri:
+              type: string
+              format: uri
+              description: OIDC JSON Web Key Set URI
+            scope:
+              type: string
+              description: OAuth2/OIDC scopes
+              default: openid profile email
+          additionalProperties: true
+          example:
+            client_id: test-client-id
+            client_secret: test-client-secret
+            issuer: https://accounts.google.com
+            authorization_endpoint: https://accounts.google.com/o/oauth2/auth
+            token_endpoint: https://oauth2.googleapis.com/token
+            userinfo_endpoint: https://openidconnect.googleapis.com/v1/userinfo
+        enabled:
+          type: boolean
+          description: Whether the federation configuration is enabled
+          default: true
+      additionalProperties: false
+    OrganizationFederationConfigCreateRequest:
+      type: object
+      required:
+      - id
+      - type
+      - sso_provider
+      - enabled
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Federation configuration ID (must be UUID)
+          example: 473b4179-6bed-4465-b64e-ab8969a3e8ae
+        type:
+          type: string
+          enum:
+          - oauth2
+          - saml2
+          - oidc
+          description: Federation type
+          example: oidc
+        sso_provider:
+          type: string
+          description: SSO provider identifier (should be unique within tenant)
+          example: google-oidc
+        payload:
+          type: object
+          description: Federation-specific configuration payload
+          additionalProperties: true
+          example:
+            client_id: test-client-id
+            client_secret: test-client-secret
+            issuer: https://accounts.google.com
+            authorization_endpoint: https://accounts.google.com/o/oauth2/auth
+            token_endpoint: https://oauth2.googleapis.com/token
+            userinfo_endpoint: https://openidconnect.googleapis.com/v1/userinfo
+        enabled:
+          type: boolean
+          description: Whether the federation configuration is enabled
+          default: true
+      additionalProperties: false
+    OrganizationFederationConfigUpdateRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - oauth2
+          - saml2
+          - oidc
+          description: Federation type
+        sso_provider:
+          type: string
+          description: SSO provider identifier
+        payload:
+          type: object
+          description: Federation-specific configuration payload
+          additionalProperties: true
+        enabled:
+          type: boolean
+          description: Whether the federation configuration is enabled
+      additionalProperties: false
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: Error type
+                example: invalid_request
+              error_description:
+                type: string
+                description: Human-readable description of the error
+                example: The request is missing required parameters
+              details:
+                type: object
+                description: Additional error details
+                additionalProperties: true
+            required:
+            - error
+            - error_description
+            additionalProperties: false
+    Unauthorized:
+      description: Unauthorized - Authentication required or invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: Error type
+                example: unauthorized
+              error_description:
+                type: string
+                description: Human-readable description of the error
+                example: Authentication required
+            required:
+            - error
+            - error_description
+            additionalProperties: false
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: Error type
+                example: access_denied
+              error_description:
+                type: string
+                description: Human-readable description of the error
+                example: Insufficient permissions to access this resource
+            required:
+            - error
+            - error_description
+            additionalProperties: false

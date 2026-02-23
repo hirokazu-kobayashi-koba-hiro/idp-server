@@ -1,0 +1,1395 @@
+openapi: 3.0.3
+info:
+  title: idp-server コントロールプレーン テナント管理 API
+  description: テナントおよび認可サーバーの管理API仕様書
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+servers:
+- url: http://localhost:8080
+tags:
+- name: organization-tenant
+  description: 組織レベルテナント管理
+- name: organization-authorization-server
+  description: 組織レベル認可サーバー管理
+paths:
+  /v1/management/organizations/{organization-id}/tenants:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    post:
+      summary: Create tenant within organization
+      description: 特定の組織に新しいテナントを作成します
+      tags:
+      - organization-tenant
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantCreateRequest'
+      responses:
+        '201':
+          description: テナントの作成が成功しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: ドライランかどうか
+                  result:
+                    $ref: '#/components/schemas/Tenant'
+        '400':
+          description: 無効なリクエストデータまたはバリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List tenants within organization
+      description: 特定の組織のテナント一覧を取得します
+      tags:
+      - organization-tenant
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: テナント一覧の取得が成功しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tenant'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: Get tenant within organization
+      description: 組織の特定のテナントを取得します
+      tags:
+      - organization-tenant
+      responses:
+        '200':
+          description: テナントの取得が成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update tenant within organization
+      description: 組織の特定のテナントを更新します
+      tags:
+      - organization-tenant
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantUpdateRequest'
+      responses:
+        '200':
+          description: テナントの更新が成功しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: ドライランかどうか
+                  result:
+                    $ref: '#/components/schemas/Tenant'
+        '400':
+          description: 無効なリクエストデータまたはバリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete tenant within organization
+      description: 組織の特定のテナントを削除します
+      tags:
+      - organization-tenant
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: テナントの削除が成功しました
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authorization-server:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: Get authorization server configuration for organization tenant
+      description: 組織内の特定のテナントの認証サーバー設定を取得します
+      tags:
+      - organization-authorization-server
+      responses:
+        '200':
+          description: 認証サーバー設定を正常に取得しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenIDConfiguration'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update authorization server configuration for organization tenant
+      description: 組織内の特定のテナントの認証サーバー設定を更新します
+      tags:
+      - organization-authorization-server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenIDConfiguration'
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: 認証サーバー設定を正常に更新しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OpenIDConfiguration'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: テナントの識別子
+    OrganizationId:
+      name: organization-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 組織の識別子
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+      description: trueの場合、リクエストの検証のみで実行はされません
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 20
+      description: 返すアイテムの最大数
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: アイテムを返す開始インデックス
+  schemas:
+    OpenIDConfiguration:
+      type: object
+      required:
+      - issuer
+      - authorization_endpoint
+      - token_endpoint
+      - jwks_uri
+      - scopes_supported
+      - response_types_supported
+      - response_modes_supported
+      - subject_types_supported
+      properties:
+        issuer:
+          type: string
+          format: uri
+          description: 必須。OPが発行者識別子として主張するhttpsスキームを使用し、クエリやフラグメントコンポーネントを含まないURL。発行者発見がサポートされている場合（セクション2参照）、この値はWebFingerによって返される発行者値と同一でなければならない。また、この発行者から発行されるIDトークンのissクレーム値と同一でなければならない。
+        authorization_endpoint:
+          type: string
+          format: uri
+          description: 必須。OPのOAuth 2.0認可エンドポイント[OpenID.Core]のURL。このURLはhttpsスキームを使用しなければならず、ポート、パス、クエリパラメータコンポーネントを含んでもよい。
+        token_endpoint:
+          type: string
+          format: uri
+          description: OPのOAuth 2.0トークンエンドポイント[OpenID.Core]のURL。Implicitフローのみが使用される場合を除き、これは必須である。このURLはhttpsスキームを使用しなければならず、ポート、パス、クエリパラメータコンポーネントを含んでもよい。
+        userinfo_endpoint:
+          type: string
+          format: uri
+          description: 推奨。OPのUserInfoエンドポイント[OpenID.Core]のURL。このURLはhttpsスキームを使用しなければならず、ポート、パス、クエリパラメータコンポーネントを含んでもよい。
+        jwk:
+          type: string
+          format: jwks
+          description: JWKセット
+        jwks_uri:
+          type: string
+          format: uri
+          description: 必須。OPのJWKセット[JWK]ドキュメントのURL。httpsスキームを使用しなければならない。これにはRPがOPからの署名を検証するために使用する署名鍵が含まれる。JWKセットには、RPがサーバーへのリクエストを暗号化するために使用するサーバーの暗号化鍵も含まれる場合がある。署名鍵と暗号化鍵の両方が利用可能な場合、参照されるJWKセット内のすべての鍵に対して、各鍵の意図された用途を示すuse（公開鍵用途）パラメータ値が必須である。一部のアルゴリズムでは同じ鍵を署名と暗号化の両方に使用できるが、セキュリティが低下するため推奨されない。JWK
+            x5cパラメータは、提供される鍵のX.509表現を提供するために使用される場合がある。使用される場合、素の鍵値も存在しなければならず、証明書内の値と一致しなければならない。JWKセットには秘密鍵や対称鍵値を含んではならない。
+        registration_endpoint:
+          type: string
+          format: uri
+          description: 推奨。OPの動的クライアント登録エンドポイント[OpenID.Registration]のURL。httpsスキームを使用しなければならない。
+        scopes_supported:
+          type: array
+          items:
+            type: string
+          description: 推奨。このサーバーがサポートするOAuth 2.0 [RFC6749]スコープ値のリストを含むJSON配列。サーバーはopenidスコープ値をサポートしなければならない。このパラメータが使用される場合でも、サーバーはサポートされているスコープ値の一部を広告しないことを選択してもよいが、[OpenID.Core]で定義されているものは、サポートされている場合はリストされるべきである。
+        response_types_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - code
+            - token
+            - id_token
+            - code token
+            - code token id_token
+            - token id_token
+            - code id_token
+            - none
+          description: 必須。このOPがサポートするOAuth 2.0 response_type値のリストを含むJSON配列。動的OpenIDプロバイダーは、code、id_token、およびid_token tokenレスポンスタイプ値をサポートしなければならない。
+        response_modes_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - query
+            - fragment
+          default:
+          - query
+          - fragment
+          description: オプション。OAuth 2.0 Multiple Response Type Encoding Practices [OAuth.Responses]で指定されているように、このOPがサポートするOAuth
+            2.0 response_mode値のリストを含むJSON配列。省略された場合、動的OpenIDプロバイダーのデフォルトは["query", "fragment"]である。
+        grant_types_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - authorization_code
+            - implicit
+            - refresh_token
+            - password
+            - client_credentials
+            - urn:openid:params:grant-type:ciba
+          default:
+          - authorization_code
+          - implicit
+          description: オプション。このOPがサポートするOAuth 2.0グラントタイプ値のリストを含むJSON配列。動的OpenIDプロバイダーはauthorization_codeおよびimplicitグラントタイプ値をサポートしなければならず、他のグラントタイプをサポートしてもよい。省略された場合、デフォルト値は["authorization_code",
+            "implicit"]である。
+        acr_values_supported:
+          type: array
+          items:
+            type: string
+          description: オプション。このOPがサポートする認証コンテキストクラス参照のリストを含むJSON配列。
+        subject_types_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - pairwise
+            - public
+          description: 必須。このOPがサポートするサブジェクト識別子タイプのリストを含むJSON配列。有効なタイプにはpairwiseおよびpublicが含まれる。
+        id_token_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: 必須。OPがIDTokenでクレームをJWT [JWT]でエンコードするためにサポートするJWS署名アルゴリズム（alg値）のリストを含むJSON配列。アルゴリズムRS256を含めなければならない。値noneはサポートされてもよいが、使用されるレスポンスタイプが認証エンドポイントからIDTokenを返さない場合（認証コードフロー使用時など）を除き使用してはならない。
+        id_token_encryption_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - RSA1_5
+            - A128KW
+          description: オプション。OPがIDTokenでクレームをJWT [JWT]でエンコードするためにサポートするJWE暗号化アルゴリズム（alg値）のリストを含むJSON配列。
+        id_token_encryption_enc_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: オプション。OPがIDTokenでクレームをJWT [JWT]でエンコードするためにサポートするJWE暗号化アルゴリズム（enc値）のリストを含むJSON配列。
+        userinfo_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: オプション。UserInfoエンドポイントがクレームをJWT [JWT]でエンコードするためにサポートするJWS [JWS]署名アルゴリズム（alg値）[JWA]のリストを含むJSON配列。値noneが含まれてもよい。
+        userinfo_encryption_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - RSA1_5
+            - A128KW
+          description: オプション。UserInfoエンドポイントがクレームをJWT [JWT]でエンコードするためにサポートするJWE [JWE]暗号化アルゴリズム（alg値）[JWA]のリストを含むJSON配列。
+        userinfo_encryption_enc_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: オプション。UserInfoエンドポイントがクレームをJWT [JWT]でエンコードするためにサポートするJWE暗号化アルゴリズム（enc値）[JWA]のリストを含むJSON配列。
+        request_object_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: オプション。OpenID Connect Core 1.0 [OpenID.Core]のセクション6.1で説明されているリクエストオブジェクトに対してOPがサポートするJWS署名アルゴリズム（alg値）のリストを含むJSON配列。これらのアルゴリズムは、リクエストオブジェクトが値で渡される場合（requestパラメータ使用）と参照で渡される場合（request_uriパラメータ使用）の両方で使用される。サーバーはnoneとRS256をサポートすべきである。
+        request_object_encryption_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - RSA1_5
+            - A128KW
+          description: オプション。リクエストオブジェクトに対してOPがサポートするJWE暗号化アルゴリズム（alg値）のリストを含むJSON配列。これらのアルゴリズムは、リクエストオブジェクトが値で渡される場合と参照で渡される場合の両方で使用される。
+        request_object_encryption_enc_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - A128CBC-HS256
+            - A128GCM
+            - A256GCM
+          description: オプション。リクエストオブジェクトに対してOPがサポートするJWE暗号化アルゴリズム（enc値）のリストを含むJSON配列。これらのアルゴリズムは、リクエストオブジェクトが値で渡される場合と参照で渡される場合の両方で使用される。
+        token_endpoint_auth_methods_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - client_secret_post
+            - client_secret_basic
+            - client_secret_jwt
+            - private_key_jwt
+            - tls_client_auth
+            - self_signed_tls_client_auth
+            - none
+          description: オプション。このトークンエンドポイントがサポートするクライアント認証方法のリストを含むJSON配列。オプションはclient_secret_post、client_secret_basic、client_secret_jwt、およびprivate_key_jwtで、OpenID
+            Connect Core 1.0のセクション9で説明されている。他の認証方法は拡張によって定義される場合がある。省略された場合、デフォルトはclient_secret_basic（OAuth 2.0 [RFC6749]のセクション2.3.1で指定されているHTTP基本認証スキーム）である。
+        token_endpoint_auth_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: オプション。private_key_jwtおよびclient_secret_jwt認証方法において、トークンエンドポイントでクライアントを認証するために使用されるJWT [JWT]の署名に対してトークンエンドポイントがサポートするJWS署名アルゴリズム（alg値）のリストを含むJSON配列。サーバーはRS256をサポートすべきである。値noneは使用してはならない。
+        display_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - page
+            - popup
+          description: オプション。OpenIDプロバイダーがサポートするdisplayパラメータ値のリストを含むJSON配列。これらの値はOpenID Connect Core 1.0 [OpenID.Core]のセクション3.1.2.1で説明されている。
+        claim_types_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - normal
+          description: オプション。OpenIDプロバイダーがサポートするクレームタイプのリストを含むJSON配列。これらのクレームタイプはOpenID Connect Core 1.0 [OpenID.Core]のセクション5.6で説明されている。この仕様で定義されている値はnormal、aggregated、distributedである。省略された場合、実装はnormalクレームのみをサポートする。
+        claims_supported:
+          type: array
+          items:
+            type: string
+          default:
+          - sub
+          - iss
+          - auth_time
+          - acr
+          - name
+          - given_name
+          - family_name
+          - nickname
+          - profile
+          - picture
+          - website
+          - email
+          - email_verified
+          - locale
+          - zoneinfo
+          - birthdate
+          - gender
+          - preferred_username
+          - middle_name
+          - updated_at
+          - address
+          - phone_number
+          - phone_number_verified
+          description: 推奨。OpenIDプロバイダーが値を提供できる可能性のあるクレームのクレーム名のリストを含むJSON配列。プライバシーやその他の理由により、これは完全なリストではない可能性があることに注意。
+        service_documentation:
+          type: string
+          format: uri
+          description: オプション。OpenIDプロバイダーを使用する際に開発者が知りたいまたは知る必要がある可能性のある人間が読める情報を含むページのURL。特に、OpenIDプロバイダーが動的クライアント登録をサポートしない場合、クライアントの登録方法に関する情報をこのドキュメントに提供する必要がある。
+        claims_locales_supported:
+          type: array
+          items:
+            type: string
+          description: オプション。返されるクレームの値にサポートされている言語とスクリプト。BCP47 [RFC5646]言語タグ値のJSON配列で表現される。すべてのクレーム値に対してすべての言語とスクリプトが必ずしもサポートされるわけではない。
+        ui_locales_supported:
+          type: array
+          items:
+            type: string
+          description: オプション。ユーザーインターフェースにサポートされている言語とスクリプト。BCP47 [RFC5646]言語タグ値のJSON配列で表現される。
+        claims_parameter_supported:
+          type: boolean
+          default: true
+          description: オプション。OPがclaimsパラメータの使用をサポートするかどうかを指定するブール値。trueはサポートを示す。省略された場合、デフォルト値はfalseである。
+        request_parameter_supported:
+          type: boolean
+          default: false
+          description: オプション。OPがrequestパラメータの使用をサポートするかどうかを指定するブール値。trueはサポートを示す。省略された場合、デフォルト値はfalseである。
+        request_uri_parameter_supported:
+          type: boolean
+          default: false
+          description: オプション。OPがrequest_uriパラメータの使用をサポートするかどうかを指定するブール値。trueはサポートを示す。省略された場合、デフォルト値はtrueである。
+        require_request_uri_registration:
+          type: boolean
+          default: false
+          description: オプション。OPが使用されるrequest_uri値をrequest_uris登録パラメータを使用して事前登録することを要求するかどうかを指定するブール値。値がtrueの場合、事前登録が必須である。省略された場合、デフォルト値はfalseである。
+        op_policy_uri:
+          type: string
+          format: uri
+          description: オプション。OpenIDプロバイダーがクライアントを登録する人に対して、Relying PartyがOPから提供されたデータをどのように使用できるかにOPの要件を読むために提供するURL。提供された場合、登録プロセスはクライアントを登録する人にこのURLを表示すべきである。
+        op_tos_uri:
+          type: string
+          format: uri
+          description: オプション。OpenIDプロバイダーがクライアントを登録する人に対して、OpenIDプロバイダーのサービス規約を読むために提供するURL。提供された場合、登録プロセスはクライアントを登録する人にこのURLを表示すべきである。
+        revocation_endpoint:
+          type: string
+          format: uri
+          description: オプション。リボケーションエンドポイントのURL。
+        revocation_endpoint_auth_methods_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - client_secret_post
+            - client_secret_basic
+            - client_secret_jwt
+            - private_key_jwt
+            - tls_client_auth
+            - self_signed_tls_client_auth
+          description: オプション。リボケーションエンドポイントでサポートされる認証方法。
+        revocation_endpoint_auth_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: オプション。リボケーションエンドポイントでサポートされる署名アルゴリズム。
+        introspection_endpoint:
+          type: string
+          format: uri
+          description: オプション。イントロスペクションエンドポイントのURL。
+        introspection_endpoint_auth_methods_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: オプション。イントロスペクションエンドポイントでサポートされる認証方法。
+        introspection_endpoint_auth_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - none
+            - RS256
+            - ES256
+            - HS256
+          description: オプション。イントロスペクションエンドポイントでサポートされる署名アルゴリズム。
+        code_challenge_methods_supported:
+          type: array
+          items:
+            type: string
+            enum:
+            - plain
+            - S256
+          description: オプション。サポートされるPKCEコードチャレンジ方法。
+        extension:
+          type: object
+          description: 認証サーバー動作のための拡張設定パラメータ。
+          properties:
+            access_token_type:
+              type: string
+              enum:
+              - opaque
+              - jwt
+              default: opaque
+              description: Specifies the format of issued access tokens. Either 'opaque' or 'jwt'.
+            authorization_code_valid_duration:
+              type: integer
+              default: 600
+              description: 認証コードの有効期間（秒）。
+            token_signed_key_id:
+              type: string
+              description: アクセストークンの署名に使用するキーID。
+            id_token_signed_key_id:
+              type: string
+              description: IDトークンの署名に使用するキーID。
+            access_token_duration:
+              type: integer
+              default: 1800
+              description: アクセストークンの有効期間（秒）。
+            refresh_token_duration:
+              type: integer
+              default: 3600
+              description: リフレッシュトークンの有効期間（秒）。
+            refresh_token_strategy:
+              type: string
+              default: FIXED
+              description: リフレッシュトークン発行戦略。
+            rotate_refresh_token:
+              type: boolean
+              default: true
+              description: リフレッシュトークンをローテートするかどうか。
+            id_token_duration:
+              type: integer
+              default: 3600
+              description: IDトークンの有効期間（秒）。
+            id_token_strict_mode:
+              type: boolean
+              default: false
+              description: IDトークンクレームの厳格な検証を強制する。
+            default_max_age:
+              type: integer
+              default: 86400
+              description: デフォルトの最大認証年齢（秒）。
+            authorization_response_duration:
+              type: integer
+              default: 60
+              description: 認証レスポンスのライフタイム（秒）。
+            backchannel_authentication_request_expires_in:
+              type: integer
+              default: 300
+              description: CIBAバックチャネル認証リクエストの有効期限。
+            backchannel_authentication_polling_interval:
+              type: integer
+              default: 5
+              description: CIBAバックチャネル認証のポーリング間隔。
+            required_backchannel_auth_user_code:
+              type: boolean
+              default: false
+              description: バックチャネル認証ユーザーコードが必要かどうか。
+            backchannel_auth_user_code_type:
+              type: string
+              default: password
+              description: バックチャネル認証ユーザーコードのタイプ。
+            default_ciba_authentication_interaction_type:
+              type: string
+              default: authentication-device-notification
+              description: デフォルトのCIBA認証インタラクションタイプ。
+            oauth_authorization_request_expires_in:
+              type: integer
+              default: 1800
+              description: OAuth認証リクエストの有効期限。
+            fapi_baseline_scopes:
+              type: array
+              items:
+                type: string
+              description: FAPI Baseline適合を示すスコープのリスト。
+            fapi_advance_scopes:
+              type: array
+              items:
+                type: string
+              description: FAPI Advanced適合を示すスコープのリスト。
+            required_identity_verification_scopes:
+              type: array
+              items:
+                type: string
+              description: 身元確認が必要なスコープのリスト。
+            custom_claims_scope_mapping:
+              type: boolean
+              description: スコープに基づくカスタムクレームのマッピングを有効にする。
+            access_token_selective_user_custom_properties:
+              type: boolean
+              description: アクセストークンでのユーザーカスタムプロパティの選択的包含を有効にする。
+            access_token_verified_claims:
+              type: boolean
+              description: アクセストークンでの検証済みクレームの包含を有効にする。
+            access_token_selective_verified_claims:
+              type: boolean
+              description: アクセストークンでの検証済みクレームの選択的包含を有効にする。
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        error_description:
+          type: string
+          description: Human-readable error description
+        error_messages:
+          type: array
+          items:
+            type: string
+            description: Human-readable validation error message.
+        error_details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+    Tenant:
+      type: object
+      required:
+      - id
+      - name
+      - type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the tenant
+        name:
+          type: string
+          maxLength: 255
+          description: Tenant name
+        type:
+          type: string
+          enum:
+          - BUSINESS
+          - PERSONAL
+          description: Tenant type
+        domain:
+          type: string
+          format: uri
+          description: Tenant domain URL
+        description:
+          type: string
+          description: Human-readable description of the tenant
+        authorization_provider:
+          type: string
+          description: Authorization provider identifier
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+    TenantCreateRequest:
+      type: object
+      required:
+      - tenant
+      - authorization_server
+      properties:
+        tenant:
+          type: object
+          required:
+          - id
+          - name
+          - tenant_type
+          - domain
+          - authorization_provider
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Unique identifier for the tenant
+            name:
+              type: string
+              maxLength: 255
+              description: Tenant name
+            domain:
+              type: string
+              format: uri
+              description: Tenant domain URL
+            description:
+              type: string
+              description: Human-readable description of the tenant
+            authorization_provider:
+              type: string
+              description: Authorization provider identifier
+            ui_config:
+              $ref: '#/components/schemas/UIConfiguration'
+            cors_config:
+              $ref: '#/components/schemas/CorsConfiguration'
+            session_config:
+              $ref: '#/components/schemas/SessionConfiguration'
+            security_event_log_config:
+              $ref: '#/components/schemas/SecurityEventLogConfiguration'
+            security_event_user_config:
+              $ref: '#/components/schemas/SecurityEventUserAttributeConfiguration'
+            identity_policy_config:
+              $ref: '#/components/schemas/IdentityPolicyConfiguration'
+        authorization_server:
+          $ref: '#/components/schemas/OpenIDConfiguration'
+    TenantUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Tenant name
+        tenant_type:
+          type: string
+          enum:
+          - BUSINESS
+          - PERSONAL
+          description: Tenant type
+        description:
+          type: string
+          description: Human-readable description of the tenant
+        ui_config:
+          $ref: '#/components/schemas/UIConfiguration'
+        cors_config:
+          $ref: '#/components/schemas/CorsConfiguration'
+        session_config:
+          $ref: '#/components/schemas/SessionConfiguration'
+        security_event_log_config:
+          $ref: '#/components/schemas/SecurityEventLogConfiguration'
+        security_event_user_config:
+          $ref: '#/components/schemas/SecurityEventUserAttributeConfiguration'
+        identity_policy_config:
+          $ref: '#/components/schemas/IdentityPolicyConfiguration'
+    AuthenticationDeviceRule:
+      type: object
+      description: '認証デバイス登録ルール設定（テナントのidentity_policy_configで設定）
+
+
+        CIBAフローでのデバイス認証とシークレット自動発行を制御します。
+
+
+        - max_devices: ユーザーあたりの最大デバイス登録数
+
+        - required_identity_verification: デバイス登録時に身元確認を必須とするか
+
+        - authentication_type: デバイスエンドポイントへのアクセス認証方式
+
+        - issue_device_secret: FIDO-UAF登録時にデバイスシークレットを自動発行するか
+
+        - device_secret_algorithm: デバイスシークレットの署名アルゴリズム
+
+        - device_secret_expires_in_seconds: デバイスシークレットの有効期限（秒）
+
+        '
+      properties:
+        max_devices:
+          type: integer
+          minimum: 1
+          default: 5
+          description: ユーザーあたりの最大デバイス登録数
+          example: 5
+        required_identity_verification:
+          type: boolean
+          default: false
+          description: デバイス登録時に身元確認（KYC）を必須とするか
+          example: false
+        authentication_type:
+          type: string
+          enum:
+          - none
+          - device_secret_jwt
+          default: none
+          description: 'デバイスエンドポイントへのアクセス認証方式
+
+
+            - none: 認証不要
+
+            - device_secret_jwt: デバイスシークレットで署名したJWTによる認証を要求
+
+            '
+          example: device_secret_jwt
+        issue_device_secret:
+          type: boolean
+          default: false
+          description: 'FIDO-UAF登録時にデバイスシークレットを自動発行するか
+
+
+            trueの場合、登録レスポンスにdevice_secret、device_secret_algorithm、
+
+            device_secret_jwt_issuerが含まれます。
+
+            '
+          example: true
+        device_secret_algorithm:
+          type: string
+          enum:
+          - HS256
+          - HS384
+          - HS512
+          default: HS256
+          description: デバイスシークレットの署名アルゴリズム
+          example: HS256
+        device_secret_expires_in_seconds:
+          type: integer
+          minimum: 0
+          nullable: true
+          default: null
+          description: 'デバイスシークレットの有効期限（秒）
+
+
+            nullの場合は無期限。1年（31536000秒）以内を推奨。
+
+            '
+          example: 31536000
+      additionalProperties: true
+    UIConfiguration:
+      type: object
+      properties:
+        base_url:
+          type: string
+          description: UIホスティング用のベースURL（オプション）。設定すると、認証画面はテナントドメインではなくこのURLから提供されます。クロスオリジンUIシナリオ（開発用のlocalhost:3000など）に対応します。
+          example: http://localhost:3000
+        signup_page:
+          type: string
+          default: /auth-views/signup/index.html
+          description: カスタムサインアップページのパス
+        signin_page:
+          type: string
+          default: /auth-views/signin/index.html
+          description: カスタムサインインページのパス
+    CorsConfiguration:
+      type: object
+      properties:
+        allow_origins:
+          type: array
+          items:
+            type: string
+          default: []
+          description: 許可するオリジンのリスト
+        allow_headers:
+          type: string
+          default: Authorization, Content-Type, Accept, x-device-id
+          description: 許可するヘッダー
+        allow_methods:
+          type: string
+          default: GET, POST, PUT, PATCH, DELETE, OPTIONS
+          description: 許可するHTTPメソッド
+        allow_credentials:
+          type: boolean
+          default: true
+          description: クレデンシャル送信を許可
+    SessionConfiguration:
+      type: object
+      description: 'セッション管理とCookie設定。
+
+
+        **構成パターン別の推奨設定:**
+
+
+        | 構成 | cookie_domain | cookie_same_site | 説明 |
+
+        |------|---------------|------------------|------|
+
+        | 同一オリジン | 指定なし | Lax/Strict | IdPとRPが同じドメイン |
+
+        | サブドメイン | 親ドメイン（例: example.com） | Lax | idp.example.com ↔ app.example.com |
+
+        | クロスサイト | 指定なし | None（Secure必須） | idp.example.com ↔ app.another.com |
+
+
+        **サブドメイン間はSame-Site扱い:**
+
+        idp.example.comとapp.example.comはCross-Originだが、Same-Site（eTLD+1が同じ）。
+
+        SameSite=Laxでも全リクエストでCookieが送信される。
+
+        '
+      properties:
+        cookie_name:
+          type: string
+          nullable: true
+          default: null
+          description: セッションCookie名（null時は自動生成）
+        cookie_domain:
+          type: string
+          nullable: true
+          default: null
+          description: 'CookieのDomain属性。サブドメイン間でCookieを共有する場合に設定。
+
+
+            例: `example.com` を設定すると、idp.example.com、app.example.com、auth.example.com で同じCookieが送信される。
+
+
+            null（未指定）の場合、Cookieは設定元のホストにのみ送信される。
+
+            '
+        cookie_same_site:
+          type: string
+          enum:
+          - None
+          - Lax
+          - Strict
+          default: None
+          description: 'SameSite属性。Cross-Siteリクエスト時のCookie送信を制御。
+
+
+            - **Strict**: Cross-Siteリクエストでは送信しない（高セキュリティ）
+
+            - **Lax**: Cross-SiteのGETナビゲーション（リダイレクト等）のみ送信（推奨）
+
+            - **None**: 常に送信（Secure=true必須、Cross-Site構成向け）
+
+
+            **注意:** サブドメイン間（例: idp.example.com ↔ app.example.com）はSame-Site扱いのため、Laxでも全リクエストでCookieが送信される。
+
+            '
+        use_secure_cookie:
+          type: boolean
+          default: true
+          description: Secure属性を使用（HTTPS時のみCookie送信）
+        use_http_only_cookie:
+          type: boolean
+          default: true
+          description: HttpOnly属性を使用（JavaScriptからのアクセス禁止、XSS対策）
+        cookie_path:
+          type: string
+          default: /
+          description: 'Cookieのパス。API Gateway経由でコンテキストパス付きでデプロイする場合に設定します。
+
+
+            **API Gateway対応例:**
+
+            API Gatewayで `/idp-admin/*` → idp-server にルーティングする場合、
+
+            `cookie_path: "/idp-admin"` を設定すると、Cookieパスが `/idp-admin/{tenant_id}/` となり、
+
+            ブラウザがCookieを正しく送信します。
+
+
+            未設定または `/` の場合は、Cookieパスは `/{tenant_id}/` となります。
+
+            '
+        timeout_seconds:
+          type: integer
+          default: 3600
+          description: セッションタイムアウト（秒）
+        switch_policy:
+          type: string
+          enum:
+          - STRICT
+          - SWITCH_ALLOWED
+          - MULTI_SESSION
+          default: SWITCH_ALLOWED
+          description: 'セッション切替ポリシー。同一ブラウザで別ユーザーが認証しようとした場合の動作を制御。
+
+
+            - **STRICT**: エラーを返す（ログアウト必須）。金融・エンタープライズ向け
+
+            - **SWITCH_ALLOWED**: 古いセッションを終了して新規作成（デフォルト）。一般的なWebアプリ向け
+
+            - **MULTI_SESSION**: 新規セッション作成（古いのは残る）。後方互換性維持
+
+
+            **同一ユーザーの再認証時**: ポリシーに関係なく、既存セッションを再利用（lastAccessedAt更新）
+
+            '
+    SecurityEventLogConfiguration:
+      type: object
+      properties:
+        format:
+          type: string
+          enum:
+          - structured_json
+          - plain_text
+          default: structured_json
+          description: ログフォーマット
+        debug_logging:
+          type: boolean
+          default: false
+          description: デバッグログ出力を有効化
+        stage:
+          type: string
+          default: processed
+          description: ログ出力タイミング
+        include_user_id:
+          type: boolean
+          default: true
+        include_user_name:
+          type: boolean
+          default: true
+          description: ユーザー名を含める
+        include_user_ex_sub:
+          type: boolean
+          default: true
+        include_client_id:
+          type: boolean
+          default: true
+        include_ip_address:
+          type: boolean
+          default: true
+        include_user_agent:
+          type: boolean
+          default: true
+        include_event_detail:
+          type: boolean
+          default: false
+        include_user_detail:
+          type: boolean
+          default: false
+        include_user_pii:
+          type: boolean
+          default: false
+          description: ⚠️ 個人情報を含める（本番環境非推奨）
+        allowed_user_pii_keys:
+          type: string
+          default: ''
+          description: 許可するPIIキー（カンマ区切り）
+        include_trace_context:
+          type: boolean
+          default: false
+        service_name:
+          type: string
+          default: idp-server
+        custom_tags:
+          type: string
+          default: ''
+          description: カスタムタグ（カンマ区切り）
+        tracing_enabled:
+          type: boolean
+          default: false
+        persistence_enabled:
+          type: boolean
+          default: false
+        statistics_enabled:
+          type: boolean
+          default: false
+          description: 統計データ記録を有効化
+        detail_scrub_keys:
+          type: string
+          default: authorization,cookie,password,secret,token,access_token,refresh_token,api_key,api_secret
+          description: スクラブするキー（カンマ区切り）
+    SecurityEventUserAttributeConfiguration:
+      type: object
+      description: セキュリティイベントに含めるユーザー属性の制御
+      properties:
+        include_id:
+          type: boolean
+          default: true
+        include_name:
+          type: boolean
+          default: true
+        include_external_user_id:
+          type: boolean
+          default: true
+        include_email:
+          type: boolean
+          default: false
+        include_phone_number:
+          type: boolean
+          default: false
+        include_given_name:
+          type: boolean
+          default: false
+        include_family_name:
+          type: boolean
+          default: false
+        include_preferred_username:
+          type: boolean
+          default: false
+        include_profile:
+          type: boolean
+          default: false
+        include_picture:
+          type: boolean
+          default: false
+        include_website:
+          type: boolean
+          default: false
+        include_gender:
+          type: boolean
+          default: false
+        include_birthdate:
+          type: boolean
+          default: false
+        include_zoneinfo:
+          type: boolean
+          default: false
+        include_locale:
+          type: boolean
+          default: false
+        include_address:
+          type: boolean
+          default: false
+        include_roles:
+          type: boolean
+          default: false
+        include_permissions:
+          type: boolean
+          default: false
+        include_current_tenant:
+          type: boolean
+          default: false
+        include_assigned_tenants:
+          type: boolean
+          default: false
+        include_verified_claims:
+          type: boolean
+          default: false
+        include_status:
+          type: boolean
+          default: true
+          description: ユーザーステータス（REGISTERED, LOCKED等）を含める
+        include_authentication_device_ids:
+          type: boolean
+          default: false
+          description: 認証デバイスIDリストを含める
+    IdentityPolicyConfiguration:
+      type: object
+      description: 'ユーザー識別ポリシーとパスワードポリシーの設定
+
+
+        - identity_unique_key_type: ユーザーの一意識別子として使用するフィールドを定義
+
+        - password_policy: パスワードの要件を定義（OWASP/NIST準拠）
+
+        - authentication_device_rule: 認証デバイス登録ルール（最大登録数、身元確認必須等）
+
+        '
+      properties:
+        identity_unique_key_type:
+          type: string
+          enum:
+          - USERNAME
+          - USERNAME_OR_EXTERNAL_USER_ID
+          - EMAIL
+          - EMAIL_OR_EXTERNAL_USER_ID
+          - PHONE
+          - PHONE_OR_EXTERNAL_USER_ID
+          - EXTERNAL_USER_ID
+          default: EMAIL_OR_EXTERNAL_USER_ID
+          description: 'ユーザー識別キー種別（Issue #729対応）
+
+
+            - USERNAME: usernameを一意キーとして使用
+
+            - USERNAME_OR_EXTERNAL_USER_ID: usernameを使用、なければexternal_user_idにフォールバック
+
+            - EMAIL: emailを一意キーとして使用
+
+            - EMAIL_OR_EXTERNAL_USER_ID: emailを使用、なければexternal_user_idにフォールバック（推奨デフォルト）
+
+            - PHONE: phone_numberを一意キーとして使用
+
+            - PHONE_OR_EXTERNAL_USER_ID: phone_numberを使用、なければexternal_user_idにフォールバック
+
+            - EXTERNAL_USER_ID: external_user_idを一意キーとして使用
+
+
+            **フォールバック時のpreferred_username形式**:
+
+
+            フォールバックが発生した場合（例: GitHubでメール非公開）、preferred_usernameは以下の形式で設定されます：
+
+            - 外部IdP: `{provider_id}.{external_user_id}` (例: `google.123456`, `github.987654`)
+
+            - ローカル(idp-server): `{external_user_id}` (例: `550e8400-e29b-41d4-a716-446655440000`)
+
+
+            **重要**: フォールバックが発生しない場合（メール等が存在する場合）、preferred_usernameは通常の値（メールアドレス等）が設定されます。
+
+            '
+        password_policy:
+          type: object
+          description: 'パスワードポリシー設定（OWASP/NIST準拠）
+
+
+            NIST推奨: 最小8文字、複雑性要件なし（ユーザビリティ優先）
+
+            金融グレード: 最小12文字、複雑性要件あり
+
+            '
+          properties:
+            min_length:
+              type: integer
+              minimum: 1
+              maximum: 72
+              default: 8
+              description: パスワード最小文字数
+              example: 8
+            max_length:
+              type: integer
+              minimum: 1
+              maximum: 72
+              default: 72
+              description: パスワード最大文字数（BCrypt制限）
+              example: 72
+            require_uppercase:
+              type: boolean
+              default: false
+              description: 大文字を必須とするか
+              example: false
+            require_lowercase:
+              type: boolean
+              default: false
+              description: 小文字を必須とするか
+              example: false
+            require_number:
+              type: boolean
+              default: false
+              description: 数字を必須とするか
+              example: false
+            require_special_char:
+              type: boolean
+              default: false
+              description: 特殊文字を必須とするか
+              example: false
+            max_history:
+              type: integer
+              minimum: 0
+              default: 0
+              description: パスワード履歴保持数（将来対応 Issue
+              example: 0
+        authentication_device_rule:
+          $ref: '#/components/schemas/AuthenticationDeviceRule'
+      example:
+        identity_unique_key_type: EMAIL_OR_EXTERNAL_USER_ID
+        password_policy:
+          min_length: 8
+          max_length: 72
+          require_uppercase: false
+          require_lowercase: false
+          require_number: false
+          require_special_char: false
+          max_history: 0
+        authentication_device_rule:
+          max_devices: 5
+          required_identity_verification: false
+          authentication_type: device_secret_jwt
+          issue_device_secret: true
+          device_secret_algorithm: HS256
+          device_secret_expires_in_seconds: 31536000
