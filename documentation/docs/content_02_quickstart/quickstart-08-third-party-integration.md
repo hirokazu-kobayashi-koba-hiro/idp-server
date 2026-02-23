@@ -189,7 +189,8 @@ admin:users     - ユーザー管理（管理者のみ）
 
 **実装方法**:
 - 許可確認画面はフルスクラッチで実装
-- idp-serverからスコープ情報を取得して表示
+- idp-serverの **view-data API**（`GET /{tenant-id}/v1/authorizations/{id}/view-data`）からクライアント名・ロゴ・スコープ一覧等を取得して表示
+- クライアントに[カスタムプロパティ](../content_06_developer-guide/05-configuration/client.md#カスタムプロパティ)を設定すると、アプリ固有のUI設定も `client_custom_properties` として取得可能
 
 ### 5. アクセストークンの管理
 

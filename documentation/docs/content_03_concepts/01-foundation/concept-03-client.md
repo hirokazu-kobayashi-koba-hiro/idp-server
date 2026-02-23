@@ -243,6 +243,7 @@ RFC標準に加えて、独自の拡張機能を提供：
 | **Federation制限** | クライアント固有の利用可能外部IdPを制限 |
 | **CIBA設定** | デフォルトの認証インタラクションタイプを指定 |
 | **Client ID Alias** | 人間可読なエイリアスを設定（ログ・監査用） |
+| **カスタムプロパティ** | 任意のキー・バリューデータを付与し、認可画面のUI表示カスタマイズ等に利用 |
 
 **詳細設定**: [Developer Guide: Client設定](../../content_06_developer-guide/05-configuration/client.md)
 

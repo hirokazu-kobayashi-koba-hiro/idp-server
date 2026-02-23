@@ -274,6 +274,8 @@
 - パスワードリセット画面（UI）
 - Socialログインボタンの配置
 
+**ログイン画面の構築方法**: idp-serverの **view-data API**（`GET /{tenant-id}/v1/authorizations/{id}/view-data`）を呼び出すことで、クライアント名・ロゴ・スコープ一覧・利用可能な外部IdP等の画面描画に必要な情報を取得できます。さらに、クライアントに[カスタムプロパティ](../content_06_developer-guide/05-configuration/client.md#カスタムプロパティ)を設定しておくと、アプリ固有のUI設定やフィーチャーフラグも `client_custom_properties` として受け取れます。
+
 ### セキュリティの注意点
 - パスワードポリシーは厳しすぎず、ユーザー体験とのバランスを取る
 - アカウントロックは攻撃者によるDoS攻撃にも使われる可能性があるので注意
