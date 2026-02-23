@@ -673,8 +673,6 @@ POST /v1/management/tenants/{tenant-id}/security-event-hooks
 - [UserLifecycleEvent実装ガイド](./09-user-lifecycle-event.md) - ユーザー状態変更イベント
 - [実装ガイド: Security Event Hooks](../04-implementation-guides/impl-15-security-event-hooks.md) - Hook実装詳細
 - [HTTP Request Executor](../04-implementation-guides/impl-16-http-request-executor.md) - HTTP層のリトライ機構
-- [AI開発者向け: Security Event](../../content_10_ai_developer/ai-50-notification-security-event.md)
-
 ---
 
 **情報源**:

@@ -500,10 +500,6 @@ documentation/docs/content_06_developer-guide/03-application-plane/
 
 ## 🔗 関連リソース
 
-- [AI開発者向け: Core - OAuth](../content_10_ai_developer/ai-11-core.md#oauth---認可ドメイン)
-- [AI開発者向け: Core - Token](../content_10_ai_developer/ai-11-core.md#token---トークンドメイン)
-- [AI開発者向け: Core - Authentication](../content_10_ai_developer/ai-11-core.md#authentication---認証ドメイン)
-- [AI開発者向け: Extensions - CIBA](../content_10_ai_developer/ai-14-extensions.md#ciba-extension)
 - [開発者ガイドTOC](../DEVELOPER_GUIDE_TOC.md)
 
 ---

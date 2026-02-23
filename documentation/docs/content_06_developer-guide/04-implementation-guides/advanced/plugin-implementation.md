@@ -355,10 +355,6 @@ public interface NotificationSender {
 
 1. [外部サービス連携ガイド](./impl-17-external-integration.md) - HttpRequestExecutor使用
 
-### 🔗 詳細情報
-
-- [AI開発者向け: Platform - Plugin System](../content_10_ai_developer/ai-12-platform.md#plugin-system)
-
 ---
 
 **情報源**: [PluginLoader.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/plugin/PluginLoader.java)

@@ -422,10 +422,6 @@ public void register(Tenant tenant, Role role) {
 1. [Plugin実装ガイド](./impl-12-plugin-implementation.md) - 拡張機能の実装
 2. [外部サービス連携ガイド](./impl-17-external-integration.md) - HttpRequestExecutor使用
 
-### 🔗 詳細情報
-
-- [AI開発者向け: Adapters詳細](../content_10_ai_developer/ai-20-adapters.md#datasource---sqlexecutor-パターン)
-
 ---
 
 **情報源**: [ClientConfigurationDataSource.java](../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/adapter/datasource/oidc/client/ClientConfigurationDataSource.java)

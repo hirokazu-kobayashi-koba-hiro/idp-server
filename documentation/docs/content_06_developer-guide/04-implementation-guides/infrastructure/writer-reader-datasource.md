@@ -190,8 +190,6 @@ beginTransaction()   createConnection()
 INSERT/UPDATE/DELETE    SELECT
 ```
 
-**詳細**: [AI開発者向け - Transaction管理](../content_10_ai_developer/ai-12-platform.md#datasourceトランザクションproxy)
-
 ---
 
 ## TenantAwareEntryServiceProxy 実装詳細

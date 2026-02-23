@@ -428,11 +428,6 @@ RoleManagementContext context = creator.create();
 1. [組織レベルAPI実装ガイド](./04-organization-level-api.md) - より複雑なアクセス制御
 2. [Repository実装ガイド](../04-implementation-guides/impl-10-repository-implementation.md) - データアクセス層の実装
 
-### 🔗 詳細情報
-
-- [AI開発者向け: Control Plane詳細](../../content_10_ai_developer/ai-13-control-plane.md)
-- [AI開発者向け: Use-Cases詳細](../../content_10_ai_developer/ai-10-use-cases.md)
-
 ---
 
 **情報源**: [ClientManagementEntryService.java](../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/system_manager/ClientManagementEntryService.java)

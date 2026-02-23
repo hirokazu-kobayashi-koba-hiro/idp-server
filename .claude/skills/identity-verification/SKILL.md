@@ -113,6 +113,56 @@ e2e/src/tests/
     └── organization_identity_verification_config_management*.test.js
 ```
 
+## 7-Phase 実装フロー
+
+身元確認リクエストは `IdentityVerificationApplicationHandler` で 7 Phase に分かれて処理される。
+
+```
+Phase 1: Request  → JSON Schema バリデーション
+Phase 2: Pre Hook → AdditionalRequestParameterResolvers（外部パラメータ解決）
+Phase 3: Execute  → IdentityVerificationApplicationExecutors（外部 eKYC API 呼び出し）
+Phase 4: Post Hook → 後処理
+Phase 5: Transition → ステータス遷移（12 種の条件演算子で判定）
+Phase 6: Store    → IdentityVerificationApplicationRepository に永続化
+Phase 7: Response → IdentityVerificationApplyingResult を返却
+```
+
+### Conditional Execution（Phase 5）
+
+ステータス遷移は `ConditionEvaluator` + JSONPath で動的に評価される。
+
+| 演算子 | 意味 |
+|--------|------|
+| `eq`, `ne` | 等値・非等値 |
+| `gt`, `gte`, `lt`, `lte` | 大小比較 |
+| `in`, `nin` | 包含・非包含 |
+| `exists`, `missing` | 存在チェック |
+| `contains`, `regex` | 文字列マッチ |
+
+`allOf` / `anyOf` でネスト可能。
+
+### verified_claims マッピング
+
+MappingRule パターンで外部 API レスポンスから verified_claims を動的生成:
+
+```json
+{
+  "from": "$.result.name",
+  "to": "verified_claims.claims.name"
+}
+```
+
+`static_value`（固定値）と `from`（JSONPath）の2種。
+
+### 外部 eKYC サービス連携
+
+`IdentityVerificationApplicationHttpRequestExecutor` が `HttpRequestExecutor` を使って外部 API を呼び出す:
+- URL プレースホルダー解決（`{{external_application_id}}`）
+- OAuth 認証サポート
+- リトライ設定（exponential backoff）
+
+**探索起点**: `libs/idp-server-core-extension-ida/src/main/java/org/idp/server/core/extension/ida/`
+
 ## コマンド
 
 ```bash

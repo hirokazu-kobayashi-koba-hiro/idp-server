@@ -280,10 +280,6 @@ RFC標準に加えて、独自の拡張機能を提供：
 - [Concept 01: マルチテナント](concept-01-multi-tenant.md) - Tenant-Client関係
 - [Concept 18: IDトークン](../04-tokens-claims/concept-01-id-token.md) - IDトークン仕様
 
-### 技術詳細
-- [AI開発者向け: Core - OAuth](../../content_10_ai_developer/ai-11-core.md#oauth---oauth-20コア) - OAuth 2.0実装詳細
-- [AI開発者向け: Control Plane - Client Registration](../../content_10_ai_developer/ai-13-control-plane.md#クライアント管理api) - Client Registration API
-
 ---
 
 ## 参考仕様

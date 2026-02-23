@@ -375,10 +375,6 @@ this.orgRoleManagementApi =
 1. [Repository実装ガイド](../04-implementation-guides/impl-10-repository-implementation.md) - データアクセス層の実装
 2. [Plugin実装ガイド](../04-implementation-guides/impl-12-plugin-implementation.md) - 拡張機能の実装
 
-### 🔗 詳細情報
-
-- [AI開発者向け: Control Plane詳細](../../content_10_ai_developer/ai-13-control-plane.md#組織レベルapi)
-
 ---
 
 **情報源**: [OrgRoleManagementEntryService.java](../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/organization_manager/OrgRoleManagementEntryService.java)

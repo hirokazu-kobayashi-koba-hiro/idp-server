@@ -102,6 +102,53 @@ e2e/src/tests/
     └── mfa-02-security-event-logging.test.js
 ```
 
+## SecurityEventHook インターフェース
+
+全フックは `SecurityEventHook` を実装する。
+
+```java
+public interface SecurityEventHook {
+  SecurityEventHookType type();
+  default boolean shouldExecute(
+      Tenant tenant, SecurityEvent securityEvent,
+      SecurityEventHookConfiguration hookConfiguration) {
+    if (!hookConfiguration.hasEvents()) { return false; }
+    return hookConfiguration.containsTrigger(securityEvent.type().value());
+  }
+  SecurityEventHookResult execute(
+      Tenant tenant, SecurityEvent securityEvent,
+      SecurityEventHookConfiguration configuration);
+}
+```
+
+`shouldExecute()` でテナント・イベント種別・フック設定に基づくフィルタリングが可能。
+
+### フック実装一覧
+
+| 実装 | 連携先 | 特徴 |
+|------|--------|------|
+| `WebHookSecurityEventExecutor` | 任意の HTTP エンドポイント | RFC 8935 準拠、`HttpRequestExecutor` 委譲 |
+| `SlackSecurityEventHookExecutor` | Slack | Block Kit JSON 形式 |
+| `SsfHookExecutor` | SSF Push Delivery | SET (Security Event Token) 生成、OAuth 認証 |
+
+### Retry メカニズム
+
+全フックは `HttpRetryConfiguration` で exponential backoff を設定可能:
+- `maxRetries`: 最大リトライ回数
+- `retryableStatusCodes`: リトライ対象 HTTP ステータス (502, 503, 504)
+- `backoffDelays`: バックオフ間隔リスト
+- `idempotencyRequired`: Idempotency-Key ヘッダー自動付与
+
+---
+
+## 通知アダプター
+
+| アダプター | 用途 | 探索起点 |
+|-----------|------|---------|
+| `FcmNotifier` | FCM プッシュ通知（CIBA デバイス認証） | `libs/idp-server-notification-fcm-adapter/` |
+| `ApnsNotifier` | APNS プッシュ通知（iOS） | `libs/idp-server-notification-apns-adapter/` |
+| `AwsEmailSender` | AWS SES メール送信 | `libs/idp-server-email-aws-adapter/` |
+
 ## コマンド
 
 ```bash

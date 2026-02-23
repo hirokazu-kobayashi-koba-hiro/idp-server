@@ -176,8 +176,6 @@ if ("ORGANIZER".equals(tenant.type())) {
 }
 ```
 
-**詳細**: [Adapters詳細](../content_10_ai_developer/ai-20-adapters.md#datasource---sqlexecutor-パターン)
-
 ---
 
 ## 2. Context Creator パターン
@@ -410,8 +408,6 @@ public class AuthorizationCodeTokenCreationService implements OAuthTokenCreation
 }
 ```
 
-**詳細**: [Platform - Plugin System](../content_10_ai_developer/ai-12-platform.md#plugin-system)
-
 ---
 
 ## 5. JsonConverter パターン
@@ -464,8 +460,6 @@ public class ClientRegistrationContextCreator {
     }
 }
 ```
-
-**詳細**: [Platform - JsonConverter](../content_10_ai_developer/ai-12-platform.md#json-シリアライズデシリアライズ)
 
 ---
 
@@ -596,13 +590,7 @@ Q5: JSON変換が必要？
 1. [04. トラブルシューティング](./04-troubleshooting.md) - よくあるエラーと解決策
 2. [05. コードレビューチェックリスト](./05-code-review-checklist.md) - PR前の確認項目
 
-### 🔍 詳細を学ぶ
-
-- [AI開発者向け: Core詳細](../content_10_ai_developer/ai-11-core.md#handler-service-repository-パターン)
-- [AI開発者向け: Platform詳細](../content_10_ai_developer/ai-12-platform.md#plugin-system)
-- [AI開発者向け: Control Plane詳細](../content_10_ai_developer/ai-13-control-plane.md#context-creator-パターン)
-
 ---
 
-**情報源**: [ai-10-use-cases.md](../content_10_ai_developer/ai-10-use-cases.md), [ai-11-core.md](../content_10_ai_developer/ai-11-core.md), [ai-12-platform.md](../content_10_ai_developer/ai-12-platform.md)
+**情報源**: 共通実装パターン
 **最終更新**: 2025-10-12

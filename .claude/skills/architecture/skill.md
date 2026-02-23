@@ -10,9 +10,6 @@ description: アーキテクチャ（Hexagonal Architecture + DDD）の開発・
 - `documentation/docs/content_06_developer-guide/01-getting-started/02-architecture-overview.md` - アーキテクチャ概要
 - `documentation/docs/content_06_developer-guide/01-getting-started/03-design-principles.md` - 設計原則
 - `documentation/docs/content_06_developer-guide/06-patterns/common-patterns.md` - 共通実装パターン
-- `documentation/docs/content_10_ai_developer/ai-10-use-cases.md` - UseCase層詳細
-- `documentation/docs/content_10_ai_developer/ai-11-core.md` - Core層詳細
-- `documentation/docs/content_10_ai_developer/ai-20-adapters.md` - Adapter層詳細
 
 ## 機能概要
 
@@ -726,3 +723,139 @@ cd e2e && npm test -- scenario/control_plane/
 **A:**
 - `get()`: 必須存在（存在しない場合は例外）
 - `find()`: 任意存在（空オブジェクトを返す、Null Object Pattern）
+
+---
+
+## 拡張モジュール（Extension Modules）
+
+Core 層の機能を Plugin アーキテクチャで拡張する仕組み。`PluginLoader` (ServiceLoader ベース) で動的にロードされる。
+
+### 拡張モジュール一覧
+
+| モジュール | 責務 | 主要仕様 |
+|-----------|------|---------|
+| `idp-server-core-extension-ciba` | バックチャネル認証 | OIDC CIBA Core 1.0 |
+| `idp-server-core-extension-fapi` | 金融グレード API セキュリティ | FAPI 1.0 Baseline/Advanced |
+| `idp-server-core-extension-ida` | 身元確認 | OIDC IDA |
+| `idp-server-core-extension-pkce` | 認可コード横取り防止 | RFC 7636 |
+| `idp-server-core-extension-vc` | Verifiable Credentials 発行 | OID4VCI |
+
+### Plugin 登録パターン
+
+```
+libs/idp-server-core-extension-{name}/
+  src/main/
+    java/.../extension/{name}/    # 実装
+    resources/META-INF/services/  # ServiceLoader 登録
+```
+
+拡張モジュールは `META-INF/services/` にインターフェース名のファイルを配置し、`PluginLoader.loadFromInternalModule(T.class)` で Core 層からロードされる。
+
+### AuthorizationProfile による分岐
+
+```java
+// Core 層で Profile に応じた Verifier を切り替え
+AuthorizationProfile profile = context.authorizationProfile();
+// FAPI_BASELINE → FapiBaselineVerifier
+// FAPI_ADVANCE  → FapiAdvanceVerifier
+// DEFAULT       → 標準検証
+```
+
+---
+
+## Validator vs Verifier - 責務分離
+
+### Validator（入力形式チェック）
+
+- nullチェック、形式妥当性、必須パラメータ存在、重複値チェック
+- ビジネスルール検証は実施しない
+- 例外: `{Operation}BadRequestException` → HTTP 400
+
+### Verifier（ビジネスルール検証）
+
+- プロトコル仕様準拠チェック、トークン有効期限、クライアント認証検証
+- 入力形式チェックは Validator 担当
+- 例外: `OAuthRedirectableBadRequestException`, `UnauthorizedException`
+
+| 項目 | Validator | Verifier |
+|------|-----------|----------|
+| チェック対象 | 入力パラメータ形式 | ビジネスルール・仕様準拠 |
+| 例外型 | BadRequestException | OAuth標準エラー |
+| 呼び出し順序 | 最初（早期エラー検出） | Validator後 |
+| 条件付き実行 | なし | `shouldVerify()`で判定 |
+
+### throwExceptionIf パターン
+
+条件をメソッド名で明示的に表現し、可読性を向上させるパターン。
+
+```java
+public void verify(...) {
+  throwExceptionIfCodeIsInvalid(authorizationCode);
+  throwExceptionIfClientIdMismatch(clientId);
+  throwExceptionIfRedirectUriMismatch(redirectUri);
+  throwExceptionIfExpirationTimeExpired(expiresAt);
+}
+```
+
+---
+
+## Extension Verifier パターン（shouldVerify 条件付き実行）
+
+拡張モジュールの Verifier は `AuthorizationRequestExtensionVerifier` インターフェースを実装し、`shouldVerify()` で実行可否を判定。
+
+```java
+public class PkceVerifier implements AuthorizationRequestExtensionVerifier {
+  @Override
+  public boolean shouldVerify(OAuthRequestContext context) {
+    return context.isPckeRequest();
+  }
+  @Override
+  public void verify(OAuthRequestContext context) {
+    // PKCE検証ロジック
+  }
+}
+```
+
+Core 層の統合 Verifier が全 Extension Verifier をループし、`shouldVerify()` が `true` の Verifier のみ `verify()` を実行する。
+
+---
+
+## PluginLoader API
+
+PluginLoader は**静的メソッドのみ**を提供（インスタンス化不可）。
+
+```java
+public class PluginLoader {
+  // 内部モジュール（idp-server-core-extension-*）からロード
+  public static <T> List<T> loadFromInternalModule(Class<T> type)
+  // 外部JARディレクトリ（plugins/）からロード
+  public static <T> List<T> loadFromExternalModule(Class<T> type)
+}
+```
+
+- `loadFromInternalModule`: Java 標準 `ServiceLoader` + `META-INF/services/`
+- `loadFromExternalModule`: `URLClassLoader` + ServiceLoader（カスタム ClassLoader）、`plugins/` ディレクトリの JAR をロード
+
+---
+
+## IdpServerApplication - DI コンテナ
+
+**探索起点**: `libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/IdpServerApplication.java`
+
+idp-server 全体の依存性注入を管理する中央コンテナ。全 API・EntryService・Repository を組み立てる。
+
+### DI 階層構造
+
+```
+IdpServerApplication (DIコンテナ)
+  ↓ 組み立て
+EntryService 実装
+  ↓ Proxy ラップ
+TenantAwareEntryServiceProxy（@Transaction 駆動）
+  ↓ 公開
+Management API / Application API
+  ↓ 使用
+Controller / Spring Boot
+```
+
+EntryService 実装を生成し、`TenantAwareEntryServiceProxy.createProxy()` でラップすることで、`@Transaction` アノテーション駆動のトランザクション管理を自動化する。

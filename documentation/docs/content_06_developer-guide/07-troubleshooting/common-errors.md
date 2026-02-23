@@ -498,7 +498,6 @@ logging.level.org.springframework.transaction=DEBUG
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: Lessons Learned](../content_10_ai_developer/ai-02-lessons-learned.md) - 過去の失敗事例から学ぶ
 - [Error Handling詳細](./error-handling/) - エラー設計の詳細
 
 ---

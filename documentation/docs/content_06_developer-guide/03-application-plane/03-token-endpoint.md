@@ -935,7 +935,6 @@ docker exec -it postgres psql -U idp_user -d idp_db -c \
 
 ### 🔗 詳細情報
 
-- [AI開発者向け: Core - Token](../../content_10_ai_developer/ai-11-core.md#token---トークンドメイン)
 - [RFC 6749 Section 3.2](https://datatracker.ietf.org/doc/html/rfc6749#section-3.2) - Token Endpoint
 - [RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662) - Token Introspection
 
