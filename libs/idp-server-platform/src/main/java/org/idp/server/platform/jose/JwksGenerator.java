@@ -42,7 +42,7 @@ public class JwksGenerator {
       String jwksJson = JSONObjectUtils.toJSONString(jwkSet.toJSONObject(false));
       return new JwksGenerationResult(jwksJson, kid);
     } catch (JOSEException e) {
-      throw new RuntimeException("Failed to generate RS256 key pair", e);
+      throw new JwksGenerationException("Failed to generate RS256 key pair", e);
     }
   }
 }

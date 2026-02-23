@@ -25,11 +25,12 @@ import org.idp.server.platform.json.JsonConverter;
 
 public class AuthorizationServerConfigurationJwksEnricher {
 
+  private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+
   private AuthorizationServerConfigurationJwksEnricher() {}
 
   @SuppressWarnings("unchecked")
   public static AuthorizationServerConfiguration enrich(Object authorizationServerObject) {
-    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
     if (authorizationServerObject == null) {
       authorizationServerObject = new HashMap<String, Object>();
