@@ -208,3 +208,52 @@ SPA → idp-server（request） → 外部 IdP 認可エンドポイント
 - アカウントリンキング: 外部 IdP ユーザーと内部ユーザーの紐づけ
 
 **探索起点**: `libs/idp-server-federation-oidc/`
+
+---
+
+## OperationType 列挙型
+
+認証インタラクションの操作種別:
+
+| 値 | 用途 |
+|----|------|
+| `CHALLENGE` | チャレンジ生成（SMS/Email/WebAuthn） |
+| `AUTHENTICATION` | 認証実行 |
+| `REGISTRATION` | デバイス/クレデンシャル登録 |
+| `DENY` | 認証拒否 |
+| `DE_REGISTRATION` | 登録解除 |
+| `NO_ACTION` | 操作なし |
+| `UNKNOWN` | 不明 |
+
+## 認証パターンの分類
+
+### Challenge-Response 型
+SMS, Email, WebAuthn, Device — チャレンジ生成 → ユーザー応答 → 検証の2ステップ
+
+### Single-Step 型
+Password, External Token, Cancel — 1回のリクエストで完結
+
+## 認証方式パッケージ一覧
+
+```
+authentication/interactors/
+├── cancel/            # 認証キャンセル
+├── device/            # デバイス認証（CIBA）
+├── email/             # Email OTP
+├── external_token/    # 外部トークン
+├── fidouaf/           # FIDO-UAF
+├── initial_registration/ # 初期登録
+├── password/          # パスワード
+├── plugin/            # Plugin 定義
+├── sms/               # SMS OTP
+└── webauthn/          # WebAuthn/FIDO2
+```
+
+## RFC 8176 AMR (Authentication Methods References)
+
+| 認証方式 | AMR 値 |
+|---------|--------|
+| Password | `pwd` |
+| SMS | `sms` |
+| WebAuthn/FIDO2 | `fido` |
+| FIDO-UAF | `fido` |

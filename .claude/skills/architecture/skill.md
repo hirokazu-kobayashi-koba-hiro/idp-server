@@ -760,3 +760,102 @@ AuthorizationProfile profile = context.authorizationProfile();
 // FAPI_ADVANCE  → FapiAdvanceVerifier
 // DEFAULT       → 標準検証
 ```
+
+---
+
+## Validator vs Verifier - 責務分離
+
+### Validator（入力形式チェック）
+
+- nullチェック、形式妥当性、必須パラメータ存在、重複値チェック
+- ビジネスルール検証は実施しない
+- 例外: `{Operation}BadRequestException` → HTTP 400
+
+### Verifier（ビジネスルール検証）
+
+- プロトコル仕様準拠チェック、トークン有効期限、クライアント認証検証
+- 入力形式チェックは Validator 担当
+- 例外: `OAuthRedirectableBadRequestException`, `UnauthorizedException`
+
+| 項目 | Validator | Verifier |
+|------|-----------|----------|
+| チェック対象 | 入力パラメータ形式 | ビジネスルール・仕様準拠 |
+| 例外型 | BadRequestException | OAuth標準エラー |
+| 呼び出し順序 | 最初（早期エラー検出） | Validator後 |
+| 条件付き実行 | なし | `shouldVerify()`で判定 |
+
+### throwExceptionIf パターン
+
+条件をメソッド名で明示的に表現し、可読性を向上させるパターン。
+
+```java
+public void verify(...) {
+  throwExceptionIfCodeIsInvalid(authorizationCode);
+  throwExceptionIfClientIdMismatch(clientId);
+  throwExceptionIfRedirectUriMismatch(redirectUri);
+  throwExceptionIfExpirationTimeExpired(expiresAt);
+}
+```
+
+---
+
+## Extension Verifier パターン（shouldVerify 条件付き実行）
+
+拡張モジュールの Verifier は `AuthorizationRequestExtensionVerifier` インターフェースを実装し、`shouldVerify()` で実行可否を判定。
+
+```java
+public class PkceVerifier implements AuthorizationRequestExtensionVerifier {
+  @Override
+  public boolean shouldVerify(OAuthRequestContext context) {
+    return context.isPckeRequest();
+  }
+  @Override
+  public void verify(OAuthRequestContext context) {
+    // PKCE検証ロジック
+  }
+}
+```
+
+Core 層の統合 Verifier が全 Extension Verifier をループし、`shouldVerify()` が `true` の Verifier のみ `verify()` を実行する。
+
+---
+
+## PluginLoader API
+
+PluginLoader は**静的メソッドのみ**を提供（インスタンス化不可）。
+
+```java
+public class PluginLoader {
+  // 内部モジュール（idp-server-core-extension-*）からロード
+  public static <T> List<T> loadFromInternalModule(Class<T> type)
+  // 外部JARディレクトリ（plugins/）からロード
+  public static <T> List<T> loadFromExternalModule(Class<T> type)
+}
+```
+
+- `loadFromInternalModule`: Java 標準 `ServiceLoader` + `META-INF/services/`
+- `loadFromExternalModule`: `URLClassLoader` + ServiceLoader（カスタム ClassLoader）、`plugins/` ディレクトリの JAR をロード
+
+---
+
+## IdpServerApplication - DI コンテナ
+
+**探索起点**: `libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/IdpServerApplication.java`
+
+idp-server 全体の依存性注入を管理する中央コンテナ。全 API・EntryService・Repository を組み立てる。
+
+### DI 階層構造
+
+```
+IdpServerApplication (DIコンテナ)
+  ↓ 組み立て
+EntryService 実装
+  ↓ Proxy ラップ
+TenantAwareEntryServiceProxy（@Transaction 駆動）
+  ↓ 公開
+Management API / Application API
+  ↓ 使用
+Controller / Spring Boot
+```
+
+EntryService 実装を生成し、`TenantAwareEntryServiceProxy.createProxy()` でラップすることで、`@Transaction` アノテーション駆動のトランザクション管理を自動化する。

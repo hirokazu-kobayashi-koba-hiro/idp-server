@@ -10,7 +10,6 @@ description: セキュリティイベント・フック（Security Events & Hook
 - `documentation/docs/content_06_developer-guide/03-application-plane/09-security-event.md` - セキュリティイベント実装ガイド
 - `documentation/docs/content_06_developer-guide/05-configuration/security-event-hook.md` - セキュリティイベントフック設定
 - `documentation/docs/content_03_concepts/06-security-extensions/concept-01-security-events.md` - セキュリティイベント概念
-- `documentation/docs/content_10_ai_developer/ai-54-security-event-framework.md` - AI開発者向けガイド
 
 ## 機能概要
 
@@ -113,6 +112,16 @@ cd e2e && npm test -- scenario/control_plane/organization/organization_security_
 ### フックが実行されない
 - `enabled: true`か確認
 - `trigger.event_types`にイベントタイプが含まれているか確認
+
+---
+
+## WebHook 実装パターン（RFC 8935）
+
+`WebHookSecurityEventExecutor` は `hookConfiguration.getEvent(securityEvent.type())` で設定を取得し、`HttpRequestExecutor.execute()` に委譲する。成功/失敗は `SecurityEventHookResult.successWithContext()` / `failureWithContext()` で返却。
+
+## Slack 実装パターン
+
+`SlackSecurityEventHookExecutor` はテンプレートベースのメッセージ補間を使用（Block Kit ではない）。`NotificationTemplateInterpolator` がイベントデータをテンプレートに埋め込み、`{"text": "message"}` 形式で Slack Incoming Webhook に送信する。メッセージテンプレートはイベント種別ごとに設定可能。
 
 ### Slack通知が届かない
 - Webhook URLが正しいか確認

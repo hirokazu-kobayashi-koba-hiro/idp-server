@@ -131,6 +131,57 @@ public class DataSourceConfiguration {
 
 ---
 
+## Filter 詳細
+
+### ManagementApiFilter
+
+管理 API のアクセストークン検証・権限検証を行う。`OperatorPrincipal` を `SecurityContextHolder` にセット。
+
+### OrgManagementFilter
+
+組織レベル API 用。URL からの `OrganizationIdentifier` 解決 + 組織の admin テナントでのトークン検証。`OrganizationOperatorPrincipal` をセット。
+
+| 項目 | ManagementApiFilter | OrgManagementFilter |
+|------|-------------------|-------------------|
+| エンドポイント | `/management/*` | `/management/organizations/{orgId}/*` |
+| Principal | `OperatorPrincipal` | `OrganizationOperatorPrincipal` |
+| スコープ | `management` | `org-management` or `management` |
+
+### DynamicCorsFilter
+
+テナント固有の CORS 設定を動的適用。リクエストパスからテナントを解決し、`CorsConfiguration` を取得。
+
+テナント解決順序:
+1. Organization API → ORGANIZER テナントの CORS 設定
+2. System Management API → admin テナントの CORS 設定
+3. Application API → パスから抽出したテナントの CORS 設定
+
+---
+
+## 例外 → HTTP ステータス 完全マッピング
+
+```
+MaliciousInputException          → 400 (invalid_request)
+BadRequestException              → 400 (invalid_request)
+UnauthorizedException            → 401 (invalid_request)
+ForbiddenException               → 403 (invalid_request)
+NotFoundException                → 404 (invalid_request)
+NoResourceFoundException         → 404 (invalid_request)
+ConflictException                → 409 (invalid_request)
+SqlDuplicateKeyException         → 409 (duplicate_key)
+HttpRequestMethodNotSupported    → 405 (invalid_request)
+HttpMediaTypeNotAcceptable       → 406 (invalid_request)
+HttpMediaTypeNotSupported        → 400 (invalid_request)
+HttpMessageConversionException   → 400 (invalid_request)
+DateTimeParseException           → 400 (invalid_request)
+InvalidConfigurationException    → 500 (server_error)
+Exception (catch-all)            → 500 (server_error)
+```
+
+`MaliciousInputException` は攻撃詳細を ERROR ログに記録するが、レスポンスには汎用メッセージのみ返す（セキュリティ原則）。
+
+---
+
 ## 責務分離の原則
 
 ```

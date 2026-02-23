@@ -28,7 +28,6 @@ documentation/
 │   ├── content_07_reference/      # リファレンス
 │   ├── content_08_ops/            # 運用・デプロイ
 │   ├── content_09_project/        # プロジェクト情報
-│   ├── content_10_ai_developer/   # AI開発者向け詳細リファレンス
 │   ├── content_11_learning/       # 学習コンテンツ・チュートリアル
 │   ├── content_20_testing/        # テスト関連
 │   ├── document-index.md          # ドキュメントガイド（読者別）
@@ -62,7 +61,6 @@ documentation/
 | **content_07_reference** | 開発者 | APIリファレンス |
 | **content_08_ops** | 運用者 | デプロイ、監視、運用 |
 | **content_09_project** | コントリビューター | 貢献ガイド、ロードマップ |
-| **content_10_ai_developer** | AI/開発者 | 詳細な内部実装リファレンス |
 | **content_11_learning** | 学習者 | 技術基礎（OAuth/OIDC/FIDO/JWT/PostgreSQL/K8s等） |
 | **content_20_testing** | 開発者/QA | テスト戦略、テストガイド |
 
@@ -149,21 +147,6 @@ content_06_developer-guide/
     ├── 03-application-plane-track.md
     └── 04-full-stack-track.md
 ```
-
----
-
-## AI開発者向けドキュメント
-
-`content_10_ai_developer/` はClaude Code向けの詳細リファレンス:
-
-| ファイル | 内容 |
-|---------|------|
-| `ai-10-use-cases.md` | EntryService実装パターン |
-| `ai-11-core.md` | Coreモジュール詳細 |
-| `ai-12-adapters.md` | アダプター実装 |
-| `ai-21-extension-fapi.md` | FAPI拡張 |
-| `ai-31-extension-ciba.md` | CIBA拡張 |
-| `ai-41-extension-ida.md` | 身元確認拡張 |
 
 ---
 

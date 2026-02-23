@@ -144,4 +144,34 @@ WebAuthn4j ライブラリ (内部統合)
 2. `WebAuthn4jConfiguration.java` でパース確認
 3. E2Eテストで動作確認
 
+---
+
+## WebAuthn4j Executor 一覧（5種）
+
+| Executor | 役割 |
+|----------|------|
+| `WebAuthn4jRegistrationChallengeExecutor` | 登録チャレンジ生成 |
+| `WebAuthn4jRegistrationExecutor` | 登録（Attestation 検証） |
+| `WebAuthn4jAuthenticationChallengeExecutor` | 認証チャレンジ生成 |
+| `WebAuthn4jAuthenticationExecutor` | 認証（Assertion 検証） |
+| `WebAuthn4jDeregistrationExecutor` | 登録解除 |
+
+全て `AuthenticationExecutor` インターフェースを実装。
+
+## WebAuthn4jConfiguration 主要パラメータ
+
+| パラメータ | 説明 |
+|-----------|------|
+| `rpId` | Relying Party ID |
+| `rpName` | Relying Party 名 |
+| `allowedOrigins` | 許可オリジン（`origin` は deprecated） |
+| `attestationPreference` | Attestation モード |
+| `authenticatorAttachment` | Authenticator タイプ |
+| `residentKey` | Resident Key 要件 |
+| `userVerificationRequired` | User Verification 要件 |
+| `pubKeyCredAlgorithms` | 公開鍵アルゴリズム |
+| `timeout` | リクエストタイムアウト |
+| `trustStorePath/Password/Type` | Attestation Trust Store |
+| `mds` | FIDO Metadata Service 設定 |
+
 $ARGUMENTS

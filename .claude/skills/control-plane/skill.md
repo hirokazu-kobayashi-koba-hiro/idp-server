@@ -139,3 +139,42 @@ cd e2e && npm test -- scenario/control_plane/organization/
 - Handler層で`dryRun`パラメータを受け取る
 - `if (dryRun) return;`の前にValidatorを実行
 - AuditLogには記録（実データ変更のみスキップ）
+
+---
+
+## Context Creator パターン
+
+管理 API のリクエスト/レスポンス変換を担うパターン。
+
+```java
+public class IdpServerStarterContextCreator {
+  // JsonConverter.snakeCaseInstance() で snake_case ↔ camelCase 変換
+  // 自動フィールド生成（例: client_id）
+  // toResponse() でレスポンス用 Map 生成
+}
+```
+
+### Create vs Update の区別
+
+- **Create**: 新規識別子を自動生成
+- **Update**: 既存の識別子を使用
+
+---
+
+## 権限モデル
+
+`DefaultAdminPermission` 列挙型（45権限）で管理 API の権限を定義。値は `idp:` プレフィックス付き（例: `idp:client:create`）。
+
+### 権限カテゴリ
+
+ORGANIZATION, TENANT_INVITATION, TENANT, AUTHORIZATION_SERVER, CLIENT, USER, PERMISSION, ROLE, AUTHENTICATION_CONFIG, AUTHENTICATION_POLICY, IDENTITY_VERIFICATION_CONFIG, FEDERATION_CONFIG, SECURITY_EVENT_HOOK_CONFIG, SECURITY_EVENT_HOOK, SECURITY_EVENT, AUDIT_LOG, AUTHENTICATION_TRANSACTION, AUTHENTICATION_INTERACTION, ADMIN_USER, SESSION, GRANT, SYSTEM, CONTROL_PLANE_ALL (ワイルドカード)
+
+### 権限判定メソッド
+
+- `isAdminUserPermission()`: admin-user スコープの権限か
+- `isPublicUserPermission()`: user スコープの権限か
+- `isSystemPermission()`: システムレベル権限か
+- `isWildcard()`: ワイルドカード権限か
+- `toTenantPermissions()`: システム権限を除外
+
+**探索起点**: `libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/admin/DefaultAdminPermission.java`

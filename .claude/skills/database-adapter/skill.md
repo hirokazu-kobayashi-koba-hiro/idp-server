@@ -8,9 +8,6 @@ description: データベースアダプター（PostgreSQL/MySQL両対応）の
 ## ドキュメント
 
 - `libs/idp-server-database/README.md` - データベース設計・マイグレーション
-- `documentation/docs/content_10_ai_developer/ai-20-adapters.md` - アダプター実装ガイド
-- `documentation/docs/content_10_ai_developer/ai-21-core-adapter.md` - Core Adapterガイド
-- `documentation/docs/content_10_ai_developer/ai-22-database.md` - データベースガイド
 
 ---
 
@@ -313,6 +310,63 @@ public enum DatabaseType {
 | MySQLでファイル認識されない | 接尾辞が`.sql` | `.mysql.sql`に変更 |
 | バージョン競合 | 既存マイグレーションとの衝突 | `flyway repair` 実行 |
 | スキーマ不整合 | 手動変更との不一致 | `docker compose down -v` で初期化 |
+
+---
+
+## Redis Cache 実装
+
+### CacheStore インターフェース
+
+```java
+public interface CacheStore {
+  <T> void put(String key, T value);
+  <T> void put(String key, T value, int timeToLiveSeconds);
+  <T> Optional<T> find(String key, Class<T> type);
+  boolean exists(String key);
+  void delete(String key);
+  long increment(String key, int timeToLiveSeconds);  // Lua スクリプトによるアトミックカウンター
+}
+```
+
+実装: `JedisCacheStore`（Jedis ベース）。全操作で例外はログ出力のみ（non-blocking）。
+
+### 用途
+
+- Rate limiting カウンター（`increment`）
+- 認証試行回数トラッキング
+- トークン Introspection キャッシュ（TTL 60秒）
+
+---
+
+## 暗号化・ハッシュ化
+
+### AesCipher vs HmacHasher
+
+| 要件 | AesCipher | HmacHasher |
+|------|-----------|------------|
+| 元の値を復元する必要がある | ✓ (decrypt) | ✗ |
+| 検索キーとして使う | ✗ | ✓ (hash して比較) |
+| 機密データ保存 | ✓ | ✗ |
+| PII（email, phone） | ✓ (復号して表示) | ✗ |
+
+- **AesCipher**: AES-256-GCM、12byte IV、`EncryptedData`（ciphertext + IV）を返す
+- **HmacHasher**: HMAC-SHA256、Base64URL エンコード、一方向（verify メソッドなし）
+
+---
+
+## Row Level Security (RLS) - PostgreSQL Only
+
+PostgreSQL で行レベルのテナント分離を実現。
+
+```sql
+ALTER TABLE client_configuration ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON client_configuration
+  USING (tenant_id = current_setting('app.tenant_id')::UUID);
+```
+
+`TransactionManager` が `SET LOCAL app.tenant_id = '{tenantId}'` でコネクションレベルの設定を行い、RLS ポリシーが自動でフィルタリングする。`LOCAL` スコープのためトランザクション終了時に自動クリア。
+
+MySQL では RLS 非対応のため、アプリケーション層での明示的 WHERE 句が必要。
 
 ---
 
