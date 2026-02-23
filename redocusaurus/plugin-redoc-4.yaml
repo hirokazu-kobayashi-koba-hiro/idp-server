@@ -4990,6 +4990,19 @@ components:
                 - authentication-device-notification
               default: authentication-device-notification
               description: OPTIONAL. Default CIBA authentication interaction type
+            custom_properties:
+              type: object
+              additionalProperties: true
+              description: |
+                OPTIONAL. 任意のキー・バリューデータ。
+                認可画面のview-data APIレスポンスにclient_custom_propertiesとして反映されます。
+                アプリ固有のUI設定、フィーチャーフラグ、ブランディング情報などに利用できます。
+              example:
+                app_label: my-custom-app
+                feature_flags:
+                  dark_mode: true
+                  beta_features: false
+                max_sessions: 5
     AuthenticationConfig:
       type: object
       description: >-
@@ -7670,6 +7683,16 @@ components:
             - SESSION_LIMIT_EXCEEDED
           description: セッション終了理由（終了している場合のみ）
           example: null
+        ip_address:
+          type: string
+          nullable: true
+          description: 認証時のIPアドレス
+          example: 192.168.1.100
+        user_agent:
+          type: string
+          nullable: true
+          description: 認証時のUser-Agent
+          example: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36
     UserSessionListResponse:
       type: object
       description: ユーザーセッション一覧のレスポンス
