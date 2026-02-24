@@ -94,8 +94,48 @@ const config = {
             route: '/docs/content_07_reference/api-internal-ja/',
           },
           {
-            spec: 'openapi/swagger-control-plane-ja.yaml',
-            route: '/docs/content_07_reference/control-plane-api-ja/',
+            spec: 'openapi/swagger-cp-tenant-ja.yaml',
+            route: '/docs/content_07_reference/cp-tenant-api-ja/',
+          },
+          {
+            spec: 'openapi/swagger-cp-client-ja.yaml',
+            route: '/docs/content_07_reference/cp-client-api-ja/',
+          },
+          {
+            spec: 'openapi/swagger-cp-user-ja.yaml',
+            route: '/docs/content_07_reference/cp-user-api-ja/',
+          },
+          {
+            spec: 'openapi/swagger-cp-role-permission-ja.yaml',
+            route: '/docs/content_07_reference/cp-role-permission-api-ja/',
+          },
+          {
+            spec: 'openapi/swagger-cp-authentication-ja.yaml',
+            route: '/docs/content_07_reference/cp-authentication-api-ja/',
+          },
+          {
+            spec: 'openapi/swagger-cp-identity-verification-ja.yaml',
+            route: '/docs/content_07_reference/cp-identity-verification-api-ja/',
+          },
+          {
+            spec: 'openapi/swagger-cp-federation-ja.yaml',
+            route: '/docs/content_07_reference/cp-federation-api-ja/',
+          },
+          {
+            spec: 'openapi/swagger-cp-security-event-ja.yaml',
+            route: '/docs/content_07_reference/cp-security-event-api-ja/',
+          },
+          {
+            spec: 'openapi/swagger-system-level-ja.yaml',
+            route: '/docs/content_07_reference/api-system-level-ja/',
+          },
+          {
+            spec: 'openapi/swagger-cp-grant-management-ja.yaml',
+            route: '/docs/content_07_reference/api-grant-management-ja/',
+          },
+          {
+            spec: 'openapi/swagger-authentication-interaction-ja.yaml',
+            route: '/docs/content_07_reference/api-authentication-interaction-ja/',
           },
         ],
         // Theme Options for modifying how redoc renders them

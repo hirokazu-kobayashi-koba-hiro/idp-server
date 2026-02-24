@@ -1,0 +1,1438 @@
+openapi: 3.0.3
+info:
+  title: idp-server コントロールプレーン ユーザー管理 API
+  description: ユーザーの管理API仕様書
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+servers:
+- url: http://localhost:8080
+tags:
+- name: organization-user
+  description: 組織レベルユーザー管理
+paths:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    post:
+      summary: Create user within organization tenant
+      description: 組織内の特定のテナントに新しいユーザーを作成します
+      tags:
+      - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserCreateRequest'
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '201':
+          description: ユーザーを正常に作成しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List users within organization tenant
+      description: 組織内の特定のテナントのユーザー一覧を取得します
+      tags:
+      - organization-user
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      - name: user_id
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 特定のユーザーIDでフィルタリング
+      - name: preferred_username
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 優先ユーザー名でフィルタリング
+      - name: email
+        in: query
+        required: false
+        schema:
+          type: string
+        description: メールアドレスでフィルタリング
+      - name: external_user_id
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 外部ユーザーIDでフィルタリング
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - locked
+        description: ユーザーステータスでフィルタリング
+      - name: provider_id
+        in: query
+        required: false
+        schema:
+          type: string
+        description: プロバイダーIDでフィルタリング
+      - name: phone_number
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 電話番号でフィルタリング
+      - name: name
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 名前で部分一致検索（大文字小文字区別なし）
+      - name: given_name
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 名で部分一致検索（大文字小文字区別なし）
+      - name: family_name
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 姓で部分一致検索（大文字小文字区別なし）
+      - name: middle_name
+        in: query
+        required: false
+        schema:
+          type: string
+        description: ミドルネームで部分一致検索（大文字小文字区別なし）
+      - name: nickname
+        in: query
+        required: false
+        schema:
+          type: string
+        description: ニックネームで部分一致検索（大文字小文字区別なし）
+      - name: role
+        in: query
+        required: false
+        schema:
+          type: string
+        description: ロール名で部分一致検索
+      - name: permission
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 権限名で部分一致検索
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 作成日時の開始（ISO 8601形式）
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 作成日時の終了（ISO 8601形式）
+      responses:
+        '200':
+          description: ユーザーを正常に取得しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrganizationUser'
+                  total_count:
+                    type: integer
+                    description: ユーザーの総数
+                  limit:
+                    type: integer
+                    description: 1ページあたりのアイテム数
+                  offset:
+                    type: integer
+                    description: 開始位置
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/UserId'
+    get:
+      summary: Get user within organization tenant
+      description: 組織内のテナントの特定のユーザーを取得します
+      tags:
+      - organization-user
+      responses:
+        '200':
+          description: ユーザーを正常に取得しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationUser'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update user within organization tenant
+      description: 組織内のテナントの特定のユーザーを更新します
+      tags:
+      - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserUpdateRequest'
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: ユーザーを正常に更新しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete user within organization tenant
+      description: 組織内のテナントの特定のユーザーを削除します
+      tags:
+      - organization-user
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: ユーザーを正常に削除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      summary: Partially update user within organization tenant
+      description: 組織内のテナントの特定のユーザーを部分更新します
+      tags:
+      - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserUpdateRequest'
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: ユーザーを正常に更新しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/password:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/UserId'
+    put:
+      summary: Update user password within organization tenant
+      description: Updates a specific user's password for a tenant within an organization
+      tags:
+      - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserPasswordUpdateRequest'
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: ユーザーのパスワードを正常に更新しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/roles:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/UserId'
+    patch:
+      summary: Update user roles within organization tenant
+      description: Updates a specific user's roles for a tenant within an organization
+      tags:
+      - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserRolesUpdateRequest'
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: ユーザーのロールを正常に更新しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/tenant-assignments:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/UserId'
+    patch:
+      summary: Update user tenant assignments within organization
+      description: Updates a specific user's tenant assignments within an organization
+      tags:
+      - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserTenantAssignmentsUpdateRequest'
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: ユーザーのテナント割り当てを正常に更新しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/organization-assignments:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/UserId'
+    patch:
+      summary: Update user organization assignments
+      description: Updates a specific user's organization assignments
+      tags:
+      - organization-user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserOrganizationAssignmentsUpdateRequest'
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: ユーザーの組織割り当てを正常に更新しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserValidationErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/sessions:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/UserId'
+    get:
+      summary: List user sessions
+      description: '指定されたユーザーのアクティブなセッション一覧を取得します。
+
+
+        このエンドポイントは、ユーザーが現在持っているOPセッション（OpenID Provider Session）の情報を返します。
+
+        セッション情報には、セッションID、認証時刻、有効期限、最終アクセス時刻などが含まれます。
+
+
+        **ユースケース:**
+
+        - ユーザーのログイン状況の確認
+
+        - 不正アクセスの検出（予期しないセッションの発見）
+
+        - セッション管理画面の構築
+
+        '
+      tags:
+      - organization-user
+      responses:
+        '200':
+          description: ユーザーのセッション一覧を正常に取得しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSessionListResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete all user sessions
+      description: '指定されたユーザーのすべてのセッションを一括削除（ログアウト）します。
+
+
+        このエンドポイントは、ユーザーが持つすべてのOPセッションを無効化します。
+
+        パスワード変更後の全デバイスからのログアウトや、アカウント侵害時の緊急対応に使用します。
+
+
+        **ユースケース:**
+
+        - パスワード変更後の全セッション無効化
+
+        - アカウント侵害時の緊急対応
+
+        - ユーザー退職時のセッションクリア
+
+        '
+      tags:
+      - organization-user
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: すべてのセッションを正常に削除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/sessions/{session-id}:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/UserId'
+    - $ref: '#/components/parameters/SessionId'
+    delete:
+      summary: Delete user session
+      description: '指定されたユーザーの特定のセッションを削除（ログアウト）します。
+
+
+        このエンドポイントは、ユーザーの特定のOPセッションを無効化します。
+
+        セッション削除により、そのセッションに関連するすべてのトークンも無効化されます。
+
+
+        **ユースケース:**
+
+        - 不正アクセスが疑われるセッションの強制終了
+
+        - ユーザーからの要請によるリモートログアウト
+
+        - セキュリティインシデント対応
+
+        '
+      tags:
+      - organization-user
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: セッションを正常に削除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: セッション、ユーザー、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: テナントの識別子
+    OrganizationId:
+      name: organization-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 組織の識別子
+    UserId:
+      name: user-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ユーザーの識別子
+    SessionId:
+      name: session-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: セッションの識別子
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+      description: trueの場合、リクエストの検証のみで実行はされません
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 20
+      description: 返すアイテムの最大数
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: アイテムを返す開始インデックス
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        error_description:
+          type: string
+          description: Human-readable error description
+        error_messages:
+          type: array
+          items:
+            type: string
+            description: Human-readable validation error message.
+        error_details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+    OrganizationUser:
+      type: object
+      required:
+      - sub
+      - provider_id
+      - name
+      - email
+      - status
+      properties:
+        sub:
+          type: string
+          format: uuid
+          description: Unique subject identifier for the user
+        provider_id:
+          type: string
+          maxLength: 255
+          description: Identity provider identifier
+        external_user_id:
+          type: string
+          maxLength: 255
+          description: External user identifier from identity provider
+        username:
+          type: string
+          maxLength: 255
+          description: Username for authentication
+        name:
+          type: string
+          maxLength: 255
+          description: Full display name of the user
+        given_name:
+          type: string
+          maxLength: 255
+          description: Given name (first name) of the user
+        family_name:
+          type: string
+          maxLength: 255
+          description: Family name (last name) of the user
+        middle_name:
+          type: string
+          maxLength: 255
+          description: Middle name of the user
+        nickname:
+          type: string
+          maxLength: 255
+          description: Casual name of the user
+        preferred_username:
+          type: string
+          maxLength: 255
+          description: Preferred username for display
+        profile:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile page
+        picture:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile picture
+        website:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's website
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Email address of the user
+        email_verified:
+          type: boolean
+          description: Whether the email address has been verified
+        gender:
+          type: string
+          description: Gender identity of the user
+        birthdate:
+          type: string
+          format: date
+          description: Date of birth (YYYY-MM-DD format)
+        zoneinfo:
+          type: string
+          maxLength: 255
+          description: Time zone information
+        locale:
+          type: string
+          description: Locale preference
+        phone_number:
+          type: string
+          pattern: ^\+?[0-9\- ]{7,20}$
+          description: Phone number in E.164 format
+        phone_number_verified:
+          type: boolean
+          description: Whether the phone number has been verified
+        address:
+          type: object
+          properties:
+            street_address:
+              type: string
+              maxLength: 255
+              description: Street address
+            locality:
+              type: string
+              maxLength: 255
+              description: City or locality
+            region:
+              type: string
+              maxLength: 255
+              description: State or region
+            postal_code:
+              type: string
+              maxLength: 255
+              description: Postal or ZIP code
+            country:
+              type: string
+              maxLength: 255
+              description: Country
+          description: Physical address of the user
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        status:
+          type: string
+          enum:
+          - REGISTERED
+          - IDENTITY_VERIFIED
+          - SUSPENDED
+          - DELETED
+          description: User account status
+        hashed_password:
+          type: string
+          description: Masked password field (always shows ****)
+        verified_claims:
+          type: object
+          additionalProperties: true
+          description: Verified identity claims
+        custom_properties:
+          type: object
+          additionalProperties: true
+          description: Custom user properties
+        authentication_devices:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              type:
+                type: string
+              enabled:
+                type: boolean
+          description: Registered authentication devices
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+          description: Assigned roles
+        permissions:
+          type: array
+          items:
+            type: string
+          description: User permissions
+        assigned_tenants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of assigned tenant IDs
+        assigned_organizations:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of assigned organization IDs
+    OrganizationUserCreateRequest:
+      type: object
+      required:
+      - provider_id
+      - name
+      - email
+      - raw_password
+      properties:
+        sub:
+          type: string
+          format: uuid
+          description: Unique subject identifier (optional, auto-generated if not provided)
+        provider_id:
+          type: string
+          maxLength: 255
+          description: Identity provider identifier
+          example: idp-server
+        external_user_id:
+          type: string
+          maxLength: 255
+          description: External user identifier from identity provider
+        username:
+          type: string
+          maxLength: 255
+          description: Username for authentication
+        name:
+          type: string
+          maxLength: 255
+          description: Full display name of the user
+        given_name:
+          type: string
+          maxLength: 255
+          description: Given name (first name) of the user
+        family_name:
+          type: string
+          maxLength: 255
+          description: Family name (last name) of the user
+        middle_name:
+          type: string
+          maxLength: 255
+          description: Middle name of the user
+        nickname:
+          type: string
+          maxLength: 255
+          description: Casual name of the user
+        preferred_username:
+          type: string
+          maxLength: 255
+          description: Preferred username for display
+        profile:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile page
+        picture:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile picture
+        website:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's website
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Email address of the user
+        email_verified:
+          type: boolean
+          description: Whether the email address has been verified
+        gender:
+          type: string
+          description: Gender identity of the user
+        birthdate:
+          type: string
+          format: date
+          description: Date of birth (YYYY-MM-DD format)
+        zoneinfo:
+          type: string
+          maxLength: 255
+          description: Time zone information
+        locale:
+          type: string
+          description: Locale preference
+        phone_number:
+          type: string
+          pattern: ^\+?[0-9\- ]{7,20}$
+          description: Phone number in E.164 format
+        phone_number_verified:
+          type: boolean
+          description: Whether the phone number has been verified
+        address:
+          type: object
+          properties:
+            street_address:
+              type: string
+              maxLength: 255
+              description: Street address
+            locality:
+              type: string
+              maxLength: 255
+              description: City or locality
+            region:
+              type: string
+              maxLength: 255
+              description: State or region
+            postal_code:
+              type: string
+              maxLength: 255
+              description: Postal or ZIP code
+            country:
+              type: string
+              maxLength: 255
+              description: Country
+          description: Physical address of the user
+        raw_password:
+          type: string
+          minLength: 8
+          maxLength: 255
+          description: Plain text password (will be hashed on server)
+        custom_properties:
+          type: object
+          additionalProperties: true
+          description: Custom user properties
+        roles:
+          type: array
+          items:
+            type: object
+            required:
+            - role_id
+            - role_name
+            properties:
+              role_id:
+                type: string
+                format: uuid
+                description: Unique role identifier
+              role_name:
+                type: string
+                maxLength: 255
+                description: Role name
+          description: User roles
+        assigned_tenants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of tenant IDs the user is assigned to
+        current_tenant:
+          type: string
+          format: uuid
+          description: Current primary tenant ID
+        assigned_organizations:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of organization IDs the user is assigned to
+        current_organization:
+          type: string
+          format: uuid
+          description: Current primary organization ID
+    OrganizationUserUpdateRequest:
+      type: object
+      required:
+      - provider_id
+      - name
+      - email
+      properties:
+        provider_id:
+          type: string
+          maxLength: 255
+          description: Identity provider identifier
+        external_user_id:
+          type: string
+          maxLength: 255
+          description: External user identifier from identity provider
+        username:
+          type: string
+          maxLength: 255
+          description: Username for authentication
+        name:
+          type: string
+          maxLength: 255
+          description: Full display name of the user
+        given_name:
+          type: string
+          maxLength: 255
+          description: Given name (first name) of the user
+        family_name:
+          type: string
+          maxLength: 255
+          description: Family name (last name) of the user
+        middle_name:
+          type: string
+          maxLength: 255
+          description: Middle name of the user
+        nickname:
+          type: string
+          maxLength: 255
+          description: Casual name of the user
+        preferred_username:
+          type: string
+          maxLength: 255
+          description: Preferred username for display
+        profile:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile page
+        picture:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's profile picture
+        website:
+          type: string
+          format: uri
+          maxLength: 255
+          description: URL of the user's website
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Email address of the user
+        email_verified:
+          type: boolean
+          description: Whether the email address has been verified
+        gender:
+          type: string
+          description: Gender identity of the user
+        birthdate:
+          type: string
+          format: date
+          description: Date of birth (YYYY-MM-DD format)
+        zoneinfo:
+          type: string
+          maxLength: 255
+          description: Time zone information
+        locale:
+          type: string
+          description: Locale preference
+        phone_number:
+          type: string
+          pattern: ^\+?[0-9\- ]{7,20}$
+          description: Phone number in E.164 format
+        phone_number_verified:
+          type: boolean
+          description: Whether the phone number has been verified
+        address:
+          type: object
+          properties:
+            street_address:
+              type: string
+              maxLength: 255
+              description: Street address
+            locality:
+              type: string
+              maxLength: 255
+              description: City or locality
+            region:
+              type: string
+              maxLength: 255
+              description: State or region
+            postal_code:
+              type: string
+              maxLength: 255
+              description: Postal or ZIP code
+            country:
+              type: string
+              maxLength: 255
+              description: Country
+          description: Physical address of the user
+        custom_properties:
+          type: object
+          additionalProperties: true
+          description: Custom user properties
+        roles:
+          type: array
+          items:
+            type: object
+            required:
+            - role_id
+            - role_name
+            properties:
+              role_id:
+                type: string
+                format: uuid
+                description: Unique role identifier
+              role_name:
+                type: string
+                maxLength: 255
+                description: Role name
+          description: User roles
+        assigned_tenants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of tenant IDs the user is assigned to
+        current_tenant:
+          type: string
+          format: uuid
+          description: Current primary tenant ID
+        assigned_organizations:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of organization IDs the user is assigned to
+        current_organization:
+          type: string
+          format: uuid
+          description: Current primary organization ID
+    UserValidationErrorResponse:
+      type: object
+      required:
+      - error
+      - error_description
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: invalid_request
+        error_description:
+          type: string
+          description: Human-readable error description
+          example: user registration validation is failed
+        dry_run:
+          type: boolean
+          description: Indicates if this was a dry run operation
+        details:
+          type: object
+          properties:
+            user:
+              type: array
+              items:
+                type: string
+              description: List of user validation error messages
+          description: Detailed validation error information
+          example:
+            user:
+            - provider_id is missing
+            - email format is invalid
+    OrganizationUserPasswordUpdateRequest:
+      type: object
+      required:
+      - raw_password
+      properties:
+        raw_password:
+          type: string
+          minLength: 8
+          pattern: ^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+=-]{8,}$
+          description: Plain text password (will be hashed on server)
+    OrganizationUserRolesUpdateRequest:
+      type: object
+      properties:
+        roles:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required:
+            - role_id
+            - role_name
+            properties:
+              role_id:
+                type: string
+                format: uuid
+                description: Unique role identifier
+              role_name:
+                type: string
+                maxLength: 255
+                description: Role name
+            additionalProperties: false
+          description: User roles
+        permissions:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            maxLength: 255
+          description: Direct permissions assigned to user
+      additionalProperties: false
+    OrganizationUserTenantAssignmentsUpdateRequest:
+      type: object
+      required:
+      - assigned_tenants
+      properties:
+        current_tenant_id:
+          type: string
+          format: uuid
+          description: Current primary tenant ID
+        assigned_tenants:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            format: uuid
+          description: List of tenant IDs the user is assigned to
+    OrganizationUserOrganizationAssignmentsUpdateRequest:
+      type: object
+      required:
+      - assigned_organizations
+      properties:
+        current_organization_id:
+          type: string
+          format: uuid
+          description: Current primary organization ID
+        assigned_organizations:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            format: uuid
+          description: List of organization IDs the user is assigned to
+    UserSession:
+      type: object
+      description: ユーザーのOPセッション（OpenID Provider Session）情報
+      properties:
+        id:
+          type: string
+          description: セッションID
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        tenant_id:
+          type: string
+          description: テナントID
+          example: 952f6906-3e95-4ed3-86b2-981f90f785f9
+        sub:
+          type: string
+          description: ユーザーの一意識別子（subject）
+          example: 3ec055a8-8000-44a2-8677-e70ebff414e2
+        auth_time:
+          type: string
+          format: date-time
+          description: 認証が行われた時刻（ISO 8601形式）
+          example: '2025-01-05T10:30:00Z'
+        acr:
+          type: string
+          nullable: true
+          description: 認証コンテキストクラス参照（Authentication Context Class Reference）
+          example: urn:mace:incommon:iap:silver
+        amr:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: 認証方法参照（Authentication Methods References）
+          example:
+          - pwd
+          - otp
+        created_at:
+          type: string
+          format: date-time
+          description: セッション作成時刻（ISO 8601形式）
+          example: '2025-01-05T10:30:00Z'
+        expires_at:
+          type: string
+          format: date-time
+          description: セッション有効期限（ISO 8601形式）
+          example: '2025-01-05T11:30:00Z'
+        last_accessed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 最終アクセス時刻（ISO 8601形式）
+          example: '2025-01-05T10:45:00Z'
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - TERMINATED
+          description: セッションステータス
+          example: ACTIVE
+        terminated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: セッション終了時刻（終了している場合のみ）
+          example: null
+        termination_reason:
+          type: string
+          nullable: true
+          enum:
+          - USER_LOGOUT
+          - ADMIN_REVOCATION
+          - TIMEOUT
+          - SESSION_LIMIT_EXCEEDED
+          description: セッション終了理由（終了している場合のみ）
+          example: null
+        ip_address:
+          type: string
+          nullable: true
+          description: 認証時のIPアドレス
+          example: 192.168.1.100
+        user_agent:
+          type: string
+          nullable: true
+          description: 認証時のUser-Agent
+          example: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36
+    UserSessionListResponse:
+      type: object
+      description: ユーザーセッション一覧のレスポンス
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSession'
+          description: セッションの配列
+      required:
+      - list

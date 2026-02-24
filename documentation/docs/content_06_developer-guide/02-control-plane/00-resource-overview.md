@@ -144,7 +144,7 @@ DELETE /v1/management/tenants/{tenant-id}/clients/{id}    # client:delete
 ### 個別機能
 - [Authentication Configuration](../04-implementation-guides/impl-05-authentication-policy.md) - 認証設定
 - [Security Event Hooks](../04-implementation-guides/impl-15-security-event-hooks.md) - イベントフック
-- [Grant Management API](../../../../openapi/swagger-grant-management-ja.yaml) - Grant管理（OpenAPI仕様）
+- [Grant Management API](../../../../openapi/swagger-cp-grant-management-ja.yaml) - Grant管理（OpenAPI仕様）
 
 ---
 

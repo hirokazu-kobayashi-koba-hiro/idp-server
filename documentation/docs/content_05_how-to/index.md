@@ -182,7 +182,14 @@ Phase 1-4完了
 - [トークン管理](../content_03_concepts/tokens-claims/concept-02-token-management.md) - トークン戦略
 
 ### API仕様
-- [OpenAPI仕様](../../openapi/swagger-control-plane-ja.yaml) - Management API詳細
+- [テナント管理API](../../openapi/swagger-cp-tenant-ja.yaml)
+- [クライアント管理API](../../openapi/swagger-cp-client-ja.yaml)
+- [ユーザー管理API](../../openapi/swagger-cp-user-ja.yaml)
+- [ロール・権限管理API](../../openapi/swagger-cp-role-permission-ja.yaml)
+- [認証設定管理API](../../openapi/swagger-cp-authentication-ja.yaml)
+- [身元確認設定管理API](../../openapi/swagger-cp-identity-verification-ja.yaml)
+- [フェデレーション設定管理API](../../openapi/swagger-cp-federation-ja.yaml)
+- [セキュリティイベント管理API](../../openapi/swagger-cp-security-event-ja.yaml)
 
 ---
 

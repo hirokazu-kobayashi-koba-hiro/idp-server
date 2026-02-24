@@ -78,8 +78,7 @@
 テナント作成・更新のAPI詳細仕様（リクエスト/レスポンススキーマ、全パラメータ説明）は、OpenAPI仕様書を参照してください。
 
 **📖 OpenAPI仕様書**:
-- [swagger-control-plane-ja.yaml](../../openapi/swagger-control-plane-ja.yaml) - 日本語版
-- [swagger-control-plane-en.yaml](../../openapi/swagger-control-plane-en.yaml) - 英語版
+- [swagger-cp-tenant-ja.yaml](../../openapi/swagger-cp-tenant-ja.yaml) - テナント管理API仕様
 
 ---
 
@@ -1391,7 +1390,7 @@ Access to XMLHttpRequest at 'https://idp.example.com/...' from origin 'https://a
 | `authorization_provider` | ✅ | string | 認可プロバイダー（固定値） | `idp-server` |
 | `attributes` | ❌ | object | テナント固有属性 | オブジェクト |
 
-**OpenAPI仕様**: [swagger-control-plane-ja.yaml:4627-4665](../../openapi/swagger-control-plane-ja.yaml#L4627-L4665)
+**OpenAPI仕様**: [swagger-cp-tenant-ja.yaml](../../openapi/swagger-cp-tenant-ja.yaml)
 
 #### Authorization Serverセクション
 
@@ -1408,7 +1407,7 @@ Access to XMLHttpRequest at 'https://idp.example.com/...' from origin 'https://a
 | `response_modes_supported` | サポートするResponse Mode |
 | `subject_types_supported` | Subject識別子タイプ（`public`/`pairwise`） |
 
-**OpenAPI仕様**: [swagger-control-plane-ja.yaml:3616-3627](../../openapi/swagger-control-plane-ja.yaml#L3616-L3627)
+**OpenAPI仕様**: [swagger-cp-tenant-ja.yaml](../../openapi/swagger-cp-tenant-ja.yaml)
 
 ##### 推奨フィールド
 
