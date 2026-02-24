@@ -64,6 +64,7 @@
     "subject_types_supported": ["public"],
     "id_token_signing_alg_values_supported": ["RS256", "ES256"],
     "claims_parameter_supported": true,
+    "verified_claims_supported": true,
     "token_introspection_endpoint": "https://api.local.dev/44444444-3333-4444-4444-444444444444/v1/tokens/introspection",
     "token_revocation_endpoint": "https://api.local.dev/44444444-3333-4444-4444-444444444444/v1/tokens/revocation",
     "extension": {
@@ -73,7 +74,6 @@
       "access_token_duration": 3600,
       "id_token_duration": 3600,
       "refresh_token_duration": 86400,
-      "verified_claims_supported": true,
       "required_identity_verification_scopes": ["transfers"]
     }
   }

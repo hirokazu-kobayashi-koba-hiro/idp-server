@@ -187,6 +187,6 @@ curl -X POST https://api.local.dev/44444444-3333-4444-4444-444444444444/v1/token
 
 ### OIDC Discovery
 
-```
-https://api.local.dev/44444444-3333-4444-4444-444444444444/.well-known/openid-configuration
+```shell
+curl https://api.local.dev/44444444-3333-4444-4444-444444444444/.well-known/openid-configuration | jq
 ```
