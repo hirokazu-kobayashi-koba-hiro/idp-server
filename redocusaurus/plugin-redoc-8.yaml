@@ -1,0 +1,1216 @@
+openapi: 3.0.3
+info:
+  title: idp-server コントロールプレーン 認証設定管理 API
+  description: 認証設定、認証ポリシー、認証インタラクション、認証トランザクションの管理API仕様書
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: organization-authentication-interaction
+    description: 組織レベル認証インタラクション管理
+  - name: organization-authentication-transaction
+    description: 組織レベル認証トランザクション管理
+paths:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configurations:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      summary: Create authentication configuration within organization
+      description: 組織内の特定のテナントに対して新しい認証設定を作成します
+      tags:
+        - organization-authentication-config
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationConfigurationRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: 認証設定が正常に作成されました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: ドライランかどうか
+                  result:
+                    $ref: '#/components/schemas/AuthenticationConfig'
+        '400':
+          description: 無効なリクエストデータまたはバリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List authentication configurations within organization
+      description: 組織内の特定のテナントの認証設定一覧を取得します
+      tags:
+        - organization-authentication-config
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: 認証設定一覧の取得が成功しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuthenticationConfig'
+                  total_count:
+                    type: integer
+                    description: 認証設定の総数
+                  limit:
+                    type: integer
+                    description: 返される結果の最大数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-configurations/{config-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AuthenticationConfigId'
+    get:
+      summary: Get authentication configuration by ID within organization
+      description: 組織内の特定のテナントの認証設定詳細を取得します
+      tags:
+        - organization-authentication-config
+      responses:
+        '200':
+          description: 認証設定の取得が成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationConfig'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織、テナント、または認証設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update authentication configuration by ID within organization
+      description: 組織内の特定のテナントの認証設定を更新します
+      tags:
+        - organization-authentication-config
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationConfigurationRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: 認証設定の更新が成功しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: ドライランかどうか
+                  result:
+                    $ref: '#/components/schemas/AuthenticationConfig'
+        '400':
+          description: 無効なリクエストデータまたはバリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織、テナント、または認証設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete authentication configuration by ID within organization
+      description: 組織内の特定のテナントの認証設定を削除します
+      tags:
+        - organization-authentication-config
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: ドライラン削除成功（dry_run=trueの場合）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: 削除シミュレーション成功メッセージ
+                  config_id:
+                    type: string
+                    format: uuid
+                    description: 削除対象の設定ID
+                  dry_run:
+                    type: boolean
+                    description: ドライランフラグ（常にtrue）
+        '204':
+          description: 認証設定の削除が成功しました（実際の削除）
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織、テナント、または認証設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      summary: Create authentication policy configuration within organization
+      description: 組織内の特定のテナントに対して新しい認証ポリシー設定を作成します
+      tags:
+        - organization-authentication-policy-config
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationPolicyConfigurationRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '201':
+          description: 認証ポリシー設定の作成が成功しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    example: false
+                  result:
+                    $ref: '#/components/schemas/AuthenticationPolicyConfig'
+        '400':
+          description: 無効なリクエストパラメータまたはボディ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List authentication policy configurations within organization
+      description: 組織内の特定のテナントの認証ポリシー設定一覧を取得します
+      tags:
+        - organization-authentication-policy-config
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: 認証ポリシー設定一覧の取得が成功しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuthenticationPolicyConfig'
+                  total_count:
+                    type: integer
+                    description: 認証ポリシー設定の総数
+                  limit:
+                    type: integer
+                    description: ページあたりの最大結果数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-policies/{config-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AuthenticationPolicyConfigId'
+    get:
+      summary: Get authentication policy configuration by ID within organization
+      description: 組織内の特定のテナントの認証ポリシー設定詳細を取得します
+      tags:
+        - organization-authentication-policy-config
+      responses:
+        '200':
+          description: 認証ポリシー設定の取得が成功しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationPolicyConfig'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織、テナント、または認証ポリシー設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update authentication policy configuration by ID within organization
+      description: 組織内の特定のテナントの認証ポリシー設定を更新します
+      tags:
+        - organization-authentication-policy-config
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticationPolicyConfigurationRequest'
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: 認証ポリシー設定の更新が成功しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                  result:
+                    $ref: '#/components/schemas/AuthenticationPolicyConfig'
+        '400':
+          description: 無効なリクエストパラメータまたはボディ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織、テナント、または認証ポリシー設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete authentication policy configuration by ID within organization
+      description: 組織内の特定のテナントの認証ポリシー設定を削除します
+      tags:
+        - organization-authentication-policy-config
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: 認証ポリシー設定の削除が成功しました
+        '403':
+          description: 権限不足または無効な組織・テナントアクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織、テナント、または認証ポリシー設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-interactions:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: 組織内認証インタラクション一覧取得
+      description: 指定した組織・テナント内の認証インタラクション一覧を取得します（読み取り専用）
+      tags:
+        - organization-authentication-interaction
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: transaction_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: 認証トランザクションIDでフィルタリング
+        - name: interaction_type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: インタラクションタイプでフィルタリング
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - pending
+              - completed
+              - failed
+              - expired
+          description: ステータスでフィルタリング
+        - name: created_at_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 作成日時の範囲指定開始
+        - name: created_at_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 作成日時の範囲指定終了
+      responses:
+        '200':
+          description: 認証インタラクション一覧取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: >-
+                        #/components/schemas/OrganizationAuthenticationInteraction
+                    description: 認証インタラクション一覧
+                  total_count:
+                    type: integer
+                    description: 総件数
+                    example: 25
+                  limit:
+                    type: integer
+                    description: 取得件数制限
+                    example: 10
+                  offset:
+                    type: integer
+                    description: 取得開始位置
+                    example: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: 組織アクセス権限不足またはテナントアクセス拒否
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-interactions/{transaction-id}/{type}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - name: transaction-id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: 認証トランザクションID
+        example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      - name: type
+        in: path
+        required: true
+        schema:
+          type: string
+        description: インタラクションタイプ
+        example: password
+    get:
+      summary: 組織内認証インタラクション詳細取得
+      description: 指定した組織・テナント内の特定の認証インタラクションの詳細を取得します
+      tags:
+        - organization-authentication-interaction
+      responses:
+        '200':
+          description: 認証インタラクション詳細取得成功
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/OrganizationAuthenticationInteractionDetail
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: 組織アクセス権限不足またはテナントアクセス拒否
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織、テナント、または認証インタラクションが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-transactions:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: 組織内認証トランザクション一覧取得
+      description: 指定した組織・テナント内の認証トランザクション一覧を取得します（読み取り専用）
+      tags:
+        - organization-authentication-transaction
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - pending
+              - completed
+              - failed
+              - expired
+          description: トランザクションステータスでフィルタリング
+        - name: client_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: クライアントIDでフィルタリング
+        - name: created_at_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 作成日時の範囲指定開始
+        - name: created_at_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: 作成日時の範囲指定終了
+      responses:
+        '200':
+          description: 認証トランザクション一覧取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: >-
+                        #/components/schemas/OrganizationAuthenticationTransaction
+                    description: 認証トランザクション一覧
+                  total_count:
+                    type: integer
+                    description: 総件数
+                    example: 15
+                  limit:
+                    type: integer
+                    description: 取得件数制限
+                    example: 10
+                  offset:
+                    type: integer
+                    description: 取得開始位置
+                    example: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: 組織アクセス権限不足またはテナントアクセス拒否
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authentication-transactions/{transaction-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - name: transaction-id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: 認証トランザクションID
+        example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+    get:
+      summary: 組織内認証トランザクション詳細取得
+      description: 指定した組織・テナント内の特定の認証トランザクションの詳細を取得します
+      tags:
+        - organization-authentication-transaction
+      responses:
+        '200':
+          description: 認証トランザクション詳細取得成功
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/OrganizationAuthenticationTransactionDetail
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: 組織アクセス権限不足またはテナントアクセス拒否
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織、テナント、または認証トランザクションが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: テナントの識別子
+    OrganizationId:
+      name: organization-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 組織の識別子
+    AuthenticationConfigId:
+      name: config-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 認証設定の識別子
+    AuthenticationPolicyConfigId:
+      name: config-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 認証ポリシー設定の識別子
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+      description: trueの場合、リクエストの検証のみで実行はされません
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 20
+      description: 返すアイテムの最大数
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: アイテムを返す開始インデックス
+  schemas:
+    AuthenticationConfig:
+      type: object
+      description: >-
+        Authentication configuration response based on
+        AuthenticationConfigurationRequest Java class
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 設定識別子
+        type:
+          type: string
+          description: 認証設定タイプ
+        tenant_id:
+          type: string
+          format: uuid
+          description: Tenant identifier
+        attributes:
+          type: object
+          description: 設定属性
+          additionalProperties: true
+        metadata:
+          type: object
+          description: 設定メタデータ
+          additionalProperties: true
+        interactions:
+          type: object
+          description: 認証インタラクション設定
+          additionalProperties:
+            $ref: '#/components/schemas/AuthenticationInteractionConfig'
+        created_at:
+          type: string
+          format: date-time
+          description: 設定作成タイムスタンプ
+        updated_at:
+          type: string
+          format: date-time
+          description: 設定最終更新タイムスタンプ
+      additionalProperties: false
+    AuthenticationConfigurationRequest:
+      type: object
+      description: >-
+        Authentication configuration request based on
+        AuthenticationConfigurationRequest Java class
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 設定識別子
+        type:
+          type: string
+          description: 認証設定タイプ
+        attributes:
+          type: object
+          description: Configuration-specific attributes
+          additionalProperties: true
+        metadata:
+          type: object
+          description: 設定メタデータ
+          additionalProperties: true
+        interactions:
+          type: object
+          description: 認証インタラクション設定 mapping
+          additionalProperties:
+            $ref: '#/components/schemas/AuthenticationInteractionConfig'
+      additionalProperties: true
+    AuthenticationInteractionConfig:
+      type: object
+      description: >-
+        Authentication interaction configuration based on
+        AuthenticationInteractionConfig Java class
+      properties:
+        request:
+          type: object
+          description: Request configuration settings (AuthenticationRequestConfig)
+          properties:
+            schema:
+              type: object
+              description: リクエスト検証用JSONスキーマ定義
+              additionalProperties: true
+          additionalProperties: true
+        preHook:
+          type: object
+          description: Pre-processing hook configuration (AuthenticationPreHookConfig)
+          properties:
+            additional_parameters:
+              type: array
+              description: 追加パラメータ設定
+              items:
+                type: object
+                additionalProperties: true
+          additionalProperties: true
+        execution:
+          type: object
+          description: Execution configuration settings (AuthenticationExecutionConfig)
+          properties:
+            function:
+              type: string
+              description: 実行関数名
+            previous_interaction:
+              type: object
+              description: 前のインタラクション解決設定
+              additionalProperties: true
+            http_request:
+              type: object
+              description: HTTPリクエスト実行設定
+              additionalProperties: true
+            http_requests:
+              type: array
+              description: Multiple HTTP request configurations
+              items:
+                type: object
+                additionalProperties: true
+            mock:
+              type: object
+              description: Mock configuration for testing
+              additionalProperties: true
+            details:
+              type: object
+              description: Additional execution details
+              additionalProperties: true
+            http_request_store:
+              type: object
+              description: HTTP request store configuration
+              additionalProperties: true
+            http_requests_store:
+              type: object
+              description: Multiple HTTP requests store configuration
+              additionalProperties: true
+          additionalProperties: true
+        userResolve:
+          type: object
+          description: User resolution configuration (AuthenticationResultConfig)
+          properties:
+            user_mapping_rules:
+              type: array
+              description: ユーザーマッピングルール
+              items:
+                $ref: '#/components/schemas/MappingRule'
+          additionalProperties: true
+        postHook:
+          type: object
+          description: Post-processing hook configuration (AuthenticationPostHookConfig)
+          properties:
+            additional_parameters:
+              type: array
+              description: 追加パラメータ設定
+              items:
+                $ref: '#/components/schemas/AuthenticationAdditionalParameterConfig'
+          additionalProperties: true
+        response:
+          type: object
+          description: Response configuration settings (AuthenticationResponseConfig)
+          properties:
+            body_mapping_rules:
+              type: array
+              description: ボディマッピングルール
+              items:
+                $ref: '#/components/schemas/MappingRule'
+          additionalProperties: true
+      additionalProperties: true
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        error_description:
+          type: string
+          description: Human-readable error description
+        error_messages:
+          type: array
+          items:
+            type: string
+            description: Human-readable validation error message.
+        error_details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+    MappingRule:
+      type: object
+      description: Mapping rule configuration based on MappingRule Java class
+      properties:
+        from:
+          type: string
+          description: Source field path for mapping
+        static_value:
+          description: Static value to use instead of mapping from source
+        to:
+          type: string
+          description: Target field path for mapping
+        convert_type:
+          type: string
+          description: Data conversion type
+        functions:
+          type: array
+          description: List of transformation functions
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: false
+    AuthenticationAdditionalParameterConfig:
+      type: object
+      description: >-
+        Additional parameter configuration based on
+        AuthenticationAdditionalParameterConfig Java class
+      properties:
+        function:
+          type: string
+          description: Function name for parameter processing
+        http_request:
+          type: object
+          description: HTTP request configuration for parameter retrieval
+          additionalProperties: true
+        http_requests:
+          type: array
+          description: Multiple HTTP requests configuration
+          items:
+            type: object
+            additionalProperties: true
+        mock:
+          type: object
+          description: Mock configuration for testing
+          additionalProperties: true
+        details:
+          type: object
+          description: Additional configuration details
+          additionalProperties: true
+      additionalProperties: false
+    AuthenticationPolicyConfig:
+      type: object
+      description: >-
+        Authentication policy configuration based on
+        AuthenticationPolicyConfiguration Java class
+      required:
+        - id
+        - flow
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Authentication policy configuration identifier
+        flow:
+          type: string
+          description: Authentication flow type
+        policies:
+          type: array
+          description: List of authentication policies
+          items:
+            $ref: '#/components/schemas/AuthenticationPolicy'
+        enabled:
+          type: boolean
+          description: Whether the policy configuration is enabled
+          default: true
+        tenant_id:
+          type: string
+          format: uuid
+          description: Tenant identifier
+        created_at:
+          type: string
+          format: date-time
+          description: 設定作成タイムスタンプ
+        updated_at:
+          type: string
+          format: date-time
+          description: 設定最終更新タイムスタンプ
+      additionalProperties: false
+    AuthenticationPolicyConfigurationRequest:
+      type: object
+      description: >-
+        Authentication policy configuration request based on
+        AuthenticationPolicyConfigRequest Java class
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Authentication policy configuration identifier
+        flow:
+          type: string
+          description: Authentication flow type
+        policies:
+          type: array
+          description: List of authentication policies
+          items:
+            $ref: '#/components/schemas/AuthenticationPolicy'
+        enabled:
+          type: boolean
+          description: Whether the policy configuration is enabled
+          default: true
+      additionalProperties: true
+    AuthenticationPolicy:
+      type: object
+      description: Authentication policy based on AuthenticationPolicy Java class
+      properties:
+        priority:
+          type: integer
+          description: Policy priority (higher values take precedence)
+        conditions:
+          $ref: '#/components/schemas/AuthenticationPolicyCondition'
+        available_methods:
+          type: array
+          description: List of available authentication methods
+          items:
+            type: string
+        acr_mapping_rules:
+          type: object
+          description: ACR (Authentication Context Class Reference) mapping rules
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        level_of_authentication_scopes:
+          type: object
+          description: Level of authentication scope mappings
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        success_conditions:
+          $ref: '#/components/schemas/AuthenticationResultConditionConfig'
+        failure_conditions:
+          $ref: '#/components/schemas/AuthenticationResultConditionConfig'
+        lock_conditions:
+          $ref: '#/components/schemas/AuthenticationResultConditionConfig'
+        device_registration_conditions:
+          description: |
+            認証デバイス（FIDO2/FIDO-UAF）登録時に必要な認証レベル（ACR）を定義します。
+            この条件が設定されている場合、ユーザーは指定された認証方式を完了しないと
+            新しいFIDOデバイスを登録できません。
+            条件を満たさない場合は403 Forbidden、未認証の場合は401 Unauthorizedを返します。
+          allOf:
+            - $ref: '#/components/schemas/AuthenticationResultConditionConfig'
+        step_definitions:
+          type: array
+          description: List of authentication step definitions
+          items:
+            $ref: '#/components/schemas/AuthenticationStepDefinition'
+        auth_session_binding_required:
+          type: boolean
+          default: true
+          description: |
+            AUTH_SESSION Cookie検証の有効/無効を制御します。
+
+            trueの場合、認可フロー中にAUTH_SESSION Cookieの検証を行い、
+            認可フローハイジャック攻撃（攻撃者が認可URLを被害者に送信し、
+            被害者の認証を自分のセッションに紐づける攻撃）を防止します。
+
+            セキュリティ上の理由から、本番環境ではtrueを推奨します。
+      additionalProperties: false
+    AuthenticationPolicyCondition:
+      type: object
+      description: Authentication policy conditions
+      properties:
+        client_ids:
+          type: array
+          description: List of client IDs this policy applies to
+          items:
+            type: string
+        acr_values:
+          type: array
+          description: List of ACR values this policy applies to
+          items:
+            type: string
+        scopes:
+          type: array
+          description: List of scopes this policy applies to
+          items:
+            type: string
+      additionalProperties: true
+    AuthenticationResultConditionConfig:
+      type: object
+      description: Authentication result condition configuration
+      properties:
+        conditions:
+          type: array
+          description: List of result conditions
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: true
+    AuthenticationStepDefinition:
+      type: object
+      description: Authentication step definition
+      properties:
+        step:
+          type: integer
+          description: Step number in the authentication flow
+        method:
+          type: string
+          description: Authentication method for this step
+        required:
+          type: boolean
+          description: Whether this step is required
+        configuration:
+          type: object
+          description: Step-specific configuration
+          additionalProperties: true
+      additionalProperties: false
+    OrganizationAuthenticationInteraction:
+      type: object
+      required:
+        - transaction_id
+        - type
+        - payload
+      properties:
+        transaction_id:
+          type: string
+          description: 認証トランザクションID
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        type:
+          type: string
+          description: インタラクションタイプ（password, mfa, biometric等）
+          example: password
+        payload:
+          type: object
+          description: インタラクション固有のペイロードデータ
+          additionalProperties: true
+          example:
+            status: completed
+            created_at: '2025-09-18T10:30:00Z'
+            metadata: {}
+      additionalProperties: false
+    OrganizationAuthenticationInteractionDetail:
+      allOf:
+        - $ref: '#/components/schemas/OrganizationAuthenticationInteraction'
+        - type: object
+          description: 詳細取得APIのレスポンスは基本スキーマと同じ構造
+    OrganizationAuthenticationTransaction:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: 認証トランザクションID
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        client_id:
+          type: string
+          description: クライアントID
+          example: example-client-001
+        redirect_uri:
+          type: string
+          format: uri
+          description: リダイレクトURI
+          example: https://example.com/callback
+        scope:
+          type: string
+          description: 要求されたスコープ
+          example: openid profile email
+        state:
+          type: string
+          description: ステート値
+          example: random-state-value
+        nonce:
+          type: string
+          description: ナンス値
+          example: random-nonce-value
+        response_type:
+          type: string
+          description: レスポンスタイプ
+          example: code
+        code_challenge:
+          type: string
+          description: PKCEコードチャレンジ
+          example: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+        code_challenge_method:
+          type: string
+          description: PKCEコードチャレンジメソッド
+          example: S256
+      additionalProperties: true
+    OrganizationAuthenticationTransactionDetail:
+      allOf:
+        - $ref: '#/components/schemas/OrganizationAuthenticationTransaction'
+        - type: object
+          description: 詳細取得APIのレスポンスは基本スキーマと同じ構造
+  responses:
+    Unauthorized:
+      description: Unauthorized - Authentication required or invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: Error type
+                example: unauthorized
+              error_description:
+                type: string
+                description: Human-readable description of the error
+                example: Authentication required
+            required:
+              - error
+              - error_description
+            additionalProperties: false

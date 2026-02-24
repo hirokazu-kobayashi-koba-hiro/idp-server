@@ -1,0 +1,589 @@
+openapi: 3.0.3
+info:
+  title: idp-server コントロールプレーン ロール・権限管理 API
+  description: ロールおよび権限の管理API仕様書
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+servers:
+- url: http://localhost:8080
+tags:
+- name: organization-role
+  description: 組織レベルロール管理
+- name: organization-permission
+  description: 組織レベル権限管理
+paths:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/permissions:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    post:
+      summary: Create permission within organization tenant
+      description: 組織内の特定のテナントに新しい権限を作成します
+      tags:
+      - organization-permission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionCreateRequest'
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '201':
+          description: 権限を正常に作成しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/Permission'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List permissions within organization tenant
+      description: 組織内の特定のテナントの権限一覧を取得します
+      tags:
+      - organization-permission
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: 権限を正常に取得しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Permission'
+                  total_count:
+                    type: integer
+                    description: 権限の総数
+                  limit:
+                    type: integer
+                    description: 返される結果の最大数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/permissions/{permission-id}:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/PermissionId'
+    get:
+      summary: Get permission within organization tenant
+      description: 組織内のテナントの特定の権限を取得します
+      tags:
+      - organization-permission
+      responses:
+        '200':
+          description: 権限を正常に取得しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 権限、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update permission within organization tenant
+      description: 組織内のテナントの特定の権限を更新します
+      tags:
+      - organization-permission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionUpdateRequest'
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: 権限を正常に更新しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/Permission'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 権限、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete permission within organization tenant
+      description: 組織内のテナントの特定の権限を削除します
+      tags:
+      - organization-permission
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: 権限を正常に削除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 権限、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/roles:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    post:
+      summary: Create role within organization tenant
+      description: 組織内の特定のテナントに新しいロールを作成します
+      tags:
+      - organization-role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCreateRequest'
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '201':
+          description: ロールを正常に作成しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/Role'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List roles within organization tenant
+      description: 組織内の特定のテナントのロール一覧を取得します
+      tags:
+      - organization-role
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: ロールを正常に取得しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+                  total_count:
+                    type: integer
+                    description: ロールの総数
+                  limit:
+                    type: integer
+                    description: 返される結果の最大数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/roles/{role-id}:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/RoleId'
+    get:
+      summary: Get role within organization tenant
+      description: 組織内のテナントの特定のロールを取得します
+      tags:
+      - organization-role
+      responses:
+        '200':
+          description: ロールを正常に取得しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ロール、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update role within organization tenant
+      description: 組織内のテナントの特定のロールを更新します
+      tags:
+      - organization-role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleUpdateRequest'
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: ロールを正常に更新しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: これがドライラン操作であったかを示します
+                  result:
+                    $ref: '#/components/schemas/Role'
+        '400':
+          description: 無効なリクエストボディまたは検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ロール、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete role within organization tenant
+      description: 組織内のテナントの特定のロールを削除します
+      tags:
+      - organization-role
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: ロールを正常に削除しました
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ロール、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: テナントの識別子
+    OrganizationId:
+      name: organization-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 組織の識別子
+    PermissionId:
+      name: permission-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 権限の識別子
+    RoleId:
+      name: role-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ロールの識別子
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+      description: trueの場合、リクエストの検証のみで実行はされません
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 20
+      description: 返すアイテムの最大数
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: アイテムを返す開始インデックス
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        error_description:
+          type: string
+          description: Human-readable error description
+        error_messages:
+          type: array
+          items:
+            type: string
+            description: Human-readable validation error message.
+        error_details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+    Permission:
+      type: object
+      required:
+      - id
+      - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the permission
+        name:
+          type: string
+          maxLength: 255
+          description: Permission name (must be unique within tenant)
+        description:
+          type: string
+          description: Human-readable description of the permission
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+    PermissionCreateRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Permission name (must be unique within tenant)
+        description:
+          type: string
+          description: Human-readable description of the permission
+    PermissionUpdateRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Permission name (must be unique within tenant)
+        description:
+          type: string
+          description: Human-readable description of the permission
+    Role:
+      type: object
+      required:
+      - id
+      - name
+      - permissions
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the role
+        name:
+          type: string
+          maxLength: 255
+          description: Role name (must be unique within tenant)
+        description:
+          type: string
+          maxLength: 255
+          description: Human-readable description of the role
+        permissions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+          description: List of permissions assigned to this role
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+    RoleCreateRequest:
+      type: object
+      required:
+      - name
+      - permissions
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Role name (must be unique within tenant)
+        description:
+          type: string
+          maxLength: 255
+          description: Human-readable description of the role
+        permissions:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of permission IDs to assign to this role (empty array is allowed)
+    RoleUpdateRequest:
+      type: object
+      required:
+      - name
+      - permissions
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Role name (must be unique within tenant)
+        description:
+          type: string
+          maxLength: 255
+          description: Human-readable description of the role
+        permissions:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of permission IDs to assign to this role (empty array is allowed for complete removal)

@@ -1,0 +1,1367 @@
+openapi: 3.0.3
+info:
+  title: idp-server コントロールプレーン セキュリティイベント管理 API
+  description: セキュリティイベント、監査ログ、セキュリティイベントフックの管理API仕様書
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: organization-security-event
+    description: 組織レベルセキュリティイベント管理
+  - name: organization-audit-log
+    description: 組織レベル監査ログ管理
+  - name: organization-security-event-hook
+    description: 組織レベルセキュリティイベントフック設定管理
+paths:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hook-configurations:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      summary: Create security event hook configuration
+      description: 組織内のテナントに対して新しいセキュリティイベントフック設定を作成します
+      tags:
+        - organization-security-event-hook
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecurityEventHookConfigurationRequest'
+      responses:
+        '201':
+          description: セキュリティイベントフック設定の作成が成功しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: ドライランかどうか
+                  result:
+                    $ref: '#/components/schemas/SecurityEventHookConfiguration'
+                required:
+                  - dry_run
+                  - result
+        '400':
+          description: 無効なリクエストパラメータまたは設定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 同じIDのセキュリティイベントフック設定が既に存在します
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List security event hook configurations
+      description: 組織内のテナントの全セキュリティイベントフック設定を取得します
+      tags:
+        - organization-security-event-hook
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: enabled
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: 有効ステータスでフィルタリング
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/StandardSecurityEventHookType'
+          description: フックタイプでフィルタリング (WEBHOOK, SSF, Email)
+      responses:
+        '200':
+          description: セキュリティイベントフック設定の一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SecurityEventHookConfiguration'
+                  total_count:
+                    type: integer
+                    description: セキュリティイベントフック設定の総数
+                  limit:
+                    type: integer
+                    description: 返される結果の最大数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hook-configurations/{config-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - name: config-id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: セキュリティイベントフック設定ID
+    get:
+      summary: Get specific security event hook configuration
+      description: IDで特定のセキュリティイベントフック設定を取得します
+      tags:
+        - organization-security-event-hook
+      responses:
+        '200':
+          description: セキュリティイベントフック設定の詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityEventHookConfiguration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、またはセキュリティイベントフック設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update security event hook configuration
+      description: 既存のセキュリティイベントフック設定を更新します
+      tags:
+        - organization-security-event-hook
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecurityEventHookConfigurationRequest'
+      responses:
+        '200':
+          description: セキュリティイベントフック設定の更新が成功しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dry_run:
+                    type: boolean
+                    description: ドライランかどうか
+                  result:
+                    $ref: '#/components/schemas/SecurityEventHookConfiguration'
+                required:
+                  - dry_run
+                  - result
+        '400':
+          description: 無効なリクエストパラメータまたは設定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、またはセキュリティイベントフック設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete security event hook configuration
+      description: 既存のセキュリティイベントフック設定を削除します
+      tags:
+        - organization-security-event-hook
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: ドライラン削除成功（dry_run=trueの場合）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: 削除シミュレーション成功メッセージ
+                  config_id:
+                    type: string
+                    format: uuid
+                    description: 削除対象の設定ID
+                  dry_run:
+                    type: boolean
+                    description: ドライランフラグ（常にtrue）
+        '204':
+          description: セキュリティイベントフック設定削除成功（実際の削除）
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、またはセキュリティイベントフック設定が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hooks:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List security event hook execution results
+      description: 組織内のテナントのセキュリティイベントフック実行結果一覧を取得します
+      tags:
+        - organization-security-event-hook
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 20
+          description: 返却する結果の最大数（1-1000）
+        - $ref: '#/components/parameters/Offset'
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: |
+            検索開始日時（ISO 8601形式）
+            未指定の場合は時間範囲制限なし
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: |
+            検索終了日時（ISO 8601形式）
+            未指定の場合は時間範囲制限なし
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: フック実行結果IDでフィルタリング
+        - name: security_event_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: セキュリティイベントIDでフィルタリング
+        - name: event_type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: |
+            イベントタイプでフィルタリング
+
+            **単一値**: event_type=user_created
+            **複数値**: event_type=user_created,user_updated,user_deleted（カンマ区切り）
+          example: user_created,user_updated
+        - name: hook_type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: フックタイプでフィルタリング（WEBHOOK, SSF, Email）
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - SUCCESS
+              - FAILURE
+              - RETRY_SUCCESS
+              - RETRY_FAILURE
+          description: 実行ステータスでフィルタリング
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: ユーザーID（sub）で完全一致フィルタリング
+        - name: user_name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: ユーザー名で部分一致フィルタリング
+        - name: external_user_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 外部ユーザーID（ex_sub）で完全一致フィルタリング
+      responses:
+        '200':
+          description: セキュリティイベントフック実行結果一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SecurityEventHookResult'
+                  total_count:
+                    type: integer
+                    description: フック実行結果の総数
+                  limit:
+                    type: integer
+                    description: 返される結果の最大数
+                  offset:
+                    type: integer
+                    description: スキップされた結果の数
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hooks/{hook-result-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - name: hook-result-id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: フック実行結果ID
+    get:
+      summary: Get security event hook execution result details
+      description: 特定のセキュリティイベントフック実行結果の詳細を取得します
+      tags:
+        - organization-security-event-hook
+      responses:
+        '200':
+          description: フック実行結果の詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityEventHookResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、またはフック実行結果が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hooks/{hook-result-id}/retry:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - name: hook-result-id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: 再試行するフック実行結果ID
+    post:
+      summary: Retry failed security event hook execution
+      description: 失敗したセキュリティイベントフック実行を再試行します。元のセキュリティイベントと最新のフック設定を使用して再実行します。
+      tags:
+        - organization-security-event-hook
+      responses:
+        '200':
+          description: フック再実行成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityEventHookResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、またはフック実行結果が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-events:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List organization security events
+      description: 組織テナント内のセキュリティイベント一覧を取得します
+      tags:
+        - organization-security-event
+      parameters:
+        - name: limit
+          in: query
+          description: 返すセキュリティイベントの最大数
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 20
+        - name: offset
+          in: query
+          description: ページネーションのためにスキップするセキュリティイベント数
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: event_type
+          in: query
+          description: セキュリティイベントタイプでフィルター（カンマ区切りで複数指定可能）
+          schema:
+            type: string
+          example: login_success,inspect_token_success
+        - name: from
+          in: query
+          description: |
+            セキュリティイベントをフィルターするための開始タイムスタンプ（ISO 8601形式）
+
+            **注意**: デフォルト値は設定されていません。省略時は全期間から検索します。
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: |
+            セキュリティイベントをフィルターするための終了タイムスタンプ（ISO 8601形式）
+
+            **注意**: デフォルト値は設定されていません。省略時は全期間から検索します。
+          schema:
+            type: string
+            format: date-time
+        - name: client_id
+          in: query
+          description: クライアント識別子でフィルター
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          description: ユーザー識別子でフィルター
+          schema:
+            type: string
+            format: uuid
+        - name: external_user_id
+          in: query
+          description: 外部ユーザー識別子でフィルター
+          schema:
+            type: string
+        - name: user_name
+          in: query
+          description: ユーザー名でフィルター（部分一致）
+          schema:
+            type: string
+        - name: ip_address
+          in: query
+          description: IPアドレスでフィルター（IPv4またはIPv6形式、完全一致）
+          schema:
+            type: string
+          example: 192.168.1.100
+        - name: user_agent
+          in: query
+          description: User-Agentでフィルター（部分一致）
+          schema:
+            type: string
+          example: Mozilla
+      responses:
+        '200':
+          description: 組織セキュリティイベントの一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SecurityEvent'
+                  total_count:
+                    type: integer
+                    description: セキュリティイベントの総数
+                  limit:
+                    type: integer
+                    description: 1ページあたりのイベント数の最大値
+                  offset:
+                    type: integer
+                    description: スキップしたイベント数
+        '400':
+          description: 無効なリクエストパラメータ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-events/{event-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - name: event-id
+        in: path
+        required: true
+        description: セキュリティイベント識別子
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get organization security event details
+      description: 組織テナント内の特定のセキュリティイベントの詳細情報を取得します
+      tags:
+        - organization-security-event
+      responses:
+        '200':
+          description: セキュリティイベントの詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityEvent'
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または無効な組織アクセス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: セキュリティイベント、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/audit-logs:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: List organization audit logs
+      description: |
+        組織レベルでの監査ログ一覧を取得します。指定された組織とテナントに関連する監査ログを検索条件に基づいて取得できます。
+
+        **動的属性フィルタ**: `attributes.*` パラメータを使用して監査ログの属性による絞り込みが可能です。
+        例：`attributes.resource_type=user`, `attributes.operation=create`
+      tags:
+        - organization-audit-log
+      parameters:
+        - name: limit
+          in: query
+          description: 取得する監査ログの最大件数（1-1000）
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 20
+        - name: offset
+          in: query
+          description: ページネーション用のオフセット（スキップする監査ログ数）
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: from
+          in: query
+          description: |
+            監査ログ検索の開始日時（ISO 8601形式）
+
+            **注意**: デフォルト値は設定されていません。省略時は全期間から検索します。
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: |
+            監査ログ検索の終了日時（ISO 8601形式）
+
+            **注意**: デフォルト値は設定されていません。省略時は全期間から検索します。
+          schema:
+            type: string
+            format: date-time
+        - name: type
+          in: query
+          description: |
+            監査ログタイプによるフィルタ
+
+            **複数指定**: カンマ区切りで複数のタイプを同時検索可能
+            例: `tenant_create,tenant_update,tenant_delete`
+          schema:
+            type: string
+        - name: description
+          in: query
+          description: 説明テキストによるフィルタ
+          schema:
+            type: string
+        - name: target_resource
+          in: query
+          description: 対象リソースによるフィルタ
+          schema:
+            type: string
+        - name: target_action
+          in: query
+          description: 対象アクションによるフィルタ
+          schema:
+            type: string
+        - name: outcome_result
+          in: query
+          description: |
+            操作結果によるフィルタ
+
+            **用途**: 成功/失敗した操作のみを検索
+            **値**: `success` または `failure`
+          schema:
+            type: string
+            enum:
+              - success
+              - failure
+        - name: target_tenant_id
+          in: query
+          description: |
+            対象テナントIDによるフィルタ
+
+            **用途**: 特定のテナントに対する操作のみを検索（テナント管理操作など）
+          schema:
+            type: string
+        - name: dry_run
+          in: query
+          description: |
+            ドライラン実行フィルタ
+
+            **用途**: 本番実行とドライラン実行を区別して検索
+            **値**: `true` - ドライラン実行のみ, `false` - 本番実行のみ
+          schema:
+            type: boolean
+        - name: client_id
+          in: query
+          description: クライアント識別子によるフィルタ
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          description: 内部ユーザIDによるフィルタ
+          schema:
+            type: string
+            format: uuid
+        - name: external_user_id
+          in: query
+          description: 外部ユーザ識別子によるフィルタ
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 監査ログ一覧が正常に取得されました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  total_count:
+                    type: integer
+                    description: 総監査ログ数
+                  limit:
+                    type: integer
+                    description: 要求された最大件数
+                  offset:
+                    type: integer
+                    description: 要求されたオフセット
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または組織アクセス無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 内部サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/audit-logs/{log-id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - name: log-id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: 監査ログの識別子
+    get:
+      summary: Get organization audit log details
+      description: 組織レベルでの特定の監査ログの詳細情報を取得します。
+      tags:
+        - organization-audit-log
+      responses:
+        '200':
+          description: 監査ログ詳細が正常に取得されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLog'
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足または組織アクセス無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 監査ログ、組織、またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 内部サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: テナントの識別子
+    OrganizationId:
+      name: organization-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 組織の識別子
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+      description: trueの場合、リクエストの検証のみで実行はされません
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 20
+      description: 返すアイテムの最大数
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: アイテムを返す開始インデックス
+  schemas:
+    SecurityEvent:
+      type: object
+      required:
+        - id
+        - type
+        - description
+        - tenant
+        - client
+        - detail
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: セキュリティイベントの一意識別子
+        type:
+          type: string
+          description: セキュリティイベントのタイプ（例：authentication_failure、suspicious_login）
+        description:
+          type: string
+          description: セキュリティイベントの人が読める説明
+        tenant:
+          type: object
+          required:
+            - id
+            - issuer
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: テナント識別子
+            issuer:
+              type: string
+              format: uri
+              description: テナント発行者URL
+        client:
+          type: object
+          required:
+            - id
+            - client_id
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: 内部クライアント識別子
+            client_id:
+              type: string
+              description: OAuthクライアント識別子
+        user:
+          type: object
+          description: 利用可能な場合のユーザー情報
+          properties:
+            id:
+              type: string
+              description: ユーザー識別子
+            ex_sub:
+              type: string
+              description: 外部サブジェクト識別子
+        detail:
+          type: object
+          description: イベント固有の追加詳細
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+          description: セキュリティイベントが発生したタイムスタンプ
+    SecurityEventHookConfiguration:
+      type: object
+      required:
+        - id
+        - type
+        - enabled
+        - events
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: セキュリティイベントフック設定の一意識別子
+        type:
+          $ref: '#/components/schemas/StandardSecurityEventHookType'
+        attributes:
+          type: object
+          description: フックタイプ固有の属性（WebフックURL、メールアドレス等）
+          additionalProperties: true
+        metadata:
+          type: object
+          description: フック設定に関連付けられたカスタムメタデータ
+          additionalProperties: true
+        triggers:
+          type: array
+          items:
+            type: string
+          description: フック実行のカスタムトリガー条件
+        execution_order:
+          type: integer
+          description: 他のフックに対するこのフックの実行順序
+          minimum: 0
+        events:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/SecurityEventConfig'
+          description: イベントタイプをキーとするイベント毎の実行設定
+        enabled:
+          type: boolean
+          description: このフック設定が有効かどうか
+        store_execution_payload:
+          type: boolean
+          description: 監査目的で実行ペイロードを保存するかどうか
+        created_at:
+          type: string
+          format: date-time
+          description: 設定作成タイムスタンプ
+        updated_at:
+          type: string
+          format: date-time
+          description: 設定最終更新タイムスタンプ
+      additionalProperties: false
+    SecurityEventHookConfigurationRequest:
+      type: object
+      required:
+        - type
+        - enabled
+        - events
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: セキュリティイベントフック設定の一意識別子（指定しない場合は自動生成）
+        type:
+          $ref: '#/components/schemas/StandardSecurityEventHookType'
+        attributes:
+          type: object
+          description: フックタイプ固有の属性（WebフックURL、メールアドレス等）
+          additionalProperties: true
+        metadata:
+          type: object
+          description: フック設定に関連付けられたカスタムメタデータ
+          additionalProperties: true
+        triggers:
+          type: array
+          items:
+            type: string
+          description: フック実行のカスタムトリガー条件
+        execution_order:
+          type: integer
+          description: 他のフックに対するこのフックの実行順序
+          minimum: 0
+          default: 0
+        events:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/SecurityEventConfigRequest'
+          description: イベントタイプをキーとするイベント毎の実行設定
+        enabled:
+          type: boolean
+          description: このフック設定が有効かどうか
+          default: true
+        store_execution_payload:
+          type: boolean
+          description: 監査目的で実行ペイロードを保存するかどうか
+          default: false
+      additionalProperties: false
+    SecurityEventConfig:
+      type: object
+      properties:
+        execution:
+          $ref: '#/components/schemas/SecurityEventExecutionConfig'
+      additionalProperties: false
+    SecurityEventConfigRequest:
+      type: object
+      properties:
+        execution:
+          $ref: '#/components/schemas/SecurityEventExecutionConfigRequest'
+      additionalProperties: false
+    SecurityEventExecutionConfig:
+      type: object
+      properties:
+        function:
+          type: string
+          description: このセキュリティイベントに対して実行する関数
+        http_request:
+          $ref: '#/components/schemas/SecurityEventHttpRequestConfig'
+        http_requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityEventHttpRequestConfig'
+          description: 複数のHTTPリクエスト設定
+        mock:
+          type: object
+          description: テスト用のモック設定
+          additionalProperties: true
+        details:
+          type: object
+          description: 追加の実行詳細
+          additionalProperties: true
+      additionalProperties: false
+    SecurityEventExecutionConfigRequest:
+      type: object
+      properties:
+        function:
+          type: string
+          description: このセキュリティイベントに対して実行する関数
+        http_request:
+          $ref: '#/components/schemas/SecurityEventHttpRequestConfigRequest'
+        http_requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityEventHttpRequestConfigRequest'
+          description: 複数のHTTPリクエスト設定
+        mock:
+          type: object
+          description: テスト用のモック設定
+          additionalProperties: true
+        details:
+          type: object
+          description: 追加の実行詳細
+          additionalProperties: true
+      additionalProperties: false
+    SecurityEventHttpRequestConfig:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: 対象WebフックURL
+        method:
+          type: string
+          enum:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+          description: リクエストのHTTPメソッド
+        auth_type:
+          type: string
+          description: 認証タイプ
+        oauth_authorization:
+          type: object
+          description: OAuth認証設定
+          additionalProperties: true
+        hmac_authentication:
+          type: object
+          description: HMAC認証設定
+          additionalProperties: true
+        path_mapping_rules:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: パスマッピングルール
+        header_mapping_rules:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: ヘッダーマッピングルール
+        body_mapping_rules:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: ボディマッピングルール
+        query_mapping_rules:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: クエリマッピングルール
+      additionalProperties: false
+    SecurityEventHttpRequestConfigRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: 対象WebフックURL
+        method:
+          type: string
+          enum:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+          description: リクエストのHTTPメソッド
+        auth_type:
+          type: string
+          description: 認証タイプ
+        oauth_authorization:
+          type: object
+          description: OAuth認証設定
+          additionalProperties: true
+        hmac_authentication:
+          type: object
+          description: HMAC認証設定
+          additionalProperties: true
+        path_mapping_rules:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: パスマッピングルール
+        header_mapping_rules:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: ヘッダーマッピングルール
+        body_mapping_rules:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: ボディマッピングルール
+        query_mapping_rules:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: クエリマッピングルール
+      additionalProperties: false
+    SecurityEventHookResult:
+      type: object
+      required:
+        - id
+        - status
+        - type
+        - security_event
+        - contents
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: フック実行結果の一意識別子
+        status:
+          type: string
+          enum:
+            - SUCCESS
+            - FAILURE
+            - RETRY_SUCCESS
+            - RETRY_FAILURE
+            - UNKNOWN
+          description: フック実行ステータス
+        type:
+          type: string
+          description: フックタイプ（WEBHOOK, SSF, Email等）
+        security_event:
+          $ref: '#/components/schemas/SecurityEvent'
+        contents:
+          type: object
+          description: フック実行の詳細結果（execution_details, error_type, error_message等）
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+          description: フック実行結果作成タイムスタンプ
+        updated_at:
+          type: string
+          format: date-time
+          description: フック実行結果最終更新タイムスタンプ
+      additionalProperties: false
+    StandardSecurityEventHookType:
+      type: string
+      enum:
+        - WEBHOOK
+        - SSF
+        - Email
+      description: |
+        標準セキュリティイベントフックタイプ:
+        - WEBHOOK: HTTP Webフック通知
+        - SSF: Security Event Token (SET) 形式通知
+        - Email: メール通知
+    AuditLog:
+      type: object
+      required:
+        - id
+        - type
+        - description
+        - tenant_id
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 監査ログの一意識別子
+        type:
+          type: string
+          description: 監査ログの種別（例：user_create, permission_update, authentication_failure）
+        description:
+          type: string
+          description: 監査ログの説明文
+        tenant_id:
+          type: string
+          format: uuid
+          description: テナント識別子
+        client_id:
+          type: string
+          nullable: true
+          description: クライアント識別子（該当する場合）
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: 内部ユーザ識別子（該当する場合）
+        external_user_id:
+          type: string
+          nullable: true
+          description: 外部ユーザ識別子（該当する場合）
+        user_payload:
+          type: object
+          nullable: true
+          description: ユーザに関する追加情報
+          additionalProperties: true
+        target_resource:
+          type: string
+          nullable: true
+          description: 操作対象のリソース名
+        target_resource_action:
+          type: string
+          nullable: true
+          description: 操作対象のリソースに対するアクション
+        ip_address:
+          type: string
+          nullable: true
+          description: 操作元のIPアドレス
+        user_agent:
+          type: string
+          nullable: true
+          description: 操作元のユーザエージェント文字列
+        before:
+          type: object
+          nullable: true
+          description: 変更前の状態（該当する場合）
+          additionalProperties: true
+        after:
+          type: object
+          nullable: true
+          description: 変更後の状態（該当する場合）
+          additionalProperties: true
+        attributes:
+          type: object
+          nullable: true
+          description: 監査ログの追加属性
+          additionalProperties: true
+        dry_run:
+          type: boolean
+          description: ドライランかどうか
+          default: false
+        created_at:
+          type: string
+          format: date-time
+          description: 監査ログが作成された日時
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        error_description:
+          type: string
+          description: Human-readable error description
+        error_messages:
+          type: array
+          items:
+            type: string
+            description: Human-readable validation error message.
+        error_details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+  responses:
+    Unauthorized:
+      description: Unauthorized - Authentication required or invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: Error type
+                example: unauthorized
+              error_description:
+                type: string
+                description: Human-readable description of the error
+                example: Authentication required
+            required:
+              - error
+              - error_description
+            additionalProperties: false
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: Error type
+                example: access_denied
+              error_description:
+                type: string
+                description: Human-readable description of the error
+                example: Insufficient permissions to access this resource
+            required:
+              - error
+              - error_description
+            additionalProperties: false
