@@ -107,6 +107,18 @@ Phase 3: 高度な機能
 ## 次のステップ
 
 - [How-to ガイド](../content_05_how-to/) - 各機能の設定手順
+- [セットアップテンプレート](./quickstart-02-setting-templates.md) - テンプレートで素早く構築
+
+### セットアップスクリプトで素早く構築
+
+`config/templates/use-cases/` にユースケース別のテンプレートとセットアップスクリプトが用意されています。環境変数でカスタマイズしながら、上記ユースケースの構成を自動構築できます。
+
+```bash
+# 例: パスワードログインの構成をセットアップ
+bash config/templates/use-cases/login-password-only/setup.sh
+```
+
+Claude Code を使用している場合は `/use-case-setup` スキルで対話型セットアップが利用できます。
 
 ---
 

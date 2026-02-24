@@ -7,7 +7,7 @@
   "tenant": {
     "id": "${ADMIN_TENANT_ID}",
     "name": "admin-tenant",
-    "tenant_type": "BUSINESS",
+    "tenant_type": "ADMIN",
     "domain": "${AUTHORIZATION_SERVER_URL}",
     "description": "Admin tenant for system management",
     "authorization_provider": "idp-server",
