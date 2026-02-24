@@ -1,0 +1,18 @@
+{
+  "client_id": "55555555-8888-5555-5555-555555555555",
+  "client_id_alias": "third-party-mobile-app",
+  "redirect_uris": [
+    "com.example.thirdparty://callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email api:read",
+  "client_name": "Third Party Mobile App",
+  "token_endpoint_auth_method": "none",
+  "application_type": "native"
+}

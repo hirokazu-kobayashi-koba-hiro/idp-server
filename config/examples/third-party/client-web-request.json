@@ -1,0 +1,19 @@
+{
+  "client_id": "55555555-7777-5555-5555-555555555555",
+  "client_id_alias": "third-party-web-app",
+  "client_secret": "third-party-web-secret-32chars!",
+  "redirect_uris": [
+    "http://localhost:3000/callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email api:read",
+  "client_name": "Third Party Web App",
+  "token_endpoint_auth_method": "client_secret_basic",
+  "application_type": "web"
+}

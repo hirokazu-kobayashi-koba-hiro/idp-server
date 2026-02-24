@@ -1,0 +1,12 @@
+{
+  "client_id": "33333333-6666-3333-3333-333333333333",
+  "client_id_alias": "fido2-webapp",
+  "client_secret": "fido2-webapp-secret-32characters!",
+  "redirect_uris": ["http://localhost:3000/callback"],
+  "response_types": ["code"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "scope": "openid profile email",
+  "client_name": "Passwordless FIDO2 Web App",
+  "token_endpoint_auth_method": "client_secret_post",
+  "application_type": "web"
+}

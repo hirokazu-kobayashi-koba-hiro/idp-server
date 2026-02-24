@@ -1,0 +1,56 @@
+{
+  "type": "authentication-assurance",
+  "external_service": "mock",
+  "external_application_id_param": "application_id",
+  "processes": {
+    "apply": {
+      "request_schema": {
+        "type": "object",
+        "required": ["last_name", "first_name", "birthdate", "email_address"],
+        "properties": {
+          "last_name": { "type": "string", "maxLength": 255, "store": true },
+          "first_name": { "type": "string", "maxLength": 255, "store": true },
+          "birthdate": { "type": "string", "format": "date", "store": true },
+          "email_address": { "type": "string", "maxLength": 255, "store": true },
+          "address": {
+            "type": "object",
+            "store": true,
+            "properties": {
+              "street_address": { "type": "string", "maxLength": 255 },
+              "locality": { "type": "string", "maxLength": 255 },
+              "region": { "type": "string", "maxLength": 255 },
+              "postal_code": { "type": "string", "maxLength": 255 },
+              "country": { "type": "string", "maxLength": 255 }
+            }
+          }
+        }
+      },
+      "execution": { "type": "no_action" },
+      "store": {
+        "application_details_mapping_rules": [
+          { "from": "$.request_body", "to": "*" }
+        ]
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
+      }
+    },
+    "evaluate-result": {
+      "execution": { "type": "no_action" },
+      "transition": {
+        "approved": {
+          "any_of": [[
+            { "path": "$.request_body.approved", "type": "boolean", "operation": "eq", "value": true }
+          ]]
+        },
+        "rejected": {
+          "any_of": [[
+            { "path": "$.request_body.rejected", "type": "boolean", "operation": "eq", "value": true }
+          ]]
+        }
+      }
+    }
+  }
+}

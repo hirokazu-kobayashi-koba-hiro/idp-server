@@ -1,0 +1,18 @@
+{
+  "client_id": "${MOBILE_CLIENT_ID}",
+  "client_id_alias": "${MOBILE_CLIENT_ALIAS}",
+  "redirect_uris": [
+    "${MOBILE_REDIRECT_URI}"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email api:read",
+  "client_name": "${MOBILE_CLIENT_NAME}",
+  "token_endpoint_auth_method": "none",
+  "application_type": "native"
+}

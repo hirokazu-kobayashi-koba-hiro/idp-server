@@ -1,0 +1,14 @@
+{
+  "client_id": "${M2M_CLIENT_ID}",
+  "client_id_alias": "${M2M_CLIENT_ALIAS}",
+  "client_secret": "${M2M_CLIENT_SECRET}",
+  "redirect_uris": [],
+  "response_types": [],
+  "grant_types": [
+    "client_credentials"
+  ],
+  "scope": "${M2M_SCOPE}",
+  "client_name": "${M2M_CLIENT_NAME}",
+  "token_endpoint_auth_method": "client_secret_basic",
+  "application_type": "web"
+}

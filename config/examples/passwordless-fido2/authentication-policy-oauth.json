@@ -1,0 +1,19 @@
+{
+  "flow": "oauth",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "fido2_or_password",
+      "priority": 1,
+      "conditions": {},
+      "available_methods": ["fido2", "password", "initial-registration"],
+      "success_conditions": {
+        "any_of": [
+          [{ "path": "$.fido2-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+          [{ "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+          [{ "path": "$.initial-registration.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+        ]
+      }
+    }
+  ]
+}

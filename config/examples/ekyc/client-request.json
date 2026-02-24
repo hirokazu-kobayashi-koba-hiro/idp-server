@@ -1,0 +1,12 @@
+{
+  "client_id": "44444444-6666-4444-4444-444444444444",
+  "client_id_alias": "ekyc-webapp",
+  "client_secret": "ekyc-webapp-secret-32characters!",
+  "redirect_uris": ["http://localhost:3000/callback"],
+  "response_types": ["code"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "scope": "openid profile email transfers",
+  "client_name": "eKYC Web App",
+  "token_endpoint_auth_method": "client_secret_post",
+  "application_type": "web"
+}
