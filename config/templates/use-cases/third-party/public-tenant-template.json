@@ -1,0 +1,133 @@
+{
+  "tenant": {
+    "id": "${PUBLIC_TENANT_ID}",
+    "name": "${ORGANIZATION_NAME} Public Tenant",
+    "type": "PUBLIC",
+    "domain": "${BASE_URL}",
+    "authorization_provider": "idp-server",
+    "ui_config": {
+      "base_url": "${UI_BASE_URL}",
+      "signin_page": "/signin/",
+      "signup_page": "/signup/"
+    },
+    "session_config": {
+      "cookie_name": "${COOKIE_NAME}",
+      "cookie_same_site": "Lax",
+      "use_secure_cookie": true,
+      "use_http_only_cookie": true,
+      "cookie_path": "/",
+      "timeout_seconds": 86400
+    },
+    "cors_config": {
+      "allow_origins": [
+        "${BASE_URL}",
+        "${UI_BASE_URL}"
+      ]
+    },
+    "identity_policy_config": {
+      "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID",
+      "password_policy": {
+        "min_length": 8,
+        "max_length": 72,
+        "require_uppercase": false,
+        "require_lowercase": false,
+        "require_number": false,
+        "require_special_char": false,
+        "max_history": 0,
+        "max_attempts": 5,
+        "lockout_duration_seconds": 900
+      }
+    },
+    "security_event_log_config": {
+      "format": "structured_json",
+      "stage": "processed",
+      "include_user_id": true,
+      "include_user_ex_sub": true,
+      "include_client_id": true,
+      "include_ip_address": true,
+      "persistence_enabled": true,
+      "include_event_detail": true
+    }
+  },
+  "authorization_server": {
+    "issuer": "${BASE_URL}/${PUBLIC_TENANT_ID}",
+    "authorization_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/authorizations",
+    "token_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/tokens",
+    "token_endpoint_auth_methods_supported": [
+      "client_secret_post",
+      "client_secret_basic"
+    ],
+    "token_endpoint_auth_signing_alg_values_supported": [
+      "RS256",
+      "ES256"
+    ],
+    "userinfo_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/userinfo",
+    "jwks_uri": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/jwks",
+    "jwks": "${JWKS_CONTENT}",
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token",
+      "client_credentials"
+    ],
+    "token_signed_key_id": "${TOKEN_SIGNING_KEY_ID}",
+    "id_token_signed_key_id": "${ID_TOKEN_SIGNING_KEY_ID}",
+    "scopes_supported": [
+      "openid",
+      "profile",
+      "email",
+      "api:read",
+      "api:write"
+    ],
+    "response_types_supported": [
+      "code"
+    ],
+    "response_modes_supported": [
+      "query"
+    ],
+    "subject_types_supported": [
+      "public"
+    ],
+    "id_token_signing_alg_values_supported": [
+      "RS256",
+      "ES256"
+    ],
+    "claims_supported": [
+      "sub",
+      "iss",
+      "auth_time",
+      "acr",
+      "name",
+      "given_name",
+      "family_name",
+      "nickname",
+      "preferred_username",
+      "middle_name",
+      "profile",
+      "picture",
+      "website",
+      "email",
+      "email_verified",
+      "gender",
+      "birthdate",
+      "zoneinfo",
+      "locale",
+      "updated_at",
+      "address",
+      "phone_number",
+      "phone_number_verified"
+    ],
+    "claims_parameter_supported": true,
+    "token_introspection_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/tokens/introspection",
+    "token_revocation_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/tokens/revocation",
+    "extension": {
+      "access_token_type": "opaque",
+      "token_signed_key_id": "${TOKEN_SIGNING_KEY_ID}",
+      "id_token_signed_key_id": "${ID_TOKEN_SIGNING_KEY_ID}",
+      "access_token_duration": 1800,
+      "id_token_duration": 3600,
+      "refresh_token_duration": 604800,
+      "rotate_refresh_token": true,
+      "refresh_token_strategy": "FIXED"
+    }
+  }
+}

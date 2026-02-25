@@ -1,0 +1,19 @@
+{
+  "client_id": "f6a7b8c9-d0e1-2345-fabc-345678901234",
+  "client_id_alias": "login-pw-webapp",
+  "client_secret": "login-pw-webapp-secret-32chars!",
+  "redirect_uris": [
+    "http://localhost:3000/callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email",
+  "client_name": "Login Password Only Web App",
+  "token_endpoint_auth_method": "client_secret_post",
+  "application_type": "web"
+}

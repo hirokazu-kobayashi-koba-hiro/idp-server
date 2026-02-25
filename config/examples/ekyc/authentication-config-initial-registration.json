@@ -1,0 +1,22 @@
+{
+  "id": "44444444-7777-4444-4444-444444444444",
+  "type": "initial-registration",
+  "interactions": {
+    "initial-registration": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": ["email", "password", "name"],
+          "properties": {
+            "email": { "type": "string", "format": "email", "maxLength": 255 },
+            "password": { "type": "string", "minLength": 8, "maxLength": 64 },
+            "name": { "type": "string", "maxLength": 255 },
+            "given_name": { "type": "string", "maxLength": 255 },
+            "family_name": { "type": "string", "maxLength": 255 },
+            "phone_number": { "type": "string", "maxLength": 20 }
+          }
+        }
+      }
+    }
+  }
+}

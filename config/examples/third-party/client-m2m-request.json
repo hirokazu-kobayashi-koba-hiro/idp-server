@@ -1,0 +1,14 @@
+{
+  "client_id": "55555555-9999-5555-5555-555555555555",
+  "client_id_alias": "third-party-m2m-service",
+  "client_secret": "third-party-m2m-secret-32chars!",
+  "redirect_uris": [],
+  "response_types": [],
+  "grant_types": [
+    "client_credentials"
+  ],
+  "scope": "api:read api:write",
+  "client_name": "Third Party M2M Service",
+  "token_endpoint_auth_method": "client_secret_basic",
+  "application_type": "web"
+}

@@ -1,0 +1,19 @@
+{
+  "client_id": "11111111-6666-1111-1111-111111111111",
+  "client_id_alias": "login-social-webapp",
+  "client_secret": "login-social-webapp-secret-32ch!",
+  "redirect_uris": [
+    "http://localhost:3000/callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email",
+  "client_name": "Login Social Web App",
+  "token_endpoint_auth_method": "client_secret_post",
+  "application_type": "web"
+}

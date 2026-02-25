@@ -1,0 +1,51 @@
+{
+  "flow": "oauth",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "password_and_email_mfa",
+      "priority": 1,
+      "conditions": {},
+      "available_methods": ["password", "email", "initial-registration"],
+      "step_definitions": [
+        {
+          "method": "email",
+          "order": 1,
+          "requires_user": false,
+          "user_identity_source": "email"
+        },
+        {
+          "method": "password",
+          "order": 2,
+          "requires_user": true
+        }
+      ],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.email-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

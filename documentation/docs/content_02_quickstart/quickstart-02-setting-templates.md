@@ -15,6 +15,23 @@
 
 このテンプレート機能により、利用者は自社のユースケースに適した設定をすばやく適用し、セキュリティとUXのバランスを担保しながら導入できます。
 
+## セットアップスクリプト
+
+ユースケース別のテンプレートとセットアップスクリプトが `config/templates/use-cases/` に用意されています。
+
+```bash
+# パスワードログインの構成を自動セットアップ
+bash config/templates/use-cases/login-password-only/setup.sh
+
+# 環境変数でカスタマイズ
+PASSWORD_MIN_LENGTH=12 PASSWORD_REQUIRE_UPPERCASE=true \
+bash config/templates/use-cases/login-password-only/setup.sh
+```
+
+各テンプレートの詳細は `config/templates/use-cases/*/README.md` を参照してください。
+
+Claude Code を使用している場合は `/use-case-setup` スキルでヒアリング付きの対話型セットアップが利用できます。
+
 ## 一覧
 
 | テンプレート名             | 概要                                     | 想定対象                           | 主な機能例                                   |

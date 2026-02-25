@@ -1,0 +1,18 @@
+{
+  "flow": "oauth",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "password_only",
+      "priority": 1,
+      "conditions": {},
+      "available_methods": ["password", "initial-registration"],
+      "success_conditions": {
+        "any_of": [
+          [{ "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+          [{ "path": "$.initial-registration.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "flow": "fido2-registration",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "fido2_device_registration",
+      "priority": 1,
+      "conditions": {},
+      "available_methods": ["fido2"],
+      "success_conditions": {
+        "any_of": [
+          [{ "path": "$.fido2-registration.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [{ "path": "$.fido2-registration.failure_count", "type": "integer", "operation": "gte", "value": 5 }]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [{ "path": "$.fido2-registration.failure_count", "type": "integer", "operation": "gte", "value": 5 }]
+        ]
+      }
+    }
+  ]
+}
