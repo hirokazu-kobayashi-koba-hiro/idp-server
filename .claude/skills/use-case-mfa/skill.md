@@ -298,8 +298,38 @@ $.initial-registration.success_count
 $.password-authentication.failure_count
 ```
 
+## 設定確認チェックリスト
+
+| # | 確認観点 | 設定箇所 | よくあるミス |
+|---|---------|---------|------------|
+| 1 | `claims_supported` が設定済み | 認可サーバー | 未設定で UserInfo/ID Token が `sub` のみ |
+| 2 | `ui_config.base_url` が認証UIのオリジン | テナント `ui_config` | APIサーバーURLを設定してしまう |
+| 3 | `cors_config` に全フィールド設定 | テナント `cors_config` | `allow_origins` だけで `allow_headers`, `allow_methods`, `allow_credentials` が抜ける |
+| 4 | email/SMS認証設定が存在する | authentication-config | 未作成で `Authentication Configuration Not Found` エラー |
+| 5 | 認証ポリシーの `success_conditions` がAND条件 | 認証ポリシー | `[[条件1, 条件2]]`（AND）ではなく `[[条件1], [条件2]]`（OR）にしてしまう |
+| 6 | `failure_conditions` / `lock_conditions` 設定済み | 認証ポリシー | 未設定だと認証失敗でアカウントロックされない |
+| 7 | no-actionモードの場合、Management APIで検証コード取得可能 | 動作確認手順 | 管理者トークンのスコープに `management` が含まれていない |
+
+### MFA の amr 確認
+
+MFA が正しく実行されたかは ID Token の `amr` クレームで確認できる:
+
+```bash
+echo "${ID_TOKEN}" | cut -d'.' -f2 | python3 -c "import sys,base64,json; print(json.dumps(json.loads(base64.urlsafe_b64decode(sys.stdin.read().strip()+'==')),indent=2))"
+```
+
+- `amr` に `["email", "password"]` のように両方の認証方式が含まれていればMFA成功
+
+### 動作確認時のprompt値
+
+| テスト | prompt値 | 目的 |
+|--------|---------|------|
+| ユーザー登録 | `prompt=create` | Sign Up画面を直接表示 |
+| MFA再認証 | `prompt=login` | 既存セッションを無視してMFA認証を再実行 |
+
 ## 設定例ファイル参照
 
+- テンプレート: `config/templates/use-cases/mfa-email/`
 - SMS認証: `config/examples/e2e/.../authentication-config/sms/external.json`
 - メール認証: `config/examples/e2e/.../authentication-config/email/smtp.json`
 - 認証ポリシー: `config/examples/e2e/.../authentication-policy/oauth.json`

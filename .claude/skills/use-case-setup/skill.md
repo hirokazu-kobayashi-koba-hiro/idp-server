@@ -70,6 +70,26 @@ Step 3: ORGANIZERテナントの管理者トークン取得
 Step 4+: ユースケース固有のリソース作成（組織レベルAPI）
 ```
 
+## 全ユースケース共通 設定確認チェックリスト
+
+setup.sh 実行後、ブラウザで動作確認する前に以下を確認する。
+
+| # | 確認観点 | 設定箇所 | よくあるミス |
+|---|---------|---------|------------|
+| 1 | `claims_supported` が設定済み | 認可サーバー | 未設定で UserInfo/ID Token が `sub` のみ返却 |
+| 2 | `ui_config.base_url` が認証UIのオリジン | テナント `ui_config` | APIサーバーURL を設定してしまう |
+| 3 | `cors_config` に `allow_headers`, `allow_methods`, `allow_credentials` | テナント `cors_config` | `allow_origins` だけ設定 |
+| 4 | `signin_page` がユースケースに合ったパス | テナント `ui_config` | FIDO2: `/signin/fido2/`, 標準: `/signin/` |
+| 5 | `failure_conditions` / `lock_conditions` が設定済み | 認証ポリシー | 未設定だと認証失敗時にアカウントロックされない |
+| 6 | setup.sh の変数定義順序 | setup.sh | 参照される変数が先に定義されていること |
+
+### 動作確認時のprompt値
+
+| テスト | prompt値 | 目的 |
+|--------|---------|------|
+| ユーザー登録 | `prompt=create` | Sign Up画面を直接表示 |
+| 再認証 | `prompt=login` | 既存セッションを無視して再認証を強制 |
+
 ## 共通環境変数
 
 | ヒアリング項目 | 環境変数 | デフォルト値 |
