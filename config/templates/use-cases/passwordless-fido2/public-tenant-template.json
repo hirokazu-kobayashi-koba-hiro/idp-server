@@ -7,7 +7,7 @@
     "authorization_provider": "idp-server",
     "ui_config": {
       "base_url": "${UI_BASE_URL}",
-      "signin_page": "/signin/",
+      "signin_page": "/signin/fido2/",
       "signup_page": "/signup/"
     },
     "session_config": {
@@ -22,7 +22,10 @@
       "allow_origins": [
         "${BASE_URL}",
         "${UI_BASE_URL}"
-      ]
+      ],
+      "allow_headers": "Authorization, Content-Type, Accept, x-device-id",
+      "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "allow_credentials": true
     },
     "identity_policy_config": {
       "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID",

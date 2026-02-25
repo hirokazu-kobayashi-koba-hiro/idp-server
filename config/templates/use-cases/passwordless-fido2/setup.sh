@@ -127,10 +127,13 @@ ID_TOKEN_DURATION="${ID_TOKEN_DURATION:-3600}"
 REFRESH_TOKEN_DURATION="${REFRESH_TOKEN_DURATION:-86400}"
 REGISTRATION_REQUIRED_FIELDS="${REGISTRATION_REQUIRED_FIELDS:-email,password,name}"
 
+# UI configuration (must be defined before FIDO2 config)
+UI_BASE_URL="${UI_BASE_URL:-https://auth.local.dev}"
+
 # FIDO2-specific configuration
 FIDO2_RP_ID="${FIDO2_RP_ID:-local.dev}"
 FIDO2_RP_NAME="${FIDO2_RP_NAME:-Local Dev IDP}"
-FIDO2_ALLOWED_ORIGIN="${FIDO2_ALLOWED_ORIGIN:-${AUTHORIZATION_SERVER_URL}}"
+FIDO2_ALLOWED_ORIGIN="${FIDO2_ALLOWED_ORIGIN:-${UI_BASE_URL}}"
 MAX_DEVICES="${MAX_DEVICES:-5}"
 DEVICE_SECRET_EXPIRES_IN_SECONDS="${DEVICE_SECRET_EXPIRES_IN_SECONDS:-86400}"
 
@@ -219,7 +222,6 @@ ORG_BASE_URL="${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORGANIZA
 echo "Step 4: Creating public tenant (password policy + session config + device rule)..."
 
 PUBLIC_TENANT_ID="${PUBLIC_TENANT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
-UI_BASE_URL="${UI_BASE_URL:-${AUTHORIZATION_SERVER_URL}}"
 
 PUBLIC_TENANT_JSON=$(substitute_template "${SCRIPT_DIR}/public-tenant-template.json" \
   "PUBLIC_TENANT_ID" "${PUBLIC_TENANT_ID}" \
@@ -322,8 +324,37 @@ else
 fi
 echo ""
 
-# --- Step 6: Create authentication configuration (fido2) ---
-echo "Step 6: Creating authentication configuration (fido2)..."
+# --- Step 6: Create authentication configuration (email) ---
+echo "Step 6: Creating authentication configuration (email)..."
+
+EMAIL_AUTH_CONFIG_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+EMAIL_AUTH_CONFIG_JSON=$(jq --arg id "${EMAIL_AUTH_CONFIG_ID}" '. + {id: $id}' \
+  "${SCRIPT_DIR}/authentication-config-email-template.json")
+
+echo "${EMAIL_AUTH_CONFIG_JSON}" | jq '.' > "${OUTPUT_DIR}/authentication-config-email.json"
+echo "  Saved: ${OUTPUT_DIR}/authentication-config-email.json"
+
+EMAIL_AUTH_CONFIG_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/authentication-configurations" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/authentication-config-email.json")
+
+HTTP_CODE=$(echo "${EMAIL_AUTH_CONFIG_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${EMAIL_AUTH_CONFIG_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Email authentication configuration created: ${EMAIL_AUTH_CONFIG_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 7: Create authentication configuration (fido2) ---
+echo "Step 7: Creating authentication configuration (fido2)..."
 
 FIDO2_AUTH_CONFIG_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
 
@@ -355,8 +386,8 @@ else
 fi
 echo ""
 
-# --- Step 7: Create authentication policy (fido2 or password) ---
-echo "Step 7: Creating authentication policy (fido2 or password)..."
+# --- Step 8: Create authentication policy (fido2 or password) ---
+echo "Step 8: Creating authentication policy (fido2 or password + email MFA for device registration)..."
 
 AUTH_POLICY_ID="${AUTH_POLICY_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 jq --arg id "${AUTH_POLICY_ID}" '. + {id: $id}' "${SCRIPT_DIR}/authentication-policy.json" > "${OUTPUT_DIR}/authentication-policy.json"
@@ -380,8 +411,8 @@ else
 fi
 echo ""
 
-# --- Step 8: Create authentication policy (fido2-registration) ---
-echo "Step 8: Creating authentication policy (fido2-registration)..."
+# --- Step 9: Create authentication policy (fido2-registration) ---
+echo "Step 9: Creating authentication policy (fido2-registration)..."
 
 AUTH_POLICY_FIDO2_REG_ID="${AUTH_POLICY_FIDO2_REG_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 jq --arg id "${AUTH_POLICY_FIDO2_REG_ID}" '. + {id: $id}' "${SCRIPT_DIR}/authentication-policy-fido2-registration.json" > "${OUTPUT_DIR}/authentication-policy-fido2-registration.json"
@@ -405,8 +436,8 @@ else
 fi
 echo ""
 
-# --- Step 9: Create application client ---
-echo "Step 9: Creating application client..."
+# --- Step 10: Create application client ---
+echo "Step 10: Creating application client..."
 
 CLIENT_ID="${CLIENT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 CLIENT_ALIAS="${CLIENT_ALIAS:-web-app}"
@@ -456,7 +487,7 @@ echo "  Account lock:     ${PASSWORD_MAX_ATTEMPTS} attempts / ${PASSWORD_LOCKOUT
 echo "  Session:          ${SESSION_TIMEOUT_SECONDS}s timeout, SameSite=Lax"
 echo "  Token duration:   AT=${ACCESS_TOKEN_DURATION}s, IDT=${ID_TOKEN_DURATION}s, RT=${REFRESH_TOKEN_DURATION}s"
 echo "  Registration:     ${REGISTRATION_REQUIRED_FIELDS} required"
-echo "  Auth policy:      FIDO2 or password (migration pattern)"
+echo "  Auth policy:      FIDO2 or password (email MFA required for device registration)"
 echo "  FIDO2 RP ID:      ${FIDO2_RP_ID}"
 echo "  FIDO2 RP Name:    ${FIDO2_RP_NAME}"
 echo "  Max devices:      ${MAX_DEVICES}"
@@ -485,6 +516,7 @@ echo "Generated JSON files:"
 echo "  ${OUTPUT_DIR}/onboarding.json"
 echo "  ${OUTPUT_DIR}/public-tenant.json"
 echo "  ${OUTPUT_DIR}/authentication-config-initial-registration.json"
+echo "  ${OUTPUT_DIR}/authentication-config-email.json"
 echo "  ${OUTPUT_DIR}/authentication-config-fido2.json"
 echo "  ${OUTPUT_DIR}/authentication-policy.json"
 echo "  ${OUTPUT_DIR}/authentication-policy-fido2-registration.json"

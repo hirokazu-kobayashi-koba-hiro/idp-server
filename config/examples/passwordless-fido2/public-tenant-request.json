@@ -7,7 +7,7 @@
     "authorization_provider": "idp-server",
     "ui_config": {
       "base_url": "https://auth.idp.local",
-      "signin_page": "/signin/",
+      "signin_page": "/signin/fido2/",
       "signup_page": "/signup/"
     },
     "session_config": {
@@ -19,7 +19,10 @@
       "timeout_seconds": 86400
     },
     "cors_config": {
-      "allow_origins": ["https://api.local.dev", "https://auth.idp.local"]
+      "allow_origins": ["https://api.local.dev", "https://auth.idp.local"],
+      "allow_headers": "Authorization, Content-Type, Accept, x-device-id",
+      "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "allow_credentials": true
     },
     "identity_policy_config": {
       "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID",

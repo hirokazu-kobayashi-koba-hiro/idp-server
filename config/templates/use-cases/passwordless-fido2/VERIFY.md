@@ -1,15 +1,16 @@
 # 動作確認ガイド - Passwordless (FIDO2/WebAuthn)
 
-setup.sh で構築した環境が正しく動作するかを、1ステップずつ手動で確認するためのガイドです。
+setup.sh で構築した環境が正しく動作するかを確認するためのガイドです。
 
-> **自動テスト**: `./verify.sh` を実行すると、パスワードフォールバックのフロー検証を自動で実行できます。
-> `./verify.sh --org my-organization` で組織名を指定できます。
-> FIDO2/WebAuthn 認証はブラウザ操作が必要なため、CLI では完全な検証ができません。
+> **Note**: FIDO2/WebAuthn はブラウザの WebAuthn API を使用するため、ブラウザ操作が必要です。
+> CLI のみで検証するパスワードフォールバックのテストは `./verify.sh` を実行してください。
 
 ## 前提条件
 
 - `setup.sh` が正常に完了していること
-- `curl`, `jq`, `python3` がインストール済みであること
+- ブラウザが WebAuthn に対応していること（Chrome, Safari, Firefox 等）
+- FIDO2 認証器が利用可能であること（Touch ID, Windows Hello, セキュリティキー等）
+- `curl`, `jq` がインストール済みであること
 - `config/generated/{organization-name}/` に生成された設定ファイルが存在すること
 
 ## 変数設定
@@ -40,98 +41,93 @@ echo "Redirect URI: ${REDIRECT_URI}"
 
 OpenID Connect の Discovery エンドポイントが正しく応答するか確認します。
 
-### リクエスト
-
 ```bash
 curl -s "${TENANT_BASE}/.well-known/openid-configuration" | jq .
 ```
 
 ### 確認ポイント
 
-- HTTP 200 が返ること
 - `issuer` が `${TENANT_BASE}` と一致すること
+- `grant_types_supported` に `authorization_code` が含まれること
 
 ---
 
-## Step 2: Authorization Request
+# Part A: FIDO2 Passkey 登録
 
-### リクエスト
+ユーザーを登録し、FIDO2 Passkey を紐づけます。
+
+## Step 2: 認可リクエスト（ユーザー登録）
+
+`prompt=create` を指定して、ユーザー登録画面を直接表示します。
 
 ```bash
-STATE="verify-state-$(date +%s)"
-SCOPE="openid profile email"
-COOKIE_JAR=$(mktemp)
-
-AUTH_REDIRECT=$(curl -s -c "${COOKIE_JAR}" -o /dev/null \
-  -w "%{redirect_url}" \
-  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=$(echo "${SCOPE}" | tr ' ' '+')&state=${STATE}")
-
-AUTHORIZATION_ID=$(echo "${AUTH_REDIRECT}" | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
-echo "Authorization ID: ${AUTHORIZATION_ID}"
+echo "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email&state=verify-fido2-reg&prompt=create"
 ```
 
 ### 確認ポイント
 
-- HTTP 302 リダイレクトが返ること
-- Authorization ID が取得できること
+- FIDO2 ログイン画面（`/signin/fido2/`）にリダイレクトされること
 
----
+## Step 3: ユーザー登録（Sign Up 画面）
 
-## Step 3: User Registration (initial-registration, password fallback)
+初回のため、ログイン画面から Sign Up 画面に遷移してユーザーを登録します。
 
-テストユーザーをパスワードフォールバックで登録します。
-
-### リクエスト
-
-```bash
-TEST_EMAIL="verify-$(date +%s)@example.com"
-TEST_PASSWORD="VerifyPass123"
-TEST_NAME="Verify User"
-
-curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
-  -X POST "${TENANT_BASE}/v1/authorizations/${AUTHORIZATION_ID}/initial-registration" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"email\": \"${TEST_EMAIL}\",
-    \"password\": \"${TEST_PASSWORD}\",
-    \"name\": \"${TEST_NAME}\"
-  }" | jq .
-```
+1. ログイン画面で **「Sign Up」** リンクをクリック
+2. 以下の情報を入力:
+   - **Email**: `fido2-test@example.com`
+   - **Password**: `TestPass123`
+   - **Name**: `FIDO2 Test User`
+3. **「Register」** ボタンをクリック
 
 ### 確認ポイント
 
-- HTTP 200 または 201 が返ること
+- ユーザー登録が成功すること
+- 同意画面、またはFIDO2 Passkey 登録のプロンプトに遷移すること
 
----
+## Step 4: FIDO2 Passkey 登録（ブラウザダイアログ）
 
-## Step 4: Authorize (consent grant)
+ユーザー登録後、FIDO2 Passkey の登録プロンプトが表示されます。
 
-### リクエスト
+1. ブラウザの WebAuthn ダイアログが表示される
+2. 認証器で Passkey を作成:
+   - **Touch ID**: 指紋を読み取る
+   - **Windows Hello**: PIN または顔認証
+   - **セキュリティキー**: キーをタッチ
+3. 登録完了を確認
+
+> この Step は認証ポリシーの設定により、同意画面の後に表示される場合もあります。
+> Passkey 登録がスキップされた場合でも、パスワード認証で同意画面に進めます。
+
+### 確認ポイント
+
+- ブラウザの WebAuthn ダイアログが表示されること
+- Passkey の登録が成功すること
+
+## Step 5: 同意画面（Consent）
+
+同意画面で認可を付与します。
+
+1. 要求されているスコープ（openid, profile, email）を確認
+2. **「Approve」** ボタンをクリック
+
+### 確認ポイント
+
+- リダイレクト URI に `code` パラメータ付きでリダイレクトされること
+- URL から認可コードをコピーしておく
+
+## Step 6: Token Exchange
+
+リダイレクト先 URL 全体をコピーして認可コードを抽出し、トークンを取得します。
 
 ```bash
-AUTHORIZE_RESPONSE=$(curl -s \
-  -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
-  -X POST "${TENANT_BASE}/v1/authorizations/${AUTHORIZATION_ID}/authorize" \
-  -H "Content-Type: application/json" \
-  -d '{}')
+# リダイレクト先 URL 全体をコピーして設定
+# 例: http://localhost:3000/callback/?code=XXXX&state=verify-fido2-reg
+CALLBACK_URL="<ブラウザのリダイレクト先 URL 全体>"
 
-AUTHZ_REDIRECT_URI=$(echo "${AUTHORIZE_RESPONSE}" | jq -r '.redirect_uri')
-AUTHORIZATION_CODE=$(echo "${AUTHZ_REDIRECT_URI}" | sed -n 's/.*[?&]code=\([^&#]*\).*/\1/p')
+# URL から code を抽出
+AUTHORIZATION_CODE=$(python3 -c "from urllib.parse import urlparse, parse_qs; print(parse_qs(urlparse('${CALLBACK_URL}').query)['code'][0])")
 echo "Authorization Code: ${AUTHORIZATION_CODE}"
-```
 
-### 確認ポイント
-
-- HTTP 200 が返ること
-- `redirect_uri` に `code` パラメータが含まれていること
-
----
-
-## Step 5: Token Exchange
-
-### リクエスト
-
-```bash
 TOKEN_RESPONSE=$(curl -s \
   -X POST "${TENANT_BASE}/v1/tokens" \
   -H "Content-Type: application/x-www-form-urlencoded" \
@@ -144,19 +140,27 @@ TOKEN_RESPONSE=$(curl -s \
 echo "${TOKEN_RESPONSE}" | jq .
 
 ACCESS_TOKEN=$(echo "${TOKEN_RESPONSE}" | jq -r '.access_token')
+ID_TOKEN=$(echo "${TOKEN_RESPONSE}" | jq -r '.id_token')
 REFRESH_TOKEN=$(echo "${TOKEN_RESPONSE}" | jq -r '.refresh_token')
 ```
 
 ### 確認ポイント
 
-- HTTP 200 が返ること
-- `access_token`, `id_token` が含まれていること
+- `access_token`, `id_token`, `refresh_token` が含まれていること
 
----
+## Step 7: ID Token 確認
 
-## Step 6: UserInfo Endpoint
+```bash
+echo "${ID_TOKEN}" | cut -d'.' -f2 | python3 -c "import sys,base64,json; print(json.dumps(json.loads(base64.urlsafe_b64decode(sys.stdin.read().strip()+'==')),indent=2))"
+```
 
-### リクエスト
+### 確認ポイント
+
+- `sub` が存在すること
+- `iss` が `${TENANT_BASE}` と一致すること
+- `email` が登録したメールアドレスと一致すること
+
+## Step 8: UserInfo Endpoint
 
 ```bash
 curl -s \
@@ -166,42 +170,88 @@ curl -s \
 
 ### 確認ポイント
 
-- HTTP 200 が返ること
 - `sub`, `email`, `name` が含まれていること
 
 ---
 
-## Step 7: Token Refresh
+# Part B: FIDO2 認証
 
-### リクエスト
+登録済みの Passkey を使って FIDO2 認証を行います。
+
+> **重要**: Part A で Passkey 登録が完了していることが前提です。
+> ブラウザのセッション（Cookie）をクリアするか、シークレットウィンドウを使用してください。
+
+## Step 9: 認可リクエスト（再認証）
+
+`prompt=login` を指定して、既存セッションに関わらず再認証を強制します。
 
 ```bash
-curl -s \
-  -X POST "${TENANT_BASE}/v1/tokens" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  --data-urlencode "grant_type=refresh_token" \
-  --data-urlencode "refresh_token=${REFRESH_TOKEN}" \
-  --data-urlencode "client_id=${CLIENT_ID}" \
-  --data-urlencode "client_secret=${CLIENT_SECRET}" | jq .
+echo "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email&state=verify-fido2-auth&prompt=login"
 ```
 
 ### 確認ポイント
 
-- HTTP 200 が返ること
-- 新しい `access_token` が含まれていること
+- FIDO2 ログイン画面（`/signin/fido2/`）にリダイレクトされること
 
----
+## Step 10: FIDO2 認証（Passkey ログイン）
 
-## ブラウザでの FIDO2 テスト
+FIDO2 ログイン画面で Passkey を使って認証します。
 
-上記の CLI テストではパスワードフォールバックのみ検証しています。
-FIDO2/WebAuthn 認証を手動でテストするには、以下の URL をブラウザで開いてください:
+1. **「Sign in with Passkey」** ボタンをクリック（またはパスキーのプロンプトが自動表示）
+2. 認証器で認証:
+   - **Touch ID**: 指紋を読み取る
+   - **Windows Hello**: PIN または顔認証
+   - **セキュリティキー**: キーをタッチ
+3. 認証成功 → 同意画面に遷移
 
+### 確認ポイント
+
+- ブラウザの WebAuthn ダイアログが表示されること
+- パスワード入力なしで認証が成功すること
+
+## Step 11: 同意 + Token Exchange
+
+1. 同意画面で **「Approve」** をクリック
+2. リダイレクト先 URL 全体をコピー
+
+```bash
+# リダイレクト先 URL 全体をコピーして設定
+CALLBACK_URL_2="<ブラウザのリダイレクト先 URL 全体>"
+
+# URL から code を抽出
+AUTHORIZATION_CODE_2=$(python3 -c "from urllib.parse import urlparse, parse_qs; print(parse_qs(urlparse('${CALLBACK_URL_2}').query)['code'][0])")
+echo "Authorization Code: ${AUTHORIZATION_CODE_2}"
+
+TOKEN_RESPONSE_2=$(curl -s \
+  -X POST "${TENANT_BASE}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=authorization_code" \
+  --data-urlencode "code=${AUTHORIZATION_CODE_2}" \
+  --data-urlencode "redirect_uri=${REDIRECT_URI}" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "client_secret=${CLIENT_SECRET}")
+
+echo "${TOKEN_RESPONSE_2}" | jq .
+
+ACCESS_TOKEN_2=$(echo "${TOKEN_RESPONSE_2}" | jq -r '.access_token')
 ```
-${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email&state=test
+
+### 確認ポイント
+
+- `access_token`, `id_token` が含まれていること
+- パスワードを一度も入力せずにトークンが取得できたこと
+
+## Step 12: UserInfo（FIDO2 認証セッション）
+
+```bash
+curl -s \
+  -X GET "${TENANT_BASE}/v1/userinfo" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN_2}" | jq .
 ```
 
-> FIDO2 認証にはセキュリティキーまたはプラットフォーム認証器（Touch ID 等）が必要です。
+### 確認ポイント
+
+- Part A と同じ `sub`, `email`, `name` が返ること（同一ユーザー）
 
 ---
 
@@ -209,12 +259,17 @@ ${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redir
 
 | Step | 確認項目 | 結果 |
 |------|---------|------|
-| 1 | Discovery endpoint が HTTP 200 を返す | |
-| 1 | issuer が正しい | |
-| 2 | Authorization request が HTTP 302 を返す | |
-| 3 | User registration が成功する | |
-| 4 | Authorize で認可コードが取得できる | |
-| 5 | Token exchange で access_token が取得できる | |
-| 6 | UserInfo で sub が返る | |
-| 7 | Refresh token で新しい access_token が取得できる | |
-| - | (手動) ブラウザで FIDO2 認証が動作する | |
+| 1 | Discovery endpoint が正しい issuer を返す | |
+| **Part A: FIDO2 Passkey 登録** | | |
+| 2 | 認可リクエストで FIDO2 ログイン画面にリダイレクトされる | |
+| 3 | Sign Up でユーザー登録が成功する | |
+| 4 | FIDO2 Passkey 登録が成功する | |
+| 5 | 同意画面で認可コードが取得できる | |
+| 6 | Token Exchange で access_token, id_token が取得できる | |
+| 7 | ID Token に sub, email が含まれる | |
+| 8 | UserInfo で sub, email, name が返る | |
+| **Part B: FIDO2 認証** | | |
+| 9 | 新しいセッションで FIDO2 ログイン画面が表示される | |
+| 10 | Passkey（Touch ID 等）でパスワードなしログインが成功する | |
+| 11 | Token Exchange で access_token, id_token が取得できる | |
+| 12 | UserInfo で Part A と同じユーザー情報が返る | |

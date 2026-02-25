@@ -11,6 +11,16 @@
         "any_of": [
           [{ "path": "$.fido2-registration.success_count", "type": "integer", "operation": "gte", "value": 1 }]
         ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [{ "path": "$.fido2-registration.failure_count", "type": "integer", "operation": "gte", "value": 5 }]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [{ "path": "$.fido2-registration.failure_count", "type": "integer", "operation": "gte", "value": 5 }]
+        ]
       }
     }
   ]

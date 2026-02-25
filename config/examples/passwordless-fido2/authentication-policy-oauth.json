@@ -6,12 +6,48 @@
       "description": "fido2_or_password",
       "priority": 1,
       "conditions": {},
-      "available_methods": ["fido2", "password", "initial-registration"],
+      "available_methods": ["fido2", "password", "email", "initial-registration"],
+      "step_definitions": [
+        {
+          "method": "email",
+          "order": 1,
+          "requires_user": false,
+          "allow_registration": true,
+          "user_identity_source": "email"
+        },
+        {
+          "method": "fido2",
+          "order": 2,
+          "requires_user": true,
+          "allow_registration": false,
+          "user_identity_source": "sub"
+        }
+      ],
+      "device_registration_conditions": {
+        "any_of": [
+          [{ "path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+        ]
+      },
       "success_conditions": {
         "any_of": [
           [{ "path": "$.fido2-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
           [{ "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+          [{ "path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
           [{ "path": "$.initial-registration.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [{ "path": "$.fido2-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5 }],
+          [{ "path": "$.password-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5 }],
+          [{ "path": "$.email-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5 }]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [{ "path": "$.fido2-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5 }],
+          [{ "path": "$.password-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5 }],
+          [{ "path": "$.email-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5 }]
         ]
       }
     }

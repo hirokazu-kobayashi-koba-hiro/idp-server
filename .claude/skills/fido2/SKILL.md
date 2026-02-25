@@ -106,6 +106,57 @@ WebAuthn4j ライブラリ (内部統合)
 }
 ```
 
+## ブラウザ動作の設定確認チェックリスト
+
+FIDO2をブラウザUIで動かす際の必須確認事項:
+
+| # | 確認観点 | 設定箇所 | よくあるミス |
+|---|---------|---------|------------|
+| 1 | `signin_page` = `/signin/fido2/` | テナント `ui_config` | `/signin/` のままだとFIDO2 UI画面が表示されない |
+| 2 | `base_url` = 認証UIのオリジン | テナント `ui_config` | APIサーバーURLを設定してしまう（例: `api.local.dev` → 正しくは `auth.local.dev`） |
+| 3 | `cors_config` に全フィールド設定 | テナント `cors_config` | `allow_origins` だけ設定して `allow_headers`, `allow_methods`, `allow_credentials` が抜ける |
+| 4 | `rp_id` = 認証UIオリジンの登録可能ドメイン | FIDO2認証設定 | `auth.local.dev` に対して `auth.local.dev` を設定（正しくは `local.dev`） |
+| 5 | `allowed_origins` = `ui_config.base_url` と一致 | FIDO2認証設定 | 不一致で `BadOriginException` が発生 |
+| 6 | email認証設定が存在する | authentication-config | 未作成で `Authentication Configuration Not Found (email)` |
+| 7 | `step_definitions` でemail→fido2の順序定義 | 認証ポリシー | 未設定だとFIDO2ブラウザUIでユーザー識別ができない |
+| 8 | `device_registration_conditions` にMFA条件 | 認証ポリシー | 未設定だとMFAなしでデバイス登録可能（脆弱性） |
+
+### rp_id と allowed_origins の関係
+
+```
+認証UI URL:    https://auth.local.dev
+                      ^^^^^^^^^^^^^^
+rp_id:                     local.dev   ← 登録可能ドメイン（eTLD+1）
+allowed_origins:  https://auth.local.dev  ← ブラウザページのオリジン（ui_config.base_url と一致）
+```
+
+- `rp_id` はオリジンの登録可能ドメイン（effective top-level domain + 1）
+- `allowed_origins` はブラウザの `collectedClientData.origin` と照合される
+- 不一致の場合 WebAuthn4j が `BadOriginException` をスローする
+
+### step_definitions（email → fido2）
+
+FIDO2ブラウザ利用時は email でユーザー識別（Step 1）→ FIDO2 で認証（Step 2）の2段構成が必要:
+
+```json
+"step_definitions": [
+  { "method": "email", "order": 1, "requires_user": false, "allow_registration": true, "user_identity_source": "email" },
+  { "method": "fido2", "order": 2, "requires_user": true, "allow_registration": false, "user_identity_source": "sub" }
+]
+```
+
+### device_registration_conditions
+
+**認証デバイス登録にはMFAが必要**（脆弱性対策）。email認証成功を条件にする:
+
+```json
+"device_registration_conditions": {
+  "any_of": [
+    [{ "path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+  ]
+}
+```
+
 ## 認証ポリシー設定例
 
 ```json

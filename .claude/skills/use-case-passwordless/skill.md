@@ -104,59 +104,89 @@ description: パスワードレス認証ユースケースの設定ガイド。F
 }
 ```
 
-### 5. 認証ポリシー更新（パスワードレス対応）
+### 5. email認証設定（FIDO2ブラウザ利用時に必須）
 
-**パスワードレスのみ**:
+FIDO2をブラウザUIで利用する場合、**email認証によるユーザー識別（Step 1）が必須**。
+未設定だと `Authentication Configuration Not Found (email)` エラーが発生する。
+
+**API**: `POST /v1/management/organizations/{org-id}/tenants/{tenant-id}/authentication-configurations`
+
+ローカル開発では `no-action` タイプ（実際のメール送信なし）を使用:
+- テンプレート: `config/templates/use-cases/passwordless-fido2/authentication-config-email-template.json`
+- リファレンス: `config/examples/financial-grade/authentication-config/email/no-action.json`
+
+### 6. 認証ポリシー更新（パスワードレス対応）
+
+#### step_definitions（FIDO2ブラウザ利用時に必須）
+
+FIDO2をブラウザUIで利用する場合、email認証（Step 1: ユーザー識別）→ FIDO2認証（Step 2）の順序を定義する。
+
 ```json
-{
-  "flow": "oauth",
-  "enabled": true,
-  "policies": [
-    {
-      "description": "fido2_only",
-      "priority": 1,
-      "available_methods": ["fido2"],
-      "success_conditions": {
-        "any_of": [
-          [
-            { "path": "$.fido2-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
-          ]
-        ]
-      }
-    }
+"step_definitions": [
+  { "method": "email", "order": 1, "requires_user": false, "allow_registration": true, "user_identity_source": "email" },
+  { "method": "fido2", "order": 2, "requires_user": true, "allow_registration": false, "user_identity_source": "sub" }
+]
+```
+
+#### device_registration_conditions（デバイス登録時のMFA）
+
+**FIDO2などの認証デバイスの登録はMFAを実施するのが脆弱性対策。**
+email認証成功を条件にデバイス登録を許可する。
+
+```json
+"device_registration_conditions": {
+  "any_of": [
+    [{ "path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }]
   ]
 }
 ```
 
-**パスワードとの選択式（移行期）**:
+#### ポリシー全体例（パスワードとの選択式 + email MFA）
+
 ```json
 {
   "flow": "oauth",
   "enabled": true,
-  "policies": [
-    {
-      "description": "fido2_or_password",
-      "priority": 1,
-      "available_methods": ["fido2", "password", "initial-registration"],
-      "success_conditions": {
-        "any_of": [
-          [
-            { "path": "$.fido2-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
-          ],
-          [
-            { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
-          ],
-          [
-            { "path": "$.initial-registration.success_count", "type": "integer", "operation": "gte", "value": 1 }
-          ]
-        ]
-      }
+  "policies": [{
+    "description": "fido2_or_password",
+    "priority": 1,
+    "available_methods": ["fido2", "password", "email", "initial-registration"],
+    "step_definitions": [
+      { "method": "email", "order": 1, "requires_user": false, "allow_registration": true, "user_identity_source": "email" },
+      { "method": "fido2", "order": 2, "requires_user": true, "allow_registration": false, "user_identity_source": "sub" }
+    ],
+    "device_registration_conditions": {
+      "any_of": [
+        [{ "path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+      ]
+    },
+    "success_conditions": {
+      "any_of": [
+        [{ "path": "$.fido2-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+        [{ "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+        [{ "path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+        [{ "path": "$.initial-registration.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+      ]
+    },
+    "failure_conditions": {
+      "any_of": [
+        [{ "path": "$.fido2-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5 }],
+        [{ "path": "$.password-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5 }],
+        [{ "path": "$.email-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5 }]
+      ]
+    },
+    "lock_conditions": {
+      "any_of": [
+        [{ "path": "$.fido2-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5 }],
+        [{ "path": "$.password-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5 }],
+        [{ "path": "$.email-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5 }]
+      ]
     }
-  ]
+  }]
 }
 ```
 
-### 6. クレーム設定（認可サーバー更新）
+### 7. クレーム設定（認可サーバー更新）
 
 > **重要**: この設定が無いと UserInfo / ID Token が `sub` のみしか返さない。
 > 詳細は `use-case-login` スキルの「クレーム設定」セクションを参照。
@@ -164,11 +194,34 @@ description: パスワードレス認証ユースケースの設定ガイド。F
 認可サーバーの `claims_supported` に返したいクレーム一覧を設定する。
 標準的な設定は `config/templates/tenant-template.json` を参照。
 
+## FIDO2 ブラウザ動作の設定確認チェックリスト
+
+| # | 確認観点 | 設定箇所 | よくあるミス |
+|---|---------|---------|------------|
+| 1 | `signin_page` が `/signin/fido2/` | テナント `ui_config` | `/signin/` のままだとFIDO2 UI画面が表示されない |
+| 2 | `base_url` が認証UIのオリジン | テナント `ui_config` | APIサーバーURL（`api.local.dev`）を設定してしまう |
+| 3 | `cors_config` に `allow_headers`, `allow_methods`, `allow_credentials` | テナント `cors_config` | `allow_origins` だけ設定してクロスオリジンリクエストが失敗 |
+| 4 | `rp_id` が認証UIオリジンの登録可能ドメイン | FIDO2認証設定 | `auth.local.dev` に対して `auth.local.dev` を設定（正しくは `local.dev`） |
+| 5 | `allowed_origins` が `ui_config.base_url` と一致 | FIDO2認証設定 | 不一致で `BadOriginException` が発生 |
+| 6 | email認証設定が存在する | authentication-config | 未作成で `Authentication Configuration Not Found (email)` |
+| 7 | `step_definitions` でemail→fido2の順序定義 | 認証ポリシー | 未設定だとFIDO2ブラウザUIでユーザー識別ができない |
+| 8 | `device_registration_conditions` にMFA条件 | 認証ポリシー | 未設定だとMFAなしでデバイス登録可能（脆弱性） |
+| 9 | `claims_supported` が設定済み | 認可サーバー | 未設定で UserInfo/ID Token が `sub` のみ |
+| 10 | setup.sh で `UI_BASE_URL` が `FIDO2_ALLOWED_ORIGIN` より先に定義 | setup.sh | 変数参照順序ミスで `allowed_origins` が空になる |
+
+## 動作確認時のprompt値
+
+| テスト | prompt値 | 目的 |
+|--------|---------|------|
+| ユーザー登録 | `prompt=create` | Sign Up画面を直接表示 |
+| FIDO2認証 | `prompt=login` | 既存セッションを無視して再認証を強制 |
+
 ## 設定例ファイル参照
 
+- テンプレート: `config/templates/use-cases/passwordless-fido2/`
+- FIDO2リファレンス: `config/examples/financial-grade/` (FIDO2 + 認証UI構成の実績ある構成)
 - WebAuthn: `config/examples/e2e/.../authentication-config/webauthn/`
 - FIDO-UAF: `config/examples/e2e/.../authentication-config/fido-uaf/`
-- 認証デバイス: `config/examples/e2e/.../authentication-config/authentication-device/`
 
 ## 関連ドキュメント
 
