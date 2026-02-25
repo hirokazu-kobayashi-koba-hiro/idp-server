@@ -156,6 +156,14 @@ description: パスワードレス認証ユースケースの設定ガイド。F
 }
 ```
 
+### 6. クレーム設定（認可サーバー更新）
+
+> **重要**: この設定が無いと UserInfo / ID Token が `sub` のみしか返さない。
+> 詳細は `use-case-login` スキルの「クレーム設定」セクションを参照。
+
+認可サーバーの `claims_supported` に返したいクレーム一覧を設定する。
+標準的な設定は `config/templates/tenant-template.json` を参照。
+
 ## 設定例ファイル参照
 
 - WebAuthn: `config/examples/e2e/.../authentication-config/webauthn/`

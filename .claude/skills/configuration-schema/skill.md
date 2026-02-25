@@ -49,14 +49,14 @@ Tenant
 | `pushed_authorization_request_endpoint` | String | PARエンドポイント |
 | `revocation_endpoint` | String | トークン取り消しエンドポイント |
 | `introspection_endpoint` | String | トークンイントロスペクションエンドポイント |
-| `scopes_supported` | List | サポートスコープ一覧 |
+| `scopes_supported` | List | サポートスコープ一覧（eKYC利用時は `identity_verification_application` を含めること） |
 | `response_types_supported` | List | サポートレスポンスタイプ |
 | `response_modes_supported` | List | サポートレスポンスモード |
 | `grant_types_supported` | List | サポートグラント種別 |
 | `acr_values_supported` | List | サポートACR値 |
 | `subject_types_supported` | List | サポートサブジェクト型 |
 | `token_endpoint_auth_methods_supported` | List | トークンエンドポイント認証方式 |
-| `claims_supported` | List | サポートクレーム一覧 |
+| `claims_supported` | List | サポートクレーム一覧（**必須**: 未設定の場合 UserInfo / ID Token は `sub` のみ返却） |
 | `code_challenge_methods_supported` | List | PKCE対応チャレンジメソッド |
 | `enabled` | boolean | 設定有効化フラグ (default: true) |
 
@@ -89,6 +89,9 @@ Tenant
 | `tls_client_certificate_bound_access_tokens` | false | Certificate Bound Access Tokens |
 | `authorization_response_iss_parameter_supported` | false | issパラメータ対応 |
 | `verified_claims_supported` | false | 身元確認済みクレーム対応 |
+| `trust_frameworks_supported` | - | サポート信頼フレームワーク一覧（例: `["eidas"]`） |
+| `evidence_supported` | - | サポート証拠タイプ一覧（例: `["id_document", "electronic_record"]`） |
+| `claims_in_verified_claims_supported` | - | verified_claims に含めるクレーム一覧（例: `["given_name", "family_name", "birthdate", "address"]`） |
 
 ### CIBA
 

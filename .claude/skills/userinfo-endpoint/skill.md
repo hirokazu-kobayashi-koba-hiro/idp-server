@@ -123,7 +123,7 @@ UserInfoクレームは、以下の要素から生成:
 | `phone` | phone_number, phone_number_verified |
 | `address` | address |
 | `claims:xxx` | カスタムクレーム |
-| `verified_claims:xxx` | 本人確認済みクレーム（OIDC4IDA） |
+| `verified_claims:xxx` | 本人確認済みクレーム（OIDC4IDA）**※現在 UserInfo 未対応、ID Token のみ** |
 
 ## E2Eテスト
 
@@ -150,12 +150,13 @@ cd e2e && npm test -- spec/oidc_core_5_userinfo.test.js
 - トークンが正しく送信されているか確認（Bearer形式）
 
 ### クレームが含まれない
+- **認可サーバーの `claims_supported` に対象クレームが含まれているか確認**（最も多い原因）
 - Access Tokenのscopeを確認
 - ユーザー属性が存在するか確認
 
 ### Verified Claimが含まれない
-- ユーザーが本人確認済みか確認
-- `verified_claims:` scopeが含まれているか確認
+- **UserInfo エンドポイントは現在 verified_claims に未対応**（ID Token でのみ返される）
+- ID Token で確認する場合: ユーザーが本人確認済みか、`claims` パラメータで verified_claims を要求しているか確認
 
 ### mTLSバインディング検証失敗
 - Access Tokenのcnfクレームとクライアント証明書が一致するか確認

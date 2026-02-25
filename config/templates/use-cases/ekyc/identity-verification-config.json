@@ -52,5 +52,14 @@
         }
       }
     }
+  },
+  "result": {
+    "verified_claims_mapping_rules": [
+      { "static_value": "eidas", "to": "verification.trust_framework" },
+      { "from": "$.application.application_details.first_name", "to": "claims.given_name" },
+      { "from": "$.application.application_details.last_name", "to": "claims.family_name" },
+      { "from": "$.application.application_details.birthdate", "to": "claims.birthdate" },
+      { "from": "$.application.application_details.address", "to": "claims.address" }
+    ]
   }
 }

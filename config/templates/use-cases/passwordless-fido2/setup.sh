@@ -104,7 +104,7 @@ ORGANIZER_TENANT_ID="${ORGANIZER_TENANT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:
 NEW_ADMIN_USER_SUB="${NEW_ADMIN_USER_SUB:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 NEW_ADMIN_CLIENT_ID="${NEW_ADMIN_CLIENT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 NEW_ADMIN_CLIENT_SECRET="${NEW_ADMIN_CLIENT_SECRET:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
-ORGANIZATION_NAME="${ORGANIZATION_NAME:-my-organization}"
+ORGANIZATION_NAME="${ORGANIZATION_NAME:-passwordless-fido2}"
 COOKIE_NAME="${COOKIE_NAME:-SESSION}"
 NEW_ADMIN_EMAIL="${NEW_ADMIN_EMAIL:-admin@example.com}"
 NEW_ADMIN_PASSWORD="${NEW_ADMIN_PASSWORD:-ChangeMe123}"
@@ -358,7 +358,8 @@ echo ""
 # --- Step 7: Create authentication policy (fido2 or password) ---
 echo "Step 7: Creating authentication policy (fido2 or password)..."
 
-cp "${SCRIPT_DIR}/authentication-policy.json" "${OUTPUT_DIR}/authentication-policy.json"
+AUTH_POLICY_ID="${AUTH_POLICY_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+jq --arg id "${AUTH_POLICY_ID}" '. + {id: $id}' "${SCRIPT_DIR}/authentication-policy.json" > "${OUTPUT_DIR}/authentication-policy.json"
 echo "  Saved: ${OUTPUT_DIR}/authentication-policy.json"
 
 POLICY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
@@ -382,7 +383,8 @@ echo ""
 # --- Step 8: Create authentication policy (fido2-registration) ---
 echo "Step 8: Creating authentication policy (fido2-registration)..."
 
-cp "${SCRIPT_DIR}/authentication-policy-fido2-registration.json" "${OUTPUT_DIR}/authentication-policy-fido2-registration.json"
+AUTH_POLICY_FIDO2_REG_ID="${AUTH_POLICY_FIDO2_REG_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+jq --arg id "${AUTH_POLICY_FIDO2_REG_ID}" '. + {id: $id}' "${SCRIPT_DIR}/authentication-policy-fido2-registration.json" > "${OUTPUT_DIR}/authentication-policy-fido2-registration.json"
 echo "  Saved: ${OUTPUT_DIR}/authentication-policy-fido2-registration.json"
 
 FIDO2_REG_POLICY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \

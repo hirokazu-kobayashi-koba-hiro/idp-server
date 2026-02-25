@@ -345,6 +345,10 @@ echo ""
 echo "  Passed: ${PASS_COUNT} / ${TOTAL}"
 echo "  Failed: ${FAIL_COUNT} / ${TOTAL}"
 echo ""
+echo "Note: This script verifies the initial-registration path."
+echo "      eKYC (Identity Verification) requires the 'transfers' scope and"
+echo "      manual approval workflow, which cannot be verified automatically."
+echo ""
 
 if [ "${FAIL_COUNT}" -eq 0 ]; then
   echo "All checks passed! The example environment is working correctly."

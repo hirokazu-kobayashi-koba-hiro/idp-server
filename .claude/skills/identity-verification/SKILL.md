@@ -65,9 +65,14 @@ libs/
       "store": { "application_details_mapping_rules": [] },
       "response": { "body_mapping_rules": [] }
     }
+  },
+  "result": {
+    "verified_claims_mapping_rules": []
   }
 }
 ```
+
+> **重要**: `result` セクションは `processes` の外側（トップレベル）に配置する。プロセス内ではない。
 
 ## 処理フロー
 
@@ -91,6 +96,25 @@ libs/
 | `IdentityVerificationResponseConfig` | レスポンス設定 |
 | `IdentityVerificationApplicationHandler` | アプリケーションハンドラー |
 | `IdentityVerificationConfigManagementHandler` | 設定管理ハンドラー |
+
+## APIアクセススコープ
+
+身元確認のエンドユーザー向けAPI（`/v1/me/identity-verification/`）には、Spring Security でスコープ制限が設定されている。
+
+| エンドポイント | メソッド | 必要スコープ |
+|--------------|---------|-------------|
+| `/v1/me/identity-verification/applications/{type}/{process}` | POST | `identity_verification_application` |
+| `/v1/me/identity-verification/applications/{type}/{id}/{process}` | POST | `identity_verification_application` |
+| `/v1/me/identity-verification/applications` | GET | `identity_verification_application` |
+| `/v1/me/identity-verification/applications/{type}/{id}` | DELETE | `identity_verification_application_delete` |
+| `/v1/me/identity-verification/results` | GET | スコープ制限なし（要対応: Issue #1319） |
+
+**設定要件**:
+- 認可サーバーの `scopes_supported` に `identity_verification_application` を含めること
+- クライアントの `scope` に `identity_verification_application` を含めること
+- ユーザーがこのスコープを含むアクセストークンを取得していること
+
+**参照**: `SecurityConfig.java`, `IdPApplicationScope.java`
 
 ## API規約
 
@@ -143,16 +167,24 @@ Phase 7: Response → IdentityVerificationApplyingResult を返却
 
 ### verified_claims マッピング
 
-MappingRule パターンで外部 API レスポンスから verified_claims を動的生成:
+トップレベルの `result.verified_claims_mapping_rules` で外部 API レスポンスから verified_claims を動的生成:
 
 ```json
 {
-  "from": "$.result.name",
-  "to": "verified_claims.claims.name"
+  "static_value": "eidas",
+  "to": "verification.trust_framework"
 }
 ```
 
-`static_value`（固定値）と `from`（JSONPath）の2種。
+```json
+{
+  "from": "$.application.application_details.first_name",
+  "to": "claims.given_name"
+}
+```
+
+`to` のパスは `verification.*`（信頼フレームワーク等）と `claims.*`（クレーム値）の2系統。
+値の指定方法は `static_value`（固定値）と `from`（JSONPath）の2種。
 
 ### 外部 eKYC サービス連携
 

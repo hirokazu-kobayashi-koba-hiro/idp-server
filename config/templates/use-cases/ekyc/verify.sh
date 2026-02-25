@@ -23,7 +23,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 ENV_FILE="${PROJECT_ROOT}/.env"
 
 # Parse arguments
-ORGANIZATION_NAME="my-organization"
+ORGANIZATION_NAME="ekyc"
 while [ $# -gt 0 ]; do
   case "$1" in
     --org) ORGANIZATION_NAME="$2"; shift 2 ;;
@@ -360,6 +360,10 @@ echo "=========================================="
 echo ""
 echo "  Passed: ${PASS_COUNT} / ${TOTAL}"
 echo "  Failed: ${FAIL_COUNT} / ${TOTAL}"
+echo ""
+echo "Note: This script verifies the initial-registration path."
+echo "      eKYC (Identity Verification) requires the 'transfers' scope and"
+echo "      manual approval workflow, which cannot be verified automatically."
 echo ""
 
 if [ "${FAIL_COUNT}" -eq 0 ]; then

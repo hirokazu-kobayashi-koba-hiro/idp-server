@@ -116,7 +116,7 @@ M2M_SCOPE="api:read api:write api:admin" \
 
 | 環境変数 | デフォルト | 説明 |
 |---------|-----------|------|
-| `ORGANIZATION_NAME` | `my-organization` | 組織名 |
+| `ORGANIZATION_NAME` | `third-party` | 組織名 |
 | `COOKIE_NAME` | `SESSION` | セッションCookie名 |
 | `NEW_ADMIN_EMAIL` | `admin@example.com` | 管理者メールアドレス |
 | `NEW_ADMIN_PASSWORD` | `ChangeMe123` | 管理者パスワード |

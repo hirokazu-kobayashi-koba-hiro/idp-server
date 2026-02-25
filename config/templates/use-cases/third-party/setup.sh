@@ -104,7 +104,7 @@ ORGANIZER_TENANT_ID="${ORGANIZER_TENANT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:
 NEW_ADMIN_USER_SUB="${NEW_ADMIN_USER_SUB:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 NEW_ADMIN_CLIENT_ID="${NEW_ADMIN_CLIENT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 NEW_ADMIN_CLIENT_SECRET="${NEW_ADMIN_CLIENT_SECRET:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
-ORGANIZATION_NAME="${ORGANIZATION_NAME:-my-organization}"
+ORGANIZATION_NAME="${ORGANIZATION_NAME:-third-party}"
 COOKIE_NAME="${COOKIE_NAME:-SESSION}"
 NEW_ADMIN_EMAIL="${NEW_ADMIN_EMAIL:-admin@example.com}"
 NEW_ADMIN_PASSWORD="${NEW_ADMIN_PASSWORD:-ChangeMe123}"
@@ -322,7 +322,8 @@ echo ""
 # --- Step 6: Create authentication policy (password only) ---
 echo "Step 6: Creating authentication policy (password only)..."
 
-cp "${SCRIPT_DIR}/authentication-policy.json" "${OUTPUT_DIR}/authentication-policy.json"
+AUTH_POLICY_ID="${AUTH_POLICY_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+jq --arg id "${AUTH_POLICY_ID}" '. + {id: $id}' "${SCRIPT_DIR}/authentication-policy.json" > "${OUTPUT_DIR}/authentication-policy.json"
 echo "  Saved: ${OUTPUT_DIR}/authentication-policy.json"
 
 POLICY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
@@ -380,43 +381,8 @@ else
 fi
 echo ""
 
-# --- Step 8: Create Mobile application client (Public + PKCE) ---
-echo "Step 8: Creating Mobile application client (Public + PKCE)..."
-
-MOBILE_CLIENT_ID="${MOBILE_CLIENT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
-MOBILE_CLIENT_ALIAS="${MOBILE_CLIENT_ALIAS:-mobile-app}"
-MOBILE_CLIENT_NAME="${MOBILE_CLIENT_NAME:-Mobile Application}"
-MOBILE_REDIRECT_URI="${MOBILE_REDIRECT_URI:-com.example.app://callback}"
-
-MOBILE_CLIENT_JSON=$(substitute_template "${SCRIPT_DIR}/mobile-client-template.json" \
-  "MOBILE_CLIENT_ID" "${MOBILE_CLIENT_ID}" \
-  "MOBILE_CLIENT_ALIAS" "${MOBILE_CLIENT_ALIAS}" \
-  "MOBILE_CLIENT_NAME" "${MOBILE_CLIENT_NAME}" \
-  "MOBILE_REDIRECT_URI" "${MOBILE_REDIRECT_URI}")
-
-echo "${MOBILE_CLIENT_JSON}" | jq '.' > "${OUTPUT_DIR}/mobile-client.json"
-echo "  Saved: ${OUTPUT_DIR}/mobile-client.json"
-
-MOBILE_CLIENT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/clients" \
-  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d @"${OUTPUT_DIR}/mobile-client.json")
-
-HTTP_CODE=$(echo "${MOBILE_CLIENT_RESPONSE}" | tail -n1)
-RESPONSE_BODY=$(echo "${MOBILE_CLIENT_RESPONSE}" | sed '$d')
-
-if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
-  echo "  Mobile client created: ${MOBILE_CLIENT_ID}"
-else
-  echo "  Failed (HTTP ${HTTP_CODE})"
-  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
-  exit 1
-fi
-echo ""
-
-# --- Step 9: Create M2M client (Client Credentials) ---
-echo "Step 9: Creating M2M client (Client Credentials)..."
+# --- Step 8: Create M2M client (Client Credentials) ---
+echo "Step 8: Creating M2M client (Client Credentials)..."
 
 M2M_CLIENT_ID="${M2M_CLIENT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 M2M_CLIENT_ALIAS="${M2M_CLIENT_ALIAS:-m2m-service}"
@@ -486,11 +452,6 @@ echo "  Client Secret: ${CLIENT_SECRET}"
 echo "  Redirect URI:  ${REDIRECT_URI}"
 echo "  Auth Method:   client_secret_basic"
 echo ""
-echo "Mobile Client (Public + PKCE):"
-echo "  Client ID:     ${MOBILE_CLIENT_ID}"
-echo "  Redirect URI:  ${MOBILE_REDIRECT_URI}"
-echo "  Auth Method:   none (PKCE required)"
-echo ""
 echo "M2M Client (Client Credentials):"
 echo "  Client ID:     ${M2M_CLIENT_ID}"
 echo "  Client Secret: ${M2M_CLIENT_SECRET}"
@@ -503,7 +464,6 @@ echo "  ${OUTPUT_DIR}/public-tenant.json"
 echo "  ${OUTPUT_DIR}/authentication-config-initial-registration.json"
 echo "  ${OUTPUT_DIR}/authentication-policy.json"
 echo "  ${OUTPUT_DIR}/web-client.json"
-echo "  ${OUTPUT_DIR}/mobile-client.json"
 echo "  ${OUTPUT_DIR}/m2m-client.json"
 echo ""
 echo "Test Web Client (Authorization Code Flow):"

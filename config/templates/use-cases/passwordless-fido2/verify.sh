@@ -26,7 +26,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 ENV_FILE="${PROJECT_ROOT}/.env"
 
 # Parse arguments
-ORGANIZATION_NAME="my-organization"
+ORGANIZATION_NAME="passwordless-fido2"
 while [ $# -gt 0 ]; do
   case "$1" in
     --org) ORGANIZATION_NAME="$2"; shift 2 ;;
@@ -364,9 +364,9 @@ echo ""
 echo "  Passed: ${PASS_COUNT} / ${TOTAL}"
 echo "  Failed: ${FAIL_COUNT} / ${TOTAL}"
 echo ""
-echo "Note: This script verifies the password fallback path."
-echo "FIDO2/WebAuthn authentication requires browser interaction"
-echo "and cannot be fully verified via CLI."
+echo "Note: This script verifies the initial-registration path."
+echo "      FIDO2/WebAuthn authentication requires browser interaction"
+echo "      and cannot be fully verified via CLI."
 echo ""
 
 if [ "${FAIL_COUNT}" -eq 0 ]; then

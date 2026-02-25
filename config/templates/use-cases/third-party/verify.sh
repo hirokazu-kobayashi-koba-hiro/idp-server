@@ -21,7 +21,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 ENV_FILE="${PROJECT_ROOT}/.env"
 
 # Parse arguments
-ORGANIZATION_NAME="my-organization"
+ORGANIZATION_NAME="third-party"
 while [ $# -gt 0 ]; do
   case "$1" in
     --org) ORGANIZATION_NAME="$2"; shift 2 ;;

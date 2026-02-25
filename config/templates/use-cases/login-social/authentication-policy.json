@@ -3,7 +3,7 @@
   "enabled": true,
   "policies": [
     {
-      "description": "password_only",
+      "description": "password_and_social",
       "priority": 1,
       "conditions": {},
       "available_methods": ["password", "initial-registration"],
@@ -20,6 +20,14 @@
           [
             {
               "path": "$.initial-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.oidc-google.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1

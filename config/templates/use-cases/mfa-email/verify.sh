@@ -10,9 +10,9 @@ set -e
 #   4. UserInfo endpoint verification
 #   5. Token Refresh
 #
-# Note: MFA email verification requires no-action mode where the verification
-# code is logged to the server. This script uses the password-grant fallback
-# for automated verification.
+# Note: MFA email + password multi-step authentication cannot be fully automated.
+# This script verifies the initial-registration path (bypasses MFA) to confirm
+# tenant configuration is correct.
 #
 # Prerequisites:
 #   - setup.sh has been executed successfully
@@ -27,7 +27,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 ENV_FILE="${PROJECT_ROOT}/.env"
 
 # Parse arguments
-ORGANIZATION_NAME="my-organization"
+ORGANIZATION_NAME="mfa-email"
 while [ $# -gt 0 ]; do
   case "$1" in
     --org) ORGANIZATION_NAME="$2"; shift 2 ;;

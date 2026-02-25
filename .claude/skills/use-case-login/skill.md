@@ -41,6 +41,7 @@ bash config/templates/use-cases/login-password-only/setup.sh --dry-run
 | 4 | セッション管理 | 有効期限, cookie設定 | テナント `session_config` |
 | 5 | トークン有効期限 | AT, IDT, RT | 認可サーバー `extension` |
 | 6 | ユーザー登録スキーマ | 必須項目（email, name, phone等） | 認証メソッド設定（initial-registration） |
+| 7 | 返すクレーム | 標準OIDC / カスタム追加 | 認可サーバー claims_supported |
 
 ## ヒアリング結果 → 環境変数マッピング
 
@@ -228,6 +229,34 @@ bash config/templates/use-cases/login-password-only/setup.sh --dry-run
   ]
 }
 ```
+
+### 5. クレーム設定（認可サーバー更新）
+
+**API**: `PUT /v1/management/organizations/{org-id}/tenants/{tenant-id}/authorization-server`
+
+> **重要**: この設定が無いと UserInfo / ID Token が `sub` のみしか返さない。
+
+```json
+{
+  "claims_supported": [
+    "sub", "iss", "auth_time", "acr",
+    "name", "given_name", "family_name", "nickname", "preferred_username", "middle_name",
+    "profile", "picture", "website",
+    "email", "email_verified",
+    "gender", "birthdate", "zoneinfo", "locale", "updated_at",
+    "address", "phone_number", "phone_number_verified"
+  ]
+}
+```
+
+**スコープとクレームの対応**:
+
+| スコープ | 返されるクレーム |
+|---------|-----------------|
+| `profile` | name, given_name, family_name, middle_name, nickname, preferred_username, profile, picture, website, gender, birthdate, zoneinfo, locale, updated_at |
+| `email` | email, email_verified |
+| `phone` | phone_number, phone_number_verified |
+| `address` | address |
 
 ## 設定例ファイル参照
 

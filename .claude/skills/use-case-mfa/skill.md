@@ -270,6 +270,14 @@ description: MFA（多要素認証）ユースケースの設定ガイド。SMS/
 }
 ```
 
+### 4. クレーム設定（認可サーバー更新）
+
+> **重要**: この設定が無いと UserInfo / ID Token が `sub` のみしか返さない。
+> 詳細は `use-case-login` スキルの「クレーム設定」セクションを参照。
+
+認可サーバーの `claims_supported` に返したいクレーム一覧を設定する。
+標準的な設定は `config/templates/tenant-template.json` を参照。
+
 ## success_conditions 構造リファレンス
 
 | 要件 | any_of構造 | 意味 |

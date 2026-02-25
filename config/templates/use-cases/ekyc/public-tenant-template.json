@@ -74,7 +74,8 @@
       "openid",
       "profile",
       "email",
-      "transfers"
+      "transfers",
+      "identity_verification_application"
     ],
     "response_types_supported": [
       "code"
@@ -89,7 +90,47 @@
       "RS256",
       "ES256"
     ],
+    "claims_supported": [
+      "sub",
+      "iss",
+      "auth_time",
+      "acr",
+      "name",
+      "given_name",
+      "family_name",
+      "nickname",
+      "preferred_username",
+      "middle_name",
+      "profile",
+      "picture",
+      "website",
+      "email",
+      "email_verified",
+      "gender",
+      "birthdate",
+      "zoneinfo",
+      "locale",
+      "updated_at",
+      "address",
+      "phone_number",
+      "phone_number_verified"
+    ],
     "claims_parameter_supported": true,
+    "verified_claims_supported": true,
+    "trust_frameworks_supported": [
+      "eidas"
+    ],
+    "evidence_supported": [
+      "id_document",
+      "electronic_record"
+    ],
+    "claims_in_verified_claims_supported": [
+      "given_name",
+      "family_name",
+      "birthdate",
+      "place_of_birth",
+      "address"
+    ],
     "token_introspection_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/tokens/introspection",
     "token_revocation_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/tokens/revocation",
     "extension": {
@@ -99,10 +140,10 @@
       "access_token_duration": 3600,
       "id_token_duration": 3600,
       "refresh_token_duration": 86400,
-      "verified_claims_supported": true,
       "required_identity_verification_scopes": [
         "transfers"
-      ]
+      ],
+      "access_token_selective_verified_claims": true
     }
   }
 }
