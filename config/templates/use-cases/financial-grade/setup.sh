@@ -1,0 +1,602 @@
+#!/bin/bash
+set -e
+
+# Financial-Grade (FAPI Advanced + CIBA) - Use Case Setup Script
+#
+# Prerequisites:
+#   1. idp-server is running
+#   2. System administrator tenant exists (initial setup completed)
+#   3. .env file with admin credentials
+#
+# Usage:
+#   ./setup.sh
+#   ./setup.sh --dry-run
+#
+# Required .env variables:
+#   AUTHORIZATION_SERVER_URL  - e.g. https://api.local.dev
+#   ADMIN_TENANT_ID           - System admin tenant ID
+#   ADMIN_USER_EMAIL          - Admin user email
+#   ADMIN_USER_PASSWORD       - Admin user password
+#   ADMIN_CLIENT_ID           - Admin client ID
+#   ADMIN_CLIENT_SECRET       - Admin client secret
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
+ENV_FILE="${PROJECT_ROOT}/.env"
+
+DRY_RUN=false
+[ "$1" = "--dry-run" ] && DRY_RUN=true
+
+echo "=========================================="
+echo "Financial-Grade (FAPI Advanced + CIBA) Use Case Setup"
+echo "=========================================="
+echo ""
+
+# --- Load .env ---
+if [ ! -f "${ENV_FILE}" ]; then
+  echo "Error: .env file not found at ${ENV_FILE}"
+  exit 1
+fi
+
+set -a
+source "${ENV_FILE}"
+set +a
+
+: "${AUTHORIZATION_SERVER_URL:?AUTHORIZATION_SERVER_URL is required in .env}"
+: "${ADMIN_TENANT_ID:?ADMIN_TENANT_ID is required in .env}"
+: "${ADMIN_USER_EMAIL:?ADMIN_USER_EMAIL is required in .env}"
+: "${ADMIN_USER_PASSWORD:?ADMIN_USER_PASSWORD is required in .env}"
+: "${ADMIN_CLIENT_ID:?ADMIN_CLIENT_ID is required in .env}"
+: "${ADMIN_CLIENT_SECRET:?ADMIN_CLIENT_SECRET is required in .env}"
+
+echo "Server:  ${AUTHORIZATION_SERVER_URL}"
+echo "Admin:   ${ADMIN_USER_EMAIL}"
+echo ""
+
+# --- Helper: jq-based template substitution ---
+# Uses jq to safely replace ${PLACEHOLDER} strings, handling special characters in values
+substitute_template() {
+  local template_file="$1"
+  shift
+  local result
+  result=$(cat "${template_file}")
+  while [ $# -gt 0 ]; do
+    local key="$1"
+    local value="$2"
+    shift 2
+    result=$(echo "${result}" | jq --arg k "\${${key}}" --arg v "${value}" '
+      walk(if type == "string" then split($k) | join($v) else . end)
+    ')
+  done
+  echo "${result}"
+}
+
+# --- Generate IDs (override via environment variables) ---
+ORGANIZATION_ID="${ORGANIZATION_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+ORGANIZER_TENANT_ID="${ORGANIZER_TENANT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+NEW_ADMIN_USER_SUB="${NEW_ADMIN_USER_SUB:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+NEW_ADMIN_CLIENT_ID="${NEW_ADMIN_CLIENT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+NEW_ADMIN_CLIENT_SECRET="${NEW_ADMIN_CLIENT_SECRET:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+ORGANIZATION_NAME="${ORGANIZATION_NAME:-financial-grade}"
+COOKIE_NAME="${COOKIE_NAME:-FAPI_SESSION}"
+NEW_ADMIN_EMAIL="${NEW_ADMIN_EMAIL:-admin@example.com}"
+NEW_ADMIN_PASSWORD="${NEW_ADMIN_PASSWORD:-FapiAdminSecure123!}"
+TOKEN_SIGNING_KEY_ID="${TOKEN_SIGNING_KEY_ID:-signing_key_1}"
+ID_TOKEN_SIGNING_KEY_ID="${ID_TOKEN_SIGNING_KEY_ID:-signing_key_1}"
+
+# FAPI-specific settings
+MTLS_BASE_URL="${MTLS_BASE_URL:-https://mtls.api.local.dev}"
+SIGNING_ALGORITHM="${SIGNING_ALGORITHM:-ES256}"
+
+# Token durations (non-string, applied via jq overlay)
+ACCESS_TOKEN_DURATION="${ACCESS_TOKEN_DURATION:-300}"
+ID_TOKEN_DURATION="${ID_TOKEN_DURATION:-300}"
+REFRESH_TOKEN_DURATION="${REFRESH_TOKEN_DURATION:-2592000}"
+PAR_EXPIRES_IN="${PAR_EXPIRES_IN:-60}"
+
+# CIBA settings (non-string, applied via jq overlay)
+CIBA_REQUEST_EXPIRES_IN="${CIBA_REQUEST_EXPIRES_IN:-120}"
+CIBA_POLLING_INTERVAL="${CIBA_POLLING_INTERVAL:-5}"
+CIBA_USER_CODE_REQUIRED="${CIBA_USER_CODE_REQUIRED:-false}"
+
+# FIDO2 settings
+FIDO2_RP_ID="${FIDO2_RP_ID:-local.dev}"
+UI_BASE_URL="${UI_BASE_URL:-https://auth.local.dev}"
+
+# Client settings
+TLS_CLIENT_ID="${TLS_CLIENT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+TLS_CLIENT_ALIAS="${TLS_CLIENT_ALIAS:-fapi-tls-client}"
+TLS_CLIENT_NAME="${TLS_CLIENT_NAME:-FAPI TLS Client Auth Client}"
+PKJ_CLIENT_ID="${PKJ_CLIENT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+PKJ_CLIENT_ALIAS="${PKJ_CLIENT_ALIAS:-fapi-pkj-client}"
+PKJ_CLIENT_NAME="${PKJ_CLIENT_NAME:-FAPI Private Key JWT Client}"
+CERT_SUBJECT_DN="${CERT_SUBJECT_DN:-C=JP,O=Financial Institution,CN=financial-app}"
+REDIRECT_URI="${REDIRECT_URI:-https://localhost:8443/callback}"
+
+# Test user settings
+FINANCIAL_USER_SUB="${FINANCIAL_USER_SUB:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+FINANCIAL_USER_NAME="${FINANCIAL_USER_NAME:-FAPI Test User}"
+FINANCIAL_USER_EMAIL="${FINANCIAL_USER_EMAIL:-fapi-test@example.com}"
+FINANCIAL_USER_PHONE="${FINANCIAL_USER_PHONE:-+81-90-1234-5678}"
+FINANCIAL_USER_PASSWORD="${FINANCIAL_USER_PASSWORD:-FapiTestSecure123!}"
+FINANCIAL_DEVICE_ID="${FINANCIAL_DEVICE_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+FINANCIAL_DEVICE_TOKEN="${FINANCIAL_DEVICE_TOKEN:-fapi-test-fcm-token}"
+
+# Registration settings
+REGISTRATION_REQUIRED_FIELDS="${REGISTRATION_REQUIRED_FIELDS:-email,password,name}"
+
+# Create output directory for generated JSON files
+OUTPUT_DIR="${PROJECT_ROOT}/config/generated/${ORGANIZATION_NAME}"
+mkdir -p "${OUTPUT_DIR}"
+echo "  Output directory: ${OUTPUT_DIR}"
+echo ""
+
+# Read JWKS
+JWKS_FILE="${SCRIPT_DIR}/jwks.json"
+if [ -f "${JWKS_FILE}" ]; then
+  JWKS_CONTENT=$(jq -c '.' "${JWKS_FILE}")
+else
+  echo "  Warning: jwks.json not found at ${JWKS_FILE}"
+  echo "  Generate JWKS and save to: ${JWKS_FILE}"
+  JWKS_CONTENT='{"keys":[]}'
+fi
+
+# --- Step 1: Get access token ---
+echo "Step 1: Getting system administrator access token..."
+
+TOKEN_RESPONSE=$(curl -s -X POST \
+  "${AUTHORIZATION_SERVER_URL}/${ADMIN_TENANT_ID}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=password" \
+  --data-urlencode "username=${ADMIN_USER_EMAIL}" \
+  --data-urlencode "password=${ADMIN_USER_PASSWORD}" \
+  --data-urlencode "client_id=${ADMIN_CLIENT_ID}" \
+  --data-urlencode "client_secret=${ADMIN_CLIENT_SECRET}" \
+  --data-urlencode "scope=account management")
+
+ACCESS_TOKEN=$(echo "${TOKEN_RESPONSE}" | jq -r '.access_token')
+
+if [ -z "${ACCESS_TOKEN}" ] || [ "${ACCESS_TOKEN}" = "null" ]; then
+  echo "  Failed to get access token"
+  echo "  ${TOKEN_RESPONSE}"
+  exit 1
+fi
+
+echo "  Access token obtained: ${ACCESS_TOKEN:0:20}..."
+echo ""
+
+# --- Step 2: Onboarding (Organization + Organizer Tenant + Admin User + Client) ---
+echo "Step 2: Executing onboarding..."
+
+ONBOARDING_JSON=$(substitute_template "${SCRIPT_DIR}/onboarding-template.json" \
+  "ORGANIZATION_ID" "${ORGANIZATION_ID}" \
+  "ORGANIZATION_NAME" "${ORGANIZATION_NAME}" \
+  "ORGANIZER_TENANT_ID" "${ORGANIZER_TENANT_ID}" \
+  "BASE_URL" "${AUTHORIZATION_SERVER_URL}" \
+  "MTLS_BASE_URL" "${MTLS_BASE_URL}" \
+  "COOKIE_NAME" "${COOKIE_NAME}" \
+  "JWKS_CONTENT" "${JWKS_CONTENT}" \
+  "TOKEN_SIGNING_KEY_ID" "${TOKEN_SIGNING_KEY_ID}" \
+  "ID_TOKEN_SIGNING_KEY_ID" "${ID_TOKEN_SIGNING_KEY_ID}" \
+  "ADMIN_USER_SUB" "${NEW_ADMIN_USER_SUB}" \
+  "ADMIN_EMAIL" "${NEW_ADMIN_EMAIL}" \
+  "ADMIN_PASSWORD" "${NEW_ADMIN_PASSWORD}" \
+  "ADMIN_CLIENT_ID" "${NEW_ADMIN_CLIENT_ID}" \
+  "ADMIN_CLIENT_SECRET" "${NEW_ADMIN_CLIENT_SECRET}")
+
+echo "${ONBOARDING_JSON}" | jq '.' > "${OUTPUT_DIR}/onboarding.json"
+echo "  Saved: ${OUTPUT_DIR}/onboarding.json"
+
+ONBOARDING_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/onboarding?dry_run=${DRY_RUN}" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/onboarding.json")
+
+HTTP_CODE=$(echo "${ONBOARDING_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${ONBOARDING_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Onboarding successful"
+  echo "  Organization: ${ORGANIZATION_ID}"
+  echo "  Organizer Tenant: ${ORGANIZER_TENANT_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 3: Get organizer admin token ---
+echo "Step 3: Getting organizer admin access token..."
+
+ORG_TOKEN_RESPONSE=$(curl -s -X POST \
+  "${AUTHORIZATION_SERVER_URL}/${ORGANIZER_TENANT_ID}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=password" \
+  --data-urlencode "username=${NEW_ADMIN_EMAIL}" \
+  --data-urlencode "password=${NEW_ADMIN_PASSWORD}" \
+  --data-urlencode "client_id=${NEW_ADMIN_CLIENT_ID}" \
+  --data-urlencode "client_secret=${NEW_ADMIN_CLIENT_SECRET}" \
+  --data-urlencode "scope=openid profile email management")
+
+ORG_ACCESS_TOKEN=$(echo "${ORG_TOKEN_RESPONSE}" | jq -r '.access_token')
+
+if [ -z "${ORG_ACCESS_TOKEN}" ] || [ "${ORG_ACCESS_TOKEN}" = "null" ]; then
+  echo "  Failed to get organizer admin token"
+  echo "  ${ORG_TOKEN_RESPONSE}"
+  exit 1
+fi
+
+echo "  Organizer admin token obtained: ${ORG_ACCESS_TOKEN:0:20}..."
+echo ""
+
+# From here, use organization-level APIs with ORG_ACCESS_TOKEN
+ORG_BASE_URL="${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants"
+
+# --- Step 4: Create financial tenant ---
+echo "Step 4: Creating financial tenant (FAPI Advanced + CIBA)..."
+
+PUBLIC_TENANT_ID="${PUBLIC_TENANT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+
+FINANCIAL_TENANT_JSON=$(substitute_template "${SCRIPT_DIR}/financial-tenant-template.json" \
+  "PUBLIC_TENANT_ID" "${PUBLIC_TENANT_ID}" \
+  "ORGANIZATION_NAME" "${ORGANIZATION_NAME}" \
+  "BASE_URL" "${AUTHORIZATION_SERVER_URL}" \
+  "MTLS_BASE_URL" "${MTLS_BASE_URL}" \
+  "UI_BASE_URL" "${UI_BASE_URL}" \
+  "COOKIE_NAME" "${COOKIE_NAME}" \
+  "JWKS_CONTENT" "${JWKS_CONTENT}" \
+  "TOKEN_SIGNING_KEY_ID" "${TOKEN_SIGNING_KEY_ID}")
+
+# Overlay non-string values (integers and booleans) via jq
+FINANCIAL_TENANT_JSON=$(echo "${FINANCIAL_TENANT_JSON}" | jq \
+  --argjson at_duration "${ACCESS_TOKEN_DURATION}" \
+  --argjson idt_duration "${ID_TOKEN_DURATION}" \
+  --argjson rt_duration "${REFRESH_TOKEN_DURATION}" \
+  --argjson par_expires "${PAR_EXPIRES_IN}" \
+  --argjson ciba_expires "${CIBA_REQUEST_EXPIRES_IN}" \
+  --argjson ciba_interval "${CIBA_POLLING_INTERVAL}" \
+  --argjson ciba_user_code "${CIBA_USER_CODE_REQUIRED}" \
+  '
+  .authorization_server.extension.access_token_duration = $at_duration |
+  .authorization_server.extension.id_token_duration = $idt_duration |
+  .authorization_server.extension.refresh_token_duration = $rt_duration |
+  .authorization_server.extension.pushed_authorization_request_expires_in = $par_expires |
+  .authorization_server.extension.backchannel_authentication_request_expires_in = $ciba_expires |
+  .authorization_server.extension.backchannel_authentication_polling_interval = $ciba_interval |
+  .authorization_server.extension.required_backchannel_auth_user_code = $ciba_user_code
+  ')
+
+echo "${FINANCIAL_TENANT_JSON}" | jq '.' > "${OUTPUT_DIR}/financial-tenant.json"
+echo "  Saved: ${OUTPUT_DIR}/financial-tenant.json"
+
+TENANT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/financial-tenant.json")
+
+HTTP_CODE=$(echo "${TENANT_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${TENANT_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Financial tenant created: ${PUBLIC_TENANT_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 5a: Create authentication configuration (initial-registration) ---
+echo "Step 5a: Creating authentication configuration (initial-registration)..."
+
+AUTH_CONFIG_IR_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+REQUIRED_FIELDS_JSON=$(echo "${REGISTRATION_REQUIRED_FIELDS}" | jq -R 'split(",")')
+
+AUTH_CONFIG_IR_JSON=$(jq \
+  --arg id "${AUTH_CONFIG_IR_ID}" \
+  --argjson required "${REQUIRED_FIELDS_JSON}" \
+  '. + {id: $id} | .interactions["initial-registration"].request.schema.required = $required' \
+  "${SCRIPT_DIR}/authentication-config-initial-registration.json")
+
+echo "${AUTH_CONFIG_IR_JSON}" | jq '.' > "${OUTPUT_DIR}/authentication-config-initial-registration.json"
+echo "  Saved: ${OUTPUT_DIR}/authentication-config-initial-registration.json"
+
+AUTH_CONFIG_IR_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/authentication-configurations" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/authentication-config-initial-registration.json")
+
+HTTP_CODE=$(echo "${AUTH_CONFIG_IR_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${AUTH_CONFIG_IR_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Authentication configuration (initial-registration) created: ${AUTH_CONFIG_IR_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 5b: Create authentication configuration (FIDO2) ---
+echo "Step 5b: Creating authentication configuration (FIDO2)..."
+
+AUTH_CONFIG_FIDO2_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+AUTH_CONFIG_FIDO2_JSON=$(substitute_template "${SCRIPT_DIR}/authentication-config-fido2.json" \
+  "FIDO2_RP_ID" "${FIDO2_RP_ID}" \
+  "UI_BASE_URL" "${UI_BASE_URL}" \
+  "ORGANIZATION_NAME" "${ORGANIZATION_NAME}")
+
+AUTH_CONFIG_FIDO2_JSON=$(echo "${AUTH_CONFIG_FIDO2_JSON}" | jq --arg id "${AUTH_CONFIG_FIDO2_ID}" '. + {id: $id}')
+
+echo "${AUTH_CONFIG_FIDO2_JSON}" | jq '.' > "${OUTPUT_DIR}/authentication-config-fido2.json"
+echo "  Saved: ${OUTPUT_DIR}/authentication-config-fido2.json"
+
+AUTH_CONFIG_FIDO2_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/authentication-configurations" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/authentication-config-fido2.json")
+
+HTTP_CODE=$(echo "${AUTH_CONFIG_FIDO2_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${AUTH_CONFIG_FIDO2_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Authentication configuration (FIDO2) created: ${AUTH_CONFIG_FIDO2_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 5c: Create authentication configuration (email) ---
+echo "Step 5c: Creating authentication configuration (email)..."
+
+AUTH_CONFIG_EMAIL_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+AUTH_CONFIG_EMAIL_JSON=$(jq --arg id "${AUTH_CONFIG_EMAIL_ID}" '. + {id: $id}' \
+  "${SCRIPT_DIR}/authentication-config-email.json")
+
+echo "${AUTH_CONFIG_EMAIL_JSON}" | jq '.' > "${OUTPUT_DIR}/authentication-config-email.json"
+echo "  Saved: ${OUTPUT_DIR}/authentication-config-email.json"
+
+AUTH_CONFIG_EMAIL_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/authentication-configurations" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/authentication-config-email.json")
+
+HTTP_CODE=$(echo "${AUTH_CONFIG_EMAIL_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${AUTH_CONFIG_EMAIL_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Authentication configuration (email) created: ${AUTH_CONFIG_EMAIL_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 6a: Create OAuth authentication policy ---
+echo "Step 6a: Creating OAuth authentication policy..."
+
+OAUTH_POLICY_ID="${OAUTH_POLICY_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+jq --arg id "${OAUTH_POLICY_ID}" '. + {id: $id}' "${SCRIPT_DIR}/authentication-policy-oauth.json" > "${OUTPUT_DIR}/authentication-policy-oauth.json"
+echo "  Saved: ${OUTPUT_DIR}/authentication-policy-oauth.json"
+
+OAUTH_POLICY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/authentication-policies" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/authentication-policy-oauth.json")
+
+HTTP_CODE=$(echo "${OAUTH_POLICY_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${OAUTH_POLICY_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  OAuth authentication policy created: ${OAUTH_POLICY_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 6b: Create CIBA authentication policy ---
+echo "Step 6b: Creating CIBA authentication policy..."
+
+CIBA_POLICY_ID="${CIBA_POLICY_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+jq --arg id "${CIBA_POLICY_ID}" '. + {id: $id}' "${SCRIPT_DIR}/authentication-policy-ciba.json" > "${OUTPUT_DIR}/authentication-policy-ciba.json"
+echo "  Saved: ${OUTPUT_DIR}/authentication-policy-ciba.json"
+
+CIBA_POLICY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/authentication-policies" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/authentication-policy-ciba.json")
+
+HTTP_CODE=$(echo "${CIBA_POLICY_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${CIBA_POLICY_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  CIBA authentication policy created: ${CIBA_POLICY_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 7a: Create tls_client_auth client ---
+echo "Step 7a: Creating tls_client_auth client..."
+
+# Generate client JWKS for tls_client_auth (use same key for signing requests)
+TLS_CLIENT_JWKS="${TLS_CLIENT_JWKS:-${JWKS_CONTENT}}"
+
+TLS_CLIENT_JSON=$(substitute_template "${SCRIPT_DIR}/tls-client-auth-client-template.json" \
+  "TLS_CLIENT_ID" "${TLS_CLIENT_ID}" \
+  "TLS_CLIENT_ALIAS" "${TLS_CLIENT_ALIAS}" \
+  "TLS_CLIENT_NAME" "${TLS_CLIENT_NAME}" \
+  "REDIRECT_URI" "${REDIRECT_URI}" \
+  "CERT_SUBJECT_DN" "${CERT_SUBJECT_DN}" \
+  "TLS_CLIENT_JWKS" "${TLS_CLIENT_JWKS}")
+
+echo "${TLS_CLIENT_JSON}" | jq '.' > "${OUTPUT_DIR}/tls-client-auth-client.json"
+echo "  Saved: ${OUTPUT_DIR}/tls-client-auth-client.json"
+
+TLS_CLIENT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/clients" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/tls-client-auth-client.json")
+
+HTTP_CODE=$(echo "${TLS_CLIENT_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${TLS_CLIENT_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  tls_client_auth client created: ${TLS_CLIENT_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 7b: Create private_key_jwt client ---
+echo "Step 7b: Creating private_key_jwt client..."
+
+PKJ_CLIENT_JWKS="${PKJ_CLIENT_JWKS:-${JWKS_CONTENT}}"
+
+PKJ_CLIENT_JSON=$(substitute_template "${SCRIPT_DIR}/private-key-jwt-client-template.json" \
+  "PKJ_CLIENT_ID" "${PKJ_CLIENT_ID}" \
+  "PKJ_CLIENT_ALIAS" "${PKJ_CLIENT_ALIAS}" \
+  "PKJ_CLIENT_NAME" "${PKJ_CLIENT_NAME}" \
+  "REDIRECT_URI" "${REDIRECT_URI}" \
+  "PKJ_CLIENT_JWKS" "${PKJ_CLIENT_JWKS}")
+
+echo "${PKJ_CLIENT_JSON}" | jq '.' > "${OUTPUT_DIR}/private-key-jwt-client.json"
+echo "  Saved: ${OUTPUT_DIR}/private-key-jwt-client.json"
+
+PKJ_CLIENT_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/clients" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/private-key-jwt-client.json")
+
+HTTP_CODE=$(echo "${PKJ_CLIENT_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${PKJ_CLIENT_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  private_key_jwt client created: ${PKJ_CLIENT_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 8: Create test user ---
+echo "Step 8: Creating test user..."
+
+FINANCIAL_USER_JSON=$(substitute_template "${SCRIPT_DIR}/financial-user-template.json" \
+  "FINANCIAL_USER_SUB" "${FINANCIAL_USER_SUB}" \
+  "FINANCIAL_USER_NAME" "${FINANCIAL_USER_NAME}" \
+  "FINANCIAL_USER_EMAIL" "${FINANCIAL_USER_EMAIL}" \
+  "FINANCIAL_USER_PHONE" "${FINANCIAL_USER_PHONE}" \
+  "FINANCIAL_USER_PASSWORD" "${FINANCIAL_USER_PASSWORD}" \
+  "FINANCIAL_DEVICE_ID" "${FINANCIAL_DEVICE_ID}" \
+  "FINANCIAL_DEVICE_TOKEN" "${FINANCIAL_DEVICE_TOKEN}")
+
+echo "${FINANCIAL_USER_JSON}" | jq '.' > "${OUTPUT_DIR}/financial-user.json"
+echo "  Saved: ${OUTPUT_DIR}/financial-user.json"
+
+USER_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/users" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/financial-user.json")
+
+HTTP_CODE=$(echo "${USER_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${USER_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Test user created: ${FINANCIAL_USER_EMAIL}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Summary ---
+echo "=========================================="
+echo "Setup Complete!"
+echo "=========================================="
+echo ""
+echo "FAPI Settings:"
+echo "  mTLS:                 Enabled (certificate-bound tokens)"
+echo "  Signed Request:       Required (${SIGNING_ALGORITHM})"
+echo "  PAR:                  Enabled (expires in ${PAR_EXPIRES_IN}s)"
+echo "  JARM:                 Enabled (${SIGNING_ALGORITHM})"
+echo "  CIBA:                 Enabled (poll mode, expires in ${CIBA_REQUEST_EXPIRES_IN}s)"
+echo "  Token duration:       AT=${ACCESS_TOKEN_DURATION}s, IDT=${ID_TOKEN_DURATION}s, RT=${REFRESH_TOKEN_DURATION}s"
+echo "  FAPI Baseline scopes: read, account"
+echo "  FAPI Advance scopes:  write, transfers"
+echo ""
+echo "Created Resources:"
+echo "  Organization ID:      ${ORGANIZATION_ID}"
+echo "  Organizer Tenant ID:  ${ORGANIZER_TENANT_ID}"
+echo "  Financial Tenant ID:  ${PUBLIC_TENANT_ID}"
+echo ""
+echo "Admin User:"
+echo "  Email:    ${NEW_ADMIN_EMAIL}"
+echo "  Password: ${NEW_ADMIN_PASSWORD}"
+echo ""
+echo "Admin Client (Organizer Tenant):"
+echo "  Tenant ID:     ${ORGANIZER_TENANT_ID}"
+echo "  Client ID:     ${NEW_ADMIN_CLIENT_ID}"
+echo "  Client Secret: ${NEW_ADMIN_CLIENT_SECRET}"
+echo ""
+echo "tls_client_auth Client (Financial Tenant):"
+echo "  Tenant ID:     ${PUBLIC_TENANT_ID}"
+echo "  Client ID:     ${TLS_CLIENT_ID}"
+echo "  Alias:         ${TLS_CLIENT_ALIAS}"
+echo "  Subject DN:    ${CERT_SUBJECT_DN}"
+echo "  Redirect URI:  ${REDIRECT_URI}"
+echo ""
+echo "private_key_jwt Client (Financial Tenant):"
+echo "  Tenant ID:     ${PUBLIC_TENANT_ID}"
+echo "  Client ID:     ${PKJ_CLIENT_ID}"
+echo "  Alias:         ${PKJ_CLIENT_ALIAS}"
+echo "  Redirect URI:  ${REDIRECT_URI}"
+echo ""
+echo "Test User (Financial Tenant):"
+echo "  Email:    ${FINANCIAL_USER_EMAIL}"
+echo "  Password: ${FINANCIAL_USER_PASSWORD}"
+echo "  Device:   ${FINANCIAL_DEVICE_ID}"
+echo ""
+echo "Generated JSON files:"
+echo "  ${OUTPUT_DIR}/onboarding.json"
+echo "  ${OUTPUT_DIR}/financial-tenant.json"
+echo "  ${OUTPUT_DIR}/authentication-config-initial-registration.json"
+echo "  ${OUTPUT_DIR}/authentication-config-fido2.json"
+echo "  ${OUTPUT_DIR}/authentication-policy-oauth.json"
+echo "  ${OUTPUT_DIR}/authentication-policy-ciba.json"
+echo "  ${OUTPUT_DIR}/tls-client-auth-client.json"
+echo "  ${OUTPUT_DIR}/private-key-jwt-client.json"
+echo "  ${OUTPUT_DIR}/financial-user.json"
+echo ""
+echo "Verify FAPI compliance:"
+echo "  curl ${AUTHORIZATION_SERVER_URL}/${PUBLIC_TENANT_ID}/.well-known/openid-configuration | jq '.tls_client_certificate_bound_access_tokens'"
+echo ""
+echo "Generate client certificates:"
+echo "  ./generate-certs.sh"
+echo ""

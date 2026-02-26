@@ -1,0 +1,203 @@
+{
+  "tenant": {
+    "id": "${PUBLIC_TENANT_ID}",
+    "name": "${ORGANIZATION_NAME} Financial Tenant",
+    "type": "PUBLIC",
+    "domain": "${BASE_URL}",
+    "authorization_provider": "idp-server",
+    "ui_config": {
+      "base_url": "${UI_BASE_URL}",
+      "signin_page": "/signin/fido2/",
+      "signup_page": "/signup/"
+    },
+    "session_config": {
+      "cookie_name": "${COOKIE_NAME}",
+      "cookie_same_site": "Lax",
+      "use_secure_cookie": true,
+      "use_http_only_cookie": true,
+      "cookie_path": "/"
+    },
+    "cors_config": {
+      "allow_origins": [
+        "${BASE_URL}",
+        "${MTLS_BASE_URL}",
+        "${UI_BASE_URL}"
+      ],
+      "allow_headers": "Authorization, Content-Type, Accept, x-device-id, X-SSL-Client-Cert",
+      "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "allow_credentials": true
+    },
+    "security_event_log_config": {
+      "format": "structured_json",
+      "stage": "processed",
+      "include_user_id": true,
+      "include_user_name": true,
+      "include_user_ex_sub": true,
+      "include_client_id": true,
+      "include_ip_address": true,
+      "include_user_agent": true,
+      "include_event_detail": true,
+      "include_user_detail": true,
+      "include_user_pii": false,
+      "include_trace_context": true,
+      "tracing_enabled": true,
+      "persistence_enabled": true
+    },
+    "identity_policy_config": {
+      "identity_unique_key_type": "EMAIL",
+      "authentication_device_rule": {
+        "max_devices": 1,
+        "required_identity_verification": true
+      }
+    }
+  },
+  "authorization_server": {
+    "issuer": "${BASE_URL}/${PUBLIC_TENANT_ID}",
+    "authorization_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/authorizations",
+    "token_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/tokens",
+    "userinfo_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/userinfo",
+    "jwks_uri": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/jwks",
+    "introspection_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/tokens/introspection",
+    "revocation_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/tokens/revocation",
+    "pushed_authorization_request_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/authorizations/push",
+    "backchannel_authentication_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/backchannel/authentications",
+    "mtls_endpoint_aliases": {
+      "pushed_authorization_request_endpoint": "${MTLS_BASE_URL}/${PUBLIC_TENANT_ID}/v1/authorizations/push",
+      "token_endpoint": "${MTLS_BASE_URL}/${PUBLIC_TENANT_ID}/v1/tokens",
+      "userinfo_endpoint": "${MTLS_BASE_URL}/${PUBLIC_TENANT_ID}/v1/userinfo",
+      "introspection_endpoint": "${MTLS_BASE_URL}/${PUBLIC_TENANT_ID}/v1/tokens/introspection",
+      "revocation_endpoint": "${MTLS_BASE_URL}/${PUBLIC_TENANT_ID}/v1/tokens/revocation",
+      "backchannel_authentication_endpoint": "${MTLS_BASE_URL}/${PUBLIC_TENANT_ID}/v1/backchannel/authentications"
+    },
+    "jwks": "${JWKS_CONTENT}",
+    "token_endpoint_auth_methods_supported": [
+      "private_key_jwt",
+      "tls_client_auth",
+      "self_signed_tls_client_auth"
+    ],
+    "token_endpoint_auth_signing_alg_values_supported": [
+      "ES256",
+      "PS256"
+    ],
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token",
+      "urn:openid:params:grant-type:ciba"
+    ],
+    "scopes_supported": [
+      "openid",
+      "profile",
+      "email",
+      "address",
+      "phone",
+      "offline_access",
+      "account",
+      "transfers",
+      "read",
+      "write"
+    ],
+    "response_types_supported": [
+      "code",
+      "code id_token"
+    ],
+    "response_modes_supported": [
+      "query",
+      "fragment",
+      "jwt",
+      "query.jwt",
+      "fragment.jwt"
+    ],
+    "subject_types_supported": [
+      "public",
+      "pairwise"
+    ],
+    "id_token_signing_alg_values_supported": [
+      "ES256",
+      "PS256"
+    ],
+    "userinfo_signing_alg_values_supported": [
+      "ES256",
+      "PS256"
+    ],
+    "request_object_signing_alg_values_supported": [
+      "ES256",
+      "PS256",
+      "RS256"
+    ],
+    "authorization_signing_alg_values_supported": [
+      "ES256",
+      "PS256"
+    ],
+    "claims_parameter_supported": true,
+    "claims_supported": [
+      "sub",
+      "iss",
+      "auth_time",
+      "acr",
+      "name",
+      "given_name",
+      "family_name",
+      "email",
+      "email_verified",
+      "phone_number",
+      "phone_number_verified",
+      "address",
+      "birthdate"
+    ],
+    "acr_values_supported": [
+      "urn:mace:incommon:iap:bronze",
+      "urn:mace:incommon:iap:silver",
+      "urn:mace:incommon:iap:gold",
+      "urn:openbanking:psd2:sca",
+      "urn:openbanking:psd2:ca"
+    ],
+    "backchannel_token_delivery_modes_supported": [
+      "poll",
+      "ping"
+    ],
+    "backchannel_authentication_request_signing_alg_values_supported": [
+      "ES256",
+      "PS256"
+    ],
+    "backchannel_user_code_parameter_supported": true,
+    "authorization_details_types_supported": [
+      "payment_initiation",
+      "account_information"
+    ],
+    "tls_client_certificate_bound_access_tokens": true,
+    "require_signed_request_object": true,
+    "authorization_response_iss_parameter_supported": true,
+    "code_challenge_methods_supported": [
+      "S256"
+    ],
+    "token_signed_key_id": "${TOKEN_SIGNING_KEY_ID}",
+    "id_token_signed_key_id": "${TOKEN_SIGNING_KEY_ID}",
+    "extension": {
+      "access_token_type": "JWT",
+      "token_signed_key_id": "${TOKEN_SIGNING_KEY_ID}",
+      "id_token_signed_key_id": "${TOKEN_SIGNING_KEY_ID}",
+      "access_token_duration": 300,
+      "id_token_duration": 300,
+      "refresh_token_duration": 2592000,
+      "id_token_strict_mode": true,
+      "default_max_age": 300,
+      "authorization_code_valid_duration": 60,
+      "backchannel_authentication_request_expires_in": 120,
+      "backchannel_authentication_polling_interval": 5,
+      "required_backchannel_auth_user_code": false,
+      "fapi_baseline_scopes": [
+        "read",
+        "account"
+      ],
+      "fapi_advance_scopes": [
+        "write",
+        "transfers"
+      ],
+      "required_identity_verification_scopes": [
+        "transfers"
+      ],
+      "oauth_authorization_request_expires_in": 300,
+      "pushed_authorization_request_expires_in": 60
+    }
+  }
+}
