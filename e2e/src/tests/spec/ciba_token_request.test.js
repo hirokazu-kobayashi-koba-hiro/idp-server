@@ -2,6 +2,8 @@ import { describe, expect, it } from "@jest/globals";
 
 import {
   getAuthenticationDeviceAuthenticationTransaction,
+  getUserinfo,
+  getJwks,
   postAuthenticationDeviceInteraction,
   requestBackchannelAuthentications,
   requestToken
@@ -11,12 +13,89 @@ import {
   clientSecretPostClient,
   serverConfig,
 } from "../testConfig";
-import { sleep } from "../../lib/util";
+import { createBearerHeader, sleep } from "../../lib/util";
 import { createClientAssertion } from "../../lib/oauth";
+import { verifyAndDecodeJwt } from "../../lib/jose";
 import { get } from "../../lib/http";
 
 describe("OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0", () => {
   const ciba = serverConfig.ciba;
+
+  describe("10. Token Success Response", () => {
+    it("should return userinfo claims (profile, email) when scope includes profile and email", async () => {
+      const backchannelAuthenticationResponse =
+        await requestBackchannelAuthentications({
+          endpoint: serverConfig.backchannelAuthenticationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          scope: "openid profile email" + (clientSecretPostClient.scope ? " " + clientSecretPostClient.scope : ""),
+          bindingMessage: ciba.bindingMessage,
+          userCode: ciba.userCode,
+          loginHint: ciba.loginHint,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+      console.log(backchannelAuthenticationResponse.data);
+      expect(backchannelAuthenticationResponse.status).toBe(200);
+
+      const authenticationTransactionResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: serverConfig.authenticationDeviceEndpoint,
+        deviceId: serverConfig.ciba.authenticationDeviceId,
+        params: {
+          "attributes.auth_req_id": backchannelAuthenticationResponse.data.auth_req_id
+        },
+      });
+      console.log(authenticationTransactionResponse.data);
+      expect(authenticationTransactionResponse.status).toBe(200);
+
+      const authenticationTransaction = authenticationTransactionResponse.data.list[0];
+      console.log(authenticationTransaction);
+
+      const completeResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: authenticationTransaction.flow,
+        id: authenticationTransaction.id,
+        interactionType: "password-authentication",
+        body: {
+          username: serverConfig.ciba.username,
+          password: serverConfig.ciba.userCode,
+        }
+      });
+      console.log(completeResponse.data);
+      expect(completeResponse.status).toBe(200);
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "urn:openid:params:grant-type:ciba",
+        authReqId: backchannelAuthenticationResponse.data.auth_req_id,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data).toHaveProperty("id_token");
+
+      const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+      expect(jwksResponse.status).toBe(200);
+
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.id_token,
+        jwks: jwksResponse.data,
+      });
+      console.log(decodedIdToken);
+      expect(decodedIdToken.payload).toHaveProperty("sub");
+
+      const headers = createBearerHeader(tokenResponse.data.access_token);
+      const userinfoResponse = await getUserinfo({
+        endpoint: serverConfig.userinfoEndpoint,
+        authorizationHeader: headers,
+      });
+      console.log(userinfoResponse.data);
+      expect(userinfoResponse.status).toBe(200);
+      expect(userinfoResponse.data).toHaveProperty("sub");
+      expect(userinfoResponse.data).toHaveProperty("email");
+      expect(userinfoResponse.data).toHaveProperty("name");
+    });
+  });
 
   describe("11. Token Error Response", () => {
     it("authorization_pending The authorization request is still pending as the end-user hasn't yet been authenticated.", async () => {
