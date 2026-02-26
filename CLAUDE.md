@@ -110,10 +110,10 @@ docker compose up -d --build idp-server-1 idp-server-2
 
 | トピック | 参照先 |
 |---------|--------|
-| 実装パターン詳細 | skill: `architecture` |
-| プラットフォーム基盤 | skill: `platform` |
-| DB実装差異 | skill: `database-adapter` |
-| Spring Boot統合 | skill: `springboot-adapter` |
+| 実装パターン詳細 | skill: `dev-architecture` |
+| プラットフォーム基盤 | skill: `dev-platform` |
+| DB実装差異 | skill: `dev-database` |
+| Spring Boot統合 | skill: `dev-springboot` |
 | 商用デプロイ | `content_08_ops/commercial-deployment/` |
 
 ## 実装チェックリスト
