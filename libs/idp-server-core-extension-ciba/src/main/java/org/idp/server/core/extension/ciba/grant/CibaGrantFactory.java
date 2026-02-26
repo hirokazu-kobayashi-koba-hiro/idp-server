@@ -16,6 +16,7 @@
 
 package org.idp.server.core.extension.ciba.grant;
 
+import java.util.List;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
@@ -23,7 +24,12 @@ import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResp
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrantBuilder;
+import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
+import org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.id_token.RequestedIdTokenClaims;
+import org.idp.server.core.openid.identity.id_token.RequestedUserinfoClaims;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
@@ -31,6 +37,7 @@ import org.idp.server.core.openid.oauth.type.ciba.Interval;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.oauth.type.oauth.ResponseType;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
@@ -63,12 +70,28 @@ public class CibaGrantFactory {
     Scopes scopes = context.scopes();
     AuthorizationDetails authorizationDetails = context.authorizationDetails();
 
+    AuthorizationServerConfiguration serverConfig = context.authorizationServerConfiguration();
+    List<String> supportedClaims = serverConfig.claimsSupported();
+    boolean idTokenStrictMode = serverConfig.isIdTokenStrictMode();
+
+    GrantIdTokenClaims grantIdTokenClaims =
+        GrantIdTokenClaims.create(
+            scopes,
+            ResponseType.undefined,
+            supportedClaims,
+            new RequestedIdTokenClaims(),
+            idTokenStrictMode);
+    GrantUserinfoClaims grantUserinfoClaims =
+        GrantUserinfoClaims.create(scopes, supportedClaims, new RequestedUserinfoClaims());
+
     AuthorizationGrantBuilder builder =
         new AuthorizationGrantBuilder(tenantIdentifier, requestedClientId, GrantType.ciba, scopes)
             .add(clientAttributes)
             .add(user)
             .add(authentication)
-            .add(authorizationDetails);
+            .add(authorizationDetails)
+            .add(grantIdTokenClaims)
+            .add(grantUserinfoClaims);
 
     AuthorizationGrant authorizationGrant = builder.build();
     AuthReqId authReqId = response.authReqId();
