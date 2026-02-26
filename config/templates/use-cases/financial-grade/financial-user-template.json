@@ -1,0 +1,21 @@
+{
+  "sub": "${FINANCIAL_USER_SUB}",
+  "provider_id": "idp-server",
+  "name": "${FINANCIAL_USER_NAME}",
+  "email": "${FINANCIAL_USER_EMAIL}",
+  "email_verified": true,
+  "phone_number": "${FINANCIAL_USER_PHONE}",
+  "phone_number_verified": true,
+  "authentication_devices": [
+    {
+      "id": "${FINANCIAL_DEVICE_ID}",
+      "platform": "iOS",
+      "os": "iOS 18.0",
+      "model": "iPhone15",
+      "notification_channel": "fcm",
+      "notification_token": "${FINANCIAL_DEVICE_TOKEN}",
+      "priority": 1
+    }
+  ],
+  "raw_password": "${FINANCIAL_USER_PASSWORD}"
+}
