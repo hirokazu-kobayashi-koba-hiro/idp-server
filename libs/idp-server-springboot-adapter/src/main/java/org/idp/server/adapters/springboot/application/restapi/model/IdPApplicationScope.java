@@ -24,6 +24,7 @@ public enum IdPApplicationScope implements GrantedAuthority {
   user_management,
   identity_verification_application,
   identity_verification_application_delete,
+  identity_verification_result,
   identity_credentials_update,
   unknown;
 

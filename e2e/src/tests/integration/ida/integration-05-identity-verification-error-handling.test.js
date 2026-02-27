@@ -45,7 +45,7 @@ describe("Identity Verification Error Handling", () => {
       federationServerConfig: federationServerConfig,
       client: clientSecretPostClient,
       adminClient: clientSecretPostClient,
-      scope: "openid profile phone email identity_verification_application identity_verification_application_delete " + clientSecretPostClient.identityVerificationScope
+      scope: "openid profile phone email identity_verification_application identity_verification_application_delete identity_verification_result " + clientSecretPostClient.identityVerificationScope
     });
 
     testUser = userResult.user;

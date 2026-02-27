@@ -168,7 +168,7 @@ export const clientSecretPostClient = {
     "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
   postLogoutRedirectUri: "https://client.example.org/logout-callback",
-  scope: "account management identity_verification_application identity_verification_application_delete claims:authentication_devices claims:ex_sub ",
+  scope: "account management identity_verification_application identity_verification_application_delete identity_verification_result claims:authentication_devices claims:ex_sub ",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
   identityVerificationScope: "transfers",
@@ -570,7 +570,7 @@ export const unsupportedClient = {
 export const publicClient = {
   clientId: "publicClient",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
-  scope: "account identity_verification_application claims:authentication_devices claims:ex_sub ",
+  scope: "account identity_verification_application identity_verification_result claims:authentication_devices claims:ex_sub ",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
   identityVerificationScope: "transfers",

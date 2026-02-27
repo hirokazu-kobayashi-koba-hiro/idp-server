@@ -70,6 +70,8 @@ public class SecurityConfig {
                 .requestMatchers(
                     HttpMethod.DELETE, "/*/v1/me/identity-verification/applications/*/*")
                 .hasAuthority(IdPApplicationScope.identity_verification_application_delete.name())
+                .requestMatchers("/*/v1/me/identity-verification/results")
+                .hasAuthority(IdPApplicationScope.identity_verification_result.name())
                 .anyRequest()
                 .permitAll());
 
