@@ -17,7 +17,7 @@ description: 管理API（Control Plane）の開発・修正を行う際に使用
 Control Planeは、idp-serverの管理API層。システム全体の設定管理、組織・テナント管理、リソース構成を行う。
 - **2層構造**: System Level（プラットフォーム全体）、Organization Level（組織別）
 - **Dry-runモード**: 全変更操作でサポート
-- **権限モデル**: 40+のデフォルト管理者権限
+- **権限モデル**: 73のデフォルト管理者権限（詳細は `spec-rbac`）
 
 ## モジュール構成
 
@@ -163,18 +163,11 @@ public class IdpServerStarterContextCreator {
 
 ## 権限モデル
 
-`DefaultAdminPermission` 列挙型（45権限）で管理 API の権限を定義。値は `idp:` プレフィックス付き（例: `idp:client:create`）。
+`DefaultAdminPermission` 列挙型（73権限）で管理APIの権限を定義。`idp:resource:action` 形式。ワイルドカードマッチング（`idp:*`, `idp:user:*`）をサポート。
 
-### 権限カテゴリ
+- **検証**: `ApiPermissionVerifier`（システムレベル）、`OrganizationAccessVerifier`（組織レベル4段階検証）
+- **カスタム権限**: `idp:` 名前空間は予約。カスタムは任意の名前空間を使用可能
 
-ORGANIZATION, TENANT_INVITATION, TENANT, AUTHORIZATION_SERVER, CLIENT, USER, PERMISSION, ROLE, AUTHENTICATION_CONFIG, AUTHENTICATION_POLICY, IDENTITY_VERIFICATION_CONFIG, FEDERATION_CONFIG, SECURITY_EVENT_HOOK_CONFIG, SECURITY_EVENT_HOOK, SECURITY_EVENT, AUDIT_LOG, AUTHENTICATION_TRANSACTION, AUTHENTICATION_INTERACTION, ADMIN_USER, SESSION, GRANT, SYSTEM, CONTROL_PLANE_ALL (ワイルドカード)
+**詳細は `spec-rbac` スキルを参照。**
 
-### 権限判定メソッド
-
-- `isAdminUserPermission()`: admin-user スコープの権限か
-- `isPublicUserPermission()`: user スコープの権限か
-- `isSystemPermission()`: システムレベル権限か
-- `isWildcard()`: ワイルドカード権限か
-- `toTenantPermissions()`: システム権限を除外
-
-**探索起点**: `libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/admin/DefaultAdminPermission.java`
+**探索起点**: `libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/base/definition/DefaultAdminPermission.java`
