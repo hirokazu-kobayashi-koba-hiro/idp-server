@@ -64,13 +64,34 @@ libs/
 
 **注意**: 統一されたEventHookExecutorインターフェースではなく、各フックタイプごとに個別のExecutorクラスが存在します。
 
-## 処理フロー
+## データライフサイクル
 
 ```
-[認証/認可イベント発生]
+[1. 発生] 認証/認可イベント発生（Application Plane）
     ↓
-[SecurityEvent発行] (@Async)
+[2. 発行] SecurityEvent発行（@Async、非同期）
     ↓
+[3. 処理] SecurityEventHandler.handle()
+    ├── DB保存（security_event テーブル）
+    ├── 統計データ更新（statistics_events）
+    ├── アクティブユーザー更新（DAU/MAU/YAU）
+    ├── ログ出力
+    └── フック実行（Slack/Datadog/Webhook/SSF）
+    ↓  ※保存失敗時: SecurityEventRetryScheduler（60秒間隔、最大3回）
+[4. 保持] アクティブパーティションに保存（日単位RANGE、90日間）
+    ↓  ※PostgreSQL: pg_partman 毎日 02:00 UTC / MySQL: Event Scheduler 毎日 02:30 AM
+[5. アーカイブ] 90日超過パーティションをDETACH → archiveスキーマに移動
+    ↓  ※PostgreSQL: 毎日 03:00 UTC
+[6. エクスポート] 外部ストレージへエクスポート（stub実装、S3/GCS対応可）
+    ↓  ※エクスポート成功時のみ次のステップへ
+[7. 削除] パーティションDROP
+```
+
+## 処理フロー（詳細）
+
+ステップ3の `SecurityEventHandler.handle()` の詳細:
+
+```
 [SecurityEventHandler.handle()]
     ├── [1] イベントをDBに保存
     ├── [2] 統計データ更新（statistics_events）
@@ -165,6 +186,47 @@ public interface SecurityEventHook {
   }
 }
 ```
+
+## パーティショニング・アーカイブ（ライフサイクル ステップ4-7）
+
+### パーティショニング（ステップ4: 保持）
+
+`security_event` と `security_event_hook_results` は日単位の RANGE パーティショニングで管理。保持期間は90日。
+
+| テーブル | パーティション | 保持期間 | 主キー |
+|----------|:----------:|:-------:|--------|
+| `security_event` | 日単位 | 90日 | `(id, created_at)` |
+| `security_event_hook_results` | 日単位 | 90日 | `(id, created_at)` |
+
+- **PostgreSQL**: pg_partman で自動管理（premake = 90日分先行作成）
+- **MySQL**: Event Scheduler + ストアドプロシージャで自動管理
+
+### アーカイブ・エクスポート・削除（ステップ5-7）
+
+90日超過データは自動アーカイブ後に削除される。
+
+**PostgreSQL:**
+```
+pg_partman retention (毎日 02:00 UTC)
+  → [5] 90日超過パーティションを archive スキーマに DETACH
+archive.process_archived_partitions() (毎日 03:00 UTC)
+  → [6] 外部ストレージにエクスポート → [7] 成功時 DROP
+```
+
+**MySQL:**
+```
+Event Scheduler (毎日 02:30 AM)
+  → [5] maintain_security_event_partitions()
+  → [6] EXCHANGE PARTITION → archive テーブル → [7] DROP
+```
+
+外部ストレージへのエクスポートはスタブ実装（S3/GCS等に対応可能）。
+
+**探索起点:**
+- `libs/idp-server-database/postgresql/V0_9_21_1__add_event_partitioning.sql`
+- `libs/idp-server-database/postgresql/V0_9_21_3__archive_support.sql`
+- `libs/idp-server-database/postgresql/operation/setup-pg-cron-jobs.sql`
+- `libs/idp-server-springboot-adapter/.../event/SecurityEventRetryScheduler.java`
 
 ## 通知アダプター
 
