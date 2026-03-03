@@ -203,15 +203,13 @@ S3はアクセス頻度とコスト要件に応じた複数のストレージク
 ├── 不明・変動する
 │   └── S3 Intelligent-Tiering（自動最適化）
 ├── 低頻度（月次程度）
-│   ├── 複数AZの耐久性が必要？
-│   │   ├── Yes → S3 Standard-IA
-│   │   └── No  → S3 One Zone-IA
-│   └──
+│   └── 複数AZの耐久性が必要？
+│       ├── Yes → S3 Standard-IA
+│       └── No  → S3 One Zone-IA
 ├── アーカイブ（年次以下）
-│   ├── 即時取り出しが必要？
-│   │   ├── Yes → Glacier Instant Retrieval
-│   │   └── No  → Glacier Flexible Retrieval
-│   └──
+│   └── 即時取り出しが必要？
+│       ├── Yes → Glacier Instant Retrieval
+│       └── No  → Glacier Flexible Retrieval
 └── 長期保存（コンプライアンス）
     └── Glacier Deep Archive
 ```

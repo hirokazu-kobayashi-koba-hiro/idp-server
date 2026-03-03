@@ -680,7 +680,7 @@ idp-server-infra/
 - ツール選定はクラウド戦略、チーム規模、複雑さに基づいて判断
 
 ## 次のステップ
-- [サーバーレス](../02-computing/aws-serverless.md): Lambda、API Gateway、SQS/SNSを用いたイベント駆動アーキテクチャを学ぶ
+- [Well-Architected Framework](aws-well-architected.md): IaCで構築したインフラが6つの柱に沿っているかを設計レビューする
 
 ## 参考リソース
 - [AWS CloudFormation ユーザーガイド](https://docs.aws.amazon.com/cloudformation/)
