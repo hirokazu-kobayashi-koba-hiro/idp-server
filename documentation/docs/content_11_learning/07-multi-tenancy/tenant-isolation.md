@@ -1,3 +1,7 @@
+---
+sidebar_position: 3
+---
+
 # データパーティション化とテナント分離
 
 ## このドキュメントの目的
@@ -332,6 +336,11 @@ List<User> users = jdbcTemplate.query("SELECT * FROM users");
 - [AWS SaaS Architecture Fundamentals - Data Partitioning](https://docs.aws.amazon.com/whitepapers/latest/saas-architecture-fundamentals/data-partitioning.html)
 - [AWS SaaS Lens](https://docs.aws.amazon.com/wellarchitected/latest/saas-lens/saas-lens.html)
 - [PostgreSQL Row-Level Security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html)
+
+### 次のステップ
+
+1. [テナントオンボーディング設計](./tenant-onboarding.md) - テナントをどう作り・管理し・削除するか
+2. [マルチテナントセキュリティ](./tenant-security.md) - データ分離以外のセキュリティ全般
 
 ---
 
