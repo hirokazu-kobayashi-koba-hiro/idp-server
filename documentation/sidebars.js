@@ -978,7 +978,8 @@ const sidebars = {
               collapsed: true,
               items: [
                 "content_11_learning/aws/networking/aws-load-balancing",
-                "content_11_learning/aws/networking/aws-route53-cloudfront"
+                "content_11_learning/aws/networking/aws-route53-cloudfront",
+                "content_11_learning/aws/networking/aws-api-gateway"
               ]
             },
             {
