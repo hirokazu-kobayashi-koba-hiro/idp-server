@@ -937,6 +937,78 @@ const sidebars = {
               ]
             }
           ]
+        },
+        {
+          type: "category",
+          label: "AWS",
+          items: [
+            "content_11_learning/aws/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/aws/fundamentals/aws-fundamentals",
+                "content_11_learning/aws/fundamentals/aws-iam",
+                "content_11_learning/aws/fundamentals/aws-vpc-networking"
+              ]
+            },
+            {
+              type: "category",
+              label: "コンピューティング",
+              collapsed: true,
+              items: [
+                "content_11_learning/aws/computing/aws-ec2",
+                "content_11_learning/aws/computing/aws-container-services",
+                "content_11_learning/aws/computing/aws-serverless"
+              ]
+            },
+            {
+              type: "category",
+              label: "データ・ストレージ",
+              collapsed: true,
+              items: [
+                "content_11_learning/aws/data-storage/aws-rds-database",
+                "content_11_learning/aws/data-storage/aws-s3-storage"
+              ]
+            },
+            {
+              type: "category",
+              label: "ネットワーク・配信",
+              collapsed: true,
+              items: [
+                "content_11_learning/aws/networking/aws-load-balancing",
+                "content_11_learning/aws/networking/aws-route53-cloudfront"
+              ]
+            },
+            {
+              type: "category",
+              label: "セキュリティ・監視",
+              collapsed: true,
+              items: [
+                "content_11_learning/aws/security-monitoring/aws-security-services",
+                "content_11_learning/aws/security-monitoring/aws-monitoring"
+              ]
+            },
+            {
+              type: "category",
+              label: "運用・設計",
+              collapsed: true,
+              items: [
+                "content_11_learning/aws/operations/aws-iac",
+                "content_11_learning/aws/operations/aws-well-architected",
+                "content_11_learning/aws/operations/aws-well-architected-large-scale"
+              ]
+            },
+            {
+              type: "category",
+              label: "コラム",
+              collapsed: true,
+              items: [
+                "content_11_learning/aws/aws-audit-log-design"
+              ]
+            }
+          ]
         }
       ]
     },
