@@ -92,6 +92,7 @@ IDサービスのデプロイと運用に必要な知識を重点的に学びま
 
 ## 関連ドキュメント
 
+- [CI/CD](../28-ci-cd/) - パイプライン設計・デプロイ戦略（Argo CD + EKS の具体例あり）
 - [商用デプロイガイド](../../content_08_ops/commercial-deployment/) - 本番環境へのデプロイ
 - [パフォーマンステスト](../../content_08_ops/ops-02-performance-test.md) - 負荷テスト
 
@@ -117,5 +118,7 @@ IDサービスのデプロイと運用に必要な知識を重点的に学びま
 ### ツール
 - [Helm](https://helm.sh/) - Kubernetesパッケージマネージャー
 - [Kustomize](https://kustomize.io/) - マニフェスト管理
+- [Argo CD](https://argo-cd.readthedocs.io/) - Kubernetes向けGitOps継続的デリバリー
+- [Flux CD](https://fluxcd.io/) - GitOpsツールキット
 - [Lens](https://k8slens.dev/) - Kubernetes IDE
 - [k9s](https://k9scli.io/) - ターミナルUI

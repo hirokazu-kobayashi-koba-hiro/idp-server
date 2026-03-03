@@ -25,5 +25,5 @@ jobs:
       - name: Run license header check
         run: ./gradlew checkLicenseHeader
 
-      - name: Run Build check
-        run: ./gradlew build -x test
+      - name: Run Build and Test
+        run: ./gradlew build
