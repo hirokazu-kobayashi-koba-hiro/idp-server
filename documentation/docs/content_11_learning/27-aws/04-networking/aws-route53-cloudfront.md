@@ -596,6 +596,7 @@ CloudFrontの活用ポイント:
 
 ## 次のステップ
 
+- [API Gateway](aws-api-gateway.md): スロットリング、使用量プラン、WAFとの多層防御を学ぶ
 - [セキュリティサービス](../05-security-monitoring/aws-security-services.md): KMS、WAF、Shield等のセキュリティ対策を学ぶ
 
 ---
