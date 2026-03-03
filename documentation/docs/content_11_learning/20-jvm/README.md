@@ -216,4 +216,4 @@ java -version
 JVMの基礎を学んだ後は、以下のドキュメントに進みましょう：
 
 - [PostgreSQL 学習ガイド](../11-postgresql/README.md) - JDBC・コネクションプーリングの理解に
-- [Kubernetes 学習ガイド](../13-kubernetes/README.md) - コンテナ化されたJavaアプリの運用に
+- [Kubernetes 学習ガイド](../13-docker-kubernetes/README.md) - コンテナ化されたJavaアプリの運用に

@@ -441,16 +441,16 @@ const sidebars = {
           type: "category",
           label: "コンテナ/Kubernetes",
           items: [
-            "content_11_learning/kubernetes/README",
+            "content_11_learning/docker-kubernetes/README",
             {
               type: "category",
               label: "Docker基礎",
               collapsed: true,
               items: [
-                "content_11_learning/kubernetes/container-basics",
-                "content_11_learning/kubernetes/dockerfile-best-practices",
-                "content_11_learning/kubernetes/docker-compose",
-                "content_11_learning/kubernetes/docker-commands"
+                "content_11_learning/docker-kubernetes/container-basics",
+                "content_11_learning/docker-kubernetes/dockerfile-best-practices",
+                "content_11_learning/docker-kubernetes/docker-compose",
+                "content_11_learning/docker-kubernetes/docker-commands"
               ]
             },
             {
@@ -458,10 +458,10 @@ const sidebars = {
               label: "Kubernetes基礎",
               collapsed: true,
               items: [
-                "content_11_learning/kubernetes/kubernetes-architecture",
-                "content_11_learning/kubernetes/kubernetes-workloads",
-                "content_11_learning/kubernetes/kubernetes-networking",
-                "content_11_learning/kubernetes/kubernetes-storage"
+                "content_11_learning/docker-kubernetes/kubernetes-architecture",
+                "content_11_learning/docker-kubernetes/kubernetes-workloads",
+                "content_11_learning/docker-kubernetes/kubernetes-networking",
+                "content_11_learning/docker-kubernetes/kubernetes-storage"
               ]
             },
             {
@@ -469,10 +469,10 @@ const sidebars = {
               label: "Kubernetes運用",
               collapsed: true,
               items: [
-                "content_11_learning/kubernetes/kubernetes-configuration",
-                "content_11_learning/kubernetes/kubernetes-scaling",
-                "content_11_learning/kubernetes/kubernetes-observability",
-                "content_11_learning/kubernetes/kubernetes-security"
+                "content_11_learning/docker-kubernetes/kubernetes-configuration",
+                "content_11_learning/docker-kubernetes/kubernetes-scaling",
+                "content_11_learning/docker-kubernetes/kubernetes-observability",
+                "content_11_learning/docker-kubernetes/kubernetes-security"
               ]
             },
             {
@@ -480,8 +480,8 @@ const sidebars = {
               label: "コマンドリファレンス",
               collapsed: true,
               items: [
-                "content_11_learning/kubernetes/docker-commands",
-                "content_11_learning/kubernetes/kubectl-commands"
+                "content_11_learning/docker-kubernetes/docker-commands",
+                "content_11_learning/docker-kubernetes/kubectl-commands"
               ]
             }
           ]

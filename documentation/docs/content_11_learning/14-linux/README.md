@@ -201,7 +201,7 @@ vagrant ssh
 
 Linux の基礎を学んだ後は、以下のドキュメントに進みましょう：
 
-- [Kubernetes/Container 学習](../13-kubernetes/README.md) - Docker、Kubernetesの実践
+- [Kubernetes/Container 学習](../13-docker-kubernetes/README.md) - Docker、Kubernetesの実践
 
 ---
 
