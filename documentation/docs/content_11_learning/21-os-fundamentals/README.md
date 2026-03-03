@@ -230,7 +230,7 @@ jstack [pid]
 
 - [14-linux](../14-linux/README.md) - Linux実践（先に学ぶ）
 - [20-jvm](../20-jvm/README.md) - JVM（OS概念の上に構築）
-- [13-kubernetes](../13-kubernetes/README.md) - コンテナ運用
+- [13-docker-kubernetes](../13-docker-kubernetes/README.md) - コンテナ運用
 
 ---
 

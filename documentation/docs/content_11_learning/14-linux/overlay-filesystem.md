@@ -429,7 +429,7 @@ docker run --tmpfs /tmp myapp
 
 - [Namespaces](namespaces.md) - プロセスの分離
 - [Cgroups](cgroups.md) - リソース制限
-- [Docker基礎](../13-kubernetes/container-basics.md) - コンテナの基本
+- [Docker基礎](../13-docker-kubernetes/container-basics.md) - コンテナの基本
 
 ---
 

@@ -232,7 +232,7 @@
 - [09-http-rest/https-tls-basics.md](../09-http-rest/https-tls-basics.md) - HTTPS/TLS基礎
 
 ### 応用
-- [13-kubernetes/](../13-kubernetes/) - Kubernetesネットワーク
+- [13-docker-kubernetes/](../13-docker-kubernetes/) - Docker/Kubernetesネットワーク
 - [06-security/06-security-headers.md](../06-security/06-security-headers.md) - セキュリティヘッダー
 - [11-postgresql/dev-06-connection-pooling.md](../11-postgresql/dev-06-connection-pooling.md) - データベース接続管理
 
