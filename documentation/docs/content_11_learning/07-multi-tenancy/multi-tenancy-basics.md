@@ -1,3 +1,7 @@
+---
+sidebar_position: 2
+---
+
 # マルチテナントとは何か
 
 ## このドキュメントの目的
@@ -142,8 +146,12 @@
 
 ### 📖 次に読むべきドキュメント
 
-1. [データパーティション化とテナント分離](./tenant-isolation.md) - AWS SaaSベストプラクティス
-2. [Concept: マルチテナント](../../content_03_concepts/foundation/concept-01-multi-tenant.md) - idp-server実装詳細
+1. [データパーティション化とテナント分離](./tenant-isolation.md) - データをどう分離するか
+2. [テナントオンボーディング設計](./tenant-onboarding.md) - テナントをどう作り・管理し・削除するか
+
+### 関連リソース
+
+- [Concept: マルチテナント](../../content_03_concepts/01-foundation/concept-01-multi-tenant.md) - idp-serverにおけるマルチテナント実装の詳細
 
 ---
 
