@@ -1010,6 +1010,31 @@ const sidebars = {
               ]
             }
           ]
+        },
+        {
+          type: "category",
+          label: "オブザーバビリティ",
+          items: [
+            "content_11_learning/observability/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/observability/observability-basics"
+              ]
+            },
+            {
+              type: "category",
+              label: "設計・運用",
+              collapsed: true,
+              items: [
+                "content_11_learning/observability/structured-logging",
+                "content_11_learning/observability/metrics-and-alerting",
+                "content_11_learning/observability/distributed-tracing"
+              ]
+            }
+          ]
         }
       ]
     },
