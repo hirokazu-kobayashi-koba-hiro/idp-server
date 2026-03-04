@@ -28,15 +28,9 @@ enum HashAlgorithm {
   SHA_512("SHA-512");
 
   String value;
-  MessageDigest messageDigest;
 
   HashAlgorithm(String value) {
     this.value = value;
-    try {
-      this.messageDigest = MessageDigest.getInstance(value);
-    } catch (NoSuchAlgorithmException exception) {
-      throw new RuntimeException(exception);
-    }
   }
 
   public String value() {
@@ -44,6 +38,10 @@ enum HashAlgorithm {
   }
 
   public MessageDigest messageDigest() {
-    return messageDigest;
+    try {
+      return MessageDigest.getInstance(value);
+    } catch (NoSuchAlgorithmException exception) {
+      throw new RuntimeException(exception);
+    }
   }
 }
