@@ -1013,6 +1013,40 @@ const sidebars = {
         },
         {
           type: "category",
+          label: "CI/CD",
+          items: [
+            "content_11_learning/ci-cd/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/ci-cd/ci-cd-basics"
+              ]
+            },
+            {
+              type: "category",
+              label: "設計・運用",
+              collapsed: true,
+              items: [
+                "content_11_learning/ci-cd/pipeline-design",
+                "content_11_learning/ci-cd/testing-strategy",
+                "content_11_learning/ci-cd/deployment-strategy",
+                "content_11_learning/ci-cd/gitops"
+              ]
+            },
+            {
+              type: "category",
+              label: "実践",
+              collapsed: true,
+              items: [
+                "content_11_learning/ci-cd/eks-argocd-pipeline"
+              ]
+            }
+          ]
+        },
+        {
+          type: "category",
           label: "オブザーバビリティ",
           items: [
             "content_11_learning/observability/README",
