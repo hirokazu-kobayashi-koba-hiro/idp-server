@@ -23,19 +23,27 @@ import java.util.Objects;
 /**
  * UI and authorization page configuration
  *
- * <p>Encapsulates tenant-specific UI settings including custom signin/signup pages for the OAuth
- * authorization flow.
+ * <p>Encapsulates tenant-specific UI settings including custom signin/signup pages, branding,
+ * texts, and layout customization for the OAuth authorization flow (Universal Login).
  */
 public class UIConfiguration {
 
   private final String baseUrl;
   private final String signupPage;
   private final String signinPage;
+  private final BrandingConfiguration branding;
+  private final TextsConfiguration texts;
+  private final LayoutConfiguration layout;
+  private final String customCss;
 
   public UIConfiguration() {
     this.baseUrl = null;
     this.signupPage = "/auth-views/signup/index.html";
     this.signinPage = "/auth-views/signin/index.html";
+    this.branding = new BrandingConfiguration();
+    this.texts = new TextsConfiguration();
+    this.layout = new LayoutConfiguration();
+    this.customCss = null;
   }
 
   public UIConfiguration(Map<String, Object> values) {
@@ -43,6 +51,21 @@ public class UIConfiguration {
     this.baseUrl = extractString(safeValues, "base_url", null);
     this.signupPage = extractString(safeValues, "signup_page", "/auth-views/signup/index.html");
     this.signinPage = extractString(safeValues, "signin_page", "/auth-views/signin/index.html");
+
+    // New customization fields
+    this.branding =
+        safeValues.containsKey("branding")
+            ? new BrandingConfiguration(castToMap(safeValues.get("branding")))
+            : new BrandingConfiguration();
+    this.texts =
+        safeValues.containsKey("texts")
+            ? new TextsConfiguration(castToMap(safeValues.get("texts")))
+            : new TextsConfiguration();
+    this.layout =
+        safeValues.containsKey("layout")
+            ? new LayoutConfiguration(castToMap(safeValues.get("layout")))
+            : new LayoutConfiguration();
+    this.customCss = extractString(safeValues, "custom_css", null);
   }
 
   /**
@@ -82,6 +105,42 @@ public class UIConfiguration {
   }
 
   /**
+   * Returns the branding configuration
+   *
+   * @return branding configuration
+   */
+  public BrandingConfiguration branding() {
+    return branding;
+  }
+
+  /**
+   * Returns the texts configuration
+   *
+   * @return texts configuration
+   */
+  public TextsConfiguration texts() {
+    return texts;
+  }
+
+  /**
+   * Returns the layout configuration
+   *
+   * @return layout configuration
+   */
+  public LayoutConfiguration layout() {
+    return layout;
+  }
+
+  /**
+   * Returns the custom CSS
+   *
+   * @return custom CSS or null if not configured
+   */
+  public String customCss() {
+    return customCss;
+  }
+
+  /**
    * Returns the configuration as a map
    *
    * @return configuration map
@@ -93,6 +152,21 @@ public class UIConfiguration {
     }
     map.put("signup_page", signupPage);
     map.put("signin_page", signinPage);
+
+    // New customization fields
+    Map<String, Object> brandingMap = branding.toMap();
+    if (!brandingMap.isEmpty()) {
+      map.put("branding", brandingMap);
+    }
+    Map<String, Object> textsMap = texts.toMap();
+    if (!textsMap.isEmpty()) {
+      map.put("texts", textsMap);
+    }
+    map.put("layout", layout.toMap());
+    if (customCss != null) {
+      map.put("custom_css", customCss);
+    }
+
     return map;
   }
 
@@ -102,5 +176,13 @@ public class UIConfiguration {
     }
     Object value = values.get(key);
     return value != null ? value.toString() : defaultValue;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> castToMap(Object value) {
+    if (value instanceof Map) {
+      return (Map<String, Object>) value;
+    }
+    return new HashMap<>();
   }
 }
