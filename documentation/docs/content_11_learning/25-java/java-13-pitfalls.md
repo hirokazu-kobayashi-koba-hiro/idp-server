@@ -195,6 +195,9 @@ private static final ThreadLocal<SimpleDateFormat> FORMAT =
 - `HashMap`, `ArrayList`, `HashSet`（→ `ConcurrentHashMap`, `CopyOnWriteArrayList`）
 - `StringBuilder`（→ `StringBuffer`、ただし通常は同期不要）
 - `Random`（→ `ThreadLocalRandom`）
+- `MessageDigest`, `Cipher`, `Signature`（java.security系全般）
+- `javax.xml.parsers.DocumentBuilder`
+- `java.text.NumberFormat`
 
 ### HashMapの無限ループ
 
@@ -248,6 +251,100 @@ public class Singleton {
     }
 }
 ```
+
+### enum/staticフィールドでのmutableインスタンスキャッシュ
+
+enumフィールドやstatic finalフィールドにスレッド非安全なオブジェクトをキャッシュすると、マルチスレッド環境で予期しない例外が発生します。「パフォーマンスのためにインスタンスを再利用したい」という動機で書きがちですが、enumやstaticフィールドはアプリケーション全体で共有されるため、スレッド非安全なオブジェクトを保持すると並行アクセスで内部状態が破壊されます。
+
+**実例**: PR #1343 で `HashAlgorithm` enum が `MessageDigest` インスタンスをフィールドにキャッシュしており、並行リクエスト時に `MessageDigest` の内部バッファが破壊されて `ArrayIndexOutOfBoundsException` が発生しました。
+
+```java
+// NG: enumフィールドにスレッド非安全なオブジェクトをキャッシュ
+enum HashAlgorithm {
+    SHA_256("SHA-256"),
+    SHA_512("SHA-512");
+
+    String value;
+    MessageDigest messageDigest;  // 全スレッドで共有される！
+
+    HashAlgorithm(String value) {
+        this.value = value;
+        try {
+            this.messageDigest = MessageDigest.getInstance(value);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public MessageDigest messageDigest() {
+        return messageDigest;  // 同じインスタンスを返す → 並行アクセスで内部バッファ破壊
+    }
+}
+
+// OK: 毎回新しいインスタンスを生成
+enum HashAlgorithm {
+    SHA_256("SHA-256"),
+    SHA_512("SHA-512");
+
+    String value;
+
+    HashAlgorithm(String value) {
+        this.value = value;
+    }
+
+    public MessageDigest messageDigest() {
+        try {
+            return MessageDigest.getInstance(value);  // 毎回新規生成（十分高速）
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
+
+// OK: ThreadLocalでスレッドごとにキャッシュ（再利用が本当に必要な場合）
+enum HashAlgorithm {
+    SHA_256("SHA-256"),
+    SHA_512("SHA-512");
+
+    String value;
+    private final ThreadLocal<MessageDigest> threadLocalDigest;
+
+    HashAlgorithm(String value) {
+        this.value = value;
+        this.threadLocalDigest = ThreadLocal.withInitial(() -> {
+            try {
+                return MessageDigest.getInstance(value);
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public MessageDigest messageDigest() {
+        return threadLocalDigest.get();  // スレッドごとに独立したインスタンス
+    }
+}
+```
+
+#### なぜ MessageDigest はスレッドセーフでないのか？
+
+`MessageDigest` はハッシュ計算のために内部にバッファ（`byte[]`）と状態（処理済みバイト数など）を保持する**ステートフルなオブジェクト**です。`update()` でデータを段階的に投入し、`digest()` で最終ハッシュ値を計算してリセットするという設計で、一連の操作が内部状態を変更します。
+
+複数スレッドが同時に同じインスタンスの `update()` / `digest()` を呼ぶと:
+- 一方のスレッドが `update()` で書き込んだバッファを、もう一方が上書き
+- `digest()` 中にバッファサイズと実際のデータ量が不整合 → `ArrayIndexOutOfBoundsException`
+- ハッシュ結果が混ざって不正な値が返る（例外が出ずサイレントに壊れるケース）
+
+JDKの `MessageDigest` は意図的に `synchronized` されていません。暗号計算は高頻度で呼ばれることが多く、内部で毎回同期するとパフォーマンスコストになるため、スレッド安全性の管理は呼び出し側の責任とされています。`Cipher` や `Signature` など `java.security` 系のクラスも同様の設計方針です。
+
+:::warning 「キャッシュしたくなる」心理に注意
+`MessageDigest.getInstance()` のようなファクトリメソッドは十分高速です。プロファイリングで実際にボトルネックと判明しない限り、キャッシュは不要です。パフォーマンスを推測で最適化しようとしてスレッド安全性を犠牲にするのは、最も危険なトレードオフです。
+:::
+
+**判断基準:**
+- そのオブジェクトはimmutableか？ → immutableならキャッシュ可能（例: `DateTimeFormatter`）
+- mutableなら → 毎回新規生成、またはThreadLocalで保持
+- 「static finalだから安全」と思わない → フィールドの参照は不変でも、参照先オブジェクトの内部状態は変わる
 
 ---
 
@@ -586,6 +683,7 @@ try {
 | スレッドセーフ | 可変オブジェクト共有 | AtomicXxx、synchronized |
 | スレッドセーフ | check-then-act | computeIfAbsent等 |
 | スレッドセーフ | HashMap共有 | ConcurrentHashMap |
+| スレッドセーフ | enum/staticにmutableキャッシュ | 毎回生成 or ThreadLocal |
 | NPE | nullチェック漏れ | Optional、Objects.requireNonNull |
 | equals/hashCode | 片方だけ実装 | 両方実装、IDEで生成 |
 | 文字列 | ==で比較 | equals()を使う |
