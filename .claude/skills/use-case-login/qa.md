@@ -174,15 +174,17 @@ PASSWORD_LOCKOUT_DURATION_SECONDS=900
 
 **設定箇所**: テナント `session_config.timeout_seconds` + 認可サーバー `extension`
 
+テナント:
 ```json
-// テナント
 {
   "session_config": {
     "timeout_seconds": 604800
   }
 }
+```
 
-// 認可サーバー extension
+認可サーバー extension:
+```json
 {
   "extension": {
     "refresh_token_duration": 2592000

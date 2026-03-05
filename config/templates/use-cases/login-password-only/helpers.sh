@@ -251,6 +251,7 @@ restore_auth_policy() {
 # 認可リクエスト開始（新しい COOKIE_JAR で毎回クリーンに）
 start_auth_flow() {
   local scope="${1:-openid+profile+email}"
+  [ -n "${COOKIE_JAR:-}" ] && [ -f "${COOKIE_JAR}" ] && rm -f "${COOKIE_JAR}"
   COOKIE_JAR=$(mktemp)
   STATE="exp-state-$(date +%s)"
 
