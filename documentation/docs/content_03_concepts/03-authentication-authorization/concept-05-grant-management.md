@@ -87,7 +87,55 @@ flowchart LR
 - 統計・分析用途
 - 法的証拠
 
-### 3. 同意履歴の永続化
+### 3. 規約・ポリシーの同意追跡（ConsentClaims）
+
+idp-serverは、スコープだけでなく**クライアントの利用規約（`tos_uri`）とプライバシーポリシー（`policy_uri`）への同意**も追跡します。
+
+```mermaid
+flowchart TB
+    Client[クライアント設定] -->|tos_uri, policy_uri| Request[認可リクエスト]
+    Request -->|ConsentClaims 生成| Compare{既存の同意と比較}
+    Compare -->|一致| Skip[同意画面スキップ]
+    Compare -->|不一致| Prompt[再同意を要求<br/>interaction_required]
+    Prompt -->|ユーザー同意| Store[同意履歴に追記]
+```
+
+**同意比較の仕組み**:
+
+1. 認可リクエスト時に、クライアントの現在の `tos_uri` / `policy_uri` から `ConsentClaims` を生成
+2. 保存済みの `AuthorizationGranted` 内の `consent_claims` と比較
+3. 値が一致しなければ `interaction_required` エラーを返し、再同意を要求
+
+**ConsentClaims のデータ構造**:
+
+```json
+{
+  "terms": [
+    {"name": "tos_uri", "value": "https://example.com/terms/v1", "consented_at": "2026-01-01T10:00:00"},
+    {"name": "tos_uri", "value": "https://example.com/terms/v2", "consented_at": "2026-03-01T14:00:00"}
+  ],
+  "privacy": [
+    {"name": "policy_uri", "value": "https://example.com/privacy/v1", "consented_at": "2026-01-01T10:00:00"}
+  ]
+}
+```
+
+- **カテゴリ**: `terms`（利用規約）と `privacy`（プライバシーポリシー）
+- **履歴保持**: 規約が更新されるたびに新しいエントリが追加される（上書きではない）
+- **比較ロジック**: `name` + `value` の一致で判定（`consentedAt` は比較に使わない）
+
+**再同意が必要になるケース**:
+
+| 変更内容 | 結果 | 理由 |
+|:---------|:-----|:-----|
+| `tos_uri` を変更 | `interaction_required` | 新しい利用規約への同意が必要 |
+| `policy_uri` を変更 | `interaction_required` | 新しいプライバシーポリシーへの同意が必要 |
+| スコープを追加 | `interaction_required` | 未同意のスコープが含まれる |
+| 変更なし | 同意画面スキップ | 全ての同意が有効 |
+
+> `prompt=none` を使用した認可リクエストでは、再同意が必要な場合にユーザー操作なしでは処理できないため `interaction_required` エラーが返されます。サードパーティアプリはこのエラーを受け取った場合、通常の認可フロー（同意画面付き）にフォールバックする必要があります。
+
+### 4. 同意履歴の永続化
 
 同意の記録は、論理削除で履歴を保持します。
 
@@ -101,7 +149,7 @@ flowchart TB
     Revoked -->|履歴として保持| History[監査証跡]
 ```
 
-**3つの状態**:
+**3つの状態（スコープ・規約ともに同じライフサイクル）**:
 
 | 状態 | revoked_at | 意味 | 動作 |
 |:---|:---|:---|:---|
@@ -157,6 +205,15 @@ flowchart TB
 - **既存同意**: openid, profile（スキップ）
 - **新規スコープ**: email（同意画面を表示）
 - **効果**: 必要最小限の同意プロセス
+
+### 4. 規約変更時の再同意
+
+クライアントが利用規約やプライバシーポリシーを更新した場合、再同意を要求。
+
+- **変更前**: `tos_uri = https://example.com/terms/v1` で同意済み
+- **変更後**: `tos_uri = https://example.com/terms/v2` に更新
+- **動作**: `prompt=none` で `interaction_required`、通常フローで同意画面を表示
+- **効果**: ユーザーは新しい規約に明示的に同意する必要がある
 
 ---
 

@@ -134,6 +134,77 @@ public class AuthorizationGrant {
 }
 ```
 
+## ConsentClaims（規約・ポリシーの同意追跡）
+
+### 概要
+
+`ConsentClaims` は、クライアントの `tos_uri`（利用規約）と `policy_uri`（プライバシーポリシー）への同意を追跡する。
+規約が変更された場合、既存の同意は無効化され、ユーザーに再同意を要求する。
+
+### データ構造
+
+```java
+// ConsentClaims: カテゴリ別の同意リスト
+Map<String, List<ConsentClaim>> claims;
+// カテゴリ: "terms"（tos_uri）, "privacy"（policy_uri）
+
+// ConsentClaim: 個別の同意レコード
+public class ConsentClaim {
+    String name;              // "tos_uri" or "policy_uri"
+    String value;             // URI値
+    LocalDateTime consentedAt; // 同意日時
+}
+```
+
+### DB上の保存形式（authorization_granted.consent_claims）
+
+```json
+{
+  "terms": [
+    {"name": "tos_uri", "value": "https://example.com/terms/v1", "consented_at": "..."},
+    {"name": "tos_uri", "value": "https://example.com/terms/v2", "consented_at": "..."}
+  ],
+  "privacy": [
+    {"name": "policy_uri", "value": "https://example.com/privacy/v1", "consented_at": "..."}
+  ]
+}
+```
+
+規約が更新されるたびに新エントリが追加される（上書きではなく履歴追加）。
+
+### 同意比較フロー
+
+```
+認可リクエスト時:
+1. OAuthRequestContext.createConsentClaims()
+   → クライアントの現在の tos_uri / policy_uri から ConsentClaims を生成
+
+2. authorizationGranted.isConsentedClaims(consentClaims)
+   → AuthorizationGrant.isConsentedClaims()
+   → ConsentClaims.isAllConsented()
+   → 各 ConsentClaim の name + value が一致するかチェック
+
+3. 不一致の場合:
+   → OAuthRedirectableBadRequestException("interaction_required",
+      "authorization request contains unauthorized consent")
+```
+
+### 比較ロジックの詳細
+
+- `ConsentClaim.equals()`: `name` + `value` で比較（`consentedAt` は無視）
+- `ConsentClaims.isAllConsented()`: リクエスト側の全 ConsentClaim が保存済みリストに `contains` されるかチェック
+- `ConsentClaims.merge()`: 同じ claim は最古の `consentedAt` を保持、新しい claim は履歴に追加
+
+### 関連ファイル
+
+| ファイル | 役割 |
+|---------|------|
+| `ConsentClaim.java` | 個別の同意レコード（name, value, consentedAt） |
+| `ConsentClaims.java` | 同意コレクション（merge, isAllConsented） |
+| `OAuthRequestContext.java` | ConsentClaims生成 + 同意比較（canAutomaticallyAuthorize） |
+| `OAuthAuthorizeContext.java` | AuthorizationGrant生成時にConsentClaimsを含める |
+| `ClientConfiguration.java` | クライアントの tosUri / policyUri を保持 |
+
 ## Grantが作成されるタイミング
 
 - Authorization Code Flowでの同意時
