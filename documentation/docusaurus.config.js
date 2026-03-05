@@ -17,6 +17,14 @@ const config = {
     mermaid: true,
   },
   themes: ['@docusaurus/theme-mermaid'],
+  plugins: [
+    [
+      '@cmfcmf/docusaurus-search-local',
+      {
+        language: 'ja',
+      },
+    ],
+  ],
 
   // Set the production url of your site here
   url: 'https://hirokazu-kobayashi-koba-hiro.github.io',
