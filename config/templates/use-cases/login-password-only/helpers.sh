@@ -311,6 +311,18 @@ complete_auth_flow() {
   echo "${TOKEN_RESPONSE}" | jq '{token_type, expires_in}'
 }
 
+# JWT ペイロードのデコード（base64url → base64 変換 + パディング追加）
+# JWT は base64url エンコーディング（-_ を使い、パディングなし）のため、
+# 標準の base64 -d では正しくデコードできない。
+decode_jwt_payload() {
+  local token="$1"
+  local payload
+  payload=$(echo "${token}" | cut -d. -f2 | tr '_-' '/+')
+  local mod=$((${#payload} % 4))
+  if [ $mod -eq 2 ]; then payload="${payload}=="; elif [ $mod -eq 3 ]; then payload="${payload}="; fi
+  echo "${payload}" | base64 -d 2>/dev/null
+}
+
 # UserInfo 取得
 get_userinfo() {
   local token="${1:-${ACCESS_TOKEN}}"
