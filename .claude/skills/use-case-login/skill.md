@@ -31,6 +31,18 @@ bash config/templates/use-cases/login-password-only/setup.sh
 bash config/templates/use-cases/login-password-only/setup.sh --dry-run
 ```
 
+## 細かい設定 Q&A（逆引き）
+
+**「やりたいこと → 設定」の対応表**: [qa.md](./qa.md)
+
+ユーザーが具体的にやりたいことを言った場合は、qa.md を参照して該当するQ&Aの設定キー＋値を提示すること。
+
+## 設定変更 × 挙動確認（ハンズオン）
+
+**「設定を変えて → 挙動が変わることを体験する」実験ガイド**: `config/templates/use-cases/login-password-only/EXPERIMENTS.md`
+
+設定の効果を手元で確認したい場合はこのガイドを案内すること。
+
 ## ヒアリング項目
 
 | # | 決めること | 選択肢 | 影響する設定 |
