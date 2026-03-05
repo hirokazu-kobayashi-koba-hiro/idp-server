@@ -1,10 +1,10 @@
 # 認可サーバー設定 実験ガイド
 
 認可サーバー（`authorization_server`）の設定を1つ変えて → 挙動がどう変わるかを手元で確認するガイドです。
-EXPERIMENTS.md の続編として、認可サーバー固有の設定に焦点を当てています。
+EXPERIMENTS-basics.md の続編として、認可サーバー固有の設定に焦点を当てています。
 
 > **前提**: `setup.sh` が正常に完了していること。
-> EXPERIMENTS.md の Experiment 3（claims_supported）と 4（access_token_duration）は既存のガイドを参照。
+> EXPERIMENTS-basics.md の Experiment 3（claims_supported）と 4（access_token_duration）は既存のガイドを参照。
 
 ---
 
@@ -35,7 +35,7 @@ register_user "idt-$(date +%s)@example.com" "TestPass123" "IDT User"
 complete_auth_flow
 
 echo "--- ベースライン: ID Token の exp ---"
-echo "${TOKEN_RESPONSE}" | jq -r '.id_token' | cut -d. -f2 | base64 -d 2>/dev/null | jq '{exp, iat, exp_minus_iat: (.exp - .iat)}'
+decode_jwt_payload "$(echo "${TOKEN_RESPONSE}" | jq -r '.id_token')" | jq '{exp, iat, exp_minus_iat: (.exp - .iat)}'
 ```
 
 > `exp - iat` がデフォルト `3600`（1時間）になるはずです。
@@ -55,7 +55,7 @@ register_user "idt2-$(date +%s)@example.com" "TestPass123" "IDT User 2"
 complete_auth_flow
 
 echo "--- 変更後: ID Token の exp ---"
-echo "${TOKEN_RESPONSE}" | jq -r '.id_token' | cut -d. -f2 | base64 -d 2>/dev/null | jq '{exp, iat, exp_minus_iat: (.exp - .iat)}'
+decode_jwt_payload "$(echo "${TOKEN_RESPONSE}" | jq -r '.id_token')" | jq '{exp, iat, exp_minus_iat: (.exp - .iat)}'
 ```
 
 ### 4. 期待結果
@@ -237,7 +237,7 @@ restore_auth_server
 >
 > **実装の仕組み**: `scopes_supported` は **Discovery（`.well-known/openid-configuration`）の表示専用**。
 > 実際のスコープフィルタリングは**クライアント設定の `scope`** で行われる（`ClientConfiguration.filteredScope()`）。
-> `AuthorizationServerConfiguration.filteredScope()` メソッドは存在するが、呼び出し箇所がない。
+> `AuthorizationServerConfiguration.filteredScope()` メソッドは存在するが、認可リクエスト処理フローから呼ばれていない可能性がある（#1353 で調査中）。
 >
 > つまり、サーバー側で `scopes_supported` を変えても、クライアントが許可されたスコープを
 > リクエストする限り、実際の動作には影響しない。
@@ -338,11 +338,26 @@ register_user "req2-$(date +%s)@example.com" "TestPass123" "Req User 2" | jq .
 
 ### 4. 期待結果
 
-| タイミング | 結果 | 理由 |
-|-----------|------|------|
-| 即座に認証 | 成功 | 認可リクエストの有効期限内（5秒以内） |
-| 10秒後に認証 | エラー | 認可リクエストのコンテキストが期限切れ |
+| タイミング | 結果 | エラー |
+|-----------|------|--------|
+| 即座に認証 | 成功 | — |
+| 10秒後に認証 | 失敗 | `auth_session_mismatch: Missing AUTH_SESSION cookie` |
 
+> **エラーメッセージについて**: 期限切れ後のエラーが「認可リクエスト期限切れ」ではなく
+> `auth_session_mismatch` になるのは、**AUTH_SESSION cookie の TTL が認可リクエストと同じ値で設定される**ため。
+>
+> ```
+> 認可リクエスト作成時（OAuthFlowEntryService.java:187-188）:
+>   authSessionCookieDelegate.setAuthSessionCookie(
+>       tenant, authSessionId.value(), requestResponse.oauthAuthorizationRequestExpiresIn());
+>                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>                                      cookie の maxAge = 認可リクエストの有効期限（同じ値）
+> ```
+>
+> 期限切れ → cookie がブラウザ/curl から消える → `AuthSessionValidator` が cookie なしを検出
+> → `auth_session_mismatch` エラー。認可リクエスト自体の期限切れチェック（DB の `expires_at > now()`）
+> には到達しない。
+>
 > **実運用での意味**: ログイン画面を開いたまま放置した場合の挙動を制御する。
 > デフォルト 1800秒（30分）は一般的だが、金融系では短く設定する場合がある。
 
@@ -374,7 +389,7 @@ register_user "strict1-$(date +%s)@example.com" "TestPass123" "Strict User"
 complete_auth_flow
 
 echo "--- strict_mode=false: ID Token のクレーム ---"
-echo "${TOKEN_RESPONSE}" | jq -r '.id_token' | cut -d. -f2 | base64 -d 2>/dev/null | jq '{sub, name, email, given_name, family_name}'
+decode_jwt_payload "$(echo "${TOKEN_RESPONSE}" | jq -r '.id_token')" | jq '{sub, name, email, given_name, family_name}'
 
 echo ""
 echo "--- strict_mode=false: UserInfo ---"
@@ -388,34 +403,96 @@ update_auth_server '.extension.id_token_strict_mode = true' \
   | jq '.result.extension.id_token_strict_mode // .'
 ```
 
-### 3. 挙動確認
+### 3. 挙動確認：scope のみ（claims パラメータなし）
 
 ```bash
 start_auth_flow "openid+profile+email"
 register_user "strict2-$(date +%s)@example.com" "TestPass123" "Strict User 2"
 complete_auth_flow
 
-echo "--- strict_mode=true: ID Token のクレーム ---"
-echo "${TOKEN_RESPONSE}" | jq -r '.id_token' | cut -d. -f2 | base64 -d 2>/dev/null | jq '{sub, name, email, given_name, family_name}'
+echo "--- strict_mode=true, claims未指定: ID Token のクレーム ---"
+decode_jwt_payload "$(echo "${TOKEN_RESPONSE}" | jq -r '.id_token')" | jq '{sub, name, email, given_name, family_name}'
 
 echo ""
 echo "--- strict_mode=true: UserInfo（影響なし） ---"
 get_userinfo | jq .
 ```
 
-### 4. 期待結果
+### 4. 挙動確認：claims パラメータで ID Token のクレームを明示要求
 
-| 設定 | ID Token のクレーム | UserInfo のクレーム |
-|------|--------------------|--------------------|
-| `false`（デフォルト） | `sub`, `name`, `email` 等（scope ベース） | `sub`, `name`, `email` 等 |
-| `true`（厳格） | `sub` のみ（`claims` パラメータ未指定のため） | `sub`, `name`, `email` 等（影響なし） |
+strict mode ON でも、認可リクエストの `claims` パラメータで `essential: true` を指定すれば
+ID Token にクレームを含められる。
 
-> **OIDC仕様との関係**: 厳密には OIDC Core では ID Token に profile クレームを
-> 含めるかどうかは OPTIONAL。strict mode は仕様に厳格な実装。
-> フロントエンドで ID Token からクレームを読む場合は `false` が便利。
-> セキュリティ重視で「ID Token は認証用途のみ」にしたい場合は `true` が適切。
+```bash
+# claims パラメータ: email は essential、name は voluntary
+CLAIMS_JSON='{"id_token":{"email":{"essential":true},"name":null}}'
+CLAIMS_PARAM=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${CLAIMS_JSON}'))")
 
-### 5. 元に戻す
+[ -n "${COOKIE_JAR:-}" ] && [ -f "${COOKIE_JAR}" ] && rm -f "${COOKIE_JAR}"
+COOKIE_JAR=$(mktemp)
+STATE="exp-state-$(date +%s)"
+ENCODED_REDIRECT=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")
+
+AUTH_REDIRECT=$(curl -s -c "${COOKIE_JAR}" -o /dev/null \
+  -w "%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${ENCODED_REDIRECT}&scope=openid+profile+email&state=${STATE}&claims=${CLAIMS_PARAM}")
+
+AUTHORIZATION_ID=$(echo "${AUTH_REDIRECT}" | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
+echo "Authorization ID: ${AUTHORIZATION_ID}"
+
+register_user "strict-claims1-$(date +%s)@example.com" "TestPass123" "Claims User"
+complete_auth_flow
+
+echo "--- strict_mode=true, essential=email: ID Token ---"
+decode_jwt_payload "$(echo "${TOKEN_RESPONSE}" | jq -r '.id_token')" | jq '{sub, name, email}'
+```
+
+```bash
+# claims パラメータ: email, name ともに essential
+CLAIMS_JSON='{"id_token":{"email":{"essential":true},"name":{"essential":true}}}'
+CLAIMS_PARAM=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${CLAIMS_JSON}'))")
+
+[ -n "${COOKIE_JAR:-}" ] && [ -f "${COOKIE_JAR}" ] && rm -f "${COOKIE_JAR}"
+COOKIE_JAR=$(mktemp)
+STATE="exp-state-$(date +%s)"
+
+AUTH_REDIRECT=$(curl -s -c "${COOKIE_JAR}" -o /dev/null \
+  -w "%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${ENCODED_REDIRECT}&scope=openid+profile+email&state=${STATE}&claims=${CLAIMS_PARAM}")
+
+AUTHORIZATION_ID=$(echo "${AUTH_REDIRECT}" | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
+echo "Authorization ID: ${AUTHORIZATION_ID}"
+
+register_user "strict-claims2-$(date +%s)@example.com" "TestPass123" "Claims User 2"
+complete_auth_flow
+
+echo "--- strict_mode=true, essential=email+name: ID Token ---"
+decode_jwt_payload "$(echo "${TOKEN_RESPONSE}" | jq -r '.id_token')" | jq '{sub, name, email}'
+```
+
+### 5. 期待結果
+
+| 条件 | ID Token `email` | ID Token `name` | UserInfo |
+|------|-------------------|------------------|----------|
+| strict=false（デフォルト） | あり | あり | あり |
+| strict=true, claims 未指定 | `null` | `null` | あり |
+| strict=true, `email: essential`, `name: voluntary` | **あり** | `null` | あり |
+| strict=true, `email: essential`, `name: essential` | **あり** | **あり** | あり |
+
+> **OIDC仕様との関係**: strict mode は OIDC Core 仕様に厳格な実装。
+> ID Token に scope ベースのクレームを含めるかは OIDC Core では OPTIONAL だが、
+> `claims` パラメータで `essential: true` を指定したクレームは仕様上含めるべきとされる。
+>
+> - `essential: true` → strict mode でも ID Token に含まれる
+> - voluntary（`null` / `essential` なし）→ strict mode では含まれない
+> - フロントエンドで ID Token からクレームを読む場合は strict=`false` が便利
+> - セキュリティ重視で「ID Token は認証用途のみ」にしたい場合は strict=`true` + 必要なクレームだけ `essential: true` で要求
+>
+> **`claims:*` カスタムスコープへの影響**: strict mode が `true` の場合、
+> `claims:*` カスタムスコープのクレームは **UserInfo からも除外される**。
+> 標準 OIDC クレーム（`profile`, `email` スコープ）には影響しない。
+
+### 6. 元に戻す
 
 ```bash
 restore_auth_server
@@ -437,6 +514,9 @@ restore_auth_server
 > | EXTENDS | false | 同じ | **延長**（now + duration） |
 > | FIXED | true | **新しい** | 同じ（初回発行時のまま） |
 > | FIXED | false | 同じ | 同じ（初回発行時のまま） |
+
+> **注意**: パターンB は sleep 50 + sleep 30 で合計80秒以上の待機が発生します。
+> 時間がない場合はパターンA と C だけでも十分に挙動差を確認できます。
 
 ### 1. パターンA: FIXED + rotate=true（デフォルト相当）
 
@@ -603,29 +683,36 @@ curl -s "${TENANT_BASE}/.well-known/openid-configuration" \
 
 ### 3. PKCE ありで認可フロー
 
+#### 3a. code_verifier / code_challenge を生成
+
 ```bash
-# code_verifier を生成（43文字以上のランダム文字列）
 CODE_VERIFIER=$(python3 -c "import secrets, base64; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode().rstrip('='))")
 CODE_CHALLENGE=$(echo -n "${CODE_VERIFIER}" | openssl dgst -sha256 -binary | base64 | tr '+/' '-_' | tr -d '=')
-
 echo "code_verifier:  ${CODE_VERIFIER}"
 echo "code_challenge: ${CODE_CHALLENGE}"
+```
 
-# PKCE パラメータ付きで認可リクエスト
+#### 3b. PKCE パラメータ付きで認可リクエスト → 登録 → 認可
+
+```bash
 [ -n "${COOKIE_JAR:-}" ] && [ -f "${COOKIE_JAR}" ] && rm -f "${COOKIE_JAR}"
 COOKIE_JAR=$(mktemp)
 STATE="pkce-$(date +%s)"
+ENCODED_REDIRECT=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")
 
 AUTH_REDIRECT=$(curl -s -c "${COOKIE_JAR}" -o /dev/null \
   -w "%{redirect_url}" \
-  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=openid+profile+email&state=${STATE}&code_challenge=${CODE_CHALLENGE}&code_challenge_method=S256")
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${ENCODED_REDIRECT}&scope=openid+profile+email&state=${STATE}&code_challenge=${CODE_CHALLENGE}&code_challenge_method=S256")
 
 AUTHORIZATION_ID=$(echo "${AUTH_REDIRECT}" | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
 echo "Authorization ID: ${AUTHORIZATION_ID}"
 
-# ユーザー登録 → 認可
 register_user "pkce-$(date +%s)@example.com" "TestPass123" "PKCE User"
+```
 
+#### 3c. 認可コード取得 → code_verifier ありでトークン交換（成功するはず）
+
+```bash
 AUTHORIZE_RESPONSE=$(curl -s \
   -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
   -X POST "${TENANT_BASE}/v1/authorizations/${AUTHORIZATION_ID}/authorize" \
@@ -635,8 +722,7 @@ AUTHORIZE_RESPONSE=$(curl -s \
 AUTHZ_REDIRECT_URI=$(echo "${AUTHORIZE_RESPONSE}" | jq -r '.redirect_uri')
 AUTHORIZATION_CODE=$(echo "${AUTHZ_REDIRECT_URI}" | sed -n 's/.*[?&]code=\([^&#]*\).*/\1/p')
 
-echo ""
-echo "--- code_verifier ありでトークン交換（成功するはず） ---"
+echo "--- code_verifier ありでトークン交換 ---"
 curl -s -X POST "${TENANT_BASE}/v1/tokens" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   --data-urlencode "grant_type=authorization_code" \
@@ -645,15 +731,14 @@ curl -s -X POST "${TENANT_BASE}/v1/tokens" \
   --data-urlencode "client_id=${CLIENT_ID}" \
   --data-urlencode "client_secret=${CLIENT_SECRET}" \
   --data-urlencode "code_verifier=${CODE_VERIFIER}" | jq '{token_type, expires_in, error}'
+```
 
-echo ""
-echo "--- code_verifier なしでトークン交換（失敗するはず） ---"
-# 新しいコードを取得（同じコードは使い回せないため）
+#### 3d. PKCE なしのフロー（code_challenge 未送信 → verifier 不要）
+
+```bash
+# start_auth_flow は code_challenge を送らないので PKCE 検証は発生しない
 start_auth_flow
 register_user "pkce2-$(date +%s)@example.com" "TestPass123" "PKCE User 2"
-
-# PKCE なしで認可リクエストしたので、code_verifier なしでもトークン交換できる
-# （PKCE は認可リクエスト時に code_challenge がある場合のみ検証される）
 complete_auth_flow
 echo "PKCE なしのフローも成功する（code_challenge を送らなかったため）"
 ```
@@ -830,10 +915,10 @@ restore_auth_server
 | 9 | claims パラメータの表示 | `claims_parameter_supported` | Discovery 表示のみ変化 |
 | 10 | カスタムクレームを取得したい | `custom_claims_scope_mapping` | `claims:*` スコープの動作 |
 
-### EXPERIMENTS.md との対応
+### EXPERIMENTS-basics.md との対応
 
-| EXPERIMENTS.md | EXPERIMENTS-2.md |
-|---------------|-----------------|
+| EXPERIMENTS-basics.md | EXPERIMENTS-authorization-server.md |
+|----------------------|-------------------------------------|
 | Exp 3: claims_supported | → 本ガイドでは扱わない（既存参照） |
 | Exp 4: access_token_duration | → 本ガイドでは扱わない（既存参照） |
 | Exp 5: session timeout | → Exp 3（default_max_age）と比較して理解 |
