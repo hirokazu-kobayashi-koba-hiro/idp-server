@@ -960,6 +960,7 @@ const sidebars = {
               items: [
                 "content_11_learning/aws/computing/aws-ec2",
                 "content_11_learning/aws/computing/aws-container-services",
+                "content_11_learning/aws/computing/aws-eks-autoscaling",
                 "content_11_learning/aws/computing/aws-serverless"
               ]
             },
