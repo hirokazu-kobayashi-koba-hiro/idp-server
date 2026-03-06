@@ -62,6 +62,7 @@ ORG_BASE_URL="${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/
 TENANT_JSON=$(jq '.tenant' "${CONFIG_DIR}/public-tenant.json")
 AUTH_SERVER_JSON=$(jq '.authorization_server' "${CONFIG_DIR}/public-tenant.json")
 AUTH_POLICY_ID=$(jq -r '.id' "${CONFIG_DIR}/authentication-policy.json")
+CLIENT_JSON=$(cat "${CONFIG_DIR}/public-client.json")
 
 echo "=========================================="
 echo "Experiment Helpers Loaded"
@@ -242,6 +243,59 @@ restore_auth_policy() {
   fi
 
   echo "Authentication policy restored."
+}
+
+# ============================================================
+# クライアント更新ヘルパー
+#
+# 重要: PUT API はフル置換。$CLIENT_JSON をベースに jq で変更して使う。
+#
+# 使用例:
+#   update_client '.scope = "openid profile"'
+#   update_client '.extension.access_token_duration = 30'
+# ============================================================
+
+update_client() {
+  local jq_filter="$1"
+  local updated response http_code
+  updated=$(echo "${CLIENT_JSON}" | jq "${jq_filter}")
+
+  response=$(curl -s -w "\n%{http_code}" -X PUT \
+    "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
+    -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "${updated}")
+
+  http_code=$(echo "${response}" | tail -1)
+  local body
+  body=$(echo "${response}" | sed '$d')
+
+  if [ "${http_code}" != "200" ]; then
+    echo "Error: update_client failed (HTTP ${http_code})" >&2
+    echo "${body}" >&2
+    return 1
+  fi
+
+  echo "${body}"
+}
+
+restore_client() {
+  local response http_code
+  response=$(curl -s -w "\n%{http_code}" -X PUT \
+    "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
+    -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "${CLIENT_JSON}")
+
+  http_code=$(echo "${response}" | tail -1)
+
+  if [ "${http_code}" != "200" ]; then
+    echo "Error: restore_client failed (HTTP ${http_code})" >&2
+    echo "${response}" | sed '$d' >&2
+    return 1
+  fi
+
+  echo "Client restored."
 }
 
 # ============================================================

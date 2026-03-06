@@ -39,6 +39,8 @@ get_admin_token   # 設定変更に必要な管理トークンを取得
 | `restore_auth_server` | 認可サーバー設定を元に戻す | `restore_auth_server` |
 | `update_auth_policy` | 認証ポリシーを更新 | `update_auth_policy '{"flow":"oauth",...}'` |
 | `restore_auth_policy` | 認証ポリシーを元に戻す | `restore_auth_policy` |
+| `update_client` | クライアント設定を部分変更 | `update_client '.scope = "openid profile"'` |
+| `restore_client` | クライアント設定を元に戻す | `restore_client` |
 | `start_auth_flow` | 認可リクエスト開始 | `start_auth_flow` / `start_auth_flow openid` |
 | `register_user` | ユーザー登録 | `register_user "a@b.com" "Pass123" "Name"` |
 | `password_login` | パスワード認証 | `password_login "a@b.com" "Pass123"` |
