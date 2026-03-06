@@ -329,7 +329,9 @@ restore_auth_server
 > - `false`（デフォルト）: scope に `profile` があれば `name` 等が ID Token に含まれる
 > - `true`: scope ベースのクレームが ID Token から除外される
 >
-> **UserInfo への影響**: なし。strict mode は ID Token のみに影響する。
+> **UserInfo への影響**: 標準クレーム（`profile`, `email` スコープ）には影響しない。
+> ただし `claims:*` プレフィックスのカスタムクレームは UserInfo からも除外される
+> （`UserinfoScopeMappingCustomClaimsCreator.shouldCreate()` が `isIdTokenStrictMode()` をチェックするため）。
 >
 > **CIBA での注意**: CIBA では認可リクエストに `claims` パラメータを送る仕組みがないため、
 > strict mode を有効にすると ID Token は常に最小限のクレーム（`sub`, `iss`, `aud` 等）のみになる。
@@ -377,7 +379,7 @@ echo "--- ID Token のクレーム（profile/email が消えるはず） ---"
 decode_jwt_payload "${ID_TOKEN}" | jq '{sub, name, email, given_name, family_name}'
 
 echo ""
-echo "--- UserInfo（影響なし） ---"
+echo "--- UserInfo（標準クレームは影響なし） ---"
 get_userinfo | jq '{sub, name, email}'
 ```
 
@@ -386,14 +388,18 @@ get_userinfo | jq '{sub, name, email}'
 | 条件 | ID Token `name` | ID Token `email` | UserInfo |
 |------|-----------------|------------------|----------|
 | strict=false（デフォルト） | あり | あり | あり |
-| strict=true | `null` | `null` | あり（影響なし） |
+| strict=true | `null` | `null` | 標準クレームは影響なし（`claims:*` カスタムクレームは除外される） |
 
 > **認可コードフローとの違い**: 認可コードフローでは `claims` パラメータで `essential: true` を指定すれば
 > strict mode でも ID Token にクレームを含められる。しかし CIBA では `claims` パラメータが
 > バックチャネル認証リクエストに含まれないため、strict mode ON = ID Token は常に最小限になる。
 >
+> **UserInfo のカスタムクレームへの影響**: `UserinfoScopeMappingCustomClaimsCreator.shouldCreate()` も
+> `isIdTokenStrictMode()` をチェックするため、strict mode ON では `claims:authentication_devices` 等の
+> カスタムクレームが UserInfo からも除外される。標準クレーム（`name`, `email` 等）は影響しない。
+>
 > **ユースケース**: CIBA で「ID Token は認証結果の確認のみ、ユーザー情報は UserInfo で取得」
-> というパターンでは strict mode ON が適切。
+> というパターンでは strict mode ON が適切。ただしカスタムクレームも UserInfo から消える点に注意。
 
 ### 5. 元に戻す
 
@@ -484,10 +490,14 @@ decode_jwt_payload "${ID_TOKEN}" | jq '{sub, authentication_devices}'
 > **すべて**のカスタムクレーム（`claims:status`, `claims:roles` 等）が無効になる。
 > `claims:authentication_devices` だけでなく、他のカスタムクレームにも影響する。
 >
-> **id_token_strict_mode との関係**: `id_token_strict_mode = true` の場合も
-> `ScopeMappingCustomClaimsCreator` は無効化される（`shouldCreate()` が `false` を返す）。
-> つまり strict mode ON だけで、IDT からカスタムクレームは消える。
-> 本実験の `custom_claims_scope_mapping = false` は IDT **と** UserInfo の両方から消す点が異なる。
+> **id_token_strict_mode との違い**: 両方とも `claims:*` カスタムクレームを IDT + UserInfo の両方から除外する
+> （`ScopeMappingCustomClaimsCreator` と `UserinfoScopeMappingCustomClaimsCreator` の両方が
+> `isIdTokenStrictMode()` をチェックするため）。真の差異は以下の通り:
+>
+> | 設定 | 標準クレーム（name, email 等） | `claims:*` カスタムクレーム |
+> |------|-------------------------------|---------------------------|
+> | `id_token_strict_mode = true` | IDT から除外、UserInfo は影響なし | IDT + UserInfo の両方から除外 |
+> | `custom_claims_scope_mapping = false` | **影響なし** | IDT + UserInfo の両方から除外 |
 
 ### 5. 元に戻す
 
