@@ -416,7 +416,7 @@ Status:
 
 ### VPAの注意点
 
-- **Podの再起動が発生する**: `Auto` モードではリソース変更のためPodがevictされる（In-place Resource Resize が GA になれば解消予定）
+- **Podの再起動が発生する**: `Auto` モードではリソース変更のためPodがevictされる。Kubernetes 1.35以降では In-place Resource Resize（GA）によりPod再起動なしでリソース変更が可能
 - **HPAとの併用制限**: CPU/メモリで同時にHPAとVPAを使うと競合する。VPAは `Off` モードで推奨値確認のみに使い、手動で `requests` を調整する運用が安全
 
 ---
@@ -716,8 +716,8 @@ spec:
 | Consolidation | 自動で不要ノードを統合 | 使用率の低いノードを削除のみ |
 | 設定の柔軟性 | NodePoolで宣言的に定義 | ASG + Launch Template |
 | Spot対応 | 混在可能、自動Fallback | ASG混在が必要 |
-| 成熟度 | 2023年GA、急速に普及 | 長い実績がある |
-| AWSへの依存 | AWS専用（CNCF Sandbox） | マルチクラウド対応 |
+| 成熟度 | 2024年GA（v1.0.0）、急速に普及 | 長い実績がある |
+| クラウド対応 | AWS中心（Azure/GCPプロバイダーはプレビュー段階） | マルチクラウド対応 |
 
 ### 選定基準
 
