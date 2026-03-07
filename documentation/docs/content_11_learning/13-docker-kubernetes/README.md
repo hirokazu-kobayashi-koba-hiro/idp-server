@@ -39,6 +39,14 @@
 
 ---
 
+### ローカル環境
+
+| ドキュメント | 内容 |
+|-------------|------|
+| [kind-local-cluster.md](kind-local-cluster.md) | kindによるローカルK8sクラスター構築、HPA/Metrics Serverハンズオン |
+
+---
+
 ### コマンドリファレンス
 
 | ドキュメント | 内容 |

@@ -1,0 +1,211 @@
+version: '3'
+
+# kind 連携用 Docker Compose
+#
+# kind 上の idp-server に対して、DB/Redis/nginx を提供する。
+#
+# 構成:
+#   nginx → kind NodePort (localhost:8080) → idp-server Pods
+#   idp-server Pods → host.docker.internal → postgres/redis
+#
+# 使い方:
+#   bash k8s/local/up-app-only.sh  (これが全部やる)
+
+services:
+  postgres-primary:
+    build:
+      context: ./docker/postgresql/primary
+    image: idp-postgres-primary:15
+    container_name: postgres-primary
+    environment:
+      - POSTGRES_USER=idpserver
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
+      - POSTGRES_DB=idpserver
+      - TZ=UTC
+      - DB_OWNER_USER=${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
+      - DB_OWNER_PASSWORD=${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
+    ports:
+      - "5432:5432"
+    command: [
+      "postgres",
+      "-c", "shared_preload_libraries=pg_stat_statements,pg_cron",
+      "-c", "cron.database_name=postgres",
+      "-c", "shared_buffers=1GB",
+      "-c", "work_mem=64MB",
+      "-c", "effective_cache_size=2GB",
+      "-c", "max_parallel_workers_per_gather=4"
+    ]
+    volumes:
+      - ./libs/idp-server-database/postgresql/init/00-init-app-user.sh:/docker-entrypoint-initdb.d/00-init-app-user.sh
+      - ./libs/idp-server-database/postgresql/init/01-add-bypassrls.sh:/docker-entrypoint-initdb.d/01-add-bypassrls.sh
+      - ./libs/idp-server-database/postgresql/init/02-init-partman.sh:/docker-entrypoint-initdb.d/02-init-partman.sh
+      - ./docker/postgresql/primary/init-replication.sh:/docker-entrypoint-initdb.d/99-init-replication.sh
+      - postgres_primary_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U idpserver -d idpserver" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  postgres-replica:
+    build:
+      context: ./docker/postgresql/replica
+    container_name: postgres-replica-kind
+    environment:
+      - POSTGRES_USER=idpserver
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
+      - POSTGRES_DB=idpserver
+      - TZ=UTC
+    ports:
+      - "5433:5432"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U idpserver -d idpserver && psql -U idpserver -d idpserver -c 'SELECT pg_is_in_recovery();' | grep -q 't'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  postgres-user-init:
+    build:
+      context: ./libs/idp-server-database
+      dockerfile: Dockerfile-postgres-init
+    image: idp-postgres-user-init:latest
+    restart: "no"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres-primary
+      PGPORT: 5432
+      POSTGRES_USER: idpserver
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
+      POSTGRES_DB: idpserver
+      DB_OWNER_USER: ${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
+      IDP_DB_ADMIN_PASSWORD: ${IDP_DB_ADMIN_PASSWORD?Database admin password is required. Set IDP_DB_ADMIN_PASSWORD environment variable.}
+      IDP_DB_APP_PASSWORD: ${IDP_DB_APP_PASSWORD?Database app password is required. Set IDP_DB_APP_PASSWORD environment variable.}
+
+  flyway-migrator:
+    build:
+      context: ./libs/idp-server-database
+      dockerfile: Dockerfile-flyway
+    image: idp-flyway-migrator:latest
+    restart: "no"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      postgres-user-init:
+        condition: service_completed_successfully
+    environment:
+      DB_TYPE: postgresql
+      DB_URL: jdbc:postgresql://postgres-primary:5432/idpserver
+      DB_USER_NAME: ${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
+      DB_PASSWORD: ${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
+    command: [ "migrate" ]
+
+  pg-cron-setup:
+    build:
+      context: ./libs/idp-server-database
+      dockerfile: Dockerfile-pg-cron-setup
+    image: idp-pg-cron-setup:latest
+    restart: "no"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      flyway-migrator:
+        condition: service_completed_successfully
+    environment:
+      PGHOST: postgres-primary
+      PGPORT: 5432
+      POSTGRES_DB: idpserver
+      DB_USER_NAME: ${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
+      DB_PASSWORD: ${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis-kind
+    ports:
+      - "6379:6379"
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-kind
+    depends_on:
+      - redis
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./k8s/local/nginx-kind.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/certs:/etc/nginx/certs:ro
+
+  mockoon:
+    image: mockoon/cli:latest
+    volumes:
+      - ./docker/mockoon/config.json:/data/config.json
+    command: [
+      "-d", "/data/config.json",
+      "-p", "4000"
+    ]
+    ports:
+      - "4000:4000"
+
+  app-view:
+    build:
+      context: .
+      dockerfile: docker/app-view/Dockerfile
+      args:
+        BASE_PATH: ""
+        NEXT_PUBLIC_BACKEND_URL: "https://api.local.dev"
+    container_name: app-view-kind
+    environment:
+      NODE_ENV: production
+
+  app-view-crosssite:
+    build:
+      context: .
+      dockerfile: docker/app-view/Dockerfile
+      args:
+        BASE_PATH: ""
+        NEXT_PUBLIC_BACKEND_URL: "https://api.local.dev"
+    container_name: app-view-crosssite-kind
+    environment:
+      NODE_ENV: production
+
+  app-view-context-path:
+    build:
+      context: .
+      dockerfile: docker/app-view/Dockerfile
+      args:
+        BASE_PATH: ""
+        NEXT_PUBLIC_BACKEND_URL: "https://api.local.dev/idp-admin"
+    container_name: app-view-context-path-kind
+    environment:
+      NODE_ENV: production
+
+  sample-web:
+    build:
+      context: .
+      dockerfile: docker/sample-web/Dockerfile
+    container_name: sample-web-kind
+    environment:
+      NODE_ENV: production
+      AUTH_SECRET: "123"
+      AUTH_TRUST_HOST: "true"
+      AUTH_URL: "https://sample.local.dev"
+      NEXT_PUBLIC_IDP_SERVER_ISSUER: "https://api.local.dev/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+      NEXT_PUBLIC_FRONTEND_URL: "https://sample.local.dev"
+      NEXT_PUBLIC_IDP_CLIENT_ID: "8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f"
+      NEXT_IDP_CLIENT_SECRET: "local-dev-public-secret-32char"
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    extra_hosts:
+      - "api.local.dev:host-gateway"
+      - "auth.local.dev:host-gateway"
+      - "sample.local.dev:host-gateway"
+
+volumes:
+  postgres_primary_data:
+  postgres_replica_data:

@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flyway-migrator
+  namespace: idp
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: flyway-migrator
+          image: idp-flyway-migrator:latest
+          imagePullPolicy: Never
+          env:
+            - name: DB_TYPE
+              value: "postgresql"
+            - name: DB_URL
+              value: "jdbc:postgresql://postgres:5432/idpserver"
+            - name: DB_USER_NAME
+              value: "idp"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: idp-secrets
+                  key: DB_OWNER_PASSWORD
+          args: ["migrate"]
