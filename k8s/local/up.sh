@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# =========================================================
+# 全サービスを kind にデプロイ（フルK8sモード）
+#
+# DB/Redis も含めてすべてを kind クラスター内で動かす。
+# ※ 通常のローカル開発には up-app-only.sh を推奨。
+#   up-app-only.sh は DB/Redis/nginx を Docker Compose で動かし、
+#   idp-server のみ kind にデプロイするハイブリッド構成。
+# =========================================================
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CLUSTER_NAME="idp-local"

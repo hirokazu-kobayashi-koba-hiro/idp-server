@@ -39,7 +39,7 @@ idp-server のみ kind クラスターにデプロイし、DB/Redis/nginx 等は
 │  │  │  │  :8080              │  │  :8080              ││    │ │
 │  │  │  └─────────────────────┘  └─────────────────────┘│    │ │
 │  │  │                                                  │    │ │
-│  │  │  HPA: CPU 70%, min=1, max=5                     │    │ │
+│  │  │  HPA: CPU 70%, min=1, max=3                     │    │ │
 │  │  │  Metrics Server                                  │    │ │
 │  │  └──────────────────────────────────────────────────┘    │ │
 │  │          │                                               │ │
@@ -62,6 +62,7 @@ idp-server のみ kind クラスターにデプロイし、DB/Redis/nginx 等は
 |-------|-------------|
 | **kind** | `brew install kind` |
 | **kubectl** | `brew install kubectl` |
+| **python3** | macOS 標準搭載（`status.sh` の JSON 解析で使用） |
 
 ## ファイル構成
 
