@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: idp
+spec:
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: idp
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: idp-postgres-primary:15
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "idpserver"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: idp-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              value: "idpserver"
+            - name: TZ
+              value: "UTC"
+            - name: DB_OWNER_USER
+              value: "idp"
+            - name: DB_OWNER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: idp-secrets
+                  key: DB_OWNER_PASSWORD
+            - name: PGDATA
+              value: "/var/lib/postgresql/data/pgdata"
+          args:
+            - "postgres"
+            - "-c"
+            - "shared_preload_libraries=pg_stat_statements,pg_cron"
+            - "-c"
+            - "cron.database_name=postgres"
+            - "-c"
+            - "shared_buffers=1GB"
+            - "-c"
+            - "work_mem=64MB"
+            - "-c"
+            - "effective_cache_size=2GB"
+            - "-c"
+            - "max_parallel_workers_per_gather=4"
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - "-U"
+                - "idpserver"
+                - "-d"
+                - "idpserver"
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: postgres-init-scripts
+            defaultMode: 0755
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 2Gi

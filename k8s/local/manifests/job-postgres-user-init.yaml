@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-user-init
+  namespace: idp
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: postgres-user-init
+          image: idp-postgres-user-init:latest
+          imagePullPolicy: Never
+          env:
+            - name: PGHOST
+              value: "postgres-0.postgres.idp.svc.cluster.local"
+            - name: PGPORT
+              value: "5432"
+            - name: POSTGRES_USER
+              value: "idpserver"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: idp-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              value: "idpserver"
+            - name: DB_OWNER_USER
+              value: "idp"
+            - name: IDP_DB_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: idp-secrets
+                  key: IDP_DB_ADMIN_PASSWORD
+            - name: IDP_DB_APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: idp-secrets
+                  key: IDP_DB_APP_PASSWORD

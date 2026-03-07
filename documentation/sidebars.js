@@ -36,6 +36,7 @@ const sidebars = {
       collapsed: true,
       items: [
         "content_02_quickstart/quickstart-01-getting-started",
+        "content_02_quickstart/quickstart-01-kind-getting-started",
         "content_02_quickstart/quickstart-02-setting-templates",
         {
           type: "category",
@@ -473,6 +474,14 @@ const sidebars = {
                 "content_11_learning/docker-kubernetes/kubernetes-scaling",
                 "content_11_learning/docker-kubernetes/kubernetes-observability",
                 "content_11_learning/docker-kubernetes/kubernetes-security"
+              ]
+            },
+            {
+              type: "category",
+              label: "ローカル環境",
+              collapsed: true,
+              items: [
+                "content_11_learning/docker-kubernetes/kind-local-cluster"
               ]
             },
             {

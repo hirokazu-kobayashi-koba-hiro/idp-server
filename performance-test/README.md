@@ -44,7 +44,7 @@ python3 ./performance-test/scripts/generate_users.py \
   --first-tenant-users 1000000
 
 # 3. PostgreSQLにインポート
-./performance-test/scripts/import_users.sh multi_tenant_1m+9x100k
+./performance-test/scripts/import_users.sh multi_tenant_1m+9x100k -y
 
 # 4. k6テスト用セットアップ
 cp ./performance-test/data/multi_tenant_1m+9x100k_test_users.json \
