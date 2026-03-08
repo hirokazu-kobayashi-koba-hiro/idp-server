@@ -31,6 +31,9 @@ dependencies {
 	//log format
 	implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 
+	// metrics
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

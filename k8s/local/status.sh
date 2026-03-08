@@ -181,7 +181,32 @@ else
 fi
 
 # =========================================================
-# 4. Health checks
+# 4. Monitoring (Prometheus + Grafana)
+# =========================================================
+section "Monitoring (namespace: monitoring)"
+
+if kubectl get namespace monitoring &>/dev/null; then
+  MON_PODS_JSON=$(kubectl get pods -n monitoring -o json 2>/dev/null || echo '{"items":[]}')
+  echo "$MON_PODS_JSON" | python3 -c "
+import sys, json
+pods = json.load(sys.stdin)['items']
+for p in pods:
+    name = p['metadata']['name']
+    phase = p['status']['phase']
+    ready = all(c.get('ready', False) for c in p['status'].get('containerStatuses', []))
+    if phase == 'Running' and ready:
+        print(f'  \033[0;32m✔\033[0m {name}')
+    elif phase == 'Succeeded':
+        print(f'  \033[0;32m✔\033[0m {name}  \033[2m(completed)\033[0m')
+    else:
+        print(f'  \033[0;31m✘\033[0m {name}  \033[2m({phase})\033[0m')
+"
+else
+  warn "monitoring namespace not found (run up-app-only.sh to install)"
+fi
+
+# =========================================================
+# 5. Health checks
 # =========================================================
 section "Health checks"
 
@@ -219,8 +244,16 @@ else
   warn "sample.local.dev ${DIM}(HTTP $SAMPLE)${NC}"
 fi
 
+# Grafana
+GRAFANA=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 http://localhost:3100/api/health 2>/dev/null || echo "000")
+if [ "$GRAFANA" = "200" ]; then
+  ok "localhost:3100  ${DIM}(Grafana)${NC}"
+else
+  warn "localhost:3100  ${DIM}(Grafana HTTP $GRAFANA)${NC}"
+fi
+
 # =========================================================
-# 5. Summary
+# 6. Summary
 # =========================================================
 section "Summary"
 
@@ -236,5 +269,6 @@ echo -e "${DIM}    Pods:     kubectl get pods -n idp${NC}"
 echo -e "${DIM}    Logs:     kubectl logs -n idp -l app=idp-server -f${NC}"
 echo -e "${DIM}    HPA:      kubectl get hpa -n idp -w${NC}"
 echo -e "${DIM}    Metrics:  kubectl top pods -n idp${NC}"
+echo -e "${DIM}    Grafana:  http://localhost:3100 (admin / prom-operator)${NC}"
 echo -e "${DIM}    Stop:     bash k8s/local/down-app-only.sh${NC}"
 echo ""

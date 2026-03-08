@@ -12,6 +12,10 @@ spec:
     metadata:
       labels:
         app: idp-server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
     spec:
       # up-app-only.sh が host.docker.internal の実IP で動的に設定する
       # ローカルドメイン → Docker ホスト（nginx）へのルーティング用
@@ -96,12 +100,15 @@ kind: Service
 metadata:
   name: idp-server
   namespace: idp
+  labels:
+    app: idp-server
 spec:
   type: NodePort
   selector:
     app: idp-server
   ports:
-    - port: 8080
+    - name: http
+      port: 8080
       targetPort: 8080
       nodePort: 30080
 ---

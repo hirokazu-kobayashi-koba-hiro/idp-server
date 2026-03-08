@@ -34,7 +34,7 @@ err()  { echo -e "${RED}[ERROR]${NC} $*" >&2; }
 # 1. Prerequisites check
 # -------------------------------------------------------
 log "Checking prerequisites..."
-for cmd in kind kubectl docker; do
+for cmd in kind kubectl docker helm; do
   if ! command -v "$cmd" &>/dev/null; then
     err "$cmd is not installed. Please install it first."
     exit 1
@@ -272,7 +272,32 @@ else
 fi
 
 # -------------------------------------------------------
-# 12. Print connection info
+# 12. Install Prometheus + Grafana (kube-prometheus-stack)
+# -------------------------------------------------------
+if ! kubectl get namespace monitoring &>/dev/null; then
+  log "Installing Prometheus + Grafana..."
+  helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 2>/dev/null || true
+  helm repo update prometheus-community
+  kubectl create namespace monitoring
+  helm install prometheus prometheus-community/kube-prometheus-stack \
+    --namespace monitoring \
+    --set grafana.service.type=NodePort \
+    --set grafana.service.nodePort=30300 \
+    --set grafana.adminPassword=prom-operator \
+    --wait --timeout 300s
+  log "Applying ServiceMonitor for idp-server..."
+  kubectl apply -f "$SCRIPT_DIR/manifests/servicemonitor.yaml"
+  kubectl apply -f "$SCRIPT_DIR/manifests/grafana-dashboard-idp-server.yaml"
+  log "Prometheus + Grafana installed."
+else
+  log "monitoring namespace already exists. Skipping Prometheus + Grafana install."
+  # ServiceMonitor / Dashboard を再適用（更新対応）
+  kubectl apply -f "$SCRIPT_DIR/manifests/servicemonitor.yaml"
+  kubectl apply -f "$SCRIPT_DIR/manifests/grafana-dashboard-idp-server.yaml"
+fi
+
+# -------------------------------------------------------
+# 13. Print connection info
 # -------------------------------------------------------
 echo ""
 echo -e "${GREEN}================================================${NC}"
@@ -289,6 +314,8 @@ echo "    idp-server → host.docker.internal → postgres/redis"
 echo ""
 echo "  Health (direct):  curl http://localhost:8080/actuator/health"
 echo "  Health (nginx):   curl -k https://api.local.dev/actuator/health"
+echo "  Prometheus:       curl http://localhost:8080/actuator/prometheus"
+echo "  Grafana:          http://localhost:3100  (admin / prom-operator)"
 echo "  Pods:             kubectl get pods -n idp"
 echo "  HPA:              kubectl get hpa -n idp"
 echo "  Metrics:          kubectl top pods -n idp  (available after 1-2 min)"

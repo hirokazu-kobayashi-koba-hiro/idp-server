@@ -12,6 +12,7 @@ HPA（水平Pod自動スケーリング）や Readiness/Liveness Probe など、
 | HPA の動作確認 | - | Pod 自動スケーリング |
 | Readiness/Liveness Probe | - | Pod ヘルスチェック |
 | Pod 分散・障害復旧 | - | Deployment による自動復旧 |
+| Prometheus + Grafana | - | CPU/メモリ/リクエスト数の可視化 |
 | FIDO2/MFA（ブラウザUI） | OK | OK |
 
 ## 構成
@@ -41,6 +42,7 @@ idp-server のみ kind クラスターにデプロイし、DB/Redis/nginx 等は
 │  │  │                                                  │    │ │
 │  │  │  HPA: CPU 70%, min=1, max=3                     │    │ │
 │  │  │  Metrics Server                                  │    │ │
+│  │  │  Prometheus + Grafana (monitoring namespace)      │    │ │
 │  │  └──────────────────────────────────────────────────┘    │ │
 │  │          │                                               │ │
 │  │          │ host.docker.internal                          │ │
@@ -62,6 +64,7 @@ idp-server のみ kind クラスターにデプロイし、DB/Redis/nginx 等は
 |-------|-------------|
 | **kind** | `brew install kind` |
 | **kubectl** | `brew install kubectl` |
+| **helm** | `brew install helm` |
 | **python3** | macOS 標準搭載（`status.sh` の JSON 解析で使用） |
 
 ## ファイル構成
@@ -75,7 +78,8 @@ k8s/local/
 ├── nginx-kind.conf          # nginx 設定（→ kind NodePort）
 └── manifests/
     ├── namespace.yaml        # idp namespace
-    └── idp-server.yaml       # Deployment + Service(NodePort) + HPA
+    ├── idp-server.yaml       # Deployment + Service(NodePort) + HPA
+    └── servicemonitor.yaml   # Prometheus ServiceMonitor for idp-server
 
 docker-compose-kind.yaml      # DB/Redis/nginx/UI（Docker Compose側）
 ```
@@ -101,6 +105,7 @@ bash k8s/local/up-app-only.sh
 | 7 | idp-server デプロイ | Deployment + NodePort Service + HPA |
 | 8 | hostAliases 設定 | Pod 内から `api.local.dev` 等を名前解決するための `/etc/hosts` 設定 |
 | 9 | Metrics Server | HPA 用の CPU/メモリメトリクス収集 |
+| 10 | Prometheus + Grafana | kube-prometheus-stack を Helm でインストール |
 
 ### 状態確認
 
@@ -116,6 +121,22 @@ curl http://localhost:8080/actuator/health
 
 # nginx 経由
 curl -k https://api.local.dev/actuator/health
+```
+
+### Grafana（メトリクス可視化）
+
+Prometheus + Grafana が自動インストールされます。
+
+| 項目 | 値 |
+|------|-----|
+| URL | http://localhost:3100 |
+| ユーザー名 | `admin` |
+| パスワード | `prom-operator` |
+
+idp-server の Prometheus メトリクス:
+
+```bash
+curl http://localhost:8080/actuator/prometheus
 ```
 
 ### Kubernetes リソース確認

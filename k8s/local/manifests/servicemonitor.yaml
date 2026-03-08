@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: idp-server
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+      - idp
+  selector:
+    matchLabels:
+      app: idp-server
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 15s
