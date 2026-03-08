@@ -103,6 +103,13 @@ SaaSアプリケーションにおける**オブザーバビリティ（Observab
 | [メトリクスとアラート設計](./metrics-and-alerting.md) | メトリクスの種類、RED/USEメソッド、命名規則、アラート設計 | 25分 |
 | [分散トレーシング](./distributed-tracing.md) | トレース・スパン、コンテキスト伝播、サンプリング戦略 | 20分 |
 
+### ツール深掘り
+
+| ドキュメント | 学べること | 所要時間 |
+|-------------|-----------|---------|
+| [Prometheus と Kubernetes](./prometheus-kubernetes.md) | Prometheus の役割、アーキテクチャ、K8s 統合 | 15分 |
+| [Prometheus 詳細編](./prometheus-kubernetes-deep-dive.md) | TSDB 内部、PromQL、スケーリング、よくある落とし穴 | 25分 |
+
 ---
 
 ## 学習パス
@@ -131,6 +138,9 @@ SaaSアプリケーションにおける**オブザーバビリティ（Observab
 
 マイクロサービス運用に注力:
   分散トレーシング → メトリクスとアラート設計 → （参考）K8s Observability
+
+Prometheus を深く理解したい:
+  メトリクスとアラート設計 → Prometheus と Kubernetes
 ```
 
 ---
