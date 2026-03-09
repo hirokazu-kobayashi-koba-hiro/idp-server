@@ -30,6 +30,7 @@ public class AuthenticationInteractionResult {
   int successCount;
   int failureCount;
   LocalDateTime interactionTime;
+  Map<String, Object> additionalProperties;
 
   public AuthenticationInteractionResult() {}
 
@@ -115,7 +116,27 @@ public class AuthenticationInteractionResult {
     map.put("call_count", callCount);
     map.put("success_count", successCount);
     map.put("failure_count", failureCount);
-    map.put("interaction_time", interactionTime.toString());
+    map.put("interaction_time", interactionTime != null ? interactionTime.toString() : null);
+    if (additionalProperties != null) {
+      map.putAll(additionalProperties);
+    }
     return map;
+  }
+
+  /**
+   * Creates a synthetic interaction result for risk assessment. This entry is injected into
+   * AuthenticationInteractionResults to allow JSONPath evaluation by MfaConditionEvaluator.
+   */
+  public static AuthenticationInteractionResult ofRiskAssessment(
+      Map<String, Object> riskProperties) {
+    AuthenticationInteractionResult result = new AuthenticationInteractionResult();
+    result.operationType = "RISK_ASSESSMENT";
+    result.method = "risk_assessment";
+    result.callCount = 1;
+    result.successCount = 1;
+    result.failureCount = 0;
+    result.interactionTime = null;
+    result.additionalProperties = riskProperties;
+    return result;
   }
 }

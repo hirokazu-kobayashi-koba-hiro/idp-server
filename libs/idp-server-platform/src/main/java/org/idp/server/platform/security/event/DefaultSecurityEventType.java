@@ -203,6 +203,11 @@ public enum DefaultSecurityEventType {
       "Identity verification was cancelled by external service"),
   identity_verification_result_findList("Identity verification results were listed", false, true),
 
+  // Risk assessment
+  risk_assessment_high("Risk assessment determined HIGH risk, MFA required"),
+  risk_assessment_medium("Risk assessment determined MEDIUM risk"),
+  risk_assessment_low("Risk assessment determined LOW risk, MFA skipped", false, true),
+
   // Management API - user
   user_create("User account was created by administrator", true),
   user_get("User details were retrieved by administrator", false, true),

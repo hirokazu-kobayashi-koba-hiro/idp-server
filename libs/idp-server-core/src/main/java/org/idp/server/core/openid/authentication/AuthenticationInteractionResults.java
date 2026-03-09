@@ -19,6 +19,7 @@ package org.idp.server.core.openid.authentication;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.idp.server.core.openid.authentication.risk.RiskAssessmentResult;
 import org.idp.server.platform.json.JsonReadable;
 
 public class AuthenticationInteractionResults implements JsonReadable {
@@ -149,5 +150,17 @@ public class AuthenticationInteractionResults implements JsonReadable {
         .map(AuthenticationInteractionResult::interactionTime)
         .max(Comparator.naturalOrder())
         .orElse(null);
+  }
+
+  /**
+   * Injects risk assessment result as a synthetic interaction entry. The result is accessible via
+   * JSONPath as $.risk_assessment.risk_level in MfaConditionEvaluator.
+   */
+  public AuthenticationInteractionResults withRiskAssessment(RiskAssessmentResult riskResult) {
+    Map<String, AuthenticationInteractionResult> updatedValues = new HashMap<>(values);
+    AuthenticationInteractionResult riskEntry =
+        AuthenticationInteractionResult.ofRiskAssessment(riskResult.toMap());
+    updatedValues.put("risk_assessment", riskEntry);
+    return new AuthenticationInteractionResults(updatedValues);
   }
 }

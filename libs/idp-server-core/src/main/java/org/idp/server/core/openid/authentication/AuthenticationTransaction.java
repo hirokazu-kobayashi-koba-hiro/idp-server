@@ -26,6 +26,7 @@ import org.idp.server.core.openid.authentication.loa.LoaDeniedScopeResolver;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
 import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
+import org.idp.server.core.openid.authentication.risk.RiskAssessmentResult;
 import org.idp.server.core.openid.federation.FederationInteractionResult;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
@@ -333,6 +334,22 @@ public class AuthenticationTransaction {
         authenticationPolicy.levelOfAuthenticationScopes();
     List<String> methods = interactionResults.authenticationMethods();
     return LoaDeniedScopeResolver.resolve(levelOfAuthenticationScopes, methods);
+  }
+
+  /**
+   * Updates the transaction with risk assessment results. Injects the risk assessment as a
+   * synthetic entry in interactionResults so MfaConditionEvaluator can evaluate it via JSONPath.
+   */
+  public AuthenticationTransaction updateWithRiskAssessment(RiskAssessmentResult riskResult) {
+    AuthenticationInteractionResults updatedResults =
+        interactionResults.withRiskAssessment(riskResult);
+    return new AuthenticationTransaction(
+        identifier,
+        authorizationIdentifier,
+        request,
+        authenticationPolicy,
+        updatedResults,
+        attributes);
   }
 
   public boolean hasAuthorizationIdentifier() {
