@@ -111,8 +111,10 @@ sequenceDiagram
 |:---|:---|:---|:---|
 | 1 | GracefulShutdownLifecycle | Readiness DOWN、K8s endpoint削除待機 | 5秒 |
 | 2 | Tomcat GracefulShutdown | 処理中のHTTPリクエスト完了待機 | 30秒 |
-| 3 | ThreadPoolTaskExecutor | 非同期タスク（セキュリティイベント/監査ログ）完了待機 | 30秒 |
+| 3 | ThreadPoolTaskExecutor ×3 | 非同期タスク（セキュリティイベント/監査ログ/ユーザーライフサイクル）完了待機。3つの executor が順次停止（各最大30秒、通常は数秒以内に完了） | 30秒※ |
 | 4 | RetryScheduler @PreDestroy | リトライキューのフラッシュ試行 | 数秒 |
+
+> ※ 3つの ThreadPoolTaskExecutor は Bean 破棄時に順次停止するため、理論上の最大待機時間は 3×30秒 = 90秒です。ただし各タスク（DB書き込み）は通常数ミリ秒で完了するため、実運用では数秒以内に全 executor が停止します。`terminationGracePeriodSeconds: 70` は実運用上十分な値です。
 
 **Kubernetes 設定**:
 

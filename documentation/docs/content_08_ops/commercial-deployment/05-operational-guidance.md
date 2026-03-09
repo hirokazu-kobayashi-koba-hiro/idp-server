@@ -310,8 +310,9 @@ SIGTERM受信
   │      └── Kubernetes が Service エンドポイントから Pod を削除するのを待機
   ├── 2. Tomcat GracefulShutdown（最大30秒）
   │      └── 処理中の HTTP リクエスト完了を待機
-  ├── 3. ThreadPoolTaskExecutor シャットダウン（最大30秒）
-  │      └── キュー内の非同期タスク（セキュリティイベント/監査ログ等）の完了を待機
+  ├── 3. ThreadPoolTaskExecutor シャットダウン（各最大30秒）
+  │      └── 3つの executor（セキュリティイベント/監査ログ/ユーザーライフサイクル）が順次停止
+  │         各タスクは通常数ms で完了するため、実測では数秒以内に終了
   └── 4. RetryScheduler @PreDestroy
          └── リトライキューに残っているイベントのフラッシュを試行
               （DB接続が切断済みの場合、処理は保証されない）
@@ -323,7 +324,7 @@ SIGTERM受信
 |------|---------|-----------|------|
 | シャットダウンディレイ | `IDP_SERVER_SHUTDOWN_DELAY` | `5s` | K8sエンドポイント削除待機時間 |
 | Tomcat グレースフル停止タイムアウト | — | `30s` | 処理中リクエストの完了待機時間 |
-| 非同期タスク完了待機 | — | `30s` | ThreadPoolTaskExecutor のタスク完了待機時間 |
+| 非同期タスク完了待機 | — | 各`30s` | ThreadPoolTaskExecutor のタスク完了待機時間（3つの executor が順次停止、理論上最大90秒だが通常は数秒で完了） |
 
 **Kubernetes 設定例**:
 
