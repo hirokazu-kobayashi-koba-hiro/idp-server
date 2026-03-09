@@ -13,6 +13,7 @@ spec:
       labels:
         app: idp-server
     spec:
+      terminationGracePeriodSeconds: 70
       # up-app-only.sh が host.docker.internal の実IP で動的に設定する
       # ローカルドメイン → Docker ホスト（nginx）へのルーティング用
       hostAliases: []

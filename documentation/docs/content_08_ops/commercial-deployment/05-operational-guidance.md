@@ -299,19 +299,21 @@ idp-server は認証・認可操作の監査ログを非同期で記録します
 
 ### 3.1 Graceful Shutdown
 
-idp-server は Kubernetes 環境での安全なシャットダウンのために、3段階のGraceful Shutdown機構を実装しています。
+idp-server は Kubernetes 環境での安全なシャットダウンのために、4段階のGraceful Shutdown機構を実装しています。
 
 **シャットダウンシーケンス**:
 
 ```
 SIGTERM受信
-  ├── 1. GracefulShutdownLifecycle
+  ├── 1. GracefulShutdownLifecycle（5秒）
   │      ├── Readiness Probe が DOWN に遷移
-  │      └── シャットダウンディレイ（デフォルト: 5秒）
-  │           └── Kubernetes が Service エンドポイントから Pod を削除するのを待機
-  ├── 2. ThreadPoolTaskExecutor シャットダウン
-  │      └── キュー内の非同期タスク（セキュリティイベント/監査ログ等）の完了を待機（最大30秒）
-  └── 3. RetryScheduler @PreDestroy
+  │      └── Kubernetes が Service エンドポイントから Pod を削除するのを待機
+  ├── 2. Tomcat GracefulShutdown（最大30秒）
+  │      └── 処理中の HTTP リクエスト完了を待機
+  ├── 3. ThreadPoolTaskExecutor シャットダウン（各最大30秒）
+  │      └── 3つの executor（セキュリティイベント/監査ログ/ユーザーライフサイクル）が順次停止
+  │         各タスクは通常数ms で完了するため、実測では数秒以内に終了
+  └── 4. RetryScheduler @PreDestroy
          └── リトライキューに残っているイベントのフラッシュを試行
               （DB接続が切断済みの場合、処理は保証されない）
 ```
@@ -321,13 +323,14 @@ SIGTERM受信
 | 設定 | 環境変数 | デフォルト | 説明 |
 |------|---------|-----------|------|
 | シャットダウンディレイ | `IDP_SERVER_SHUTDOWN_DELAY` | `5s` | K8sエンドポイント削除待機時間 |
-| グレースフル停止タイムアウト | — | `30s` | 処理中リクエストの完了待機時間 |
+| Tomcat グレースフル停止タイムアウト | — | `30s` | 処理中リクエストの完了待機時間 |
+| 非同期タスク完了待機 | — | 各`30s` | ThreadPoolTaskExecutor のタスク完了待機時間（3つの executor が順次停止、理論上最大90秒だが通常は数秒で完了） |
 
 **Kubernetes 設定例**:
 
 ```yaml
 spec:
-  terminationGracePeriodSeconds: 40  # delay(5s) + timeout(30s) + margin(5s)
+  terminationGracePeriodSeconds: 70  # delay(5s) + tomcat-graceful(30s) + executor-await(30s) + margin(5s)
   containers:
     - name: idp-server
       lifecycle:
@@ -337,7 +340,7 @@ spec:
 ```
 
 **ポイント**:
-- `terminationGracePeriodSeconds` は「シャットダウンディレイ + グレースフル停止タイムアウト + マージン」以上に設定してください
+- `terminationGracePeriodSeconds` は「シャットダウンディレイ(5s) + Tomcat グレースフル停止タイムアウト(30s) + 非同期タスク完了待機(30s) + マージン」以上に設定してください
 - `preStop` の `sleep` 値は `IDP_SERVER_SHUTDOWN_DELAY` と一致させてください
 
 ### 3.2 マルチインスタンスデプロイ
