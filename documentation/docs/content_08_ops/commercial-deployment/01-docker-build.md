@@ -2,6 +2,11 @@
 
 GitHubリリースの成果物を利用してDockerイメージをビルドします。
 
+:::warning リポジトリのDockerfileは使用しない
+リポジトリ直下の `Dockerfile` はローカル開発用（マルチステージビルド＋ソースからのビルド）です。
+商用デプロイでは、リリースJARを使用して本ページの手順でDockerイメージをビルドしてください。
+:::
+
 ---
 
 ## 📦 リリース成果物の取得
@@ -13,8 +18,8 @@ GitHubリリースページから最新版をダウンロード:
 **リリースURL**: https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/releases
 
 ```bash
-# バージョン指定
-VERSION=0.9.20
+# バージョン指定（リリースページで最新バージョンを確認してください）
+VERSION=<LATEST_VERSION>
 
 # JARダウンロード
 wget https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/releases/download/v${VERSION}/idp-server-${VERSION}.jar
@@ -28,7 +33,7 @@ sha256sum -c checksums.txt --ignore-missing
 
 **期待結果**:
 ```
-idp-server-0.9.20.jar: OK
+idp-server-<VERSION>.jar: OK
 ```
 
 ---
@@ -37,34 +42,55 @@ idp-server-0.9.20.jar: OK
 
 ### Dockerfile作成
 
-リリースJARを使用するシンプルなDockerfile:
+リリースJARを使用する商用デプロイ用のDockerfile:
 
 ```dockerfile
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
 # リリース成果物をコピー
-COPY idp-server-0.9.20.jar /app/idp-server.jar
+ARG JAR_FILE=idp-server-*.jar
+COPY ${JAR_FILE} /app/idp-server.jar
 
-# エントリーポイント
-ENTRYPOINT ["java", "-jar", "/app/idp-server.jar"]
+# エントリーポイントスクリプトをコピー
+COPY entrypoint.sh /app/entrypoint.sh
+
+# セキュリティ: 非rootユーザーで実行
+RUN chmod +x /app/entrypoint.sh && \
+    addgroup -S idpserver && \
+    adduser -S idpserver -G idpserver && \
+    chown -R idpserver:idpserver /app
+
+USER idpserver
+
+ENTRYPOINT ["/app/entrypoint.sh"]
 ```
+
+### entrypoint.sh 作成
+
+```bash
+#!/bin/sh
+
+echo "Starting idp-server..."
+
+# Clean up tmp directory before starting
+rm -rf /tmp/tomcat.* 2>/dev/null || true
+
+exec java $JAVA_OPTS -jar /app/idp-server.jar
+```
+
+**Note**: `JAVA_OPTS` 環境変数でJVMオプション（ヒープサイズ、GC設定等）を外部から指定できます。
 
 ### イメージビルド
 
 ```bash
-# Dockerfile作成
-cat > Dockerfile << 'EOF'
-FROM eclipse-temurin:21-jre-jammy
-WORKDIR /app
-COPY idp-server-0.9.20.jar /app/idp-server.jar
-ENTRYPOINT ["java", "-jar", "/app/idp-server.jar"]
-EOF
+# entrypoint.sh に実行権限を付与
+chmod +x entrypoint.sh
 
 # ビルド実行
-docker build -t idp-server:0.9.20 .
-docker tag idp-server:0.9.20 idp-server:latest
+docker build -t idp-server:${VERSION} .
+docker tag idp-server:${VERSION} idp-server:latest
 ```
 
 ### イメージ確認
@@ -74,8 +100,8 @@ docker tag idp-server:0.9.20 idp-server:latest
 docker images | grep idp-server
 
 # 期待結果:
-# idp-server   0.9.20   <IMAGE_ID>   X seconds ago   XXX MB
-# idp-server   latest  <IMAGE_ID>   X seconds ago   XXX MB
+# idp-server   <VERSION>   <IMAGE_ID>   X seconds ago   XXX MB
+# idp-server   latest      <IMAGE_ID>   X seconds ago   XXX MB
 ```
 
 **Note**: 実際の起動・動作確認は [初期設定](./04-initial-configuration.md) を参照してください。
@@ -91,11 +117,11 @@ docker images | grep idp-server
 docker login <REGISTRY_URL>
 
 # 2. イメージタグ付け
-docker tag idp-server:0.9.20 <REGISTRY_URL>/idp-server:0.9.20
-docker tag idp-server:0.9.20 <REGISTRY_URL>/idp-server:latest
+docker tag idp-server:${VERSION} <REGISTRY_URL>/idp-server:${VERSION}
+docker tag idp-server:${VERSION} <REGISTRY_URL>/idp-server:latest
 
 # 3. プッシュ
-docker push <REGISTRY_URL>/idp-server:0.9.20
+docker push <REGISTRY_URL>/idp-server:${VERSION}
 docker push <REGISTRY_URL>/idp-server:latest
 ```
 
@@ -119,7 +145,7 @@ docker push <REGISTRY_URL>/idp-server:latest
 ls -la idp-server-*.jar
 
 # 再ダウンロード
-wget https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/releases/download/v0.9.20/idp-server-0.9.20.jar
+wget https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/releases/download/v${VERSION}/idp-server-${VERSION}.jar
 ```
 
 
@@ -134,12 +160,13 @@ wget https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/releases/downloa
 
 ### ビルド
 - [ ] Dockerfile作成
+- [ ] entrypoint.sh 作成
 - [ ] イメージビルド成功（`docker build`）
 - [ ] イメージ確認（`docker images`）
 
 ### レジストリ（任意）
 - [ ] レジストリ認証成功
-- [ ] バージョンタグでプッシュ（例: `0.9.20`）
+- [ ] バージョンタグでプッシュ
 - [ ] `latest` タグでプッシュ
 - [ ] レジストリでイメージ確認
 

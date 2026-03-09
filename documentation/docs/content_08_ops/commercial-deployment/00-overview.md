@@ -37,7 +37,7 @@ idp-server の商用デプロイメントに必要な技術要件と基本的な
 
 #### 認証・認可
 - **OAuth 2.0/OIDC** 完全準拠 (RFC 6749, RFC 7519等)
-- **FAPI 1.0/2.0** 金融機関グレードのセキュリティ
+- **FAPI 1.0** 金融機関グレードのセキュリティ
 - **CIBA** (Client Initiated Backchannel Authentication)
 - **WebAuthn/FIDO2** パスワードレス認証
 
@@ -54,17 +54,16 @@ idp-server の商用デプロイメントに必要な技術要件と基本的な
 │   Client Apps   │────│   idp-server     │────│   External APIs │
 │ (Web/Mobile/SPA)│    │ (Identity Engine)│    │ (KYC/Notify etc)│
 └─────────────────┘    └──────────────────┘    └─────────────────┘
-                                │
-                       ┌────────┴────────┐
-                       │    Database     │
-                       │ (PostgreSQL +   │
-                       │ Redis Session)  │
-                       └─────────────────┘
+                           │            │
+                  ┌────────┴───┐   ┌────┴──────────┐
+                  │  Database  │   │     Redis     │
+                  │(PostgreSQL)│   │(Session/Cache)│
+                  └────────────┘   └───────────────┘
 ```
 
 **技術スタック**:
 - **Backend**: Java 21+ (Spring Boot), Hexagonal Architecture + DDD
-- **Database**: PostgreSQL 13+ (Row Level Security必須)
+- **Database**: PostgreSQL 14+ (Row Level Security必須)
 - **Session**: Redis 6.0+ (セッション管理)
 
 ---
@@ -86,7 +85,7 @@ idp-server の商用デプロイメントに必要な技術要件と基本的な
 
 | 項目 | 要件 | 備考 |
 |------|------|------|
-| **バージョン** | PostgreSQL 13+ | Row Level Security必須 |
+| **バージョン** | PostgreSQL 14+ | pg_cron, pg_partman拡張必須 |
 | **ユーザー** | `idp_app_user` | RLS適用 |
 | **接続数** | 最小 50 | アプリケーション用 |
 | **ストレージ** | SSD推奨 | IOPSパフォーマンス重視 |
@@ -107,7 +106,7 @@ idp-server の商用デプロイメントに必要な技術要件と基本的な
 
 | 項目 | 要件 | 備考 |
 |------|------|------|
-| **Redis** | 6.0+ | セッション管理用 |
+| **Redis** | 6.0+ | セッション管理・キャッシュ用 |
 | **メモリ** | 最小 1GB | セッション数に依存 |
 | **永続化** | 推奨 (RDB/AOF) | 再起動時のセッション保持 |
 
@@ -132,9 +131,8 @@ idp-server の商用デプロイメントに必要な技術要件と基本的な
    - Flyway マイグレーション実行
 
 4. **[初期設定](./04-initial-configuration.md)**
-   - `./setup.sh` による初期化
-   - 管理テナント・ユーザー作成
-   - OAuth クライアント設定
+   - 管理テナント・ユーザー・クライアント作成
+   - システム設定（Trusted Proxy、SSRF保護）
    - OAuth/OIDC フロー検証
 
 5. **[運用ガイダンス](./05-operational-guidance.md)**

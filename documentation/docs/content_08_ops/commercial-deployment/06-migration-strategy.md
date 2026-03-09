@@ -13,8 +13,8 @@ idp-server のデータベーススキーマ変更を安全に実施するため
 | アプリバージョン | マイグレーションバージョン | 説明 |
 |----------------|-------------------------|------|
 | v0.9.0 | V0_9_0__init_lib.sql | 初期DDL |
-| v1.0.1 | V1_0_1__webauthn.sql | WebAuthn機能追加 |
-| v1.1.0 | V1_1_0__*.sql | 次期メジャー機能 |
+| v0.9.21.1 | V0_9_21_1__add_event_partitioning.sql | イベントパーティショニング追加 |
+| v0.9.32.2 | V0_9_32_2__webauthn4j.sql | WebAuthn機能追加 |
 
 **デプロイ順序**:
 ```
@@ -33,18 +33,24 @@ idp-server のデータベーススキーマ変更を安全に実施するため
 
 ```
 V{major}_{minor}_{patch}__{description}.sql
+V{major}_{minor}_{patch}_{sub}__{description}.sql   # サブバージョンあり
 ```
 
-**例**:
-- `V1_0_2__add_user_email_verified.sql`
-- `V1_1_0__add_identity_verification_tables.sql`
-- `V1_1_1__add_index_user_email.sql`
+**PostgreSQL例**:
+- `V0_9_0__init_lib.sql`
+- `V0_9_21_1__add_event_partitioning.sql`
+- `V0_9_32_2__webauthn4j.sql`
+
+**MySQL例**（`.mysql.sql` サフィックス）:
+- `V0_9_0__init_lib.mysql.sql`
+- `V0_9_21_1__security_event_partition.mysql.sql`
+- `V0_9_32_2__webauthn.mysql.sql`
 
 **ルール**:
 - バージョン番号は昇順（Flywayが自動検出）
 - 説明は英語スネークケース
 - PostgreSQL用: `libs/idp-server-database/postgresql/`
-- MySQL用: `libs/idp-server-database/mysql/`
+- MySQL用: `libs/idp-server-database/mysql/`（ファイル名は `.mysql.sql` で終わること）
 
 ---
 
@@ -55,7 +61,7 @@ V{major}_{minor}_{patch}__{description}.sql
 #### カラム追加（DEFAULT値付き）
 ```sql
 -- ✅ 旧バージョンのアプリも動作可能
-ALTER TABLE idp_user ADD COLUMN email_verified BOOLEAN DEFAULT false;
+ALTER TABLE idp_user ADD COLUMN mfa_enabled BOOLEAN DEFAULT false;
 ```
 
 #### テーブル追加
@@ -190,12 +196,12 @@ cd libs/idp-server-database
 
 **出力例**（失敗時）:
 ```
-+------------+---------+---------------------+------+---------------------+---------+
-| Category   | Version | Description         | Type | Installed On        | State   |
-+------------+---------+---------------------+------+---------------------+---------+
-| Versioned  | 1.0.1   | webauthn            | SQL  | 2024-01-15 10:00:00 | Success |
-| Versioned  | 1.0.2   | add email verified  | SQL  | 2024-01-15 10:05:00 | Failed  |
-+------------+---------+---------------------+------+---------------------+---------+
++------------+---------+------------------------------+------+---------------------+---------+
+| Category   | Version | Description                  | Type | Installed On        | State   |
++------------+---------+------------------------------+------+---------------------+---------+
+| Versioned  | 0.9.32.1| device credential            | SQL  | 2024-01-15 10:00:00 | Success |
+| Versioned  | 0.9.32.2| webauthn4j                   | SQL  | 2024-01-15 10:05:00 | Failed  |
++------------+---------+------------------------------+------+---------------------+---------+
 ```
 
 ### 修復手順
@@ -235,7 +241,7 @@ psql -h $IDP_DB_HOST -U idp_admin_user -d idpserver
 
 ### マイグレーション作成時
 - [ ] ファイル命名規則に従っている（`V{major}_{minor}_{patch}__{description}.sql`）
-- [ ] PostgreSQL/MySQL両方のSQLファイルを作成
+- [ ] PostgreSQL/MySQL両方のSQLファイルを作成（MySQL用は `.mysql.sql` サフィックス）
 - [ ] 後方互換性を確認（カラム追加にDEFAULT値を設定）
 - [ ] 大量データ更新はバッチ処理で実装
 - [ ] ステージング環境で実行時間を計測
