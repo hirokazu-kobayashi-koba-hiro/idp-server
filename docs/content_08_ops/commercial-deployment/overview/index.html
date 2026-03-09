@@ -5,7 +5,7 @@
 <meta name="generator" content="Docusaurus v3.7.0">
 <title data-rh="true">商用デプロイメント概要 | IdP-Server Documentation</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_08_ops/commercial-deployment/overview"><meta data-rh="true" property="og:locale" content="ja"><meta data-rh="true" name="docusaurus_locale" content="ja"><meta data-rh="true" name="docsearch:language" content="ja"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="商用デプロイメント概要 | IdP-Server Documentation"><meta data-rh="true" name="description" content="idp-server の商用デプロイメントに必要な技術要件と基本的なデプロイ構成について説明します。"><meta data-rh="true" property="og:description" content="idp-server の商用デプロイメントに必要な技術要件と基本的なデプロイ構成について説明します。"><link data-rh="true" rel="icon" href="/idp-server/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_08_ops/commercial-deployment/overview"><link data-rh="true" rel="alternate" href="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_08_ops/commercial-deployment/overview" hreflang="ja"><link data-rh="true" rel="alternate" href="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_08_ops/commercial-deployment/overview" hreflang="x-default"><link rel="alternate" type="application/rss+xml" href="/idp-server/blog/rss.xml" title="IdP-Server Documentation RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/idp-server/blog/atom.xml" title="IdP-Server Documentation Atom Feed"><link rel="stylesheet" href="/idp-server/assets/css/styles.205b0e17.css">
-<script src="/idp-server/assets/js/runtime~main.692a6aa7.js" defer="defer"></script>
+<script src="/idp-server/assets/js/runtime~main.621eb11d.js" defer="defer"></script>
 <script src="/idp-server/assets/js/main.03f31090.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -39,7 +39,7 @@
 <h4 class="anchor anchorWithStickyNavbar_LWe7" id="認証認可">認 証・認可<a href="#認証認可" class="hash-link" aria-label="認証・認可 への直接リンク" title="認証・認可 への直接リンク">​</a></h4>
 <ul>
 <li><strong>OAuth 2.0/OIDC</strong> 完全準拠 (RFC 6749, RFC 7519等)</li>
-<li><strong>FAPI 1.0/2.0</strong> 金融機関グレードのセキュリティ</li>
+<li><strong>FAPI 1.0</strong> 金融機関グレードのセキュリティ</li>
 <li><strong>CIBA</strong> (Client Initiated Backchannel Authentication)</li>
 <li><strong>WebAuthn/FIDO2</strong> パスワードレス認証</li>
 </ul>
@@ -51,11 +51,11 @@
 <li><strong>Audit Log</strong> 全操作の監査証跡</li>
 </ul>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="アーキテクチャ">アーキテクチャ<a href="#アーキテクチャ" class="hash-link" aria-label="アーキテクチャ への直接リンク" title="アーキテクチャ への直接リンク">​</a></h3>
-<div class="codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   Client Apps   │────│   idp-server     │────│   External APIs │</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│ (Web/Mobile/SPA)│    │ (Identity Engine)│    │ (KYC/Notify etc)│</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">└─────────────────┘    └──────────────────┘    └─────────────────┘</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">                                │</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">                       ┌────────┴────────┐</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">                       │    Database     │</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">                       │ (PostgreSQL +   │</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">                       │ Redis Session)  │</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">                       └─────────────────┘</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="クリップボードにコードをコピー" title="コピー" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<div class="codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   Client Apps   │────│   idp-server     │────│   External APIs │</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│ (Web/Mobile/SPA)│    │ (Identity Engine)│    │ (KYC/Notify etc)│</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">└─────────────────┘    └──────────────────┘    └─────────────────┘</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">                           │            │</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">                  ┌────────┴───┐   ┌────┴──────────┐</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">                  │  Database  │   │     Redis     │</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">                  │(PostgreSQL)│   │(Session/Cache)│</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">                  └────────────┘   └───────────────┘</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="クリップボードにコードをコピー" title="コピー" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
 <p><strong>技術スタック</strong>:</p>
 <ul>
 <li><strong>Backend</strong>: Java 21+ (Spring Boot), Hexagonal Architecture + DDD</li>
-<li><strong>Database</strong>: PostgreSQL 13+ (Row Level Security必須)</li>
+<li><strong>Database</strong>: PostgreSQL 14+ (Row Level Security必須)</li>
 <li><strong>Session</strong>: Redis 6.0+ (セッション管理)</li>
 </ul>
 <hr>
@@ -64,7 +64,7 @@
 <table><thead><tr><th>項目</th><th>要件</th><th>推奨</th></tr></thead><tbody><tr><td><strong>Java バージョン</strong></td><td>Java 21+</td><td>Java 21 LTS</td></tr><tr><td><strong>JVM</strong></td><td>OpenJDK, Oracle JDK</td><td>Eclipse Temurin</td></tr><tr><td><strong>メモリ</strong></td><td>最小 2GB</td><td>4GB+</td></tr><tr><td><strong>CPU</strong></td><td>最小 2 コア</td><td>4 コア+</td></tr></tbody></table>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="データベース要件">データベース要件<a href="#データベース要件" class="hash-link" aria-label="データベース要件 への直接リンク" title="データベース要件 への直接リンク">​</a></h3>
 <h4 class="anchor anchorWithStickyNavbar_LWe7" id="postgresql-推奨">PostgreSQL (推奨)<a href="#postgresql-推奨" class="hash-link" aria-label="PostgreSQL (推奨) への直接リンク" title="PostgreSQL (推奨) への直接リンク">​</a></h4>
-<table><thead><tr><th>項目</th><th>要件</th><th>備考</th></tr></thead><tbody><tr><td><strong>バージョン</strong></td><td>PostgreSQL 13+</td><td>Row Level Security  必須</td></tr><tr><td><strong>ユーザー</strong></td><td><code>idp_app_user</code></td><td>RLS適用</td></tr><tr><td><strong>接続数</strong></td><td>最小 50</td><td>アプリケーション用</td></tr><tr><td><strong>ストレージ</strong></td><td>SSD推奨</td><td>IOPSパフォーマンス重視</td></tr></tbody></table>
+<table><thead><tr><th>項目</th><th>要件</th><th>備考</th></tr></thead><tbody><tr><td><strong>バージョン</strong></td><td>PostgreSQL 14+</td><td>pg_cron, pg_partman拡張必須</td></tr><tr><td><strong>ユーザー</strong></td><td><code>idp_app_user</code></td><td>RLS適用</td></tr><tr><td><strong>接続数</strong></td><td>最小 50</td><td>アプリケーション用</td></tr><tr><td><strong>ストレージ</strong></td><td>SSD推奨</td><td>IOPSパフォーマンス重視</td></tr></tbody></table>
 <p><strong>必須設定</strong>:</p>
 <ul>
 <li>Row Level Security (RLS) 有効化</li>
@@ -73,9 +73,9 @@
 <h4 class="anchor anchorWithStickyNavbar_LWe7" id="mysql-代替">MySQL (代替)<a href="#mysql-代替" class="hash-link" aria-label="MySQL (代替) への直接リンク" title="MySQL (代替) への直接リンク">​</a></h4>
 <table><thead><tr><th>項目</th><th>要件</th><th>備考</th></tr></thead><tbody><tr><td><strong>バージョン</strong></td><td>MySQL 8.0+</td><td>-</td></tr><tr><td><strong>エンジン</strong></td><td>InnoDB</td><td>-</td></tr><tr><td><strong>文字セット</strong></td><td>utf8mb4</td><td>-</td></tr></tbody></table>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="キャッシュセッション管理">キャッシュ・セッション管理<a href="#キャッシュセッション管理" class="hash-link" aria-label="キャッシュ・セッション管理 への直接リンク" title="キャッシュ・セッション管理 への直接リンク">​</a></h3>
-<table><thead><tr><th>項目</th><th>要件</th><th>備考</th></tr></thead><tbody><tr><td><strong>Redis</strong></td><td>6.0+</td><td>セッション管理用</td></tr><tr><td><strong>メモリ</strong></td><td>最小 1GB</td><td>セッション数に依存</td></tr><tr><td><strong>永続化</strong></td><td>推奨 (RDB/AOF)</td><td>再起動時のセッション保持</td></tr></tbody></table>
+<table><thead><tr><th>項目</th><th>要件</th><th>備考</th></tr></thead><tbody><tr><td><strong>Redis</strong></td><td>6.0+</td><td>セッション管理・キャッシュ用</td></tr><tr><td><strong>メモリ</strong></td><td>最小 1GB</td><td>セッション数に依存</td></tr><tr><td><strong>永続化</strong></td><td>推奨 (RDB/AOF)</td><td>再起動時のセッション保持</td></tr></tbody></table>
 <hr>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-デプロイ手順">📋 デプロイ手順<a href="#-デプロイ手順" class="hash-link" aria-label="📋 デプロイ手順 への直接リンク" title="📋 デ プロイ手順 への直接リンク">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-デプロイ手順">📋 デプロイ手順<a href="#-デプロイ手順" class="hash-link" aria-label="📋 デプロイ手順 への直接リンク" title="📋 デプロイ手  順 への直接リンク">​</a></h2>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="手順の流れ">手順の流れ<a href="#手順の流れ" class="hash-link" aria-label="手順の流れ への直接リンク" title="手順の流れ への直接リンク">​</a></h3>
 <ol>
 <li>
@@ -104,9 +104,8 @@
 <li>
 <p><strong><a href="/idp-server/docs/content_08_ops/commercial-deployment/initial-configuration">初期設定</a></strong></p>
 <ul>
-<li><code>./setup.sh</code> による初期化</li>
-<li>管理テナント・ユーザー作成</li>
-<li>OAuth クライアント設定</li>
+<li>管理テナント・ユーザー・クライアント作成</li>
+<li>システム設定（Trusted Proxy、SSRF保護）</li>
 <li>OAuth/OIDC フロー検証</li>
 </ul>
 </li>
