@@ -74,7 +74,7 @@ cat initial.json | jq '{
 }'
 ```
 
-**Note**: 設定ファイルの作成方法は [How-to: 初期テナント・ユーザー作成](../../content_05_how-to/phase-1-setup/how-to-01-create-initial-tenant-and-user.md) を参照してください。
+**Note**: 設定ファイルの作成方法は [How-to: サーバーセットアップ](../../content_05_how-to/phase-1-foundation/01-server-setup.md) および [How-to: 組織初期化](../../content_05_how-to/phase-1-foundation/02-organization-initialization.md) を参照してください。
 
 ---
 
@@ -113,23 +113,151 @@ curl -X POST "${AUTHORIZATION_SERVER_URL}/v1/admin/initialization" \
 
 ---
 
-## ステップ5: 検証
+## ステップ5: システム設定（Trusted Proxy・SSRF保護）
 
-### 5-1. OAuthトークン取得テスト
+初期化完了後、System Configuration API でセキュリティ関連のシステム設定を行います。
+
+**前提**: ステップ4で取得した管理者トークンを使用します。
 
 ```bash
-# initial.jsonから値を取得して環境変数に設定
+# ステップ4の初期化結果から管理者トークンを取得
 export TENANT_ID=$(cat initial.json | jq -r '.tenant.id')
 export ADMIN_EMAIL=$(cat initial.json | jq -r '.user.email')
 export ADMIN_PASSWORD=$(cat initial.json | jq -r '.user.raw_password')
 export CLIENT_ID=$(cat initial.json | jq -r '.client.client_id')
 export CLIENT_SECRET=$(cat initial.json | jq -r '.client.client_secret')
 
-# テナント固有のトークンエンドポイント
-export TOKEN_ENDPOINT="${AUTHORIZATION_SERVER_URL}/${TENANT_ID}/v1/tokens"
+export ACCESS_TOKEN=$(curl -s -X POST "${AUTHORIZATION_SERVER_URL}/${TENANT_ID}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "username=${ADMIN_EMAIL}" \
+  -d "password=${ADMIN_PASSWORD}" \
+  -d "client_id=${CLIENT_ID}" \
+  -d "client_secret=${CLIENT_SECRET}" \
+  -d "scope=openid management" | jq -r '.access_token')
+```
 
-# パスワード認証でトークン取得
-curl -X POST "${TOKEN_ENDPOINT}" \
+### 5-1. Trusted Proxy設定
+
+ロードバランサーやリバースプロキシの背後で運用する場合、`X-Forwarded-For` ヘッダーからクライアントIPを正しく解決するために Trusted Proxy を設定します。
+
+**未設定の場合**: クライアントIPが全てLB/プロキシのIPとなり、監査ログやレートリミットが正しく機能しません。
+
+```bash
+curl -X PUT "${AUTHORIZATION_SERVER_URL}/v1/management/system-configurations" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "trusted_proxies": {
+      "enabled": true,
+      "addresses": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ]
+    }
+  }' | jq
+```
+
+**設定項目:**
+
+| フィールド | 説明 | デフォルト | 本番推奨 |
+|-----------|------|----------|---------|
+| `enabled` | Trusted Proxy機能の有効化 | `false` | `true` |
+| `addresses` | 信頼するプロキシのIP/CIDR一覧 | `[]` | VPCのCIDR範囲 |
+
+**`addresses` の設定例:**
+
+| 環境 | 推奨設定 |
+|------|---------|
+| AWS ALB (VPC: 10.0.0.0/16) | `["10.0.0.0/16"]` |
+| GCP Cloud Load Balancing | `["35.191.0.0/16", "130.211.0.0/22"]` |
+| Kubernetes (Pod CIDR) | `["10.244.0.0/16"]`（クラスタ設定に依存） |
+
+### 5-2. SSRF保護設定
+
+外部HTTPリクエスト（Webhook、フェデレーション連携等）時に、プライベートIPへのアクセスをブロックします。
+
+**未設定の場合**: Security Event HookやフェデレーションのコールバックURLにプライベートIPを指定されると、内部ネットワークへのアクセスが可能になります。
+
+```bash
+curl -X PUT "${AUTHORIZATION_SERVER_URL}/v1/management/system-configurations" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "trusted_proxies": {
+      "enabled": true,
+      "addresses": [
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16"
+      ]
+    },
+    "ssrf_protection": {
+      "enabled": true,
+      "bypass_hosts": [],
+      "allowed_hosts": []
+    }
+  }' | jq
+```
+
+**Note**: System Configuration API は全設定を一括更新するため、Trusted Proxy設定も含めて送信します。
+
+**設定項目:**
+
+| フィールド | 説明 | デフォルト | 本番推奨 |
+|-----------|------|----------|---------|
+| `enabled` | SSRF保護の有効化 | `false` | `true` |
+| `bypass_hosts` | 保護を迂回するホスト名一覧 | `[]` | `[]`（空推奨） |
+| `allowed_hosts` | 許可する外部ホスト名一覧（指定時はallowlist方式） | `[]` | 連携先のみ指定 |
+
+**動作モード:**
+
+| `allowed_hosts` | 動作 |
+|----------------|------|
+| `[]`（空） | プライベートIPのみブロック（blocklist方式） |
+| ホスト名指定あり | 指定されたホストのみ許可（allowlist方式、より安全） |
+
+**ブロック対象:** RFC1918プライベートIP（`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`）、ループバック（`127.0.0.0/8`）、クラウドメタデータ（`169.254.169.254`）、IPv6プライベート範囲
+
+**allowlist方式の設定例（推奨）:**
+```json
+{
+  "ssrf_protection": {
+    "enabled": true,
+    "bypass_hosts": [],
+    "allowed_hosts": [
+      "accounts.google.com",
+      "login.microsoftonline.com",
+      "hooks.slack.com"
+    ]
+  }
+}
+```
+
+### 5-3. 設定確認
+
+```bash
+curl -X GET "${AUTHORIZATION_SERVER_URL}/v1/management/system-configurations" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" | jq
+```
+
+**期待結果**: `trusted_proxies.enabled: true` と `ssrf_protection.enabled: true` が返される
+
+**Note**: 設定は5分間キャッシュされます。設定更新時はキャッシュが自動的に無効化されますが、複数インスタンス環境では全インスタンスへの反映に最大5分かかります。
+
+---
+
+## ステップ6: 検証
+
+### 6-1. OAuthトークン取得テスト
+
+```bash
+# ステップ5で設定済みの環境変数を使用（未設定の場合は再設定）
+# export TENANT_ID, ADMIN_EMAIL, ADMIN_PASSWORD, CLIENT_ID, CLIENT_SECRET
+
+# パスワード認証でトークン取得（profile, email スコープ付き）
+curl -X POST "${AUTHORIZATION_SERVER_URL}/${TENANT_ID}/v1/tokens" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=password" \
   -d "username=${ADMIN_EMAIL}" \
@@ -141,14 +269,16 @@ curl -X POST "${TOKEN_ENDPOINT}" \
 
 **期待結果**: `access_token` が返される
 
-### 5-2. 管理API呼び出しテスト
+### 6-2. 管理API呼び出しテスト
 
 ```bash
-# 取得したトークンを設定
-export ACCESS_TOKEN="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+# ステップ5で取得済みの ACCESS_TOKEN を使用（期限切れの場合は6-1で再取得）
+
+# initial.jsonから組織IDを取得
+export ORGANIZATION_ID=$(cat initial.json | jq -r '.organization.id')
 
 # テナント一覧を取得
-curl -X GET "${AUTHORIZATION_SERVER_URL}/v1/admin/tenants" \
+curl -X GET "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" | jq
 ```
 
@@ -206,7 +336,8 @@ cat initial.json | jq .
 - [運用ガイダンス](./05-operational-guidance.md)
 
 ### 詳細情報
-- [How-to: 初期テナント・ユーザー作成](../../content_05_how-to/phase-1-setup/how-to-01-create-initial-tenant-and-user.md) - 各フィールドの詳細説明
+- [How-to: サーバーセットアップ](../../content_05_how-to/phase-1-foundation/01-server-setup.md) - サーバー初期設定の詳細
+- [How-to: 組織初期化](../../content_05_how-to/phase-1-foundation/02-organization-initialization.md) - 組織・テナント・ユーザー作成の詳細
 - [Control Plane API - 初期化](../../content_06_developer-guide/02-control-plane/03-system-level-api.md) - API仕様の詳細
 
 ---
