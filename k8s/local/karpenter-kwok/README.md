@@ -10,7 +10,7 @@
 
 > **⚠️ 重要: KWOK ノード上ではコンテナは実行されません**
 >
-> KWOK ノードには [kubelet](../../documentation/docs/content_11_learning/13-docker-kubernetes/kubernetes-architecture.md)（各ノードでコンテナを起動・管理するエージェント）が存在しないため、Pod は `Running` と**表示される**だけで、実際にはコンテナプロセスは起動していません。ネットワーク通信、ヘルスチェック、ログ出力なども動作しません。
+> KWOK ノードには [kubelet](../../../documentation/docs/content_11_learning/13-docker-kubernetes/kubernetes-architecture.md)（各ノードでコンテナを起動・管理するエージェント）が存在しないため、Pod は `Running` と**表示される**だけで、実際にはコンテナプロセスは起動していません。ネットワーク通信、ヘルスチェック、ログ出力なども動作しません。
 >
 > この環境で検証できるのは **Karpenter のスケジューリング判断**（ノード追加・削除・Consolidation・NodePool ポリシー）のみです。
 
