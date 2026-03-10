@@ -3,10 +3,10 @@
   "client_id_alias": "subdomain-sample-web-app",
   "client_secret": "local-dev-public-secret-32char",
   "redirect_uris": [
-    "https://sample.local.dev/api/auth/callback/idp-server",
-    "https://sample.local.dev/api/security-test/callback",
-    "https://sample.local.dev/api/passkey-registration/callback/",
-    "https://sample.local.dev/api/fido-uaf-device-test/callback"
+    "https://sample.local.test/api/auth/callback/idp-server",
+    "https://sample.local.test/api/security-test/callback",
+    "https://sample.local.test/api/passkey-registration/callback/",
+    "https://sample.local.test/api/fido-uaf-device-test/callback"
   ],
   "response_types": [
     "code"

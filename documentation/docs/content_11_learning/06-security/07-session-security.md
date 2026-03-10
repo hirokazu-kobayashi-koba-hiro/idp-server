@@ -478,7 +478,7 @@ ITPの主な制限:
 問題のあるフロー（サーバー間通信でCookie転送）:
 
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│ sample.local.dev│     │ api.local.dev   │     │ auth.local.dev  │
+│ sample.local.test│     │ api.local.test   │     │ auth.local.test  │
 │   (クライアント)  │     │   (認可サーバー) │     │   (認証画面)     │
 └────────┬────────┘     └────────┬────────┘     └────────┬────────┘
          │                       │                       │
@@ -494,17 +494,17 @@ ITPの主な制限:
          │                       │                       │
          │ 3. Cookie転送 + リダイレクト                   │
          │   Set-Cookie: AUTH_SESSION=xxx (転送)         │
-         │   Location: auth.local.dev                   │
+         │   Location: auth.local.test                   │
          │<─────────────────────────────────────────────│
          │                       │                       │
          │                     ↑                        │
          │              Safariがブロック！               │
-         │    (sample.local.devがapi.local.devの        │
+         │    (sample.local.testがapi.local.testの        │
          │     Cookieを設定しようとしている)             │
 ```
 
 **問題の原因**:
-- `sample.local.dev`のレスポンスで`api.local.dev`用のCookieを設定しようとしている
+- `sample.local.test`のレスポンスで`api.local.test`用のCookieを設定しようとしている
 - SafariはこれをサードパーティCookieとして拒否
 
 ### 解決策：ブラウザ直接リダイレクト
@@ -515,7 +515,7 @@ ITPの主な制限:
 正しいフロー（ブラウザ直接リダイレクト）:
 
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│ sample.local.dev│     │ api.local.dev   │     │ auth.local.dev  │
+│ sample.local.test│     │ api.local.test   │     │ auth.local.test  │
 │   (クライアント)  │     │   (認可サーバー) │     │   (認証画面)     │
 └────────┬────────┘     └────────┬────────┘     └────────┬────────┘
          │                       │                       │
@@ -523,37 +523,37 @@ ITPの主な制限:
          │────────>│             │                       │
          │         │             │                       │
          │ 2. 302 Redirect       │                       │
-         │    Location: api.local.dev/v1/authorizations  │
+         │    Location: api.local.test/v1/authorizations  │
          │<────────│             │                       │
          │                       │                       │
          │ 3. ブラウザが直接アクセス                      │
-         │    GET api.local.dev/v1/authorizations        │
+         │    GET api.local.test/v1/authorizations        │
          │ ─────────────────────>│                       │
          │                       │                       │
          │ 4. 302 Redirect       │                       │
          │    Set-Cookie: AUTH_SESSION=xxx               │
-         │    Location: auth.local.dev                   │
+         │    Location: auth.local.test                   │
          │<──────────────────────│                       │
          │                       │                       │
          │              ↑                                │
          │     Cookieは受け入れられる！                   │
-         │   (api.local.devが自身のCookieを設定)         │
+         │   (api.local.testが自身のCookieを設定)         │
          │                       │                       │
-         │ 5. ブラウザがauth.local.devにアクセス          │
+         │ 5. ブラウザがauth.local.testにアクセス          │
          │   Cookie: AUTH_SESSION=xxx                   │
          │ ─────────────────────────────────────────────>│
 ```
 
 **ポイント**:
-- ブラウザが`api.local.dev`に直接アクセス
-- `api.local.dev`が自身のドメインでCookieを設定
+- ブラウザが`api.local.test`に直接アクセス
+- `api.local.test`が自身のドメインでCookieを設定
 - Safariはファーストパーティcookieとして受け入れる
 
 ### 実装例
 
 **❌ 問題のある実装（サーバー間通信）**:
 ```typescript
-// sample.local.dev のAPIルート
+// sample.local.test のAPIルート
 export async function GET() {
   // サーバー間通信でCookieを取得
   const authResponse = await fetch(`${idpServer}/v1/authorizations`, {
@@ -573,7 +573,7 @@ export async function GET() {
 
 **✅ 正しい実装（ブラウザ直接リダイレクト）**:
 ```typescript
-// sample.local.dev のAPIルート
+// sample.local.test のAPIルート
 export async function GET() {
   // 認可URLを構築
   const authUrl = new URL(`${idpServer}/v1/authorizations`);
@@ -595,7 +595,7 @@ export async function GET() {
 推奨設定:
 ┌────────────────────────────────────────────────────┐
 │ Set-Cookie: SESSION=xxx;                           │
-│             Domain=.local.dev;  ← サブドメイン共有  │
+│             Domain=.local.test;  ← サブドメイン共有  │
 │             SameSite=Lax;       ← トップレベルナビ可 │
 │             Secure;             ← HTTPS必須         │
 │             HttpOnly;           ← XSS対策           │

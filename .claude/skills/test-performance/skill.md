@@ -105,7 +105,7 @@ cp ./performance-test/data/multi_tenant_1m+9x100k_test_users.json \
 ### 2. 環境変数設定
 
 ```bash
-export BASE_URL=https://api.local.dev
+export BASE_URL=https://api.local.test
 # または
 export BASE_URL=http://localhost:8080
 ```

@@ -21,6 +21,6 @@
     "grant_types_supported": ["authorization_code"],
     "client_id": "your-google-client-id",
     "client_secret": "your-google-client-secret",
-    "redirect_uri": "https://api.local.dev/11111111-3333-1111-1111-111111111111/v1/authorizations/federations/oidc/callback"
+    "redirect_uri": "https://api.local.test/11111111-3333-1111-1111-111111111111/v1/authorizations/federations/oidc/callback"
   }
 }

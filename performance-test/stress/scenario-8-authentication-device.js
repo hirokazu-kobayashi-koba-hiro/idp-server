@@ -28,7 +28,7 @@ const users = config.users;
 const userCount = users.length;
 
 export default function () {
-  const baseUrl = __ENV.BASE_URL || 'https://api.local.dev';
+  const baseUrl = __ENV.BASE_URL || 'https://api.local.test';
   const tenantId = config.tenantId;
 
   // ユーザーをランダムに選択

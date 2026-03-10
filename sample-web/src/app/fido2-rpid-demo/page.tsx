@@ -97,9 +97,9 @@ export default function Fido2RpIdDemoPage() {
 
   // サンプルのrpId候補
   const rpIdExamples = [
-    { rpId: "local.dev", description: "親ドメイン（推奨）" },
+    { rpId: "local.test", description: "親ドメイン（推奨）" },
     { rpId: currentHostname, description: "完全一致" },
-    { rpId: "other.local.dev", description: "兄弟ドメイン" },
+    { rpId: "other.local.test", description: "兄弟ドメイン" },
     { rpId: "example.com", description: "無関係なドメイン" },
   ];
 
@@ -395,8 +395,8 @@ export default function Fido2RpIdDemoPage() {
             <Alert severity="warning" sx={{ mb: 2 }}>
               <AlertTitle>重要</AlertTitle>
               サブドメインデプロイでは、認証チャレンジのレスポンスに<strong>rpId</strong>を明示的に含める必要があります。
-              省略するとブラウザがオリジンのドメイン（例: sample.local.dev）を使用し、
-              登録時のrpId（例: local.dev）と不一致になります。
+              省略するとブラウザがオリジンのドメイン（例: sample.local.test）を使用し、
+              登録時のrpId（例: local.test）と不一致になります。
             </Alert>
           </CardContent>
         </Card>
@@ -480,7 +480,7 @@ export default function Fido2RpIdDemoPage() {
             <Alert severity="info" sx={{ mb: 3 }}>
               <AlertTitle>前提条件</AlertTitle>
               このテストを実行するには、事前にPasskeyが登録されている必要があります。
-              登録時のrpIdは親ドメイン（例: local.dev）である必要があります。
+              登録時のrpIdは親ドメイン（例: local.test）である必要があります。
             </Alert>
 
             <Stack spacing={3}>
@@ -639,9 +639,9 @@ export default function Fido2RpIdDemoPage() {
               </Typography>
               <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
                 <pre style={{ margin: 0, fontSize: "0.875rem" }}>
-{`API:    https://api.local.dev      (認可エンドポイント)
-認証UI: https://auth.local.dev     (ログイン画面)
-Web:    https://sample.local.dev   (アプリケーション)`}
+{`API:    https://api.local.test      (認可エンドポイント)
+認証UI: https://auth.local.test     (ログイン画面)
+Web:    https://sample.local.test   (アプリケーション)`}
                 </pre>
               </Paper>
             </Box>
@@ -657,7 +657,7 @@ Web:    https://sample.local.dev   (アプリケーション)`}
                 <StepLabel>
                   <Typography variant="body2">
                     <Chip size="small" label="登録時" color="primary" sx={{ mr: 1 }} />
-                    auth.local.dev で Passkey 登録 (rpId: &quot;local.dev&quot;)
+                    auth.local.test で Passkey 登録 (rpId: &quot;local.test&quot;)
                   </Typography>
                 </StepLabel>
               </Step>
@@ -673,7 +673,7 @@ Web:    https://sample.local.dev   (アプリケーション)`}
                 <StepLabel>
                   <Typography variant="body2">
                     <Chip size="small" label="ブラウザ" color="secondary" sx={{ mr: 1 }} />
-                    rpId が省略されているため &quot;sample.local.dev&quot; を使用
+                    rpId が省略されているため &quot;sample.local.test&quot; を使用
                   </Typography>
                 </StepLabel>
               </Step>
@@ -696,7 +696,7 @@ Web:    https://sample.local.dev   (アプリケーション)`}
                 <StepLabel>
                   <Typography variant="body2">
                     <Chip size="small" label="登録時" color="primary" sx={{ mr: 1 }} />
-                    auth.local.dev で Passkey 登録 (rpId: &quot;local.dev&quot;)
+                    auth.local.test で Passkey 登録 (rpId: &quot;local.test&quot;)
                   </Typography>
                 </StepLabel>
               </Step>
@@ -704,7 +704,7 @@ Web:    https://sample.local.dev   (アプリケーション)`}
                 <StepLabel>
                   <Typography variant="body2">
                     <Chip size="small" label="認証時" color="primary" sx={{ mr: 1 }} />
-                    サーバーが rpId: &quot;local.dev&quot; を明示的に返す
+                    サーバーが rpId: &quot;local.test&quot; を明示的に返す
                   </Typography>
                 </StepLabel>
               </Step>
@@ -712,7 +712,7 @@ Web:    https://sample.local.dev   (アプリケーション)`}
                 <StepLabel>
                   <Typography variant="body2">
                     <Chip size="small" label="ブラウザ" color="secondary" sx={{ mr: 1 }} />
-                    指定された rpId: &quot;local.dev&quot; を使用
+                    指定された rpId: &quot;local.test&quot; を使用
                   </Typography>
                 </StepLabel>
               </Step>
@@ -743,7 +743,7 @@ Web:    https://sample.local.dev   (アプリケーション)`}
 {`// 認証チャレンジのレスポンスに rpId を含める
 {
   "challenge": "...",
-  "rpId": "local.dev",  // または rp.id でネスト
+  "rpId": "local.test",  // または rp.id でネスト
   "allowCredentials": [
     {
       "type": "public-key",

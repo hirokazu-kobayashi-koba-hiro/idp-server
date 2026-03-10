@@ -287,7 +287,7 @@ OpenID Foundation (OIDF) が提供する適合性テストスイートで、FAPI
 ```
 OIDF Conformance Suite (https://www.certification.openid.net/)
     ↕ HTTPS
-ローカル idp-server (api.local.dev / mtls.api.local.dev)
+ローカル idp-server (api.local.test / mtls.api.local.test)
     ↕
 Financial-grade テナント (tenant_id: c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8)
 ```
@@ -349,21 +349,21 @@ config/examples/financial-grade/oidc-test/
 {
   "alias": "テスト計画の識別名",
   "server": {
-    "discoveryUrl": "https://api.local.dev/{tenant_id}/.well-known/openid-configuration"
+    "discoveryUrl": "https://api.local.test/{tenant_id}/.well-known/openid-configuration"
   },
   "client": { "client_id": "...", "scope": "...", "jwks": {...} },
   "client2": { "client_id": "...", "scope": "...", "jwks": {...} },
   "mtls": { "key": "...", "cert": "..." },
   "mtls2": { "key": "...", "cert": "..." },
   "resource": {
-    "resourceUrl": "https://mtls.api.local.dev/{tenant_id}/v1/me/identity-verification/applications"
+    "resourceUrl": "https://mtls.api.local.test/{tenant_id}/v1/me/identity-verification/applications"
   }
 }
 ```
 
 **注意:**
-- `discoveryUrl`は通常エンドポイント (`api.local.dev`)
-- `resourceUrl`はmTLSエンドポイント (`mtls.api.local.dev`) — sender-constrainedトークン検証にクライアント証明書が必要
+- `discoveryUrl`は通常エンドポイント (`api.local.test`)
+- `resourceUrl`はmTLSエンドポイント (`mtls.api.local.test`) — sender-constrainedトークン検証にクライアント証明書が必要
 - `client`と`client2`は2クライアントテスト用（証明書バインドアクセストークンの交差検証等）
 - `mtls`/`mtls2`はそれぞれのクライアントのTLSクライアント証明書
 
@@ -405,8 +405,8 @@ cd config/examples/financial-grade
 - `response`パラメータのJWT形式を確認
 
 ### OIDFテスト discoveryUrl エラー
-- `discoveryUrl`が`api.local.dev`(通常エンドポイント)を指しているか確認
-- `resourceUrl`が`mtls.api.local.dev`(mTLSエンドポイント)を指しているか確認
+- `discoveryUrl`が`api.local.test`(通常エンドポイント)を指しているか確認
+- `resourceUrl`が`mtls.api.local.test`(mTLSエンドポイント)を指しているか確認
 - `host.docker.internal:8445`等の旧URL形式が残っていないか確認
 
 ---

@@ -24,7 +24,7 @@
         "function": "email_authentication_challenge",
         "details": {
           "function": "no_action",
-          "sender": "noreply@local.dev",
+          "sender": "noreply@local.test",
           "templates": {
             "registration": {
               "subject": "[Local Dev] Your signup email confirmation code",

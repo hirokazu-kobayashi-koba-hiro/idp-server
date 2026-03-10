@@ -18,10 +18,10 @@
  *     ./performance-test/stress/scenario-10-fido2-registration.js
  *
  * Environment variables:
- *   BASE_URL - Base URL of idp-server (default: https://api.local.dev)
+ *   BASE_URL - Base URL of idp-server (default: https://api.local.test)
  *   TENANT_ID - Tenant ID
- *   RP_ID - Relying Party ID (default: local.dev)
- *   ORIGIN - Origin URL (default: https://auth.local.dev)
+ *   RP_ID - Relying Party ID (default: local.test)
+ *   ORIGIN - Origin URL (default: https://auth.local.test)
  *   VU_COUNT - Number of virtual users (default: 10)
  *   DURATION - Test duration (default: 30s)
  */
@@ -33,14 +33,14 @@ import { generateValidCredentialFromChallenge } from "../libs/fido2.js";
 import { initDb, saveCredential, clearAllCredentials, closeDb } from "../libs/credential-store.js";
 
 // Environment variables
-const BASE_URL = __ENV.BASE_URL || "https://api.local.dev";
+const BASE_URL = __ENV.BASE_URL || "https://api.local.test";
 const TENANT_ID = __ENV.TENANT_ID || "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d";
 const ORGANIZATION_ID = __ENV.ORGANIZATION_ID || "9eb8eb8c-2615-4604-809f-5cae1c00a462";
 const CLIENT_ID = __ENV.CLIENT_ID || "8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f";
 const CLIENT_SECRET = __ENV.CLIENT_SECRET || "local-dev-public-secret-32char";
-const REDIRECT_URI = __ENV.REDIRECT_URI || "https://sample.local.dev/api/passkey-registration/callback/";
-const RP_ID = __ENV.RP_ID || "local.dev";
-const ORIGIN = __ENV.ORIGIN || "https://auth.local.dev";
+const REDIRECT_URI = __ENV.REDIRECT_URI || "https://sample.local.test/api/passkey-registration/callback/";
+const RP_ID = __ENV.RP_ID || "local.test";
+const ORIGIN = __ENV.ORIGIN || "https://auth.local.test";
 
 // Admin credentials for Management API (from .env)
 const ADMIN_ORGANIZATION_ID = __ENV.ADMIN_ORGANIZATION_ID || "278bacde-56b0-4922-9cff-714eb23ae928";

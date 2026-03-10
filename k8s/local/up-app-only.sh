@@ -9,7 +9,7 @@ set -euo pipefail
 #   kind cluster             : idp-server Pods + HPA
 #
 # リクエストフロー:
-#   https://api.local.dev → nginx → kind NodePort → idp-server
+#   https://api.local.test → nginx → kind NodePort → idp-server
 #   idp-server → host.docker.internal → postgres/redis
 # =========================================================
 
@@ -159,7 +159,7 @@ kubectl -n "$NAMESPACE" create secret generic root-ca-cert \
 log "Creating configmap from .env..."
 kubectl -n "$NAMESPACE" delete configmap idp-config --ignore-not-found
 kubectl -n "$NAMESPACE" create configmap idp-config \
-  --from-literal="SERVER_URL=https://api.local.dev" \
+  --from-literal="SERVER_URL=https://api.local.test" \
   --from-literal="ADMIN_TENANT_ID=${ADMIN_TENANT_ID}" \
   --from-literal="DATABASE_TYPE=POSTGRESQL" \
   --from-literal="DB_WRITER_URL=jdbc:postgresql://host.docker.internal:5432/idpserver" \
@@ -237,7 +237,7 @@ kubectl apply -f "$SCRIPT_DIR/manifests/idp-server.yaml"
 # -------------------------------------------------------
 # 10.1 hostAliases: ローカルドメイン → Docker ホスト
 #
-# Pod 内から api.local.dev 等へアクセスするため、
+# Pod 内から api.local.test 等へアクセスするため、
 # host.docker.internal の実 IP を /etc/hosts に追加する。
 # （フェデレーション callback など自分自身への HTTP 呼び出しに必要）
 # -------------------------------------------------------
@@ -249,7 +249,7 @@ else
   log "host.docker.internal -> $HOST_IP"
   kubectl -n "$NAMESPACE" patch deployment idp-server --type='json' -p="[
     {\"op\":\"replace\",\"path\":\"/spec/template/spec/hostAliases\",\"value\":[
-      {\"ip\":\"${HOST_IP}\",\"hostnames\":[\"api.local.dev\",\"mtls.api.local.dev\",\"auth.local.dev\",\"auth.idp.local\",\"auth-cp.idp.local\",\"sample.local.dev\"]}
+      {\"ip\":\"${HOST_IP}\",\"hostnames\":[\"api.local.test\",\"mtls.api.local.test\",\"auth.local.test\",\"auth.idp.local\",\"auth-cp.idp.local\",\"sample.local.test\"]}
     ]}
   ]"
 fi
@@ -284,11 +284,11 @@ echo "    docker-compose-kind.yaml : postgres, redis, nginx"
 echo "    kind cluster (idp-local) : idp-server Pods + HPA"
 echo ""
 echo "  リクエストフロー:"
-echo "    https://api.local.dev → nginx → kind → idp-server Pods"
+echo "    https://api.local.test → nginx → kind → idp-server Pods"
 echo "    idp-server → host.docker.internal → postgres/redis"
 echo ""
 echo "  Health (direct):  curl http://localhost:8080/actuator/health"
-echo "  Health (nginx):   curl -k https://api.local.dev/actuator/health"
+echo "  Health (nginx):   curl -k https://api.local.test/actuator/health"
 echo "  Pods:             kubectl get pods -n idp"
 echo "  HPA:              kubectl get hpa -n idp"
 echo "  Metrics:          kubectl top pods -n idp  (available after 1-2 min)"

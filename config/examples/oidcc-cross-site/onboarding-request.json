@@ -8,7 +8,7 @@
     "id": "e8c169c2-019f-46c9-af39-7be12ec51e4d",
     "name": "OIDCC Certification Tenant",
     "type": "ORGANIZER",
-    "domain": "https://api.local.dev",
+    "domain": "https://api.local.test",
     "authorization_provider": "idp-server",
     "ui_config": {
       "base_url": "https://auth.idp.local",
@@ -24,15 +24,15 @@
     "cors_config": {
       "allow_origins": [
         "https://auth.idp.local",
-        "https://api.local.dev",
+        "https://api.local.test",
         "https://www.certification.openid.net"
       ]
     }
   },
   "authorization_server": {
-    "issuer": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d",
-    "authorization_endpoint": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/authorizations",
-    "token_endpoint": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/tokens",
+    "issuer": "https://api.local.test/e8c169c2-019f-46c9-af39-7be12ec51e4d",
+    "authorization_endpoint": "https://api.local.test/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/authorizations",
+    "token_endpoint": "https://api.local.test/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/tokens",
     "token_endpoint_auth_methods_supported": [
       "client_secret_basic",
       "client_secret_post"
@@ -41,9 +41,9 @@
       "RS256",
       "ES256"
     ],
-    "userinfo_endpoint": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/userinfo",
-    "end_session_endpoint": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/logout",
-    "jwks_uri": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/jwks",
+    "userinfo_endpoint": "https://api.local.test/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/userinfo",
+    "end_session_endpoint": "https://api.local.test/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/logout",
+    "jwks_uri": "https://api.local.test/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/jwks",
     "jwks": "{\"keys\":[{\"kty\":\"EC\",\"x\":\"_g1pn_N84_T82eU-YVN4pcgQt3tfvZWJMPabMFNgbVg\",\"y\":\"B3vLi4eGNz9rzoj493h7zHBpM5G3lSM7Af57fru2-FE\",\"crv\":\"P-256\",\"d\":\"xHfNjJqElnZajzexFG49MQqO01TrveM4mL4tlz8T9jw\",\"use\":\"sig\",\"kid\":\"signing_key_1\",\"alg\":\"ES256\"}]}",
     "grant_types_supported": [
       "authorization_code",
@@ -112,8 +112,8 @@
     "claims_parameter_supported": true,
     "request_parameter_supported": true,
     "request_uri_parameter_supported": true,
-    "token_introspection_endpoint": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/tokens/introspection",
-    "token_revocation_endpoint": "https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/tokens/revocation",
+    "token_introspection_endpoint": "https://api.local.test/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/tokens/introspection",
+    "token_revocation_endpoint": "https://api.local.test/e8c169c2-019f-46c9-af39-7be12ec51e4d/v1/tokens/revocation",
     "extension": {
       "access_token_type": "JWT",
       "token_signed_key_id": "signing_key_1",

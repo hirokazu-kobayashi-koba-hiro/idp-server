@@ -13,7 +13,7 @@ set -e
 #   ./setup.sh --dry-run
 #
 # Required .env variables:
-#   AUTHORIZATION_SERVER_URL  - e.g. https://api.local.dev
+#   AUTHORIZATION_SERVER_URL  - e.g. https://api.local.test
 #   ADMIN_TENANT_ID           - System admin tenant ID
 #   ADMIN_USER_EMAIL          - Admin user email
 #   ADMIN_USER_PASSWORD       - Admin user password
@@ -85,7 +85,7 @@ TOKEN_SIGNING_KEY_ID="${TOKEN_SIGNING_KEY_ID:-signing_key_1}"
 ID_TOKEN_SIGNING_KEY_ID="${ID_TOKEN_SIGNING_KEY_ID:-signing_key_1}"
 
 # FAPI-specific settings
-MTLS_BASE_URL="${MTLS_BASE_URL:-https://mtls.api.local.dev}"
+MTLS_BASE_URL="${MTLS_BASE_URL:-https://mtls.api.local.test}"
 SIGNING_ALGORITHM="${SIGNING_ALGORITHM:-ES256}"
 
 # Token durations (non-string, applied via jq overlay)
@@ -100,8 +100,8 @@ CIBA_POLLING_INTERVAL="${CIBA_POLLING_INTERVAL:-5}"
 CIBA_USER_CODE_REQUIRED="${CIBA_USER_CODE_REQUIRED:-false}"
 
 # FIDO2 settings
-FIDO2_RP_ID="${FIDO2_RP_ID:-local.dev}"
-UI_BASE_URL="${UI_BASE_URL:-https://auth.local.dev}"
+FIDO2_RP_ID="${FIDO2_RP_ID:-local.test}"
+UI_BASE_URL="${UI_BASE_URL:-https://auth.local.test}"
 
 # Client settings
 TLS_CLIENT_ID="${TLS_CLIENT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"

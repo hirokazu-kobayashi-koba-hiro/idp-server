@@ -49,7 +49,7 @@ USERNAME=$(jq -r '.email' "${OUTPUT_DIR}/financial-user.json")
 PASSWORD=$(jq -r '.raw_password' "${OUTPUT_DIR}/financial-user.json")
 
 # Use backend URL (without mTLS) for device authentication
-BASE_URL="${AUTHORIZATION_SERVER_URL:-https://api.local.dev}"
+BASE_URL="${AUTHORIZATION_SERVER_URL:-https://api.local.test}"
 
 echo "   Server:    ${BASE_URL}"
 echo "   Tenant:    ${TENANT_ID}"

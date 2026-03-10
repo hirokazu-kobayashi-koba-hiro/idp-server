@@ -2,7 +2,7 @@
   "alias": "oidc-core-comprehensive-test-context-path",
   "description": "Context Path Test - comprehensive",
   "server": {
-    "discoveryUrl": "https://api.local.dev/76ec54ab-8923-468d-b04b-0d8d0a5eaade/.well-known/openid-configuration"
+    "discoveryUrl": "https://api.local.test/76ec54ab-8923-468d-b04b-0d8d0a5eaade/.well-known/openid-configuration"
   },
   "client": {
     "client_id": "context-path-client",

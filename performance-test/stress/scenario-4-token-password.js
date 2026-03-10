@@ -29,7 +29,7 @@ const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
 const config = tenantData[tenantIndex];
 
 export default function () {
-  const baseUrl = __ENV.BASE_URL || 'https://api.local.dev';
+  const baseUrl = __ENV.BASE_URL || 'https://api.local.test';
   const clientId = config.clientId;
   const clientSecret = config.clientSecret;
   const tenantId = config.tenantId;

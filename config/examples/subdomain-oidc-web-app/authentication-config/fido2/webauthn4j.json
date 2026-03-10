@@ -7,8 +7,8 @@
       "execution": {
         "function": "webauthn4j_registration_challenge",
         "details": {
-          "rp_id": "local.dev",
-          "allowed_origins": ["https://auth.local.dev", "https://sample.local.dev"],
+          "rp_id": "local.test",
+          "allowed_origins": ["https://auth.local.test", "https://sample.local.test"],
           "rp_name": "Local Dev IDP",
           "token_binding_id": null,
           "require_resident_key": true,
@@ -31,8 +31,8 @@
       "execution": {
         "function": "webauthn4j_registration",
         "details": {
-          "rp_id": "local.dev",
-          "allowed_origins": ["https://auth.local.dev", "https://sample.local.dev"],
+          "rp_id": "local.test",
+          "allowed_origins": ["https://auth.local.test", "https://sample.local.test"],
           "rp_name": "Local Dev IDP",
           "token_binding_id": null,
           "require_resident_key": true,
@@ -55,8 +55,8 @@
       "execution": {
         "function": "webauthn4j_authentication_challenge",
         "details": {
-          "rp_id": "local.dev",
-          "allowed_origins": ["https://auth.local.dev", "https://sample.local.dev"],
+          "rp_id": "local.test",
+          "allowed_origins": ["https://auth.local.test", "https://sample.local.test"],
           "rp_name": "Local Dev IDP",
           "token_binding_id": null,
           "require_resident_key": true,
@@ -79,8 +79,8 @@
       "execution": {
         "function": "webauthn4j_authentication",
         "details": {
-          "rp_id": "local.dev",
-          "allowed_origins": ["https://auth.local.dev", "https://sample.local.dev"],
+          "rp_id": "local.test",
+          "allowed_origins": ["https://auth.local.test", "https://sample.local.test"],
           "rp_name": "Local Dev IDP",
           "token_binding_id": null,
           "require_resident_key": true,

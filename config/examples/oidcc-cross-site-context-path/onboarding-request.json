@@ -8,7 +8,7 @@
     "id": "76ec54ab-8923-468d-b04b-0d8d0a5eaade",
     "name": "Context Path Test Tenant",
     "type": "ORGANIZER",
-    "domain": "https://api.local.dev",
+    "domain": "https://api.local.test",
     "authorization_provider": "idp-server",
     "ui_config": {
       "base_url": "https://auth-cp.idp.local",
@@ -25,14 +25,14 @@
     "cors_config": {
       "allow_origins": [
         "https://auth-cp.idp.local",
-        "https://api.local.dev"
+        "https://api.local.test"
       ]
     }
   },
   "authorization_server": {
-    "issuer": "https://api.local.dev/76ec54ab-8923-468d-b04b-0d8d0a5eaade",
-    "authorization_endpoint": "https://api.local.dev/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/authorizations",
-    "token_endpoint": "https://api.local.dev/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/tokens",
+    "issuer": "https://api.local.test/76ec54ab-8923-468d-b04b-0d8d0a5eaade",
+    "authorization_endpoint": "https://api.local.test/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/authorizations",
+    "token_endpoint": "https://api.local.test/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/tokens",
     "token_endpoint_auth_methods_supported": [
       "client_secret_basic",
       "client_secret_post"
@@ -41,9 +41,9 @@
       "RS256",
       "ES256"
     ],
-    "userinfo_endpoint": "https://api.local.dev/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/userinfo",
-    "end_session_endpoint": "https://api.local.dev/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/logout",
-    "jwks_uri": "https://api.local.dev/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/jwks",
+    "userinfo_endpoint": "https://api.local.test/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/userinfo",
+    "end_session_endpoint": "https://api.local.test/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/logout",
+    "jwks_uri": "https://api.local.test/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/jwks",
     "jwks": "{\"keys\":[{\"kty\":\"EC\",\"x\":\"_g1pn_N84_T82eU-YVN4pcgQt3tfvZWJMPabMFNgbVg\",\"y\":\"B3vLi4eGNz9rzoj493h7zHBpM5G3lSM7Af57fru2-FE\",\"crv\":\"P-256\",\"d\":\"xHfNjJqElnZajzexFG49MQqO01TrveM4mL4tlz8T9jw\",\"use\":\"sig\",\"kid\":\"signing_key_1\",\"alg\":\"ES256\"}]}",
     "grant_types_supported": [
       "authorization_code",
@@ -112,8 +112,8 @@
     "claims_parameter_supported": true,
     "request_parameter_supported": true,
     "request_uri_parameter_supported": true,
-    "token_introspection_endpoint": "https://api.local.dev/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/tokens/introspection",
-    "token_revocation_endpoint": "https://api.local.dev/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/tokens/revocation",
+    "token_introspection_endpoint": "https://api.local.test/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/tokens/introspection",
+    "token_revocation_endpoint": "https://api.local.test/76ec54ab-8923-468d-b04b-0d8d0a5eaade/v1/tokens/revocation",
     "extension": {
       "access_token_type": "JWT",
       "token_signed_key_id": "signing_key_1",
@@ -159,7 +159,7 @@
     "client_id_alias": "context-path-client",
     "client_secret": "context-path-secret-32characters1",
     "redirect_uris": [
-      "https://sample.local.dev/api/auth/callback/idp-server",
+      "https://sample.local.test/api/auth/callback/idp-server",
       "https://localhost.emobix.co.uk:8443/test/a/oidc-core-basic-context-path/callback"
     ],
     "response_types": [

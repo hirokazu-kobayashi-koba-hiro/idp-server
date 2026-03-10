@@ -94,7 +94,7 @@ CGO_ENABLED=1 ~/go/bin/xk6 build \
 ### ローカル環境
 
 ```bash
-export BASE_URL=https://api.local.dev
+export BASE_URL=https://api.local.test
 export TENANT_ID=67e7eae6-62b0-4500-9eff-87459f63fc66
 export CLIENT_ID=clientSecretPost
 export CLIENT_SECRET=clientSecretPostPassword1234567890...
@@ -265,10 +265,10 @@ cd /path/to/idp-server
 
 | 変数 | デフォルト値 | 説明 |
 |------|-------------|------|
-| `BASE_URL` | https://api.local.dev | idp-serverのベースURL |
+| `BASE_URL` | https://api.local.test | idp-serverのベースURL |
 | `TENANT_ID` | (設定ファイルから) | テナントID |
-| `RP_ID` | local.dev | Relying Party ID |
-| `ORIGIN` | https://auth.local.dev | WebAuthnのorigin |
+| `RP_ID` | local.test | Relying Party ID |
+| `ORIGIN` | https://auth.local.test | WebAuthnのorigin |
 | `VU_COUNT` | 10 | 同時仮想ユーザー数 |
 | `DURATION` | 30s | テスト期間 |
 | `CLEAR_DB` | false | trueで既存データをクリア |

@@ -195,28 +195,28 @@ else
 fi
 
 # via nginx (HTTPS)
-NGINX=$(curl -sk -o /dev/null -w "%{http_code}" --connect-timeout 3 https://api.local.dev/actuator/health 2>/dev/null || echo "000")
+NGINX=$(curl -sk -o /dev/null -w "%{http_code}" --connect-timeout 3 https://api.local.test/actuator/health 2>/dev/null || echo "000")
 if [ "$NGINX" = "200" ]; then
-  ok "api.local.dev   ${DIM}(nginx → kind)${NC}"
+  ok "api.local.test   ${DIM}(nginx → kind)${NC}"
 else
-  fail "api.local.dev   ${DIM}(HTTP $NGINX)${NC}"
+  fail "api.local.test   ${DIM}(HTTP $NGINX)${NC}"
   ERRORS=$((ERRORS+1))
 fi
 
 # Auth UI
-AUTH_UI=$(curl -sk -o /dev/null -w "%{http_code}" --connect-timeout 3 https://auth.local.dev/ 2>/dev/null || echo "000")
+AUTH_UI=$(curl -sk -o /dev/null -w "%{http_code}" --connect-timeout 3 https://auth.local.test/ 2>/dev/null || echo "000")
 if [ "$AUTH_UI" = "200" ]; then
-  ok "auth.local.dev  ${DIM}(auth UI)${NC}"
+  ok "auth.local.test  ${DIM}(auth UI)${NC}"
 else
-  warn "auth.local.dev  ${DIM}(HTTP $AUTH_UI)${NC}"
+  warn "auth.local.test  ${DIM}(HTTP $AUTH_UI)${NC}"
 fi
 
 # Sample Web
-SAMPLE=$(curl -sk -o /dev/null -w "%{http_code}" --connect-timeout 3 https://sample.local.dev/ 2>/dev/null || echo "000")
+SAMPLE=$(curl -sk -o /dev/null -w "%{http_code}" --connect-timeout 3 https://sample.local.test/ 2>/dev/null || echo "000")
 if [ "$SAMPLE" = "200" ]; then
-  ok "sample.local.dev ${DIM}(sample app)${NC}"
+  ok "sample.local.test ${DIM}(sample app)${NC}"
 else
-  warn "sample.local.dev ${DIM}(HTTP $SAMPLE)${NC}"
+  warn "sample.local.test ${DIM}(HTTP $SAMPLE)${NC}"
 fi
 
 # =========================================================

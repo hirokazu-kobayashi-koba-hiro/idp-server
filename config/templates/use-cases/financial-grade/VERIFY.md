@@ -30,7 +30,7 @@ REDIRECT_URI=$(jq -r '.redirect_uris[0]' "${CONFIG_DIR}/tls-client-auth-client.j
 TENANT_BASE="${AUTHORIZATION_SERVER_URL}/${PUBLIC_TENANT_ID}"
 
 # mTLS エンドポイント（Phase 5 以降で使用）
-MTLS_BASE_URL="${MTLS_BASE_URL:-https://mtls.api.local.dev}"
+MTLS_BASE_URL="${MTLS_BASE_URL:-https://mtls.api.local.test}"
 MTLS_TENANT_BASE="${MTLS_BASE_URL}/${PUBLIC_TENANT_ID}"
 
 # クライアント証明書（Phase 5 以降で使用）

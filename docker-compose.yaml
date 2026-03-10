@@ -4,14 +4,14 @@ version: '3'
 #
 # Prerequisites:
 #   1. Run setup script: ./scripts/setup-local-subdomain.sh
-#   2. This sets up dnsmasq and mkcert for *.local.dev
+#   2. This sets up dnsmasq and mkcert for *.local.test
 #
 # Access:
-#   - IDP Server API:    https://api.local.dev
-#   - Authorization UI:  https://auth.local.dev
+#   - IDP Server API:    https://api.local.test
+#   - Authorization UI:  https://auth.local.test
 #
 # Cookie sharing:
-#   - cookie_domain: "local.dev" in tenant session_config
+#   - cookie_domain: "local.test" in tenant session_config
 
 services:
   idp-server-1:
@@ -40,7 +40,7 @@ services:
           cpus: '0.5'
           memory: 1g
     environment:
-      SERVER_URL: "https://api.local.dev"
+      SERVER_URL: "https://api.local.test"
       IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY?IDP server API key is required. Set IDP_SERVER_API_KEY environment variable.}
       IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET?IDP server API secret is required. Set IDP_SERVER_API_SECRET environment variable.}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY?Encryption key is required. Set ENCRYPTION_KEY environment variable.}
@@ -124,9 +124,9 @@ services:
     volumes:
       - ./docker/nginx/certs/rootCA.pem:/app/certs/rootCA.pem:ro
     extra_hosts:
-      - "api.local.dev:host-gateway"
-      - "auth.local.dev:host-gateway"
-      - "mtls.api.local.dev:host-gateway"
+      - "api.local.test:host-gateway"
+      - "auth.local.test:host-gateway"
+      - "mtls.api.local.test:host-gateway"
 
   idp-server-2:
     build: .
@@ -154,7 +154,7 @@ services:
           cpus: '0.5'
           memory: 1g
     environment:
-      SERVER_URL: "https://api.local.dev"
+      SERVER_URL: "https://api.local.test"
       IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY:-30113151-4ee1-4f6a-a1ac-cc1be9eaf695}
       IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET:-MTY5YjM3NmYtOTY0ZC00Nzg0LWIyOTMtOWQyNDhjMTkyNmIwCg==}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-JjN9c6N4STeA+g9d+TtBGp5MC3sbqOWs+S9qzJG42iY=}
@@ -238,9 +238,9 @@ services:
     volumes:
       - ./docker/nginx/certs/rootCA.pem:/app/certs/rootCA.pem:ro
     extra_hosts:
-      - "api.local.dev:host-gateway"
-      - "auth.local.dev:host-gateway"
-      - "mtls.api.local.dev:host-gateway"
+      - "api.local.test:host-gateway"
+      - "auth.local.test:host-gateway"
+      - "mtls.api.local.test:host-gateway"
 
   nginx:
     build: ./docker/nginx
@@ -392,9 +392,9 @@ services:
       context: .
       dockerfile: docker/app-view/Dockerfile
       args:
-        # Subdomain deployment: Authorization UI on auth.local.dev, IDP API on api.local.dev
+        # Subdomain deployment: Authorization UI on auth.local.test, IDP API on api.local.test
         BASE_PATH: ""
-        NEXT_PUBLIC_BACKEND_URL: "https://api.local.dev"
+        NEXT_PUBLIC_BACKEND_URL: "https://api.local.test"
     container_name: app-view
     environment:
       NODE_ENV: production
@@ -402,14 +402,14 @@ services:
       - idp-server-1
 
   # Cross-site Auth UI for testing cross-domain cookie behavior
-  # Access via https://auth.idp.local (different domain from api.local.dev)
+  # Access via https://auth.idp.local (different domain from api.local.test)
   app-view-crosssite:
     build:
       context: .
       dockerfile: docker/app-view/Dockerfile
       args:
         BASE_PATH: ""
-        NEXT_PUBLIC_BACKEND_URL: "https://api.local.dev"
+        NEXT_PUBLIC_BACKEND_URL: "https://api.local.test"
     container_name: app-view-crosssite
     environment:
       NODE_ENV: production
@@ -425,7 +425,7 @@ services:
       dockerfile: docker/app-view/Dockerfile
       args:
         BASE_PATH: ""
-        NEXT_PUBLIC_BACKEND_URL: "https://api.local.dev/idp-admin"
+        NEXT_PUBLIC_BACKEND_URL: "https://api.local.test/idp-admin"
     container_name: app-view-context-path
     environment:
       NODE_ENV: production
@@ -441,16 +441,16 @@ services:
       NODE_ENV: production
       AUTH_SECRET: "123"
       AUTH_TRUST_HOST: "true"
-      AUTH_URL: "https://sample.local.dev"
-      NEXT_PUBLIC_IDP_SERVER_ISSUER: "https://api.local.dev/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
-      NEXT_PUBLIC_FRONTEND_URL: "https://sample.local.dev"
+      AUTH_URL: "https://sample.local.test"
+      NEXT_PUBLIC_IDP_SERVER_ISSUER: "https://api.local.test/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+      NEXT_PUBLIC_FRONTEND_URL: "https://sample.local.test"
       NEXT_PUBLIC_IDP_CLIENT_ID: "8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f"
       NEXT_IDP_CLIENT_SECRET: "local-dev-public-secret-32char"
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
     extra_hosts:
-      - "api.local.dev:host-gateway"
-      - "auth.local.dev:host-gateway"
-      - "sample.local.dev:host-gateway"
+      - "api.local.test:host-gateway"
+      - "auth.local.test:host-gateway"
+      - "sample.local.test:host-gateway"
     depends_on:
       - idp-server-1
 

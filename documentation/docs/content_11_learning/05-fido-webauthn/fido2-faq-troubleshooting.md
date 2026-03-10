@@ -28,8 +28,8 @@ FIDO2/WebAuthn実装時によく遭遇する問題とその解決方法をFAQ形
 **問題**: 登録時と認証時で`rpId`が異なる
 
 ```
-登録時: rpId = "local.dev"
-認証時: rpId = "auth.local.dev" (オリジンからのデフォルト値)
+登録時: rpId = "local.test"
+認証時: rpId = "auth.local.test" (オリジンからのデフォルト値)
 ```
 
 **解決方法**: 認証チャレンジのレスポンスに`rpId`を明示的に含める
@@ -38,7 +38,7 @@ FIDO2/WebAuthn実装時によく遭遇する問題とその解決方法をFAQ形
 // サーバーレスポンス
 {
   "challenge": "...",
-  "rpId": "local.dev",  // または rp.id でネスト
+  "rpId": "local.test",  // または rp.id でネスト
   "allowCredentials": [...]
 }
 ```
@@ -54,7 +54,7 @@ const publicKeyOptions = {
 
 **ポイント**:
 - `rpId`を省略すると、ブラウザは現在のオリジンのドメインを使用
-- サブドメインデプロイ（`auth.local.dev`）では親ドメイン（`local.dev`）を明示的に指定する必要がある
+- サブドメインデプロイ（`auth.local.test`）では親ドメイン（`local.test`）を明示的に指定する必要がある
 - 登録時と認証時で同じ`rpId`を使用すること
 
 ---
@@ -162,9 +162,9 @@ const getOptions = {
 
 **シナリオ**:
 ```
-API:  https://api.local.dev
-認証: https://auth.local.dev
-Web:  https://sample.local.dev
+API:  https://api.local.test
+認証: https://auth.local.test
+Web:  https://sample.local.test
 ```
 
 **正しいrpId設定**:
@@ -172,7 +172,7 @@ Web:  https://sample.local.dev
 ```json
 {
   "rp": {
-    "id": "local.dev",
+    "id": "local.test",
     "name": "My Service"
   }
 }
@@ -180,21 +180,21 @@ Web:  https://sample.local.dev
 
 **ルール**:
 1. `rpId`は現在のオリジンと同じか、その親ドメインである必要がある
-2. `auth.local.dev`では`local.dev`または`auth.local.dev`を使用可能
+2. `auth.local.test`では`local.test`または`auth.local.test`を使用可能
 3. 複数サブドメインで同じPasskeyを使うなら、共通の親ドメインを使用
 
 **NGパターン**:
 ```
-オリジン: https://auth.local.dev
-rpId: "other.local.dev"  // NG: 兄弟ドメインは不可
+オリジン: https://auth.local.test
+rpId: "other.local.test"  // NG: 兄弟ドメインは不可
 rpId: "dev"              // NG: 有効なeTLD+1ではない
 ```
 
 **OKパターン**:
 ```
-オリジン: https://auth.local.dev
-rpId: "local.dev"        // OK: 親ドメイン
-rpId: "auth.local.dev"   // OK: 完全一致
+オリジン: https://auth.local.test
+rpId: "local.test"        // OK: 親ドメイン
+rpId: "auth.local.test"   // OK: 完全一致
 ```
 
 ---

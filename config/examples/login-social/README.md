@@ -52,7 +52,7 @@ login-social/
 ```
 
 Google Cloud Console での設定：
-- 承認済みリダイレクト URI: `https://api.local.dev/11111111-3333-1111-1111-111111111111/v1/authorizations/federations/oidc/callback`
+- 承認済みリダイレクト URI: `https://api.local.test/11111111-3333-1111-1111-111111111111/v1/authorizations/federations/oidc/callback`
 
 ### 3. セットアップ実行
 
@@ -70,7 +70,7 @@ chmod +x setup.sh update.sh delete.sh
 | Organizer Tenant ID | `11111111-2222-1111-1111-111111111111` |
 | Public Tenant ID | `11111111-3333-1111-1111-111111111111` |
 | Federation Config ID | `11111111-8888-1111-1111-111111111111` |
-| Issuer | `https://api.local.dev/11111111-3333-1111-1111-111111111111` |
+| Issuer | `https://api.local.test/11111111-3333-1111-1111-111111111111` |
 
 ### 5. 設定更新
 
@@ -167,12 +167,12 @@ Step 9: クライアント更新（組織レベルAPI）
 
 ```bash
 # 1. ブラウザで認可エンドポイントを開く
-open "https://api.local.dev/11111111-3333-1111-1111-111111111111/v1/authorizations?response_type=code&client_id=11111111-6666-1111-1111-111111111111&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email&state=test-state"
+open "https://api.local.test/11111111-3333-1111-1111-111111111111/v1/authorizations?response_type=code&client_id=11111111-6666-1111-1111-111111111111&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email&state=test-state"
 
 # 2. メールアドレス/パスワードで登録またはログイン、または Google ログインを使用
 
 # 3. 認可コードをトークンに交換
-curl -X POST https://api.local.dev/11111111-3333-1111-1111-111111111111/v1/tokens \
+curl -X POST https://api.local.test/11111111-3333-1111-1111-111111111111/v1/tokens \
   -d "grant_type=authorization_code" \
   -d "code=YOUR_CODE" \
   -d "redirect_uri=http://localhost:3000/callback" \
@@ -183,5 +183,5 @@ curl -X POST https://api.local.dev/11111111-3333-1111-1111-111111111111/v1/token
 ### OIDC Discovery
 
 ```
-https://api.local.dev/11111111-3333-1111-1111-111111111111/.well-known/openid-configuration
+https://api.local.test/11111111-3333-1111-1111-111111111111/.well-known/openid-configuration
 ```
