@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-inflate
+  labels:
+    app: demo-inflate
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: demo-inflate
+  template:
+    metadata:
+      labels:
+        app: demo-inflate
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          resources:
+            requests:
+              cpu: "1"
+              memory: "1.5Gi"

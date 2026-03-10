@@ -473,6 +473,7 @@ const sidebars = {
               items: [
                 "content_11_learning/docker-kubernetes/kubernetes-configuration",
                 "content_11_learning/docker-kubernetes/kubernetes-scaling",
+                "content_11_learning/docker-kubernetes/karpenter-node-scaling",
                 "content_11_learning/docker-kubernetes/kubernetes-observability",
                 "content_11_learning/docker-kubernetes/kubernetes-security"
               ]

@@ -34,6 +34,7 @@
 |-------------|------|
 | [kubernetes-configuration.md](kubernetes-configuration.md) | ConfigMap、Secret、環境変数 |
 | [kubernetes-scaling.md](kubernetes-scaling.md) | HPA、VPA、Cluster Autoscaler |
+| [karpenter-node-scaling.md](karpenter-node-scaling.md) | Karpenter ノードオートスケーリング、NodePool設計、KWOK検証 |
 | [kubernetes-observability.md](kubernetes-observability.md) | ログ、メトリクス、トレーシング |
 | [kubernetes-security.md](kubernetes-security.md) | RBAC、PodSecurity、Secrets管理 |
 
@@ -83,8 +84,9 @@ Kubernetesの基本を学びます。
 
 1. **kubernetes-configuration.md** - 設定管理のベストプラクティス
 2. **kubernetes-scaling.md** - オートスケーリング
-3. **kubernetes-observability.md** - 監視と可観測性
-4. **kubernetes-security.md** - セキュリティ強化
+3. **karpenter-node-scaling.md** - Karpenter ノードオートスケーリング
+4. **kubernetes-observability.md** - 監視と可観測性
+5. **kubernetes-security.md** - セキュリティ強化
 
 ### IDサービス運用者
 
@@ -94,7 +96,8 @@ IDサービスのデプロイと運用に必要な知識を重点的に学びま
 2. **kubernetes-workloads.md** - Deploymentの設定
 3. **kubernetes-configuration.md** - ConfigMap/Secretの管理
 4. **kubernetes-scaling.md** - HPAの設定
-5. **kubernetes-security.md** - 本番セキュリティ
+5. **karpenter-node-scaling.md** - Karpenter ノードスケーリング
+6. **kubernetes-security.md** - 本番セキュリティ
 
 ---
 
@@ -122,6 +125,10 @@ IDサービスのデプロイと運用に必要な知識を重点的に学びま
 - [Amazon EKS](https://docs.aws.amazon.com/eks/)
 - [Google GKE](https://cloud.google.com/kubernetes-engine/docs)
 - [Azure AKS](https://docs.microsoft.com/azure/aks/)
+
+### オートスケーリング
+- [Karpenter](https://karpenter.sh/) - Kubernetesノードオートスケーラー
+- [KWOK](https://kwok.sigs.k8s.io/) - Kubernetes WithOut Kubelet（仮想ノードシミュレーター）
 
 ### ツール
 - [Helm](https://helm.sh/) - Kubernetesパッケージマネージャー
