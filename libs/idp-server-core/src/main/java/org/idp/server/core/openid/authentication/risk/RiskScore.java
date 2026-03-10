@@ -17,6 +17,8 @@ package org.idp.server.core.openid.authentication.risk;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.multi_tenancy.tenant.policy.RiskAssessmentConfig;
+import org.idp.server.platform.multi_tenancy.tenant.policy.RiskLevel;
 
 public class RiskScore {
 

@@ -18,12 +18,12 @@ package org.idp.server.core.openid.authentication.risk;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.idp.server.core.openid.authentication.risk.repository.RiskAssessmentConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.risk.repository.UserKnownDeviceCommandRepository;
 import org.idp.server.core.openid.authentication.risk.signal.RiskSignalEvaluator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.policy.RiskAssessmentConfig;
 import org.idp.server.platform.security.type.DeviceInfo;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -32,26 +32,24 @@ public class RiskAssessmentService {
   private static final LoggerWrapper log = LoggerWrapper.getLogger(RiskAssessmentService.class);
 
   List<RiskSignalEvaluator> evaluators;
-  RiskAssessmentConfigurationQueryRepository configQueryRepository;
   UserKnownDeviceCommandRepository knownDeviceCommandRepository;
 
   public RiskAssessmentService(
       List<RiskSignalEvaluator> evaluators,
-      RiskAssessmentConfigurationQueryRepository configQueryRepository,
       UserKnownDeviceCommandRepository knownDeviceCommandRepository) {
     this.evaluators = evaluators;
-    this.configQueryRepository = configQueryRepository;
     this.knownDeviceCommandRepository = knownDeviceCommandRepository;
   }
 
   /**
    * Assesses risk if enabled for the tenant. Returns empty if risk assessment is disabled.
+   * Configuration is read from tenant's identity_policy_config.risk_assessment.
    *
    * @return Optional containing the result if risk assessment is enabled, empty otherwise
    */
   public Optional<RiskAssessmentResult> assessIfEnabled(
       Tenant tenant, User user, RequestAttributes requestAttributes) {
-    RiskAssessmentConfig config = configQueryRepository.find(tenant);
+    RiskAssessmentConfig config = resolveConfig(tenant);
     if (!config.isEnabled()) {
       return Optional.empty();
     }
@@ -63,6 +61,10 @@ public class RiskAssessmentService {
    * authentication to enable future NewDevice risk signal evaluation.
    */
   public void recordDevice(Tenant tenant, User user, RequestAttributes requestAttributes) {
+    RiskAssessmentConfig config = resolveConfig(tenant);
+    if (!config.isEnabled()) {
+      return;
+    }
     try {
       DeviceInfo deviceInfo = DeviceInfo.parse(requestAttributes.getUserAgent().value());
       DeviceFingerprint fingerprint = DeviceFingerprint.from(deviceInfo);
@@ -86,6 +88,14 @@ public class RiskAssessmentService {
     } catch (Exception e) {
       log.warn("Failed to upsert known device: {}", e.getMessage());
     }
+  }
+
+  private RiskAssessmentConfig resolveConfig(Tenant tenant) {
+    RiskAssessmentConfig config = tenant.riskAssessmentConfig();
+    if (config == null) {
+      return new RiskAssessmentConfig();
+    }
+    return config;
   }
 
   RiskAssessmentResult assess(

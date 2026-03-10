@@ -27,19 +27,3 @@ COMMENT ON TABLE user_known_devices IS
 'Tracks known devices per user for risk-based authentication (Adaptive MFA).
 Uses upsert pattern: one row per device, updated on each login.
 Device fingerprint = SHA-256(os|browser|platform).';
-
--- Risk assessment configuration per tenant (JSONB payload)
-CREATE TABLE risk_assessment_configuration (
-    id          UUID DEFAULT gen_random_uuid() NOT NULL,
-    tenant_id   UUID NOT NULL,
-    payload     JSONB NOT NULL,
-    enabled     BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at  TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at  TIMESTAMP DEFAULT now() NOT NULL,
-    PRIMARY KEY (id),
-    UNIQUE (tenant_id)
-);
-
-COMMENT ON TABLE risk_assessment_configuration IS
-'Per-tenant risk assessment configuration.
-Payload contains signal weights, thresholds, and enabled flags.';

@@ -20,15 +20,3 @@ CREATE TABLE user_known_devices (
     PRIMARY KEY (tenant_id, user_id, device_fingerprint),
     KEY idx_known_devices_last_seen (tenant_id, user_id, last_seen_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Risk assessment configuration per tenant (JSON payload)
-CREATE TABLE risk_assessment_configuration (
-    id          CHAR(36) NOT NULL,
-    tenant_id   CHAR(36) NOT NULL,
-    payload     JSON NOT NULL,
-    enabled     TINYINT(1) NOT NULL DEFAULT 1,
-    created_at  DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
-    updated_at  DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_risk_config_tenant (tenant_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

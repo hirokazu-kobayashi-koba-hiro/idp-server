@@ -58,7 +58,6 @@ import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.organization.OrganizationManagementApi;
 import org.idp.server.control_plane.management.permission.OrgPermissionManagementApi;
 import org.idp.server.control_plane.management.permission.PermissionManagementApi;
-import org.idp.server.control_plane.management.risk.RiskAssessmentConfigManagementApi;
 import org.idp.server.control_plane.management.role.OrgRoleManagementApi;
 import org.idp.server.control_plane.management.role.RoleManagementApi;
 import org.idp.server.control_plane.management.security.event.OrgSecurityEventManagementApi;
@@ -99,8 +98,6 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.repository.*;
 import org.idp.server.core.openid.authentication.risk.RiskAssessmentService;
-import org.idp.server.core.openid.authentication.risk.repository.RiskAssessmentConfigurationCommandRepository;
-import org.idp.server.core.openid.authentication.risk.repository.RiskAssessmentConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.risk.repository.UserKnownDeviceCommandRepository;
 import org.idp.server.core.openid.authentication.risk.repository.UserKnownDeviceQueryRepository;
 import org.idp.server.core.openid.authentication.risk.signal.NewDeviceSignalEvaluator;
@@ -250,7 +247,6 @@ public class IdpServerApplication {
   AuthenticationPolicyConfigurationManagementApi authenticationPolicyConfigurationManagementApi;
   FederationConfigurationManagementApi federationConfigurationManagementApi;
   IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi;
-  RiskAssessmentConfigManagementApi riskAssessmentConfigManagementApi;
   SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi;
   SecurityEventManagementApi securityEventManagementApi;
   SecurityEventHookManagementApi securityEventHookManagementApi;
@@ -383,10 +379,6 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(IdentityVerificationResultCommandRepository.class);
     IdentityVerificationResultQueryRepository identityVerificationResultQueryRepository =
         applicationComponentContainer.resolve(IdentityVerificationResultQueryRepository.class);
-    RiskAssessmentConfigurationCommandRepository riskAssessmentConfigurationCommandRepository =
-        applicationComponentContainer.resolve(RiskAssessmentConfigurationCommandRepository.class);
-    RiskAssessmentConfigurationQueryRepository riskAssessmentConfigurationQueryRepository =
-        applicationComponentContainer.resolve(RiskAssessmentConfigurationQueryRepository.class);
     UserKnownDeviceCommandRepository userKnownDeviceCommandRepository =
         applicationComponentContainer.resolve(UserKnownDeviceCommandRepository.class);
     UserKnownDeviceQueryRepository userKnownDeviceQueryRepository =
@@ -627,10 +619,7 @@ public class IdpServerApplication {
     List<RiskSignalEvaluator> riskSignalEvaluators =
         List.of(new NewDeviceSignalEvaluator(userKnownDeviceQueryRepository));
     RiskAssessmentService riskAssessmentService =
-        new RiskAssessmentService(
-            riskSignalEvaluators,
-            riskAssessmentConfigurationQueryRepository,
-            userKnownDeviceCommandRepository);
+        new RiskAssessmentService(riskSignalEvaluators, userKnownDeviceCommandRepository);
 
     this.oAuthFlowApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -1022,15 +1011,6 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 auditLogPublisher),
             IdentityVerificationConfigManagementApi.class,
-            databaseTypeProvider);
-
-    this.riskAssessmentConfigManagementApi =
-        ManagementTypeEntryServiceProxy.createProxy(
-            new RiskAssessmentConfigManagementEntryService(
-                riskAssessmentConfigurationCommandRepository,
-                riskAssessmentConfigurationQueryRepository,
-                tenantQueryRepository),
-            RiskAssessmentConfigManagementApi.class,
             databaseTypeProvider);
 
     this.securityEventManagementApi =
@@ -1436,10 +1416,6 @@ public class IdpServerApplication {
 
   public IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi() {
     return identityVerificationConfigManagementApi;
-  }
-
-  public RiskAssessmentConfigManagementApi riskAssessmentConfigManagementApi() {
-    return riskAssessmentConfigManagementApi;
   }
 
   public UserAuthenticationApi operatorAuthenticationApi() {

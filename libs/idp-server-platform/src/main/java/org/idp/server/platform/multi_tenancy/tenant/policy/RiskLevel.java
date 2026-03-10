@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.idp.server.core.openid.authentication.risk;
+package org.idp.server.platform.multi_tenancy.tenant.policy;
 
-public enum RiskSignalType {
-  NEW_DEVICE("new_device"),
-  IMPOSSIBLE_TRAVEL("impossible_travel"),
-  UNTRUSTED_IP("untrusted_ip");
+public enum RiskLevel {
+  LOW,
+  MEDIUM,
+  HIGH;
 
-  String value;
-
-  RiskSignalType(String value) {
-    this.value = value;
-  }
-
-  public String value() {
-    return value;
+  public static RiskLevel of(String value) {
+    for (RiskLevel level : values()) {
+      if (level.name().equalsIgnoreCase(value)) {
+        return level;
+      }
+    }
+    return MEDIUM;
   }
 }

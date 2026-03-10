@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.idp.server.core.openid.authentication.risk;
+package org.idp.server.platform.multi_tenancy.tenant.policy;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.platform.json.JsonReadable;
 
-public class RiskAssessmentConfig implements JsonReadable {
+public class RiskAssessmentConfig {
 
   boolean enabled;
   Map<String, SignalConfig> signals;
@@ -72,6 +71,30 @@ public class RiskAssessmentConfig implements JsonReadable {
     return RiskLevel.MEDIUM;
   }
 
+  @SuppressWarnings("unchecked")
+  public static RiskAssessmentConfig fromMap(Map<String, Object> map) {
+    if (map == null || map.isEmpty()) {
+      return new RiskAssessmentConfig();
+    }
+    boolean enabled = Boolean.TRUE.equals(map.get("enabled"));
+    Map<String, SignalConfig> signals = new HashMap<>();
+    if (map.containsKey("signals") && map.get("signals") instanceof Map) {
+      Map<String, Object> signalsMap = (Map<String, Object>) map.get("signals");
+      for (Map.Entry<String, Object> entry : signalsMap.entrySet()) {
+        if (entry.getValue() instanceof Map) {
+          Map<String, Object> sc = (Map<String, Object>) entry.getValue();
+          signals.put(entry.getKey(), SignalConfig.fromMap(sc));
+        }
+      }
+    }
+    ThresholdConfig thresholds = ThresholdConfig.defaultThresholds();
+    if (map.containsKey("thresholds") && map.get("thresholds") instanceof Map) {
+      Map<String, Object> tc = (Map<String, Object>) map.get("thresholds");
+      thresholds = ThresholdConfig.fromMap(tc);
+    }
+    return new RiskAssessmentConfig(enabled, signals, thresholds);
+  }
+
   public boolean exists() {
     return signals != null && !signals.isEmpty();
   }
@@ -92,7 +115,7 @@ public class RiskAssessmentConfig implements JsonReadable {
     return map;
   }
 
-  public static class SignalConfig implements JsonReadable {
+  public static class SignalConfig {
     boolean enabled;
     double weight;
     int lookbackDays;
@@ -108,6 +131,14 @@ public class RiskAssessmentConfig implements JsonReadable {
       this.speedThresholdKmh = speedThresholdKmh;
     }
 
+    public static SignalConfig fromMap(Map<String, Object> map) {
+      boolean enabled = Boolean.TRUE.equals(map.get("enabled"));
+      double weight = toDouble(map.get("weight"), 0.0);
+      int lookbackDays = toInt(map.get("lookback_days"), 90);
+      double speedThresholdKmh = toDouble(map.get("speed_threshold_kmh"), 1000.0);
+      return new SignalConfig(enabled, weight, lookbackDays, speedThresholdKmh);
+    }
+
     public Map<String, Object> toMap() {
       Map<String, Object> map = new HashMap<>();
       map.put("enabled", enabled);
@@ -118,7 +149,7 @@ public class RiskAssessmentConfig implements JsonReadable {
     }
   }
 
-  public static class ThresholdConfig implements JsonReadable {
+  public static class ThresholdConfig {
     double lowMax = 0.3;
     double highMin = 0.7;
 
@@ -129,11 +160,33 @@ public class RiskAssessmentConfig implements JsonReadable {
       this.highMin = highMin;
     }
 
+    public static ThresholdConfig defaultThresholds() {
+      return new ThresholdConfig(0.3, 0.7);
+    }
+
+    public static ThresholdConfig fromMap(Map<String, Object> map) {
+      double lowMax = toDouble(map.get("low_max"), 0.3);
+      double highMin = toDouble(map.get("high_min"), 0.7);
+      return new ThresholdConfig(lowMax, highMin);
+    }
+
     public Map<String, Object> toMap() {
       Map<String, Object> map = new HashMap<>();
       map.put("low_max", lowMax);
       map.put("high_min", highMin);
       return map;
     }
+  }
+
+  private static double toDouble(Object value, double defaultValue) {
+    if (value == null) return defaultValue;
+    if (value instanceof Number) return ((Number) value).doubleValue();
+    return defaultValue;
+  }
+
+  private static int toInt(Object value, int defaultValue) {
+    if (value == null) return defaultValue;
+    if (value instanceof Number) return ((Number) value).intValue();
+    return defaultValue;
   }
 }

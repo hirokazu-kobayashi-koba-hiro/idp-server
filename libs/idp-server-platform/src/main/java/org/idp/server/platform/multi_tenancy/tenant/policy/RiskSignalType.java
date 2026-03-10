@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.idp.server.control_plane.management.risk;
+package org.idp.server.platform.multi_tenancy.tenant.policy;
 
-import java.util.HashMap;
-import java.util.Map;
+public enum RiskSignalType {
+  NEW_DEVICE("new_device"),
+  IMPOSSIBLE_TRAVEL("impossible_travel"),
+  UNTRUSTED_IP("untrusted_ip");
 
-public class RiskAssessmentConfigRequest {
+  String value;
 
-  Map<String, Object> values;
-
-  public RiskAssessmentConfigRequest() {
-    this.values = new HashMap<>();
+  RiskSignalType(String value) {
+    this.value = value;
   }
 
-  public RiskAssessmentConfigRequest(Map<String, Object> values) {
-    this.values = values != null ? values : new HashMap<>();
-  }
-
-  public Map<String, Object> toMap() {
-    return values;
-  }
-
-  public boolean exists() {
-    return values != null && !values.isEmpty();
+  public String value() {
+    return value;
   }
 }

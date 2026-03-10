@@ -75,6 +75,7 @@ public class TenantIdentityPolicy {
   private UniqueKeyType uniqueKeyType;
   private PasswordPolicyConfig passwordPolicyConfig;
   private AuthenticationDeviceRule authenticationDeviceRule;
+  private RiskAssessmentConfig riskAssessmentConfig;
 
   public TenantIdentityPolicy(UniqueKeyType uniqueKeyType) {
     this.uniqueKeyType =
@@ -104,6 +105,22 @@ public class TenantIdentityPolicy {
         authenticationDeviceRule != null
             ? authenticationDeviceRule
             : AuthenticationDeviceRule.defaultRule();
+  }
+
+  public TenantIdentityPolicy(
+      UniqueKeyType uniqueKeyType,
+      PasswordPolicyConfig passwordPolicyConfig,
+      AuthenticationDeviceRule authenticationDeviceRule,
+      RiskAssessmentConfig riskAssessmentConfig) {
+    this.uniqueKeyType =
+        uniqueKeyType != null ? uniqueKeyType : UniqueKeyType.EMAIL_OR_EXTERNAL_USER_ID;
+    this.passwordPolicyConfig =
+        passwordPolicyConfig != null ? passwordPolicyConfig : PasswordPolicyConfig.defaultPolicy();
+    this.authenticationDeviceRule =
+        authenticationDeviceRule != null
+            ? authenticationDeviceRule
+            : AuthenticationDeviceRule.defaultRule();
+    this.riskAssessmentConfig = riskAssessmentConfig;
   }
 
   /**
@@ -157,7 +174,14 @@ public class TenantIdentityPolicy {
       authenticationDeviceRule = AuthenticationDeviceRule.fromMap(deviceRuleMap);
     }
 
-    return new TenantIdentityPolicy(uniqueKeyType, passwordPolicyConfig, authenticationDeviceRule);
+    RiskAssessmentConfig riskAssessmentConfig = null;
+    if (map.containsKey("risk_assessment")) {
+      Map<String, Object> riskAssessmentMap = (Map<String, Object>) map.get("risk_assessment");
+      riskAssessmentConfig = RiskAssessmentConfig.fromMap(riskAssessmentMap);
+    }
+
+    return new TenantIdentityPolicy(
+        uniqueKeyType, passwordPolicyConfig, authenticationDeviceRule, riskAssessmentConfig);
   }
 
   /**
@@ -224,6 +248,10 @@ public class TenantIdentityPolicy {
     return authenticationDeviceRule().requiredIdentityVerification();
   }
 
+  public RiskAssessmentConfig riskAssessmentConfig() {
+    return riskAssessmentConfig;
+  }
+
   /**
    * Checks if this policy exists (is not null).
    *
@@ -251,6 +279,9 @@ public class TenantIdentityPolicy {
     }
     if (authenticationDeviceRule != null) {
       map.put("authentication_device_rule", authenticationDeviceRule.toMap());
+    }
+    if (riskAssessmentConfig != null) {
+      map.put("risk_assessment", riskAssessmentConfig.toMap());
     }
     return map;
   }

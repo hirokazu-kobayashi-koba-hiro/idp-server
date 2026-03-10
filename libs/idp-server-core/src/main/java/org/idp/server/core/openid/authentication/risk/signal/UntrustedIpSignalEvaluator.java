@@ -15,11 +15,11 @@
  */
 package org.idp.server.core.openid.authentication.risk.signal;
 
-import org.idp.server.core.openid.authentication.risk.RiskAssessmentConfig;
 import org.idp.server.core.openid.authentication.risk.RiskSignalResult;
-import org.idp.server.core.openid.authentication.risk.RiskSignalType;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.policy.RiskAssessmentConfig;
+import org.idp.server.platform.multi_tenancy.tenant.policy.RiskSignalType;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class UntrustedIpSignalEvaluator implements RiskSignalEvaluator {

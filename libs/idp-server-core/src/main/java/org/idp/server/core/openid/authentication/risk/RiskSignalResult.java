@@ -17,6 +17,7 @@ package org.idp.server.core.openid.authentication.risk;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.platform.multi_tenancy.tenant.policy.RiskSignalType;
 
 public class RiskSignalResult {
 

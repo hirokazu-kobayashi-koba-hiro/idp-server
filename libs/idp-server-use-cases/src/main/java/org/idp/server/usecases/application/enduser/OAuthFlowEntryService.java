@@ -271,7 +271,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
 
     // Risk assessment: evaluate after 1st factor success (user identified), before MFA decision
-    if (updatedTransaction.hasUser() && !updatedTransaction.isComplete()) {
+    // Skip if already evaluated (prevents duplicate evaluation during MFA steps)
+    if (updatedTransaction.hasUser()
+        && !updatedTransaction.isComplete()
+        && !updatedTransaction.interactionResults().contains("risk_assessment")) {
       Optional<RiskAssessmentResult> riskResultOpt =
           riskAssessmentService.assessIfEnabled(
               tenant, updatedTransaction.user(), requestAttributes);

@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.idp.server.platform.multi_tenancy.tenant.policy.RiskLevel;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 public class RiskAssessmentResult {

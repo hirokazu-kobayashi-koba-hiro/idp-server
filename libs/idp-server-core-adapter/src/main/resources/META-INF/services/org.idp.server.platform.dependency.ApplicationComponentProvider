@@ -67,5 +67,3 @@ org.idp.server.core.adapters.datasource.session.ClientSessionRepositoryProvider
 org.idp.server.core.adapters.datasource.system.SystemConfigurationDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.risk.knowndevice.command.UserKnownDeviceCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.risk.knowndevice.query.UserKnownDeviceQueryDataSourceProvider
-org.idp.server.core.adapters.datasource.authentication.risk.configuration.command.RiskAssessmentConfigurationCommandDataSourceProvider
-org.idp.server.core.adapters.datasource.authentication.risk.configuration.query.RiskAssessmentConfigurationQueryDataSourceProvider
