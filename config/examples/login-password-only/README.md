@@ -51,7 +51,7 @@ chmod +x setup.sh update.sh delete.sh
 | Organization ID | `a1b2c3d4-e5f6-7890-abcd-ef0123456789` |
 | Organizer Tenant ID | `b2c3d4e5-f6a7-8901-bcde-f01234567890` |
 | Public Tenant ID | `e5f6a7b8-c9d0-1234-efab-234567890123` |
-| Issuer | `https://api.local.dev/e5f6a7b8-c9d0-1234-efab-234567890123` |
+| Issuer | `https://api.local.test/e5f6a7b8-c9d0-1234-efab-234567890123` |
 
 ### 4. 設定更新
 
@@ -139,12 +139,12 @@ Step 7: クライアント作成（組織レベルAPI）
 
 ```bash
 # 1. ブラウザで認可エンドポイントを開く
-open "https://api.local.dev/e5f6a7b8-c9d0-1234-efab-234567890123/v1/authorizations?response_type=code&client_id=f6a7b8c9-d0e1-2345-fabc-345678901234&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email&state=test-state"
+open "https://api.local.test/e5f6a7b8-c9d0-1234-efab-234567890123/v1/authorizations?response_type=code&client_id=f6a7b8c9-d0e1-2345-fabc-345678901234&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email&state=test-state"
 
 # 2. メールアドレス/パスワードで登録またはログイン
 
 # 3. 認可コードをトークンに交換
-curl -X POST https://api.local.dev/e5f6a7b8-c9d0-1234-efab-234567890123/v1/tokens \
+curl -X POST https://api.local.test/e5f6a7b8-c9d0-1234-efab-234567890123/v1/tokens \
   -d "grant_type=authorization_code" \
   -d "code=YOUR_CODE" \
   -d "redirect_uri=http://localhost:3000/callback" \
@@ -155,5 +155,5 @@ curl -X POST https://api.local.dev/e5f6a7b8-c9d0-1234-efab-234567890123/v1/token
 ### OIDC Discovery
 
 ```
-https://api.local.dev/e5f6a7b8-c9d0-1234-efab-234567890123/.well-known/openid-configuration
+https://api.local.test/e5f6a7b8-c9d0-1234-efab-234567890123/.well-known/openid-configuration
 ```

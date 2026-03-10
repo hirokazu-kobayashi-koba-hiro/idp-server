@@ -62,7 +62,7 @@ chmod +x setup.sh update.sh delete.sh
 | Organization ID | `44444444-1111-4444-4444-444444444444` |
 | Organizer Tenant ID | `44444444-2222-4444-4444-444444444444` |
 | Public Tenant ID | `44444444-3333-4444-4444-444444444444` |
-| Issuer | `https://api.local.dev/44444444-3333-4444-4444-444444444444` |
+| Issuer | `https://api.local.test/44444444-3333-4444-4444-444444444444` |
 
 ### 4. 設定更新
 
@@ -157,14 +157,14 @@ Step 8: 身元確認設定作成（組織レベルAPI）
 
 ```bash
 # 1. ブラウザで認可エンドポイントを開く（transfers スコープ付き）
-open "https://api.local.dev/44444444-3333-4444-4444-444444444444/v1/authorizations?response_type=code&client_id=44444444-6666-4444-4444-444444444444&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email%20transfers&state=test-state"
+open "https://api.local.test/44444444-3333-4444-4444-444444444444/v1/authorizations?response_type=code&client_id=44444444-6666-4444-4444-444444444444&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email%20transfers&state=test-state"
 
 # 2. メールアドレス/パスワードで登録またはログイン
 
 # 3. 身元確認プロセスが発動（transfers スコープにより）
 
 # 4. 認可コードをトークンに交換
-curl -X POST https://api.local.dev/44444444-3333-4444-4444-444444444444/v1/tokens \
+curl -X POST https://api.local.test/44444444-3333-4444-4444-444444444444/v1/tokens \
   -d "grant_type=authorization_code" \
   -d "code=YOUR_CODE" \
   -d "redirect_uri=http://localhost:3000/callback" \
@@ -188,5 +188,5 @@ curl -X POST https://api.local.dev/44444444-3333-4444-4444-444444444444/v1/token
 ### OIDC Discovery
 
 ```shell
-curl https://api.local.dev/44444444-3333-4444-4444-444444444444/.well-known/openid-configuration | jq
+curl https://api.local.test/44444444-3333-4444-4444-444444444444/.well-known/openid-configuration | jq
 ```

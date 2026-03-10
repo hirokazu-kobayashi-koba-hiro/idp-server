@@ -21,7 +21,7 @@ const tenantIndex = parseInt(__ENV.TENANT_INDEX || '0');
 const config = tenantData[tenantIndex];
 
 export default function () {
-  const baseUrl = __ENV.BASE_URL || 'https://api.local.dev';
+  const baseUrl = __ENV.BASE_URL || 'https://api.local.test';
   const clientId = config.clientId;
   const redirectUri = __ENV.REDIRECT_URI || 'https://client.example.com/callback';
   const tenantId = config.tenantId;

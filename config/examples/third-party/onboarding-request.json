@@ -8,7 +8,7 @@
     "id": "55555555-2222-5555-5555-555555555555",
     "name": "Third Party Integration Organizer",
     "type": "ORGANIZER",
-    "domain": "https://api.local.dev",
+    "domain": "https://api.local.test",
     "authorization_provider": "idp-server",
     "session_config": {
       "cookie_name": "THIRD_PARTY_ADMIN_SESSION",
@@ -20,7 +20,7 @@
     },
     "cors_config": {
       "allow_origins": [
-        "https://api.local.dev",
+        "https://api.local.test",
         "https://auth.idp.local"
       ]
     },
@@ -36,9 +36,9 @@
     }
   },
   "authorization_server": {
-    "issuer": "https://api.local.dev/55555555-2222-5555-5555-555555555555",
-    "authorization_endpoint": "https://api.local.dev/55555555-2222-5555-5555-555555555555/v1/authorizations",
-    "token_endpoint": "https://api.local.dev/55555555-2222-5555-5555-555555555555/v1/tokens",
+    "issuer": "https://api.local.test/55555555-2222-5555-5555-555555555555",
+    "authorization_endpoint": "https://api.local.test/55555555-2222-5555-5555-555555555555/v1/authorizations",
+    "token_endpoint": "https://api.local.test/55555555-2222-5555-5555-555555555555/v1/tokens",
     "token_endpoint_auth_methods_supported": [
       "client_secret_post",
       "client_secret_basic"
@@ -47,8 +47,8 @@
       "RS256",
       "ES256"
     ],
-    "userinfo_endpoint": "https://api.local.dev/55555555-2222-5555-5555-555555555555/v1/userinfo",
-    "jwks_uri": "https://api.local.dev/55555555-2222-5555-5555-555555555555/v1/jwks",
+    "userinfo_endpoint": "https://api.local.test/55555555-2222-5555-5555-555555555555/v1/userinfo",
+    "jwks_uri": "https://api.local.test/55555555-2222-5555-5555-555555555555/v1/jwks",
     "jwks": "{\"keys\":[{\"kty\":\"EC\",\"x\":\"_g1pn_N84_T82eU-YVN4pcgQt3tfvZWJMPabMFNgbVg\",\"y\":\"B3vLi4eGNz9rzoj493h7zHBpM5G3lSM7Af57fru2-FE\",\"crv\":\"P-256\",\"d\":\"xHfNjJqElnZajzexFG49MQqO01TrveM4mL4tlz8T9jw\",\"use\":\"sig\",\"kid\":\"third-party-key-1\",\"alg\":\"ES256\"}]}",
     "grant_types_supported": [
       "authorization_code",
@@ -77,8 +77,8 @@
       "ES256"
     ],
     "claims_parameter_supported": true,
-    "token_introspection_endpoint": "https://api.local.dev/55555555-2222-5555-5555-555555555555/v1/tokens/introspection",
-    "token_revocation_endpoint": "https://api.local.dev/55555555-2222-5555-5555-555555555555/v1/tokens/revocation",
+    "token_introspection_endpoint": "https://api.local.test/55555555-2222-5555-5555-555555555555/v1/tokens/introspection",
+    "token_revocation_endpoint": "https://api.local.test/55555555-2222-5555-5555-555555555555/v1/tokens/revocation",
     "extension": {
       "access_token_type": "JWT",
       "token_signed_key_id": "third-party-key-1",
@@ -101,7 +101,7 @@
     "client_id_alias": "third-party-admin-client",
     "client_secret": "third-party-admin-secret-32ch!!",
     "redirect_uris": [
-      "https://api.local.dev/callback/"
+      "https://api.local.test/callback/"
     ],
     "response_types": [
       "code"

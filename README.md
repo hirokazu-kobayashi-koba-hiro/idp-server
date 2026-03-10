@@ -132,15 +132,15 @@ Sample-web is a Next.js application demonstrating FIDO2/Passkey authentication.
 ### Subdomain Configuration (macOS)
 
 ```bash
-# Setup dnsmasq and mkcert for *.local.dev
+# Setup dnsmasq and mkcert for *.local.test
 ./scripts/setup-local-subdomain.sh
 ```
 
 This script sets up:
-- dnsmasq for `*.local.dev` DNS resolution
+- dnsmasq for `*.local.test` DNS resolution
 - mkcert for local SSL certificates
 
-Open https://sample.local.dev
+Open https://sample.local.test
 
 ## Development
 

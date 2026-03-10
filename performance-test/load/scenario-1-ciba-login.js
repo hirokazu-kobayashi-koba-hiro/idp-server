@@ -43,7 +43,7 @@ export const options = {
 };
 
 export function login() {
-  const baseUrl = __ENV.BASE_URL || 'https://api.local.dev';
+  const baseUrl = __ENV.BASE_URL || 'https://api.local.test';
   const clientId = config.clientId;
   const clientSecret = config.clientSecret;
   const tenantId = config.tenantId;
@@ -110,7 +110,7 @@ export function login() {
 }
 
 export function introspect() {
-  const baseUrl = __ENV.BASE_URL || 'https://api.local.dev';
+  const baseUrl = __ENV.BASE_URL || 'https://api.local.test';
   const tenantId = config.tenantId;
   const clientId = config.clientId;
   const clientSecret = config.clientSecret;

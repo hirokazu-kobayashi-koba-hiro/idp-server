@@ -37,6 +37,7 @@ const sidebars = {
       items: [
         "content_02_quickstart/quickstart-01-getting-started",
         "content_02_quickstart/quickstart-01-kind-getting-started",
+        "content_02_quickstart/quickstart-09-local-subdomain-setup",
         "content_02_quickstart/quickstart-02-setting-templates",
         {
           type: "category",

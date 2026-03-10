@@ -95,7 +95,7 @@ REFRESH_TOKEN_DURATION=604800 \
 
 | 環境変数 | デフォルト | 説明 |
 |---------|-----------|------|
-| `FIDO2_RP_ID` | `local.dev` | Relying Party ID |
+| `FIDO2_RP_ID` | `local.test` | Relying Party ID |
 | `FIDO2_RP_NAME` | `Local Dev IDP` | Relying Party 表示名 |
 | `FIDO2_ALLOWED_ORIGIN` | `${AUTHORIZATION_SERVER_URL}` | WebAuthn 許可オリジン |
 | `MAX_DEVICES` | `5` | ユーザーあたりの最大デバイス数 |

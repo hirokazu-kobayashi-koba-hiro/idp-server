@@ -19,12 +19,12 @@ description: ローカル開発環境の構築・設定を行う際に使用。D
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    *.local.dev サブドメイン                    │
+│                    *.local.test サブドメイン                    │
 ├─────────────────────────────────────────────────────────────┤
-│  api.local.dev      → nginx → idp-server-1/2 (8081/8082)   │
-│  mtls.api.local.dev → nginx → idp-server-1/2 (mTLS)       │
-│  auth.local.dev     → app-view (認可UI)                     │
-│  sample.local.dev   → sample-web (サンプルRP)               │
+│  api.local.test      → nginx → idp-server-1/2 (8081/8082)   │
+│  mtls.api.local.test → nginx → idp-server-1/2 (mTLS)       │
+│  auth.local.test     → app-view (認可UI)                     │
+│  sample.local.test   → sample-web (サンプルRP)               │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -48,7 +48,7 @@ description: ローカル開発環境の構築・設定を行う際に使用。D
 ```
 
 このスクリプトは以下を設定:
-- dnsmasq による `*.local.dev` のローカルDNS解決
+- dnsmasq による `*.local.test` のローカルDNS解決
 - mkcert によるローカルSSL証明書の生成
 
 ### 方法2: /etc/hosts（手動設定）
@@ -57,18 +57,18 @@ dnsmasqが使えない環境向け:
 
 ```bash
 # Linux / macOS
-sudo sh -c 'echo "127.0.0.1 api.local.dev mtls.api.local.dev auth.local.dev sample.local.dev" >> /etc/hosts'
+sudo sh -c 'echo "127.0.0.1 api.local.test mtls.api.local.test auth.local.test sample.local.test" >> /etc/hosts'
 
 # Windows (管理者権限のPowerShell)
-Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 api.local.dev mtls.api.local.dev auth.local.dev sample.local.dev"
+Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 api.local.test mtls.api.local.test auth.local.test sample.local.test"
 ```
 
 ### 設定確認
 
 ```bash
 # DNS解決の確認
-ping -c 1 api.local.dev
-nslookup api.local.dev
+ping -c 1 api.local.test
+nslookup api.local.test
 
 # 127.0.0.1 が返されれば正常
 ```
@@ -87,12 +87,12 @@ brew install mkcert
 mkcert -install
 
 # 証明書生成（setup-local-subdomain.sh が自動実行）
-mkcert "*.local.dev"
+mkcert "*.local.test"
 ```
 
 証明書ファイルの場所:
-- `config/certs/_wildcard.local.dev.pem` - 証明書
-- `config/certs/_wildcard.local.dev-key.pem` - 秘密鍵
+- `config/certs/_wildcard.local.test.pem` - 証明書
+- `config/certs/_wildcard.local.test-key.pem` - 秘密鍵
 
 ---
 
@@ -126,11 +126,11 @@ docker compose -f docker-compose-mysql.yaml up -d
 
 | サービス | ポート | 説明 |
 |---------|-------|------|
-| `nginx` | 443 | リバースプロキシ（api.local.dev / mtls.api.local.dev） |
+| `nginx` | 443 | リバースプロキシ（api.local.test / mtls.api.local.test） |
 | `idp-server-1` | 8081 | idp-server インスタンス1 |
 | `idp-server-2` | 8082 | idp-server インスタンス2 |
-| `app-view` | 3000 | 認可UI（auth.local.dev） |
-| `sample-web` | 3001 | サンプルRP（sample.local.dev） |
+| `app-view` | 3000 | 認可UI（auth.local.test） |
+| `sample-web` | 3001 | サンプルRP（sample.local.test） |
 | `postgres-primary` | 5432 | PostgreSQL プライマリ |
 | `postgres-replica` | 5433 | PostgreSQL レプリカ |
 | `redis` | 6379 | Redis |
@@ -198,7 +198,7 @@ docker compose exec postgres-replica psql -U idp_app -d idp
 
 ```bash
 # ヘルスチェック
-curl -v https://api.local.dev/actuator/health
+curl -v https://api.local.test/actuator/health
 
 # ログ確認
 docker compose logs -f idp-server-1
@@ -225,8 +225,8 @@ cd e2e && npm test
 
 | 問題 | 原因 | 解決策 |
 |------|------|--------|
-| `ping api.local.dev` 失敗 | dnsmasq停止 | `brew services restart dnsmasq` または `/etc/hosts` 手動設定 |
-| DNS解決が127.0.0.1以外 | 他DNSリゾルバ優先 | `/etc/resolver/local.dev` ファイル確認 |
+| `ping api.local.test` 失敗 | dnsmasq停止 | `brew services restart dnsmasq` または `/etc/hosts` 手動設定 |
+| DNS解決が127.0.0.1以外 | 他DNSリゾルバ優先 | `/etc/resolver/local.test` ファイル確認 |
 | SSL証明書エラー | ルートCA未インストール | `mkcert -install` 実行 |
 
 ### Docker関連

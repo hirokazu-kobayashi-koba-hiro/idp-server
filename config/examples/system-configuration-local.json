@@ -2,7 +2,7 @@
   "ssrf_protection": {
     "enabled": true,
     "bypass_hosts": [
-      "api.local.dev",
+      "api.local.test",
       "localhost",
       "127.0.0.1",
       "host.docker.internal",

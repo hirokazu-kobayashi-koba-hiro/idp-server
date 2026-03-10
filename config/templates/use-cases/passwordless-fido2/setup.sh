@@ -128,10 +128,10 @@ REFRESH_TOKEN_DURATION="${REFRESH_TOKEN_DURATION:-86400}"
 REGISTRATION_REQUIRED_FIELDS="${REGISTRATION_REQUIRED_FIELDS:-email,password,name}"
 
 # UI configuration (must be defined before FIDO2 config)
-UI_BASE_URL="${UI_BASE_URL:-https://auth.local.dev}"
+UI_BASE_URL="${UI_BASE_URL:-https://auth.local.test}"
 
 # FIDO2-specific configuration
-FIDO2_RP_ID="${FIDO2_RP_ID:-local.dev}"
+FIDO2_RP_ID="${FIDO2_RP_ID:-local.test}"
 FIDO2_RP_NAME="${FIDO2_RP_NAME:-Local Dev IDP}"
 FIDO2_ALLOWED_ORIGIN="${FIDO2_ALLOWED_ORIGIN:-${UI_BASE_URL}}"
 MAX_DEVICES="${MAX_DEVICES:-5}"

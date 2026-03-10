@@ -57,7 +57,7 @@ chmod +x setup.sh update.sh delete.sh
 | Organization ID | `22222222-1111-2222-2222-222222222222` |
 | Organizer Tenant ID | `22222222-2222-2222-2222-222222222222` |
 | Public Tenant ID | `22222222-3333-2222-2222-222222222222` |
-| Issuer | `https://api.local.dev/22222222-3333-2222-2222-222222222222` |
+| Issuer | `https://api.local.test/22222222-3333-2222-2222-222222222222` |
 
 ### 4. 設定更新
 
@@ -149,14 +149,14 @@ Step 8: クライアント作成（組織レベルAPI）
 
 ```bash
 # 1. ブラウザで認可エンドポイントを開く
-open "https://api.local.dev/22222222-3333-2222-2222-222222222222/v1/authorizations?response_type=code&client_id=22222222-6666-2222-2222-222222222222&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email&state=test-state"
+open "https://api.local.test/22222222-3333-2222-2222-222222222222/v1/authorizations?response_type=code&client_id=22222222-6666-2222-2222-222222222222&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email&state=test-state"
 
 # 2. メールアドレス/パスワードで登録またはログイン
 #    ログイン時は Email OTP の入力も求められます
 #    no-action モードでは検証コードはサーバーログに出力されます
 
 # 3. 認可コードをトークンに交換
-curl -X POST https://api.local.dev/22222222-3333-2222-2222-222222222222/v1/tokens \
+curl -X POST https://api.local.test/22222222-3333-2222-2222-222222222222/v1/tokens \
   -d "grant_type=authorization_code" \
   -d "code=YOUR_CODE" \
   -d "redirect_uri=http://localhost:3000/callback" \
@@ -167,5 +167,5 @@ curl -X POST https://api.local.dev/22222222-3333-2222-2222-222222222222/v1/token
 ### OIDC Discovery
 
 ```
-https://api.local.dev/22222222-3333-2222-2222-222222222222/.well-known/openid-configuration
+https://api.local.test/22222222-3333-2222-2222-222222222222/.well-known/openid-configuration
 ```

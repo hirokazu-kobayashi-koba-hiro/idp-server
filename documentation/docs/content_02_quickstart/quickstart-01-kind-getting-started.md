@@ -99,7 +99,7 @@ bash k8s/local/up-app-only.sh
 | 5 | idp-server イメージビルド | `docker build` → `kind load docker-image` |
 | 6 | Kubernetes リソース作成 | Secret（.env から動的生成）、ConfigMap（.env + kind用DB/Redis接続先）|
 | 7 | idp-server デプロイ | Deployment + NodePort Service + HPA |
-| 8 | hostAliases 設定 | Pod 内から `api.local.dev` 等を名前解決するための `/etc/hosts` 設定 |
+| 8 | hostAliases 設定 | Pod 内から `api.local.test` 等を名前解決するための `/etc/hosts` 設定 |
 | 9 | Metrics Server | HPA 用の CPU/メモリメトリクス収集 |
 
 ### 状態確認
@@ -115,7 +115,7 @@ bash k8s/local/status.sh
 curl http://localhost:8080/actuator/health
 
 # nginx 経由
-curl -k https://api.local.dev/actuator/health
+curl -k https://api.local.test/actuator/health
 ```
 
 ### Kubernetes リソース確認
@@ -256,7 +256,7 @@ kubectl get pods -n idp -w
 | `ErrImageNeverPull` | kind にイメージが未ロード | `kind load docker-image --name idp-local idp-server:latest` |
 | `context "kind-idp-local" does not exist` | kubeconfig 消失 | `kind export kubeconfig --name idp-local` |
 | `PKIX path building failed` | rootCA 未信頼 | Secret `root-ca-cert` が作成されているか確認 |
-| `ConnectException: null` (api.local.dev) | DNS 解決不可 | hostAliases が設定されているか `kubectl exec POD -- cat /etc/hosts` で確認 |
+| `ConnectException: null` (api.local.test) | DNS 解決不可 | hostAliases が設定されているか `kubectl exec POD -- cat /etc/hosts` で確認 |
 | Docker ディスク不足 | kind ノードイメージが大きい | `docker system prune -a` で不要イメージ削除 |
 | `docker compose --wait` がハング | ワンショットコンテナに healthcheck 無し | `up-app-only.sh` は `--wait` 不使用（個別に待機） |
 

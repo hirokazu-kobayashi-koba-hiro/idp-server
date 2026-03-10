@@ -45,7 +45,7 @@ chmod +x setup.sh
 | リソース | 値 |
 |---------|-----|
 | Tenant ID | `e8c169c2-019f-46c9-af39-7be12ec51e4d` |
-| Issuer | `https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d` |
+| Issuer | `https://api.local.test/e8c169c2-019f-46c9-af39-7be12ec51e4d` |
 
 ### 4. 設定更新
 
@@ -112,7 +112,7 @@ OpenID Conformance Suite で以下の設定を使用:
 
 ```
 Server:
-  Issuer: https://api.local.dev/e8c169c2-019f-46c9-af39-7be12ec51e4d
+  Issuer: https://api.local.test/e8c169c2-019f-46c9-af39-7be12ec51e4d
 
 Client (client_secret_basic):
   Client ID: 35f40824-807c-4f36-bf91-a8da0692b032

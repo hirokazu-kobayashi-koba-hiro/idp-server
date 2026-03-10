@@ -159,7 +159,7 @@ services:
       dockerfile: docker/app-view/Dockerfile
       args:
         BASE_PATH: ""
-        NEXT_PUBLIC_BACKEND_URL: "https://api.local.dev"
+        NEXT_PUBLIC_BACKEND_URL: "https://api.local.test"
     container_name: app-view-kind
     environment:
       NODE_ENV: production
@@ -170,7 +170,7 @@ services:
       dockerfile: docker/app-view/Dockerfile
       args:
         BASE_PATH: ""
-        NEXT_PUBLIC_BACKEND_URL: "https://api.local.dev"
+        NEXT_PUBLIC_BACKEND_URL: "https://api.local.test"
     container_name: app-view-crosssite-kind
     environment:
       NODE_ENV: production
@@ -181,7 +181,7 @@ services:
       dockerfile: docker/app-view/Dockerfile
       args:
         BASE_PATH: ""
-        NEXT_PUBLIC_BACKEND_URL: "https://api.local.dev/idp-admin"
+        NEXT_PUBLIC_BACKEND_URL: "https://api.local.test/idp-admin"
     container_name: app-view-context-path-kind
     environment:
       NODE_ENV: production
@@ -195,16 +195,16 @@ services:
       NODE_ENV: production
       AUTH_SECRET: "123"
       AUTH_TRUST_HOST: "true"
-      AUTH_URL: "https://sample.local.dev"
-      NEXT_PUBLIC_IDP_SERVER_ISSUER: "https://api.local.dev/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
-      NEXT_PUBLIC_FRONTEND_URL: "https://sample.local.dev"
+      AUTH_URL: "https://sample.local.test"
+      NEXT_PUBLIC_IDP_SERVER_ISSUER: "https://api.local.test/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+      NEXT_PUBLIC_FRONTEND_URL: "https://sample.local.test"
       NEXT_PUBLIC_IDP_CLIENT_ID: "8a9f5e2c-1b3d-4c6a-9f8e-7d5c3a2b1e4f"
       NEXT_IDP_CLIENT_SECRET: "local-dev-public-secret-32char"
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
     extra_hosts:
-      - "api.local.dev:host-gateway"
-      - "auth.local.dev:host-gateway"
-      - "sample.local.dev:host-gateway"
+      - "api.local.test:host-gateway"
+      - "auth.local.test:host-gateway"
+      - "sample.local.test:host-gateway"
 
 volumes:
   postgres_primary_data:

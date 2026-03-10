@@ -7,8 +7,8 @@
     "http://localhost:3001/callback/",
     "http://localhost:3010/api/auth/callback/idp-server",
     "http://localhost:3010/api/security-test/callback",
-    "https://sample.local.dev/api/auth/callback/idp-server",
-    "https://sample.local.dev/api/security-test/callback"
+    "https://sample.local.test/api/auth/callback/idp-server",
+    "https://sample.local.test/api/security-test/callback"
   ],
   "response_types": [
     "code"

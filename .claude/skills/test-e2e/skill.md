@@ -99,8 +99,8 @@ monkey/
 ```javascript
 // e2e/src/tests/testConfig.js
 module.exports = {
-  baseUrl: 'https://api.local.dev',
-  authUrl: 'https://auth.local.dev',
+  baseUrl: 'https://api.local.test',
+  authUrl: 'https://auth.local.test',
   tenantId: '...',
   clientId: '...',
   // ...

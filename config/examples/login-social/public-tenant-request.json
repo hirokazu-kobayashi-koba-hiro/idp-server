@@ -3,7 +3,7 @@
     "id": "11111111-3333-1111-1111-111111111111",
     "name": "Login Social Public Tenant",
     "type": "PUBLIC",
-    "domain": "https://api.local.dev",
+    "domain": "https://api.local.test",
     "authorization_provider": "idp-server",
     "ui_config": {
       "base_url": "https://auth.idp.local",
@@ -20,7 +20,7 @@
     },
     "cors_config": {
       "allow_origins": [
-        "https://api.local.dev",
+        "https://api.local.test",
         "https://auth.idp.local"
       ]
     },
@@ -50,9 +50,9 @@
     }
   },
   "authorization_server": {
-    "issuer": "https://api.local.dev/11111111-3333-1111-1111-111111111111",
-    "authorization_endpoint": "https://api.local.dev/11111111-3333-1111-1111-111111111111/v1/authorizations",
-    "token_endpoint": "https://api.local.dev/11111111-3333-1111-1111-111111111111/v1/tokens",
+    "issuer": "https://api.local.test/11111111-3333-1111-1111-111111111111",
+    "authorization_endpoint": "https://api.local.test/11111111-3333-1111-1111-111111111111/v1/authorizations",
+    "token_endpoint": "https://api.local.test/11111111-3333-1111-1111-111111111111/v1/tokens",
     "token_endpoint_auth_methods_supported": [
       "client_secret_post",
       "client_secret_basic"
@@ -61,8 +61,8 @@
       "RS256",
       "ES256"
     ],
-    "userinfo_endpoint": "https://api.local.dev/11111111-3333-1111-1111-111111111111/v1/userinfo",
-    "jwks_uri": "https://api.local.dev/11111111-3333-1111-1111-111111111111/v1/jwks",
+    "userinfo_endpoint": "https://api.local.test/11111111-3333-1111-1111-111111111111/v1/userinfo",
+    "jwks_uri": "https://api.local.test/11111111-3333-1111-1111-111111111111/v1/jwks",
     "jwks": "{\"keys\":[{\"kty\":\"EC\",\"x\":\"_g1pn_N84_T82eU-YVN4pcgQt3tfvZWJMPabMFNgbVg\",\"y\":\"B3vLi4eGNz9rzoj493h7zHBpM5G3lSM7Af57fru2-FE\",\"crv\":\"P-256\",\"d\":\"xHfNjJqElnZajzexFG49MQqO01TrveM4mL4tlz8T9jw\",\"use\":\"sig\",\"kid\":\"login-social-key-1\",\"alg\":\"ES256\"}]}",
     "grant_types_supported": [
       "authorization_code",
@@ -114,8 +114,8 @@
       "phone_number_verified"
     ],
     "claims_parameter_supported": true,
-    "token_introspection_endpoint": "https://api.local.dev/11111111-3333-1111-1111-111111111111/v1/tokens/introspection",
-    "token_revocation_endpoint": "https://api.local.dev/11111111-3333-1111-1111-111111111111/v1/tokens/revocation",
+    "token_introspection_endpoint": "https://api.local.test/11111111-3333-1111-1111-111111111111/v1/tokens/introspection",
+    "token_revocation_endpoint": "https://api.local.test/11111111-3333-1111-1111-111111111111/v1/tokens/revocation",
     "extension": {
       "access_token_type": "JWT",
       "token_signed_key_id": "login-social-key-1",

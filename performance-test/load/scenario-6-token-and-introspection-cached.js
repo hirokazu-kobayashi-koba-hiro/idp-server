@@ -84,7 +84,7 @@ function getToken(baseUrl, tenantId, clientId, clientSecret) {
 }
 
 export default function () {
-  const baseUrl = __ENV.BASE_URL || 'https://api.local.dev';
+  const baseUrl = __ENV.BASE_URL || 'https://api.local.test';
   const tenantId = config.tenantId;
   const clientId = config.clientId;
   const clientSecret = config.clientSecret;

@@ -316,8 +316,8 @@ tls-client.pem: OK
 ### nginx mTLS接続テスト
 
 ```bash
-# クライアント証明書でHTTPS接続テスト（mtls.api.local.devドメイン経由）
-curl -v https://mtls.api.local.dev/health \
+# クライアント証明書でHTTPS接続テスト（mtls.api.local.testドメイン経由）
+curl -v https://mtls.api.local.test/health \
   --cert tls-client-auth-2.pem \
   --key tls-client-auth-2.key
 ```

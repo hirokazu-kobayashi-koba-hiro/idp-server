@@ -8,7 +8,7 @@
     "id": "44444444-2222-4444-4444-444444444444",
     "name": "eKYC Organizer",
     "type": "ORGANIZER",
-    "domain": "https://api.local.dev",
+    "domain": "https://api.local.test",
     "authorization_provider": "idp-server",
     "session_config": {
       "cookie_name": "EKYC_ADMIN_SESSION",
@@ -19,7 +19,7 @@
       "timeout_seconds": 3600
     },
     "cors_config": {
-      "allow_origins": ["https://api.local.dev", "https://auth.idp.local"]
+      "allow_origins": ["https://api.local.test", "https://auth.idp.local"]
     },
     "security_event_log_config": {
       "format": "structured_json",
@@ -33,13 +33,13 @@
     }
   },
   "authorization_server": {
-    "issuer": "https://api.local.dev/44444444-2222-4444-4444-444444444444",
-    "authorization_endpoint": "https://api.local.dev/44444444-2222-4444-4444-444444444444/v1/authorizations",
-    "token_endpoint": "https://api.local.dev/44444444-2222-4444-4444-444444444444/v1/tokens",
+    "issuer": "https://api.local.test/44444444-2222-4444-4444-444444444444",
+    "authorization_endpoint": "https://api.local.test/44444444-2222-4444-4444-444444444444/v1/authorizations",
+    "token_endpoint": "https://api.local.test/44444444-2222-4444-4444-444444444444/v1/tokens",
     "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"],
     "token_endpoint_auth_signing_alg_values_supported": ["RS256", "ES256"],
-    "userinfo_endpoint": "https://api.local.dev/44444444-2222-4444-4444-444444444444/v1/userinfo",
-    "jwks_uri": "https://api.local.dev/44444444-2222-4444-4444-444444444444/v1/jwks",
+    "userinfo_endpoint": "https://api.local.test/44444444-2222-4444-4444-444444444444/v1/userinfo",
+    "jwks_uri": "https://api.local.test/44444444-2222-4444-4444-444444444444/v1/jwks",
     "jwks": "{\"keys\":[{\"kty\":\"EC\",\"x\":\"_g1pn_N84_T82eU-YVN4pcgQt3tfvZWJMPabMFNgbVg\",\"y\":\"B3vLi4eGNz9rzoj493h7zHBpM5G3lSM7Af57fru2-FE\",\"crv\":\"P-256\",\"d\":\"xHfNjJqElnZajzexFG49MQqO01TrveM4mL4tlz8T9jw\",\"use\":\"sig\",\"kid\":\"ekyc-key-1\",\"alg\":\"ES256\"}]}",
     "grant_types_supported": ["authorization_code", "refresh_token", "password"],
     "token_signed_key_id": "ekyc-key-1",
@@ -50,8 +50,8 @@
     "subject_types_supported": ["public"],
     "id_token_signing_alg_values_supported": ["RS256", "ES256"],
     "claims_parameter_supported": true,
-    "token_introspection_endpoint": "https://api.local.dev/44444444-2222-4444-4444-444444444444/v1/tokens/introspection",
-    "token_revocation_endpoint": "https://api.local.dev/44444444-2222-4444-4444-444444444444/v1/tokens/revocation",
+    "token_introspection_endpoint": "https://api.local.test/44444444-2222-4444-4444-444444444444/v1/tokens/introspection",
+    "token_revocation_endpoint": "https://api.local.test/44444444-2222-4444-4444-444444444444/v1/tokens/revocation",
     "extension": {
       "access_token_type": "JWT",
       "token_signed_key_id": "ekyc-key-1",
@@ -73,7 +73,7 @@
     "client_id": "44444444-5555-4444-4444-444444444444",
     "client_id_alias": "ekyc-admin-client",
     "client_secret": "ekyc-admin-secret-32characters!!",
-    "redirect_uris": ["https://api.local.dev/callback/"],
+    "redirect_uris": ["https://api.local.test/callback/"],
     "response_types": ["code"],
     "grant_types": ["authorization_code", "refresh_token", "password"],
     "scope": "openid profile email management",

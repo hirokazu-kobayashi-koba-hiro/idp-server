@@ -26,7 +26,7 @@ passwordless-fido2/
 | 項目 | 設定値 |
 |------|--------|
 | 認証方式 | FIDO2/WebAuthn OR パスワード（移行期パターン） |
-| FIDO2 RP ID | `local.dev` |
+| FIDO2 RP ID | `local.test` |
 | Authenticator | platform（端末内蔵認証器） |
 | Resident Key | required（Discoverable Credential） |
 | User Verification | required |
@@ -72,7 +72,7 @@ chmod +x setup.sh update.sh delete.sh
 | Organization ID | `33333333-1111-3333-3333-333333333333` |
 | Organizer Tenant ID | `33333333-2222-3333-3333-333333333333` |
 | Public Tenant ID | `33333333-3333-3333-3333-333333333333` |
-| Issuer | `https://api.local.dev/33333333-3333-3333-3333-333333333333` |
+| Issuer | `https://api.local.test/33333333-3333-3333-3333-333333333333` |
 
 ### 4. 設定更新
 
@@ -168,13 +168,13 @@ Step 9: クライアント作成（組織レベルAPI）
 
 ```bash
 # 1. ブラウザで認可エンドポイントを開く
-open "https://api.local.dev/33333333-3333-3333-3333-333333333333/v1/authorizations?response_type=code&client_id=33333333-6666-3333-3333-333333333333&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email&state=test-state"
+open "https://api.local.test/33333333-3333-3333-3333-333333333333/v1/authorizations?response_type=code&client_id=33333333-6666-3333-3333-333333333333&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email&state=test-state"
 
 # 2. メールアドレス/パスワードで登録またはログイン
 #    → パスワード認証後、FIDO2 デバイス登録を促される
 
 # 3. 認可コードをトークンに交換
-curl -X POST https://api.local.dev/33333333-3333-3333-3333-333333333333/v1/tokens \
+curl -X POST https://api.local.test/33333333-3333-3333-3333-333333333333/v1/tokens \
   -d "grant_type=authorization_code" \
   -d "code=YOUR_CODE" \
   -d "redirect_uri=http://localhost:3000/callback" \
@@ -187,5 +187,5 @@ curl -X POST https://api.local.dev/33333333-3333-3333-3333-333333333333/v1/token
 ### OIDC Discovery
 
 ```
-https://api.local.dev/33333333-3333-3333-3333-333333333333/.well-known/openid-configuration
+https://api.local.test/33333333-3333-3333-3333-333333333333/.well-known/openid-configuration
 ```

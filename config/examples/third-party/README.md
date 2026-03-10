@@ -49,7 +49,7 @@ third-party/
 | Web Client ID | `55555555-7777-5555-5555-555555555555` |
 | Mobile Client ID | `55555555-8888-5555-5555-555555555555` |
 | M2M Client ID | `55555555-9999-5555-5555-555555555555` |
-| Issuer | `https://api.local.dev/55555555-5555-5555-5555-555555555555` |
+| Issuer | `https://api.local.test/55555555-5555-5555-5555-555555555555` |
 
 ## セットアップ
 
@@ -189,12 +189,12 @@ Step 9: M2M クライアント作成（組織レベルAPI）
 
 ```bash
 # 1. ブラウザで認可エンドポイントを開く
-open "https://api.local.dev/55555555-5555-5555-5555-555555555555/v1/authorizations?response_type=code&client_id=55555555-7777-5555-5555-555555555555&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email%20api%3Aread&state=test-state"
+open "https://api.local.test/55555555-5555-5555-5555-555555555555/v1/authorizations?response_type=code&client_id=55555555-7777-5555-5555-555555555555&redirect_uri=http://localhost:3000/callback&scope=openid%20profile%20email%20api%3Aread&state=test-state"
 
 # 2. メールアドレス/パスワードで登録またはログイン
 
 # 3. 認可コードをトークンに交換（Basic認証）
-curl -X POST https://api.local.dev/55555555-5555-5555-5555-555555555555/v1/tokens \
+curl -X POST https://api.local.test/55555555-5555-5555-5555-555555555555/v1/tokens \
   -u "55555555-7777-5555-5555-555555555555:third-party-web-secret-32chars!" \
   -d "grant_type=authorization_code" \
   -d "code=YOUR_CODE" \
@@ -209,12 +209,12 @@ CODE_VERIFIER=$(openssl rand -base64 32 | tr -d '=/+' | head -c 43)
 CODE_CHALLENGE=$(echo -n "${CODE_VERIFIER}" | openssl dgst -sha256 -binary | base64 | tr -d '=' | tr '/+' '_-')
 
 # 2. ブラウザで認可エンドポイントを開く（PKCE パラメータ付き）
-open "https://api.local.dev/55555555-5555-5555-5555-555555555555/v1/authorizations?response_type=code&client_id=55555555-8888-5555-5555-555555555555&redirect_uri=com.example.thirdparty://callback&scope=openid%20profile%20email%20api%3Aread&state=test-state&code_challenge=${CODE_CHALLENGE}&code_challenge_method=S256"
+open "https://api.local.test/55555555-5555-5555-5555-555555555555/v1/authorizations?response_type=code&client_id=55555555-8888-5555-5555-555555555555&redirect_uri=com.example.thirdparty://callback&scope=openid%20profile%20email%20api%3Aread&state=test-state&code_challenge=${CODE_CHALLENGE}&code_challenge_method=S256"
 
 # 3. メールアドレス/パスワードで登録またはログイン
 
 # 4. 認可コードをトークンに交換（code_verifier付き）
-curl -X POST https://api.local.dev/55555555-5555-5555-5555-555555555555/v1/tokens \
+curl -X POST https://api.local.test/55555555-5555-5555-5555-555555555555/v1/tokens \
   -d "grant_type=authorization_code" \
   -d "code=YOUR_CODE" \
   -d "redirect_uri=com.example.thirdparty://callback" \
@@ -226,7 +226,7 @@ curl -X POST https://api.local.dev/55555555-5555-5555-5555-555555555555/v1/token
 
 ```bash
 # クライアントクレデンシャルでアクセストークンを取得
-curl -X POST https://api.local.dev/55555555-5555-5555-5555-555555555555/v1/tokens \
+curl -X POST https://api.local.test/55555555-5555-5555-5555-555555555555/v1/tokens \
   -u "55555555-9999-5555-5555-555555555555:third-party-m2m-secret-32chars!" \
   -d "grant_type=client_credentials" \
   -d "scope=api:read api:write"
@@ -235,5 +235,5 @@ curl -X POST https://api.local.dev/55555555-5555-5555-5555-555555555555/v1/token
 ### OIDC Discovery
 
 ```
-https://api.local.dev/55555555-5555-5555-5555-555555555555/.well-known/openid-configuration
+https://api.local.test/55555555-5555-5555-5555-555555555555/.well-known/openid-configuration
 ```

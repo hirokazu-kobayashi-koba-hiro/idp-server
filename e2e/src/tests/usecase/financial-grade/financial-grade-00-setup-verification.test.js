@@ -467,7 +467,7 @@ describe("Financial Grade: Setup Verification", () => {
 
     // CORS configuration
     const corsConfig = tenant.cors_config;
-    expect(corsConfig.allow_origins).toEqual(["https://localhost.emobix.co.uk:8443", "https://api.local.dev", "https://mtls.api.local.dev", "https://auth.local.dev"]);
+    expect(corsConfig.allow_origins).toEqual(["https://localhost.emobix.co.uk:8443", "https://api.local.test", "https://mtls.api.local.test", "https://auth.local.test"]);
     expect(corsConfig.allow_headers).toContain("Authorization");
     expect(corsConfig.allow_headers).toContain("Content-Type");
     expect(corsConfig.allow_methods).toContain("GET");

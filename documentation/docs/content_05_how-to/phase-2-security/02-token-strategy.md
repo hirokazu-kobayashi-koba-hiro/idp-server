@@ -166,7 +166,7 @@ gantt
 ### Management API での設定例
 
 ```bash
-curl -X PUT https://api.local.dev/v1/management/tenants/{tenant-id}/authorization-server \
+curl -X PUT https://api.local.test/v1/management/tenants/{tenant-id}/authorization-server \
   -H "Content-Type: application/json" \
   -d '{
     "extension": {
@@ -194,7 +194,7 @@ curl -X PUT https://api.local.dev/v1/management/tenants/{tenant-id}/authorizatio
 ### 設定例
 
 ```bash
-curl -X PUT https://api.local.dev/v1/management/tenants/{tenant-id}/clients/{client-id} \
+curl -X PUT https://api.local.test/v1/management/tenants/{tenant-id}/clients/{client-id} \
   -H "Content-Type: application/json" \
   -d '{
     "extension": {

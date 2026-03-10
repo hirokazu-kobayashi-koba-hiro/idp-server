@@ -21,13 +21,13 @@
 
 ```mermaid
 flowchart TD
-subgraph Frontend["Frontend (*.local.dev)"]
-app_view[🖥️ app-view<br>auth.local.dev<br>認可UI]
-sample_web[🌐 sample-web<br>sample.local.dev<br>サンプルRP]
+subgraph Frontend["Frontend (*.local.test)"]
+app_view[🖥️ app-view<br>auth.local.test<br>認可UI]
+sample_web[🌐 sample-web<br>sample.local.test<br>サンプルRP]
 end
 
 subgraph Nginx["Nginx Reverse Proxy"]
-nginx[🔀 nginx<br>api.local.dev:443<br>mtls.api.local.dev:443]
+nginx[🔀 nginx<br>api.local.test:443<br>mtls.api.local.test:443]
 end
 
 subgraph App["App Cluster"]
@@ -68,16 +68,16 @@ idp2 --> mockoon
 
 | サブドメイン | サービス | 説明 |
 |------------|---------|------|
-| `api.local.dev` | nginx → idp-server | IDP Server API エンドポイント |
-| `mtls.api.local.dev` | nginx → idp-server | mTLSエンドポイント（クライアント証明書検証、sender-constrainedトークン） |
-| `auth.local.dev` | app-view | 認可UI（ログイン画面等） |
-| `sample.local.dev` | sample-web | サンプルRPアプリケーション |
+| `api.local.test` | nginx → idp-server | IDP Server API エンドポイント |
+| `mtls.api.local.test` | nginx → idp-server | mTLSエンドポイント（クライアント証明書検証、sender-constrainedトークン） |
+| `auth.local.test` | app-view | 認可UI（ログイン画面等） |
+| `sample.local.test` | sample-web | サンプルRPアプリケーション |
 
 ### 各コンポーネントの役割
 
 | コンポーネント | 説明 |
 |---------------|------|
-| 🔀 **nginx** | リバースプロキシ。`api.local.dev` / `mtls.api.local.dev` へのリクエストを idp-server クラスタにルーティング。mTLSドメインではクライアント証明書を検証・転送 |
+| 🔀 **nginx** | リバースプロキシ。`api.local.test` / `mtls.api.local.test` へのリクエストを idp-server クラスタにルーティング。mTLSドメインではクライアント証明書を検証・転送 |
 | 🔥 **idp-server-1/2** | idp-server 本体。クラスタ構成でスケーラビリティ・冗長性を確認（ポート 8081/8082） |
 | 🖥️ **app-view** | Next.js製の認可UI。ログイン・同意画面などを提供 |
 | 🌐 **sample-web** | サンプルRPアプリ。OIDC連携のデモ・テスト用 |
@@ -87,7 +87,7 @@ idp2 --> mockoon
 | 🧪 **Mockoon** | 外部サービス連携を模擬するモックサーバー（eKYC/通知サービス等） |
 
 ### 特徴
-- **サブドメイン構成**: 本番環境に近い `*.local.dev` サブドメイン構成
+- **サブドメイン構成**: 本番環境に近い `*.local.test` サブドメイン構成
 - **複数台構成（HAテスト可）**: 2台の idp-server をクラスタで起動し、nginx 経由でルーティング
 - **PostgreSQL Primary/Replica**: ストリーミングレプリケーションによる読み書き分離
 - **Redis セッション/キャッシュ**: 高速なセッション管理とキャッシュ
@@ -107,14 +107,14 @@ cd idp-server
 
 ### 2. サブドメイン設定（初回のみ）
 
-ローカル開発環境で `*.local.dev` サブドメインを使用するため、以下のスクリプトを実行します：
+ローカル開発環境で `*.local.test` サブドメインを使用するため、以下のスクリプトを実行します：
 
 ```shell
 ./scripts/setup-local-subdomain.sh
 ```
 
 このスクリプトは以下を設定します：
-- dnsmasq による `*.local.dev` のローカルDNS解決
+- dnsmasq による `*.local.test` のローカルDNS解決
 - mkcert によるローカルSSL証明書の生成
 
 > **Note**: macOS を前提としています。他のOSでは手動設定が必要です（下記参照）。
@@ -125,11 +125,11 @@ cd idp-server
 
 ```shell
 # DNS解決の確認
-ping -c 1 api.local.dev
-ping -c 1 auth.local.dev
+ping -c 1 api.local.test
+ping -c 1 auth.local.test
 
 # または nslookup で確認
-nslookup api.local.dev
+nslookup api.local.test
 ```
 
 `127.0.0.1` が返されれば正常です。
@@ -140,18 +140,18 @@ dnsmasqを使用できない環境では、`/etc/hosts` に直接追記するこ
 
 ```shell
 # Linux / macOS
-sudo sh -c 'echo "127.0.0.1 api.local.dev mtls.api.local.dev auth.local.dev sample.local.dev" >> /etc/hosts'
+sudo sh -c 'echo "127.0.0.1 api.local.test mtls.api.local.test auth.local.test sample.local.test" >> /etc/hosts'
 
 # Windows (管理者権限のPowerShell)
-Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 api.local.dev mtls.api.local.dev auth.local.dev sample.local.dev"
+Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 api.local.test mtls.api.local.test auth.local.test sample.local.test"
 ```
 
 #### トラブルシューティング
 
 | 問題 | 原因 | 解決策 |
 |------|------|--------|
-| `ping api.local.dev` が失敗 | dnsmasq が動作していない | `brew services restart dnsmasq` を実行、または `/etc/hosts` で手動設定 |
-| DNS解決が `127.0.0.1` 以外を返す | 他のDNSリゾルバが優先されている | `/etc/resolver/local.dev` ファイルが存在するか確認 |
+| `ping api.local.test` が失敗 | dnsmasq が動作していない | `brew services restart dnsmasq` を実行、または `/etc/hosts` で手動設定 |
+| DNS解決が `127.0.0.1` 以外を返す | 他のDNSリゾルバが優先されている | `/etc/resolver/local.test` ファイルが存在するか確認 |
 | SSL証明書エラー | mkcert のルートCAが未インストール | `mkcert -install` を実行 |
 
 ### 3. 環境変数の設定
@@ -204,7 +204,7 @@ docker compose up -d
 サービスの健全性をチェック：
 
 ```shell
-curl -v https://api.local.dev/actuator/health
+curl -v https://api.local.test/actuator/health
 ```
 
 PostgreSQLレプリケーションの確認：

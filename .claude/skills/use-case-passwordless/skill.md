@@ -199,9 +199,9 @@ email認証成功を条件にデバイス登録を許可する。
 | # | 確認観点 | 設定箇所 | よくあるミス |
 |---|---------|---------|------------|
 | 1 | `signin_page` が `/signin/fido2/` | テナント `ui_config` | `/signin/` のままだとFIDO2 UI画面が表示されない |
-| 2 | `base_url` が認証UIのオリジン | テナント `ui_config` | APIサーバーURL（`api.local.dev`）を設定してしまう |
+| 2 | `base_url` が認証UIのオリジン | テナント `ui_config` | APIサーバーURL（`api.local.test`）を設定してしまう |
 | 3 | `cors_config` に `allow_headers`, `allow_methods`, `allow_credentials` | テナント `cors_config` | `allow_origins` だけ設定してクロスオリジンリクエストが失敗 |
-| 4 | `rp_id` が認証UIオリジンの登録可能ドメイン | FIDO2認証設定 | `auth.local.dev` に対して `auth.local.dev` を設定（正しくは `local.dev`） |
+| 4 | `rp_id` が認証UIオリジンの登録可能ドメイン | FIDO2認証設定 | `auth.local.test` に対して `auth.local.test` を設定（正しくは `local.test`） |
 | 5 | `allowed_origins` が `ui_config.base_url` と一致 | FIDO2認証設定 | 不一致で `BadOriginException` が発生 |
 | 6 | email認証設定が存在する | authentication-config | 未作成で `Authentication Configuration Not Found (email)` |
 | 7 | `step_definitions` でemail→fido2の順序定義 | 認証ポリシー | 未設定だとFIDO2ブラウザUIでユーザー識別ができない |
