@@ -6,7 +6,7 @@ info:
   contact:
     name: idp-server OSS
 servers:
-  - url: https://api.local.dev
+  - url: https://api.local.test
     description: IdP Server API エンドポイント(ローカル)
 tags:
   - name: CIBAフロー
