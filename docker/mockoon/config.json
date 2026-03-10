@@ -135,7 +135,7 @@
     {
       "uuid": "a1b2c3d4-5678-90ab-cdef-password-auth",
       "type": "http",
-      "documentation": "External password authentication service for Issue #898",
+      "documentation": "External password authentication service for Issue #898. password=invalid → 401, otherwise → 200",
       "method": "post",
       "endpoint": "auth/password",
       "responses": [
@@ -144,7 +144,7 @@
           "body": "{\n  \"user_id\": \"{{ body 'username' }}\",\n  \"email\": \"{{ body 'username' }}\",\n  \"name\": \"Test User\",\n  \"authenticated\": true\n}",
           "latency": 0,
           "statusCode": 200,
-          "label": "Success",
+          "label": "Success - valid password",
           "headers": [
             {
               "key": "Content-Type",
@@ -160,6 +160,38 @@
           "disableTemplating": false,
           "fallbackTo404": false,
           "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "response-password-auth-failure",
+          "body": "{\n  \"error\": \"invalid_credentials\",\n  \"error_description\": \"Invalid username or password\"\n}",
+          "latency": 0,
+          "statusCode": 401,
+          "label": "Failure - password is 'invalid'",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "",
+              "value": "\"password\"\\s*:\\s*\"invalid\"",
+              "invert": false,
+              "operator": "regex"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
           "crudKey": "id",
           "callbacks": []
         }
