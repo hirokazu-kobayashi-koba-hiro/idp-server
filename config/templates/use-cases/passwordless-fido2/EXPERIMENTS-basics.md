@@ -138,7 +138,7 @@ update_tenant '.identity_policy_config.authentication_device_rule.max_devices = 
   | jq '.result.identity_policy_config.authentication_device_rule // .'
 ```
 
-### 2. 挙動確認（ブラウザ）
+### 2. 1台目のデバイス登録（成功）
 
 1. ブラウザで認可リクエストを開く（`prompt=create` でユーザー登録から）:
 
@@ -146,17 +146,33 @@ update_tenant '.identity_policy_config.authentication_device_rule.max_devices = 
 echo "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email&state=exp-device-limit&prompt=create"
 ```
 
-2. ユーザーを登録し、**1台目の FIDO2 デバイスを登録** → 成功する
-3. 同じユーザーで **2台目の FIDO2 デバイスを登録** しようとする → **拒否される**
+2. ユーザーを登録し、email 認証 → **1台目の FIDO2 デバイスを登録** → **成功する**
+3. **登録したメールアドレスを控えておく**（次のステップで使う）
 
-### 3. 期待結果
+### 3. 2台目のデバイス登録（拒否）
+
+1. 新しいブラウザウィンドウ（またはシークレットウィンドウ）で認可リクエストを開く（`prompt=login` で再認証）:
+
+```bash
+echo "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email&state=exp-device-limit-2&prompt=login"
+```
+
+2. Step 2 で登録したメールアドレスを入力 → email 認証を完了する
+3. email 認証成功により `device_registration_conditions` が満たされ、FIDO2 デバイス登録画面が表示される
+4. **2台目の FIDO2 デバイスを登録** しようとする → **拒否される**（`max_devices = 1` を超過）
+
+> **Note**: `prompt=login` は既存セッションを無視して再認証を強制します。
+> email 認証成功後に `device_registration_conditions` が満たされるため、
+> 認証 UI がデバイス追加登録のオプションを表示します。
+
+### 4. 期待結果
 
 | 操作 | 結果 | 理由 |
 |------|------|------|
 | 1台目のデバイス登録 | 成功 | `max_devices = 1` の上限内 |
 | 2台目のデバイス登録 | 拒否 | `max_devices = 1` を超過 |
 
-### 4. 元に戻す
+### 5. 元に戻す
 
 ```bash
 restore_tenant
