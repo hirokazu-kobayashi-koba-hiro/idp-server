@@ -508,6 +508,8 @@ Status:
 
 Karpenterは、AWSが開発したKubernetesノードの自動プロビジョニングツールです。Pending状態のPodを検知し、最適なEC2インスタンスを直接起動します。
 
+> Karpenter の概念・NodePool設計パターン・KWOK ローカル検証については [Karpenter ノードオートスケーリング](../../13-docker-kubernetes/karpenter-node-scaling.md) も参照。
+
 ### 仕組み
 
 ```

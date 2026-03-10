@@ -441,40 +441,10 @@ spec:
 
 ### Karpenter（AWS推奨）
 
-```yaml
-# Karpenter NodePool
-apiVersion: karpenter.sh/v1beta1
-kind: NodePool
-metadata:
-  name: default
-spec:
-  template:
-    spec:
-      requirements:
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64"]
-        - key: kubernetes.io/os
-          operator: In
-          values: ["linux"]
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot", "on-demand"]
-        - key: node.kubernetes.io/instance-type
-          operator: In
-          values: ["m5.large", "m5.xlarge", "m5.2xlarge"]
+Karpenter は Cluster Autoscaler に代わるノードオートスケーラー。
+ノードグループに依存せず、Pod の要求に応じて最適なインスタンスタイプを直接プロビジョニングする。
 
-      nodeClassRef:
-        name: default
-
-  limits:
-    cpu: 1000
-    memory: 1000Gi
-
-  disruption:
-    consolidationPolicy: WhenUnderutilized
-    consolidateAfter: 30s
-```
+→ 詳細は [Karpenter ノードオートスケーリング](karpenter-node-scaling.md) を参照。
 
 ---
 
