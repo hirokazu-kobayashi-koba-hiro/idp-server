@@ -26,5 +26,6 @@ public interface UserinfoApi {
       TenantIdentifier tenantId,
       String authorizationHeader,
       String clientCert,
+      String dpopProof,
       RequestAttributes requestAttributes);
 }

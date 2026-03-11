@@ -49,7 +49,6 @@ public interface ParameterTransformable extends AuthorizationHeaderHandlerable {
     contents.put("resource", request.getRequestURI());
     contents.put("action", request.getMethod());
     contents.put("request_url", resolveRequestUrl(request));
-    contents.put("dpop", Optional.ofNullable(request.getHeader("DPoP")).orElse(""));
 
     Enumeration<String> headerNames = request.getHeaderNames();
     Map<String, String> headers = new HashMap<>();

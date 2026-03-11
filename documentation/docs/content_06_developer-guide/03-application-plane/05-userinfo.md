@@ -26,20 +26,22 @@
 ### 30秒で理解する全体像
 
 ```
-HTTPリクエスト（Access Token）
+HTTPリクエスト（Access Token + DPoP Proof）
     ↓
 Controller (UserinfoV1Api) - HTTP処理
+    ├─ Authorization, x-ssl-cert, DPoP ヘッダー受け取り
     ↓
 EntryService (UserinfoEntryService) - オーケストレーション
     ├─ Tenant取得
-    ├─ UserinfoRequest作成
+    ├─ UserinfoRequest作成（clientCert, dpopProof, httpMethod, httpUri）
     ├─ UserinfoProtocol.request()（Delegate渡し）
     └─ イベント発行
     ↓
-Core層 (UserinfoProtocol)
+Core層 (UserinfoHandler)
     ├─ Access Token検証（署名・期限・失効チェック）
-    ├─ Subject抽出
+    ├─ Subject存在チェック
     ├─ Delegate.findUser() 呼び出し
+    ├─ Sender-Constrained Token検証（MTLS/DPoP）
     ├─ Scope別Claims抽出
     └─ レスポンス生成
     ↓
@@ -78,8 +80,14 @@ Repository層 (UserQueryRepository)
 ## エンドポイント
 
 ```
+# Bearerトークンの場合
 GET /{tenant-id}/v1/userinfo
 Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# DPoP-boundトークンの場合（RFC 9449）
+GET /{tenant-id}/v1/userinfo
+Authorization: DPoP eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+DPoP: eyJhbGciOiJFUzI1NiIsInR5cCI6ImRwb3Arand0IiwiandrIjp7...
 ```
 
 **実装**:
@@ -134,6 +142,7 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
       TenantIdentifier tenantIdentifier,
       String authorizationHeader,
       String clientCert,
+      String dpopProof,                  // ✅ DPoP対応（RFC 9449）
       RequestAttributes requestAttributes) {
 
     // 1. Tenant取得
@@ -142,6 +151,9 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
     // 2. UserinfoRequest作成
     UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
     userinfoRequest.setClientCert(clientCert);  // MTLS対応
+    userinfoRequest.setDpopProof(dpopProof);    // DPoP対応
+    userinfoRequest.setHttpMethod(requestAttributes.optValueAsString("action", "GET"));
+    userinfoRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
 
     // 3. Core層に委譲
     UserinfoProtocol userinfoProtocol = userinfoProtocols.get(tenant.authorizationProvider());
@@ -171,6 +183,7 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
 **ポイント**:
 - ✅ `@Transaction(readOnly = true)`: 読み取り専用トランザクション
 - ✅ `UserinfoDelegate`実装: Core層へのコールバック提供
+- ✅ DPoP Proof: `@RequestHeader`で明示的に受け取り（Token Endpointと統一）
 - ✅ イベント発行: `userinfo_success`
 
 ---
@@ -222,14 +235,26 @@ public class UserinfoHandler {
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, oAuthToken.requestedClientId());
 
-    // 4. Delegate経由でユーザー取得
+    // 4. Subject存在チェック
+    if (!oAuthToken.hasSubject()) {
+      throw new TokenInvalidException(
+          "token does not have a subject, userinfo endpoint requires a user-bound token");
+    }
+
+    // 5. Delegate経由でユーザー取得
     User user = delegate.findUser(tenant, oAuthToken.subject());
 
-    // 5. Verifier: ビジネスルール検証
-    UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken, request.toClientCert(), user);
+    // 6. Verifier: ビジネスルール検証
+    UserinfoVerifier verifier = new UserinfoVerifier(
+        oAuthToken,
+        request.toClientCert(),
+        request.dpopProof(),      // DPoP対応
+        request.httpMethod(),
+        request.httpUri(),
+        user);
     verifier.verify();
 
-    // 6. Claims抽出（Scope別フィルタリング）
+    // 7. Claims抽出（Scope別フィルタリング）
     UserinfoClaimsCreator claimsCreator =
         new UserinfoClaimsCreator(
             user,
@@ -239,21 +264,22 @@ public class UserinfoHandler {
             userinfoCustomIndividualClaimsCreators);
     Map<String, Object> claims = claimsCreator.createClaims();
 
-    // 7. レスポンス生成
+    // 8. レスポンス生成
     UserinfoResponse userinfoResponse = new UserinfoResponse(user, claims);
     return new UserinfoRequestResponse(UserinfoRequestStatus.OK, oAuthToken, userinfoResponse);
   }
 }
 ```
 
-**処理の7ステップ**:
+**処理の8ステップ**:
 1. Validator: 入力形式チェック
 2. Access Token取得（OAuthTokenQueryRepository）
 3. 設定取得（AuthorizationServerConfiguration/ClientConfiguration）
-4. **Delegate経由でユーザー取得** ← UseCase層への依存注入
-5. Verifier: ビジネスルール検証（トークン有効性・MTLS等）
-6. Claims抽出（UserinfoClaimsCreator）
-7. レスポンス生成
+4. Subject存在チェック（Client Credentialsトークン等を拒否）
+5. **Delegate経由でユーザー取得** ← UseCase層への依存注入
+6. Verifier: ビジネスルール検証（トークン有効性・MTLS・**DPoP**等）
+7. Claims抽出（UserinfoClaimsCreator）
+8. レスポンス生成
 
 **Delegateパターンの理由**: Core層はRepositoryに直接依存せず、UseCase層経由でデータ取得（Hexagonal Architecture原則）
 
@@ -294,8 +320,22 @@ UserInfoエンドポイントでは、以下を検証します：
 2. **有効期限チェック**: `exp`クレームが期限内か
 3. **失効チェック**: トークンが失効（revoke）されていないか
 4. **Audience検証**: トークンの用途が正しいか
-5. **ユーザー存在チェック**: ユーザーが存在するか
-6. **ユーザーステータスチェック**: ユーザーがアクティブな状態か（LOCKED, DISABLED, SUSPENDED, DEACTIVATED, DELETED_PENDING, DELETEDは拒否）
+5. **Subject存在チェック**: トークンにsubjectが含まれるか（Client Credentialsトークン等を拒否）
+6. **Sender-Constrained Token検証**:
+   - **MTLS**: クライアント証明書のThumbprintがAccess Tokenのバインディングと一致するか
+   - **DPoP（RFC 9449）**: DPoP Proofの署名検証、JWK ThumbprintがAccess Tokenのjktと一致するか
+7. **ユーザー存在チェック**: ユーザーが存在するか
+8. **ユーザーステータスチェック**: ユーザーがアクティブな状態か（LOCKED, DISABLED, SUSPENDED, DEACTIVATED, DELETED_PENDING, DELETEDは拒否）
+
+**UserinfoVerifierの検証フロー**:
+```
+UserinfoVerifier.verify()
+    ├─ throwExceptionIfNotFoundToken()     // トークン存在・有効期限
+    ├─ throwExceptionIfUnMatchClientCert() // MTLS Sender-Constrained
+    ├─ throwExceptionIfUnMatchDPoPProof()  // DPoP Sender-Constrained
+    ├─ throwExceptionIfNotFoundUser()      // ユーザー存在
+    └─ throwExceptionIfInactiveUser()      // ユーザーステータス
+```
 
 ### 検証エラー
 
@@ -424,7 +464,38 @@ UserInfoレスポンス:
 scope: 'openid profile email'  // profile, emailスコープ追加
 ```
 
-### エラー3: `invalid_token` - ユーザーがアクティブでない
+### エラー3: `invalid_dpop_proof` - DPoP証明が不正（RFC 9449）
+
+**原因**: DPoPヘッダーが空、またはDPoP-boundトークンに対するDPoP検証が失敗
+
+```bash
+# DPoPヘッダーが空
+GET /{tenant-id}/v1/userinfo
+Authorization: DPoP eyJ...
+DPoP:
+
+→ HTTP 400 Bad Request
+{
+  "error": "invalid_dpop_proof",
+  "error_description": "DPoP header is present but empty"
+}
+```
+
+**注意**: DPoP-boundトークンに対してDPoP Proofが不足・不正な場合は `invalid_token`（401）が返されます。これはAccess Token自体が無効と見なされるためです。
+
+```bash
+# DPoP-boundトークンだがDPoPヘッダーなし
+GET /{tenant-id}/v1/userinfo
+Authorization: DPoP eyJ...
+
+→ HTTP 401 Unauthorized
+{
+  "error": "invalid_token",
+  "error_description": "access token is DPoP-bound, but DPoP proof header is missing"
+}
+```
+
+### エラー4: `invalid_token` - ユーザーがアクティブでない
 
 **原因**: ユーザーのステータスがLOCKED, DISABLED, SUSPENDED, DEACTIVATED, DELETED_PENDING, DELETEDのいずれか
 
@@ -447,4 +518,4 @@ scope: 'openid profile email'  // profile, emailスコープ追加
 ---
 
 **情報源**: [UserinfoEntryService.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/application/enduser/UserinfoEntryService.java)
-**最終更新**: 2025-10-12
+**最終更新**: 2026-03-12

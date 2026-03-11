@@ -27,9 +27,7 @@ import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertifica
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.exception.ConfigurationInvalidException;
-import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
-import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.dpop.JwkThumbprint;
 import org.idp.server.core.openid.oauth.type.extension.CreatedAt;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
@@ -80,9 +78,7 @@ public class AccessTokenCreator {
         authorizationServerConfiguration,
         clientConfiguration,
         clientCredentials,
-        new DPoPProof(),
-        "POST",
-        "");
+        new DPoPProofVerifiedResult());
   }
 
   public AccessToken create(
@@ -90,9 +86,7 @@ public class AccessTokenCreator {
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
       ClientCredentials clientCredentials,
-      DPoPProof dpopProof,
-      String httpMethod,
-      String httpUri) {
+      DPoPProofVerifiedResult dpopResult) {
     try {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
@@ -104,8 +98,6 @@ public class AccessTokenCreator {
 
       ExpiresIn expiresIn = new ExpiresIn(accessTokenDuration);
       ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(accessTokenDuration));
-
-      DPoPProofVerifiedResult dpopResult = verifyDPoPProof(dpopProof, httpMethod, httpUri);
 
       return issueAccessToken(
           authorizationGrant,
@@ -133,9 +125,7 @@ public class AccessTokenCreator {
         authorizationServerConfiguration,
         clientConfiguration,
         clientCredentials,
-        new DPoPProof(),
-        "POST",
-        "");
+        new DPoPProofVerifiedResult());
   }
 
   public AccessToken refresh(
@@ -144,9 +134,7 @@ public class AccessTokenCreator {
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
       ClientCredentials clientCredentials,
-      DPoPProof dpopProof,
-      String httpMethod,
-      String httpUri) {
+      DPoPProofVerifiedResult dpopResult) {
     try {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
@@ -158,8 +146,6 @@ public class AccessTokenCreator {
 
       ExpiresIn expiresIn = new ExpiresIn(accessTokenDuration);
       ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(accessTokenDuration));
-
-      DPoPProofVerifiedResult dpopResult = verifyDPoPProof(dpopProof, httpMethod, httpUri);
 
       return issueAccessToken(
           authorizationGrant,
@@ -173,15 +159,6 @@ public class AccessTokenCreator {
     } catch (JoseInvalidException | JsonWebKeyInvalidException exception) {
       throw new ConfigurationInvalidException(exception);
     }
-  }
-
-  private DPoPProofVerifiedResult verifyDPoPProof(
-      DPoPProof dpopProof, String httpMethod, String httpUri) {
-    if (dpopProof == null || !dpopProof.exists()) {
-      return new DPoPProofVerifiedResult();
-    }
-    DPoPProofVerifier verifier = new DPoPProofVerifier();
-    return verifier.verify(dpopProof, httpMethod, httpUri, null);
   }
 
   private AccessToken issueAccessToken(
