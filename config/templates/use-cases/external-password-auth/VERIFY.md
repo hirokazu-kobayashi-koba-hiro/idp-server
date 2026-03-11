@@ -77,7 +77,7 @@ curl -s -X POST "${EXTERNAL_AUTH_URL_LOCAL}" \
 
 ```bash
 node mock-server.js
-# → Mock auth server running on http://localhost:4000
+# → Mock auth server running on http://localhost:4001
 ```
 
 ---

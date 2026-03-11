@@ -373,10 +373,17 @@ password_login() {
   local username="$1"
   local password="$2"
 
-  curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
+  local response http_code body
+  response=$(curl -s -w "\n%{http_code}" -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
     -X POST "${TENANT_BASE}/v1/authorizations/${AUTHORIZATION_ID}/password-authentication" \
     -H "Content-Type: application/json" \
-    -d "{\"username\": \"${username}\", \"password\": \"${password}\"}"
+    -d "{\"username\": \"${username}\", \"password\": \"${password}\"}")
+
+  http_code=$(echo "${response}" | tail -1)
+  body=$(echo "${response}" | sed '$d')
+
+  echo "← ${http_code} POST /password-authentication" >&2
+  echo "${body}"
 }
 
 # 認可 → コード取得 → トークン交換

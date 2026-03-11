@@ -72,6 +72,7 @@
 - **HTTP API 委譲**: 外部サービスの認証APIにユーザー名/パスワードを転送
 - **レスポンスマッピング**: 外部サービスのレスポンスから idp-server のユーザー属性に自動変換
 - **プロバイダー識別**: 外部サービスごとにプロバイダーIDを付与して識別
+- **複数API チェーン**: 認証API → ユーザー詳細APIなど、複数の外部APIを順番に呼び出し、結果を統合
 
 ### OIDCレイヤーの提供
 
@@ -115,6 +116,7 @@
 **idp-serverでの設定**:
 - 認証メソッド設定（`authentication-configurations`）で `execution.function = "http_request"` を使用
 - `body_mapping_rules` でリクエスト、`user_mapping_rules` でレスポンスをマッピング
+- 複数APIを呼ぶ場合は `execution.function = "http_requests"`（複数形）を使用し、前のレスポンスを次のリクエストで参照可能
 
 **外部APIの契約例**:
 
@@ -180,7 +182,8 @@
 
 ### idp-serverが提供すること
 - OAuth 2.0/OpenID Connect標準準拠のログイン機能
-- 外部認証サービスへのHTTP委譲（`http_request` executor）
+- 外部認証サービスへのHTTP委譲（`http_request`/`http_requests` executor）
+- 複数APIチェーン（認証 → 詳細取得など、前のレスポンスを次に引き渡し）
 - レスポンスマッピングによるユーザー情報の自動変換
 - アカウントロック機能（failure_conditions / lock_conditions）
 - セッション管理（SSO、有効期限、セッション切り替え）

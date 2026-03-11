@@ -37,25 +37,22 @@ bash config/templates/use-cases/external-password-auth/setup.sh --dry-run
 
 ユーザーが具体的にやりたいことを言った場合は、qa.md を参照して該当するQ&Aの設定キー+値を提示すること。
 
-## 設定変更 x 挙動確認
+## 設定変更 x 挙動確認（ハンズオン）
 
-**検証スクリプト**: `config/templates/use-cases/external-password-auth/verify.sh`
+**「設定を変えて → 挙動が変わることを体験する」実験ガイド**:
 
-setup.sh 実行後に `verify.sh` を使って動作確認できる。モックサーバー（`mock-server.js`）を起動してローカルで検証可能。
+- `config/templates/use-cases/external-password-auth/EXPERIMENTS.md` - `http_request`（単数）の基本実験
+- `config/templates/use-cases/external-password-auth/EXPERIMENTS-http-requests.md` - `http_requests`（複数形）の複数API チェーン実験
 
-```bash
-# モックサーバー起動（別ターミナル）
-node config/templates/use-cases/external-password-auth/mock-server.js
+設定の効果を手元で確認したい場合はこれらのガイドを案内すること。
 
-# 検証実行
-bash config/templates/use-cases/external-password-auth/verify.sh
-```
+**自動検証スクリプト**: `config/templates/use-cases/external-password-auth/verify.sh`
 
 ## ヒアリング項目
 
 | # | 決めること | 選択肢 | 影響する設定 |
 |---|-----------|--------|-------------|
-| 1 | 外部認証サービスURL | 実サービスURL / モック（localhost:4000） | 認証メソッド設定 `http_request.url` |
+| 1 | 外部認証サービスURL | 実サービスURL / モック（localhost:4001） | 認証メソッド設定 `http_request.url` |
 | 2 | 外部プロバイダーID | 任意の識別子（例: `ldap-wrapper`, `legacy-auth`） | 認証メソッド設定 `user_mapping_rules[].static_value` |
 | 3 | アカウントロック条件 | 失敗回数（デフォルト: 5回） | 認証ポリシー `failure_conditions` / `lock_conditions` |
 | 4 | セッション有効期限 | 秒数（デフォルト: 86400 = 24時間） | テナント `session_config.timeout_seconds` |
@@ -69,7 +66,7 @@ bash config/templates/use-cases/external-password-auth/verify.sh
 
 | ヒアリング項目 | 環境変数 | デフォルト値 |
 |--------------|---------|-------------|
-| 外部認証サービスURL | `EXTERNAL_AUTH_URL` | `http://host.docker.internal:4000/auth/password` |
+| 外部認証サービスURL | `EXTERNAL_AUTH_URL` | `http://host.docker.internal:4001/auth/password` |
 | 外部プロバイダー識別子 | `EXTERNAL_PROVIDER_ID` | `external-auth` |
 
 ### セッション設定
@@ -171,6 +168,58 @@ bash config/templates/use-cases/external-password-auth/verify.sh
 | `email` | `email` | メールアドレス |
 | `name` | `name` | 表示名 |
 | (static) | `provider_id` | 外部サービス識別子 |
+
+### 1b. 複数API チェーン設定（http_requests）
+
+複数の外部APIを順番に呼び出し、結果を統合するパターン。例: 認証API → ユーザー詳細API。
+
+| | `http_request`（単数） | `http_requests`（複数形） |
+|---|---|---|
+| リクエスト数 | 1つ | 複数（順番に実行） |
+| 設定キー | `execution.http_request` (object) | `execution.http_requests` (array) |
+| 結果パス | `$.execution_http_request.response_body.*` | `$.execution_http_requests[0].response_body.*` |
+| チェーン | 不可 | 前のレスポンスを次のリクエストで使える |
+| エラー時 | 即座に返却 | 失敗した時点で中断、それまでの結果を保持 |
+
+**複数API呼び出し時のエラーハンドリング**:
+
+成功フィールドとエラーフィールドが共存しないよう、`allOf` + `missing` 複合条件を使う:
+
+```json
+{
+  "from": "$.execution_http_requests[0].response_body.user_id",
+  "to": "user_id",
+  "condition": {
+    "operation": "allOf",
+    "value": [
+      { "operation": "exists", "path": "$.execution_http_requests[0].response_body.user_id" },
+      { "operation": "missing", "path": "$.execution_http_requests[1].response_body.error" }
+    ]
+  }
+}
+```
+
+- `exists` のみだと、API 2 が失敗してもAPI 1 の成功フィールドが返ってしまう
+- `allOf` で「自身が存在 AND 後続APIのエラーが missing」を両方満たす場合のみ出力
+
+**functions（ヘッダー動的生成）**:
+
+```json
+"header_mapping_rules": [
+  {
+    "from": "$.unused",
+    "to": "x-request-id",
+    "functions": [
+      { "name": "random_string", "args": { "length": 8 } },
+      { "name": "format", "args": { "template": "trace-{{value}}" } }
+    ]
+  }
+]
+```
+
+使える functions: `format`（テンプレート変換）、`random_string`（ランダム文字列）、`now`（現在時刻）、`exists`（boolean化）。`from: "$.unused"` は入力不要な functions 用の特殊パス。
+
+詳細と実験手順は `EXPERIMENTS-http-requests.md` を参照。
 
 ### 2. 認証ポリシー（パスワードのみ、failure/lock_conditions あり）
 

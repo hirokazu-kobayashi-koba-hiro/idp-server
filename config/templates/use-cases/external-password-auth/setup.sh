@@ -116,7 +116,7 @@ TOKEN_SIGNING_KEY_ID="${TOKEN_SIGNING_KEY_ID:-signing_key_1}"
 ID_TOKEN_SIGNING_KEY_ID="${ID_TOKEN_SIGNING_KEY_ID:-signing_key_1}"
 
 # External authentication service settings
-EXTERNAL_AUTH_URL="${EXTERNAL_AUTH_URL:-http://host.docker.internal:4000/auth/password}"
+EXTERNAL_AUTH_URL="${EXTERNAL_AUTH_URL:-http://host.docker.internal:4001/auth/password}"
 EXTERNAL_PROVIDER_ID="${EXTERNAL_PROVIDER_ID:-external-auth}"
 
 # Customizable policy values (non-string, applied via jq overlay)
