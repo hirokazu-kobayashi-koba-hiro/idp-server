@@ -91,6 +91,9 @@ public class UserinfoVerifier {
 
   void throwExceptionIfUnMatchDPoPProof() {
     AccessToken accessToken = oAuthToken.accessToken();
+    if (dpopProof != null && dpopProof.isPresentButEmpty()) {
+      throw new DPoPProofInvalidException("DPoP header is present but empty");
+    }
     if (!accessToken.hasDPoPBinding()) {
       return;
     }

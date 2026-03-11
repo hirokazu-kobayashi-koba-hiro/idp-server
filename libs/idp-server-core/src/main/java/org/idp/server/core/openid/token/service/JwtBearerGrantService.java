@@ -31,6 +31,8 @@ import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.Cl
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.JwtBearerAssertion;
@@ -134,15 +136,16 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
               .add(user)
               .build();
 
+      DPoPProofVerifiedResult dpopResult =
+          new DPoPProofVerifier()
+              .verifyIfNeeded(context.dpopProof(), context.httpMethod(), context.httpUri());
       AccessToken accessToken =
           accessTokenCreator.create(
               authorizationGrant,
               serverConfiguration,
               clientConfiguration,
               clientCredentials,
-              context.dpopProof(),
-              context.httpMethod(),
-              context.httpUri());
+              dpopResult);
 
       RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
 

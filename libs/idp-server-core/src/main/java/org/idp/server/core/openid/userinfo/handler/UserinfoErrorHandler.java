@@ -20,6 +20,7 @@ import org.idp.server.core.openid.identity.exception.UserNotFoundException;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
 import org.idp.server.core.openid.oauth.type.oauth.Error;
 import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInvalidException;
@@ -71,6 +72,16 @@ public class UserinfoErrorHandler {
           UserinfoRequestStatus.UNAUTHORIZE,
           new UserinfoErrorResponse(
               new Error("invalid_client"), new ErrorDescription(exception.getMessage())));
+    }
+
+    if (exception instanceof DPoPProofInvalidException) {
+      log.warn(
+          "Userinfo request failed: status=bad_request, error=invalid_dpop_proof, description={}",
+          exception.getMessage());
+      return new UserinfoRequestResponse(
+          UserinfoRequestStatus.BAD_REQUEST,
+          new UserinfoErrorResponse(
+              new Error("invalid_dpop_proof"), new ErrorDescription(exception.getMessage())));
     }
 
     if (exception instanceof ServerConfigurationNotFoundException) {

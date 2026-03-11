@@ -10,7 +10,7 @@ import { describe, expect, it, beforeAll } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 
-import { requestToken, getUserinfo } from "../../api/oauthClient";
+import { requestToken, getUserinfo, inspectToken } from "../../api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
 
@@ -855,6 +855,89 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
       console.log(userinfoResponse.status, userinfoResponse.data);
       expect(userinfoResponse.status).toBe(200);
       expect(userinfoResponse.data).toHaveProperty("sub");
+    });
+  });
+
+  /**
+   * RFC 9449 Section 7: Token Introspection with DPoP-bound Tokens
+   *
+   * When a DPoP-bound access token is introspected, the response MUST include:
+   * - "token_type": "DPoP"
+   * - "cnf" claim containing "jkt" (JWK Thumbprint) of the bound public key
+   *
+   * @see https://www.rfc-editor.org/rfc/rfc9449.html#section-7
+   */
+  describe("Section 7: Token Introspection with DPoP-bound Tokens", () => {
+
+    it("MUST return token_type DPoP and cnf.jkt for DPoP-bound token", async () => {
+      // 1. Get a DPoP-bound access token via client_credentials
+      const dpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: dpopProof },
+      });
+
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("DPoP");
+
+      // 2. Introspect the DPoP-bound token
+      const introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      console.log(JSON.stringify(introspectionResponse.data, null, 2));
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(true);
+      expect(introspectionResponse.data.token_type).toBe("DPoP");
+      expect(introspectionResponse.data.cnf).toBeDefined();
+      expect(introspectionResponse.data.cnf.jkt).toBeDefined();
+      expect(typeof introspectionResponse.data.cnf.jkt).toBe("string");
+      expect(introspectionResponse.data.cnf.jkt.length).toBeGreaterThan(0);
+    });
+
+    it("MUST NOT return cnf.jkt for Bearer token (non DPoP-bound)", async () => {
+      // 1. Get a Bearer token (no DPoP)
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("Bearer");
+
+      // 2. Introspect the Bearer token
+      const introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      console.log(JSON.stringify(introspectionResponse.data, null, 2));
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(true);
+      expect(introspectionResponse.data.token_type).not.toBe("DPoP");
+      // cnf should not exist or should not contain jkt
+      if (introspectionResponse.data.cnf) {
+        expect(introspectionResponse.data.cnf.jkt).toBeUndefined();
+      }
     });
   });
 });
