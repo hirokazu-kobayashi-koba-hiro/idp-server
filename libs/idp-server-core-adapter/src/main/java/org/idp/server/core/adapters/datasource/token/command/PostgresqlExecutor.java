@@ -64,6 +64,7 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             refresh_token_expires_at,
                             id_token,
                             client_certification_thumbprint,
+                            jwk_thumbprint,
                             c_nonce,
                             c_nonce_expires_in,
                             expires_at
@@ -91,6 +92,7 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             ?,
                             ?,
                             ?::jsonb,
+                            ?,
                             ?,
                             ?,
                             ?,
@@ -179,6 +181,11 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
       params.add(oAuthToken.accessToken().clientCertificationThumbprint().value());
     } else {
       params.add("");
+    }
+    if (oAuthToken.accessToken().hasDPoPBinding()) {
+      params.add(oAuthToken.accessToken().jwkThumbprint().value());
+    } else {
+      params.add(null);
     }
 
     if (oAuthToken.hasCNonce()) {

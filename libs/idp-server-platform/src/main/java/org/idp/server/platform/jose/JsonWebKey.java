@@ -19,7 +19,9 @@ package org.idp.server.platform.jose;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyType;
+import com.nimbusds.jose.jwk.ThumbprintUtils;
 import com.nimbusds.jose.util.Base64;
+import com.nimbusds.jose.util.Base64URL;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.List;
@@ -118,5 +120,26 @@ public class JsonWebKey {
 
   public int keySize() {
     return value.size();
+  }
+
+  public boolean isPrivate() {
+    return value != null && value.isPrivate();
+  }
+
+  public JsonWebKey toPublicJwk() {
+    if (value == null) {
+      return new JsonWebKey();
+    }
+    return new JsonWebKey(value.toPublicJWK());
+  }
+
+  public String thumbprintSha256() throws JsonWebKeyInvalidException {
+    try {
+      Base64URL thumbprint = ThumbprintUtils.compute("SHA-256", value);
+      return thumbprint.toString();
+    } catch (JOSEException e) {
+      throw new JsonWebKeyInvalidException(
+          "Failed to compute JWK Thumbprint: " + e.getMessage(), e);
+    }
   }
 }

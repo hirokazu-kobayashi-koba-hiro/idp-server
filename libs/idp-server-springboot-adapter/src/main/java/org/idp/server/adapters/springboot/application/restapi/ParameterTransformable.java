@@ -48,6 +48,8 @@ public interface ParameterTransformable extends AuthorizationHeaderHandlerable {
     contents.put("user_agent", userAgent);
     contents.put("resource", request.getRequestURI());
     contents.put("action", request.getMethod());
+    contents.put("request_url", resolveRequestUrl(request));
+    contents.put("dpop", Optional.ofNullable(request.getHeader("DPoP")).orElse(""));
 
     Enumeration<String> headerNames = request.getHeaderNames();
     Map<String, String> headers = new HashMap<>();
@@ -59,5 +61,31 @@ public interface ParameterTransformable extends AuthorizationHeaderHandlerable {
     contents.put("headers", headers);
 
     return new RequestAttributes(contents);
+  }
+
+  /**
+   * Resolves the full request URL, considering reverse proxy headers.
+   *
+   * <p>When the application runs behind a reverse proxy (e.g., nginx), {@code
+   * request.getRequestURL()} returns the internal URL (http://...) instead of the external URL
+   * (https://...). This method uses {@code X-Forwarded-Proto} and {@code X-Forwarded-Host} headers
+   * to reconstruct the original request URL as seen by the client.
+   *
+   * <p>This is critical for DPoP (RFC 9449) htu claim verification, where the server must compare
+   * the htu claim against the actual request URI as perceived by the client.
+   */
+  default String resolveRequestUrl(HttpServletRequest request) {
+    String forwardedProto = request.getHeader("X-Forwarded-Proto");
+    String forwardedHost = request.getHeader("X-Forwarded-Host");
+
+    if (forwardedProto != null && !forwardedProto.isEmpty()) {
+      String host =
+          (forwardedHost != null && !forwardedHost.isEmpty())
+              ? forwardedHost
+              : request.getServerName();
+      return forwardedProto + "://" + host + request.getRequestURI();
+    }
+
+    return request.getRequestURL().toString();
   }
 }

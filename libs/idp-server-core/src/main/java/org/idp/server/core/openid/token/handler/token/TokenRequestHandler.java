@@ -24,6 +24,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
@@ -93,6 +94,7 @@ public class TokenRequestHandler {
 
     ClientSecretBasic clientSecretBasic = tokenRequest.clientSecretBasic();
     ClientCert clientCert = tokenRequest.toClientCert();
+    DPoPProof dpopProof = tokenRequest.toDPoPProof();
     RequestedClientId requestedClientId = tokenRequest.clientId();
     CustomProperties customProperties = tokenRequest.toCustomProperties();
     AuthorizationServerConfiguration authorizationServerConfiguration =
@@ -105,6 +107,9 @@ public class TokenRequestHandler {
             tenant,
             clientSecretBasic,
             clientCert,
+            dpopProof,
+            tokenRequest.httpMethod(),
+            tokenRequest.httpUri(),
             parameters,
             customProperties,
             passwordCredentialsGrantDelegate,
