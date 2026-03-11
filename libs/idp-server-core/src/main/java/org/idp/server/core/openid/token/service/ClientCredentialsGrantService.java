@@ -76,7 +76,10 @@ public class ClientCredentialsGrantService implements OAuthTokenCreationService 
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,
-            clientCredentials);
+            clientCredentials,
+            context.dpopProof(),
+            context.httpMethod(),
+            context.httpUri());
 
     OAuthToken oAuthToken =
         new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))

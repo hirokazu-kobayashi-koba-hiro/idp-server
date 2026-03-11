@@ -21,6 +21,11 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertification;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprintCalculator;
+import org.idp.server.core.openid.oauth.dpop.AccessTokenHashCalculator;
+import org.idp.server.core.openid.oauth.dpop.DPoPProof;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.token.AccessToken;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -32,17 +37,30 @@ public class UserinfoVerifier {
 
   OAuthToken oAuthToken;
   ClientCert clientCert;
+  DPoPProof dpopProof;
+  String httpMethod;
+  String httpUri;
   User user;
 
-  public UserinfoVerifier(OAuthToken oAuthToken, ClientCert clientCert, User user) {
+  public UserinfoVerifier(
+      OAuthToken oAuthToken,
+      ClientCert clientCert,
+      DPoPProof dpopProof,
+      String httpMethod,
+      String httpUri,
+      User user) {
     this.oAuthToken = oAuthToken;
     this.clientCert = clientCert;
+    this.dpopProof = dpopProof;
+    this.httpMethod = httpMethod;
+    this.httpUri = httpUri;
     this.user = user;
   }
 
   public void verify() {
     throwExceptionIfNotFoundToken();
     throwExceptionIfUnMatchClientCert();
+    throwExceptionIfUnMatchDPoPProof();
     throwExceptionIfNotFoundUser();
     throwExceptionIfInactiveUser();
   }
@@ -68,6 +86,29 @@ public class UserinfoVerifier {
     LocalDateTime now = SystemDateTime.now();
     if (oAuthToken.isExpiredAccessToken(now)) {
       throw new TokenInvalidException("token is expired");
+    }
+  }
+
+  void throwExceptionIfUnMatchDPoPProof() {
+    AccessToken accessToken = oAuthToken.accessToken();
+    if (!accessToken.hasDPoPBinding()) {
+      return;
+    }
+    if (dpopProof == null || !dpopProof.exists()) {
+      throw new TokenInvalidException(
+          "access token is DPoP-bound, but DPoP proof header is missing");
+    }
+    try {
+      String accessTokenValue = oAuthToken.accessTokenEntity().value();
+      String ath = new AccessTokenHashCalculator(accessTokenValue).calculate();
+      DPoPProofVerifier verifier = new DPoPProofVerifier();
+      DPoPProofVerifiedResult result = verifier.verify(dpopProof, httpMethod, httpUri, ath);
+      if (!accessToken.matchJwkThumbprint(result.jwkThumbprint())) {
+        throw new TokenInvalidException(
+            "DPoP proof JWK thumbprint does not match the access token binding");
+      }
+    } catch (DPoPProofInvalidException e) {
+      throw new TokenInvalidException("DPoP proof validation failed: " + e.getMessage());
     }
   }
 

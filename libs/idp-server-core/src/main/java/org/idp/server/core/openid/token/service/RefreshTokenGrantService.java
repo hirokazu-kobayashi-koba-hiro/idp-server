@@ -80,7 +80,10 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,
-            clientCredentials);
+            clientCredentials,
+            context.dpopProof(),
+            context.httpMethod(),
+            context.httpUri());
 
     RefreshToken refreshToken =
         refresh(oAuthToken.refreshToken(), authorizationServerConfiguration, clientConfiguration);
