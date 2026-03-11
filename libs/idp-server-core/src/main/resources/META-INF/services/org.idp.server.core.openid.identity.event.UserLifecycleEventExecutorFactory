@@ -1,1 +1,2 @@
 org.idp.server.core.openid.token.event.UserTokenDeletionExecutorFactory
+org.idp.server.core.openid.identity.event.UserStatusLockExecutorFactory

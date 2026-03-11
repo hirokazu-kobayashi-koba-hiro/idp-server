@@ -266,6 +266,14 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
+    eventPublisher.publish(
+        tenant,
+        authorizationRequest,
+        result.user(),
+        result.eventType(),
+        result.response(),
+        requestAttributes);
+
     if (updatedTransaction.isSuccess()) {
       // Get existing session from cookie for session switch policy handling
       OPSession existingSession =
@@ -284,19 +292,22 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
       oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
     }
 
-    if (updatedTransaction.isLocked()) {
+    if (updatedTransaction.isLocked() && result.hasUser()) {
+      log.warn(
+          "Account lock conditions met, publishing LOCK lifecycle event: sub={}, user_name={}",
+          result.user().sub(),
+          result.user().preferredUsername());
       UserLifecycleEvent userLifecycleEvent =
-          new UserLifecycleEvent(tenant, updatedTransaction.user(), UserLifecycleType.LOCK);
+          new UserLifecycleEvent(tenant, result.user(), UserLifecycleType.LOCK);
       userLifecycleEventPublisher.publish(userLifecycleEvent);
-    }
 
-    eventPublisher.publish(
-        tenant,
-        authorizationRequest,
-        result.user(),
-        result.eventType(),
-        result.response(),
-        requestAttributes);
+      eventPublisher.publish(
+          tenant,
+          authorizationRequest,
+          result.user(),
+          DefaultSecurityEventType.user_lock.toEventType(),
+          requestAttributes);
+    }
 
     return result;
   }
