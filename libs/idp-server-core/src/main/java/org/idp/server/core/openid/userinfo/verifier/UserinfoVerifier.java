@@ -21,6 +21,11 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertification;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprintCalculator;
+import org.idp.server.core.openid.oauth.dpop.AccessTokenHashCalculator;
+import org.idp.server.core.openid.oauth.dpop.DPoPProof;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.Subject;
 import org.idp.server.core.openid.token.AccessToken;
@@ -52,17 +57,39 @@ public class UserinfoVerifier {
 
   OAuthToken oAuthToken;
   ClientCert clientCert;
+    DPoPProof dpopProof;
+    String httpMethod;
+    String httpUri;
+    User user;
 
   public UserinfoVerifier(OAuthToken oAuthToken, ClientCert clientCert) {
     this.oAuthToken = oAuthToken;
     this.clientCert = clientCert;
   }
 
+    public UserinfoVerifier(
+            OAuthToken oAuthToken,
+            ClientCert clientCert,
+            DPoPProof dpopProof,
+            String httpMethod,
+            String httpUri,
+            User user) {
+        this.oAuthToken = oAuthToken;
+        this.clientCert = clientCert;
+        this.dpopProof = dpopProof;
+        this.httpMethod = httpMethod;
+        this.httpUri = httpUri;
+        this.user = user;
+    }
+
   /** Verify token validity: existence, expiration, subject presence, and client certificate. */
   public void verifyToken() {
     throwExceptionIfNotFoundToken();
     throwExceptionIfNoSubject();
     throwExceptionIfUnMatchClientCert();
+      throwExceptionIfUnMatchDPoPProof();
+      throwExceptionIfNotFoundUser();
+      throwExceptionIfInactiveUser();
   }
 
   /** Verify user state: existence and active status. */
@@ -89,6 +116,35 @@ public class UserinfoVerifier {
       throw new TokenInvalidException("token is expired");
     }
   }
+
+    void throwExceptionIfNotFoundUser() {
+        if (!user.exists()) {
+            throw new TokenInvalidException("not found user");
+        }
+    }
+
+    void throwExceptionIfUnMatchDPoPProof() {
+        AccessToken accessToken = oAuthToken.accessToken();
+        if (!accessToken.hasDPoPBinding()) {
+            return;
+        }
+        if (dpopProof == null || !dpopProof.exists()) {
+            throw new TokenInvalidException(
+                    "access token is DPoP-bound, but DPoP proof header is missing");
+        }
+        try {
+            String accessTokenValue = oAuthToken.accessTokenEntity().value();
+            String ath = new AccessTokenHashCalculator(accessTokenValue).calculate();
+            DPoPProofVerifier verifier = new DPoPProofVerifier();
+            DPoPProofVerifiedResult result = verifier.verify(dpopProof, httpMethod, httpUri, ath);
+            if (!accessToken.matchJwkThumbprint(result.jwkThumbprint())) {
+                throw new TokenInvalidException(
+                        "DPoP proof JWK thumbprint does not match the access token binding");
+            }
+        } catch (DPoPProofInvalidException e) {
+            throw new TokenInvalidException("DPoP proof validation failed: " + e.getMessage());
+        }
+    }
 
   /**
    * Reject tokens without a subject claim.

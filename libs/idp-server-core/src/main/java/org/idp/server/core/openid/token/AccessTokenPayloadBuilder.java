@@ -17,9 +17,11 @@
 package org.idp.server.core.openid.token;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprint;
+import org.idp.server.core.openid.oauth.dpop.JwkThumbprint;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.extension.CreatedAt;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
@@ -85,9 +87,51 @@ public class AccessTokenPayloadBuilder {
     return this;
   }
 
+  /**
+   * Add sender-constrained token confirmation claims (cnf) to JWT access token.
+   *
+   * <p>Supports both mTLS (RFC 8705, x5t#S256) and DPoP (RFC 9449, jkt) bindings, which can coexist
+   * in a single cnf claim object.
+   *
+   * @param certThumbprint the mTLS certificate thumbprint (RFC 8705)
+   * @param jwkThumbprint the DPoP JWK Thumbprint (RFC 9449)
+   * @return this builder
+   */
+  public AccessTokenPayloadBuilder addConfirmation(
+      ClientCertificationThumbprint certThumbprint, JwkThumbprint jwkThumbprint) {
+    Map<String, Object> cnf = new LinkedHashMap<>();
+    if (jwkThumbprint != null && jwkThumbprint.exists()) {
+      cnf.put("jkt", jwkThumbprint.value());
+    }
+    if (certThumbprint != null && certThumbprint.exists()) {
+      cnf.put("x5t#S256", certThumbprint.value());
+    }
+    if (!cnf.isEmpty()) {
+      values.put("cnf", cnf);
+    }
+    return this;
+  }
+
   public AccessTokenPayloadBuilder add(ClientCertificationThumbprint thumbprint) {
     if (thumbprint.exists()) {
       values.put("cnf", Map.of("x5t#S256", thumbprint.value()));
+    }
+    return this;
+  }
+
+  /**
+   * Add DPoP JWK Thumbprint confirmation claim to JWT access token.
+   *
+   * <p>RFC 9449 Section 6: The confirmation claim "cnf" with "jkt" member is used to bind the
+   * access token to the DPoP public key.
+   *
+   * @param jwkThumbprint the JWK Thumbprint (RFC 7638) of the DPoP public key
+   * @return this builder
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-6">RFC 9449 Section 6</a>
+   */
+  public AccessTokenPayloadBuilder add(JwkThumbprint jwkThumbprint) {
+    if (jwkThumbprint.exists()) {
+      values.put("cnf", Map.of("jkt", jwkThumbprint.value()));
     }
     return this;
   }
