@@ -37,6 +37,8 @@ import org.idp.server.core.openid.identity.id_token.RequestedUserinfoClaims;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.ResponseType;
@@ -137,15 +139,16 @@ public class ResourceOwnerPasswordCredentialsGrantService
             .add(grantUserinfoClaims)
             .build();
 
+    DPoPProofVerifiedResult dpopResult =
+        new DPoPProofVerifier()
+            .verifyIfNeeded(context.dpopProof(), context.httpMethod(), context.httpUri());
     AccessToken accessToken =
         accessTokenCreator.create(
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,
             clientCredentials,
-            context.dpopProof(),
-            context.httpMethod(),
-            context.httpUri());
+            dpopResult);
     RefreshToken refreshToken =
         createRefreshTokenIfGranted(authorizationServerConfiguration, clientConfiguration);
     OAuthTokenBuilder oAuthTokenBuilder =

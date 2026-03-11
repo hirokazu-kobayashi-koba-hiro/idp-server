@@ -58,21 +58,63 @@ public class DPoPProofVerifier {
   static final String DPOP_JWT_TYPE = "dpop+jwt";
 
   /**
+   * Verifies a DPoP proof if present, skipping verification when no proof is provided.
+   *
+   * <p>This method is intended for the token endpoint (RFC 9449 Section 4), where DPoP is optional.
+   * If the client does not send a DPoP header, the server issues a regular Bearer token.
+   *
+   * @param dpopProof the DPoP proof JWT, or null if the DPoP header was absent
+   * @param httpMethod the HTTP method of the current request (e.g., "POST")
+   * @param httpUri the HTTP URI of the current request
+   * @return the verified result, or empty result if no DPoP proof was provided
+   * @throws DPoPProofInvalidException if proof is present but invalid
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4">RFC 9449 Section 4</a>
+   */
+  public DPoPProofVerifiedResult verifyIfNeeded(
+      DPoPProof dpopProof, String httpMethod, String httpUri) {
+    if (dpopProof == null) {
+      return new DPoPProofVerifiedResult();
+    }
+    if (dpopProof.isPresentButEmpty()) {
+      throw new DPoPProofInvalidException("DPoP header is present but empty");
+    }
+    if (!dpopProof.exists()) {
+      return new DPoPProofVerifiedResult();
+    }
+    return verify(dpopProof, httpMethod, httpUri, null);
+  }
+
+  /**
    * Verifies a DPoP proof JWT and returns the verified result containing the public key.
    *
+   * <p>Performs all applicable checks from RFC 9449 Section 4.3. The {@code accessTokenHash}
+   * parameter controls whether the {@code ath} claim is verified:
+   *
+   * <ul>
+   *   <li>Token endpoint: {@code accessTokenHash} is null (ath is not required)
+   *   <li>Resource endpoint (e.g., UserInfo): {@code accessTokenHash} is the base64url-encoded
+   *       SHA-256 hash of the ASCII access token value (RFC 9449 Section 4.2)
+   * </ul>
+   *
    * @param dpopProof the DPoP proof JWT string
-   * @param httpMethod the HTTP method of the current request (e.g., "POST")
-   * @param httpUri the HTTP URI of the current request (e.g., "https://server.example.com/token")
-   * @param accessTokenHash the access token hash (ath claim), null if not required (token endpoint)
-   * @return the verified DPoP proof result
+   * @param httpMethod the HTTP method of the current request (e.g., "POST", "GET")
+   * @param httpUri the HTTP URI of the current request
+   * @param accessTokenHash the access token hash (ath claim), null if not required
+   * @return the verified DPoP proof result containing the public key and JWK thumbprint
    * @throws DPoPProofInvalidException if any validation check fails
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.3">RFC 9449 Section 4.3</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2">RFC 9449 Section 4.2</a>
    */
   public DPoPProofVerifiedResult verify(
       DPoPProof dpopProof, String httpMethod, String httpUri, String accessTokenHash) {
+    if (dpopProof.isPresentButEmpty()) {
+      throw new DPoPProofInvalidException("DPoP header is present but empty");
+    }
     if (!dpopProof.exists()) {
       throw new DPoPProofInvalidException("DPoP proof is required but not provided.");
     }
 
+    // Check 2: The DPoP HTTP request header field value is a single well-formed JWT
     JsonWebSignature jws;
     try {
       jws = JsonWebSignature.parse(dpopProof.value());
@@ -82,32 +124,43 @@ public class DPoPProofVerifier {
 
     JsonWebSignatureHeader header = jws.header();
 
-    // Check 4: typ must be dpop+jwt
+    // Check 4: The typ JOSE Header Parameter has the value dpop+jwt
     verifyType(header);
 
-    // Check 5: alg must be asymmetric
+    // Check 5: The alg JOSE Header Parameter indicates a registered asymmetric digital signature
+    // algorithm
     verifyAlgorithm(jws);
 
-    // Check 7: jwk must not contain a private key
+    // Check 7: The jwk JOSE Header Parameter does not contain a private key
     verifyJwkPresent(header);
     JsonWebKey jwk = header.jwk();
     verifyJwkNoPrivateKey(jwk);
 
-    // Check 6: Signature verification
+    // Check 6: The JWT signature verifies with the public key contained in the jwk JOSE Header
+    // Parameter
     verifySignature(jws, header, jwk);
 
-    // Check 3, 8, 9, 10, 11: Claims validation
     JsonWebTokenClaims claims = jws.claims();
 
+    // Check 3: All required claims (jti, htm, htu, iat) are contained in the JWT
     verifyRequiredClaims(claims);
+
+    // Check 8: The htm claim matches the HTTP method of the current request
     verifyHtm(claims, httpMethod);
+
+    // Check 9: The htu claim matches the HTTP URI of the current request (scheme, authority, path)
     verifyHtu(claims, httpUri);
+
+    // Check 11: The creation time (iat) is within an acceptable window
     verifyIat(claims);
 
+    // RFC 9449 Section 4.2: When the DPoP proof is used in conjunction with an access token,
+    // the ath claim MUST be included and match the hash of the access token
     if (accessTokenHash != null) {
       verifyAth(claims, accessTokenHash);
     }
 
+    // Calculate JWK Thumbprint (RFC 7638) for token binding (RFC 9449 Section 6)
     JsonWebKey publicJwk = jwk.toPublicJwk();
     JwkThumbprint thumbprint = new JwkThumbprintCalculator(publicJwk).calculate();
 
@@ -116,6 +169,11 @@ public class DPoPProofVerifier {
     return new DPoPProofVerifiedResult(publicJwk, thumbprint);
   }
 
+  /**
+   * Check 4: The typ JOSE Header Parameter has the value dpop+jwt.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2">RFC 9449 Section 4.2</a>
+   */
   private void verifyType(JsonWebSignatureHeader header) {
     if (!header.hasType() || !DPOP_JWT_TYPE.equals(header.type())) {
       throw new DPoPProofInvalidException(
@@ -124,6 +182,12 @@ public class DPoPProofVerifier {
     }
   }
 
+  /**
+   * Check 5: The alg JOSE Header Parameter indicates a registered asymmetric digital signature
+   * algorithm, not "none".
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2">RFC 9449 Section 4.2</a>
+   */
   private void verifyAlgorithm(JsonWebSignature jws) {
     if (jws.isSymmetricType()) {
       throw new DPoPProofInvalidException(
@@ -134,12 +198,22 @@ public class DPoPProofVerifier {
     }
   }
 
+  /**
+   * Check 7 (part 1): The jwk JOSE Header Parameter is present.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2">RFC 9449 Section 4.2</a>
+   */
   private void verifyJwkPresent(JsonWebSignatureHeader header) {
     if (!header.hasJwk()) {
       throw new DPoPProofInvalidException("DPoP proof must contain jwk JOSE Header Parameter.");
     }
   }
 
+  /**
+   * Check 7 (part 2): The jwk JOSE Header Parameter does not contain a private key.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.3">RFC 9449 Section 4.3</a>
+   */
   private void verifyJwkNoPrivateKey(JsonWebKey jwk) {
     if (jwk.isPrivate()) {
       throw new DPoPProofInvalidException(
@@ -147,6 +221,12 @@ public class DPoPProofVerifier {
     }
   }
 
+  /**
+   * Check 6: The JWT signature verifies with the public key contained in the jwk JOSE Header
+   * Parameter.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.3">RFC 9449 Section 4.3</a>
+   */
   private void verifySignature(
       JsonWebSignature jws, JsonWebSignatureHeader header, JsonWebKey jwk) {
     try {
@@ -158,6 +238,11 @@ public class DPoPProofVerifier {
     }
   }
 
+  /**
+   * Check 3: All required claims (jti, htm, htu, iat) are contained in the JWT.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2">RFC 9449 Section 4.2</a>
+   */
   private void verifyRequiredClaims(JsonWebTokenClaims claims) {
     if (!claims.hasJti() || claims.getJti().isEmpty()) {
       throw new DPoPProofInvalidException("DPoP proof must contain jti claim.");
@@ -173,6 +258,13 @@ public class DPoPProofVerifier {
     }
   }
 
+  /**
+   * Check 8: The htm claim matches the HTTP method of the current request.
+   *
+   * <p>The value of the htm claim is compared case-insensitively.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.3">RFC 9449 Section 4.3</a>
+   */
   private void verifyHtm(JsonWebTokenClaims claims, String expectedHttpMethod) {
     String htm = claims.getValue("htm");
     if (!expectedHttpMethod.equalsIgnoreCase(htm)) {
@@ -183,6 +275,14 @@ public class DPoPProofVerifier {
     }
   }
 
+  /**
+   * Check 9: The htu claim matches the HTTP URI of the current request.
+   *
+   * <p>Per RFC 9449 Section 4.3, the comparison is performed on scheme, authority, and path only,
+   * ignoring query and fragment components.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.3">RFC 9449 Section 4.3</a>
+   */
   private void verifyHtu(JsonWebTokenClaims claims, String expectedHttpUri) {
     String htu = claims.getValue("htu");
     if (htu == null || htu.isEmpty()) {
@@ -191,7 +291,6 @@ public class DPoPProofVerifier {
     try {
       URI htuUri = URI.create(htu);
       URI expectedUri = URI.create(expectedHttpUri);
-      // RFC 9449 Section 4.3: Compare scheme, authority, and path (ignoring query and fragment)
       String htuNormalized = htuUri.getScheme() + "://" + htuUri.getAuthority() + htuUri.getPath();
       String expectedNormalized =
           expectedUri.getScheme() + "://" + expectedUri.getAuthority() + expectedUri.getPath();
@@ -206,6 +305,15 @@ public class DPoPProofVerifier {
     }
   }
 
+  /**
+   * Check 11: The creation time (iat) is within an acceptable window.
+   *
+   * <p>The acceptable window is {@value #DEFAULT_ACCEPTABLE_TIME_WINDOW} minutes. If the absolute
+   * difference between the current time and iat exceeds this window, the proof is rejected.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-11.1">RFC 9449 Section
+   *     11.1</a>
+   */
   private void verifyIat(JsonWebTokenClaims claims) {
     Date iat = claims.getIat();
     Instant now = Instant.now();
@@ -220,6 +328,15 @@ public class DPoPProofVerifier {
     }
   }
 
+  /**
+   * Verifies the ath (access token hash) claim.
+   *
+   * <p>Per RFC 9449 Section 4.2, when a DPoP proof is used in conjunction with an access token, the
+   * proof MUST include an ath claim whose value is the base64url encoding of the SHA-256 hash of
+   * the ASCII encoding of the associated access token's value.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2">RFC 9449 Section 4.2</a>
+   */
   private void verifyAth(JsonWebTokenClaims claims, String expectedAccessTokenHash) {
     String ath = claims.getValue("ath");
     if (ath == null || ath.isEmpty()) {

@@ -22,6 +22,8 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.openid.token.*;
@@ -74,6 +76,9 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
     userVerifier.verify();
     AuthorizationGrant authorizationGrant = oAuthToken.authorizationGrant();
 
+    DPoPProofVerifiedResult dpopResult =
+        new DPoPProofVerifier()
+            .verifyIfNeeded(context.dpopProof(), context.httpMethod(), context.httpUri());
     AccessToken accessToken =
         accessTokenCreator.refresh(
             oAuthToken.accessToken(),
@@ -81,9 +86,7 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
             authorizationServerConfiguration,
             clientConfiguration,
             clientCredentials,
-            context.dpopProof(),
-            context.httpMethod(),
-            context.httpUri());
+            dpopResult);
 
     RefreshToken refreshToken =
         refresh(oAuthToken.refreshToken(), authorizationServerConfiguration, clientConfiguration);
