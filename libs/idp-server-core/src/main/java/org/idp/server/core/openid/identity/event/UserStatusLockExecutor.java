@@ -44,6 +44,9 @@ public class UserStatusLockExecutor implements UserLifecycleEventExecutor {
 
   @Override
   public boolean shouldExecute(UserLifecycleEvent userLifecycleEvent) {
+    if (userLifecycleEvent.lifecycleType() != UserLifecycleType.LOCK) {
+      return false;
+    }
     User user = userLifecycleEvent.user();
     return user.canTransit(user.status(), UserStatus.LOCKED);
   }
