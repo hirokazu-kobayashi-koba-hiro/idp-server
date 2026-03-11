@@ -49,7 +49,8 @@ const sidebars = {
             "content_02_quickstart/quickstart-05-mfa",
             "content_02_quickstart/quickstart-06-passwordless",
             "content_02_quickstart/quickstart-07-ekyc",
-            "content_02_quickstart/quickstart-08-third-party-integration"
+            "content_02_quickstart/quickstart-08-third-party-integration",
+            "content_02_quickstart/quickstart-10-external-password-auth"
           ]
         }
       ]
