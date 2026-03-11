@@ -30,6 +30,7 @@ public interface TokenApi {
       Map<String, String[]> params,
       String authorizationHeader,
       String clientCert,
+      String dpopProof,
       RequestAttributes requestAttributes);
 
   TokenIntrospectionResponse inspect(

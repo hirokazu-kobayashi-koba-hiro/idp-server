@@ -151,7 +151,10 @@ public class AuthorizationCodeGrantService
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,
-            clientCredentials);
+            clientCredentials,
+            tokenRequestContext.dpopProof(),
+            tokenRequestContext.httpMethod(),
+            tokenRequestContext.httpUri());
     RefreshToken refreshToken =
         createRefreshTokenIfGranted(authorizationServerConfiguration, clientConfiguration);
     OAuthTokenBuilder oAuthTokenBuilder =

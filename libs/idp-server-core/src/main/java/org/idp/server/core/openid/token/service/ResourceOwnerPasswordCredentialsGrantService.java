@@ -142,7 +142,10 @@ public class ResourceOwnerPasswordCredentialsGrantService
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,
-            clientCredentials);
+            clientCredentials,
+            context.dpopProof(),
+            context.httpMethod(),
+            context.httpUri());
     RefreshToken refreshToken =
         createRefreshTokenIfGranted(authorizationServerConfiguration, clientConfiguration);
     OAuthTokenBuilder oAuthTokenBuilder =
