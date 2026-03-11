@@ -203,6 +203,25 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
     syncAuthenticationDevices(tenant, user);
   }
 
+  public void updateStatus(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                     UPDATE idp_user
+                     SET status = ?,
+                     updated_at = now()
+                     WHERE id = ?
+                     AND tenant_id = ?;
+                     """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(user.statusName());
+    params.add(user.sub());
+    params.add(tenant.identifier().value());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
   public void updatePassword(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
