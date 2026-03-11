@@ -63,6 +63,7 @@ TENANT_JSON=$(jq '.tenant' "${CONFIG_DIR}/public-tenant.json")
 AUTH_SERVER_JSON=$(jq '.authorization_server' "${CONFIG_DIR}/public-tenant.json")
 AUTH_POLICY_ID=$(jq -r '.id' "${CONFIG_DIR}/authentication-policy.json")
 AUTH_CONFIG_ID=$(jq -r '.id' "${CONFIG_DIR}/authentication-config-password.json")
+PROVIDER_ID=$(jq -r '.interactions["password-authentication"].user_resolve.user_mapping_rules[] | select(.to == "provider_id") | .static_value' "${CONFIG_DIR}/authentication-config-password.json")
 CLIENT_JSON=$(cat "${CONFIG_DIR}/public-client.json")
 
 echo "=========================================="
@@ -377,7 +378,7 @@ password_login() {
   response=$(curl -s -w "\n%{http_code}" -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
     -X POST "${TENANT_BASE}/v1/authorizations/${AUTHORIZATION_ID}/password-authentication" \
     -H "Content-Type: application/json" \
-    -d "{\"username\": \"${username}\", \"password\": \"${password}\"}")
+    -d "{\"username\": \"${username}\", \"password\": \"${password}\", \"provider_id\": \"${PROVIDER_ID}\"}")
 
   http_code=$(echo "${response}" | tail -1)
   body=$(echo "${response}" | sed '$d')
