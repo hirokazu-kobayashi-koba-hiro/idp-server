@@ -91,7 +91,7 @@ Content-Type: application/json
 
 ```bash
 node mock-server.js
-# → Mock auth server running on http://localhost:4000
+# → Mock auth server running on http://localhost:4001
 ```
 
 `mock-server.js` は Node.js 標準ライブラリのみで動作し、依存パッケージのインストールは不要です。
@@ -138,7 +138,7 @@ REFRESH_TOKEN_DURATION=604800 \
 
 | 環境変数 | デフォルト | 説明 |
 |---------|-----------|------|
-| `EXTERNAL_AUTH_URL` | `http://host.docker.internal:4000/auth/password` | 外部認証サービスのURL |
+| `EXTERNAL_AUTH_URL` | `http://host.docker.internal:4001/auth/password` | 外部認証サービスのURL |
 | `EXTERNAL_PROVIDER_ID` | `external-auth` | 外部プロバイダー識別子 |
 
 #### セッション設定
