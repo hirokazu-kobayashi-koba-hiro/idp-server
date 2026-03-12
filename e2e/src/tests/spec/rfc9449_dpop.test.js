@@ -1229,7 +1229,8 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         },
       });
 
-      // Bearer token without DPoP should pass the filter (not 401)
+      // Bearer token without DPoP should pass the filter (not 401 unauthorized)
+      expect(response.status).toBeLessThan(500);
       expect(response.status).not.toBe(401);
     });
   });

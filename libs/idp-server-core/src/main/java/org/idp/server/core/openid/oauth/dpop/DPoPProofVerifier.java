@@ -16,11 +16,12 @@
 
 package org.idp.server.core.openid.oauth.dpop;
 
-import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import org.idp.server.platform.http.InvalidUriException;
+import org.idp.server.platform.http.UriWrapper;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebKey;
 import org.idp.server.platform.jose.JsonWebKeyInvalidException;
@@ -310,21 +311,32 @@ public class DPoPProofVerifier {
     if (htu == null || htu.isEmpty()) {
       throw new DPoPProofInvalidException("DPoP proof htu claim is required.");
     }
+    UriWrapper htuUri;
     try {
-      URI htuUri = URI.create(htu);
-      URI expectedUri = URI.create(expectedHttpUri);
-      // RFC 3986: scheme and host are case-insensitive, path is case-sensitive
-      boolean schemeMatch = htuUri.getScheme().equalsIgnoreCase(expectedUri.getScheme());
-      boolean authorityMatch = htuUri.getAuthority().equalsIgnoreCase(expectedUri.getAuthority());
-      boolean pathMatch = htuUri.getPath().equals(expectedUri.getPath());
-      if (!schemeMatch || !authorityMatch || !pathMatch) {
-        throw new DPoPProofInvalidException(
-            String.format(
-                "DPoP proof htu claim '%s' does not match the HTTP URI '%s'.",
-                htu, expectedHttpUri));
-      }
-    } catch (IllegalArgumentException e) {
+      htuUri = new UriWrapper(htu);
+    } catch (InvalidUriException e) {
       throw new DPoPProofInvalidException("DPoP proof htu claim is not a valid URI: " + htu);
+    }
+    if (!htuUri.isAbsolute()) {
+      throw new DPoPProofInvalidException("DPoP proof htu must be an absolute URI: " + htu);
+    }
+    UriWrapper expectedUri;
+    try {
+      expectedUri = new UriWrapper(expectedHttpUri);
+    } catch (InvalidUriException e) {
+      log.error("Expected HTTP URI is not a valid URI", e);
+      throw new DPoPProofInvalidException("DPoP proof htu verification failed");
+    }
+    if (!expectedUri.isAbsolute()) {
+      log.error("Expected HTTP URI is not an absolute URI");
+      throw new DPoPProofInvalidException("DPoP proof htu verification failed");
+    }
+    // RFC 3986: scheme and host are case-insensitive, path is case-sensitive
+    if (!htuUri.equalsScheme(expectedUri)
+        || !htuUri.equalsHost(expectedUri)
+        || !htuUri.equalsPath(expectedUri)) {
+      throw new DPoPProofInvalidException(
+          String.format("DPoP proof htu claim '%s' does not match the expected HTTP URI.", htu));
     }
   }
 
