@@ -151,7 +151,7 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
     // 2. UserinfoRequest作成
     UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
     userinfoRequest.setClientCert(clientCert);  // MTLS対応
-    userinfoRequest.setDpopProof(dpopProof);    // DPoP対応
+    userinfoRequest.setDPoPProof(dpopProof);    // DPoP対応
     userinfoRequest.setHttpMethod(requestAttributes.optValueAsString("action", "GET"));
     userinfoRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
 
