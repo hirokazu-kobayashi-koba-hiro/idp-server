@@ -48,7 +48,7 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
     return this;
   }
 
-  public TokenIntrospectionExtensionRequest setDpopProof(String dpopProof) {
+  public TokenIntrospectionExtensionRequest setDPoPProof(String dpopProof) {
     this.dpopProof = dpopProof;
     return this;
   }

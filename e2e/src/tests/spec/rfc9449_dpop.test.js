@@ -1233,4 +1233,166 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
       expect(response.status).not.toBe(401);
     });
   });
+
+  describe("Section 10: Refresh Token DPoP Key Continuity", () => {
+
+    it("MUST accept refresh with same DPoP key that was used for original token", async () => {
+      // 1. Get authorization code
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "dpop-refresh-test",
+        scope: "openid profile email " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authorizationResponse.code).toBeDefined();
+
+      // 2. Exchange code with DPoP proof to get DPoP-bound token + refresh_token
+      const tokenDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: tokenDpopProof },
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("DPoP");
+      expect(tokenResponse.data.refresh_token).toBeDefined();
+
+      // 3. Refresh with same DPoP key
+      const refreshDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const refreshResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        refreshToken: tokenResponse.data.refresh_token,
+        grantType: "refresh_token",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: refreshDpopProof },
+      });
+
+      expect(refreshResponse.status).toBe(200);
+      expect(refreshResponse.data.token_type).toBe("DPoP");
+      expect(refreshResponse.data.access_token).toBeDefined();
+    });
+
+    it("MUST reject refresh with different DPoP key (downgrade attack prevention)", async () => {
+      // 1. Get authorization code
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "dpop-refresh-diff-key",
+        scope: "openid profile email " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authorizationResponse.code).toBeDefined();
+
+      // 2. Exchange code with DPoP proof
+      const tokenDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: tokenDpopProof },
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("DPoP");
+      expect(tokenResponse.data.refresh_token).toBeDefined();
+
+      // 3. Refresh with DIFFERENT DPoP key - must be rejected
+      const attackerKeyPair = await generateDPoPKeyPair();
+      const attackerDpopProof = await createDPoPProof({
+        privateKey: attackerKeyPair.privateKey,
+        publicJwk: attackerKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const refreshResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        refreshToken: tokenResponse.data.refresh_token,
+        grantType: "refresh_token",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: attackerDpopProof },
+      });
+
+      expect(refreshResponse.status).toBe(400);
+      expect(refreshResponse.data.error).toBe("invalid_dpop_proof");
+    });
+
+    it("MUST reject refresh without DPoP proof when original token was DPoP-bound", async () => {
+      // 1. Get authorization code
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "dpop-refresh-no-proof",
+        scope: "openid profile email " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authorizationResponse.code).toBeDefined();
+
+      // 2. Exchange code with DPoP proof
+      const tokenDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: tokenDpopProof },
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("DPoP");
+      expect(tokenResponse.data.refresh_token).toBeDefined();
+
+      // 3. Refresh WITHOUT DPoP proof - must be rejected (downgrade to Bearer)
+      const refreshResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        refreshToken: tokenResponse.data.refresh_token,
+        grantType: "refresh_token",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      expect(refreshResponse.status).toBe(400);
+      expect(refreshResponse.data.error).toBe("invalid_dpop_proof");
+    });
+  });
 });

@@ -64,7 +64,7 @@ public class UserinfoRequest implements AuthorizationHeaderHandlerable {
     return new DPoPProof(dpopProof);
   }
 
-  public UserinfoRequest setDpopProof(String dpopProof) {
+  public UserinfoRequest setDPoPProof(String dpopProof) {
     this.dpopProof = dpopProof;
     return this;
   }
