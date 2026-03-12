@@ -86,6 +86,9 @@ public class TokenIntrospectionExtensionHandler {
     TokenIntrospectionExtensionVerifier verifier =
         new TokenIntrospectionExtensionVerifier(
             request.clientCertForTokenBinding(),
+            request.dpopProof(),
+            request.httpMethod(),
+            request.httpUri(),
             request.scopes(),
             oAuthToken,
             authorizationServerConfiguration,
