@@ -141,7 +141,11 @@ public class ResourceOwnerPasswordCredentialsGrantService
 
     DPoPProofVerifiedResult dpopResult =
         new DPoPProofVerifier()
-            .verifyIfNeeded(context.dpopProof(), context.httpMethod(), context.httpUri());
+            .verifyIfNeeded(
+                context.dpopProof(),
+                context.httpMethod(),
+                context.httpUri(),
+                authorizationServerConfiguration.dpopSigningAlgValuesSupported());
     AccessToken accessToken =
         accessTokenCreator.create(
             authorizationGrant,

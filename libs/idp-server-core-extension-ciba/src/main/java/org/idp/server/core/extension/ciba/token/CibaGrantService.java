@@ -102,7 +102,8 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
             .verifyIfNeeded(
                 tokenRequestContext.dpopProof(),
                 tokenRequestContext.httpMethod(),
-                tokenRequestContext.httpUri());
+                tokenRequestContext.httpUri(),
+                authorizationServerConfiguration.dpopSigningAlgValuesSupported());
     AccessToken accessToken =
         accessTokenCreator.create(
             authorizationGrant,
