@@ -23,5 +23,10 @@ import org.idp.server.platform.type.Pairs;
 public interface UserAuthenticationApi {
 
   Pairs<User, OAuthToken> authenticate(
-      TenantIdentifier adminTenantIdentifier, String authorizationHeader, String clientCert);
+      TenantIdentifier adminTenantIdentifier,
+      String authorizationHeader,
+      String clientCert,
+      String dpopProof,
+      String httpMethod,
+      String httpUri);
 }
