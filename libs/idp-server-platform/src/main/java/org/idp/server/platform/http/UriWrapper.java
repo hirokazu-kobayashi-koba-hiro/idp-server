@@ -76,7 +76,17 @@ public class UriWrapper {
   }
 
   public boolean equalsHost(UriWrapper other) {
+    if (!hasHost() && !other.hasHost()) {
+      return true;
+    }
+    if (!hasHost() || !other.hasHost()) {
+      return false;
+    }
     return getHost().equalsIgnoreCase(other.getHost());
+  }
+
+  public boolean hasHost() {
+    return Objects.nonNull(value.getHost());
   }
 
   public boolean equalsPort(UriWrapper other) {
