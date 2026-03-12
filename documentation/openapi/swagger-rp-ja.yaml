@@ -59,6 +59,7 @@ tags:
       - [RFC 6749 - The OAuth 2.0 Authorization Framework](https://openid-foundation-japan.github.io/rfc6749.ja.html)
       - [RFC 7009 - Token Revocation](https://datatracker.ietf.org/doc/html/rfc7009)
       - [RFC 7662 - Token Introspection](https://datatracker.ietf.org/doc/html/rfc7662)
+      - [RFC 9449 - OAuth 2.0 Demonstrating Proof of Possession (DPoP)](https://www.rfc-editor.org/rfc/rfc9449.html)
       - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
 
   - name: OIDC
@@ -498,9 +499,21 @@ paths:
 
           - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
           - `client_assertion`: 署名済みJWT
+
+        ## DPoP（Demonstrating Proof of Possession）
+
+        RFC 9449 に基づく送信者制約トークンをサポートしています。
+        `DPoP` ヘッダーに DPoP プルーフ JWT を含めてリクエストすると、
+        発行されるアクセストークンはプルーフの公開鍵にバインドされます。
+
+        DPoP を使用した場合：
+        - レスポンスの `token_type` は `"DPoP"` になります
+        - アクセストークンには `cnf.jkt`（JWK Thumbprint）が含まれます
+        - リソースサーバーへのアクセス時にも DPoP プルーフの提示が必要です
       parameters:
         - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/DPoP'
       requestBody:
         required: true
         content:
@@ -549,10 +562,15 @@ paths:
               サーバーがサポートしていない `grant_type` を指定した場合。  
               例：typo や未対応の独自拡張。
 
-            - **invalid_scope**  
-              リクエストされた scope が不正または許可されていない場合。  
+            - **invalid_scope**
+              リクエストされた scope が不正または許可されていない場合。
               例：`offline_access` の要求が許可されていない。
-            
+
+            - **invalid_dpop_proof**
+              DPoP プルーフ JWT が不正な場合に返される（RFC 9449 Section 5）。
+              例：DPoP ヘッダーが空、署名検証失敗、必須クレーム（`jti`, `htm`, `htu`, `iat`）の欠落、
+              `htm`/`htu` がリクエストと不一致。
+
             CIBAフローでは、通常のOAuth 2.0のエラーに加えて、以下の固有のエラー値も含まれます：
             
             - `authorization_pending`: ユーザーの認証がまだ完了していない
@@ -644,17 +662,26 @@ paths:
       summary: トークン検証（拡張）
       description: |
         アクセストークンやリフレッシュトークンの状態を確認するための標準仕様を拡張したエンドポイントです。
-        リソースサーバー側で実施している許可している
-         - スコープを含んでいるか
-         - クライアント証明書がバインディングされているか
+        リソースサーバー側で実施する以下の検証をまとめて実行できます：
 
-        の検証も実施してトークンの有効性を確認することができます。
+         - スコープを含んでいるか
+         - クライアント証明書がバインディングされているか（RFC 8705 mTLS）
+         - DPoP プルーフが正しくバインディングされているか（RFC 9449 DPoP）
 
         トークンが有効な場合は、標準仕様に沿ったレスポンスを返却します。
 
         トークンが無効な場合は、エラーの原因を含めてレスポンスを返却します。
 
         📘 **RFC 7662 拡張**: OAuth 2.0 Token Introspection の拡張実装
+
+        ## DPoP バインディング検証
+
+        DPoP-bound トークンを検証する場合、`DPoP` ヘッダーに DPoP プルーフ JWT を含めてください。
+        プルーフの `ath`（Access Token Hash）クレームには、検証対象トークンの SHA-256 ハッシュを
+        Base64URL エンコードした値を設定します。
+
+        DPoP-bound トークンに対して DPoP プルーフが未提示、またはプルーフの公開鍵が
+        トークンにバインドされた鍵と一致しない場合、`active: false` のレスポンスが返されます。
 
         ## クライアント認証
 
@@ -676,6 +703,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/DPoP'
       requestBody:
         required: true
         content:
@@ -762,6 +790,12 @@ paths:
         - OpenID Connect Discovery（`/.well-known/openid-configuration`）の `claims_supported` で確認できます
         - 標準クレーム例: `sub`, `name`, `email`, `email_verified`, `preferred_username`, `phone_number` など
         - 実際に返却されるクレームは、`scope` パラメータまたは `claims` パラメータでの要求内容に依存します
+
+        **DPoP-bound トークンでのアクセス**:
+        DPoP-bound アクセストークンを使用する場合、`DPoP` ヘッダーに DPoP プルーフ JWT を含めてください。
+        プルーフの `ath` クレームにはアクセストークンの SHA-256 ハッシュを設定する必要があります。
+      parameters:
+        - $ref: '#/components/parameters/DPoP'
       security:
         - bearerAuth: [ ]
       responses:
@@ -800,6 +834,12 @@ paths:
         - OpenID Connect Discovery（`/.well-known/openid-configuration`）の `claims_supported` で確認できます
         - 標準クレーム例: `sub`, `name`, `email`, `email_verified`, `preferred_username`, `phone_number` など
         - 実際に返却されるクレームは、`scope` パラメータまたは `claims` パラメータでの要求内容に依存します
+
+        **DPoP-bound トークンでのアクセス**:
+        DPoP-bound アクセストークンを使用する場合、`DPoP` ヘッダーに DPoP プルーフ JWT を含めてください。
+        プルーフの `ath` クレームにはアクセストークンの SHA-256 ハッシュを設定する必要があります。
+      parameters:
+        - $ref: '#/components/parameters/DPoP'
       security:
         - bearerAuth: [ ]
       responses:
@@ -1254,6 +1294,27 @@ components:
       description: |
         Basic認証ヘッダー（client_secret_basic認証方式用）。
         `Basic base64(client_id:client_secret)` 形式で送信します。
+      schema:
+        type: string
+
+    DPoP:
+      name: DPoP
+      in: header
+      required: false
+      description: |
+        RFC 9449 に基づく DPoP（Demonstrating Proof of Possession）プルーフ JWT。
+
+        DPoP を使用すると、アクセストークンを特定のクライアント鍵ペアにバインドし、
+        送信者制約（Sender-Constrained）トークンを実現できます。
+
+        **DPoP プルーフ JWT の構造**:
+        - ヘッダー: `typ: "dpop+jwt"`, `alg`, `jwk`（公開鍵）
+        - ペイロード: `jti`（一意識別子）, `htm`（HTTPメソッド）, `htu`（リクエストURI）, `iat`（発行時刻）
+
+        トークンリクエスト時にこのヘッダーを含めると、発行されるアクセストークンは
+        DPoP プルーフの公開鍵にバインドされます（`token_type: "DPoP"`）。
+
+        📘 関連仕様: [RFC 9449 - OAuth 2.0 DPoP](https://www.rfc-editor.org/rfc/rfc9449.html)
       schema:
         type: string
 
@@ -1808,7 +1869,10 @@ components:
         token_type:
           type: string
           description: |
-            トークンタイプ。通常は "Bearer"。
+            トークンタイプ。
+            - `"Bearer"`: 通常のアクセストークン（RFC 6750）
+            - `"DPoP"`: DPoP-bound アクセストークン（RFC 9449）。リクエスト時に `DPoP` ヘッダーを含めた場合に返される。
+          enum: [Bearer, DPoP]
           example: Bearer
         expires_in:
           type: integer
@@ -1886,7 +1950,10 @@ components:
         token_type:
           type: string
           description: |
-            トークンタイプ。通常は "Bearer"。
+            トークンタイプ。
+            - `"Bearer"`: 通常のアクセストークン
+            - `"DPoP"`: DPoP-bound アクセストークン（RFC 9449）
+          enum: [Bearer, DPoP]
           example: Bearer
         expires_in:
           type: integer
@@ -1953,9 +2020,10 @@ components:
       properties:
         error:
           type: string
-          enum: [invalid_request, invalid_client, invalid_grant, unauthorized_client, unsupported_grant_type, invalid_scope]
+          enum: [invalid_request, invalid_client, invalid_grant, unauthorized_client, unsupported_grant_type, invalid_scope, invalid_dpop_proof]
           description: |
             エラーの種類。
+            `invalid_dpop_proof` は RFC 9449 で定義された DPoP プルーフ不正時のエラーコード。
         error_description:
           type: string
           description: エラーの詳細な説明（ユーザー向けではない）
@@ -2108,7 +2176,28 @@ components:
             トークンに関連づけられたユーザー識別子（preferred_username）。
         token_type:
           type: string
-          description: トークンの種別（例：Bearer）。
+          description: |
+            トークンの種別。
+            - `"Bearer"`: 通常のアクセストークン
+            - `"DPoP"`: DPoP-bound アクセストークン（RFC 9449）
+          enum: [Bearer, DPoP]
+        cnf:
+          type: object
+          description: |
+            Confirmation Method（RFC 7800）。送信者制約トークンのバインディング情報。
+            DPoP-bound トークンの場合は `jkt`（JWK Thumbprint）が含まれます。
+            mTLS-bound トークンの場合は `x5t#S256`（証明書サムプリント）が含まれます。
+          properties:
+            jkt:
+              type: string
+              description: |
+                DPoP プルーフの公開鍵の JWK Thumbprint（RFC 7638）。
+                DPoP-bound トークンの場合に含まれます。
+            x5t#S256:
+              type: string
+              description: |
+                クライアント証明書の SHA-256 サムプリント。
+                mTLS-bound トークンの場合に含まれます。
         exp:
           type: integer
           description: 有効期限（UNIXタイムスタンプ）。
@@ -2153,16 +2242,31 @@ components:
       type: object
       description: |
         RFC 7662 - Token Introspectionをベースとした拡張APIのエラーレスポンス。
+        エラー時は HTTP 200 で返却され、レスポンスボディにエラー詳細が含まれます。
       properties:
         active:
           type: boolean
-          description: エラーのため、false固定。
+          description: エラーのため、`false` 固定。
+          example: false
         error:
           type: string
-          description: aa
+          description: |
+            エラーコード。
+            - `invalid_token`: トークンが無効、期限切れ、DPoP バインディング不一致、証明書バインディング不一致
+            - `insufficient_scope`: トークンに必要なスコープが含まれていない
+            - `invalid_request`: リクエスト形式が不正
+          enum: [invalid_token, insufficient_scope, invalid_request]
         error_description:
           type: string
-          description: aaa
+          description: エラーの詳細な説明。
+        status_code:
+          type: integer
+          description: |
+            推奨 HTTP ステータスコード。リソースサーバーがクライアントに返すべきステータスコードを示します。
+            - `401`: トークン無効（invalid_token）
+            - `403`: スコープ不足（insufficient_scope）
+            - `400`: リクエスト不正（invalid_request）
+          enum: [400, 401, 403]
 
 
     TokenRevocationRequest:

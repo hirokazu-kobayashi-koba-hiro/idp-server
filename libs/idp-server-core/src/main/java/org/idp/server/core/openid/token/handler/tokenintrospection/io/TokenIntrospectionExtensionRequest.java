@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.token.handler.tokenintrospection.io;
 
 import java.util.Map;
+import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -31,6 +32,9 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
   String authorizationHeaders;
   Map<String, String[]> params;
   String clientCert;
+  String dpopProof;
+  String httpMethod;
+  String httpUri;
 
   public TokenIntrospectionExtensionRequest(
       Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
@@ -41,6 +45,21 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
 
   public TokenIntrospectionExtensionRequest setClientCert(String clientCert) {
     this.clientCert = clientCert;
+    return this;
+  }
+
+  public TokenIntrospectionExtensionRequest setDpopProof(String dpopProof) {
+    this.dpopProof = dpopProof;
+    return this;
+  }
+
+  public TokenIntrospectionExtensionRequest setHttpMethod(String httpMethod) {
+    this.httpMethod = httpMethod;
+    return this;
+  }
+
+  public TokenIntrospectionExtensionRequest setHttpUri(String httpUri) {
+    this.httpUri = httpUri;
     return this;
   }
 
@@ -127,5 +146,17 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
 
   public ClientCert clientCertFormMtls() {
     return new ClientCert(clientCert);
+  }
+
+  public DPoPProof dpopProof() {
+    return new DPoPProof(dpopProof);
+  }
+
+  public String httpMethod() {
+    return httpMethod;
+  }
+
+  public String httpUri() {
+    return httpUri;
   }
 }

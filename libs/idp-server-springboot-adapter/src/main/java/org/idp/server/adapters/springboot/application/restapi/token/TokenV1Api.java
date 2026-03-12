@@ -99,6 +99,7 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
+      @RequestHeader(required = false, value = "DPoP") String dpopProof,
       @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
 
@@ -107,7 +108,12 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
 
     TokenIntrospectionResponse response =
         tokenApi.inspectWithVerification(
-            tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
+            tenantIdentifier,
+            request,
+            authorizationHeader,
+            clientCert,
+            dpopProof,
+            requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setAll(response.responseHeaders());
