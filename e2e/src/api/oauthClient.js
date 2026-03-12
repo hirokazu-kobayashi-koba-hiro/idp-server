@@ -352,7 +352,8 @@ export const inspectTokenWithVerification = async ({
  clientAssertionType,
  basicAuth,
  clientCert,
- clientCertFile
+ clientCertFile,
+ additionalHeaders
 }) => {
   let params = new URLSearchParams();
   if (params) {
@@ -393,6 +394,12 @@ export const inspectTokenWithVerification = async ({
     headers = {
       ...headers,
       "x-ssl-cert": encoded
+    };
+  }
+  if (additionalHeaders) {
+    headers = {
+      ...headers,
+      ...additionalHeaders
     };
   }
 

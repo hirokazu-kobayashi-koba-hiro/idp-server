@@ -10,7 +10,7 @@ import { describe, expect, it, beforeAll } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 
-import { requestToken, getUserinfo, inspectToken } from "../../api/oauthClient";
+import { requestToken, getUserinfo, inspectToken, inspectTokenWithVerification } from "../../api/oauthClient";
 import { clientSecretPostClient, serverConfig } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
 
@@ -938,6 +938,174 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
       if (introspectionResponse.data.cnf) {
         expect(introspectionResponse.data.cnf.jkt).toBeUndefined();
       }
+    });
+  });
+
+  /**
+   * RFC 9449 Section 7: Token Introspection Extensions with DPoP Binding Verification
+   *
+   * The introspection-extensions endpoint verifies sender-constrained tokens.
+   * For DPoP-bound tokens, the resource server sends a DPoP proof and the
+   * authorization server verifies the JWK Thumbprint matches the token binding.
+   *
+   * @see https://www.rfc-editor.org/rfc/rfc9449.html#section-7
+   */
+  describe("Section 7: Token Introspection Extensions - DPoP Binding Verification", () => {
+
+    it("MUST return active when valid DPoP proof matches token binding", async () => {
+      // 1. Get a DPoP-bound access token
+      const tokenDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: tokenDpopProof },
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("DPoP");
+
+      // 2. Introspect with DPoP proof (ath required for resource endpoint)
+      const ath = computeAth(tokenResponse.data.access_token);
+      const introspectionDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenIntrospectionExtensionsEndpoint,
+        overrides: { ath },
+      });
+
+      const introspectionResponse = await inspectTokenWithVerification({
+        endpoint: serverConfig.tokenIntrospectionExtensionsEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: introspectionDpopProof },
+      });
+
+      console.log(JSON.stringify(introspectionResponse.data, null, 2));
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(true);
+      expect(introspectionResponse.data.token_type).toBe("DPoP");
+      expect(introspectionResponse.data.cnf).toBeDefined();
+      expect(introspectionResponse.data.cnf.jkt).toBeDefined();
+    });
+
+    it("MUST reject when DPoP proof is signed with different key than token binding", async () => {
+      // 1. Get a DPoP-bound access token with original key
+      const tokenDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: tokenDpopProof },
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("DPoP");
+
+      // 2. Introspect with DPoP proof signed by DIFFERENT key
+      const otherKeyPair = await generateDPoPKeyPair();
+      const ath = computeAth(tokenResponse.data.access_token);
+      const introspectionDpopProof = await createDPoPProof({
+        privateKey: otherKeyPair.privateKey,
+        publicJwk: otherKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenIntrospectionExtensionsEndpoint,
+        overrides: { ath },
+      });
+
+      const introspectionResponse = await inspectTokenWithVerification({
+        endpoint: serverConfig.tokenIntrospectionExtensionsEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: introspectionDpopProof },
+      });
+
+      console.log(introspectionResponse.status, introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(false);
+      expect(introspectionResponse.data.status_code).toBe(401);
+      expect(introspectionResponse.data.error).toBe("invalid_token");
+    });
+
+    it("MUST reject DPoP-bound token without DPoP proof at extensions endpoint", async () => {
+      // 1. Get a DPoP-bound access token
+      const tokenDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: tokenDpopProof },
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("DPoP");
+
+      // 2. Introspect WITHOUT DPoP proof
+      const introspectionResponse = await inspectTokenWithVerification({
+        endpoint: serverConfig.tokenIntrospectionExtensionsEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      console.log(introspectionResponse.status, introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(false);
+      expect(introspectionResponse.data.status_code).toBe(401);
+      expect(introspectionResponse.data.error).toBe("invalid_token");
+    });
+
+    it("MUST accept Bearer token without DPoP proof at extensions endpoint", async () => {
+      // 1. Get a Bearer token (no DPoP)
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("Bearer");
+
+      // 2. Introspect without DPoP proof (should succeed for Bearer token)
+      const introspectionResponse = await inspectTokenWithVerification({
+        endpoint: serverConfig.tokenIntrospectionExtensionsEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      console.log(JSON.stringify(introspectionResponse.data, null, 2));
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(true);
     });
   });
 });
