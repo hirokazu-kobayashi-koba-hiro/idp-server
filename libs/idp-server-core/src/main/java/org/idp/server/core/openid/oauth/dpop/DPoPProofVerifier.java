@@ -20,6 +20,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebKey;
 import org.idp.server.platform.jose.JsonWebKeyInvalidException;
@@ -66,12 +67,13 @@ public class DPoPProofVerifier {
    * @param dpopProof the DPoP proof JWT, or null if the DPoP header was absent
    * @param httpMethod the HTTP method of the current request (e.g., "POST")
    * @param httpUri the HTTP URI of the current request
+   * @param supportedAlgorithms the server's dpop_signing_alg_values_supported; empty list to skip
    * @return the verified result, or empty result if no DPoP proof was provided
    * @throws DPoPProofInvalidException if proof is present but invalid
    * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4">RFC 9449 Section 4</a>
    */
   public DPoPProofVerifiedResult verifyIfNeeded(
-      DPoPProof dpopProof, String httpMethod, String httpUri) {
+      DPoPProof dpopProof, String httpMethod, String httpUri, List<String> supportedAlgorithms) {
     if (dpopProof == null) {
       return new DPoPProofVerifiedResult();
     }
@@ -81,7 +83,7 @@ public class DPoPProofVerifier {
     if (!dpopProof.exists()) {
       return new DPoPProofVerifiedResult();
     }
-    return verify(dpopProof, httpMethod, httpUri, null);
+    return verify(dpopProof, httpMethod, httpUri, null, supportedAlgorithms);
   }
 
   /**
@@ -107,6 +109,15 @@ public class DPoPProofVerifier {
    */
   public DPoPProofVerifiedResult verify(
       DPoPProof dpopProof, String httpMethod, String httpUri, String accessTokenHash) {
+    return verify(dpopProof, httpMethod, httpUri, accessTokenHash, List.of());
+  }
+
+  DPoPProofVerifiedResult verify(
+      DPoPProof dpopProof,
+      String httpMethod,
+      String httpUri,
+      String accessTokenHash,
+      List<String> supportedAlgorithms) {
     if (dpopProof.isPresentButEmpty()) {
       throw new DPoPProofInvalidException("DPoP header is present but empty");
     }
@@ -128,8 +139,8 @@ public class DPoPProofVerifier {
     verifyType(header);
 
     // Check 5: The alg JOSE Header Parameter indicates a registered asymmetric digital signature
-    // algorithm
-    verifyAlgorithm(jws);
+    // algorithm, and is in the server's dpop_signing_alg_values_supported (if configured)
+    verifyAlgorithm(jws, supportedAlgorithms);
 
     // Check 7: The jwk JOSE Header Parameter does not contain a private key
     verifyJwkPresent(header);
@@ -193,13 +204,19 @@ public class DPoPProofVerifier {
    *
    * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-4.2">RFC 9449 Section 4.2</a>
    */
-  private void verifyAlgorithm(JsonWebSignature jws) {
+  private void verifyAlgorithm(JsonWebSignature jws, List<String> supportedAlgorithms) {
     if (jws.isSymmetricType()) {
       throw new DPoPProofInvalidException(
           "DPoP proof alg must not be a symmetric algorithm, but was: " + jws.algorithm());
     }
     if ("none".equals(jws.algorithm())) {
       throw new DPoPProofInvalidException("DPoP proof alg must not be 'none'.");
+    }
+    if (!supportedAlgorithms.isEmpty() && !supportedAlgorithms.contains(jws.algorithm())) {
+      throw new DPoPProofInvalidException(
+          String.format(
+              "DPoP proof alg '%s' is not in the supported algorithms: %s.",
+              jws.algorithm(), supportedAlgorithms));
     }
   }
 
@@ -296,10 +313,11 @@ public class DPoPProofVerifier {
     try {
       URI htuUri = URI.create(htu);
       URI expectedUri = URI.create(expectedHttpUri);
-      String htuNormalized = htuUri.getScheme() + "://" + htuUri.getAuthority() + htuUri.getPath();
-      String expectedNormalized =
-          expectedUri.getScheme() + "://" + expectedUri.getAuthority() + expectedUri.getPath();
-      if (!htuNormalized.equalsIgnoreCase(expectedNormalized)) {
+      // RFC 3986: scheme and host are case-insensitive, path is case-sensitive
+      boolean schemeMatch = htuUri.getScheme().equalsIgnoreCase(expectedUri.getScheme());
+      boolean authorityMatch = htuUri.getAuthority().equalsIgnoreCase(expectedUri.getAuthority());
+      boolean pathMatch = htuUri.getPath().equals(expectedUri.getPath());
+      if (!schemeMatch || !authorityMatch || !pathMatch) {
         throw new DPoPProofInvalidException(
             String.format(
                 "DPoP proof htu claim '%s' does not match the HTTP URI '%s'.",

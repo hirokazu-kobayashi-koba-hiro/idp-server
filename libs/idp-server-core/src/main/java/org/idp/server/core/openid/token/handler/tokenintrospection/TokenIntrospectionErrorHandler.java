@@ -23,6 +23,7 @@ import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.openid.token.tokenintrospection.exception.TokenCertificationBindingInvalidException;
 import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInsufficientScopeException;
@@ -82,6 +83,18 @@ public class TokenIntrospectionErrorHandler {
       contents.put("status_code", 401);
 
       return new TokenIntrospectionResponse(INVALID_CLIENT_CERT, contents);
+    }
+
+    if (exception instanceof DPoPProofInvalidException dpopInvalidException) {
+      logTokenIntrospectionError("invalid_dpop_binding", "invalid_token", exception.getMessage());
+
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("active", false);
+      contents.put("error", "invalid_token");
+      contents.put("error_description", dpopInvalidException.getMessage());
+      contents.put("status_code", 401);
+
+      return new TokenIntrospectionResponse(INVALID_DPOP_PROOF, contents);
     }
 
     if (exception instanceof TokenInsufficientScopeException insufficientScopeException) {

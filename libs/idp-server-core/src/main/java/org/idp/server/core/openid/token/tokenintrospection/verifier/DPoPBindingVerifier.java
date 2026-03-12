@@ -23,7 +23,6 @@ import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.token.AccessToken;
 import org.idp.server.core.openid.token.OAuthToken;
-import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.platform.log.LoggerWrapper;
 
 /**
@@ -56,8 +55,7 @@ public class DPoPBindingVerifier {
    * @param httpMethod the HTTP method of the introspection request
    * @param httpUri the HTTP URI of the introspection request
    * @param oAuthToken the OAuth token to verify
-   * @throws TokenInvalidException if DPoP binding validation fails
-   * @throws DPoPProofInvalidException if DPoP proof is present but empty
+   * @throws DPoPProofInvalidException if DPoP binding validation fails
    */
   public void verify(
       DPoPProof dpopProof, String httpMethod, String httpUri, OAuthToken oAuthToken) {
@@ -75,34 +73,29 @@ public class DPoPBindingVerifier {
         throw new DPoPProofInvalidException("DPoP header is present but empty");
       }
       log.warn("DPoP-bound token presented without DPoP proof");
-      throw new TokenInvalidException(
+      throw new DPoPProofInvalidException(
           "Sender-constrained access token requires DPoP proof, but none was provided.");
     }
 
-    try {
-      String accessTokenValue = oAuthToken.accessTokenEntity().value();
-      String ath = new AccessTokenHashCalculator(accessTokenValue).calculate();
-      DPoPProofVerifier verifier = new DPoPProofVerifier();
-      DPoPProofVerifiedResult result = verifier.verify(dpopProof, httpMethod, httpUri, ath);
+    String accessTokenValue = oAuthToken.accessTokenEntity().value();
+    String ath = new AccessTokenHashCalculator(accessTokenValue).calculate();
+    DPoPProofVerifier verifier = new DPoPProofVerifier();
+    DPoPProofVerifiedResult result = verifier.verify(dpopProof, httpMethod, httpUri, ath);
 
-      log.debug(
-          "DPoP thumbprint verification: expected={}, actual={}",
+    log.debug(
+        "DPoP thumbprint verification: expected={}, actual={}",
+        accessToken.jwkThumbprint().value(),
+        result.jwkThumbprint().value());
+
+    if (!accessToken.matchJwkThumbprint(result.jwkThumbprint())) {
+      log.warn(
+          "DPoP thumbprint mismatch: expected={}, actual={}",
           accessToken.jwkThumbprint().value(),
           result.jwkThumbprint().value());
-
-      if (!accessToken.matchJwkThumbprint(result.jwkThumbprint())) {
-        log.warn(
-            "DPoP thumbprint mismatch: expected={}, actual={}",
-            accessToken.jwkThumbprint().value(),
-            result.jwkThumbprint().value());
-        throw new TokenInvalidException(
-            "DPoP proof JWK Thumbprint does not match the sender-constrained access token.");
-      }
-
-      log.debug("DPoP binding verification succeeded");
-
-    } catch (DPoPProofInvalidException e) {
-      throw new TokenInvalidException("DPoP proof validation failed: " + e.getMessage());
+      throw new DPoPProofInvalidException(
+          "DPoP proof JWK Thumbprint does not match the sender-constrained access token.");
     }
+
+    log.debug("DPoP binding verification succeeded");
   }
 }

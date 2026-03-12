@@ -138,7 +138,11 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
 
       DPoPProofVerifiedResult dpopResult =
           new DPoPProofVerifier()
-              .verifyIfNeeded(context.dpopProof(), context.httpMethod(), context.httpUri());
+              .verifyIfNeeded(
+                  context.dpopProof(),
+                  context.httpMethod(),
+                  context.httpUri(),
+                  serverConfiguration.dpopSigningAlgValuesSupported());
       AccessToken accessToken =
           accessTokenCreator.create(
               authorizationGrant,

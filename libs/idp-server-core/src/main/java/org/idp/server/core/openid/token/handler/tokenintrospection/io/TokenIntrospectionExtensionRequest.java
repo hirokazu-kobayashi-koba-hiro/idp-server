@@ -153,10 +153,10 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
   }
 
   public String httpMethod() {
-    return httpMethod;
+    return httpMethod != null ? httpMethod : "POST";
   }
 
   public String httpUri() {
-    return httpUri;
+    return httpUri != null ? httpUri : "";
   }
 }
