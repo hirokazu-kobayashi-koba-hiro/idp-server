@@ -117,12 +117,16 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
       Map<String, String[]> params,
       String authorizationHeader,
       String clientCert,
+      String dpopProof,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     TokenIntrospectionExtensionRequest tokenIntrospectionRequest =
         new TokenIntrospectionExtensionRequest(tenant, authorizationHeader, params);
     tokenIntrospectionRequest.setClientCert(clientCert);
+    tokenIntrospectionRequest.setDpopProof(dpopProof);
+    tokenIntrospectionRequest.setHttpMethod(requestAttributes.optValueAsString("action", "POST"));
+    tokenIntrospectionRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 

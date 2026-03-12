@@ -19,6 +19,7 @@ package org.idp.server.core.openid.token.tokenintrospection.verifier;
 import java.time.LocalDateTime;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -30,6 +31,9 @@ import org.idp.server.platform.log.LoggerWrapper;
 public class TokenIntrospectionExtensionVerifier {
 
   ClientCert clientCert;
+  DPoPProof dpopProof;
+  String httpMethod;
+  String httpUri;
   Scopes scopes;
   OAuthToken oAuthToken;
   AuthorizationServerConfiguration authorizationServerConfiguration;
@@ -38,11 +42,17 @@ public class TokenIntrospectionExtensionVerifier {
 
   public TokenIntrospectionExtensionVerifier(
       ClientCert clientCert,
+      DPoPProof dpopProof,
+      String httpMethod,
+      String httpUri,
       Scopes scopes,
       OAuthToken oAuthToken,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.clientCert = clientCert;
+    this.dpopProof = dpopProof;
+    this.httpMethod = httpMethod;
+    this.httpUri = httpUri;
     this.scopes = scopes;
     this.oAuthToken = oAuthToken;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
@@ -78,6 +88,8 @@ public class TokenIntrospectionExtensionVerifier {
   private void verifySenderConstrainedIfRequired() {
     CertificateBindingVerifier certificateBindingVerifier = new CertificateBindingVerifier();
     certificateBindingVerifier.verify(clientCert, oAuthToken);
+    DPoPBindingVerifier dpopBindingVerifier = new DPoPBindingVerifier();
+    dpopBindingVerifier.verify(dpopProof, httpMethod, httpUri, oAuthToken);
   }
 
   private void verifyScope() {
