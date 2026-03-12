@@ -40,7 +40,7 @@ public class DPoPProof {
   }
 
   public boolean exists() {
-    return Objects.nonNull(value) && !value.isEmpty();
+    return Objects.nonNull(value) && !value.isBlank();
   }
 
   public boolean isPresentButEmpty() {

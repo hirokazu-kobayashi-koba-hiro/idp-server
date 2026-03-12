@@ -124,7 +124,7 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
     TokenIntrospectionExtensionRequest tokenIntrospectionRequest =
         new TokenIntrospectionExtensionRequest(tenant, authorizationHeader, params);
     tokenIntrospectionRequest.setClientCert(clientCert);
-    tokenIntrospectionRequest.setDpopProof(dpopProof);
+    tokenIntrospectionRequest.setDPoPProof(dpopProof);
     tokenIntrospectionRequest.setHttpMethod(requestAttributes.optValueAsString("action", "POST"));
     tokenIntrospectionRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
 
