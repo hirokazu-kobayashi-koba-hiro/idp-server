@@ -174,7 +174,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
           additionalHeaders: { DPoP: dpopProof },
         });
 
-        console.log(tokenResponse.data);
+
         expect(tokenResponse.status).toBe(200);
         expect(tokenResponse.data).toHaveProperty("access_token");
         expect(tokenResponse.data.token_type).toBe("DPoP");
@@ -213,7 +213,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -236,7 +236,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -270,7 +270,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: unsignedDpop },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -300,7 +300,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -327,7 +327,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -357,7 +357,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -380,7 +380,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -403,7 +403,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -426,7 +426,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -455,7 +455,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -484,7 +484,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -514,7 +514,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -537,7 +537,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -570,7 +570,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-          console.log(tokenResponse.data);
+  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -602,7 +602,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
           additionalHeaders: { DPoP: dpopProof },
         });
 
-        console.log(tokenResponse.data);
+
         expect(tokenResponse.status).toBe(200);
         expect(tokenResponse.data.token_type).toBe("DPoP");
         expect(tokenResponse.data).toHaveProperty("access_token");
@@ -618,7 +618,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
           clientSecret: clientSecretPostClient.clientSecret,
         });
 
-        console.log(tokenResponse.data);
+
         expect(tokenResponse.status).toBe(200);
         expect(tokenResponse.data.token_type).toBe("Bearer");
       });
@@ -639,7 +639,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
           additionalHeaders: { DPoP: "not-a-valid-jwt" },
         });
 
-        console.log(tokenResponse.data);
+
         expect(tokenResponse.status).toBe(400);
         expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
       });
@@ -654,7 +654,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
           additionalHeaders: { DPoP: "" },
         });
 
-        console.log(tokenResponse.data);
+
         expect(tokenResponse.status).toBe(400);
         expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
       });
@@ -706,7 +706,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         },
       });
 
-      console.log(userinfoResponse.status, userinfoResponse.data);
+
       expect(userinfoResponse.status).toBe(200);
       expect(userinfoResponse.data).toHaveProperty("sub");
     });
@@ -726,7 +726,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         },
       });
 
-      console.log(userinfoResponse.status, userinfoResponse.data);
+
       expect(userinfoResponse.status).toBe(401);
     });
 
@@ -758,7 +758,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         },
       });
 
-      console.log(userinfoResponse.status, userinfoResponse.data);
+
       expect(userinfoResponse.status).toBe(401);
     });
 
@@ -787,7 +787,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         },
       });
 
-      console.log(userinfoResponse.status, userinfoResponse.data);
+
       expect(userinfoResponse.status).toBe(401);
     });
 
@@ -814,7 +814,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         },
       });
 
-      console.log(userinfoResponse.status, userinfoResponse.data);
+
       expect(userinfoResponse.status).toBe(401);
     });
 
@@ -852,7 +852,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         },
       });
 
-      console.log(userinfoResponse.status, userinfoResponse.data);
+
       expect(userinfoResponse.status).toBe(200);
       expect(userinfoResponse.data).toHaveProperty("sub");
     });
@@ -887,7 +887,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         additionalHeaders: { DPoP: dpopProof },
       });
 
-      console.log(tokenResponse.data);
+
       expect(tokenResponse.status).toBe(200);
       expect(tokenResponse.data.token_type).toBe("DPoP");
 
@@ -899,7 +899,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         clientSecret: clientSecretPostClient.clientSecret,
       });
 
-      console.log(JSON.stringify(introspectionResponse.data, null, 2));
+
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(true);
       expect(introspectionResponse.data.token_type).toBe("DPoP");
@@ -930,7 +930,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         clientSecret: clientSecretPostClient.clientSecret,
       });
 
-      console.log(JSON.stringify(introspectionResponse.data, null, 2));
+
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(true);
       expect(introspectionResponse.data.token_type).not.toBe("DPoP");
@@ -991,7 +991,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         additionalHeaders: { DPoP: introspectionDpopProof },
       });
 
-      console.log(JSON.stringify(introspectionResponse.data, null, 2));
+
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(true);
       expect(introspectionResponse.data.token_type).toBe("DPoP");
@@ -1039,7 +1039,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         additionalHeaders: { DPoP: introspectionDpopProof },
       });
 
-      console.log(introspectionResponse.status, introspectionResponse.data);
+
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(false);
       expect(introspectionResponse.data.status_code).toBe(401);
@@ -1075,7 +1075,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         clientSecret: clientSecretPostClient.clientSecret,
       });
 
-      console.log(introspectionResponse.status, introspectionResponse.data);
+
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(false);
       expect(introspectionResponse.data.status_code).toBe(401);
@@ -1103,7 +1103,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         clientSecret: clientSecretPostClient.clientSecret,
       });
 
-      console.log(JSON.stringify(introspectionResponse.data, null, 2));
+
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(true);
     });

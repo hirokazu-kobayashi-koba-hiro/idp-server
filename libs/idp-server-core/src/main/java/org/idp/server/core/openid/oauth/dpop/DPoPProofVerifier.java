@@ -160,6 +160,11 @@ public class DPoPProofVerifier {
       verifyAth(claims, accessTokenHash);
     }
 
+    // Check 12: jti replay protection (RFC 9449 Section 4.3)
+    // Currently not implemented. The RFC states this as conditional ("if replay protection is
+    // desired"). A future implementation would require a time-limited jti cache store
+    // (e.g., Redis with TTL matching the iat acceptance window) to detect reuse.
+
     // Calculate JWK Thumbprint (RFC 7638) for token binding (RFC 9449 Section 6)
     JsonWebKey publicJwk = jwk.toPublicJwk();
     JwkThumbprint thumbprint = new JwkThumbprintCalculator(publicJwk).calculate();
