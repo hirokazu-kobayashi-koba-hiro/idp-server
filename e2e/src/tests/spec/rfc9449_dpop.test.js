@@ -11,7 +11,8 @@ import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 
 import { requestToken, getUserinfo, inspectToken, inspectTokenWithVerification } from "../../api/oauthClient";
-import { clientSecretPostClient, serverConfig } from "../testConfig";
+import { get } from "../../lib/http";
+import { backendUrl, clientSecretPostClient, serverConfig } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
 
 // eslint-disable-next-line no-undef
@@ -1106,6 +1107,130 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
 
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(true);
+    });
+  });
+
+  /**
+   * Section 8: Protected Resource Access with DPoP-bound Tokens
+   *
+   * RFC 9449 Section 7.1: Resource servers MUST verify that the DPoP proof
+   * is valid and that the public key matches the token's cnf.jkt binding.
+   *
+   * This tests the ProtectedResourceApiFilter which guards /me APIs.
+   */
+  describe("Section 8: Protected Resource API (/me) - DPoP Binding Verification", () => {
+
+    const meEndpoint = `${backendUrl}/${serverConfig.tenantId}/v1/me`;
+
+    const getResourceOwnerDPoPToken = async (keyPair) => {
+      const dpopProof = await createDPoPProof({
+        privateKey: keyPair.privateKey,
+        publicJwk: keyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: "openid profile email",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: dpopProof },
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("DPoP");
+      return tokenResponse.data.access_token;
+    };
+
+    it("MUST accept /me request with valid DPoP proof for DPoP-bound token", async () => {
+      const accessToken = await getResourceOwnerDPoPToken(dpopKeyPair);
+
+      const ath = computeAth(accessToken);
+      const dpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "GET",
+        htu: meEndpoint,
+        overrides: { ath },
+      });
+
+      const response = await get({
+        url: meEndpoint,
+        headers: {
+          Authorization: `DPoP ${accessToken}`,
+          DPoP: dpopProof,
+        },
+      });
+
+      // Filter passes DPoP verification; actual /me GET may return 404/405 etc.
+      // but NOT 401 with "DPoP" or "invalid_token" error
+      expect(response.status).not.toBe(401);
+    });
+
+    it("MUST reject /me request when DPoP-bound token has no DPoP proof", async () => {
+      const accessToken = await getResourceOwnerDPoPToken(dpopKeyPair);
+
+      const response = await get({
+        url: meEndpoint,
+        headers: {
+          Authorization: `DPoP ${accessToken}`,
+        },
+      });
+
+      expect(response.status).toBe(401);
+    });
+
+    it("MUST reject /me request when DPoP proof is signed with different key", async () => {
+      const accessToken = await getResourceOwnerDPoPToken(dpopKeyPair);
+
+      const otherKeyPair = await generateDPoPKeyPair();
+      const ath = computeAth(accessToken);
+      const dpopProof = await createDPoPProof({
+        privateKey: otherKeyPair.privateKey,
+        publicJwk: otherKeyPair.publicJwk,
+        htm: "GET",
+        htu: meEndpoint,
+        overrides: { ath },
+      });
+
+      const response = await get({
+        url: meEndpoint,
+        headers: {
+          Authorization: `DPoP ${accessToken}`,
+          DPoP: dpopProof,
+        },
+      });
+
+      expect(response.status).toBe(401);
+    });
+
+    it("MUST accept /me request with Bearer token without DPoP proof", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: serverConfig.oauth.username,
+        password: serverConfig.oauth.password,
+        scope: "openid profile email",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("Bearer");
+
+      const response = await get({
+        url: meEndpoint,
+        headers: {
+          Authorization: `Bearer ${tokenResponse.data.access_token}`,
+        },
+      });
+
+      // Bearer token without DPoP should pass the filter (not 401)
+      expect(response.status).not.toBe(401);
     });
   });
 });
