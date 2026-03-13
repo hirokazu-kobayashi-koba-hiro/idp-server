@@ -219,7 +219,7 @@ cat VERIFY.md
 ## 次のステップ
 
 - [How-to ガイド](../content_05_how-to/) - 各機能の詳細な設定手順
-- [コンセプト](../content_03_concepts/01-foundation/concept-01-multi-tenant.md) - idp-server の設計思想と主要概念
+- [コンセプト](../content_03_concepts/concept-00-overview.md) - idp-server の設計思想と主要概念
 
 ---
 

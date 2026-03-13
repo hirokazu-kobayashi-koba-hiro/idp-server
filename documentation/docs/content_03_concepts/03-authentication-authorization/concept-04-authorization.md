@@ -83,7 +83,7 @@ flowchart TB
 - テナントごとのカスタマイズ可能
 - セキュリティ境界の明確化
 
-詳細は [concept-01: マルチテナント](../01-foundation/concept-01-multi-tenant.md) を参照。
+詳細は [concept-01: マルチテナント](../01-foundation/concept-03-multi-tenant.md) を参照。
 
 ### 2. スコープベースのアクセス制御
 
@@ -374,7 +374,7 @@ idp-serverは、最新のOAuth/OIDCセキュリティ拡張をサポートしま
 
 ## 関連ドキュメント
 
-- [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナント単位の認可サーバー
+- [マルチテナント](../01-foundation/concept-03-multi-tenant.md) - テナント単位の認可サーバー
 - [身元確認済みID](../05-advanced-id/concept-01-id-verified.md) - verified_claimsスコープ
 - [認証ポリシー](concept-01-authentication-policy.md) - 認証強度と連動したスコープ制御
 - [トークン管理](../04-tokens-claims/concept-02-token-management.md) - トークン形式・有効期限設計
