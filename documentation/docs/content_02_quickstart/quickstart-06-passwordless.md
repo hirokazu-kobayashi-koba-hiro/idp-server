@@ -164,6 +164,19 @@
 
 ---
 
+## テンプレートで試す
+
+ローカル環境ですぐに試せるテンプレートが用意されています。
+
+```bash
+cd config/templates/use-cases/passwordless-fido2
+./setup.sh
+```
+
+セットアップ後の動作確認は `VERIFY.md` を参照してください。
+
+詳細: [`config/templates/use-cases/passwordless-fido2/`](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/tree/main/config/templates/use-cases/passwordless-fido2)
+
 ## 関連ドキュメント
 
 - [How-to: FIDO2登録](../content_05_how-to/phase-3-advanced/fido-uaf/02-registration.md)

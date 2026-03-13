@@ -283,6 +283,19 @@
 
 ---
 
+## テンプレートで試す
+
+ローカル環境ですぐに試せるテンプレートが用意されています。
+
+```bash
+cd config/templates/use-cases/login-password-only
+./setup.sh
+```
+
+セットアップ後の動作確認は `VERIFY.md` を参照してください。
+
+詳細: [`config/templates/use-cases/login-password-only/`](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/tree/main/config/templates/use-cases/login-password-only)
+
 ## 関連ドキュメント
 
 - [How-to: ユーザー登録・パスワード認証](../content_05_how-to/phase-1-foundation/05-user-registration.md)

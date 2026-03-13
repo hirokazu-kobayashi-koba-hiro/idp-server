@@ -196,9 +196,26 @@
 
 ---
 
-## 関連ドキュメント
+## テンプレートで試す
 
-- [テンプレート: external-password-auth](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/tree/main/config/templates/use-cases/external-password-auth) - セットアップスクリプトとテンプレート
+ローカル環境ですぐに試せるテンプレートが用意されています。
+
+```bash
+cd config/templates/use-cases/external-password-auth
+./setup.sh
+```
+
+セットアップ後の動作確認:
+
+| ガイド | 内容 |
+|--------|------|
+| `VERIFY.md` | 基本動作確認（外部認証フロー → ログイン → トークン取得） |
+| `EXPERIMENTS.md` | 設定変更の実験（認証ポリシー、ブルートフォース防止等） |
+| `EXPERIMENTS-http-requests.md` | HTTP Request の高度な設定（複数APIチェーン、マッピング関数等） |
+
+詳細: [`config/templates/use-cases/external-password-auth/`](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/tree/main/config/templates/use-cases/external-password-auth)
+
+## 関連ドキュメント
 - [How-to: 認証ポリシー設定](../content_05_how-to/phase-1-foundation/07-authentication-policy.md)
 - [Concept: セッション管理](../content_03_concepts/03-authentication-authorization/concept-03-session-management.md)
 - [Concept: トークン管理](../content_03_concepts/04-tokens-claims/concept-02-token-management.md)

@@ -202,6 +202,25 @@
 
 ---
 
+## テンプレートで試す
+
+ローカル環境ですぐに試せるテンプレートが用意されています。
+
+```bash
+cd config/templates/use-cases/ekyc
+./setup.sh
+```
+
+セットアップ後の動作確認:
+
+| ガイド | 内容 |
+|--------|------|
+| `VERIFY.md` | 基本動作確認（認証フロー → eKYC申請 → verified_claims 取得） |
+| `VERIFY-CONFIG-CHANGES.md` | 設定変更の実験（mock↔http_request切替、リトライ、エラー処理等） |
+| `VERIFY-CONFIG-CHANGES-ADVANCED.md` | マッピング関数リファレンス（全20関数の設定例・テスト手順） |
+
+詳細: [`config/templates/use-cases/ekyc/`](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/tree/main/config/templates/use-cases/ekyc)
+
 ## 関連ドキュメント
 
 - [How-to: 身元確認申込み導入ガイド](../content_05_how-to/phase-4-extensions/identity-verification/01-guide.md)
