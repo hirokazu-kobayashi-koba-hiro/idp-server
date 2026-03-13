@@ -28,33 +28,20 @@ Controller → UseCase (EntryService) → Core (Handler-Service-Repository) → 
 cd e2e && npm test
 ```
 
-## E2Eテスト実行時の注意
+## 自動ルール（`.claude/rules/`）
 
-**`npx jest` ではなく `npm test` 経由で実行すること。**
+ファイルを読んだ時に自動適用されるガードレール。スキルと異なりopt-in不要。
 
-`package.json` の `test` スクリプトが `NODE_EXTRA_CA_CERTS` で mkcert のルートCAを設定している。
-`npx jest` 直接実行だとこの設定が抜け、自己署名証明書の検証エラー（`UNABLE_TO_VERIFY_LEAF_SIGNATURE`）でリクエストが失敗する。
-
-```bash
-# 正しい実行方法
-cd e2e && npm test -- --testPathPattern="integration-05" --testNamePattern="テスト名"
-
-# NG: TLSエラーになる
-cd e2e && npx jest src/tests/integration/...
-```
-
-## ローカル環境でのコード変更反映
-
-**重要**: Javaコードを変更した場合、Docker imageを再ビルドしないと変更が反映されない。
-
-```bash
-# Docker imageビルド + コンテナ再起動（ビルドはDocker内で実行される）
-docker compose up -d --build idp-server-1 idp-server-2
-```
-
-- Dockerfileがマルチステージビルドのため、`./gradlew bootJar`は不要
-- `docker compose restart`だけでは新しいコードは反映されない
-- `--build`フラグが必須
+| ルール | 対象パス | 守ること |
+|--------|---------|----------|
+| `adapter-repository.md` | `idp-server-core-adapter/` | Tenant第一引数、両DB実装 |
+| `control-plane.md` | `idp-server-control-plane/` | ContextCreator、snake_case |
+| `e2e-testing.md` | `e2e/` | `npm test`必須、`npx jest`禁止 |
+| `database-migration.md` | `idp-server-database/*.sql` | PostgreSQL+MySQL両方 |
+| `config-json.md` | `config/templates/`, `config/examples/` | claims_supported必須 |
+| `docker-local.md` | `docker-compose*`, `Dockerfile*` | `--build`フラグ必須 |
+| `documentation.md` | `documentation/`, `.claude/skills/` | 想像禁止、コード確認必須 |
+| `springboot-adapter.md` | `idp-server-springboot-adapter/` | Controller層ロジック禁止 |
 
 ## スキル活用
 - 実装・修正タスクを開始する前に、関連するスキル（`.claude/skills/`）の有無を確認し、該当するスキルがあれば先にロードしてから作業を開始すること
@@ -129,25 +116,4 @@ docker compose up -d --build idp-server-1 idp-server-2
 ## アンチパターン（禁止）
 - Util濫用、Map濫用、DTO肥大化
 - 永続化層でのビジネスロジック
-- 想像でのドキュメント作成（コード確認必須）
-
-## ドキュメント・コード記載ルール（想像禁止）
-
-**鉄則: ドキュメント作成は「調査」であり「創作」ではない**
-
-### 禁止事項
-- 実装確認前の記載（「たぶん」「だろう」思考）
-- 一般論適用（「〜ライブラリなら通常は...」）
-- パターン推測（「他のクラスにあるから...」）
-- 存在しないクラス名・メソッド名の記載
-
-### 必須手順
-1. **クラス存在確認**: `Glob` でファイル検索
-2. **メソッド確認**: `Grep "public"` でメソッド一覧
-3. **Javadoc確認**: `Read` でクラス先頭を確認
-4. **使用箇所確認**: Use Cases層で実際の呼び出しパターンを確認
-
-### 危険信号（即座に作業停止）
-- 「まあ、こんな感じだろう」と思った
-- ファイル存在確認をしていない
-- 「一般的には...」で補完している
+- 想像でのドキュメント作成（コード確認必須）→ 詳細は `.claude/rules/documentation.md`

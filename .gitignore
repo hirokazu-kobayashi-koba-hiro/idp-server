@@ -73,3 +73,8 @@ docker/nginx/certs/*.pem
 performance-test/k6-sqlite
 performance-test/data/*.db
 identifier.sqlite
+
+### Claude Code ###
+.claude/settings.local.json
+.claude/projects/
+CLAUDE.local.md
