@@ -47,7 +47,7 @@ const sidebars = {
         },
         {
           type: "category",
-          label: "ユースケース",
+          label: "ユースケース別セットアップ",
           collapsed: true,
           items: [
             "content_02_quickstart/quickstart-03-common-use-cases",

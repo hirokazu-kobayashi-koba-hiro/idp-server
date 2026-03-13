@@ -1,6 +1,6 @@
 # Socialログイン（外部IdP連携）
 
-[← ユースケース一覧に戻る](./quickstart-03-common-use-cases.md)
+[← 導入ガイドに戻る](./quickstart-03-common-use-cases.md)
 
 ---
 

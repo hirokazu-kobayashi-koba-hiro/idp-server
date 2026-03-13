@@ -1,6 +1,6 @@
 # サードパーティ連携（OAuth 2.0）
 
-[← ユースケース一覧に戻る](./quickstart-03-common-use-cases.md)
+[← 導入ガイドに戻る](./quickstart-03-common-use-cases.md)
 
 ---
 

@@ -1,6 +1,6 @@
 # MFA（多要素認証）
 
-[← ユースケース一覧に戻る](./quickstart-03-common-use-cases.md)
+[← 導入ガイドに戻る](./quickstart-03-common-use-cases.md)
 
 ---
 

@@ -171,7 +171,7 @@ OAuth 2.0 / OpenID Connect の基礎から学びたい方向け。
 |---------|---------|
 | intro-01-tech-overview.md | 技術概要 |
 | intro-02-features.md | 機能一覧 |
-| intro-03-use-cases.md | ユースケース |
+| intro-03-use-cases.md | ユースケースカタログ |
 
 </details>
 

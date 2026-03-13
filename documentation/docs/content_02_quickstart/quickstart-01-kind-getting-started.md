@@ -262,5 +262,5 @@ kubectl get pods -n idp -w
 
 ## 次のステップ
 
-- [ユースケース一覧](./quickstart-03-common-use-cases.md) - テンプレートを使ったセットアップ
+- [導入ガイド](./quickstart-03-common-use-cases.md) - テンプレートを使ったセットアップ
 - [kind の仕組みを学ぶ](../content_11_learning/13-docker-kubernetes/kind-local-cluster.md) - kind の基礎知識
