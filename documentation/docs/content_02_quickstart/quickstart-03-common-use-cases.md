@@ -85,7 +85,7 @@ Phase 4: エンタープライズ
 |------------|------------|-----------|
 | **[ログイン](./quickstart-04-login.md)** | `login-password-only` | パスワード認証、アカウントロック、セッション管理 |
 | **[Socialログイン](./quickstart-04-login-social.md)** | `login-social` | Google等の外部サービスアカウントでログイン |
-| **[MFA](./quickstart-05-mfa.md)** | `mfa-email` | SMS/メール認証でセキュリティ強化 |
+| **[MFA](./quickstart-05-mfa.md)** | `mfa-email` / `mfa-sms` | メール/SMS認証でセキュリティ強化 |
 | **[パスワードレス認証](./quickstart-06-passwordless.md)** | `passwordless-fido2` | 生体認証、セキュリティキー、Passkey |
 | **[身元確認/eKYC](./quickstart-07-ekyc.md)** | `ekyc` | 本人確認書類検証、verified_claims発行 |
 | **[サードパーティ連携](./quickstart-08-third-party-integration.md)** | `third-party` | 第三者アプリへのOAuth 2.0連携 |

@@ -320,7 +320,6 @@ npm test
 クイックスタートはこれで完了です。次のステップとして以下を参照してください：
 
 - [ユースケース一覧](./quickstart-03-common-use-cases.md) - テンプレートを使ってユースケース別の設定を素早く構築
-- [主要ユースケース](./quickstart-03-common-use-cases.md) - ログイン、MFA、パスワードレス等のユースケース別ガイド
-- [コンセプト](../content_03_concepts/) - idp-server の設計思想と主要概念
-- [開発者ガイド](../content_06_developer-guide/) - 詳細な実装リファレンス
+- [コンセプト](../content_03_concepts/01-foundation/concept-01-multi-tenant.md) - idp-server の設計思想と主要概念
+- [開発者ガイド](../content_06_developer-guide/README.md) - 詳細な実装リファレンス
 - [パフォーマンスチューニング](../content_11_learning/26-performance-tuning/) - ローカル環境のリソースチューニング（Docker、PostgreSQL、nginx、HikariCP）

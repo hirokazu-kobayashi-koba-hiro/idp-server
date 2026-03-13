@@ -320,7 +320,7 @@ ACCESS_TOKEN_DURATION=600 REFRESH_TOKEN_DURATION=86400 ./setup.sh
 
 ## 関連ドキュメント
 
-- [Concept: FAPI](../content_03_concepts/authentication-authorization/concept-06-fapi.md)
+- [Concept: FAPI](../content_03_concepts/03-authentication-authorization/concept-06-fapi.md)
 - [Protocol: FAPI-CIBA](../content_04_protocols/protocol-05-fapi-ciba.md)
 - [CIBA](./quickstart-11-ciba.md) - モバイル承認の詳細
 - [パスワードレス認証](./quickstart-06-passwordless.md) - FIDO2/生体認証の詳細

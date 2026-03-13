@@ -186,9 +186,9 @@ cd config/templates/use-cases/ciba
 ## 関連ドキュメント
 
 - [How-to: CIBAフロー](../content_05_how-to/phase-3-advanced/fido-uaf/01-ciba-flow.md)
-- [How-to: CIBA Binding Message](../content_05_how-to/phase-4-extensions/ciba-binding-message.md)
-- [Concept: パスワードレス認証](../content_03_concepts/authentication-authorization/concept-07-passwordless.md)
-- [Concept: デバイスクレデンシャル](../content_03_concepts/authentication-authorization/concept-10-device-credential.md)
+- [How-to: CIBA Binding Message](../content_05_how-to/phase-4-extensions/05-ciba-binding-message.md)
+- [Concept: パスワードレス認証](../content_03_concepts/03-authentication-authorization/concept-07-passwordless.md)
+- [Concept: デバイスクレデンシャル](../content_03_concepts/03-authentication-authorization/concept-10-device-credential.md)
 - [Protocol: CIBA Flow](../content_04_protocols/protocol-02-ciba-flow.md)
 
 ---
