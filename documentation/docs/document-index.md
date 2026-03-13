@@ -171,7 +171,7 @@ OAuth 2.0 / OpenID Connect の基礎から学びたい方向け。
 |---------|---------|
 | intro-01-tech-overview.md | 技術概要 |
 | intro-02-features.md | 機能一覧 |
-| intro-03-use-cases.md | ユースケース |
+| intro-03-use-cases.md | ユースケースカタログ |
 
 </details>
 
@@ -181,7 +181,11 @@ OAuth 2.0 / OpenID Connect の基礎から学びたい方向け。
 | ファイル | タイトル |
 |---------|---------|
 | quickstart-01-getting-started.md | Getting Started |
-| quickstart-02-setting-templates.md | 初期設定テンプレート |
+| quickstart-03-common-use-cases.md | ユースケース一覧 |
+| quickstart-04-login.md | ログイン |
+| quickstart-04-login-social.md | Socialログイン（外部IdP連携） |
+| quickstart-11-ciba.md | CIBA |
+| quickstart-12-financial-grade.md | 金融グレード（FAPI） |
 
 </details>
 

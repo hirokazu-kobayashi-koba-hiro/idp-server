@@ -1,8 +1,10 @@
-# ユースケース一覧
+# ユースケースカタログ
 
-`idp-server` における主要なユースケースを網羅的に整理したものです。
+`idp-server` が提供する全機能を、アクター・ユーザーストーリーごとに網羅的に整理したカタログです。
 
-アクター・機能分類ごとにユースケースを分けることで、機能全体の把握、仕様設計、テスト設計、および外部連携設計のベースとして活用できます。
+仕様設計、テスト設計、外部連携設計のベースとして活用できます。
+
+> **テンプレートで試したい場合**: 各ユースケースのセットアップ手順・業種別の推奨構成は [導入ガイド](../content_02_quickstart/quickstart-03-common-use-cases.md) を参照してください。
 
 ## アクター定義
 
@@ -43,6 +45,8 @@
 
 ### 認証・認可（ユーザー）
 
+> テンプレート: [`login-password-only`](../content_02_quickstart/quickstart-04-login.md) / [`login-social`](../content_02_quickstart/quickstart-04-login-social.md) / [`ciba`](../content_02_quickstart/quickstart-11-ciba.md)
+
 | # | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|---------------|------------|---------|
 | 1 | **アプリケーションにログインしたい** | OAuth 2.0 認可コードフローによる認証・認可 | <details><summary>フロー概要</summary>認可リクエスト → 認証画面（ログイン） → 同意画面 → 認可コード発行 → RP へリダイレクト<br/><br/>**関連仕様**: [RFC 6749 Section 4.1](https://www.rfc-editor.org/rfc/rfc6749#section-4.1)</details> |
@@ -61,11 +65,15 @@
 
 ### 本人確認（eKYC）
 
+> テンプレート: [`ekyc`](../content_02_quickstart/quickstart-07-ekyc.md)
+
 | # | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|---------------|------------|---------|
 | 1 | **オンラインで本人確認を完了したい** | eKYC 申請・審査結果取得 | <details><summary>フロー概要</summary>身元確認申請送信 → 外部 eKYC サービスで審査 → 結果コールバック受信 → ユーザーが結果取得<br/><br/>**操作**: 申請・履歴照会・結果取得・キャンセル<br/>**外部連携**: eKYC サービスとの HTTP 連携（動的テンプレート対応）</details> |
 
 ### 多要素認証・デバイス管理
+
+> テンプレート: [`mfa-email`/ `mfa-sms`](../content_02_quickstart/quickstart-05-mfa.md) / [`passwordless-fido2`](../content_02_quickstart/quickstart-06-passwordless.md)
 
 | # | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|---------------|------------|---------|
@@ -73,6 +81,8 @@
 | 2 | **生体認証・FIDO で認証したい** | FIDO UAF 統合 | <details><summary>概要</summary>FIDO UAF プロトコルによる生体認証<br/>デバイス登録履歴・最終利用日時の管理</details> |
 
 ### システム統合（RP・リソースサーバー向け）
+
+> テンプレート: [`third-party`](../content_02_quickstart/quickstart-08-third-party-integration.md)
 
 | # | 利用者 | ユーザーストーリー | システム機能 | 実装詳細 |
 |---|-------|---------------|------------|---------|

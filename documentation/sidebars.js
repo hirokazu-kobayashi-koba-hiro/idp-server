@@ -35,22 +35,31 @@ const sidebars = {
       label: "クイックスタート",
       collapsed: true,
       items: [
-        "content_02_quickstart/quickstart-01-getting-started",
-        "content_02_quickstart/quickstart-01-kind-getting-started",
-        "content_02_quickstart/quickstart-09-local-subdomain-setup",
-        "content_02_quickstart/quickstart-02-setting-templates",
         {
           type: "category",
-          label: "主要ユースケース",
+          label: "環境構築",
+          collapsed: false,
+          items: [
+            "content_02_quickstart/quickstart-01-getting-started",
+            "content_02_quickstart/quickstart-01-kind-getting-started",
+            "content_02_quickstart/quickstart-09-local-subdomain-setup",
+          ]
+        },
+        {
+          type: "category",
+          label: "ユースケース別セットアップ",
           collapsed: true,
           items: [
             "content_02_quickstart/quickstart-03-common-use-cases",
             "content_02_quickstart/quickstart-04-login",
+            "content_02_quickstart/quickstart-04-login-social",
             "content_02_quickstart/quickstart-05-mfa",
             "content_02_quickstart/quickstart-06-passwordless",
             "content_02_quickstart/quickstart-07-ekyc",
             "content_02_quickstart/quickstart-08-third-party-integration",
-            "content_02_quickstart/quickstart-10-external-password-auth"
+            "content_02_quickstart/quickstart-10-external-password-auth",
+            "content_02_quickstart/quickstart-11-ciba",
+            "content_02_quickstart/quickstart-12-financial-grade"
           ]
         }
       ]

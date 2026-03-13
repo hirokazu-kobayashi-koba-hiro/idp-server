@@ -1,0 +1,79 @@
+{
+  "type": "sms",
+  "attributes": {},
+  "metadata": {
+    "type": "internal",
+    "transaction_id_param": "transaction_id",
+    "verification_code_param": "verification_code"
+  },
+  "interactions": {
+    "sms-authentication-challenge": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "phone_number": {
+              "type": "string"
+            },
+            "template": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "pre_hook": {},
+      "execution": {
+        "function": "sms_authentication_challenge",
+        "details": {
+          "sender_type": "no_action",
+          "templates": {
+            "registration": {
+              "subject": "[Local Dev] Your signup SMS confirmation code",
+              "body": "Your verification code is: {VERIFICATION_CODE}. It expires in {EXPIRE_SECONDS} seconds."
+            },
+            "authentication": {
+              "subject": "[Local Dev] Your login SMS confirmation code",
+              "body": "Your verification code is: {VERIFICATION_CODE}. It expires in {EXPIRE_SECONDS} seconds."
+            }
+          },
+          "retry_count_limitation": 5,
+          "expire_seconds": 300
+        }
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    },
+    "sms-authentication": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "verification_code": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "pre_hook": {},
+      "execution": {
+        "function": "sms_authentication"
+      },
+      "post_hook": {},
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.response_body",
+            "to": "*"
+          }
+        ]
+      }
+    }
+  }
+}
