@@ -4,23 +4,25 @@
   "external_application_id_param": "application_id",
   "processes": {
     "apply": {
-      "request_schema": {
-        "type": "object",
-        "required": ["last_name", "first_name", "birthdate", "email_address"],
-        "properties": {
-          "last_name": { "type": "string", "maxLength": 255, "store": true },
-          "first_name": { "type": "string", "maxLength": 255, "store": true },
-          "birthdate": { "type": "string", "format": "date", "store": true },
-          "email_address": { "type": "string", "maxLength": 255, "store": true },
-          "address": {
-            "type": "object",
-            "store": true,
-            "properties": {
-              "street_address": { "type": "string", "maxLength": 255 },
-              "locality": { "type": "string", "maxLength": 255 },
-              "region": { "type": "string", "maxLength": 255 },
-              "postal_code": { "type": "string", "maxLength": 255 },
-              "country": { "type": "string", "maxLength": 255 }
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": ["last_name", "first_name", "birthdate", "email_address"],
+          "properties": {
+            "last_name": { "type": "string", "maxLength": 255, "store": true },
+            "first_name": { "type": "string", "maxLength": 255, "store": true },
+            "birthdate": { "type": "string", "format": "date", "store": true },
+            "email_address": { "type": "string", "maxLength": 255, "store": true },
+            "address": {
+              "type": "object",
+              "store": true,
+              "properties": {
+                "street_address": { "type": "string", "maxLength": 255 },
+                "locality": { "type": "string", "maxLength": 255 },
+                "region": { "type": "string", "maxLength": 255 },
+                "postal_code": { "type": "string", "maxLength": 255 },
+                "country": { "type": "string", "maxLength": 255 }
+              }
             }
           }
         }

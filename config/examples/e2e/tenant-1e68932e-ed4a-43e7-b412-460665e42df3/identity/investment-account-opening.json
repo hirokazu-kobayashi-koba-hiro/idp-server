@@ -3,16 +3,7 @@
   "type": "investment-account-opening",
   "common": {
     "external_service": "mocky",
-    "callback_application_id_param": "application_id",
-    "oauth_authorization": {
-      "type": "password",
-      "token_endpoint": "http://host.docker.internal:4000/token",
-      "client_id": "your-client-id",
-      "username": "username",
-      "password": "password",
-      "scope": "application"
-    },
-    "hmac_authentication": {}
+    "callback_application_id_param": "application_id"
   },
   "processes": {
     "apply": {
@@ -165,22 +156,8 @@
       }
     },
     "request-ekyc": {
-      "request_schema": {
-        "type": "object",
-        "required": [
-          "trust_framework",
-          "evidence_document_type"
-        ],
-        "properties": {
-          "trust_framework": {
-            "type": "string",
-            "maxLength": 100
-          },
-          "evidence_document_type": {
-            "type": "string",
-            "maxLength": 50
-          }
-        }
+      "request": {
+        "schema": {}
       },
       "execution": {
         "type": "http_request",
@@ -212,11 +189,8 @@
       }
     },
     "complete-ekyc": {
-      "request_schema": {
-        "type": "object",
-        "required": [],
-        "properties": {},
-        "additionalProperties": false
+      "request": {
+        "schema": {}
       },
       "execution": {
         "type": "http_request",
@@ -248,10 +222,8 @@
       }
     },
     "crm-registration": {
-      "request_schema": {
-        "type": "object",
-        "required": [],
-        "properties": {}
+      "request": {
+        "schema": {}
       },
       "execution": {
         "type": "http_request",
@@ -322,27 +294,6 @@
     "cancel": {
       "execution": {
         "type": "no_action"
-      },
-      "cancellation_condition": {
-        "request_condition": {
-          "all_of": [
-            {
-              "path": "$.application_id",
-              "type": "string",
-              "operation": "exists",
-              "value": true
-            }
-          ]
-        },
-        "process_condition": {
-          "all_of": [
-            {
-              "process_name": "apply",
-              "type": "success",
-              "count": 1
-            }
-          ]
-        }
       }
     },
     "callback-result": {
@@ -369,32 +320,6 @@
               "type": "object"
             }
           }
-        }
-      },
-      "completion_condition": {
-        "request_condition": {
-          "all_of": [
-            {
-              "path": "$.application_id",
-              "type": "string",
-              "operation": "exists",
-              "value": true
-            }
-          ]
-        },
-        "process_condition": {
-          "all_of": [
-            {
-              "process_name": "apply",
-              "type": "success",
-              "success_count": 1
-            },
-            {
-              "process_name": "callback-examination",
-              "type": "success",
-              "success_count": 1
-            }
-          ]
         }
       }
     }
