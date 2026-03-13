@@ -492,7 +492,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
     "interactions": {
       "initial-registration": {
         "request": {
-          "request_schema": {
+          "schema": {
             "type": "object",
             "required": ["email", "password", "name", "company", "department"],
             "properties": {

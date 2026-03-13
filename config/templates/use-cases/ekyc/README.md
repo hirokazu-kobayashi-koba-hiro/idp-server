@@ -173,3 +173,13 @@ Step 8: 身元確認設定作成（組織レベルAPI）
 - `rejected: true` → 拒否
 
 > **Note**: このテンプレートは `mock/no_action` モードです。本番環境では外部身元確認サービスとの連携設定が必要です。
+
+## 次のステップ
+
+セットアップ完了後、以下のガイドで動作確認・設定カスタマイズができます。
+
+| ガイド | 内容 |
+|--------|------|
+| [VERIFY.md](./VERIFY.md) | 基本動作確認（認証フロー → eKYC申請 → verified_claims 取得） |
+| [VERIFY-CONFIG-CHANGES.md](./VERIFY-CONFIG-CHANGES.md) | 設定変更の実験（mock↔http_request切替、リトライ、エラー処理、condition、additional_parameters等） |
+| [VERIFY-CONFIG-CHANGES-ADVANCED.md](./VERIFY-CONFIG-CHANGES-ADVANCED.md) | マッピング関数リファレンス（全20関数の設定例・テスト手順） |

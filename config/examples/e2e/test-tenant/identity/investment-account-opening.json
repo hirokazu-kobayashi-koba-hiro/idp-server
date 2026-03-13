@@ -6,16 +6,7 @@
   },
   "common": {
     "external_service": "mocky",
-    "callback_application_id_param": "application_id",
-    "oauth_authorization": {
-      "type": "password",
-      "token_endpoint": "http://host.docker.internal:4000/token",
-      "client_id": "your-client-id",
-      "username": "username",
-      "password": "password",
-      "scope": "application"
-    },
-    "hmac_authentication": {}
+    "callback_application_id_param": "application_id"
   },
   "processes": {
     "apply": {
@@ -203,22 +194,8 @@
       }
     },
     "request-ekyc": {
-      "request_schema": {
-        "type": "object",
-        "required": [
-          "trust_framework",
-          "evidence_document_type"
-        ],
-        "properties": {
-          "trust_framework": {
-            "type": "string",
-            "maxLength": 100
-          },
-          "evidence_document_type": {
-            "type": "string",
-            "maxLength": 50
-          }
-        }
+      "request": {
+        "schema": {}
       },
       "execution": {
         "type": "http_request",
@@ -271,11 +248,8 @@
       }
     },
     "complete-ekyc": {
-      "request_schema": {
-        "type": "object",
-        "required": [],
-        "properties": {},
-        "additionalProperties": false
+      "request": {
+        "schema": {}
       },
       "execution": {
         "type": "http_request",
@@ -328,10 +302,8 @@
       }
     },
     "crm-registration": {
-      "request_schema": {
-        "type": "object",
-        "required": [],
-        "properties": {}
+      "request": {
+        "schema": {}
       },
       "execution": {
         "type": "http_request",

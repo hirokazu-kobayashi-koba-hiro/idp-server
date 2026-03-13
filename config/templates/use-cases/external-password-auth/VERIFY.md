@@ -334,3 +334,14 @@ curl -s \
 | 8 | UserInfo で sub が返る | |
 | 8 | email, name が外部サービスの値と一致する | |
 | 9 | Refresh token で新しい access_token が取得できる | |
+
+---
+
+## 次のステップ: 設定のカスタマイズ
+
+基本動作確認が完了したら、設定値を変更して挙動の違いを確認できます。
+
+| ガイド | 内容 |
+|--------|------|
+| [EXPERIMENTS.md](./EXPERIMENTS.md) | 認証ポリシー、ブルートフォース防止、ユーザー識別方式等の実験 |
+| [EXPERIMENTS-http-requests.md](./EXPERIMENTS-http-requests.md) | HTTP Request の高度な設定（複数APIチェーン、マッピング関数等） |

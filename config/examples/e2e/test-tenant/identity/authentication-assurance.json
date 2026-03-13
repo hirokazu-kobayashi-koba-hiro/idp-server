@@ -5,89 +5,8 @@
   "external_application_id_param": "application_id",
   "processes": {
     "apply": {
-      "request_schema": {
-        "type": "object",
-        "required": [
-          "last_name",
-          "first_name",
-          "last_name_kana",
-          "first_name_kana",
-          "birthdate",
-          "nationality",
-          "email_address",
-          "mobile_phone_number",
-          "address"
-        ],
-        "properties": {
-          "last_name": {
-            "type": "string",
-            "maxLength": 255,
-            "store": true
-          },
-          "first_name": {
-            "type": "string",
-            "maxLength": 255,
-            "store": true
-          },
-          "last_name_kana": {
-            "type": "string",
-            "maxLength": 255,
-            "store": true
-          },
-          "first_name_kana": {
-            "type": "string",
-            "maxLength": 255,
-            "store": true
-          },
-          "birthdate": {
-            "type": "string",
-            "format": "date",
-            "store": true
-          },
-          "nationality": {
-            "type": "string",
-            "maxLength": 255,
-            "store": true
-          },
-          "email_address": {
-            "type": "string",
-            "maxLength": 255,
-            "pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$",
-            "store": true
-          },
-          "mobile_phone_number": {
-            "type": "string",
-            "maxLength": 11,
-            "pattern": "^[0-9]{10,11}$",
-            "store": true
-          },
-          "address": {
-            "type": "object",
-            "store": true,
-            "properties": {
-              "street_address": {
-                "type": "string",
-                "maxLength": 255
-              },
-              "locality": {
-                "type": "string",
-                "maxLength": 255
-              },
-              "region": {
-                "type": "string",
-                "maxLength": 255
-              },
-              "postal_code": {
-                "type": "string",
-                "maxLength": 255
-              },
-              "country": {
-                "type": "string",
-                "maxLength": 255
-              }
-            }
-          }
-        }
+      "request": {
+        "schema": {}
       },
       "pre_hook": {
         "verifications": [
@@ -140,25 +59,8 @@
       }
     },
     "request-authentication": {
-      "request_schema": {
-        "type": "object",
-        "required": [
-          "trust_framework",
-          "evidence_document_type"
-        ],
-        "properties": {
-          "trust_framework": {
-            "type": "string",
-            "maxLength": 100,
-            "store": true
-          },
-          "evidence_document_type": {
-            "type": "string",
-            "maxLength": 50,
-            "store": true
-          }
-        },
-        "additionalProperties": false
+      "request": {
+        "schema": {}
       },
       "execution": {
         "type": "http_request",

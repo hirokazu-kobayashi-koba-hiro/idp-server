@@ -537,3 +537,14 @@ curl -s \
 | 16 | verified_claims.verification.trust_framework が eidas | |
 | 16 | verified_claims.claims に given_name, family_name, birthdate が含まれる | |
 | 17 | UserInfo で sub, email, name が返る | |
+
+---
+
+## 次のステップ: 設定のカスタマイズ
+
+基本動作確認が完了したら、設定値を変更して挙動の違いを確認できます。
+
+| ガイド | 内容 |
+|--------|------|
+| [VERIFY-CONFIG-CHANGES.md](./VERIFY-CONFIG-CHANGES.md) | mock↔http_request切替、リトライ、エラー処理、condition、additional_parameters等 |
+| [VERIFY-CONFIG-CHANGES-ADVANCED.md](./VERIFY-CONFIG-CHANGES-ADVANCED.md) | マッピング関数リファレンス（trim/case/replace/switch/if/uuid4/now/split/map/join等） |

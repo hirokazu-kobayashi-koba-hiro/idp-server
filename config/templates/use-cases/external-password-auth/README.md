@@ -186,6 +186,16 @@ Step 7: クライアント作成（組織レベルAPI）
      → アプリケーション用OAuthクライアント
 ```
 
+## 次のステップ
+
+セットアップ完了後、以下のガイドで動作確認・設定カスタマイズができます。
+
+| ガイド | 内容 |
+|--------|------|
+| [VERIFY.md](./VERIFY.md) | 基本動作確認（外部認証フロー → ログイン → トークン取得） |
+| [EXPERIMENTS.md](./EXPERIMENTS.md) | 設定変更の実験（認証ポリシー、ブルートフォース防止、ユーザー識別方式等） |
+| [EXPERIMENTS-http-requests.md](./EXPERIMENTS-http-requests.md) | HTTP Request の高度な設定（複数APIチェーン、マッピング関数等） |
+
 ## login-password-only との差分
 
 | 項目 | login-password-only | external-password-auth |

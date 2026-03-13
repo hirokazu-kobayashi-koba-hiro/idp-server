@@ -124,6 +124,19 @@ MFA（多要素認証）を導入する際の重要なポイント:
 
 ---
 
+## テンプレートで試す
+
+ローカル環境ですぐに試せるテンプレートが用意されています。
+
+```bash
+cd config/templates/use-cases/mfa-email
+./setup.sh
+```
+
+セットアップ後の動作確認は `VERIFY.md` を参照してください。
+
+詳細: [`config/templates/use-cases/mfa-email/`](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/tree/main/config/templates/use-cases/mfa-email)
+
 ## 関連ドキュメント
 
 - [How-to: MFA設定](../content_05_how-to/phase-2-security/01-mfa-setup.md)

@@ -3,14 +3,6 @@
   "type": "continuous-customer-due-diligence",
   "external_service": "mocky",
   "external_application_id_param": "application_id",
-  "oauth_authorization": {
-    "type": "password",
-    "token_endpoint": "http://host.docker.internal:4000/token",
-    "client_id": "your-client-id",
-    "username": "username",
-    "password": "password",
-    "scope": "application"
-  },
   "approved_target_types": ["investment-account-opening", "nisa-account-opening"],
   "processes": {
     "apply": {

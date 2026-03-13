@@ -57,7 +57,7 @@ libs/
   },
   "processes": {
     "process_name": {
-      "request": { "request_schema": {} },
+      "request": { "schema": {} },
       "pre_hook": {},
       "execution": { "http_request": {}, "mock": {} },
       "post_hook": {},
