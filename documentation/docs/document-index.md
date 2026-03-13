@@ -181,7 +181,6 @@ OAuth 2.0 / OpenID Connect の基礎から学びたい方向け。
 | ファイル | タイトル |
 |---------|---------|
 | quickstart-01-getting-started.md | Getting Started |
-| quickstart-02-setting-templates.md | 初期設定テンプレート |
 
 </details>
 

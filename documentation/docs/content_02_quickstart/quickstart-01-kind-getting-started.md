@@ -262,6 +262,5 @@ kubectl get pods -n idp -w
 
 ## 次のステップ
 
-- [設定テンプレート](./quickstart-02-setting-templates.md) - テンプレートを使ったセットアップ
-- [主要ユースケース](./quickstart-03-common-use-cases.md) - ログイン、MFA、パスワードレス等
+- [ユースケース一覧](./quickstart-03-common-use-cases.md) - テンプレートを使ったセットアップ
 - [kind の仕組みを学ぶ](../content_11_learning/13-docker-kubernetes/kind-local-cluster.md) - kind の基礎知識
