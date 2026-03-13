@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run build:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh api:*)",
+      "Bash(git add:*)",
+      "Bash(git checkout:*)",
+      "Bash(git fetch:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git status:*)",
+      "Bash(git branch:*)",
+      "Bash(git mv:*)",
+      "Bash(jq:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)",
+      "Bash(uuidgen:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker logs:*)",
+      "Bash(java -version:*)",
+      "Bash(node:*)",
+      "WebSearch"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)"
+    ]
+  }
+}
