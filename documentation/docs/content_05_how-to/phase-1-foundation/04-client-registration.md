@@ -47,7 +47,7 @@
 - **Confidential Client（機密クライアント）**: `client_secret`を安全に保管できる（例：サーバーサイドWebアプリ）
 - **Public Client（公開クライアント）**: `client_secret`を保管できない（例：SPA、モバイルアプリ）
 
-**詳細**: [📖 Concept 19: Client](../content_03_concepts/01-foundation/concept-03-client.md) - Client種別、認証方法、Tenant-Client-User関係の詳細解説
+**詳細**: [📖 Concept 19: Client](../content_03_concepts/01-foundation/concept-04-client.md) - Client種別、認証方法、Tenant-Client-User関係の詳細解説
 
 ---
 

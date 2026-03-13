@@ -122,9 +122,9 @@ OAuth 2.0 / OpenID Connect の基礎から学びたい方向け。
 
 | 機能 | 概念 | How-to | 開発者向け |
 |------|------|--------|-----------|
-| マルチテナント | [concept-01](content_03_concepts/01-foundation/concept-01-multi-tenant.md) | [組織初期化](./content_05_how-to/phase-1-foundation/02-organization-initialization.md) | [impl-07](./content_06_developer-guide/04-implementation-guides/impl-07-multi-tenancy.md) |
+| マルチテナント | [concept-01](content_03_concepts/01-foundation/concept-03-multi-tenant.md) | [組織初期化](./content_05_how-to/phase-1-foundation/02-organization-initialization.md) | [impl-07](./content_06_developer-guide/04-implementation-guides/impl-07-multi-tenancy.md) |
 | テナント設定 | - | [テナント設定](./content_05_how-to/phase-1-foundation/03-tenant-setup.md) | [config/tenant](./content_06_developer-guide/05-configuration/tenant.md) |
-| クライアント | [concept-03](content_03_concepts/01-foundation/concept-03-client.md) | [クライアント登録](./content_05_how-to/phase-1-foundation/04-client-registration.md) | [config/client](./content_06_developer-guide/05-configuration/client.md) |
+| クライアント | [concept-03](content_03_concepts/01-foundation/concept-04-client.md) | [クライアント登録](./content_05_how-to/phase-1-foundation/04-client-registration.md) | [config/client](./content_06_developer-guide/05-configuration/client.md) |
 
 ### 身元確認・eKYC
 
@@ -194,9 +194,9 @@ OAuth 2.0 / OpenID Connect の基礎から学びたい方向け。
 
 | # | ファイル | タイトル | カテゴリ |
 |---|---------|---------|---------|
-| 01 | concept-01-multi-tenant.md | マルチテナント | 基盤概念 |
+| 01 | concept-03-multi-tenant.md | マルチテナント | 基盤概念 |
 | 02 | concept-02-control-plane.md | コントロールプレーン | 基盤概念 |
-| 03 | concept-03-client.md | クライアント | 基盤概念 |
+| 03 | concept-04-client.md | クライアント | 基盤概念 |
 | 04 | concept-01-id-management.md | ID（ユーザー）管理 | アイデンティティ管理 |
 | 05 | concept-02-password-policy.md | パスワードポリシー | アイデンティティ管理 |
 | 06 | concept-01-authentication-policy.md | 認証ポリシー | 認証・認可 |

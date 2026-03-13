@@ -177,7 +177,7 @@ Phase 1-4完了
 - [Implementation Guides](../content_06_developer-guide/04-implementation-guides/01-overview.md) - 実装パターン
 
 ### コンセプト理解
-- [マルチテナント](../content_03_concepts/foundation/concept-01-multi-tenant.md) - テナントの概念
+- [マルチテナント](../content_03_concepts/foundation/concept-03-multi-tenant.md) - テナントの概念
 - [認証ポリシー](../content_03_concepts/authentication-authorization/concept-01-authentication-policy.md) - ポリシーの仕組み
 - [トークン管理](../content_03_concepts/tokens-claims/concept-02-token-management.md) - トークン戦略
 

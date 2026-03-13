@@ -151,7 +151,7 @@ sidebar_position: 2
 
 ### 関連リソース
 
-- [Concept: マルチテナント](../../content_03_concepts/01-foundation/concept-01-multi-tenant.md) - idp-serverにおけるマルチテナント実装の詳細
+- [Concept: マルチテナント](../../content_03_concepts/01-foundation/concept-03-multi-tenant.md) - idp-serverにおけるマルチテナント実装の詳細
 
 ---
 

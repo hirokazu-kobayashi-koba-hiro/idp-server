@@ -8,7 +8,7 @@
 
 - [セキュリティイベント](../06-security-extensions/concept-01-security-events.md) - SecurityEventログの基礎
 - [コントロールプレーン](../01-foundation/concept-02-control-plane.md) - Management APIの概要
-- [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナント分離の仕組み
+- [マルチテナント](../01-foundation/concept-03-multi-tenant.md) - テナント分離の仕組み
 
 ---
 
@@ -189,7 +189,7 @@ flowchart TB
 ## 関連ドキュメント
 
 - [セキュリティイベント](../06-security-extensions/concept-01-security-events.md) - SecurityEventログ、6種類のフック
-- [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナント単位の監査分離、RLS
+- [マルチテナント](../01-foundation/concept-03-multi-tenant.md) - テナント単位の監査分離、RLS
 - [コントロールプレーン](../01-foundation/concept-02-control-plane.md) - Management API、権限管理
 
 ---

@@ -918,7 +918,7 @@ curl "..."  # いきなり本番実行
 
 ### 関連ドキュメント
 - [Concept: エンタープライズID](../content_03_concepts/05-advanced-id/concept-02-enterprise-id.md) - 組織・テナント概念
-- [Concept: マルチテナント](../content_03_concepts/01-foundation/concept-01-multi-tenant.md) - マルチテナント設計
+- [Concept: マルチテナント](../content_03_concepts/01-foundation/concept-03-multi-tenant.md) - マルチテナント設計
 - [Configuration: Tenant設定](../content_06_developer-guide/05-configuration/tenant.md) - テナント設定詳細
 
 ### 参考資料

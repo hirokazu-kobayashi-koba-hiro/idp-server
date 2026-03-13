@@ -32,7 +32,7 @@
 - **Public Client（公開クライアント）**: `client_secret`を保管できない（例：SPA、モバイルアプリ）
 
 **詳細な説明は専用コンセプトドキュメントを参照**:
-- [📖 Concept 19: Client](../../content_03_concepts/01-foundation/concept-03-client.md) - Client種別、認証方法の詳細、Tenant-Client-User関係図、セキュリティベストプラクティス
+- [📖 Concept 19: Client](../../content_03_concepts/01-foundation/concept-04-client.md) - Client種別、認証方法の詳細、Tenant-Client-User関係図、セキュリティベストプラクティス
 
 ---
 

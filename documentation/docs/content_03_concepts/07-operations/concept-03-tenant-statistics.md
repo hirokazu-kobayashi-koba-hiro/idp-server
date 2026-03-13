@@ -175,4 +175,4 @@ idp-serverのテナント統計機能の概要について説明します。
 
 - [統計機能 実装ガイド](../../content_06_developer-guide/08-reference/tenant-statistics-implementation.md) - データモデル、実装パターン、パーティショニング詳細
 - [セキュリティイベント](../06-security-extensions/concept-01-security-events.md) - イベント駆動アーキテクチャ
-- [マルチテナント](../01-foundation/concept-01-multi-tenant.md) - テナント分離の基本概念
+- [マルチテナント](../01-foundation/concept-03-multi-tenant.md) - テナント分離の基本概念

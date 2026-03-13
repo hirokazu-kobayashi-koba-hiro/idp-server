@@ -69,14 +69,16 @@ const sidebars = {
       label: "コア概念",
       collapsed: true,
       items: [
+        "content_03_concepts/concept-00-overview",
         {
           type: "category",
           label: "基盤概念",
           collapsed: true,
           items: [
-            "content_03_concepts/foundation/concept-01-multi-tenant",
+            "content_03_concepts/foundation/concept-01-application-plane",
             "content_03_concepts/foundation/concept-02-control-plane",
-            "content_03_concepts/foundation/concept-03-client",
+            "content_03_concepts/foundation/concept-03-multi-tenant",
+            "content_03_concepts/foundation/concept-04-client",
           ]
         },
         {
