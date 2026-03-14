@@ -9,13 +9,13 @@
       "available_methods": ["password", "sms", "initial-registration"],
       "step_definitions": [
         {
-          "method": "sms",
+          "method": "password",
           "order": 1,
           "requires_user": false,
-          "user_identity_source": "phone_number"
+          "user_identity_source": "username"
         },
         {
-          "method": "password",
+          "method": "sms",
           "order": 2,
           "requires_user": true
         }

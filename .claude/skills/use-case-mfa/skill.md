@@ -17,6 +17,17 @@ description: MFA（多要素認証）ユースケースの設定ガイド。SMS/
 
 ---
 
+## SMS と Email の送信方式の違い
+
+| 項目 | SMS | Email |
+|------|-----|-------|
+| idp-server 内蔵送信 | なし | あり（SMTP） |
+| 外部API委譲 | `http_request`（Twilio等） | `http_request`（SendGrid等） |
+| ローカル開発 | `no_action`（OTP生成のみ、送信なし） | `no_action`（OTP生成のみ、送信なし） |
+
+- **SMS**: 送信機能を内蔵していないため、本番では必ず外部SMS送信サービスへの `http_request` 委譲が必要
+- **Email**: SMTP設定（`metadata.settings.smtp`）を行えば idp-server 単体でメール送信可能。外部API委譲も選択可
+
 ## 設定対象と手順
 
 ### 1. SMS認証メソッド設定

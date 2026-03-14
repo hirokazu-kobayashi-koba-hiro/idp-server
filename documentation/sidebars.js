@@ -27,7 +27,8 @@ const sidebars = {
       items: [
         "content_01_intro/intro-01-tech-overview",
         "content_01_intro/intro-02-features",
-        "content_01_intro/intro-03-use-cases"
+        "content_01_intro/intro-03-use-cases",
+        "content_01_intro/intro-04-feature-matrix"
       ]
     },
     {

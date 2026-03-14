@@ -111,6 +111,10 @@ NEW_ADMIN_PASSWORD="${NEW_ADMIN_PASSWORD:-ChangeMe123}"
 TOKEN_SIGNING_KEY_ID="${TOKEN_SIGNING_KEY_ID:-signing_key_1}"
 ID_TOKEN_SIGNING_KEY_ID="${ID_TOKEN_SIGNING_KEY_ID:-signing_key_1}"
 
+# SMS external service URLs (default: mock-server on host.docker.internal:4004)
+SMS_SERVICE_CHALLENGE_URL="${SMS_SERVICE_CHALLENGE_URL:-http://host.docker.internal:4004/sms/challenge}"
+SMS_SERVICE_VERIFY_URL="${SMS_SERVICE_VERIFY_URL:-http://host.docker.internal:4004/sms/verify}"
+
 # Customizable policy values (non-string, applied via jq overlay)
 SESSION_TIMEOUT_SECONDS="${SESSION_TIMEOUT_SECONDS:-86400}"
 PASSWORD_MIN_LENGTH="${PASSWORD_MIN_LENGTH:-8}"
@@ -316,8 +320,10 @@ echo "Step 6: Creating authentication configuration (sms)..."
 
 SMS_AUTH_CONFIG_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
 
-SMS_AUTH_CONFIG_JSON=$(jq --arg id "${SMS_AUTH_CONFIG_ID}" '. + {id: $id}' \
-  "${SCRIPT_DIR}/authentication-config-sms.json")
+SMS_AUTH_CONFIG_JSON=$(substitute_template "${SCRIPT_DIR}/authentication-config-sms.json" \
+  "SMS_SERVICE_CHALLENGE_URL" "${SMS_SERVICE_CHALLENGE_URL}" \
+  "SMS_SERVICE_VERIFY_URL" "${SMS_SERVICE_VERIFY_URL}")
+SMS_AUTH_CONFIG_JSON=$(echo "${SMS_AUTH_CONFIG_JSON}" | jq --arg id "${SMS_AUTH_CONFIG_ID}" '. + {id: $id}')
 
 echo "${SMS_AUTH_CONFIG_JSON}" | jq '.' > "${OUTPUT_DIR}/authentication-config-sms.json"
 echo "  Saved: ${OUTPUT_DIR}/authentication-config-sms.json"
@@ -417,6 +423,8 @@ echo "  Session:          ${SESSION_TIMEOUT_SECONDS}s timeout, SameSite=Lax"
 echo "  Token duration:   AT=${ACCESS_TOKEN_DURATION}s, IDT=${ID_TOKEN_DURATION}s, RT=${REFRESH_TOKEN_DURATION}s"
 echo "  Registration:     ${REGISTRATION_REQUIRED_FIELDS} required"
 echo "  Auth policy:      password AND SMS OTP (MFA)"
+echo "  SMS challenge:    ${SMS_SERVICE_CHALLENGE_URL}"
+echo "  SMS verify:       ${SMS_SERVICE_VERIFY_URL}"
 echo ""
 echo "Created Resources:"
 echo "  Organization ID:      ${ORGANIZATION_ID}"
@@ -450,7 +458,8 @@ echo "Test Authorization Code Flow:"
 echo "  1. Open browser:"
 echo "     ${AUTHORIZATION_SERVER_URL}/${PUBLIC_TENANT_ID}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email&state=test-state"
 echo ""
-echo "  2. Enter phone number, receive OTP code (no-action mode: code logged to server), then enter password"
+echo "  2. Start mock-server: node config/templates/use-cases/mfa-sms/mock-server.js"
+echo "     Enter phone number, receive OTP code (mock-server generates and logs the code), then enter password"
 echo ""
 echo "  3. Exchange code for token:"
 echo "     curl -X POST ${AUTHORIZATION_SERVER_URL}/${PUBLIC_TENANT_ID}/v1/tokens \\"
