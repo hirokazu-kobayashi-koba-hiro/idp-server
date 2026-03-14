@@ -51,6 +51,7 @@ description: MFA（多要素認証）ユースケースの設定ガイド。SMS/
         "http_request": {
           "url": "{SMS送信サービスURL}",
           "method": "POST",
+          "auth_type": "oauth2",
           "oauth_authorization": {
             "type": "password",
             "token_endpoint": "{認証トークンエンドポイント}",
@@ -75,7 +76,10 @@ description: MFA（多要素認証）ユースケースの設定ガイド。SMS/
       },
       "response": {
         "body_mapping_rules": [
-          { "from": "$.execution_http_request.response_body", "to": "*" }
+          { "from": "$.execution_http_request.response_body.status", "to": "status" },
+          { "from": "$.execution_http_request.response_body.message", "to": "message", "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.message" } },
+          { "from": "$.execution_http_request.response_body.error", "to": "error", "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.error" } },
+          { "from": "$.execution_http_request.response_body.error_description", "to": "error_description", "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.error_description" } }
         ]
       }
     },
@@ -96,6 +100,7 @@ description: MFA（多要素認証）ユースケースの設定ガイド。SMS/
         "http_request": {
           "url": "{SMS検証サービスURL}",
           "method": "POST",
+          "auth_type": "oauth2",
           "oauth_authorization": {
             "type": "password",
             "token_endpoint": "{認証トークンエンドポイント}",
@@ -108,13 +113,17 @@ description: MFA（多要素認証）ユースケースの設定ガイド。SMS/
             { "static_value": "application/json", "to": "Content-Type" }
           ],
           "body_mapping_rules": [
-            { "from": "$.request_body", "to": "*" }
+            { "from": "$.request_body", "to": "*" },
+            { "from": "$.interaction.transaction_id", "to": "transaction_id" }
           ]
         }
       },
       "response": {
         "body_mapping_rules": [
-          { "from": "$.execution_http_request.response_body", "to": "*" }
+          { "from": "$.execution_http_request.response_body.status", "to": "status" },
+          { "from": "$.execution_http_request.response_body.message", "to": "message", "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.message" } },
+          { "from": "$.execution_http_request.response_body.error", "to": "error", "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.error" } },
+          { "from": "$.execution_http_request.response_body.error_description", "to": "error_description", "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.error_description" } }
         ]
       }
     }
@@ -162,6 +171,7 @@ description: MFA（多要素認証）ユースケースの設定ガイド。SMS/
         "http_request": {
           "url": "{メール送信サービスURL}",
           "method": "POST",
+          "auth_type": "oauth2",
           "oauth_authorization": {
             "type": "password",
             "token_endpoint": "{認証トークンエンドポイント}"
@@ -278,6 +288,75 @@ description: MFA（多要素認証）ユースケースの設定ガイド。SMS/
 認可サーバーの `claims_supported` に返したいクレーム一覧を設定する。
 標準的な設定は `config/templates/tenant-template.json` を参照。
 
+## 内部/外部で異なる response.body_mapping_rules
+
+> 詳細は `spec-external-integration` スキルの「認証設定の内部/外部で異なるマッピングパス」を参照。
+
+| 項目 | 内部ビルトイン (`email_authentication_challenge` 等) | 外部 HTTP (`http_request`) |
+|------|------|------|
+| response のマッピングパス | `$` (executor contents 直接) | `$.execution_http_request.response_body` |
+| 送信ボディで前のインタラクション参照 | N/A | `$.interaction.xxx` |
+| ワイルドカード `"to": "*"` | 内部データ漏洩リスク（`verification_code` 等） | 外部レスポンス丸ごと漏洩リスク |
+| 推奨 | `static_value` + 条件付きエラーマッピング | 必要フィールドだけ明示的にマッピング |
+
+## step_definitions リファレンス
+
+認証ポリシーの `step_definitions` でステップの実行順序とユーザー特定方法を定義する。
+
+| フィールド | 説明 |
+|-----------|------|
+| `method` | 認証メソッド名（`password`, `email`, `sms`, `fido2` 等） |
+| `order` | 実行順序（1が最初） |
+| `requires_user` | `true`: 前のステップで既にユーザーが特定されていることが前提。`false`: このステップ自身がユーザーを特定する |
+| `user_identity_source` | `requires_user: false` の場合に必要。どのフィールドでユーザーを特定するか（`"email"`, `"username"` 等） |
+
+> **重要**: 最初のステップ（order=1）には必ず `requires_user: false` + `user_identity_source` を設定すること。
+> `requires_user: true` を最初のステップに設定すると、まだユーザーが特定されていないため `user_not_found` エラーになる。
+
+**例: Email → Password（デフォルト）**:
+```json
+"step_definitions": [
+  { "method": "email", "order": 1, "requires_user": false, "user_identity_source": "email" },
+  { "method": "password", "order": 2, "requires_user": true }
+]
+```
+
+**例: Password → Email（順序反転）**:
+```json
+"step_definitions": [
+  { "method": "password", "order": 1, "requires_user": false, "user_identity_source": "username" },
+  { "method": "email", "order": 2, "requires_user": true }
+]
+```
+
+## conditions と success_conditions の違い
+
+> **注意**: `conditions` と `success_conditions` は構造が異なる。混同しないこと。
+
+### conditions（ポリシー適用条件）
+
+どのリクエストにこのポリシーを適用するかを決める。**専用フィールド**で指定する:
+
+```json
+// スコープ条件: transfers スコープを要求した場合のみ適用
+"conditions": { "scopes": ["transfers"] }
+
+// 無条件（全リクエストに適用）
+"conditions": {}
+```
+
+**NG**: `conditions` に `any_of` + JSONPath を使うのは誤り。それは `success_conditions` の構造。
+
+> **重要: priority とconditions の関係**
+> - `conditions.scopes` が空 `[]` のポリシーは**全リクエストにマッチ**する
+> - マッチした全ポリシーの中から **priority が最も高いもの**が選択される
+> - そのため、スコープ条件付きポリシーは、デフォルトポリシーよりも **priority を高く** 設定すること
+> - 例: `mfa_for_transfers` (priority: 10) > `password_only` (priority: 1)
+
+### success_conditions（認証成功条件）
+
+認証が成功したと判定する条件。**`any_of` + JSONPath** で指定する:
+
 ## success_conditions 構造リファレンス
 
 | 要件 | any_of構造 | 意味 |
@@ -309,6 +388,7 @@ $.password-authentication.failure_count
 | 5 | 認証ポリシーの `success_conditions` がAND条件 | 認証ポリシー | `[[条件1, 条件2]]`（AND）ではなく `[[条件1], [条件2]]`（OR）にしてしまう |
 | 6 | `failure_conditions` / `lock_conditions` 設定済み | 認証ポリシー | 未設定だと認証失敗でアカウントロックされない |
 | 7 | no-actionモードの場合、Management APIで検証コード取得可能 | 動作確認手順 | 管理者トークンのスコープに `management` が含まれていない |
+| 8 | 最初のステップに `requires_user: false` + `user_identity_source` | `step_definitions` | 最初のステップに `requires_user: true` を設定して `user_not_found` エラー |
 
 ### MFA の amr 確認
 
@@ -338,6 +418,8 @@ echo "${ID_TOKEN}" | cut -d'.' -f2 | python3 -c "import sys,base64,json; print(j
 
 - `documentation/docs/content_05_how-to/phase-2-security/01-mfa-setup.md`
 - `documentation/docs/content_05_how-to/phase-1-foundation/07-authentication-policy.md`
+- `documentation/docs/content_05_how-to/phase-2-security/03-authentication-policy-advanced.md` — `conditions`（`scopes`, `client_ids`）、`failure_conditions`、`lock_conditions`、`step_definitions` の詳細
+- `documentation/docs/content_06_developer-guide/05-configuration/authentication-policy.md` — 設定リファレンス
 - `documentation/docs/content_02_quickstart/quickstart-05-mfa.md`
 
 $ARGUMENTS

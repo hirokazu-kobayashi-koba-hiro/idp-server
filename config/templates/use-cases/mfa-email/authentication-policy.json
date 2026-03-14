@@ -17,7 +17,8 @@
         {
           "method": "password",
           "order": 2,
-          "requires_user": true
+          "requires_user": false,
+          "user_identity_source": "username"
         }
       ],
       "success_conditions": {

@@ -112,6 +112,103 @@ public class MappingRule {
 
 **使用場所**: Federation（userinfo_mapping_rules）、Identity Verification（mapping_rules）
 
+## 認証設定の内部/外部で異なるマッピングパス
+
+認証設定（authentication-config）の `execution.function` により、`response.body_mapping_rules` で参照できるパスが異なる。
+
+### 内部ビルトイン関数（`email_authentication_challenge`, `email_authentication`, `sms_authentication_challenge` 等）
+
+executor が直接返す `Map<String, Object>` がマッピング対象。
+
+```
+マッピングコンテキスト:
+  $ → executor の contents() そのもの
+```
+
+```json
+// 成功時: executor は Map.of() を返す（空）→ static_value で補完
+// エラー時: executor は {error, error_description} を返す
+"response": {
+  "body_mapping_rules": [
+    { "static_value": "sent", "to": "status", "condition": { "operation": "missing", "path": "$.error" } },
+    { "from": "$.error", "to": "error", "condition": { "operation": "exists", "path": "$.error" } },
+    { "from": "$.error_description", "to": "error_description", "condition": { "operation": "exists", "path": "$.error_description" } }
+  ]
+}
+```
+
+### 外部 HTTP リクエスト（`http_request`）
+
+> **重要**: `oauth_authorization` を使う場合、同じ `http_request` オブジェクトに `"auth_type": "oauth2"` が必須。これが無いと OAuth 認証が実行されない。
+
+executor の結果は `execution_http_request` でラップされる。
+
+```
+マッピングコンテキスト:
+  $.execution_http_request.status_code → HTTP ステータスコード
+  $.execution_http_request.response_headers → レスポンスヘッダー
+  $.execution_http_request.response_body → レスポンスボディ
+```
+
+```json
+// 必要なフィールドだけ明示的にマッピングする（ワイルドカード禁止）
+// NG: { "from": "$.execution_http_request.response_body", "to": "*" }
+//     → 外部サービスの内部データ（verification_code 等）がクライアントに漏洩するリスク
+"response": {
+  "body_mapping_rules": [
+    { "from": "$.execution_http_request.response_body.status", "to": "status" },
+    { "from": "$.execution_http_request.response_body.message", "to": "message", "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.message" } },
+    { "from": "$.execution_http_request.response_body.error", "to": "error", "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.error" } },
+    { "from": "$.execution_http_request.response_body.error_description", "to": "error_description", "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.error_description" } }
+  ]
+}
+```
+
+### 外部 HTTP リクエスト: 送信ボディのマッピングコンテキスト
+
+`execution.http_request.body_mapping_rules`（送信リクエストの組み立て）で参照できるパス:
+
+```
+$.request_body          → クライアントからのリクエストボディ
+$.request_attributes    → HTTP リクエスト属性
+$.interaction           → previous_interaction で取得した前のインタラクションの保存データ
+                          ※ $.previous_interaction ではない
+```
+
+```json
+"http_request": {
+  "body_mapping_rules": [
+    { "from": "$.request_body", "to": "*" },
+    { "from": "$.interaction.transaction_id", "to": "transaction_id" }
+  ]
+}
+```
+
+### http_request_store / previous_interaction パターン
+
+チャレンジ→検証のような2段階フローで、チャレンジの結果を検証時に引き継ぐ:
+
+```json
+// Step 1: チャレンジ — レスポンスから transaction_id を保存
+"http_request_store": {
+  "key": "email-authentication-challenge",
+  "interaction_mapping_rules": [
+    { "from": "$.response_body.transaction_id", "to": "transaction_id" }
+  ]
+}
+
+// Step 2: 検証 — 保存した transaction_id を送信ボディに注入
+"previous_interaction": { "key": "email-authentication-challenge" },
+"http_request": {
+  "body_mapping_rules": [
+    { "from": "$.request_body", "to": "*" },
+    { "from": "$.interaction.transaction_id", "to": "transaction_id" }
+  ]
+}
+```
+
+`interaction_mapping_rules` の `$.response_body` は外部サービスの生レスポンスを参照する（`$.execution_http_request` ではない）。
+
 ## HTTP Request Executor
 
 `idp-server-platform/http/` 内:
