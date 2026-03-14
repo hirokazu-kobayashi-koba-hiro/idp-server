@@ -16,7 +16,7 @@
 | セッション有効期限 | 24時間 |
 | ユーザー登録必須項目 | email, password, name |
 
-> **no-action モード**: ローカル開発では実際のSMSは送信されません。認証コードはサーバーログに出力されます。本番環境では `authentication-config-sms.json` の `execution.details.sender_type` を適切なSMS送信プロバイダに変更してください。
+> **外部API委譲（http_request）モード**: SMS送信機能はidp-serverに内蔵されていないため、デフォルトで外部APIに委譲する設定になっています。ローカル開発では付属のモックサーバー（`mock-server.js`、ポート4004）を使用します。本番環境では `SMS_SERVICE_CHALLENGE_URL` / `SMS_SERVICE_VERIFY_URL` を実際のSMS送信サービス（Twilio等）のURLに変更してください。
 
 ## ファイル構成
 
@@ -25,7 +25,8 @@
 | `onboarding-template.json` | Organization + Organizer Tenant + Admin User + Client | `POST /v1/management/onboarding` |
 | `public-tenant-template.json` | Public Tenant（パスワードポリシー + セッション設定） | `POST /v1/management/tenants` |
 | `authentication-config-initial-registration.json` | ユーザー登録スキーマ | `POST /v1/management/tenants/{id}/authentication-configurations` |
-| `authentication-config-sms.json` | SMS OTP 認証設定（no-action モード） | `POST /v1/management/tenants/{id}/authentication-configurations` |
+| `authentication-config-sms.json` | SMS OTP 認証設定（外部API委譲モード） | `POST /v1/management/tenants/{id}/authentication-configurations` |
+| `mock-server.js` | SMS送信サービスのモックサーバー（ポート4004） | - |
 | `authentication-policy.json` | パスワード + SMS OTP MFA 認証ポリシー | `POST /v1/management/tenants/{id}/authentication-policies` |
 | `public-client-template.json` | アプリケーションクライアント | `POST /v1/management/tenants/{id}/clients` |
 | `setup.sh` | 上記を順番に実行するスクリプト | - |
@@ -37,6 +38,12 @@
 - idp-serverが起動済み
 - システム管理者テナントが存在（初期セットアップ済み）
 - `.env` に管理者認証情報を設定済み
+- **モックサーバー起動済み**（または外部SMS送信サービスのURL設定済み）
+
+```bash
+# モックサーバー起動（別ターミナル）
+node config/templates/use-cases/mfa-sms/mock-server.js
+```
 
 ### 自動セットアップ
 
@@ -85,6 +92,15 @@ REFRESH_TOKEN_DURATION=604800 \
 ```
 
 ### カスタマイズ可能な環境変数
+
+#### 外部SMSサービス設定
+
+| 環境変数 | デフォルト | 説明 |
+|---------|-----------|------|
+| `SMS_SERVICE_CHALLENGE_URL` | `http://host.docker.internal:4004/sms/challenge` | SMS送信（チャレンジ）APIのURL |
+| `SMS_SERVICE_VERIFY_URL` | `http://host.docker.internal:4004/sms/verify` | SMS検証APIのURL |
+
+> デフォルトは付属のモックサーバーを使用します。本番環境ではTwilio等の実サービスURLに変更してください。
 
 #### セッション設定
 
@@ -144,7 +160,7 @@ Step 5: 認証設定作成 - 初期登録（組織レベルAPI）
 
 Step 6: 認証設定作成 - SMS OTP（組織レベルAPI）
   └─ POST /v1/management/organizations/{org-id}/tenants/{id}/authentication-configurations
-     → SMS OTP 認証（no-action モード）
+     → SMS OTP 認証（外部API委譲モード + モックサーバー）
 
 Step 7: 認証ポリシー作成（組織レベルAPI）
   └─ POST /v1/management/organizations/{org-id}/tenants/{id}/authentication-policies
