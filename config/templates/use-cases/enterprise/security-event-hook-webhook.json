@@ -1,0 +1,37 @@
+{
+  "id": "${WEBHOOK_HOOK_ID}",
+  "type": "WEBHOOK",
+  "triggers": [
+    "password_success",
+    "password_failure",
+    "sms_verification_success",
+    "sms_verification_failure",
+    "login_success",
+    "user_signup"
+  ],
+  "events": {
+    "default": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "${MOCK_API_URL}/webhook/security-events",
+          "method": "POST",
+          "auth_type": "none",
+          "body_mapping_rules": [
+            { "from": "$.type", "to": "event_type" },
+            { "from": "$.user.sub", "to": "user_id" },
+            { "from": "$.user.preferred_username", "to": "username" }
+          ],
+          "retry_configuration": {
+            "max_retries": 3,
+            "retryable_status_codes": [502, 503, 504],
+            "backoff_delays": ["PT1S", "PT2S", "PT4S"]
+          }
+        }
+      }
+    }
+  },
+  "execution_order": 100,
+  "enabled": true,
+  "store_execution_payload": true
+}

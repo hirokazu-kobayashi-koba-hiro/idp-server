@@ -64,6 +64,35 @@ libs/
 
 **注意**: 統一されたEventHookExecutorインターフェースではなく、各フックタイプごとに個別のExecutorクラスが存在します。
 
+## テナント設定の前提条件（security_event_log_config）
+
+セキュリティイベントの永続化・統計・フックを動作させるには、テナント設定の `security_event_log_config` で以下を有効にする必要がある（**デフォルトは全て `false`**）:
+
+```json
+{
+  "tenant": {
+    "security_event_log_config": {
+      "persistence_enabled": true,
+      "statistics_enabled": true,
+      "format": "structured_json",
+      "include_event_detail": true
+    }
+  }
+}
+```
+
+| フィールド | デフォルト | 説明 |
+|-----------|:---------:|------|
+| `persistence_enabled` | `false` | `true` でイベントをDBに永続化（`security_event` テーブル） |
+| `statistics_enabled` | `false` | `true` で統計データを更新（DAU/MAU/YAU、イベントカウント） |
+| `format` | - | ログ出力形式（`structured_json` 推奨） |
+| `include_event_detail` | `false` | イベント詳細（リクエストヘッダー等）を含めるか |
+| `include_user_pii` | `false` | ユーザーPII（メール等）を含めるか |
+
+**重要**: `persistence_enabled: false` の場合、Management API でセキュリティイベントを照会できない。`statistics_enabled: false` の場合、テナント統計API（`/statistics`）が常に空を返す。
+
+実装: `SecurityEventLogConfiguration.java` → `SecurityEventHandler.handle()` 内で `config.isPersistenceEnabled()` / `config.isStatisticsEnabled()` をチェック。
+
 ## データライフサイクル
 
 ```
@@ -168,24 +197,107 @@ public interface SecurityEventHook {
 
 ## フック設定
 
+Management API エンドポイント:
+```
+POST /v1/management/tenants/{tenant-id}/security-event-hook-configurations
+POST /v1/management/organizations/{org-id}/tenants/{tenant-id}/security-event-hook-configurations
+```
+
+### Webhook設定例
+
 ```json
 {
-  "hook_id": "uuid",
-  "name": "Login Success Notification",
-  "enabled": true,
-  "hook_type": "slack",
-  "trigger": {
-    "event_types": [
-      "PASSWORD_AUTH_SUCCESS",
-      "FIDO2_AUTH_SUCCESS"
-    ]
+  "id": "uuid",
+  "type": "WEBHOOK",
+  "triggers": ["password_success", "password_failure"],
+  "events": {
+    "default": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "https://webhook.example.com/events",
+          "method": "POST",
+          "auth_type": "none",
+          "body_mapping_rules": [
+            { "from": "$.type", "to": "event_type" },
+            { "from": "$.user.sub", "to": "user_id" }
+          ]
+        }
+      }
+    }
   },
-  "config": {
-    "webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz",
-    "channel": "#security-alerts"
-  }
+  "execution_order": 100,
+  "enabled": true,
+  "store_execution_payload": true
 }
 ```
+
+### Slack設定例
+
+```json
+{
+  "id": "uuid",
+  "type": "SLACK",
+  "triggers": ["password_failure", "user_self_delete"],
+  "events": {
+    "password_failure": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "https://hooks.slack.com/services/xxx/yyy/zzz",
+          "method": "POST",
+          "auth_type": "none"
+        }
+      }
+    }
+  },
+  "enabled": true
+}
+```
+
+### SSF設定例
+
+```json
+{
+  "id": "uuid",
+  "type": "SSF",
+  "triggers": ["password_success", "password_failure"],
+  "metadata": {
+    "issuer": "${AUTHORIZATION_SERVER_URL}/${TENANT_ID}",
+    "spec_version": "1_0",
+    "jwks_uri": "${AUTHORIZATION_SERVER_URL}/${TENANT_ID}/v1/ssf/jwks",
+    "jwks": "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"...\",\"y\":\"...\",\"d\":\"...\",\"use\":\"sig\",\"kid\":\"ssf-key-id\",\"alg\":\"ES256\"}]}"
+  },
+  "events": {
+    "password_success": {
+      "execution": {
+        "function": "ssf",
+        "details": {
+          "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/credential-compromise",
+          "kid": "ssf-key-id",
+          "url": "https://receiver.example.com/ssf/events"
+        }
+      }
+    }
+  },
+  "enabled": true
+}
+```
+
+**重要**: `metadata.jwks` にはSET署名用の**秘密鍵を含むJWK Set**をJSON文字列で指定。実装は `jwks_uri` からの動的取得を行わず、`jwks` フィールドから直接鍵を読み取る。`kid` は `events` 内の `details.kid` と一致させること。
+
+### 主要フィールド
+
+| フィールド | 説明 |
+|-----------|------|
+| `id` | Hook設定ID（UUID） |
+| `type` | フックタイプ（`WEBHOOK`, `SLACK`, `SSF`, `Email`等） |
+| `triggers` | トリガーとなるイベントタイプの配列 |
+| `events` | イベントタイプごとの実行設定マップ（`default`で全トリガー共通設定） |
+| `metadata.jwks` | **SSF必須** SET署名用の秘密鍵を含むJWK Set（JSON文字列） |
+| `execution_order` | 実行順序（複数Hook時） |
+| `enabled` | 有効/無効 |
+| `store_execution_payload` | 実行ペイロードを保存するか |
 
 ## パーティショニング・アーカイブ（ライフサイクル ステップ4-7）
 
@@ -268,7 +380,8 @@ cd e2e && npm test -- --grep "security.*event"
 
 ### フックが実行されない
 - `enabled: true`か確認
-- `trigger.event_types`にイベントタイプが含まれているか確認
+- `triggers`配列にイベントタイプが含まれているか確認
+- `events`マップに対応する実行設定があるか確認（`default`で全トリガー共通設定可能）
 
 ### Slack通知が届かない
 - Webhook URLが正しいか確認

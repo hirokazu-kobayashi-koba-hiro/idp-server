@@ -11,17 +11,42 @@
 - 管理者トークンを取得済み
 - 通知先サービス（Email、Slack、Webhook等）の準備
 - 組織ID（organization-id）を取得済み
+- テナントの `security_event_log_config` で必要な機能が有効化されていること（下記参照）
+
+### テナント設定（security_event_log_config）
+
+セキュリティイベントフックを動作させるには、テナント設定で以下を有効にしてください（**デフォルトは全て `false`**）:
+
+```json
+{
+  "tenant": {
+    "security_event_log_config": {
+      "persistence_enabled": true,
+      "statistics_enabled": true,
+      "format": "structured_json",
+      "include_event_detail": true
+    }
+  }
+}
+```
+
+| フィールド | デフォルト | 説明 |
+|-----------|:---------:|------|
+| `persistence_enabled` | `false` | `true` でイベントをDBに永続化。Management API でイベント照会するために必須 |
+| `statistics_enabled` | `false` | `true` で統計データ（DAU/MAU/YAU、イベントカウント）を記録。統計APIを使用する場合に必須 |
+
+> **注意**: これらの設定が `false` のままだと、フック自体は実行されますが、イベントの永続化や統計データは記録されません。
 
 ### Management API URL
 
 **組織レベルAPI**（このドキュメントでの表記）:
 ```
-POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hooks
+POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hook-configurations
 ```
 
 **注意**: システムレベルAPIとの違い
-- **組織レベル**: `POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hooks` ← このドキュメント
-- **システムレベル**: `POST /v1/management/tenants/{tenant-id}/security-event-hooks` ← 管理者のみ
+- **組織レベル**: `POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/security-event-hook-configurations` ← このドキュメント
+- **システムレベル**: `POST /v1/management/tenants/{tenant-id}/security-event-hook-configurations` ← 管理者のみ
 
 通常の運用では組織レベルAPIを使用してください。
 
@@ -60,29 +85,42 @@ idp-server: イベント検出
 ### Step 1: Email通知フックを作成
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
-    "type": "Email",
+    "id": "'$(uuidgen)'",
+    "type": "EMAIL",
     "enabled": true,
-    "events": [
+    "triggers": [
       "login_success",
-      "login_failure",
-      "password_changed"
+      "password_failure",
+      "password_change_success"
     ],
-    "email_configuration": {
-      "to": "security-team@example.com",
-      "subject": "Security Event: {event_type}",
-      "body_template": "Event: {event_type}\nUser: {user_email}\nTime: {timestamp}\nIP: {ip_address}"
+    "events": {
+      "default": {
+        "execution": {
+          "function": "http_request",
+          "http_request": {
+            "url": "https://notification-api.example.com/emails/send",
+            "method": "POST",
+            "auth_type": "none",
+            "body_mapping_rules": [
+              { "static_value": "security-team@example.com", "to": "to" },
+              { "from": "$.type", "to": "subject" },
+              { "from": "$.user.sub", "to": "user_id" }
+            ]
+          }
+        }
+      }
     }
   }'
 ```
 
 **設定内容**:
-- `type: "Email"` - Email通知
-- `events` - 通知するイベント一覧
-- `email_configuration` - メール設定（宛先、件名、本文）
+- `type: "EMAIL"` - Email通知
+- `triggers` - 通知するイベント一覧
+- `events` - 実行設定（外部Email API呼び出し）
 
 ---
 
@@ -107,38 +145,53 @@ IP: 192.168.1.100
 ### Webhookフックを作成
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
-    "type": "Webhook",
+    "id": "'$(uuidgen)'",
+    "type": "WEBHOOK",
     "enabled": true,
-    "events": [
-      "login_success",
-      "login_failure",
-      "account_locked",
+    "triggers": [
+      "password_success",
+      "password_failure",
       "identity_verification_application_approved"
     ],
-    "webhook_configuration": {
-      "url": "https://your-webhook-endpoint.example.com/security-events",
-      "method": "POST",
-      "headers": {
-        "Authorization": "Bearer your-api-key",
-        "Content-Type": "application/json"
-      },
-      "retry_configuration": {
-        "max_retries": 3,
-        "retryable_status_codes": [502, 503, 504],
-        "backoff_delays": ["PT1S", "PT2S", "PT4S"]
+    "events": {
+      "default": {
+        "execution": {
+          "function": "http_request",
+          "http_request": {
+            "url": "https://your-webhook-endpoint.example.com/security-events",
+            "method": "POST",
+            "auth_type": "oauth2",
+            "oauth_authorization": {
+              "type": "client_credentials",
+              "token_endpoint": "https://auth.example.com/oauth/token",
+              "client_authentication_type": "client_secret_post",
+              "client_id": "your-client-id",
+              "client_secret": "your-client-secret"
+            },
+            "body_mapping_rules": [
+              { "from": "$.type", "to": "event_type" },
+              { "from": "$.user.sub", "to": "user_id" }
+            ],
+            "retry_configuration": {
+              "max_retries": 3,
+              "retryable_status_codes": [502, 503, 504],
+              "backoff_delays": ["PT1S", "PT2S", "PT4S"]
+            }
+          }
+        }
       }
     }
   }'
 ```
 
 **設定内容**:
-- `url` - Webhook エンドポイント
-- `method` - HTTPメソッド（POST推奨）
-- `headers` - 認証ヘッダー等
+- `events.default.execution.http_request.url` - Webhook エンドポイント
+- `auth_type` - 認証タイプ（`oauth2`, `hmac_sha256`, `none`）
+- `body_mapping_rules` - リクエストボディのマッピング
 - `retry_configuration` - リトライ設定
 
 ---
@@ -166,40 +219,49 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 ### 認証関連イベント
 
-| イベント名 | 発生タイミング | 重要度 |
-|-----------|-------------|-------|
-| `login_success` | ログイン成功 | 🟢 低 |
-| `login_failure` | ログイン失敗 | 🟡 中 |
-| `authentication_success` | 認証成功 | 🟢 低 |
-| `authentication_failure` | 認証失敗 | 🟡 中 |
-| `mfa_success` | MFA成功 | 🟢 低 |
-| `mfa_failure` | MFA失敗 | 🟡 中 |
+| イベント名 | 発生タイミング |
+|-----------|-------------|
+| `password_success` | パスワード認証成功 |
+| `password_failure` | パスワード認証失敗 |
+| `sms_verification_success` | SMS認証成功 |
+| `sms_verification_failure` | SMS認証失敗 |
+| `email_verification_success` | メール認証成功 |
+| `fido2_authentication_success` | FIDO2認証成功 |
+| `fido2_authentication_failure` | FIDO2認証失敗 |
+| `login_success` | セッション作成 |
+| `logout` | セッション終了 |
 
-### アカウント関連イベント
+### ユーザーライフサイクルイベント
 
-| イベント名 | 発生タイミング | 重要度 |
-|-----------|-------------|-------|
-| `account_locked` | アカウントロック | 🔴 高 |
-| `account_unlocked` | アカウントロック解除 | 🟡 中 |
-| `password_changed` | パスワード変更 | 🟡 中 |
-| `user_created` | ユーザー作成 | 🟢 低 |
-| `user_deleted` | ユーザー削除 | 🔴 高 |
+| イベント名 | 発生タイミング |
+|-----------|-------------|
+| `user_signup` | ユーザー自己登録 |
+| `user_self_delete` | ユーザー自己削除 |
+| `user_create` | 管理者によるユーザー作成 |
+| `user_delete` | 管理者によるユーザー削除 |
+| `user_lock` | アカウントロック |
+| `password_change_success` | パスワード変更成功 |
+| `password_reset_success` | パスワードリセット成功 |
 
 ### 本人確認関連イベント
 
-| イベント名 | 発生タイミング | 重要度 |
-|-----------|-------------|-------|
-| `identity_verification_application_approved` | 本人確認申請承認 | 🟡 中 |
-| `identity_verification_application_rejected` | 本人確認申請却下 | 🟡 中 |
-| `identity_verification_application_cancelled` | 本人確認申請キャンセル | 🟢 低 |
+| イベント名 | 発生タイミング |
+|-----------|-------------|
+| `identity_verification_application_approved` | 本人確認申請承認 |
+| `identity_verification_application_rejected` | 本人確認申請却下 |
+| `identity_verification_application_cancelled` | 本人確認申請キャンセル |
 
-### トークン関連イベント
+### トークン・認可関連イベント
 
-| イベント名 | 発生タイミング | 重要度 |
-|-----------|-------------|-------|
-| `token_issued` | トークン発行 | 🟢 低 |
-| `token_refreshed` | トークン更新 | 🟢 低 |
-| `token_revoked` | トークン失効 | 🟡 中 |
+| イベント名 | 発生タイミング |
+|-----------|-------------|
+| `oauth_authorize` | Authorization Code発行 |
+| `issue_token_success` | アクセストークン発行成功 |
+| `issue_token_failure` | アクセストークン発行失敗 |
+| `refresh_token_success` | トークン更新成功 |
+| `revoke_token_success` | トークン失効 |
+
+**完全なリスト**: [DefaultSecurityEventType.java](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/event/DefaultSecurityEventType.java)
 
 ---
 
@@ -217,27 +279,47 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 ### SSF設定
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
+    "id": "'$(uuidgen)'",
     "type": "SSF",
     "enabled": true,
-    "events": [
-      "account_locked",
-      "password_changed",
-      "token_revoked"
+    "triggers": [
+      "user_lock",
+      "password_change_success",
+      "revoke_token_success"
     ],
-    "ssf_configuration": {
-      "transmission_endpoint": "https://receiver.example.com/ssf/events",
-      "oauth_authorization": {
-        "token_endpoint": "https://receiver.example.com/oauth/token",
-        "client_id": "your-client-id",
-        "client_secret": "your-client-secret"
+    "events": {
+      "user_lock": {
+        "execution": {
+          "function": "ssf",
+          "details": {
+            "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/account-disabled",
+            "kid": "ssf-key-id",
+            "url": "https://receiver.example.com/ssf/events",
+            "oauth_authorization": {
+              "type": "client_credentials",
+              "token_endpoint": "https://receiver.example.com/oauth/token",
+              "client_authentication_type": "client_secret_post",
+              "client_id": "your-client-id",
+              "client_secret": "your-client-secret"
+            }
+          }
+        }
       }
+    },
+    "metadata": {
+      "issuer": "${AUTHORIZATION_SERVER_URL}/${TENANT_ID}",
+      "spec_version": "1_0",
+      "jwks_uri": "${AUTHORIZATION_SERVER_URL}/${TENANT_ID}/v1/ssf/jwks",
+      "jwks": "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"...\",\"y\":\"...\",\"d\":\"...\",\"use\":\"sig\",\"kid\":\"ssf-key-id\",\"alg\":\"ES256\"}]}"
     }
   }'
 ```
+
+> **重要**: `metadata.jwks` にはSET（Security Event Token）署名用の**秘密鍵を含むJWK Set**をJSON文字列で指定します。`jwks_uri` だけでは署名鍵を取得できないため、`jwks` フィールドは必須です。`kid` は `events` 内の各 `details.kid` と一致させてください。
 
 **送信されるSSFトークン例**:
 ```json
@@ -266,53 +348,68 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 ### Email + Webhook + SSF
 
 ```bash
-# Email通知（ユーザー向け）
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
+# Webhook通知（セキュリティチーム向けSlack通知）
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
-    "type": "Email",
+    "id": "'$(uuidgen)'",
+    "type": "WEBHOOK",
     "enabled": true,
-    "events": ["login_success", "password_changed"],
-    "email_configuration": {
-      "to": "{user_email}",
-      "subject": "セキュリティ通知: {event_type}",
-      "body_template": "あなたのアカウントで以下のイベントが発生しました:\n\nイベント: {event_type}\n日時: {timestamp}\nIP: {ip_address}"
-    }
-  }'
-
-# Webhook通知（セキュリティチーム向け）
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-  -d '{
-    "type": "Webhook",
-    "enabled": true,
-    "events": ["login_failure", "account_locked", "suspicious_activity"],
-    "webhook_configuration": {
-      "url": "https://slack.example.com/webhooks/security-alerts",
-      "method": "POST"
-    }
+    "triggers": ["password_failure", "user_lock"],
+    "events": {
+      "default": {
+        "execution": {
+          "function": "http_request",
+          "http_request": {
+            "url": "https://hooks.slack.com/services/xxx/yyy/zzz",
+            "method": "POST",
+            "auth_type": "none",
+            "body_mapping_rules": [
+              { "from": "$.type", "to": "event_type" },
+              { "from": "$.user.sub", "to": "user_id" }
+            ]
+          }
+        }
+      }
+    },
+    "execution_order": 1
   }'
 
 # SSF通知（外部システム連携）
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
+curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
+    "id": "'$(uuidgen)'",
     "type": "SSF",
     "enabled": true,
-    "events": ["account_locked", "token_revoked"],
-    "ssf_configuration": {
-      "transmission_endpoint": "https://external-system.example.com/ssf/events"
-    }
+    "triggers": ["user_lock", "revoke_token_success"],
+    "events": {
+      "user_lock": {
+        "execution": {
+          "function": "ssf",
+          "details": {
+            "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/account-disabled",
+            "kid": "ssf-key-id",
+            "url": "https://external-system.example.com/ssf/events"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "issuer": "${AUTHORIZATION_SERVER_URL}/${TENANT_ID}",
+      "spec_version": "1_0",
+      "jwks_uri": "${AUTHORIZATION_SERVER_URL}/${TENANT_ID}/v1/ssf/jwks",
+      "jwks": "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"...\",\"y\":\"...\",\"d\":\"...\",\"use\":\"sig\",\"kid\":\"ssf-key-id\",\"alg\":\"ES256\"}]}"
+    },
+    "execution_order": 2
   }'
 ```
 
 **効果**:
-- ✅ ログイン成功 → ユーザーにEmail通知
-- ✅ ログイン失敗 → Slackでセキュリティチームに通知
-- ✅ アカウントロック → ユーザーにEmail、Slackに通知、外部システムにSSF送信
+- ✅ パスワード認証失敗 → Slackでセキュリティチームに通知
+- ✅ アカウントロック → Slack通知 + 外部システムにSSF送信
 
 ---
 
@@ -324,31 +421,27 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 ```json
 {
-  "type": "Email",
+  "id": "uuid",
+  "type": "EMAIL",
   "enabled": true,
-  "events": [
-    "identity_verification_application_approved",
-    "strongauth_pin_registration_success"
+  "triggers": [
+    "identity_verification_application_approved"
   ],
-  "email_configuration": {
-    "function": "email",
-    "http_request": {
-      "url": "${NOTIFICATION_SYSTEM_URL}/api/v1/emails/send",
-      "method": "POST",
-      "body_mapping_rules": [
-        {
-          "from": "$.user.email",
-          "to": "to"
-        },
-        {
-          "static_value": "本人確認申請が承認されました",
-          "to": "subject"
-        },
-        {
-          "from": "$.event.details",
-          "to": "body"
+  "events": {
+    "default": {
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "${NOTIFICATION_SYSTEM_URL}/api/v1/emails/send",
+          "method": "POST",
+          "auth_type": "none",
+          "body_mapping_rules": [
+            { "from": "$.user.email", "to": "to" },
+            { "static_value": "本人確認申請が承認されました", "to": "subject" },
+            { "from": "$.type", "to": "event_type" }
+          ]
         }
-      ]
+      }
     }
   }
 }
@@ -357,7 +450,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 **特徴**:
 - 外部通知システム連携（`${NOTIFICATION_SYSTEM_URL}`）
 - body_mapping_rulesでメール内容をカスタマイズ
-- 本人確認承認、PIN登録成功時に通知
+- 本人確認承認時に通知
 
 ---
 
@@ -367,24 +460,41 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 ```json
 {
+  "id": "uuid",
   "type": "SSF",
   "enabled": true,
-  "events": [
-    "login_success",
-    "login_failure",
-    "password_changed",
-    "account_locked",
-    "token_issued",
-    "token_revoked"
+  "triggers": [
+    "password_success",
+    "password_failure",
+    "password_change_success",
+    "user_lock",
+    "issue_token_success",
+    "revoke_token_success"
   ],
-  "ssf_configuration": {
-    "function": "ssf",
-    "transmission_endpoint": "${EXTERNAL_SSF_RECEIVER_URL}/ssf/events",
-    "oauth_authorization": {
-      "token_endpoint": "${EXTERNAL_SSF_RECEIVER_URL}/oauth/token",
-      "client_id": "${SSF_CLIENT_ID}",
-      "client_secret": "${SSF_CLIENT_SECRET}"
+  "events": {
+    "user_lock": {
+      "execution": {
+        "function": "ssf",
+        "details": {
+          "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/account-disabled",
+          "kid": "ssf-key-id",
+          "url": "${EXTERNAL_SSF_RECEIVER_URL}/ssf/events",
+          "oauth_authorization": {
+            "type": "client_credentials",
+            "token_endpoint": "${EXTERNAL_SSF_RECEIVER_URL}/oauth/token",
+            "client_authentication_type": "client_secret_post",
+            "client_id": "${SSF_CLIENT_ID}",
+            "client_secret": "${SSF_CLIENT_SECRET}"
+          }
+        }
+      }
     }
+  },
+  "metadata": {
+    "issuer": "${AUTHORIZATION_SERVER_URL}/${TENANT_ID}",
+    "spec_version": "1_0",
+    "jwks_uri": "${AUTHORIZATION_SERVER_URL}/${TENANT_ID}/v1/ssf/jwks",
+    "jwks": "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"...\",\"y\":\"...\",\"d\":\"...\",\"use\":\"sig\",\"kid\":\"ssf-key-id\",\"alg\":\"ES256\"}]}"
   }
 }
 ```
@@ -392,7 +502,8 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 **特徴**:
 - 外部SSF Receiver連携
 - OAuth 2.0認証
-- 幅広いイベントを送信（ログイン、パスワード変更、ロック等）
+- 幅広いイベントを送信（パスワード認証、変更、ロック等）
+- `metadata.jwks` に署名用秘密鍵が必須
 
 ---
 
@@ -448,7 +559,7 @@ Security Event Hook failed after 3 retries
 **解決策**:
 ```bash
 # フック設定を確認
-curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hooks" \
+curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   | jq '.[] | {type, enabled, events}'
 
@@ -464,15 +575,14 @@ curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenan
 
 1. **重要度に応じた通知先**
    ```
-   高重要度（account_locked等）:
-     → Email（ユーザー）
-     → Slack（セキュリティチーム）
+   高重要度（user_lock, user_delete等）:
+     → Webhook（セキュリティチーム）
      → SSF（外部システム）
 
-   中重要度（password_changed等）:
-     → Email（ユーザー）
+   中重要度（password_change_success, password_failure等）:
+     → Webhook通知
 
-   低重要度（login_success等）:
+   低重要度（login_success, issue_token_success等）:
      → ログのみ（通知なし、または集計後に通知）
    ```
 

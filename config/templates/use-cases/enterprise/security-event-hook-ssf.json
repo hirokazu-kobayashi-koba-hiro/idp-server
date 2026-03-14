@@ -1,0 +1,68 @@
+{
+  "id": "${SSF_HOOK_ID}",
+  "type": "SSF",
+  "execution_order": 2,
+  "triggers": [
+    "password_success",
+    "password_failure",
+    "user_self_delete"
+  ],
+  "attributes": {
+    "label": "Security Event Framework",
+    "spec": "https://openid.net/specs/openid-sharedsignals-framework-1_0.html"
+  },
+  "metadata": {
+    "issuer": "${BASE_URL}/${PUBLIC_TENANT_ID}",
+    "spec_version": "1_0",
+    "jwks_uri": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/ssf/jwks",
+    "jwks": "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"i5tDkJC_DiMQdKhwOviicAmrBJo4btluPNSBFno2UIc\",\"y\":\"3UwYdQ2i3kvvdiMbPIfavZuCnVxJJSTdwpqrdwdhwSI\",\"d\":\"rsUbA-vsEBgMUXTvQ_vHtdF3Nss51f1zyDPfU5ISJyk\",\"use\":\"sig\",\"kid\":\"ssf-key-id\",\"alg\":\"ES256\"}]}",
+    "delivery_methods_supported": [
+      "urn:ietf:rfc:8935"
+    ]
+  },
+  "events": {
+    "password_success": {
+      "execution": {
+        "function": "ssf",
+        "details": {
+          "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/credential-compromise",
+          "kid": "ssf-key-id",
+          "url": "${MOCK_API_URL}/ssf/events",
+          "security_event_token_additional_payload_mapping_rules": [
+            { "from": "$.user.preferred_username", "to": "username" }
+          ]
+        }
+      }
+    },
+    "password_failure": {
+      "execution": {
+        "function": "ssf",
+        "details": {
+          "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/credential-compromise",
+          "kid": "ssf-key-id",
+          "url": "${MOCK_API_URL}/ssf/events"
+        }
+      }
+    },
+    "user_self_delete": {
+      "execution": {
+        "function": "ssf",
+        "details": {
+          "security_event_type_identifier": "https://schemas.openid.net/secevent/risc/event-type/account-purged",
+          "kid": "ssf-key-id",
+          "url": "${MOCK_API_URL}/ssf/events",
+          "oauth_authorization": {
+            "type": "client_credentials",
+            "token_endpoint": "${MOCK_API_URL}/oauth/token",
+            "client_authentication_type": "client_secret_post",
+            "client_id": "ssf-client",
+            "client_secret": "ssf-secret",
+            "scope": "application"
+          }
+        }
+      }
+    }
+  },
+  "enabled": true,
+  "store_execution_payload": true
+}
