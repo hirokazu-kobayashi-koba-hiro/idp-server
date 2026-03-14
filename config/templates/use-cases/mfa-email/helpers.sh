@@ -154,7 +154,7 @@ get_admin_token() {
     return 1
   fi
 
-  echo "Admin token: ${ORG_ACCESS_TOKEN:0:20}..."
+  echo "Admin token: acquired"
 }
 
 # ============================================================

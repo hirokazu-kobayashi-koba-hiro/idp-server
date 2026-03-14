@@ -690,7 +690,7 @@ restore_auth_policy
 | 1 | Password → Email の順序で MFA 成功 | トークン取得成功 |
 | 2 | amr に password と email が含まれる | `show_amr` で確認 |
 
-### 5-2. 条件付き MFA（スコープベース）
+### 6-2. 条件付き MFA（スコープベース）
 
 特定のスコープが要求された場合のみ MFA を要求するポリシーを設定します。
 
@@ -812,7 +812,7 @@ restore_client
 | 2 | transfers スコープあり + パスワードのみ | 認可コード発行失敗（MFA 未達） |
 | 3 | transfers スコープあり + MFA | amr: ["password", "email"] |
 
-### 5-3. success_conditions の変更（AND → OR）
+### 6-3. success_conditions の変更（AND → OR）
 
 ```bash
 # success_conditions を変更: email OR password でログイン可能にする
