@@ -46,8 +46,19 @@
       "response": {
         "body_mapping_rules": [
           {
-            "from": "$.response_body",
-            "to": "*"
+            "static_value": "sent",
+            "to": "status",
+            "condition": { "operation": "missing", "path": "$.error" }
+          },
+          {
+            "from": "$.error",
+            "to": "error",
+            "condition": { "operation": "exists", "path": "$.error" }
+          },
+          {
+            "from": "$.error_description",
+            "to": "error_description",
+            "condition": { "operation": "exists", "path": "$.error_description" }
           }
         ]
       }
@@ -71,8 +82,19 @@
       "response": {
         "body_mapping_rules": [
           {
-            "from": "$.response_body",
-            "to": "*"
+            "static_value": "verified",
+            "to": "status",
+            "condition": { "operation": "missing", "path": "$.error" }
+          },
+          {
+            "from": "$.error",
+            "to": "error",
+            "condition": { "operation": "exists", "path": "$.error" }
+          },
+          {
+            "from": "$.error_description",
+            "to": "error_description",
+            "condition": { "operation": "exists", "path": "$.error_description" }
           }
         ]
       }
