@@ -35,6 +35,8 @@ import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConf
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
+import org.idp.server.core.openid.authentication.risk.RiskAssessmentResult;
+import org.idp.server.core.openid.authentication.risk.RiskAssessmentService;
 import org.idp.server.core.openid.federation.*;
 import org.idp.server.core.openid.federation.io.FederationCallbackRequest;
 import org.idp.server.core.openid.federation.io.FederationRequestResponse;
@@ -93,6 +95,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
   OAuthFlowEventPublisher eventPublisher;
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   OIDCSessionHandler oidcSessionHandler;
+  RiskAssessmentService riskAssessmentService;
 
   public OAuthFlowEntryService(
       OAuthProtocols oAuthProtocols,
@@ -109,7 +112,8 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
           authenticationPolicyConfigurationQueryRepository,
       OAuthFlowEventPublisher eventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
-      OIDCSessionHandler oidcSessionHandler) {
+      OIDCSessionHandler oidcSessionHandler,
+      RiskAssessmentService riskAssessmentService) {
     this.oAuthProtocols = oAuthProtocols;
     this.sessionCookieDelegate = sessionCookieDelegate;
     this.authSessionCookieDelegate = authSessionCookieDelegate;
@@ -125,6 +129,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     this.eventPublisher = eventPublisher;
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
     this.oidcSessionHandler = oidcSessionHandler;
+    this.riskAssessmentService = riskAssessmentService;
   }
 
   @Override
@@ -264,6 +269,27 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
             userQueryRepository);
 
     AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
+
+    // Risk assessment: evaluate after 1st factor success (user identified), before MFA decision
+    // Skip if already evaluated (prevents duplicate evaluation during MFA steps)
+    if (updatedTransaction.hasUser()
+        && !updatedTransaction.isComplete()
+        && !updatedTransaction.interactionResults().contains("risk_assessment")) {
+      Optional<RiskAssessmentResult> riskResultOpt =
+          riskAssessmentService.assessIfEnabled(
+              tenant, updatedTransaction.user(), requestAttributes);
+      if (riskResultOpt.isPresent()) {
+        RiskAssessmentResult riskResult = riskResultOpt.get();
+        updatedTransaction = updatedTransaction.updateWithRiskAssessment(riskResult);
+        eventPublisher.publish(
+            tenant,
+            authorizationRequest,
+            updatedTransaction.user(),
+            riskResult.securityEventType().toEventType(),
+            requestAttributes);
+      }
+    }
+
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     if (updatedTransaction.isSuccess()) {
@@ -282,6 +308,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
               existingSession,
               requestAttributes);
       oidcSessionHandler.registerSessionCookies(tenant, opSession, sessionCookieDelegate);
+
+      // Record known device on successful authentication
+      riskAssessmentService.recordDevice(tenant, updatedTransaction.user(), requestAttributes);
     }
 
     if (updatedTransaction.isLocked()) {

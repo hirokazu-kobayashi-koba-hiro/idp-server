@@ -17,6 +17,7 @@
 package org.idp.server.usecases;
 
 import java.net.http.HttpClient;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
@@ -96,6 +97,11 @@ import org.idp.server.core.openid.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.repository.*;
+import org.idp.server.core.openid.authentication.risk.RiskAssessmentService;
+import org.idp.server.core.openid.authentication.risk.repository.UserKnownDeviceCommandRepository;
+import org.idp.server.core.openid.authentication.risk.repository.UserKnownDeviceQueryRepository;
+import org.idp.server.core.openid.authentication.risk.signal.NewDeviceSignalEvaluator;
+import org.idp.server.core.openid.authentication.risk.signal.RiskSignalEvaluator;
 import org.idp.server.core.openid.discovery.*;
 import org.idp.server.core.openid.federation.FederationInteractors;
 import org.idp.server.core.openid.federation.plugin.FederationDependencyContainer;
@@ -373,6 +379,10 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(IdentityVerificationResultCommandRepository.class);
     IdentityVerificationResultQueryRepository identityVerificationResultQueryRepository =
         applicationComponentContainer.resolve(IdentityVerificationResultQueryRepository.class);
+    UserKnownDeviceCommandRepository userKnownDeviceCommandRepository =
+        applicationComponentContainer.resolve(UserKnownDeviceCommandRepository.class);
+    UserKnownDeviceQueryRepository userKnownDeviceQueryRepository =
+        applicationComponentContainer.resolve(UserKnownDeviceQueryRepository.class);
     FederationConfigurationCommandRepository federationConfigurationCommandRepository =
         applicationComponentContainer.resolve(FederationConfigurationCommandRepository.class);
     FederationConfigurationQueryRepository federationConfigurationQueryRepository =
@@ -606,6 +616,11 @@ public class IdpServerApplication {
     AuditLogWriters auditLogWriters =
         AuditLogWriterPluginLoader.load(applicationComponentContainer);
 
+    List<RiskSignalEvaluator> riskSignalEvaluators =
+        List.of(new NewDeviceSignalEvaluator(userKnownDeviceQueryRepository));
+    RiskAssessmentService riskAssessmentService =
+        new RiskAssessmentService(riskSignalEvaluators, userKnownDeviceCommandRepository);
+
     this.oAuthFlowApi =
         TenantAwareEntryServiceProxy.createProxy(
             new OAuthFlowEntryService(
@@ -622,7 +637,8 @@ public class IdpServerApplication {
                 authenticationPolicyConfigurationQueryRepository,
                 oAuthFLowEventPublisher,
                 userLifecycleEventPublisher,
-                oidcSessionHandler),
+                oidcSessionHandler,
+                riskAssessmentService),
             OAuthFlowApi.class,
             databaseTypeProvider);
 
