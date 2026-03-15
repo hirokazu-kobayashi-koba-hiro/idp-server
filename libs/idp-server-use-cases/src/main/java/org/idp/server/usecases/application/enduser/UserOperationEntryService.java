@@ -48,6 +48,7 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -56,6 +57,8 @@ import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
 public class UserOperationEntryService implements UserOperationApi {
+
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(UserOperationEntryService.class);
 
   UserQueryRepository userQueryRepository;
   UserCommandRepository userCommandRepository;
@@ -177,10 +180,21 @@ public class UserOperationEntryService implements UserOperationApi {
       userCommandRepository.update(tenant, authenticationTransaction.user());
     }
 
-    if (updatedTransaction.isLocked()) {
+    if (updatedTransaction.isLocked() && result.hasUser()) {
+      log.warn(
+          "Account lock conditions met, publishing LOCK lifecycle event: sub={}, user_name={}",
+          result.user().sub(),
+          result.user().preferredUsername());
       UserLifecycleEvent userLifecycleEvent =
           new UserLifecycleEvent(tenant, result.user(), UserLifecycleType.LOCK);
       userLifecycleEventPublisher.publish(userLifecycleEvent);
+
+      eventPublisher.publish(
+          tenant,
+          authenticationTransaction.request().requestedClientId(),
+          result.user(),
+          DefaultSecurityEventType.user_lock.toEventType(),
+          requestAttributes);
     }
 
     if (updatedTransaction.isComplete()) {

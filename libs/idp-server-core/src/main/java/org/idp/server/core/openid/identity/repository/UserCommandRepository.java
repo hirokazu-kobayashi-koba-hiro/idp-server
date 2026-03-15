@@ -31,6 +31,8 @@ public interface UserCommandRepository {
 
   void updateOrganizationAssignments(Tenant tenant, User user);
 
+  void updateStatus(Tenant tenant, User user);
+
   void updatePassword(Tenant tenant, User user);
 
   void delete(Tenant tenant, UserIdentifier userIdentifier);
