@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.userinfo;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.type.oauth.Error;
 import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
@@ -32,6 +33,11 @@ public class UserinfoErrorResponse {
   }
 
   public Map<String, Object> response() {
-    return Map.of("error", error.value(), "error_description", errorDescription.value());
+    Map<String, Object> map = new HashMap<>();
+    map.put("error", error != null ? error.value() : "server_error");
+    map.put(
+        "error_description",
+        errorDescription != null ? errorDescription.value() : "unexpected error is occurred");
+    return map;
   }
 }

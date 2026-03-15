@@ -73,8 +73,19 @@ public class UserinfoHandler {
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, oAuthToken.requestedClientId());
 
+    if (!oAuthToken.hasSubject()) {
+      throw new TokenInvalidException(
+          "token does not have a subject, userinfo endpoint requires a user-bound token");
+    }
     User user = delegate.findUser(tenant, oAuthToken.subject());
-    UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken, request.toClientCert(), user);
+    UserinfoVerifier verifier =
+        new UserinfoVerifier(
+            oAuthToken,
+            request.toClientCert(),
+            request.dpopProof(),
+            request.httpMethod(),
+            request.httpUri(),
+            user);
     verifier.verify();
 
     UserinfoClaimsCreator claimsCreator =

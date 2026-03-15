@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.userinfo;
+package org.idp.server.core.openid.oauth.dpop;
 
-import org.idp.server.core.openid.userinfo.handler.io.UserinfoRequestResponse;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.type.RequestAttributes;
+/**
+ * Exception thrown when DPoP proof JWT validation fails.
+ *
+ * <p>Maps to the "invalid_dpop_proof" error code defined in RFC 9449.
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-5">RFC 9449 Section 5</a>
+ */
+public class DPoPProofInvalidException extends RuntimeException {
 
-public interface UserinfoApi {
+  public DPoPProofInvalidException(String message) {
+    super(message);
+  }
 
-  UserinfoRequestResponse request(
-      TenantIdentifier tenantId,
-      String authorizationHeader,
-      String clientCert,
-      String dpopProof,
-      RequestAttributes requestAttributes);
+  public DPoPProofInvalidException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

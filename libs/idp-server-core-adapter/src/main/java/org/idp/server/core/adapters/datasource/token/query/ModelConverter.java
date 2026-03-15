@@ -26,6 +26,7 @@ import org.idp.server.core.openid.grant_management.grant.consent.ConsentClaims;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
+import org.idp.server.core.openid.oauth.dpop.JwkThumbprint;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.extension.CreatedAt;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
@@ -95,6 +96,7 @@ class ModelConverter {
 
     ClientCertificationThumbprint thumbprint =
         new ClientCertificationThumbprint(stringMap.get("client_certification_thumbprint"));
+    JwkThumbprint jwkThumbprint = new JwkThumbprint(stringMap.get("jwk_thumbprint"));
     ExpiresIn expiresIn = new ExpiresIn(stringMap.get("expires_in"));
     ExpiresAt accessTokenExpiresAt = new ExpiresAt(stringMap.get("access_token_expires_at"));
     CreatedAt accessTokenCreatedAt = new CreatedAt(stringMap.get("access_token_created_at"));
@@ -109,6 +111,7 @@ class ModelConverter {
             accessTokenEntity,
             authorizationGrant,
             thumbprint,
+            jwkThumbprint,
             accessTokenCustomClaims,
             accessTokenCreatedAt,
             expiresIn,

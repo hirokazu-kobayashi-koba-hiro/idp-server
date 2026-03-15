@@ -23,6 +23,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
+import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
 import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
 import org.idp.server.core.openid.oauth.type.ciba.BackchannelTokenDeliveryMode;
@@ -38,6 +39,9 @@ public class TokenRequestContext implements BackchannelRequestContext {
   Tenant tenant;
   ClientSecretBasic clientSecretBasic;
   ClientCert clientCert;
+  DPoPProof dpopProof;
+  String httpMethod;
+  String httpUri;
   TokenRequestParameters parameters;
   CustomProperties customProperties;
   PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
@@ -50,6 +54,9 @@ public class TokenRequestContext implements BackchannelRequestContext {
       Tenant tenant,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
+      DPoPProof dpopProof,
+      String httpMethod,
+      String httpUri,
       TokenRequestParameters parameters,
       CustomProperties customProperties,
       PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
@@ -60,6 +67,9 @@ public class TokenRequestContext implements BackchannelRequestContext {
     this.tenant = tenant;
     this.clientSecretBasic = clientSecretBasic;
     this.clientCert = clientCert;
+    this.dpopProof = dpopProof;
+    this.httpMethod = httpMethod;
+    this.httpUri = httpUri;
     this.parameters = parameters;
     this.customProperties = customProperties;
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
@@ -264,5 +274,21 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public boolean isSupportedJwtBearerGrant() {
     return Objects.nonNull(jwtBearerUserFindingDelegate);
+  }
+
+  public DPoPProof dpopProof() {
+    return dpopProof;
+  }
+
+  public String httpMethod() {
+    return httpMethod != null ? httpMethod : "POST";
+  }
+
+  public String httpUri() {
+    return httpUri != null ? httpUri : "";
+  }
+
+  public boolean hasDPoPProof() {
+    return dpopProof != null && dpopProof.exists();
   }
 }

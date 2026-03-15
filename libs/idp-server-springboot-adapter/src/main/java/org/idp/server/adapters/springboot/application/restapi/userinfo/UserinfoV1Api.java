@@ -44,13 +44,15 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
   public ResponseEntity<?> get(
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
+      @RequestHeader(required = false, value = "DPoP") String dpopProof,
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserinfoRequestResponse response =
-        userinfoApi.request(tenantId, authorizationHeader, clientCert, requestAttributes);
+        userinfoApi.request(
+            tenantId, authorizationHeader, clientCert, dpopProof, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");
@@ -63,13 +65,15 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
   public ResponseEntity<?> post(
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
+      @RequestHeader(required = false, value = "DPoP") String dpopProof,
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserinfoRequestResponse response =
-        userinfoApi.request(tenantId, authorizationHeader, clientCert, requestAttributes);
+        userinfoApi.request(
+            tenantId, authorizationHeader, clientCert, dpopProof, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");

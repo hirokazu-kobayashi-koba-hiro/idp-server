@@ -63,11 +63,15 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
       TenantIdentifier tenantIdentifier,
       String authorizationHeader,
       String clientCert,
+      String dpopProof,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
     userinfoRequest.setClientCert(clientCert);
+    userinfoRequest.setDPoPProof(dpopProof);
+    userinfoRequest.setHttpMethod(requestAttributes.optValueAsString("action", "GET"));
+    userinfoRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
 
     UserinfoProtocol userinfoProtocol = userinfoProtocols.get(tenant.authorizationProvider());
 
