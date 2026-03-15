@@ -4,8 +4,6 @@
   "triggers": [
     "password_success",
     "password_failure",
-    "sms_verification_success",
-    "sms_verification_failure",
     "login_success",
     "user_signup"
   ],
