@@ -1,6 +1,6 @@
 // CIBA + External Password Auth Mock Server
 //
-// 外部パスワード認証 + CIBA デバイス通知をローカルで検証するためのモックサーバー。
+// 外部パスワード認証 + CIBA デバイス通知 + FIDO-UAF をローカルで検証するためのモックサーバー。
 //
 // 起動:
 //   node mock-server.js
@@ -18,6 +18,11 @@
 //
 //   GET  /ciba/notifications - 受信した CIBA 通知一覧を返す
 //   DELETE /ciba/notifications - 受信した CIBA 通知をクリア
+//
+//   POST /fido-uaf/registration-challenge - FIDO-UAF 登録チャレンジ生成
+//   POST /fido-uaf/registration           - FIDO-UAF 登録完了
+//   POST /fido-uaf/authentication-challenge - FIDO-UAF 認証チャレンジ生成
+//   POST /fido-uaf/authentication          - FIDO-UAF 認証完了
 //
 // テスト例:
 //   curl -s -X POST http://localhost:4002/auth/password \
@@ -131,6 +136,75 @@ function handleDeleteCibaNotifications(res) {
   res.end();
 }
 
+// --- FIDO-UAF Mock Endpoints ---
+
+// POST /fido-uaf/registration-challenge
+function handleFidoUafRegistrationChallenge(body, res) {
+  try {
+    const challenge = crypto.randomBytes(32).toString("base64url");
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        challenge: challenge,
+        device_id: crypto.randomUUID(),
+        status: "ok",
+      })
+    );
+  } catch (e) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "invalid_request" }));
+  }
+}
+
+// POST /fido-uaf/registration
+function handleFidoUafRegistration(body, res) {
+  try {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        status: "ok",
+        registered: true,
+      })
+    );
+  } catch (e) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "invalid_request" }));
+  }
+}
+
+// POST /fido-uaf/authentication-challenge
+function handleFidoUafAuthenticationChallenge(body, res) {
+  try {
+    const challenge = crypto.randomBytes(32).toString("base64url");
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        challenge: challenge,
+        status: "ok",
+      })
+    );
+  } catch (e) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "invalid_request" }));
+  }
+}
+
+// POST /fido-uaf/authentication
+function handleFidoUafAuthentication(body, res) {
+  try {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        status: "ok",
+        authenticated: true,
+      })
+    );
+  } catch (e) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "invalid_request" }));
+  }
+}
+
 // --- request/response logging ---
 function logRequest(req, body) {
   const timestamp = new Date().toISOString();
@@ -177,6 +251,14 @@ const server = http.createServer((req, res) => {
         handleAuthPassword(body, logged);
       } else if (req.url === "/ciba/notification") {
         handleCibaNotification(body, req, logged);
+      } else if (req.url === "/fido-uaf/registration-challenge") {
+        handleFidoUafRegistrationChallenge(body, logged);
+      } else if (req.url === "/fido-uaf/registration") {
+        handleFidoUafRegistration(body, logged);
+      } else if (req.url === "/fido-uaf/authentication-challenge") {
+        handleFidoUafAuthenticationChallenge(body, logged);
+      } else if (req.url === "/fido-uaf/authentication") {
+        handleFidoUafAuthentication(body, logged);
       } else {
         logged.writeHead(404);
         logged.end();
@@ -206,7 +288,7 @@ const server = http.createServer((req, res) => {
   }
 });
 
-const PORT = process.env.MOCK_PORT || 4007;
+const PORT = process.env.MOCK_PORT || 4002;
 server.listen(PORT, () =>
   console.log(
     `CIBA + External Auth mock server running on http://localhost:${PORT}`

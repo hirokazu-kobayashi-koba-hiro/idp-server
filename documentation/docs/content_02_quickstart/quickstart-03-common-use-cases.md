@@ -26,6 +26,7 @@ graph TB
         D[身元確認/eKYC]
         G[CIBA]
         H[金融グレード FAPI]
+        I[既存IDサービス移行]
     end
 
     A -->|推奨導入順序| B
@@ -37,6 +38,8 @@ graph TB
     C -->|推奨導入順序| G
     D -->|推奨導入順序| H
     G -->|推奨導入順序| H
+    F -->|推奨導入順序| I
+    G -->|推奨導入順序| I
 
     style A fill:#e1f5ff
     style A2 fill:#e1f5ff
@@ -47,6 +50,7 @@ graph TB
     style D fill:#ffe1e1
     style G fill:#ffe1e1
     style H fill:#f5e1ff
+    style I fill:#ffe1e1
 ```
 
 **矢印の意味**: 推奨される導入順序を表しています。
@@ -92,6 +96,7 @@ Phase 4: エンタープライズ
 | **[サードパーティ連携](./quickstart-08-third-party-integration.md)** | `third-party` | 第三者アプリへのOAuth 2.0連携 |
 | **[外部パスワード認証委譲](./quickstart-10-external-password-auth.md)** | `external-password-auth` | 既存認証基盤（LDAP、社内API等）にOIDCを追加 |
 | **[CIBA](./quickstart-11-ciba.md)** | `ciba` | モバイル承認（PCでログイン開始、スマホで生体認証） |
+| **[既存IDサービスからの移行](./quickstart-13-id-service-migration.md)** | `id-service-migration` | 既存認証基盤の活用 + CIBA モバイル承認（binding_message / FIDO-UAF） |
 | **[金融グレード（FAPI）](./quickstart-12-financial-grade.md)** | `financial-grade` | 不正送金・なりすまし・改ざん防止、金融規制準拠 |
 
 ---
@@ -158,6 +163,7 @@ cat VERIFY.md
 | 外部アプリにAPI提供したい | `third-party` |
 | 既存認証基盤を活かしたい | `external-password-auth` |
 | モバイル承認が必要 | `ciba` |
+| 既存IDサービスから移行したい | `id-service-migration` |
 | 金融グレードが必要 | `financial-grade` |
 
 ### 業種別
@@ -169,7 +175,8 @@ cat VERIFY.md
 | 金融サービス | `financial-grade` |
 | 決済サービス | `passwordless-fido2` + `ciba` + `ekyc` |
 | APIプラットフォーム | `third-party` |
-| 既存システム移行 | `external-password-auth` |
+| 既存システム移行（基本） | `external-password-auth` |
+| 既存システム移行（モバイル承認） | `id-service-migration` |
 
 ---
 
@@ -204,6 +211,7 @@ cat VERIFY.md
 |------|------|
 | **移行フェーズ** | 外部パスワード認証委譲（既存LDAPやAPIをそのまま利用） |
 | **セキュリティ強化** | MFA追加（SMS/メール） |
+| **モバイル承認** | CIBA + 外部パスワード認証（既存基盤 + バインディングメッセージ / FIDO-UAF） |
 
 ### 決済サービス
 

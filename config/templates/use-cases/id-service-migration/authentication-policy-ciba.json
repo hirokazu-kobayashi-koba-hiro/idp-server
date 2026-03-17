@@ -3,15 +3,23 @@
   "enabled": true,
   "policies": [
     {
-      "description": "ciba_binding_message_verification",
+      "description": "ciba_binding_message_or_fido_uaf",
       "priority": 1,
       "conditions": {},
-      "available_methods": [],
+      "available_methods": ["fido-uaf"],
       "success_conditions": {
         "any_of": [
           [
             {
               "path": "$.authentication-device-binding-message.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.fido-uaf-authentication.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1

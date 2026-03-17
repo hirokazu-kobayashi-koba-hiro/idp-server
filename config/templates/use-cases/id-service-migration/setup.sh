@@ -114,6 +114,9 @@ ID_TOKEN_SIGNING_KEY_ID="${ID_TOKEN_SIGNING_KEY_ID:-signing_key_1}"
 EXTERNAL_AUTH_URL="${EXTERNAL_AUTH_URL:-http://host.docker.internal:4002/auth/password}"
 EXTERNAL_PROVIDER_ID="${EXTERNAL_PROVIDER_ID:-external-auth}"
 
+# FIDO-UAF mock server settings
+FIDO_UAF_SERVER_URL="${FIDO_UAF_SERVER_URL:-http://host.docker.internal:4002}"
+
 # Customizable policy values
 SESSION_TIMEOUT_SECONDS="${SESSION_TIMEOUT_SECONDS:-86400}"
 ACCESS_TOKEN_DURATION="${ACCESS_TOKEN_DURATION:-3600}"
@@ -294,6 +297,38 @@ else
 fi
 echo ""
 
+# --- Step 5b: Create authentication configuration (FIDO-UAF) ---
+echo "Step 5b: Creating authentication configuration (FIDO-UAF)..."
+
+FIDO_UAF_CONFIG_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+FIDO_UAF_CONFIG_JSON=$(substitute_template "${SCRIPT_DIR}/authentication-config-fido-uaf.json" \
+  "FIDO_UAF_SERVER_URL" "${FIDO_UAF_SERVER_URL}")
+
+FIDO_UAF_CONFIG_JSON=$(echo "${FIDO_UAF_CONFIG_JSON}" | jq --arg id "${FIDO_UAF_CONFIG_ID}" '. + {id: $id}')
+
+echo "${FIDO_UAF_CONFIG_JSON}" | jq '.' > "${OUTPUT_DIR}/authentication-config-fido-uaf.json"
+echo "  Saved: ${OUTPUT_DIR}/authentication-config-fido-uaf.json"
+
+FIDO_UAF_CONFIG_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/authentication-configurations" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/authentication-config-fido-uaf.json")
+
+HTTP_CODE=$(echo "${FIDO_UAF_CONFIG_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${FIDO_UAF_CONFIG_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  FIDO-UAF authentication configuration created: ${FIDO_UAF_CONFIG_ID}"
+  echo "  FIDO-UAF URL: ${FIDO_UAF_SERVER_URL}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
 # --- Step 6a: Create authentication policy (OAuth - external password) ---
 echo "Step 6a: Creating authentication policy (OAuth - external password)..."
 
@@ -389,8 +424,9 @@ echo ""
 echo "Settings applied:"
 echo "  Authentication:   External password (${EXTERNAL_AUTH_URL})"
 echo "  Provider ID:      ${EXTERNAL_PROVIDER_ID}"
+echo "  FIDO-UAF:         ${FIDO_UAF_SERVER_URL} (mock)"
 echo "  Device mapping:   authentication_devices via user_mapping_rules"
-echo "  CIBA mode:        no-action (notification only, no device auth)"
+echo "  CIBA mode:        binding_message or FIDO-UAF authentication"
 echo "  Session:          ${SESSION_TIMEOUT_SECONDS}s timeout"
 echo "  Token duration:   AT=${ACCESS_TOKEN_DURATION}s, IDT=${ID_TOKEN_DURATION}s, RT=${REFRESH_TOKEN_DURATION}s"
 echo "  CIBA config:      expires=${CIBA_REQUEST_EXPIRES_IN}s, interval=${CIBA_POLLING_INTERVAL}s"
@@ -419,11 +455,12 @@ echo "Generated JSON files:"
 echo "  ${OUTPUT_DIR}/onboarding.json"
 echo "  ${OUTPUT_DIR}/public-tenant.json"
 echo "  ${OUTPUT_DIR}/authentication-config-password.json"
+echo "  ${OUTPUT_DIR}/authentication-config-fido-uaf.json"
 echo "  ${OUTPUT_DIR}/authentication-policy-oauth.json"
 echo "  ${OUTPUT_DIR}/authentication-policy-ciba.json"
 echo "  ${OUTPUT_DIR}/public-client.json"
 echo ""
 echo "Verification:"
 echo "  1. Ensure mock server is running: node mock-server.js"
-echo "  2. Run: cd config/templates/use-cases/ciba_external-password-auth && source helpers.sh && get_admin_token"
+echo "  2. Run: cd config/templates/use-cases/id-service-migration && source helpers.sh && get_admin_token"
 echo "  3. Run: source verify.sh"
