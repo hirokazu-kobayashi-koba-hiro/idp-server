@@ -318,6 +318,93 @@ fi
 echo ""
 
 # ============================================================
+# Phase 4: CIBA with FIDO-UAF Authentication
+# ============================================================
+echo "--- Phase 4: CIBA with FIDO-UAF Authentication ---"
+echo ""
+
+BINDING_MESSAGE_F="UAF-$(date +%s | tail -c 5)"
+
+# --- Step 16: CIBA request for FIDO-UAF flow ---
+echo "Step 16: CIBA request for FIDO-UAF flow..."
+ciba_request "email:${TEST_EMAIL},idp:${EXTERNAL_PROVIDER_ID}" "${BINDING_MESSAGE_F}"
+
+if [ -n "${AUTH_REQ_ID}" ] && [ "${AUTH_REQ_ID}" != "null" ] && [ "${AUTH_REQ_ID}" != "" ]; then
+  pass "CIBA request accepted (auth_req_id: ${AUTH_REQ_ID:0:20}...)"
+else
+  fail "CIBA request failed"
+fi
+echo ""
+
+# --- Step 17: CIBA poll (before FIDO-UAF - expect authorization_pending) ---
+echo "Step 17: CIBA token poll (before FIDO-UAF, expect authorization_pending)..."
+ciba_poll
+
+if [ "${CIBA_ERROR}" = "authorization_pending" ]; then
+  pass "CIBA poll returns authorization_pending (expected)"
+else
+  fail "CIBA poll unexpected result (expected authorization_pending, got: ${CIBA_ERROR:-token})"
+fi
+echo ""
+
+# --- Step 18: Get authentication transaction ---
+echo "Step 18: Get authentication transaction for FIDO-UAF..."
+TX_RESPONSE_F=$(curl -s -w "\n%{http_code}" \
+  "${TENANT_BASE}/v1/authentication-devices/${DEVICE_ID}/authentications?attributes.auth_req_id=${AUTH_REQ_ID}")
+
+TX_HTTP_F=$(echo "${TX_RESPONSE_F}" | tail -n1)
+TX_BODY_F=$(echo "${TX_RESPONSE_F}" | sed '$d')
+
+TRANSACTION_ID_F=$(echo "${TX_BODY_F}" | jq -r '.list[0].id // empty')
+
+if [ -n "${TRANSACTION_ID_F}" ] && [ "${TRANSACTION_ID_F}" != "null" ]; then
+  pass "Authentication transaction found (id: ${TRANSACTION_ID_F:0:20}...)"
+else
+  fail "Authentication transaction not found"
+  echo "  HTTP ${TX_HTTP_F}"
+  echo "  ${TX_BODY_F}" | jq '.' 2>/dev/null || echo "  ${TX_BODY_F}"
+fi
+echo ""
+
+# --- Step 19: FIDO-UAF authentication challenge ---
+echo "Step 19: FIDO-UAF authentication challenge..."
+fido_uaf_authentication_challenge "${TRANSACTION_ID_F}"
+
+if [ -n "${FIDO_CHALLENGE}" ] && [ "${FIDO_CHALLENGE}" != "null" ]; then
+  pass "FIDO-UAF authentication challenge obtained"
+else
+  fail "FIDO-UAF authentication challenge failed"
+fi
+echo ""
+
+# --- Step 20: FIDO-UAF authentication ---
+echo "Step 20: FIDO-UAF authentication..."
+fido_uaf_authentication "${TRANSACTION_ID_F}" "${FIDO_CHALLENGE}"
+
+echo ""
+
+# --- Step 21: CIBA poll (after FIDO-UAF - expect token) ---
+echo "Step 21: CIBA token poll (after FIDO-UAF authentication)..."
+ciba_poll
+
+if [ -n "${CIBA_ACCESS_TOKEN}" ] && [ "${CIBA_ACCESS_TOKEN}" != "null" ] && [ "${CIBA_ACCESS_TOKEN}" != "" ]; then
+  pass "CIBA token obtained via FIDO-UAF"
+
+  CIBA_USERINFO_F=$(get_userinfo "${CIBA_ACCESS_TOKEN}")
+  CIBA_SUB_F=$(echo "${CIBA_USERINFO_F}" | jq -r '.sub // empty')
+  if [ "${CIBA_SUB_F}" = "${USER_SUB}" ]; then
+    pass "CIBA token UserInfo matches original user (sub: ${CIBA_SUB_F})"
+  else
+    fail "CIBA UserInfo sub mismatch (${CIBA_SUB_F} vs ${USER_SUB})"
+  fi
+elif [ "${CIBA_ERROR}" = "authorization_pending" ]; then
+  fail "CIBA still authorization_pending after FIDO-UAF authentication"
+else
+  fail "CIBA poll failed"
+fi
+echo ""
+
+# ============================================================
 # Summary
 # ============================================================
 echo "=========================================="
@@ -331,6 +418,7 @@ if [ ${FAIL} -gt 0 ]; then
   echo "Some tests failed. Key areas to check:"
   echo "  - authentication_devices mapping via ObjectCompositor"
   echo "  - CIBA binding_message verification flow"
+  echo "  - CIBA FIDO-UAF authentication flow"
   echo "  - authentication_device_rule.authentication_type setting"
   echo "  - login_hint format (email: or device: with ,idp: suffix)"
   exit 1

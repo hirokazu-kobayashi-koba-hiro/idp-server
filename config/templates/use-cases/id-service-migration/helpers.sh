@@ -2,7 +2,7 @@
 # CIBA + External Password Auth - Helper Functions
 #
 # Usage:
-#   cd config/templates/use-cases/ciba_external-password-auth
+#   cd config/templates/use-cases/id-service-migration
 #   source helpers.sh
 #   get_admin_token
 
@@ -208,6 +208,54 @@ get_userinfo() {
   local TOKEN="${1:-${USER_ACCESS_TOKEN}}"
   curl -s "${TENANT_BASE}/v1/userinfo" \
     -H "Authorization: Bearer ${TOKEN}" | jq '.'
+}
+
+# --- FIDO-UAF helpers ---
+fido_uaf_authentication_challenge() {
+  local TRANSACTION_ID="$1"
+  local RESPONSE
+  RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+    "${TENANT_BASE}/v1/authentications/${TRANSACTION_ID}/fido-uaf-authentication-challenge" \
+    -H "Content-Type: application/json" \
+    -d '{}')
+
+  local HTTP_CODE
+  HTTP_CODE=$(echo "${RESPONSE}" | tail -n1)
+  local BODY
+  BODY=$(echo "${RESPONSE}" | sed '$d')
+
+  FIDO_CHALLENGE=$(echo "${BODY}" | jq -r '.challenge // empty')
+
+  echo "  FIDO-UAF auth challenge: HTTP ${HTTP_CODE}"
+  if [ -n "${FIDO_CHALLENGE}" ]; then
+    echo "  challenge: ${FIDO_CHALLENGE:0:20}..."
+  else
+    echo "  ${BODY}" | jq '.' 2>/dev/null || echo "  ${BODY}"
+  fi
+}
+
+fido_uaf_authentication() {
+  local TRANSACTION_ID="$1"
+  local CHALLENGE="${2:-mock-challenge}"
+  local RESPONSE
+  RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+    "${TENANT_BASE}/v1/authentications/${TRANSACTION_ID}/fido-uaf-authentication" \
+    -H "Content-Type: application/json" \
+    -d "{\"challenge\": \"${CHALLENGE}\", \"response\": \"mock-response\"}")
+
+  local HTTP_CODE
+  HTTP_CODE=$(echo "${RESPONSE}" | tail -n1)
+  local BODY
+  BODY=$(echo "${RESPONSE}" | sed '$d')
+
+  FIDO_AUTH_STATUS=$(echo "${BODY}" | jq -r '.status // .authenticated // empty')
+
+  echo "  FIDO-UAF authentication: HTTP ${HTTP_CODE}"
+  if [ "${HTTP_CODE}" = "200" ]; then
+    echo "  status: ok"
+  else
+    echo "  ${BODY}" | jq '.' 2>/dev/null || echo "  ${BODY}"
+  fi
 }
 
 # --- JWT decode ---
