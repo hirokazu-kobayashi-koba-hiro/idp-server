@@ -115,6 +115,10 @@ public enum DefaultAdminPermission {
       "idp:identity-verification-application:delete",
       "Admin Delete identity-verification-application"),
 
+  IDENTITY_VERIFICATION_RESULT_READ(
+      "idp:identity-verification-result:read",
+      "Admin Read identity-verification-result information"),
+
   FEDERATION_CONFIG_CREATE("idp:federation-config:create", "Admin Create a federation-config"),
   FEDERATION_CONFIG_READ("idp:federation-config:read", "Admin Read federation-config information"),
   FEDERATION_CONFIG_UPDATE("idp:federation-config:update", "Admin Update federation-config"),
