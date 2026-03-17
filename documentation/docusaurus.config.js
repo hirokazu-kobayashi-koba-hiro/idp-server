@@ -130,6 +130,10 @@ const config = {
             route: '/docs/content_07_reference/cp-identity-verification-application-api-ja/',
           },
           {
+            spec: 'openapi/swagger-cp-identity-verification-result-ja.yaml',
+            route: '/docs/content_07_reference/cp-identity-verification-result-api-ja/',
+          },
+          {
             spec: 'openapi/swagger-cp-federation-ja.yaml',
             route: '/docs/content_07_reference/cp-federation-api-ja/',
           },
