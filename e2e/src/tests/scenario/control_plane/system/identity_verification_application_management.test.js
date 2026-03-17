@@ -64,7 +64,7 @@ describe("identity verification application management api", () => {
       const accessToken = await getAccessToken();
 
       const listResponse = await get({
-        url: `${baseUrl}?status=completed&limit=10`,
+        url: `${baseUrl}?status=approved&limit=10`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -75,7 +75,7 @@ describe("identity verification application management api", () => {
 
       if (listResponse.data.list.length > 0) {
         listResponse.data.list.forEach(app => {
-          expect(app.status).toBe("completed");
+          expect(app.status).toBe("approved");
         });
       }
     });
@@ -122,7 +122,7 @@ describe("identity verification application management api", () => {
       const fromDate = oneYearAgo.toISOString().substring(0, 19).replace("T", " ");
 
       const listResponse = await get({
-        url: `${baseUrl}?from=${encodeURIComponent(fromDate)}&status=completed&limit=5&offset=0`,
+        url: `${baseUrl}?from=${encodeURIComponent(fromDate)}&status=approved&limit=5&offset=0`,
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
