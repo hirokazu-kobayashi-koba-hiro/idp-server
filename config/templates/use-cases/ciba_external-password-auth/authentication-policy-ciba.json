@@ -1,0 +1,24 @@
+{
+  "flow": "ciba",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "ciba_binding_message_verification",
+      "priority": 1,
+      "conditions": {},
+      "available_methods": [],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.authentication-device-binding-message.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

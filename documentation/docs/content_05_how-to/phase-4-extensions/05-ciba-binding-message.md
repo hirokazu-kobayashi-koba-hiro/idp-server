@@ -84,7 +84,7 @@ sequenceDiagram
 認証デバイスからバインディングメッセージの一致を検証するAPIです。
 
 ```
-POST {tenant-id}/v1/authentications/{flow-type}/{transaction-id}/interactions/authentication-device-binding-message
+POST {tenant-id}/v1/authentications/{transaction-id}/authentication-device-binding-message
 Content-Type: application/json
 
 {
@@ -97,7 +97,6 @@ Content-Type: application/json
 | パラメータ | 型 | 説明 |
 |-----------|---|------|
 | `tenant-id` | `string` | テナント識別子 |
-| `flow-type` | `string` | 認証フロー種別（`ciba`等） |
 | `transaction-id` | `string` | 認証トランザクションID（UUID） |
 
 #### リクエストボディ
@@ -185,7 +184,7 @@ const userInput = await getUserInput(); // ユーザーが入力した値
 
 // 4. バインディングメッセージ検証API呼び出し
 const verifyResponse = await fetch(
-  `${baseUrl}/${tenantId}/v1/authentications/${transaction.flow}/${transaction.id}/interactions/authentication-device-binding-message`,
+  `${baseUrl}/${tenantId}/v1/authentications/${transaction.id}/authentication-device-binding-message`,
   {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
