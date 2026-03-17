@@ -180,6 +180,105 @@ export const validateAuthenticationConfig = (config) => {
 };
 
 /**
+ * Identity Verification Application schema validation
+ * Based on OpenAPI spec: swagger-cp-identity-verification-application-ja.yaml
+ */
+export const validateIdentityVerificationApplication = (application) => {
+  const errors = [];
+
+  const validStatuses = [
+    "requested",
+    "applying",
+    "applied",
+    "examination_processing",
+    "approved",
+    "rejected",
+    "expired",
+    "cancelled",
+  ];
+
+  // Required fields
+  if (!application.id || !isUUID(application.id)) {
+    errors.push("id must be a valid UUID");
+  }
+
+  if (!application.type || typeof application.type !== "string") {
+    errors.push("type must be a string");
+  }
+
+  if (!application.tenant_id || typeof application.tenant_id !== "string") {
+    errors.push("tenant_id must be a string");
+  }
+
+  if (!application.client_id || typeof application.client_id !== "string") {
+    errors.push("client_id must be a string");
+  }
+
+  if (!application.user_id || typeof application.user_id !== "string") {
+    errors.push("user_id must be a string");
+  }
+
+  if (!application.status || !validStatuses.includes(application.status)) {
+    errors.push(
+      `status must be one of: ${validStatuses.join(", ")}, got: ${application.status}`
+    );
+  }
+
+  if (
+    !application.requested_at ||
+    !isISODateTime(application.requested_at)
+  ) {
+    errors.push("requested_at must be a valid ISO datetime");
+  }
+
+  // Optional object fields
+  if (
+    application.application_details &&
+    typeof application.application_details !== "object"
+  ) {
+    errors.push("application_details must be an object when present");
+  }
+
+  if (application.processes && typeof application.processes !== "object") {
+    errors.push("processes must be an object when present");
+  }
+
+  // Validate process results structure
+  if (application.processes && typeof application.processes === "object") {
+    for (const [processName, result] of Object.entries(
+      application.processes
+    )) {
+      if (typeof result !== "object" || result === null) {
+        errors.push(`processes.${processName} must be an object`);
+        continue;
+      }
+      if (typeof result.call_count !== "number") {
+        errors.push(`processes.${processName}.call_count must be a number`);
+      }
+      if (typeof result.success_count !== "number") {
+        errors.push(
+          `processes.${processName}.success_count must be a number`
+        );
+      }
+      if (typeof result.failure_count !== "number") {
+        errors.push(
+          `processes.${processName}.failure_count must be a number`
+        );
+      }
+    }
+  }
+
+  if (application.attributes && typeof application.attributes !== "object") {
+    errors.push("attributes must be an object when present");
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+};
+
+/**
  * List response schema validation
  */
 export const validateListResponse = (response, itemValidator) => {

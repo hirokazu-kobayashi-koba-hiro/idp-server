@@ -126,4 +126,22 @@ public class MysqlExecutor implements IdentityVerificationApplicationCommandSqlE
 
     sqlExecutor.execute(sqlTemplate, params);
   }
+
+  @Override
+  public void delete(Tenant tenant, IdentityVerificationApplicationIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+            DELETE FROM identity_verification_application
+            WHERE tenant_id = ?
+            AND id = ?;
+            """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifier().value());
+    params.add(identifier.value());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
 }
