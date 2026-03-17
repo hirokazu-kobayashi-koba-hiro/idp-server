@@ -61,7 +61,7 @@ describe("Organization Identity Verification Application Management API Test", (
 
   test("should support filtering by status", async () => {
     const listResponse = await get({
-      url: `${baseUrl}?status=completed&limit=10`,
+      url: `${baseUrl}?status=approved&limit=10`,
       headers: {
         Authorization: authHeader,
       },
@@ -73,7 +73,7 @@ describe("Organization Identity Verification Application Management API Test", (
 
     if (listResponse.data.list.length > 0) {
       listResponse.data.list.forEach(app => {
-        expect(app.status).toBe("completed");
+        expect(app.status).toBe("approved");
       });
     }
   });
@@ -116,7 +116,7 @@ describe("Organization Identity Verification Application Management API Test", (
     const fromDate = oneYearAgo.toISOString().substring(0, 19).replace("T", " ");
 
     const listResponse = await get({
-      url: `${baseUrl}?from=${encodeURIComponent(fromDate)}&status=completed&limit=5&offset=0`,
+      url: `${baseUrl}?from=${encodeURIComponent(fromDate)}&status=approved&limit=5&offset=0`,
       headers: {
         Authorization: authHeader,
       },
