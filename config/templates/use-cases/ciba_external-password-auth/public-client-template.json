@@ -1,0 +1,26 @@
+{
+  "client_id": "${CLIENT_ID}",
+  "client_id_alias": "${CLIENT_ALIAS}",
+  "client_secret": "${CLIENT_SECRET}",
+  "redirect_uris": [
+    "${REDIRECT_URI}"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "scope": "openid profile email claims:authentication_devices",
+  "client_name": "${CLIENT_NAME}",
+  "token_endpoint_auth_method": "client_secret_post",
+  "application_type": "web",
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_authentication_request_signing_alg": "ES256",
+  "backchannel_user_code_parameter": false,
+  "extension": {
+    "default_ciba_authentication_interaction_type": "authentication-device-notification-no-action"
+  }
+}
