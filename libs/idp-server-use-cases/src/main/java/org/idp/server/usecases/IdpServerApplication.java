@@ -48,6 +48,8 @@ import org.idp.server.control_plane.management.identity.user.OrgUserManagementAp
 import org.idp.server.control_plane.management.identity.user.UserManagementApi;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementApi;
 import org.idp.server.control_plane.management.identity.verification.OrgIdentityVerificationConfigManagementApi;
+import org.idp.server.control_plane.management.identity.verification.application.IdentityVerificationApplicationManagementApi;
+import org.idp.server.control_plane.management.identity.verification.application.OrgIdentityVerificationApplicationManagementApi;
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.authorization.OrgAuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
@@ -245,6 +247,7 @@ public class IdpServerApplication {
   AuthenticationPolicyConfigurationManagementApi authenticationPolicyConfigurationManagementApi;
   FederationConfigurationManagementApi federationConfigurationManagementApi;
   IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi;
+  IdentityVerificationApplicationManagementApi identityVerificationApplicationManagementApi;
   SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi;
   SecurityEventManagementApi securityEventManagementApi;
   SecurityEventHookManagementApi securityEventHookManagementApi;
@@ -266,6 +269,7 @@ public class IdpServerApplication {
   OrgAuthenticationConfigManagementApi orgAuthenticationConfigManagementApi;
   OrgAuthenticationPolicyConfigManagementApi orgAuthenticationPolicyConfigManagementApi;
   OrgIdentityVerificationConfigManagementApi orgIdentityVerificationConfigManagementApi;
+  OrgIdentityVerificationApplicationManagementApi orgIdentityVerificationApplicationManagementApi;
   OrgFederationConfigManagementApi orgFederationConfigManagementApi;
   OrgSecurityEventHookConfigManagementApi orgSecurityEventHookConfigManagementApi;
   OrgAuthenticationInteractionManagementApi orgAuthenticationInteractionManagementApi;
@@ -1011,6 +1015,16 @@ public class IdpServerApplication {
             IdentityVerificationConfigManagementApi.class,
             databaseTypeProvider);
 
+    this.identityVerificationApplicationManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new IdentityVerificationApplicationManagementEntryService(
+                identityVerificationApplicationQueryRepository,
+                identityVerificationApplicationCommandRepository,
+                tenantQueryRepository,
+                auditLogPublisher),
+            IdentityVerificationApplicationManagementApi.class,
+            databaseTypeProvider);
+
     this.securityEventManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new SecurityEventManagementEntryService(
@@ -1262,6 +1276,17 @@ public class IdpServerApplication {
             OrgIdentityVerificationConfigManagementApi.class,
             databaseTypeProvider);
 
+    this.orgIdentityVerificationApplicationManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new OrgIdentityVerificationApplicationManagementEntryService(
+                tenantQueryRepository,
+                organizationRepository,
+                identityVerificationApplicationQueryRepository,
+                identityVerificationApplicationCommandRepository,
+                auditLogPublisher),
+            OrgIdentityVerificationApplicationManagementApi.class,
+            databaseTypeProvider);
+
     this.orgAuditLogManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new OrgAuditLogManagementEntryService(
@@ -1428,6 +1453,11 @@ public class IdpServerApplication {
     return identityVerificationConfigManagementApi;
   }
 
+  public IdentityVerificationApplicationManagementApi
+      identityVerificationApplicationManagementApi() {
+    return identityVerificationApplicationManagementApi;
+  }
+
   public UserAuthenticationApi operatorAuthenticationApi() {
     return userAuthenticationApi;
   }
@@ -1546,6 +1576,11 @@ public class IdpServerApplication {
 
   public OrgIdentityVerificationConfigManagementApi orgIdentityVerificationConfigManagementApi() {
     return orgIdentityVerificationConfigManagementApi;
+  }
+
+  public OrgIdentityVerificationApplicationManagementApi
+      orgIdentityVerificationApplicationManagementApi() {
+    return orgIdentityVerificationApplicationManagementApi;
   }
 
   public OrgAuditLogManagementApi orgAuditLogManagementApi() {

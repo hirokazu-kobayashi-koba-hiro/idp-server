@@ -39,4 +39,9 @@ public interface IdentityVerificationApplicationQueryRepository {
       Tenant tenant, User user, IdentityVerificationApplicationQueries queries);
 
   long findTotalCount(Tenant tenant, User user, IdentityVerificationApplicationQueries queries);
+
+  IdentityVerificationApplications findList(
+      Tenant tenant, IdentityVerificationApplicationQueries queries);
+
+  long findTotalCount(Tenant tenant, IdentityVerificationApplicationQueries queries);
 }

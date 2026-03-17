@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.identity.verification.application.command;
+package org.idp.server.control_plane.management.identity.verification.application.io;
 
-import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
+import java.util.Map;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
-import org.idp.server.core.openid.identity.User;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public interface IdentityVerificationApplicationCommandSqlExecutor {
-  void insert(Tenant tenant, IdentityVerificationApplication application);
+public record IdentityVerificationApplicationFindRequest(
+    IdentityVerificationApplicationIdentifier identifier)
+    implements IdentityVerificationApplicationManagementRequest {
 
-  void update(Tenant tenant, IdentityVerificationApplication application);
-
-  void delete(Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier);
-
-  void delete(Tenant tenant, IdentityVerificationApplicationIdentifier identifier);
+  @Override
+  public Map<String, Object> toMap() {
+    return Map.of("id", identifier.value());
+  }
 }
