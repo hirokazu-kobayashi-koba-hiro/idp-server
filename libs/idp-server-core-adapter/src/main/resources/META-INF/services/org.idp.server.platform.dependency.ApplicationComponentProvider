@@ -29,6 +29,8 @@ org.idp.server.core.adapters.datasource.multi_tenancy.tenant.command.TenantComma
 org.idp.server.core.adapters.datasource.token.command.OAuthTokenDataSourceProvider
 org.idp.server.core.adapters.datasource.token.query.OAuthTokenQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.token.operation.command.OAuthTokenCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.token.management.query.OAuthTokenManagementQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.token.management.command.OAuthTokenManagementCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.transaction.command.AuthenticationTransactionCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.transaction.query.AuthenticationTransactionQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.authentication.transaction.operation.AuthenticationTransactionOperationCommandDataSourceProvider
