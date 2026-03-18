@@ -23,20 +23,29 @@ import org.idp.server.platform.date.LocalDateTimeParser;
 
 public class OAuthTokenQueries {
 
-  Map<String, String> values;
+  private static final int MAX_LIMIT = 1000;
+
+  private final Map<String, String> values;
 
   public OAuthTokenQueries(Map<String, String> values) {
     this.values = values;
   }
 
   public int limit() {
-    String limit = values.getOrDefault("limit", "20");
-    return Integer.parseInt(limit);
+    try {
+      int parsed = Integer.parseInt(values.getOrDefault("limit", "20"));
+      return Math.min(Math.max(parsed, 1), MAX_LIMIT);
+    } catch (NumberFormatException e) {
+      return 20;
+    }
   }
 
   public int offset() {
-    String offset = values.getOrDefault("offset", "0");
-    return Integer.parseInt(offset);
+    try {
+      return Math.max(Integer.parseInt(values.getOrDefault("offset", "0")), 0);
+    } catch (NumberFormatException e) {
+      return 0;
+    }
   }
 
   public boolean hasUserId() {

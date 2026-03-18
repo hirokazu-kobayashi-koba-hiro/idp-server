@@ -125,7 +125,7 @@ public class MysqlExecutor implements OAuthTokenManagementQuerySqlExecutor {
     }
   }
 
-  String selectSql =
+  private static final String selectSql =
       """
           SELECT
           id,
