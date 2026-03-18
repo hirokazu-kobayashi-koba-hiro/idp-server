@@ -17,7 +17,10 @@ paths:
     - $ref: '#/components/parameters/TenantId'
     get:
       summary: 組織内トークン一覧取得
-      description: 指定した組織・テナント内のOAuthトークン一覧を取得します。各種フィルタリングおよびページネーションに対応しています。
+      description: |
+        指定した組織・テナント内のOAuthトークン一覧を取得します。
+        各種フィルタリングおよびページネーションに対応しています。
+        **user_id または client_id のどちらか1つ以上のフィルタが必須です。**
       tags:
       - organization-token
       parameters:

@@ -21,7 +21,7 @@ describe("token management api", () => {
   };
 
   describe("list operations", () => {
-    it("should list tokens with default pagination", async () => {
+    it("should require user_id or client_id filter", async () => {
       const accessToken = await getAccessToken();
 
       const listResponse = await get({
@@ -30,19 +30,16 @@ describe("token management api", () => {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-      console.log("List Response:", JSON.stringify(listResponse.data));
-      expect(listResponse.status).toBe(200);
-      expect(listResponse.data).toHaveProperty("list");
-      expect(listResponse.data).toHaveProperty("total_count");
-      expect(Array.isArray(listResponse.data.list)).toBe(true);
-      expect(typeof listResponse.data.total_count).toBe("number");
+      console.log("No filter Response:", JSON.stringify(listResponse.data));
+      expect(listResponse.status).toBe(400);
+      expect(listResponse.data).toHaveProperty("error", "invalid_request");
     });
 
-    it("should support pagination with limit and offset", async () => {
+    it("should list tokens with client_id filter and pagination", async () => {
       const accessToken = await getAccessToken();
 
       const listResponse = await get({
-        url: `${baseUrl}?limit=5&offset=0`,
+        url: `${baseUrl}?client_id=${adminServerConfig.adminClient.clientId}&limit=5&offset=0`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -58,11 +55,11 @@ describe("token management api", () => {
       expect(listResponse.data.list.length).toBeLessThanOrEqual(5);
     });
 
-    it("should support filtering by grant_type", async () => {
+    it("should support filtering by client_id and grant_type", async () => {
       const accessToken = await getAccessToken();
 
       const listResponse = await get({
-        url: `${baseUrl}?grant_type=password&limit=10`,
+        url: `${baseUrl}?client_id=${adminServerConfig.adminClient.clientId}&grant_type=password&limit=10`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -105,7 +102,7 @@ describe("token management api", () => {
       }
     });
 
-    it("should support time range filtering", async () => {
+    it("should support time range filtering with client_id", async () => {
       const accessToken = await getAccessToken();
 
       const oneYearAgo = new Date();
@@ -116,7 +113,7 @@ describe("token management api", () => {
         .replace("T", " ");
 
       const listResponse = await get({
-        url: `${baseUrl}?from=${encodeURIComponent(fromDate)}&limit=10`,
+        url: `${baseUrl}?client_id=${adminServerConfig.adminClient.clientId}&from=${encodeURIComponent(fromDate)}&limit=10`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -134,7 +131,7 @@ describe("token management api", () => {
       const accessToken = await getAccessToken();
 
       const listResponse = await get({
-        url: `${baseUrl}?limit=1`,
+        url: `${baseUrl}?client_id=${adminServerConfig.adminClient.clientId}&limit=1`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -167,7 +164,7 @@ describe("token management api", () => {
       const accessToken = await getAccessToken();
 
       const listResponse = await get({
-        url: `${baseUrl}?limit=1`,
+        url: `${baseUrl}?client_id=${adminServerConfig.adminClient.clientId}&limit=1`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -206,7 +203,7 @@ describe("token management api", () => {
       const accessToken = await getAccessToken();
 
       const listResponse = await get({
-        url: `${baseUrl}?limit=1`,
+        url: `${baseUrl}?client_id=${adminServerConfig.adminClient.clientId}&limit=1`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -248,7 +245,7 @@ describe("token management api", () => {
       const accessToken = await getAccessToken();
 
       const listResponse = await get({
-        url: `${baseUrl}?limit=1`,
+        url: `${baseUrl}?client_id=${adminServerConfig.adminClient.clientId}&limit=1`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

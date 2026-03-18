@@ -24,7 +24,7 @@ describe("Organization Token Management API Test", () => {
     authHeader = `Bearer ${tokenResponse.data.access_token}`;
   });
 
-  test("should list tokens with default pagination", async () => {
+  test("should require user_id or client_id filter", async () => {
     const listResponse = await get({
       url: baseUrl,
       headers: {
@@ -32,17 +32,14 @@ describe("Organization Token Management API Test", () => {
       },
     });
 
-    console.log("List Response:", JSON.stringify(listResponse.data));
-    expect(listResponse.status).toBe(200);
-    expect(listResponse.data).toHaveProperty("list");
-    expect(listResponse.data).toHaveProperty("total_count");
-    expect(Array.isArray(listResponse.data.list)).toBe(true);
-    expect(typeof listResponse.data.total_count).toBe("number");
+    console.log("No filter Response:", JSON.stringify(listResponse.data));
+    expect(listResponse.status).toBe(400);
+    expect(listResponse.data).toHaveProperty("error", "invalid_request");
   });
 
-  test("should support pagination with limit and offset", async () => {
+  test("should list tokens with client_id filter and pagination", async () => {
     const listResponse = await get({
-      url: `${baseUrl}?limit=5&offset=0`,
+      url: `${baseUrl}?client_id=org-client&limit=5&offset=0`,
       headers: {
         Authorization: authHeader,
       },
@@ -59,9 +56,9 @@ describe("Organization Token Management API Test", () => {
     expect(listResponse.data.list.length).toBeLessThanOrEqual(5);
   });
 
-  test("should support filtering by grant_type", async () => {
+  test("should support filtering by client_id and grant_type", async () => {
     const listResponse = await get({
-      url: `${baseUrl}?grant_type=password&limit=10`,
+      url: `${baseUrl}?client_id=org-client&grant_type=password&limit=10`,
       headers: {
         Authorization: authHeader,
       },
@@ -81,7 +78,7 @@ describe("Organization Token Management API Test", () => {
     }
   });
 
-  test("should support time range filtering", async () => {
+  test("should support time range filtering with client_id", async () => {
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     const fromDate = oneYearAgo
@@ -90,7 +87,7 @@ describe("Organization Token Management API Test", () => {
       .replace("T", " ");
 
     const listResponse = await get({
-      url: `${baseUrl}?from=${encodeURIComponent(fromDate)}&limit=10`,
+      url: `${baseUrl}?client_id=org-client&from=${encodeURIComponent(fromDate)}&limit=10`,
       headers: {
         Authorization: authHeader,
       },
@@ -107,7 +104,7 @@ describe("Organization Token Management API Test", () => {
 
   test("should return correct token fields in list", async () => {
     const listResponse = await get({
-      url: `${baseUrl}?limit=1`,
+      url: `${baseUrl}?client_id=org-client&limit=1`,
       headers: {
         Authorization: authHeader,
       },
@@ -133,7 +130,7 @@ describe("Organization Token Management API Test", () => {
 
   test("should get token detail when tokens exist", async () => {
     const listResponse = await get({
-      url: `${baseUrl}?limit=1`,
+      url: `${baseUrl}?client_id=org-client&limit=1`,
       headers: {
         Authorization: authHeader,
       },
@@ -167,7 +164,7 @@ describe("Organization Token Management API Test", () => {
 
   test("should support dry-run delete", async () => {
     const listResponse = await get({
-      url: `${baseUrl}?limit=1`,
+      url: `${baseUrl}?client_id=org-client&limit=1`,
       headers: {
         Authorization: authHeader,
       },
@@ -207,7 +204,7 @@ describe("Organization Token Management API Test", () => {
 
   test("should support dry-run delete user tokens", async () => {
     const listResponse = await get({
-      url: `${baseUrl}?limit=1`,
+      url: `${baseUrl}?client_id=org-client&limit=1`,
       headers: {
         Authorization: authHeader,
       },

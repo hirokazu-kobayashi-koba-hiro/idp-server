@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.token.TokenManagementContextBuilder;
 import org.idp.server.control_plane.management.token.io.TokenFindListRequest;
 import org.idp.server.control_plane.management.token.io.TokenManagementResponse;
@@ -49,6 +50,11 @@ public class TokenFindListService implements TokenManagementService<TokenFindLis
       boolean dryRun) {
 
     OAuthTokenQueries queries = request.queries();
+
+    if (!queries.hasUserId() && !queries.hasClientId()) {
+      throw new InvalidRequestException("Either user_id or client_id query parameter is required");
+    }
+
     long totalCount = queryRepository.findTotalCount(tenant, queries);
     if (totalCount == 0) {
       Map<String, Object> response =
