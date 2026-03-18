@@ -67,7 +67,7 @@ public class PostgresqlExecutor implements OAuthTokenManagementQuerySqlExecutor 
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     StringBuilder sqlBuilder = new StringBuilder();
-    sqlBuilder.append("SELECT COUNT(*) FROM oauth_token");
+    sqlBuilder.append("SELECT COUNT(*) as count FROM oauth_token");
     sqlBuilder.append(" WHERE tenant_id = ?::uuid");
 
     List<Object> params = new ArrayList<>();
@@ -83,7 +83,7 @@ public class PostgresqlExecutor implements OAuthTokenManagementQuerySqlExecutor 
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sql =
         """
-            SELECT COUNT(*) FROM oauth_token
+            SELECT COUNT(*) as count FROM oauth_token
             WHERE tenant_id = ?::uuid
             AND user_id = ?::uuid;
             """;
