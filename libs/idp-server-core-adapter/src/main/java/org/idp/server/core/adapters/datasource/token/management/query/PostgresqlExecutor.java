@@ -66,16 +66,17 @@ public class PostgresqlExecutor implements OAuthTokenManagementQuerySqlExecutor 
   public Map<String, String> selectCount(Tenant tenant, OAuthTokenQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    StringBuilder sqlBuilder = new StringBuilder();
-    sqlBuilder.append("SELECT COUNT(*) as count FROM oauth_token");
-    sqlBuilder.append(" WHERE tenant_id = ?::uuid");
+    StringBuilder sql = new StringBuilder();
+    sql.append("SELECT id FROM oauth_token");
+    sql.append(" WHERE tenant_id = ?::uuid");
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
 
-    appendFilters(sqlBuilder, params, queries);
+    appendFilters(sql, params, queries);
 
-    return sqlExecutor.selectOne(sqlBuilder.toString(), params);
+    String countSql = "SELECT COUNT(*) as count FROM (" + sql + " LIMIT 1000001) t";
+    return sqlExecutor.selectOne(countSql, params);
   }
 
   @Override
