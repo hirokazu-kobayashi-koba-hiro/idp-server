@@ -119,6 +119,7 @@ public enum DefaultAdminPermission {
       "idp:identity-verification-result:read",
       "Admin Read identity-verification-result information"),
 
+  TOKEN_CREATE("idp:token:create", "Admin Create token"),
   TOKEN_READ("idp:token:read", "Admin Read token information"),
   TOKEN_DELETE("idp:token:delete", "Admin Delete token"),
 

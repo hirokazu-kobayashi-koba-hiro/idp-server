@@ -43,6 +43,30 @@ public class TokenManagementV1Api implements ParameterTransformable {
     this.tokenManagementApi = idpServerApplication.tokenManagementApi();
   }
 
+  @PostMapping("/tokens")
+  public ResponseEntity<?> create(
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestBody Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    TokenManagementResponse response =
+        tokenManagementApi.create(
+            operatorPrincipal.authenticationContext(),
+            tenantIdentifier,
+            body,
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
   @GetMapping("/tokens")
   public ResponseEntity<?> getList(
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,

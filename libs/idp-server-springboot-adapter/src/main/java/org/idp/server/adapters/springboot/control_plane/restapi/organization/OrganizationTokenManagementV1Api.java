@@ -43,6 +43,31 @@ public class OrganizationTokenManagementV1Api implements ParameterTransformable 
     this.orgTokenManagementApi = idpServerApplication.orgTokenManagementApi();
   }
 
+  @PostMapping("/tokens")
+  public ResponseEntity<?> create(
+      @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,
+      @PathVariable String organizationId,
+      @PathVariable String tenantId,
+      @RequestBody Map<String, Object> body,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    TokenManagementResponse response =
+        orgTokenManagementApi.create(
+            organizationOperatorPrincipal.authenticationContext(),
+            new TenantIdentifier(tenantId),
+            body,
+            requestAttributes,
+            dryRun);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add("content-type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
   @GetMapping("/tokens")
   public ResponseEntity<?> getList(
       @AuthenticationPrincipal OrganizationOperatorPrincipal organizationOperatorPrincipal,

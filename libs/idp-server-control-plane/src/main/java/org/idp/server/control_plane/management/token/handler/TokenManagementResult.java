@@ -80,7 +80,10 @@ public class TokenManagementResult {
       Map<String, Object> errorResponse = new HashMap<>();
       errorResponse.put("error", exception.errorCode());
       errorResponse.put("error_description", exception.errorDescription());
-      errorResponse.putAll(exception.errorDetails());
+      Map<String, Object> errorDetails = exception.errorDetails();
+      if (errorDetails != null && !errorDetails.isEmpty()) {
+        errorResponse.putAll(errorDetails);
+      }
       return new TokenManagementResponse(status, errorResponse);
     }
     return response;

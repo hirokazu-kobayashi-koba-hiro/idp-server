@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.token.io;
 
 public enum TokenManagementStatus {
   OK(200),
+  CREATED(201),
   NO_CONTENT(204),
   INVALID_REQUEST(400),
   UNAUTHORIZED(401),

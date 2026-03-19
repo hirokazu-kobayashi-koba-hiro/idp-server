@@ -23,8 +23,12 @@ import org.idp.server.control_plane.base.AuditLogCreator;
 import org.idp.server.control_plane.management.token.TokenManagementApi;
 import org.idp.server.control_plane.management.token.handler.*;
 import org.idp.server.control_plane.management.token.io.*;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.token.OAuthTokenIdentifier;
 import org.idp.server.core.openid.token.OAuthTokenQueries;
+import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenManagementCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenManagementQueryRepository;
 import org.idp.server.platform.audit.AuditLog;
@@ -43,10 +47,21 @@ public class TokenManagementEntryService implements TokenManagementApi {
   public TokenManagementEntryService(
       OAuthTokenManagementQueryRepository queryRepository,
       OAuthTokenManagementCommandRepository commandRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
+      AuthorizationServerConfigurationQueryRepository serverConfigRepository,
+      ClientConfigurationQueryRepository clientConfigRepository,
+      UserQueryRepository userQueryRepository,
       TenantQueryRepository tenantQueryRepository,
       AuditLogPublisher auditLogPublisher) {
 
     Map<String, TokenManagementService<?>> services = new HashMap<>();
+    services.put(
+        "create",
+        new TokenCreationService(
+            serverConfigRepository,
+            clientConfigRepository,
+            userQueryRepository,
+            oAuthTokenCommandRepository));
     services.put("findList", new TokenFindListService(queryRepository));
     services.put("get", new TokenFindService(queryRepository));
     services.put("delete", new TokenDeletionService(queryRepository, commandRepository));
@@ -55,6 +70,30 @@ public class TokenManagementEntryService implements TokenManagementApi {
 
     this.handler = new TokenManagementHandler(services, this, tenantQueryRepository);
     this.auditLogPublisher = auditLogPublisher;
+  }
+
+  @Override
+  public TokenManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      Map<String, Object> body,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    TokenCreateRequest createRequest = new TokenCreateRequest(body);
+    TokenManagementResult result =
+        handler.handle(
+            "create",
+            authenticationContext,
+            tenantIdentifier,
+            createRequest,
+            requestAttributes,
+            dryRun);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(dryRun);
   }
 
   @Override

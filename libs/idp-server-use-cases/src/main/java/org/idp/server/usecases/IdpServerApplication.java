@@ -1039,6 +1039,10 @@ public class IdpServerApplication {
             new TokenManagementEntryService(
                 oAuthTokenManagementQueryRepository,
                 oAuthTokenManagementCommandRepository,
+                oAuthTokenCommandRepository,
+                authorizationServerConfigurationQueryRepository,
+                clientConfigurationQueryRepository,
+                userQueryRepository,
                 tenantQueryRepository,
                 auditLogPublisher),
             TokenManagementApi.class,
@@ -1323,6 +1327,10 @@ public class IdpServerApplication {
                 organizationRepository,
                 oAuthTokenManagementQueryRepository,
                 oAuthTokenManagementCommandRepository,
+                oAuthTokenCommandRepository,
+                authorizationServerConfigurationQueryRepository,
+                clientConfigurationQueryRepository,
+                userQueryRepository,
                 auditLogPublisher),
             OrgTokenManagementApi.class,
             databaseTypeProvider);

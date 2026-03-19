@@ -33,6 +33,7 @@ public interface TokenManagementApi {
 
   default AdminPermissions getRequiredPermissions(String method) {
     Map<String, AdminPermissions> map = new HashMap<>();
+    map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.TOKEN_CREATE)));
     map.put("findList", new AdminPermissions(Set.of(DefaultAdminPermission.TOKEN_READ)));
     map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.TOKEN_READ)));
     map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.TOKEN_DELETE)));
@@ -43,6 +44,13 @@ public interface TokenManagementApi {
     }
     return adminPermissions;
   }
+
+  TokenManagementResponse create(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      Map<String, Object> body,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 
   TokenManagementResponse findList(
       AdminAuthenticationContext authenticationContext,
