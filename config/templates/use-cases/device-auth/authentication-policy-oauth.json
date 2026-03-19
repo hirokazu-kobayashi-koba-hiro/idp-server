@@ -1,0 +1,73 @@
+{
+  "flow": "oauth",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "device_fido_uaf_authentication",
+      "priority": 1,
+      "conditions": {
+        "acr_values": ["urn:idp:acr:device"]
+      },
+      "available_methods": [
+        "authentication-device-notification",
+        "authentication-device-binding-message",
+        "authentication-device-deny",
+        "fido-uaf"
+      ],
+      "step_definitions": [
+        {
+          "method": "authentication-device-notification",
+          "order": 1,
+          "requires_user": false
+        },
+        {
+          "method": "fido-uaf",
+          "order": 2,
+          "requires_user": true
+        }
+      ],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.authentication-device-deny.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "description": "password_fallback",
+      "priority": 2,
+      "conditions": {},
+      "available_methods": ["password"],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -20,6 +20,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.idp.server.core.extension.ciba.user.LoginHintResolver;
+import org.idp.server.core.extension.ciba.user.UserHint;
+import org.idp.server.core.extension.ciba.user.UserHintRelatedParams;
 import org.idp.server.core.openid.authentication.AuthSessionId;
 import org.idp.server.core.openid.authentication.AuthSessionValidator;
 import org.idp.server.core.openid.authentication.Authentication;
@@ -50,6 +53,8 @@ import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.*;
 import org.idp.server.core.openid.oauth.io.*;
+import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusResponse;
+import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusStatus;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
@@ -175,12 +180,19 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
       // Generate AUTH_SESSION for browser session binding (prevents session fixation attacks)
       AuthSessionId authSessionId = AuthSessionId.generate();
 
+      // Resolve user from login_hint if present
+      User resolvedUser = resolveUserFromLoginHint(tenant, requestResponse);
+
       AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
           authenticationPolicyConfigurationQueryRepository.find(
               tenant, StandardAuthFlow.OAUTH.toAuthFlow());
       AuthenticationTransaction authenticationTransaction =
           OAuthAuthenticationTransactionCreator.create(
-              tenant, requestResponse, authenticationPolicyConfiguration, authSessionId);
+              tenant,
+              requestResponse,
+              authenticationPolicyConfiguration,
+              authSessionId,
+              resolvedUser);
       authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
 
       // Register AUTH_SESSION cookie with same expiry as authorization request
@@ -219,6 +231,26 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
     return oAuthProtocol.getViewData(oAuthViewDataRequest, this);
+  }
+
+  @Override
+  public OAuthAuthenticationStatusResponse getAuthenticationStatus(
+      TenantIdentifier tenantIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    AuthenticationTransaction authenticationTransaction =
+        authenticationTransactionQueryRepository.get(
+            tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
+
+    validateAuthSession(authenticationTransaction);
+
+    return new OAuthAuthenticationStatusResponse(
+        OAuthAuthenticationStatusStatus.OK,
+        authenticationTransaction.authenticationStatus(),
+        authenticationTransaction.interactionResultsAsMapObject(),
+        authenticationTransaction.interactionResults().authenticationMethods());
   }
 
   @Override
@@ -612,6 +644,22 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     }
 
     return response;
+  }
+
+  /**
+   * Resolves user from login_hint parameter in the authorization request.
+   *
+   * <p>Reuses CIBA's LoginHintResolver to support the same hint formats (sub:, device:, email:,
+   * phone:, ex-sub:). Returns User.notFound() if login_hint is absent or user cannot be found.
+   */
+  private User resolveUserFromLoginHint(Tenant tenant, OAuthRequestResponse requestResponse) {
+    if (!requestResponse.authorizationRequest().hasLoginHint()) {
+      return User.notFound();
+    }
+    String loginHintValue = requestResponse.authorizationRequest().loginHint().value();
+    LoginHintResolver resolver = new LoginHintResolver();
+    return resolver.resolve(
+        tenant, new UserHint(loginHintValue), new UserHintRelatedParams(), userQueryRepository);
   }
 
   /**
