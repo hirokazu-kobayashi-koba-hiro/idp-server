@@ -78,6 +78,8 @@ import org.idp.server.control_plane.management.tenant.invitation.TenantInvitatio
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationCommandRepository;
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationMetaDataApi;
 import org.idp.server.control_plane.management.tenant.invitation.operation.TenantInvitationQueryRepository;
+import org.idp.server.control_plane.management.token.OrgTokenManagementApi;
+import org.idp.server.control_plane.management.token.TokenManagementApi;
 import org.idp.server.core.extension.ciba.CibaFlowApi;
 import org.idp.server.core.extension.ciba.CibaFlowEventPublisher;
 import org.idp.server.core.extension.ciba.CibaProtocol;
@@ -143,6 +145,8 @@ import org.idp.server.core.openid.token.*;
 import org.idp.server.core.openid.token.JwtBearerUserFinder;
 import org.idp.server.core.openid.token.JwtBearerUserFindingDelegate;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.openid.token.repository.OAuthTokenManagementCommandRepository;
+import org.idp.server.core.openid.token.repository.OAuthTokenManagementQueryRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
@@ -247,6 +251,7 @@ public class IdpServerApplication {
   IdentityVerificationConfigManagementApi identityVerificationConfigManagementApi;
   IdentityVerificationApplicationManagementApi identityVerificationApplicationManagementApi;
   IdentityVerificationResultManagementApi identityVerificationResultManagementApi;
+  TokenManagementApi tokenManagementApi;
   SecurityEventHookConfigurationManagementApi securityEventHookConfigurationManagementApi;
   SecurityEventManagementApi securityEventManagementApi;
   SecurityEventHookManagementApi securityEventHookManagementApi;
@@ -270,6 +275,7 @@ public class IdpServerApplication {
   OrgIdentityVerificationConfigManagementApi orgIdentityVerificationConfigManagementApi;
   OrgIdentityVerificationApplicationManagementApi orgIdentityVerificationApplicationManagementApi;
   OrgIdentityVerificationResultManagementApi orgIdentityVerificationResultManagementApi;
+  OrgTokenManagementApi orgTokenManagementApi;
   OrgFederationConfigManagementApi orgFederationConfigManagementApi;
   OrgSecurityEventHookConfigManagementApi orgSecurityEventHookConfigManagementApi;
   OrgAuthenticationInteractionManagementApi orgAuthenticationInteractionManagementApi;
@@ -454,6 +460,10 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(AuthorizationGrantedRepository.class);
     OAuthTokenCommandRepository oAuthTokenCommandRepository =
         applicationComponentContainer.resolve(OAuthTokenCommandRepository.class);
+    OAuthTokenManagementQueryRepository oAuthTokenManagementQueryRepository =
+        applicationComponentContainer.resolve(OAuthTokenManagementQueryRepository.class);
+    OAuthTokenManagementCommandRepository oAuthTokenManagementCommandRepository =
+        applicationComponentContainer.resolve(OAuthTokenManagementCommandRepository.class);
 
     // System configuration resolver for SSRF protection and trusted proxy settings
     SystemConfigurationRepository systemConfigurationRepository =
@@ -1024,6 +1034,20 @@ public class IdpServerApplication {
             IdentityVerificationResultManagementApi.class,
             databaseTypeProvider);
 
+    this.tokenManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new TokenManagementEntryService(
+                oAuthTokenManagementQueryRepository,
+                oAuthTokenManagementCommandRepository,
+                oAuthTokenCommandRepository,
+                authorizationServerConfigurationQueryRepository,
+                clientConfigurationQueryRepository,
+                userQueryRepository,
+                tenantQueryRepository,
+                auditLogPublisher),
+            TokenManagementApi.class,
+            databaseTypeProvider);
+
     this.securityEventManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new SecurityEventManagementEntryService(
@@ -1296,6 +1320,21 @@ public class IdpServerApplication {
             OrgIdentityVerificationResultManagementApi.class,
             databaseTypeProvider);
 
+    this.orgTokenManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new OrgTokenManagementEntryService(
+                tenantQueryRepository,
+                organizationRepository,
+                oAuthTokenManagementQueryRepository,
+                oAuthTokenManagementCommandRepository,
+                oAuthTokenCommandRepository,
+                authorizationServerConfigurationQueryRepository,
+                clientConfigurationQueryRepository,
+                userQueryRepository,
+                auditLogPublisher),
+            OrgTokenManagementApi.class,
+            databaseTypeProvider);
+
     this.orgAuditLogManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new OrgAuditLogManagementEntryService(
@@ -1459,6 +1498,10 @@ public class IdpServerApplication {
     return identityVerificationResultManagementApi;
   }
 
+  public TokenManagementApi tokenManagementApi() {
+    return tokenManagementApi;
+  }
+
   public UserAuthenticationApi operatorAuthenticationApi() {
     return userAuthenticationApi;
   }
@@ -1586,6 +1629,10 @@ public class IdpServerApplication {
 
   public OrgIdentityVerificationResultManagementApi orgIdentityVerificationResultManagementApi() {
     return orgIdentityVerificationResultManagementApi;
+  }
+
+  public OrgTokenManagementApi orgTokenManagementApi() {
+    return orgTokenManagementApi;
   }
 
   public OrgAuditLogManagementApi orgAuditLogManagementApi() {

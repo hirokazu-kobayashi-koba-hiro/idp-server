@@ -1,0 +1,80 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.control_plane.management.token;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import org.idp.server.control_plane.base.OrganizationAuthenticationContext;
+import org.idp.server.control_plane.base.definition.AdminPermissions;
+import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
+import org.idp.server.control_plane.management.token.io.TokenManagementResponse;
+import org.idp.server.core.openid.token.OAuthTokenIdentifier;
+import org.idp.server.core.openid.token.OAuthTokenQueries;
+import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.type.RequestAttributes;
+
+public interface OrgTokenManagementApi {
+
+  default AdminPermissions getRequiredPermissions(String method) {
+    Map<String, AdminPermissions> map = new HashMap<>();
+    map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.TOKEN_CREATE)));
+    map.put("findList", new AdminPermissions(Set.of(DefaultAdminPermission.TOKEN_READ)));
+    map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.TOKEN_READ)));
+    map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.TOKEN_DELETE)));
+    map.put("deleteUserTokens", new AdminPermissions(Set.of(DefaultAdminPermission.TOKEN_DELETE)));
+    AdminPermissions adminPermissions = map.get(method);
+    if (adminPermissions == null) {
+      throw new UnSupportedException("Method " + method + " not supported");
+    }
+    return adminPermissions;
+  }
+
+  TokenManagementResponse create(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      Map<String, Object> body,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  TokenManagementResponse findList(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      OAuthTokenQueries queries,
+      RequestAttributes requestAttributes);
+
+  TokenManagementResponse get(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      OAuthTokenIdentifier identifier,
+      RequestAttributes requestAttributes);
+
+  TokenManagementResponse delete(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      OAuthTokenIdentifier identifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+
+  TokenManagementResponse deleteUserTokens(
+      OrganizationAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      String userId,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
+}

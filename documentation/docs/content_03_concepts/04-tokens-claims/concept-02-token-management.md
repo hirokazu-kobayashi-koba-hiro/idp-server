@@ -113,6 +113,7 @@ idp-serverでは、Refresh Tokenを使用のたびに新しいトークンを発
 
 ## 関連ドキュメント
 
+- [トークン管理API運用ガイド](../../content_05_how-to/phase-2-security/06-token-management-api.md) - 管理APIの使い方とGrant管理APIとの使い分け
 - [トークン有効期限パターン](../../content_05_how-to/phase-2-security/02-token-strategy.md) - 具体的な設定例
 - [イントロスペクション](../../content_04_protocols/protocol-03-introspection.md) - イントロスペクション仕様
 - [セッション管理](../03-authentication-authorization/concept-03-session-management.md) - セッションとトークンの関係

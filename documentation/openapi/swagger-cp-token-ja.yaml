@@ -1,0 +1,397 @@
+openapi: 3.0.3
+info:
+  title: idp-server コントロールプレーン トークン管理 API
+  description: OAuthトークンの管理API仕様書。管理者がテナント内のトークンを一覧取得・詳細取得・強制失効できます。
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+servers:
+- url: http://localhost:8080
+tags:
+- name: organization-token
+  description: 組織レベルトークン管理
+paths:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/tokens:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: 組織内トークン一覧取得
+      description: |
+        指定した組織・テナント内のOAuthトークン一覧を取得します。
+        各種フィルタリングおよびページネーションに対応しています。
+        **user_id または client_id のどちらか1つ以上のフィルタが必須です。**
+      tags:
+      - organization-token
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      - name: user_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: ユーザーIDでフィルタリング
+      - name: client_id
+        in: query
+        required: false
+        schema:
+          type: string
+        description: クライアントIDでフィルタリング
+      - name: grant_type
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - authorization_code
+          - client_credentials
+          - password
+          - refresh_token
+          - urn:ietf:params:oauth:grant-type:jwt-bearer
+          - urn:ietf:params:oauth:grant-type:device_code
+          - urn:openid:params:grant-type:ciba
+        description: grant_typeでフィルタリング
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 作成日時の開始（ISO 8601形式）
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 作成日時の終了（ISO 8601形式）
+      - name: expired
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+        description: 期限切れトークンを含めるか
+      responses:
+        '200':
+          description: トークン一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/tokens/{token-id}:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/TokenId'
+    get:
+      summary: 組織内トークン詳細取得
+      description: 指定した組織・テナント内の特定のトークンの詳細を取得します
+      tags:
+      - organization-token
+      responses:
+        '200':
+          description: トークン詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: トークンが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: 組織内トークン失効
+      description: 指定した組織・テナント内の特定のトークンを強制失効します
+      tags:
+      - organization-token
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: トークン失効成功
+        '200':
+          description: dry_run=trueの場合の応答
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenDryRunDeleteResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: トークンが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users/{user-id}/tokens:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/UserId'
+    delete:
+      summary: 組織内ユーザー全トークン失効
+      description: 指定したユーザーの全トークンを強制失効します。不可逆な操作のため、dry_runでの事前確認を推奨します。
+      tags:
+      - organization-token
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: ユーザー全トークン失効成功
+        '200':
+          description: dry_run=trueの場合の応答
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenUserDryRunDeleteResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: テナントの識別子
+    OrganizationId:
+      name: organization-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 組織の識別子
+    TokenId:
+      name: token-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: トークンの識別子
+    UserId:
+      name: user-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ユーザーの識別子
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+      description: trueの場合、リクエストの検証のみで実行はされません
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 20
+      description: 返すアイテムの最大数
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: アイテムを返す開始インデックス
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: エラーコード
+        error_description:
+          type: string
+          description: エラーの説明
+      required:
+      - error
+      - error_description
+    TokenDetail:
+      type: object
+      description: OAuthトークン詳細（トークン値は含まない）
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: トークンID
+          example: 8a3f2b1c-4d5e-6f7a-8b9c-0d1e2f3a4b5c
+        tenant_id:
+          type: string
+          description: テナントID
+          example: 952f6906-3e95-4ed3-86b2-981f90f785f9
+        user_id:
+          type: string
+          format: uuid
+          description: ユーザーID（client_credentialsの場合はnull）
+          example: 3ec055a8-8000-44a2-8677-e70ebff414e2
+        client_id:
+          type: string
+          description: クライアントID
+          example: my-client
+        grant_type:
+          type: string
+          description: グラントタイプ
+          example: authorization_code
+        scopes:
+          type: string
+          description: 付与されたスコープ（スペース区切り）
+          example: openid profile email
+        token_type:
+          type: string
+          description: トークンタイプ
+          example: Bearer
+        access_token_expires_at:
+          type: string
+          format: date-time
+          description: アクセストークンの有効期限
+          example: "2026-03-18T10:30:00"
+        has_refresh_token:
+          type: boolean
+          description: リフレッシュトークンの有無
+          example: true
+        refresh_token_expires_at:
+          type: string
+          format: date-time
+          description: リフレッシュトークンの有効期限（存在する場合のみ）
+          example: "2026-04-17T10:30:00"
+        created_at:
+          type: string
+          format: date-time
+          description: トークン作成日時
+          example: "2026-03-17T10:30:00"
+      required:
+      - id
+      - tenant_id
+      - client_id
+      - grant_type
+      - scopes
+      - token_type
+      - access_token_expires_at
+      - has_refresh_token
+      - created_at
+    TokenListResponse:
+      type: object
+      description: トークン一覧レスポンス
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/TokenDetail'
+        total_count:
+          type: integer
+          description: フィルタ条件に一致する総件数
+          example: 42
+        limit:
+          type: integer
+          description: リクエストされたlimit値
+          example: 20
+        offset:
+          type: integer
+          description: リクエストされたoffset値
+          example: 0
+      required:
+      - list
+      - total_count
+      - limit
+      - offset
+    TokenDryRunDeleteResponse:
+      type: object
+      description: トークン個別削除のdry_runレスポンス
+      properties:
+        dry_run:
+          type: boolean
+          example: true
+        target:
+          $ref: '#/components/schemas/TokenDetail'
+      required:
+      - dry_run
+      - target
+    TokenUserDryRunDeleteResponse:
+      type: object
+      description: ユーザー全トークン削除のdry_runレスポンス
+      properties:
+        dry_run:
+          type: boolean
+          example: true
+        user_id:
+          type: string
+          format: uuid
+          description: 対象ユーザーID
+          example: 3ec055a8-8000-44a2-8677-e70ebff414e2
+        affected_count:
+          type: integer
+          description: 削除対象のトークン数
+          example: 12
+      required:
+      - dry_run
+      - user_id
+      - affected_count
+  responses:
+    Unauthorized:
+      description: Unauthorized - 認証が必要です
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: unauthorized
+              error_description:
+                type: string
+                example: Authentication required
+            required:
+            - error
+            - error_description
+    Forbidden:
+      description: Forbidden - 権限が不足しています
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: access_denied
+              error_description:
+                type: string
+                example: Insufficient permissions to access this resource
+            required:
+            - error
+            - error_description

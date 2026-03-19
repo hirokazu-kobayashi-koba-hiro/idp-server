@@ -119,6 +119,10 @@ public enum DefaultAdminPermission {
       "idp:identity-verification-result:read",
       "Admin Read identity-verification-result information"),
 
+  TOKEN_CREATE("idp:token:create", "Admin Create token"),
+  TOKEN_READ("idp:token:read", "Admin Read token information"),
+  TOKEN_DELETE("idp:token:delete", "Admin Delete token"),
+
   FEDERATION_CONFIG_CREATE("idp:federation-config:create", "Admin Create a federation-config"),
   FEDERATION_CONFIG_READ("idp:federation-config:read", "Admin Read federation-config information"),
   FEDERATION_CONFIG_UPDATE("idp:federation-config:update", "Admin Update federation-config"),
