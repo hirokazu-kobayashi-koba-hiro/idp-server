@@ -30,6 +30,7 @@ import org.idp.server.core.openid.federation.io.FederationRequestResponse;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.core.openid.oauth.OAuthFlowApi;
 import org.idp.server.core.openid.oauth.io.*;
+import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusResponse;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -154,6 +155,24 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
     httpHeaders.setCacheControl("no-store, private");
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
     return new ResponseEntity<>(viewDataResponse.contents(), httpHeaders, HttpStatus.OK);
+  }
+
+  @GetMapping("/{id}/authentication-status")
+  public ResponseEntity<?> getAuthenticationStatus(
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+    OAuthAuthenticationStatusResponse response =
+        oAuthFlowApi.getAuthenticationStatus(
+            tenantIdentifier, authorizationRequestIdentifier, requestAttributes);
+
+    HttpHeaders httpHeaders = createSecurityHeaders();
+    httpHeaders.setCacheControl("no-store, private");
+    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @PostMapping("/{id}/federations/{federation-type}/{sso-provider-name}")
