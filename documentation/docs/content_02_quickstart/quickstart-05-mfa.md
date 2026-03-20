@@ -129,6 +129,72 @@ MFA（多要素認証）を導入する際の重要なポイント:
 
 ---
 
+## パスワードリセット（メール認証による）
+
+MFA設定があるテナントでは、メール認証を使ったセルフサービスのパスワードリセットが可能です。
+
+### 仕組み
+
+`password:reset` スコープ専用の認証ポリシーを設定することで、メール認証のみで `password:reset` スコープ付きトークンを取得できます。このトークンを使ってパスワードリセットAPIを呼び出します。
+
+### フロー
+
+```
+1. ユーザー: 「パスワードを忘れた」をクリック
+2. アプリ:   scope=openid password:reset で認可リクエスト
+3. ユーザー: メールアドレスを入力
+4. idp-server: OTPコードをメール送信
+5. ユーザー: OTPコードを入力
+6. アプリ:   認可コード → トークン交換（password:reset スコープ付き）
+7. アプリ:   POST /v1/me/password/reset で新パスワードを設定
+```
+
+### 認証ポリシー設定
+
+`password:reset` スコープ要求時にメール認証のみで成功とするポリシーを追加します。通常のMFAポリシー（priority: 1）より高い優先度で設定します。
+
+```json
+{
+  "description": "password_reset_email_only",
+  "priority": 10,
+  "conditions": {
+    "scopes": ["password:reset"]
+  },
+  "available_methods": ["email"],
+  "step_definitions": [
+    { "method": "email", "order": 1, "requires_user": false, "user_identity_source": "email" }
+  ],
+  "success_conditions": {
+    "any_of": [
+      [{ "path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+    ]
+  }
+}
+```
+
+### 必要な設定
+
+| 設定箇所 | 追加内容 |
+|---------|---------|
+| テナント `scopes_supported` | `password:reset` を追加 |
+| クライアント `scope` | `password:reset` を追加 |
+| 認証ポリシー | `password_reset_email_only` ポリシーを追加 |
+
+### リセットAPI
+
+```
+POST /{tenant-id}/v1/me/password/reset
+Authorization: Bearer {password:reset スコープ付きトークン}
+
+{
+  "new_password": "新しいパスワード"
+}
+```
+
+> **MFA設定がないテナント**: メール認証設定がない場合は、管理者がManagement APIでパスワードをリセットします。詳細は[ログイン](./quickstart-04-login.md)を参照してください。
+
+---
+
 ## テンプレートで試す
 
 ローカル環境ですぐに試せるテンプレートが用意されています。

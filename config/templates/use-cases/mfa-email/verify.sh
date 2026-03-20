@@ -354,6 +354,248 @@ else
 fi
 
 # ============================================================
+# Step 8: Password Change
+# ============================================================
+echo "Step 8: Changing password..."
+
+CURRENT_ACCESS_TOKEN="${NEW_ACCESS_TOKEN:-${ACCESS_TOKEN}}"
+
+NEW_PASSWORD="NewVerifyPass456"
+PASSWORD_CHANGE_RESPONSE=$(curl -s -w "\n%{http_code}" \
+  -X POST "${TENANT_BASE}/v1/me/password/change" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CURRENT_ACCESS_TOKEN}" \
+  -d "{
+    \"current_password\": \"${TEST_PASSWORD}\",
+    \"new_password\": \"${NEW_PASSWORD}\"
+  }")
+
+PWCHANGE_HTTP=$(echo "${PASSWORD_CHANGE_RESPONSE}" | tail -n1)
+PWCHANGE_BODY=$(echo "${PASSWORD_CHANGE_RESPONSE}" | sed '$d')
+
+if [ "${PWCHANGE_HTTP}" = "200" ]; then
+  echo "  HTTP 200 OK"
+  echo "  ${PWCHANGE_BODY}" | jq '.' 2>/dev/null || echo "  ${PWCHANGE_BODY}"
+  check_result "password_change" "true"
+else
+  echo "  HTTP ${PWCHANGE_HTTP}"
+  echo "  ${PWCHANGE_BODY}" | jq '.' 2>/dev/null || echo "  ${PWCHANGE_BODY}"
+  check_result "password_change" "false"
+fi
+echo ""
+
+# ============================================================
+# Step 9: Password Reset Flow (email authentication → reset)
+# ============================================================
+echo "Step 9: Password reset flow..."
+
+RESET_PASSWORD="ResetVerifyPass789"
+
+# 9a: Start authorization with password:reset scope
+RESET_STATE="verify-reset-$(date +%s)"
+RESET_SCOPE="openid password:reset"
+
+COOKIE_JAR_RESET=$(mktemp)
+trap "rm -f ${COOKIE_JAR} ${COOKIE_JAR_RESET}" EXIT
+
+RESET_AUTH_RESPONSE=$(curl -s -c "${COOKIE_JAR_RESET}" -o /dev/null \
+  -w "%{http_code}|%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=$(echo "${RESET_SCOPE}" | tr ' ' '+')&state=${RESET_STATE}&prompt=login")
+
+RESET_AUTH_HTTP=$(echo "${RESET_AUTH_RESPONSE}" | cut -d'|' -f1)
+RESET_AUTH_REDIRECT=$(echo "${RESET_AUTH_RESPONSE}" | cut -d'|' -f2)
+
+if [ "${RESET_AUTH_HTTP}" != "302" ]; then
+  echo "  Authorization request failed: HTTP ${RESET_AUTH_HTTP}"
+  check_result "password_reset" "false"
+else
+  RESET_AUTH_ID=$(extract_param "${RESET_AUTH_REDIRECT}" "id")
+  echo "  9a: Authorization started (id: ${RESET_AUTH_ID})"
+
+  # 9b: Email authentication challenge
+  EMAIL_CHALLENGE_RESPONSE=$(curl -s -w "\n%{http_code}" \
+    -b "${COOKIE_JAR_RESET}" -c "${COOKIE_JAR_RESET}" \
+    -X POST "${TENANT_BASE}/v1/authorizations/${RESET_AUTH_ID}/email-authentication-challenge" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"email\": \"${TEST_EMAIL}\",
+      \"template\": \"authentication\"
+    }")
+
+  EMAIL_CHALLENGE_HTTP=$(echo "${EMAIL_CHALLENGE_RESPONSE}" | tail -n1)
+
+  if [ "${EMAIL_CHALLENGE_HTTP}" != "200" ] && [ "${EMAIL_CHALLENGE_HTTP}" != "201" ]; then
+    echo "  9b: Email challenge failed: HTTP ${EMAIL_CHALLENGE_HTTP}"
+    echo "${EMAIL_CHALLENGE_RESPONSE}" | sed '$d' | jq '.' 2>/dev/null
+    check_result "password_reset" "false"
+  else
+    echo "  9b: Email challenge sent"
+
+    # 9c: Get verification code via Management API
+    ORG_ID=$(jq -r '.organization.id' "${CONFIG_DIR}/onboarding.json")
+    ORGANIZER_TENANT_ID=$(jq -r '.tenant.id' "${CONFIG_DIR}/onboarding.json")
+    ADMIN_EMAIL_ADDR=$(jq -r '.user.email' "${CONFIG_DIR}/onboarding.json")
+    ADMIN_PASSWORD_VAL=$(jq -r '.user.raw_password' "${CONFIG_DIR}/onboarding.json")
+    ORG_CLIENT_ID=$(jq -r '.client.client_id' "${CONFIG_DIR}/onboarding.json")
+    ORG_CLIENT_SECRET=$(jq -r '.client.client_secret' "${CONFIG_DIR}/onboarding.json")
+
+    ORG_TOKEN=$(curl -s -X POST \
+      "${AUTHORIZATION_SERVER_URL}/${ORGANIZER_TENANT_ID}/v1/tokens" \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      --data-urlencode "grant_type=password" \
+      --data-urlencode "username=${ADMIN_EMAIL_ADDR}" \
+      --data-urlencode "password=${ADMIN_PASSWORD_VAL}" \
+      --data-urlencode "client_id=${ORG_CLIENT_ID}" \
+      --data-urlencode "client_secret=${ORG_CLIENT_SECRET}" \
+      --data-urlencode "scope=openid profile email management" | jq -r '.access_token')
+
+    TRANSACTION_ID=$(curl -s \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/authentication-transactions?authorization_id=${RESET_AUTH_ID}" \
+      -H "Authorization: Bearer ${ORG_TOKEN}" | jq -r '.list[0].id')
+
+    VERIFICATION_CODE=$(curl -s \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/authentication-interactions/${TRANSACTION_ID}/email-authentication-challenge" \
+      -H "Authorization: Bearer ${ORG_TOKEN}" | jq -r '.payload.verification_code')
+
+    echo "  9c: Verification code obtained: ${VERIFICATION_CODE}"
+
+    # 9d: Email authentication verification
+    EMAIL_VERIFY_RESPONSE=$(curl -s -w "\n%{http_code}" \
+      -b "${COOKIE_JAR_RESET}" -c "${COOKIE_JAR_RESET}" \
+      -X POST "${TENANT_BASE}/v1/authorizations/${RESET_AUTH_ID}/email-authentication" \
+      -H "Content-Type: application/json" \
+      -d "{
+        \"verification_code\": \"${VERIFICATION_CODE}\"
+      }")
+
+    EMAIL_VERIFY_HTTP=$(echo "${EMAIL_VERIFY_RESPONSE}" | tail -n1)
+
+    if [ "${EMAIL_VERIFY_HTTP}" != "200" ]; then
+      echo "  9d: Email verification failed: HTTP ${EMAIL_VERIFY_HTTP}"
+      check_result "password_reset" "false"
+    else
+      echo "  9d: Email verified"
+
+      # 9e: Authorize
+      RESET_AUTHORIZE_RESPONSE=$(curl -s -w "\n%{http_code}" \
+        -b "${COOKIE_JAR_RESET}" -c "${COOKIE_JAR_RESET}" \
+        -X POST "${TENANT_BASE}/v1/authorizations/${RESET_AUTH_ID}/authorize" \
+        -H "Content-Type: application/json" \
+        -d '{}')
+
+      RESET_AUTHZ_HTTP=$(echo "${RESET_AUTHORIZE_RESPONSE}" | tail -n1)
+      RESET_AUTHZ_BODY=$(echo "${RESET_AUTHORIZE_RESPONSE}" | sed '$d')
+
+      if [ "${RESET_AUTHZ_HTTP}" != "200" ]; then
+        echo "  9e: Authorize failed: HTTP ${RESET_AUTHZ_HTTP}"
+        echo "  ${RESET_AUTHZ_BODY}" | jq '.' 2>/dev/null
+        check_result "password_reset" "false"
+      else
+        RESET_CODE=$(extract_param "$(echo "${RESET_AUTHZ_BODY}" | jq -r '.redirect_uri')" "code")
+        echo "  9e: Authorization code obtained"
+
+        # 9f: Exchange code for token with password:reset scope
+        RESET_TOKEN_RESPONSE=$(curl -s -w "\n%{http_code}" \
+          -X POST "${TENANT_BASE}/v1/tokens" \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          --data-urlencode "grant_type=authorization_code" \
+          --data-urlencode "code=${RESET_CODE}" \
+          --data-urlencode "redirect_uri=${REDIRECT_URI}" \
+          --data-urlencode "client_id=${CLIENT_ID}" \
+          --data-urlencode "client_secret=${CLIENT_SECRET}")
+
+        RESET_TOKEN_HTTP=$(echo "${RESET_TOKEN_RESPONSE}" | tail -n1)
+        RESET_TOKEN_BODY=$(echo "${RESET_TOKEN_RESPONSE}" | sed '$d')
+
+        if [ "${RESET_TOKEN_HTTP}" != "200" ]; then
+          echo "  9f: Token exchange failed: HTTP ${RESET_TOKEN_HTTP}"
+          check_result "password_reset" "false"
+        else
+          RESET_ACCESS_TOKEN=$(echo "${RESET_TOKEN_BODY}" | jq -r '.access_token')
+          RESET_SCOPE_RESULT=$(echo "${RESET_TOKEN_BODY}" | jq -r '.scope')
+          echo "  9f: Token obtained (scope: ${RESET_SCOPE_RESULT})"
+
+          if echo "${RESET_SCOPE_RESULT}" | grep -q "password:reset"; then
+            echo "  password:reset scope confirmed"
+          else
+            echo "  WARNING: password:reset scope not in token"
+          fi
+
+          # 9g: Reset password
+          RESET_RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST "${TENANT_BASE}/v1/me/password/reset" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${RESET_ACCESS_TOKEN}" \
+            -d "{
+              \"new_password\": \"${RESET_PASSWORD}\"
+            }")
+
+          RESET_HTTP=$(echo "${RESET_RESPONSE}" | tail -n1)
+          RESET_BODY=$(echo "${RESET_RESPONSE}" | sed '$d')
+
+          if [ "${RESET_HTTP}" = "200" ]; then
+            echo "  9g: Password reset succeeded"
+            echo "  ${RESET_BODY}" | jq '.' 2>/dev/null || echo "  ${RESET_BODY}"
+            check_result "password_reset" "true"
+          else
+            echo "  9g: Password reset failed: HTTP ${RESET_HTTP}"
+            echo "  ${RESET_BODY}" | jq '.' 2>/dev/null || echo "  ${RESET_BODY}"
+            check_result "password_reset" "false"
+          fi
+        fi
+      fi
+    fi
+  fi
+fi
+echo ""
+
+# ============================================================
+# Step 10: Verify Login with Reset Password
+# ============================================================
+echo "Step 10: Verifying login with reset password..."
+
+LOGIN_STATE="verify-login-$(date +%s)"
+
+COOKIE_JAR_LOGIN=$(mktemp)
+trap "rm -f ${COOKIE_JAR} ${COOKIE_JAR_RESET} ${COOKIE_JAR_LOGIN}" EXIT
+
+LOGIN_AUTH_RESPONSE=$(curl -s -c "${COOKIE_JAR_LOGIN}" -o /dev/null \
+  -w "%{http_code}|%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=openid+profile+email&state=${LOGIN_STATE}&prompt=login")
+
+LOGIN_AUTH_HTTP=$(echo "${LOGIN_AUTH_RESPONSE}" | cut -d'|' -f1)
+LOGIN_AUTH_REDIRECT=$(echo "${LOGIN_AUTH_RESPONSE}" | cut -d'|' -f2)
+
+if [ "${LOGIN_AUTH_HTTP}" = "302" ]; then
+  LOGIN_AUTH_ID=$(extract_param "${LOGIN_AUTH_REDIRECT}" "id")
+
+  PW_LOGIN_RESPONSE=$(curl -s -w "\n%{http_code}" \
+    -b "${COOKIE_JAR_LOGIN}" -c "${COOKIE_JAR_LOGIN}" \
+    -X POST "${TENANT_BASE}/v1/authorizations/${LOGIN_AUTH_ID}/password-authentication" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"username\": \"${TEST_EMAIL}\",
+      \"password\": \"${RESET_PASSWORD}\"
+    }")
+
+  PW_LOGIN_HTTP=$(echo "${PW_LOGIN_RESPONSE}" | tail -n1)
+
+  if [ "${PW_LOGIN_HTTP}" = "200" ]; then
+    echo "  HTTP 200 OK - Login with reset password succeeded"
+    check_result "login_reset_password" "true"
+  else
+    PW_LOGIN_BODY=$(echo "${PW_LOGIN_RESPONSE}" | sed '$d')
+    echo "  HTTP ${PW_LOGIN_HTTP} - Login with reset password failed"
+    echo "  ${PW_LOGIN_BODY}" | jq '.' 2>/dev/null || echo "  ${PW_LOGIN_BODY}"
+    check_result "login_reset_password" "false"
+  fi
+else
+  echo "  Authorization request failed: HTTP ${LOGIN_AUTH_HTTP}"
+  check_result "login_reset_password" "false"
+fi
+echo ""
+
+# ============================================================
 # Summary
 # ============================================================
 TOTAL=$((PASS_COUNT + FAIL_COUNT))

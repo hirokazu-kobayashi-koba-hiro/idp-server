@@ -3,6 +3,46 @@
   "enabled": true,
   "policies": [
     {
+      "description": "password_reset_email_only",
+      "priority": 10,
+      "conditions": {
+        "scopes": ["password:reset"]
+      },
+      "available_methods": ["email"],
+      "step_definitions": [
+        {
+          "method": "email",
+          "order": 1,
+          "requires_user": false,
+          "user_identity_source": "email"
+        }
+      ],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.email-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.email-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      }
+    },
+    {
       "description": "password_and_email_mfa",
       "priority": 1,
       "conditions": {},
