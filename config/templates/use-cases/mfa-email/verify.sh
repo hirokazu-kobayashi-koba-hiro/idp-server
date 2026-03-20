@@ -395,7 +395,10 @@ RESET_PASSWORD="ResetVerifyPass789"
 RESET_STATE="verify-reset-$(date +%s)"
 RESET_SCOPE="openid password:reset"
 
-RESET_AUTH_RESPONSE=$(curl -s -c "${COOKIE_JAR}" -o /dev/null \
+COOKIE_JAR_RESET=$(mktemp)
+trap "rm -f ${COOKIE_JAR} ${COOKIE_JAR_RESET}" EXIT
+
+RESET_AUTH_RESPONSE=$(curl -s -c "${COOKIE_JAR_RESET}" -o /dev/null \
   -w "%{http_code}|%{redirect_url}" \
   "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=$(echo "${RESET_SCOPE}" | tr ' ' '+')&state=${RESET_STATE}&prompt=login")
 
@@ -411,7 +414,7 @@ else
 
   # 9b: Email authentication challenge
   EMAIL_CHALLENGE_RESPONSE=$(curl -s -w "\n%{http_code}" \
-    -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
+    -b "${COOKIE_JAR_RESET}" -c "${COOKIE_JAR_RESET}" \
     -X POST "${TENANT_BASE}/v1/authorizations/${RESET_AUTH_ID}/email-authentication-challenge" \
     -H "Content-Type: application/json" \
     -d "{
@@ -458,7 +461,7 @@ else
 
     # 9d: Email authentication verification
     EMAIL_VERIFY_RESPONSE=$(curl -s -w "\n%{http_code}" \
-      -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
+      -b "${COOKIE_JAR_RESET}" -c "${COOKIE_JAR_RESET}" \
       -X POST "${TENANT_BASE}/v1/authorizations/${RESET_AUTH_ID}/email-authentication" \
       -H "Content-Type: application/json" \
       -d "{
@@ -475,7 +478,7 @@ else
 
       # 9e: Authorize
       RESET_AUTHORIZE_RESPONSE=$(curl -s -w "\n%{http_code}" \
-        -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
+        -b "${COOKIE_JAR_RESET}" -c "${COOKIE_JAR_RESET}" \
         -X POST "${TENANT_BASE}/v1/authorizations/${RESET_AUTH_ID}/authorize" \
         -H "Content-Type: application/json" \
         -d '{}')
@@ -553,7 +556,10 @@ echo "Step 10: Verifying login with reset password..."
 
 LOGIN_STATE="verify-login-$(date +%s)"
 
-LOGIN_AUTH_RESPONSE=$(curl -s -c "${COOKIE_JAR}" -o /dev/null \
+COOKIE_JAR_LOGIN=$(mktemp)
+trap "rm -f ${COOKIE_JAR} ${COOKIE_JAR_RESET} ${COOKIE_JAR_LOGIN}" EXIT
+
+LOGIN_AUTH_RESPONSE=$(curl -s -c "${COOKIE_JAR_LOGIN}" -o /dev/null \
   -w "%{http_code}|%{redirect_url}" \
   "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=openid+profile+email&state=${LOGIN_STATE}&prompt=login")
 
@@ -564,7 +570,7 @@ if [ "${LOGIN_AUTH_HTTP}" = "302" ]; then
   LOGIN_AUTH_ID=$(extract_param "${LOGIN_AUTH_REDIRECT}" "id")
 
   PW_LOGIN_RESPONSE=$(curl -s -w "\n%{http_code}" \
-    -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
+    -b "${COOKIE_JAR_LOGIN}" -c "${COOKIE_JAR_LOGIN}" \
     -X POST "${TENANT_BASE}/v1/authorizations/${LOGIN_AUTH_ID}/password-authentication" \
     -H "Content-Type: application/json" \
     -d "{

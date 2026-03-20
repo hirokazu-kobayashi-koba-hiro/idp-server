@@ -411,6 +411,8 @@ curl -s \
 
 # Phase 3: Password Change & Reset
 
+> **verify.sh との対応**: Phase 3 は verify.sh の Step 8（パスワード変更）、Step 9（パスワードリセット）、Step 10（リセット後ログイン確認）に対応しています。
+
 ## Step 10: Password Change（ユーザー自身によるパスワード変更）
 
 認証済みユーザーが自身のパスワードを変更します。
