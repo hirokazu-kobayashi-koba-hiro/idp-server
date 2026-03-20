@@ -20,6 +20,7 @@ graph TB
     subgraph セキュリティ強化
         B[MFA]
         C[パスワードレス認証]
+        J[MFA FIDO-UAF]
     end
 
     subgraph 高度な機能
@@ -33,9 +34,11 @@ graph TB
     A -->|推奨導入順序| C
     A2 -->|推奨導入順序| B
     A2 -->|推奨導入順序| C
+    B -->|推奨導入順序| J
     B -->|推奨導入順序| D
     C -->|推奨導入順序| D
     C -->|推奨導入順序| G
+    J -->|推奨導入順序| G
     D -->|推奨導入順序| H
     G -->|推奨導入順序| H
     F -->|推奨導入順序| I
@@ -46,6 +49,7 @@ graph TB
     style E fill:#e1f5ff
     style B fill:#fff4e1
     style C fill:#fff4e1
+    style J fill:#fff4e1
     style F fill:#e1f5ff
     style D fill:#ffe1e1
     style G fill:#ffe1e1
@@ -72,6 +76,7 @@ Phase 1: 基本機能
   ↓
 Phase 2: セキュリティ強化
   - MFA（多要素認証）
+  - MFA FIDO-UAF（モバイルデバイス認証）
   - パスワードレス認証
   ↓
 Phase 3: 高度な機能
@@ -91,6 +96,7 @@ Phase 4: エンタープライズ
 | **[ログイン](./quickstart-04-login.md)** | `login-password-only` | パスワード認証、アカウントロック、セッション管理 |
 | **[Socialログイン](./quickstart-04-login-social.md)** | `login-social` | Google等の外部サービスアカウントでログイン |
 | **[MFA](./quickstart-05-mfa.md)** | `mfa-email` / `mfa-sms` | メール/SMS認証でセキュリティ強化 |
+| **[MFA FIDO-UAF](./quickstart-14-mfa-fido-uaf.md)** | `mfa-fido-uaf` | 認可コードフローでモバイルデバイス生体認証、スコープフィルタリング |
 | **[パスワードレス認証](./quickstart-06-passwordless.md)** | `passwordless-fido2` | 生体認証、セキュリティキー、Passkey |
 | **[身元確認/eKYC](./quickstart-07-ekyc.md)** | `ekyc` | 本人確認書類検証、verified_claims発行 |
 | **[サードパーティ連携](./quickstart-08-third-party-integration.md)** | `third-party` | 第三者アプリへのOAuth 2.0連携 |
@@ -158,7 +164,7 @@ cat VERIFY.md
 |---------|---------------|
 | まず動かしたい | `login-password-only` |
 | Socialログインも使いたい | `login-social` |
-| セキュリティを強化したい | `mfa-email` → `passwordless-fido2` |
+| セキュリティを強化したい | `mfa-email` → `mfa-fido-uaf` → `passwordless-fido2` |
 | 本人確認が必要 | `ekyc` |
 | 外部アプリにAPI提供したい | `third-party` |
 | 既存認証基盤を活かしたい | `external-password-auth` |
