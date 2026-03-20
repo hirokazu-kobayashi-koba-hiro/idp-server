@@ -409,6 +409,176 @@ curl -s \
 
 ---
 
+# Phase 3: Password Change & Reset
+
+## Step 10: Password Change（ユーザー自身によるパスワード変更）
+
+認証済みユーザーが自身のパスワードを変更します。
+
+### リクエスト
+
+```bash
+NEW_PASSWORD="NewVerifyPass456"
+
+curl -s \
+  -X POST "${TENANT_BASE}/v1/me/password/change" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN2}" \
+  -d "{
+    \"current_password\": \"${TEST_PASSWORD}\",
+    \"new_password\": \"${NEW_PASSWORD}\"
+  }" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 200 が返ること
+- `"message": "Password changed successfully."` が返ること
+
+---
+
+## Step 11: Password Reset（メール認証によるパスワードリセット）
+
+パスワードを忘れた場合のリセットフローです。`password:reset` スコープで認可リクエストを行い、メール認証のみで認証を完了した後、新パスワードを設定します。
+
+### 前提
+
+- テナントの `scopes_supported` に `password:reset` が含まれていること
+- クライアントの `scope` に `password:reset` が含まれていること
+- 認証ポリシーに `password:reset` スコープ用のメール認証のみポリシー（`password_reset_email_only`）が設定されていること
+
+### リクエスト
+
+**1. password:reset スコープで認可リクエスト**
+
+```bash
+COOKIE_JAR3=$(mktemp)
+RESET_STATE="verify-reset-$(date +%s)"
+
+RESET_AUTH_REDIRECT=$(curl -s -c "${COOKIE_JAR3}" -o /dev/null \
+  -w "%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=openid+password%3Areset&state=${RESET_STATE}&prompt=login")
+
+RESET_AUTH_ID=$(echo "${RESET_AUTH_REDIRECT}" | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
+echo "Authorization ID: ${RESET_AUTH_ID}"
+```
+
+**2. Email OTP チャレンジ**
+
+```bash
+curl -s -b "${COOKIE_JAR3}" -c "${COOKIE_JAR3}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${RESET_AUTH_ID}/email-authentication-challenge" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"email\": \"${TEST_EMAIL}\",
+    \"template\": \"authentication\"
+  }" | jq .
+```
+
+**3. Management API で検証コードを取得**
+
+```bash
+RESET_TRANSACTION_ID=$(curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/authentication-transactions?authorization_id=${RESET_AUTH_ID}" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq -r '.list[0].id')
+
+RESET_VERIFICATION_CODE=$(curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/authentication-interactions/${RESET_TRANSACTION_ID}/email-authentication-challenge" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq -r '.payload.verification_code')
+
+echo "Verification Code: ${RESET_VERIFICATION_CODE}"
+```
+
+**4. Email OTP 検証**
+
+```bash
+curl -s -b "${COOKIE_JAR3}" -c "${COOKIE_JAR3}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${RESET_AUTH_ID}/email-authentication" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"verification_code\": \"${RESET_VERIFICATION_CODE}\"
+  }" | jq .
+```
+
+**5. 認可 → トークン取得**
+
+```bash
+RESET_AUTHORIZE_RESPONSE=$(curl -s \
+  -b "${COOKIE_JAR3}" -c "${COOKIE_JAR3}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${RESET_AUTH_ID}/authorize" \
+  -H "Content-Type: application/json" \
+  -d '{}')
+
+RESET_CODE=$(echo "${RESET_AUTHORIZE_RESPONSE}" | jq -r '.redirect_uri' | sed -n 's/.*[?&]code=\([^&#]*\).*/\1/p')
+
+RESET_TOKEN_RESPONSE=$(curl -s \
+  -X POST "${TENANT_BASE}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=authorization_code" \
+  --data-urlencode "code=${RESET_CODE}" \
+  --data-urlencode "redirect_uri=${REDIRECT_URI}" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "client_secret=${CLIENT_SECRET}")
+
+RESET_ACCESS_TOKEN=$(echo "${RESET_TOKEN_RESPONSE}" | jq -r '.access_token')
+RESET_SCOPE=$(echo "${RESET_TOKEN_RESPONSE}" | jq -r '.scope')
+echo "Scope: ${RESET_SCOPE}"
+```
+
+**6. パスワードリセット**
+
+```bash
+RESET_PASSWORD="ResetVerifyPass789"
+
+curl -s \
+  -X POST "${TENANT_BASE}/v1/me/password/reset" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${RESET_ACCESS_TOKEN}" \
+  -d "{
+    \"new_password\": \"${RESET_PASSWORD}\"
+  }" | jq .
+```
+
+### 確認ポイント
+
+- トークンの `scope` に `password:reset` が含まれていること
+- HTTP 200 が返り、パスワードリセットが成功すること
+- リセット後のパスワードでログインできること
+
+---
+
+## Step 12: Verify Login with Reset Password
+
+リセット後のパスワードでログインできることを確認します。
+
+### リクエスト
+
+```bash
+COOKIE_JAR4=$(mktemp)
+LOGIN_STATE="verify-login-$(date +%s)"
+
+LOGIN_REDIRECT=$(curl -s -c "${COOKIE_JAR4}" -o /dev/null \
+  -w "%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=openid+profile+email&state=${LOGIN_STATE}&prompt=login")
+
+LOGIN_AUTH_ID=$(echo "${LOGIN_REDIRECT}" | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
+
+curl -s -b "${COOKIE_JAR4}" -c "${COOKIE_JAR4}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${LOGIN_AUTH_ID}/password-authentication" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"username\": \"${TEST_EMAIL}\",
+    \"password\": \"${RESET_PASSWORD}\"
+  }" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 200 が返ること
+- リセット前のパスワードではログインできないこと
+
+---
+
 ## チェックリスト
 
 ### Phase 1: User Registration
@@ -435,3 +605,13 @@ curl -s \
 | 9b | ID Token の amr に email と password が含まれる | |
 | 9c | UserInfo で sub が返る | |
 | 9d | Refresh token が動作する | |
+
+### Phase 3: Password Change & Reset
+
+| Step | 確認項目 | 結果 |
+|------|---------|------|
+| 10 | Password change が成功する | |
+| 11 | password:reset スコープでメール認証のみで認可できる | |
+| 11 | password:reset スコープ付きトークンが取得できる | |
+| 11 | Password reset が成功する | |
+| 12 | リセット後のパスワードでログインできる | |

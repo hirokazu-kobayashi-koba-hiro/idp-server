@@ -350,6 +350,175 @@ else
 fi
 
 # ============================================================
+# Step 8: Password Change
+# ============================================================
+echo "Step 8: Changing password..."
+
+# Use refreshed token if available, otherwise original
+CURRENT_ACCESS_TOKEN="${NEW_ACCESS_TOKEN:-${ACCESS_TOKEN}}"
+
+NEW_PASSWORD="NewVerifyPass456"
+PASSWORD_CHANGE_RESPONSE=$(curl -s -w "\n%{http_code}" \
+  -X POST "${TENANT_BASE}/v1/me/password/change" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CURRENT_ACCESS_TOKEN}" \
+  -d "{
+    \"current_password\": \"${TEST_PASSWORD}\",
+    \"new_password\": \"${NEW_PASSWORD}\"
+  }")
+
+PWCHANGE_HTTP=$(echo "${PASSWORD_CHANGE_RESPONSE}" | tail -n1)
+PWCHANGE_BODY=$(echo "${PASSWORD_CHANGE_RESPONSE}" | sed '$d')
+
+if [ "${PWCHANGE_HTTP}" = "200" ]; then
+  echo "  HTTP 200 OK"
+  echo "  ${PWCHANGE_BODY}" | jq '.' 2>/dev/null || echo "  ${PWCHANGE_BODY}"
+  check_result "password_change" "true"
+else
+  echo "  HTTP ${PWCHANGE_HTTP}"
+  echo "  ${PWCHANGE_BODY}" | jq '.' 2>/dev/null || echo "  ${PWCHANGE_BODY}"
+  check_result "password_change" "false"
+fi
+echo ""
+
+# ============================================================
+# Step 9: Verify Login with New Password
+# ============================================================
+echo "Step 9: Verifying login with new password..."
+
+STATE2="verify-state2-$(date +%s)"
+
+AUTH_RESPONSE2=$(curl -s -c "${COOKIE_JAR}" -o /dev/null \
+  -w "%{http_code}|%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=$(echo "${SCOPE}" | tr ' ' '+')&state=${STATE2}&prompt=login")
+
+AUTH_HTTP2=$(echo "${AUTH_RESPONSE2}" | cut -d'|' -f1)
+AUTH_REDIRECT_URL2=$(echo "${AUTH_RESPONSE2}" | cut -d'|' -f2)
+
+if [ "${AUTH_HTTP2}" = "302" ]; then
+  AUTHORIZATION_ID2=$(extract_param "${AUTH_REDIRECT_URL2}" "id")
+
+  # Login with new password
+  PW_RESPONSE=$(curl -s -w "\n%{http_code}" \
+    -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
+    -X POST "${TENANT_BASE}/v1/authorizations/${AUTHORIZATION_ID2}/password-authentication" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"username\": \"${TEST_EMAIL}\",
+      \"password\": \"${NEW_PASSWORD}\"
+    }")
+
+  PW_HTTP=$(echo "${PW_RESPONSE}" | tail -n1)
+
+  if [ "${PW_HTTP}" = "200" ]; then
+    echo "  HTTP 200 OK - Login with new password succeeded"
+    check_result "login_new_password" "true"
+  else
+    PW_BODY=$(echo "${PW_RESPONSE}" | sed '$d')
+    echo "  HTTP ${PW_HTTP} - Login with new password failed"
+    echo "  ${PW_BODY}" | jq '.' 2>/dev/null || echo "  ${PW_BODY}"
+    check_result "login_new_password" "false"
+  fi
+else
+  echo "  Authorization request failed: HTTP ${AUTH_HTTP2}"
+  check_result "login_new_password" "false"
+fi
+echo ""
+
+# ============================================================
+# Step 10: Admin Password Reset (Management API)
+# ============================================================
+echo "Step 10: Admin password reset via Management API..."
+
+ADMIN_RESET_PASSWORD="AdminResetPass789"
+
+# Get user sub from ID token
+USER_SUB=$(echo "${ID_TOKEN}" | cut -d'.' -f2 | python3 -c "import sys,base64,json; print(json.loads(base64.urlsafe_b64decode(sys.stdin.read().strip()+'=='))['sub'])")
+
+# Get org admin token
+ORG_ID=$(jq -r '.organization.id' "${CONFIG_DIR}/onboarding.json")
+ORGANIZER_TENANT_ID=$(jq -r '.tenant.id' "${CONFIG_DIR}/onboarding.json")
+ADMIN_EMAIL_ADDR=$(jq -r '.user.email' "${CONFIG_DIR}/onboarding.json")
+ADMIN_PASSWORD_VAL=$(jq -r '.user.raw_password' "${CONFIG_DIR}/onboarding.json")
+ORG_CLIENT_ID=$(jq -r '.client.client_id' "${CONFIG_DIR}/onboarding.json")
+ORG_CLIENT_SECRET=$(jq -r '.client.client_secret' "${CONFIG_DIR}/onboarding.json")
+
+ORG_TOKEN=$(curl -s -X POST \
+  "${AUTHORIZATION_SERVER_URL}/${ORGANIZER_TENANT_ID}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=password" \
+  --data-urlencode "username=${ADMIN_EMAIL_ADDR}" \
+  --data-urlencode "password=${ADMIN_PASSWORD_VAL}" \
+  --data-urlencode "client_id=${ORG_CLIENT_ID}" \
+  --data-urlencode "client_secret=${ORG_CLIENT_SECRET}" \
+  --data-urlencode "scope=openid profile email management" | jq -r '.access_token')
+
+# Reset password via Management API
+ADMIN_RESET_RESPONSE=$(curl -s -w "\n%{http_code}" \
+  -X PUT "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/users/${USER_SUB}/password" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ORG_TOKEN}" \
+  -d "{
+    \"raw_password\": \"${ADMIN_RESET_PASSWORD}\"
+  }")
+
+ADMIN_RESET_HTTP=$(echo "${ADMIN_RESET_RESPONSE}" | tail -n1)
+ADMIN_RESET_BODY=$(echo "${ADMIN_RESET_RESPONSE}" | sed '$d')
+
+if [ "${ADMIN_RESET_HTTP}" = "200" ]; then
+  echo "  HTTP 200 OK - Admin password reset succeeded"
+  check_result "admin_password_reset" "true"
+else
+  echo "  HTTP ${ADMIN_RESET_HTTP}"
+  echo "  ${ADMIN_RESET_BODY}" | jq '.' 2>/dev/null || echo "  ${ADMIN_RESET_BODY}"
+  check_result "admin_password_reset" "false"
+fi
+echo ""
+
+# ============================================================
+# Step 11: Verify Login with Admin-Reset Password
+# ============================================================
+echo "Step 11: Verifying login with admin-reset password..."
+
+STATE3="verify-state3-$(date +%s)"
+
+AUTH_RESPONSE3=$(curl -s -c "${COOKIE_JAR}" -o /dev/null \
+  -w "%{http_code}|%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=$(echo "${SCOPE}" | tr ' ' '+')&state=${STATE3}&prompt=login")
+
+AUTH_HTTP3=$(echo "${AUTH_RESPONSE3}" | cut -d'|' -f1)
+AUTH_REDIRECT_URL3=$(echo "${AUTH_RESPONSE3}" | cut -d'|' -f2)
+
+if [ "${AUTH_HTTP3}" = "302" ]; then
+  AUTHORIZATION_ID3=$(extract_param "${AUTH_REDIRECT_URL3}" "id")
+
+  PW_RESPONSE3=$(curl -s -w "\n%{http_code}" \
+    -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
+    -X POST "${TENANT_BASE}/v1/authorizations/${AUTHORIZATION_ID3}/password-authentication" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"username\": \"${TEST_EMAIL}\",
+      \"password\": \"${ADMIN_RESET_PASSWORD}\"
+    }")
+
+  PW_HTTP3=$(echo "${PW_RESPONSE3}" | tail -n1)
+
+  if [ "${PW_HTTP3}" = "200" ]; then
+    echo "  HTTP 200 OK - Login with admin-reset password succeeded"
+    check_result "login_admin_reset_password" "true"
+  else
+    PW_BODY3=$(echo "${PW_RESPONSE3}" | sed '$d')
+    echo "  HTTP ${PW_HTTP3} - Login with admin-reset password failed"
+    echo "  ${PW_BODY3}" | jq '.' 2>/dev/null || echo "  ${PW_BODY3}"
+    check_result "login_admin_reset_password" "false"
+  fi
+else
+  echo "  Authorization request failed: HTTP ${AUTH_HTTP3}"
+  check_result "login_admin_reset_password" "false"
+fi
+echo ""
+
+# ============================================================
 # Summary
 # ============================================================
 TOTAL=$((PASS_COUNT + FAIL_COUNT))

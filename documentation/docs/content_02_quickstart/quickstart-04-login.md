@@ -204,6 +204,48 @@ Socialログイン（Google等の外部サービス連携）については [Soc
 
 ---
 
+## パスワード変更・リセット
+
+idp-serverはパスワード変更とリセットの2つのAPIを提供しています。
+
+### パスワード変更（ユーザー自身）
+
+認証済みユーザーが現在のパスワードを使って新しいパスワードに変更します。
+
+```
+POST /{tenant-id}/v1/me/password/change
+Authorization: Bearer {access_token}
+
+{
+  "current_password": "現在のパスワード",
+  "new_password": "新しいパスワード"
+}
+```
+
+### パスワードリセット（管理者による）
+
+MFA設定がないテナントでは、管理者がManagement APIを使ってユーザーのパスワードをリセットできます。
+
+```
+PUT /v1/management/organizations/{org-id}/tenants/{tenant-id}/users/{user-id}/password
+Authorization: Bearer {admin_access_token}
+
+{
+  "raw_password": "新しいパスワード"
+}
+```
+
+### パスワードリセット（メール認証による）
+
+MFA設定があるテナントでは、`password:reset` スコープを使ったセルフサービスリセットが可能です。詳細は [MFA - パスワードリセット](./quickstart-05-mfa.md#パスワードリセットメール認証による) を参照してください。
+
+1. `scope=openid password:reset` で認可リクエスト
+2. メール認証でユーザーを本人確認
+3. `password:reset` スコープ付きトークンを取得
+4. `POST /{tenant-id}/v1/me/password/reset` で新パスワードを設定
+
+---
+
 ## テンプレートで試す
 
 ローカル環境ですぐに試せるテンプレートが用意されています。

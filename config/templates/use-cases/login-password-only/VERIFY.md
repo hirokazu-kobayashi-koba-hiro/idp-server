@@ -249,6 +249,146 @@ curl -s \
 
 ---
 
+## Step 8: Password Change（ユーザー自身によるパスワード変更）
+
+認証済みユーザーが自身のパスワードを変更します。
+
+### リクエスト
+
+```bash
+# リフレッシュ後のトークンがあればそちらを使用
+CURRENT_ACCESS_TOKEN="${NEW_ACCESS_TOKEN:-${ACCESS_TOKEN}}"
+
+NEW_PASSWORD="NewVerifyPass456"
+
+curl -s \
+  -X POST "${TENANT_BASE}/v1/me/password/change" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CURRENT_ACCESS_TOKEN}" \
+  -d "{
+    \"current_password\": \"${TEST_PASSWORD}\",
+    \"new_password\": \"${NEW_PASSWORD}\"
+  }" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 200 が返ること
+- `"message": "Password changed successfully."` が返ること
+
+---
+
+## Step 9: Verify Login with New Password
+
+変更後のパスワードでログインできることを確認します。
+
+### リクエスト
+
+```bash
+STATE2="verify-state2-$(date +%s)"
+
+AUTH_REDIRECT2=$(curl -s -c "${COOKIE_JAR}" -o /dev/null \
+  -w "%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=openid+profile+email&state=${STATE2}&prompt=login")
+
+AUTHORIZATION_ID2=$(echo "${AUTH_REDIRECT2}" | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
+
+curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${AUTHORIZATION_ID2}/password-authentication" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"username\": \"${TEST_EMAIL}\",
+    \"password\": \"${NEW_PASSWORD}\"
+  }" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 200 が返ること
+- 変更前のパスワードではログインできないこと
+
+---
+
+## Step 10: Admin Password Reset（管理者によるパスワードリセット）
+
+管理者が Management API を使ってユーザーのパスワードをリセットします。メール認証設定がないテナントでは、この方法でパスワードリセットを行います。
+
+### リクエスト
+
+```bash
+# ID Token からユーザーの sub を取得
+USER_SUB=$(echo "${ID_TOKEN}" | cut -d'.' -f2 | \
+  python3 -c "import sys,base64,json; print(json.loads(base64.urlsafe_b64decode(sys.stdin.read().strip()+'=='))['sub'])")
+
+# 管理者情報の読み込み
+ORG_ID=$(jq -r '.organization.id' "${CONFIG_DIR}/onboarding.json")
+ORGANIZER_TENANT_ID=$(jq -r '.tenant.id' "${CONFIG_DIR}/onboarding.json")
+ADMIN_EMAIL_ADDR=$(jq -r '.user.email' "${CONFIG_DIR}/onboarding.json")
+ADMIN_PASSWORD_VAL=$(jq -r '.user.raw_password' "${CONFIG_DIR}/onboarding.json")
+ORG_CLIENT_ID=$(jq -r '.client.client_id' "${CONFIG_DIR}/onboarding.json")
+ORG_CLIENT_SECRET=$(jq -r '.client.client_secret' "${CONFIG_DIR}/onboarding.json")
+
+# 管理者トークンの取得
+ORG_TOKEN=$(curl -s -X POST \
+  "${AUTHORIZATION_SERVER_URL}/${ORGANIZER_TENANT_ID}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=password" \
+  --data-urlencode "username=${ADMIN_EMAIL_ADDR}" \
+  --data-urlencode "password=${ADMIN_PASSWORD_VAL}" \
+  --data-urlencode "client_id=${ORG_CLIENT_ID}" \
+  --data-urlencode "client_secret=${ORG_CLIENT_SECRET}" \
+  --data-urlencode "scope=openid profile email management" | jq -r '.access_token')
+
+# パスワードリセット
+ADMIN_RESET_PASSWORD="AdminResetPass789"
+
+curl -s \
+  -X PUT "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/users/${USER_SUB}/password" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ORG_TOKEN}" \
+  -d "{
+    \"raw_password\": \"${ADMIN_RESET_PASSWORD}\"
+  }" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 200 が返ること
+- 管理者トークンに `management` スコープが含まれていること
+
+---
+
+## Step 11: Verify Login with Admin-Reset Password
+
+管理者がリセットしたパスワードでログインできることを確認します。
+
+### リクエスト
+
+```bash
+STATE3="verify-state3-$(date +%s)"
+
+AUTH_REDIRECT3=$(curl -s -c "${COOKIE_JAR}" -o /dev/null \
+  -w "%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=openid+profile+email&state=${STATE3}&prompt=login")
+
+AUTHORIZATION_ID3=$(echo "${AUTH_REDIRECT3}" | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
+
+curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${AUTHORIZATION_ID3}/password-authentication" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"username\": \"${TEST_EMAIL}\",
+    \"password\": \"${ADMIN_RESET_PASSWORD}\"
+  }" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 200 が返ること
+- リセット前のパスワードではログインできないこと
+
+---
+
 ## チェックリスト
 
 | Step | 確認項目 | 結果 |
@@ -265,3 +405,7 @@ curl -s \
 | 6 | UserInfo で sub が返る | |
 | 6 | email, name が正しい | |
 | 7 | Refresh token で新しい access_token が取得できる | |
+| 8 | Password change が成功する | |
+| 9 | 変更後のパスワードでログインできる | |
+| 10 | Admin password reset が成功する | |
+| 11 | リセット後のパスワードでログインできる | |
