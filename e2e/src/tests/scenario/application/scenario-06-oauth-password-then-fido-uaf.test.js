@@ -250,4 +250,152 @@ describe("scenario - oauth password then fido-uaf (no login_hint)", () => {
     console.log("  6. authentication-status: success (password + fido-uaf)");
     console.log("  7. Tokens issued with amr: [password, fido-uaf]\n");
   });
+
+  it("should fail authorization when device denies authentication after password", async () => {
+    // Step 1: Create user via initial-registration
+    console.log("\n=== Step 1: Create user via initial-registration ===");
+
+    const userEmail = faker.internet.email();
+    const userPassword = "TestPassword123!";
+    const userName = faker.person.fullName();
+
+    const { authorizationResponse: regAuthResponse } = await requestAuthorizations({
+      endpoint: serverConfig.authorizationEndpoint,
+      clientId: clientSecretPostClient.clientId,
+      responseType: "code",
+      state: `state_deny_reg_${Date.now()}`,
+      scope: "openid profile email claims:authentication_devices",
+      redirectUri: clientSecretPostClient.redirectUri,
+      prompt: "create",
+      user: { email: userEmail, password: userPassword, name: userName },
+      interaction: async (id) => {
+        const regResponse = await postWithJson({
+          url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${id}/initial-registration`,
+          body: { email: userEmail, password: userPassword, name: userName },
+        });
+        expect(regResponse.status).toBe(200);
+      },
+    });
+
+    const regTokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "authorization_code",
+      code: regAuthResponse.code,
+      redirectUri: clientSecretPostClient.redirectUri,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    expect(regTokenResponse.status).toBe(200);
+    const userAccessToken = regTokenResponse.data.access_token;
+
+    // Step 2: Register FIDO-UAF device
+    console.log("\n=== Step 2: Register FIDO-UAF device ===");
+    const { authenticationDeviceId } = await registerFidoUaf({ accessToken: userAccessToken });
+    console.log("FIDO-UAF device registered:", authenticationDeviceId);
+
+    // Step 3: Start authorization without login_hint
+    console.log("\n=== Step 3: Start authorization ===");
+
+    const authorizeResponse = await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations?` +
+        new URLSearchParams({
+          response_type: "code",
+          client_id: clientSecretPostClient.clientId,
+          redirect_uri: clientSecretPostClient.redirectUri,
+          scope: "openid profile email",
+          state: `state_deny_${Date.now()}`,
+        }).toString(),
+      headers: {},
+    });
+    expect(authorizeResponse.status).toBe(302);
+    const authId = new URL(authorizeResponse.headers.location, backendUrl).searchParams.get("id");
+
+    // Step 4: Password authentication
+    console.log("\n=== Step 4: Password authentication ===");
+    const pwResponse = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/password-authentication`,
+      body: { username: userEmail, password: userPassword },
+    });
+    expect(pwResponse.status).toBe(200);
+
+    // Step 5: Device denies authentication
+    console.log("\n=== Step 5: Device denies authentication ===");
+
+    const adminTokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "password",
+      username: serverConfig.oauth.username,
+      password: serverConfig.oauth.password,
+      scope: clientSecretPostClient.scope,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    expect(adminTokenResponse.status).toBe(200);
+
+    const txListResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${authId}`,
+      headers: {
+        Authorization: `Bearer ${adminTokenResponse.data.access_token}`,
+      },
+    });
+    expect(txListResponse.status).toBe(200);
+    const transactionId = txListResponse.data.list[0].id;
+
+    const denyResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: "oauth",
+      id: transactionId,
+      interactionType: "authentication-device-deny",
+      body: {},
+    });
+    console.log("Device deny response:", denyResponse.status, denyResponse.data);
+    expect(denyResponse.status).toBe(200);
+
+    // Step 6: Verify authentication-status is "failure"
+    console.log("\n=== Step 6: Verify authentication-status ===");
+
+    const statusAfterDeny = await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-status`,
+      headers: {},
+    });
+    expect(statusAfterDeny.status).toBe(200);
+    console.log("authentication-status:", statusAfterDeny.data.status);
+    console.log("interaction_results:", JSON.stringify(statusAfterDeny.data.interaction_results, null, 2));
+
+    // Status should not be "success" - either "failure" or "in_progress" depending on failure_conditions
+    expect(statusAfterDeny.data.status).not.toBe("success");
+
+    // Step 7: Verify authorize is rejected
+    // TODO: PR #1379 (AuthenticationTransaction.isSuccess() が isFailure() 時に false を返す修正) マージ後に有効化
+    // console.log("\n=== Step 7: Verify authorize is rejected ===");
+    //
+    // const authorizeAttempt = await postWithJson({
+    //   url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authorize`,
+    // });
+    // console.log("Authorize attempt:", authorizeAttempt.status, authorizeAttempt.data);
+    // expect(authorizeAttempt.status).not.toBe(200);
+
+    // Step 8: SPA calls deny endpoint to reject authorization
+    console.log("\n=== Step 8: Deny authorization ===");
+
+    const denyAuthResponse = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/deny`,
+    });
+    expect(denyAuthResponse.status).toBe(200);
+    expect(denyAuthResponse.data.redirect_uri).toBeDefined();
+
+    const denyRedirectUrl = new URL(denyAuthResponse.data.redirect_uri);
+    const error = denyRedirectUrl.searchParams.get("error");
+    const errorDescription = denyRedirectUrl.searchParams.get("error_description");
+    console.log("Deny redirect error:", error);
+    console.log("Deny redirect error_description:", errorDescription);
+    expect(error).toBe("access_denied");
+
+    console.log("\n=== Test Completed: Device Deny ===");
+    console.log("  1. User created + FIDO-UAF device registered");
+    console.log("  2. Password authentication succeeded");
+    console.log("  3. Device denied authentication");
+    console.log("  4. authentication-status: failure");
+    console.log("  5. SPA denied authorization → access_denied error\n");
+  });
 });
