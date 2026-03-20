@@ -273,7 +273,11 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
         newNotificationChannel,
         newNotificationToken,
         availableMethods,
-        newPriority);
+        newPriority,
+        credentialType,
+        credentialId,
+        credentialPayload,
+        credentialMetadata);
   }
 
   public boolean exists() {
