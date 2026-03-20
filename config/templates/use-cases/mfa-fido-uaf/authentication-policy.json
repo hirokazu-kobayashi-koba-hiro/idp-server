@@ -49,18 +49,70 @@
             }
           ]
         ]
+      },
+      "device_registration_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
       }
     },
     {
       "description": "password_fallback",
       "priority": 2,
       "conditions": {},
-      "available_methods": ["password"],
+      "available_methods": ["password", "email", "initial-registration", "fido-uaf"],
       "success_conditions": {
         "any_of": [
           [
             {
               "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "device_registration_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.email-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.email-authentication.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1
