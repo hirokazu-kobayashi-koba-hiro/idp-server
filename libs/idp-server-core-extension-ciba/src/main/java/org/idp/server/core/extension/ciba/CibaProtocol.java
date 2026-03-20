@@ -19,8 +19,8 @@ package org.idp.server.core.extension.ciba;
 import org.idp.server.core.extension.ciba.handler.io.*;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.extension.ciba.user.UserHintResolvers;
 import org.idp.server.core.extension.ciba.verifier.additional.CibaRequestAdditionalVerifiers;
+import org.idp.server.core.openid.identity.hint.UserHintResolvers;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
