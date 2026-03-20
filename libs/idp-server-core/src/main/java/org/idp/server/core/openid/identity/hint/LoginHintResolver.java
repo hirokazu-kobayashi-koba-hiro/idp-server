@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.ciba.user;
+package org.idp.server.core.openid.identity.hint;
 
 import java.util.List;
 import org.idp.server.core.openid.identity.User;

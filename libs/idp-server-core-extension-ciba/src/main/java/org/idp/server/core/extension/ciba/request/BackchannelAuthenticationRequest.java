@@ -17,8 +17,8 @@
 package org.idp.server.core.extension.ciba.request;
 
 import org.idp.server.core.extension.ciba.CibaProfile;
-import org.idp.server.core.extension.ciba.user.UserHint;
-import org.idp.server.core.extension.ciba.user.UserHintType;
+import org.idp.server.core.openid.identity.hint.UserHint;
+import org.idp.server.core.openid.identity.hint.UserHintType;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.ciba.*;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
