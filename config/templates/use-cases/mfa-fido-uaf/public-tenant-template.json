@@ -82,7 +82,9 @@
       "openid",
       "profile",
       "email",
-      "phone"
+      "phone",
+      "transfers",
+      "account"
     ],
     "response_types_supported": [
       "code"

@@ -4,7 +4,7 @@
   "policies": [
     {
       "description": "device_fido_uaf_authentication",
-      "priority": 1,
+      "priority": 10,
       "conditions": {
         "acr_values": ["urn:idp:acr:device"]
       },
@@ -14,6 +14,9 @@
         "authentication-device-deny",
         "fido-uaf"
       ],
+      "acr_mapping_rules": {
+        "urn:idp:acr:device": ["fido-uaf"]
+      },
       "step_definitions": [
         {
           "method": "authentication-device-notification",
@@ -65,8 +68,17 @@
     },
     {
       "description": "password_fallback",
-      "priority": 2,
+      "priority": 1,
       "conditions": {},
+      "acr_mapping_rules": {
+        "urn:idp:acr:mfa": ["password", "email"],
+        "urn:idp:acr:pwd": ["password"],
+        "urn:idp:acr:initial": ["initial-registration"]
+      },
+      "level_of_authentication_scopes": {
+        "transfers": ["fido-uaf"],
+        "account": ["password", "email"]
+      },
       "available_methods": ["password", "email", "initial-registration", "fido-uaf"],
       "success_conditions": {
         "any_of": [

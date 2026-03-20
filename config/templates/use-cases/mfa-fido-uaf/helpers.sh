@@ -150,16 +150,21 @@ start_auth_flow() {
 start_auth_flow_with_login_hint() {
   local login_hint="$1"
   local scope="${2:-openid+profile+email}"
+  local acr_values="${3:-}"
   [ -n "${COOKIE_JAR:-}" ] && [ -f "${COOKIE_JAR}" ] && rm -f "${COOKIE_JAR}"
   COOKIE_JAR=$(mktemp)
   STATE="exp-state-$(date +%s)"
 
-  AUTH_REDIRECT=$(curl -s -c "${COOKIE_JAR}" -o /dev/null \
-    -w "%{redirect_url}" \
-    "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=${scope}&state=${STATE}&login_hint=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${login_hint}', safe=''))")")
+  local url="${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=${scope}&state=${STATE}&login_hint=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${login_hint}', safe=''))")"
+
+  if [ -n "${acr_values}" ]; then
+    url="${url}&acr_values=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${acr_values}', safe=''))")"
+  fi
+
+  AUTH_REDIRECT=$(curl -s -c "${COOKIE_JAR}" -o /dev/null -w "%{redirect_url}" "${url}")
 
   AUTHORIZATION_ID=$(echo "${AUTH_REDIRECT}" | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
-  echo "Authorization ID: ${AUTHORIZATION_ID} (login_hint: ${login_hint})"
+  echo "Authorization ID: ${AUTHORIZATION_ID} (login_hint: ${login_hint}${acr_values:+, acr_values: ${acr_values}})"
 }
 
 register_user() {
@@ -515,10 +520,15 @@ show_amr() {
 import sys, json
 data = json.load(sys.stdin)
 amr = data.get('amr')
+acr = data.get('acr')
 if amr:
     print('amr:', json.dumps(amr))
 else:
     print('amr not found in ID Token')
+if acr:
+    print('acr:', acr)
+else:
+    print('acr not found in ID Token')
 print('sub:', data.get('sub', 'N/A'))
 "
 }
@@ -555,7 +565,7 @@ print('sub:', data.get('sub', 'N/A'))
 #   complete_auth_flow
 #
 #   # Phase 4: 認可コードフロー + FIDO-UAF 認証
-#   start_auth_flow_with_login_hint "sub:${USER_SUB}"
+#   start_auth_flow_with_login_hint "sub:${USER_SUB}" "openid+profile+email" "urn:idp:acr:device"
 #   get_device_auth_transactions
 #   fido_uaf_auth_challenge
 #   fido_uaf_auth
