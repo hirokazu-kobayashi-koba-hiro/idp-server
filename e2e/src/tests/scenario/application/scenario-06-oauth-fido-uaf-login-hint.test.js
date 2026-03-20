@@ -268,4 +268,154 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     console.log("  9. Authorization code and tokens issued");
     console.log("  10. ID token contains amr claim\n");
   });
+
+  it("should filter scopes based on level_of_authentication_scopes", async () => {
+    // Setup: Create user and register FIDO-UAF device
+    console.log("\n=== Setup: Create user and register FIDO-UAF device ===");
+
+    const { user, accessToken } = await createFederatedUser({
+      serverConfig: serverConfig,
+      federationServerConfig: federationServerConfig,
+      client: clientSecretPostClient,
+      adminClient: clientSecretPostClient,
+    });
+    console.log("User created:", user.sub);
+
+    const { authenticationDeviceId } = await registerFidoUaf({ accessToken });
+    console.log("FIDO-UAF device registered:", authenticationDeviceId);
+
+    // Test 1: Password-only auth should NOT include "transfers" scope
+    console.log("\n=== Test 1: Password-only → transfers scope should be filtered ===");
+
+    const loginHint1 = `sub:${user.sub},idp:idp-server`;
+    const state1 = `state_loa_1_${Date.now()}`;
+
+    // Use existing CIBA test user for password authentication (login_hint not used here)
+    const authResponse1 = await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations?` +
+        new URLSearchParams({
+          response_type: "code",
+          client_id: clientSecretPostClient.clientId,
+          redirect_uri: clientSecretPostClient.redirectUri,
+          scope: "openid profile email transfers",
+          state: state1,
+        }).toString(),
+      headers: {},
+    });
+    expect(authResponse1.status).toBe(302);
+    const authId1 = new URL(authResponse1.headers.location, backendUrl).searchParams.get("id");
+
+    // Password authentication with CIBA test user
+    const pwResponse = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId1}/password-authentication`,
+      body: { username: serverConfig.oauth.username, password: serverConfig.oauth.password },
+    });
+    expect(pwResponse.status).toBe(200);
+
+    // Authorize and get tokens
+    const authorizeResponse1 = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId1}/authorize`,
+    });
+    expect(authorizeResponse1.status).toBe(200);
+
+    const code1 = new URL(authorizeResponse1.data.redirect_uri).searchParams.get("code");
+    const tokenResponse1 = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "authorization_code",
+      code: code1,
+      redirectUri: clientSecretPostClient.redirectUri,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    expect(tokenResponse1.status).toBe(200);
+
+    const scope1 = tokenResponse1.data.scope;
+    console.log("Password-only scope:", scope1);
+    expect(scope1).not.toContain("transfers");
+    console.log("PASS: transfers scope filtered out with password-only auth");
+
+    // Test 2: FIDO-UAF auth should include "transfers" scope
+    console.log("\n=== Test 2: FIDO-UAF auth → transfers scope should be included ===");
+
+    const state2 = `state_loa_2_${Date.now()}`;
+
+    const authResponse2 = await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations?` +
+        new URLSearchParams({
+          response_type: "code",
+          client_id: clientSecretPostClient.clientId,
+          redirect_uri: clientSecretPostClient.redirectUri,
+          scope: "openid profile email transfers",
+          state: state2,
+          login_hint: loginHint1,
+        }).toString(),
+      headers: {},
+    });
+    expect(authResponse2.status).toBe(302);
+    const authId2 = new URL(authResponse2.headers.location, backendUrl).searchParams.get("id");
+
+    // Get admin token for management API
+    const adminTokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "password",
+      username: serverConfig.oauth.username,
+      password: serverConfig.oauth.password,
+      scope: clientSecretPostClient.scope,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+
+    // Get authentication transaction ID
+    const txListResponse = await get({
+      url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${authId2}`,
+      headers: { Authorization: `Bearer ${adminTokenResponse.data.access_token}` },
+    });
+    expect(txListResponse.data.list.length).toBeGreaterThanOrEqual(1);
+    const transactionId = txListResponse.data.list[0].id;
+
+    // FIDO-UAF authentication
+    let authResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: "oauth",
+      id: transactionId,
+      interactionType: "fido-uaf-authentication-challenge",
+      body: {},
+    });
+    expect(authResponse.status).toBe(200);
+
+    authResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: "oauth",
+      id: transactionId,
+      interactionType: "fido-uaf-authentication",
+      body: {},
+    });
+    expect(authResponse.status).toBe(200);
+
+    // Authorize and get tokens
+    const authorizeResponse2 = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId2}/authorize`,
+    });
+    expect(authorizeResponse2.status).toBe(200);
+
+    const code2 = new URL(authorizeResponse2.data.redirect_uri).searchParams.get("code");
+    const tokenResponse2 = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "authorization_code",
+      code: code2,
+      redirectUri: clientSecretPostClient.redirectUri,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    expect(tokenResponse2.status).toBe(200);
+
+    const scope2 = tokenResponse2.data.scope;
+    console.log("FIDO-UAF scope:", scope2);
+    expect(scope2).toContain("transfers");
+    console.log("PASS: transfers scope included with FIDO-UAF auth");
+
+    console.log("\n=== Test Completed: level_of_authentication_scopes ===");
+    console.log("  Password-only: transfers EXCLUDED");
+    console.log("  FIDO-UAF:      transfers INCLUDED\n");
+  });
 });
