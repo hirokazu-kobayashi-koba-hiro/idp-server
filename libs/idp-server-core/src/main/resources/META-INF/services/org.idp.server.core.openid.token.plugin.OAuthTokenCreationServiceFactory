@@ -1,1 +1,2 @@
 org.idp.server.core.openid.token.plugin.JwtBearerGrantServiceFactory
+org.idp.server.core.openid.token.plugin.TokenExchangeGrantServiceFactory

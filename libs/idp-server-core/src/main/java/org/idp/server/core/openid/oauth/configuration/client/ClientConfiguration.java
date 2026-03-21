@@ -509,6 +509,20 @@ public class ClientConfiguration implements JsonReadable, Configurable {
         .findFirst();
   }
 
+  public Optional<AvailableFederation> findTokenExchangeFederationByIssuer(String issuer) {
+    return availableFederations().stream()
+        .filter(federation -> federation.tokenExchangeGrantEnabled())
+        .filter(federation -> federation.matchesIssuer(issuer))
+        .findFirst();
+  }
+
+  public Optional<AvailableFederation> findTokenExchangeIntrospectionFederation() {
+    return availableFederations().stream()
+        .filter(federation -> federation.tokenExchangeGrantEnabled())
+        .filter(federation -> federation.hasIntrospectionEndpoint())
+        .findFirst();
+  }
+
   public Optional<AvailableFederation> findDeviceFederation() {
     return availableFederations().stream()
         .filter(federation -> federation.jwtBearerGrantEnabled())

@@ -215,6 +215,8 @@ export const requestToken = async ({
  password,
  authReqId,
  assertion,
+ subjectToken,
+ subjectTokenType,
  clientId,
  clientSecret,
  clientAssertion,
@@ -254,6 +256,13 @@ export const requestToken = async ({
   // JWT Bearer Grant assertion (RFC 7523)
   if (assertion) {
     params.append("assertion", assertion);
+  }
+  // RFC 8693 Token Exchange
+  if (subjectToken) {
+    params.append("subject_token", subjectToken);
+  }
+  if (subjectTokenType) {
+    params.append("subject_token_type", subjectTokenType);
   }
   if (clientId) {
     params.append("client_id", clientId);

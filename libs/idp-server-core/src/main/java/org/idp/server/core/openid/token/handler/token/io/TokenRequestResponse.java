@@ -18,6 +18,7 @@ package org.idp.server.core.openid.token.handler.token.io;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.openid.oauth.type.oauth.IssuedTokenType;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenErrorResponse;
 import org.idp.server.core.openid.token.TokenResponse;
@@ -32,6 +33,11 @@ public class TokenRequestResponse {
   Map<String, String> headers;
 
   public TokenRequestResponse(TokenRequestStatus status, OAuthToken oAuthToken) {
+    this(status, oAuthToken, new IssuedTokenType());
+  }
+
+  public TokenRequestResponse(
+      TokenRequestStatus status, OAuthToken oAuthToken, IssuedTokenType issuedTokenType) {
     this.status = status;
     this.oAuthToken = oAuthToken;
     this.tokenResponse =
@@ -45,6 +51,7 @@ public class TokenRequestResponse {
             .add(oAuthToken.authorizationDetails())
             .add(oAuthToken.cNonce())
             .add(oAuthToken.cNonceExpiresIn())
+            .add(issuedTokenType)
             .build();
     this.errorResponse = new TokenErrorResponse();
     Map<String, String> values = new HashMap<>();

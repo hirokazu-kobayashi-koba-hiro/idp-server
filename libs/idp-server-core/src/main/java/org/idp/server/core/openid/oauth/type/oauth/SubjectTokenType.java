@@ -18,49 +18,50 @@ package org.idp.server.core.openid.oauth.type.oauth;
 
 import java.util.Objects;
 
-public enum GrantType {
-  authorization_code("authorization_code"),
-  implicit("implicit"),
-  password("password"),
-  client_credentials("client_credentials"),
-  refresh_token("refresh_token"),
-  ciba("urn:openid:params:grant-type:ciba"),
-  jwt_bearer("urn:ietf:params:oauth:grant-type:jwt-bearer"),
-  token_exchange("urn:ietf:params:oauth:grant-type:token-exchange"),
-  unknown(""),
+/**
+ * SubjectTokenType
+ *
+ * <p>RFC 8693 Section 3 - Token Type Identifiers for subject_token_type.
+ *
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-3">RFC 8693 Section 3</a>
+ */
+public enum SubjectTokenType {
+  access_token("urn:ietf:params:oauth:token-type:access_token"),
+  id_token("urn:ietf:params:oauth:token-type:id_token"),
+  jwt("urn:ietf:params:oauth:token-type:jwt"),
   undefined("");
 
   String value;
 
-  GrantType(String value) {
+  SubjectTokenType(String value) {
     this.value = value;
   }
 
-  public static GrantType of(String value) {
+  public static SubjectTokenType of(String value) {
     if (Objects.isNull(value) || value.isEmpty()) {
       return undefined;
     }
-    for (GrantType grantType : GrantType.values()) {
-      if (grantType.value.equals(value) || grantType.name().equals(value)) {
-        return grantType;
+    for (SubjectTokenType type : SubjectTokenType.values()) {
+      if (type.value.equals(value)) {
+        return type;
       }
     }
-    return unknown;
+    return undefined;
   }
 
   public String value() {
     return value;
   }
 
-  public boolean isClientCredentials() {
-    return this == client_credentials;
+  public boolean exists() {
+    return this != undefined;
   }
 
-  public boolean isJwtBearer() {
-    return this == jwt_bearer;
+  public boolean isAlwaysJwt() {
+    return this == id_token || this == jwt;
   }
 
-  public boolean isTokenExchange() {
-    return this == token_exchange;
+  public boolean isAccessToken() {
+    return this == access_token;
   }
 }

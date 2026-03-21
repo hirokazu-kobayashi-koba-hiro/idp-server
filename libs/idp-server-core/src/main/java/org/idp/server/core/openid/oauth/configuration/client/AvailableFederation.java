@@ -16,9 +16,12 @@
 
 package org.idp.server.core.openid.oauth.configuration.client;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.mapper.MappingRule;
 
 public class AvailableFederation implements JsonReadable {
   String id;
@@ -28,10 +31,18 @@ public class AvailableFederation implements JsonReadable {
   String issuer;
   String providerId;
   boolean jwtBearerGrantEnabled = false;
+  boolean tokenExchangeGrantEnabled = false;
+  String tokenExchangeTokenVerificationMethod;
   String subjectClaimMapping;
   String jwksUri;
   String jwks;
   int jwksCacheTtlSeconds = 3600;
+  String introspectionEndpoint;
+  String introspectionAuthMethod;
+  String introspectionClientId;
+  String introspectionClientSecret;
+  boolean jitProvisioningEnabled = false;
+  List<MappingRule> userinfoMappingRules = new ArrayList<>();
 
   public AvailableFederation() {}
 
@@ -84,12 +95,34 @@ public class AvailableFederation implements JsonReadable {
     return jwtBearerGrantEnabled;
   }
 
+  public boolean tokenExchangeGrantEnabled() {
+    return tokenExchangeGrantEnabled;
+  }
+
+  public String tokenExchangeTokenVerificationMethod() {
+    return tokenExchangeTokenVerificationMethod;
+  }
+
+  public boolean isJwtVerification() {
+    return "jwt".equals(tokenExchangeTokenVerificationMethod)
+        || tokenExchangeTokenVerificationMethod == null
+        || tokenExchangeTokenVerificationMethod.isEmpty();
+  }
+
+  public boolean isIntrospectionVerification() {
+    return "introspection".equals(tokenExchangeTokenVerificationMethod);
+  }
+
   public String subjectClaimMapping() {
     return subjectClaimMapping;
   }
 
   public boolean hasSubjectClaimMapping() {
     return subjectClaimMapping != null && !subjectClaimMapping.isEmpty();
+  }
+
+  public String resolveSubjectClaimMapping() {
+    return hasSubjectClaimMapping() ? subjectClaimMapping : "sub";
   }
 
   public boolean isDeviceType() {
@@ -116,6 +149,44 @@ public class AvailableFederation implements JsonReadable {
     return jwksCacheTtlSeconds;
   }
 
+  public boolean jitProvisioningEnabled() {
+    return jitProvisioningEnabled;
+  }
+
+  public List<MappingRule> userinfoMappingRules() {
+    return userinfoMappingRules;
+  }
+
+  public boolean hasUserinfoMappingRules() {
+    return userinfoMappingRules != null && !userinfoMappingRules.isEmpty();
+  }
+
+  public String introspectionAuthMethod() {
+    return introspectionAuthMethod;
+  }
+
+  public boolean isIntrospectionBasicAuth() {
+    return introspectionAuthMethod == null
+        || introspectionAuthMethod.isEmpty()
+        || "client_secret_basic".equals(introspectionAuthMethod);
+  }
+
+  public String introspectionEndpoint() {
+    return introspectionEndpoint;
+  }
+
+  public boolean hasIntrospectionEndpoint() {
+    return introspectionEndpoint != null && !introspectionEndpoint.isEmpty();
+  }
+
+  public String introspectionClientId() {
+    return introspectionClientId;
+  }
+
+  public String introspectionClientSecret() {
+    return introspectionClientSecret;
+  }
+
   public boolean matchesIssuer(String issuerToMatch) {
     if (!hasIssuer()) {
       return false;
@@ -132,10 +203,18 @@ public class AvailableFederation implements JsonReadable {
     if (hasIssuer()) map.put("issuer", issuer);
     if (hasProviderId()) map.put("provider_id", providerId);
     map.put("jwt_bearer_grant_enabled", jwtBearerGrantEnabled);
+    map.put("token_exchange_grant_enabled", tokenExchangeGrantEnabled);
+    if (tokenExchangeTokenVerificationMethod != null)
+      map.put("token_exchange_token_verification_method", tokenExchangeTokenVerificationMethod);
     if (hasSubjectClaimMapping()) map.put("subject_claim_mapping", subjectClaimMapping);
     if (hasJwksUri()) map.put("jwks_uri", jwksUri);
     if (hasJwks()) map.put("jwks", jwks);
     if (jwksCacheTtlSeconds > 0) map.put("jwks_cache_ttl_seconds", jwksCacheTtlSeconds);
+    map.put("jit_provisioning_enabled", jitProvisioningEnabled);
+    if (hasIntrospectionEndpoint()) map.put("introspection_endpoint", introspectionEndpoint);
+    if (introspectionClientId != null) map.put("introspection_client_id", introspectionClientId);
+    if (introspectionClientSecret != null)
+      map.put("introspection_client_secret", introspectionClientSecret);
     return map;
   }
 }

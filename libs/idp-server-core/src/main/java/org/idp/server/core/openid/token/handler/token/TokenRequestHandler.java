@@ -30,6 +30,7 @@ import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
+import org.idp.server.core.openid.oauth.type.oauth.IssuedTokenType;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.JwtBearerUserFindingDelegate;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -121,6 +122,11 @@ public class TokenRequestHandler {
 
     OAuthToken oAuthToken =
         oAuthTokenCreationService.create(tokenRequestContext, clientCredentials);
+
+    if (tokenRequestContext.isTokenExchangeGrant()) {
+      return new TokenRequestResponse(
+          TokenRequestStatus.OK, oAuthToken, IssuedTokenType.accessToken());
+    }
 
     return new TokenRequestResponse(TokenRequestStatus.OK, oAuthToken);
   }

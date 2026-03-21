@@ -162,6 +162,30 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
     return contains(OAuthRequestKey.assertion);
   }
 
+  public SubjectToken subjectToken() {
+    return new SubjectToken(getValueOrEmpty(OAuthRequestKey.subject_token));
+  }
+
+  public boolean hasSubjectToken() {
+    return contains(OAuthRequestKey.subject_token);
+  }
+
+  public SubjectTokenType subjectTokenType() {
+    return SubjectTokenType.of(getValueOrEmpty(OAuthRequestKey.subject_token_type));
+  }
+
+  public boolean hasSubjectTokenType() {
+    return contains(OAuthRequestKey.subject_token_type);
+  }
+
+  public RequestedTokenType requestedTokenType() {
+    return new RequestedTokenType(getValueOrEmpty(OAuthRequestKey.requested_token_type));
+  }
+
+  public boolean hasRequestedTokenType() {
+    return contains(OAuthRequestKey.requested_token_type);
+  }
+
   public String getValueOrEmpty(OAuthRequestKey key) {
     return values.getFirstOrEmpty(key.name());
   }

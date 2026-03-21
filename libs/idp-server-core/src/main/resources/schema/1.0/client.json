@@ -55,7 +55,8 @@
           "password",
           "client_credentials",
           "urn:openid:params:grant-type:ciba",
-          "urn:ietf:params:oauth:grant-type:jwt-bearer"
+          "urn:ietf:params:oauth:grant-type:jwt-bearer",
+          "urn:ietf:params:oauth:grant-type:token-exchange"
         ]
       },
       "default": [
