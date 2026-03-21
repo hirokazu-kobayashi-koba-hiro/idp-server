@@ -105,8 +105,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
           "login_required", "invalid session, session is not registered", this);
     }
     if (!opSession.isActive()) {
-      log.info(
-          "DEBUG canAutomaticallyAuthorize: session not active, status={}", opSession.status());
+      log.debug("canAutomaticallyAuthorize: session not active, status={}", opSession.status());
       throw new OAuthRedirectableBadRequestException(
           "login_required", "invalid session, session is expired or terminated", this);
     }
