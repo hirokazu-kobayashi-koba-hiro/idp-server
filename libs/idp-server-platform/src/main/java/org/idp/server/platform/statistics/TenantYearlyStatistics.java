@@ -40,12 +40,12 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
  */
 public class TenantYearlyStatistics {
 
-  private final TenantYearlyStatisticsIdentifier id;
-  private final TenantIdentifier tenantId;
-  private final String statYear;
-  private final Map<String, Object> yearlySummary;
-  private final Instant createdAt;
-  private final Instant updatedAt;
+  private TenantYearlyStatisticsIdentifier id;
+  private TenantIdentifier tenantId;
+  private String statYear;
+  private Map<String, Object> yearlySummary;
+  private Instant createdAt;
+  private Instant updatedAt;
 
   private TenantYearlyStatistics(Builder builder) {
     this.id = builder.id;

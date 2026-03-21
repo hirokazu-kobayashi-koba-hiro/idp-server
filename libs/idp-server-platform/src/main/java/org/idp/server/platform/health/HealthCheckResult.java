@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class HealthCheckResult {
 
-  private final HealthStatus status;
+  private HealthStatus status;
 
   private HealthCheckResult(HealthStatus status) {
     this.status = status;

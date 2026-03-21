@@ -22,10 +22,12 @@ import java.util.Objects;
 import java.util.Optional;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.*;
 
 public class TenantQueryDataSource implements TenantQueryRepository {
 
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(TenantQueryDataSource.class);
   TenantQuerySqlExecutor executor;
   JsonConverter jsonConverter;
   CacheStore cacheStore;
@@ -42,9 +44,12 @@ public class TenantQueryDataSource implements TenantQueryRepository {
     Optional<Tenant> optionalTenant = cacheStore.find(key, Tenant.class);
 
     if (optionalTenant.isPresent()) {
-      return optionalTenant.get();
+      Tenant cached = optionalTenant.get();
+      log.trace("tenant cache HIT: tenant={}", tenantIdentifier.value());
+      return cached;
     }
 
+    log.trace("tenant cache MISS: tenant={}", tenantIdentifier.value());
     Map<String, String> result = executor.selectOne(tenantIdentifier);
 
     if (Objects.isNull(result) || result.isEmpty()) {

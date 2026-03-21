@@ -26,8 +26,8 @@ import java.util.Map;
 public class SecurityEventHookConfigFindListRequest
     implements SecurityEventHookConfigManagementRequest {
 
-  private final int limit;
-  private final int offset;
+  private int limit;
+  private int offset;
 
   public SecurityEventHookConfigFindListRequest(int limit, int offset) {
     this.limit = limit;

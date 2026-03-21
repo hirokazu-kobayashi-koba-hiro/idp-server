@@ -53,11 +53,11 @@ import java.util.Map;
  */
 public class IdentityVerificationErrorDetails {
 
-  private final String error;
-  private final String errorDescription;
-  private final Map<String, Object> errorDetails;
-  private final List<String> errorMessages;
-  private final int statusCode;
+  private String error;
+  private String errorDescription;
+  private Map<String, Object> errorDetails;
+  private List<String> errorMessages;
+  private int statusCode;
 
   private IdentityVerificationErrorDetails(Builder builder) {
     this.error = builder.error;
@@ -113,8 +113,8 @@ public class IdentityVerificationErrorDetails {
   public static class Builder {
     private String error;
     private String errorDescription;
-    private final Map<String, Object> errorDetails = new HashMap<>();
-    private final List<String> errorMessages = new java.util.ArrayList<>();
+    private Map<String, Object> errorDetails = new HashMap<>();
+    private List<String> errorMessages = new java.util.ArrayList<>();
     private int statusCode;
 
     private Builder() {}

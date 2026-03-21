@@ -37,9 +37,9 @@ import org.idp.server.control_plane.management.security.event.io.SecurityEventMa
  */
 public class SecurityEventManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final SecurityEventManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private SecurityEventManagementResponse response;
 
   private SecurityEventManagementResult(
       AuditableContext context,

@@ -82,12 +82,12 @@ public enum PrivateIpRange {
   // IPv4-mapped IPv6 addresses
   IPV4_MAPPED_IPV6("::ffff:0:0", 96, "IPv4-mapped IPv6");
 
-  private final String baseAddress;
-  private final int prefixLength;
-  private final String description;
-  private final BigInteger networkAddress;
-  private final BigInteger broadcastAddress;
-  private final boolean isIpv6;
+  private String baseAddress;
+  private int prefixLength;
+  private String description;
+  private BigInteger networkAddress;
+  private BigInteger broadcastAddress;
+  private boolean isIpv6;
 
   PrivateIpRange(String baseAddress, int prefixLength, String description) {
     this.baseAddress = baseAddress;

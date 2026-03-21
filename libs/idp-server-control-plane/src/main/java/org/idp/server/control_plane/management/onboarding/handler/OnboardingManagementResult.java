@@ -40,9 +40,9 @@ import org.idp.server.control_plane.management.onboarding.io.OnboardingStatus;
  */
 public class OnboardingManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final OnboardingResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private OnboardingResponse response;
 
   private OnboardingManagementResult(
       AuditableContext context, ManagementApiException exception, OnboardingResponse response) {

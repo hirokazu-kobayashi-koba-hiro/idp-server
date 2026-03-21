@@ -21,12 +21,12 @@ import java.util.Map;
 /** Result of a security event hook retry operation. */
 public class SecurityEventHookRetryResult {
 
-  private final SecurityEventHookResultIdentifier originalResultIdentifier;
-  private final SecurityEventHookRetryStatus status;
-  private final SecurityEventHookResultIdentifier newResultIdentifier;
-  private final SecurityEventHookResult newResult;
-  private final String errorMessage;
-  private final Map<String, Object> retryDetails;
+  private SecurityEventHookResultIdentifier originalResultIdentifier;
+  private SecurityEventHookRetryStatus status;
+  private SecurityEventHookResultIdentifier newResultIdentifier;
+  private SecurityEventHookResult newResult;
+  private String errorMessage;
+  private Map<String, Object> retryDetails;
 
   private SecurityEventHookRetryResult(
       SecurityEventHookResultIdentifier originalResultIdentifier,

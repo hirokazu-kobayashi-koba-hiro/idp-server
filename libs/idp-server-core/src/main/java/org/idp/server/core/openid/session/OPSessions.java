@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 
 public class OPSessions implements Iterable<OPSession> {
 
-  private final List<OPSession> values;
+  private List<OPSession> values;
 
   public OPSessions() {
     this.values = new ArrayList<>();

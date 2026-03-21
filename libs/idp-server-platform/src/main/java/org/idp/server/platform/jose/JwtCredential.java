@@ -38,9 +38,9 @@ package org.idp.server.platform.jose;
  */
 public class JwtCredential {
 
-  private final JwtCredentialType type;
-  private final String secret;
-  private final String jwks;
+  private JwtCredentialType type;
+  private String secret;
+  private String jwks;
 
   private JwtCredential(JwtCredentialType type, String secret, String jwks) {
     this.type = type;

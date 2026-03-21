@@ -47,10 +47,10 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
  */
 public class TenantStatisticsReport {
 
-  private final TenantIdentifier tenantId;
-  private final Period period;
-  private final Map<String, Object> summary;
-  private final List<MonthlyData> monthly;
+  private TenantIdentifier tenantId;
+  private Period period;
+  private Map<String, Object> summary;
+  private List<MonthlyData> monthly;
 
   private TenantStatisticsReport(Builder builder) {
     this.tenantId = Objects.requireNonNull(builder.tenantId, "tenantId must not be null");
@@ -89,9 +89,9 @@ public class TenantStatisticsReport {
 
   /** Period information */
   public static class Period {
-    private final String year;
-    private final String fromMonth;
-    private final String toMonth;
+    private String year;
+    private String fromMonth;
+    private String toMonth;
 
     public Period(String year, String fromMonth, String toMonth) {
       this.year = year;
@@ -122,10 +122,10 @@ public class TenantStatisticsReport {
 
   /** Monthly data with daily breakdown */
   public static class MonthlyData {
-    private final String month;
-    private final Map<String, Object> metrics;
-    private final int cumulativeYau;
-    private final List<DailyData> daily;
+    private String month;
+    private Map<String, Object> metrics;
+    private int cumulativeYau;
+    private List<DailyData> daily;
 
     private MonthlyData(MonthlyDataBuilder builder) {
       this.month = Objects.requireNonNull(builder.month, "month must not be null");
@@ -218,8 +218,8 @@ public class TenantStatisticsReport {
 
   /** Daily data */
   public static class DailyData {
-    private final String day;
-    private final Map<String, Object> metrics;
+    private String day;
+    private Map<String, Object> metrics;
 
     private DailyData(DailyDataBuilder builder) {
       this.day = Objects.requireNonNull(builder.day, "day must not be null");

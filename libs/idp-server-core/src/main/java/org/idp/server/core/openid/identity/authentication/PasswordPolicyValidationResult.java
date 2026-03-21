@@ -19,8 +19,8 @@ package org.idp.server.core.openid.identity.authentication;
 /** Password policy validation result. */
 public class PasswordPolicyValidationResult {
 
-  private final boolean valid;
-  private final String errorMessage;
+  private boolean valid;
+  private String errorMessage;
 
   private PasswordPolicyValidationResult(boolean valid, String errorMessage) {
     this.valid = valid;

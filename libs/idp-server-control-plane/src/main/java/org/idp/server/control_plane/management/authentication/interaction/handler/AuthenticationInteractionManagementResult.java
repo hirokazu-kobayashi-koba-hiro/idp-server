@@ -40,9 +40,9 @@ import org.idp.server.control_plane.management.exception.*;
  */
 public class AuthenticationInteractionManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final AuthenticationInteractionManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private AuthenticationInteractionManagementResponse response;
 
   private AuthenticationInteractionManagementResult(
       AuditableContext context,

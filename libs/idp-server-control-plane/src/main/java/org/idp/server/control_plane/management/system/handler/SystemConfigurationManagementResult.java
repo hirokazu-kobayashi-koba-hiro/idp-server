@@ -38,9 +38,9 @@ import org.idp.server.control_plane.management.system.io.SystemConfigurationMana
  */
 public class SystemConfigurationManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final SystemConfigurationManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private SystemConfigurationManagementResponse response;
 
   private SystemConfigurationManagementResult(
       AuditableContext context,

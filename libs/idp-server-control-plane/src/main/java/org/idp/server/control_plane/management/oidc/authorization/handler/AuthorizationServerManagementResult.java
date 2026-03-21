@@ -43,9 +43,9 @@ import org.idp.server.control_plane.management.oidc.authorization.io.Authorizati
  */
 public class AuthorizationServerManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final AuthorizationServerManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private AuthorizationServerManagementResponse response;
 
   private AuthorizationServerManagementResult(
       AuditableContext context,

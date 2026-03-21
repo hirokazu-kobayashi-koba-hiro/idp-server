@@ -12,9 +12,8 @@ repositories {
 }
 
 dependencies {
-	//json
-	implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
-	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
+	//json (Jackson 3: java.time support is built-in, no separate jsr310 module needed)
+	implementation 'tools.jackson.core:jackson-databind:3.1.0'
 	implementation 'com.jayway.jsonpath:json-path:2.9.0'
 	//jose
 	implementation 'com.nimbusds:nimbus-jose-jwt:9.40'

@@ -87,14 +87,21 @@ public class SessionCookieService implements SessionCookieDelegate {
     addCookieWithSameSiteAndDomain(sessionCookie, sameSite, cookieDomain);
 
     log.debug(
-        "Session cookies set: IDP_IDENTITY and IDP_SESSION, path={}, domain={}",
+        "Session cookies set: IDP_IDENTITY and IDP_SESSION, path={}, domain={}, secure={}, sameSite={}",
         cookiePath,
-        cookieDomain != null ? cookieDomain : "(host only)");
+        cookieDomain != null ? cookieDomain : "(host only)",
+        secureCookie,
+        sameSite);
   }
 
   @Override
   public Optional<String> getIdentityToken() {
-    return getCookieValue(IDENTITY_COOKIE_NAME);
+    Optional<String> value = getCookieValue(IDENTITY_COOKIE_NAME);
+    log.debug(
+        "getIdentityToken: present={}, cookieCount={}",
+        value.isPresent(),
+        httpServletRequest.getCookies() != null ? httpServletRequest.getCookies().length : 0);
+    return value;
   }
 
   @Override

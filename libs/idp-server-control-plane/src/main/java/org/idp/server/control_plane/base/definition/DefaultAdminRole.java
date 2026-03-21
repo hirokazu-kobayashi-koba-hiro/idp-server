@@ -28,9 +28,9 @@ public enum DefaultAdminRole {
       "Administrator with full control plane access via wildcard permission",
       DefaultAdminPermission.getWildcard());
 
-  private final String name;
-  private final String description;
-  private final Set<DefaultAdminPermission> permissions;
+  private String name;
+  private String description;
+  private Set<DefaultAdminPermission> permissions;
 
   DefaultAdminRole(String name, String description, Set<DefaultAdminPermission> permissions) {
     this.name = name;

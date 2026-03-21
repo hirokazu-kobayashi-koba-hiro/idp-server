@@ -29,10 +29,10 @@ import java.util.Objects;
  */
 public class CorsConfiguration {
 
-  private final List<String> allowOrigins;
-  private final String allowHeaders;
-  private final String allowMethods;
-  private final boolean allowCredentials;
+  private List<String> allowOrigins;
+  private String allowHeaders;
+  private String allowMethods;
+  private boolean allowCredentials;
 
   public CorsConfiguration() {
     this.allowOrigins = List.of();

@@ -28,9 +28,9 @@ import java.util.Objects;
  */
 public class UIConfiguration {
 
-  private final String baseUrl;
-  private final String signupPage;
-  private final String signinPage;
+  private String baseUrl;
+  private String signupPage;
+  private String signinPage;
 
   public UIConfiguration() {
     this.baseUrl = null;

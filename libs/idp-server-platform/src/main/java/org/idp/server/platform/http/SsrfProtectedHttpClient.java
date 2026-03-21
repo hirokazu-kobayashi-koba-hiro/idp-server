@@ -66,9 +66,9 @@ import org.idp.server.platform.system.config.SsrfProtectionConfig;
  */
 public class SsrfProtectedHttpClient {
 
-  private final HttpClient httpClient;
-  private final SystemConfigurationResolver systemConfigurationResolver;
-  private final LoggerWrapper log = LoggerWrapper.getLogger(SsrfProtectedHttpClient.class);
+  private HttpClient httpClient;
+  private SystemConfigurationResolver systemConfigurationResolver;
+  private LoggerWrapper log = LoggerWrapper.getLogger(SsrfProtectedHttpClient.class);
 
   public SsrfProtectedHttpClient(
       HttpClient httpClient, SystemConfigurationResolver systemConfigurationResolver) {

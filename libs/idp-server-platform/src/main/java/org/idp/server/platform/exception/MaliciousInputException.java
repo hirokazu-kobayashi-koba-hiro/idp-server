@@ -38,8 +38,8 @@ package org.idp.server.platform.exception;
  */
 public class MaliciousInputException extends RuntimeException {
 
-  private final String attackType;
-  private final String inputValue;
+  private String attackType;
+  private String inputValue;
 
   public MaliciousInputException(String attackType, String inputValue) {
     super(String.format("%s detected: %s", attackType, inputValue));

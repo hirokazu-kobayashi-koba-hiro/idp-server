@@ -27,9 +27,9 @@ import org.idp.server.platform.json.JsonConverter;
  */
 public class JwtBearerCredentialData {
 
-  private final String algorithm;
-  private final String secretValue;
-  private final String jwks;
+  private String algorithm;
+  private String secretValue;
+  private String jwks;
 
   private JwtBearerCredentialData(String algorithm, String secretValue, String jwks) {
     this.algorithm = algorithm;

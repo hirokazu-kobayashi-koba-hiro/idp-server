@@ -28,12 +28,12 @@ import java.util.Map;
  */
 public class IdentityCookieToken {
 
-  private final String issuer;
-  private final String subject;
-  private final String opSessionId;
-  private final Instant authTime;
-  private final Instant issuedAt;
-  private final Instant expiration;
+  private String issuer;
+  private String subject;
+  private String opSessionId;
+  private Instant authTime;
+  private Instant issuedAt;
+  private Instant expiration;
 
   public IdentityCookieToken(
       String issuer,

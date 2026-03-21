@@ -35,7 +35,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
  */
 public class OrganizationOperatorPrincipal extends AbstractAuthenticationToken {
 
-  private final OrganizationAuthenticationContext authenticationContext;
+  private OrganizationAuthenticationContext authenticationContext;
 
   /**
    * Constructs a new OrganizationOperatorPrincipal.
