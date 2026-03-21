@@ -39,7 +39,7 @@ public class JsonConverter {
     return SNAKE_CASE;
   }
 
-  private JsonMapper jsonMapper;
+  private final JsonMapper jsonMapper;
 
   private JsonConverter(JsonMapper jsonMapper) {
     this.jsonMapper = jsonMapper;
