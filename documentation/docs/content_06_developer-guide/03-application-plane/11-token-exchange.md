@@ -233,6 +233,10 @@ curl -X POST https://api.example.com/{tenant-id}/v1/tokens \
 - `"introspection"`: `introspection_endpoint` + `introspection_client_id` + `introspection_client_secret` が必要
 - `jit_provisioning_enabled: true`: `userinfo_mapping_rules` が必要
 
+**注意事項:**
+- `introspection_client_secret` は管理APIのレスポンスで確認可能。認可画面（フロントエンド）には一切渡らない（`toViewMap()` による最小情報のみ返却）
+- `token_exchange_token_verification_method: "introspection"` のfederationは**1クライアントに1つのみ**設定可能。複数設定した場合は `server_error` になる
+
 ### subject_claim_mapping の動作
 
 | 値 | 検索方法 | 用途 |
@@ -309,7 +313,7 @@ curl -X POST https://api.example.com/{tenant-id}/v1/tokens \
 | `unauthorized_client` | クライアントが token exchange を許可されていない |
 | `invalid_request` | `subject_token` または `subject_token_type` が未指定 |
 | `invalid_grant` | issuer が信頼されていない / 署名検証失敗 / JWT期限切れ / ユーザー未発見 / introspection で active=false |
-| `server_error` | 予期しないエラー |
+| `server_error` | 予期しないエラー / introspection federationが複数設定されている |
 
 ---
 

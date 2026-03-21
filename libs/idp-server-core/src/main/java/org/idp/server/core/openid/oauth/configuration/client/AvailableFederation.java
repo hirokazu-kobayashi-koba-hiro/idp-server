@@ -217,4 +217,13 @@ public class AvailableFederation implements JsonReadable {
       map.put("introspection_client_secret", introspectionClientSecret);
     return map;
   }
+
+  public Map<String, Object> toViewMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("id", id);
+    map.put("type", type);
+    if (ssoProvider != null) map.put("sso_provider", ssoProvider);
+    map.put("auto_selected", autoSelected);
+    return map;
+  }
 }

@@ -128,9 +128,10 @@ public class SubjectTokenVerifier {
 
     if (!result.hasSubject()) {
       log.warn(
-          "External introspection response missing 'sub' claim. issuer={}, claims={}",
+          "External introspection response missing 'sub' claim. issuer={}, endpoint={}, claimKeys={}",
           federation.issuer(),
-          result.claims());
+          federation.introspectionEndpoint(),
+          result.claims().keySet());
       throw new TokenBadRequestException(
           "invalid_grant", "External IdP introspection response does not contain a 'sub' claim");
     }

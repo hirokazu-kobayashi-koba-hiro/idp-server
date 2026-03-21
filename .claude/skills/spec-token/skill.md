@@ -303,6 +303,10 @@ Token Exchangeは、外部IdPが発行したトークン（JWT/opaque）をidp-s
 - `introspection_endpoint`のURL、`introspection_client_id`/`introspection_client_secret`が正しいか確認
 - `introspection_auth_method`が外部IdPの要求と合っているか確認（`client_secret_basic` or `client_secret_post`）
 
+#### server_error: Multiple introspection federations configured
+- 1クライアントに `token_exchange_token_verification_method: "introspection"` のfederationが2つ以上設定されている
+- introspection federationは1クライアントにつき1つのみサポート
+
 #### invalid_grant: User not found
 - `jit_provisioning_enabled: true`が設定されているか確認（JIT無効の場合はユーザーの事前登録が必要）
 - `subject_claim_mapping`の設定を確認
