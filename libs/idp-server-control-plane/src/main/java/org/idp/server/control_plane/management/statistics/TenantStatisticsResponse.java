@@ -25,8 +25,8 @@ import org.idp.server.platform.statistics.TenantStatisticsReport;
 
 public class TenantStatisticsResponse {
 
-  private final TenantStatisticsStatus status;
-  private final Map<String, Object> contents;
+  private TenantStatisticsStatus status;
+  private Map<String, Object> contents;
 
   public TenantStatisticsResponse(TenantStatisticsStatus status, Map<String, Object> contents) {
     this.status = status;

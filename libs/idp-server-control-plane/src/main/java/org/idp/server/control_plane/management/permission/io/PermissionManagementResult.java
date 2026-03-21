@@ -43,9 +43,9 @@ import org.idp.server.control_plane.management.permission.handler.PermissionMana
  */
 public class PermissionManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final PermissionManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private PermissionManagementResponse response;
 
   private PermissionManagementResult(
       AuditableContext context,

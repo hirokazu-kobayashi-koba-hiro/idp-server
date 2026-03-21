@@ -29,8 +29,8 @@ import org.idp.server.platform.security.hook.configuration.SecurityEventHookConf
  */
 public class SecurityEventHookExecutionContext {
 
-  private final HookExecutionContext hookExecutionContext;
-  private final ExecutionResult executionResult;
+  private HookExecutionContext hookExecutionContext;
+  private ExecutionResult executionResult;
 
   public SecurityEventHookExecutionContext(
       HookExecutionContext hookExecutionContext, ExecutionResult executionResult) {
@@ -119,9 +119,9 @@ public class SecurityEventHookExecutionContext {
 
   /** Hook execution context containing metadata about the hook execution. */
   public static class HookExecutionContext {
-    private final String hookType;
-    private final String hookConfigurationId;
-    private final LocalDateTime executionTimestamp;
+    private String hookType;
+    private String hookConfigurationId;
+    private LocalDateTime executionTimestamp;
 
     public HookExecutionContext(
         String hookType, String hookConfigurationId, LocalDateTime executionTimestamp) {
@@ -153,10 +153,10 @@ public class SecurityEventHookExecutionContext {
 
   /** Execution result containing status and detailed information about the execution outcome. */
   public static class ExecutionResult {
-    private final SecurityEventHookStatus status;
-    private final Map<String, Object> executionDetails;
-    private final long executionDurationMs;
-    private final ErrorDetails errorDetails;
+    private SecurityEventHookStatus status;
+    private Map<String, Object> executionDetails;
+    private long executionDurationMs;
+    private ErrorDetails errorDetails;
 
     private ExecutionResult(
         SecurityEventHookStatus status,
@@ -217,8 +217,8 @@ public class SecurityEventHookExecutionContext {
 
   /** Error details for failed hook executions. */
   public static class ErrorDetails {
-    private final String errorType;
-    private final String errorMessage;
+    private String errorType;
+    private String errorMessage;
 
     public ErrorDetails(String errorType, String errorMessage) {
       this.errorType = errorType;

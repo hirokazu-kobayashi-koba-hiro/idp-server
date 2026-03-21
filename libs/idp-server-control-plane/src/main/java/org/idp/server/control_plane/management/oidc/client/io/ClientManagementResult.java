@@ -43,9 +43,9 @@ import org.idp.server.control_plane.management.oidc.client.handler.ClientManagem
  */
 public class ClientManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final ClientManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private ClientManagementResponse response;
 
   private ClientManagementResult(
       AuditableContext context,

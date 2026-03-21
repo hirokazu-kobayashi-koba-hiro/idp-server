@@ -29,9 +29,9 @@ package org.idp.server.platform.security.ssrf;
  */
 public class SsrfProtectionException extends RuntimeException {
 
-  private final String blockedHost;
-  private final String blockedIp;
-  private final PrivateIpRange matchedRange;
+  private String blockedHost;
+  private String blockedIp;
+  private PrivateIpRange matchedRange;
 
   public SsrfProtectionException(String message) {
     super(message);

@@ -22,8 +22,8 @@ import org.idp.server.platform.date.SystemDateTime;
 
 public class JwtTokenCache {
 
-  private final String token;
-  private final LocalDateTime expiresAt;
+  private String token;
+  private LocalDateTime expiresAt;
 
   public JwtTokenCache(String token, LocalDateTime expiresAt) {
     this.token = token;

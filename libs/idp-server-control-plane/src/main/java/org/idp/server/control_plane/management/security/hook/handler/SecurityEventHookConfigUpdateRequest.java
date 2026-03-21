@@ -28,8 +28,8 @@ import org.idp.server.platform.security.hook.configuration.SecurityEventHookConf
 public class SecurityEventHookConfigUpdateRequest
     implements SecurityEventHookConfigManagementRequest {
 
-  private final SecurityEventHookConfigurationIdentifier identifier;
-  private final SecurityEventHookRequest request;
+  private SecurityEventHookConfigurationIdentifier identifier;
+  private SecurityEventHookRequest request;
 
   public SecurityEventHookConfigUpdateRequest(
       SecurityEventHookConfigurationIdentifier identifier, SecurityEventHookRequest request) {

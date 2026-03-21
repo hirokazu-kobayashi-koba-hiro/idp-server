@@ -24,8 +24,8 @@ package org.idp.server.core.openid.identity.permission;
  */
 public class ReservedNamespaceException extends RuntimeException {
 
-  private final String permissionName;
-  private final String namespace;
+  private String permissionName;
+  private String namespace;
 
   public ReservedNamespaceException(String permissionName, String namespace) {
     super(

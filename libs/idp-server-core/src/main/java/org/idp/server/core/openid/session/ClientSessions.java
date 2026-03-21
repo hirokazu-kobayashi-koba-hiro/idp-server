@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 
 public class ClientSessions implements Iterable<ClientSession> {
 
-  private final List<ClientSession> values;
+  private List<ClientSession> values;
 
   public ClientSessions() {
     this.values = new ArrayList<>();

@@ -23,7 +23,7 @@ public enum TenantStatisticsStatus {
   NOT_FOUND(404),
   SERVER_ERROR(500);
 
-  private final int statusCode;
+  private int statusCode;
 
   TenantStatisticsStatus(int statusCode) {
     this.statusCode = statusCode;

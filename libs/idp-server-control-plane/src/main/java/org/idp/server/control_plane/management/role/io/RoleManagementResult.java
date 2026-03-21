@@ -43,9 +43,9 @@ import org.idp.server.control_plane.management.role.handler.RoleManagementServic
  */
 public class RoleManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final RoleManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private RoleManagementResponse response;
 
   private RoleManagementResult(
       AuditableContext context, ManagementApiException exception, RoleManagementResponse response) {

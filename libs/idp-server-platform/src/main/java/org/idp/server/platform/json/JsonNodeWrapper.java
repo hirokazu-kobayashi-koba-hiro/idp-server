@@ -16,9 +16,9 @@
 
 package org.idp.server.platform.json;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import java.util.*;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeFactory;
 
 /**
  * A lightweight wrapper for Jackson's {@link JsonNode} providing convenient and safe access
@@ -75,7 +75,9 @@ public class JsonNodeWrapper {
     if (jsonNode == null) {
       return Collections.emptyIterator();
     }
-    return jsonNode.fieldNames();
+    Set<String> names = new LinkedHashSet<>();
+    jsonNode.properties().forEach(entry -> names.add(entry.getKey()));
+    return names.iterator();
   }
 
   public List<String> fieldNamesAsList() {
@@ -87,7 +89,7 @@ public class JsonNodeWrapper {
   public List<String> toList() {
     List<String> list = new ArrayList<>();
     if (jsonNode.isArray()) {
-      Iterator<JsonNode> iterator = jsonNode.elements();
+      Iterator<JsonNode> iterator = jsonNode.iterator();
       while (iterator.hasNext()) {
         list.add(iterator.next().asText());
       }
@@ -107,7 +109,7 @@ public class JsonNodeWrapper {
    */
   public List<JsonNodeWrapper> getValueAsJsonNodeList(String fieldName) {
     List<JsonNodeWrapper> values = new ArrayList<>();
-    Iterator<JsonNode> iterator = jsonNode.get(fieldName).elements();
+    Iterator<JsonNode> iterator = jsonNode.get(fieldName).iterator();
     while (iterator.hasNext()) {
       values.add(new JsonNodeWrapper(iterator.next()));
     }
@@ -116,7 +118,7 @@ public class JsonNodeWrapper {
 
   public List<Map<String, Object>> toListAsMap() {
     List<Map<String, Object>> values = new ArrayList<>();
-    Iterator<JsonNode> iterator = jsonNode.elements();
+    Iterator<JsonNode> iterator = jsonNode.iterator();
     while (iterator.hasNext()) {
       values.add(new JsonNodeWrapper(iterator.next()).toMap());
     }
@@ -125,7 +127,7 @@ public class JsonNodeWrapper {
 
   public List<Map<String, Object>> getValueAsJsonNodeListAsMap(String fieldName) {
     List<Map<String, Object>> values = new ArrayList<>();
-    Iterator<JsonNode> iterator = jsonNode.get(fieldName).elements();
+    Iterator<JsonNode> iterator = jsonNode.get(fieldName).iterator();
     while (iterator.hasNext()) {
       values.add(new JsonNodeWrapper(iterator.next()).toMap());
     }
@@ -135,7 +137,7 @@ public class JsonNodeWrapper {
   public List<JsonNodeWrapper> elements() {
     List<JsonNodeWrapper> list = new ArrayList<>();
     if (jsonNode.isArray()) {
-      Iterator<JsonNode> iterator = jsonNode.elements();
+      Iterator<JsonNode> iterator = jsonNode.iterator();
       while (iterator.hasNext()) {
         list.add(new JsonNodeWrapper(iterator.next()));
       }
@@ -217,11 +219,11 @@ public class JsonNodeWrapper {
   public Map<String, Object> toMap() {
     Map<String, Object> results = new HashMap<>();
     jsonNode
-        .fieldNames()
-        .forEachRemaining(
-            fieldName -> {
-              JsonNodeWrapper valueWrapper = getValueAsJsonNode(fieldName);
-              JsonNode valueNode = (JsonNode) valueWrapper.node();
+        .properties()
+        .forEach(
+            entry -> {
+              String fieldName = entry.getKey();
+              JsonNode valueNode = entry.getValue();
               Object value = toPrimitive(valueNode);
               results.put(fieldName, value);
             });
@@ -304,16 +306,15 @@ public class JsonNodeWrapper {
   private Object toPrimitive(JsonNode node) {
     if (node.isObject()) {
       Map<String, Object> map = new HashMap<>();
-      node.fieldNames()
-          .forEachRemaining(
-              fieldName -> {
-                JsonNode childNode = node.get(fieldName);
-                map.put(fieldName, toPrimitive(childNode));
+      node.properties()
+          .forEach(
+              entry -> {
+                map.put(entry.getKey(), toPrimitive(entry.getValue()));
               });
       return map;
     } else if (node.isArray()) {
       List<Object> list = new ArrayList<>();
-      node.elements().forEachRemaining(element -> list.add(toPrimitive(element)));
+      node.iterator().forEachRemaining(element -> list.add(toPrimitive(element)));
       return list;
     } else if (node.isTextual()) {
       return node.asText();

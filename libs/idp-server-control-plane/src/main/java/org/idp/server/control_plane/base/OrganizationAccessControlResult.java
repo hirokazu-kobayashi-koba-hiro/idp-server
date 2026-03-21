@@ -28,8 +28,8 @@ public class OrganizationAccessControlResult {
     FORBIDDEN
   }
 
-  private final AccessControlStatus status;
-  private final String reason;
+  private AccessControlStatus status;
+  private String reason;
 
   private OrganizationAccessControlResult(AccessControlStatus status, String reason) {
     this.status = status;

@@ -58,8 +58,8 @@ public enum StandardAuthenticationMethodReference {
   UNKNOWN("unknown", "Unknown authentication method [RFC4949]."),
   ;
 
-  private final String value;
-  private final String description;
+  private String value;
+  private String description;
 
   StandardAuthenticationMethodReference(String value, String description) {
     this.value = value;

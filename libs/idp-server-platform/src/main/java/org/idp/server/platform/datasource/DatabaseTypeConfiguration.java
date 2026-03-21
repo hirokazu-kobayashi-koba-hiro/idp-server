@@ -19,7 +19,7 @@ package org.idp.server.platform.datasource;
 /** Configuration class that holds the application-level database type. */
 public class DatabaseTypeConfiguration {
 
-  private final DatabaseType databaseType;
+  private DatabaseType databaseType;
 
   public DatabaseTypeConfiguration(String databaseTypeConfig) {
     this.databaseType = DatabaseType.of(databaseTypeConfig);

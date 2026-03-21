@@ -110,10 +110,12 @@ public class OPSessionDataSource implements OPSessionRepository {
               });
     } catch (Exception e) {
       log.error(
-          "Failed to find OP session (graceful degradation). id:{}, tenant:{}, error:{}",
+          "Failed to find OP session (graceful degradation). id:{}, tenant:{}, error:{}, exceptionClass:{}",
           id.value(),
           tenant.identifierValue(),
-          e.getMessage());
+          e.getMessage(),
+          e.getClass().getName(),
+          e);
       return Optional.empty();
     }
   }

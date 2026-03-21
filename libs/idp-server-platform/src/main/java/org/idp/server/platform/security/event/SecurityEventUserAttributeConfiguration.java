@@ -22,29 +22,29 @@ import java.util.Objects;
 
 public class SecurityEventUserAttributeConfiguration {
 
-  private final boolean includeId;
-  private final boolean includeName;
-  private final boolean includeExternalUserId;
-  private final boolean includeEmail;
-  private final boolean includePhoneNumber;
-  private final boolean includeGivenName;
-  private final boolean includeFamilyName;
-  private final boolean includePreferredUsername;
-  private final boolean includeProfile;
-  private final boolean includePicture;
-  private final boolean includeWebsite;
-  private final boolean includeGender;
-  private final boolean includeBirthdate;
-  private final boolean includeZoneinfo;
-  private final boolean includeLocale;
-  private final boolean includeAddress;
-  private final boolean includeRoles;
-  private final boolean includePermissions;
-  private final boolean includeCurrentTenant;
-  private final boolean includeAssignedTenants;
-  private final boolean includeVerifiedClaims;
-  private final boolean includeStatus;
-  private final boolean includeAuthenticationDeviceIds;
+  private boolean includeId;
+  private boolean includeName;
+  private boolean includeExternalUserId;
+  private boolean includeEmail;
+  private boolean includePhoneNumber;
+  private boolean includeGivenName;
+  private boolean includeFamilyName;
+  private boolean includePreferredUsername;
+  private boolean includeProfile;
+  private boolean includePicture;
+  private boolean includeWebsite;
+  private boolean includeGender;
+  private boolean includeBirthdate;
+  private boolean includeZoneinfo;
+  private boolean includeLocale;
+  private boolean includeAddress;
+  private boolean includeRoles;
+  private boolean includePermissions;
+  private boolean includeCurrentTenant;
+  private boolean includeAssignedTenants;
+  private boolean includeVerifiedClaims;
+  private boolean includeStatus;
+  private boolean includeAuthenticationDeviceIds;
 
   public SecurityEventUserAttributeConfiguration() {
     this.includeId = true;

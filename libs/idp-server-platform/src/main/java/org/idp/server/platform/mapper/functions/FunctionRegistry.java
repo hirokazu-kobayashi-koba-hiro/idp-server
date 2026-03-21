@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FunctionRegistry {
-  private final Map<String, ValueFunction> map;
+  private Map<String, ValueFunction> map;
 
   public FunctionRegistry() {
     Map<String, ValueFunction> temp = new HashMap<>();

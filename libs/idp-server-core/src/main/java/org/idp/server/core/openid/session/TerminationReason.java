@@ -26,7 +26,7 @@ public enum TerminationReason {
   USER_SWITCH("user_switch"),
   UNKNOWN("unknown");
 
-  private final String value;
+  private String value;
 
   TerminationReason(String value) {
     this.value = value;

@@ -28,9 +28,9 @@ import org.idp.server.control_plane.management.statistics.TenantStatisticsStatus
 
 public class TenantStatisticsManagementResult {
 
-  private final AuditableContext context;
-  private final TenantStatisticsResponse response;
-  private final ManagementApiException exception;
+  private AuditableContext context;
+  private TenantStatisticsResponse response;
+  private ManagementApiException exception;
 
   private TenantStatisticsManagementResult(
       AuditableContext context,

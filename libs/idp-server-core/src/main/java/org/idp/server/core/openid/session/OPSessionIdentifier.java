@@ -26,7 +26,7 @@ public class OPSessionIdentifier {
   private static final int RANDOM_BYTES_LENGTH = 32;
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-  private final String value;
+  private String value;
 
   public OPSessionIdentifier() {
     this.value = "";

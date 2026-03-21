@@ -40,9 +40,9 @@ import org.idp.server.control_plane.management.exception.*;
  */
 public class AuditLogManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final AuditLogManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private AuditLogManagementResponse response;
 
   private AuditLogManagementResult(
       AuditableContext context,

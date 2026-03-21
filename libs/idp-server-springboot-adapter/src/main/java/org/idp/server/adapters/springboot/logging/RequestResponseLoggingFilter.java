@@ -91,7 +91,8 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     }
 
     if (logger.isDebugEnabled()) {
-      ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request);
+      ContentCachingRequestWrapper wrappedRequest =
+          new ContentCachingRequestWrapper(request, 50000);
       ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
 
       try {

@@ -57,9 +57,9 @@ import org.idp.server.control_plane.management.identity.user.io.UserManagementSt
  */
 public class UserManagementResult {
 
-  private final UserManagementResponse response;
-  private final AuditableContext context;
-  private final ManagementApiException exception;
+  private UserManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
 
   private UserManagementResult(
       UserManagementResponse response, AuditableContext context, ManagementApiException exception) {

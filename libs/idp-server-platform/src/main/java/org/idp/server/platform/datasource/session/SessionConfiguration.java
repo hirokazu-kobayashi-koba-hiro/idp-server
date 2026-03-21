@@ -24,14 +24,14 @@ package org.idp.server.platform.datasource.session;
  */
 public class SessionConfiguration {
 
-  private final String host;
-  private final int port;
-  private final int database;
-  private final int timeout;
-  private final String password;
-  private final int maxTotal;
-  private final int maxIdle;
-  private final int minIdle;
+  private String host;
+  private int port;
+  private int database;
+  private int timeout;
+  private String password;
+  private int maxTotal;
+  private int maxIdle;
+  private int minIdle;
 
   public SessionConfiguration(
       String host,

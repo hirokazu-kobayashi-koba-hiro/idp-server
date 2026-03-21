@@ -41,9 +41,9 @@ import org.idp.server.control_plane.management.exception.ResourceNotFoundExcepti
  */
 public class FederationConfigManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final FederationConfigManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private FederationConfigManagementResponse response;
 
   private FederationConfigManagementResult(
       AuditableContext context,

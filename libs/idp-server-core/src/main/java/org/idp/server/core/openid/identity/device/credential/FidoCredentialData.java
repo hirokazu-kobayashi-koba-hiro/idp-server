@@ -27,10 +27,10 @@ import java.util.Map;
  */
 public class FidoCredentialData {
 
-  private final String fidoServerId;
-  private final String credentialId;
-  private final String rpId;
-  private final String appId;
+  private String fidoServerId;
+  private String credentialId;
+  private String rpId;
+  private String appId;
 
   private FidoCredentialData(String fidoServerId, String credentialId, String rpId, String appId) {
     this.fidoServerId = fidoServerId;

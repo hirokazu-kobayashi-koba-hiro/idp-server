@@ -22,11 +22,11 @@ import java.util.List;
 /** Result of a batch security event hook retry operation. */
 public class SecurityEventHookBatchRetryResult {
 
-  private final List<SecurityEventHookRetryResult> results;
-  private final int totalCount;
-  private final int successfulCount;
-  private final int failedCount;
-  private final int skippedCount;
+  private List<SecurityEventHookRetryResult> results;
+  private int totalCount;
+  private int successfulCount;
+  private int failedCount;
+  private int skippedCount;
 
   private SecurityEventHookBatchRetryResult(List<SecurityEventHookRetryResult> results) {
     this.results = List.copyOf(results);
@@ -72,7 +72,7 @@ public class SecurityEventHookBatchRetryResult {
   }
 
   public static class Builder {
-    private final List<SecurityEventHookRetryResult> results = new ArrayList<>();
+    private List<SecurityEventHookRetryResult> results = new ArrayList<>();
 
     public Builder addResult(SecurityEventHookRetryResult result) {
       results.add(result);
