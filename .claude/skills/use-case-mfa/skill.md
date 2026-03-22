@@ -17,7 +17,125 @@ description: MFA（多要素認証）ユースケースの設定ガイド。SMS/
 
 ---
 
-## SMS と Email の送信方式の違い
+## OTP認証の2層アーキテクチャ
+
+Email/SMS OTP認証は **OTP管理**（生成・検証・有効期限・リトライ制限）と **メッセージ送信** の2層で構成される。
+
+### 層1: execution.function — OTP管理の責務
+
+| execution.function | OTP管理 | メッセージ送信 | ユースケース |
+|---|---|---|---|
+| `email_authentication_challenge` / `sms_authentication_challenge` | **idp-server内部** | `details.function`で選択 | 推奨（OTP管理が堅牢） |
+| `http_request` | **外部サービス丸投げ** | 外部サービス丸投げ | 外部認証サービスが全責務を持つ場合 |
+
+`email_authentication_challenge` / `sms_authentication_challenge` を使う場合、`expire_seconds` や `retry_count_limitation` は **idp-server内部で強制** される。
+`http_request` を使う場合、これらの設定はidp-serverでは効かず、外部サービス側の責務になる。
+
+### 層2: details.function — メッセージ送信方法
+
+`execution.function` が `email_authentication_challenge` / `sms_authentication_challenge` の場合のみ有効。
+
+| details.function | 送信方法 | 用途 |
+|---|---|---|
+| `no_action` | 送信しない（ログのみ） | ローカル開発・テスト |
+| `http_request` | 外部API委譲（SendGrid/Twilio等） | **本番推奨** |
+| ※Email限定: SMTP | idp-server内蔵SMTP送信 | Email のみ（`metadata.settings.smtp` で設定） |
+
+### 3パターンまとめ
+
+**Email認証**:
+
+| # | execution.function | details.function | OTP管理 | メール送信 |
+|---|---|---|---|---|
+| 1 | `email_authentication_challenge` | `no_action` | 内部 | 送信しない |
+| 2 | `email_authentication_challenge` | `http_request` | 内部 | 外部API委譲 |
+| 3 | `http_request` | — | 外部 | 外部 |
+
+**SMS認証**:
+
+| # | execution.function | details.function | OTP管理 | SMS送信 |
+|---|---|---|---|---|
+| 1 | `sms_authentication_challenge` | `no_action` | 内部 | 送信しない |
+| 2 | `sms_authentication_challenge` | `http_request` | 内部 | 外部API委譲（[#1394](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1394)） |
+| 3 | `http_request` | — | 外部 | 外部 |
+
+### 設定構造（内部OTP管理 + 外部API送信の場合）
+
+```json
+{
+  "interactions": {
+    "email-authentication-challenge": {
+      "execution": {
+        "function": "email_authentication_challenge",
+        "details": {
+          "function": "http_request",
+          "sender": "noreply@example.com",
+          "sender_config": {
+            "http_request": {
+              "url": "https://api.sendgrid.com/v3/mail/send",
+              "method": "POST",
+              "header_mapping_rules": [
+                { "static_value": "application/json", "to": "Content-Type" },
+                { "static_value": "Bearer {API_KEY}", "to": "Authorization" }
+              ],
+              "body_mapping_rules": [
+                { "from": "$.request_body", "to": "*" }
+              ]
+            }
+          },
+          "templates": {
+            "authentication": {
+              "subject": "Your verification code",
+              "body": "Code: {VERIFICATION_CODE}\nExpires in {EXPIRE_SECONDS}s."
+            }
+          },
+          "retry_count_limitation": 5,
+          "expire_seconds": 300
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "static_value": "sent", "to": "status", "condition": { "operation": "missing", "path": "$.error" } },
+          { "from": "$.error", "to": "error", "condition": { "operation": "exists", "path": "$.error" } }
+        ]
+      }
+    },
+    "email-authentication": {
+      "execution": {
+        "function": "email_authentication"
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "static_value": "verified", "to": "status", "condition": { "operation": "missing", "path": "$.error" } },
+          { "from": "$.error", "to": "error", "condition": { "operation": "exists", "path": "$.error" } }
+        ]
+      }
+    }
+  }
+}
+```
+
+**ポイント**:
+- `email-authentication-challenge` の `details` 内に `sender_config.http_request` でHTTP送信先を設定
+- `email-authentication`（検証）は `execution.function = "email_authentication"` のみ（内部検証、外部APIコール不要）
+- `retry_count_limitation` と `expire_seconds` は `details` 内に設定し、idp-server内部で強制される
+
+### 実装クラス
+
+| コンポーネント | クラス |
+|---|---|
+| OTP生成・検証（Email） | `EmailChallengeAuthenticationExecutor`, `EmailAuthenticationExecutor` |
+| OTP生成・検証（SMS） | `SmsChallengeAuthenticationExecutor`, `SmsAuthenticationExecutor` |
+| メール送信（no_action） | `NoActionEmailSender` |
+| メール送信（HTTP） | `HttpRequestEmailSender` |
+| SMS送信（no_action） | `NoActionSmsSender` |
+| SMS送信（HTTP） | `HttpRequestSmsSender`（[#1394](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1394)） |
+| 送信者選択 | `EmailSenders.get(String function)` / `SmsSenders.get(SmsSenderType)` |
+| 設定読み込み | `EmailAuthenticationConfiguration`, `EmailSenderConfiguration` |
+
+---
+
+## SMS と Email の送信方式の違い（簡易比較）
 
 | 項目 | SMS | Email |
 |------|-----|-------|
@@ -33,6 +151,9 @@ description: MFA（多要素認証）ユースケースの設定ガイド。SMS/
 ### 1. SMS認証メソッド設定
 
 **API**: `POST /v1/management/organizations/{org-id}/tenants/{tenant-id}/authentication-configurations`
+
+> **パターン選択**: 下記は外部丸投げ（`execution.function = "http_request"`）パターン。
+> 内部OTP管理 + 外部SMS送信パターンは「OTP認証の2層アーキテクチャ」セクションを参照。
 
 ```json
 {
@@ -154,6 +275,10 @@ description: MFA（多要素認証）ユースケースの設定ガイド。SMS/
 ### 2. メール認証メソッド設定
 
 **API**: `POST /v1/management/organizations/{org-id}/tenants/{tenant-id}/authentication-configurations`
+
+> **パターン選択**: 下記は外部丸投げ（`execution.function = "http_request"`）パターン。
+> 内部OTP管理 + 外部メール送信パターンは「OTP認証の2層アーキテクチャ」セクションを参照。
+> 内部OTP管理を使う場合、`expire_seconds` と `retry_count_limitation` はidp-server内部で強制される。
 
 ```json
 {

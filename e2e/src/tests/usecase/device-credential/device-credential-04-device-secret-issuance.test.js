@@ -729,6 +729,18 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
     const authReqId = cibaResponse.data.auth_req_id;
     console.log("✅ CIBA request initiated, auth_req_id:", authReqId);
 
+    // 13.1.5: Poll before authentication → expect authorization_pending (GAP A-07)
+    const pendingResponse = await requestToken({
+      endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+      grantType: "urn:openid:params:grant-type:ciba",
+      authReqId: authReqId,
+      clientId: clientId,
+      clientSecret: clientSecret,
+    });
+    expect(pendingResponse.status).toBe(400);
+    expect(pendingResponse.data.error).toBe("authorization_pending");
+    console.log("✅ Poll before auth: authorization_pending confirmed");
+
     // 13.2: Verify device endpoint requires authentication (401 without JWT)
     const noAuthResponse = await get({
       url: `${backendUrl}/${tenantId}/v1/authentication-devices/${deviceId}/authentications?attributes.auth_req_id=${authReqId}`,
@@ -833,6 +845,21 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
     expect(cibaTokenResponse.data).toHaveProperty("access_token");
     expect(cibaTokenResponse.data).toHaveProperty("id_token");
     console.log("✅ CIBA token obtained with device secret authentication\n");
+
+    // 13.6: Verify UserInfo with CIBA token (GAP A-07)
+    console.log("=== Step 13.6: Verify UserInfo with CIBA Token ===");
+
+    const cibaUserinfoResponse = await get({
+      url: `${backendUrl}/${tenantId}/v1/userinfo`,
+      headers: {
+        Authorization: `Bearer ${cibaTokenResponse.data.access_token}`,
+      },
+    });
+
+    expect(cibaUserinfoResponse.status).toBe(200);
+    expect(cibaUserinfoResponse.data.sub).toBe(userId);
+    expect(cibaUserinfoResponse.data.email).toBe(userEmail);
+    console.log(`✅ CIBA UserInfo verified: sub=${cibaUserinfoResponse.data.sub}, email=${cibaUserinfoResponse.data.email}\n`);
 
     // Cleanup
     await deletion({
