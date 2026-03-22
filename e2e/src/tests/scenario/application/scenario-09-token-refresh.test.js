@@ -1,4 +1,4 @@
-import { jest, describe, expect, it } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 import { createFederatedUser } from "../../../user";
 import {
   backendUrl,
@@ -13,7 +13,6 @@ import { post } from "../../../lib/http";
 describe("token refresh strategy", () => {
 
   it("fixed & rotate strategy", async () => {
-    jest.setTimeout(180_000);
 
     const { user, accessToken, refreshToken: initialRefreshToken } = await createFederatedUser({
       serverConfig: serverConfig,
@@ -74,7 +73,7 @@ describe("token refresh strategy", () => {
     expect(refreshTokenResponse.status).toBe(400);
     expect(refreshTokenResponse.data.error).toEqual("invalid_grant");
     expect(refreshTokenResponse.data.error_description).toEqual("refresh token is expired");
-  });
+  }, 180_000);
 
 
 });
