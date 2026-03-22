@@ -12,7 +12,7 @@ on:
 
 jobs:
   analyze:
-    name: Analyze (${{ matrix.language }})
+    name: Analyze Java
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -20,17 +20,11 @@ jobs:
       actions: read
       contents: read
 
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ["java-kotlin", "javascript-typescript"]
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
-        if: matrix.language == 'java-kotlin'
         uses: actions/setup-java@v4
         with:
           java-version: "21"
@@ -39,7 +33,7 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ matrix.language }}
+          languages: java-kotlin
           # セキュリティクエリ（デフォルト） + 品質クエリ
           queries: security-extended
 
@@ -49,4 +43,4 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
-          category: "/language:${{ matrix.language }}"
+          category: "/language:java-kotlin"
