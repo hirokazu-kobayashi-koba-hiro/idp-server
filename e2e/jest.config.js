@@ -1,11 +1,19 @@
 module.exports = {
   verbose: false,
   testMatch: ["**/*.test.js"],
-  testEnvironment: "node",
+  testEnvironment: "allure-jest/node",
+  testEnvironmentOptions: {
+    resultsDir: "./allure-results",
+    environmentInfo: {
+      project: "idp-server",
+      test_type: "E2E",
+    },
+  },
   moduleDirectories: ["node_modules", "src"],
   maxWorkers: 5,
   setupFilesAfterEnv: [`${process.cwd()}/jest.setup.js`],
-  testRunner: "jest-jasmine2",
+  // jest-circus (Jest 27+ default) is required by allure-jest
+  // Removed: testRunner: "jest-jasmine2"
   reporters: [
     "default",
     [
