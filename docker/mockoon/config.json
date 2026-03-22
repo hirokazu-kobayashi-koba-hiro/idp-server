@@ -1857,6 +1857,68 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "email-send-only",
+      "type": "http",
+      "documentation": "Email send-only endpoint - receives email content from idp-server internal OTP, just acknowledges. Used with execution.function=email_authentication_challenge + details.function=http_request",
+      "method": "post",
+      "endpoint": "email/send",
+      "responses": [
+        {
+          "uuid": "email-send-success",
+          "body": "{\n  \"status\": \"sent\",\n  \"message_id\": \"{{ uuid }}\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Success - email accepted for delivery",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "sms-send-only",
+      "type": "http",
+      "documentation": "SMS send-only endpoint - receives SMS content from idp-server internal OTP, just acknowledges. Used with execution.function=sms_authentication_challenge + details.function=http_request",
+      "method": "post",
+      "endpoint": "sms/send",
+      "responses": [
+        {
+          "uuid": "sms-send-success",
+          "body": "{\n  \"status\": \"sent\",\n  \"message_id\": \"{{ uuid }}\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Success - SMS accepted for delivery",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -1979,6 +2041,14 @@
     {
       "type": "route",
       "uuid": "fido2-authentication"
+    },
+    {
+      "type": "route",
+      "uuid": "email-send-only"
+    },
+    {
+      "type": "route",
+      "uuid": "sms-send-only"
     }
   ],
   "proxyMode": false,
