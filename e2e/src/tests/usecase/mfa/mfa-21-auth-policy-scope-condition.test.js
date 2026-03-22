@@ -332,11 +332,12 @@ describe("MFA Use Case: Scope-Conditioned Authentication Policy", () => {
     });
 
     // Authorize should fail — MFA not satisfied (email-authentication missing)
+    // success_conditions が未達の場合、authorize は 400 を返す
     const authorizeResp = await authorize({
       endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
       id: authId, body: {},
     });
-    expect(authorizeResp.status).not.toBe(200);
+    expect(authorizeResp.status).toBe(400);
     console.log(`Authorize with password only: status=${authorizeResp.status} (MFA not satisfied)`);
   });
 

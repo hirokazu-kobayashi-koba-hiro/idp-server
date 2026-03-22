@@ -205,19 +205,13 @@ describe("CIBA Use Case: Polling Interval & Binding Message", () => {
       expect(txResp.data.list.length).toBeGreaterThan(0);
 
       const tx = txResp.data.list[0];
-      // context may contain binding_message depending on authentication_type config
-      if (tx.context) {
-        if (tx.context.binding_message) {
-          expect(tx.context.binding_message).toBe(bindingMessage);
-          console.log(`binding_message in context: "${tx.context.binding_message}"`);
-        } else {
-          console.log("binding_message not in context (authentication_type may restrict it)");
-        }
-      } else {
-        console.log("No context returned (authentication_type=none does not include context)");
-      }
+      // authentication_type がデフォルト(none)の場合、セキュリティ上 context は非公開
+      // (認証されたデバイスにのみ binding_message 等の詳細情報が返される)
+      // context 内の binding_message 検証は device_secret_jwt 認証が必要な
+      // device-credential-04 テストでカバーされている
+      console.log(`Transaction found: id=${tx.id}, context=${tx.context ? "present" : "absent (auth_type=none)"}`);
 
-      // Complete auth to verify full flow works with binding_message
+      // binding_message 付きで CIBA フロー全体が正常動作することを検証
       await postAuthenticationDeviceInteraction({
         endpoint: `${backendUrl}/${env.tenantId}/v1/authentications/{id}/`,
         flowType: tx.flow, id: tx.id,

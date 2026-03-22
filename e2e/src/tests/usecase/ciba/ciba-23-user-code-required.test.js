@@ -141,7 +141,10 @@ describe("CIBA Use Case: User Code Required", () => {
       console.log(`Without user_code: status=${noCodeResp.status}, error=${noCodeResp.data.error}`);
 
       // With user_code → should succeed
-      console.log("\nStep 2: CIBA request WITH user_code");
+      // idp-serverの user_code 実装: backchannel_auth_user_code_type="password" の場合、
+      // UserCodeAsPasswordVerifier が user_code をユーザーのパスワードハッシュと照合する。
+      // つまり user_code にはユーザーのパスワードを渡すのが正しい。
+      console.log("\nStep 2: CIBA request WITH user_code (= user password)");
       const withCodeResp = await requestBackchannelAuthentications({
         endpoint: `${backendUrl}/${tenantId}/v1/backchannel/authentications`,
         clientId: cibaClientId, clientSecret: cibaClientSecret,
