@@ -1,7 +1,10 @@
 {
   "scripts": {
     "test": "NODE_EXTRA_CA_CERTS=\"$(mkcert -CAROOT)/rootCA.pem\" jest",
-    "test-coverage": "npx jest --coverage",
+    "test-coverage": "NODE_EXTRA_CA_CERTS=\"$(mkcert -CAROOT)/rootCA.pem\" jest --coverage",
+    "allure:generate": "npx allure generate ./allure-results --clean -o ./allure-report",
+    "allure:open": "npx allure open ./allure-report",
+    "allure:serve": "npx allure serve ./allure-results",
     "pretter": "npx prettier --write ."
   },
   "devDependencies": {
@@ -11,6 +14,9 @@
     "@jest/globals": "^29.5.0",
     "@typescript-eslint/eslint-plugin": "^5.55.0",
     "@typescript-eslint/parser": "^5.55.0",
+    "allure-commandline": "^2.38.1",
+    "allure-jest": "^3.6.0",
+    "allure-js-commons": "^3.6.0",
     "axios": "^1.3.4",
     "babel-jest": "^29.5.0",
     "babel-plugin-module-resolver": "^5.0.0",

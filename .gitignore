@@ -78,3 +78,7 @@ identifier.sqlite
 .claude/settings.local.json
 .claude/projects/
 CLAUDE.local.md
+
+# Allure test reports
+e2e/allure-results/
+e2e/allure-report/
