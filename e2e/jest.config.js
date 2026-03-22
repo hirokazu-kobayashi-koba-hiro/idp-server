@@ -12,8 +12,6 @@ module.exports = {
   moduleDirectories: ["node_modules", "src"],
   maxWorkers: 5,
   setupFilesAfterEnv: [`${process.cwd()}/jest.setup.js`],
-  // jest-circus (Jest 27+ default) is required by allure-jest
-  // Removed: testRunner: "jest-jasmine2"
   reporters: [
     "default",
     [
