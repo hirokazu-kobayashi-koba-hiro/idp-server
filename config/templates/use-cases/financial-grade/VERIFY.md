@@ -536,9 +536,9 @@ curl -s \
 
 ## Phase 6: eKYC（身元確認）
 
-Part A で取得した `ACCESS_TOKEN` を使って、身元確認の申請→承認→verified_claims 取得を検証します。
+Part B で取得した `ACCESS_TOKEN_2` を使って、身元確認の申請→承認→verified_claims 取得を検証します。
 
-> **前提**: Phase 5 Part A でトークンを取得済みであること。`identity_verification_application` および `identity_verification_result` スコープを含むトークンが必要です（Step 9 で含めています）。
+> **前提**: Phase 5 Part B でトークンを取得済みであること。`identity_verification_application` および `identity_verification_result` スコープを含むトークンが必要です（Step 17 で含めています）。
 
 ### Step 20: eKYC Discovery 確認
 
