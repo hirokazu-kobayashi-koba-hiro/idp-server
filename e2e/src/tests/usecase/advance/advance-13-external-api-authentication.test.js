@@ -17,16 +17,16 @@ import {
 } from "../../../lib/util";
 
 /**
- * Advance Use Case: External API Authentication (operation-based routing)
+ * Advance Use Case: External API Authentication (interaction-based routing)
  *
  * カバー範囲:
  * - external-api-authentication type の新規 Interactor
- * - リクエストボディの "operation" フィールドで interaction 設定をルーティング
- * - operation ごとに異なる外部APIを呼び出し
- * - user_resolve 付き operation: ユーザー解決 + 同一ユーザー再認証で sub 一致
- * - user_resolve なし operation: 外部APIの結果だけ返却
- * - 未定義 operation → 400 エラー
- * - operation 未指定 → 400 エラー
+ * - リクエストボディの "interaction" フィールドで interaction 設定をルーティング
+ * - interaction ごとに異なる外部APIを呼び出し
+ * - user_resolve 付き interaction: ユーザー解決 + 同一ユーザー再認証で sub 一致
+ * - user_resolve なし interaction: 外部APIの結果だけ返却
+ * - 未定義 interaction → 400 エラー
+ * - interaction 未指定 → 400 エラー
  * - 外部APIエラーのステータスコード透過
  *
  * Prerequisites:
@@ -172,7 +172,7 @@ describe("Advance Use Case: External API Authentication", () => {
     expect(mgmtTokenResponse.status).toBe(200);
     mgmtAccessToken = mgmtTokenResponse.data.access_token;
 
-    // Register external-api-authentication config with multiple operations
+    // Register external-api-authentication config with multiple interactions
     const authConfigResp = await postWithJson({
       url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-configurations`,
       headers: { Authorization: `Bearer ${mgmtAccessToken}` },
@@ -182,7 +182,7 @@ describe("Advance Use Case: External API Authentication", () => {
         attributes: {},
         metadata: {
           description:
-            "External API authentication with operation-based routing",
+            "External API authentication with interaction-based routing",
         },
         interactions: {
           // Operation 1: password_verify (with user_resolve)
@@ -190,9 +190,9 @@ describe("Advance Use Case: External API Authentication", () => {
             request: {
               schema: {
                 type: "object",
-                required: ["operation", "username", "password"],
+                required: ["interaction", "username", "password"],
                 properties: {
-                  operation: { type: "string" },
+                  interaction: { type: "string" },
                   username: { type: "string", minLength: 1 },
                   password: { type: "string", minLength: 1 },
                 },
@@ -242,14 +242,75 @@ describe("Advance Use Case: External API Authentication", () => {
               ],
             },
           },
-          // Operation 2: risk_check (no user_resolve - returns API result only)
+          // Interaction 2: challenge → verify (previous_interaction pattern)
+          challenge: {
+            execution: {
+              function: "http_request",
+              http_request: {
+                url: `${mockApiBaseUrl}/e2e/error-responses`,
+                method: "POST",
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" },
+                ],
+                body_mapping_rules: [
+                  { from: "$.request_body", to: "*" },
+                ],
+              },
+              http_request_store: {
+                key: "challenge",
+                interaction_mapping_rules: [
+                  {
+                    from: "$.response_body.application_id",
+                    to: "transaction_id",
+                  },
+                ],
+              },
+            },
+            response: {
+              body_mapping_rules: [
+                {
+                  from: "$.execution_http_request.response_body.application_id",
+                  to: "transaction_id",
+                },
+              ],
+            },
+          },
+          verify: {
+            execution: {
+              function: "http_request",
+              previous_interaction: { key: "challenge" },
+              http_request: {
+                url: `${mockApiBaseUrl}/e2e/error-responses`,
+                method: "POST",
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" },
+                ],
+                body_mapping_rules: [
+                  {
+                    from: "$.interaction.transaction_id",
+                    to: "transaction_id",
+                  },
+                  { from: "$.request_body.code", to: "verification_code" },
+                ],
+              },
+            },
+            response: {
+              body_mapping_rules: [
+                {
+                  from: "$.execution_http_request.response_body",
+                  to: "*",
+                },
+              ],
+            },
+          },
+          // Interaction 3: risk_check (no user_resolve - returns API result only)
           risk_check: {
             request: {
               schema: {
                 type: "object",
-                required: ["operation"],
+                required: ["interaction"],
                 properties: {
-                  operation: { type: "string" },
+                  interaction: { type: "string" },
                   status: { type: "string" },
                 },
               },
@@ -326,7 +387,7 @@ describe("Advance Use Case: External API Authentication", () => {
   ) {
     const authId = await startAuthFlow();
     const loginResp = await callExternalApiAuth(authId, {
-      operation: "password_verify",
+      interaction: "password_verify",
       username: email,
       password,
     });
@@ -366,9 +427,9 @@ describe("Advance Use Case: External API Authentication", () => {
     return tokenResp.data;
   }
 
-  // === password_verify operation (with user_resolve) ===
+  // === password_verify interaction (with user_resolve) ===
 
-  it("should authenticate via password_verify operation, issue tokens, and verify ID Token amr", async () => {
+  it("should authenticate via password_verify interaction, issue tokens, and verify ID Token amr", async () => {
     const authId = await startAuthenticatedFlow();
 
     // Complete flow
@@ -443,11 +504,11 @@ describe("Advance Use Case: External API Authentication", () => {
     expect(userinfo2.data.sub).toBe(firstSub);
   });
 
-  it("should reject invalid credentials via password_verify operation", async () => {
+  it("should reject invalid credentials via password_verify interaction", async () => {
     const authId = await startAuthFlow();
 
     const loginResp = await callExternalApiAuth(authId, {
-      operation: "password_verify",
+      interaction: "password_verify",
       username: "test@example.com",
       password: "invalid",
     });
@@ -455,17 +516,56 @@ describe("Advance Use Case: External API Authentication", () => {
     expect(loginResp.status).toBe(401);
   });
 
-  // === risk_check operation (no user_resolve) ===
+  // === risk_check interaction (no user_resolve) ===
 
-  it("should return external API result for risk_check operation (no user_resolve)", async () => {
+  it("should return external API result for risk_check interaction (no user_resolve)", async () => {
     const authId = await startAuthenticatedFlow();
 
     // Mock /e2e/error-responses returns 200 with success body by default
     const resp = await callExternalApiAuth(authId, {
-      operation: "risk_check",
+      interaction: "risk_check",
     });
     expect(resp.status).toBe(200);
     expect(resp.data.status).toBe("success");
+  });
+
+  // === previous_interaction (challenge → verify) ===
+
+  it("should pass data from challenge to verify via previous_interaction", async () => {
+    const authId = await startAuthenticatedFlow();
+
+    // Step 1: Challenge - external API returns application_id, stored as transaction_id
+    const challengeResp = await callExternalApiAuth(authId, {
+      interaction: "challenge",
+    });
+    expect(challengeResp.status).toBe(200);
+    expect(challengeResp.data.transaction_id).toBeDefined();
+    const transactionId = challengeResp.data.transaction_id;
+
+    // Step 2: Verify - previous_interaction loads stored transaction_id
+    const verifyResp = await callExternalApiAuth(authId, {
+      interaction: "verify",
+      code: "123456",
+    });
+    expect(verifyResp.status).toBe(200);
+    // Mock /e2e/error-responses receives { transaction_id: "...", verification_code: "123456" }
+    // and returns 200 success
+    expect(verifyResp.data.status).toBe("success");
+  });
+
+  it("should not crash when verify is called without prior challenge", async () => {
+    const authId = await startAuthenticatedFlow();
+
+    // Skip challenge, directly call verify which has previous_interaction: { key: "challenge" }
+    // previous_interaction data doesn't exist → transaction_id is not resolved in body_mapping_rules
+    // The external API receives the request without transaction_id
+    // Whether this succeeds or fails depends on the external API's validation
+    const verifyResp = await callExternalApiAuth(authId, {
+      interaction: "verify",
+      code: "123456",
+    });
+    // idp-server must not return 500 (internal server error)
+    expect(verifyResp.status).not.toBe(500);
   });
 
   // === Error propagation ===
@@ -481,7 +581,7 @@ describe("Advance Use Case: External API Authentication", () => {
       const authId = await startAuthenticatedFlow();
 
       const resp = await callExternalApiAuth(authId, {
-        operation: "risk_check",
+        interaction: "risk_check",
         status: String(statusCode),
       });
       expect(resp.status).toBe(statusCode);
@@ -490,7 +590,7 @@ describe("Advance Use Case: External API Authentication", () => {
 
   // === Operation routing errors ===
 
-  it("should return 400 when operation is missing", async () => {
+  it("should return 400 when interaction is missing", async () => {
     const authId = await startAuthenticatedFlow();
 
     const resp = await callExternalApiAuth(authId, {
@@ -501,11 +601,11 @@ describe("Advance Use Case: External API Authentication", () => {
     expect(resp.data.error).toBe("invalid_request");
   });
 
-  it("should return 400 when operation is not configured", async () => {
+  it("should return 400 when interaction is not configured", async () => {
     const authId = await startAuthenticatedFlow();
 
     const resp = await callExternalApiAuth(authId, {
-      operation: "nonexistent_operation",
+      interaction: "nonexistent_interaction",
     });
     expect(resp.status).toBe(400);
     expect(resp.data.error).toBe("invalid_request");
@@ -516,7 +616,7 @@ describe("Advance Use Case: External API Authentication", () => {
 
     // password_verify requires username and password, sending without them
     const resp = await callExternalApiAuth(authId, {
-      operation: "password_verify",
+      interaction: "password_verify",
     });
     expect(resp.status).toBe(400);
     expect(resp.data.error).toBe("invalid_request");
