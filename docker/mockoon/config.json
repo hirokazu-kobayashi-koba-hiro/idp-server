@@ -141,7 +141,7 @@
       "responses": [
         {
           "uuid": "response-password-auth-success",
-          "body": "{\n  \"user_id\": \"{{ body 'username' }}\",\n  \"email\": \"{{ body 'username' }}\",\n  \"name\": \"Test User\",\n  \"authenticated\": true\n}",
+          "body": "{\n  \"user_id\": \"{{ body 'username' }}\",\n  \"email\": \"{{ body 'username' }}\",\n  \"name\": \"Test User\",\n  \"phone_number\": \"+819012345678\",\n  \"member_id\": \"MEM-12345\",\n  \"authenticated\": true\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "Success - valid password",

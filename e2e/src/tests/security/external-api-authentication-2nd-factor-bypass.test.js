@@ -247,6 +247,110 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
             "External API auth for 2nd factor bypass testing",
         },
         interactions: {
+          // identity_match_field: "$.phone_number" — phone_number で一致検証
+          verify_by_phone: {
+            execution: {
+              function: "http_request",
+              http_request: {
+                url: `${mockApiBaseUrl}/auth/password`,
+                method: "POST",
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" },
+                ],
+                body_mapping_rules: [
+                  { from: "$.request_body.username", to: "username" },
+                  { from: "$.request_body.password", to: "password" },
+                ],
+              },
+            },
+            user_resolve: {
+              identity_match_field: "$.phone_number",
+              user_mapping_rules: [
+                {
+                  from: "$.execution_http_request.response_body.user_id",
+                  to: "external_user_id",
+                },
+                {
+                  from: "$.execution_http_request.response_body.email",
+                  to: "email",
+                },
+                {
+                  from: "$.execution_http_request.response_body.phone_number",
+                  to: "phone_number",
+                },
+                { static_value: "mock-external-api", to: "provider_id" },
+              ],
+            },
+            response: { body_mapping_rules: [] },
+          },
+          // identity_match_field なし — 比較スキップ（hasUser チェックのみ）
+          verify_no_match: {
+            execution: {
+              function: "http_request",
+              http_request: {
+                url: `${mockApiBaseUrl}/auth/password`,
+                method: "POST",
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" },
+                ],
+                body_mapping_rules: [
+                  { from: "$.request_body.username", to: "username" },
+                  { from: "$.request_body.password", to: "password" },
+                ],
+              },
+            },
+            user_resolve: {
+              user_mapping_rules: [
+                {
+                  from: "$.execution_http_request.response_body.user_id",
+                  to: "external_user_id",
+                },
+                {
+                  from: "$.execution_http_request.response_body.email",
+                  to: "email",
+                },
+                { static_value: "mock-external-api", to: "provider_id" },
+              ],
+            },
+            response: { body_mapping_rules: [] },
+          },
+          // identity_match_field: "$.custom_properties.member_id" — カスタムプロパティで一致検証
+          verify_by_member_id: {
+            execution: {
+              function: "http_request",
+              http_request: {
+                url: `${mockApiBaseUrl}/auth/password`,
+                method: "POST",
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" },
+                ],
+                body_mapping_rules: [
+                  { from: "$.request_body.username", to: "username" },
+                  { from: "$.request_body.password", to: "password" },
+                ],
+              },
+            },
+            user_resolve: {
+              identity_match_field: "$.custom_properties.member_id",
+              user_mapping_rules: [
+                {
+                  from: "$.execution_http_request.response_body.user_id",
+                  to: "external_user_id",
+                },
+                {
+                  from: "$.execution_http_request.response_body.email",
+                  to: "email",
+                },
+                {
+                  from: "$.execution_http_request.response_body.member_id",
+                  to: "custom_properties.member_id",
+                },
+                { static_value: "mock-external-api", to: "provider_id" },
+              ],
+            },
+            response: { body_mapping_rules: [] },
+          },
+          // identity_match_field: "$.email" — email で一致検証
           verify_identity: {
             execution: {
               function: "http_request",
@@ -263,6 +367,7 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
               },
             },
             user_resolve: {
+              identity_match_field: "$.email",
               user_mapping_rules: [
                 {
                   from: "$.execution_http_request.response_body.user_id",
@@ -554,5 +659,125 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
     // → User.notFound() → user_not_found error
     expect(extApiResp.status).toBe(400);
     expect(extApiResp.data.error).toBe("user_not_found");
+  });
+
+  it("should match by phone_number when identity_match_field is $.phone_number", async () => {
+    // User A was registered with phone_number (set during initial registration or by the system)
+    // Mock /auth/password returns phone_number: "+819012345678" for all users
+
+    const authResp = await getAuthorizations({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+      clientId,
+      responseType: "code",
+      state: `phone-${Date.now()}`,
+      scope: "openid profile email",
+      redirectUri,
+      prompt: "login",
+    });
+    expect(authResp.status).toBe(302);
+    const { params } = convertNextAction(authResp.headers.location);
+    const authId = params.get("id");
+
+    // 1st factor: password
+    const passwordResp = await postAuthentication({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/password-authentication`,
+      id: authId,
+      body: { username: testUserAEmail, password: testUserAPassword },
+    });
+    expect(passwordResp.status).toBe(200);
+
+    // 2nd factor: verify_by_phone (identity_match_field: "$.phone_number")
+    // Mock returns phone_number: "+819012345678"
+    // Transaction user may not have phone_number set → identity_match_field comparison
+    // should fail since transaction user's phone_number is empty
+    const extApiResp = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: {
+        interaction: "verify_by_phone",
+        username: testUserAEmail,
+        password: "ExternalPass123!",
+      },
+    });
+    // Transaction user has no phone_number → field is empty → mismatch
+    expect(extApiResp.status).toBe(400);
+    expect(extApiResp.data.error).toBe("user_identity_mismatch");
+  });
+
+  it("should match by custom_properties.member_id when identity_match_field is $.custom_properties.member_id", async () => {
+    const authResp = await getAuthorizations({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+      clientId,
+      responseType: "code",
+      state: `member-${Date.now()}`,
+      scope: "openid profile email",
+      redirectUri,
+      prompt: "login",
+    });
+    expect(authResp.status).toBe(302);
+    const { params } = convertNextAction(authResp.headers.location);
+    const authId = params.get("id");
+
+    // 1st factor: password
+    const passwordResp = await postAuthentication({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/password-authentication`,
+      id: authId,
+      body: { username: testUserAEmail, password: testUserAPassword },
+    });
+    expect(passwordResp.status).toBe(200);
+
+    // 2nd factor: verify_by_member_id (identity_match_field: "$.custom_properties.member_id")
+    // Mock returns member_id: "MEM-12345"
+    // Transaction user has no custom_properties.member_id → field empty → mismatch
+    const extApiResp = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: {
+        interaction: "verify_by_member_id",
+        username: testUserAEmail,
+        password: "ExternalPass123!",
+      },
+    });
+    // Transaction user has no member_id → mismatch
+    expect(extApiResp.status).toBe(400);
+    expect(extApiResp.data.error).toBe("user_identity_mismatch");
+  });
+
+  it("should skip identity comparison when identity_match_field is not configured", async () => {
+    const authResp = await getAuthorizations({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+      clientId,
+      responseType: "code",
+      state: `nomatch-${Date.now()}`,
+      scope: "openid profile email",
+      redirectUri,
+      prompt: "login",
+    });
+    expect(authResp.status).toBe(302);
+    const { params } = convertNextAction(authResp.headers.location);
+    const authId = params.get("id");
+
+    // 1st factor: password
+    const passwordResp = await postAuthentication({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/password-authentication`,
+      id: authId,
+      body: { username: testUserAEmail, password: testUserAPassword },
+    });
+    expect(passwordResp.status).toBe(200);
+
+    // 2nd factor: verify_no_match (identity_match_field なし)
+    // Even with a different username, it should succeed because
+    // identity comparison is skipped (only hasUser check)
+    const extApiResp = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: {
+        interaction: "verify_no_match",
+        username: "different@example.com",
+        password: "ExternalPass123!",
+      },
+    });
+    // identity_match_field not configured → comparison skipped → success
+    expect(extApiResp.status).toBe(200);
+    expect(extApiResp.data.user).toBeDefined();
+    // But user should still be user A (transaction user), not the different user
+    expect(extApiResp.data.user.sub).toBe(testUserASub);
   });
 });
