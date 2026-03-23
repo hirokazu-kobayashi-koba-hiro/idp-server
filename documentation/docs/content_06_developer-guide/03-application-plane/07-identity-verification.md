@@ -20,6 +20,36 @@
 
 ---
 
+## Discovery設定（前提条件）
+
+eKYC（身元確認）機能を有効にするには、認可サーバー設定で以下を設定する必要があります。
+
+### 認可サーバー設定
+
+```json
+{
+  "authorization_server": {
+    "verified_claims_supported": true
+  }
+}
+```
+
+`verified_claims_supported: true` が設定されていない場合、eKYC関連のエンドポイントは利用できません。
+
+### スコープ設定
+
+身元確認申込みAPI（`/v1/me/identity-verification/applications`）にアクセスするには、クライアントに `identity_verification_application` スコープが必要です。
+
+```json
+{
+  "scope": "openid profile identity_verification_application"
+}
+```
+
+**注意**: このスコープがクライアントに付与されていない場合、アクセストークンに必要な権限が含まれず、APIアクセスが拒否されます。
+
+---
+
 ## エンドポイント
 
 ### 動的生成API
@@ -418,6 +448,100 @@ describe('Identity Verification Application', () => {
     expect(response.data).toHaveProperty('status');
   });
 });
+```
+
+---
+
+## マッピング関数リファレンス
+
+`body_mapping_rules` および `header_mapping_rules` で使用可能な関数の一覧です。Phase 3（Execution）やPre Hook/Post Hookのリクエスト・レスポンス変換時に活用できます。
+
+### 文字列操作
+
+| 関数 | 説明 | 例 |
+|------|------|-----|
+| `trim` | 前後の空白を除去 | `{"name": "trim"}` |
+| `case` | 大文字・小文字変換 | `{"name": "case", "args": {"mode": "upper"}}` |
+| `replace` | 文字列置換 | `{"name": "replace", "args": {"target": "-", "replacement": "_"}}` |
+| `regex_replace` | 正規表現置換 | `{"name": "regex_replace", "args": {"pattern": "\\d+", "replacement": "***"}}` |
+| `substring` | 部分文字列抽出 | `{"name": "substring", "args": {"start": 0, "end": 10}}` |
+| `format` | フォーマット文字列適用 | `{"name": "format", "args": {"template": "ID-{{value}}"}}` |
+
+### コレクション操作
+
+| 関数 | 説明 | 例 |
+|------|------|-----|
+| `join` | 配列を文字列に結合 | `{"name": "join", "args": {"separator": ","}}` |
+| `split` | 文字列を配列に分割 | `{"name": "split", "args": {"separator": ","}}` |
+| `filter` | 条件に一致する要素を抽出 | `{"name": "filter", "args": {"condition": "$.status == 'active'"}}` |
+| `map` | 各要素に変換を適用 | `{"name": "map", "args": {"field": "$.name"}}` |
+
+### 条件・変換
+
+| 関数 | 説明 | 例 |
+|------|------|-----|
+| `switch` | 値に応じた分岐変換 | `{"name": "switch", "args": {"approved": "OK", "rejected": "NG"}}` |
+| `if` | 条件付き値設定 | `{"name": "if", "args": {"condition": "$.age >= 18", "then": "adult", "else": "minor"}}` |
+| `convert_type` | 型変換 | `{"name": "convert_type", "args": {"type": "integer"}}` |
+| `exists` | 値の存在チェック | `{"name": "exists", "args": {"path": "$.optional_field"}}` |
+
+### ID生成・ユーティリティ
+
+| 関数 | 説明 | 例 |
+|------|------|-----|
+| `uuid4` | UUID v4生成 | `{"name": "uuid4"}` |
+| `uuid5` | UUID v5生成（名前空間ベース） | `{"name": "uuid5", "args": {"namespace": "...", "name": "$.user.sub"}}` |
+| `random_string` | ランダム文字列生成 | `{"name": "random_string", "args": {"length": 16}}` |
+| `now` | 現在日時取得 | `{"name": "now", "args": {"format": "yyyy-MM-dd'T'HH:mm:ss'Z'"}}` |
+
+### エンコーディング
+
+| 関数 | 説明 | 例 |
+|------|------|-----|
+| `mimeEncodedWord` | MIMEエンコードワード変換（メールヘッダー等） | `{"name": "mimeEncodedWord"}` |
+
+### 関数チェーン
+
+複数の関数を順番に適用できます：
+
+```json
+{
+  "body_mapping_rules": [
+    {
+      "from": "$.request.name",
+      "to": "full_name",
+      "functions": [
+        {"name": "trim"},
+        {"name": "case", "args": {"mode": "upper"}}
+      ]
+    }
+  ]
+}
+```
+
+### 未使用値パターン（`"from": "$.unused"`）
+
+外部APIリクエストに固定値やID生成結果を含めたい場合、`"from": "$.unused"` を指定して入力値を無視し、関数の出力のみを使用します：
+
+```json
+{
+  "body_mapping_rules": [
+    {
+      "from": "$.unused",
+      "to": "request_id",
+      "functions": [
+        {"name": "uuid4"}
+      ]
+    },
+    {
+      "from": "$.unused",
+      "to": "timestamp",
+      "functions": [
+        {"name": "now", "args": {"format": "yyyy-MM-dd'T'HH:mm:ss'Z'"}}
+      ]
+    }
+  ]
+}
 ```
 
 ---

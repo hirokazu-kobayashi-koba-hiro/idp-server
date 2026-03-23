@@ -240,6 +240,88 @@ JWTの`sub`クレームからユーザーを解決する方法を設定できま
 
 トークンを無効化します。OAuthTokenCommandRepository.delete()を使用します。キャッシュが有効な場合、DB削除と同時にキャッシュも削除されます。
 
+## Access Token タイプ（opaque vs JWT）
+
+`authorization_server.extension.access_token_type` で制御（認可サーバーレベルの設定。クライアント単位のオーバーライドは不可）。
+
+| タイプ | 形式 | 検証方法 | Revocation反映 |
+|-------|------|---------|--------------|
+| opaque（デフォルト） | ランダム文字列 | Introspectionエンドポイント必須 | 即時（DB削除） |
+| JWT | `header.payload.signature` | JWKS署名検証でローカル検証可能 | 次回Introspection時（JWTは自己完結型のため即時反映されない） |
+
+**使い分けの指針**:
+- **opaque**: トークン情報を隠蔽したい場合、Revocationを即時反映したい場合
+- **JWT**: リソースサーバーがIdPへの問い合わせなしにトークンを検証したい場合（パフォーマンス優先）
+
+JWTの場合、ペイロードに `iss`, `sub`, `scope`, `client_id`, `exp` 等が含まれる。JWKSエンドポイント（`/v1/jwks`）で公開鍵を取得して署名検証する。Introspectionも引き続き動作する。
+
+## リフレッシュトークン戦略
+
+`RefreshTokenCreatable` が以下の4パターンで動作する。
+
+| strategy | rotation | トークン値 | 有効期限 |
+|----------|----------|-----------|---------|
+| EXTENDS | true | **新しい** | **延長**（now + duration） |
+| EXTENDS | false | 同じ | **延長**（now + duration） |
+| FIXED | true | **新しい** | 同じ（初回発行時のまま） |
+| FIXED | false | 同じ | 同じ（初回発行時のまま） |
+
+### 設定
+
+```json
+{
+  "extension": {
+    "refresh_token_duration": 604800,
+    "refresh_token_strategy": "FIXED",
+    "rotate_refresh_token": true
+  }
+}
+```
+
+### ローテーション動作
+
+- `rotate_refresh_token: true`: リフレッシュ時に新しいRTを発行し、旧RTを無効化する。旧RTでのリフレッシュはエラー
+- `rotate_refresh_token: false`: 同じRTを繰り返し使える
+
+### FIXED vs EXTENDS
+
+- **FIXED**: RTの有効期限は最初の発行時点から固定。例: RT期限60秒で発行→50秒後にリフレッシュ→残り10秒で期限切れ
+- **EXTENDS（SLIDING）**: リフレッシュするたびに有効期限が `now + duration` にリセットされる。アクティブなユーザーはログアウトされない
+
+## トークン有効期限設定
+
+認可サーバー設定（`authorization_server.extension`）でデフォルト値を設定し、クライアント設定で個別にオーバーライド可能。
+
+| 設定 | デフォルト | 説明 |
+|------|----------|------|
+| `access_token_duration` | 3600 | AT有効期限（秒） |
+| `id_token_duration` | 3600 | ID Token有効期限（秒）。`IdTokenCreator`が`now + duration`で`exp`を計算 |
+| `refresh_token_duration` | 604800 | RT有効期限（秒） |
+| `authorization_code_valid_duration` | 600 | 認可コード有効期限（秒）。RFC 6749推奨は最大10分 |
+| `oauth_authorization_request_expires_in` | 1800 | 認可リクエスト（認証中コンテキスト）の有効期限。AUTH_SESSION cookieのmaxAgeと同じ値が使われる |
+
+## id_token_strict_mode
+
+`authorization_server.extension.id_token_strict_mode` で ID Token に含めるクレームを制御する。
+
+| 条件 | ID Token | UserInfo |
+|------|----------|----------|
+| `false`（デフォルト） | scopeベースのクレームを含む（name, email等） | 含む |
+| `true`, claims未指定 | `sub`, `iss`, `aud`, `exp`, `iat` のみ | 含む |
+| `true`, `claims`パラメータで`essential: true` | 指定されたクレームを含む | 含む |
+| `true`, `claims`パラメータで`voluntary`（essentialなし） | 含まない | 含む |
+
+**`claims:*` カスタムスコープへの影響**: strict_mode が `true` の場合、`claims:*` カスタムスコープのクレームは **UserInfo からも除外される**（`UserinfoScopeMappingCustomClaimsCreator.shouldCreate()` が `isIdTokenStrictMode()` をチェック）。標準OIDCクレーム（`profile`, `email` スコープ）のUserInfoには影響しない。
+
+## scopes_supported と claims_supported の動作の違い
+
+| 設定 | 影響範囲 | 動作 |
+|------|---------|------|
+| `scopes_supported` | Discovery（`.well-known/openid-configuration`）の表示**のみ** | 実際のスコープ処理には影響しない。スコープのフィルタリングはクライアント設定の`scope`で行う |
+| `claims_supported` | **Grant作成時のフィルタリング** | `GrantIdTokenClaims`/`GrantUserinfoClaims`の作成時に`claims_supported`に含まれないクレームを除外する。UserInfo/ID Tokenの両方に影響 |
+
+**カスタムスコープとUserInfoの関係**: `api:read`等のリソースアクセス用スコープはUserInfoのクレームに影響しない。UserInfoで返るクレームは`profile`, `email`等のOIDC標準スコープで制御される。
+
 ## E2Eテスト
 
 ```

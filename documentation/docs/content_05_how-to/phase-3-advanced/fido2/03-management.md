@@ -40,7 +40,9 @@ authentication_devices クレーム
 `custom_claims_scope_mapping`を有効にします。
 
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authorization-servers/${AUTH_SERVER_ID}" \
+IDP_SERVER_URL=http://localhost:8080
+
+curl -X PUT "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authorization-servers/${AUTH_SERVER_ID}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{

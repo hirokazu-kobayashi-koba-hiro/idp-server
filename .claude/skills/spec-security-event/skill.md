@@ -348,6 +348,24 @@ Event Scheduler (毎日 02:30 AM)
 | `ApnsNotifier` | APNS プッシュ通知（iOS） | `libs/idp-server-notification-apns-adapter/` |
 | `AwsEmailSender` | AWS SES メール送信 | `libs/idp-server-email-aws-adapter/` |
 
+## フック設定と動作確認
+
+### Webhookフック
+
+外部URLにセキュリティイベントをHTTP POSTで送信する。フック実行結果（成功/失敗、レスポンスコード）はManagement APIで確認可能。
+
+### SSF（Shared Signals Framework）フック
+
+RFC 8935/8936に基づくセキュリティイベントの配信。標準化されたイベント形式で外部システムに通知する。
+
+### テナント統計API
+
+セキュリティイベントの集約統計をテナント単位で取得できる。認証成功/失敗回数、アクティブユーザー数等の運用メトリクスを提供。
+
+### セキュリティイベント永続化
+
+イベントはDBに永続化され、Management API経由で履歴を検索可能。監査ログとしても機能する。
+
 ## E2Eテスト
 
 ```

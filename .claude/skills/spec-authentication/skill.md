@@ -249,6 +249,54 @@ authentication/interactors/
 └── webauthn/          # WebAuthn/FIDO2
 ```
 
+## パスワードポリシー
+
+テナント設定 `identity_policy_config.password_policy` で制御。
+
+| 設定 | 説明 |
+|------|------|
+| `min_length` | 最小文字数（デフォルト: 8） |
+| `max_length` | 最大文字数（デフォルト: 72、BCrypt制約） |
+| `require_uppercase` | 大文字必須 |
+| `require_lowercase` | 小文字必須 |
+| `require_number` | 数字必須 |
+| `require_special_char` | 特殊文字必須 |
+| `max_attempts` | ロックまでの最大失敗回数 |
+| `lockout_duration_seconds` | ロック期間（秒） |
+
+## アカウントロック
+
+パスワード認証の失敗回数がしきい値に達するとアカウントをロックする仕組み。3つの設定が連携して動作する:
+
+1. **テナント設定**: `password_policy.max_attempts` + `lockout_duration_seconds`
+2. **認証ポリシー `failure_conditions`**: 失敗回数の条件（例: `$.password-authentication.failure_count >= 3`）
+3. **認証ポリシー `lock_conditions`**: ロック判定条件（`failure_conditions` と同じ条件を設定）
+
+ロック中は正しいパスワードでも認証が拒否される。`lockout_duration_seconds` 経過後に自動解除。
+
+## SMS/Email OTP認証フロー
+
+2ステップのChallenge-Response型:
+
+1. **チャレンジ送信**: `sms-authentication-challenge` / `email-authentication-challenge` でOTPコードを送信
+2. **検証**: `sms-authentication` / `email-authentication` でコードを検証
+
+### OTP動作特性
+
+- **再チャレンジで旧コード無効化**: 新しいチャレンジを送信すると、前のOTPコードは無効になる
+- **Email OTP有効期限**: `expire_seconds` で設定可能（期限切れコードは検証失敗）
+- **no_actionモード**: ローカル開発用。Management APIの `authentication-interactions/{id}/sms-authentication-challenge` で検証コードを取得可能
+
+### MFA時のID Token amrクレーム
+
+MFA認証完了後、ID Tokenの `amr` クレームに使用された全認証方式が含まれる:
+
+```json
+{
+  "amr": ["sms", "pwd"]  // SMS OTP + パスワード
+}
+```
+
 ## RFC 8176 AMR (Authentication Methods References)
 
 | 認証方式 | AMR 値 |

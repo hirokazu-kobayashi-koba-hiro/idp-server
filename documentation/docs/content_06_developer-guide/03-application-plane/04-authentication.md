@@ -331,6 +331,50 @@ POST /{tenant-id}/v1/authentications/{authorization-request-id}/{interaction-typ
 
 ---
 
+## パスワードポリシー設定
+
+テナント設定の `identity_policy_config.password_policy` で、パスワードの複雑性要件やロックアウト条件を定義できます。
+
+### 設定例
+
+```json
+{
+  "identity_policy_config": {
+    "password_policy": {
+      "min_length": 8,
+      "max_length": 72,
+      "require_uppercase": false,
+      "require_lowercase": false,
+      "require_number": false,
+      "require_special_char": false,
+      "max_history": 0,
+      "max_attempts": 5,
+      "lockout_duration_seconds": 900
+    }
+  }
+}
+```
+
+### フィールド説明
+
+| フィールド | 型 | 説明 | デフォルト例 |
+|-----------|---|------|------------|
+| `min_length` | number | パスワードの最小文字数 | `8` |
+| `max_length` | number | パスワードの最大文字数 | `72` |
+| `require_uppercase` | boolean | 大文字を1文字以上含むことを要求 | `false` |
+| `require_lowercase` | boolean | 小文字を1文字以上含むことを要求 | `false` |
+| `require_number` | boolean | 数字を1文字以上含むことを要求 | `false` |
+| `require_special_char` | boolean | 特殊文字を1文字以上含むことを要求 | `false` |
+| `max_history` | number | パスワード履歴の保持数（過去N回と同じパスワードを禁止、`0`で無効）**※未実装** | `0` |
+| `max_attempts` | number | パスワード認証の最大試行回数（超過するとアカウントロック） | `5` |
+| `lockout_duration_seconds` | number | アカウントロックの持続時間（秒）。`900` = 15分 | `900` |
+
+**参考設定**: [public-tenant-template.json（id-service-migration）](../../../../config/templates/use-cases/id-service-migration/public-tenant-template.json)
+
+**バリデーション実装**: [PasswordPolicyValidationResult.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/authentication/PasswordPolicyValidationResult.java)
+
+---
+
 ## 実装の全体フロー
 
 ```
@@ -669,6 +713,29 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
 - ✅ OTPコードは`AuthenticationTransaction`に保存されている
 - ✅ 有効期限チェックも`AuthenticationTransaction`で実行
 - ✅ パスワード認証後の追加認証として使用される
+
+### OTP再チャレンジ時の旧コード無効化
+
+SMS OTPおよびEmail OTPでは、新しいチャレンジを送信すると**前のOTPコードは無効**になります。
+
+チャレンジ送信時に`interactionCommandRepository.register()`が呼ばれ、`sms-authentication-challenge`（または`email-authentication-challenge`）キーに対して新しい`SmsVerificationChallenge`（または`EmailVerificationChallenge`）が上書き保存されます。これにより、前回生成されたOTPコードは参照されなくなり、事実上無効化されます。
+
+```
+1回目チャレンジ送信 → OTPコード "123456" を保存
+    ↓
+ユーザーがOTPを入力せず、再チャレンジ要求
+    ↓
+2回目チャレンジ送信 → OTPコード "789012" で上書き保存
+    ↓
+"123456" を入力 → 検証失敗（保存されているのは "789012"）
+"789012" を入力 → 検証成功
+```
+
+**実装**:
+- SMS: [SmsChallengeAuthenticationExecutor.java](../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/sms/executor/SmsChallengeAuthenticationExecutor.java) - `interactionCommandRepository.register()`で上書き
+- Email: [EmailAuthenticationChallengeInteractor.java](../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/email/EmailAuthenticationChallengeInteractor.java) - 同様の上書き方式
+
+**注意**: フロントエンド実装では、再チャレンジ送信後にユーザーへ「新しいコードを送信しました」と通知し、旧コードが無効であることを案内してください。
 
 ---
 

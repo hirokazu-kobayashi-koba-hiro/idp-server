@@ -125,6 +125,93 @@ public class SelfSignedTlsClientAuthAuthenticator {
 }
 ```
 
+## クライアント設定による認可制御
+
+クライアント認証方式だけでなく、クライアント設定で認可動作を制御できる。
+
+### スコープ制限
+
+クライアントの `scope` フィールドで、利用可能なスコープを制限する。
+
+```json
+{
+  "scope": "openid profile"  // emailスコープを除外 → UserInfoからemail消失
+}
+```
+
+サーバーの `scopes_supported` は Discovery 表示専用。実際のフィルタリングはクライアント設定で行う。
+
+### grant_types制限
+
+```json
+{
+  "grant_types": ["authorization_code"]  // refresh_tokenを除外 → RT発行不可
+}
+```
+
+### redirect_uri検証
+
+```json
+{
+  "redirect_uris": ["https://app.example.com/callback"]
+  // 登録されていないURIへの認可リクエスト → error=invalid_request
+}
+```
+
+RFC 6749 Section 3.1.2.4 に準拠した完全一致検証。
+
+### response_types制限
+
+```json
+{
+  "response_types": ["code"]  // token, id_token等を除外
+}
+```
+
+### トークン有効期限のクライアント別オーバーライド
+
+認可サーバー設定のデフォルト値をクライアント単位で上書きできる。
+
+```json
+{
+  "access_token_duration": 1800,   // サーバーデフォルトより短く
+  "id_token_duration": 600,
+  "refresh_token_duration": 86400
+}
+```
+
+### リフレッシュトークン戦略のクライアント別オーバーライド
+
+```json
+{
+  "refresh_token_strategy": "FIXED",    // FIXED: 元のRT期限維持, EXTENDS: リフレッシュ時に延長
+  "rotate_refresh_token": true           // true: リフレッシュ時に新RT発行（旧RT無効化）
+}
+```
+
+### tos_uri / policy_uri による再同意トリガー
+
+```json
+{
+  "tos_uri": "https://example.com/tos-v2",     // 変更すると既存同意を無効化
+  "policy_uri": "https://example.com/policy-v2" // 次回認可時に再同意画面が表示される
+}
+```
+
+スコープ拡張時も同様に再同意がトリガーされる。
+
+### サーバーとクライアントの認証方式整合性
+
+クライアントの `token_endpoint_auth_method` は、サーバーの `token_endpoint_auth_methods_supported` に含まれている必要がある。
+
+```json
+// サーバー: "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post"]
+// クライアント: "token_endpoint_auth_method": "none"
+// → トークンリクエスト時にエラー
+```
+
+`none` を使う場合はサーバー側にも `none` を追加する必要がある。
+
 ## E2Eテスト
 
 ```

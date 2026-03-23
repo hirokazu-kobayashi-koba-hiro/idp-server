@@ -235,6 +235,40 @@ mTLS実装は以下のクラスで構成:
 - `TlsClientAuthAuthenticator` - tls_client_auth方式
 - `SelfSignedTlsClientAuthAuthenticator` - self_signed_tls_client_auth方式
 
+## FAPI Advanced 必須設定
+
+FAPI Advanced準拠に必要な認可サーバー設定:
+
+| 設定 | 値 | 説明 |
+|------|-----|------|
+| `tls_client_certificate_bound_access_tokens` | `true` | ATをクライアント証明書にバインド |
+| `require_signed_request_object` | `true` | 署名付きリクエストオブジェクト必須 |
+| `pushed_authorization_request_endpoint` | 設定必須 | PAR エンドポイント |
+
+### PAR（Pushed Authorization Request）フロー
+
+1. クライアントが `POST /v1/authorizations/push` にリクエストパラメータを送信
+2. サーバーが `request_uri`（`urn:ietf:params:oauth:request_uri:...`）を返却
+3. クライアントが `request_uri` を使って認可リクエストを送信
+
+### JARM（JWT Secured Authorization Response Mode）
+
+認可レスポンスをJWTで署名して返す。対応するresponse_mode:
+
+| response_mode | 説明 |
+|--------------|------|
+| `jwt` | デフォルトの応答方法をJWTで返す |
+| `query.jwt` | クエリパラメータでJWTを返す |
+| `fragment.jwt` | フラグメントでJWTを返す |
+
+### mTLSエンドポイントエイリアス
+
+Discoveryの `mtls_endpoint_aliases` でmTLS用のエンドポイントURLを公開。クライアント証明書が必要なエンドポイント（トークン、Introspection等）の別URLを提供する。
+
+### クライアント認証方式
+
+FAPI Advancedでは `private_key_jwt` または `tls_client_auth` を使用。`client_secret` ベースの認証は非推奨。mTLS環境ではトークンリクエスト時にクライアント証明書のみで認証し、`client_secret` は不要。
+
 ## E2Eテスト
 
 ```

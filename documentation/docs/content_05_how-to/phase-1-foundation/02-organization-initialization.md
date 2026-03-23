@@ -185,8 +185,11 @@ export CLIENT_SECRET='test-org-secret-a3f9e82c...'
 ### 3. トークン取得リクエスト
 
 ```bash
+# 接続先サーバーURL
+IDP_SERVER_URL=http://localhost:8080
+
 # ⚠️ パスワードに特殊文字(!,$,\等)が含まれる可能性があるため --data-urlencode
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   --data-urlencode 'grant_type=password' \
   --data-urlencode "username=${ADMIN_EMAIL}" \
@@ -220,7 +223,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
 
 ```bash
 # トークンを環境変数に保存
-export ORG_ADMIN_TOKEN=$(curl -sS -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+export ORG_ADMIN_TOKEN=$(curl -sS -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   --data-urlencode 'grant_type=password' \
   --data-urlencode "username=${ADMIN_EMAIL}" \
@@ -290,7 +293,7 @@ Onboarding APIは**management スコープを持つ管理者専用**です。Adm
 
 ```bash
 # Admin Tenantでトークン取得
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   --data-urlencode 'grant_type=password' \
   --data-urlencode "username=${ADMIN_EMAIL}" \
@@ -615,7 +618,7 @@ Content-Type: application/json
 
 ```bash
 # ⚠️ パスワードに特殊文字(!,$,\等)が含まれる場合は必ずシングルクォートを使用
-curl -X POST "http://localhost:8080/${ADMIN_TENANT_ID}/v1/tokens" \
+curl -X POST "${IDP_SERVER_URL}/${ADMIN_TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=password' \
   -d "username=${ADMIN_USER_EMAIL}" \

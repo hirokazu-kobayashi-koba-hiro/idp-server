@@ -192,6 +192,39 @@ config/templates/federation/
 └── custom-oidc-template.json
 ```
 
+## クライアント・ポリシー設定の注意点
+
+外部IdP連携を有効にするには、以下の2つの設定が**両方**必要:
+
+### 1. クライアントの `available_federations`
+
+クライアント設定にフェデレーションIDの配列を設定する必要がある。未設定の場合、外部IdP認証のリクエストが通らない。
+
+```json
+{
+  "extension": {
+    "available_federations": ["federation-config-id-for-google"]
+  }
+}
+```
+
+### 2. 認証ポリシーの `success_conditions`
+
+認証ポリシーの `success_conditions` に外部IdPの成功カウントパスを含める必要がある。**これが欠けていると、Google認証自体は成功するが、認可ステップで `authentication is required` エラーが返る**。
+
+```json
+{
+  "success_conditions": {
+    "any_of": [
+      [{"path": "$.oidc-google.success_count", "type": "integer", "operation": "gte", "value": 1}],
+      [{"path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}]
+    ]
+  }
+}
+```
+
+パスの形式: `$.{federation-type}-{provider-id}.success_count`（例: `$.oidc-google.success_count`）
+
 ## E2Eテスト
 
 ```

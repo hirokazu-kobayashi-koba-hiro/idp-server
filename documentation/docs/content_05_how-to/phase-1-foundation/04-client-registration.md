@@ -60,6 +60,9 @@
 **前提**: [how-to-02](./03-tenant-setup.md)で設定した環境変数を使用します。
 
 ```bash
+# 接続先サーバーURL
+IDP_SERVER_URL=http://localhost:8080
+
 # 環境変数の確認
 echo "Organization ID: $ORGANIZATION_ID"
 echo "Public Tenant ID: $PUBLIC_TENANT_ID"
@@ -91,7 +94,7 @@ echo "Web Client Secret: $WEB_CLIENT_SECRET"
 #### クライアント登録
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
   -d "{
@@ -154,7 +157,7 @@ echo "Mobile Client ID: $MOBILE_CLIENT_ID"
 #### クライアント登録
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
   -d "{
@@ -216,7 +219,7 @@ echo "M2M Client Secret: $M2M_CLIENT_SECRET"
 #### クライアント登録
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
   -d "{
@@ -260,7 +263,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 ```bash
 # クライアント一覧取得
-curl -X GET "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients" \
+curl -X GET "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients" \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" | jq .
 ```
 
@@ -277,7 +280,7 @@ curl -X GET "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 **解決策**: トークンを再取得してください
 
 ```bash
-export ORG_ADMIN_TOKEN=$(curl -sS -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+export ORG_ADMIN_TOKEN=$(curl -sS -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=password' \
   -d "username=${ADMIN_EMAIL}" \
@@ -297,7 +300,7 @@ export ORG_ADMIN_TOKEN=$(curl -sS -X POST "http://localhost:8080/${TENANT_ID}/v1
 
 ```bash
 # 既存クライアントを削除
-curl -X DELETE "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
+curl -X DELETE "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}"
 ```
 ---
@@ -498,7 +501,7 @@ Content-Type: application/json
 
 ```bash
 # redirect_urisに追加
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
+curl -X PUT "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
   -d '{
@@ -524,7 +527,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 **解決策**: `grant_types`に追加
 
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
+curl -X PUT "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
   -d '{
@@ -550,7 +553,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 
 ```bash
 # クライアントのスコープを更新
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
+curl -X PUT "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/clients/${CLIENT_ID}" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
   -d '{
@@ -603,6 +606,35 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
    - 環境変数で管理（コードにハードコードしない）
    - HTTPSで送信（平文送信禁止）
    - 漏洩が疑われる場合は即座に無効化
+
+---
+
+## 補足：高度な設定に関する注意事項
+
+### 外部IdPフェデレーション（`extension.available_federations`）
+
+Google、Azure AD、LINEなどの外部IdPと連携してソーシャルログインを実現する場合、クライアント設定の `extension.available_federations` に使用するフェデレーション名を配列で指定する必要があります。
+
+```json
+{
+  "extension": {
+    "available_federations": ["google", "azure_ad"]
+  }
+}
+```
+
+この設定がないと、該当クライアントの認可リクエスト時に外部IdPへのフェデレーション選択肢が表示されません。フェデレーション名はテナント側で事前に設定された `federation_configs` のキー名と一致させてください。
+
+### `claims_supported` と `scopes_supported` の違い
+
+クライアントが受け取るトークンに含まれるクレームを制御する際、以下の2つの設定の役割の違いに注意してください：
+
+| 設定項目 | 設定場所 | 役割 |
+|---------|---------|------|
+| `claims_supported` | 認可サーバー設定（`authorization_server`） | **実際にID Token / UserInfoに含まれるクレームを制御する**。ここに含まれていないクレームは、スコープで要求しても返却されない |
+| `scopes_supported` | 認可サーバー設定（`authorization_server`） | **OpenID Connect Discoveryエンドポイント（`.well-known/openid-configuration`）に表示されるスコープ一覧**。表示用であり、トークンに含まれるクレームの制御には直接影響しない |
+
+> ⚠️ `scopes_supported` にスコープを追加しただけでは、対応するクレームがトークンに含まれるようにはなりません。`claims_supported` にクレーム名を追加することが必要です。例えば、`email` スコープを使って `email` クレームを返したい場合、`claims_supported` に `"email"` が含まれている必要があります。
 
 ---
 

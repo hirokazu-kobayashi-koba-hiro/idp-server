@@ -128,6 +128,14 @@ public enum SessionSwitchPolicy {
 
 OIDCSessionService内で、ポリシーに応じた処理を実行します。
 
+## セッション有効期限の注意点
+
+`session_config.timeout_seconds` を変更しても、**既存セッションには影響しない**。セッションの `expiresAt` はセッション作成時に `now + timeout_seconds` で固定される。設定変更後に新しく作成されたセッションのみが新しい有効期限を持つ。
+
+**`default_max_age` との違い**:
+- `session_config.timeout_seconds`: セッション自体の寿命（cookie が消える）
+- `authorization_server.extension.default_max_age`: セッションは存在するが「認証が古すぎる」場合に再認証を要求する。`auth_time` からの経過秒数で判定
+
 ## E2Eテスト
 
 ```

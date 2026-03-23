@@ -125,6 +125,85 @@ APIレスポンスのJSONキーは**snake_case**を使用：
 
 `toMap()`メソッドのキー名は必ずsnake_caseで出力すること。
 
+## Discovery設定
+
+eKYC機能を有効にするには、認可サーバーに以下の設定が必要:
+
+- `verified_claims_supported: true` — Discoveryで身元確認サポートを公開
+- `identity_verification_application` スコープ — `/v1/me/identity-verification/applications` APIへのアクセスに必要
+
+## マッピング関数リファレンス
+
+`body_mapping_rules` / `header_mapping_rules` で使用可能な関数。外部API連携（eKYC, SMS, Email等）全般で共通。
+
+### 文字列操作
+
+| 関数 | 用途 | 例 |
+|------|------|-----|
+| `trim` | 前後の空白除去 | — |
+| `case` | 大文字/小文字変換 | `{"name":"case","args":{"mode":"upper"}}` |
+| `replace` | 文字列置換 | `{"name":"replace","args":{"target":"-","replacement":""}}` |
+| `regex_replace` | 正規表現置換 | `{"name":"regex_replace","args":{"pattern":"\\d+","replacement":"*"}}` |
+| `substring` | 部分文字列抽出 | `{"name":"substring","args":{"start":0,"end":10}}` |
+| `format` | テンプレート置換 | `{"name":"format","args":{"template":"Bearer {{value}}"}}` |
+
+### コレクション操作
+
+| 関数 | 用途 |
+|------|------|
+| `join` | 配列を文字列に結合 |
+| `split` | 文字列を配列に分割 |
+| `filter` | 条件に合う要素を抽出 |
+| `map` | 各要素に変換を適用 |
+
+### 条件・変換
+
+| 関数 | 用途 |
+|------|------|
+| `switch` | 値に応じた分岐 |
+| `if` | 条件付き値設定 |
+| `convert_type` | 型変換 |
+| `exists` | 値の存在チェック |
+
+### ID・日時生成
+
+| 関数 | 用途 |
+|------|------|
+| `uuid4` | UUID v4生成 |
+| `uuid5` | UUID v5生成 |
+| `uuid_short` | 短縮UUID |
+| `random_string` | ランダム文字列生成 |
+| `now` | 現在時刻 |
+
+### エンコーディング
+
+| 関数 | 用途 |
+|------|------|
+| `mimeEncodedWord` | RFC 2047 MIMEエンコード |
+
+### 関数チェーン
+
+複数の関数を配列で指定すると、左から右へ順に適用される:
+
+```json
+{
+  "from": "$.request_body.name",
+  "to": "display_name",
+  "functions": [
+    {"name": "trim"},
+    {"name": "case", "args": {"mode": "upper"}}
+  ]
+}
+```
+
+### 入力非依存関数
+
+`"from": "$.unused"` で入力値に依存しない関数（`random_string`, `now`等）を使用できる:
+
+```json
+{"from": "$.unused", "to": "request_id", "functions": [{"name": "random_string", "args": {"length": 32}}]}
+```
+
 ## E2Eテスト
 
 ```

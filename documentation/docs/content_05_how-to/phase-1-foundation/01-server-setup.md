@@ -103,8 +103,11 @@ curl -X POST "${IDP_SERVER_DOMAIN}v1/admin/initialization" \
 **Adminテナントのトークン取得**
 
 ```bash
+# 接続先サーバーURL
+IDP_SERVER_URL=http://localhost:8080
+
 # ⚠️ パスワードに特殊文字(!,$,\等)が含まれる可能性があるため --data-urlencode
-curl -X POST "http://localhost:8080/${ADMIN_TENANT_ID}/v1/tokens" \
+curl -X POST "${IDP_SERVER_URL}/${ADMIN_TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   --data-urlencode 'grant_type=password' \
   --data-urlencode "username=${ADMIN_USER_EMAIL}" \
