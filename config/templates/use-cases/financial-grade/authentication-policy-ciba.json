@@ -3,49 +3,15 @@
   "enabled": true,
   "policies": [
     {
-      "description": "default_authentication_policy",
+      "description": "ciba_fido_uaf_authentication",
       "priority": 1,
-      "conditions": {
-        "scopes": [
-          "openid"
-        ]
-      },
-      "step_definitions": [
-        {
-          "method": "password",
-          "order": 1,
-          "requires_user": true,
-          "allow_registration": false
-        }
-      ],
-      "available_methods": [
-        "password"
-      ],
-      "acr_mapping_rules": {
-        "urn:mace:incommon:iap:gold": [
-          "fido-uaf",
-          "fido2"
-        ],
-        "urn:mace:incommon:iap:silver": [
-          "email",
-          "sms"
-        ],
-        "urn:mace:incommon:iap:bronze": [
-          "password",
-          "external-token"
-        ]
-      },
-      "level_of_authentication_scopes": {
-        "transfers": [
-          "fido-uaf",
-          "fido2"
-        ]
-      },
+      "conditions": {},
+      "available_methods": ["fido-uaf"],
       "success_conditions": {
         "any_of": [
           [
             {
-              "path": "$.password-authentication.success_count",
+              "path": "$.fido-uaf-authentication.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1
@@ -57,7 +23,7 @@
         "any_of": [
           [
             {
-              "path": "$.password-authentication.failure_count",
+              "path": "$.fido-uaf-authentication.failure_count",
               "type": "integer",
               "operation": "gte",
               "value": 5
@@ -69,7 +35,7 @@
         "any_of": [
           [
             {
-              "path": "$.password-authentication.failure_count",
+              "path": "$.fido-uaf-authentication.failure_count",
               "type": "integer",
               "operation": "gte",
               "value": 5
