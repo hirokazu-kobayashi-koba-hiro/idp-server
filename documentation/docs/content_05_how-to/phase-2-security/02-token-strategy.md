@@ -256,21 +256,7 @@ curl -X PUT https://api.local.test/v1/management/tenants/{tenant-id}/authorizati
   -H "Content-Type: application/json" \
   -d '{
     "extension": {
-      "access_token_type": "jwt"
-    }
-  }'
-```
-
-#### クライアントレベルでのオーバーライド
-
-テナントのデフォルトがopaqueでも、特定のクライアントだけJWTにすることが可能です。
-
-```bash
-curl -X PUT https://api.local.test/v1/management/tenants/{tenant-id}/clients/{client-id} \
-  -H "Content-Type: application/json" \
-  -d '{
-    "extension": {
-      "access_token_type": "jwt"
+      "access_token_type": "JWT"
     }
   }'
 ```
@@ -278,6 +264,8 @@ curl -X PUT https://api.local.test/v1/management/tenants/{tenant-id}/clients/{cl
 ### デフォルト設定
 
 設定を省略した場合、**opaque** が適用されます。即時失効が可能なセキュアなデフォルトです。
+
+> **注意**: `access_token_type` は認可サーバーレベルの設定です。クライアント単位でのオーバーライドはサポートされていません。
 
 ---
 

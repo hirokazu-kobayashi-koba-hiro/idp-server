@@ -460,45 +460,45 @@ describe('Identity Verification Application', () => {
 
 | 関数 | 説明 | 例 |
 |------|------|-----|
-| `trim` | 前後の空白を除去 | `"trim": true` |
-| `case` | 大文字・小文字変換 | `"case": "upper"` / `"case": "lower"` |
-| `replace` | 文字列置換 | `"replace": {"target": "-", "replacement": "_"}` |
-| `regex_replace` | 正規表現置換 | `"regex_replace": {"pattern": "\\d+", "replacement": "***"}` |
-| `substring` | 部分文字列抽出 | `"substring": {"start": 0, "end": 10}` |
-| `format` | フォーマット文字列適用 | `"format": "ID-%s"` |
+| `trim` | 前後の空白を除去 | `{"name": "trim"}` |
+| `case` | 大文字・小文字変換 | `{"name": "case", "args": {"mode": "upper"}}` |
+| `replace` | 文字列置換 | `{"name": "replace", "args": {"target": "-", "replacement": "_"}}` |
+| `regex_replace` | 正規表現置換 | `{"name": "regex_replace", "args": {"pattern": "\\d+", "replacement": "***"}}` |
+| `substring` | 部分文字列抽出 | `{"name": "substring", "args": {"start": 0, "end": 10}}` |
+| `format` | フォーマット文字列適用 | `{"name": "format", "args": {"template": "ID-{{value}}"}}` |
 
 ### コレクション操作
 
 | 関数 | 説明 | 例 |
 |------|------|-----|
-| `join` | 配列を文字列に結合 | `"join": ","` |
-| `split` | 文字列を配列に分割 | `"split": ","` |
-| `filter` | 条件に一致する要素を抽出 | `"filter": {"condition": "$.status == 'active'"}` |
-| `map` | 各要素に変換を適用 | `"map": {"field": "$.name"}` |
+| `join` | 配列を文字列に結合 | `{"name": "join", "args": {"separator": ","}}` |
+| `split` | 文字列を配列に分割 | `{"name": "split", "args": {"separator": ","}}` |
+| `filter` | 条件に一致する要素を抽出 | `{"name": "filter", "args": {"condition": "$.status == 'active'"}}` |
+| `map` | 各要素に変換を適用 | `{"name": "map", "args": {"field": "$.name"}}` |
 
 ### 条件・変換
 
 | 関数 | 説明 | 例 |
 |------|------|-----|
-| `switch` | 値に応じた分岐変換 | `"switch": {"approved": "OK", "rejected": "NG"}` |
-| `if` | 条件付き値設定 | `"if": {"condition": "$.age >= 18", "then": "adult", "else": "minor"}` |
-| `convert_type` | 型変換 | `"convert_type": "integer"` / `"convert_type": "string"` |
-| `exists` | 値の存在チェック | `"exists": "$.optional_field"` |
+| `switch` | 値に応じた分岐変換 | `{"name": "switch", "args": {"approved": "OK", "rejected": "NG"}}` |
+| `if` | 条件付き値設定 | `{"name": "if", "args": {"condition": "$.age >= 18", "then": "adult", "else": "minor"}}` |
+| `convert_type` | 型変換 | `{"name": "convert_type", "args": {"type": "integer"}}` |
+| `exists` | 値の存在チェック | `{"name": "exists", "args": {"path": "$.optional_field"}}` |
 
 ### ID生成・ユーティリティ
 
 | 関数 | 説明 | 例 |
 |------|------|-----|
-| `uuid4` | UUID v4生成 | `"uuid4": true` |
-| `uuid5` | UUID v5生成（名前空間ベース） | `"uuid5": {"namespace": "...", "name": "$.user.sub"}` |
-| `random_string` | ランダム文字列生成 | `"random_string": {"length": 16}` |
-| `now` | 現在日時取得 | `"now": "yyyy-MM-dd'T'HH:mm:ss'Z'"` |
+| `uuid4` | UUID v4生成 | `{"name": "uuid4"}` |
+| `uuid5` | UUID v5生成（名前空間ベース） | `{"name": "uuid5", "args": {"namespace": "...", "name": "$.user.sub"}}` |
+| `random_string` | ランダム文字列生成 | `{"name": "random_string", "args": {"length": 16}}` |
+| `now` | 現在日時取得 | `{"name": "now", "args": {"format": "yyyy-MM-dd'T'HH:mm:ss'Z'"}}` |
 
 ### エンコーディング
 
 | 関数 | 説明 | 例 |
 |------|------|-----|
-| `mimeEncodedWord` | MIMEエンコードワード変換（メールヘッダー等） | `"mimeEncodedWord": true` |
+| `mimeEncodedWord` | MIMEエンコードワード変換（メールヘッダー等） | `{"name": "mimeEncodedWord"}` |
 
 ### 関数チェーン
 
@@ -506,15 +506,16 @@ describe('Identity Verification Application', () => {
 
 ```json
 {
-  "body_mapping_rules": {
-    "full_name": {
+  "body_mapping_rules": [
+    {
       "from": "$.request.name",
+      "to": "full_name",
       "functions": [
-        {"trim": true},
-        {"case": "upper"}
+        {"name": "trim"},
+        {"name": "case", "args": {"mode": "upper"}}
       ]
     }
-  }
+  ]
 }
 ```
 

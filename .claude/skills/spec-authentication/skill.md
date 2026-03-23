@@ -255,10 +255,12 @@ authentication/interactors/
 
 | 設定 | 説明 |
 |------|------|
-| `min_length` | 最小文字数 |
+| `min_length` | 最小文字数（デフォルト: 8） |
+| `max_length` | 最大文字数（デフォルト: 72、BCrypt制約） |
 | `require_uppercase` | 大文字必須 |
 | `require_lowercase` | 小文字必須 |
 | `require_number` | 数字必須 |
+| `require_special_char` | 特殊文字必須 |
 | `max_attempts` | ロックまでの最大失敗回数 |
 | `lockout_duration_seconds` | ロック期間（秒） |
 

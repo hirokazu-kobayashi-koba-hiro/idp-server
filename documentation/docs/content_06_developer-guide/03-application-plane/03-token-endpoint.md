@@ -761,7 +761,7 @@ HTTP/1.1 200 OK
 {
   "authorization_server": {
     "extension": {
-      "access_token_type": "jwt"
+      "access_token_type": "JWT"
     }
   }
 }

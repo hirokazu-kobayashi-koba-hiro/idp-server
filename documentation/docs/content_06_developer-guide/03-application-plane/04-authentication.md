@@ -365,7 +365,7 @@ POST /{tenant-id}/v1/authentications/{authorization-request-id}/{interaction-typ
 | `require_lowercase` | boolean | 小文字を1文字以上含むことを要求 | `false` |
 | `require_number` | boolean | 数字を1文字以上含むことを要求 | `false` |
 | `require_special_char` | boolean | 特殊文字を1文字以上含むことを要求 | `false` |
-| `max_history` | number | パスワード履歴の保持数（過去N回と同じパスワードを禁止、`0`で無効） | `0` |
+| `max_history` | number | パスワード履歴の保持数（過去N回と同じパスワードを禁止、`0`で無効）**※未実装** | `0` |
 | `max_attempts` | number | パスワード認証の最大試行回数（超過するとアカウントロック） | `5` |
 | `lockout_duration_seconds` | number | アカウントロックの持続時間（秒）。`900` = 15分 | `900` |
 

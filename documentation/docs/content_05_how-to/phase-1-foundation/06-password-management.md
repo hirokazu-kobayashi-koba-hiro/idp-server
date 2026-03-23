@@ -269,7 +269,7 @@ Content-Type: application/json
 | `require_lowercase` | boolean | `false` | 小文字必須 |
 | `require_number` | boolean | `false` | 数字必須 |
 | `require_special_char` | boolean | `false` | 特殊文字必須 |
-| `max_history` | integer | `0` | パスワード履歴保持数（過去N件の再使用を防止。0は無制限） |
+| `max_history` | integer | `0` | パスワード履歴保持数（過去N件の再使用を防止）**※未実装（将来対応予定）** |
 | `max_attempts` | integer | `5` | アカウントロックまでの最大失敗回数 |
 | `lockout_duration_seconds` | integer | `900` | ロック期間（秒）。デフォルトは15分 |
 

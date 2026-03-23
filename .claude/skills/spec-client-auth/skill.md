@@ -185,7 +185,7 @@ RFC 6749 Section 3.1.2.4 に準拠した完全一致検証。
 ```json
 {
   "refresh_token_strategy": "FIXED",    // FIXED: 元のRT期限維持, EXTENDS: リフレッシュ時に延長
-  "refresh_token_rotation": true        // true: リフレッシュ時に新RT発行（旧RT無効化）
+  "rotate_refresh_token": true           // true: リフレッシュ時に新RT発行（旧RT無効化）
 }
 ```
 

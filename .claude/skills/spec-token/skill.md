@@ -242,7 +242,7 @@ JWTの`sub`クレームからユーザーを解決する方法を設定できま
 
 ## Access Token タイプ（opaque vs JWT）
 
-`authorization_server.extension.access_token_type` で制御。
+`authorization_server.extension.access_token_type` で制御（認可サーバーレベルの設定。クライアント単位のオーバーライドは不可）。
 
 | タイプ | 形式 | 検証方法 | Revocation反映 |
 |-------|------|---------|--------------|
