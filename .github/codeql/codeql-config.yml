@@ -1,0 +1,12 @@
+# CodeQL カスタム設定
+# https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/customizing-your-advanced-setup-for-code-scanning
+#
+# idp-server は REST API + Bearer トークン認証のため、CSRF 保護は不要。
+# SecurityConfig で csrf().disable() を意図的に設定しており、
+# state-changing エンドポイント追加のたびに誤検知が増えるのを防ぐ。
+
+query-filters:
+  - exclude:
+      id: java/csrf-unprotected-request-type
+  - exclude:
+      id: java/spring-disabled-csrf-protection

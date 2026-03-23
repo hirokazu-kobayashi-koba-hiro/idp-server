@@ -34,7 +34,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: java-kotlin
-          # セキュリティクエリ（デフォルト） + 品質クエリ
+          config-file: .github/codeql/codeql-config.yml
           queries: security-extended
 
       - name: Autobuild
