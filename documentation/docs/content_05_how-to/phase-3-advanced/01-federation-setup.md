@@ -90,7 +90,9 @@ Google Cloud Consoleで事前準備：
 ### Step 2: idp-serverでFederation設定
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/federation-configurations" \
+IDP_SERVER_URL=http://localhost:8080
+
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/federation-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -153,7 +155,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 ### Step 3: 認証ポリシーでFederationを許可
 
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
+curl -X PUT "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -196,7 +198,7 @@ Step 2で作成したフェデレーション設定のIDを使用して、クラ
 # FEDERATION_ID は Step 2 のレスポンスで取得した id を使用
 FEDERATION_ID="770e8400-e29b-41d4-a716-446655440002"
 
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
+curl -X PUT "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/clients/${CLIENT_ID}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -225,7 +227,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 ### 5.1 Authorization Request（通常通り）
 
 ```bash
-curl -v "http://localhost:8080/${TENANT_ID}/v1/authorizations?\
+curl -v "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations?\
 response_type=code&\
 client_id=${CLIENT_ID}&\
 redirect_uri=${REDIRECT_URI}&\
@@ -280,7 +282,7 @@ idp-serverが自動処理:
 ### 5.5 トークン取得（通常通り）
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/tokens" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -u "${CLIENT_ID}:${CLIENT_SECRET}" \
   -d "grant_type=authorization_code&code=abc123&redirect_uri=${REDIRECT_URI}"
@@ -631,7 +633,7 @@ Google, Azure AD, カスタムOIDCなど標準的なプロバイダーの場合:
 OpenID Connect Discoveryに対応しているIdPの場合、自動設定が便利です：
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/federation-configurations/discover" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/federation-configurations/discover" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{

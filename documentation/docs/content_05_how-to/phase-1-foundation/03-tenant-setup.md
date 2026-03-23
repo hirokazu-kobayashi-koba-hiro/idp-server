@@ -116,8 +116,11 @@ export CLIENT_SECRET='your-client-secret'
 #### トークン設定
 
 ```bash
+# 接続先サーバーURL
+IDP_SERVER_URL=http://localhost:8080
+
 # 組織管理者トークンを取得して保存
-export ORG_ADMIN_TOKEN=$(curl -sS -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+export ORG_ADMIN_TOKEN=$(curl -sS -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   --data-urlencode 'grant_type=password' \
   --data-urlencode "username=${ADMIN_EMAIL}" \
@@ -180,7 +183,7 @@ echo "Public Tenant Domain: $PUBLIC_TENANT_DOMAIN"
 #### 2. アプリケーション用テナントを作成
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" \
   -d '{
@@ -254,7 +257,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 #### 3. 作成したテナントの認可サーバー設定を確認
 
 ```bash
-curl -X GET "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/authorization-server" \
+curl -X GET "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}/authorization-server" \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" | jq .
 ```
 
@@ -475,7 +478,7 @@ curl -d "scope=org-management account management" ...
 **解決策**: トークンを再取得してください
 
 ```bash
-export ORG_ADMIN_TOKEN=$(curl -sS -X POST "http://localhost:8080/${TENANT_ID}/v1/tokens" \
+export ORG_ADMIN_TOKEN=$(curl -sS -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/tokens" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=password' \
   -d "username=${ADMIN_EMAIL}" \

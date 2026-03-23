@@ -107,9 +107,10 @@ idp-serverは**内蔵のWebAuthn4jライブラリ**を使用してFIDO2認証を
 以下の設定で使用する`webauthn4j_*`関数は、WebAuthn4jライブラリを直接呼び出します。
 
 ```bash
+IDP_SERVER_URL=http://localhost:8080
 FIDO2_AUTH_CONFIG_ID=$(uuidgen)
 
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-configurations" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d "{
@@ -211,7 +212,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 ```bash
 AUTH_POLICY_ID=$(uuidgen)
 
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d "{
@@ -317,8 +318,10 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 ## Step 1: 認可リクエスト
 
+> **💡 ヒント**: 認可リクエストに `prompt=create` を指定すると、ユーザー登録画面が表示されます。新規ユーザーのFIDO2パスキー登録を行う場合、`prompt=create` がユーザー登録フローのエントリーポイントとなります。
+
 ```bash
-curl -v "http://localhost:8080/${TENANT_ID}/v1/authorizations?\
+curl -v "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations?\
 response_type=code&\
 client_id=${CLIENT_ID}&\
 redirect_uri=${REDIRECT_URI}&\
@@ -341,7 +344,7 @@ Location: http://localhost:8080/authorize?id=auth-transaction-id-xxxxx
 ```bash
 AUTH_ID="auth-transaction-id-xxxxx"
 
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/password-authentication" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/password-authentication" \
   -H "Content-Type: application/json" \
   -d '{
     "username": "user@example.com",
@@ -361,7 +364,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/pa
 ## Step 3: FIDO2登録チャレンジ（MFA前 - 失敗例）
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/fido2-registration-challenge" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/fido2-registration-challenge" \
   -H "Content-Type: application/json" \
   -d '{
     "username": "user@example.com",
@@ -386,7 +389,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/fi
 ### 4.1 Email OTP送信リクエスト
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/email-authentication-challenge" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/email-authentication-challenge" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com"
@@ -404,7 +407,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/em
 ### 4.2 Email OTP検証
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/email-authentication" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/email-authentication" \
   -H "Content-Type: application/json" \
   -d '{
     "verification_code": "123456"
@@ -423,7 +426,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/em
 ## Step 5: FIDO2登録チャレンジ（MFA後 - 成功）
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/fido2-registration-challenge" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/fido2-registration-challenge" \
   -H "Content-Type: application/json" \
   -d '{
     "username": "user@example.com",
@@ -455,7 +458,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/fi
 フロントエンドで `navigator.credentials.create()` を実行した結果をサーバーに送信します。
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/fido2-registration" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/fido2-registration" \
   -H "Content-Type: application/json" \
   -d '{
     "id": "credential-id",
@@ -481,7 +484,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/fi
 ## Step 7: 認可完了
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/authorize" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/authorize" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```

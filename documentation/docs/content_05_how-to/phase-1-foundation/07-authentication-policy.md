@@ -12,6 +12,13 @@
 - 管理者トークンを取得済み
 - 組織ID（organization-id）を取得済み
 
+### 環境変数の準備
+
+```bash
+# 接続先サーバーURL
+IDP_SERVER_URL=http://localhost:8080
+```
+
 ### Management API URL
 
 **組織レベルAPI**（このドキュメントでの表記）:
@@ -49,7 +56,7 @@ Authorization Request
 ### パスワードのみの認証
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -91,7 +98,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 ### パスワード + SMS OTP
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -147,7 +154,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 ### パスワード + （SMS または Email）
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -367,12 +374,140 @@ fido2で成功 → 認証完了
 
 ---
 
-## Level 4: 複数ポリシー（priority）
+## Level 4: 認証失敗・アカウントロック条件（failure_conditions / lock_conditions）
+
+### failure_conditions（認証失敗条件）
+
+`failure_conditions` は、**認証失敗と判定する条件**を定義します。`success_conditions` と同じ `any_of` 構造を使用します。
+
+例えば、パスワード認証が3回失敗した場合に認証失敗と判定するには、以下のように設定します。
+
+```json
+{
+  "failure_conditions": {
+    "any_of": [
+      [
+        {
+          "path": "$.password-authentication.failure_count",
+          "type": "integer",
+          "operation": "gte",
+          "value": 3
+        }
+      ]
+    ]
+  }
+}
+```
+
+**設定内容**:
+- `$.password-authentication.failure_count` - パスワード認証の失敗回数を参照
+- `operation: "gte"` + `value: 3` - 3回以上失敗したら認証失敗と判定
+- 認証失敗と判定されると、そのセッションでの認証試行が終了する
+
+### lock_conditions（アカウントロック条件）
+
+`lock_conditions` は、**アカウントをロックする条件**を定義します。`failure_conditions` と同じ条件構造を使用します。
+
+ロック条件が満たされると、アカウントがロックされます。ロック中は正しいパスワードを入力しても認証が拒否されます。ロックは `password_policy.lockout_duration_seconds` で設定した時間が経過すると自動的に解除されます。
+
+```json
+{
+  "lock_conditions": {
+    "any_of": [
+      [
+        {
+          "path": "$.password-authentication.failure_count",
+          "type": "integer",
+          "operation": "gte",
+          "value": 5
+        }
+      ]
+    ]
+  }
+}
+```
+
+**設定内容**:
+- パスワード認証が5回以上失敗した場合にアカウントをロック
+- ロック中は `lockout_duration_seconds`（デフォルト: 900秒 = 15分）経過後に自動解除
+
+### 完全な設定例（success_conditions + failure_conditions + lock_conditions）
+
+以下は、成功条件・失敗条件・ロック条件を全て含む認証ポリシーの設定例です。
+
+```bash
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+  -d '{
+    "flow": "oauth",
+    "enabled": true,
+    "policies": [
+      {
+        "description": "password with brute-force protection",
+        "priority": 1,
+        "conditions": {},
+        "available_methods": ["password"],
+        "success_conditions": {
+          "any_of": [
+            [
+              {
+                "path": "$.password-authentication.success_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 1
+              }
+            ]
+          ]
+        },
+        "failure_conditions": {
+          "any_of": [
+            [
+              {
+                "path": "$.password-authentication.failure_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 3
+              }
+            ]
+          ]
+        },
+        "lock_conditions": {
+          "any_of": [
+            [
+              {
+                "path": "$.password-authentication.failure_count",
+                "type": "integer",
+                "operation": "gte",
+                "value": 5
+              }
+            ]
+          ]
+        }
+      }
+    ]
+  }'
+```
+
+**動作フロー**:
+```
+パスワード認証試行
+  ├─ 成功（1回以上成功） → 認証完了
+  ├─ 失敗3回 → failure_conditions発動 → 認証失敗（セッション終了）
+  └─ 失敗5回 → lock_conditions発動 → アカウントロック
+       └─ lockout_duration_seconds 経過後 → 自動解除
+```
+
+**注意**: `failure_conditions` と `lock_conditions` の閾値は、`failure_conditions` の値を `lock_conditions` の値以下に設定してください。上記の例では、3回失敗で認証失敗（再試行が必要）、5回失敗でアカウントロック（一定時間認証不可）となります。
+
+---
+
+## Level 5: 複数ポリシー（priority）
 
 ### クライアント別のポリシー
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -446,7 +581,7 @@ other-app からのリクエスト
 
 ---
 
-## Level 5: ACRマッピング（基礎）
+## Level 6: ACRマッピング（基礎）
 
 ### ACR（Authentication Context Class Reference）とは
 
@@ -603,7 +738,7 @@ ID Tokenに acr クレームとして含める
 ### ポリシー一覧取得
 
 ```bash
-curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
+curl "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   | jq '.'
 ```
@@ -611,7 +746,7 @@ curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenan
 ### 特定のポリシー取得
 
 ```bash
-curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
+curl "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   | jq '.policies'
 ```
@@ -619,7 +754,7 @@ curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenan
 ### テナントのDiscoveryで確認
 
 ```bash
-curl "http://localhost:8080/${TENANT_ID}/.well-known/openid-configuration" \
+curl "${IDP_SERVER_URL}/${TENANT_ID}/.well-known/openid-configuration" \
   | jq '.acr_values_supported'
 ```
 
@@ -639,7 +774,7 @@ curl "http://localhost:8080/${TENANT_ID}/.well-known/openid-configuration" \
 ### 既存ポリシーの更新
 
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
+curl -X PUT "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -670,7 +805,7 @@ curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID
 ### ポリシーの無効化
 
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
+curl -X PUT "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies/oauth" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{

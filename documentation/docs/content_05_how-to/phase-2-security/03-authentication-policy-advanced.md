@@ -385,7 +385,9 @@ Case 2: パスワード + SMS OTPで認証完了
 
 **ロック解除**:
 ```bash
-curl -X PUT "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/users/${USER_ID}" \
+IDP_SERVER_URL=http://localhost:8080
+
+curl -X PUT "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/users/${USER_ID}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -841,7 +843,7 @@ if (idToken.acr === "urn:mace:incommon:iap:gold") {
 
 **または、Authorization Requestで要求**:
 ```bash
-curl "http://localhost:8080/${TENANT_ID}/v1/authorizations?\
+curl "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations?\
 response_type=code&\
 client_id=${CLIENT_ID}&\
 acr_values=urn:mace:incommon:iap:gold"  # gold レベル必須

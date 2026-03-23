@@ -47,6 +47,21 @@ WebAuthn4j ライブラリ (内部統合)
 | `documentation/.../fido2/03-management.md` | パスキー管理API |
 | `documentation/.../fido2/04-attestation-verification.md` | アテステーション検証 |
 
+### 認可リクエストのpromptパラメータ
+
+| prompt値 | 動作 |
+|---------|------|
+| `create` | ユーザー登録画面をトリガー |
+| `login` | 既存セッションがあっても再認証を強制 |
+| `none` | ユーザー操作なし。セッション有効＋同意済みならcode発行、それ以外はエラー |
+
+### Passkey登録・認証の2フェーズ
+
+1. **Part A（Passkey登録）**: `prompt=create` でユーザー登録 → パスワード認証 → WebAuthn Registration Challenge → Passkey登録
+2. **Part B（Passkey認証）**: `prompt=login` で再認証 → WebAuthn認証（ブラウザのPasskeyダイアログ）
+
+CLI環境ではWebAuthnのブラウザインタラクションが必要なため、パスワードフォールバックでのテストに限定される。
+
 ### E2Eテスト
 
 | ファイル | 内容 |

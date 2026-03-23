@@ -54,9 +54,10 @@ POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/authenti
 SMS認証では、外部APIを呼び出してOTPを送信します。このステップでは、外部サービスとの連携を設定します。
 
 ```bash
+IDP_SERVER_URL=http://localhost:8080
 SMS_AUTH_CONFIG_ID=$(uuidgen)
 
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-configurations" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d "{
@@ -88,6 +89,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
           \"http_request\": {
             \"url\": \"http://host.docker.internal:4000/sms-authentication-challenge\",
             \"method\": \"POST\",
+            \"auth_type\": \"oauth2\",
             \"oauth_authorization\": {
               \"type\": \"password\",
               \"token_endpoint\": \"http://host.docker.internal:4000/token\",
@@ -135,6 +137,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
           \"http_request\": {
             \"url\": \"http://host.docker.internal:4000/sms-authentication\",
             \"method\": \"POST\",
+            \"auth_type\": \"oauth2\",
             \"oauth_authorization\": {
               \"type\": \"password\",
               \"token_endpoint\": \"http://host.docker.internal:4000/token\",
@@ -208,7 +211,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 ```bash
 AUTH_POLICY_ID=$(uuidgen)
 
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/authentication-policies" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d "{
@@ -296,7 +299,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 ### 3.1 Authorization Request（認可開始）
 
 ```bash
-curl -v "http://localhost:8080/${TENANT_ID}/v1/authorizations?\
+curl -v "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations?\
 response_type=code&\
 client_id=${CLIENT_ID}&\
 redirect_uri=${REDIRECT_URI}&\
@@ -317,7 +320,7 @@ Location: http://localhost:8080/authorize?id=auth-transaction-id-xxxxx
 ```bash
 AUTH_ID="auth-transaction-id-xxxxx"
 
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/initial-registration" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/initial-registration" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "new-user@example.com",
@@ -344,7 +347,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/in
 ### 3.3 第2要素: SMS OTP送信リクエスト（登録用）
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/sms-authentication-challenge" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/sms-authentication-challenge" \
   -H "Content-Type: application/json" \
   -d '{
     "phone_number": "+81-90-1234-5678",
@@ -369,10 +372,12 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/sm
 - 新規ユーザーの電話にSMSが届く（登録用テンプレート）
 - 開発環境ではレスポンスに `verification_code` が含まれる（テスト用）
 
+> **注意**: 新しいチャレンジを送信すると、前のOTPコードは無効になります。再送信した場合は、最新のOTPコードを使用してください。
+
 ### 3.4 第2要素: SMS OTP検証
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/sms-authentication" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/sms-authentication" \
   -H "Content-Type: application/json" \
   -d '{
     "verification_code": "123456"
@@ -389,7 +394,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/sm
 ### 3.5 認可完了（ユーザー登録完了）
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/authorize" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/authorize" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -412,7 +417,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/au
 ### 4.1 Authorization Request（認可開始）
 
 ```bash
-curl -v "http://localhost:8080/${TENANT_ID}/v1/authorizations?\
+curl -v "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations?\
 response_type=code&\
 client_id=${CLIENT_ID}&\
 redirect_uri=${REDIRECT_URI}&\
@@ -431,7 +436,7 @@ Location: http://localhost:8080/authorize?id=auth-transaction-id-yyyyy
 ```bash
 AUTH_ID="auth-transaction-id-yyyyy"
 
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/password-authentication" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/password-authentication" \
   -H "Content-Type: application/json" \
   -d '{
     "username": "new-user@example.com",
@@ -451,7 +456,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/pa
 ### 4.3 第2要素: SMS OTP送信リクエスト（ログイン用）
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/sms-authentication-challenge" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/sms-authentication-challenge" \
   -H "Content-Type: application/json" \
   -d '{
     "phone_number": "+81-90-1234-5678",
@@ -472,10 +477,12 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/sm
 - ユーザーの電話にSMSが届く（ログイン用テンプレート）
 - 本番環境では `verification_code` は含まれず、SMSでのみ確認可能
 
+> **注意**: 新しいチャレンジを送信すると、前のOTPコードは無効になります。再送信した場合は、最新のOTPコードを使用してください。
+
 ### 4.4 第2要素: SMS OTP検証
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/sms-authentication" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/sms-authentication" \
   -H "Content-Type: application/json" \
   -d '{
     "verification_code": "654321"
@@ -492,7 +499,7 @@ curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/sm
 ### 4.5 認可完了
 
 ```bash
-curl -X POST "http://localhost:8080/${TENANT_ID}/v1/authorizations/${AUTH_ID}/authorize" \
+curl -X POST "${IDP_SERVER_URL}/${TENANT_ID}/v1/authorizations/${AUTH_ID}/authorize" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -702,6 +709,7 @@ POST http://host.docker.internal:4000/sms-authentication
   "http_request": {
     "url": "https://your-sms-service.example.com/send",
     "method": "POST",
+    "auth_type": "oauth2",
     "oauth_authorization": {
       "type": "password",
       "token_endpoint": "https://your-sms-service.example.com/token",
@@ -728,7 +736,7 @@ POST http://host.docker.internal:4000/sms-authentication
 ### セキュリティイベントの確認
 ```bash
 # SMS認証の成功/失敗イベントを確認
-curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-events?event_type=sms_verification_success" \
+curl "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-events?event_type=sms_verification_success" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}"
 ```
 

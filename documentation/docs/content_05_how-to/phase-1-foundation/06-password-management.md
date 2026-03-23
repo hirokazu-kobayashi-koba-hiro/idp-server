@@ -95,7 +95,10 @@ idp-serverでは、2つのパスワード管理APIを提供しています：
 ### API実行
 
 ```bash
-curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/me/password/change" \
+# 接続先サーバーURL
+IDP_SERVER_URL=http://localhost:8080
+
+curl -X POST "${IDP_SERVER_URL}/${PUBLIC_TENANT_ID}/v1/me/password/change" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -194,7 +197,7 @@ Content-Type: application/json
 
 ```bash
 # Authorization Request（パスワードリセット用）
-curl -v "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/authorizations?\
+curl -v "${IDP_SERVER_URL}/${PUBLIC_TENANT_ID}/v1/authorizations?\
 response_type=code&\
 client_id=${WEB_CLIENT_ID}&\
 redirect_uri=http://localhost:3000/callback&\
@@ -207,7 +210,7 @@ state=random-state-123"
 ### Step 2: パスワードリセットAPI実行
 
 ```bash
-curl -X POST "http://localhost:8080/${PUBLIC_TENANT_ID}/v1/me/password/reset" \
+curl -X POST "${IDP_SERVER_URL}/${PUBLIC_TENANT_ID}/v1/me/password/reset" \
   -H "Authorization: Bearer ${RESET_ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -254,10 +257,55 @@ Content-Type: application/json
 
 パスワード変更・リセット時には、テナントに設定されたパスワードポリシーで検証されます。
 
+### パスワードポリシーの設定フィールド
+
+`identity_policy_config.password_policy` ブロックで、以下のフィールドを設定できます。
+
+| フィールド | 型 | デフォルト値 | 説明 |
+|-----------|---|------------|------|
+| `min_length` | integer | `8` | 最小文字数 |
+| `max_length` | integer | `72` | 最大文字数（BCryptの制約により72が上限） |
+| `require_uppercase` | boolean | `false` | 大文字必須 |
+| `require_lowercase` | boolean | `false` | 小文字必須 |
+| `require_number` | boolean | `false` | 数字必須 |
+| `require_special_char` | boolean | `false` | 特殊文字必須 |
+| `max_history` | integer | `0` | パスワード履歴保持数（過去N件の再使用を防止。0は無制限） |
+| `max_attempts` | integer | `5` | アカウントロックまでの最大失敗回数 |
+| `lockout_duration_seconds` | integer | `900` | ロック期間（秒）。デフォルトは15分 |
+
+### パスワードポリシーの設定例
+
+テナント作成・更新時に `identity_policy_config.password_policy` ブロックで設定します。
+
+```json
+{
+  "identity_policy_config": {
+    "password_policy": {
+      "min_length": 12,
+      "max_length": 72,
+      "require_uppercase": true,
+      "require_lowercase": true,
+      "require_number": true,
+      "require_special_char": true,
+      "max_history": 5,
+      "max_attempts": 5,
+      "lockout_duration_seconds": 900
+    }
+  }
+}
+```
+
+**設定内容の説明**:
+- パスワードは12文字以上72文字以下
+- 大文字・小文字・数字・特殊文字を全て含む必要がある
+- 過去5件のパスワードは再使用不可
+- パスワード認証を5回連続で失敗するとアカウントがロックされる
+- ロックは900秒（15分）経過後に自動解除される
+
 ### パスワードポリシーの確認
 
 ```bash
-curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}" \
+curl "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${PUBLIC_TENANT_ID}" \
   -H "Authorization: Bearer ${ORG_ADMIN_TOKEN}" | jq '.identity_policy.password_policy'
 ```
 

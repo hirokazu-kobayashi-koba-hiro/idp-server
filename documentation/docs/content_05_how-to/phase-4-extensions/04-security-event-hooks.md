@@ -85,7 +85,9 @@ idp-server: イベント検出
 ### Step 1: Email通知フックを作成
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
+IDP_SERVER_URL=http://localhost:8080
+
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -145,7 +147,7 @@ IP: 192.168.1.100
 ### Webhookフックを作成
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -279,7 +281,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 ### SSF設定
 
 ```bash
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -349,7 +351,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
 
 ```bash
 # Webhook通知（セキュリティチーム向けSlack通知）
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -377,7 +379,7 @@ curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_I
   }'
 
 # SSF通知（外部システム連携）
-curl -X POST "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
+curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{
@@ -559,7 +561,7 @@ Security Event Hook failed after 3 retries
 **解決策**:
 ```bash
 # フック設定を確認
-curl "http://localhost:8080/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
+curl "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants/${TENANT_ID}/security-event-hook-configurations" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   | jq '.[] | {type, enabled, events}'
 

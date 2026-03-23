@@ -739,6 +739,107 @@ HTTP/1.1 200 OK
 
 ---
 
+## 4. トークン関連の設定
+
+トークンエンドポイントの動作に影響を与える重要な設定項目について説明します。
+
+### 4.1 Access Tokenタイプ（opaque vs JWT）
+
+`authorization_server.extension.access_token_type` で、発行されるAccess Tokenの形式を制御します。
+
+| 設定値 | 形式 | 説明 |
+|--------|------|------|
+| **opaque**（デフォルト） | ランダム文字列 | トークン自体に情報を含まない。リソースサーバーは**Introspectionエンドポイント**を呼び出して検証する必要がある |
+| **jwt** | header.payload.signature | トークン自体にクレーム情報を含む。リソースサーバーは**JWKSを取得してローカルで署名検証**できる |
+
+**使い分けの指針**:
+
+- **opaque**: 即時失効が必要なケース（金融系など）。Revocationすると即座に無効化される（Introspection時にDBを参照するため）
+- **jwt**: パフォーマンス重視のケース。ネットワークコールなしでトークン検証が可能。ただし、Revocation後もトークンの有効期限まで使用可能な場合がある
+
+```json
+{
+  "authorization_server": {
+    "extension": {
+      "access_token_type": "jwt"
+    }
+  }
+}
+```
+
+---
+
+### 4.2 id_token_strict_mode
+
+`authorization_server.extension.id_token_strict_mode` で、ID Tokenに含まれるクレームの制御方式を切り替えます。
+
+| 設定値 | 動作 |
+|--------|------|
+| **false**（デフォルト） | scopeに基づくクレームをID Tokenに含める（例: `scope=profile` → `name`, `family_name`等） |
+| **true** | `claims`パラメータで `"essential": true` を指定したクレームのみID Tokenに含める |
+
+**`true`に設定した場合の影響**:
+
+- ID Tokenには、`claims`パラメータの`id_token`セクションで`essential: true`と明示的にリクエストされたクレームのみが含まれる
+- scopeベースのクレーム自動付与は行われない
+- `claims:*` プレフィックス付きカスタムスコープによるUserInfoクレームの動作にも影響する
+
+```json
+{
+  "authorization_server": {
+    "extension": {
+      "id_token_strict_mode": true
+    }
+  }
+}
+```
+
+**`claims`パラメータでのリクエスト例**（strict mode時）:
+
+```
+claims={"id_token":{"email":{"essential":true},"name":{"essential":true}}}
+```
+
+この場合、ID Tokenには`email`と`name`のみが含まれます。
+
+---
+
+### 4.3 scopes_supported と claims_supported の違い
+
+トークン発行に影響する2つの設定の違いを理解することが重要です。
+
+| 設定 | 役割 | トークン発行への影響 |
+|------|------|-------------------|
+| **scopes_supported** | Discovery（`.well-known/openid-configuration`）での表示用 | **影響なし** - 実際のスコープ処理には関与しない |
+| **claims_supported** | 認可グラント作成時のクレームフィルタリング | **直接影響あり** - `GrantIdTokenClaims`/`GrantUserinfoClaims` でフィルタされる |
+
+**重要な注意点**:
+
+- `scopes_supported` はDiscoveryエンドポイントで対応スコープを公開するための設定であり、実際のスコープ受付や処理には影響しません
+- `claims_supported` に含まれないクレームは、認可グラント作成時に除外されるため、ID TokenやUserInfoレスポンスに含まれません
+- カスタムスコープ（例: `api:read`）はリソースアクセスの権限制御に使用されるものであり、UserInfoのクレームには影響しません。UserInfoのクレームを制御するのはOIDC標準スコープ（`profile`, `email`, `address`, `phone`）です
+
+**設定例**:
+
+```json
+{
+  "authorization_server": {
+    "scopes_supported": ["openid", "profile", "email", "api:read"],
+    "claims_supported": [
+      "sub", "name", "family_name", "given_name",
+      "email", "email_verified"
+    ]
+  }
+}
+```
+
+この設定では:
+- Discovery: `openid`, `profile`, `email`, `api:read` が対応スコープとして公開される
+- 実際のクレーム: `claims_supported` に `address` 関連のクレームがないため、`scope=address` を指定してもアドレス情報はID Token/UserInfoに含まれない
+- `api:read` スコープ: Access Tokenの`scope`クレームに反映されるが、UserInfoのクレームには影響しない
+
+---
+
 ## E2Eテストの書き方
 
 ### 実際のテストファイル

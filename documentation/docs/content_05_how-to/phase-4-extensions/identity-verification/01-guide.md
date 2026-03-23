@@ -97,6 +97,42 @@ curl -X PUT /v1/management/tenants/{tenant-id}/identity-verification-configurati
 
 ---
 
+## ⚠️ 前提条件・設定上の注意
+
+身元確認機能を利用するためには、以下の設定が事前に行われている必要があります。
+
+### 認可サーバー設定
+
+| 設定項目 | 必須 | 説明 |
+|---------|------|------|
+| `verified_claims_supported` | ✅ | `true` に設定する必要がある。この設定が `false` またはの場合、テンプレートを正しく設定しても **ID Token / UserInfo に `verified_claims` が出力されない** |
+
+テナントの認可サーバー設定（`authorization_server`）に以下を含めてください：
+
+```json
+{
+  "authorization_server": {
+    "verified_claims_supported": true
+  }
+}
+```
+
+> 💡 この設定がないと、eKYCの結果がユーザー属性として保存されても、トークンやUserInfoレスポンスには反映されません。テンプレートやMappingRuleの設定だけでは不十分です。
+
+### クライアントのスコープ設定
+
+身元確認申込みAPIを利用するクライアントには、`identity_verification_application` スコープが必要です。クライアント登録時に `scope` に含めてください：
+
+```json
+{
+  "scope": "openid profile identity_verification_application"
+}
+```
+
+このスコープがないと、身元確認申込みAPIへのアクセスが拒否されます。
+
+---
+
 ## 🧪 開発に入る前の「最短準備ステップ」
 
 1. `POST /identity-verification-configurations` でテンプレートを登録
