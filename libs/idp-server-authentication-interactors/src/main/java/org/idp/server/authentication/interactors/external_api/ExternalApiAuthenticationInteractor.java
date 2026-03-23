@@ -114,9 +114,11 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    log.debug("ExternalApiAuthenticationInteractor called");
-
     String interaction = request.optValueAsString("interaction", "");
+    log.info(
+        "ExternalApiAuthenticationInteractor called. interaction={}, tenant={}",
+        interaction,
+        tenant.identifierValue());
     if (interaction.isEmpty()) {
       log.warn("External API authentication request missing 'interaction' field");
       Map<String, Object> errorResponse = new HashMap<>();
@@ -236,12 +238,14 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
       // 2nd factor: verify external API user matches authenticated user
       AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
       if (stepDefinition != null && stepDefinition.requiresUser()) {
+        String identityMatchField = interactionConfig.userResolve().identityMatchField();
         return handleSecondFactor(
             tenant,
             transaction,
             request,
             executionResult,
             userMappingRules,
+            identityMatchField,
             interaction,
             type,
             contents,
@@ -286,6 +290,47 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     }
 
     // No user resolution - return execution result as-is
+    // But still enforce 2nd factor requires_user check (e.g., risk analysis API as 2nd factor)
+    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
+    if (stepDefinition != null && stepDefinition.requiresUser()) {
+      if (!transaction.hasUser()) {
+        log.warn(
+            "2nd factor requires authenticated user but transaction has no user. interaction={}, method={}",
+            interaction,
+            method());
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("interaction", interaction);
+        errorResponse.put("error", "user_not_found");
+        errorResponse.put(
+            "error_description",
+            "2nd factor requires an authenticated user from the previous step.");
+        return new AuthenticationInteractionRequestResult(
+            AuthenticationInteractionStatus.CLIENT_ERROR,
+            type,
+            operationType(),
+            method(),
+            null,
+            errorResponse,
+            failureEvent);
+      }
+
+      User transactionUser = transaction.user();
+      transactionUser.applyIdentityPolicy(tenant.identityPolicyConfig());
+
+      Map<String, Object> responseContents = new HashMap<>(contents);
+      responseContents.put("interaction", interaction);
+      responseContents.put("user", transactionUser.toMinimalizedMap());
+
+      return new AuthenticationInteractionRequestResult(
+          AuthenticationInteractionStatus.SUCCESS,
+          type,
+          operationType(),
+          method(),
+          transactionUser,
+          responseContents,
+          successEvent);
+    }
+
     contents.put("interaction", interaction);
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -314,6 +359,7 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
       AuthenticationInteractionRequest request,
       AuthenticationExecutionResult executionResult,
       List<MappingRule> userMappingRules,
+      String identityMatchField,
       String interaction,
       AuthenticationInteractionType type,
       Map<String, Object> contents,
@@ -347,9 +393,10 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     mappingSource.putAll(executionResult.contents());
     User externalUser = toUser(userMappingRules, mappingSource);
 
-    if (!matchesTransactionUser(transactionUser, externalUser)) {
+    if (!matchesTransactionUser(transactionUser, externalUser, identityMatchField)) {
       log.warn(
-          "2nd factor user identity mismatch. transaction_sub={}, external_email={}, external_user_id={}",
+          "2nd factor user identity mismatch. identity_match_field={}, transaction_sub={}, external_email={}, external_user_id={}",
+          identityMatchField,
           transactionUser.sub(),
           externalUser.email(),
           externalUser.externalUserId());
@@ -440,30 +487,42 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
   /**
    * Verifies that the external API response user matches the authenticated transaction user.
    *
-   * <p>Checks email or externalUserId match to prevent 2nd factor identity swap attacks. At least
-   * one non-empty field must match.
+   * <p>Uses the configured {@code identity_match_field} (JSONPath expression) to extract a value
+   * from both the transaction user and external user, then compares them. If not configured,
+   * identity verification is skipped (only hasUser check is enforced).
+   *
+   * <p>Examples: {@code $.email}, {@code $.external_user_id}, {@code $.phone_number}, {@code
+   * $.custom_properties.member_id}
    */
-  private boolean matchesTransactionUser(User transactionUser, User externalUser) {
-    String txEmail = transactionUser.email();
-    String extEmail = externalUser.email();
-    if (txEmail != null && !txEmail.isEmpty() && extEmail != null && !extEmail.isEmpty()) {
-      return txEmail.equals(extEmail);
+  private boolean matchesTransactionUser(
+      User transactionUser, User externalUser, String identityMatchField) {
+    if (identityMatchField == null || identityMatchField.isEmpty()) {
+      log.debug(
+          "identity_match_field not configured, skipping field comparison. transaction_sub={}",
+          transactionUser.sub());
+      return true;
     }
 
-    String txExtId = transactionUser.externalUserId();
-    String extExtId = externalUser.externalUserId();
-    if (txExtId != null && !txExtId.isEmpty() && extExtId != null && !extExtId.isEmpty()) {
-      return txExtId.equals(extExtId);
+    String txValue = extractUserValue(transactionUser, identityMatchField);
+    String extValue = extractUserValue(externalUser, identityMatchField);
+
+    if (txValue == null || txValue.isEmpty() || extValue == null || extValue.isEmpty()) {
+      log.warn(
+          "Cannot verify 2nd factor user identity: field is empty. identity_match_field={}, transaction_value={}, external_value={}",
+          identityMatchField,
+          txValue,
+          extValue);
+      return false;
     }
 
-    // No comparable fields → cannot verify identity
-    log.warn(
-        "Cannot verify 2nd factor user identity: no comparable fields. transaction_email={}, external_email={}, transaction_ext_id={}, external_ext_id={}",
-        txEmail,
-        extEmail,
-        txExtId,
-        extExtId);
-    return false;
+    return txValue.equals(extValue);
+  }
+
+  private String extractUserValue(User user, String jsonPath) {
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(user.toMap());
+    JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Object value = jsonPathWrapper.readRaw(jsonPath);
+    return value != null ? value.toString() : null;
   }
 
   private User toUser(List<MappingRule> mappingRules, Map<String, Object> results) {
