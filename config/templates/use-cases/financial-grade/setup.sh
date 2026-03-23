@@ -99,6 +99,9 @@ CIBA_REQUEST_EXPIRES_IN="${CIBA_REQUEST_EXPIRES_IN:-120}"
 CIBA_POLLING_INTERVAL="${CIBA_POLLING_INTERVAL:-5}"
 CIBA_USER_CODE_REQUIRED="${CIBA_USER_CODE_REQUIRED:-false}"
 
+# FIDO-UAF settings
+FIDO_UAF_SERVER_URL="${FIDO_UAF_SERVER_URL:-http://host.docker.internal:4000}"
+
 # FIDO2 settings
 FIDO2_RP_ID="${FIDO2_RP_ID:-local.test}"
 UI_BASE_URL="${UI_BASE_URL:-https://auth.local.test}"
@@ -385,6 +388,66 @@ else
 fi
 echo ""
 
+# --- Step 5d: Create authentication configuration (FIDO-UAF for CIBA) ---
+echo "Step 5d: Creating authentication configuration (FIDO-UAF)..."
+
+AUTH_CONFIG_FIDO_UAF_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+AUTH_CONFIG_FIDO_UAF_JSON=$(substitute_template "${SCRIPT_DIR}/authentication-config-fido-uaf.json" \
+  "FIDO_UAF_SERVER_URL" "${FIDO_UAF_SERVER_URL}")
+
+AUTH_CONFIG_FIDO_UAF_JSON=$(echo "${AUTH_CONFIG_FIDO_UAF_JSON}" | jq --arg id "${AUTH_CONFIG_FIDO_UAF_ID}" '. + {id: $id}')
+
+echo "${AUTH_CONFIG_FIDO_UAF_JSON}" | jq '.' > "${OUTPUT_DIR}/authentication-config-fido-uaf.json"
+echo "  Saved: ${OUTPUT_DIR}/authentication-config-fido-uaf.json"
+
+AUTH_CONFIG_FIDO_UAF_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/authentication-configurations" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/authentication-config-fido-uaf.json")
+
+HTTP_CODE=$(echo "${AUTH_CONFIG_FIDO_UAF_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${AUTH_CONFIG_FIDO_UAF_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Authentication configuration (FIDO-UAF) created: ${AUTH_CONFIG_FIDO_UAF_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 5e: Create identity verification configuration (eKYC) ---
+echo "Step 5e: Creating identity verification configuration (eKYC)..."
+
+IV_CONFIG_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+IV_CONFIG_JSON=$(jq --arg id "${IV_CONFIG_ID}" '. + {id: $id}' \
+  "${SCRIPT_DIR}/identity-verification-config.json")
+
+echo "${IV_CONFIG_JSON}" | jq '.' > "${OUTPUT_DIR}/identity-verification-config.json"
+echo "  Saved: ${OUTPUT_DIR}/identity-verification-config.json"
+
+IV_CONFIG_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/identity-verification-configurations" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/identity-verification-config.json")
+
+HTTP_CODE=$(echo "${IV_CONFIG_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${IV_CONFIG_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Identity verification configuration created: ${IV_CONFIG_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
 # --- Step 6a: Create OAuth authentication policy ---
 echo "Step 6a: Creating OAuth authentication policy..."
 
@@ -546,7 +609,9 @@ echo "  mTLS:                 Enabled (certificate-bound tokens)"
 echo "  Signed Request:       Required (${SIGNING_ALGORITHM})"
 echo "  PAR:                  Enabled (expires in ${PAR_EXPIRES_IN}s)"
 echo "  JARM:                 Enabled (${SIGNING_ALGORITHM})"
-echo "  CIBA:                 Enabled (poll mode, expires in ${CIBA_REQUEST_EXPIRES_IN}s)"
+echo "  CIBA:                 Enabled (poll mode, FIDO-UAF auth, expires in ${CIBA_REQUEST_EXPIRES_IN}s)"
+echo "  FIDO-UAF server:      ${FIDO_UAF_SERVER_URL}"
+echo "  eKYC:                 Enabled (jp_aml, no_action mode)"
 echo "  Token duration:       AT=${ACCESS_TOKEN_DURATION}s, IDT=${ID_TOKEN_DURATION}s, RT=${REFRESH_TOKEN_DURATION}s"
 echo "  FAPI Baseline scopes: read, account"
 echo "  FAPI Advance scopes:  write, transfers"
@@ -588,6 +653,8 @@ echo "  ${OUTPUT_DIR}/onboarding.json"
 echo "  ${OUTPUT_DIR}/financial-tenant.json"
 echo "  ${OUTPUT_DIR}/authentication-config-initial-registration.json"
 echo "  ${OUTPUT_DIR}/authentication-config-fido2.json"
+echo "  ${OUTPUT_DIR}/authentication-config-fido-uaf.json"
+echo "  ${OUTPUT_DIR}/identity-verification-config.json"
 echo "  ${OUTPUT_DIR}/authentication-policy-oauth.json"
 echo "  ${OUTPUT_DIR}/authentication-policy-ciba.json"
 echo "  ${OUTPUT_DIR}/tls-client-auth-client.json"

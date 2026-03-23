@@ -94,7 +94,14 @@
       "account",
       "transfers",
       "read",
-      "write"
+      "write",
+      "identity_verification_application",
+      "identity_verification_application_delete",
+      "identity_verification_result",
+      "verified_claims:given_name",
+      "verified_claims:family_name",
+      "verified_claims:birthdate",
+      "verified_claims:address"
     ],
     "response_types_supported": [
       "code",
@@ -129,6 +136,20 @@
       "PS256"
     ],
     "claims_parameter_supported": true,
+    "verified_claims_supported": true,
+    "trust_frameworks_supported": [
+      "jp_aml"
+    ],
+    "evidence_supported": [
+      "id_document",
+      "electronic_record"
+    ],
+    "claims_in_verified_claims_supported": [
+      "given_name",
+      "family_name",
+      "birthdate",
+      "address"
+    ],
     "claims_supported": [
       "sub",
       "iss",
@@ -197,7 +218,9 @@
         "transfers"
       ],
       "oauth_authorization_request_expires_in": 300,
-      "pushed_authorization_request_expires_in": 60
+      "pushed_authorization_request_expires_in": 60,
+      "access_token_selective_verified_claims": true,
+      "custom_claims_scope_mapping": true
     }
   }
 }
