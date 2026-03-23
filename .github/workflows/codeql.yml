@@ -3,8 +3,12 @@ name: "CodeQL Security Analysis"
 on:
   push:
     branches: [main]
+    paths:
+      - '**/*.java'
   pull_request:
     branches: [main]
+    paths:
+      - '**/*.java'
   schedule:
     # 毎日 03:00 JST (18:00 UTC)
     - cron: "0 18 * * *"
