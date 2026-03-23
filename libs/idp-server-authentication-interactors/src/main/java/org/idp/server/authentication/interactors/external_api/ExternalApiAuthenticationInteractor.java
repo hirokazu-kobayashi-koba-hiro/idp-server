@@ -26,6 +26,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
@@ -230,8 +231,42 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     // User resolution (only when user_resolve is configured for this operation)
     List<MappingRule> userMappingRules = interactionConfig.userResolve().userMappingRules();
     if (!userMappingRules.isEmpty()) {
+
+      // 2nd factor: verify external API user matches authenticated user
+      AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
+      if (stepDefinition != null && stepDefinition.requiresUser()) {
+        return handleSecondFactor(
+            tenant,
+            transaction,
+            request,
+            executionResult,
+            userMappingRules,
+            operation,
+            type,
+            contents,
+            successEvent,
+            failureEvent);
+      }
+
+      // 1st factor: resolve user from external API response
       User user =
           resolveUser(tenant, request, executionResult, userMappingRules, userQueryRepository);
+
+      if (!user.exists()) {
+        log.warn("User resolution failed. operation={}, method={}", operation, method());
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("operation", operation);
+        errorResponse.put("error", "user_not_found");
+        errorResponse.put("error_description", "User not found.");
+        return new AuthenticationInteractionRequestResult(
+            AuthenticationInteractionStatus.CLIENT_ERROR,
+            type,
+            operationType(),
+            method(),
+            null,
+            errorResponse,
+            failureEvent);
+      }
 
       user.applyIdentityPolicy(tenant.identityPolicyConfig());
 
@@ -261,6 +296,98 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
         successEvent);
   }
 
+  /**
+   * Handles 2nd factor authentication with user identity verification.
+   *
+   * <p>SECURITY: Verifies that the external API response user matches the authenticated transaction
+   * user. Returns distinct error codes for each failure case:
+   *
+   * <ul>
+   *   <li>{@code user_not_found}: No authenticated user in transaction (1st factor skipped)
+   *   <li>{@code user_identity_mismatch}: External API returned a different user
+   * </ul>
+   */
+  private AuthenticationInteractionRequestResult handleSecondFactor(
+      Tenant tenant,
+      AuthenticationTransaction transaction,
+      AuthenticationInteractionRequest request,
+      AuthenticationExecutionResult executionResult,
+      List<MappingRule> userMappingRules,
+      String operation,
+      AuthenticationInteractionType type,
+      Map<String, Object> contents,
+      SecurityEventType successEvent,
+      SecurityEventType failureEvent) {
+
+    if (!transaction.hasUser()) {
+      log.warn(
+          "2nd factor requires authenticated user but transaction has no user. method={}",
+          method());
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("operation", operation);
+      errorResponse.put("error", "user_not_found");
+      errorResponse.put(
+          "error_description", "2nd factor requires an authenticated user from the previous step.");
+      return new AuthenticationInteractionRequestResult(
+          AuthenticationInteractionStatus.CLIENT_ERROR,
+          type,
+          operationType(),
+          method(),
+          null,
+          errorResponse,
+          failureEvent);
+    }
+
+    User transactionUser = transaction.user();
+
+    // Verify external API response matches the authenticated user
+    Map<String, Object> mappingSource = new HashMap<>();
+    mappingSource.put("request_body", request.toMap());
+    mappingSource.putAll(executionResult.contents());
+    User externalUser = toUser(userMappingRules, mappingSource);
+
+    if (!matchesTransactionUser(transactionUser, externalUser)) {
+      log.warn(
+          "2nd factor user identity mismatch. transaction_sub={}, external_email={}, external_user_id={}",
+          transactionUser.sub(),
+          externalUser.email(),
+          externalUser.externalUserId());
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("operation", operation);
+      errorResponse.put("error", "user_identity_mismatch");
+      errorResponse.put(
+          "error_description",
+          "The external API returned a different user than the authenticated user.");
+      return new AuthenticationInteractionRequestResult(
+          AuthenticationInteractionStatus.CLIENT_ERROR,
+          type,
+          operationType(),
+          method(),
+          transactionUser,
+          errorResponse,
+          failureEvent);
+    }
+
+    log.debug(
+        "2nd factor: user identity verified. method={}, sub={}", method(), transactionUser.sub());
+
+    transactionUser.applyIdentityPolicy(tenant.identityPolicyConfig());
+
+    Map<String, Object> responseContents = new HashMap<>(contents);
+    responseContents.put("operation", operation);
+    responseContents.put("user", transactionUser.toMinimalizedMap());
+
+    return new AuthenticationInteractionRequestResult(
+        AuthenticationInteractionStatus.SUCCESS,
+        type,
+        operationType(),
+        method(),
+        transactionUser,
+        responseContents,
+        successEvent);
+  }
+
+  /** Resolves user from external API response (1st factor only). */
   private User resolveUser(
       Tenant tenant,
       AuthenticationInteractionRequest request,
@@ -307,6 +434,35 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
    */
   private SecurityEventType toEventType(String operation, String result) {
     return new SecurityEventType("external_api_" + operation + "_" + result);
+  }
+
+  /**
+   * Verifies that the external API response user matches the authenticated transaction user.
+   *
+   * <p>Checks email or externalUserId match to prevent 2nd factor identity swap attacks. At least
+   * one non-empty field must match.
+   */
+  private boolean matchesTransactionUser(User transactionUser, User externalUser) {
+    String txEmail = transactionUser.email();
+    String extEmail = externalUser.email();
+    if (txEmail != null && !txEmail.isEmpty() && extEmail != null && !extEmail.isEmpty()) {
+      return txEmail.equals(extEmail);
+    }
+
+    String txExtId = transactionUser.externalUserId();
+    String extExtId = externalUser.externalUserId();
+    if (txExtId != null && !txExtId.isEmpty() && extExtId != null && !extExtId.isEmpty()) {
+      return txExtId.equals(extExtId);
+    }
+
+    // No comparable fields → cannot verify identity
+    log.warn(
+        "Cannot verify 2nd factor user identity: no comparable fields. transaction_email={}, external_email={}, transaction_ext_id={}, external_ext_id={}",
+        txEmail,
+        extEmail,
+        txExtId,
+        extExtId);
+    return false;
   }
 
   private User toUser(List<MappingRule> mappingRules, Map<String, Object> results) {
