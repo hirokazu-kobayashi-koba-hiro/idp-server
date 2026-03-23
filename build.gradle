@@ -1,5 +1,10 @@
 plugins {
 	id "com.diffplug.spotless" version "6.24.0"
+	id 'jacoco'
+}
+
+repositories {
+	mavenCentral()
 }
 
 task stage(dependsOn: ['clean',':app:bootJar']) {
@@ -11,6 +16,26 @@ task stage(dependsOn: ['clean',':app:bootJar']) {
 import java.nio.file.Files
 
 subprojects {
+	apply plugin: 'jacoco'
+
+	jacoco {
+		toolVersion = "0.8.12"
+	}
+
+	plugins.withId('java') {
+		jacocoTestReport {
+			dependsOn test
+			reports {
+				xml.required = true
+				html.required = true
+				csv.required = false
+			}
+		}
+
+		test {
+			finalizedBy jacocoTestReport
+		}
+	}
 
 	tasks.register('addApacheLicenseHeader') {
 		group = 'license'
@@ -83,5 +108,28 @@ tasks.register('checkLicenseHeader') {
 		} else {
 			println "✅ All .java files have Apache license headers."
 		}
+	}
+}
+
+tasks.register('jacocoAggregatedReport', JacocoReport) {
+	group = 'verification'
+	description = 'Generates aggregated JaCoCo coverage report for all subprojects'
+
+	def javaSubprojects = subprojects.findAll { it.plugins.hasPlugin('java') }
+	dependsOn javaSubprojects.collect { it.tasks.named('test') }
+
+	executionData.from(javaSubprojects.collect {
+		it.tasks.named('test').map { t -> t.jacoco.destinationFile }
+	})
+
+	sourceDirectories.from(javaSubprojects.collect { it.sourceSets.main.java.srcDirs })
+	classDirectories.from(javaSubprojects.collect { it.sourceSets.main.output })
+
+	reports {
+		xml.required = true
+		xml.outputLocation = layout.buildDirectory.file("reports/jacoco/aggregated/jacoco.xml")
+		html.required = true
+		html.outputLocation = layout.buildDirectory.dir("reports/jacoco/aggregated/html")
+		csv.required = false
 	}
 }
