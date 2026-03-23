@@ -525,20 +525,22 @@ describe('Identity Verification Application', () => {
 
 ```json
 {
-  "body_mapping_rules": {
-    "request_id": {
+  "body_mapping_rules": [
+    {
       "from": "$.unused",
+      "to": "request_id",
       "functions": [
-        {"uuid4": true}
+        {"name": "uuid4"}
       ]
     },
-    "timestamp": {
+    {
       "from": "$.unused",
+      "to": "timestamp",
       "functions": [
-        {"now": "yyyy-MM-dd'T'HH:mm:ss'Z'"}
+        {"name": "now", "args": {"format": "yyyy-MM-dd'T'HH:mm:ss'Z'"}}
       ]
     }
-  }
+  ]
 }
 ```
 

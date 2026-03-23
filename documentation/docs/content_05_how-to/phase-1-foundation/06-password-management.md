@@ -287,7 +287,6 @@ Content-Type: application/json
       "require_lowercase": true,
       "require_number": true,
       "require_special_char": true,
-      "max_history": 5,
       "max_attempts": 5,
       "lockout_duration_seconds": 900
     }
@@ -298,7 +297,6 @@ Content-Type: application/json
 **設定内容の説明**:
 - パスワードは12文字以上72文字以下
 - 大文字・小文字・数字・特殊文字を全て含む必要がある
-- 過去5件のパスワードは再使用不可
 - パスワード認証を5回連続で失敗するとアカウントがロックされる
 - ロックは900秒（15分）経過後に自動解除される
 
