@@ -435,7 +435,7 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
     const extApiResp = await postWithJson({
       url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
       body: {
-        operation: "verify_identity",
+        interaction: "verify_identity",
         username: testUserAEmail,
         password: "ExternalPass123!",
       },
@@ -515,7 +515,7 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
     const extApiResp = await postWithJson({
       url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
       body: {
-        operation: "verify_identity",
+        interaction: "verify_identity",
         username: "attacker@evil.com",
         password: "ExternalPass123!",
       },
@@ -545,7 +545,7 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
     const extApiResp = await postWithJson({
       url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
       body: {
-        operation: "verify_identity",
+        interaction: "verify_identity",
         username: "attacker@evil.com",
         password: "ExternalPass123!",
       },

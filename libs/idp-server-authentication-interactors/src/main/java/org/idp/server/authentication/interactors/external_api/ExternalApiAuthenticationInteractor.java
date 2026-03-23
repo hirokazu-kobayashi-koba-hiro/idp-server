@@ -49,11 +49,11 @@ import org.idp.server.platform.type.RequestAttributes;
  * External API authentication interactor.
  *
  * <p>Provides a generic external API authentication mechanism where the request body's {@code
- * operation} field determines which interaction configuration to use. Each operation maps to a
+ * interaction} field determines which interaction configuration to use. Each interaction maps to a
  * separate key in the {@code interactions} map of the authentication configuration.
  *
  * <p>The idp-server endpoint type is fixed ({@code external-api-authentication}), but each
- * operation can call a different external API endpoint with its own request schema, execution
+ * interaction can call a different external API endpoint with its own request schema, execution
  * config, user resolution rules, and response mapping.
  *
  * <p><b>Configuration structure:</b>
@@ -77,8 +77,8 @@ import org.idp.server.platform.type.RequestAttributes;
  * }
  * }</pre>
  *
- * <p><b>Request routing:</b> The {@code operation} field in the request body selects the
- * interaction config key. For example, {@code {"operation": "password_verify", "username": "...",
+ * <p><b>Request routing:</b> The {@code interaction} field in the request body selects the
+ * interaction config key. For example, {@code {"interaction": "password_verify", "username": "...",
  * "password": "..."}} routes to the {@code password_verify} interaction config.
  */
 public class ExternalApiAuthenticationInteractor implements AuthenticationInteractor {
@@ -116,14 +116,14 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
 
     log.debug("ExternalApiAuthenticationInteractor called");
 
-    String operation = request.optValueAsString("operation", "");
-    if (operation.isEmpty()) {
-      log.warn("External API authentication request missing 'operation' field");
+    String interaction = request.optValueAsString("interaction", "");
+    if (interaction.isEmpty()) {
+      log.warn("External API authentication request missing 'interaction' field");
       Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("operation", "");
+      errorResponse.put("interaction", "");
       errorResponse.put("error", "invalid_request");
       errorResponse.put(
-          "error_description", "The 'operation' field is required in the request body.");
+          "error_description", "The 'interaction' field is required in the request body.");
       return AuthenticationInteractionRequestResult.clientError(
           errorResponse,
           type,
@@ -136,17 +136,18 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
         configurationRepository.get(tenant, "external-api-authentication");
 
     AuthenticationInteractionConfig interactionConfig =
-        configuration.getAuthenticationConfig(operation);
+        configuration.getAuthenticationConfig(interaction);
     if (interactionConfig == null) {
       log.warn(
-          "External API authentication operation not found. operation={}, tenant={}",
-          operation,
+          "External API authentication interaction not found. interaction={}, tenant={}",
+          interaction,
           tenant.identifierValue());
       Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("operation", operation);
+      errorResponse.put("interaction", interaction);
       errorResponse.put("error", "invalid_request");
       errorResponse.put(
-          "error_description", String.format("The operation '%s' is not configured.", operation));
+          "error_description",
+          String.format("The interaction '%s' is not configured.", interaction));
       return AuthenticationInteractionRequestResult.clientError(
           errorResponse,
           type,
@@ -155,8 +156,8 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
           DefaultSecurityEventType.external_api_authentication_failure);
     }
 
-    SecurityEventType successEvent = toEventType(operation, "success");
-    SecurityEventType failureEvent = toEventType(operation, "failure");
+    SecurityEventType successEvent = toEventType(interaction, "success");
+    SecurityEventType failureEvent = toEventType(interaction, "failure");
 
     // JSON Schema validation (Layer 2)
     JsonSchemaDefinition schemaDefinition = interactionConfig.request().requestSchemaAsDefinition();
@@ -167,13 +168,13 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
 
       if (!validationResult.isValid()) {
         log.warn(
-            "External API authentication request validation failed. operation={}, error_count={}, errors={}",
-            operation,
+            "External API authentication request validation failed. interaction={}, error_count={}, errors={}",
+            interaction,
             validationResult.errors().size(),
             validationResult.errors());
 
         Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("operation", operation);
+        errorResponse.put("interaction", interaction);
         errorResponse.put("error", "invalid_request");
         errorResponse.put(
             "error_description", "The authentication request is invalid. Please check your input.");
@@ -213,11 +214,11 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
 
     if (!executionResult.isSuccess()) {
       log.warn(
-          "External API authentication failed. operation={}, status={}, contents={}",
-          operation,
+          "External API authentication failed. interaction={}, status={}, contents={}",
+          interaction,
           executionResult.statusCode(),
           executionResult.contents());
-      contents.put("operation", operation);
+      contents.put("interaction", interaction);
       return new AuthenticationInteractionRequestResult(
           AuthenticationInteractionStatus.fromStatusCode(executionResult.statusCode()),
           type,
@@ -228,7 +229,7 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
           failureEvent);
     }
 
-    // User resolution (only when user_resolve is configured for this operation)
+    // User resolution (only when user_resolve is configured for this interaction)
     List<MappingRule> userMappingRules = interactionConfig.userResolve().userMappingRules();
     if (!userMappingRules.isEmpty()) {
 
@@ -241,7 +242,7 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
             request,
             executionResult,
             userMappingRules,
-            operation,
+            interaction,
             type,
             contents,
             successEvent,
@@ -253,9 +254,9 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
           resolveUser(tenant, request, executionResult, userMappingRules, userQueryRepository);
 
       if (!user.exists()) {
-        log.warn("User resolution failed. operation={}, method={}", operation, method());
+        log.warn("User resolution failed. interaction={}, method={}", interaction, method());
         Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("operation", operation);
+        errorResponse.put("interaction", interaction);
         errorResponse.put("error", "user_not_found");
         errorResponse.put("error_description", "User not found.");
         return new AuthenticationInteractionRequestResult(
@@ -271,7 +272,7 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
       user.applyIdentityPolicy(tenant.identityPolicyConfig());
 
       Map<String, Object> responseContents = new HashMap<>(contents);
-      responseContents.put("operation", operation);
+      responseContents.put("interaction", interaction);
       responseContents.put("user", user.toMinimalizedMap());
 
       return new AuthenticationInteractionRequestResult(
@@ -285,7 +286,7 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     }
 
     // No user resolution - return execution result as-is
-    contents.put("operation", operation);
+    contents.put("interaction", interaction);
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
         type,
@@ -313,7 +314,7 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
       AuthenticationInteractionRequest request,
       AuthenticationExecutionResult executionResult,
       List<MappingRule> userMappingRules,
-      String operation,
+      String interaction,
       AuthenticationInteractionType type,
       Map<String, Object> contents,
       SecurityEventType successEvent,
@@ -324,7 +325,7 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
           "2nd factor requires authenticated user but transaction has no user. method={}",
           method());
       Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("operation", operation);
+      errorResponse.put("interaction", interaction);
       errorResponse.put("error", "user_not_found");
       errorResponse.put(
           "error_description", "2nd factor requires an authenticated user from the previous step.");
@@ -353,7 +354,7 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
           externalUser.email(),
           externalUser.externalUserId());
       Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("operation", operation);
+      errorResponse.put("interaction", interaction);
       errorResponse.put("error", "user_identity_mismatch");
       errorResponse.put(
           "error_description",
@@ -374,7 +375,7 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     transactionUser.applyIdentityPolicy(tenant.identityPolicyConfig());
 
     Map<String, Object> responseContents = new HashMap<>(contents);
-    responseContents.put("operation", operation);
+    responseContents.put("interaction", interaction);
     responseContents.put("user", transactionUser.toMinimalizedMap());
 
     return new AuthenticationInteractionRequestResult(
@@ -427,13 +428,13 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
   }
 
   /**
-   * Creates a dynamic SecurityEventType with the operation name embedded.
+   * Creates a dynamic SecurityEventType with the interaction name embedded.
    *
-   * <p>Format: {@code external_api_{operation}_{result}} (e.g., {@code
+   * <p>Format: {@code external_api_{interaction}_{result}} (e.g., {@code
    * external_api_password_verify_success})
    */
-  private SecurityEventType toEventType(String operation, String result) {
-    return new SecurityEventType("external_api_" + operation + "_" + result);
+  private SecurityEventType toEventType(String interaction, String result) {
+    return new SecurityEventType("external_api_" + interaction + "_" + result);
   }
 
   /**
