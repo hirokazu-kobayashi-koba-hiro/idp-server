@@ -164,6 +164,38 @@
           "callbacks": []
         },
         {
+          "uuid": "response-password-auth-locked",
+          "body": "{\n  \"error\": \"account_locked\",\n  \"error_description\": \"Account is temporarily locked due to too many failed attempts\",\n  \"locked_until\": \"2026-12-31T23:59:59Z\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Success HTTP but error body - password is 'locked'",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "",
+              "value": "\"password\"\\s*:\\s*\"locked\"",
+              "invert": false,
+              "operator": "regex"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
           "uuid": "response-password-auth-failure",
           "body": "{\n  \"error\": \"invalid_credentials\",\n  \"error_description\": \"Invalid username or password\"\n}",
           "latency": 0,
