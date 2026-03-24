@@ -1,0 +1,13 @@
+# Statistics aggregation function setup container
+FROM postgres:15-alpine
+
+WORKDIR /scripts
+
+# Copy aggregation function
+COPY postgresql/statistics-aggregation/02_daily_statistics_aggregation_optimized.sql ./statistics-aggregation-function.sql
+COPY entrypoint-statistics-setup.sh /entrypoint.sh
+
+# Grant execution permissions
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
