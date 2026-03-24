@@ -317,14 +317,27 @@ curl -X POST \
    → トークン発行
 ```
 
-### セキュリティ保護
+### セキュリティ保護（identity_match_field）
 
-2段階目では以下が自動で検証されます:
+2段階目で `user_resolve` を使う場合、`identity_match_field` で比較フィールドを指定します:
+
+```json
+{
+  "user_resolve": {
+    "identity_match_field": "$.email",
+    "user_mapping_rules": [ ... ]
+  }
+}
+```
 
 | チェック | 失敗時のエラー |
 |---------|--------------|
 | 1段階目が未完了 | `400 user_not_found` |
-| 外部APIのユーザーと1段階目のユーザーが不一致 | `400 user_identity_mismatch` |
+| `identity_match_field` で指定したフィールドが不一致 | `400 user_identity_mismatch` |
+
+`identity_match_field` には JSONPath 式を指定できます（`$.email`, `$.phone_number`, `$.custom_properties.member_id` 等）。
+
+**未設定の場合**: フィールド比較はスキップされ、1段階目のユーザーの存在チェックのみが行われます。リスク分析APIなど、ユーザー識別を返さない外部APIを使う場合に適しています。
 
 **重要**: 2段階目で外部APIが別のユーザーの情報を返しても、1段階目のユーザーが入れ替わることはありません。
 

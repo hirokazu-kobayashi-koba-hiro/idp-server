@@ -110,7 +110,7 @@ Step 3: POST /authorize                           → トークン発行
 | 決めること | 選択肢 |
 |-----------|--------|
 | **認証ポリシー** | `step_definitions` で order と requires_user を設定 |
-| **ユーザー一致検証** | 2段階目で email / externalUserId の一致を自動検証 |
+| **ユーザー一致検証** | 2段階目で `identity_match_field`（JSONPath）による一致検証 |
 
 ---
 
@@ -126,7 +126,7 @@ Step 3: POST /authorize                           → トークン発行
 - 設定ベースの外部API呼び出し（OAuth2 / HMAC / 認証なし）
 - JSONPath ベースのリクエスト/レスポンスマッピング
 - `previous_interaction` による Challenge-Response データ受け渡し
-- MFA 2段階目でのユーザー一致検証（`user_identity_mismatch` 検出）
+- MFA 2段階目でのユーザー一致検証（`identity_match_field` による JSONPath ベース比較、`user_identity_mismatch` 検出）
 - interaction ごとの動的セキュリティイベント
 
 ### 自分で用意すること
@@ -136,7 +136,7 @@ Step 3: POST /authorize                           → トークン発行
 
 ### セキュリティの注意点
 - `user_mapping_rules` の `provider_id` は `static_value` で固定値にする（外部APIの値を使わない）
-- MFA 2段階目では、外部APIが返すユーザー情報が1段階目と一致しないと `user_identity_mismatch` で拒否される
+- MFA 2段階目では、`identity_match_field` で指定したフィールド（`$.email`, `$.phone_number`, `$.custom_properties.*` 等）で1段階目のユーザーとの一致検証を行う。不一致なら `user_identity_mismatch` で拒否
 - 外部APIの認証情報（client_secret 等）は認証設定の `oauth_authorization` に安全に保管される
 
 ---
