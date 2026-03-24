@@ -109,6 +109,7 @@ External API認証を使用するには、テナントに `type = "external-api-
       }
     },
     "user_resolve": {
+      "identity_match_field": "$.email",
       "user_mapping_rules": [
         { "from": "$.execution_http_request.response_body.user_id", "to": "external_user_id" },
         { "from": "$.execution_http_request.response_body.email", "to": "email" },
@@ -125,6 +126,8 @@ External API認証を使用するには、テナントに `type = "external-api-
   }
 }
 ```
+
+> **MFA 2段階目で使う場合**: `identity_match_field` を設定して、1段階目のユーザーとの一致検証を有効にしてください。
 
 ### 2. 補助判定型（user_resolve なし）
 
@@ -294,13 +297,45 @@ POST /external-api-authentication
 }
 ```
 
-### セキュリティ: ユーザー一致検証
+### セキュリティ: ユーザー一致検証（identity_match_field）
 
 2段階目（`requires_user: true`）では以下のセキュリティチェックが行われます:
 
 1. **1段階目未完了チェック**: トランザクションに認証済みユーザーがいなければ `400 user_not_found`
-2. **ユーザー一致検証**: 外部APIが返したユーザー情報（email / externalUserId）が1段階目のユーザーと一致しなければ `400 user_identity_mismatch`
+2. **ユーザー一致検証**: `identity_match_field` で指定した JSONPath のフィールドで、1段階目のユーザーと外部APIが返したユーザーを比較。不一致なら `400 user_identity_mismatch`
 3. **一致する場合のみ**: 1段階目のユーザーをそのまま返す（外部APIのユーザー情報では上書きしない）
+
+#### identity_match_field の設定
+
+`user_resolve` 内に JSONPath 式で比較フィールドを指定します:
+
+```json
+{
+  "user_resolve": {
+    "identity_match_field": "$.email",
+    "user_mapping_rules": [
+      { "from": "$.execution_http_request.response_body.email", "to": "email" },
+      { "..." : "..." }
+    ]
+  }
+}
+```
+
+| identity_match_field | 比較対象 | ユースケース |
+|---------------------|---------|------------|
+| `$.email` | メールアドレス | パスワード認証委譲の2段階目 |
+| `$.external_user_id` | 外部ユーザーID | 外部システム連携の2段階目 |
+| `$.phone_number` | 電話番号 | SMS検証の2段階目 |
+| `$.custom_properties.member_id` | カスタムプロパティ | 会員基盤連携の2段階目 |
+| 未設定 | 比較スキップ | リスク分析API等（ユーザー識別不要） |
+
+**未設定の場合**: `identity_match_field` を設定しないと、1段階目のユーザーの存在チェック（`hasUser`）のみが行われ、フィールド比較はスキップされます。リスク判定APIなど、ユーザー識別を返さない外部APIを2段階目に使う場合に適しています。
+
+#### user_resolve なしの2段階目
+
+`user_resolve` 自体を設定しない場合でも、`requires_user: true` のとき:
+- 1段階目のユーザーの存在チェックは実行される（スキップ攻撃防止）
+- 外部APIの結果だけを返し、1段階目のユーザーをそのまま引き継ぐ
 
 ---
 
