@@ -68,6 +68,11 @@ BEGIN
     -- For each event, convert created_at to the tenant's
     -- local timezone, then check if the local date matches
     -- p_target_date.
+    --
+    -- All event types are counted (no filtering).
+    -- The app-layer (SecurityEventHandler) excluded inspect_token_success
+    -- to reduce real-time UPSERT lock contention, but in batch mode
+    -- there is no cost difference since we COUNT(*) the entire day at once.
     -- =====================================================
     INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
     SELECT
@@ -80,7 +85,6 @@ BEGIN
     WHERE ev.created_at >= v_window_start
       AND ev.created_at < v_window_end
       AND (ev.created_at AT TIME ZONE 'UTC' AT TIME ZONE COALESCE(t.attributes->>'timezone', 'UTC'))::date = p_target_date
-      AND ev.type != 'inspect_token_success'
     GROUP BY ev.tenant_id, ev.type
     ON CONFLICT (tenant_id, stat_date, event_type)
     DO UPDATE SET count = EXCLUDED.count,

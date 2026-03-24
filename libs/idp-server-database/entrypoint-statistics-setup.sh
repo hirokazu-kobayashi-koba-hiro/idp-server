@@ -14,15 +14,12 @@ echo "PostgreSQL is ready."
 # Step 1: Register statistics aggregation function in idpserver database
 echo "Registering statistics aggregation function..."
 PGPASSWORD="$DB_PASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$DB_USER_NAME" -d "$POSTGRES_DB" -f /scripts/statistics-aggregation-function.sql
-
-if [ $? -eq 0 ]; then
-  echo "✓ Statistics aggregation function registered"
-else
-  echo "✗ Statistics aggregation function registration failed"
-  exit 1
-fi
+echo "✓ Statistics aggregation function registered"
 
 # Step 2: Register pg_cron job for daily statistics aggregation
+# Note: pg_cron extension is installed in the 'postgres' database,
+# so we connect to 'postgres' and use cron.schedule_in_database()
+# to target 'idpserver'.
 echo "Registering pg_cron job for daily statistics aggregation..."
 PGPASSWORD="$DB_PASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$DB_USER_NAME" -d "postgres" <<'EOSQL'
 -- Remove existing job (idempotent)
@@ -59,12 +56,6 @@ BEGIN
     END IF;
 END $$;
 EOSQL
-
-if [ $? -eq 0 ]; then
-  echo "✓ pg_cron job for statistics aggregation registered"
-else
-  echo "✗ pg_cron job registration failed"
-  exit 1
-fi
+echo "✓ pg_cron job for statistics aggregation registered"
 
 echo "✓ Statistics aggregation setup completed"

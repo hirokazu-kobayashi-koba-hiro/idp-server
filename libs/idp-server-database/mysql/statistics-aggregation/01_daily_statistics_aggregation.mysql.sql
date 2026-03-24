@@ -33,6 +33,10 @@ BEGIN
     SET v_window_end   = DATE_ADD(p_target_date, INTERVAL 36 HOUR);
 
     -- Step 1: Aggregate event counts into statistics_events
+    -- All event types are counted (no filtering).
+    -- The app-layer (SecurityEventHandler) excluded inspect_token_success
+    -- to reduce real-time UPSERT lock contention, but in batch mode
+    -- there is no cost difference since we COUNT(*) the entire day at once.
     INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
     SELECT
         ev.tenant_id,
@@ -44,7 +48,6 @@ BEGIN
     WHERE ev.created_at >= v_window_start
       AND ev.created_at < v_window_end
       AND DATE(CONVERT_TZ(ev.created_at, 'UTC', COALESCE(JSON_UNQUOTE(JSON_EXTRACT(t.attributes, '$.timezone')), 'UTC'))) = p_target_date
-      AND ev.type != 'inspect_token_success'
     GROUP BY ev.tenant_id, ev.type
     ON DUPLICATE KEY UPDATE
         count = VALUES(count),

@@ -55,6 +55,8 @@ BEGIN
     --   UTC        → [2026-03-24 00:00 UTC, 2026-03-25 00:00 UTC)
     --   US/Pacific → [2026-03-24 07:00 UTC, 2026-03-25 07:00 UTC)
     -- =====================================================
+    DROP TABLE IF EXISTS tmp_tz_ranges;
+    DROP TABLE IF EXISTS tmp_tenant_tz;
     CREATE TEMP TABLE tmp_tz_ranges AS
     SELECT
         tz,
@@ -76,6 +78,11 @@ BEGIN
 
     -- =====================================================
     -- Step 1: Aggregate event counts into statistics_events
+    --
+    -- All event types are counted (no filtering).
+    -- The app-layer (SecurityEventHandler) excluded inspect_token_success
+    -- to reduce real-time UPSERT lock contention, but in batch mode
+    -- there is no cost difference since we COUNT(*) the entire day at once.
     -- =====================================================
     INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
     SELECT
@@ -89,7 +96,6 @@ BEGIN
     WHERE ev.created_at >= v_prune_start AND ev.created_at < v_prune_end
       AND ev.created_at >= tr.utc_start
       AND ev.created_at < tr.utc_end
-      AND ev.type != 'inspect_token_success'
     GROUP BY ev.tenant_id, ev.type
     ON CONFLICT (tenant_id, stat_date, event_type)
     DO UPDATE SET count = EXCLUDED.count,
