@@ -16,13 +16,16 @@
 
 package org.idp.server.core.openid.token.service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrantBuilder;
+import org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserRegistrator;
 import org.idp.server.core.openid.identity.UserStatus;
+import org.idp.server.core.openid.identity.id_token.RequestedUserinfoClaims;
 import org.idp.server.core.openid.identity.mapper.UserInfoMapper;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
@@ -147,6 +150,10 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
         clientConfiguration.filteredScope(context.scopes().toStringValues());
     Scopes scopes = new Scopes(filteredScopes);
 
+    List<String> supportedClaims = serverConfiguration.claimsSupported();
+    GrantUserinfoClaims grantUserinfoClaims =
+        GrantUserinfoClaims.create(scopes, supportedClaims, new RequestedUserinfoClaims());
+
     CustomProperties customProperties = context.customProperties();
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrantBuilder(
@@ -157,6 +164,7 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
             .add(customProperties)
             .add(clientConfiguration.clientAttributes())
             .add(user)
+            .add(grantUserinfoClaims)
             .build();
 
     AccessToken accessToken =

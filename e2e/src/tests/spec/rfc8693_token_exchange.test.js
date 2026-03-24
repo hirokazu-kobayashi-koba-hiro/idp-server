@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
-import { deletion, postWithJson } from "../../lib/http";
-import { requestToken, getUserinfo, getJwks } from "../../api/oauthClient";
+import { deletion, get, postWithJson } from "../../lib/http";
+import { requestToken, getUserinfo, getJwks, postAuthentication } from "../../api/oauthClient";
+import { requestAuthorizations } from "../../oauth/request";
 import { generateECP256JWKS, generateECP256KeyPair, createJwtWithJwk, generateJti, verifyAndDecodeJwt } from "../../lib/jose";
 import { adminServerConfig, backendUrl } from "../testConfig";
 import { toEpocTime } from "../../lib/util";
@@ -667,6 +668,357 @@ describe("RFC 8693 Token Exchange", () => {
       expect(tokenResponse.data.error).toBe("invalid_grant");
     } finally {
       await cleanup(ctx);
+    }
+  });
+
+  it("should fetch userinfo via userinfoHttpRequests after introspection for JIT Provisioning", async () => {
+    const timestamp = Date.now();
+    const tenantAUserId = uuidv4();
+
+    // === Tenant A: the "external IdP" that issues the original access token ===
+    const tenantAOrgId = uuidv4();
+    const tenantAId = uuidv4();
+    const tenantAClientId = uuidv4();
+    const tenantAEmail = `admin-a-${timestamp}@userinfo-fetch.example.com`;
+    const tenantAPassword = `TestPassA${timestamp}!`;
+    const tenantAClientSecret = `client-secret-a-${crypto.randomBytes(16).toString("hex")}`;
+    const tenantAJwks = await generateECP256JWKS();
+
+    const tenantAOnboarding = {
+      organization: {
+        id: tenantAOrgId,
+        name: `Userinfo Fetch External IdP Org ${timestamp}`,
+        description: "Acts as external IdP for userinfo_http_requests test",
+      },
+      tenant: {
+        id: tenantAId,
+        name: `Userinfo Fetch External IdP Tenant ${timestamp}`,
+        domain: backendUrl,
+        authorization_provider: "idp-server",
+        session_config: {
+          cookie_name: `UF_A_SESSION_${tenantAOrgId.substring(0, 8)}`,
+          use_secure_cookie: false,
+        },
+        cors_config: { allow_origins: [backendUrl] },
+        security_event_log_config: {
+          format: "structured_json",
+          stage: "processed",
+          include_user_id: true,
+          include_client_id: true,
+          persistence_enabled: true,
+        },
+      },
+      authorization_server: {
+        issuer: `${backendUrl}/${tenantAId}`,
+        authorization_endpoint: `${backendUrl}/${tenantAId}/v1/authorizations`,
+        token_endpoint: `${backendUrl}/${tenantAId}/v1/tokens`,
+        token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+        userinfo_endpoint: `${backendUrl}/${tenantAId}/v1/userinfo`,
+        jwks_uri: `${backendUrl}/${tenantAId}/v1/jwks`,
+        jwks: tenantAJwks,
+        grant_types_supported: ["authorization_code", "refresh_token", "password"],
+        token_signed_key_id: "signing_key_1",
+        id_token_signed_key_id: "signing_key_1",
+        scopes_supported: ["openid", "profile", "email", "management"],
+        claims_supported: ["sub", "email", "email_verified", "name", "preferred_username"],
+        claims_parameter_supported: true,
+        response_types_supported: ["code"],
+        subject_types_supported: ["public"],
+        id_token_signing_alg_values_supported: ["ES256"],
+        token_introspection_endpoint: `${backendUrl}/${tenantAId}/v1/tokens/introspection`,
+        token_revocation_endpoint: `${backendUrl}/${tenantAId}/v1/tokens/revocation`,
+        response_modes_supported: ["query"],
+        extension: { access_token_type: "JWT" },
+      },
+      user: {
+        sub: tenantAUserId,
+        email: tenantAEmail,
+        raw_password: tenantAPassword,
+        username: tenantAEmail,
+        name: "Userinfo Fetch Test User",
+      },
+      client: {
+        client_id: tenantAClientId,
+        client_id_alias: `test-userinfo-fetch-ext-idp-client-${timestamp}`,
+        client_secret: tenantAClientSecret,
+        redirect_uris: ["http://localhost:3000/callback"],
+        response_types: ["code"],
+        grant_types: ["authorization_code", "refresh_token", "password"],
+        scope: "openid profile email management",
+        client_name: `Userinfo Fetch External IdP Client ${timestamp}`,
+        token_endpoint_auth_method: "client_secret_post",
+        application_type: "web",
+      },
+    };
+
+    const tenantAResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/onboarding`,
+      body: tenantAOnboarding,
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
+    });
+    expect(tenantAResponse.status).toBe(201);
+
+    // Get access token from Tenant A via Authorization Code Flow
+    // (Password Grant doesn't populate GrantUserinfoClaims - see Issue #1440)
+    const tenantAAuthEndpoint = `${backendUrl}/${tenantAId}/v1/authorizations`;
+    const tenantAAuthorizeEndpoint = `${backendUrl}/${tenantAId}/v1/authorizations/{id}/authorize`;
+    const tenantAAuthIdEndpoint = `${backendUrl}/${tenantAId}/v1/authorizations/{id}/`;
+
+    const { authorizationResponse } = await requestAuthorizations({
+      endpoint: tenantAAuthEndpoint,
+      clientId: tenantAClientId,
+      responseType: "code",
+      state: "token-exchange-test",
+      scope: "openid profile email",
+      redirectUri: "http://localhost:3000/callback",
+      authorizeEndpoint: tenantAAuthorizeEndpoint,
+      user: {
+        username: tenantAEmail,
+        password: tenantAPassword,
+      },
+      interaction: async (id, user) => {
+        await postAuthentication({
+          endpoint: tenantAAuthIdEndpoint + "password-authentication",
+          id,
+          body: user,
+        });
+      },
+    });
+    expect(authorizationResponse.code).toBeDefined();
+
+    const tenantATokenResponse = await requestToken({
+      endpoint: `${backendUrl}/${tenantAId}/v1/tokens`,
+      grantType: "authorization_code",
+      code: authorizationResponse.code,
+      redirectUri: "http://localhost:3000/callback",
+      clientId: tenantAClientId,
+      clientSecret: tenantAClientSecret,
+    });
+    expect(tenantATokenResponse.status).toBe(200);
+    const externalAccessToken = tenantATokenResponse.data.access_token;
+
+    // Verify Tenant A's UserInfo returns email via Authorization Code Flow
+    const tenantAUserinfo = await getUserinfo({
+      endpoint: `${backendUrl}/${tenantAId}/v1/userinfo`,
+      authorizationHeader: { Authorization: `Bearer ${externalAccessToken}` },
+    });
+    expect(tenantAUserinfo.status).toBe(200);
+    expect(tenantAUserinfo.data.email).toBe(tenantAEmail);
+
+    // Get admin token for Tenant A (for cleanup)
+    const tenantAAdminTokenResponse = await requestToken({
+      endpoint: `${backendUrl}/${tenantAId}/v1/tokens`,
+      grantType: "password",
+      username: tenantAEmail,
+      password: tenantAPassword,
+      scope: "openid profile email management",
+      clientId: tenantAClientId,
+      clientSecret: tenantAClientSecret,
+    });
+    expect(tenantAAdminTokenResponse.status).toBe(200);
+    const tenantAAdminToken = tenantAAdminTokenResponse.data.access_token;
+
+    // === Tenant B: token exchange server with userinfo_http_requests ===
+    const tenantBOrgId = uuidv4();
+    const tenantBId = uuidv4();
+    const tenantBClientId = uuidv4();
+    const tenantBAdminUserId = uuidv4();
+    const tenantBEmail = `admin-b-${timestamp}@userinfo-fetch.example.com`;
+    const tenantBPassword = `TestPassB${timestamp}!`;
+    const tenantBClientSecret = `client-secret-b-${crypto.randomBytes(16).toString("hex")}`;
+    const tenantBJwks = await generateECP256JWKS();
+
+    const tenantBOnboarding = {
+      organization: {
+        id: tenantBOrgId,
+        name: `Userinfo Fetch Token Exchange Org ${timestamp}`,
+        description: "Token exchange server with userinfo_http_requests + JIT",
+      },
+      tenant: {
+        id: tenantBId,
+        name: `Userinfo Fetch Token Exchange Tenant ${timestamp}`,
+        domain: backendUrl,
+        authorization_provider: "idp-server",
+        session_config: {
+          cookie_name: `UF_B_SESSION_${tenantBOrgId.substring(0, 8)}`,
+          use_secure_cookie: false,
+        },
+        cors_config: { allow_origins: [backendUrl] },
+        security_event_log_config: {
+          format: "structured_json",
+          stage: "processed",
+          include_user_id: true,
+          include_client_id: true,
+          persistence_enabled: true,
+        },
+      },
+      authorization_server: {
+        issuer: `${backendUrl}/${tenantBId}`,
+        authorization_endpoint: `${backendUrl}/${tenantBId}/v1/authorizations`,
+        token_endpoint: `${backendUrl}/${tenantBId}/v1/tokens`,
+        token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"],
+        userinfo_endpoint: `${backendUrl}/${tenantBId}/v1/userinfo`,
+        jwks_uri: `${backendUrl}/${tenantBId}/v1/jwks`,
+        jwks: tenantBJwks,
+        grant_types_supported: [
+          "authorization_code",
+          "refresh_token",
+          "password",
+          "urn:ietf:params:oauth:grant-type:token-exchange"
+        ],
+        token_signed_key_id: "signing_key_1",
+        id_token_signed_key_id: "signing_key_1",
+        scopes_supported: ["openid", "profile", "email", "management"],
+        claims_supported: ["sub", "email", "name", "preferred_username"],
+        response_types_supported: ["code"],
+        subject_types_supported: ["public"],
+        id_token_signing_alg_values_supported: ["ES256"],
+        token_introspection_endpoint: `${backendUrl}/${tenantBId}/v1/tokens/introspection`,
+        token_revocation_endpoint: `${backendUrl}/${tenantBId}/v1/tokens/revocation`,
+        response_modes_supported: ["query"],
+        extension: { access_token_type: "JWT" },
+      },
+      user: {
+        sub: tenantBAdminUserId,
+        email: tenantBEmail,
+        raw_password: tenantBPassword,
+        username: tenantBEmail,
+      },
+      client: {
+        client_id: tenantBClientId,
+        client_id_alias: `test-userinfo-fetch-te-client-${timestamp}`,
+        client_secret: tenantBClientSecret,
+        redirect_uris: ["http://localhost:3000/callback"],
+        response_types: ["code"],
+        grant_types: [
+          "authorization_code",
+          "refresh_token",
+          "password",
+          "urn:ietf:params:oauth:grant-type:token-exchange"
+        ],
+        scope: "openid profile email management",
+        client_name: `Userinfo Fetch Token Exchange Client ${timestamp}`,
+        token_endpoint_auth_method: "client_secret_post",
+        application_type: "web",
+        extension: {
+          available_federations: [
+            {
+              id: "external-idp-userinfo-fetch",
+              issuer: `${backendUrl}/${tenantAId}`,
+              type: "oidc",
+              sso_provider: "TenantA",
+              token_exchange_grant_enabled: true,
+              token_exchange_token_verification_method: "introspection",
+              jit_provisioning_enabled: true,
+              introspection_endpoint: `${backendUrl}/${tenantAId}/v1/tokens/introspection`,
+              introspection_auth_method: "client_secret_post",
+              introspection_client_id: tenantAClientId,
+              introspection_client_secret: tenantAClientSecret,
+              userinfo_http_requests: [
+                {
+                  url: `${backendUrl}/${tenantAId}/v1/userinfo`,
+                  method: "GET",
+                  header_mapping_rules: [
+                    {
+                      from: "$.request_body.access_token",
+                      to: "Authorization",
+                      functions: [{ name: "format", args: { template: "Bearer {{value}}" } }]
+                    }
+                  ]
+                }
+              ],
+              userinfo_mapping_rules: [
+                { from: "$.userinfo_execution_http_requests[0].response_body.sub", to: "external_user_id" },
+                { from: "$.userinfo_execution_http_requests[0].response_body.email", to: "email" },
+                { from: "$.userinfo_execution_http_requests[0].response_body.email", to: "preferred_username" }
+              ]
+            }
+          ]
+        }
+      },
+    };
+
+    const tenantBResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/onboarding`,
+      body: tenantBOnboarding,
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
+    });
+    expect(tenantBResponse.status).toBe(201);
+
+    const tenantBAdminTokenResponse = await requestToken({
+      endpoint: `${backendUrl}/${tenantBId}/v1/tokens`,
+      grantType: "password",
+      username: tenantBEmail,
+      password: tenantBPassword,
+      scope: "openid profile email management",
+      clientId: tenantBClientId,
+      clientSecret: tenantBClientSecret,
+    });
+    expect(tenantBAdminTokenResponse.status).toBe(200);
+    const tenantBAdminToken = tenantBAdminTokenResponse.data.access_token;
+
+    try {
+      console.log("\n=== Token Exchange with Introspection + userinfoHttpRequests + JIT ===");
+
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantBId}/v1/tokens`,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: externalAccessToken,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:access_token",
+        scope: "openid profile email",
+        clientId: tenantBClientId,
+        clientSecret: tenantBClientSecret,
+      });
+
+      console.log("Token Exchange (userinfo fetch) response status:", tokenResponse.status);
+      if (tokenResponse.status !== 200) {
+        console.log("Token Exchange error:", JSON.stringify(tokenResponse.data, null, 2));
+      }
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data.issued_token_type).toBe("urn:ietf:params:oauth:token-type:access_token");
+
+      // Verify the exchanged token returns userinfo with email from external IdP
+      const userinfoResponse = await getUserinfo({
+        endpoint: `${backendUrl}/${tenantBId}/v1/userinfo`,
+        authorizationHeader: { Authorization: `Bearer ${tokenResponse.data.access_token}` },
+      });
+
+      console.log("Userinfo fetch result:", JSON.stringify(userinfoResponse.data, null, 2));
+
+      expect(userinfoResponse.status).toBe(200);
+      expect(userinfoResponse.data.sub).toBeDefined();
+      expect(userinfoResponse.data.sub).not.toBe(tenantAUserId);
+      // The email should have been fetched from Tenant A's userinfo endpoint via userinfoHttpRequests
+      expect(userinfoResponse.data.email).toBe(tenantAEmail);
+      console.log("Introspection + userinfoHttpRequests + JIT succeeded, email:", userinfoResponse.data.email);
+
+    } finally {
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${tenantBOrgId}/tenants/${tenantBId}/clients/${tenantBClientId}`,
+        headers: { Authorization: `Bearer ${tenantBAdminToken}` },
+      });
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${tenantBOrgId}/tenants/${tenantBId}`,
+        headers: { Authorization: `Bearer ${tenantBAdminToken}` },
+      });
+      await deletion({
+        url: `${backendUrl}/v1/management/orgs/${tenantBOrgId}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      });
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${tenantAOrgId}/tenants/${tenantAId}/clients/${tenantAClientId}`,
+        headers: { Authorization: `Bearer ${tenantAAdminToken}` },
+      });
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${tenantAOrgId}/tenants/${tenantAId}`,
+        headers: { Authorization: `Bearer ${tenantAAdminToken}` },
+      });
+      await deletion({
+        url: `${backendUrl}/v1/management/orgs/${tenantAOrgId}`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      });
     }
   });
 

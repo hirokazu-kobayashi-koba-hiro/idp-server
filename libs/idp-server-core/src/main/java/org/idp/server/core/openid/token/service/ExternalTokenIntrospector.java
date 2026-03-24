@@ -20,10 +20,11 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Map;
+import java.util.*;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
+import org.idp.server.platform.http.HttpRequestBaseParams;
+import org.idp.server.platform.http.HttpRequestExecutionConfig;
 import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.json.JsonConverter;
@@ -95,6 +96,50 @@ public class ExternalTokenIntrospector {
               "Failed to introspect token at '%s': %s",
               federation.introspectionEndpoint(), e.getMessage()));
     }
+  }
+
+  /**
+   * Fetches additional user information from the external IdP using configured HTTP requests. The
+   * access_token is passed as a base parameter so that mapping rules can reference it (e.g. for
+   * Authorization header).
+   *
+   * @param accessToken the subject_token (opaque access token)
+   * @param federation the federation configuration containing userinfoHttpRequests
+   * @return merged claims from all HTTP responses, or empty map if no requests configured
+   */
+  public Map<String, Object> fetchUserinfo(String accessToken, AvailableFederation federation) {
+    if (!federation.hasUserinfoHttpRequests()) {
+      return Collections.emptyMap();
+    }
+
+    List<HttpRequestExecutionConfig> configs = federation.userinfoHttpRequests();
+    Map<String, Object> param = new HashMap<>();
+    param.put("request_body", Map.of("access_token", accessToken));
+
+    List<HttpRequestResult> httpRequestResults = new ArrayList<>();
+    for (HttpRequestExecutionConfig config : configs) {
+      HttpRequestBaseParams baseParams = new HttpRequestBaseParams(param);
+      HttpRequestResult result = httpRequestExecutor.execute(config, baseParams);
+
+      if (result.isClientError() || result.isServerError()) {
+        log.warn(
+            "Userinfo HTTP request failed. issuer={}, statusCode={}",
+            federation.issuer(),
+            result.statusCode());
+        return Collections.emptyMap();
+      }
+
+      httpRequestResults.add(result);
+      param.put(
+          "execution_http_requests",
+          httpRequestResults.stream().map(HttpRequestResult::toMap).toList());
+    }
+
+    Map<String, Object> results = new HashMap<>();
+    results.put(
+        "userinfo_execution_http_requests",
+        httpRequestResults.stream().map(HttpRequestResult::toMap).toList());
+    return results;
   }
 
   public static class ExternalIntrospectionResult {

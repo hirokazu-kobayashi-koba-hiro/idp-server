@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.token.verifier;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
@@ -136,8 +138,18 @@ public class SubjectTokenVerifier {
           "invalid_grant", "External IdP introspection response does not contain a 'sub' claim");
     }
 
+    Map<String, Object> claims = new HashMap<>(result.claims());
+
+    if (federation.hasUserinfoHttpRequests()) {
+      Map<String, Object> userinfoResult =
+          externalTokenIntrospector.fetchUserinfo(subjectToken.value(), federation);
+      if (!userinfoResult.isEmpty()) {
+        claims.putAll(userinfoResult);
+      }
+    }
+
     return new SubjectTokenVerificationResult(
-        federation, result.subject(), federation.resolveSubjectClaimMapping(), result.claims());
+        federation, result.subject(), federation.resolveSubjectClaimMapping(), claims);
   }
 
   private AvailableFederation findFederationByIssuer(TokenRequestContext context, String issuer) {

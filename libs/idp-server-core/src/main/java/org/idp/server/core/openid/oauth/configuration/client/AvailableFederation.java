@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.http.HttpRequestExecutionConfig;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
 
@@ -43,6 +44,7 @@ public class AvailableFederation implements JsonReadable {
   String introspectionClientSecret;
   boolean jitProvisioningEnabled = false;
   List<MappingRule> userinfoMappingRules = new ArrayList<>();
+  List<HttpRequestExecutionConfig> userinfoHttpRequests = new ArrayList<>();
 
   public AvailableFederation() {}
 
@@ -161,6 +163,17 @@ public class AvailableFederation implements JsonReadable {
     return userinfoMappingRules != null && !userinfoMappingRules.isEmpty();
   }
 
+  public List<HttpRequestExecutionConfig> userinfoHttpRequests() {
+    if (userinfoHttpRequests == null) {
+      return new ArrayList<>();
+    }
+    return userinfoHttpRequests;
+  }
+
+  public boolean hasUserinfoHttpRequests() {
+    return userinfoHttpRequests != null && !userinfoHttpRequests.isEmpty();
+  }
+
   public String introspectionAuthMethod() {
     return introspectionAuthMethod;
   }
@@ -215,6 +228,10 @@ public class AvailableFederation implements JsonReadable {
     if (introspectionClientId != null) map.put("introspection_client_id", introspectionClientId);
     if (introspectionClientSecret != null)
       map.put("introspection_client_secret", introspectionClientSecret);
+    if (hasUserinfoHttpRequests())
+      map.put(
+          "userinfo_http_requests",
+          userinfoHttpRequests.stream().map(HttpRequestExecutionConfig::toMap).toList());
     return map;
   }
 
