@@ -973,6 +973,39 @@ const sidebars = {
         },
         {
           type: "category",
+          label: "大量データ集計・分析（OLAP）",
+          items: [
+            "content_11_learning/olap-analytics/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/olap-analytics/columnar-storage"
+              ]
+            },
+            {
+              type: "category",
+              label: "ClickHouse",
+              collapsed: true,
+              items: [
+                "content_11_learning/olap-analytics/clickhouse-basics",
+                "content_11_learning/olap-analytics/data-ingestion"
+              ]
+            },
+            {
+              type: "category",
+              label: "アーキテクチャ",
+              collapsed: true,
+              items: [
+                "content_11_learning/olap-analytics/dual-architecture",
+                "content_11_learning/olap-analytics/aws-deployment"
+              ]
+            }
+          ]
+        },
+        {
+          type: "category",
           label: "AWS",
           items: [
             "content_11_learning/aws/README",
