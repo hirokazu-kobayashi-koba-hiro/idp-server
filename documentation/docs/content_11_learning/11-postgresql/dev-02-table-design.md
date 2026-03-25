@@ -1064,6 +1064,145 @@ CREATE TABLE article_tags (
 );
 ```
 
+### 9.3 並行性能のアンチパターン
+
+テーブル設計は正しくても、高並行環境で性能問題を引き起こすパターンがあります。
+
+#### ❌ ホットスポット行（カウンターテーブル）
+
+多数のスレッドが同一行を同時にUPDATEするテーブル設計。
+
+```sql
+-- ❌ ホットスポットが発生する設計
+-- PK = (tenant_id, stat_date, event_type) なので
+-- 同じテナント・同じ日・同じイベントタイプは常に「同じ1行」を更新する
+CREATE TABLE statistics_events (
+    tenant_id UUID NOT NULL,
+    stat_date DATE NOT NULL,
+    event_type VARCHAR(255) NOT NULL,
+    count BIGINT NOT NULL DEFAULT 0,
+    PRIMARY KEY (tenant_id, stat_date, event_type)
+);
+
+-- 30スレッドが同時に:
+INSERT INTO statistics_events VALUES ('tenant-1', '2026-03-25', 'login_success', 1)
+ON CONFLICT (tenant_id, stat_date, event_type)
+DO UPDATE SET count = statistics_events.count + 1;
+-- → 全スレッドが同じ1行の排他ロックを奪い合う → 直列化
+```
+
+**なぜ問題か**:
+- `INSERT ... ON CONFLICT DO UPDATE` は対象行に排他ロックを取得する
+- 30スレッドが同じ行をめぐって順番待ちになり、実質シングルスレッド実行
+- ロック保持中にI/O（メール送信等）があると待ち時間がカスケード的に増大
+
+**対策パターン**:
+
+```sql
+-- ✅ パターンA: バッチ集計（推奨）
+-- リアルタイムのUPSERTをやめ、イベントログからバッチで集計
+-- 1日分をまとめてCOUNT(*)するのでロック競合なし
+INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
+SELECT tenant_id, '2026-03-25', type, COUNT(*)
+FROM security_event
+WHERE ...
+GROUP BY tenant_id, type
+ON CONFLICT (tenant_id, stat_date, event_type)
+DO UPDATE SET count = EXCLUDED.count;  -- 絶対値上書き
+
+-- ✅ パターンB: ランダムバケットで行を分散
+-- 書き込み時に複数行に分散し、読み取り時にSUMで集約
+CREATE TABLE statistics_events_distributed (
+    tenant_id UUID NOT NULL,
+    stat_date DATE NOT NULL,
+    event_type VARCHAR(255) NOT NULL,
+    bucket_id INT NOT NULL,           -- 0-9のランダム値
+    count BIGINT NOT NULL DEFAULT 0,
+    PRIMARY KEY (tenant_id, stat_date, event_type, bucket_id)
+);
+
+-- 書き込み: ランダムなバケットに分散
+INSERT INTO statistics_events_distributed
+VALUES ('tenant-1', '2026-03-25', 'login_success', floor(random() * 10), 1)
+ON CONFLICT ... DO UPDATE SET count = count + 1;
+
+-- 読み取り: SUM で集約
+SELECT tenant_id, stat_date, event_type, SUM(count) as total
+FROM statistics_events_distributed
+GROUP BY tenant_id, stat_date, event_type;
+
+-- ✅ パターンC: INSERT のみ（ログ型）
+-- UPDATEを一切行わず、イベントごとに1行INSERTする
+-- 集計は読み取り時にCOUNT(*)で行う
+CREATE TABLE statistics_event_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL,
+    event_type VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now()
+);
+-- INSERTは行ロック競合が発生しない（常に新しい行）
+```
+
+| パターン | 書き込み競合 | 読み取りコスト | 適用場面 |
+|:---|:---:|:---:|:---|
+| カウンターテーブル（元の設計） | 高 | 低 | 低並行度の環境 |
+| バッチ集計 | なし | 低 | 遅延許容、高並行度 |
+| バケット分散（ランダム） | 低 | 中（SUM必要） | リアルタイム性が必要 |
+| バケット分散（PID） | なし | 中（SUM必要） | リアルタイム性 + 衝突ゼロ |
+| ログ型INSERT | なし | 高（COUNT必要） | 書き込み最優先 |
+
+**バケット分散の改良: `pg_backend_pid()` でバケットを確定的に割り当て**
+
+ランダムなバケットだと確率的に衝突が残る。PostgreSQLのバックエンドPID（`pg_backend_pid()`）をバケットに使えば、各コネクションが常に異なるバケットに書き込むため**衝突がゼロ**になる。
+
+```sql
+-- ✅ パターンB': PIDベースのバケット分散（衝突ゼロ）
+INSERT INTO statistics_events_distributed
+VALUES ('tenant-1', '2026-03-25', 'login_success',
+        pg_backend_pid() % 10,    -- コネクションごとに固定のバケット
+        1)
+ON CONFLICT ... DO UPDATE SET count = count + 1;
+```
+
+```
+ランダム（衝突あり）:
+  Conn-1 (pid=100) → bucket 3
+  Conn-2 (pid=101) → bucket 7
+  Conn-3 (pid=102) → bucket 3  ← 確率的に衝突
+
+PID（衝突なし）:
+  Conn-1 (pid=100) → bucket 0  (100 % 10)
+  Conn-2 (pid=101) → bucket 1  (101 % 10)
+  Conn-3 (pid=102) → bucket 2  (102 % 10)  ← 絶対に衝突しない
+```
+
+コネクションプール（HikariCP等）はコネクションを再利用するため、同じスレッドは同じPID → 同じバケットに常に書き込む。バケット数はコネクションプールの `maxPoolSize` に合わせると最適。
+
+#### ❌ 1テーブルに集約しすぎたサマリーテーブル
+
+```sql
+-- ❌ 1行に全メトリクスをJSONBで詰め込む
+CREATE TABLE tenant_statistics (
+    tenant_id UUID PRIMARY KEY,
+    metrics JSONB  -- {"login_count": 1000, "dau": 500, "mau": 3000, ...}
+);
+-- テナントごとに1行 → 全更新が同じ行に集中
+```
+
+```sql
+-- ✅ メトリクスごとに行を分ける
+CREATE TABLE tenant_statistics (
+    tenant_id UUID NOT NULL,
+    stat_date DATE NOT NULL,
+    metric_name VARCHAR(255) NOT NULL,
+    metric_value BIGINT NOT NULL DEFAULT 0,
+    PRIMARY KEY (tenant_id, stat_date, metric_name)
+);
+-- 異なるメトリクスは異なる行 → ロック競合が分散
+```
+
+> **実事例**: idp-serverで統計テーブルのロック競合により `INSERT` が本来の3,600倍に遅延した事例があります。詳細は [ケーススタディ: 統計テーブルのロック競合](../26-performance-tuning/14-case-study-lock-contention.md) を参照。
+
 ---
 
 ## 参考リンク

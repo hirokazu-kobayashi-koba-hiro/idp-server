@@ -122,14 +122,68 @@ libs/
 
 ```
 [SecurityEventHandler.handle()]
-    ├── [1] イベントをDBに保存
-    ├── [2] 統計データ更新（statistics_events）
-    ├── [3] アクティブユーザー更新（DAU/MAU/YAU）
-    ├── [4] ログ出力
-    └── [5] フック実行（Slack/Datadog/Webhook/SSF）
+    ├── [1] イベントをDBに保存（security_event INSERT）
+    ├── [2] フック実行（Slack/Datadog/Webhook/SSF）← I/O（先に実行）
+    ├── [3] フック結果保存
+    └── [4] 統計データ更新（statistics_events, DAU/MAU/YAU）← ロック取得（後に実行）
 ```
 
+**重要**: フック実行を統計更新の**前**に配置している（#1442）。統計の `INSERT ... ON CONFLICT` は行ロックを取得するため、フック実行（450-500ms のHTTP I/O）の後に配置することでロック保持時間を最小化。
+
+## アンチパターン（SecurityEventHandler）
+
+### ❌ 統計更新の後にフック実行（外部I/O）を行わない
+
+```
+❌ 禁止: ロックを保持したまま外部I/O
+[SecurityEventHandler.handle()]
+    ├── [1] INSERT security_event
+    ├── [2] INSERT statistics_events       ← ロック取得
+    ├── [3] INSERT statistics_daily_users  ← ロック取得
+    ├── [4] フック実行（メール/Slack/Webhook）← 450-500ms I/O、ロック保持中！
+    └── COMMIT                             ← 500ms+ 後にやっとロック解放
+```
+
+この順序にすると:
+- `statistics_events` の同一行（tenant_id, stat_date, event_type）に排他ロックが取得される
+- フック実行の450-500msの間ずっとロックが保持される
+- 後続スレッドが同じ行を更新しようとするとロック待ち→カスケード的にブロック
+- **実測: INSERT平均 0.53ms → 1.94秒（3,600倍遅延）、最大1分16秒（#1442）**
+
+### ❌ handle() 内に新しい外部I/O処理を追加する場合
+
+`SecurityEventHandler.handle()` は `@Transaction` 内で実行される。新しい外部I/O（HTTP通信、ファイル書き込み等）を追加する場合は、**統計更新（ロック取得）の前** に配置すること。
+
+```
+✅ 正しい配置:
+    ├── [1] INSERT security_event
+    ├── [2] フック実行（既存）
+    ├── [3] 新しい外部I/O処理          ← ロック取得前に配置
+    └── [4] 統計データ更新              ← ロック取得はトランザクションの最後
+
+❌ 間違った配置:
+    ├── [1] INSERT security_event
+    ├── [2] フック実行
+    ├── [3] 統計データ更新              ← ロック取得
+    └── [4] 新しい外部I/O処理          ← ロック保持中にI/O → 障害の原因
+```
+
+### ❌ 高負荷環境でリアルタイム統計更新のみに依存しない
+
+1日数万件以上のイベントが発生する環境では、リアルタイムUPSERTのロック競合が問題になりうる。バッチ集計（`aggregate_statistics_for_timezone()`）への移行を検討すること。
+
 ## 統計データ更新
+
+### 2つのアプローチ
+
+| アプローチ | 方式 | 用途 |
+|-----------|------|------|
+| **リアルタイム（アプリ側）** | `SecurityEventHandler.updateStatistics()` でイベントごとにUPSERT | 即時性が必要な場合 |
+| **バッチ集計（DB側）** | `aggregate_statistics_for_timezone()` でpg_cron/Event Schedulerで日次集計 | 高負荷環境・ロック競合回避 |
+
+バッチ集計はアプリ側の `updateStatistics()` と同じ結果を生成する代替手段。高負荷環境ではバッチ集計への移行を検討。
+
+### リアルタイム統計（アプリ側）
 
 `SecurityEventHandler`は以下のリポジトリを使用：
 - `StatisticsEventsCommandRepository` - イベント種別ごとのカウント
@@ -137,16 +191,45 @@ libs/
 - `MonthlyActiveUserCommandRepository` - MAU
 - `YearlyActiveUserCommandRepository` - YAU
 
-### パフォーマンス改善（#1198）
+### バッチ統計集計（DB側）
+
+`security_event` テーブルから日次でテナント統計を集計。アプリ側のリアルタイムUPSERTによるロック競合を根本的に回避。
+
+```
+探索起点: libs/idp-server-database/postgresql/statistics-aggregation/
+```
+
+| 関数 | 用途 |
+|------|------|
+| `aggregate_statistics_for_timezone(tz, date)` | 特定TZ・特定日の統計を集計 |
+| `aggregate_statistics_by_timezone()` | 毎時実行用。hour=0のTZグループを自動検出 |
+| `aggregate_daily_statistics(date)` | 全TZ一括集計（02版） |
+
+特徴:
+- テナントタイムゾーン対応（`tenant.attributes->>'timezone'`）
+- 会計年度対応（`tenant.attributes->>'fiscal_year_start_month'`）
+- 冪等性保証（絶対値上書き）
+- パーティションプルーニング最適化
+
+Docker環境: `statistics-setup` コンテナが関数登録 + pg_cronジョブ登録を自動実行。
+
+### パフォーマンス改善履歴
+
+#### #1198: JSONB → 行ベースupsert
 - JSONBベースの更新 → 行ベースのupsertに変更
 - `statistics_events`テーブルで直接upsert
 - 10ms → 0.53ms（約19倍高速化）
 
-### パフォーマンス改善（#1231）
+#### #1231: フックコンフィグキャッシュ
 - フックコンフィグ取得をAdapter層でキャッシュ（TTL 5分）
 - 設定の登録/更新/削除時にキャッシュ自動無効化
 - `TenantQueryDataSource`と同じパターンで実装
 - 実装: `SecurityEventHookConfigurationQueryDataSource`, `SecurityEventHookConfigurationCommandDataSource`
+
+#### #1442: ロック保持時間の短縮 + バッチ集計導入
+- 統計書き込みをフック実行の**後**に移動（ロック保持 500ms+ → 数ms）
+- DB側の日次バッチ集計関数を追加（pg_cron / Event Scheduler）
+- TZ別集計でスキャン窓を50h → 24hに半減
 
 ## SecurityEventHook インターフェース
 
