@@ -955,6 +955,14 @@ const sidebars = {
             },
             {
               type: "category",
+              label: "ケーススタディ",
+              collapsed: true,
+              items: [
+                "content_11_learning/performance-tuning/case-study-lock-contention"
+              ]
+            },
+            {
+              type: "category",
               label: "コラム",
               collapsed: true,
               items: [
