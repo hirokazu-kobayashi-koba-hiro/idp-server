@@ -22,9 +22,20 @@ import org.idp.server.platform.jose.JsonWebTokenClaims;
  * TokenExchangeGrantVerifier
  *
  * <p>Verifies JWT claims in token exchange subject_token. Delegates to JwtBearerGrantVerifier since
- * the same RFC 7523 claim checks apply.
+ * the same RFC 7523 claim checks apply (iss, sub, aud, exp).
  *
- * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693</a>
+ * <p>RFC 8693 Section 2.1:
+ *
+ * <blockquote>
+ *
+ * The authorization server MUST perform the appropriate validation procedures for the indicated
+ * token type and, if the actor token is present, also perform the appropriate validation procedures
+ * for its indicated token type.
+ *
+ * </blockquote>
+ *
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">RFC 8693 Section 2.1</a>
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc7523">RFC 7523 - JWT Bearer</a>
  */
 public class TokenExchangeGrantVerifier {
 

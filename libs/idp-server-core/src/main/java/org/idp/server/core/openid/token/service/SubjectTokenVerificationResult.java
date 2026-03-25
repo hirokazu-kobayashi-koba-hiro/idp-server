@@ -18,6 +18,8 @@ package org.idp.server.core.openid.token.service;
 
 import java.util.Collections;
 import java.util.Map;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.mapper.UserInfoMapper;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
 
 /**
@@ -67,5 +69,12 @@ public class SubjectTokenVerificationResult {
 
   public boolean hasClaims() {
     return !claims.isEmpty();
+  }
+
+  public User toUser() {
+    UserInfoMapper userInfoMapper =
+        new UserInfoMapper(
+            federation.userinfoMappingRules(), claims, federation.resolveProviderId());
+    return userInfoMapper.toUser();
   }
 }

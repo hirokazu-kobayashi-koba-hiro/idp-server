@@ -25,6 +25,7 @@ import org.idp.server.core.openid.oauth.type.oauth.SubjectToken;
 import org.idp.server.core.openid.oauth.type.oauth.SubjectTokenType;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
+import org.idp.server.core.openid.token.service.ExternalIntrospectionResult;
 import org.idp.server.core.openid.token.service.ExternalTokenIntrospector;
 import org.idp.server.core.openid.token.service.FederationJwtVerifier;
 import org.idp.server.core.openid.token.service.SubjectTokenVerificationResult;
@@ -40,8 +41,30 @@ import org.idp.server.platform.log.LoggerWrapper;
  * SubjectTokenVerificationResult}. Supports JWT signature verification and external IdP
  * introspection.
  *
+ * <p>RFC 8693 Section 2.1:
+ *
+ * <blockquote>
+ *
+ * The authorization server MUST perform the appropriate validation procedures for the indicated
+ * token type.
+ *
+ * </blockquote>
+ *
+ * <p>Verification method is determined by {@code subject_token_type} (RFC 8693 Section 3):
+ *
+ * <ul>
+ *   <li>{@code urn:ietf:params:oauth:token-type:jwt} / {@code id_token} — JWT signature
+ *       verification
+ *   <li>{@code urn:ietf:params:oauth:token-type:access_token} — introspection (RFC 7662) or JWT
+ *       fallback
+ * </ul>
+ *
  * <p>All verification errors are converted to {@link TokenBadRequestException} so callers do not
  * need to handle low-level exceptions.
+ *
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">RFC 8693 Section 2.1</a>
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-3">RFC 8693 Section 3 - Token
+ *     Type Identifiers</a>
  */
 public class SubjectTokenVerifier {
 
@@ -57,6 +80,18 @@ public class SubjectTokenVerifier {
     this.externalTokenIntrospector = externalTokenIntrospector;
   }
 
+  /**
+   * Verifies the subject_token based on its token type identifier (RFC 8693 Section 3).
+   *
+   * <p>Dispatches to the appropriate verification method:
+   *
+   * <ul>
+   *   <li>{@code urn:ietf:params:oauth:token-type:jwt}, {@code id_token} → JWT signature
+   *       verification via {@link FederationJwtVerifier}
+   *   <li>{@code urn:ietf:params:oauth:token-type:access_token} → introspection (RFC 7662) if
+   *       configured, otherwise JWT fallback
+   * </ul>
+   */
   public SubjectTokenVerificationResult verify(TokenRequestContext context) {
     SubjectTokenType subjectTokenType = context.subjectTokenType();
     SubjectToken subjectToken = context.subjectToken();
@@ -77,14 +112,18 @@ public class SubjectTokenVerifier {
       TokenRequestContext context, SubjectToken subjectToken) {
     Optional<AvailableFederation> introspectionFederation =
         context.findTokenExchangeIntrospectionFederation();
-    if (introspectionFederation.isPresent()
-        && introspectionFederation.get().isIntrospectionVerification()) {
+    if (introspectionFederation.isPresent()) {
       return verifyByIntrospection(subjectToken, introspectionFederation.get());
     }
 
     return verifyAsJwt(context, subjectToken);
   }
 
+  /**
+   * Verifies the subject_token as a JWT: parses the JWS, resolves the federation by issuer,
+   * verifies the signature against the federation's JWKS, and validates standard JWT claims (iss,
+   * sub, aud, exp) per RFC 7523.
+   */
   private SubjectTokenVerificationResult verifyAsJwt(
       TokenRequestContext context, SubjectToken subjectToken) {
     try {
@@ -111,12 +150,21 @@ public class SubjectTokenVerifier {
       log.warn("subject_token JWT verification failed: {}", e.getMessage());
       throw new TokenBadRequestException(
           "invalid_grant", "Invalid subject_token JWT: " + e.getMessage());
+    } catch (RuntimeException e) {
+      log.error("Unexpected error verifying subject_token JWT", e);
+      throw new TokenBadRequestException(
+          "server_error", "Unexpected error verifying subject_token JWT");
     }
   }
 
+  /**
+   * Verifies the subject_token via external IdP token introspection (RFC 7662). Validates that the
+   * introspection response contains {@code active: true} and a {@code sub} claim. Optionally
+   * fetches additional user claims via configured {@code userinfo_http_requests}.
+   */
   private SubjectTokenVerificationResult verifyByIntrospection(
       SubjectToken subjectToken, AvailableFederation federation) {
-    ExternalTokenIntrospector.ExternalIntrospectionResult result =
+    ExternalIntrospectionResult result =
         externalTokenIntrospector.introspect(subjectToken.value(), federation);
 
     if (!result.isActive()) {

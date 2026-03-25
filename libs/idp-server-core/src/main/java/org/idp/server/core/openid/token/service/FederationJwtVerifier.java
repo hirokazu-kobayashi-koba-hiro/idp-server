@@ -31,6 +31,21 @@ import org.idp.server.platform.jose.JwtSignatureVerifier;
  *
  * <p>Shared verifier for external IdP JWT signature verification. Used by both JWT Bearer Grant
  * (RFC 7523) and Token Exchange (RFC 8693).
+ *
+ * <p>RFC 8693 Section 2.1:
+ *
+ * <blockquote>
+ *
+ * The authorization server MUST perform the appropriate validation procedures for the indicated
+ * token type.
+ *
+ * </blockquote>
+ *
+ * <p>For JWT-type subject_tokens, this means verifying the JWS signature against the external IdP's
+ * JWKS (resolved from inline {@code jwks} or fetched from {@code jwks_uri}).
+ *
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">RFC 8693 Section 2.1</a>
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc7523">RFC 7523 - JWT Bearer</a>
  */
 public class FederationJwtVerifier {
 
@@ -40,6 +55,14 @@ public class FederationJwtVerifier {
     this.httpRequestExecutor = httpRequestExecutor;
   }
 
+  /**
+   * Verifies the JWS signature of a subject_token against the external IdP's JWKS.
+   *
+   * @param jws the parsed JSON Web Signature
+   * @param federation the federation configuration containing jwks or jwks_uri
+   * @throws TokenBadRequestException with {@code invalid_grant} if signature verification fails or
+   *     JWKS is not configured
+   */
   public void verifyExternalIdpSignature(JsonWebSignature jws, AvailableFederation federation) {
     try {
       String jwks = resolveJwks(federation);

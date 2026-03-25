@@ -20,7 +20,11 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.platform.http.HttpRequestBaseParams;
@@ -33,8 +37,22 @@ import org.idp.server.platform.log.LoggerWrapper;
 /**
  * ExternalTokenIntrospector
  *
- * <p>Introspects opaque tokens at an external IdP's introspection endpoint. Used by Token Exchange
- * (RFC 8693) when the subject_token is not a JWT.
+ * <p>Introspects opaque tokens at an external IdP's introspection endpoint per RFC 7662. Used by
+ * Token Exchange (RFC 8693) when {@code subject_token_type} is {@code
+ * urn:ietf:params:oauth:token-type:access_token} and the federation is configured with {@code
+ * token_exchange_token_verification_method: "introspection"}.
+ *
+ * <p>RFC 8693 Section 2.1:
+ *
+ * <blockquote>
+ *
+ * The authorization server MUST perform the appropriate validation procedures for the indicated
+ * token type.
+ *
+ * </blockquote>
+ *
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">RFC 8693 Section 2.1</a>
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc7662">RFC 7662 - Token Introspection</a>
  */
 public class ExternalTokenIntrospector {
 
@@ -48,6 +66,15 @@ public class ExternalTokenIntrospector {
     this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
+  /**
+   * Introspects a token at the external IdP's introspection endpoint per RFC 7662.
+   *
+   * @param token the opaque access token to introspect
+   * @param federation the federation configuration with introspection endpoint and credentials
+   * @return the introspection result containing claims from the external IdP
+   * @throws TokenBadRequestException with {@code server_error} if credentials are missing or the
+   *     external endpoint returns 5xx; with {@code invalid_grant} if the endpoint returns 4xx
+   */
   public ExternalIntrospectionResult introspect(String token, AvailableFederation federation) {
     if (!federation.hasIntrospectionEndpoint()) {
       throw new TokenBadRequestException(
@@ -57,14 +84,36 @@ public class ExternalTokenIntrospector {
               federation.issuer()));
     }
 
+    if (!federation.hasIntrospectionCredentials()) {
+      throw new TokenBadRequestException(
+          "server_error",
+          String.format(
+              "Federation '%s' introspection credentials (client_id/client_secret) are not configured",
+              federation.issuer()));
+    }
+
     try {
       HttpRequest request = buildIntrospectionRequest(token, federation);
 
       HttpRequestResult result = httpRequestExecutor.execute(request);
 
-      if (result.isClientError() || result.isServerError()) {
+      if (result.isServerError()) {
         log.error(
-            "External introspection failed. endpoint={}, issuer={}, statusCode={}, response={}",
+            "External introspection server error. endpoint={}, issuer={}, statusCode={}, response={}",
+            federation.introspectionEndpoint(),
+            federation.issuer(),
+            result.statusCode(),
+            result.body());
+        throw new TokenBadRequestException(
+            "server_error",
+            String.format(
+                "External introspection endpoint returned server error at '%s': HTTP %d",
+                federation.introspectionEndpoint(), result.statusCode()));
+      }
+
+      if (result.isClientError()) {
+        log.error(
+            "External introspection client error. endpoint={}, issuer={}, statusCode={}, response={}",
             federation.introspectionEndpoint(),
             federation.issuer(),
             result.statusCode(),
@@ -142,37 +191,6 @@ public class ExternalTokenIntrospector {
     return results;
   }
 
-  public static class ExternalIntrospectionResult {
-    Map<String, Object> claims;
-
-    public ExternalIntrospectionResult(Map<String, Object> claims) {
-      this.claims = claims;
-    }
-
-    public boolean isActive() {
-      Object active = claims.get("active");
-      return Boolean.TRUE.equals(active);
-    }
-
-    public String subject() {
-      Object sub = claims.get("sub");
-      return sub != null ? sub.toString() : null;
-    }
-
-    public String issuer() {
-      Object iss = claims.get("iss");
-      return iss != null ? iss.toString() : null;
-    }
-
-    public boolean hasSubject() {
-      return subject() != null && !subject().isEmpty();
-    }
-
-    public Map<String, Object> claims() {
-      return claims;
-    }
-  }
-
   private HttpRequest buildIntrospectionRequest(String token, AvailableFederation federation) {
     String body =
         "token="
@@ -186,18 +204,9 @@ public class ExternalTokenIntrospector {
             .header("Accept", "application/json");
 
     if (federation.isIntrospectionBasicAuth()) {
-      String credentials =
-          federation.introspectionClientId() + ":" + federation.introspectionClientSecret();
-      String basicAuth =
-          "Basic "
-              + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
-      builder.header("Authorization", basicAuth);
+      builder.header("Authorization", federation.introspectionBasicAuthHeaderValue());
     } else {
-      body +=
-          "&client_id="
-              + URLEncoder.encode(federation.introspectionClientId(), StandardCharsets.UTF_8)
-              + "&client_secret="
-              + URLEncoder.encode(federation.introspectionClientSecret(), StandardCharsets.UTF_8);
+      body += federation.introspectionPostCredentialsBody();
     }
 
     return builder.POST(HttpRequest.BodyPublishers.ofString(body)).build();

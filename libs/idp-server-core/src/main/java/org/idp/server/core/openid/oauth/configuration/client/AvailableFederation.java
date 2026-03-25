@@ -16,10 +16,9 @@
 
 package org.idp.server.core.openid.oauth.configuration.client;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import org.idp.server.platform.http.HttpRequestExecutionConfig;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
@@ -155,6 +154,10 @@ public class AvailableFederation implements JsonReadable {
     return jitProvisioningEnabled;
   }
 
+  public boolean canJitUpdate() {
+    return jitProvisioningEnabled && hasUserinfoMappingRules();
+  }
+
   public List<MappingRule> userinfoMappingRules() {
     return userinfoMappingRules;
   }
@@ -184,12 +187,32 @@ public class AvailableFederation implements JsonReadable {
         || "client_secret_basic".equals(introspectionAuthMethod);
   }
 
+  public String introspectionBasicAuthHeaderValue() {
+    String credentials = introspectionClientId + ":" + introspectionClientSecret;
+    return "Basic "
+        + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+  }
+
+  public String introspectionPostCredentialsBody() {
+    return "&client_id="
+        + URLEncoder.encode(introspectionClientId, StandardCharsets.UTF_8)
+        + "&client_secret="
+        + URLEncoder.encode(introspectionClientSecret, StandardCharsets.UTF_8);
+  }
+
   public String introspectionEndpoint() {
     return introspectionEndpoint;
   }
 
   public boolean hasIntrospectionEndpoint() {
     return introspectionEndpoint != null && !introspectionEndpoint.isEmpty();
+  }
+
+  public boolean hasIntrospectionCredentials() {
+    return introspectionClientId != null
+        && !introspectionClientId.isEmpty()
+        && introspectionClientSecret != null
+        && !introspectionClientSecret.isEmpty();
   }
 
   public String introspectionClientId() {
@@ -225,9 +248,14 @@ public class AvailableFederation implements JsonReadable {
     if (jwksCacheTtlSeconds > 0) map.put("jwks_cache_ttl_seconds", jwksCacheTtlSeconds);
     map.put("jit_provisioning_enabled", jitProvisioningEnabled);
     if (hasIntrospectionEndpoint()) map.put("introspection_endpoint", introspectionEndpoint);
+    if (introspectionAuthMethod != null)
+      map.put("introspection_auth_method", introspectionAuthMethod);
     if (introspectionClientId != null) map.put("introspection_client_id", introspectionClientId);
     if (introspectionClientSecret != null)
       map.put("introspection_client_secret", introspectionClientSecret);
+    if (hasUserinfoMappingRules())
+      map.put(
+          "userinfo_mapping_rules", userinfoMappingRules.stream().map(MappingRule::toMap).toList());
     if (hasUserinfoHttpRequests())
       map.put(
           "userinfo_http_requests",

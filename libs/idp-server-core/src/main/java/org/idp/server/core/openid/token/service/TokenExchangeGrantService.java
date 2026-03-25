@@ -26,7 +26,6 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserRegistrator;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.id_token.RequestedUserinfoClaims;
-import org.idp.server.core.openid.identity.mapper.UserInfoMapper;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
@@ -40,6 +39,7 @@ import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.validator.TokenExchangeGrantValidator;
 import org.idp.server.core.openid.token.verifier.SubjectTokenVerifier;
 import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -51,6 +51,8 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693</a>
  */
 public class TokenExchangeGrantService implements OAuthTokenCreationService, RefreshTokenCreatable {
+
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(TokenExchangeGrantService.class);
 
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
   SubjectTokenVerifier subjectTokenVerifier;
@@ -75,6 +77,12 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
     return GrantType.token_exchange;
   }
 
+  /**
+   * Processes a token exchange request per RFC 8693 Section 2.
+   *
+   * <p>Flow: validate request parameters (Section 2.1) → verify subject_token → resolve user (with
+   * optional JIT Provisioning) → issue new access token (Section 2.2.1).
+   */
   @Override
   public OAuthToken create(TokenRequestContext context, ClientCredentials clientCredentials) {
     TokenExchangeGrantValidator validator = new TokenExchangeGrantValidator(context);
@@ -85,6 +93,14 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
     return issueToken(context, clientCredentials, user);
   }
 
+  /**
+   * Resolves the user for the token exchange. If the user exists, optionally updates attributes via
+   * JIT. If the user does not exist and JIT Provisioning is enabled, auto-creates a new user with
+   * status {@link UserStatus#FEDERATED}.
+   *
+   * @throws TokenBadRequestException with {@code invalid_grant} if the user is not found and JIT
+   *     Provisioning is disabled, or if no claims are available for provisioning
+   */
   private User resolveUser(
       TokenRequestContext context, SubjectTokenVerificationResult verificationResult) {
     Tenant tenant = context.tenant();
@@ -99,10 +115,12 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
             verificationResult.subjectClaimMapping());
 
     if (existingUser.exists()) {
-      if (federation.jitProvisioningEnabled()
-          && federation.hasUserinfoMappingRules()
-          && verificationResult.hasClaims()) {
-        User mappedUser = mapClaimsToUser(verificationResult);
+      if (federation.canJitUpdate() && verificationResult.hasClaims()) {
+        log.info(
+            "JIT updating existing user: providerId={}, subject={}",
+            verificationResult.providerId(),
+            verificationResult.subject());
+        User mappedUser = verificationResult.toUser();
         mappedUser.setSub(existingUser.sub());
         mappedUser.setStatus(existingUser.status());
         mappedUser.applyIdentityPolicy(tenant.identityPolicyConfig());
@@ -122,7 +140,11 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
           "invalid_grant", "User not found and no claims available for JIT provisioning");
     }
 
-    User newUser = mapClaimsToUser(verificationResult);
+    log.info(
+        "JIT provisioning new user: providerId={}, subject={}",
+        verificationResult.providerId(),
+        verificationResult.subject());
+    User newUser = verificationResult.toUser();
     newUser.setSub(UUID.randomUUID().toString());
     newUser.setStatus(UserStatus.FEDERATED);
     newUser.applyIdentityPolicy(context.tenant().identityPolicyConfig());
@@ -130,16 +152,18 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
     return newUser;
   }
 
-  private User mapClaimsToUser(SubjectTokenVerificationResult verificationResult) {
-    AvailableFederation federation = verificationResult.federation();
-    UserInfoMapper userInfoMapper =
-        new UserInfoMapper(
-            federation.userinfoMappingRules(),
-            verificationResult.claims(),
-            federation.resolveProviderId());
-    return userInfoMapper.toUser();
-  }
-
+  /**
+   * Issues a new access token and optional refresh token per RFC 8693 Section 2.2.1.
+   *
+   * <p>RFC 8693 Section 2.2.1:
+   *
+   * <blockquote>
+   *
+   * access_token REQUIRED. The security token issued by the authorization server in response to the
+   * token exchange request.
+   *
+   * </blockquote>
+   */
   private OAuthToken issueToken(
       TokenRequestContext context, ClientCredentials clientCredentials, User user) {
     Tenant tenant = context.tenant();

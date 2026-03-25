@@ -11,12 +11,9 @@ import crypto from "crypto";
 /**
  * RFC 8693 - OAuth 2.0 Token Exchange
  *
- * Tests for token exchange grant type (urn:ietf:params:oauth:grant-type:token-exchange).
- * Exchanges a subject_token (JWT from external IdP) for a new access token.
- *
  * @see https://datatracker.ietf.org/doc/html/rfc8693
  */
-describe("RFC 8693 Token Exchange", () => {
+describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
   let systemAccessToken;
 
   beforeAll(async () => {
@@ -192,7 +189,9 @@ describe("RFC 8693 Token Exchange", () => {
     });
   }
 
-  it("should exchange external IdP JWT subject_token for access token", async () => {
+  describe("2.1. Request", () => {
+
+  it("grant_type REQUIRED. The value urn:ietf:params:oauth:grant-type:token-exchange indicates that a token exchange is being performed.", async () => {
     const ctx = await createTestTenant();
 
     try {
@@ -258,7 +257,7 @@ describe("RFC 8693 Token Exchange", () => {
     }
   });
 
-  it("should reject request without subject_token", async () => {
+  it("subject_token REQUIRED. A security token that represents the identity of the party on behalf of whom the request is being made.", async () => {
     const ctx = await createTestTenant();
 
     try {
@@ -278,7 +277,7 @@ describe("RFC 8693 Token Exchange", () => {
     }
   });
 
-  it("should reject request without subject_token_type", async () => {
+  it("subject_token_type REQUIRED. An identifier, as described in Section 3, that indicates the type of the security token in the subject_token parameter.", async () => {
     const ctx = await createTestTenant();
 
     try {
@@ -313,7 +312,7 @@ describe("RFC 8693 Token Exchange", () => {
     }
   });
 
-  it("should reject subject_token from untrusted issuer", async () => {
+  it("The authorization server MUST perform the appropriate validation procedures for the indicated token type - untrusted issuer MUST be rejected.", async () => {
     const ctx = await createTestTenant();
 
     try {
@@ -352,7 +351,7 @@ describe("RFC 8693 Token Exchange", () => {
     }
   });
 
-  it("should reject subject_token with invalid signature", async () => {
+  it("The authorization server MUST perform the appropriate validation procedures for the indicated token type - invalid signature MUST be rejected.", async () => {
     const ctx = await createTestTenant();
 
     try {
@@ -391,7 +390,7 @@ describe("RFC 8693 Token Exchange", () => {
     }
   });
 
-  it("should reject expired subject_token", async () => {
+  it("The authorization server MUST perform the appropriate validation procedures for the indicated token type - expired subject_token MUST be rejected.", async () => {
     const ctx = await createTestTenant();
 
     try {
@@ -427,7 +426,11 @@ describe("RFC 8693 Token Exchange", () => {
     }
   });
 
-  it("should auto-create user via JIT Provisioning when user does not exist", async () => {
+  }); // describe("2.1. Request")
+
+  describe("2.2.1. Successful Response", () => {
+
+  it("issued_token_type REQUIRED. An identifier for the representation of the issued security token.", async () => {
     const timestamp = Date.now();
     const organizationId = uuidv4();
     const tenantId = uuidv4();
@@ -632,7 +635,11 @@ describe("RFC 8693 Token Exchange", () => {
     }
   });
 
-  it("should reject token exchange when user not found and JIT disabled", async () => {
+  }); // describe("2.2.1. Successful Response")
+
+  describe("JIT Provisioning (Extension)", () => {
+
+  it("When jit_provisioning_enabled is false and user does not exist, the authorization server MUST reject the request with invalid_grant.", async () => {
     const ctx = await createTestTenant(); // default: jit disabled
 
     try {
@@ -671,7 +678,11 @@ describe("RFC 8693 Token Exchange", () => {
     }
   });
 
-  it("should fetch userinfo via userinfoHttpRequests after introspection for JIT Provisioning", async () => {
+  }); // describe("JIT Provisioning (Extension)")
+
+  describe("Introspection Verification (Extension)", () => {
+
+  it("When token_exchange_token_verification_method is introspection, the authorization server MUST introspect the subject_token at the external IdP and fetch additional userinfo via userinfoHttpRequests for JIT Provisioning.", async () => {
     const timestamp = Date.now();
     const tenantAUserId = uuidv4();
 
@@ -1022,7 +1033,7 @@ describe("RFC 8693 Token Exchange", () => {
     }
   });
 
-  it("should exchange access_token via introspection with JIT Provisioning", async () => {
+  it("When token_exchange_token_verification_method is introspection, the authorization server MUST introspect the subject_token and perform JIT Provisioning when the user does not exist.", async () => {
     const timestamp = Date.now();
     const tenantAUserId = uuidv4();
 
@@ -1331,4 +1342,6 @@ describe("RFC 8693 Token Exchange", () => {
       });
     }
   });
+
+  }); // describe("Introspection Verification (Extension)")
 });

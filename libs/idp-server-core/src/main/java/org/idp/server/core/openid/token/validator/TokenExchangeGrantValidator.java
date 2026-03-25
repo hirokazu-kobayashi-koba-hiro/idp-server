@@ -23,9 +23,18 @@ import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 /**
  * TokenExchangeGrantValidator
  *
- * <p>Validates token exchange request parameters per RFC 8693.
+ * <p>Validates token exchange request parameters per RFC 8693 Section 2.1.
  *
- * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693</a>
+ * <p>RFC 8693 Section 2.1:
+ *
+ * <blockquote>
+ *
+ * The value "urn:ietf:params:oauth:grant-type:token-exchange" indicates that a token exchange is
+ * being performed.
+ *
+ * </blockquote>
+ *
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">RFC 8693 Section 2.1</a>
  */
 public class TokenExchangeGrantValidator {
 
@@ -42,6 +51,16 @@ public class TokenExchangeGrantValidator {
     throwExceptionIfSubjectTokenTypeNotProvided();
   }
 
+  /**
+   * RFC 8693 Section 2.1:
+   *
+   * <blockquote>
+   *
+   * subject_token REQUIRED. A security token that represents the identity of the party on behalf of
+   * whom the request is being made.
+   *
+   * </blockquote>
+   */
   void throwExceptionIfSubjectTokenNotProvided() {
     if (!tokenRequestContext.hasSubjectToken()) {
       throw new TokenBadRequestException(
@@ -49,6 +68,19 @@ public class TokenExchangeGrantValidator {
     }
   }
 
+  /**
+   * RFC 8693 Section 2.1:
+   *
+   * <blockquote>
+   *
+   * subject_token_type REQUIRED. An identifier, as described in Section 3, that indicates the type
+   * of the security token in the subject_token parameter.
+   *
+   * </blockquote>
+   *
+   * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-3">RFC 8693 Section 3 -
+   *     Token Type Identifiers</a>
+   */
   void throwExceptionIfSubjectTokenTypeNotProvided() {
     if (!tokenRequestContext.hasSubjectTokenType()) {
       throw new TokenBadRequestException(
