@@ -370,6 +370,24 @@ services:
       DB_USER_NAME: ${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
       DB_PASSWORD: ${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
 
+  statistics-setup:
+    build:
+      context: ./libs/idp-server-database
+      dockerfile: Dockerfile-statistics-setup
+    image: idp-statistics-setup:latest
+    restart: "no"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      flyway-migrator:
+        condition: service_completed_successfully
+    environment:
+      PGHOST: postgres-primary
+      PGPORT: 5432
+      POSTGRES_DB: idpserver
+      DB_USER_NAME: ${DB_OWNER_USER?Database owner user is required. Set DB_OWNER_USER environment variable.}
+      DB_PASSWORD: ${DB_OWNER_PASSWORD?Database owner password is required. Set DB_OWNER_PASSWORD environment variable.}
+
   redis:
     image: redis:7.2-alpine
     container_name: redis

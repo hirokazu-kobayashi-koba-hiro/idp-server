@@ -80,12 +80,10 @@ public class SecurityEventHandler {
 
     logService.logEvent(tenant, securityEvent);
 
-    // Update statistics synchronously (same transaction)
-    SecurityEventLogConfiguration config = tenant.securityEventLogConfiguration();
-    if (config.isStatisticsEnabled()) {
-      updateStatistics(tenant, securityEvent);
-    }
-
+    // Execute hooks first (before statistics) to minimize lock hold time.
+    // Hook execution involves blocking I/O (email, Slack, webhook: 450-500ms).
+    // If statistics rows are locked before hooks, the lock is held during I/O,
+    // causing cascading lock contention on statistics_events under high load.
     SecurityEventHookConfigurations securityEventHookConfigurations =
         securityEventHookConfigurationQueryRepository.find(tenant);
 
@@ -123,6 +121,12 @@ public class SecurityEventHandler {
 
     if (!results.isEmpty()) {
       resultsCommandRepository.bulkRegister(tenant, results);
+    }
+
+    // Update statistics after hooks to keep lock hold time minimal (few ms).
+    SecurityEventLogConfiguration config = tenant.securityEventLogConfiguration();
+    if (config.isStatisticsEnabled()) {
+      updateStatistics(tenant, securityEvent);
     }
   }
 
