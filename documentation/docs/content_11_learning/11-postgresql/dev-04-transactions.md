@@ -929,6 +929,166 @@ SET idle_in_transaction_session_timeout = '5min';
 
 ---
 
+## 11. ロック実践: よくある問題パターン
+
+基礎を理解したうえで、実際のアプリケーションで遭遇しやすいロック問題のパターンを学びます。
+
+### 11.1 ON CONFLICT (UPSERT) のロック挙動
+
+`INSERT ... ON CONFLICT DO UPDATE` は、対象行に**排他ロック**を取得します。
+
+```sql
+-- このUPSERTは (tenant_id, stat_date, event_type) の行に排他ロックを取得
+INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
+VALUES ('tenant-1', '2026-03-25', 'login_success', 1)
+ON CONFLICT (tenant_id, stat_date, event_type)
+DO UPDATE SET count = statistics_events.count + 1;
+```
+
+`DO NOTHING` の場合はロックを取得しません。
+
+```sql
+-- DO NOTHING は対象行にロックを取得しない
+INSERT INTO statistics_daily_users (tenant_id, stat_date, user_id)
+VALUES ('tenant-1', '2026-03-25', 'user-1')
+ON CONFLICT DO NOTHING;
+```
+
+**ポイント**: UPSERTを多用する場合は、`DO UPDATE` と `DO NOTHING` のロック挙動の違いを意識する。
+
+### 11.2 ホットスポット行
+
+同一行に多数のスレッドが集中すると、直列化が発生します。
+
+```
+例: statistics_events の PK = (tenant_id, stat_date, event_type)
+
+30スレッドが同時に:
+  INSERT INTO statistics_events ('tenant-1', '2026-03-25', 'login_success', 1)
+  ON CONFLICT DO UPDATE SET count = count + 1;
+
+→ 全スレッドが同じ1行をめぐって排他ロック競合
+→ 実質的にシングルスレッド実行になる
+```
+
+```
+スレッド1: ████████░░░░░░░░░░░░░░░░░░░░░░  ロック取得 → 更新 → COMMIT
+スレッド2: ________████████░░░░░░░░░░░░░░░  ロック待ち → 取得 → 更新 → COMMIT
+スレッド3: ________________████████░░░░░░░  ロック待ち → 取得 → 更新 → COMMIT
+  ...
+スレッド30:                              ████████  最後にやっと実行
+```
+
+**対策パターン**:
+
+| パターン | 概要 | トレードオフ |
+|:---|:---|:---|
+| バッチ集計 | 1日分をまとめて `COUNT(*)` → 1回のUPSERT | リアルタイム性を犠牲 |
+| インメモリバッファ | アプリ側で集約してから書き込み | クラッシュ時にデータ消失 |
+| キー分散 | ランダムなバケットIDを付与して行を分散 | 読み取り時の集約が必要 |
+
+### 11.3 トランザクション内の外部I/O（最重要）
+
+**最も危険なアンチパターン**: ロックを保持したまま外部I/O（HTTP通信、メール送信等）を行う。
+
+```sql
+-- ❌ 危険: ロック保持中に外部I/O
+BEGIN;
+  UPDATE orders SET status = 'processing' WHERE id = 123;   -- 行ロック取得
+  -- ↓ この間、他のトランザクションは id=123 の更新を待つ
+  SELECT http_post('https://api.example.com/notify', ...);   -- 500ms かかる
+  UPDATE orders SET status = 'notified' WHERE id = 123;
+COMMIT;  -- 500ms+ 後にやっとロック解放
+```
+
+問題が**カスケード**する仕組み:
+
+```
+                                   ロック保持時間
+                    ├────────────────────────────────────────────┤
+Thread-1: BEGIN → UPDATE(ロック) → HTTP(500ms) → UPDATE → COMMIT
+Thread-2:          ↓ ロック待ち(500ms+)          → UPDATE → HTTP → COMMIT
+Thread-3:                                          ↓ ロック待ち(1000ms+) → ...
+Thread-4:                                                        ↓ ロック待ち(1500ms+)
+```
+
+1スレッドの500msが、30スレッドでは最悪 **15秒** の待ち時間に膨張する。
+さらにコネクションプールが枯渇すると、新しいリクエストも処理できなくなる。
+
+**解決パターン**:
+
+```sql
+-- ✅ パターンA: I/Oをトランザクション外に
+BEGIN;
+  UPDATE orders SET status = 'processing' WHERE id = 123;
+COMMIT;  -- 即座にロック解放
+
+-- トランザクション外でI/O
+SELECT http_post('https://api.example.com/notify', ...);
+
+BEGIN;
+  UPDATE orders SET status = 'notified' WHERE id = 123;
+COMMIT;
+```
+
+```sql
+-- ✅ パターンB: 順序を変えてロック保持時間を最小化
+BEGIN;
+  INSERT INTO outbox (order_id, payload) VALUES (123, ...);  -- 新規行なので競合なし
+  SELECT http_post('https://api.example.com/notify', ...);   -- I/O実行
+  UPDATE orders SET status = 'notified' WHERE id = 123;      -- ロック取得は最後
+COMMIT;  -- 数ms後にロック解放
+```
+
+### 11.4 ロック競合の調査方法
+
+問題が起きたとき、何を見るか。
+
+#### pg_stat_activity で待機中のセッションを確認
+
+```sql
+SELECT
+  pid,
+  state,
+  wait_event_type,
+  wait_event,
+  query_start,
+  NOW() - query_start AS duration,
+  LEFT(query, 80) AS query
+FROM pg_stat_activity
+WHERE state = 'active'
+  AND wait_event_type = 'Lock'
+ORDER BY duration DESC;
+```
+
+#### pg_locks でどの行がロックされているか確認
+
+```sql
+SELECT
+  blocked.pid AS blocked_pid,
+  blocked.query AS blocked_query,
+  blocking.pid AS blocking_pid,
+  blocking.query AS blocking_query,
+  NOW() - blocked_activity.query_start AS blocked_duration
+FROM pg_locks blocked
+JOIN pg_locks blocking
+  ON blocked.transactionid = blocking.transactionid
+  AND blocked.pid != blocking.pid
+JOIN pg_stat_activity blocked_activity ON blocked.pid = blocked_activity.pid
+JOIN pg_stat_activity blocking_activity ON blocking.pid = blocking_activity.pid
+WHERE NOT blocked.granted;
+```
+
+#### 確認のポイント
+
+| 確認項目 | 見るべきもの | 異常の目安 |
+|:---|:---|:---|
+| 待機セッション数 | `wait_event = 'transactionid'` のセッション数 | コネクションプールの半数以上 |
+| 待機時間 | `NOW() - query_start` | 通常の処理時間の10倍以上 |
+| ブロックしているクエリ | `blocking_query` | 外部I/O呼び出しを含むか |
+
+---
+
 ## まとめ
 
 1. **ACID特性**を理解し、トランザクションで一貫性を保証する
@@ -937,8 +1097,11 @@ SET idle_in_transaction_session_timeout = '5min';
 4. **MVCC**により読み取りと書き込みが互いをブロックしない
 5. **セーブポイント**で部分的なロールバックが可能
 6. 長時間トランザクションを避け、**適切なタイムアウト**を設定する
+7. **トランザクション内で外部I/Oをしない** — ロック保持時間が膨張しカスケード障害を引き起こす
+8. **ホットスポット行**を意識し、バッチ化やキー分散で競合を回避する
 
 ## 次のステップ
 
 - [dev-05-query-optimization.md](dev-05-query-optimization.md): クエリ最適化
 - [dba-03-replication-ha.md](dba-03-replication-ha.md): レプリケーションと高可用性
+- [ケーススタディ: 統計テーブルのロック競合](../26-performance-tuning/14-case-study-lock-contention.md): 実事例による学習
