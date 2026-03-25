@@ -1006,6 +1006,33 @@ const sidebars = {
         },
         {
           type: "category",
+          label: "イベント駆動アーキテクチャ",
+          items: [
+            "content_11_learning/event-driven-architecture/README",
+            {
+              type: "category",
+              label: "概念",
+              collapsed: true,
+              items: [
+                "content_11_learning/event-driven-architecture/domain-events",
+                "content_11_learning/event-driven-architecture/event-sourcing",
+                "content_11_learning/event-driven-architecture/cqrs"
+              ]
+            },
+            {
+              type: "category",
+              label: "実現パターン",
+              collapsed: true,
+              items: [
+                "content_11_learning/event-driven-architecture/implementation-patterns",
+                "content_11_learning/event-driven-architecture/scaling-patterns",
+                "content_11_learning/event-driven-architecture/aws-architecture"
+              ]
+            }
+          ]
+        },
+        {
+          type: "category",
           label: "AWS",
           items: [
             "content_11_learning/aws/README",
