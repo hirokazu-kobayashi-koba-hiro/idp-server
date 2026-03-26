@@ -37,8 +37,8 @@ import org.idp.server.core.openid.token.*;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.validator.TokenExchangeGrantValidator;
-import org.idp.server.core.openid.token.verifier.SubjectTokenVerifier;
-import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.core.openid.token.verifier.SubjectTokenVerificationStrategies;
+import org.idp.server.core.openid.token.verifier.SubjectTokenVerificationStrategy;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -55,19 +55,16 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
   private static final LoggerWrapper log = LoggerWrapper.getLogger(TokenExchangeGrantService.class);
 
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
-  SubjectTokenVerifier subjectTokenVerifier;
+  SubjectTokenVerificationStrategies subjectTokenVerificationStrategies;
   UserRegistrator userRegistrator;
   AccessTokenCreator accessTokenCreator;
 
   public TokenExchangeGrantService(
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
-      HttpRequestExecutor httpRequestExecutor,
-      UserRegistrator userRegistrator) {
+      UserRegistrator userRegistrator,
+      SubjectTokenVerificationStrategies subjectTokenVerificationStrategies) {
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
-    this.subjectTokenVerifier =
-        new SubjectTokenVerifier(
-            new FederationJwtVerifier(httpRequestExecutor),
-            new ExternalTokenIntrospector(httpRequestExecutor));
+    this.subjectTokenVerificationStrategies = subjectTokenVerificationStrategies;
     this.userRegistrator = userRegistrator;
     this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
@@ -88,7 +85,10 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
     TokenExchangeGrantValidator validator = new TokenExchangeGrantValidator(context);
     validator.validate();
 
-    SubjectTokenVerificationResult verificationResult = subjectTokenVerifier.verify(context);
+    SubjectTokenVerificationStrategy strategy =
+        subjectTokenVerificationStrategies.get(context.subjectTokenType());
+    SubjectTokenVerificationResult verificationResult =
+        strategy.verify(context, context.subjectToken());
     User user = resolveUser(context, verificationResult);
     return issueToken(context, clientCredentials, user);
   }

@@ -86,10 +86,6 @@ public class TokenExchangeGrantValidator {
       throw new TokenBadRequestException(
           "invalid_request", "subject_token_type parameter is required for Token Exchange Grant");
     }
-    if (!tokenRequestContext.subjectTokenType().exists()) {
-      throw new TokenBadRequestException(
-          "invalid_request", "subject_token_type parameter value is not supported");
-    }
   }
 
   void throwExceptionIfUnSupportedGrantTypeWithClient() {

@@ -171,7 +171,7 @@ public class TokenRequestParameters implements BackchannelRequestParameters {
   }
 
   public SubjectTokenType subjectTokenType() {
-    return SubjectTokenType.of(getValueOrEmpty(OAuthRequestKey.subject_token_type));
+    return new SubjectTokenType(getValueOrEmpty(OAuthRequestKey.subject_token_type));
   }
 
   public boolean hasSubjectTokenType() {

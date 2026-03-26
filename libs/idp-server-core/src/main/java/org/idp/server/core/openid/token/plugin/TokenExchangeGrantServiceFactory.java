@@ -16,19 +16,29 @@
 
 package org.idp.server.core.openid.token.plugin;
 
+import java.util.Map;
 import org.idp.server.core.openid.identity.UserRegistrator;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.type.oauth.SubjectTokenType;
+import org.idp.server.core.openid.plugin.token.SubjectTokenVerificationStrategyPluginLoader;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.openid.token.service.ExternalTokenIntrospector;
+import org.idp.server.core.openid.token.service.FederationJwtVerifier;
 import org.idp.server.core.openid.token.service.OAuthTokenCreationService;
 import org.idp.server.core.openid.token.service.TokenExchangeGrantService;
+import org.idp.server.core.openid.token.verifier.SubjectTokenVerificationStrategies;
+import org.idp.server.core.openid.token.verifier.SubjectTokenVerificationStrategy;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.http.HttpRequestExecutor;
 
 /**
  * Factory for creating TokenExchangeGrantService instances.
  *
- * <p>This factory is registered via SPI to enable Token Exchange Grant support.
+ * <p>This factory is registered via SPI to enable Token Exchange Grant support. Core token types
+ * (jwt, id_token, access_token) are built into {@link SubjectTokenVerifier}. Extension token types
+ * (e.g., SAML) are loaded via {@link SubjectTokenVerificationStrategyPluginLoader} from internal
+ * modules and external plugins/ directory.
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693</a>
  */
@@ -43,7 +53,19 @@ public class TokenExchangeGrantServiceFactory implements OAuthTokenCreationServi
     UserCommandRepository userCommandRepository = container.resolve(UserCommandRepository.class);
     UserRegistrator userRegistrator =
         new UserRegistrator(userQueryRepository, userCommandRepository);
+
+    FederationJwtVerifier federationJwtVerifier = new FederationJwtVerifier(httpRequestExecutor);
+    ExternalTokenIntrospector externalTokenIntrospector =
+        new ExternalTokenIntrospector(httpRequestExecutor);
+
+    Map<SubjectTokenType, SubjectTokenVerificationStrategy> extensionStrategies =
+        SubjectTokenVerificationStrategyPluginLoader.load(container);
+
+    SubjectTokenVerificationStrategies subjectTokenVerificationStrategies =
+        new SubjectTokenVerificationStrategies(
+            federationJwtVerifier, externalTokenIntrospector, extensionStrategies);
+
     return new TokenExchangeGrantService(
-        oAuthTokenCommandRepository, httpRequestExecutor, userRegistrator);
+        oAuthTokenCommandRepository, userRegistrator, subjectTokenVerificationStrategies);
   }
 }

@@ -21,32 +21,20 @@ import java.util.Objects;
 /**
  * SubjectTokenType
  *
- * <p>RFC 8693 Section 3 - Token Type Identifiers for subject_token_type.
+ * <p>RFC 8693 Section 3 - Token Type Identifier for subject_token_type. Value object that wraps the
+ * token type URI string, allowing extensibility for custom token types (e.g., SAML assertions)
+ * without modifying core code.
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-3">RFC 8693 Section 3</a>
  */
-public enum SubjectTokenType {
-  access_token("urn:ietf:params:oauth:token-type:access_token"),
-  id_token("urn:ietf:params:oauth:token-type:id_token"),
-  jwt("urn:ietf:params:oauth:token-type:jwt"),
-  undefined("");
+public class SubjectTokenType {
 
   String value;
 
-  SubjectTokenType(String value) {
-    this.value = value;
-  }
+  public SubjectTokenType() {}
 
-  public static SubjectTokenType of(String value) {
-    if (Objects.isNull(value) || value.isEmpty()) {
-      return undefined;
-    }
-    for (SubjectTokenType type : SubjectTokenType.values()) {
-      if (type.value.equals(value)) {
-        return type;
-      }
-    }
-    return undefined;
+  public SubjectTokenType(String value) {
+    this.value = value;
   }
 
   public String value() {
@@ -54,14 +42,18 @@ public enum SubjectTokenType {
   }
 
   public boolean exists() {
-    return this != undefined;
+    return value != null && !value.isEmpty();
   }
 
-  public boolean isAlwaysJwt() {
-    return this == id_token || this == jwt;
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    SubjectTokenType that = (SubjectTokenType) o;
+    return Objects.equals(value, that.value);
   }
 
-  public boolean isAccessToken() {
-    return this == access_token;
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(value);
   }
 }

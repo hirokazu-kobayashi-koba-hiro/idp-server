@@ -426,6 +426,154 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
     }
   });
 
+  it("subject_token_type urn:ietf:params:oauth:token-type:jwt - Indicates that the security token is a JWT (Section 3).", async () => {
+    const ctx = await createTestTenant();
+
+    try {
+      const assertionPayload = {
+        iss: ctx.externalIdpIssuer,
+        sub: ctx.userId,
+        aud: ctx.audience,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+      };
+
+      const subjectTokenJwt = createJwtWithJwk({
+        payload: assertionPayload,
+        privateJwk: ctx.externalIdpJwks.privateJwk,
+        options: { algorithm: "ES256", keyId: "signing_key_1" },
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: subjectTokenJwt,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:jwt",
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data.issued_token_type).toBe("urn:ietf:params:oauth:token-type:access_token");
+    } finally {
+      await cleanup(ctx);
+    }
+  });
+
+  it("subject_token_type urn:ietf:params:oauth:token-type:id_token - Indicates that the security token is an ID Token (Section 3).", async () => {
+    const ctx = await createTestTenant();
+
+    try {
+      const assertionPayload = {
+        iss: ctx.externalIdpIssuer,
+        sub: ctx.userId,
+        aud: ctx.audience,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+      };
+
+      const subjectTokenJwt = createJwtWithJwk({
+        payload: assertionPayload,
+        privateJwk: ctx.externalIdpJwks.privateJwk,
+        options: { algorithm: "ES256", keyId: "signing_key_1" },
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: subjectTokenJwt,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:id_token",
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data.issued_token_type).toBe("urn:ietf:params:oauth:token-type:access_token");
+    } finally {
+      await cleanup(ctx);
+    }
+  });
+
+  it("subject_token_type id_token without sub claim MUST be rejected per OIDC Core Section 2 (sub REQUIRED in ID Token).", async () => {
+    const ctx = await createTestTenant();
+
+    try {
+      const assertionPayload = {
+        iss: ctx.externalIdpIssuer,
+        // no sub
+        aud: ctx.audience,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+      };
+
+      const subjectTokenJwt = createJwtWithJwk({
+        payload: assertionPayload,
+        privateJwk: ctx.externalIdpJwks.privateJwk,
+        options: { algorithm: "ES256", keyId: "signing_key_1" },
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: subjectTokenJwt,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:id_token",
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toBe("invalid_grant");
+    } finally {
+      await cleanup(ctx);
+    }
+  });
+
+  it("requested_token_type OPTIONAL. If the requested type is unspecified, the issued token type is at the discretion of the authorization server.", async () => {
+    const ctx = await createTestTenant();
+
+    try {
+      const assertionPayload = {
+        iss: ctx.externalIdpIssuer,
+        sub: ctx.userId,
+        aud: ctx.audience,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+      };
+
+      const subjectTokenJwt = createJwtWithJwk({
+        payload: assertionPayload,
+        privateJwk: ctx.externalIdpJwks.privateJwk,
+        options: { algorithm: "ES256", keyId: "signing_key_1" },
+      });
+
+      // With requested_token_type specified
+      const tokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: subjectTokenJwt,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:access_token",
+        requestedTokenType: "urn:ietf:params:oauth:token-type:access_token",
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.issued_token_type).toBe("urn:ietf:params:oauth:token-type:access_token");
+    } finally {
+      await cleanup(ctx);
+    }
+  });
+
   }); // describe("2.1. Request")
 
   describe("2.2.1. Successful Response", () => {
@@ -632,6 +780,84 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
         url: `${backendUrl}/v1/management/orgs/${organizationId}`,
         headers: { Authorization: `Bearer ${systemAccessToken}` },
       });
+    }
+  });
+
+  it("expires_in RECOMMENDED. The validity lifetime, in seconds, of the token issued by the authorization server.", async () => {
+    const ctx = await createTestTenant();
+
+    try {
+      const assertionPayload = {
+        iss: ctx.externalIdpIssuer,
+        sub: ctx.userId,
+        aud: ctx.audience,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+      };
+
+      const subjectTokenJwt = createJwtWithJwk({
+        payload: assertionPayload,
+        privateJwk: ctx.externalIdpJwks.privateJwk,
+        options: { algorithm: "ES256", keyId: "signing_key_1" },
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: subjectTokenJwt,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:access_token",
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("expires_in");
+      expect(typeof tokenResponse.data.expires_in).toBe("number");
+      expect(tokenResponse.data.expires_in).toBeGreaterThan(0);
+    } finally {
+      await cleanup(ctx);
+    }
+  });
+
+  it("refresh_token OPTIONAL. A refresh token will typically not be issued when the exchange is of one temporary credential for a different temporary credential.", async () => {
+    const ctx = await createTestTenant();
+
+    try {
+      const assertionPayload = {
+        iss: ctx.externalIdpIssuer,
+        sub: ctx.userId,
+        aud: ctx.audience,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+      };
+
+      const subjectTokenJwt = createJwtWithJwk({
+        payload: assertionPayload,
+        privateJwk: ctx.externalIdpJwks.privateJwk,
+        options: { algorithm: "ES256", keyId: "signing_key_1" },
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: subjectTokenJwt,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:access_token",
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      // refresh_token is optional per RFC 8693 - verify it is present if the server issues one
+      if (tokenResponse.data.refresh_token) {
+        expect(typeof tokenResponse.data.refresh_token).toBe("string");
+        expect(tokenResponse.data.refresh_token.length).toBeGreaterThan(0);
+      }
+    } finally {
+      await cleanup(ctx);
     }
   });
 
