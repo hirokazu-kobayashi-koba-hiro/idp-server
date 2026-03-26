@@ -233,19 +233,14 @@ paths:
                   value:
                     error: "invalid_client"
                     error_description: "Client authentication required"
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
-          description: |
-            サーバー内部エラー
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                server_error:
-                  summary: サーバーエラー
-                  value:
-                    error: "server_error"
-                    error_description: "The authorization server encountered an unexpected condition"
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/v1/backchannel/authentications:
     post:
       summary: バックチャンネル認証リクエスト
@@ -307,6 +302,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/BackchannelAuthenticationForbiddenErrorResponse'
 
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/v1/authorizations:
     get:
       summary: 認可リクエスト
@@ -346,6 +349,14 @@ paths:
       responses:
         '302':
           description: 認可画面のURL（リダイレクト）
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
     post:
       summary: 認可リクエスト（POST）
       tags:
@@ -468,6 +479,14 @@ paths:
               description: 認証画面のURL
               example: "https://idp.example.com/{tenant-id}/v1/authorizations/authenticate?id={authorization-id}"
 
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/v1/tokens:
     post:
       summary: トークンリクエスト
@@ -584,6 +603,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenInvalidClientErrorResponse'
 
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/v1/tokens/introspection:
     post:
       tags:
@@ -637,6 +664,14 @@ paths:
         '401':
           description: 認証エラー。クライアント認証に失敗した場合。
 
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/v1/tokens/introspection-extensions:
     post:
       tags:
@@ -698,6 +733,14 @@ paths:
         '401':
           description: 認証エラー。クライアント認証に失敗した場合。
 
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/v1/tokens/revocation:
     post:
       tags:
@@ -749,6 +792,14 @@ paths:
         '401':
           description: クライアント認証エラー。
 
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/v1/userinfo:
     get:
       summary: ユーザーInfo
@@ -788,6 +839,14 @@ paths:
                 RFC 6750 Section 3 に従い、エラー詳細（例：invalid_token）と説明が含まれます。
               schema:
                 type: string
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
     post:
       summary: ユーザーInfo
       tags:
@@ -827,6 +886,14 @@ paths:
               schema:
                 type: string
 
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/.well-known/openid-configuration:
     get:
       summary: OpenID Connect Discovery
@@ -859,6 +926,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenIDConfiguration'
 
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/v1/jwks:
     get:
       summary: JSON Web Key Set (JWKS)
@@ -876,6 +951,14 @@ paths:
                 $ref: '#/components/schemas/JWKS'
 
 
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/v1/ssf/events/receive:
     post:
       summary: |
@@ -912,6 +995,14 @@ paths:
         '401':
           description: 認証エラー（トークンが無効、署名検証失敗）
 
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/v1/logout:
     get:
       summary: RP-Initiated Logout エンドポイント
@@ -1111,22 +1202,14 @@ paths:
                   value:
                     error: "invalid_request"
                     error_description: "id_token_hint iss claim does not match this OP"
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
-          description: |
-            サーバー内部エラー。
-
-            セッション処理やストレージアクセスに関する予期しないエラーが発生した場合。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                server_error:
-                  summary: サーバー内部エラー
-                  value:
-                    error: "server_error"
-                    error_description: "An unexpected error occurred during logout processing"
-
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/.well-known/ssf-configuration:
     get:
       summary: SSF Discovery Configuration
@@ -1170,6 +1253,14 @@ paths:
                     verification_endpoint: "https://idp-server.example.com/v1/ssf/verification"
                     critical_subject_members: ["sub", "email"]
 
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/v1/ssf/jwks:
     get:
       summary: JSON Web Key Set (JWKS)
@@ -1185,8 +1276,121 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/JWKS'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
 components:
+  responses:
+    TooManyRequests:
+      description: |
+        レート制限超過。
+
+        クライアントが短時間に過剰なリクエストを送信した場合に返却されます。
+        このレスポンスは API Gateway がリクエストをアプリケーションに到達させる前に返却します。
+
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: リトライまでの推奨待機時間（秒）
+          required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            throttled:
+              summary: スロットリング（秒間リクエスト制限）
+              value:
+                message: "Too Many Requests"
+            quota_exceeded:
+              summary: クォータ超過（日次/月次リクエスト制限）
+              value:
+                message: "Limit Exceeded"
+    InternalServerError:
+      description: |
+        サーバー内部エラー。
+
+        アプリケーションで予期しないエラーが発生した場合、または API Gateway が
+        バックエンドから正常なレスポンスを受信できなかった場合に返却されます。
+
+        アプリケーション起因の場合は OAuth 2.0 ErrorResponse 形式
+        （`{"error": "server_error", "error_description": "..."}`）で
+        返却される場合があります。
+
+        問題が継続する場合は、サーバー管理者にお問い合わせください。
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            default:
+              summary: サーバー内部エラー
+              value:
+                message: "Internal server error"
+    ServiceUnavailable:
+      description: |
+        サービス一時利用不可。
+
+        バックエンドサーバーが利用できない状態です。
+        このレスポンスは API Gateway がバックエンドへの接続に失敗した場合に返却します。
+
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: サービス復旧までの推定時間（秒）
+          required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            default:
+              summary: サービス利用不可
+              value:
+                message: "Service Unavailable"
+    GatewayTimeout:
+      description: |
+        ゲートウェイタイムアウト。
+
+        バックエンドサーバーからの応答が制限時間内に返却されませんでした。
+        このレスポンスは API Gateway がバックエンドの応答を待機してタイムアウトした場合に返却します。
+
+        ネットワークの一時的な問題の可能性があります。時間をおいてリトライしてください。
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            default:
+              summary: タイムアウト
+              value:
+                message: "Endpoint request timed out"
   securitySchemes:
     bearerAuth:
       type: http
@@ -3088,5 +3292,3 @@ components:
             - "https://schemas.openid.net/secevent/risc/event-type/account-purged"
             - "https://schemas.openid.net/secevent/risc/event-type/account-disabled"
             - "https://schemas.openid.net/secevent/risc/event-type/session-revoked"
-
-
