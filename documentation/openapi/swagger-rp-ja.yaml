@@ -1276,6 +1276,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/JWKS'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
 components:
   responses:
@@ -1316,6 +1324,10 @@ components:
 
         アプリケーションで予期しないエラーが発生した場合、または API Gateway が
         バックエンドから正常なレスポンスを受信できなかった場合に返却されます。
+
+        アプリケーション起因の場合は OAuth 2.0 ErrorResponse 形式
+        （`{"error": "server_error", "error_description": "..."}`）で
+        返却される場合があります。
 
         問題が継続する場合は、サーバー管理者にお問い合わせください。
       content:
@@ -3280,14 +3292,3 @@ components:
             - "https://schemas.openid.net/secevent/risc/event-type/account-purged"
             - "https://schemas.openid.net/secevent/risc/event-type/account-disabled"
             - "https://schemas.openid.net/secevent/risc/event-type/session-revoked"
-
-
-
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-        '504':
-          $ref: '#/components/responses/GatewayTimeout'
