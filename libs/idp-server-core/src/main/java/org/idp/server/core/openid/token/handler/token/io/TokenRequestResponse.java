@@ -124,6 +124,13 @@ public class TokenRequestResponse {
       return DefaultSecurityEventType.refresh_token_success;
     }
 
+    if (tokenRequest.isTokenExchangeGrant()) {
+      if (tokenRequest.hasActorToken()) {
+        return DefaultSecurityEventType.token_exchange_delegation_success;
+      }
+      return DefaultSecurityEventType.token_exchange_success;
+    }
+
     return DefaultSecurityEventType.issue_token_success;
   }
 }

@@ -165,6 +165,8 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
       userId,
       orgClientId,
       orgClientSecret,
+      orgAdminEmail,
+      orgAdminPassword,
       orgAdminAccessToken: adminTokenResponse.data.access_token,
       externalIdpJwks,
       externalIdpIssuer,
@@ -1549,4 +1551,255 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
   });
 
   }); // describe("Introspection Verification (Extension)")
+
+  describe("4.1. act (actor) Claim - Delegation", () => {
+
+  it("The act claim provides a means of expressing that delegation has occurred. actor_token MUST be a valid access token issued by this authorization server.", async () => {
+    const ctx = await createTestTenant();
+
+    try {
+      // Get a self-issued access token to use as actor_token
+      // (the actor is an authenticated user/service on this server)
+      const actorTokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "password",
+        username: ctx.orgAdminEmail,
+        password: ctx.orgAdminPassword,
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+      expect(actorTokenResponse.status).toBe(200);
+      const actorAccessToken = actorTokenResponse.data.access_token;
+
+      // Create subject_token (external IdP JWT)
+      const subjectPayload = {
+        iss: ctx.externalIdpIssuer,
+        sub: ctx.userId,
+        aud: ctx.audience,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+      };
+
+      const subjectTokenJwt = createJwtWithJwk({
+        payload: subjectPayload,
+        privateJwk: ctx.externalIdpJwks.privateJwk,
+        options: { algorithm: "ES256", keyId: "signing_key_1" },
+      });
+
+      // Token Exchange with Delegation
+      const tokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: subjectTokenJwt,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:jwt",
+        actorToken: actorAccessToken,
+        actorTokenType: "urn:ietf:params:oauth:token-type:access_token",
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+      expect(tokenResponse.data.issued_token_type).toBe("urn:ietf:params:oauth:token-type:access_token");
+
+      // Verify the act claim is embedded in the JWT access token
+      const jwksResponse = await getJwks({ endpoint: ctx.jwksEndpoint });
+      expect(jwksResponse.status).toBe(200);
+
+      const { payload, verifyResult } = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.access_token,
+        jwks: jwksResponse.data,
+      });
+
+      expect(verifyResult).toBe(true);
+      expect(payload.sub).toBe(ctx.userId);
+      expect(payload).toHaveProperty("act");
+      expect(payload.act).toHaveProperty("sub");
+    } finally {
+      await cleanup(ctx);
+    }
+  });
+
+  it("actor_token_type REQUIRED when the actor_token parameter is present in the request but MUST NOT be included otherwise.", async () => {
+    const ctx = await createTestTenant();
+
+    try {
+      const subjectPayload = {
+        iss: ctx.externalIdpIssuer,
+        sub: ctx.userId,
+        aud: ctx.audience,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+      };
+
+      const subjectTokenJwt = createJwtWithJwk({
+        payload: subjectPayload,
+        privateJwk: ctx.externalIdpJwks.privateJwk,
+        options: { algorithm: "ES256", keyId: "signing_key_1" },
+      });
+
+      // Send actor_token WITHOUT actor_token_type
+      const tokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: subjectTokenJwt,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:jwt",
+        actorToken: "some-token-value",
+        // actor_token_type is intentionally missing
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toBe("invalid_request");
+    } finally {
+      await cleanup(ctx);
+    }
+  });
+
+  it("actor_token that is not issued by this server MUST be rejected with invalid_grant.", async () => {
+    const ctx = await createTestTenant();
+
+    try {
+      const subjectPayload = {
+        iss: ctx.externalIdpIssuer,
+        sub: ctx.userId,
+        aud: ctx.audience,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+      };
+
+      const subjectTokenJwt = createJwtWithJwk({
+        payload: subjectPayload,
+        privateJwk: ctx.externalIdpJwks.privateJwk,
+        options: { algorithm: "ES256", keyId: "signing_key_1" },
+      });
+
+      // Use a fake token that was NOT issued by this server
+      const tokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: subjectTokenJwt,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:jwt",
+        actorToken: "invalid-actor-token-not-from-this-server",
+        actorTokenType: "urn:ietf:params:oauth:token-type:access_token",
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toBe("invalid_grant");
+    } finally {
+      await cleanup(ctx);
+    }
+  });
+
+  it("Without actor_token, the exchange is Impersonation and the issued token MUST NOT contain an act claim.", async () => {
+    const ctx = await createTestTenant();
+
+    try {
+      const subjectPayload = {
+        iss: ctx.externalIdpIssuer,
+        sub: ctx.userId,
+        aud: ctx.audience,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+      };
+
+      const subjectTokenJwt = createJwtWithJwk({
+        payload: subjectPayload,
+        privateJwk: ctx.externalIdpJwks.privateJwk,
+        options: { algorithm: "ES256", keyId: "signing_key_1" },
+      });
+
+      // No actor_token → Impersonation
+      const tokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: subjectTokenJwt,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:jwt",
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(200);
+
+      const jwksResponse = await getJwks({ endpoint: ctx.jwksEndpoint });
+      const { payload } = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.access_token,
+        jwks: jwksResponse.data,
+      });
+
+      expect(payload.sub).toBe(ctx.userId);
+      expect(payload).not.toHaveProperty("act");
+    } finally {
+      await cleanup(ctx);
+    }
+  });
+
+  it("4.4. may_act - If may_act claim is present in subject_token and actor does not match, the request MUST be rejected.", async () => {
+    const ctx = await createTestTenant();
+
+    try {
+      // Get actor token (self-issued)
+      const actorTokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "password",
+        username: ctx.orgAdminEmail,
+        password: ctx.orgAdminPassword,
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+      expect(actorTokenResponse.status).toBe(200);
+      const actorAccessToken = actorTokenResponse.data.access_token;
+
+      // Create subject_token with may_act restricting to a DIFFERENT sub
+      const subjectPayload = {
+        iss: ctx.externalIdpIssuer,
+        sub: ctx.userId,
+        aud: ctx.audience,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+        may_act: {
+          sub: "only-this-service-is-allowed",
+        },
+      };
+
+      const subjectTokenJwt = createJwtWithJwk({
+        payload: subjectPayload,
+        privateJwk: ctx.externalIdpJwks.privateJwk,
+        options: { algorithm: "ES256", keyId: "signing_key_1" },
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: subjectTokenJwt,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:jwt",
+        actorToken: actorAccessToken,
+        actorTokenType: "urn:ietf:params:oauth:token-type:access_token",
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toBe("invalid_grant");
+    } finally {
+      await cleanup(ctx);
+    }
+  });
+
+  }); // describe("4.1. act (actor) Claim - Delegation")
 });

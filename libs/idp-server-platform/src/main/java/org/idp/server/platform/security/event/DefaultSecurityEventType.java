@@ -136,6 +136,9 @@ public enum DefaultSecurityEventType {
   // Token
   issue_token_success("Access token was issued"),
   issue_token_failure("Access token issuance failed"),
+  token_exchange_success("Access token was issued via token exchange (impersonation)"),
+  token_exchange_delegation_success(
+      "Access token was issued via token exchange (delegation with actor)"),
   refresh_token_success("Access token was refreshed"),
   refresh_token_failure("Access token refresh failed"),
   login_success("User session was created"),
@@ -272,6 +275,8 @@ public enum DefaultSecurityEventType {
   public boolean isActiveUserEvent() {
     return this == login_success
         || this == issue_token_success
+        || this == token_exchange_success
+        || this == token_exchange_delegation_success
         || this == refresh_token_success
         || this == inspect_token_success;
   }

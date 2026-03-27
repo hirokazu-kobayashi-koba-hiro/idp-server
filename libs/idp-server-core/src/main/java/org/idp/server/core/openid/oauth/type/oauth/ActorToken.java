@@ -17,59 +17,45 @@
 package org.idp.server.core.openid.oauth.type.oauth;
 
 import java.util.Objects;
-import org.idp.server.platform.jose.JoseInvalidException;
-import org.idp.server.platform.jose.JsonWebSignature;
-import org.idp.server.platform.jose.JsonWebTokenClaims;
 
 /**
- * SubjectToken
+ * ActorToken
  *
- * <p>RFC 8693 Section 2.1 - subject_token parameter.
+ * <p>RFC 8693 Section 2.1 - actor_token parameter.
+ *
+ * <blockquote>
+ *
+ * A security token that represents the identity of the acting party. Typically, this will be the
+ * party that is authorized to use the requested security token and act on behalf of the subject.
+ *
+ * </blockquote>
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693#section-2.1">RFC 8693 Section 2.1</a>
  */
-public class SubjectToken implements SecurityToken {
+public class ActorToken implements SecurityToken {
 
   String value;
-  JsonWebSignature jsonWebSignature;
 
-  public SubjectToken() {}
+  public ActorToken() {}
 
-  public SubjectToken(String value) {
+  public ActorToken(String value) {
     this.value = value;
   }
 
+  @Override
   public String value() {
     return value;
   }
 
+  @Override
   public boolean exists() {
     return value != null && !value.isEmpty();
-  }
-
-  public JsonWebSignature parse() throws JoseInvalidException {
-    if (jsonWebSignature == null) {
-      jsonWebSignature = JsonWebSignature.parse(value);
-    }
-    return jsonWebSignature;
-  }
-
-  public JsonWebTokenClaims claims() throws JoseInvalidException {
-    return parse().claims();
-  }
-
-  public String issuer() throws JoseInvalidException {
-    return claims().getIss();
-  }
-
-  public String subject() throws JoseInvalidException {
-    return claims().getSub();
   }
 
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
-    SubjectToken that = (SubjectToken) o;
+    ActorToken that = (ActorToken) o;
     return Objects.equals(value, that.value);
   }
 

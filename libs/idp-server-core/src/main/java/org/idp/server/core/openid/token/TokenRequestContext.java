@@ -301,4 +301,20 @@ public class TokenRequestContext implements BackchannelRequestContext {
   public boolean hasRequestedTokenType() {
     return parameters.hasRequestedTokenType();
   }
+
+  public ActorToken actorToken() {
+    return parameters.actorToken();
+  }
+
+  public boolean hasActorToken() {
+    return parameters.hasActorToken();
+  }
+
+  public SubjectTokenType actorTokenType() {
+    return parameters.actorTokenType();
+  }
+
+  public boolean hasActorTokenType() {
+    return parameters.hasActorTokenType();
+  }
 }

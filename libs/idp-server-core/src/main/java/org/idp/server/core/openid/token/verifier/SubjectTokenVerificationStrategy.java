@@ -16,7 +16,7 @@
 
 package org.idp.server.core.openid.token.verifier;
 
-import org.idp.server.core.openid.oauth.type.oauth.SubjectToken;
+import org.idp.server.core.openid.oauth.type.oauth.SecurityToken;
 import org.idp.server.core.openid.oauth.type.oauth.SubjectTokenType;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.service.SubjectTokenVerificationResult;
@@ -42,5 +42,5 @@ public interface SubjectTokenVerificationStrategy {
 
   SubjectTokenType type();
 
-  SubjectTokenVerificationResult verify(TokenRequestContext context, SubjectToken subjectToken);
+  SubjectTokenVerificationResult verify(TokenRequestContext context, SecurityToken securityToken);
 }

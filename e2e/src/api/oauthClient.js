@@ -218,6 +218,8 @@ export const requestToken = async ({
  subjectToken,
  subjectTokenType,
  requestedTokenType,
+ actorToken,
+ actorTokenType,
  clientId,
  clientSecret,
  clientAssertion,
@@ -267,6 +269,12 @@ export const requestToken = async ({
   }
   if (requestedTokenType) {
     params.append("requested_token_type", requestedTokenType);
+  }
+  if (actorToken) {
+    params.append("actor_token", actorToken);
+  }
+  if (actorTokenType) {
+    params.append("actor_token_type", actorTokenType);
   }
   if (clientId) {
     params.append("client_id", clientId);

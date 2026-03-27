@@ -23,6 +23,7 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.SubjectTokenType;
 import org.idp.server.core.openid.plugin.token.SubjectTokenVerificationStrategyPluginLoader;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.service.ExternalTokenIntrospector;
 import org.idp.server.core.openid.token.service.FederationJwtVerifier;
 import org.idp.server.core.openid.token.service.OAuthTokenCreationService;
@@ -48,6 +49,8 @@ public class TokenExchangeGrantServiceFactory implements OAuthTokenCreationServi
   public OAuthTokenCreationService create(ApplicationComponentContainer container) {
     OAuthTokenCommandRepository oAuthTokenCommandRepository =
         container.resolve(OAuthTokenCommandRepository.class);
+    OAuthTokenQueryRepository oAuthTokenQueryRepository =
+        container.resolve(OAuthTokenQueryRepository.class);
     HttpRequestExecutor httpRequestExecutor = container.resolve(HttpRequestExecutor.class);
     UserQueryRepository userQueryRepository = container.resolve(UserQueryRepository.class);
     UserCommandRepository userCommandRepository = container.resolve(UserCommandRepository.class);
@@ -66,6 +69,9 @@ public class TokenExchangeGrantServiceFactory implements OAuthTokenCreationServi
             federationJwtVerifier, externalTokenIntrospector, extensionStrategies);
 
     return new TokenExchangeGrantService(
-        oAuthTokenCommandRepository, userRegistrator, subjectTokenVerificationStrategies);
+        oAuthTokenCommandRepository,
+        oAuthTokenQueryRepository,
+        userRegistrator,
+        subjectTokenVerificationStrategies);
   }
 }

@@ -16,7 +16,7 @@
 
 package org.idp.server.core.openid.token.verifier;
 
-import org.idp.server.core.openid.oauth.type.oauth.SubjectToken;
+import org.idp.server.core.openid.oauth.type.oauth.SecurityToken;
 import org.idp.server.core.openid.oauth.type.oauth.SubjectTokenType;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
@@ -68,8 +68,8 @@ public class IdTokenSubjectTokenVerificationStrategy implements SubjectTokenVeri
 
   @Override
   public SubjectTokenVerificationResult verify(
-      TokenRequestContext context, SubjectToken subjectToken) {
-    SubjectTokenVerificationResult result = jwtStrategy.verify(context, subjectToken);
+      TokenRequestContext context, SecurityToken securityToken) {
+    SubjectTokenVerificationResult result = jwtStrategy.verify(context, securityToken);
 
     // OIDC Core Section 2 - ID Token:
     // "sub REQUIRED. Subject Identifier."

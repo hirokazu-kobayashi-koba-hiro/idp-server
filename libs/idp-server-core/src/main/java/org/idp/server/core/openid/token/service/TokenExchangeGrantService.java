@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.token.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
@@ -31,22 +32,28 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
+import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.token.*;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
+import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.validator.TokenExchangeGrantValidator;
 import org.idp.server.core.openid.token.verifier.SubjectTokenVerificationStrategies;
 import org.idp.server.core.openid.token.verifier.SubjectTokenVerificationStrategy;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
  * TokenExchangeGrantService
  *
- * <p>Implements RFC 8693 OAuth 2.0 Token Exchange. Supports JIT Provisioning when the federation
- * has {@code jit_provisioning_enabled: true}.
+ * <p>Implements RFC 8693 OAuth 2.0 Token Exchange. Supports Impersonation (subject_token only) and
+ * Delegation (subject_token + actor_token) patterns, with optional JIT Provisioning.
+ *
+ * <p>actor_token is verified as a token issued by this authorization server (self-introspection),
+ * not via external federation. This follows the industry standard approach (ZITADEL, Curity).
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693</a>
  */
@@ -55,15 +62,18 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
   private static final LoggerWrapper log = LoggerWrapper.getLogger(TokenExchangeGrantService.class);
 
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
+  OAuthTokenQueryRepository oAuthTokenQueryRepository;
   SubjectTokenVerificationStrategies subjectTokenVerificationStrategies;
   UserRegistrator userRegistrator;
   AccessTokenCreator accessTokenCreator;
 
   public TokenExchangeGrantService(
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
+      OAuthTokenQueryRepository oAuthTokenQueryRepository,
       UserRegistrator userRegistrator,
       SubjectTokenVerificationStrategies subjectTokenVerificationStrategies) {
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
+    this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.subjectTokenVerificationStrategies = subjectTokenVerificationStrategies;
     this.userRegistrator = userRegistrator;
     this.accessTokenCreator = AccessTokenCreator.getInstance();
@@ -77,8 +87,8 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
   /**
    * Processes a token exchange request per RFC 8693 Section 2.
    *
-   * <p>Flow: validate request parameters (Section 2.1) → verify subject_token → resolve user (with
-   * optional JIT Provisioning) → issue new access token (Section 2.2.1).
+   * <p>Flow: validate → verify subject_token → verify actor_token (Delegation) → verify may_act →
+   * resolve user → issue token with optional act claim.
    */
   @Override
   public OAuthToken create(TokenRequestContext context, ClientCredentials clientCredentials) {
@@ -89,8 +99,107 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
         subjectTokenVerificationStrategies.get(context.subjectTokenType());
     SubjectTokenVerificationResult verificationResult =
         strategy.verify(context, context.subjectToken());
+
+    OAuthToken actorOAuthToken = verifyActorTokenIfPresent(context);
+
+    if (actorOAuthToken != null) {
+      verifyMayAct(verificationResult, actorOAuthToken, context);
+    }
+
     User user = resolveUser(context, verificationResult);
-    return issueToken(context, clientCredentials, user);
+    return issueToken(context, clientCredentials, user, actorOAuthToken);
+  }
+
+  /**
+   * Verifies the actor_token as a token issued by this authorization server.
+   *
+   * <p>RFC 8693 Section 2.1:
+   *
+   * <blockquote>
+   *
+   * The authorization server MUST perform the appropriate validation procedures for the indicated
+   * token type and, if the actor token is present, also perform the appropriate validation
+   * procedures for its indicated token type.
+   *
+   * </blockquote>
+   *
+   * <p>Following industry standard (ZITADEL, Curity), actor_token is verified via
+   * self-introspection: the token must be a valid access token issued by this server.
+   *
+   * @return the actor's OAuthToken, or null if no actor_token is present
+   */
+  private OAuthToken verifyActorTokenIfPresent(TokenRequestContext context) {
+    if (!context.hasActorToken()) {
+      return null;
+    }
+
+    log.info("Delegation: verifying actor_token as self-issued access token");
+
+    Tenant tenant = context.tenant();
+    AccessTokenEntity actorAccessToken = new AccessTokenEntity(context.actorToken().value());
+    OAuthToken actorOAuthToken = oAuthTokenQueryRepository.find(tenant, actorAccessToken);
+
+    if (!actorOAuthToken.exists()) {
+      throw new TokenBadRequestException(
+          "invalid_grant",
+          "actor_token is not a valid access token issued by this authorization server");
+    }
+
+    if (actorOAuthToken.isExpiredAccessToken(SystemDateTime.now())) {
+      throw new TokenBadRequestException("invalid_grant", "actor_token is expired");
+    }
+
+    return actorOAuthToken;
+  }
+
+  /**
+   * Verifies the may_act claim if present in the subject_token (RFC 8693 Section 4.4).
+   *
+   * <p>RFC 8693 Section 4.4:
+   *
+   * <blockquote>
+   *
+   * The "may_act" claim makes a statement that one party is authorized to become the actor and act
+   * on behalf of another party. The claim value is a JSON object, and members in the JSON object
+   * are claims that identify the party that is asserted as being eligible to act for the party
+   * identified by the JWT containing the claim.
+   *
+   * </blockquote>
+   *
+   * <p>If may_act is present, the actor's sub (and optionally iss) must match. If may_act is
+   * absent, the check is skipped (may_act is OPTIONAL per RFC 8693).
+   */
+  @SuppressWarnings("unchecked")
+  private void verifyMayAct(
+      SubjectTokenVerificationResult subjectResult,
+      OAuthToken actorOAuthToken,
+      TokenRequestContext context) {
+    Map<String, Object> claims = subjectResult.claims();
+    Object mayActObj = claims.get("may_act");
+    if (mayActObj == null) {
+      return;
+    }
+
+    Map<String, Object> mayAct = (Map<String, Object>) mayActObj;
+    String allowedSub = (String) mayAct.get("sub");
+    String actorSub = actorOAuthToken.subject().value();
+
+    if (allowedSub != null && !allowedSub.equals(actorSub)) {
+      log.warn("may_act check failed: allowed_sub={}, actor_sub={}", allowedSub, actorSub);
+      throw new TokenBadRequestException(
+          "invalid_grant", "Actor is not authorized by may_act claim: actor sub does not match");
+    }
+
+    String allowedIss = (String) mayAct.get("iss");
+    if (allowedIss != null) {
+      String serverIssuer = context.serverConfiguration().tokenIssuer().value();
+      if (!allowedIss.equals(serverIssuer)) {
+        log.warn(
+            "may_act issuer check failed: allowed_iss={}, server_iss={}", allowedIss, serverIssuer);
+        throw new TokenBadRequestException(
+            "invalid_grant", "Actor is not authorized by may_act claim: issuer does not match");
+      }
+    }
   }
 
   /**
@@ -165,7 +274,10 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
    * </blockquote>
    */
   private OAuthToken issueToken(
-      TokenRequestContext context, ClientCredentials clientCredentials, User user) {
+      TokenRequestContext context,
+      ClientCredentials clientCredentials,
+      User user,
+      OAuthToken actorOAuthToken) {
     Tenant tenant = context.tenant();
     AuthorizationServerConfiguration serverConfiguration = context.serverConfiguration();
     ClientConfiguration clientConfiguration = context.clientConfiguration();
@@ -178,7 +290,7 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
     GrantUserinfoClaims grantUserinfoClaims =
         GrantUserinfoClaims.create(scopes, supportedClaims, new RequestedUserinfoClaims());
 
-    CustomProperties customProperties = context.customProperties();
+    CustomProperties customProperties = buildCustomProperties(context, actorOAuthToken);
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrantBuilder(
                 context.tenantIdentifier(),
@@ -206,5 +318,20 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
     oAuthTokenCommandRepository.register(tenant, oAuthToken);
 
     return oAuthToken;
+  }
+
+  /**
+   * Builds CustomProperties with optional actor claim data for Delegation (RFC 8693 Section 4.1).
+   */
+  private CustomProperties buildCustomProperties(
+      TokenRequestContext context, OAuthToken actorOAuthToken) {
+    CustomProperties customProperties = context.customProperties();
+    if (actorOAuthToken == null) {
+      return customProperties;
+    }
+
+    customProperties.setValue("act_sub", actorOAuthToken.subject().value());
+
+    return customProperties;
   }
 }

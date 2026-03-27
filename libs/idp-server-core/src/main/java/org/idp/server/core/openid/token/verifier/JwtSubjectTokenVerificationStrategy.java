@@ -19,7 +19,7 @@ package org.idp.server.core.openid.token.verifier;
 import java.util.Optional;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
-import org.idp.server.core.openid.oauth.type.oauth.SubjectToken;
+import org.idp.server.core.openid.oauth.type.oauth.SecurityToken;
 import org.idp.server.core.openid.oauth.type.oauth.SubjectTokenType;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
@@ -63,11 +63,11 @@ public class JwtSubjectTokenVerificationStrategy implements SubjectTokenVerifica
 
   @Override
   public SubjectTokenVerificationResult verify(
-      TokenRequestContext context, SubjectToken subjectToken) {
+      TokenRequestContext context, SecurityToken securityToken) {
     try {
       AuthorizationServerConfiguration serverConfiguration = context.serverConfiguration();
 
-      JsonWebSignature jws = subjectToken.parse();
+      JsonWebSignature jws = JsonWebSignature.parse(securityToken.value());
       JsonWebTokenClaims claims = jws.claims();
       String issuer = claims.getIss();
 

@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
-import org.idp.server.core.openid.oauth.type.oauth.SubjectToken;
+import org.idp.server.core.openid.oauth.type.oauth.SecurityToken;
 import org.idp.server.core.openid.oauth.type.oauth.SubjectTokenType;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
@@ -65,14 +65,14 @@ public class AccessTokenSubjectTokenVerificationStrategy
 
   @Override
   public SubjectTokenVerificationResult verify(
-      TokenRequestContext context, SubjectToken subjectToken) {
+      TokenRequestContext context, SecurityToken securityToken) {
     Optional<AvailableFederation> introspectionFederation =
         context.findTokenExchangeIntrospectionFederation();
     if (introspectionFederation.isPresent()) {
-      return verifyByIntrospection(subjectToken, introspectionFederation.get());
+      return verifyByIntrospection(securityToken, introspectionFederation.get());
     }
 
-    return jwtStrategy.verify(context, subjectToken);
+    return jwtStrategy.verify(context, securityToken);
   }
 
   /**
@@ -81,9 +81,9 @@ public class AccessTokenSubjectTokenVerificationStrategy
    * fetches additional user claims via configured {@code userinfo_http_requests}.
    */
   private SubjectTokenVerificationResult verifyByIntrospection(
-      SubjectToken subjectToken, AvailableFederation federation) {
+      SecurityToken securityToken, AvailableFederation federation) {
     ExternalIntrospectionResult result =
-        externalTokenIntrospector.introspect(subjectToken.value(), federation);
+        externalTokenIntrospector.introspect(securityToken.value(), federation);
 
     if (!result.isActive()) {
       log.warn(
@@ -108,7 +108,7 @@ public class AccessTokenSubjectTokenVerificationStrategy
 
     if (federation.hasUserinfoHttpRequests()) {
       Map<String, Object> userinfoResult =
-          externalTokenIntrospector.fetchUserinfo(subjectToken.value(), federation);
+          externalTokenIntrospector.fetchUserinfo(securityToken.value(), federation);
       if (!userinfoResult.isEmpty()) {
         claims.putAll(userinfoResult);
       }

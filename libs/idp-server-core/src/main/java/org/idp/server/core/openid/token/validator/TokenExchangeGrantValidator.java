@@ -49,6 +49,24 @@ public class TokenExchangeGrantValidator {
     throwExceptionIfUnSupportedGrantTypeWithClient();
     throwExceptionIfSubjectTokenNotProvided();
     throwExceptionIfSubjectTokenTypeNotProvided();
+    throwExceptionIfActorTokenTypeNotProvidedWhenActorTokenPresent();
+  }
+
+  /**
+   * RFC 8693 Section 2.1:
+   *
+   * <blockquote>
+   *
+   * actor_token_type REQUIRED when the actor_token parameter is present in the request but MUST NOT
+   * be included otherwise.
+   *
+   * </blockquote>
+   */
+  void throwExceptionIfActorTokenTypeNotProvidedWhenActorTokenPresent() {
+    if (tokenRequestContext.hasActorToken() && !tokenRequestContext.hasActorTokenType()) {
+      throw new TokenBadRequestException(
+          "invalid_request", "actor_token_type parameter is required when actor_token is present");
+    }
   }
 
   /**
