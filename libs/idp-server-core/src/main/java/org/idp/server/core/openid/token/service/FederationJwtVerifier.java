@@ -18,6 +18,7 @@ package org.idp.server.core.openid.token.service;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
+import java.time.Duration;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.platform.http.HttpRequestExecutor;
@@ -48,6 +49,8 @@ import org.idp.server.platform.jose.JwtSignatureVerifier;
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc7523">RFC 7523 - JWT Bearer</a>
  */
 public class FederationJwtVerifier {
+
+  private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
   HttpRequestExecutor httpRequestExecutor;
 
@@ -97,6 +100,7 @@ public class FederationJwtVerifier {
       HttpRequest request =
           HttpRequest.newBuilder()
               .uri(URI.create(jwksUri))
+              .timeout(REQUEST_TIMEOUT)
               .GET()
               .header("Accept", "application/json")
               .build();

@@ -20,13 +20,16 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
+import org.idp.server.core.openid.oauth.configuration.exception.ConfigurationInvalidException;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
+import org.idp.server.core.openid.token.exception.TokenExternalServiceException;
 import org.idp.server.platform.http.HttpRequestBaseParams;
 import org.idp.server.platform.http.HttpRequestExecutionConfig;
 import org.idp.server.platform.http.HttpRequestExecutor;
@@ -57,6 +60,7 @@ import org.idp.server.platform.log.LoggerWrapper;
 public class ExternalTokenIntrospector {
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(ExternalTokenIntrospector.class);
+  private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
   HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
@@ -85,8 +89,7 @@ public class ExternalTokenIntrospector {
     }
 
     if (!federation.hasIntrospectionCredentials()) {
-      throw new TokenBadRequestException(
-          "server_error",
+      throw new ConfigurationInvalidException(
           String.format(
               "Federation '%s' introspection credentials (client_id/client_secret) are not configured",
               federation.issuer()));
@@ -104,8 +107,7 @@ public class ExternalTokenIntrospector {
             federation.issuer(),
             result.statusCode(),
             result.body());
-        throw new TokenBadRequestException(
-            "server_error",
+        throw new TokenExternalServiceException(
             String.format(
                 "External introspection endpoint returned server error at '%s': HTTP %d",
                 federation.introspectionEndpoint(), result.statusCode()));
@@ -200,6 +202,7 @@ public class ExternalTokenIntrospector {
     HttpRequest.Builder builder =
         HttpRequest.newBuilder()
             .uri(URI.create(federation.introspectionEndpoint()))
+            .timeout(REQUEST_TIMEOUT)
             .header("Content-Type", "application/x-www-form-urlencoded")
             .header("Accept", "application/json");
 

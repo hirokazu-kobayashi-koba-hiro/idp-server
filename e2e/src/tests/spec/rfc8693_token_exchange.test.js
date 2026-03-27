@@ -90,6 +90,7 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
         token_signed_key_id: "signing_key_1",
         id_token_signed_key_id: "signing_key_1",
         scopes_supported: ["openid", "profile", "email", "management"],
+        claims_supported: ["sub", "name", "email", "email_verified", "preferred_username"],
         response_types_supported: ["code"],
         subject_types_supported: ["public"],
         id_token_signing_alg_values_supported: ["RS256", "ES256"],
@@ -220,9 +221,7 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
         clientSecret: ctx.orgClientSecret,
       });
 
-      console.log("Token Exchange response status:", tokenResponse.status);
       if (tokenResponse.status !== 200) {
-        console.log("Token Exchange error:", JSON.stringify(tokenResponse.data, null, 2));
       }
 
       expect(tokenResponse.status).toBe(200);
@@ -694,9 +693,7 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
-    console.log("JIT onboarding status:", onboardingResponse.status);
     if (onboardingResponse.status !== 201) {
-      console.log("JIT onboarding error:", JSON.stringify(onboardingResponse.data, null, 2));
     }
     expect(onboardingResponse.status).toBe(201);
 
@@ -733,7 +730,6 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
         options: { algorithm: "ES256", keyId: "signing_key_1" },
       });
 
-      console.log("\n=== JIT Provisioning: Token Exchange with non-existing user ===");
 
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
@@ -745,9 +741,7 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
         clientSecret: orgClientSecret,
       });
 
-      console.log("JIT Token Exchange response status:", tokenResponse.status);
       if (tokenResponse.status !== 200) {
-        console.log("JIT Token Exchange error:", JSON.stringify(tokenResponse.data, null, 2));
       }
 
       expect(tokenResponse.status).toBe(200);
@@ -765,7 +759,6 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
       // sub should be a new UUID (not the external IdP's sub)
       expect(userinfoResponse.data.sub).toBeDefined();
       expect(userinfoResponse.data.sub).not.toBe(externalOnlyUserId);
-      console.log("JIT Provisioning succeeded, new user sub:", userinfoResponse.data.sub);
 
     } finally {
       await deletion({
@@ -1195,7 +1188,6 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
     const tenantBAdminToken = tenantBAdminTokenResponse.data.access_token;
 
     try {
-      console.log("\n=== Token Exchange with Introspection + userinfoHttpRequests + JIT ===");
 
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/${tenantBId}/v1/tokens`,
@@ -1207,9 +1199,7 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
         clientSecret: tenantBClientSecret,
       });
 
-      console.log("Token Exchange (userinfo fetch) response status:", tokenResponse.status);
       if (tokenResponse.status !== 200) {
-        console.log("Token Exchange error:", JSON.stringify(tokenResponse.data, null, 2));
       }
 
       expect(tokenResponse.status).toBe(200);
@@ -1222,14 +1212,12 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
         authorizationHeader: { Authorization: `Bearer ${tokenResponse.data.access_token}` },
       });
 
-      console.log("Userinfo fetch result:", JSON.stringify(userinfoResponse.data, null, 2));
 
       expect(userinfoResponse.status).toBe(200);
       expect(userinfoResponse.data.sub).toBeDefined();
       expect(userinfoResponse.data.sub).not.toBe(tenantAUserId);
       // The email should have been fetched from Tenant A's userinfo endpoint via userinfoHttpRequests
       expect(userinfoResponse.data.email).toBe(tenantAEmail);
-      console.log("Introspection + userinfoHttpRequests + JIT succeeded, email:", userinfoResponse.data.email);
 
     } finally {
       await deletion({
@@ -1341,9 +1329,7 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
       body: tenantAOnboarding,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
-    console.log("Tenant A onboarding status:", tenantAResponse.status);
     if (tenantAResponse.status !== 201) {
-      console.log("Tenant A onboarding error:", JSON.stringify(tenantAResponse.data, null, 2));
     }
     expect(tenantAResponse.status).toBe(201);
 
@@ -1359,7 +1345,6 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
     });
     expect(tenantATokenResponse.status).toBe(200);
     const externalAccessToken = tenantATokenResponse.data.access_token;
-    console.log("Got access token from Tenant A (external IdP)");
 
     // Get admin token for Tenant A (for cleanup)
     const tenantAAdminTokenResponse = await requestToken({
@@ -1484,9 +1469,7 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
       body: tenantBOnboarding,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
-    console.log("Tenant B onboarding status:", tenantBResponse.status);
     if (tenantBResponse.status !== 201) {
-      console.log("Tenant B onboarding error:", JSON.stringify(tenantBResponse.data, null, 2));
     }
     expect(tenantBResponse.status).toBe(201);
 
@@ -1504,7 +1487,6 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
     const tenantBAdminToken = tenantBAdminTokenResponse.data.access_token;
 
     try {
-      console.log("\n=== Token Exchange with Introspection + JIT Provisioning ===");
 
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/${tenantBId}/v1/tokens`,
@@ -1516,9 +1498,7 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
         clientSecret: tenantBClientSecret,
       });
 
-      console.log("Token Exchange (introspection+JIT) response status:", tokenResponse.status);
       if (tokenResponse.status !== 200) {
-        console.log("Token Exchange error:", JSON.stringify(tokenResponse.data, null, 2));
       }
 
       expect(tokenResponse.status).toBe(200);
@@ -1536,7 +1516,6 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
       // sub should be a new UUID (JIT-provisioned), not the Tenant A user's sub
       expect(userinfoResponse.data.sub).toBeDefined();
       expect(userinfoResponse.data.sub).not.toBe(tenantAUserId);
-      console.log("Introspection + JIT succeeded, new user sub:", userinfoResponse.data.sub);
 
     } finally {
       // Cleanup Tenant B

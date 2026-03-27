@@ -25,6 +25,7 @@ import org.idp.server.core.openid.oauth.type.oauth.Error;
 import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 import org.idp.server.core.openid.token.TokenErrorResponse;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
+import org.idp.server.core.openid.token.exception.TokenExternalServiceException;
 import org.idp.server.core.openid.token.exception.TokenUnSupportedGrantException;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -78,6 +79,16 @@ public class TokenRequestErrorHandler {
           BAD_REQUEST,
           new TokenErrorResponse(
               new Error("invalid_request"), new ErrorDescription(exception.getMessage())));
+    }
+
+    if (exception instanceof TokenExternalServiceException externalServiceError) {
+      log.warn(
+          "External service error during token request: description={}",
+          externalServiceError.errorDescription().value());
+      return new TokenRequestResponse(
+          SERVER_ERROR,
+          new TokenErrorResponse(
+              externalServiceError.error(), externalServiceError.errorDescription()));
     }
 
     log.error("Token request server error: error={}", exception.getMessage(), exception);
