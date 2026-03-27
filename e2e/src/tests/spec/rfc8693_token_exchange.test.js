@@ -224,6 +224,7 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
       });
 
       if (tokenResponse.status !== 200) {
+        console.log(tokenResponse.data);
       }
 
       expect(tokenResponse.status).toBe(200);
@@ -1788,6 +1789,57 @@ describe("RFC 8693 - OAuth 2.0 Token Exchange", () => {
         subjectToken: subjectTokenJwt,
         subjectTokenType: "urn:ietf:params:oauth:token-type:jwt",
         actorToken: actorAccessToken,
+        actorTokenType: "urn:ietf:params:oauth:token-type:access_token",
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toBe("invalid_grant");
+    } finally {
+      await cleanup(ctx);
+    }
+  });
+
+  it("4.4. may_act claim value is a JSON object - non-object may_act MUST be rejected.", async () => {
+    const ctx = await createTestTenant();
+
+    try {
+      const actorTokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "password",
+        username: ctx.orgAdminEmail,
+        password: ctx.orgAdminPassword,
+        scope: "openid profile email",
+        clientId: ctx.orgClientId,
+        clientSecret: ctx.orgClientSecret,
+      });
+      expect(actorTokenResponse.status).toBe(200);
+
+      // Create subject_token with may_act as a STRING instead of JSON object
+      const subjectPayload = {
+        iss: ctx.externalIdpIssuer,
+        sub: ctx.userId,
+        aud: ctx.audience,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+        may_act: "this-is-not-a-json-object",
+      };
+
+      const subjectTokenJwt = createJwtWithJwk({
+        payload: subjectPayload,
+        privateJwk: ctx.externalIdpJwks.privateJwk,
+        options: { algorithm: "ES256", keyId: "signing_key_1" },
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: ctx.tokenEndpoint,
+        grantType: "urn:ietf:params:oauth:grant-type:token-exchange",
+        subjectToken: subjectTokenJwt,
+        subjectTokenType: "urn:ietf:params:oauth:token-type:jwt",
+        actorToken: actorTokenResponse.data.access_token,
         actorTokenType: "urn:ietf:params:oauth:token-type:access_token",
         scope: "openid profile email",
         clientId: ctx.orgClientId,

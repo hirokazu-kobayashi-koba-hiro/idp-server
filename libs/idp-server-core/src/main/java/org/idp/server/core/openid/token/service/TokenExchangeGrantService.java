@@ -17,7 +17,6 @@
 package org.idp.server.core.openid.token.service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
@@ -42,6 +41,7 @@ import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.validator.TokenExchangeGrantValidator;
 import org.idp.server.core.openid.token.verifier.SubjectTokenVerificationStrategies;
 import org.idp.server.core.openid.token.verifier.SubjectTokenVerificationStrategy;
+import org.idp.server.core.openid.token.verifier.TokenExchangeDelegationVerifier;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -103,7 +103,10 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
     OAuthToken actorOAuthToken = verifyActorTokenIfPresent(context);
 
     if (actorOAuthToken != null) {
-      verifyMayAct(verificationResult, actorOAuthToken, context);
+      TokenExchangeDelegationVerifier delegationVerifier =
+          new TokenExchangeDelegationVerifier(
+              verificationResult, actorOAuthToken, context.serverConfiguration());
+      delegationVerifier.verify();
     }
 
     User user = resolveUser(context, verificationResult);
@@ -150,56 +153,6 @@ public class TokenExchangeGrantService implements OAuthTokenCreationService, Ref
     }
 
     return actorOAuthToken;
-  }
-
-  /**
-   * Verifies the may_act claim if present in the subject_token (RFC 8693 Section 4.4).
-   *
-   * <p>RFC 8693 Section 4.4:
-   *
-   * <blockquote>
-   *
-   * The "may_act" claim makes a statement that one party is authorized to become the actor and act
-   * on behalf of another party. The claim value is a JSON object, and members in the JSON object
-   * are claims that identify the party that is asserted as being eligible to act for the party
-   * identified by the JWT containing the claim.
-   *
-   * </blockquote>
-   *
-   * <p>If may_act is present, the actor's sub (and optionally iss) must match. If may_act is
-   * absent, the check is skipped (may_act is OPTIONAL per RFC 8693).
-   */
-  @SuppressWarnings("unchecked")
-  private void verifyMayAct(
-      SubjectTokenVerificationResult subjectResult,
-      OAuthToken actorOAuthToken,
-      TokenRequestContext context) {
-    Map<String, Object> claims = subjectResult.claims();
-    Object mayActObj = claims.get("may_act");
-    if (mayActObj == null) {
-      return;
-    }
-
-    Map<String, Object> mayAct = (Map<String, Object>) mayActObj;
-    String allowedSub = (String) mayAct.get("sub");
-    String actorSub = actorOAuthToken.subject().value();
-
-    if (allowedSub != null && !allowedSub.equals(actorSub)) {
-      log.warn("may_act check failed: allowed_sub={}, actor_sub={}", allowedSub, actorSub);
-      throw new TokenBadRequestException(
-          "invalid_grant", "Actor is not authorized by may_act claim: actor sub does not match");
-    }
-
-    String allowedIss = (String) mayAct.get("iss");
-    if (allowedIss != null) {
-      String serverIssuer = context.serverConfiguration().tokenIssuer().value();
-      if (!allowedIss.equals(serverIssuer)) {
-        log.warn(
-            "may_act issuer check failed: allowed_iss={}, server_iss={}", allowedIss, serverIssuer);
-        throw new TokenBadRequestException(
-            "invalid_grant", "Actor is not authorized by may_act claim: issuer does not match");
-      }
-    }
   }
 
   /**

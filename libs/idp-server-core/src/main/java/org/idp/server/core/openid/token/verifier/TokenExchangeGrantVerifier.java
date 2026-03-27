@@ -16,13 +16,15 @@
 
 package org.idp.server.core.openid.token.verifier;
 
+import java.util.Map;
+import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
 
 /**
  * TokenExchangeGrantVerifier
  *
- * <p>Verifies JWT claims in token exchange subject_token. Delegates to JwtBearerGrantVerifier since
- * the same RFC 7523 claim checks apply (iss, sub, aud, exp).
+ * <p>Verifies JWT claims in token exchange subject_token. Delegates to JwtBearerGrantVerifier for
+ * standard claim checks (iss, sub, aud, exp) and adds Token Exchange specific validations.
  *
  * <p>RFC 8693 Section 2.1:
  *
@@ -40,12 +42,43 @@ import org.idp.server.platform.jose.JsonWebTokenClaims;
 public class TokenExchangeGrantVerifier {
 
   JwtBearerGrantVerifier jwtBearerGrantVerifier;
+  JsonWebTokenClaims claims;
 
   public TokenExchangeGrantVerifier(JsonWebTokenClaims claims, String expectedAudience) {
     this.jwtBearerGrantVerifier = new JwtBearerGrantVerifier(claims, expectedAudience);
+    this.claims = claims;
   }
 
   public void verify() {
     jwtBearerGrantVerifier.verify();
+    verifyMayActClaimType();
+  }
+
+  /**
+   * RFC 8693 Section 4.4 - may_act claim must be a JSON object if present.
+   *
+   * <p>Validates the structural type of may_act before it is used for authorization decisions in
+   * TokenExchangeGrantService.verifyMayAct().
+   */
+  /**
+   * RFC 8693 Section 4.4 - may_act claim must be a JSON object if present.
+   *
+   * <blockquote>
+   *
+   * The claim value is a JSON object, and members in the JSON object are claims that identify the
+   * party that is asserted as being eligible to act for the party identified by the JWT containing
+   * the claim.
+   *
+   * </blockquote>
+   */
+  private void verifyMayActClaimType() {
+    if (!claims.contains("may_act")) {
+      return;
+    }
+    Object mayAct = claims.toMap().get("may_act");
+    if (!(mayAct instanceof Map)) {
+      throw new TokenBadRequestException(
+          "invalid_grant", "may_act claim must be a JSON object (RFC 8693 Section 4.4)");
+    }
   }
 }
