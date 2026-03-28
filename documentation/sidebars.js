@@ -1126,6 +1126,9 @@ const sidebars = {
                 "content_11_learning/ci-cd/pipeline-design",
                 "content_11_learning/ci-cd/testing-strategy",
                 "content_11_learning/ci-cd/deployment-strategy",
+                "content_11_learning/ci-cd/deployment-blue-green-practice",
+                "content_11_learning/ci-cd/deployment-blue-green-aws-services",
+                "content_11_learning/ci-cd/deployment-blue-green-operations",
                 "content_11_learning/ci-cd/gitops"
               ]
             },
