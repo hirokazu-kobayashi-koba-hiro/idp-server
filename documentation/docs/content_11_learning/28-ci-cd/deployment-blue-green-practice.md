@@ -324,10 +324,20 @@ aws elbv2 modify-rule \
 
 ```bash
 # 24時間〜1週間後、問題がないことを確認してから
-aws rds delete-blue-green-deployment \
-  --blue-green-deployment-identifier idp-release-v2 \
-  --delete-target
 
+# 1. Blue/Green デプロイメント定義を削除（レプリケーション設定等を解除）
+#    --delete-target は Green 環境のリソースを削除するフラグ
+#    Switchover 後は Green が旧 Blue のエンドポイント名を持っているため、
+#    旧 Blue（Switchover 後はスタンドアロンクラスタ）は別途削除が必要
+aws rds delete-blue-green-deployment \
+  --blue-green-deployment-identifier idp-release-v2
+
+# 2. 旧 Blue クラスタを削除（Switchover 後にスタンドアロンとして残っている）
+aws rds delete-db-cluster \
+  --db-cluster-identifier idp-cluster-old-blue \
+  --skip-final-snapshot
+
+# 3. 旧 Blue ECS Service をスケールダウン
 aws ecs update-service \
   --cluster idp-cluster \
   --service idp-server-blue \
@@ -384,12 +394,29 @@ aws elbv2 modify-rule --rule-arn $RULE_ARN \
 
 ## Graceful Shutdown との連携
 
+切り替え時と、クリーンアップ時の旧 Blue 停止で Graceful Shutdown が関わります。
+
+### 切り替え時（推奨フロー順: ALB → Aurora）
+
 ```
-t=0s    Aurora switchover 開始（書き込み一時停止）
-t=30-60s Aurora switchover 完了（エンドポイント入れ替え）
-t=60s   ALB トラフィック切り替え開始
-t=60-90s ALB Deregistration Delay（Blue への新規リクエスト停止）
-t=90s   Blue アプリの Graceful Shutdown 完了
+t=0s     ALB トラフィック切り替え（Blue → Green）
+t=0-30s  ALB Deregistration Delay（Blue への新規リクエスト停止）
+         Blue ECS は処理中リクエストを完了させる
+t=30s    Blue ECS への新規トラフィックなし
+         （ただし Blue ECS はまだ起動中 = ロールバック可能）
+  ...15分間監視...
+t=15min  Aurora Switchover 開始（書き込み一時停止）
+t=16min  Aurora Switchover 完了（エンドポイント入れ替え）
+  ...15分間監視...
+t=30min  リリース完了
+```
+
+### クリーンアップ時（旧 Blue ECS の停止）
+
+```
+t=0s    Blue ECS の desired-count を 0 に変更
+t=0-30s Graceful Shutdown（処理中リクエスト完了を待つ）
+t=30s   Blue ECS タスク停止
 
 設定:
   idp-server:  server.shutdown=graceful, timeout-per-shutdown-phase=30s
