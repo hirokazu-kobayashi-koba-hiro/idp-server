@@ -121,7 +121,7 @@
   ② Unplanned Failover（障害時）
      ・Secondary を独立した Primary に昇格
      ・旧 Primary との接続を切断
-     ・ダウンタイム: 1〜2分
+     ・ダウンタイム: 1〜5分
      ・データ損失: レプリカラグ分（通常 < 1秒）
 ```
 
