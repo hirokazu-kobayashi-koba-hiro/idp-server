@@ -1144,6 +1144,47 @@ const sidebars = {
         },
         {
           type: "category",
+          label: "DR（Disaster Recovery）",
+          items: [
+            "content_11_learning/disaster-recovery/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/disaster-recovery/rpo-rto-strategies"
+              ]
+            },
+            {
+              type: "category",
+              label: "実践",
+              collapsed: true,
+              items: [
+                "content_11_learning/disaster-recovery/multi-region",
+                "content_11_learning/disaster-recovery/backup-restore",
+                "content_11_learning/disaster-recovery/failover-procedures"
+              ]
+            },
+            {
+              type: "category",
+              label: "AWS 実践",
+              collapsed: true,
+              items: [
+                "content_11_learning/disaster-recovery/aws-dr-architecture"
+              ]
+            },
+            {
+              type: "category",
+              label: "訓練",
+              collapsed: true,
+              items: [
+                "content_11_learning/disaster-recovery/game-day"
+              ]
+            }
+          ]
+        },
+        {
+          type: "category",
           label: "障害対応（Incident Response）",
           items: [
             "content_11_learning/incident-response/README",
