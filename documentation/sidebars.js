@@ -1144,6 +1144,41 @@ const sidebars = {
         },
         {
           type: "category",
+          label: "障害対応（Incident Response）",
+          items: [
+            "content_11_learning/incident-response/README",
+            {
+              type: "category",
+              label: "基礎",
+              collapsed: true,
+              items: [
+                "content_11_learning/incident-response/severity-and-roles",
+                "content_11_learning/incident-response/alert-design"
+              ]
+            },
+            {
+              type: "category",
+              label: "検知と復旧",
+              collapsed: true,
+              items: [
+                "content_11_learning/incident-response/first-response",
+                "content_11_learning/incident-response/investigation",
+                "content_11_learning/incident-response/recovery-patterns"
+              ]
+            },
+            {
+              type: "category",
+              label: "振り返りと実践",
+              collapsed: true,
+              items: [
+                "content_11_learning/incident-response/postmortem",
+                "content_11_learning/incident-response/runbook"
+              ]
+            }
+          ]
+        },
+        {
+          type: "category",
           label: "オブザーバビリティ",
           items: [
             "content_11_learning/observability/README",
