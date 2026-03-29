@@ -85,8 +85,8 @@
 ```markdown
 ## 根本原因
 
-v2.1.0 で HikariCP の minimum-idle を 10 → 30 に変更。
-4 ECS タスク × 30 接続 = 120 で Aurora の max_connections (150) に近づき、
+v2.1.0 でコネクションプールの minimum-idle を 10 → 30 に変更。
+4 インスタンス × 30 接続 = 120 で DB の max_connections (150) に近づき、
 他のサービスのコネクション確保が困難になった。
 
 直接の原因: 設定変更のレビューで接続数の総量計算が漏れた
@@ -104,7 +104,7 @@ v2.1.0 で HikariCP の minimum-idle を 10 → 30 に変更。
 ### 恒久対応（予定）
 - [ ] minimum-idle を 10 に戻し、max-pool-size のみ 20 → 30 に変更
 - [ ] コネクション総量計算をリリースチェックリストに追加
-- [ ] Aurora max_connections のアラートを追加（80% で Sev 3）
+- [ ] DB の接続数 / max_connections 比率のアラートを追加（80% で Sev 3）
 - [ ] 期限: 2026-04-05
 ```
 
@@ -114,13 +114,13 @@ v2.1.0 で HikariCP の minimum-idle を 10 → 30 に変更。
 ## 再発防止
 
 ### 検知の改善
-- Aurora の接続数 / max_connections 比率のアラートを追加
+- DB の接続数 / max_connections 比率のアラートを追加
 
 ### プロセスの改善
-- コネクションプール設定変更時は「タスク数 × pool-size ≤ max_connections の 70%」を確認
+- コネクションプール設定変更時は「インスタンス数 × pool-size ≤ max_connections の 70%」を確認
 
 ### 設計の改善
-- RDS Proxy の導入検討（コネクション管理の一元化）
+- コネクションプーリングプロキシの導入検討（PgBouncer / RDS Proxy 等）
 ```
 
 ### 学んだこと
@@ -128,8 +128,8 @@ v2.1.0 で HikariCP の minimum-idle を 10 → 30 に変更。
 ```markdown
 ## 学んだこと
 
-- コネクションプールの minimum-idle は「1タスクあたり」だが、
-  max_connections は「クラスタ全体」。掛け算を忘れると枯渇する
+- コネクションプールの minimum-idle は「1インスタンスあたり」だが、
+  max_connections は「DB 全体」。掛け算を忘れると枯渇する
 - ロールバック（Blue-Green）が3分で完了した。投資の価値があった
 - アラートが 5xx > 1% で鳴ったが、5xx > 0.5% に下げてもよかった
 ```

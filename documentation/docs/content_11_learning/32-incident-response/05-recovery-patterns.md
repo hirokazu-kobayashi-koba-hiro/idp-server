@@ -34,18 +34,16 @@
 
 ```
 Blue-Green の場合（瞬時）:
-  aws elbv2 modify-rule --rule-arn $RULE_ARN \
-    --actions '[{"Type":"forward","ForwardConfig":{"TargetGroups":[
-      {"TargetGroupArn":"'$BLUE_ARN'","Weight":100},
-      {"TargetGroupArn":"'$GREEN_ARN'","Weight":0}
-    ]}}]'
+  ロードバランサーのルーティングを旧環境に戻す
   → 数秒で復旧
 
 ローリングアップデートの場合:
-  aws ecs update-service --cluster idp-cluster \
-    --service idp-server \
-    --task-definition idp-server:PREVIOUS_VERSION
-  → 数分で復旧（旧バージョンのタスクが起動するまで）
+  前バージョンのイメージで再デプロイ
+  → 数分で復旧（旧バージョンのインスタンスが起動するまで）
+
+Kubernetes の場合:
+  kubectl rollout undo deployment/my-app
+  → デプロイ履歴から1つ前に戻す
 ```
 
 ### 2. スケールアウト
@@ -53,22 +51,16 @@ Blue-Green の場合（瞬時）:
 **トラフィック急増やリソース不足が原因の場合。**
 
 ```
-ECS タスク数を増やす:
-  aws ecs update-service --cluster idp-cluster \
-    --service idp-server \
-    --desired-count 8  # 4 → 8 に増加
+アプリインスタンスを増やす:
+  ・コンテナのレプリカ数を増加
+  ・オートスケーリングの閾値を一時的に下げる
 
-Aurora Reader を追加:
-  aws rds create-db-instance \
-    --db-instance-identifier idp-reader-3 \
-    --db-cluster-identifier idp-cluster \
-    --db-instance-class db.r6g.large \
-    --engine aurora-postgresql
+DB の読み取り負荷を分散:
+  ・Read Replica を追加
+  ・コネクションプーリング（PgBouncer / ProxySQL / RDS Proxy）の導入
 
-ElastiCache ノードを追加:
-  aws elasticache modify-replication-group \
-    --replication-group-id idp-redis \
-    --apply-immediately
+キャッシュの容量を増やす:
+  ・Redis ノードの追加 / スケールアップ
 ```
 
 ### 3. アプリ再起動
@@ -76,45 +68,44 @@ ElastiCache ノードを追加:
 **原因不明だが再起動で直る場合（メモリリーク、コネクション枯渇等）。**
 
 ```
-ECS タスクを強制再起動:
-  # 1台ずつ再起動（全台同時はNG）
-  aws ecs update-service --cluster idp-cluster \
-    --service idp-server \
-    --force-new-deployment
-
-  # または特定のタスクだけ停止（新タスクが自動起動）
-  aws ecs stop-task --cluster idp-cluster --task $TASK_ARN
+注意:
+  ・1台ずつ再起動（全台同時はNG → サービス停止になる）
+  ・コンテナオーケストレーション（Kubernetes / ECS）なら
+    1台停止すると新しいインスタンスが自動起動する
+  ・再起動で直っても根本原因は後で調査する
 ```
 
 ### 4. DB フェイルオーバー
 
-**Aurora Writer に問題がある場合。**
+**DB の Writer ノードに問題がある場合。**
 
 ```
-Aurora フェイルオーバー（Writer を Reader に切り替え）:
-  aws rds failover-db-cluster \
-    --db-cluster-identifier idp-cluster
+マネージド DB のフェイルオーバー:
+  ・Reader が新 Writer に昇格
+  ・エンドポイントが自動更新（アプリ設定変更不要）
+  ・30秒〜1分で完了
+  ・アプリ側は接続エラーが一時的に発生 → コネクションプールが自動再接続
 
-  → 30秒〜1分で完了
-  → エンドポイントは変わらない（アプリ設定変更不要）
-  → アプリ側は接続エラーが一時的に発生 → 自動再接続
+Kubernetes 上のセルフホスト DB の場合:
+  ・Patroni / Stolon 等の HA ツールが自動フェイルオーバー
+  ・手動の場合は pg_ctl promote でスタンバイを昇格
 ```
 
 ### 5. 外部サービスの一時無効化
 
-**フック実行（Slack/Webhook/Email）の遅延が本体に影響している場合。**
+**外部 API 呼び出し（Webhook / メール送信等）の遅延が本体に影響している場合。**
 
 ```
 対策:
-  ① フック設定を無効化（Management API）
-     → POST /v1/management/tenants/{id}/security-event-hook-configurations
-     → enabled: false に変更
+  ① 外部呼び出しの設定を無効化
+     → 管理画面や設定 API で該当機能を OFF にする
 
-  ② 非同期スレッドプールの設定調整
-     → SECURITY_EVENT_MAX_POOL_SIZE を一時的に増加
+  ② 非同期処理のスレッドプール / キューサイズを調整
+     → 外部呼び出しが詰まっても本体に影響しないようにする
 
   ③ 外部サービスのタイムアウトを短縮
-     → フック実行の HTTP タイムアウトを 30秒 → 5秒 に
+     → HTTP タイムアウトを 30秒 → 5秒 に
+     → 応答しない外部サービスに引きずられないようにする
 ```
 
 ---

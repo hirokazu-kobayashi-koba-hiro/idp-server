@@ -12,13 +12,13 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
 │  1. 外側から内側へ                                          │
-│     ALB → アプリ → DB → 外部サービス の順に調べる          │
+│     LB → アプリ → DB → 外部サービス の順に調べる           │
 │     → 外側で異常が見つかれば、内側は調べなくていい          │
 │                                                             │
 │  2. 変わったものを探す                                      │
 │     「昨日まで動いていたのに今日動かない」                   │
 │     → 昨日と今日で何が変わった？                            │
-│     → デプロイ？設定変更？トラフィック？AWS 障害？           │
+│     → デプロイ？設定変更？トラフィック？インフラ障害？       │
 │                                                             │
 │  3. 仮説→検証を繰り返す                                    │
 │     「たぶん DB が遅い」→ DB のメトリクスを確認              │
@@ -36,85 +36,58 @@
 
 ## レイヤー別の調査
 
-### レイヤー1: ALB（リクエストの入口）
+### レイヤー1: ロードバランサー（リクエストの入口）
 
 ```
 確認すること:
   □ 5xx エラーの内訳（502/503/504 のどれ？）
      502: アプリが不正なレスポンスを返した
-     503: ターゲットが Unhealthy
+     503: バックエンドが Unhealthy
      504: タイムアウト（アプリが応答しない）
-  □ ターゲットヘルス（何台 Healthy / Unhealthy？）
+  □ バックエンドのヘルス（何台 Healthy / Unhealthy？）
   □ リクエスト数の推移（急増していないか）
 
-コマンド:
-  # ターゲットヘルス確認
-  aws elbv2 describe-target-health \
-    --target-group-arn $TARGET_GROUP_ARN
-
-  # ALB アクセスログ（S3 に保存されている場合）
-  # エラーが多いパスを特定
-  aws s3 cp s3://alb-logs/AWSLogs/... - | \
-    grep " 5[0-9][0-9] " | \
-    awk '{print $13}' | sort | uniq -c | sort -rn
+確認方法:
+  ・ロードバランサーのダッシュボード（エラー率、レイテンシ、ヘルスチェック）
+  ・アクセスログでエラーが多いパスを特定
 ```
 
-### レイヤー2: アプリ（ECS / idp-server）
+### レイヤー2: アプリ
 
 ```
 確認すること:
-  □ タスクの状態（Running / Stopped / Pending）
-  □ 最近のタスク停止理由
-  □ アプリログのエラー
+  □ インスタンス / コンテナの状態（稼働中？停止？再起動ループ？）
+  □ 最近の停止理由
+  □ アプリログのエラー（ERROR / Exception で検索）
   □ CPU / メモリ使用率
-  □ GC ログ（JVM）
+  □ GC ログ（JVM の場合）
 
-コマンド:
-  # タスク一覧
-  aws ecs list-tasks --cluster idp-cluster --service idp-server
-
-  # 停止理由の確認
-  aws ecs describe-tasks --cluster idp-cluster \
-    --tasks $TASK_ARN \
-    --query 'tasks[0].stoppedReason'
-
-  # アプリログ（直近のエラー）
-  aws logs filter-log-events \
-    --log-group-name /ecs/idp-server \
-    --filter-pattern "ERROR" \
-    --start-time $(date -d '15 minutes ago' +%s000) \
-    --limit 20
-
-  # CloudWatch Logs Insights
-  fields @timestamp, @message
-  | filter @message like /ERROR|Exception/
-  | sort @timestamp desc
-  | limit 50
+確認方法:
+  ・コンテナオーケストレーションのダッシュボード（Kubernetes / ECS）
+  ・ログ集約ツールで ERROR をフィルタ（CloudWatch Logs / Datadog / Grafana Loki）
+  ・APM ツールでトレースを確認（Datadog APM / New Relic / Jaeger）
 ```
 
-### レイヤー3: DB（Aurora）
+### レイヤー3: DB
 
 ```
 確認すること:
   □ 接続数（max_connections に近づいていないか）
   □ CPU / メモリ使用率
-  □ スロークエリ（Performance Insights）
+  □ スロークエリ
   □ Wait Event（ロック待ち等）
   □ レプリカラグ
-  □ RDS イベント（フェイルオーバー等）
+  □ DB イベント（フェイルオーバー等）
 
-コマンド:
-  # RDS イベント確認（直近1時間）
-  aws rds describe-events \
-    --source-identifier idp-cluster \
-    --source-type db-cluster \
-    --duration 60
+確認方法:
+  ・DB のダッシュボード（Performance Insights / pgAdmin / Datadog DBM）
+  ・SQL で直接確認:
 
-  # 接続数確認（SQL）
+  -- 接続数
   SELECT count(*) FROM pg_stat_activity;
   SELECT state, count(*) FROM pg_stat_activity GROUP BY state;
 
-  # ロック待ちの確認
+  -- ロック待ち
   SELECT blocked.pid, blocked.query, blocking.pid, blocking.query
   FROM pg_locks blocked
   JOIN pg_locks blocking ON blocked.transactionid = blocking.transactionid
@@ -128,16 +101,15 @@
 
 ```
 確認すること:
-  □ フック実行の遅延（Slack / Webhook / Email）
-  □ Federation 先の IdP が応答しているか
-  □ AWS サービスのステータス（health.aws.amazon.com）
+  □ 外部 API 呼び出しの遅延（Webhook / メール送信等）
+  □ 外部 IdP が応答しているか
+  □ クラウドプロバイダーのステータスページ
 
-コマンド:
-  # AWS サービスヘルス
-  aws health describe-events --filter '{
-    "eventTypeCategories": ["issue"],
-    "regions": ["ap-northeast-1"]
-  }'
+確認方法:
+  ・外部サービスのステータスページを確認
+    （AWS: health.aws.amazon.com / GCP: status.cloud.google.com）
+  ・アプリログで外部呼び出しのタイムアウト / エラーを検索
+  ・APM ツールで外部呼び出しのレイテンシを確認
 ```
 
 ---
@@ -147,7 +119,7 @@
 原因特定で最も強力なのは**タイムラインの照合**です。
 
 ```
-時刻          ALB 5xx    DB接続数    直近イベント
+時刻          5xx率      DB接続数    直近イベント
 ─────         ──────     ────────    ──────────
 09:00         0.1%       50
 09:15         0.1%       50          デプロイ開始
@@ -172,7 +144,7 @@
   症状: INSERT INTO statistics_events の平均実行時間が 1.94秒（通常 0.53ms）
 
   調査フロー:
-  ① ALB → エラーは出ていないが、レイテンシ悪化
+  ① LB → エラーは出ていないが、レイテンシ悪化
   ② アプリ → SecurityEventHandler の非同期スレッドが詰まっている
   ③ DB → pg_stat_activity で transactionid の wait が 28 セッション
   ④ Wait Event の分析 → statistics_events の同一行にロック集中
@@ -195,7 +167,7 @@
 ```
 調査の進め方:
 
-  1. 外側から内側へ（ALB → アプリ → DB → 外部）
+  1. 外側から内側へ（LB → アプリ → DB → 外部）
   2. 変わったものを探す（デプロイ？設定？トラフィック？）
   3. タイムラインを作る（時系列で因果関係を特定）
   4. 仮説→検証を繰り返す（推測で対処しない）

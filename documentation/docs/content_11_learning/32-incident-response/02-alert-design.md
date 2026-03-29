@@ -8,16 +8,19 @@
 
 全てをアラートにすると通知疲れで無視されます。重要度に応じて3層に分けます。
 
+「ページング」とは、PagerDuty 等のツールを通じて **電話・SMS・アプリ通知で担当者を即座に呼び出す** ことです。語源は pager（ポケットベル。病院で医師を緊急呼び出しするための小型無線端末）から来ています。現在はスマートフォンへの電話・SMS・プッシュ通知に置き換わっていますが、「page する」「ページングする」という用語はそのまま使われています。
+
 ```
 ┌─ ページング（即時対応が必要）──────────────────────────────┐
 │                                                             │
-│  PagerDuty / 電話 / SMS                                     │
-│  → 深夜でも起こされる                                       │
+│  PagerDuty / Opsgenie → 電話 / SMS / アプリ通知            │
+│  → 深夜でも担当者を呼び出す                                │
 │  → 対応しないとユーザー影響が拡大する                       │
+│  → 応答がなければ次の担当者に自動エスカレーション           │
 │                                                             │
-│  例: 全テナントの 5xx エラー率 > 5%                         │
-│      ECS 全タスク Unhealthy                                 │
-│      Aurora 接続不能                                        │
+│  例: 5xx エラー率 > 5%                                      │
+│      全インスタンス Unhealthy                                │
+│      DB 接続不能                                             │
 │                                                             │
 ├─ アラート（勤務時間中に対応）───────────────────────────────┤
 │                                                             │
@@ -52,21 +55,21 @@
 
 | メトリクス | 閾値 | 期間 | 理由 |
 |:---|:---|:---:|:---|
-| ALB 5xx エラー率 | > 5% | 3分 | 多くのユーザーがエラーを受けている |
-| ECS Running Task 数 | = 0 | 1分 | サービス完全停止 |
-| Aurora Writer 接続不能 | > 0 | 1分 | DB に書き込めない = 認証不可 |
-| ヘルスチェック全失敗 | 全ターゲット Unhealthy | 1分 | ALB がリクエストを転送できない |
+| 5xx エラー率 | > 5% | 3分 | 多くのユーザーがエラーを受けている |
+| Running インスタンス数 | = 0 | 1分 | サービス完全停止 |
+| DB Writer 接続不能 | > 0 | 1分 | DB に書き込めない |
+| ヘルスチェック全失敗 | 全ターゲット Unhealthy | 1分 | LB がリクエストを転送できない |
 
 ### アラート（勤務時間中に対応）
 
 | メトリクス | 閾値 | 期間 | 理由 |
 |:---|:---|:---:|:---|
-| ALB 5xx エラー率 | > 1% | 5分 | エラーが増加傾向 |
+| 5xx エラー率 | > 1% | 5分 | エラーが増加傾向 |
 | p95 レイテンシ | > 1秒 | 5分 | ユーザー体感に影響 |
 | DB コネクションプール使用率 | > 80% | 5分 | 枯渇の予兆 |
-| ElastiCache メモリ使用率 | > 80% | 10分 | セッション保存に影響 |
-| ECS タスク再起動 | > 2回 | 10分 | アプリがクラッシュしている |
-| Aurora レプリカラグ | > 10秒 | 5分 | Reader の遅延 |
+| キャッシュ メモリ使用率 | > 80% | 10分 | セッション保存に影響 |
+| アプリ再起動回数 | > 2回 | 10分 | アプリがクラッシュしている |
+| DB レプリカラグ | > 10秒 | 5分 | Reader の遅延 |
 | Certificate 有効期限 | < 14日 | 1日1回 | 証明書切れでサービス停止 |
 
 ### 情報（ダッシュボードのみ）
@@ -121,35 +124,36 @@
 
 ---
 
-## CloudWatch Alarm の設定例
+## 監視ツールの選択肢
 
-```bash
-# Sev 1: 全タスク Unhealthy（ページング）
-aws cloudwatch put-metric-alarm \
-  --alarm-name "idp-sev1-all-unhealthy" \
-  --metric-name UnHealthyHostCount \
-  --namespace AWS/ApplicationELB \
-  --statistic Maximum \
-  --period 60 \
-  --threshold 0 \
-  --comparison-operator GreaterThanThreshold \
-  --evaluation-periods 1 \
-  --alarm-actions arn:aws:sns:ap-northeast-1:123456789012:pagerduty-sev1 \
-  --dimensions Name=TargetGroup,Value=targetgroup/idp-tg/xxx \
-               Name=LoadBalancer,Value=app/idp-alb/yyy
+ここまでの設計方針は、どの監視ツールでも同じ考え方で実装できます。
 
-# Sev 2: 5xx エラー率 > 1%（Slack 通知）
-aws cloudwatch put-metric-alarm \
-  --alarm-name "idp-sev2-5xx-rate" \
-  --metric-name HTTPCode_Target_5XX_Count \
-  --namespace AWS/ApplicationELB \
-  --statistic Sum \
-  --period 300 \
-  --threshold 100 \
-  --comparison-operator GreaterThanThreshold \
-  --evaluation-periods 1 \
-  --alarm-actions arn:aws:sns:ap-northeast-1:123456789012:slack-alerts
+### 主要な監視ツール
+
+| ツール | 特徴 | アラート通知先 | 向いているケース |
+|:---|:---|:---|:---|
+| **CloudWatch** | AWS ネイティブ。追加導入不要 | SNS → Slack / Email / Lambda | AWS 中心の環境 |
+| **Datadog** | 統合監視。APM / ログ / メトリクスが1画面 | PagerDuty / Slack / Email / Webhook | マルチクラウド、詳細な分析 |
+| **Grafana + Prometheus** | OSS。カスタマイズ性が高い | AlertManager → Slack / PagerDuty | コスト重視、Kubernetes 環境 |
+| **New Relic** | APM に強い。トレーシング | PagerDuty / Slack / Email | アプリケーション性能の可視化 |
+
+### ページングツール
+
+| ツール | 特徴 |
+|:---|:---|
+| **PagerDuty** | 業界標準。オンコールローテーション、エスカレーションポリシー |
+| **Opsgenie** | Atlassian 製。Jira / Confluence と統合 |
+| **VictorOps (Splunk On-Call)** | チャット統合、タイムライン機能 |
+
+### 3層と監視ツールの対応
+
 ```
+ページング: 監視ツール → PagerDuty → 電話 / SMS
+アラート:   監視ツール → Slack / Teams / メール
+情報:       監視ツール → ダッシュボード（通知なし）
+```
+
+どのツールを使っても、**3層に分ける設計方針は変わりません**。ツール固有の設定方法は各ツールのドキュメントを参照してください。
 
 ---
 
