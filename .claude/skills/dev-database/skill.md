@@ -293,6 +293,105 @@ public enum DatabaseType {
 
 ---
 
+## 悲観ロック（SELECT FOR UPDATE）
+
+### 背景（Issue #1454）
+
+`authentication_transaction` のように状態遷移を持つリソースに対して、複数リクエストが同時にDELETEを実行すると、`ON DELETE CASCADE` による子テーブル（`authentication_interactions`）の行削除順序が異なり、PostgreSQLでデッドロックが発生する。
+
+```
+Process A: DELETE authentication_transaction → CASCADE DELETE interactions (row 1, row 2)
+Process B: DELETE authentication_transaction → CASCADE DELETE interactions (row 2, row 1)
+→ 循環待ち → deadlock detected
+```
+
+### 対策パターン
+
+親テーブルの行を `SELECT FOR UPDATE` で先にロックし、並行操作を直列化する。
+
+```java
+// QueryRepository インターフェース
+AuthenticationTransaction getForUpdate(Tenant tenant, AuthenticationTransactionIdentifier identifier);
+AuthenticationTransaction getForUpdate(Tenant tenant, AuthorizationIdentifier identifier);
+```
+
+```sql
+-- PostgreSQL
+SELECT ... FROM authentication_transaction
+WHERE id = ?::uuid AND tenant_id = ?::uuid
+FOR UPDATE
+
+-- MySQL（同一構文で動作）
+SELECT ... FROM authentication_transaction
+WHERE id = ? AND tenant_id = ?
+FOR UPDATE
+```
+
+### EntryService での使い方
+
+`@Transaction` 内で `getForUpdate()` により再取得し、以降の処理はロック済みオブジェクトを使う。
+
+```java
+@Transaction
+public class CibaFlowEntryService {
+  public AuthenticationInteractionRequestResult interact(
+      ..., AuthenticationTransaction authenticationTransaction, ...) {
+
+    // 引数の authenticationTransaction はトランザクション外で取得済み。
+    // @Transaction 内で FOR UPDATE 付きで再取得して悲観ロックを取る。
+    AuthenticationTransaction lockedTransaction =
+        authenticationTransactionQueryRepository.getForUpdate(
+            tenant, authenticationTransaction.identifier());
+
+    // 以降は lockedTransaction を使い、元の authenticationTransaction は使わない
+  }
+}
+```
+
+### 適用箇所
+
+状態遷移を持ち、並行書き込み（DELETE/UPDATE）が発生しうるリソースに適用:
+
+| EntryService | メソッド | 理由 |
+|-------------|---------|------|
+| `CibaFlowEntryService` | `interact()` | FIDO-UAF認証完了 + キャンセルの同時到着 |
+| `OAuthFlowEntryService` | `interact()`, `authorize()`, `deny()`, `callbackFederation()` | 二重クリック、タブ重複 |
+| `UserOperationEntryService` | `interact()` | デバイス認証操作の並行実行 |
+
+### 注意点
+
+- `SELECT FOR UPDATE` はトランザクション内でのみ有効（`@Transaction` 必須）
+- ロック保持中に外部サービス呼び出し（FIDO-UAF等）があると、その応答時間分だけロックが保持される。現状はデッドロック（500）よりマシというトレードオフ
+- 読み取り専用クエリ（`get()` / `findList()`）には `FOR UPDATE` を付けない
+
+---
+
+## SQL エラーハンドリング
+
+### SqlError 分類
+
+`SqlErrorClassifier` がDB固有のエラーコードを統一分類し、`SqlExecutor` が適切な例外に変換する。
+
+| SqlError | PostgreSQL | MySQL | 例外クラス | HTTP |
+|----------|-----------|-------|-----------|------|
+| `UNIQUE_VIOLATION` | 23505 | 1062 | `SqlDuplicateKeyException` | 409 |
+| `FK_VIOLATION` | 23503 | 1451/1452 | `SqlForeignKeyViolationException` | 404 |
+| `NOT_NULL_VIOLATION` | 23502 | 1048 | `SqlBadRequestException` | 400 |
+| `CHECK_VIOLATION` | 23514 | 3819 | `SqlBadRequestException` | 400 |
+| `DEADLOCK_DETECTED` | 40P01 | 1213 | `SqlTransactionConflictException` | 409 |
+| `SERIALIZATION_FAILURE` | 40001 | 1205 | `SqlTransactionConflictException` | 409 |
+| `OTHER` | — | — | `SqlRuntimeException` | 500 |
+
+### FK違反の用途
+
+`authentication_transaction` がCASCADE DELETEされた後に、別トランザクションが子テーブルへINSERT/UPDATEしようとした場合に発生。`ApiExceptionHandler` で「セッション期限切れ」として404を返す。
+
+### トランザクション競合の用途
+
+`SELECT FOR UPDATE` を導入してもデッドロックが完全にゼロにはならない（想定外のロック順序、アプリケーション外からの操作等）。`SqlTransactionConflictException` → 409でクライアントにリトライ可能であることを伝える。
+
+---
+
 ## トラブルシューティング
 
 ### SQL構文エラー
@@ -302,6 +401,14 @@ public enum DatabaseType {
 | PostgreSQLで動くがMySQLでエラー | DB固有構文の混在 | 両Executor実装を確認 |
 | UUIDキャストエラー | `?::uuid`がMySQLで失敗 | MySQL版では文字列として扱う |
 | JSONクエリ失敗 | JSON関数の差異 | 上記JSON操作表を参照 |
+
+### デッドロック / ロック競合
+
+| 問題 | 原因 | 解決策 |
+|------|------|--------|
+| `deadlock detected` (PostgreSQL 40P01) | CASCADE DELETE で子テーブルの行ロック順序が競合 | 親テーブルに `SELECT FOR UPDATE` を適用 |
+| `Lock wait timeout exceeded` (MySQL 1205) | FOR UPDATE のロック保持時間が長い | 外部サービス呼び出しをロック区間外に分離検討 |
+| FK violation after concurrent DELETE | 別トランザクションが先に親行を削除済み | `SqlForeignKeyViolationException` で404返却 |
 
 ### マイグレーション失敗
 
