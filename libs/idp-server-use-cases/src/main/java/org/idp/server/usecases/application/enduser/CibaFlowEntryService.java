@@ -157,6 +157,14 @@ public class CibaFlowEntryService implements CibaFlowApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
+    // Acquire pessimistic lock to prevent deadlock from concurrent interact requests
+    // (e.g., fido-uaf-authentication + cancel arriving simultaneously).
+    // Without this lock, concurrent transactions can acquire locks on authentication_interactions
+    // rows in different orders, causing circular wait deadlock on CASCADE DELETE.
+    AuthenticationTransaction lockedTransaction =
+        authenticationTransactionQueryRepository.getForUpdate(
+            tenant, authenticationTransaction.identifier());
+
     CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProvider());
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
         cibaProtocol.get(tenant, backchannelAuthenticationRequestIdentifier);
@@ -165,14 +173,9 @@ public class CibaFlowEntryService implements CibaFlowApi {
 
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
-            tenant,
-            authenticationTransaction,
-            type,
-            request,
-            requestAttributes,
-            userQueryRepository);
+            tenant, lockedTransaction, type, request, requestAttributes, userQueryRepository);
 
-    AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
+    AuthenticationTransaction updatedTransaction = lockedTransaction.updateWith(result);
 
     eventPublisher.publish(
         tenant,
@@ -222,10 +225,9 @@ public class CibaFlowEntryService implements CibaFlowApi {
     }
 
     if (updatedTransaction.isComplete()) {
-      authenticationTransactionCommandRepository.delete(
-          tenant, authenticationTransaction.identifier());
+      authenticationTransactionCommandRepository.delete(tenant, lockedTransaction.identifier());
     } else {
-      authenticationTransactionCommandRepository.update(tenant, authenticationTransaction);
+      authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
     }
 
     return result;

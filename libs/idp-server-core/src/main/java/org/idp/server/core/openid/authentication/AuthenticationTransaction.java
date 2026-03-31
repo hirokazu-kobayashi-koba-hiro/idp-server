@@ -289,6 +289,13 @@ public class AuthenticationTransaction {
     return isSuccess() || isFailure() || isLocked();
   }
 
+  public boolean isExpired() {
+    if (request == null || request.expiredAt() == null) {
+      return false;
+    }
+    return SystemDateTime.now().isAfter(request.expiredAt());
+  }
+
   public boolean exists() {
     return identifier != null && identifier.exists();
   }

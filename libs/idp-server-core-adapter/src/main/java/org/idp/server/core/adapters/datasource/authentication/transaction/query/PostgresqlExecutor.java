@@ -328,6 +328,45 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     return sqlExecutor.selectList(sql.toString(), params);
   }
 
+  @Override
+  public Map<String, String> selectOneForUpdate(
+      Tenant tenant, AuthenticationTransactionIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
+            WHERE id = ?::uuid
+            AND tenant_id = ?::uuid
+            FOR UPDATE
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
+  public Map<String, String> selectOneForUpdate(Tenant tenant, AuthorizationIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
+            WHERE authorization_id = ?::uuid
+            AND tenant_id = ?::uuid
+            FOR UPDATE
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(identifier.valueAsUuid());
+    params.add(tenant.identifierUUID());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
   String selectSql =
       """
           SELECT

@@ -30,6 +30,7 @@ import org.idp.server.core.openid.authentication.AuthenticationInteractor;
 import org.idp.server.core.openid.authentication.AuthenticationInteractors;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.core.openid.authentication.AuthorizationIdentifier;
+import org.idp.server.core.openid.authentication.exception.AuthenticationTransactionNotFoundException;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
@@ -245,7 +246,11 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     AuthorizationIdentifier authorizationIdentifier =
         new AuthorizationIdentifier(authorizationRequestIdentifier.value());
     AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(tenant, authorizationIdentifier);
+        authenticationTransactionQueryRepository.getForUpdate(tenant, authorizationIdentifier);
+
+    if (authenticationTransaction.isExpired()) {
+      throw new AuthenticationTransactionNotFoundException("authentication transaction is expired");
+    }
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
     // Skip validation for device-based interactors (e.g., push notification) as they don't have the
@@ -360,7 +365,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         oAuthProtocol.get(tenant, result.authorizationRequestIdentifier());
 
     AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(
+        authenticationTransactionQueryRepository.getForUpdate(
             tenant, result.authorizationRequestIdentifier().toAuthorizationIdentifier());
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
@@ -404,7 +409,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
     AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(
+        authenticationTransactionQueryRepository.getForUpdate(
             tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
@@ -552,7 +557,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(
+        authenticationTransactionQueryRepository.getForUpdate(
             tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
