@@ -22,7 +22,7 @@ DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_USER="${DB_USER:-idp}"
 DB_NAME="${DB_NAME:-idpserver}"
-DB_PASSWORD="${DB_PASSWORD:-WftkeJdd2odzHwWoIJa00YDP9qgm1DjP}"
+DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD is required. Set via environment variable or .env file.}"
 
 SLEEP_SECONDS="${1:-2}"
 

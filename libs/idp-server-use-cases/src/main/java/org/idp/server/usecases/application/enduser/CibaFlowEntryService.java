@@ -184,7 +184,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
         result.eventType(),
         result.response(),
         requestAttributes,
-        authenticationTransaction.request().clientAttributes());
+        lockedTransaction.request().clientAttributes());
 
     if (updatedTransaction.isSuccess()) {
 
@@ -202,7 +202,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
           result.user(),
           DefaultSecurityEventType.backchannel_authentication_authorize.toEventType(),
           requestAttributes,
-          authenticationTransaction.request().clientAttributes());
+          lockedTransaction.request().clientAttributes());
     }
 
     if (updatedTransaction.isFailure()) {
@@ -215,7 +215,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
           result.user(),
           DefaultSecurityEventType.backchannel_authentication_deny.toEventType(),
           requestAttributes,
-          authenticationTransaction.request().clientAttributes());
+          lockedTransaction.request().clientAttributes());
     }
 
     if (updatedTransaction.isLocked()) {
