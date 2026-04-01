@@ -82,7 +82,7 @@ describe("Monkey test Concurrent Authentication Transaction", () => {
         const setupTypes = [
           { type: "fido-uaf-authentication-challenge", body: { username: ciba.username, password: ciba.userCode } },
           { type: "sms-authentication-challenge", body: { phone_number: "09012345678", provider_id: "idp-server" } },
-          { type: "password-authentication", body: { username: ciba.username, password: "wrong-password" } },
+          { type: "password-authentication", body: { username: ciba.username, password: ciba.userCode } },
         ];
         for (const { type, body } of setupTypes) {
           await postAuthenticationDeviceInteraction({
