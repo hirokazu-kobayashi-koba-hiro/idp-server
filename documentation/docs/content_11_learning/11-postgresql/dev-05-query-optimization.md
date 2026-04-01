@@ -804,6 +804,110 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 
 ---
 
+## 7. 実践事例: ユーザー検索APIのページネーション最適化
+
+### 7.1 問題
+
+ユーザー検索API（`selectList`）は200万ユーザー規模で約3秒かかっていた。
+
+原因は、全行をJOIN→GROUP BY→ORDER BY→LIMITするクエリ構造。
+
+```sql
+-- 変更前: 全行をJOIN・GROUP BYしてからLIMIT
+SELECT idp_user.*, roles, permissions
+FROM idp_user
+LEFT JOIN idp_user_roles ON ...
+LEFT JOIN role ON ...
+LEFT JOIN role_permission ON ...
+LEFT JOIN permission ON ...
+WHERE idp_user.tenant_id = ?
+GROUP BY idp_user.id
+ORDER BY idp_user.created_at DESC
+LIMIT 20 OFFSET 0;
+```
+
+```
+Execution Time: 2954.068 ms
+
+Sort Method: external merge  Disk: 176088kB  ← 176MBのディスクソート
+→  Bitmap Heap Scan on idp_user ... rows=2000193
+```
+
+200万行を全てJOIN・GROUP BYし、176MBのディスクソートが発生していた。
+
+### 7.2 解決: CTEで先にLIMIT/OFFSETしてからJOIN
+
+```sql
+-- 変更後: CTEで先に20件に絞ってからJOIN
+WITH paged_users AS (
+  SELECT id, created_at FROM idp_user
+  WHERE tenant_id = ?
+  ORDER BY created_at DESC
+  LIMIT 20 OFFSET 0
+)
+SELECT idp_user.*, roles, permissions
+FROM paged_users
+JOIN idp_user ON idp_user.id = paged_users.id
+LEFT JOIN idp_user_roles ON ...
+LEFT JOIN role ON ...
+LEFT JOIN role_permission ON ...
+LEFT JOIN permission ON ...
+WHERE idp_user.id IN (SELECT id FROM paged_users)
+GROUP BY idp_user.id
+ORDER BY idp_user.created_at DESC;
+```
+
+### 7.3 性能検証結果（200万ユーザー、LIMIT 20）
+
+| クエリ構造 | インデックスなし | `(tenant_id, created_at DESC)` インデックスあり |
+|---|---|---|
+| 変更前（全行JOIN→GROUP BY→LIMIT） | 2,954ms | 2,778ms（インデックス効かず） |
+| 変更後（CTE→20件だけJOIN） | 185ms | 2.5ms |
+
+- CTE方式はインデックスなしでも **約16倍高速化**（3秒→185ms）
+- インデックス追加でさらに **約74倍高速化**（185ms→2.5ms）
+
+### 7.4 注意点: JOINテーブルの条件
+
+CTEで先にLIMITする場合、JOINテーブル（role, permissionなど）の条件の扱いに注意が必要。
+
+```
+パターン A（間違い）:
+  CTE: idp_userだけでLIMIT 20 → メインクエリ: role条件で絞り込み
+  → 20件からさらに絞るので結果が0〜20件になる（不正確）
+
+パターン B（正解）:
+  CTE内にJOINを含めてrole条件で絞り込んでからLIMIT 20
+  → 正確に条件に合うユーザーが20件返る
+```
+
+実装では、role/permission条件の有無で動的にCTEのFROM句を切り替える:
+
+```java
+if (hasRoleOrPermissionFilter) {
+  // CTE内でJOINして絞り込み
+  cteFrom = """
+    SELECT DISTINCT idp_user.id, idp_user.created_at FROM idp_user
+    LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
+    LEFT JOIN role ON idp_user_roles.role_id = role.id
+    LEFT JOIN role_permission ON role.id = role_permission.role_id
+    LEFT JOIN permission ON role_permission.permission_id = permission.id
+    """;
+} else {
+  // idp_userのみ（高速パス）
+  cteFrom = "SELECT id, created_at FROM idp_user ";
+}
+```
+
+### 7.5 学び
+
+1. **LIMIT/OFFSETは可能な限り早い段階で適用する** — 全行を処理してからLIMITするのは無駄
+2. **ORDER BYなしのLIMIT/OFFSETは非決定的** — ページ送りでレコードが重複・欠落する
+3. **インデックスだけでは解決しないケースがある** — GROUP BYの後のORDER BYにはインデックスが効かない
+4. **JOINテーブルの条件はCTE内で処理する** — CTEの外に残すとページネーションが壊れる
+
+---
+
 ## まとめ
 
 1. **EXPLAIN ANALYZE** でクエリの実行計画を確認する

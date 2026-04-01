@@ -246,96 +246,123 @@ public class PostgresqlExecutor implements UserSqlExecutor {
   public List<Map<String, String>> selectList(Tenant tenant, UserQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    StringBuilder where = new StringBuilder("WHERE idp_user.tenant_id = ?::uuid");
-    List<Object> params = new ArrayList<>();
-    params.add(tenant.identifierUUID());
+    StringBuilder cteWhere = new StringBuilder("WHERE idp_user.tenant_id = ?::uuid");
+    List<Object> cteParams = new ArrayList<>();
+    cteParams.add(tenant.identifierUUID());
 
     if (queries.hasFrom()) {
-      where.append(" AND idp_user.created_at >= ?");
-      params.add(queries.from());
+      cteWhere.append(" AND idp_user.created_at >= ?");
+      cteParams.add(queries.from());
     }
 
     if (queries.hasTo()) {
-      where.append(" AND idp_user.created_at <= ?");
-      params.add(queries.to());
+      cteWhere.append(" AND idp_user.created_at <= ?");
+      cteParams.add(queries.to());
     }
 
     if (queries.hasUserId()) {
-      where.append(" AND idp_user.id = ?::uuid");
-      params.add(queries.userIdAsUuid());
+      cteWhere.append(" AND idp_user.id = ?::uuid");
+      cteParams.add(queries.userIdAsUuid());
     }
 
     if (queries.hasExternalUserId()) {
-      where.append(" AND idp_user.external_user_id = ?");
-      params.add(queries.externalUserId());
+      cteWhere.append(" AND idp_user.external_user_id = ?");
+      cteParams.add(queries.externalUserId());
     }
 
     if (queries.hasProviderId()) {
-      where.append(" AND idp_user.provider_id = ?");
-      params.add(queries.providerId());
+      cteWhere.append(" AND idp_user.provider_id = ?");
+      cteParams.add(queries.providerId());
     }
 
     if (queries.hasEmail()) {
-      where.append(" AND idp_user.email = ?");
-      params.add(queries.email());
+      cteWhere.append(" AND idp_user.email = ?");
+      cteParams.add(queries.email());
     }
 
     if (queries.hasStatus()) {
-      where.append(" AND idp_user.status = ?");
-      params.add(queries.status().name());
+      cteWhere.append(" AND idp_user.status = ?");
+      cteParams.add(queries.status().name());
     }
 
     if (queries.hasName()) {
-      where.append(" AND idp_user.name ILIKE ?");
-      params.add("%" + queries.name() + "%");
+      cteWhere.append(" AND idp_user.name ILIKE ?");
+      cteParams.add("%" + queries.name() + "%");
     }
 
     if (queries.hasGivenName()) {
-      where.append(" AND idp_user.given_name ILIKE ?");
-      params.add("%" + queries.givenName() + "%");
+      cteWhere.append(" AND idp_user.given_name ILIKE ?");
+      cteParams.add("%" + queries.givenName() + "%");
     }
     if (queries.hasFamilyName()) {
-      where.append(" AND idp_user.family_name ILIKE ?");
-      params.add("%" + queries.familyName() + "%");
+      cteWhere.append(" AND idp_user.family_name ILIKE ?");
+      cteParams.add("%" + queries.familyName() + "%");
     }
     if (queries.hasMiddleName()) {
-      where.append(" AND idp_user.middle_name ILIKE ?");
-      params.add("%" + queries.middleName() + "%");
+      cteWhere.append(" AND idp_user.middle_name ILIKE ?");
+      cteParams.add("%" + queries.middleName() + "%");
     }
     if (queries.hasNickname()) {
-      where.append(" AND idp_user.nickname ILIKE ?");
-      params.add("%" + queries.nickname() + "%");
+      cteWhere.append(" AND idp_user.nickname ILIKE ?");
+      cteParams.add("%" + queries.nickname() + "%");
     }
     if (queries.hasPreferredUsername()) {
-      where.append(" AND idp_user.preferred_username ILIKE ?");
-      params.add("%" + queries.preferredUsername() + "%");
+      cteWhere.append(" AND idp_user.preferred_username ILIKE ?");
+      cteParams.add("%" + queries.preferredUsername() + "%");
     }
 
     if (queries.hasPhoneNumber()) {
-      where.append(" AND idp_user.phone_number = ?");
-      params.add(queries.phoneNumber());
+      cteWhere.append(" AND idp_user.phone_number = ?");
+      cteParams.add(queries.phoneNumber());
     }
 
     if (queries.hasRole()) {
-      where.append(" AND role.name ILIKE ?");
-      params.add("%" + queries.role() + "%");
+      cteWhere.append(" AND role.name ILIKE ?");
+      cteParams.add("%" + queries.role() + "%");
     }
 
     if (queries.hasPermission()) {
-      where.append(" AND permission.name ILIKE ?");
-      params.add("%" + queries.permission() + "%");
+      cteWhere.append(" AND permission.name ILIKE ?");
+      cteParams.add("%" + queries.permission() + "%");
     }
 
+    cteParams.add(queries.limit());
+    cteParams.add(queries.offset());
+
+    boolean hasRoleOrPermissionFilter = queries.hasRole() || queries.hasPermission();
+
+    String cteFrom;
+    if (hasRoleOrPermissionFilter) {
+      cteFrom =
+          """
+          SELECT DISTINCT idp_user.id, idp_user.created_at FROM idp_user
+          LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
+          LEFT JOIN role ON idp_user_roles.role_id = role.id
+          LEFT JOIN role_permission ON role.id = role_permission.role_id
+          LEFT JOIN permission ON role_permission.permission_id = permission.id
+          """;
+    } else {
+      cteFrom = "SELECT id, created_at FROM idp_user ";
+    }
+
+    String cteSql =
+        "WITH paged_users AS ("
+            + cteFrom
+            + cteWhere
+            + """
+           ORDER BY idp_user.created_at DESC
+           LIMIT ?
+           OFFSET ?
+        ) """;
+
     String pagedSql =
-        String.format(selectSql, where) + """
-          LIMIT ?
-          OFFSET ?
+        cteSql
+            + String.format(selectSql, "WHERE idp_user.id IN (SELECT id FROM paged_users)")
+            + """
+          ORDER BY idp_user.created_at DESC
         """;
 
-    params.add(queries.limit());
-    params.add(queries.offset());
-
-    return sqlExecutor.selectList(pagedSql, params);
+    return sqlExecutor.selectList(pagedSql, cteParams);
   }
 
   @Override

@@ -248,98 +248,125 @@ public class MysqlExecutor implements UserSqlExecutor {
   public List<Map<String, String>> selectList(Tenant tenant, UserQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
-    StringBuilder where = new StringBuilder("WHERE idp_user.tenant_id = ?");
-    List<Object> params = new ArrayList<>();
-    params.add(tenant.identifier().value());
+    StringBuilder cteWhere = new StringBuilder("WHERE idp_user.tenant_id = ?");
+    List<Object> cteParams = new ArrayList<>();
+    cteParams.add(tenant.identifier().value());
 
     if (queries.hasFrom()) {
-      where.append(" AND idp_user.created_at >= ?");
-      params.add(queries.from());
+      cteWhere.append(" AND idp_user.created_at >= ?");
+      cteParams.add(queries.from());
     }
 
     if (queries.hasTo()) {
-      where.append(" AND idp_user.created_at <= ?");
-      params.add(queries.to());
+      cteWhere.append(" AND idp_user.created_at <= ?");
+      cteParams.add(queries.to());
     }
 
     if (queries.hasUserId()) {
-      where.append(" AND idp_user.id = ?");
-      params.add(queries.userIdAsUuid().toString());
+      cteWhere.append(" AND idp_user.id = ?");
+      cteParams.add(queries.userIdAsUuid().toString());
     }
 
     if (queries.hasExternalUserId()) {
-      where.append(" AND idp_user.external_user_id = ?");
-      params.add(queries.externalUserId());
+      cteWhere.append(" AND idp_user.external_user_id = ?");
+      cteParams.add(queries.externalUserId());
     }
 
     if (queries.hasProviderId()) {
-      where.append(" AND idp_user.provider_id = ?");
-      params.add(queries.providerId());
+      cteWhere.append(" AND idp_user.provider_id = ?");
+      cteParams.add(queries.providerId());
     }
 
     if (queries.hasEmail()) {
-      where.append(" AND idp_user.email = ?");
-      params.add(queries.email());
+      cteWhere.append(" AND idp_user.email = ?");
+      cteParams.add(queries.email());
     }
 
     if (queries.hasStatus()) {
-      where.append(" AND idp_user.status = ?");
-      params.add(queries.status().name());
+      cteWhere.append(" AND idp_user.status = ?");
+      cteParams.add(queries.status().name());
     }
 
     if (queries.hasName()) {
-      where.append(" AND LOWER(idp_user.name) LIKE ?");
-      params.add("%" + queries.name().toLowerCase() + "%");
+      cteWhere.append(" AND LOWER(idp_user.name) LIKE ?");
+      cteParams.add("%" + queries.name().toLowerCase() + "%");
     }
 
     if (queries.hasGivenName()) {
-      where.append(" AND LOWER(idp_user.given_name) LIKE ?");
-      params.add("%" + queries.givenName().toLowerCase() + "%");
+      cteWhere.append(" AND LOWER(idp_user.given_name) LIKE ?");
+      cteParams.add("%" + queries.givenName().toLowerCase() + "%");
     }
 
     if (queries.hasFamilyName()) {
-      where.append(" AND LOWER(idp_user.family_name) LIKE ?");
-      params.add("%" + queries.familyName().toLowerCase() + "%");
+      cteWhere.append(" AND LOWER(idp_user.family_name) LIKE ?");
+      cteParams.add("%" + queries.familyName().toLowerCase() + "%");
     }
 
     if (queries.hasMiddleName()) {
-      where.append(" AND LOWER(idp_user.middle_name) LIKE ?");
-      params.add("%" + queries.middleName().toLowerCase() + "%");
+      cteWhere.append(" AND LOWER(idp_user.middle_name) LIKE ?");
+      cteParams.add("%" + queries.middleName().toLowerCase() + "%");
     }
     if (queries.hasNickname()) {
-      where.append(" AND LOWER(idp_user.nickname) LIKE ?");
-      params.add("%" + queries.nickname().toLowerCase() + "%");
+      cteWhere.append(" AND LOWER(idp_user.nickname) LIKE ?");
+      cteParams.add("%" + queries.nickname().toLowerCase() + "%");
     }
     if (queries.hasPreferredUsername()) {
-      where.append(" AND LOWER(idp_user.preferred_username) LIKE ?");
-      params.add("%" + queries.preferredUsername().toLowerCase() + "%");
+      cteWhere.append(" AND LOWER(idp_user.preferred_username) LIKE ?");
+      cteParams.add("%" + queries.preferredUsername().toLowerCase() + "%");
     }
 
     if (queries.hasPhoneNumber()) {
-      where.append(" AND idp_user.phone_number = ?");
-      params.add(queries.phoneNumber());
+      cteWhere.append(" AND idp_user.phone_number = ?");
+      cteParams.add(queries.phoneNumber());
     }
 
     if (queries.hasRole()) {
-      where.append(" AND role.name LIKE ?");
-      params.add("%" + queries.role() + "%");
+      cteWhere.append(" AND role.name LIKE ?");
+      cteParams.add("%" + queries.role() + "%");
     }
 
     if (queries.hasPermission()) {
-      where.append(" AND permission.name LIKE ?");
-      params.add("%" + queries.permission() + "%");
+      cteWhere.append(" AND permission.name LIKE ?");
+      cteParams.add("%" + queries.permission() + "%");
     }
 
+    cteParams.add(queries.limit());
+    cteParams.add(queries.offset());
+
+    boolean hasRoleOrPermissionFilter = queries.hasRole() || queries.hasPermission();
+
+    String cteFrom;
+    if (hasRoleOrPermissionFilter) {
+      cteFrom =
+          """
+          SELECT DISTINCT idp_user.id, idp_user.created_at FROM idp_user
+          LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
+          LEFT JOIN role ON idp_user_roles.role_id = role.id
+          LEFT JOIN role_permission ON role.id = role_permission.role_id
+          LEFT JOIN permission ON role_permission.permission_id = permission.id
+          """;
+    } else {
+      cteFrom = "SELECT id, created_at FROM idp_user ";
+    }
+
+    String cteSql =
+        "WITH paged_users AS ("
+            + cteFrom
+            + cteWhere
+            + """
+           ORDER BY idp_user.created_at DESC
+           LIMIT ?
+           OFFSET ?
+        ) """;
+
     String pagedSql =
-        String.format(selectSql, where) + """
-          LIMIT ?
-          OFFSET ?
+        cteSql
+            + String.format(selectSql, "WHERE idp_user.id IN (SELECT id FROM paged_users)")
+            + """
+          ORDER BY idp_user.created_at DESC
         """;
 
-    params.add(queries.limit());
-    params.add(queries.offset());
-
-    return sqlExecutor.selectList(pagedSql, params);
+    return sqlExecutor.selectList(pagedSql, cteParams);
   }
 
   @Override
