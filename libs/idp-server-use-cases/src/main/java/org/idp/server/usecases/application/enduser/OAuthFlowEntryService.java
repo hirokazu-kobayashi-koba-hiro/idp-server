@@ -30,7 +30,6 @@ import org.idp.server.core.openid.authentication.AuthenticationInteractor;
 import org.idp.server.core.openid.authentication.AuthenticationInteractors;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.core.openid.authentication.AuthorizationIdentifier;
-import org.idp.server.core.openid.authentication.exception.AuthenticationTransactionNotFoundException;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
@@ -247,10 +246,6 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         new AuthorizationIdentifier(authorizationRequestIdentifier.value());
     AuthenticationTransaction authenticationTransaction =
         authenticationTransactionQueryRepository.getForUpdate(tenant, authorizationIdentifier);
-
-    if (authenticationTransaction.isExpired()) {
-      throw new AuthenticationTransactionNotFoundException("authentication transaction is expired");
-    }
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
     // Skip validation for device-based interactors (e.g., push notification) as they don't have the

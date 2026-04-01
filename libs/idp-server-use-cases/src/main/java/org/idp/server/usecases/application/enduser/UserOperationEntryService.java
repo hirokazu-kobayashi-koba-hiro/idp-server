@@ -19,7 +19,6 @@ package org.idp.server.usecases.application.enduser;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.*;
-import org.idp.server.core.openid.authentication.exception.AuthenticationTransactionNotFoundException;
 import org.idp.server.core.openid.authentication.mfa.*;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
@@ -149,10 +148,6 @@ public class UserOperationEntryService implements UserOperationApi {
     AuthenticationTransaction authenticationTransaction =
         authenticationTransactionQueryRepository.getForUpdate(
             tenant, authenticationTransactionIdentifier);
-
-    if (authenticationTransaction.isExpired()) {
-      throw new AuthenticationTransactionNotFoundException("authentication transaction is expired");
-    }
 
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
