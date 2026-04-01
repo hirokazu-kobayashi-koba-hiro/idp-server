@@ -132,4 +132,30 @@ public class AuthenticationTransactionQueryDataSource
 
     return ModelConverter.convert(result);
   }
+
+  @Override
+  public AuthenticationTransaction getForUpdate(
+      Tenant tenant, AuthenticationTransactionIdentifier identifier) {
+    Map<String, String> result = executor.selectOneForUpdate(tenant, identifier);
+
+    if (result == null || result.isEmpty()) {
+      throw new AuthenticationTransactionNotFoundException(
+          "Authentication transaction not found for identifier: " + identifier.value());
+    }
+
+    return ModelConverter.convert(result);
+  }
+
+  @Override
+  public AuthenticationTransaction getForUpdate(Tenant tenant, AuthorizationIdentifier identifier) {
+    Map<String, String> result = executor.selectOneForUpdate(tenant, identifier);
+
+    if (result == null || result.isEmpty()) {
+      throw new AuthenticationTransactionNotFoundException(
+          "Authentication transaction not found for authorization identifier: "
+              + identifier.value());
+    }
+
+    return ModelConverter.convert(result);
+  }
 }

@@ -76,9 +76,15 @@ public class SqlExecutor {
         case UNIQUE_VIOLATION ->
             throw new SqlDuplicateKeyException(
                 "Duplicate key violation: " + exception.getMessage(), exception);
+        case FK_VIOLATION ->
+            throw new SqlForeignKeyViolationException(
+                "Referenced resource not found: " + exception.getMessage(), exception);
         case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
             throw new SqlBadRequestException(
                 "Invalid data for: " + exception.getMessage(), exception);
+        case DEADLOCK_DETECTED, SERIALIZATION_FAILURE ->
+            throw new SqlTransactionConflictException(
+                "Transaction conflict: " + exception.getMessage(), exception);
         default ->
             throw new SqlRuntimeException(
                 "Sql execution is error: " + exception.getMessage(), exception);
@@ -131,9 +137,15 @@ public class SqlExecutor {
         case UNIQUE_VIOLATION ->
             throw new SqlDuplicateKeyException(
                 "Duplicate key violation: " + exception.getMessage(), exception);
+        case FK_VIOLATION ->
+            throw new SqlForeignKeyViolationException(
+                "Referenced resource not found: " + exception.getMessage(), exception);
         case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
             throw new SqlBadRequestException(
                 "Invalid data for: " + exception.getMessage(), exception);
+        case DEADLOCK_DETECTED, SERIALIZATION_FAILURE ->
+            throw new SqlTransactionConflictException(
+                "Transaction conflict: " + exception.getMessage(), exception);
         default ->
             throw new SqlRuntimeException(
                 "Sql execution is error: " + exception.getMessage(), exception);
@@ -186,9 +198,15 @@ public class SqlExecutor {
         case UNIQUE_VIOLATION ->
             throw new SqlDuplicateKeyException(
                 "Duplicate key violation: " + exception.getMessage(), exception);
+        case FK_VIOLATION ->
+            throw new SqlForeignKeyViolationException(
+                "Referenced resource not found: " + exception.getMessage(), exception);
         case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
             throw new SqlBadRequestException(
                 "Invalid data for: " + exception.getMessage(), exception);
+        case DEADLOCK_DETECTED, SERIALIZATION_FAILURE ->
+            throw new SqlTransactionConflictException(
+                "Transaction conflict: " + exception.getMessage(), exception);
         default ->
             throw new SqlRuntimeException(
                 "Sql execution is error: " + exception.getMessage(), exception);
@@ -247,9 +265,15 @@ public class SqlExecutor {
         case UNIQUE_VIOLATION ->
             throw new SqlDuplicateKeyException(
                 "Duplicate key violation: " + exception.getMessage(), exception);
+        case FK_VIOLATION ->
+            throw new SqlForeignKeyViolationException(
+                "Referenced resource not found: " + exception.getMessage(), exception);
         case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
             throw new SqlBadRequestException(
                 "Invalid data for: " + exception.getMessage(), exception);
+        case DEADLOCK_DETECTED, SERIALIZATION_FAILURE ->
+            throw new SqlTransactionConflictException(
+                "Transaction conflict: " + exception.getMessage(), exception);
         default ->
             throw new SqlRuntimeException(
                 "Sql execution is error: " + exception.getMessage(), exception);
@@ -299,9 +323,15 @@ public class SqlExecutor {
         case UNIQUE_VIOLATION ->
             throw new SqlDuplicateKeyException(
                 "Duplicate key violation: " + exception.getMessage(), exception);
+        case FK_VIOLATION ->
+            throw new SqlForeignKeyViolationException(
+                "Referenced resource not found: " + exception.getMessage(), exception);
         case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
             throw new SqlBadRequestException(
                 "Invalid data for: " + exception.getMessage(), exception);
+        case DEADLOCK_DETECTED, SERIALIZATION_FAILURE ->
+            throw new SqlTransactionConflictException(
+                "Transaction conflict: " + exception.getMessage(), exception);
         default ->
             throw new SqlRuntimeException(
                 "Sql execution is error: " + exception.getMessage(), exception);
@@ -361,9 +391,15 @@ public class SqlExecutor {
         case UNIQUE_VIOLATION ->
             throw new SqlDuplicateKeyException(
                 "Duplicate key violation: " + exception.getMessage(), exception);
+        case FK_VIOLATION ->
+            throw new SqlForeignKeyViolationException(
+                "Referenced resource not found: " + exception.getMessage(), exception);
         case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
             throw new SqlBadRequestException(
                 "Invalid data for: " + exception.getMessage(), exception);
+        case DEADLOCK_DETECTED, SERIALIZATION_FAILURE ->
+            throw new SqlTransactionConflictException(
+                "Transaction conflict: " + exception.getMessage(), exception);
         default ->
             throw new SqlRuntimeException(
                 "Sql execution is error: " + exception.getMessage(), exception);
@@ -422,9 +458,15 @@ public class SqlExecutor {
         case UNIQUE_VIOLATION ->
             throw new SqlDuplicateKeyException(
                 "Duplicate key violation: " + exception.getMessage(), exception);
+        case FK_VIOLATION ->
+            throw new SqlForeignKeyViolationException(
+                "Referenced resource not found: " + exception.getMessage(), exception);
         case NOT_NULL_VIOLATION, CHECK_VIOLATION ->
             throw new SqlBadRequestException(
                 "Invalid data for: " + exception.getMessage(), exception);
+        case DEADLOCK_DETECTED, SERIALIZATION_FAILURE ->
+            throw new SqlTransactionConflictException(
+                "Transaction conflict: " + exception.getMessage(), exception);
         default ->
             throw new SqlRuntimeException(
                 "Sql execution is error: " + exception.getMessage(), exception);

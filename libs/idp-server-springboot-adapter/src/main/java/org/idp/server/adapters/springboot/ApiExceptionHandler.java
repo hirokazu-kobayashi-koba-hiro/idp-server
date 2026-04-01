@@ -20,6 +20,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.format.DateTimeParseException;
 import java.util.Map;
 import org.idp.server.platform.datasource.SqlDuplicateKeyException;
+import org.idp.server.platform.datasource.SqlForeignKeyViolationException;
+import org.idp.server.platform.datasource.SqlTransactionConflictException;
 import org.idp.server.platform.exception.*;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.springframework.http.HttpStatus;
@@ -127,6 +129,34 @@ public class ApiExceptionHandler {
         exception.getMessage());
     Map<String, String> response =
         Map.of("error", "invalid_request", "error_description", exception.getMessage());
+    return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+  }
+
+  @ExceptionHandler(SqlForeignKeyViolationException.class)
+  public ResponseEntity<?> handleException(SqlForeignKeyViolationException exception) {
+    log.warn(
+        "API request failed: status=not_found, error=invalid_request, description={}",
+        exception.getMessage());
+    Map<String, String> response =
+        Map.of(
+            "error",
+            "invalid_request",
+            "error_description",
+            "The referenced resource no longer exists. The session may have expired.");
+    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(SqlTransactionConflictException.class)
+  public ResponseEntity<?> handleException(SqlTransactionConflictException exception) {
+    log.warn(
+        "API request failed: status=conflict, error=transaction_conflict, description={}",
+        exception.getMessage());
+    Map<String, String> response =
+        Map.of(
+            "error",
+            "transaction_conflict",
+            "error_description",
+            "A concurrent operation conflicted with this request. Please retry.");
     return new ResponseEntity<>(response, HttpStatus.CONFLICT);
   }
 

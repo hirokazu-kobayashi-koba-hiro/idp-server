@@ -245,7 +245,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     AuthorizationIdentifier authorizationIdentifier =
         new AuthorizationIdentifier(authorizationRequestIdentifier.value());
     AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(tenant, authorizationIdentifier);
+        authenticationTransactionQueryRepository.getForUpdate(tenant, authorizationIdentifier);
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
     // Skip validation for device-based interactors (e.g., push notification) as they don't have the
@@ -360,7 +360,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         oAuthProtocol.get(tenant, result.authorizationRequestIdentifier());
 
     AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(
+        authenticationTransactionQueryRepository.getForUpdate(
             tenant, result.authorizationRequestIdentifier().toAuthorizationIdentifier());
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
@@ -404,7 +404,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
     AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(
+        authenticationTransactionQueryRepository.getForUpdate(
             tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
@@ -552,7 +552,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(
+        authenticationTransactionQueryRepository.getForUpdate(
             tenant, authorizationRequestIdentifier.toAuthorizationIdentifier());
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks

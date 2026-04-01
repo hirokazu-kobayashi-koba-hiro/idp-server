@@ -329,6 +329,45 @@ public class MysqlExecutor implements AuthenticationTransactionQuerySqlExecutor 
     return sqlExecutor.selectList(sql.toString(), params);
   }
 
+  @Override
+  public Map<String, String> selectOneForUpdate(
+      Tenant tenant, AuthenticationTransactionIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
+            WHERE id = ?
+            AND tenant_id = ?
+            FOR UPDATE
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(identifier.value());
+    params.add(tenant.identifier().value());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
+  public Map<String, String> selectOneForUpdate(Tenant tenant, AuthorizationIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
+            WHERE authorization_id = ?
+            AND tenant_id = ?
+            FOR UPDATE
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(identifier.valueAsUuid().toString());
+    params.add(tenant.identifier().value());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
   String selectSql =
       """
           SELECT

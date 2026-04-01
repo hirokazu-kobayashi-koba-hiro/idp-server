@@ -45,4 +45,9 @@ public interface AuthenticationTransactionQueryRepository {
   List<AuthenticationTransaction> findList(Tenant tenant, AuthenticationTransactionQueries queries);
 
   AuthenticationTransaction find(Tenant tenant, AuthenticationTransactionIdentifier identifier);
+
+  AuthenticationTransaction getForUpdate(
+      Tenant tenant, AuthenticationTransactionIdentifier identifier);
+
+  AuthenticationTransaction getForUpdate(Tenant tenant, AuthorizationIdentifier identifier);
 }

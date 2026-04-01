@@ -146,7 +146,9 @@ public class UserOperationEntryService implements UserOperationApi {
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
 
     AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.get(tenant, authenticationTransactionIdentifier);
+        authenticationTransactionQueryRepository.getForUpdate(
+            tenant, authenticationTransactionIdentifier);
+
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
             tenant,

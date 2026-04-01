@@ -43,4 +43,9 @@ public interface AuthenticationTransactionQuerySqlExecutor {
       Tenant tenant,
       AuthenticationDeviceIdentifier authenticationDeviceIdentifier,
       AuthenticationTransactionQueries queries);
+
+  Map<String, String> selectOneForUpdate(
+      Tenant tenant, AuthenticationTransactionIdentifier identifier);
+
+  Map<String, String> selectOneForUpdate(Tenant tenant, AuthorizationIdentifier identifier);
 }

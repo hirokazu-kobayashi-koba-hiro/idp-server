@@ -308,53 +308,168 @@ SHOW transaction_isolation;
 
 ## 4. ロック機構
 
-### 4.1 ロックの種類
+PostgreSQLには**テーブルレベルロック**と**行レベルロック**の2階層があります。通常のSQL文（SELECT, UPDATE, DELETE等）を実行すると、PostgreSQLが自動的に適切なロックを取得します。
 
-PostgreSQLには複数のロックレベルがあります。
+### 4.1 テーブルレベルロック
+
+テーブルレベルロックはテーブル全体に対するロックです。通常のDML操作では軽量なロックが自動取得され、DDL操作では重いロックが取得されます。
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                           テーブルロックモード                                    │
 ├────────────────────────────┬────────────────────────────────────────────────────┤
-│ ロックモード               │ 用途                                                │
+│ ロックモード               │ 用途・取得される場面                                 │
 ├────────────────────────────┼────────────────────────────────────────────────────┤
-│ ACCESS SHARE               │ SELECT で取得                                       │
-│                            │ ACCESS EXCLUSIVE とのみ競合                         │
+│ ACCESS SHARE               │ SELECT で自動取得                                    │
+│                            │ 最も弱いロック。テーブル削除以外は何も妨げない       │
 ├────────────────────────────┼────────────────────────────────────────────────────┤
-│ ROW SHARE                  │ SELECT FOR UPDATE/SHARE で取得                      │
-│                            │                                                     │
+│ ROW SHARE                  │ SELECT FOR UPDATE / FOR SHARE で自動取得             │
+│                            │ 「この後に行ロックを取るよ」という宣言               │
 ├────────────────────────────┼────────────────────────────────────────────────────┤
-│ ROW EXCLUSIVE              │ UPDATE, DELETE, INSERT で取得                       │
-│                            │                                                     │
+│ ROW EXCLUSIVE              │ UPDATE, DELETE, INSERT で自動取得                    │
+│                            │ 「この後に行を変更するよ」という宣言                 │
 ├────────────────────────────┼────────────────────────────────────────────────────┤
-│ SHARE                      │ CREATE INDEX（非CONCURRENT）で取得                  │
-│                            │                                                     │
+│ SHARE UPDATE EXCLUSIVE     │ VACUUM, CREATE INDEX CONCURRENTLY で取得            │
+│                            │ 同時に別のスキーマ変更を防ぐ                         │
 ├────────────────────────────┼────────────────────────────────────────────────────┤
-│ ACCESS EXCLUSIVE           │ ALTER TABLE, DROP, TRUNCATE, VACUUM FULL で取得     │
-│                            │ 他のすべてのロックと競合                             │
+│ SHARE                      │ CREATE INDEX（非CONCURRENT）で取得                   │
+│                            │ テーブルへの書き込みをすべてブロック                  │
+├────────────────────────────┼────────────────────────────────────────────────────┤
+│ ACCESS EXCLUSIVE           │ ALTER TABLE, DROP, TRUNCATE, VACUUM FULL で取得      │
+│                            │ 最も強いロック。SELECTすらブロックする               │
 └────────────────────────────┴────────────────────────────────────────────────────┘
 ```
 
+:::info テーブルロックは「ゲートキーパー」
+テーブルレベルロックの主な役割は、DDL（スキーマ変更）とDML（データ操作）の競合を防ぐことです。通常のアプリケーションで問題になるのは、次の行レベルロックの方です。
+:::
+
+#### テーブルロックの競合マトリクス
+
+```
+要求するロック →
+                 ACCESS  ROW     ROW     SHARE   SHARE   ACCESS
+                 SHARE   SHARE   EXCL    UPD EX  SHARE   EXCL
+保持中のロック ↓
+ACCESS SHARE       ○       ○       ○       ○       ○       ×
+ROW SHARE          ○       ○       ○       ○       ○       ×
+ROW EXCLUSIVE      ○       ○       ○       ○       ×       ×
+SHARE UPD EXCL     ○       ○       ○       ×       ×       ×
+SHARE              ○       ○       ×       ×       ○       ×
+ACCESS EXCLUSIVE   ×       ×       ×       ×       ×       ×
+
+○ = 共存可能（両方同時に取得できる）
+× = 競合（後から要求した方は待機）
+```
+
+**ポイント**: SELECT（ACCESS SHARE）と UPDATE（ROW EXCLUSIVE）はテーブルレベルでは競合しません。行レベルで競合が起きます。
+
 ### 4.2 行レベルロック
 
-行レベルロックは、特定の行のみをロックします。
+行レベルロックは特定の行のみをロックします。テーブルの他の行には影響しないため、高い並行性を維持できます。
+
+#### 4つの行ロックモード
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           行レベルロックモード                                    │
+├──────────────────────┬──────────────────────────────────────────────────────────┤
+│ ロックモード          │ 用途                                                     │
+├──────────────────────┼──────────────────────────────────────────────────────────┤
+│ FOR KEY SHARE        │ 外部キー制約の検証で自動取得                              │
+│                      │ 主キー以外のカラム更新は許可する                          │
+│                      │ 最も弱い行ロック                                         │
+├──────────────────────┼──────────────────────────────────────────────────────────┤
+│ FOR SHARE            │ 読み取り保護。他のトランザクションの読み取りは許可        │
+│                      │ 更新・削除はブロック                                      │
+│                      │ 例: 外部キー参照先の存在確認                             │
+├──────────────────────┼──────────────────────────────────────────────────────────┤
+│ FOR NO KEY UPDATE    │ UPDATE で自動取得（主キー以外のカラム更新時）              │
+│                      │ FOR KEY SHARE とは共存可能                                │
+│                      │ → 外部キー制約の検証とデータ更新を同時に実行できる        │
+├──────────────────────┼──────────────────────────────────────────────────────────┤
+│ FOR UPDATE           │ 最も強い行ロック。排他的な行ロック                        │
+│                      │ DELETE, 主キー更新, SELECT FOR UPDATE で取得             │
+│                      │ 他の行ロック（FOR KEY SHARE 以外）をすべてブロック        │
+└──────────────────────┴──────────────────────────────────────────────────────────┘
+```
+
+:::tip FOR UPDATE と FOR NO KEY UPDATE の違い
+`UPDATE accounts SET balance = 100 WHERE id = 1` は主キー（id）を変更しないため `FOR NO KEY UPDATE` ロックで済みます。一方、`SELECT ... FOR UPDATE` や `DELETE` は最強の `FOR UPDATE` ロックを取ります。この違いは外部キー制約のパフォーマンスに影響します。
+:::
+
+#### 基本的な使い方
 
 ```sql
--- 排他ロック（更新用）
+-- 排他ロック（更新用）: 読み取りと同時にロック取得
 SELECT * FROM accounts WHERE id = 1 FOR UPDATE;
--- 他のトランザクションはこの行を更新できない
+-- → 他のトランザクションはこの行を更新・削除できない（SELECT は可能）
+-- → ロック取得と同時に最新のデータを読み取れる
+-- → 「読み取ってから更新するまでの間に他の人に変更されたくない」場合に使う
 
--- 共有ロック（読み取り用）
+-- 共有ロック（読み取り保護）
 SELECT * FROM accounts WHERE id = 1 FOR SHARE;
--- 他のトランザクションもこの行を読み取り可能だが、更新は待機
+-- → 他のトランザクションもこの行を FOR SHARE で読み取れる
+-- → 更新・削除はブロック
+-- → 「参照先が消されないことを保証したい」場合に使う
 
--- ロック待機をスキップ
+-- ロック待機をスキップ（NOWAIT）
 SELECT * FROM accounts WHERE id = 1 FOR UPDATE NOWAIT;
--- ロックできない場合は即座にエラー
+-- → ロックできない場合は即座にエラー（ERROR: could not obtain lock on row）
+-- → 待機したくない場合に使う
 
--- ロックできた行のみ取得
-SELECT * FROM accounts WHERE id IN (1, 2, 3) FOR UPDATE SKIP LOCKED;
--- ロック中の行はスキップされる
+-- ロックできた行のみ取得（SKIP LOCKED）
+SELECT * FROM tasks WHERE status = 'pending' LIMIT 1 FOR UPDATE SKIP LOCKED;
+-- → ロック中の行はスキップして、ロック取得できた行だけ返す
+-- → ジョブキューのような「誰か1人が処理すればいい」パターンに最適
+```
+
+#### よくある使用パターン
+
+**パターン1: 読み取り後の更新（悲観ロック）**
+
+```sql
+BEGIN;
+-- 最新のデータを読み取りつつロック
+SELECT balance FROM accounts WHERE id = 1 FOR UPDATE;
+-- → balance = 10000
+
+-- 読み取った値を基に更新（他のトランザクションに割り込まれない）
+UPDATE accounts SET balance = 10000 - 3000 WHERE id = 1;
+COMMIT;
+```
+
+`FOR UPDATE` なしだと、SELECTとUPDATEの間に別トランザクションが残高を変更する可能性があります（Lost Update問題）。
+
+**パターン2: 親行ロックによるCASCADE DELETE保護**
+
+```sql
+BEGIN;
+-- 親テーブルの行をロック → 他のトランザクションは同じ行のDELETEで待機する
+SELECT * FROM authentication_transaction WHERE id = 'abc' FOR UPDATE;
+
+-- 安全に処理を実行（他のトランザクションはこの行のDELETEに到達できない）
+-- ... 処理 ...
+
+DELETE FROM authentication_transaction WHERE id = 'abc';
+-- CASCADE DELETEも安全に実行される
+COMMIT;
+```
+
+**パターン3: ジョブキュー（SKIP LOCKED）**
+
+```sql
+BEGIN;
+-- 他のワーカーが処理中の行をスキップして、空いている行を取得
+SELECT * FROM job_queue
+WHERE status = 'pending'
+ORDER BY created_at
+LIMIT 1
+FOR UPDATE SKIP LOCKED;
+
+-- 取得した行を処理
+UPDATE job_queue SET status = 'processing' WHERE id = ...;
+COMMIT;
 ```
 
 ### 4.3 行ロックの競合マトリクス
@@ -445,9 +560,97 @@ UPDATE accounts SET balance = balance + 100 WHERE id = 1;  -- 行1を待機
 UPDATE accounts SET balance = balance + 100 WHERE id = 2;  -- 行2を待機 → デッドロック！
 ```
 
-### 5.3 デッドロックの回避策
+### 5.3 CASCADE DELETEによるデッドロック（実例）
 
-#### 策1: 一貫した順序でロック
+`ON DELETE CASCADE` を持つ親子テーブルで、同一の親行に対して複数トランザクションが同時にDELETEを実行すると、子テーブルの行ロック取得順序が異なりデッドロックが発生することがあります。
+
+#### 発生メカニズム
+
+```
+親テーブル: authentication_transaction (id, tenant_id, ...)
+子テーブル: authentication_interactions (id, transaction_id REFERENCES authentication_transaction ON DELETE CASCADE)
+
+子テーブルに3行ある場合:
+  interaction_1 (transaction_id = 'abc')
+  interaction_2 (transaction_id = 'abc')
+  interaction_3 (transaction_id = 'abc')
+```
+
+```
+時間 →
+┌──────────────────────────────────────────────────────────────┐
+│ トランザクションA              │ トランザクションB              │
+│ （認証完了）                   │ （認証キャンセル）              │
+├───────────────────────────────┼──────────────────────────────┤
+│ DELETE authentication_        │                              │
+│   transaction WHERE id='abc'; │                              │
+│   → CASCADE: interaction_1    │                              │
+│     のロック取得 ✓             │                              │
+│                               │ DELETE authentication_       │
+│                               │   transaction WHERE id='abc';│
+│                               │   → CASCADE: interaction_3   │
+│                               │     のロック取得 ✓            │
+│   → CASCADE: interaction_3    │                              │
+│     のロック待ち...            │   → CASCADE: interaction_1   │
+│            ↑                  │     のロック待ち...            │
+│            └────── デッドロック ─────────┘                    │
+│                                                              │
+│ → PostgreSQLが検出（deadlock_timeout後）                      │
+│ → トランザクションAをROLLBACK → 500エラー                    │
+└──────────────────────────────────────────────────────────────┘
+```
+
+#### 対策: 親行の事前ロック（SELECT FOR UPDATE）
+
+親行を `SELECT FOR UPDATE` で先にロックすることで、後続のトランザクションは親行のロック待ちで直列化され、CASCADE DELETEの行ロック競合が発生しなくなります。
+
+```sql
+-- トランザクションA
+BEGIN;
+SELECT * FROM authentication_transaction WHERE id = 'abc' FOR UPDATE;  -- 親行をロック
+-- 認証処理を実行
+DELETE FROM authentication_transaction WHERE id = 'abc';  -- CASCADE DELETEも安全
+COMMIT;
+
+-- トランザクションB（同時に実行）
+BEGIN;
+SELECT * FROM authentication_transaction WHERE id = 'abc' FOR UPDATE;  -- Aのロック解放を待機
+-- Aが完了後にロック取得 → 行が既に削除済み → 0行返却
+-- アプリケーション側で「トランザクションが存在しない」として適切にハンドリング
+```
+
+```
+時間 →
+┌──────────────────────────────────────────────────────────────┐
+│ トランザクションA              │ トランザクションB              │
+├───────────────────────────────┼──────────────────────────────┤
+│ SELECT ... FOR UPDATE         │                              │
+│   → 親行ロック取得 ✓          │                              │
+│                               │ SELECT ... FOR UPDATE        │
+│                               │   → 親行ロック待ち...        │
+│ （認証処理実行）               │         ↓                   │
+│ DELETE → CASCADE DELETE       │       待機中                 │
+│ COMMIT;                       │         ↓                   │
+│   → 親行ロック解放            │   → ロック取得               │
+│                               │   → 0行返却（削除済み）      │
+│                               │   → 適切にハンドリング       │
+└──────────────────────────────────────────────────────────────┘
+デッドロックなし！
+```
+
+:::tip idp-serverでの実装
+`AuthenticationTransactionQueryRepository.getForUpdate()` で `SELECT FOR UPDATE` を実行し、`CibaFlowEntryService` / `OAuthFlowEntryService` / `UserOperationEntryService` の `interact()` 等で使用しています。詳細は Issue #1454 を参照してください。
+:::
+
+---
+
+### 5.4 デッドロックの回避策
+
+#### 策1: 親行の事前ロック（SELECT FOR UPDATE）
+
+CASCADE DELETEによるデッドロックに最も有効。詳細は上記5.3を参照。
+
+#### 策2: 一貫した順序でロック
 
 ```sql
 -- 常にIDの昇順でロック
@@ -459,7 +662,7 @@ UPDATE accounts SET balance = balance + 100 WHERE id = 2;
 COMMIT;
 ```
 
-#### 策2: ロックタイムアウトの設定
+#### 策3: ロックタイムアウトの設定
 
 ```sql
 -- セッション単位でタイムアウト設定
@@ -471,7 +674,7 @@ UPDATE accounts SET balance = balance - 100 WHERE id = 1;
 COMMIT;
 ```
 
-#### 策3: NOWAIT オプション
+#### 策4: NOWAIT オプション
 
 ```sql
 BEGIN;
@@ -480,7 +683,7 @@ SELECT * FROM accounts WHERE id = 1 FOR UPDATE NOWAIT;
 COMMIT;
 ```
 
-#### 策4: アプリケーション側でのリトライ
+#### 策5: アプリケーション側でのリトライ
 
 ```java
 // Javaでのリトライ例
@@ -500,7 +703,7 @@ for (int i = 0; i < maxRetries; i++) {
 }
 ```
 
-### 5.4 デッドロック検出の設定
+### 5.5 デッドロック検出の設定
 
 ```sql
 -- デッドロック検出の間隔（デフォルト1秒）
