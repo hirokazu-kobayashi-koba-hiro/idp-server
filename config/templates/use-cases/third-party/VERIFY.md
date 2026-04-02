@@ -254,6 +254,24 @@ curl -s \
 
 ---
 
+## Step 10: UserInfo with M2M Token (Expected: 401)
+
+M2M トークン（client_credentials）には subject（エンドユーザー）がないため、UserInfo エンドポイントは 401 invalid_token を返す必要があります。
+
+```bash
+curl -s -w "\nHTTP Status: %{http_code}\n" \
+  -H "Authorization: Bearer ${M2M_ACCESS_TOKEN}" \
+  "${TENANT_BASE}/v1/userinfo" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 401 が返ること
+- `error` が `invalid_token` であること
+- 500 server_error が返らないこと（修正前の不具合動作）
+
+---
+
 ## チェックリスト
 
 ### Phase 1: Authorization Code Flow (Web Client)
@@ -277,3 +295,4 @@ curl -s \
 | 8 | M2M client_credentials で access_token が取得できる | |
 | 9 | Token introspection で active: true が返る | |
 | 9 | scope が正しい | |
+| 10 | M2M トークンで UserInfo が 401 invalid_token を返す | |

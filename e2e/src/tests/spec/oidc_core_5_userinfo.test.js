@@ -47,6 +47,27 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 userinfo", () => {
     expect(postUserinfoResponse.data).toHaveProperty("sub");
   });
 
+  it("5.3.3. UserInfo Error Response - client_credentials token with no subject returns invalid_token", async () => {
+    const tokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "client_credentials",
+      scope: clientSecretPostClient.scope,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    expect(tokenResponse.status).toBe(200);
+
+    const userinfoResponse = await getUserinfo({
+      endpoint: serverConfig.userinfoEndpoint,
+      authorizationHeader: createBearerHeader(tokenResponse.data.access_token),
+    });
+    console.log("UserInfo with client_credentials token:", userinfoResponse.status, JSON.stringify(userinfoResponse.data));
+
+    // client_credentials token has no subject (no end-user), so UserInfo should reject it
+    expect(userinfoResponse.status).toBe(401);
+    expect(userinfoResponse.data.error).toBe("invalid_token");
+  });
+
   it("missing access token ", async () => {
     const userinfoResponse = await getUserinfo({
       endpoint: serverConfig.userinfoEndpoint,

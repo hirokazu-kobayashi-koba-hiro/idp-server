@@ -25,7 +25,6 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
-import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.core.openid.userinfo.UserinfoClaimsCreator;
 import org.idp.server.core.openid.userinfo.UserinfoResponse;
 import org.idp.server.core.openid.userinfo.handler.io.UserinfoRequest;
@@ -64,9 +63,8 @@ public class UserinfoHandler {
 
     OAuthToken oAuthToken = oAuthTokenQueryRepository.find(tenant, accessTokenEntity);
 
-    if (!oAuthToken.exists()) {
-      throw new TokenInvalidException("not found token");
-    }
+    UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken, request.toClientCert());
+    verifier.verifyToken();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
@@ -74,8 +72,7 @@ public class UserinfoHandler {
         clientConfigurationQueryRepository.get(tenant, oAuthToken.requestedClientId());
 
     User user = delegate.findUser(tenant, oAuthToken.subject());
-    UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken, request.toClientCert(), user);
-    verifier.verify();
+    verifier.verifyUser(user);
 
     UserinfoClaimsCreator claimsCreator =
         new UserinfoClaimsCreator(
