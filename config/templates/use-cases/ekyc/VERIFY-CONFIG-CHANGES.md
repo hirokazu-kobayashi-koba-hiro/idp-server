@@ -977,7 +977,6 @@ restore_iv_config
 
 外部APIが HTTP 200 を返しても、レスポンスボディの内容でエラーとみなす場合の設定。
 
-> **既知の問題（#1385）**: 入力キー名 `response_resolve_configs` と出力キー名 `response_success_criteria` が不一致。
 
 ```bash
 # execution に response_resolve_configs を追加
@@ -1001,8 +1000,8 @@ update_iv_config '
     }
   }'
 
-# 設定確認（出力キー名は response_success_criteria）
-get_iv_config | jq '.processes.apply.execution.http_request.response_success_criteria'
+# 設定確認
+get_iv_config | jq '.processes.apply.execution.http_request.response_resolve_configs'
 
 # テスト 1: 正常（200 + status: "applied"）→ 条件不一致で通常処理
 iv_apply "Tanaka" "Taro" "1990-01-15" "${TEST_EMAIL}"

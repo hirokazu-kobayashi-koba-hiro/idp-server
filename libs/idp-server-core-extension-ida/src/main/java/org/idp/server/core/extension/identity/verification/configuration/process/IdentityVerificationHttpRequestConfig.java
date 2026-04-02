@@ -38,7 +38,7 @@ import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
  *   "url": "https://api.example.com/verify",
  *   "method": "POST",
  *   "auth_type": "oauth2",
- *   "response_success_criteria": {
+ *   "response_resolve_configs": {
  *     "conditions": [
  *       {"path": "$.status", "operation": "eq", "value": "approved"},
  *       {"path": "$.error", "operation": "missing"}
@@ -226,7 +226,7 @@ public class IdentityVerificationHttpRequestConfig
     if (hasQueryMappingRules()) map.put("query_mapping_rules", queryMappingRulesMap());
     if (hasRetryConfiguration()) map.put("retry_configuration", retryConfiguration.toMap());
     if (hasRequestTimeout()) map.put("request_timeout_seconds", requestTimeoutSeconds);
-    if (hasResponseConfigs()) map.put("response_success_criteria", responseResolveConfigsMap());
+    if (hasResponseConfigs()) map.put("response_resolve_configs", responseResolveConfigsMap());
     return map;
   }
 }
