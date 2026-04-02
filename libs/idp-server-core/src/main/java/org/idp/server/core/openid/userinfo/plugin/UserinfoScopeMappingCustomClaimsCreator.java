@@ -37,10 +37,6 @@ public class UserinfoScopeMappingCustomClaimsCreator
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
 
-    if (authorizationServerConfiguration.isIdTokenStrictMode()) {
-      return false;
-    }
-
     if (!authorizationServerConfiguration.enabledCustomClaimsScopeMapping()) {
       return false;
     }
