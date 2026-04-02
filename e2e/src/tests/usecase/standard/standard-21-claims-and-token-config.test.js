@@ -8,7 +8,7 @@ import {
   authorize,
   getUserinfo,
 } from "../../../api/oauthClient";
-import { generateECP256JWKS, verifyAndDecodeJwt } from "../../../lib/jose";
+import { generateECP256JWKS } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
@@ -415,5 +415,100 @@ describe("Standard Use Case: Claims & Token Configuration Effects", () => {
     expect(userinfoFull.data.email).toBe(testEmail);
     expect(userinfoFull.data.name).toBe("Claims Test User");
     console.log("scope=openid profile email: email + name present");
+  });
+
+  it("B-10: id_token_strict_mode should NOT exclude custom claims from UserInfo", async () => {
+    console.log("\n=== id_token_strict_mode + claims:* UserInfo Test ===");
+
+    const strictOrganizationId = uuidv4();
+    const strictTenantId = uuidv4();
+    const strictClientId = uuidv4();
+    const strictClientSecret = `cs-${crypto.randomBytes(16).toString("hex")}`;
+    const strictJwks = await generateECP256JWKS();
+    const ts = Date.now();
+    const strictAdminEmail = `strict-admin-${ts}@claims-test.example.com`;
+    const strictAdminPassword = `Strict_${ts}!`;
+
+    const onboardStrict = await onboarding({
+      body: {
+        organization: { id: strictOrganizationId, name: `Strict Mode Test Org ${ts}`, description: "id_token_strict_mode + custom claims test" },
+        tenant: {
+          id: strictTenantId, name: `Strict Mode Tenant ${ts}`, domain: backendUrl,
+          authorization_provider: "idp-server",
+          identity_policy_config: { identity_unique_key_type: "EMAIL" },
+          session_config: { cookie_name: `STRICT_${strictTenantId.substring(0, 8)}`, use_secure_cookie: false },
+          cors_config: { allow_origins: [backendUrl] },
+        },
+        authorization_server: {
+          issuer: `${backendUrl}/${strictTenantId}`,
+          authorization_endpoint: `${backendUrl}/${strictTenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${strictTenantId}/v1/tokens`,
+          token_endpoint_auth_methods_supported: ["client_secret_post"],
+          userinfo_endpoint: `${backendUrl}/${strictTenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${strictTenantId}/v1/jwks`,
+          jwks: strictJwks,
+          grant_types_supported: ["authorization_code", "password"],
+          token_signed_key_id: "signing_key_1",
+          id_token_signed_key_id: "signing_key_1",
+          scopes_supported: ["openid", "profile", "email", "management", "claims:status", "claims:ex_sub"],
+          claims_supported: ["sub", "iss", "auth_time", "acr", "name", "email", "email_verified"],
+          response_types_supported: ["code"],
+          response_modes_supported: ["query"],
+          subject_types_supported: ["public"],
+          id_token_signing_alg_values_supported: ["ES256"],
+          extension: {
+            access_token_type: "JWT",
+            id_token_strict_mode: true,
+            custom_claims_scope_mapping: true,
+          },
+        },
+        user: { sub: uuidv4(), provider_id: "idp-server", name: "Strict Admin", email: strictAdminEmail, email_verified: true, raw_password: strictAdminPassword },
+        client: {
+          client_id: strictClientId, client_secret: strictClientSecret, redirect_uris: [redirectUri],
+          response_types: ["code"], grant_types: ["authorization_code", "password"],
+          scope: "openid profile email management claims:status claims:ex_sub", client_name: "Strict Mode Client",
+          token_endpoint_auth_method: "client_secret_post", application_type: "web",
+        },
+      },
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
+    });
+    expect(onboardStrict.status).toBe(201);
+
+    const strictMgmt = await requestToken({ endpoint: `${backendUrl}/${strictTenantId}/v1/tokens`, grantType: "password", username: strictAdminEmail, password: strictAdminPassword, scope: "management", clientId: strictClientId, clientSecret: strictClientSecret });
+    const strictMgmtToken = strictMgmt.data.access_token;
+
+    await postWithJson({ url: `${backendUrl}/v1/management/organizations/${strictOrganizationId}/tenants/${strictTenantId}/authentication-configurations`, headers: { Authorization: `Bearer ${strictMgmtToken}` }, body: { id: uuidv4(), type: "password", attributes: {}, metadata: { type: "password" }, interactions: { "password-authentication": { request: { schema: { type: "object", properties: { username: { type: "string" }, password: { type: "string" } }, required: ["username", "password"] } }, pre_hook: {}, execution: { function: "password_verification" }, post_hook: {}, response: { body_mapping_rules: [{ from: "$.user_id", to: "user_id" }, { from: "$.error", to: "error" }] } } } } });
+    await postWithJson({ url: `${backendUrl}/v1/management/organizations/${strictOrganizationId}/tenants/${strictTenantId}/authentication-configurations`, headers: { Authorization: `Bearer ${strictMgmtToken}` }, body: { id: uuidv4(), type: "initial-registration", attributes: {}, metadata: {}, interactions: { "initial-registration": { request: { schema: { type: "object", required: ["email", "password", "name"], properties: { name: { type: "string" }, email: { type: "string", format: "email" }, password: { type: "string", minLength: 8 } } } } } } } });
+
+    // Register + login with claims:status scope
+    const strictEmail = `strict-${ts}@claims-test.example.com`;
+    const strictAuth = await getAuthorizations({ endpoint: `${backendUrl}/${strictTenantId}/v1/authorizations`, clientId: strictClientId, responseType: "code", state: `strict-${ts}`, scope: "openid profile email claims:status", redirectUri });
+    const { params: sp } = convertNextAction(strictAuth.headers.location);
+    await postWithJson({ url: `${backendUrl}/${strictTenantId}/v1/authorizations/${sp.get("id")}/initial-registration`, body: { email: strictEmail, password: "StrictPass_1!", name: "Strict User" } });
+    const strictAuthorize = await authorize({ endpoint: `${backendUrl}/${strictTenantId}/v1/authorizations/{id}/authorize`, id: sp.get("id"), body: {} });
+    const strictResult = convertToAuthorizationResponse(strictAuthorize.data.redirect_uri);
+    const strictTokens = await requestToken({ endpoint: `${backendUrl}/${strictTenantId}/v1/tokens`, grantType: "authorization_code", code: strictResult.code, redirectUri, clientId: strictClientId, clientSecret: strictClientSecret });
+    expect(strictTokens.status).toBe(200);
+
+    // ID Token should NOT have custom claims (strict mode)
+    const idToken = strictTokens.data.id_token;
+    const idTokenPayload = JSON.parse(Buffer.from(idToken.split(".")[1], "base64url").toString());
+    expect(idTokenPayload.status).toBeUndefined();
+    expect(idTokenPayload.email).toBeUndefined();
+    console.log("id_token_strict_mode=true: ID Token has no email/status (correct)");
+
+    // UserInfo SHOULD have custom claims (fix for #1359)
+    const userinfo = await getUserinfo({ endpoint: `${backendUrl}/${strictTenantId}/v1/userinfo`, authorizationHeader: createBearerHeader(strictTokens.data.access_token) });
+    expect(userinfo.status).toBe(200);
+    expect(userinfo.data.sub).toBeDefined();
+    expect(userinfo.data.status).toBeDefined();
+    console.log("id_token_strict_mode=true: UserInfo has status custom claim:", userinfo.data.status);
+
+    // Standard claims should still appear in UserInfo
+    expect(userinfo.data.name).toBe("Strict User");
+    expect(userinfo.data.email).toBe(strictEmail);
+    console.log("id_token_strict_mode=true: UserInfo still has standard claims (name, email)");
+
+    await deletion({ url: `${backendUrl}/v1/management/organizations/${strictOrganizationId}/tenants/${strictTenantId}`, headers: { Authorization: `Bearer ${strictMgmtToken}` } }).catch(() => {});
   });
 });
