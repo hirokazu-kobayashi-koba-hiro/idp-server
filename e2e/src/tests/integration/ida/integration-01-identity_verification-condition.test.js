@@ -254,6 +254,12 @@ describe("Identity Verification with Condition", () => {
       expect(getResponse.data).toHaveProperty("type", configurationType);
       expect(getResponse.data).toHaveProperty("processes");
 
+      // Verify input/output key name consistency (#1385)
+      // Before fix: input was "response_resolve_configs" but output was "response_success_criteria"
+      const httpRequestConfig = getResponse.data.processes.verify.execution.http_request;
+      expect(httpRequestConfig).toHaveProperty("response_resolve_configs");
+      expect(httpRequestConfig).not.toHaveProperty("response_success_criteria");
+
       // Use the dynamic identity verification API: /{tenant}/v1/me/identity-verification/applications/{type}/{process}
       // First try with existing type from serverConfig
       const applyUrl = serverConfig.identityVerificationApplyEndpoint
