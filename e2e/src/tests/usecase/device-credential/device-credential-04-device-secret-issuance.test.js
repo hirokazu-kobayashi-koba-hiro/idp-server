@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import {
   requestToken,
@@ -160,8 +161,7 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingRequest,
     });
@@ -974,8 +974,7 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingRequest,
     });
@@ -1320,8 +1319,7 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingRequest,
     });

@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import { mtlsPost, mtlsPostWithJson } from "../../../lib/http/mtls";
 import {
@@ -303,8 +304,7 @@ describe("Financial Grade: Multi-Device Priority - Later Registration Wins (Issu
 
     // Step 1: Create organization
     console.log("\n=== Step 1: Creating Organization ===");
-    const createOrgResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const createOrgResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingConfig,
     });

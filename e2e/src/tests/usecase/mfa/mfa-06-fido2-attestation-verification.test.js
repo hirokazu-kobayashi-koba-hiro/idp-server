@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
 import { get, postWithJson } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
+import { onboarding } from "../../../api/managementClient";
 import { generateRS256KeyPair } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
@@ -55,8 +56,7 @@ describe("FIDO2 Attestation Verification Configuration Tests", () => {
     const { jwks } = await generateRS256KeyPair();
 
     // Setup tenant
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: createOnboardingRequest(organizationId, tenantId, timestamp, jwks, redirectUri),
     });
@@ -125,8 +125,7 @@ describe("FIDO2 Attestation Verification Configuration Tests", () => {
 
     const { jwks } = await generateRS256KeyPair();
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: createOnboardingRequest(organizationId, tenantId, timestamp, jwks, redirectUri),
     });
@@ -192,8 +191,7 @@ describe("FIDO2 Attestation Verification Configuration Tests", () => {
 
     const { jwks } = await generateRS256KeyPair();
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: createOnboardingRequest(organizationId, tenantId, timestamp, jwks, "https://app.example.com/callback"),
     });
@@ -260,8 +258,7 @@ describe("FIDO2 Attestation Verification Configuration Tests", () => {
 
     const { jwks } = await generateRS256KeyPair();
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: createOnboardingRequest(organizationId, tenantId, timestamp, jwks, redirectUri),
     });
@@ -373,8 +370,7 @@ describe("FIDO2 Attestation Verification Configuration Tests", () => {
 
     const { jwks } = await generateRS256KeyPair();
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: createOnboardingRequest(organizationId, tenantId, timestamp, jwks, "https://app.example.com/callback"),
     });
@@ -441,8 +437,7 @@ describe("FIDO2 Attestation Verification Configuration Tests", () => {
 
     const { jwks } = await generateRS256KeyPair();
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: createOnboardingRequest(organizationId, tenantId, timestamp, jwks, redirectUri),
     });
@@ -575,8 +570,7 @@ describe("FIDO2 Attestation Verification Configuration Tests", () => {
 
     const { jwks } = await generateRS256KeyPair();
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: createOnboardingRequest(organizationId, tenantId, timestamp, jwks, redirectUri),
     });

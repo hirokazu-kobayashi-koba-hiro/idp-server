@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, get, postWithJson, putWithJson } from "../../../lib/http";
 import {
   requestToken,
@@ -63,8 +64,7 @@ describe("Standard Use Case: Password Management", () => {
     const adminEmail = `admin-${timestamp}@password-mgmt.example.com`;
     const adminPassword = `AdminPass_${timestamp}!`;
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: {
         organization: {
           id: organizationId,

@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import { requestToken, postAuthentication } from "../../../api/oauthClient";
+import { onboarding } from "../../../api/managementClient";
 import { generateECP256JWKS } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
@@ -128,8 +129,7 @@ describe("Advance Use Case: Client Custom Properties in Authorization ViewData",
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });

@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, postWithJson } from "../../../lib/http";
 import {
   requestToken,
@@ -55,8 +56,7 @@ describe("Advance Use Case: Custom Claims Scope Mapping", () => {
     const adminPassword = `AdminPass_${timestamp}!`;
     const redirectUri = "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
 
-    const onboardingResp = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResp = await onboarding({
       body: {
         organization: { id: organizationId, name: `Custom Claims Test ${timestamp}`, description: `custom_claims_scope_mapping=${enabled}` },
         tenant: {

@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, postWithJson, putWithJson, get } from "../../../lib/http";
 import {
   requestToken,
@@ -55,8 +56,7 @@ describe("Advance Use Case: External Password Auth Config Effects", () => {
     const adminPassword = `AdminPass_${timestamp}!`;
     const redirectUri = "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
 
-    const resp = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const resp = await onboarding({
       body: {
         organization: { id: organizationId, name: `Ext Auth Config Test ${timestamp}`, description: "External auth config effects test" },
         tenant: {

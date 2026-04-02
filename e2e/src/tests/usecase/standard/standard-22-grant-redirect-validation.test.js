@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import {
   requestToken,
@@ -55,8 +56,7 @@ describe("Standard Use Case: Grant Type & Redirect URI Validation", () => {
     const adminEmail = `admin-${timestamp}@grant-test.example.com`;
     const adminPassword = `AdminPass_${timestamp}!`;
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: {
         organization: {
           id: organizationId,

@@ -2,6 +2,7 @@ import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { deletion, get, postWithJson, putWithJson } from "../../../lib/http";
 import { mtlsPost, mtlsPostWithJson } from "../../../lib/http/mtls";
 import { requestToken, postAuthenticationDeviceInteraction } from "../../../api/oauthClient";
+import { onboarding } from "../../../api/managementClient";
 import { adminServerConfig, backendUrl, mtlBackendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
@@ -136,8 +137,7 @@ describe("Financial Grade: Authentication Device Rule (Issue #728)", () => {
   it("should have authentication_device_rule in identity_policy_config", async () => {
     // Step 1: Create organization
     console.log("\n=== Step 1: Creating Organization ===");
-    const createOrgResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const createOrgResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingConfig,
     });
@@ -532,8 +532,7 @@ describe("Financial Grade: Device Limit Enforcement (Issue #728)", () => {
 
     // Step 1: Create organization
     console.log("\n=== Step 1: Creating Organization ===");
-    const createOrgResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const createOrgResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingConfig,
     });
@@ -1134,8 +1133,7 @@ describe("Financial Grade: Identity Verification Required (Issue #728)", () => {
 
     // Step 1: Create organization
     console.log("\n=== Step 1: Creating Organization ===");
-    const orgResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const orgResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingConfig,
     });
@@ -1699,8 +1697,7 @@ describe("Financial Grade: TOCTOU Device Limit Prevention (Security Fix)", () =>
 
     // Step 1: Create organization
     console.log("\n=== [TOCTOU] Step 1: Creating Organization ===");
-    const orgResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const orgResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingConfig,
     });

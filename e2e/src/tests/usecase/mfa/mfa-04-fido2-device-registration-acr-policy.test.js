@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
 import { get, postWithJson } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
+import { onboarding } from "../../../api/managementClient";
 import { generateRS256KeyPair } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
@@ -135,8 +136,7 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },
@@ -699,8 +699,7 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },
@@ -1188,8 +1187,7 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },
@@ -1499,8 +1497,7 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },

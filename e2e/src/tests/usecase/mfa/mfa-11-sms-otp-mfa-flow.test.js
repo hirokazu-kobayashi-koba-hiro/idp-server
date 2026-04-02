@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import {
   requestToken,
@@ -64,8 +65,7 @@ describe("MFA Use Case: SMS OTP + Password MFA Flow", () => {
     const adminEmail = `admin-${timestamp}@mfa-sms.example.com`;
     const adminPassword = `AdminPass_${timestamp}!`;
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: {
         organization: {
           id: organizationId,

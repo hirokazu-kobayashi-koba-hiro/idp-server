@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import {
   requestBackchannelAuthentications,
@@ -159,8 +160,7 @@ describe("Device Credential Use Case: Device Endpoint Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
@@ -421,8 +421,7 @@ describe("Device Credential Use Case: Device Endpoint Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
@@ -640,8 +639,7 @@ describe("Device Credential Use Case: Device Endpoint Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
@@ -871,8 +869,7 @@ describe("Device Credential Use Case: Device Endpoint Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
@@ -1169,8 +1166,7 @@ describe("Device Credential Use Case: Device Endpoint Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });

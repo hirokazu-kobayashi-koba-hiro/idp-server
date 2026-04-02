@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, postWithJson } from "../../../lib/http";
 import {
   requestToken,
@@ -53,8 +54,7 @@ describe("CIBA Use Case: Access Denied via failure_conditions", () => {
     const userPassword = `DenyPass_${timestamp}!`;
     const redirectUri = "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
 
-    const onboardingResp = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResp = await onboarding({
       body: {
         organization: { id: organizationId, name: `CIBA Deny Test ${timestamp}`, description: "CIBA access_denied test" },
         tenant: {

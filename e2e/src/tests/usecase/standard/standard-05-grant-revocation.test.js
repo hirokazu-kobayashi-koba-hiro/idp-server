@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
-import { deletion, get, postWithJson } from "../../../lib/http";
+import { deletion, get } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
+import { onboarding } from "../../../api/managementClient";
 import { generateECP256JWKS } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
@@ -125,8 +126,7 @@ describe("Standard Use Case: Grant Revocation with Token Deletion", () => {
       },
     };
 
-    const createResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const createResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },
@@ -370,8 +370,7 @@ describe("Standard Use Case: Grant Revocation with Token Deletion", () => {
       },
     };
 
-    const createResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const createResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingRequest,
     });

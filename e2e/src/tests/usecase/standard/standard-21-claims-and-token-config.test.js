@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import {
   requestToken,
@@ -65,8 +66,7 @@ describe("Standard Use Case: Claims & Token Configuration Effects", () => {
     testEmail = `user-${timestamp}@claims-test.example.com`;
     testPassword = "ClaimsTest_1!";
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: {
         organization: {
           id: organizationId,
@@ -219,8 +219,7 @@ describe("Standard Use Case: Claims & Token Configuration Effects", () => {
     const subOnlyAdminEmail = `subonly-admin-${ts2}@claims-test.example.com`;
     const subOnlyAdminPassword = `SubOnly_${ts2}!`;
 
-    const onboard2 = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboard2 = await onboarding({
       body: {
         organization: { id: uuidv4(), name: `Sub Only Test Org ${ts2}`, description: "Sub-only claims test" },
         tenant: {
@@ -313,8 +312,7 @@ describe("Standard Use Case: Claims & Token Configuration Effects", () => {
     const shortAdminEmail = `short-admin-${ts3}@claims-test.example.com`;
     const shortAdminPassword = `Short_${ts3}!`;
 
-    const onboard3 = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboard3 = await onboarding({
       body: {
         organization: { id: uuidv4(), name: `Short AT Test Org ${ts3}`, description: "Short AT duration test" },
         tenant: {

@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, postWithJson } from "../../../lib/http";
 import {
   requestToken,
@@ -56,8 +57,7 @@ describe("Standard Use Case: PKCE (Proof Key for Code Exchange)", () => {
     const adminEmail = `admin-${timestamp}@pkce.example.com`;
     const adminPassword = `AdminPass_${timestamp}!`;
 
-    const resp = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const resp = await onboarding({
       body: {
         organization: { id: organizationId, name: `PKCE Test ${timestamp}`, description: "PKCE test" },
         tenant: {

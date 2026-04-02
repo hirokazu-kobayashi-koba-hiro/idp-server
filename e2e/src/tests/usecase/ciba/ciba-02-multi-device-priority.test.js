@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, postWithJson } from "../../../lib/http";
 import {
   getAuthenticationDeviceAuthenticationTransaction,
@@ -160,8 +161,7 @@ describe("CIBA Use Case: Multi-Device Priority Selection (Issue #1027)", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
