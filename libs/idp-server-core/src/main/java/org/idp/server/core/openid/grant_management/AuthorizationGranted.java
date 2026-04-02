@@ -129,7 +129,7 @@ public class AuthorizationGranted {
 
       if (authorizationGrant.consentClaims() != null
           && authorizationGrant.consentClaims().exists()) {
-        map.put("consent_claims", authorizationGrant.consentClaims().toMap());
+        map.put("consent_claims", authorizationGrant.consentClaims().toSerializableMap());
       }
     }
 

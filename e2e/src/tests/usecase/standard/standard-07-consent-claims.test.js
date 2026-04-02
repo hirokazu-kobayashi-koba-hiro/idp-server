@@ -213,25 +213,21 @@ describe("Standard Use Case: ConsentClaims Tracking", () => {
     expect(grant.consent_claims).toBeDefined();
     console.log("consent_claims:", JSON.stringify(grant.consent_claims, null, 2));
 
-    // TODO: #1351 - ConsentClaim のシリアライズ修正後にコメントアウトを解除する
-    // 現在 ConsentClaim オブジェクトが {} としてシリアライズされるため、
-    // name/value/consented_at の検証はスキップしている。
-    //
-    // // Verify terms category (tos_uri)
-    // expect(grant.consent_claims.terms).toBeDefined();
-    // expect(Array.isArray(grant.consent_claims.terms)).toBe(true);
-    // expect(grant.consent_claims.terms.length).toBeGreaterThan(0);
-    // expect(grant.consent_claims.terms[0].name).toBe("tos_uri");
-    // expect(grant.consent_claims.terms[0].value).toBe(tosUri);
-    // expect(grant.consent_claims.terms[0].consented_at).toBeDefined();
-    //
-    // // Verify privacy category (policy_uri)
-    // expect(grant.consent_claims.privacy).toBeDefined();
-    // expect(Array.isArray(grant.consent_claims.privacy)).toBe(true);
-    // expect(grant.consent_claims.privacy.length).toBeGreaterThan(0);
-    // expect(grant.consent_claims.privacy[0].name).toBe("policy_uri");
-    // expect(grant.consent_claims.privacy[0].value).toBe(policyUri);
-    // expect(grant.consent_claims.privacy[0].consented_at).toBeDefined();
+    // Verify terms category (tos_uri)
+    expect(grant.consent_claims.terms).toBeDefined();
+    expect(Array.isArray(grant.consent_claims.terms)).toBe(true);
+    expect(grant.consent_claims.terms.length).toBeGreaterThan(0);
+    expect(grant.consent_claims.terms[0].name).toBe("tos_uri");
+    expect(grant.consent_claims.terms[0].value).toBe(tosUri);
+    expect(grant.consent_claims.terms[0].consented_at).toBeDefined();
+
+    // Verify privacy category (policy_uri)
+    expect(grant.consent_claims.privacy).toBeDefined();
+    expect(Array.isArray(grant.consent_claims.privacy)).toBe(true);
+    expect(grant.consent_claims.privacy.length).toBeGreaterThan(0);
+    expect(grant.consent_claims.privacy[0].name).toBe("policy_uri");
+    expect(grant.consent_claims.privacy[0].value).toBe(policyUri);
+    expect(grant.consent_claims.privacy[0].consented_at).toBeDefined();
 
     console.log("\n=== Step 5: Verify consent_claims in Grant Detail API ===");
 
@@ -243,9 +239,8 @@ describe("Standard Use Case: ConsentClaims Tracking", () => {
     expect(grantDetailResponse.status).toBe(200);
     expect(grantDetailResponse.data.consent_claims).toBeDefined();
 
-    // TODO: #1351 - ConsentClaim のシリアライズ修正後にコメントアウトを解除する
-    // expect(grantDetailResponse.data.consent_claims.terms[0].value).toBe(tosUri);
-    // expect(grantDetailResponse.data.consent_claims.privacy[0].value).toBe(policyUri);
+    expect(grantDetailResponse.data.consent_claims.terms[0].value).toBe(tosUri);
+    expect(grantDetailResponse.data.consent_claims.privacy[0].value).toBe(policyUri);
     console.log("Grant detail API also returns consent_claims");
 
     console.log("\n=== Cleanup ===");
