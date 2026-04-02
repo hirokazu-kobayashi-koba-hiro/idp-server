@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import {
   requestToken,
@@ -62,8 +63,7 @@ describe("Standard Use Case: JWT Access Token & Token Revocation", () => {
     const adminPassword = `AdminPass_${timestamp}!`;
     const redirectUri = "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: {
         organization: {
           id: organizationId,

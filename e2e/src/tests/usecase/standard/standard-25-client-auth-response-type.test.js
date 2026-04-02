@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, postWithJson } from "../../../lib/http";
 import {
   requestToken,
@@ -53,8 +54,7 @@ describe("Standard Use Case: Client Auth Method & Response Type Validation", () 
     const adminPassword = `AdminPass_${timestamp}!`;
 
     // Create tenant with client_secret_post and none in auth methods
-    const resp = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const resp = await onboarding({
       body: {
         organization: { id: organizationId, name: `Client Validation Test ${timestamp}`, description: "Client auth method and response_type test" },
         tenant: {

@@ -2,6 +2,7 @@ import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import { mtlsGet, mtlsPost, mtlsPostWithJson } from "../../../lib/http/mtls";
 import { requestToken } from "../../../api/oauthClient";
+import { onboarding } from "../../../api/managementClient";
 import { adminServerConfig, backendUrl, mtlBackendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
@@ -249,8 +250,7 @@ describe("Financial Grade: Transfer Flow with FIDO-UAF", () => {
     // === Setup: Create organization and financial tenant ===
     console.log("\n=== Setup: Creating Organization ===");
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingConfig,
     });

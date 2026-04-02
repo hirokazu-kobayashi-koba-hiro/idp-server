@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
-import { deletion, get, postWithJson, putWithJson } from "../../../lib/http";
+import { onboarding } from "../../../api/managementClient";
+import { deletion, get, putWithJson } from "../../../lib/http";
 import {
   requestToken,
   getAuthorizations,
@@ -119,8 +120,7 @@ describe("Standard Use Case: ConsentClaims Tracking", () => {
       },
     };
 
-    const createResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const createResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingRequest,
     });
@@ -357,8 +357,7 @@ describe("Standard Use Case: ConsentClaims Tracking", () => {
       },
     };
 
-    const createResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const createResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingRequest,
     });

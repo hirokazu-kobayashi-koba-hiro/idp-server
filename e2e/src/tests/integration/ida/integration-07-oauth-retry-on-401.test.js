@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
 import { postWithJson } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
+import { onboarding } from "../../../api/managementClient";
 import { generateRS256KeyPair } from "../../../lib/jose";
 import { backendUrl, adminServerConfig, mockApiBaseUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
@@ -127,8 +128,7 @@ describe("Integration: OAuth Token Retry on 401/403", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },

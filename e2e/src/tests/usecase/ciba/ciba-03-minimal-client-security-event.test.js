@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import {
   getAuthenticationDeviceAuthenticationTransaction,
@@ -137,8 +138,7 @@ describe("Standard Use Case: Minimal Client CIBA Security Event (Issue #1035)", 
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });

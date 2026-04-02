@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import { requestToken, postAuthentication } from "../../../api/oauthClient";
+import { onboarding } from "../../../api/managementClient";
 import { generateECP256JWKS } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
@@ -178,8 +179,7 @@ describe("Advance Use Case: Federation Security Event User Name (Issue #1131)", 
       },
     };
 
-    const consumerOnboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const consumerOnboardingResponse = await onboarding({
       body: consumerOnboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });

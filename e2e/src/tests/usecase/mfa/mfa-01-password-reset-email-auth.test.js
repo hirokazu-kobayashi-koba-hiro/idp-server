@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
 import { deletion, get, post, postWithJson } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
+import { onboarding } from "../../../api/managementClient";
 import { generateRS256KeyPair } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
@@ -124,8 +125,7 @@ describe("Use Case: Password Reset with Email Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },
@@ -643,8 +643,7 @@ describe("Use Case: Password Reset with Email Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingRequest,
     });
@@ -800,8 +799,7 @@ describe("Use Case: Password Reset with Email Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: onboardingRequest,
     });
@@ -1187,8 +1185,7 @@ describe("Use Case: Password Reset with Email Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },
@@ -1432,8 +1429,7 @@ describe("Use Case: Password Reset with Email Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },
@@ -1731,8 +1727,7 @@ describe("Use Case: Password Reset with Email Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },
@@ -2114,8 +2109,7 @@ describe("Use Case: Password Reset with Email Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },
@@ -2454,8 +2448,7 @@ describe("Use Case: Password Reset with Email Authentication", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },
@@ -2741,8 +2734,7 @@ describe("Use Case: Password Reset with Email Authentication", () => {
     console.log("Step 1: Create test organization and tenant");
     const { jwks } = await generateRS256KeyPair();
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: {
         Authorization: `Bearer ${systemAccessToken}`,
       },

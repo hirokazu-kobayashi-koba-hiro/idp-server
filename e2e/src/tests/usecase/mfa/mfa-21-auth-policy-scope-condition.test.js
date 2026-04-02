@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import {
   requestToken,
@@ -61,8 +62,7 @@ describe("MFA Use Case: Scope-Conditioned Authentication Policy", () => {
     testEmail = `user-${timestamp}@scope-mfa.example.com`;
     testPassword = "ScopeMfaPass_1!";
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: {
         organization: {
           id: organizationId,

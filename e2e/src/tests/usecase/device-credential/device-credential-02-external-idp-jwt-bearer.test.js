@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
-import { deletion, postWithJson } from "../../../lib/http";
+import { deletion } from "../../../lib/http";
 import { requestToken, getUserinfo, getJwks } from "../../../api/oauthClient";
+import { onboarding } from "../../../api/managementClient";
 import { generateECP256JWKS, generateECP256KeyPair, createJwtWithJwk, createJwtWithNoneSignature, generateJti, verifyAndDecodeJwt } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import { toEpocTime } from "../../../lib/util";
@@ -150,8 +151,7 @@ describe("External IdP JWT Bearer Grant", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
@@ -390,8 +390,7 @@ describe("External IdP JWT Bearer Grant", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
@@ -576,8 +575,7 @@ describe("External IdP JWT Bearer Grant", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
@@ -761,8 +759,7 @@ describe("External IdP JWT Bearer Grant", () => {
       },
     };
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       body: onboardingRequest,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });

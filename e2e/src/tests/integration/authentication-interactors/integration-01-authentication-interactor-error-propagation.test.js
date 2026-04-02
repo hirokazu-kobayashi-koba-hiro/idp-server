@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { deletion, get, postWithJson } from "../../../lib/http";
 import { requestToken } from "../../../api/oauthClient";
+import { onboarding } from "../../../api/managementClient";
 import { generateRS256KeyPair } from "../../../lib/jose";
 import { adminServerConfig, backendUrl, mockApiBaseUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
@@ -58,8 +59,7 @@ describe("Authentication Interactor: External Service Error Code Propagation", (
     // Onboard tenant
     const { jwks } = await generateRS256KeyPair();
 
-    const onboardingResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const onboardingResponse = await onboarding({
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       body: {
         organization: {

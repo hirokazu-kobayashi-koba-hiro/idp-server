@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
+import { onboarding } from "../../../api/managementClient";
 import { deletion, postWithJson } from "../../../lib/http";
 import {
   requestToken,
@@ -52,8 +53,7 @@ describe("CIBA Use Case: User Code Required", () => {
     const userPassword = `UcPass_${timestamp}!`;
     const redirectUri = "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
 
-    const resp = await postWithJson({
-      url: `${backendUrl}/v1/management/onboarding`,
+    const resp = await onboarding({
       body: {
         organization: { id: organizationId, name: `CIBA UC Test ${timestamp}`, description: "CIBA user_code test" },
         tenant: {
