@@ -41,6 +41,7 @@ Environment: Local environment via Docker Compose (PostgreSQL / MySQL / Redis)
 | 6. JWKS                       | 120 | 2,205 | 107.20           | 0.00           |
 | 7. Token Introspection        | 120 | 1,388 | 151.18           | 0.00           |
 | 8. Authentication Device      | 120 | 2,054 | 148.43           | 0.00           |
+| 12. User Search (2M users)    | 20  | -     | -                | -              |
 
 ---
 

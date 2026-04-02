@@ -43,6 +43,7 @@ SCENARIOS=(
     "scenario-7-token-introspection:Token Introspection"
     "scenario-8-authentication-device:デバイス認証"
     "scenario-9-identity-verification-application:本人確認申請"
+    "scenario-12-user-search:ユーザー検索"
 )
 
 # シナリオ名から説明を取得
