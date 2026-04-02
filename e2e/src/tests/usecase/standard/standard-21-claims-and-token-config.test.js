@@ -420,6 +420,7 @@ describe("Standard Use Case: Claims & Token Configuration Effects", () => {
   it("B-10: id_token_strict_mode should NOT exclude custom claims from UserInfo", async () => {
     console.log("\n=== id_token_strict_mode + claims:* UserInfo Test ===");
 
+    const strictOrganizationId = uuidv4();
     const strictTenantId = uuidv4();
     const strictClientId = uuidv4();
     const strictClientSecret = `cs-${crypto.randomBytes(16).toString("hex")}`;
@@ -430,7 +431,7 @@ describe("Standard Use Case: Claims & Token Configuration Effects", () => {
 
     const onboardStrict = await onboarding({
       body: {
-        organization: { id: uuidv4(), name: `Strict Mode Test Org ${ts}`, description: "id_token_strict_mode + custom claims test" },
+        organization: { id: strictOrganizationId, name: `Strict Mode Test Org ${ts}`, description: "id_token_strict_mode + custom claims test" },
         tenant: {
           id: strictTenantId, name: `Strict Mode Tenant ${ts}`, domain: backendUrl,
           authorization_provider: "idp-server",
@@ -476,8 +477,8 @@ describe("Standard Use Case: Claims & Token Configuration Effects", () => {
     const strictMgmt = await requestToken({ endpoint: `${backendUrl}/${strictTenantId}/v1/tokens`, grantType: "password", username: strictAdminEmail, password: strictAdminPassword, scope: "management", clientId: strictClientId, clientSecret: strictClientSecret });
     const strictMgmtToken = strictMgmt.data.access_token;
 
-    await postWithJson({ url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${strictTenantId}/authentication-configurations`, headers: { Authorization: `Bearer ${strictMgmtToken}` }, body: { id: uuidv4(), type: "password", attributes: {}, metadata: { type: "password" }, interactions: { "password-authentication": { request: { schema: { type: "object", properties: { username: { type: "string" }, password: { type: "string" } }, required: ["username", "password"] } }, pre_hook: {}, execution: { function: "password_verification" }, post_hook: {}, response: { body_mapping_rules: [{ from: "$.user_id", to: "user_id" }, { from: "$.error", to: "error" }] } } } } });
-    await postWithJson({ url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${strictTenantId}/authentication-configurations`, headers: { Authorization: `Bearer ${strictMgmtToken}` }, body: { id: uuidv4(), type: "initial-registration", attributes: {}, metadata: {}, interactions: { "initial-registration": { request: { schema: { type: "object", required: ["email", "password", "name"], properties: { name: { type: "string" }, email: { type: "string", format: "email" }, password: { type: "string", minLength: 8 } } } } } } } });
+    await postWithJson({ url: `${backendUrl}/v1/management/organizations/${strictOrganizationId}/tenants/${strictTenantId}/authentication-configurations`, headers: { Authorization: `Bearer ${strictMgmtToken}` }, body: { id: uuidv4(), type: "password", attributes: {}, metadata: { type: "password" }, interactions: { "password-authentication": { request: { schema: { type: "object", properties: { username: { type: "string" }, password: { type: "string" } }, required: ["username", "password"] } }, pre_hook: {}, execution: { function: "password_verification" }, post_hook: {}, response: { body_mapping_rules: [{ from: "$.user_id", to: "user_id" }, { from: "$.error", to: "error" }] } } } } });
+    await postWithJson({ url: `${backendUrl}/v1/management/organizations/${strictOrganizationId}/tenants/${strictTenantId}/authentication-configurations`, headers: { Authorization: `Bearer ${strictMgmtToken}` }, body: { id: uuidv4(), type: "initial-registration", attributes: {}, metadata: {}, interactions: { "initial-registration": { request: { schema: { type: "object", required: ["email", "password", "name"], properties: { name: { type: "string" }, email: { type: "string", format: "email" }, password: { type: "string", minLength: 8 } } } } } } } });
 
     // Register + login with claims:status scope
     const strictEmail = `strict-${ts}@claims-test.example.com`;
@@ -508,6 +509,6 @@ describe("Standard Use Case: Claims & Token Configuration Effects", () => {
     expect(userinfo.data.email).toBe(strictEmail);
     console.log("id_token_strict_mode=true: UserInfo still has standard claims (name, email)");
 
-    await deletion({ url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${strictTenantId}`, headers: { Authorization: `Bearer ${strictMgmtToken}` } }).catch(() => {});
+    await deletion({ url: `${backendUrl}/v1/management/organizations/${strictOrganizationId}/tenants/${strictTenantId}`, headers: { Authorization: `Bearer ${strictMgmtToken}` } }).catch(() => {});
   });
 });
