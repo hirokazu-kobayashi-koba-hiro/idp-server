@@ -101,8 +101,17 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
 
       log.info("fcm result: {}", result);
       return NotificationResult.success("fcm", Map.of("result", result));
+    } catch (FirebaseMessagingException e) {
+      MessagingErrorCode errorCode = e.getMessagingErrorCode();
+      FcmErrorClassification classification = FcmErrorClassification.of(errorCode);
+      if (classification.isError()) {
+        log.error("FCM send failed ({}): {}", errorCode, e.getMessage());
+      } else {
+        log.warn("FCM send failed ({}): {}", errorCode, e.getMessage());
+      }
+      return NotificationResult.failure("fcm", e.getMessage());
     } catch (Exception e) {
-      log.error("Fcm is failed: {}", e.getMessage());
+      log.error("FCM send failed with unexpected error: {}", e.getMessage());
       return NotificationResult.failure("fcm", e.getMessage());
     }
   }
