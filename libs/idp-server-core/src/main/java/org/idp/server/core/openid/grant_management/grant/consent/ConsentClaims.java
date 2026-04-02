@@ -36,8 +36,34 @@ public class ConsentClaims implements JsonReadable {
     return claims != null && !claims.isEmpty();
   }
 
+  /**
+   * Returns the raw claims map with ConsentClaim domain objects.
+   *
+   * <p>Used for DB persistence via JsonConverter, which has FIELD visibility enabled and can
+   * serialize ConsentClaim's package-private fields directly. Note that LocalDateTime fields are
+   * serialized as JSON arrays (e.g. [2026,4,1,12,0]) in this path.
+   */
   public Map<String, List<ConsentClaim>> toMap() {
     return claims;
+  }
+
+  /**
+   * Returns the claims as a plain Map structure for API response serialization.
+   *
+   * <p>Used for API responses (e.g. Grant Management API) where Spring Boot's default ObjectMapper
+   * serializes the response. Since ConsentClaim has package-private fields with non-JavaBean
+   * getters (name() instead of getName()), the default ObjectMapper cannot detect them and produces
+   * {}. This method converts each ConsentClaim to a Map via {@link ConsentClaim#toMap()}, making it
+   * serializable by any ObjectMapper. LocalDateTime is converted to ISO-8601 string format.
+   *
+   * @see <a href="https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1351">#1351</a>
+   */
+  public Map<String, List<Map<String, Object>>> toSerializableMap() {
+    Map<String, List<Map<String, Object>>> result = new HashMap<>();
+    for (Map.Entry<String, List<ConsentClaim>> entry : claims.entrySet()) {
+      result.put(entry.getKey(), entry.getValue().stream().map(ConsentClaim::toMap).toList());
+    }
+    return result;
   }
 
   public ConsentClaims merge(ConsentClaims other) {

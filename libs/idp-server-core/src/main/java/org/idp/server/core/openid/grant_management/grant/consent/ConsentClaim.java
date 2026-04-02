@@ -17,6 +17,8 @@
 package org.idp.server.core.openid.grant_management.grant.consent;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -43,6 +45,14 @@ public class ConsentClaim implements JsonReadable {
 
   public LocalDateTime consentedAt() {
     return consentedAt;
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("name", name);
+    map.put("value", value);
+    map.put("consented_at", consentedAt != null ? consentedAt.toString() : null);
+    return map;
   }
 
   public boolean isConsented(ConsentClaim requested) {
