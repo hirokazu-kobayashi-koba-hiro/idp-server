@@ -145,7 +145,7 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
   }
 
   public NotificationChannel optNotificationChannel(String defaultChannel) {
-    if (notificationChannel == null) {
+    if (notificationChannel == null || notificationChannel.isEmpty()) {
       return new NotificationChannel(defaultChannel);
     }
     return new NotificationChannel(notificationChannel);
