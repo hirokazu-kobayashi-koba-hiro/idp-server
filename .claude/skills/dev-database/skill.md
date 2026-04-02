@@ -293,6 +293,61 @@ public enum DatabaseType {
 
 ---
 
+## ページネーション（LIMIT/OFFSET）
+
+### 必須ルール
+
+1. **ORDER BYを必ず指定する** — ORDER BYなしのLIMIT/OFFSETは非決定的。ページ送りでレコードが重複・欠落する。
+2. **tie-breakerとしてPKを追加する** — `ORDER BY created_at DESC` だけでは、同一`created_at`のレコード間でページ境界が非決定的。`ORDER BY created_at DESC, id DESC` のようにPKを追加して完全に決定的にする。
+3. **CTEで先にLIMITしてからJOINする** — 全行をJOIN→GROUP BY→LIMITするとデータ量に比例して遅くなる。CTEで先にLIMIT/OFFSETしてからJOINすれば、JOINの対象行がLIMIT件数分のみになり大幅に高速化できる。
+
+### パターン
+
+```sql
+-- NG: 全行JOIN→GROUP BY→LIMIT（200万行で3秒）
+SELECT idp_user.*, roles, permissions
+FROM idp_user
+LEFT JOIN idp_user_roles ON ...
+WHERE idp_user.tenant_id = ?
+GROUP BY idp_user.id
+ORDER BY idp_user.created_at DESC, idp_user.id DESC
+LIMIT ? OFFSET ?;
+
+-- OK: CTEで先にLIMIT→JOIN（200万行で185ms）
+WITH paged_users AS (
+  SELECT id, created_at FROM idp_user
+  WHERE tenant_id = ?
+  ORDER BY created_at DESC, id DESC
+  LIMIT ? OFFSET ?
+)
+SELECT idp_user.*, roles, permissions
+FROM paged_users
+JOIN idp_user ON idp_user.id = paged_users.id
+LEFT JOIN idp_user_roles ON ...
+WHERE idp_user.id IN (SELECT id FROM paged_users)
+GROUP BY idp_user.id
+ORDER BY idp_user.created_at DESC, idp_user.id DESC;
+```
+
+### JOINテーブルの条件をCTEに含める
+
+role/permissionなどJOINテーブルでフィルタする場合、CTEの外に条件を残すとページネーションが壊れる（LIMIT後にさらに絞り込まれて件数が減る）。CTE内にJOINを含めて正しく絞り込んでからLIMITする。
+
+```java
+if (hasRoleOrPermissionFilter) {
+  cteFrom = """
+    SELECT DISTINCT idp_user.id, idp_user.created_at FROM idp_user
+    LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
+    LEFT JOIN role ON idp_user_roles.role_id = role.id
+    ...
+    """;
+} else {
+  cteFrom = "SELECT id, created_at FROM idp_user ";
+}
+```
+
+---
+
 ## 悲観ロック（SELECT FOR UPDATE）
 
 ### 背景（Issue #1454）

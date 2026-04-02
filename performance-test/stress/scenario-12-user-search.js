@@ -1,6 +1,5 @@
 import http from 'k6/http';
 import { check } from 'k6';
-import { SharedArray } from 'k6/data';
 
 /**
  * User Search API Stress Test

@@ -350,7 +350,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
             + cteFrom
             + cteWhere
             + """
-           ORDER BY idp_user.created_at DESC
+           ORDER BY idp_user.created_at DESC, idp_user.id DESC
            LIMIT ?
            OFFSET ?
         ) """;
@@ -359,7 +359,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
         cteSql
             + String.format(selectSql, "WHERE idp_user.id IN (SELECT id FROM paged_users)")
             + """
-          ORDER BY idp_user.created_at DESC
+          ORDER BY idp_user.created_at DESC, idp_user.id DESC
         """;
 
     return sqlExecutor.selectList(pagedSql, cteParams);
