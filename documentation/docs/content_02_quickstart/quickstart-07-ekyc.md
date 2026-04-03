@@ -159,10 +159,31 @@
 | **IDトークンに含める** | claimsパラメータで要求 |
 | **アクセストークンに含める** | verified_claims:xxxスコープで要求 |
 | **特定機能を本人確認必須にする** | required_identity_verification_scopesで制御 |
+| **後続の申込みで活用する** | body_mapping_rulesで `$.user.verified_claims` を参照 |
 
 **idp-serverでの設定**:
 - テナント設定でverified_claims出力を有効化
 - required_identity_verification_scopesを設定
+
+### 身元確認結果を活用した申込み
+
+**承認済みのverified_claimsを、後続の申込みで自動的に外部サービスに送信**できます。
+
+1回目の身元確認で取得した情報（氏名、生年月日、外部申込み番号など）を、2回目以降の申込みで再利用できるため、ユーザーの入力負担を軽減しつつ、外部サービス側でデータの紐づけが可能になります。
+
+**典型的な流れ**:
+```
+1. 初回の身元確認（authentication-assurance）
+   → 外部サービスが申込み番号を発行
+   → verified_claimsに氏名・生年月日・申込み番号を保存
+
+2. 継続的身元確認（ongoing-verification）
+   → 前回の申込み番号をverified_claimsから自動取得
+   → 外部サービスに previous_application_id として送信
+   → 外部サービスで前回の審査結果と紐づけた処理が可能
+```
+
+> **verified_claimsの更新ルール**: 新しい身元確認が承認されると、同じキーの値は上書きされます。異なるキーの値はそのまま保持されます。詳細は[身元確認申込みガイド](../content_05_how-to/phase-4-extensions/identity-verification/02-application.md)の「verified_claimsのライフサイクル」を参照してください。
 
 ---
 
