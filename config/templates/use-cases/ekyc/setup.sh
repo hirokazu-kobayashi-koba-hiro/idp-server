@@ -402,6 +402,35 @@ else
 fi
 echo ""
 
+# --- Step 9: Create external eKYC identity verification configuration ---
+echo "Step 9: Creating external eKYC identity verification configuration (ongoing-verification)..."
+
+EXTERNAL_IV_CONFIG_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+EXTERNAL_IV_JSON=$(jq --arg id "${EXTERNAL_IV_CONFIG_ID}" '. + {id: $id}' \
+  "${SCRIPT_DIR}/identity-verification-config-ongoing.json")
+
+echo "${EXTERNAL_IV_JSON}" | jq '.' > "${OUTPUT_DIR}/identity-verification-config-ongoing.json"
+echo "  Saved: ${OUTPUT_DIR}/identity-verification-config-ongoing.json"
+
+EXTERNAL_IV_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/identity-verification-configurations" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/identity-verification-config-ongoing.json")
+
+HTTP_CODE=$(echo "${EXTERNAL_IV_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${EXTERNAL_IV_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  External eKYC configuration created: ${EXTERNAL_IV_CONFIG_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
 # --- Summary ---
 echo "=========================================="
 echo "Setup Complete!"
@@ -418,7 +447,7 @@ echo "  Token duration:   AT=${ACCESS_TOKEN_DURATION}s, IDT=${ID_TOKEN_DURATION}
 echo "  Registration:     ${REGISTRATION_REQUIRED_FIELDS} required"
 echo "  Auth policy:      password only"
 echo "  eKYC:             verified_claims enabled (transfers scope triggers verification)"
-echo "  eKYC mode:        mock/no_action (local development)"
+echo "  eKYC mode:        mock/no_action (authentication-assurance) + external HTTP (ongoing-verification)"
 echo ""
 echo "Created Resources:"
 echo "  Organization ID:      ${ORGANIZATION_ID}"
@@ -447,6 +476,7 @@ echo "  ${OUTPUT_DIR}/authentication-config-initial-registration.json"
 echo "  ${OUTPUT_DIR}/authentication-policy.json"
 echo "  ${OUTPUT_DIR}/public-client.json"
 echo "  ${OUTPUT_DIR}/identity-verification-config.json"
+echo "  ${OUTPUT_DIR}/identity-verification-config-ongoing.json"
 echo ""
 echo "Test Authorization Code Flow:"
 echo "  1. Open browser:"

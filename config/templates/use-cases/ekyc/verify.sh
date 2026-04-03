@@ -361,9 +361,9 @@ echo ""
 echo "  Passed: ${PASS_COUNT} / ${TOTAL}"
 echo "  Failed: ${FAIL_COUNT} / ${TOTAL}"
 echo ""
-echo "Note: This script verifies the initial-registration path."
-echo "      eKYC (Identity Verification) requires the 'transfers' scope and"
-echo "      manual approval workflow, which cannot be verified automatically."
+echo "Note: This script verifies the initial-registration and basic auth flow."
+echo "      eKYC (Identity Verification) requires additional manual steps."
+echo "      See VERIFY.md for the full eKYC flow including ongoing-verification."
 echo ""
 
 if [ "${FAIL_COUNT}" -eq 0 ]; then

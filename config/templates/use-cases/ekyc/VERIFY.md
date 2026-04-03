@@ -284,6 +284,84 @@ echo "Application ID: ${APPLICATION_ID}"
 
 ---
 
+## Step 9b: 身元確認の申請 (ongoing-verification/apply) — 外部eKYCサービス連携
+
+外部eKYCサービス（mock-server）と連携する `ongoing-verification` タイプで身元確認を申請します。
+
+> **前提**: mock-server が起動していること (`node mock-server.js`)
+
+```bash
+IV_TYPE_ONGOING="ongoing-verification"
+
+APPLY_RESPONSE_ONGOING=$(curl -s \
+  -X POST "${TENANT_BASE}/v1/me/identity-verification/applications/${IV_TYPE_ONGOING}/apply" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -d "{
+    \"last_name\": \"Tanaka\",
+    \"first_name\": \"Taro\",
+    \"birthdate\": \"1990-01-15\",
+    \"email_address\": \"${TEST_EMAIL}\",
+    \"address\": {
+      \"street_address\": \"1-1-1 Chiyoda\",
+      \"locality\": \"Chiyoda-ku\",
+      \"region\": \"Tokyo\",
+      \"postal_code\": \"1000001\",
+      \"country\": \"JP\"
+    }
+  }")
+
+echo "${APPLY_RESPONSE_ONGOING}" | jq .
+
+APPLICATION_ID_ONGOING=$(echo "${APPLY_RESPONSE_ONGOING}" | jq -r '.id')
+echo "Application ID (ongoing): ${APPLICATION_ID_ONGOING}"
+```
+
+### 確認ポイント
+
+- HTTP 200 が返ること
+- `id` (Application ID) が取得できること
+- mock-serverのログに eKYC 申請リクエストが記録されていること
+
+---
+
+## Step 9c: 身元確認の承認 (ongoing-verification/callback-result)
+
+外部eKYCサービスからのコールバック結果を登録して申請を承認します。
+
+```bash
+CALLBACK_RESPONSE=$(curl -s \
+  -X POST "${TENANT_BASE}/v1/me/identity-verification/applications/${IV_TYPE_ONGOING}/${APPLICATION_ID_ONGOING}/callback-result" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -d '{"verification_result": "approved"}')
+
+echo "${CALLBACK_RESPONSE}" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 200 が返ること
+
+---
+
+## Step 9d: 申請ステータス確認 (ongoing-verification)
+
+```bash
+curl -s \
+  -X GET "${TENANT_BASE}/v1/me/identity-verification/applications?id=${APPLICATION_ID_ONGOING}&type=${IV_TYPE_ONGOING}&status=approved" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 200 が返ること
+- `status` が `approved` であること
+- `type` が `ongoing-verification` であること
+- `application_details.external_application_id` が存在すること（外部サービスから返された値）
+
+---
+
 ## Step 10: 身元確認の承認 (Evaluate Result)
 
 申請を承認します（本番環境では外部 eKYC サービスの審査結果に基づく）。
@@ -370,7 +448,7 @@ claims = {
   'id_token': {
     'verified_claims': {
       'verification': {
-        'trust_framework': 'eidas'
+        'trust_framework': 'jp_aml'
       },
       'claims': {
         'given_name': 'Taro',
@@ -471,7 +549,7 @@ print(json.dumps(json.loads(base64.urlsafe_b64decode(p)), indent=2, ensure_ascii
 
 - `iss`, `sub`, `aud` が含まれていること
 - `verified_claims` が含まれていること
-  - `verified_claims.verification.trust_framework` が `"eidas"` であること
+  - `verified_claims.verification.trust_framework` が `"jp_aml"` であること（ongoing-verification で申請した場合）
   - `verified_claims.claims.given_name` が `"Taro"` であること
   - `verified_claims.claims.family_name` が `"Tanaka"` であること
   - `verified_claims.claims.birthdate` が `"1990-01-15"` であること
@@ -522,6 +600,9 @@ curl -s \
 |------|---------|------|
 | 8 | 身元確認設定が管理APIで取得できる | |
 | 9 | 身元確認申請が成功し Application ID が取得できる | |
+| 9b | ongoing-verification 申請が成功し Application ID が取得できる | |
+| 9c | ongoing-verification コールバック承認が成功する | |
+| 9d | ongoing-verification ステータスが approved、external_application_id が存在する | |
 | 10 | 申請の承認 (evaluate-result) が成功する | |
 | 11 | 申請ステータスが approved になっている | |
 | 12 | 身元確認結果が取得でき verified_at が存在する | |
@@ -534,7 +615,7 @@ curl -s \
 | 14 | 既存ユーザーでログインが成功する | |
 | 15 | Token exchange で transfers スコープが含まれる | |
 | 16 | ID Token に verified_claims が含まれる | |
-| 16 | verified_claims.verification.trust_framework が eidas | |
+| 16 | verified_claims.verification.trust_framework が jp_aml | |
 | 16 | verified_claims.claims に given_name, family_name, birthdate が含まれる | |
 | 17 | UserInfo で sub, email, name が返る | |
 

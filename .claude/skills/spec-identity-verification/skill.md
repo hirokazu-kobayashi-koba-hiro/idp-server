@@ -265,6 +265,36 @@ Phase 7: Response → IdentityVerificationApplyingResult を返却
 `to` のパスは `verification.*`（信頼フレームワーク等）と `claims.*`（クレーム値）の2系統。
 値の指定方法は `static_value`（固定値）と `from`（JSONPath）の2種。
 
+### verified_claims ライフサイクル
+
+身元確認が承認されると `verified_claims_mapping_rules` で生成された値がユーザーに保存される。
+
+**マージ戦略**:
+- 申込み承認・コールバック承認: `User.mergeVerifiedClaims()` → `putAll` によるキーレベルマージ
+- 外部サービス直接登録: `User.setVerifiedClaims()` → 完全上書き
+
+**putAllの挙動**:
+- 同じキー → 新しい値で上書き
+- 新しい方に無いキー → 既存値が残る
+- 新しい方にnull値 → 既存値がnullで上書き
+
+**注意**: `verification` や `claims` はトップレベルキーとして putAll されるため、部分更新ではなくオブジェクト全体が置き換わる。
+
+**TODO**: テナントIDポリシーでマージ戦略選択（#1269）
+
+### verified_claims を後続申込みで参照
+
+`$.user.verified_claims.claims.*` パスで、承認済みの verified_claims を申込みの body_mapping_rules 等から参照可能:
+
+```json
+{ "from": "$.user.verified_claims.claims.external_application_id", "to": "previous_application_id" }
+```
+
+**実装箇所**:
+- `IdentityVerificationApplicationEntryService:299` → `mergeVerifiedClaims`
+- `IdentityVerificationCallbackEntryService:209` → `mergeVerifiedClaims`
+- `IdentityVerificationEntryService:135` → `setVerifiedClaims`
+
 ### 外部 eKYC サービス連携
 
 `IdentityVerificationApplicationHttpRequestExecutor` が `HttpRequestExecutor` を使って外部 API を呼び出す:

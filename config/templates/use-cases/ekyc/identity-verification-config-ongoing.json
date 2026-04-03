@@ -1,5 +1,5 @@
 {
-  "type": "authentication-assurance",
+  "type": "ongoing-verification",
   "external_service": "ekyc-vendor",
   "external_application_id_param": "application_id",
   "processes": {
@@ -7,7 +7,7 @@
       "request": {
         "schema": {
           "type": "object",
-          "required": ["last_name", "first_name", "birthdate", "email_address"],
+          "required": ["last_name", "first_name", "birthdate"],
           "properties": {
             "last_name": { "type": "string", "maxLength": 255, "store": true },
             "first_name": { "type": "string", "maxLength": 255, "store": true },
@@ -47,7 +47,11 @@
           ],
           "body_mapping_rules": [
             { "from": "$.request_body", "to": "*" },
-            { "from": "$.user.sub", "to": "user_id" }
+            { "from": "$.user.sub", "to": "user_id" },
+            { "from": "$.user.verified_claims.claims.given_name", "to": "verified_given_name" },
+            { "from": "$.user.verified_claims.claims.family_name", "to": "verified_family_name" },
+            { "from": "$.user.verified_claims.claims.birthdate", "to": "verified_birthdate" },
+            { "from": "$.user.verified_claims.claims.external_application_id", "to": "previous_application_id" }
           ]
         }
       },
@@ -63,17 +67,19 @@
         ]
       }
     },
-    "evaluate-result": {
+    "callback-result": {
+      "required_processes": ["apply"],
+      "allow_retry": false,
       "execution": { "type": "no_action" },
       "transition": {
         "approved": {
           "any_of": [[
-            { "path": "$.request_body.approved", "type": "boolean", "operation": "eq", "value": true }
+            { "path": "$.request_body.verification_result", "type": "string", "operation": "eq", "value": "approved" }
           ]]
         },
         "rejected": {
           "any_of": [[
-            { "path": "$.request_body.rejected", "type": "boolean", "operation": "eq", "value": true }
+            { "path": "$.request_body.verification_result", "type": "string", "operation": "eq", "value": "rejected" }
           ]]
         }
       }
@@ -81,7 +87,7 @@
   },
   "result": {
     "verified_claims_mapping_rules": [
-      { "static_value": "eidas", "to": "verification.trust_framework" },
+      { "static_value": "jp_aml", "to": "verification.trust_framework" },
       { "from": "$.application.application_details.first_name", "to": "claims.given_name" },
       { "from": "$.application.application_details.last_name", "to": "claims.family_name" },
       { "from": "$.application.application_details.birthdate", "to": "claims.birthdate" },
