@@ -61,7 +61,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
     get:
       summary: List users within organization tenant
-      description: 組織内の特定のテナントのユーザー一覧を取得します
+      description: 組織内の特定のテナントのユーザー一覧を取得します。結果は作成日時の降順（新しいユーザーが先頭）でソートされます。
       tags:
         - organization-user
       parameters:
