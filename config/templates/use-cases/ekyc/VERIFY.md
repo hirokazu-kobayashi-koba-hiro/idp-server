@@ -427,6 +427,86 @@ echo "${RESULTS_RESPONSE}" | jq .
 
 ---
 
+## Phase 2b: verified_claims ライフサイクル確認
+
+verified_claims のマージ挙動を確認します。
+
+---
+
+## Step 12b: verified_claims の確認（管理API）
+
+ongoing-verification 承認前後で verified_claims がどう変わるか確認します。
+
+```bash
+# 管理トークンで現在の verified_claims を確認
+curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/users?email=${TEST_EMAIL}" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq '.list[0].verified_claims'
+```
+
+### 確認ポイント（authentication-assurance 承認後）
+
+- `verification.trust_framework` が `eidas` であること
+- `claims.given_name`, `claims.family_name`, `claims.birthdate` が存在すること
+- `claims.external_application_id` が存在すること（外部サービスから取得した値）
+
+---
+
+## Step 12c: ongoing-verification 承認後の verified_claims マージ確認
+
+Step 9b〜9c で ongoing-verification を申請・承認した後、verified_claims がどう更新されたか確認します。
+
+```bash
+curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/users?email=${TEST_EMAIL}" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq '.list[0].verified_claims'
+```
+
+### 確認ポイント（ongoing-verification 承認後）
+
+- `verification.trust_framework` が `jp_aml` に**上書き**されていること（authentication-assurance の `eidas` から変更）
+- `claims.external_application_id` が**新しい値に上書き**されていること
+- `claims.given_name`, `claims.family_name`, `claims.birthdate` はそのまま保持されていること
+
+> **マージ挙動**: `mergeVerifiedClaims(putAll)` により、同じキーは上書き、存在しないキーは保持されます。マッピングルールにないキーの既存値は消えません。
+
+---
+
+## Step 12d: 空マッピングルールの承認確認（既存値が保持されること）
+
+`verified_claims_mapping_rules` が空 `[]` のテンプレートで承認した場合、既存の verified_claims が保持されることを確認します。
+
+> **前提**: 管理APIで `verified_claims_mapping_rules: []` のテンプレート（例: `empty-result-test`）を事前に登録しておく
+
+```bash
+# 空マッピングのテンプレートで申込み + 承認
+APPLY_EMPTY=$(curl -s \
+  -X POST "${TENANT_BASE}/v1/me/identity-verification/applications/empty-result-test/apply" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -d '{"name": "Test"}')
+
+APPLICATION_ID_EMPTY=$(echo "${APPLY_EMPTY}" | jq -r '.id')
+
+curl -s \
+  -X POST "${TENANT_BASE}/v1/me/identity-verification/applications/empty-result-test/${APPLICATION_ID_EMPTY}/evaluate-result" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -d '{"approved": true}'
+
+# verified_claims が変わっていないことを確認
+curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/users?email=${TEST_EMAIL}" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq '.list[0].verified_claims'
+```
+
+### 確認ポイント
+
+- verified_claims が承認前と**同一**であること
+- 空の `putAll({})` は既存値を変更しないことの確認
+
+---
+
 ## Phase 3: Verified Claims (claims parameter)
 
 身元確認完了後、`claims` パラメータを使って認可リクエストに `verified_claims` を要求し、ID Token / UserInfo で verified claims が返ることを検証します。
@@ -606,6 +686,16 @@ curl -s \
 | 10 | 申請の承認 (evaluate-result) が成功する | |
 | 11 | 申請ステータスが approved になっている | |
 | 12 | 身元確認結果が取得でき verified_at が存在する | |
+
+### Phase 2b: verified_claims ライフサイクル
+
+| Step | 確認項目 | 結果 |
+|------|---------|------|
+| 12b | authentication-assurance 承認後に verified_claims に external_application_id が存在する | |
+| 12c | ongoing-verification 承認後に trust_framework が jp_aml に上書きされている | |
+| 12c | ongoing-verification 承認後に external_application_id が新しい値に上書きされている | |
+| 12c | ongoing-verification 承認後に given_name, family_name, birthdate が保持されている | |
+| 12d | 空マッピングルールの承認後に verified_claims が変更されていない | |
 
 ### Phase 3: Verified Claims
 

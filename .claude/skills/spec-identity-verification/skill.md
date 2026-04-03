@@ -280,6 +280,8 @@ Phase 7: Response → IdentityVerificationApplyingResult を返却
 
 **注意**: `verification` や `claims` はトップレベルキーとして putAll されるため、部分更新ではなくオブジェクト全体が置き換わる。
 
+**空マッピングルールの場合**: `verified_claims_mapping_rules: []` で承認しても、`putAll({})` なので既存値は保持される。新規ユーザーならnullのまま。
+
 **TODO**: テナントIDポリシーでマージ戦略選択（#1269）
 
 ### verified_claims を後続申込みで参照
