@@ -30,6 +30,7 @@ import org.idp.server.core.extension.identity.verification.io.IdentityVerificati
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.federation.sso.SsoCredentials;
 import org.idp.server.core.openid.federation.sso.SsoCredentialsCommandRepository;
+import org.idp.server.core.openid.federation.sso.SsoCredentialsNotFoundException;
 import org.idp.server.core.openid.federation.sso.SsoCredentialsQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.http.*;
@@ -110,6 +111,13 @@ public class SsoCredentialsParameterResolver implements AdditionalRequestParamet
           jsonConverter.read(
               additionalParameterConfig.details(), SsoCredentialsParameterConfig.class);
       SsoCredentials ssoCredentials = ssoCredentialsQueryRepository.find(tenant, user);
+
+      if (!ssoCredentials.exists()) {
+        throw new SsoCredentialsNotFoundException(
+            "SSO credentials not found for user "
+                + user.userIdentifier().value()
+                + ". Federation login is required.");
+      }
 
       Map<String, String> params = new HashMap<>();
       params.put("refresh_token", ssoCredentials.refreshToken());

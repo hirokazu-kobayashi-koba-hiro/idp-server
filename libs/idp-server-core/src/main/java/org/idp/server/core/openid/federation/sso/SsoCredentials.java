@@ -100,6 +100,6 @@ public class SsoCredentials implements JsonReadable {
   }
 
   public boolean exists() {
-    return provider != null && provider.isEmpty();
+    return provider != null && !provider.isEmpty();
   }
 }
