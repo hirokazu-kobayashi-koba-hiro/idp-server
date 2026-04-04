@@ -30,6 +30,7 @@ import org.idp.server.core.extension.identity.verification.io.IdentityVerificati
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.federation.sso.SsoCredentials;
 import org.idp.server.core.openid.federation.sso.SsoCredentialsCommandRepository;
+import org.idp.server.core.openid.federation.sso.SsoCredentialsNotFoundException;
 import org.idp.server.core.openid.federation.sso.SsoCredentialsQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.http.*;
@@ -39,6 +40,37 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
+/**
+ * Resolves SSO credentials by refreshing the OAuth token from an external identity provider.
+ *
+ * <p>This resolver is used as a pre_hook additional_parameter in identity verification processes.
+ * It retrieves the user's stored SSO credentials (refresh_token), exchanges them for a new
+ * access_token at the configured token endpoint, and makes the token available to subsequent
+ * processing steps.
+ *
+ * <h3>Error Classification</h3>
+ *
+ * <table>
+ *   <tr><th>Scenario</th><th>error_type</th><th>retryable</th><th>HTTP Status</th></tr>
+ *   <tr><td>Token endpoint returns 401/403</td><td>AUTHENTICATION_ERROR</td><td>false</td><td>400</td></tr>
+ *   <tr><td>Token endpoint returns 5xx</td><td>SERVER_ERROR</td><td>true</td><td>400</td></tr>
+ *   <tr><td>SSO credentials not found</td><td>UNEXPECTED_ERROR</td><td>false</td><td>400</td></tr>
+ *   <tr><td>Connection failure / parse error</td><td>UNEXPECTED_ERROR</td><td>false</td><td>400</td></tr>
+ * </table>
+ *
+ * <h3>Error Handling Strategy</h3>
+ *
+ * <p>The behavior on error is controlled by {@link ErrorHandlingStrategy}:
+ *
+ * <ul>
+ *   <li>{@code FAIL_FAST} (default): Returns error immediately, halting the identity verification
+ *       process.
+ *   <li>{@code RESILIENT}: Continues processing with fallback data, allowing the identity
+ *       verification to proceed without SSO credentials.
+ * </ul>
+ *
+ * @see <a href="https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1456">#1456</a>
+ */
 public class SsoCredentialsParameterResolver implements AdditionalRequestParameterResolver {
 
   SsoCredentialsQueryRepository ssoCredentialsQueryRepository;
@@ -80,6 +112,13 @@ public class SsoCredentialsParameterResolver implements AdditionalRequestParamet
               additionalParameterConfig.details(), SsoCredentialsParameterConfig.class);
       SsoCredentials ssoCredentials = ssoCredentialsQueryRepository.find(tenant, user);
 
+      if (!ssoCredentials.exists()) {
+        throw new SsoCredentialsNotFoundException(
+            "SSO credentials not found for user "
+                + user.userIdentifier().value()
+                + ". Federation login is required.");
+      }
+
       Map<String, String> params = new HashMap<>();
       params.put("refresh_token", ssoCredentials.refreshToken());
       params.put("grant_type", "refresh_token");
@@ -104,13 +143,52 @@ public class SsoCredentialsParameterResolver implements AdditionalRequestParamet
       HttpRequestResult httpRequestResult = httpRequestExecutor.execute(httpRequest);
 
       if (httpRequestResult.isClientError() || httpRequestResult.isServerError()) {
-        throw new RuntimeException("Token refresh failed: " + httpRequestResult.statusCode());
+        int statusCode = httpRequestResult.statusCode();
+        String responseBody =
+            httpRequestResult.body() != null ? httpRequestResult.body().toString() : "";
+        boolean isAuthenticationError = statusCode == 401 || statusCode == 403;
+        String errorType = isAuthenticationError ? "AUTHENTICATION_ERROR" : "SERVER_ERROR";
+        boolean retryable = !isAuthenticationError;
+
+        log.warn(
+            "SSO token refresh failed: status={}, authError={}, body={}",
+            statusCode,
+            isAuthenticationError,
+            responseBody);
+
+        IdentityVerificationErrorDetails errorDetails =
+            IdentityVerificationErrorDetails.builder()
+                .error("sso_credentials_error")
+                .errorDescription(
+                    "Token refresh failed: HTTP "
+                        + statusCode
+                        + (isAuthenticationError
+                            ? " (refresh token may be invalid or revoked)"
+                            : " (external provider error)"))
+                .statusCode(statusCode)
+                .addErrorDetail("phase", "pre_hook")
+                .addErrorDetail("component", "sso_credentials_resolver")
+                .addErrorDetail("error_type", errorType)
+                .addErrorDetail("retryable", retryable)
+                .addErrorDetail("status_code", statusCode)
+                .build();
+
+        return handleError(
+            additionalParameterConfig,
+            errorDetails,
+            Map.of(
+                "status_code", statusCode,
+                "error", isAuthenticationError ? "invalid_grant" : "server_error",
+                "error_description",
+                    isAuthenticationError
+                        ? "SSO refresh token is invalid or revoked"
+                        : "SSO credentials unavailable"));
       }
 
       JsonNodeWrapper json = JsonNodeWrapper.fromString(httpRequestResult.body().toString());
       String accessToken = json.getValueOrEmptyAsString("access_token");
       String refreshToken = json.getValueOrEmptyAsString("refresh_token");
-      long expiresIn = Long.parseLong(json.getValueOrEmptyAsString("expires_in"));
+      long expiresIn = parseExpiresIn(json.getValueOrEmptyAsString("expires_in"));
 
       SsoCredentials updateWithToken =
           ssoCredentials.updateWithToken(accessToken, refreshToken, expiresIn);
@@ -128,22 +206,37 @@ public class SsoCredentialsParameterResolver implements AdditionalRequestParamet
               .errorDescription("SSO credentials parameter resolution failed: " + e.getMessage())
               .addErrorDetail("phase", "pre_hook")
               .addErrorDetail("component", "sso_credentials_resolver")
-              .addErrorDetail("error_type", "NETWORK_ERROR")
-              .addErrorDetail("retryable", true)
+              .addErrorDetail("error_type", "UNEXPECTED_ERROR")
+              .addErrorDetail("retryable", false)
               .build();
 
-      ErrorHandlingStrategy strategy = additionalParameterConfig.errorHandlingStrategy();
+      return handleError(
+          additionalParameterConfig,
+          errorDetails,
+          Map.of(
+              "status_code", 500,
+              "error", "server_error",
+              "error_description", "SSO credentials unavailable"));
+    }
+  }
 
-      if (strategy == ErrorHandlingStrategy.FAIL_FAST) {
-        return AdditionalParameterResolveResult.failFastError(errorDetails);
-      } else {
-        Map<String, Object> fallbackData =
-            Map.of(
-                "status_code", 500,
-                "error", "server_error",
-                "error_description", "SSO credentials unavailable");
-        return AdditionalParameterResolveResult.resilientError(errorDetails, fallbackData);
-      }
+  private AdditionalParameterResolveResult handleError(
+      IdentityVerificationConfig config,
+      IdentityVerificationErrorDetails errorDetails,
+      Map<String, Object> fallbackData) {
+    ErrorHandlingStrategy strategy = config.errorHandlingStrategy();
+    if (strategy == ErrorHandlingStrategy.FAIL_FAST) {
+      return AdditionalParameterResolveResult.failFastError(errorDetails);
+    }
+    return AdditionalParameterResolveResult.resilientError(errorDetails, fallbackData);
+  }
+
+  private long parseExpiresIn(String value) {
+    try {
+      return Long.parseLong(value);
+    } catch (NumberFormatException e) {
+      log.warn("Invalid expires_in value: '{}', using default 300", value);
+      return 300;
     }
   }
 }

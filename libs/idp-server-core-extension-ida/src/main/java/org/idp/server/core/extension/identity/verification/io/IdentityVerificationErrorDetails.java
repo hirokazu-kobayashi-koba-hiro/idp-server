@@ -57,12 +57,14 @@ public class IdentityVerificationErrorDetails {
   private final String errorDescription;
   private final Map<String, Object> errorDetails;
   private final List<String> errorMessages;
+  private final int statusCode;
 
   private IdentityVerificationErrorDetails(Builder builder) {
     this.error = builder.error;
     this.errorDescription = builder.errorDescription;
     this.errorDetails = new HashMap<>(builder.errorDetails);
     this.errorMessages = List.copyOf(builder.errorMessages);
+    this.statusCode = builder.statusCode;
   }
 
   public static Builder builder() {
@@ -99,12 +101,21 @@ public class IdentityVerificationErrorDetails {
     return errorMessages;
   }
 
+  public int statusCode() {
+    return statusCode;
+  }
+
+  public boolean hasStatusCode() {
+    return statusCode > 0;
+  }
+
   /** Builder class for identity verification error details. */
   public static class Builder {
     private String error;
     private String errorDescription;
     private final Map<String, Object> errorDetails = new HashMap<>();
     private final List<String> errorMessages = new java.util.ArrayList<>();
+    private int statusCode;
 
     private Builder() {}
 
@@ -126,6 +137,11 @@ public class IdentityVerificationErrorDetails {
     public Builder errorDetails(Map<String, Object> errorDetails) {
       this.errorDetails.clear();
       this.errorDetails.putAll(errorDetails);
+      return this;
+    }
+
+    public Builder statusCode(int statusCode) {
+      this.statusCode = statusCode;
       return this;
     }
 
