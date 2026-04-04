@@ -157,6 +157,7 @@ public class SsoCredentialsParameterResolver implements AdditionalRequestParamet
                         + (isAuthenticationError
                             ? " (refresh token may be invalid or revoked)"
                             : " (external provider error)"))
+                .statusCode(statusCode)
                 .addErrorDetail("phase", "pre_hook")
                 .addErrorDetail("component", "sso_credentials_resolver")
                 .addErrorDetail("error_type", errorType)

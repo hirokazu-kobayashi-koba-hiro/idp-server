@@ -120,19 +120,13 @@ describe("Integration: SSO Credentials Refresh Error Handling (#1456)", () => {
     console.log("Response status:", response.status);
     console.log("Response:", JSON.stringify(response.data, null, 2));
 
-    // Before fix: 500 server_error (RuntimeException not caught properly)
-    // After fix: error response with AUTHENTICATION_ERROR classification
-    expect(response.status).not.toBe(500);
-    expect(response.data).toHaveProperty("error");
-    expect(response.data).toHaveProperty("error_description");
-
-    // Error details should indicate authentication failure, not network error
-    if (response.data.error_details) {
-      console.log("error_type:", response.data.error_details.error_type);
-      console.log("retryable:", response.data.error_details.retryable);
-      expect(response.data.error_details.error_type).toBe("AUTHENTICATION_ERROR");
-      expect(response.data.error_details.retryable).toBe(false);
-    }
+    // Before fix: 500 server_error
+    // After fix: 401 with AUTHENTICATION_ERROR classification
+    expect(response.status).toBe(401);
+    expect(response.data.error).toBe("sso_credentials_error");
+    expect(response.data.error_details.error_type).toBe("AUTHENTICATION_ERROR");
+    expect(response.data.error_details.retryable).toBe(false);
+    expect(response.data.error_details.status_code).toBe(401);
 
     console.log("=== Test Completed ===\n");
   });
@@ -188,7 +182,7 @@ describe("Integration: SSO Credentials Refresh Error Handling (#1456)", () => {
     console.log("Response status:", response.status);
     console.log("Response:", JSON.stringify(response.data, null, 2));
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(403);
     expect(response.data.error).toBe("sso_credentials_error");
     expect(response.data.error_details.error_type).toBe("AUTHENTICATION_ERROR");
     expect(response.data.error_details.retryable).toBe(false);
@@ -248,8 +242,8 @@ describe("Integration: SSO Credentials Refresh Error Handling (#1456)", () => {
     console.log("Response status:", response.status);
     console.log("Response:", JSON.stringify(response.data, null, 2));
 
-    // Non-auth HTTP error → SERVER_ERROR, retryable=true
-    expect(response.status).toBe(400);
+    // Non-auth HTTP error → SERVER_ERROR, retryable=true, original status code preserved
+    expect(response.status).not.toBe(500);
     expect(response.data.error).toBe("sso_credentials_error");
     expect(response.data.error_details.error_type).not.toBe("AUTHENTICATION_ERROR");
     expect(response.data.error_details.retryable).toBe(true);

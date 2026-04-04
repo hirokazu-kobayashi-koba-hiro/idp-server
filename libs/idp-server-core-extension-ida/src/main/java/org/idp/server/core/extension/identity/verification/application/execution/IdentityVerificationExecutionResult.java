@@ -42,8 +42,9 @@ public class IdentityVerificationExecutionResult {
 
   public static IdentityVerificationExecutionResult preHookError(
       IdentityVerificationErrorDetails errorDetails) {
+    int statusCode = errorDetails.hasStatusCode() ? errorDetails.statusCode() : 400;
     return new IdentityVerificationExecutionResult(
-        IdentityVerificationExecutionStatus.CLIENT_ERROR, 400, errorDetails.toMap());
+        IdentityVerificationExecutionStatus.CLIENT_ERROR, statusCode, errorDetails.toMap());
   }
 
   public boolean isOk() {
