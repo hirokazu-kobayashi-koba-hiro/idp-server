@@ -43,7 +43,7 @@ public class IdentityVerificationExecutionResult {
   public static IdentityVerificationExecutionResult preHookError(
       IdentityVerificationErrorDetails errorDetails) {
     return new IdentityVerificationExecutionResult(
-        IdentityVerificationExecutionStatus.CLIENT_ERROR, errorDetails.toMap());
+        IdentityVerificationExecutionStatus.CLIENT_ERROR, 400, errorDetails.toMap());
   }
 
   public boolean isOk() {

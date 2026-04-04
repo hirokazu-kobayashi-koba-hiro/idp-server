@@ -746,9 +746,47 @@ flowchart TD
 }
 ```
 
-| type           | 説明                    |
-|----------------|-----------------------|
-| `http_request` | 外部APIを叩いて追加パラメータを取得する |
+| type              | 説明                                      |
+|-------------------|-------------------------------------------|
+| `http_request`    | 外部APIを叩いて追加パラメータを取得する     |
+| `sso_credentials` | SSOクレデンシャルのリフレッシュトークンで新しいアクセストークンを取得する |
+
+##### sso_credentials の設定例
+
+フェデレーションログインで取得したSSOクレデンシャルを使って、外部IdPのアクセストークンをリフレッシュします。
+
+```json
+{
+  "type": "sso_credentials",
+  "details": {
+    "token_endpoint": "https://external-idp.example.com/oauth/token",
+    "client_id": "my-client-id",
+    "client_secret": "my-client-secret",
+    "client_authentication_type": "client_secret_post"
+  }
+}
+```
+
+| フィールド | 説明 |
+|-----------|------|
+| `token_endpoint` | 外部IdPのトークンエンドポイント |
+| `client_id` | OAuthクライアントID |
+| `client_secret` | OAuthクライアントシークレット |
+| `client_authentication_type` | `client_secret_post` または `client_secret_basic` |
+| `error_strategy` | エラー時の戦略。`FAIL_FAST`（デフォルト、即座にエラー返却）または `RESILIENT`（フォールバックデータで続行） |
+
+##### sso_credentials のエラー分類
+
+トークンリフレッシュが失敗した場合、エラーの原因に応じて適切なエラー情報が返却されます。
+
+| シナリオ | error_type | retryable | 説明 |
+|---------|-----------|-----------|------|
+| トークンエンドポイントが401/403を返す | `AUTHENTICATION_ERROR` | `false` | リフレッシュトークンが無効・取り消し済み。ユーザーの再認証が必要 |
+| トークンエンドポイントが5xxを返す | `SERVER_ERROR` | `true` | 外部IdPの一時的な障害。リトライで解消する可能性あり |
+| ユーザーにSSOクレデンシャルがない | `UNEXPECTED_ERROR` | `false` | フェデレーションログインしていないユーザー |
+| 接続失敗・パースエラー等 | `UNEXPECTED_ERROR` | `false` | ネットワーク障害や予期しないレスポンス形式 |
+
+> **前提条件**: `sso_credentials` を使用するには、ユーザーがフェデレーションログイン済みで、SSOクレデンシャル（リフレッシュトークン）がDBに保存されている必要があります。フェデレーション設定で `store_credentials: true` を有効にしてください。
 
 ```json
 {

@@ -265,6 +265,20 @@ Phase 7: Response → IdentityVerificationApplyingResult を返却
 `to` のパスは `verification.*`（信頼フレームワーク等）と `claims.*`（クレーム値）の2系統。
 値の指定方法は `static_value`（固定値）と `from`（JSONPath）の2種。
 
+### SSOクレデンシャル連携（pre_hook: sso_credentials）
+
+`additional_parameters` で `type: "sso_credentials"` を指定すると、フェデレーションログインで取得したリフレッシュトークンを使って外部IdPのアクセストークンを取得できる。
+
+**エラー分類**:
+- 401/403 → `AUTHENTICATION_ERROR`, retryable=false（トークン無効・取消）
+- 5xx → `SERVER_ERROR`, retryable=true（一時的障害）
+- SSOクレデンシャルなし → `UNEXPECTED_ERROR`, retryable=false
+- 接続失敗等 → `UNEXPECTED_ERROR`, retryable=false
+
+**前提**: フェデレーション設定で `store_credentials: true` が必要。
+
+**実装**: `SsoCredentialsParameterResolver`（idp-server-core-extension-ida）
+
 ### verified_claims ライフサイクル
 
 身元確認が承認されると `verified_claims_mapping_rules` で生成された値がユーザーに保存される。
