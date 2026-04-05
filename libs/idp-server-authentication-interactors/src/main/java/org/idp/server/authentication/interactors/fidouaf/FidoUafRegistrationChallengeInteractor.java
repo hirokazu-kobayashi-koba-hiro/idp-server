@@ -32,6 +32,7 @@ import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -107,6 +108,36 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
           type,
           operationType(),
           method(),
+          DefaultSecurityEventType.fido_uaf_registration_challenge_failure);
+    }
+
+    // Verify max_devices limit before generating challenge (skip for reset action)
+    User authenticatedUser = transaction.user();
+    boolean isResetAction = "reset".equals(request.toMap().get("action"));
+    int authenticationDeviceCount = authenticatedUser.authenticationDeviceCount();
+    int maxDevices = tenant.maxDevicesForAuthentication();
+
+    if (!isResetAction && authenticationDeviceCount >= maxDevices) {
+      log.warn(
+          "FIDO-UAF registration challenge rejected: device limit reached. user={}, current={}, max={}",
+          authenticatedUser.sub(),
+          authenticationDeviceCount,
+          maxDevices);
+
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "invalid_request");
+      errorResponse.put(
+          "error_description",
+          String.format(
+              "Maximum number of devices reached %d, user has already %d devices.",
+              maxDevices, authenticationDeviceCount));
+
+      return AuthenticationInteractionRequestResult.clientError(
+          errorResponse,
+          type,
+          operationType(),
+          method(),
+          authenticatedUser,
           DefaultSecurityEventType.fido_uaf_registration_challenge_failure);
     }
 
