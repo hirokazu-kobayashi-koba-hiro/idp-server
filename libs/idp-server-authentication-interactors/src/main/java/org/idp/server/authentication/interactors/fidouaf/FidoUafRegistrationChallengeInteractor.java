@@ -125,12 +125,14 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
           maxDevices);
 
       Map<String, Object> errorResponse = new HashMap<>();
-      errorResponse.put("error", "invalid_request");
+      errorResponse.put("error", "device_limit_exceeded");
       errorResponse.put(
           "error_description",
           String.format(
               "Maximum number of devices reached %d, user has already %d devices.",
               maxDevices, authenticationDeviceCount));
+      errorResponse.put("max_devices", maxDevices);
+      errorResponse.put("current_devices", authenticationDeviceCount);
 
       return AuthenticationInteractionRequestResult.clientError(
           errorResponse,

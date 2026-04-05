@@ -136,6 +136,28 @@ FIDO2をブラウザUIで動かす際の必須確認事項:
 | 7 | `step_definitions` でemail→fido2の順序定義 | 認証ポリシー | 未設定だとFIDO2ブラウザUIでユーザー識別ができない |
 | 8 | `device_registration_conditions` にMFA条件 | 認証ポリシー | 未設定だとMFAなしでデバイス登録可能（脆弱性） |
 
+### max_devices チェック
+
+`authentication_device_rule.max_devices` の上限チェックは **registration-challenge 段階**と **registration 段階**の両方で実施される。
+
+- **challenge段階**: `navigator.credentials.create()` の前にチェック。上限到達時はチャレンジを返さず、ブラウザ/認証器に孤立した鍵が生成されることを防止。
+- **registration段階**: 二重防御として維持。TOCTOU（Time-of-check to time-of-use）対策で、DBから最新のデバイス数を再取得して検証。
+
+`action: "reset"` の場合はチェックをスキップ（既存デバイスを置換するため）。
+
+**エラーレスポンス（`device_limit_exceeded`）**:
+
+```json
+{
+  "error": "device_limit_exceeded",
+  "error_description": "Maximum number of devices reached 1, user has already 1 devices.",
+  "max_devices": 1,
+  "current_devices": 1
+}
+```
+
+クライアントは `error: "device_limit_exceeded"` を検知して、「デバイス管理画面で不要なデバイスを削除してください」等の案内を表示できる。
+
 ### rp_id と allowed_origins の関係
 
 ```
