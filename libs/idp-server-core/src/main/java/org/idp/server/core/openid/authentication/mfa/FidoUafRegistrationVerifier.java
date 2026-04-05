@@ -38,12 +38,14 @@ public class FidoUafRegistrationVerifier implements MfaRequestVerifier {
 
     if (authenticationDeviceCount >= maxDevices) {
       Map<String, Object> errors = new HashMap<>();
-      errors.put("error", "invalid_request");
+      errors.put("error", "device_limit_exceeded");
       errors.put(
           "error_description",
           String.format(
               "Maximum number of devices reached %d, user has already %d devices.",
               maxDevices, authenticationDeviceCount));
+      errors.put("max_devices", maxDevices);
+      errors.put("current_devices", authenticationDeviceCount);
 
       return MfaVerificationResult.failure(errors);
     }

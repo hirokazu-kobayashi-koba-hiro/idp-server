@@ -515,6 +515,48 @@ FIDO2登録の成功・失敗はセキュリティイベントとして記録さ
 
 ## 関連ドキュメント
 
+## デバイス上限エラー（device_limit_exceeded）
+
+テナントの `authentication_device_rule.max_devices` で設定された上限に達している場合、**registration-challenge 段階**でエラーが返されます。これにより `navigator.credentials.create()` が呼ばれず、ブラウザ/認証器に孤立した鍵が生成されることを防ぎます。
+
+### エラーレスポンス
+
+```json
+{
+  "error": "device_limit_exceeded",
+  "error_description": "Maximum number of devices reached 1, user has already 1 devices.",
+  "max_devices": 1,
+  "current_devices": 1
+}
+```
+
+### クライアント側のハンドリング
+
+```javascript
+const challengeRes = await fetch(`/authorizations/${authId}/fido2-registration-challenge`, {
+  method: 'POST',
+  body: JSON.stringify({ ... })
+});
+
+if (!challengeRes.ok) {
+  const error = await challengeRes.json();
+  if (error.error === 'device_limit_exceeded') {
+    // デバイス管理画面への誘導
+    showMessage(`デバイス上限（${error.max_devices}台）に達しています。不要なデバイスを削除してください。`);
+    return;
+  }
+  showError(error.error_description);
+  return;
+}
+
+// challenge成功時のみ鍵生成
+const credential = await navigator.credentials.create({ publicKey: challenge });
+```
+
+> **二重チェック**: registration 段階（`fido2-registration`）でもデバイス数を再検証します（TOCTOU対策）。
+
+## 関連ドキュメント
+
 - [パスキー認証](./02-authentication.md) - 登録後の認証フロー
 - [パスキー管理](./03-management.md) - 一覧・削除API
 - [アテステーション検証](./04-attestation-verification.md) - 認証器の信頼性検証

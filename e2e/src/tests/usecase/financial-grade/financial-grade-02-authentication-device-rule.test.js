@@ -872,7 +872,7 @@ describe("Financial Grade: Device Limit Enforcement (Issue #728)", () => {
     // Verify that registration is rejected
     console.log("Response:", JSON.stringify(mfaResponse.data, null, 2));
     expect(mfaResponse.status).toBe(400);
-    expect(mfaResponse.data.error).toBe("invalid_request");
+    expect(mfaResponse.data.error).toBe("device_limit_exceeded");
     expect(mfaResponse.data.error_description).toContain("Maximum number of devices reached");
     expect(mfaResponse.data.error_description).toContain("2");
 
@@ -1967,7 +1967,7 @@ describe("Financial Grade: TOCTOU Device Limit Prevention (Security Fix)", () =>
 
     // Verify that registration is rejected at COMPLETION time (not challenge time)
     expect(registrationResult2.status).toBe(400);
-    expect(registrationResult2.data.error).toBe("invalid_request");
+    expect(registrationResult2.data.error).toBe("device_limit_exceeded");
     expect(registrationResult2.data.error_description).toContain("Maximum number of devices reached");
     expect(registrationResult2.data.error_description).toContain("1");
 

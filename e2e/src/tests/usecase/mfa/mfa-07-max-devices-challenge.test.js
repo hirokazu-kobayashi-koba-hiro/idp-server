@@ -264,8 +264,10 @@ describe("Use Case: FIDO2 max_devices check at registration-challenge", () => {
     // Before fix: challenge succeeds, registration fails later (orphaned key)
     // After fix: challenge fails with max_devices error
     expect(challengeResponse.status).toBe(400);
-    expect(challengeResponse.data.error).toBe("invalid_request");
+    expect(challengeResponse.data.error).toBe("device_limit_exceeded");
     expect(challengeResponse.data.error_description).toContain("Maximum number of devices reached");
+    expect(challengeResponse.data.max_devices).toBeDefined();
+    expect(challengeResponse.data.current_devices).toBeDefined();
 
     console.log("✅ Challenge correctly rejected at max_devices limit");
     console.log("   No orphaned key created in browser/authenticator");
@@ -467,8 +469,10 @@ describe("Use Case: FIDO2 max_devices check at registration-challenge", () => {
     console.log("Challenge response:", JSON.stringify(challengeResponse.data, null, 2));
 
     expect(challengeResponse.status).toBe(400);
-    expect(challengeResponse.data.error).toBe("invalid_request");
+    expect(challengeResponse.data.error).toBe("device_limit_exceeded");
     expect(challengeResponse.data.error_description).toContain("Maximum number of devices reached");
+    expect(challengeResponse.data.max_devices).toBeDefined();
+    expect(challengeResponse.data.current_devices).toBeDefined();
 
     console.log("✅ FIDO-UAF challenge correctly rejected at max_devices limit");
   });
