@@ -124,7 +124,7 @@ public class Fido2RegistrationChallengeInteractor implements AuthenticationInter
 
     // Verify max_devices limit before generating challenge (skip for reset action)
     User authenticatedUser = transaction.user();
-    boolean isResetAction = isResetAction(request);
+    boolean isResetAction = isResetAction(transaction);
     int authenticationDeviceCount = authenticatedUser.authenticationDeviceCount();
     int maxDevices = tenant.maxDevicesForAuthentication();
 
@@ -360,7 +360,7 @@ public class Fido2RegistrationChallengeInteractor implements AuthenticationInter
     }
   }
 
-  private boolean isResetAction(AuthenticationInteractionRequest request) {
-    return "reset".equals(request.toMap().get("action"));
+  private boolean isResetAction(AuthenticationTransaction transaction) {
+    return "reset".equals(transaction.attributes().getValueOrEmpty("action"));
   }
 }
