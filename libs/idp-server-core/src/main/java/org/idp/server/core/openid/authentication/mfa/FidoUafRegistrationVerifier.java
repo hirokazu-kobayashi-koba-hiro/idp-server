@@ -16,8 +16,6 @@
 
 package org.idp.server.core.openid.authentication.mfa;
 
-import java.util.HashMap;
-import java.util.Map;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -37,15 +35,8 @@ public class FidoUafRegistrationVerifier implements MfaRequestVerifier {
     int maxDevices = tenant.maxDevicesForAuthentication();
 
     if (authenticationDeviceCount >= maxDevices) {
-      Map<String, Object> errors = new HashMap<>();
-      errors.put("error", "invalid_request");
-      errors.put(
-          "error_description",
-          String.format(
-              "Maximum number of devices reached %d, user has already %d devices.",
-              maxDevices, authenticationDeviceCount));
-
-      return MfaVerificationResult.failure(errors);
+      return MfaVerificationResult.failure(
+          DeviceLimitExceededResponse.create(maxDevices, authenticationDeviceCount));
     }
 
     return MfaVerificationResult.success();
