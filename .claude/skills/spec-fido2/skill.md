@@ -158,6 +158,38 @@ FIDO2をブラウザUIで動かす際の必須確認事項:
 
 クライアントは `error: "device_limit_exceeded"` を検知して、「デバイス管理画面で不要なデバイスを削除してください」等の案内を表示できる。
 
+### MFAエンドポイント経由のデバイス登録
+
+`/v1/me/mfa/fido2-registration` エンドポイントでFIDO2デバイスを登録する場合、**`flow: "fido2-registration"` の認証ポリシーが別途必要**。
+
+```json
+{
+  "flow": "fido2-registration",
+  "enabled": true,
+  "policies": [{
+    "available_methods": ["fido2"],
+    "success_conditions": {
+      "any_of": [
+        [{ "path": "$.fido2-registration.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+      ]
+    }
+  }]
+}
+```
+
+`flow: "oauth"` のポリシーだけでは MFA エンドポイントから `Authentication policy configuration not found` エラーが返る。
+
+**StandardAuthFlow一覧**:
+
+| flow | 用途 |
+|------|------|
+| `oauth` | 認可コードフロー |
+| `ciba` | CIBAフロー |
+| `fido2-registration` | FIDO2 MFA登録 |
+| `fido-uaf-registration` | FIDO-UAF MFA登録 |
+| `fido2-deregistration` | FIDO2 登録解除 |
+| `fido-uaf-deregistration` | FIDO-UAF 登録解除 |
+
 ### rp_id と allowed_origins の関係
 
 ```
