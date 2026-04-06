@@ -29,6 +29,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.mfa.DeviceLimitExceededResponse;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
@@ -204,18 +205,8 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
             authenticationDeviceCount,
             maxDevices);
 
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("error", "device_limit_exceeded");
-        errorResponse.put(
-            "error_description",
-            String.format(
-                "Maximum number of devices reached %d, user has already %d devices.",
-                maxDevices, authenticationDeviceCount));
-        errorResponse.put("max_devices", maxDevices);
-        errorResponse.put("current_devices", authenticationDeviceCount);
-
         return AuthenticationInteractionRequestResult.clientError(
-            errorResponse,
+            DeviceLimitExceededResponse.create(maxDevices, authenticationDeviceCount),
             type,
             operationType(),
             method(),
