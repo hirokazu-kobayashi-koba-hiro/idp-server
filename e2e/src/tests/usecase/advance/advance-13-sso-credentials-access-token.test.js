@@ -43,6 +43,14 @@ describe("Advance Use Case: SSO Credentials in Access Token (opaque AT + Introsp
   let ssoProvider;
   let orgAdminEmail;
   let orgAdminPassword;
+  // JWT consumer tenant
+  let jwtConsumerTenantId;
+  let jwtConsumerClientId;
+  let jwtConsumerClientSecret;
+  let jwtFederationConfigId;
+  let jwtSsoProvider;
+  let jwtProviderClientIdValue;
+  let jwtProviderClientSecret2;
 
   beforeAll(async () => {
     console.log("\n=== Setting up SSO Credentials Access Token Test ===\n");
@@ -346,10 +354,166 @@ describe("Advance Use Case: SSO Credentials in Access Token (opaque AT + Introsp
     }
     expect(authPolicyResponse.status).toBe(201);
 
-    console.log("\n=== Setup Complete ===\n");
-  }, 60000);
+    // === JWT Consumer Tenant (same org, reuses Provider Tenant) ===
+    console.log("Step 8: Creating JWT Consumer Tenant...");
+    jwtConsumerTenantId = uuidv4();
+    jwtConsumerClientId = uuidv4();
+    jwtConsumerClientSecret = `jwt-consumer-${crypto.randomBytes(16).toString("hex")}`;
+    jwtFederationConfigId = uuidv4();
+    jwtSsoProvider = `jwt-sso-provider-${timestamp}`;
 
-  it("should include sso_provider and sso_access_token in introspection response", async () => {
+    const jwtConsumerJwks = await generateECP256JWKS();
+
+    const jwtTenantResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants`,
+      body: {
+        tenant: {
+          id: jwtConsumerTenantId,
+          name: `JWT Consumer ${timestamp}`,
+          domain: backendUrl,
+          authorization_provider: "idp-server",
+          tenant_type: "BUSINESS",
+          identity_policy_config: {
+            identity_unique_key_type: "EMAIL_OR_EXTERNAL_USER_ID",
+          },
+          session_config: {
+            cookie_name: `JWT_C_${organizationId.substring(0, 8)}`,
+            use_secure_cookie: false,
+          },
+          cors_config: { allow_origins: [backendUrl] },
+        },
+        authorization_server: {
+          issuer: `${backendUrl}/${jwtConsumerTenantId}`,
+          authorization_endpoint: `${backendUrl}/${jwtConsumerTenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${jwtConsumerTenantId}/v1/tokens`,
+          token_endpoint_auth_methods_supported: ["client_secret_post"],
+          userinfo_endpoint: `${backendUrl}/${jwtConsumerTenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${jwtConsumerTenantId}/v1/jwks`,
+          jwks: jwtConsumerJwks,
+          grant_types_supported: ["authorization_code", "refresh_token", "password"],
+          token_signed_key_id: "signing_key_1",
+          id_token_signed_key_id: "signing_key_1",
+          scopes_supported: ["openid", "profile", "email", "management", "org-management"],
+          claims_supported: ["sub", "iss", "auth_time", "acr", "name", "email", "email_verified"],
+          response_types_supported: ["code"],
+          subject_types_supported: ["public"],
+          id_token_signing_alg_values_supported: ["ES256"],
+          response_modes_supported: ["query"],
+          extension: {
+            access_token_type: "JWT",
+            access_token_sso_credentials: true,
+          },
+        },
+      },
+      headers: { Authorization: `Bearer ${orgAccessToken}` },
+    });
+    expect(jwtTenantResponse.status).toBe(201);
+
+    // Client for JWT Consumer
+    const jwtClientResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${jwtConsumerTenantId}/clients`,
+      body: {
+        client_id: jwtConsumerClientId,
+        client_name: `JWT Consumer Client ${timestamp}`,
+        client_secret: jwtConsumerClientSecret,
+        redirect_uris: ["http://localhost:3000/callback"],
+        response_types: ["code"],
+        grant_types: ["authorization_code", "refresh_token", "password"],
+        scope: "openid profile email management org-management",
+        token_endpoint_auth_method: "client_secret_post",
+        application_type: "web",
+        extension: {
+          available_federations: [
+            { id: jwtFederationConfigId, type: "oidc", sso_provider: jwtSsoProvider, auto_selected: true },
+          ],
+        },
+      },
+      headers: { Authorization: `Bearer ${orgAccessToken}` },
+    });
+    expect(jwtClientResponse.status).toBe(201);
+
+    // Provider client redirect_uri for JWT consumer
+    const jwtProviderClientId2 = uuidv4();
+    jwtProviderClientSecret2 = `jwt-prov-${crypto.randomBytes(16).toString("hex")}`;
+    const jwtProviderClientResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${providerTenantId}/clients`,
+      body: {
+        client_id: jwtProviderClientId2,
+        client_name: `JWT Provider Client ${timestamp}`,
+        client_secret: jwtProviderClientSecret2,
+        redirect_uris: [`${backendUrl}/${jwtConsumerTenantId}/v1/authorizations/federations/oidc/callback`],
+        response_types: ["code"],
+        grant_types: ["authorization_code", "refresh_token"],
+        scope: "openid profile email",
+        token_endpoint_auth_method: "client_secret_post",
+        application_type: "web",
+      },
+      headers: { Authorization: `Bearer ${orgAccessToken}` },
+    });
+    expect(jwtProviderClientResponse.status).toBe(201);
+    jwtProviderClientIdValue = jwtProviderClientId2;
+
+    // Federation config for JWT consumer
+    const jwtFedConfigResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${jwtConsumerTenantId}/federation-configurations`,
+      body: {
+        id: jwtFederationConfigId,
+        type: "oidc",
+        sso_provider: jwtSsoProvider,
+        payload: {
+          type: "standard",
+          provider: "standard",
+          issuer: `${backendUrl}/${providerTenantId}`,
+          issuer_name: jwtSsoProvider,
+          authorization_endpoint: `${backendUrl}/${providerTenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${providerTenantId}/v1/tokens`,
+          userinfo_endpoint: `${backendUrl}/${providerTenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${providerTenantId}/v1/jwks`,
+          scopes_supported: ["openid", "profile", "email"],
+          client_id: jwtProviderClientId2,
+          client_secret: jwtProviderClientSecret2,
+          redirect_uri: `${backendUrl}/${jwtConsumerTenantId}/v1/authorizations/federations/oidc/callback`,
+          store_credentials: true,
+          userinfo_mapping_rules: [
+            { from: "$.http_request.response_body.sub", to: "external_user_id" },
+            { from: "$.http_request.response_body.email", to: "email" },
+            { from: "$.http_request.response_body.name", to: "name" },
+          ],
+        },
+        enabled: true,
+      },
+      headers: { Authorization: `Bearer ${orgAccessToken}` },
+    });
+    expect(jwtFedConfigResponse.status).toBe(201);
+
+    // Auth policy for JWT consumer
+    const jwtAuthPolicyResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${jwtConsumerTenantId}/authentication-policies`,
+      body: {
+        id: uuidv4(),
+        flow: "oauth",
+        policies: [{
+          description: "Federation policy for JWT SSO test",
+          priority: 1,
+          conditions: { scopes: ["openid"] },
+          available_methods: ["password", `oidc-${jwtSsoProvider}`],
+          success_conditions: {
+            any_of: [
+              [{ path: "$.password-authentication.success_count", type: "integer", operation: "gte", value: 1 }],
+              [{ path: `$.oidc-${jwtSsoProvider}.success_count`, type: "integer", operation: "gte", value: 1 }],
+            ],
+          },
+        }],
+        enabled: true,
+      },
+      headers: { Authorization: `Bearer ${orgAccessToken}` },
+    });
+    expect(jwtAuthPolicyResponse.status).toBe(201);
+
+    console.log("\n=== Setup Complete ===\n");
+  }, 120000);
+
+  it("should include sso_provider and sso_access_token in introspection response (opaque AT)", async () => {
     console.log("\n=== Test: SSO Credentials in Token Introspection ===\n");
 
     // Perform federation login
@@ -446,5 +610,97 @@ describe("Advance Use Case: SSO Credentials in Access Token (opaque AT + Introsp
 
     console.log(`SSO Provider: ${introspectionResponse.data.sso_provider}`);
     console.log(`SSO Access Token present: ${introspectionResponse.data.sso_access_token.length > 0}`);
+  }, 60000);
+
+  it("should NOT include sso credentials in introspection response when access_token_type is JWT", async () => {
+    console.log("\n=== Test: JWT AT should NOT contain SSO Credentials ===\n");
+
+    const providerInteraction = async (authId) => {
+      const challengeResponse = await postAuthentication({
+        endpoint: `${backendUrl}/${providerTenantId}/v1/authorizations/{id}/password-authentication`,
+        id: authId,
+        body: {
+          username: providerUserEmail,
+          password: providerUserPassword,
+        },
+      });
+      console.log(`Provider password auth: ${challengeResponse.status}`);
+      expect(challengeResponse.status).toBe(200);
+    };
+
+    const { authorizationResponse } = await requestAuthorizations({
+      endpoint: `${backendUrl}/${jwtConsumerTenantId}/v1/authorizations`,
+      authorizeEndpoint: `${backendUrl}/${jwtConsumerTenantId}/v1/authorizations/{id}/authorize`,
+      clientId: jwtConsumerClientId,
+      responseType: "code",
+      state: `state-${Date.now()}`,
+      scope: "openid profile email",
+      redirectUri: "http://localhost:3000/callback",
+      interaction: async (authId) => {
+        const viewResponse = await get({
+          url: `${backendUrl}/${jwtConsumerTenantId}/v1/authorizations/${authId}/view-data`,
+        });
+        expect(viewResponse.status).toBe(200);
+
+        const federationSetting = viewResponse.data.available_federations?.find(
+          f => f.sso_provider === jwtSsoProvider
+        );
+        expect(federationSetting).toBeDefined();
+
+        const { params } = await requestFederation({
+          url: backendUrl,
+          authSessionId: authId,
+          authSessionTenantId: jwtConsumerTenantId,
+          type: federationSetting.type,
+          providerName: federationSetting.sso_provider,
+          federationTenantId: providerTenantId,
+          user: { email: providerUserEmail },
+          interaction: providerInteraction,
+        });
+
+        const federationCallbackResponse = await post({
+          url: `${backendUrl}/${jwtConsumerTenantId}/v1/authorizations/federations/oidc/callback`,
+          body: params.toString(),
+        });
+        console.log(`Federation callback: ${federationCallbackResponse.status}`);
+        expect(federationCallbackResponse.status).toBe(200);
+      },
+    });
+
+    expect(authorizationResponse.code).toBeDefined();
+
+    const tokenResponse = await requestToken({
+      endpoint: `${backendUrl}/${jwtConsumerTenantId}/v1/tokens`,
+      code: authorizationResponse.code,
+      grantType: "authorization_code",
+      redirectUri: "http://localhost:3000/callback",
+      clientId: jwtConsumerClientId,
+      clientSecret: jwtConsumerClientSecret,
+    });
+
+    console.log("Token response:", JSON.stringify(tokenResponse.data, null, 2));
+    expect(tokenResponse.status).toBe(200);
+
+    const accessToken = tokenResponse.data.access_token;
+    // JWT token should have 3 parts separated by dots
+    expect(accessToken.split(".").length).toBe(3);
+
+    // Token Introspection
+    const introspectionResponse = await inspectToken({
+      endpoint: `${backendUrl}/${jwtConsumerTenantId}/v1/tokens/introspection`,
+      token: accessToken,
+      clientId: jwtConsumerClientId,
+      clientSecret: jwtConsumerClientSecret,
+    });
+
+    console.log("Introspection response:", JSON.stringify(introspectionResponse.data, null, 2));
+    expect(introspectionResponse.status).toBe(200);
+    expect(introspectionResponse.data.active).toBe(true);
+
+    // SSO credentials should NOT be included for JWT access tokens
+    expect(introspectionResponse.data).not.toHaveProperty("sso_provider");
+    expect(introspectionResponse.data).not.toHaveProperty("sso_access_token");
+
+    console.log("Confirmed: JWT AT does not contain SSO credentials");
   }, 60000);
 });
