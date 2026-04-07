@@ -76,6 +76,7 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
 
     AccessToken accessToken =
         accessTokenCreator.refresh(
+            tenant,
             oAuthToken.accessToken(),
             authorizationGrant,
             authorizationServerConfiguration,
