@@ -10,6 +10,11 @@
     "type": "ORGANIZER",
     "domain": "${BASE_URL}",
     "authorization_provider": "idp-server",
+    "ui_config": {
+      "base_url": "${UI_BASE_URL}",
+      "signin_page": "/signin/fido2/",
+      "signup_page": "/signup/"
+    },
     "session_config": {
       "cookie_name": "${COOKIE_NAME}_ADMIN",
       "cookie_same_site": "Lax",
@@ -21,7 +26,8 @@
     "cors_config": {
       "allow_origins": [
         "${BASE_URL}",
-        "${MTLS_BASE_URL}"
+        "${MTLS_BASE_URL}",
+        "${UI_BASE_URL}"
       ],
       "allow_headers": "Authorization, Content-Type, Accept, x-device-id, X-SSL-Client-Cert",
       "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
@@ -35,6 +41,7 @@
       "include_client_id": true,
       "include_ip_address": true,
       "persistence_enabled": true,
+      "statistics_enabled": true,
       "include_event_detail": true
     },
     "identity_policy_config": {
@@ -71,7 +78,10 @@
       "openid",
       "profile",
       "email",
-      "management"
+      "management",
+      "claims:roles",
+      "claims:permissions",
+      "claims:assigned_tenants"
     ],
     "response_types_supported": [
       "code"
@@ -102,15 +112,16 @@
       "address",
       "birthdate"
     ],
-    "token_introspection_endpoint": "${BASE_URL}/${ORGANIZER_TENANT_ID}/v1/tokens/introspection",
-    "token_revocation_endpoint": "${BASE_URL}/${ORGANIZER_TENANT_ID}/v1/tokens/revocation",
+    "introspection_endpoint": "${BASE_URL}/${ORGANIZER_TENANT_ID}/v1/tokens/introspection",
+    "revocation_endpoint": "${BASE_URL}/${ORGANIZER_TENANT_ID}/v1/tokens/revocation",
     "extension": {
       "access_token_type": "JWT",
       "token_signed_key_id": "${TOKEN_SIGNING_KEY_ID}",
       "id_token_signed_key_id": "${ID_TOKEN_SIGNING_KEY_ID}",
       "access_token_duration": 3600,
       "id_token_duration": 3600,
-      "refresh_token_duration": 86400
+      "refresh_token_duration": 86400,
+      "custom_claims_scope_mapping": true
     }
   },
   "user": {
@@ -136,7 +147,7 @@
       "refresh_token",
       "password"
     ],
-    "scope": "openid profile email management",
+    "scope": "openid profile email management claims:roles claims:permissions claims:assigned_tenants",
     "client_name": "${ORGANIZATION_NAME} Admin Client",
     "token_endpoint_auth_method": "client_secret_post",
     "application_type": "web"
