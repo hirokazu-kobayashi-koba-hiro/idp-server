@@ -185,7 +185,8 @@ ONBOARDING_JSON=$(substitute_template "${SCRIPT_DIR}/onboarding-template.json" \
   "ADMIN_EMAIL" "${NEW_ADMIN_EMAIL}" \
   "ADMIN_PASSWORD" "${NEW_ADMIN_PASSWORD}" \
   "ADMIN_CLIENT_ID" "${NEW_ADMIN_CLIENT_ID}" \
-  "ADMIN_CLIENT_SECRET" "${NEW_ADMIN_CLIENT_SECRET}")
+  "ADMIN_CLIENT_SECRET" "${NEW_ADMIN_CLIENT_SECRET}" \
+  "UI_BASE_URL" "${UI_BASE_URL}")
 
 echo "${ONBOARDING_JSON}" | jq '.' > "${OUTPUT_DIR}/onboarding.json"
 echo "  Saved: ${OUTPUT_DIR}/onboarding.json"
@@ -236,6 +237,144 @@ echo ""
 
 # From here, use organization-level APIs with ORG_ACCESS_TOKEN
 ORG_BASE_URL="${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/tenants"
+
+# --- Step 3a: Create authentication configuration (email) for Organizer ---
+echo "Step 3a: Creating authentication configuration (email) for Organizer..."
+
+ORG_AUTH_CONFIG_EMAIL_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+ORG_AUTH_CONFIG_EMAIL_JSON=$(jq --arg id "${ORG_AUTH_CONFIG_EMAIL_ID}" '. + {id: $id}' \
+  "${SCRIPT_DIR}/authentication-config-email.json")
+
+ORG_AUTH_CONFIG_EMAIL_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${ORGANIZER_TENANT_ID}/authentication-configurations" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d "${ORG_AUTH_CONFIG_EMAIL_JSON}")
+
+HTTP_CODE=$(echo "${ORG_AUTH_CONFIG_EMAIL_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${ORG_AUTH_CONFIG_EMAIL_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Organizer email auth config created: ${ORG_AUTH_CONFIG_EMAIL_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 3b: Create authentication configuration (FIDO2) for Organizer ---
+echo "Step 3b: Creating authentication configuration (FIDO2) for Organizer..."
+
+ORG_AUTH_CONFIG_FIDO2_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+ORG_AUTH_CONFIG_FIDO2_JSON=$(substitute_template "${SCRIPT_DIR}/authentication-config-fido2.json" \
+  "FIDO2_RP_ID" "${FIDO2_RP_ID}" \
+  "UI_BASE_URL" "${UI_BASE_URL}" \
+  "ORGANIZATION_NAME" "${ORGANIZATION_NAME}")
+
+ORG_AUTH_CONFIG_FIDO2_JSON=$(echo "${ORG_AUTH_CONFIG_FIDO2_JSON}" | jq --arg id "${ORG_AUTH_CONFIG_FIDO2_ID}" '. + {id: $id}')
+
+ORG_AUTH_CONFIG_FIDO2_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${ORGANIZER_TENANT_ID}/authentication-configurations" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d "${ORG_AUTH_CONFIG_FIDO2_JSON}")
+
+HTTP_CODE=$(echo "${ORG_AUTH_CONFIG_FIDO2_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${ORG_AUTH_CONFIG_FIDO2_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Organizer FIDO2 auth config created: ${ORG_AUTH_CONFIG_FIDO2_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
+# --- Step 3c: Create authentication policy for Organizer ---
+echo "Step 3c: Creating authentication policy for Organizer..."
+
+ORG_AUTH_POLICY_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+ORG_AUTH_POLICY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${ORGANIZER_TENANT_ID}/authentication-policies" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d "$(cat <<POLICY_EOF
+{
+  "id": "${ORG_AUTH_POLICY_ID}",
+  "flow": "oauth",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "organizer_admin_policy",
+      "priority": 1,
+      "conditions": {
+        "scopes": ["openid"]
+      },
+      "available_methods": ["password", "fido2", "email"],
+      "step_definitions": [
+        {
+          "method": "email",
+          "order": 1,
+          "requires_user": false,
+          "allow_registration": false,
+          "user_identity_source": "email"
+        },
+        {
+          "method": "fido2",
+          "order": 2,
+          "requires_user": true,
+          "allow_registration": true,
+          "user_identity_source": "sub"
+        }
+      ],
+      "device_registration_conditions": {
+        "any_of": [
+          [{"path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}]
+        ]
+      },
+      "success_conditions": {
+        "any_of": [
+          [{"path": "$.fido2-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}],
+          [{"path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}],
+          [{"path": "$.email-authentication.success_count", "type": "integer", "operation": "gte", "value": 1}]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [{"path": "$.fido2-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5}],
+          [{"path": "$.password-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5}],
+          [{"path": "$.email-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5}]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [{"path": "$.fido2-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5}],
+          [{"path": "$.password-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5}],
+          [{"path": "$.email-authentication.failure_count", "type": "integer", "operation": "gte", "value": 5}]
+        ]
+      }
+    }
+  ]
+}
+POLICY_EOF
+)")
+
+HTTP_CODE=$(echo "${ORG_AUTH_POLICY_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${ORG_AUTH_POLICY_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Organizer auth policy created: ${ORG_AUTH_POLICY_ID}"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
 
 # --- Step 4: Create financial tenant ---
 echo "Step 4: Creating financial tenant (FAPI Advanced + CIBA)..."

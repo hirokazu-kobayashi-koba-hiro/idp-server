@@ -41,7 +41,8 @@
       "include_user_pii": false,
       "include_trace_context": true,
       "tracing_enabled": true,
-      "persistence_enabled": true
+      "persistence_enabled": true,
+      "statistics_enabled": true
     },
     "identity_policy_config": {
       "identity_unique_key_type": "EMAIL",
