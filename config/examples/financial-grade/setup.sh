@@ -368,10 +368,6 @@ if [ "${HTTP_CODE}" = "201" ]; then
   echo "   2. Check FAPI scopes:"
   echo "      curl ${AUTHORIZATION_SERVER_URL}/${FINANCIAL_TENANT_ID}/.well-known/openid-configuration | jq '.extension.fapi_advance_scopes'"
   echo ""
-  echo "   3. Test authentication policy:"
-  echo "      curl ${AUTHORIZATION_SERVER_URL}/${FINANCIAL_TENANT_ID}/.well-known/openid-configuration | jq '.extension.authentication_policies'"
-  echo ""
-
 else
   echo "❌ Onboarding failed (HTTP ${HTTP_CODE})"
   echo "Response: ${RESPONSE_BODY}" | jq '.' || echo "${RESPONSE_BODY}"
