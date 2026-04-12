@@ -193,18 +193,6 @@ curl "${BASE_URL}/${TENANT_ID}/.well-known/openid-configuration" \
 # 期待値: ["write", "transfers", "payment_initiation"]
 ```
 
-#### 4.3 認証ポリシー確認
-
-```bash
-# 認証ポリシーの確認
-curl "${BASE_URL}/${TENANT_ID}/.well-known/openid-configuration" \
-  | jq '.extension.authentication_policies'
-```
-
-**期待される認証ポリシー**:
-1. `financial_high_security_policy`: 送金・決済操作（WebAuthn必須）
-2. `financial_standard_policy`: 参照操作（WebAuthn/FIDO-UAF/SMS）
-
 ### 5. テストユーザー作成
 
 #### 5.1 ユーザー登録

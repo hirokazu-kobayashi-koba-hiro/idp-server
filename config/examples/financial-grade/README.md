@@ -422,17 +422,6 @@ curl https://localhost:8443/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/ope
 }
 ```
 
-### 3. 認証ポリシー確認
-
-```bash
-curl https://localhost:8443/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/openid-configuration | jq '.extension.authentication_policies[] | {
-  description: .description,
-  priority: .priority,
-  scopes: .conditions.scopes,
-  methods: .available_methods
-}'
-```
-
 ## MTLS認証の使用方法
 
 ### クライアント証明書での認証
