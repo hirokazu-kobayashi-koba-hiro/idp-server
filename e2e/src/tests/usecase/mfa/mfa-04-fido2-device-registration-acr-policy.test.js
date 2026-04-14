@@ -76,7 +76,6 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
         name: `FIDO2 ACR Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
         security_event_log_config: {
           format: "structured_json",
           stage: "processed",
@@ -639,7 +638,6 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
         name: `FIDO2 MFA Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
         security_event_log_config: {
           format: "structured_json",
           stage: "processed",
@@ -1127,7 +1125,6 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
         name: `FIDO2 Unauth Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
         security_event_log_config: {
           format: "structured_json",
           stage: "processed",
@@ -1437,7 +1434,6 @@ describe("Use Case: FIDO2 Device Registration with ACR Policy", () => {
         name: `FIDO2 Full Flow Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
         security_event_log_config: {
           format: "structured_json",
           stage: "processed",

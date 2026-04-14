@@ -72,7 +72,6 @@ describe("Use Case: FIDO-UAF Device Registration with ACR Policy", () => {
         name: `FIDO-UAF ACR Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
         security_event_log_config: {
           format: "structured_json",
           stage: "processed",
@@ -622,7 +621,6 @@ describe("Use Case: FIDO-UAF Device Registration with ACR Policy", () => {
         name: `FIDO-UAF MFA Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
         security_event_log_config: {
           format: "structured_json",
           stage: "processed",
@@ -1091,7 +1089,6 @@ describe("Use Case: FIDO-UAF Device Registration with ACR Policy", () => {
         name: `FIDO-UAF No ACR Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
         security_event_log_config: {
           format: "structured_json",
           stage: "processed",

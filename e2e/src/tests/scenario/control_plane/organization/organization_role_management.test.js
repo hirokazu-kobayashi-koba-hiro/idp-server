@@ -38,8 +38,7 @@ describe("organization role management api", () => {
             "name": `Role Test Tenant ${timestamp}`,
             "domain": "http://localhost:8080",
             "description": "Test tenant for role management",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": `http://localhost:8080/${newTenantId}`,
@@ -374,8 +373,7 @@ describe("organization role management api", () => {
             "name": `Role Roundtrip Test Tenant ${Date.now()}`,
             "domain": "http://localhost:8080",
             "description": "Test tenant for role roundtrip test",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": `http://localhost:8080/${newTenantId}`,

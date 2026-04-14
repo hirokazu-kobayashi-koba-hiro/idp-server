@@ -72,7 +72,6 @@ describe("FIDO2 Authentication and Security Tests", () => {
         name: `FIDO2 Error Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
       },
       authorization_server: {
         issuer: `${backendUrl}/${tenantId}`,
@@ -433,7 +432,6 @@ describe("FIDO2 Authentication and Security Tests", () => {
         name: `CVE Test Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
       },
       authorization_server: {
         issuer: `${backendUrl}/${tenantId}`,

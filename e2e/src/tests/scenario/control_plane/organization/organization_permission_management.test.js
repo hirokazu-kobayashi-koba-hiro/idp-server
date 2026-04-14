@@ -38,8 +38,7 @@ describe("organization permission management api", () => {
             "name": `Permission Test Tenant ${timestamp}`,
             "domain": "http://localhost:8080",
             "description": "Test tenant for permission management",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": `http://localhost:8080/${newTenantId}`,
@@ -249,8 +248,7 @@ describe("organization permission management api", () => {
             "name": `Permission Roundtrip Test Tenant ${Date.now()}`,
             "domain": "http://localhost:8080",
             "description": "Test tenant for permission roundtrip test",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": `http://localhost:8080/${newTenantId}`,

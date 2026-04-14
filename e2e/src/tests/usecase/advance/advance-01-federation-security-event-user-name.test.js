@@ -213,7 +213,6 @@ describe("Advance Use Case: Federation Security Event User Name (Issue #1131)", 
         name: `Provider Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "BUSINESS",
         session_config: {
           cookie_name: `FED_PROVIDER_${organizationId.substring(0, 8)}`,
           use_secure_cookie: false,

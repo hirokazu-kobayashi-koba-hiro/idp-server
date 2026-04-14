@@ -80,7 +80,6 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
         name: `Device Secret FIDO-UAF Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
         security_event_log_config: {
           format: "structured_json",
           stage: "processed",
@@ -918,7 +917,6 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
         name: `Device Secret ${algorithm} Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
         security_event_log_config: {
           format: "structured_json",
           stage: "processed",
@@ -1266,7 +1264,6 @@ describe("Device Credential Use Case: Device Secret Issuance via FIDO-UAF Regist
         name: `No Device Secret Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
         security_event_log_config: {
           format: "structured_json",
           stage: "processed",
