@@ -19,6 +19,8 @@ package org.idp.server.core.openid.plugin.token;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.core.openid.token.plugin.AccessTokenCustomClaimsCreator;
+import org.idp.server.core.openid.token.plugin.AccessTokenCustomClaimsCreatorFactory;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
 
@@ -27,6 +29,7 @@ public class AccessTokenCustomClaimsCreationPluginLoader extends PluginLoader {
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(AccessTokenCustomClaimsCreationPluginLoader.class);
 
+  /** Legacy: load creators without DI (for backward compatibility) */
   public static List<AccessTokenCustomClaimsCreator> load() {
     List<AccessTokenCustomClaimsCreator> customClaimsCreators = new ArrayList<>();
 
@@ -49,5 +52,33 @@ public class AccessTokenCustomClaimsCreationPluginLoader extends PluginLoader {
     }
 
     return customClaimsCreators;
+  }
+
+  /** Factory pattern: load creators with DI support */
+  public static List<AccessTokenCustomClaimsCreator> loadWithFactory(
+      ApplicationComponentDependencyContainer container) {
+    List<AccessTokenCustomClaimsCreator> creators = new ArrayList<>();
+
+    List<AccessTokenCustomClaimsCreatorFactory> internalFactories =
+        loadFromInternalModule(AccessTokenCustomClaimsCreatorFactory.class);
+    for (AccessTokenCustomClaimsCreatorFactory factory : internalFactories) {
+      AccessTokenCustomClaimsCreator creator = factory.create(container);
+      creators.add(creator);
+      log.info(
+          "Loaded AccessTokenCustomClaimsCreator via Factory (internal): {}",
+          creator.getClass().getSimpleName());
+    }
+
+    List<AccessTokenCustomClaimsCreatorFactory> externalFactories =
+        loadFromExternalModule(AccessTokenCustomClaimsCreatorFactory.class);
+    for (AccessTokenCustomClaimsCreatorFactory factory : externalFactories) {
+      AccessTokenCustomClaimsCreator creator = factory.create(container);
+      creators.add(creator);
+      log.info(
+          "Loaded AccessTokenCustomClaimsCreator via Factory (external): {}",
+          creator.getClass().getSimpleName());
+    }
+
+    return creators;
   }
 }

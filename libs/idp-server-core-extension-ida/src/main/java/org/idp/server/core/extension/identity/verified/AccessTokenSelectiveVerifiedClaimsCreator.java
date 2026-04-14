@@ -26,6 +26,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.token.plugin.AccessTokenCustomClaimsCreator;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AccessTokenSelectiveVerifiedClaimsCreator implements AccessTokenCustomClaimsCreator {
 
@@ -33,6 +34,7 @@ public class AccessTokenSelectiveVerifiedClaimsCreator implements AccessTokenCus
 
   @Override
   public boolean shouldCreate(
+      Tenant tenant,
       AuthorizationGrant authorizationGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
@@ -54,6 +56,7 @@ public class AccessTokenSelectiveVerifiedClaimsCreator implements AccessTokenCus
 
   @Override
   public Map<String, Object> create(
+      Tenant tenant,
       AuthorizationGrant authorizationGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
