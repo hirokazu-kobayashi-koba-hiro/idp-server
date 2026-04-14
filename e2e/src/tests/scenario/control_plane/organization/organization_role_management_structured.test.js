@@ -67,8 +67,7 @@ describe("Organization Role Management API - Structured Tests", () => {
           "name": `E2E Test Tenant ${Date.now()}`,
           "domain": "http://localhost:8080",
           "description": "Test tenant for E2E testing",
-          "authorization_provider": "idp-server",
-          "tenant_type": "BUSINESS"
+          "authorization_provider": "idp-server"
         },
         authorization_server: {
           "issuer": `http://localhost:8080/${testTenantId}`,

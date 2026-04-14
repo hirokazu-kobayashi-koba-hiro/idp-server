@@ -67,8 +67,7 @@ describe("User Status verification. Can not authorize when user status is not ac
           name: "Password Policy Test Tenant",
           domain: "http://localhost:8080",
           description: "Test tenant for password policy validation",
-          authorization_provider: "idp-server",
-          tenant_type: "BUSINESS"
+          authorization_provider: "idp-server"
         },
         authorization_server: {
           issuer: `${backendUrl}/${tenantId}`,
@@ -299,8 +298,7 @@ describe("User Status verification. Can not authorize when user status is not ac
           name: "Userinfo Status Test Tenant",
           domain: "http://localhost:8080",
           description: "Test tenant for userinfo status validation",
-          authorization_provider: "idp-server",
-          tenant_type: "BUSINESS"
+          authorization_provider: "idp-server"
         },
         authorization_server: {
           issuer: `${backendUrl}/${tenantId}`,
@@ -498,8 +496,7 @@ describe("User Status verification. Can not authorize when user status is not ac
           name: "Refresh Token Status Test Tenant",
           domain: "http://localhost:8080",
           description: "Test tenant for refresh token status validation",
-          authorization_provider: "idp-server",
-          tenant_type: "BUSINESS"
+          authorization_provider: "idp-server"
         },
         authorization_server: {
           issuer: `${backendUrl}/${tenantId}`,
@@ -729,8 +726,7 @@ describe("User Status verification. Can not authorize when user status is not ac
           name: "Password Grant Status Test Tenant",
           domain: "http://localhost:8080",
           description: "Test tenant for password grant status validation",
-          authorization_provider: "idp-server",
-          tenant_type: "BUSINESS"
+          authorization_provider: "idp-server"
         },
         authorization_server: {
           issuer: `${backendUrl}/${tenantId}`,
@@ -947,8 +943,7 @@ describe("User Status verification. Can not authorize when user status is not ac
           name: "Token Introspection Status Test Tenant",
           domain: "http://localhost:8080",
           description: "Test tenant for token introspection status validation",
-          authorization_provider: "idp-server",
-          tenant_type: "BUSINESS"
+          authorization_provider: "idp-server"
         },
         authorization_server: {
           issuer: `${backendUrl}/${tenantId}`,
@@ -1172,8 +1167,7 @@ describe("User Status verification. Can not authorize when user status is not ac
           name: "Token Introspection Extension Status Test Tenant",
           domain: "http://localhost:8080",
           description: "Test tenant for token introspection extension status validation",
-          authorization_provider: "idp-server",
-          tenant_type: "BUSINESS"
+          authorization_provider: "idp-server"
         },
         authorization_server: {
           issuer: `${backendUrl}/${tenantId}`,
@@ -1400,8 +1394,7 @@ describe("User Status verification. Can not authorize when user status is not ac
           name: "User Deletion Test Tenant (Refresh Token)",
           domain: "http://localhost:8080",
           description: "Test tenant for user deletion after token issuance",
-          authorization_provider: "idp-server",
-          tenant_type: "BUSINESS"
+          authorization_provider: "idp-server"
         },
         authorization_server: {
           issuer: `${backendUrl}/${tenantId}`,
@@ -1606,8 +1599,7 @@ describe("User Status verification. Can not authorize when user status is not ac
           name: "User Deletion Test Tenant (Introspection)",
           domain: "http://localhost:8080",
           description: "Test tenant for user deletion after token issuance (introspection)",
-          authorization_provider: "idp-server",
-          tenant_type: "BUSINESS"
+          authorization_provider: "idp-server"
         },
         authorization_server: {
           issuer: `${backendUrl}/${tenantId}`,
@@ -1807,8 +1799,7 @@ describe("User Status verification. Can not authorize when user status is not ac
           name: "CIBA User Status Test Tenant",
           domain: "http://localhost:8080",
           description: "Test tenant for CIBA user status validation",
-          authorization_provider: "idp-server",
-          tenant_type: "BUSINESS"
+          authorization_provider: "idp-server"
         },
         authorization_server: {
           issuer: `${backendUrl}/${tenantId}`,

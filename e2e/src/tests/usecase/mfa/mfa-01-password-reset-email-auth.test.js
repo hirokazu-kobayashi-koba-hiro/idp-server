@@ -71,7 +71,6 @@ describe("Use Case: Password Reset with Email Authentication", () => {
         name: `Password Reset Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
       },
       authorization_server: {
         issuer: `${backendUrl}/${tenantId}`,
@@ -605,7 +604,6 @@ describe("Use Case: Password Reset with Email Authentication", () => {
         name: `Scope Test Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "BUSINESS",
       },
       authorization_server: {
         issuer: `${backendUrl}/${testTenantId}`,
@@ -749,7 +747,6 @@ describe("Use Case: Password Reset with Email Authentication", () => {
         name: `Policy Test Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "BUSINESS",
         identity_policy_config: {
           identity_unique_key_type: "EMAIL_OR_EXTERNAL_USER_ID",
           password_policy: {
@@ -1134,7 +1131,6 @@ describe("Use Case: Password Reset with Email Authentication", () => {
         name: `Auth Policy Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
       },
       authorization_server: {
         issuer: `${backendUrl}/${testTenantId}`,
@@ -1377,7 +1373,6 @@ describe("Use Case: Password Reset with Email Authentication", () => {
         name: `Multi-Policy Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
       },
       authorization_server: {
         issuer: `${backendUrl}/${testTenantId}`,
@@ -1675,7 +1670,6 @@ describe("Use Case: Password Reset with Email Authentication", () => {
         name: `Client Policy Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
       },
       authorization_server: {
         issuer: `${backendUrl}/${testTenantId}`,
@@ -2058,7 +2052,6 @@ describe("Use Case: Password Reset with Email Authentication", () => {
         name: `OTP Replay Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
       },
       authorization_server: {
         issuer: `${backendUrl}/${testTenantId}`,
@@ -2391,7 +2384,6 @@ describe("Use Case: Password Reset with Email Authentication", () => {
         name: `ACR Policy Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
       },
       authorization_server: {
         issuer: `${backendUrl}/${testTenantId}`,
@@ -2749,7 +2741,6 @@ describe("Use Case: Password Reset with Email Authentication", () => {
           name: `Executor Test Tenant ${timestamp}`,
           domain: backendUrl,
           authorization_provider: "idp-server",
-          tenant_type: "ORGANIZER",
         },
         authorization_server: {
           issuer: `${backendUrl}/${testTenantId}`,

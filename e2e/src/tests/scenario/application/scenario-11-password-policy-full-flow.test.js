@@ -84,8 +84,7 @@ describe("Issue #741: Password Policy Full Flow", () => {
           name: "Password Policy Test Tenant",
           domain: "http://localhost:8080",
           description: "Test tenant for password policy validation",
-          authorization_provider: "idp-server",
-          tenant_type: "BUSINESS"
+          authorization_provider: "idp-server"
         },
         authorization_server: {
           issuer: `${backendUrl}/${tenantId}`,
@@ -312,8 +311,7 @@ describe("Issue #741: Password Policy Full Flow", () => {
           name: "External Auth Test Tenant",
           domain: "http://localhost:8080",
           description: "Test tenant for external password authentication",
-          authorization_provider: "idp-server",
-          tenant_type: "BUSINESS"
+          authorization_provider: "idp-server"
         },
         authorization_server: {
           issuer: `${backendUrl}/${tenantId}`,

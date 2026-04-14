@@ -48,8 +48,7 @@ describe("System-Level Tenant Management API", () => {
             "name": `System Tenant ${timestamp}`,
             "domain": "http://localhost:8080",
             "description": "Test tenant for system management",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": `http://localhost:8080/${adminServerConfig.tenantId}`,

@@ -77,7 +77,6 @@ describe("Integration: OAuth Token Retry on 401/403", () => {
         name: `OAuth Retry Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
       },
       authorization_server: {
         issuer: `${backendUrl}/${tenantId}`,

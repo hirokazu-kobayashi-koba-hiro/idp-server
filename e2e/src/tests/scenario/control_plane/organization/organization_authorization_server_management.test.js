@@ -37,8 +37,7 @@ describe("organization authorization server management api", () => {
             "name": `Test Tenant ${timestamp}`,
             "domain": "http://localhost:8080",
             "description": "Test tenant for authorization server management",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": `http://localhost:8080/${newTenantId}`,
@@ -266,8 +265,7 @@ describe("organization authorization server management api", () => {
             "name": `OpenAPI Test Tenant ${timestamp}`,
             "domain": "http://localhost:8080",
             "description": "Test tenant for OpenAPI specification verification",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": `http://localhost:8080/${newTenantId}`,
@@ -541,8 +539,7 @@ describe("organization authorization server management api", () => {
             "name": `Roundtrip Test Tenant ${Date.now()}`,
             "domain": "http://localhost:8080",
             "description": "Test tenant for GET-UPDATE roundtrip verification",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": `http://localhost:8080/${newTenantId}`,

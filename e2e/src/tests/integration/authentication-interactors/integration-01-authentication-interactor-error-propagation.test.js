@@ -72,7 +72,6 @@ describe("Authentication Interactor: External Service Error Code Propagation", (
           name: `Error Propagation Tenant ${timestamp}`,
           domain: backendUrl,
           authorization_provider: "idp-server",
-          tenant_type: "ORGANIZER",
           identity_policy_config: {
             identity_unique_key_type: "EMAIL",
           },

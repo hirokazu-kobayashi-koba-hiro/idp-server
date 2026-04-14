@@ -19,7 +19,7 @@ describe("Organization Tenant Management API - Structured Tests", () => {
   let accessToken;
 
   // Helper function to create a test tenant
-  const createTestTenant = async (tenantName, tenantType = "BUSINESS", description = "Test tenant") => {
+  const createTestTenant = async (tenantName, description = "Test tenant") => {
     const response = await postWithJson({
       url: `${backendUrl}/v1/management/organizations/${orgId}/tenants`,
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -29,8 +29,7 @@ describe("Organization Tenant Management API - Structured Tests", () => {
           "name": tenantName,
           "domain": "http://localhost:8080",
           "description": description,
-          "authorization_provider": "idp-server",
-          "tenant_type": tenantType
+          "authorization_provider": "idp-server"
         },
         authorization_server: {
           "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9",
@@ -91,7 +90,6 @@ describe("Organization Tenant Management API - Structured Tests", () => {
           body: {
             tenant: {
               "id": uuidv4(),
-              "tenant_type": "BUSINESS",
               "domain": "http://localhost:8080",
               "authorization_provider": "idp-server"
             },
@@ -115,8 +113,7 @@ describe("Organization Tenant Management API - Structured Tests", () => {
               "id": uuidv4(),
               "name": tenantName,
               "domain": "http://localhost:8080",
-              "authorization_provider": "idp-server",
-              "tenant_type": "BUSINESS"
+              "authorization_provider": "idp-server"
             },
             authorization_server: {
               "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9",
@@ -171,7 +168,6 @@ describe("Organization Tenant Management API - Structured Tests", () => {
             tenant: {
               "id": "",
               "name": "Test Tenant",
-              "tenant_type": "BUSINESS",
               "domain": "http://localhost:8080",
               "authorization_provider": "idp-server"
             },
@@ -193,7 +189,6 @@ describe("Organization Tenant Management API - Structured Tests", () => {
             tenant: {
               "id": uuidv4(),
               "name": "Test Tenant",
-              "tenant_type": "BUSINESS",
               "domain": "http://localhost:8080",
               "authorization_provider": "idp-server"
             }
@@ -271,8 +266,7 @@ describe("Organization Tenant Management API - Structured Tests", () => {
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${nonExistentId}`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
-            "name": "Updated Name",
-            "tenant_type": "BUSINESS"
+            "name": "Updated Name"
           }
         });
 
@@ -307,8 +301,7 @@ describe("Organization Tenant Management API - Structured Tests", () => {
               "name": tenantName,
               "domain": "http://localhost:8080",
               "description": "Another test tenant",
-              "authorization_provider": "idp-server",
-              "tenant_type": "BUSINESS"
+              "authorization_provider": "idp-server"
             },
             authorization_server: {
               "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9",
@@ -371,7 +364,7 @@ describe("Organization Tenant Management API - Structured Tests", () => {
     describe("Complete CRUD Workflow", () => {
       it("should successfully create a tenant with all fields", async () => {
         const tenantName = `Integration Test Tenant ${generateRandomString(8)}`;
-        const tenant = await createTestTenant(tenantName, "BUSINESS", "Integration test tenant");
+        const tenant = await createTestTenant(tenantName, "Integration test tenant");
 
         expect(tenant).toHaveProperty("id");
         expect(tenant).toHaveProperty("name", tenantName);
@@ -471,8 +464,7 @@ describe("Organization Tenant Management API - Structured Tests", () => {
               "name": tenantName,
               "domain": "http://localhost:8080",
               "description": "Dry run test tenant",
-              "authorization_provider": "idp-server",
-              "tenant_type": "BUSINESS"
+              "authorization_provider": "idp-server"
             },
             authorization_server: {
               "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9",
@@ -670,7 +662,6 @@ describe("Organization Tenant Management API - Structured Tests", () => {
             tenant: {
               "id": uuidv4(),
               "name": "Test Tenant",
-              "tenant_type": "BUSINESS",
               "domain": "http://localhost:8080",
               "authorization_provider": "idp-server"
             }

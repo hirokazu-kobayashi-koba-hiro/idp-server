@@ -42,8 +42,7 @@ describe("Disabled Tenant Scenario", () => {
           "name": `Disable Test Tenant ${timestamp}`,
           "domain": "http://localhost:8080",
           "description": "Test tenant for disable scenario",
-          "authorization_provider": "idp-server",
-          "tenant_type": "BUSINESS"
+          "authorization_provider": "idp-server"
         },
         authorization_server: {
           "issuer": `http://localhost:8080/${tenantId}`,

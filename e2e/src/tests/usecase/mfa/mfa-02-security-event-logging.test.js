@@ -61,7 +61,6 @@ describe("Use Case: MFA Security Event Logging", () => {
         name: `MFA Security Event Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        tenant_type: "ORGANIZER",
         security_event_log_config: {
           format: "structured_json",
           stage: "processed",

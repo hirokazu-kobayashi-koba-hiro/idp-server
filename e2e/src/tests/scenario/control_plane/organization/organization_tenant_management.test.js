@@ -37,8 +37,7 @@ describe("organization tenant management api", () => {
             "name": `Organization Tenant ${timestamp}`,
             "domain": "http://localhost:8080",
             "description": "Test tenant for organization management",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9",
@@ -354,8 +353,7 @@ describe("organization tenant management api", () => {
             "name": `Dry Run Tenant ${timestamp}`,
             "domain": "http://localhost:8080",
             "description": "Test tenant for dry run",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9",
@@ -454,8 +452,7 @@ describe("organization tenant management api", () => {
             "name": `Test Tenant ${timestamp}`,
             "domain": "http://localhost:8080",
             "description": "Original description",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9",
@@ -569,8 +566,7 @@ describe("organization tenant management api", () => {
             "name": `Test Tenant ${timestamp}`,
             "domain": "http://localhost:8080",
             "description": "Test tenant for dry run delete",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9",
@@ -679,8 +675,7 @@ describe("organization tenant management api", () => {
             "name": `Roundtrip Tenant ${timestamp}`,
             "domain": "http://localhost:8080",
             "description": "Test tenant for roundtrip test",
-            "authorization_provider": "idp-server",
-            "tenant_type": "BUSINESS"
+            "authorization_provider": "idp-server"
           },
           authorization_server: {
             "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9",
@@ -883,7 +878,7 @@ describe("organization tenant management api", () => {
 
     const invalidRequestCases = [
       ["missing tenant name", {
-        tenant: { "id": uuidv4(), "tenant_type": "BUSINESS", "domain": "http://localhost:8080", "authorization_provider": "idp-server" },
+        tenant: { "id": uuidv4(), "domain": "http://localhost:8080", "authorization_provider": "idp-server" },
         authorization_server: { "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9" }
       }],
       ["invalid tenant type", {
@@ -891,7 +886,7 @@ describe("organization tenant management api", () => {
         authorization_server: { "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9" }
       }],
       ["empty tenant id", {
-        tenant: { "id": "", "name": "Test", "tenant_type": "BUSINESS", "domain": "http://localhost:8080", "authorization_provider": "idp-server" },
+        tenant: { "id": "", "name": "Test", "domain": "http://localhost:8080", "authorization_provider": "idp-server" },
         authorization_server: { "issuer": "http://localhost:8080/952f6906-3e95-4ed3-86b2-981f90f785f9" }
       }]
     ];
