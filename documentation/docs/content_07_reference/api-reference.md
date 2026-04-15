@@ -14,6 +14,7 @@
 
 ### コントロールプレーン用のAPI仕様
 
+- [オンボーディングAPI](cp-onboarding-api-ja)
 - [テナント管理API](cp-tenant-api-ja)
 - [Grant管理API](api-grant-management-ja)
 - [クライアント管理API](cp-client-api-ja)

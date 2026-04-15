@@ -145,6 +145,10 @@ const config = {
             spec: 'openapi/swagger-authentication-interaction-ja.yaml',
             route: '/docs/content_07_reference/api-authentication-interaction-ja/',
           },
+          {
+            spec: 'openapi/swagger-cp-onboarding-ja.yaml',
+            route: '/docs/content_07_reference/cp-onboarding-api-ja/',
+          },
         ],
         // Theme Options for modifying how redoc renders them
         theme: {
