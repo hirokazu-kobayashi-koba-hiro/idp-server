@@ -2315,9 +2315,186 @@ components:
             オプション。スコープや設定によっては返されない。
         id_token:
           type: string
-          description: |
+          description: >
             OpenID Connect フローでユーザー情報を表すJWTトークン。
-            sub（ユーザーID）や認証時間などのクレームが含まれる。
+
+            `{Header}.{Payload}.{Signature}` の3パートを `.` で結合した JWS
+            形式（クライアント設定で暗号化が有効な場合は JWE のネスト形式）。
+
+            各パートは Base64url エンコードされています。
+
+
+            仕様: [OpenID Connect Core 1.0 - ID
+            Token](https://openid.net/specs/openid-connect-core-1_0.html#IDToken)
+            / [RFC 7519 - JSON Web
+            Token](https://datatracker.ietf.org/doc/html/rfc7519)
+
+
+            ---
+
+
+            **1. Header（JOSE ヘッダー）**
+
+
+            署名アルゴリズムと鍵の情報。
+
+
+            | フィールド | 型 | 説明 |
+
+            |-----------|------|------|
+
+            | `alg` | string | 署名アルゴリズム（例: `RS256`, `ES256`） |
+
+            | `kid` | string | 署名に使用した鍵の Key ID（`jwks_uri` で公開鍵を取得可能） |
+
+            | `typ` | string | トークンタイプ（通常 `JWT`） |
+
+
+            ---
+
+
+            **2. Payload（クレームセット）**
+
+
+            **必須クレーム（常に含まれる）:**
+
+            | クレーム | 型 | 説明 |
+
+            |---------|------|------|
+
+            | `iss` | string | 発行者識別子（Issuer）。認可サーバーのURL |
+
+            | `sub` | string | ユーザーの一意識別子（Subject） |
+
+            | `aud` | string | 対象クライアントの `client_id`（Audience） |
+
+            | `exp` | number | 有効期限（Unix Epoch秒） |
+
+            | `iat` | number | 発行日時（Unix Epoch秒） |
+
+
+            **条件付きクレーム（認証方法・リクエストに応じて含まれる）:**
+
+            | クレーム | 型 | 条件 | 説明 |
+
+            |---------|------|------|------|
+
+            | `auth_time` | number | 認証が行われた場合 | 認証日時（Unix Epoch秒） |
+
+            | `nonce` | string | リクエストに `nonce` が含まれる場合 | リプレイ攻撃防止用の値 |
+
+            | `acr` | string | ACR値が設定されている場合 | 認証コンテキストクラス参照 |
+
+            | `amr` | array[string] | 認証メソッドがある場合 | 使用された認証メソッド（例:
+            `["password"]`, `["fido2"]`） |
+
+            | `sid` | string | セッションIDがある場合 | セッション識別子（ログアウト連携用） |
+
+            | `at_hash` | string | アクセストークンが同時発行される場合 | アクセストークンのハッシュ値 |
+
+            | `c_hash` | string | 認可コードが同時発行される場合 | 認可コードのハッシュ値 |
+
+            | `s_hash` | string | stateが含まれる場合 | stateパラメータのハッシュ値 |
+
+
+            **ユーザー属性クレーム（`claims_supported` と scope/claims パラメータに応じて含まれる）:**
+
+            | クレーム | スコープ | 説明 |
+
+            |---------|---------|------|
+
+            | `name` | profile | フルネーム |
+
+            | `given_name` | profile | 名 |
+
+            | `family_name` | profile | 姓 |
+
+            | `middle_name` | profile | ミドルネーム |
+
+            | `nickname` | profile | ニックネーム |
+
+            | `preferred_username` | profile | 優先ユーザー名 |
+
+            | `profile` | profile | プロフィールURL |
+
+            | `picture` | profile | プロフィール画像URL |
+
+            | `website` | profile | ウェブサイトURL |
+
+            | `gender` | profile | 性別 |
+
+            | `birthdate` | profile | 生年月日 |
+
+            | `zoneinfo` | profile | タイムゾーン |
+
+            | `locale` | profile | ロケール |
+
+            | `updated_at` | profile | 最終更新日時（Unix Epoch秒） |
+
+            | `email` | email | メールアドレス |
+
+            | `email_verified` | email | メール検証済みフラグ |
+
+            | `phone_number` | phone | 電話番号 |
+
+            | `phone_number_verified` | phone | 電話番号検証済みフラグ |
+
+            | `address` | address | 住所（オブジェクト） |
+
+
+            **カスタムクレーム（`claims:` プレフィックス付きスコープで取得。`custom_claims_scope_mapping:
+            true` が必要）:**
+
+            | クレーム | スコープ | 説明 |
+
+            |---------|---------|------|
+
+            | `ex_sub` | claims:ex_sub |
+            外部プロバイダーのユーザーID（Federation/SSO連携時に外部IdPから取得した識別子） |
+
+            | `status` | claims:status | ユーザーステータス（例: `REGISTERED`,
+            `IDENTITY_VERIFIED`） |
+
+            | `roles` | claims:roles | 割り当てられたロール名の一覧 |
+
+            | `permissions` | claims:permissions | 割り当てられたパーミッション一覧 |
+
+            | `assigned_tenants` | claims:assigned_tenants | 所属テナントID一覧（+
+            `current_tenant_id`） |
+
+            | `assigned_organizations` | claims:assigned_organizations |
+            所属組織ID一覧（+ `current_organization_id`） |
+
+            | `authentication_devices` | claims:authentication_devices |
+            登録済み認証デバイス一覧 |
+
+            | `{key}` | claims:{key} | ユーザーの `custom_properties` に格納された任意のキー |
+
+
+            ---
+
+
+            **3. Signature（署名）**
+
+
+            Header の `alg` で指定されたアルゴリズムで `{Header}.{Payload}` を署名した値。
+
+            検証には `jwks_uri` から取得した公開鍵（`kid` で特定）を使用します。
+
+
+            ---
+
+
+            **注意:**
+
+            - `id_token_strict_mode` が有効な場合、ユーザー属性クレームは `claims`
+            パラメータで明示的にリクエストされたもののみ含まれます
+
+            - カスタムクレーム（プラグインによる拡張）が追加される場合がありますが、標準クレーム（`sub`, `iss`, `aud`
+            等）を上書きすることはできません
+
+            - クライアント設定で `id_token_encrypted_response_alg` が指定されている場合、JWS を JWE
+            でラップしたネスト JWT 形式になります
         scope:
           type: string
           description: |
