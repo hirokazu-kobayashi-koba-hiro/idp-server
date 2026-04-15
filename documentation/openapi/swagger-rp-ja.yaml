@@ -691,6 +691,12 @@ paths:
 
         📘 **RFC 7662 拡張**: OAuth 2.0 Token Introspection の拡張実装
 
+        ## エラーハンドリング
+
+        このエンドポイントでは、クライアント認証失敗・トークン無効・スコープ不足等の **すべてのエラーが HTTP 200 で返却** されます（HTTP 401/403 は返りません）。
+        エラーの判別には `active: false` と `error` / `status_code` フィールドを使用してください。
+        `status_code` はリソースサーバーがエンドユーザーに返すべき論理的な HTTP ステータスの参考値です。
+
         ## クライアント認証
 
         このエンドポイントは **クライアント認証が必須** です。以下の認証方法をサポートしています：
@@ -719,20 +725,26 @@ paths:
               $ref: '#/components/schemas/TokenIntrospectionExtensionRequest'
       responses:
         '200':
-          description: 有効なトークンに対するイントロスペクション結果。
+          description: |
+            イントロスペクション結果。
+            `active: true` の場合はトークン情報（`TokenIntrospectionResponse`）、
+            `active: false` の場合はエラー詳細（`TokenIntrospectionExtensionErrorResponse`）を返却します。
+            トークン無効・期限切れ・スコープ不足等でも HTTP 200 で返却され、`active` と `error` / `status_code` で判別します。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenIntrospectionResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/TokenIntrospectionResponse'
+                  - $ref: '#/components/schemas/TokenIntrospectionExtensionErrorResponse'
         '400':
-          description: 不正なリクエスト形式または必須パラメータの欠落。
+          description: |
+            不正なリクエスト、またはクライアント認証失敗。
+            - `error: invalid_request` — 必須パラメータの欠落、不正な形式
+            - `error: invalid_client` — クライアントシークレット不一致、未登録クライアント、認証情報なし
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenIntrospectionBadRequestResponse'
-        '401':
-          description: 認証エラー。クライアント認証に失敗した場合。
-
+                $ref: '#/components/schemas/TokenIntrospectionExtensionErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -2478,17 +2490,45 @@ components:
     TokenIntrospectionExtensionErrorResponse:
       type: object
       description: |
-        RFC 7662 - Token Introspectionをベースとした拡張APIのエラーレスポンス。
+        RFC 7662 拡張イントロスペクションのエラーレスポンス。
+        トークンが無効・期限切れ・スコープ不足・クライアント認証失敗等の場合に返却されます。
+        HTTP ステータスは 200 ですが、`active: false` とエラー詳細で判別します。
+      required:
+        - active
+        - error
+        - status_code
       properties:
         active:
           type: boolean
-          description: エラーのため、false固定。
+          description: 常に `false`。
+          example: false
         error:
           type: string
-          description: aa
+          enum:
+            - invalid_token
+            - insufficient_scope
+            - invalid_client
+            - server_error
+          description: |
+            エラーの種類。
+            - `invalid_token`: トークンが存在しない、期限切れ、またはユーザーが無効
+            - `insufficient_scope`: 要求されたスコープがトークンに含まれていない
+            - `invalid_client`: クライアント認証失敗、クライアント設定が見つからない
+            - `server_error`: サーバー内部エラー
         error_description:
           type: string
-          description: aaa
+          description: エラーの詳細説明。原因の特定に使用できます。
+          example: "Token has expired (access and refresh tokens)."
+        status_code:
+          type: integer
+          description: |
+            エラーに対応する論理的なHTTPステータスコード。
+            リソースサーバーがクライアントに返すべきステータスの参考値として使用できます。
+            - `400`: 不正なリクエスト（invalid_client）
+            - `401`: 認証エラー（invalid_token、ユーザー無効、証明書不一致）
+            - `403`: 権限不足（insufficient_scope）
+            - `500`: サーバーエラー
+          example: 401
 
 
     TokenRevocationRequest:

@@ -1024,6 +1024,52 @@ describe("OAuth 2.0 Token Introspection Extensions", () => {
     });
   });
 
+  describe("400 error - client authentication failure", () => {
+
+    it("should return 400 with invalid_client when client_secret is wrong", async () => {
+      const introspectionResponse = await inspectTokenWithVerification({
+        endpoint: serverConfig.tokenIntrospectionExtensionsEndpoint,
+        token: "dummy_token",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: "wrong_secret_value",
+      });
+      console.log(introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(400);
+      expect(introspectionResponse.data.active).toBe(false);
+      expect(introspectionResponse.data.error).toBe("invalid_client");
+      expect(introspectionResponse.data.error_description).toBeDefined();
+      expect(introspectionResponse.data.status_code).toBe(400);
+    });
+
+    it("should return 400 with invalid_client when client_id is unregistered", async () => {
+      const introspectionResponse = await inspectTokenWithVerification({
+        endpoint: serverConfig.tokenIntrospectionExtensionsEndpoint,
+        token: "dummy_token",
+        clientId: "nonexistent_client_id",
+        clientSecret: "whatever",
+      });
+      console.log(introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(400);
+      expect(introspectionResponse.data.active).toBe(false);
+      expect(introspectionResponse.data.error).toBe("invalid_client");
+      expect(introspectionResponse.data.error_description).toBeDefined();
+      expect(introspectionResponse.data.status_code).toBe(400);
+    });
+
+    it("should return 400 with invalid_client when no client credentials provided", async () => {
+      const introspectionResponse = await inspectTokenWithVerification({
+        endpoint: serverConfig.tokenIntrospectionExtensionsEndpoint,
+        token: "dummy_token",
+      });
+      console.log(introspectionResponse.data);
+      expect(introspectionResponse.status).toBe(400);
+      expect(introspectionResponse.data.active).toBe(false);
+      expect(introspectionResponse.data.error).toBe("invalid_client");
+      expect(introspectionResponse.data.error_description).toBeDefined();
+      expect(introspectionResponse.data.status_code).toBe(400);
+    });
+  });
+
   describe("403 error", () => {
 
     it("insufficient scope self_signed_tls_client_auth", async () => {
