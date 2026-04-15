@@ -40,7 +40,7 @@
         "fido-uaf"
       ],
       "acr_mapping_rules": {
-        "urn:mace:incommon:iap:gold": ["fido-uaf", "webauthn"],
+        "urn:mace:incommon:iap:gold": ["fido-uaf", "fido2"],
         "urn:mace:incommon:iap:silver": ["email", "sms"],
         "urn:mace:incommon:iap:bronze": ["password"]
       },
@@ -109,7 +109,7 @@ UIに表示する認証方式を指定します。この設定は**UIヒント**
     "password",
     "email",
     "fido-uaf",
-    "webauthn"
+    "fido2"
   ]
 }
 ```
@@ -128,7 +128,7 @@ ACR値と認証方式のマッピング：
 ```json
 {
   "acr_mapping_rules": {
-    "urn:mace:incommon:iap:gold": ["fido-uaf", "webauthn"],
+    "urn:mace:incommon:iap:gold": ["fido-uaf", "fido2"],
     "urn:mace:incommon:iap:silver": ["email", "sms"],
     "urn:mace:incommon:iap:bronze": ["password"]
   }
