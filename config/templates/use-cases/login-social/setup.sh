@@ -120,7 +120,7 @@ NEW_ADMIN_EMAIL="${NEW_ADMIN_EMAIL:-admin@example.com}"
 NEW_ADMIN_PASSWORD="${NEW_ADMIN_PASSWORD:-ChangeMe123}"
 TOKEN_SIGNING_KEY_ID="${TOKEN_SIGNING_KEY_ID:-signing_key_1}"
 ID_TOKEN_SIGNING_KEY_ID="${ID_TOKEN_SIGNING_KEY_ID:-signing_key_1}"
-UI_BASE_URL="${UI_BASE_URL:-${AUTHORIZATION_SERVER_URL}}"
+UI_BASE_URL="${UI_BASE_URL:-https://auth.local.test}"
 
 # Customizable policy values (non-string, applied via jq overlay)
 SESSION_TIMEOUT_SECONDS="${SESSION_TIMEOUT_SECONDS:-86400}"
