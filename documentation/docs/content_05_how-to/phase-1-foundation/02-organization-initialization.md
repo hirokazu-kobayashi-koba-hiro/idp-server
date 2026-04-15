@@ -382,7 +382,7 @@ Content-Type: application/json
     "authorization_provider": "idp-server",
     "ui_config": {
       "base_url": "https://admin.acme.com",
-      "signin_page": "/signin/fido2/",
+      "signin_page": "/signin/",
       "signup_page": "/signup/"
     },
     "session_config": {
@@ -746,7 +746,7 @@ cat > org-init.json <<EOF
     "authorization_provider": "idp-server",
     "ui_config": {
       "base_url": "${UI_BASE_URL}",
-      "signin_page": "/signin/fido2/",
+      "signin_page": "/signin/",
       "signup_page": "/signup/"
     },
     "session_config": {
