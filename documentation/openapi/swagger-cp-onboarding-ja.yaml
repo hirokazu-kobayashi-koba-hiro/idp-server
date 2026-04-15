@@ -1,0 +1,477 @@
+openapi: 3.0.3
+info:
+  title: idp-server コントロールプレーン オンボーディング API
+  description: |
+    新規組織のオンボーディング（組織・Organizerテナント・管理ユーザー・管理クライアントの一括作成）API仕様書。
+
+    このAPIは admin tenant のコンテキストで実行され、以下を原子的に作成します:
+    - 組織 (Organization)
+    - Organizerテナント (TenantType=ORGANIZER, 組織オーナー用)
+    - 認可サーバー設定
+    - デフォルトのロール / パーミッション
+    - 組織管理者ユーザー
+    - 組織管理クライアント
+
+    旧API `/v1/admin/organization/initialization` は非推奨です。新規実装では必ず本APIを使用してください。
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+servers:
+- url: http://localhost:8080
+tags:
+- name: onboarding
+  description: 組織オンボーディング（組織＋Organizerテナント＋管理者の一括作成）
+paths:
+  /v1/management/onboarding:
+    post:
+      summary: Onboard a new organization
+      description: |
+        新規組織とその Organizer テナント、管理者ユーザー、管理クライアントを一括で作成します。
+
+        ## 動作
+
+        - 作成されるテナントは常に `type=ORGANIZER`（サーバー側でハードコード）
+        - `organization.id` / `tenant.id` / `user.sub` / `client.client_id` が指定されない場合、サーバー側でUUIDが生成されます
+        - パスワード (`user.raw_password`) はサーバー側でハッシュ化されて保存されます
+        - デフォルトのロール / パーミッションが自動作成され、管理者ユーザーに付与されます
+        - 6つのリソース（組織・テナント・認可サーバー・ロール/パーミッション・ユーザー・クライアント）がすべて成功した場合のみコミットされます
+
+        ## Dry Run
+
+        `dry_run=true` を指定すると、リクエストのバリデーションと構築のみ実行され、永続化はスキップされます。
+        本番実行前の検証に利用してください。
+
+        ## 認証
+
+        このエンドポイントは admin tenant のコンテキストで実行されます。
+        admin tenant の管理者として発行されたアクセストークンを `Authorization: Bearer` で渡してください。
+      tags:
+      - onboarding
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingRequest'
+      responses:
+        '200':
+          description: Dry Run 検証が成功しました（リソースは作成されていません）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingResponse'
+        '201':
+          description: オンボーディングが成功し、リソースが作成されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingResponse'
+        '400':
+          description: |
+            無効なリクエストデータまたはバリデーションエラー。
+            `organization` / `tenant` / `authorization_server` / `client` のJSONスキーマ検証失敗を含みます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 認証が必要です（アクセストークンが無効または欠落）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限不足（admin tenant の組織管理権限が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: リソースの重複（既存の組織ID、テナントID、ユーザー、クライアントIDと衝突）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: admin tenant の管理者アクセストークン
+  parameters:
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+      description: trueの場合、リクエストの検証と構築のみ実行され、永続化はされません
+  schemas:
+    OnboardingRequest:
+      type: object
+      description: |
+        オンボーディングリクエスト。
+        組織・テナント・認可サーバー・ユーザー・クライアントを1つのリクエストで指定します。
+        作成されるテナントは常に `type=ORGANIZER` になります。
+      required:
+      - organization
+      - tenant
+      - authorization_server
+      - user
+      - client
+      properties:
+        organization:
+          $ref: '#/components/schemas/OrganizationRegistration'
+        tenant:
+          $ref: '#/components/schemas/TenantRegistration'
+        authorization_server:
+          $ref: '#/components/schemas/AuthorizationServerRegistration'
+        user:
+          $ref: '#/components/schemas/AdminUserRegistration'
+        client:
+          $ref: '#/components/schemas/AdminClientRegistration'
+    OrganizationRegistration:
+      type: object
+      description: 作成する組織の情報
+      required:
+      - id
+      - name
+      - description
+      properties:
+        id:
+          type: string
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          description: 組織の一意識別子（UUID）
+        name:
+          type: string
+          minLength: 1
+          description: 組織名
+        description:
+          type: string
+          minLength: 1
+          description: 組織の説明
+    TenantRegistration:
+      type: object
+      description: |
+        作成する Organizer テナントの情報。
+        `type` / `tenant_type` は指定しても無視され、常に `ORGANIZER` として作成されます。
+      required:
+      - id
+      - name
+      - domain
+      - authorization_provider
+      properties:
+        id:
+          type: string
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          description: テナントの一意識別子（UUID）
+        name:
+          type: string
+          minLength: 1
+          description: テナント名
+        domain:
+          type: string
+          format: uri
+          minLength: 1
+          description: テナントのドメインURL（issuerのベースURLとして使用）
+        authorization_provider:
+          type: string
+          enum:
+          - idp-server
+          description: 認可プロバイダー識別子（`idp-server` 固定）
+        attributes:
+          type: object
+          additionalProperties: true
+          description: テナント属性（カスタムプロパティ）
+        ui_config:
+          type: object
+          additionalProperties: true
+          description: |
+            UI設定（signin/signupページのベースURL等）。
+            詳細は `swagger-cp-tenant-ja.yaml` の `UIConfiguration` を参照。
+        cors_config:
+          type: object
+          additionalProperties: true
+          description: |
+            CORS設定（allow_origins, allow_headers 等）。
+            詳細は `swagger-cp-tenant-ja.yaml` の `CorsConfiguration` を参照。
+        session_config:
+          type: object
+          additionalProperties: true
+          description: |
+            セッション設定（cookie_name, timeout 等）。
+            詳細は `swagger-cp-tenant-ja.yaml` の `SessionConfiguration` を参照。
+        security_event_log_config:
+          type: object
+          additionalProperties: true
+          description: |
+            セキュリティイベントログ設定。
+            詳細は `swagger-cp-tenant-ja.yaml` の `SecurityEventLogConfiguration` を参照。
+        security_event_user_config:
+          type: object
+          additionalProperties: true
+          description: |
+            セキュリティイベントユーザー属性設定。
+            詳細は `swagger-cp-tenant-ja.yaml` の `SecurityEventUserAttributeConfiguration` を参照。
+        identity_policy_config:
+          type: object
+          additionalProperties: true
+          description: |
+            アイデンティティポリシー設定（identity_unique_key_type 等）。
+            詳細は `swagger-cp-tenant-ja.yaml` の `IdentityPolicyConfiguration` を参照。
+        enabled:
+          type: boolean
+          default: true
+          description: テナントの有効/無効フラグ（デフォルト: true）
+    AuthorizationServerRegistration:
+      type: object
+      description: |
+        OpenID Connect / OAuth 2.0 認可サーバー設定。
+        スキーマ詳細は `swagger-cp-tenant-ja.yaml` の `OpenIDConfiguration` を参照してください。
+      additionalProperties: true
+      required:
+      - issuer
+      - authorization_endpoint
+      - token_endpoint
+      - jwks_uri
+      - jwks
+      properties:
+        issuer:
+          type: string
+          format: uri
+          description: 発行者識別子（通常 `<tenant.domain>/<tenant.id>`）
+        authorization_endpoint:
+          type: string
+          format: uri
+          description: 認可エンドポイントURL
+        token_endpoint:
+          type: string
+          format: uri
+          description: トークンエンドポイントURL
+        userinfo_endpoint:
+          type: string
+          format: uri
+          description: UserInfoエンドポイントURL
+        jwks_uri:
+          type: string
+          format: uri
+          description: JWKSエンドポイントURL
+        jwks:
+          type: string
+          description: JSON Web Key Set（JSON文字列としてエスケープ必須）
+        token_signed_key_id:
+          type: string
+          description: アクセストークン署名用のKey ID
+        id_token_signed_key_id:
+          type: string
+          description: IDトークン署名用のKey ID
+        scopes_supported:
+          type: array
+          items:
+            type: string
+          description: サポートするスコープ一覧
+        response_types_supported:
+          type: array
+          items:
+            type: string
+          description: サポートするレスポンスタイプ
+        grant_types_supported:
+          type: array
+          items:
+            type: string
+          description: サポートするグラントタイプ
+        token_endpoint_auth_methods_supported:
+          type: array
+          items:
+            type: string
+          description: トークンエンドポイント認証方式
+        subject_types_supported:
+          type: array
+          items:
+            type: string
+          description: サポートするsubject識別子タイプ
+        extension:
+          type: object
+          additionalProperties: true
+          description: 拡張設定（トークン有効期限、署名キーID等）
+    AdminUserRegistration:
+      type: object
+      description: |
+        組織管理者ユーザー。デフォルトの管理者ロール・パーミッションが自動付与されます。
+        `status` が未指定の場合は `REGISTERED` が自動設定されます。
+        `preferred_username` が未指定の場合はテナントの identity policy に従って自動設定されます。
+      additionalProperties: true
+      required:
+      - provider_id
+      - raw_password
+      properties:
+        sub:
+          type: string
+          format: uuid
+          description: ユーザーの一意識別子（省略時はサーバー側で自動生成）
+        provider_id:
+          type: string
+          maxLength: 255
+          description: 認証プロバイダーID
+          example: idp-server
+        external_user_id:
+          type: string
+          maxLength: 255
+          description: 外部プロバイダーのユーザーID
+        name:
+          type: string
+          maxLength: 255
+          description: 表示名
+        given_name:
+          type: string
+          maxLength: 255
+        family_name:
+          type: string
+          maxLength: 255
+        preferred_username:
+          type: string
+          maxLength: 255
+          description: 優先ユーザー名（未指定の場合はテナントのidentity policyに従って自動設定）
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: メールアドレス
+        email_verified:
+          type: boolean
+          description: メール検証済みフラグ
+        phone_number:
+          type: string
+          pattern: ^\+?[0-9\- ]{7,20}$
+          description: 電話番号
+        phone_number_verified:
+          type: boolean
+        raw_password:
+          type: string
+          description: 初期パスワード（平文。サーバー側でハッシュ化されて保存）
+        custom_properties:
+          type: object
+          additionalProperties: true
+          description: カスタムプロパティ
+    AdminClientRegistration:
+      type: object
+      description: |
+        組織管理用のOAuth/OIDCクライアント。
+        詳細なフィールドは `swagger-cp-client-ja.yaml` の `ClientCreateRequest` を参照。
+      additionalProperties: true
+      required:
+      - client_id
+      - client_secret
+      - redirect_uris
+      - grant_types
+      - response_types
+      - scope
+      - client_name
+      - token_endpoint_auth_method
+      properties:
+        client_id:
+          type: string
+          description: クライアント識別子
+        client_id_alias:
+          type: string
+          description: クライアント識別子のエイリアス
+        client_secret:
+          type: string
+          description: クライアントシークレット
+        redirect_uris:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: リダイレクトURI一覧
+        response_types:
+          type: array
+          items:
+            type: string
+          description: サポートするレスポンスタイプ
+        grant_types:
+          type: array
+          items:
+            type: string
+          description: サポートするグラントタイプ
+        scope:
+          type: string
+          description: デフォルトスコープ（スペース区切り）
+        client_name:
+          type: string
+          description: クライアント表示名
+        token_endpoint_auth_method:
+          type: string
+          description: トークンエンドポイント認証方式
+        application_type:
+          type: string
+          enum:
+          - web
+          - native
+          description: アプリケーション種別
+    OnboardingResponse:
+      type: object
+      description: オンボーディング実行結果
+      required:
+      - organization
+      - tenant
+      - user
+      - client
+      - dry_run
+      properties:
+        dry_run:
+          type: boolean
+          description: ドライランかどうか（true の場合、永続化はされていません）
+        organization:
+          type: object
+          additionalProperties: true
+          description: 作成された組織の情報（assigned_tenants を含む）
+        tenant:
+          type: object
+          additionalProperties: true
+          description: |
+            作成されたテナント情報。
+            `type` フィールドは常に `ORGANIZER` です。
+            詳細は `swagger-cp-tenant-ja.yaml` の `Tenant` スキーマを参照。
+        user:
+          type: object
+          additionalProperties: true
+          description: 作成された管理者ユーザー情報（ロール、テナント割当を含む）
+        client:
+          type: object
+          additionalProperties: true
+          description: 作成された管理クライアント情報
+    ErrorResponse:
+      type: object
+      description: エラーレスポンス
+      required:
+      - error
+      properties:
+        error:
+          type: string
+          description: エラーコード
+          example: invalid_request
+        error_description:
+          type: string
+          description: エラーの詳細説明
+        error_messages:
+          type: array
+          items:
+            type: string
+          description: バリデーションエラー詳細（スキーマ検証失敗時）
