@@ -18,7 +18,13 @@ paths:
     - $ref: '#/components/parameters/OrganizationId'
     post:
       summary: Create tenant within organization
-      description: 特定の組織に新しいテナントを作成します
+      description: |
+        特定の組織に新しいテナントを作成します。
+
+        作成されるテナントは常に `type=PUBLIC`（エンドユーザー向けの実運用テナント）として作成されます。
+        `ADMIN` / `ORGANIZER` タイプはこのAPIでは作成できません:
+        - `ADMIN` はサーバー起動時に1つだけ自動作成されます
+        - `ORGANIZER` は組織オンボーディング時に自動作成されます
       tags:
       - organization-tenant
       parameters:
@@ -789,9 +795,14 @@ components:
         type:
           type: string
           enum:
-          - BUSINESS
-          - PERSONAL
-          description: Tenant type
+          - ADMIN
+          - ORGANIZER
+          - PUBLIC
+          description: |
+            Tenant type (read-only, assigned by the server)
+            - ADMIN: System-wide super tenant (created once at server startup)
+            - ORGANIZER: Organization owner tenant (created during organization onboarding)
+            - PUBLIC: End-user facing tenant (created via tenant creation APIs)
         domain:
           type: string
           format: uri
@@ -812,6 +823,10 @@ components:
           description: Last update timestamp
     TenantCreateRequest:
       type: object
+      description: |
+        テナント作成リクエスト。
+        作成されたテナントは常に `type=PUBLIC` となります（サーバー側でハードコード）。
+        リクエストボディで `type` / `tenant_type` を指定しても無視されます。
       required:
       - tenant
       - authorization_server
@@ -821,7 +836,6 @@ components:
           required:
           - id
           - name
-          - tenant_type
           - domain
           - authorization_provider
           properties:
@@ -864,12 +878,6 @@ components:
           type: string
           maxLength: 255
           description: Tenant name
-        tenant_type:
-          type: string
-          enum:
-          - BUSINESS
-          - PERSONAL
-          description: Tenant type
         description:
           type: string
           description: Human-readable description of the tenant
