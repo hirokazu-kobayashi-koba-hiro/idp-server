@@ -737,11 +737,14 @@ paths:
                   - $ref: '#/components/schemas/TokenIntrospectionResponse'
                   - $ref: '#/components/schemas/TokenIntrospectionExtensionErrorResponse'
         '400':
-          description: 不正なリクエスト形式または必須パラメータの欠落。
+          description: |
+            不正なリクエスト、またはクライアント認証失敗。
+            - `error: invalid_request` — 必須パラメータの欠落、不正な形式
+            - `error: invalid_client` — クライアントシークレット不一致、未登録クライアント、認証情報なし
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenIntrospectionBadRequestResponse'
+                $ref: '#/components/schemas/TokenIntrospectionExtensionErrorResponse'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -2493,7 +2496,6 @@ components:
       required:
         - active
         - error
-        - error_description
         - status_code
       properties:
         active:
