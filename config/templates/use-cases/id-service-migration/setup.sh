@@ -109,6 +109,7 @@ NEW_ADMIN_EMAIL="${NEW_ADMIN_EMAIL:-admin@example.com}"
 NEW_ADMIN_PASSWORD="${NEW_ADMIN_PASSWORD:-ChangeMe123}"
 TOKEN_SIGNING_KEY_ID="${TOKEN_SIGNING_KEY_ID:-signing_key_1}"
 ID_TOKEN_SIGNING_KEY_ID="${ID_TOKEN_SIGNING_KEY_ID:-signing_key_1}"
+UI_BASE_URL="${UI_BASE_URL:-${AUTHORIZATION_SERVER_URL}}"
 
 # External authentication service settings
 EXTERNAL_AUTH_URL="${EXTERNAL_AUTH_URL:-http://host.docker.internal:4002/auth/password}"
@@ -157,7 +158,8 @@ ONBOARDING_JSON=$(substitute_template "${SCRIPT_DIR}/onboarding-template.json" \
   "ADMIN_EMAIL" "${NEW_ADMIN_EMAIL}" \
   "ADMIN_PASSWORD" "${NEW_ADMIN_PASSWORD}" \
   "ADMIN_CLIENT_ID" "${NEW_ADMIN_CLIENT_ID}" \
-  "ADMIN_CLIENT_SECRET" "${NEW_ADMIN_CLIENT_SECRET}")
+  "ADMIN_CLIENT_SECRET" "${NEW_ADMIN_CLIENT_SECRET}" \
+  "UI_BASE_URL" "${UI_BASE_URL}")
 
 echo "${ONBOARDING_JSON}" | jq '.' > "${OUTPUT_DIR}/onboarding.json"
 echo "  Saved: ${OUTPUT_DIR}/onboarding.json"
@@ -212,7 +214,6 @@ ORG_BASE_URL="${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORGANIZA
 echo "Step 4: Creating public tenant (CIBA + external password auth)..."
 
 PUBLIC_TENANT_ID="${PUBLIC_TENANT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
-UI_BASE_URL="${UI_BASE_URL:-${AUTHORIZATION_SERVER_URL}}"
 
 PUBLIC_TENANT_JSON=$(substitute_template "${SCRIPT_DIR}/public-tenant-template.json" \
   "PUBLIC_TENANT_ID" "${PUBLIC_TENANT_ID}" \

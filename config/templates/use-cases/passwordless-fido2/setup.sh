@@ -166,7 +166,8 @@ ONBOARDING_JSON=$(substitute_template "${SCRIPT_DIR}/onboarding-template.json" \
   "ADMIN_EMAIL" "${NEW_ADMIN_EMAIL}" \
   "ADMIN_PASSWORD" "${NEW_ADMIN_PASSWORD}" \
   "ADMIN_CLIENT_ID" "${NEW_ADMIN_CLIENT_ID}" \
-  "ADMIN_CLIENT_SECRET" "${NEW_ADMIN_CLIENT_SECRET}")
+  "ADMIN_CLIENT_SECRET" "${NEW_ADMIN_CLIENT_SECRET}" \
+  "UI_BASE_URL" "${UI_BASE_URL}")
 
 echo "${ONBOARDING_JSON}" | jq '.' > "${OUTPUT_DIR}/onboarding.json"
 echo "  Saved: ${OUTPUT_DIR}/onboarding.json"
