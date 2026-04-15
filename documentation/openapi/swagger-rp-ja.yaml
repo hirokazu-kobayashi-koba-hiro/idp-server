@@ -2043,7 +2043,6 @@ components:
             |-----------|------|------|
             | `alg` | string | 署名アルゴリズム（例: `RS256`, `ES256`） |
             | `kid` | string | 署名に使用した鍵の Key ID（`jwks_uri` で公開鍵を取得可能） |
-            | `typ` | string | トークンタイプ（通常 `JWT`） |
 
             ---
 
