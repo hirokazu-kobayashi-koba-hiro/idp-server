@@ -12,7 +12,7 @@ info:
     - 組織管理者ユーザー
     - 組織管理クライアント
 
-    旧API `/v1/admin/organization/initialization` は非推奨です。新規実装では必ず本APIを使用してください。
+    `/v1/admin/initialization` はadminテナント自体の初期化用APIであり、本APIとは用途が異なります。
   version: 1.0.0
   contact:
     name: idp-server OSS
@@ -250,7 +250,10 @@ components:
       - authorization_endpoint
       - token_endpoint
       - jwks_uri
-      - jwks
+      - scopes_supported
+      - response_types_supported
+      - response_modes_supported
+      - subject_types_supported
       properties:
         issuer:
           type: string
@@ -315,16 +318,17 @@ components:
       description: |
         組織管理者ユーザー。デフォルトの管理者ロール・パーミッションが自動付与されます。
         `status` が未指定の場合は `REGISTERED` が自動設定されます。
-        `preferred_username` が未指定の場合はテナントの identity policy に従って自動設定されます。
+        `preferred_username` が未指定の場合はテナントの identity policy に従って自動設定されます（identity policy 未設定時は `email` 等の指定が必要です）。
       additionalProperties: true
       required:
+      - sub
       - provider_id
       - raw_password
       properties:
         sub:
           type: string
           format: uuid
-          description: ユーザーの一意識別子（省略時はサーバー側で自動生成）
+          description: ユーザーの一意識別子（必須。省略すると永続化時にエラーになります）
         provider_id:
           type: string
           maxLength: 255
@@ -376,14 +380,7 @@ components:
         詳細なフィールドは `swagger-cp-client-ja.yaml` の `ClientCreateRequest` を参照。
       additionalProperties: true
       required:
-      - client_id
-      - client_secret
       - redirect_uris
-      - grant_types
-      - response_types
-      - scope
-      - client_name
-      - token_endpoint_auth_method
       properties:
         client_id:
           type: string
