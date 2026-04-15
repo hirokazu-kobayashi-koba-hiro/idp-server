@@ -238,7 +238,7 @@ components:
         enabled:
           type: boolean
           default: true
-          description: テナントの有効/無効フラグ（デフォルト: true）
+          description: "テナントの有効/無効フラグ（デフォルト: true）"
     AuthorizationServerRegistration:
       type: object
       description: |
