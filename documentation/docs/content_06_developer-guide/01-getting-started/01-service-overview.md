@@ -194,16 +194,16 @@ Organization (大企業グループ)
         "password",
         "email",
         "sms",
-        "webauthn",
+        "fido2",
         "fido-uaf"
       ],
       "acr_mapping_rules": {
-        "urn:mace:incommon:iap:gold": ["fido-uaf", "webauthn"],
+        "urn:mace:incommon:iap:gold": ["fido-uaf", "fido2"],
         "urn:mace:incommon:iap:silver": ["email", "sms"],
         "urn:mace:incommon:iap:bronze": ["password"]
       },
       "level_of_authentication_scopes": {
-        "transfers": ["fido-uaf", "webauthn"]
+        "transfers": ["fido-uaf", "fido2"]
       },
       "success_conditions": {
         "any_of": [

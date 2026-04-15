@@ -298,7 +298,7 @@ public class ServerConfigurationResponseCreator {
   "response_types_supported": ["code", "id_token", "token id_token", "code id_token", "code token", "code token id_token"],
   "response_modes_supported": ["query", "fragment", "form_post", "jwt"],
   "grant_types_supported": ["authorization_code", "implicit", "refresh_token", "client_credentials"],
-  "acr_values_supported": ["password", "fido-uaf", "webauthn"],
+  "acr_values_supported": ["password", "fido-uaf", "fido2"],
   "subject_types_supported": ["public", "pairwise"],
   "id_token_signing_alg_values_supported": ["RS256", "ES256", "PS256"],
   "id_token_encryption_alg_values_supported": ["RSA-OAEP", "RSA-OAEP-256"],
@@ -462,7 +462,7 @@ public class JwkParser {
 | `registration_endpoint` | 動的クライアント登録エンドポイント | Dynamic Registration |
 | `introspection_endpoint` | トークンイントロスペクションエンドポイント | トークン検証 |
 | `revocation_endpoint` | トークン失効エンドポイント | トークン無効化 |
-| `acr_values_supported` | サポートする認証コンテキストクラス | ["password", "fido-uaf", "webauthn"] |
+| `acr_values_supported` | サポートする認証コンテキストクラス | ["password", "fido-uaf", "fido2"] |
 | `request_parameter_supported` | Request Objectサポート | FAPI |
 | `request_uri_parameter_supported` | Request URI サポート | FAPI/PAR |
 | `tls_client_certificate_bound_access_tokens` | mTLS トークンバインディング | FAPI Advance |

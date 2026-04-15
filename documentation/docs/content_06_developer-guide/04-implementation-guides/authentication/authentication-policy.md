@@ -34,16 +34,16 @@
         "password",
         "email",
         "sms",
-        "webauthn",
+        "fido2",
         "fido-uaf"
       ],
       "acr_mapping_rules": {
-        "urn:mace:incommon:iap:gold": ["fido-uaf", "webauthn"],
+        "urn:mace:incommon:iap:gold": ["fido-uaf", "fido2"],
         "urn:mace:incommon:iap:silver": ["email", "sms"],
         "urn:mace:incommon:iap:bronze": ["password"]
       },
       "level_of_authentication_scopes": {
-        "transfers": ["fido-uaf", "webauthn"]
+        "transfers": ["fido-uaf", "fido2"]
       },
       "success_conditions": {
         "any_of": [
@@ -114,9 +114,9 @@
 | `description`                      | ポリシーの説明                                            | `"MFA required for high-value transactions"`                       |
 | `priority`                         | 優先度（数値が大きいほど優先）                                  | `1`                                                                 |
 | `conditions`                       | 適用条件。`scopes`, `acr_values`, `client_ids`等を指定       | `{"scopes": ["openid"], "acr_values": ["urn:mace:incommon:iap:gold"]}` |
-| `available_methods`                | UIに表示する認証方式のリスト（UIヒント）                           | `["password", "fido-uaf", "webauthn"]`                              |
-| `acr_mapping_rules`                | ACR値と認証方式のマッピング                                   | `{"urn:mace:incommon:iap:gold": ["fido-uaf", "webauthn"]}`          |
-| `level_of_authentication_scopes`   | スコープ別の必須認証レベル                                     | `{"transfers": ["fido-uaf", "webauthn"]}`                           |
+| `available_methods`                | UIに表示する認証方式のリスト（UIヒント）                           | `["password", "fido-uaf", "fido2"]`                              |
+| `acr_mapping_rules`                | ACR値と認証方式のマッピング                                   | `{"urn:mace:incommon:iap:gold": ["fido-uaf", "fido2"]}`          |
+| `level_of_authentication_scopes`   | スコープ別の必須認証レベル                                     | `{"transfers": ["fido-uaf", "fido2"]}`                           |
 | `success_conditions`               | 認証成功とみなす条件（JSONPath + 演算子）                        | 下記参照                                                                |
 | `failure_conditions`               | 警告や統計記録の対象となる失敗条件                                 | 下記参照                                                                |
 | `lock_conditions`                  | アカウントロックや認可拒否に至る失敗条件                               | 下記参照                                                                |
@@ -271,7 +271,7 @@ public AuthenticationPolicy findSatisfiedAuthenticationPolicy(
 ```java
 // available_methods から認証方式を提示
 List<String> methods = authenticationPolicy.availableMethods();
-// → ["password", "email", "sms", "webauthn", "fido-uaf"]
+// → ["password", "email", "sms", "fido2", "fido-uaf"]
 ```
 
 ### 3. 成功条件の評価
