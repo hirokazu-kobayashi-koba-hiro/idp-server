@@ -2334,6 +2334,40 @@ components:
         jti:
           type: string
           description: JWT ID（トークンの一意な識別子）。
+        acr:
+          type: string
+          description: |
+            認証コンテキストクラス参照（Authentication Context Class Reference）。
+            認証時にACR値が設定された場合のみ返却されます。
+          example: "urn:mace:incommon:iap:gold"
+        amr:
+          type: array
+          items:
+            type: string
+          description: |
+            認証方式参照（Authentication Methods References）。
+            認証時に使用された認証方式のリスト。認証方式が記録されている場合のみ返却されます。
+          example: ["fido-uaf"]
+        auth_time:
+          type: integer
+          description: |
+            認証日時（UNIXタイムスタンプ）。
+            認証日時が記録されている場合のみ返却されます。
+        authorization_details:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: |
+            RFC 9396 Rich Authorization Requests に基づく認可詳細。
+            アクセストークンに認可詳細が含まれる場合のみ返却されます。
+            FAPI/金融グレードのトランザクション認可（振込、決済等）で使用されます。
+        ex_sub:
+          type: string
+          description: |
+            外部IdPでのユーザー識別子。フェデレーション（SSO）連携時に外部IdPから取得したユーザーIDを表します。
+            `claims:ex_sub` スコープが要求され、かつユーザーに外部ユーザーIDが設定されている場合のみ返却されます。
+            `authorization_server.extension.custom_claims_scope_mapping` が `true` である必要があります。
       additionalProperties:
         description: 任意の拡張プロパティ。テナントの設定などによりトークンに付与される。
 
