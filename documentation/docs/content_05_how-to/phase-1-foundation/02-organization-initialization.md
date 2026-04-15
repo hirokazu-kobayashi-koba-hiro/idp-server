@@ -377,70 +377,123 @@ Content-Type: application/json
   "tenant": {
     "id": "952f6906-3e95-4ed3-86b2-981f90f785f9",
     "name": "ACME Organizer Tenant",
+    "type": "ORGANIZER",
     "domain": "https://auth.acme.com",
     "authorization_provider": "idp-server",
-    "database_type": "postgresql",
-    "attributes": {
+    "ui_config": {
+      "base_url": "https://admin.acme.com",
+      "signin_page": "/signin/fido2/",
+      "signup_page": "/signup/"
+    },
+    "session_config": {
       "cookie_name": "ACME_ORG_SESSION",
+      "cookie_same_site": "Lax",
       "use_secure_cookie": true,
+      "use_http_only_cookie": true,
+      "cookie_path": "/",
+      "timeout_seconds": 3600
+    },
+    "cors_config": {
       "allow_origins": [
-        "https://admin.acme.com",
-        "https://app.acme.com"
+        "https://auth.acme.com",
+        "https://admin.acme.com"
       ],
-      "security_event_log_format": "structured_json",
-      "security_event_log_persistence_enabled": true
+      "allow_headers": "Authorization, Content-Type, Accept, x-device-id, X-SSL-Client-Cert",
+      "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "allow_credentials": true
+    },
+    "security_event_log_config": {
+      "format": "structured_json",
+      "stage": "processed",
+      "include_user_id": true,
+      "include_user_ex_sub": true,
+      "include_client_id": true,
+      "include_ip_address": true,
+      "persistence_enabled": true,
+      "statistics_enabled": true,
+      "include_event_detail": true
     }
   },
   "authorization_server": {
     "issuer": "https://auth.acme.com/952f6906-3e95-4ed3-86b2-981f90f785f9",
     "authorization_endpoint": "https://auth.acme.com/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/authorizations",
     "token_endpoint": "https://auth.acme.com/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens",
+    "token_endpoint_auth_methods_supported": [
+      "client_secret_post",
+      "client_secret_basic"
+    ],
+    "token_endpoint_auth_signing_alg_values_supported": [
+      "RS256",
+      "ES256"
+    ],
     "userinfo_endpoint": "https://auth.acme.com/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/userinfo",
     "jwks_uri": "https://auth.acme.com/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/jwks",
-    "jwks": "{\"keys\":[{\"kty\":\"RSA\",\"n\":\"...\",\"e\":\"AQAB\",\"kid\":\"signing_key_1\",\"use\":\"sig\"}]}",
+    "jwks": "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"kid\":\"signing_key_1\",\"use\":\"sig\",...}]}",
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token",
+      "password"
+    ],
     "token_signed_key_id": "signing_key_1",
     "id_token_signed_key_id": "signing_key_1",
     "scopes_supported": [
       "openid",
       "profile",
       "email",
-      "org-management",
-      "account",
-      "management"
+      "management",
+      "claims:roles",
+      "claims:permissions",
+      "claims:assigned_tenants"
     ],
     "response_types_supported": ["code"],
-    "grant_types_supported": [
-      "authorization_code",
-      "refresh_token",
-      "password"
-    ],
-    "token_endpoint_auth_methods_supported": [
-      "client_secret_post",
-      "client_secret_basic"
-    ],
+    "response_modes_supported": ["query"],
     "subject_types_supported": ["public"],
+    "id_token_signing_alg_values_supported": [
+      "RS256",
+      "ES256"
+    ],
+    "claims_parameter_supported": true,
+    "claims_supported": [
+      "sub",
+      "iss",
+      "auth_time",
+      "acr",
+      "name",
+      "given_name",
+      "family_name",
+      "email",
+      "email_verified",
+      "phone_number",
+      "phone_number_verified",
+      "address",
+      "birthdate"
+    ],
+    "introspection_endpoint": "https://auth.acme.com/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens/introspection",
+    "revocation_endpoint": "https://auth.acme.com/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens/revocation",
     "extension": {
       "access_token_type": "JWT",
+      "token_signed_key_id": "signing_key_1",
+      "id_token_signed_key_id": "signing_key_1",
       "access_token_duration": 3600,
       "id_token_duration": 3600,
-      "refresh_token_duration": 86400
+      "refresh_token_duration": 86400,
+      "custom_claims_scope_mapping": true
     }
   },
   "user": {
     "sub": "8d8822f0-cf68-455a-aa82-3ccfbc07b060",
     "provider_id": "idp-server",
-    "name": "admin.user",
+    "name": "admin@acme.com",
     "email": "admin@acme.com",
     "email_verified": true,
-    "raw_password": "SecurePassword123!",
-    "role": "Administrator"
+    "raw_password": "SecurePassword123!"
   },
   "client": {
     "client_id": "c2b59f68-071e-4fbe-b37d-1374d1b868dd",
     "client_id_alias": "acme-org-client",
     "client_secret": "acme-org-secret-001",
     "redirect_uris": [
-      "https://admin.acme.com/callback"
+      "https://auth.acme.com/callback/"
     ],
     "response_types": ["code"],
     "grant_types": [
@@ -448,7 +501,7 @@ Content-Type: application/json
       "refresh_token",
       "password"
     ],
-    "scope": "openid profile email org-management account management",
+    "scope": "openid profile email management claims:roles claims:permissions claims:assigned_tenants",
     "client_name": "ACME Organization Client",
     "token_endpoint_auth_method": "client_secret_post",
     "application_type": "web"
@@ -472,10 +525,15 @@ Content-Type: application/json
 |-----|---|------|------|
 | `id` | string (UUID) | ✅ | テナントの一意識別子 |
 | `name` | string | ✅ | テナント名 |
+| `type` | string | ✅ | テナントタイプ（`ORGANIZER`） |
 | `domain` | string | ✅ | テナントのドメインURL |
 | `authorization_provider` | string | ✅ | 認可プロバイダー（`idp-server`固定） |
-| `database_type` | string | ✅ | データベース種別（`postgresql`/`mysql`） |
-| `attributes` | object | - | テナント属性（カスタム設定） |
+| `ui_config` | object | - | 管理UI設定（`base_url`, `signin_page`, `signup_page`） |
+| `session_config` | object | - | セッション設定（Cookie名、有効期限等） |
+| `cors_config` | object | - | CORS設定（`allow_origins`, `allow_headers`, `allow_methods`, `allow_credentials`） |
+| `security_event_log_config` | object | - | セキュリティイベントログ設定 |
+
+管理UI経由での操作に必要な設定の詳細は[Organizerテナント管理UI設定](./02a-organizer-management-ui.md)を参照してください。
 
 #### authorization_server設定項目
 
@@ -494,6 +552,10 @@ Content-Type: application/json
 | `grant_types_supported` | array | ✅ | サポートするグラントタイプ |
 | `token_endpoint_auth_methods_supported` | array | ✅ | トークンエンドポイント認証方式 |
 | `subject_types_supported` | array | ✅ | サポートするsubject識別子タイプ |
+| `claims_parameter_supported` | boolean | - | claimsパラメータのサポート |
+| `claims_supported` | array | - | サポートするクレーム（**未設定だとUserInfo/IDトークンが`sub`のみ返却**） |
+| `introspection_endpoint` | string | - | トークンイントロスペクションエンドポイントURL |
+| `revocation_endpoint` | string | - | トークン失効エンドポイントURL |
 | `extension` | object | - | 拡張設定（トークン有効期限等） |
 
 **`extension`設定項目**:
@@ -501,9 +563,12 @@ Content-Type: application/json
 | 項目 | 型 | 説明 |
 |-----|---|------|
 | `access_token_type` | string | アクセストークンタイプ（`JWT`推奨） |
+| `token_signed_key_id` | string | アクセストークン署名用のKey ID |
+| `id_token_signed_key_id` | string | IDトークン署名用のKey ID |
 | `access_token_duration` | number | アクセストークン有効期限（秒）デフォルト: 3600 |
 | `id_token_duration` | number | IDトークン有効期限（秒）デフォルト: 3600 |
 | `refresh_token_duration` | number | リフレッシュトークン有効期限（秒）デフォルト: 86400 |
+| `custom_claims_scope_mapping` | boolean | `claims:*`スコープによるカスタムクレームマッピングの有効化 |
 
 詳細は[認可サーバー設定ガイド](./03-tenant-setup.md)を参照してください。
 
@@ -517,7 +582,6 @@ Content-Type: application/json
 | `email` | string | ✅ | メールアドレス |
 | `email_verified` | boolean | - | メール検証済みフラグ |
 | `raw_password` | string | ✅ | 初期パスワード（平文） |
-| `role` | string | ✅ | ロール（`Administrator`推奨） |
 
 #### client設定項目
 
@@ -677,48 +741,93 @@ cat > org-init.json <<EOF
   "tenant": {
     "id": "${TENANT_ID}",
     "name": "Enterprise Organizer",
+    "type": "ORGANIZER",
     "domain": "${BASE_URL}",
     "authorization_provider": "idp-server",
-    "database_type": "postgresql"
+    "ui_config": {
+      "base_url": "${UI_BASE_URL}",
+      "signin_page": "/signin/fido2/",
+      "signup_page": "/signup/"
+    },
+    "session_config": {
+      "cookie_name": "SESSION_ADMIN",
+      "cookie_same_site": "Lax",
+      "use_secure_cookie": true,
+      "use_http_only_cookie": true,
+      "cookie_path": "/",
+      "timeout_seconds": 3600
+    },
+    "cors_config": {
+      "allow_origins": ["${BASE_URL}", "${UI_BASE_URL}"],
+      "allow_headers": "Authorization, Content-Type, Accept, x-device-id, X-SSL-Client-Cert",
+      "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "allow_credentials": true
+    },
+    "security_event_log_config": {
+      "format": "structured_json",
+      "stage": "processed",
+      "include_user_id": true,
+      "include_user_ex_sub": true,
+      "include_client_id": true,
+      "include_ip_address": true,
+      "persistence_enabled": true,
+      "statistics_enabled": true,
+      "include_event_detail": true
+    }
   },
   "authorization_server": {
     "issuer": "${BASE_URL}/${TENANT_ID}",
     "authorization_endpoint": "${BASE_URL}/${TENANT_ID}/v1/authorizations",
     "token_endpoint": "${BASE_URL}/${TENANT_ID}/v1/tokens",
+    "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"],
     "userinfo_endpoint": "${BASE_URL}/${TENANT_ID}/v1/userinfo",
     "jwks_uri": "${BASE_URL}/${TENANT_ID}/v1/jwks",
     "jwks": ${ESCAPED_JWKS},
-    "token_signed_key_id": "access_token",
-    "id_token_signed_key_id": "id_token_nextauth",
-    "scopes_supported": ["openid", "profile", "email", "org-management"],
-    "response_types_supported": ["code"],
     "grant_types_supported": ["authorization_code", "refresh_token", "password"],
-    "token_endpoint_auth_methods_supported": ["client_secret_post"],
+    "token_signed_key_id": "signing_key_1",
+    "id_token_signed_key_id": "signing_key_1",
+    "scopes_supported": [
+      "openid", "profile", "email", "management",
+      "claims:roles", "claims:permissions", "claims:assigned_tenants"
+    ],
+    "response_types_supported": ["code"],
     "subject_types_supported": ["public"],
+    "claims_parameter_supported": true,
+    "claims_supported": [
+      "sub", "iss", "auth_time", "acr",
+      "name", "given_name", "family_name",
+      "email", "email_verified",
+      "phone_number", "phone_number_verified",
+      "address", "birthdate"
+    ],
+    "introspection_endpoint": "${BASE_URL}/${TENANT_ID}/v1/tokens/introspection",
+    "revocation_endpoint": "${BASE_URL}/${TENANT_ID}/v1/tokens/revocation",
     "extension": {
       "access_token_type": "JWT",
+      "token_signed_key_id": "signing_key_1",
+      "id_token_signed_key_id": "signing_key_1",
       "access_token_duration": 3600,
       "id_token_duration": 3600,
-      "refresh_token_duration": 86400
+      "refresh_token_duration": 86400,
+      "custom_claims_scope_mapping": true
     }
   },
   "user": {
     "sub": "${USER_ID}",
     "provider_id": "idp-server",
-    "name": "org.admin",
+    "name": "admin@customer.com",
     "email": "admin@customer.com",
     "email_verified": true,
-    "raw_password": "TempPassword123!",
-    "role": "Administrator"
+    "raw_password": "TempPassword123!"
   },
   "client": {
     "client_id": "${CLIENT_ID}",
     "client_id_alias": "enterprise-org-client",
     "client_secret": "$(openssl rand -hex 32)",
-    "redirect_uris": ["https://admin.customer.com/callback"],
+    "redirect_uris": ["${BASE_URL}/callback/"],
     "response_types": ["code"],
     "grant_types": ["authorization_code", "refresh_token", "password"],
-    "scope": "openid profile email org-management",
+    "scope": "openid profile email management claims:roles claims:permissions claims:assigned_tenants",
     "client_name": "Enterprise Admin Client",
     "token_endpoint_auth_method": "client_secret_post",
     "application_type": "web"
@@ -916,6 +1025,7 @@ curl "..."  # いきなり本番実行
 ### Phase 1を完了しよう
 
 **次に必要な設定**:
+- [Organizerテナント管理UI設定](./02a-organizer-management-ui.md) - 管理ダッシュボードからの操作に必要な設定
 - [テナント設定](./03-tenant-setup.md) - ビジネス用テナント作成
 - [クライアント登録](./04-client-registration.md) - アプリケーションクライアント登録
 
