@@ -1,0 +1,20 @@
+{
+  "type": "initial-registration",
+  "attributes": {},
+  "metadata": {},
+  "interactions": {
+    "initial-registration": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": ["email", "password", "name"],
+          "properties": {
+            "name": { "type": "string", "maxLength": 255 },
+            "email": { "type": "string", "format": "email", "maxLength": 255 },
+            "password": { "type": "string", "maxLength": 64, "minLength": 8 }
+          }
+        }
+      }
+    }
+  }
+}

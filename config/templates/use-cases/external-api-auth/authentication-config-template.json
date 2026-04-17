@@ -1,0 +1,69 @@
+{
+  "type": "external-api-authentication",
+  "attributes": {},
+  "metadata": {
+    "description": "External API authentication with interaction-based routing"
+  },
+  "interactions": {
+    "password_verify": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": ["interaction", "username", "password"],
+          "properties": {
+            "interaction": { "type": "string" },
+            "username": { "type": "string", "minLength": 1, "maxLength": 256 },
+            "password": { "type": "string", "minLength": 1, "maxLength": 128 }
+          }
+        }
+      },
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "${EXTERNAL_API_URL}",
+          "method": "POST",
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" }
+          ],
+          "body_mapping_rules": [
+            { "from": "$.request_body.username", "to": "username" },
+            { "from": "$.request_body.password", "to": "password" }
+          ]
+        }
+      },
+      "user_resolve": {
+        "identity_match_field": "$.email",
+        "user_mapping_rules": [
+          { "from": "$.execution_http_request.response_body.user_id", "to": "external_user_id" },
+          { "from": "$.execution_http_request.response_body.email", "to": "email" },
+          { "from": "$.execution_http_request.response_body.name", "to": "name" },
+          { "static_value": "${EXTERNAL_PROVIDER_ID}", "to": "provider_id" }
+        ]
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.response_body.user_id",
+            "to": "user_id",
+            "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.user_id" }
+          },
+          {
+            "from": "$.execution_http_request.response_body.email",
+            "to": "email",
+            "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.email" }
+          },
+          {
+            "from": "$.execution_http_request.response_body.error",
+            "to": "error",
+            "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.error" }
+          },
+          {
+            "from": "$.execution_http_request.response_body.error_description",
+            "to": "error_description",
+            "condition": { "operation": "exists", "path": "$.execution_http_request.response_body.error_description" }
+          }
+        ]
+      }
+    }
+  }
+}
