@@ -902,7 +902,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenIntrospectionExtensionErrorResponse'
+                $ref: >-
+                  #/components/schemas/TokenIntrospectionExtensionClientErrorResponse
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -2902,8 +2903,8 @@ components:
     TokenIntrospectionExtensionErrorResponse:
       type: object
       description: |
-        RFC 7662 拡張イントロスペクションのエラーレスポンス。
-        トークンが無効・期限切れ・スコープ不足・クライアント認証失敗等の場合に返却されます。
+        RFC 7662 拡張イントロスペクションのトークン検証エラーレスポンス（HTTP 200）。
+        トークンが無効・期限切れ・スコープ不足等の場合に返却されます。
         HTTP ステータスは 200 ですが、`active: false` とエラー詳細で判別します。
       required:
         - active
@@ -2919,13 +2920,11 @@ components:
           enum:
             - invalid_token
             - insufficient_scope
-            - invalid_client
             - server_error
           description: |
             エラーの種類。
-            - `invalid_token`: トークンが存在しない、期限切れ、またはユーザーが無効
+            - `invalid_token`: トークンが存在しない、期限切れ、ユーザーが無効、証明書不一致
             - `insufficient_scope`: 要求されたスコープがトークンに含まれていない
-            - `invalid_client`: クライアント認証失敗、クライアント設定が見つからない
             - `server_error`: サーバー内部エラー
         error_description:
           type: string
@@ -2936,11 +2935,43 @@ components:
           description: |
             エラーに対応する論理的なHTTPステータスコード。
             リソースサーバーがクライアントに返すべきステータスの参考値として使用できます。
-            - `400`: 不正なリクエスト（invalid_client）
             - `401`: 認証エラー（invalid_token、ユーザー無効、証明書不一致）
             - `403`: 権限不足（insufficient_scope）
             - `500`: サーバーエラー
           example: 401
+    TokenIntrospectionExtensionClientErrorResponse:
+      type: object
+      description: |
+        RFC 7662 拡張イントロスペクションのクライアント認証エラーレスポンス（HTTP 400）。
+        クライアント認証失敗、未登録クライアント、認証情報なし等の場合に返却されます。
+      required:
+        - active
+        - error
+        - status_code
+      properties:
+        active:
+          type: boolean
+          description: 常に `false`。
+          example: false
+        error:
+          type: string
+          enum:
+            - invalid_request
+            - invalid_client
+          description: |
+            エラーの種類。
+            - `invalid_request`: 必須パラメータの欠落、不正な形式
+            - `invalid_client`: クライアントシークレット不一致、未登録クライアント、認証情報なし、サーバー設定未発見
+        error_description:
+          type: string
+          description: エラーの詳細説明。原因の特定に使用できます。
+          example: >-
+            Client authentication failed: method=client_secret_post,
+            client_id=xxx, reason=client_secret does not match
+        status_code:
+          type: integer
+          description: 常に `400`。
+          example: 400
     TokenRevocationRequest:
       type: object
       description: |
