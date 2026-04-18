@@ -516,9 +516,10 @@ PrivateLink 経由でサービスを公開する場合、「mTLS が必要かど
   ・利用側は execute-api 用の VPC Endpoint を作成
 
 制約:
-  ・リクエストタイムアウト: 最大 29 秒（ハードリミット）
+  ・リクエストタイムアウト: デフォルト 29 秒
+    （Regional/Private REST API はクォータ申請で延長可能）
   ・ペイロードサイズ: 最大 10 MB
-  ・リクエスト課金（$3.50/100 万リクエスト〜）
+  ・リクエスト課金（$3.50/100 万リクエスト〜、リージョンにより異なる）
 ```
 
 > **注意: API Gateway (Private) では mTLS は使えない。**
@@ -553,7 +554,7 @@ FAPI（Financial-grade API）等でクライアント証明書による認証が
   ・ALB が mTLS を処理（Verify モード / Passthrough モード）
   ・アプリは HTTP ヘッダーで証明書情報を受け取る
   ・ALB の重み付き TG で 1% 単位の段階的 Blue-Green が可能
-  ・NLB は TCP パススルーのみ（TLS に関与しない）
+  ・NLB は TCP リスナー必須（TLS リスナーでは ALB タイプ TG に転送不可）
   ・NLB は ALB タイプのターゲットグループで ALB に直接接続
 
 ALB が転送するヘッダー:

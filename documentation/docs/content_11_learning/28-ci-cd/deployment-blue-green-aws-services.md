@@ -277,11 +277,12 @@ ALB で mTLS を有効化すると **TLS セッション再開（Session Resumpt
 
 ```
 mTLS なし:
-  初回: Full Handshake（~50ms）
-  2回目以降: Session Resumption（~10ms）
+  初回: Full Handshake（数十ms〜）
+  2回目以降: Session Resumption（数ms〜）
+  ※ レイテンシは環境・ネットワーク条件により異なる
 
 mTLS あり:
-  毎回: Full Handshake（~50ms）
+  毎回: Full Handshake（数十ms〜）
   → Canary フェーズ（5%:95%）でもレイテンシ特性は同じ
   → p95/p99 レイテンシを通常より注意深く監視
 ```
@@ -708,7 +709,7 @@ ALB の設定:
   ・ターゲット: Blue TG / Green TG（重み切り替え）
 
 重要:
-  ・NLB は TCP モードなので TLS を終端しない
+  ・NLB は TCP リスナー必須（TLS リスナーでは ALB タイプ TG に転送不可）
   ・クライアント証明書は NLB を透過して ALB に到達する
   ・ALB が mTLS 検証を行い、Blue/Green TG にルーティング
   → PrivateLink + mTLS + Blue-Green がすべて共存可能
@@ -853,14 +854,14 @@ MTU の注意:
     ・同一組織内のアカウント間で使いやすい
     ・TGW を RAM で共有する必要がある
     ・Blue-Green: 同一 VPC なら影響なし
-    ・コスト: Attachment $0.05/hr + Data $0.02/GB
+    ・コスト: Attachment $0.05/hr + Data $0.02/GB（参考価格、リージョンにより異なる）
 
   PrivateLink 経由:
     クライアント VPC → VPC Endpoint (ENI) → NLB → ALB
     ・組織外のアカウントでも利用可能（サービス名を共有するだけ）
     ・TGW を共有する必要がない
     ・Blue-Green: ALB TG 切り替えのみ、一切影響なし
-    ・コスト: Endpoint $0.01/hr/AZ + Data $0.01/GB
+    ・コスト: Endpoint $0.01/hr/AZ + Data $0.01/GB（参考価格、リージョンにより異なる）
 
   使い分けの指針:
     ・FAPI / 金融機関連携 → PrivateLink 推奨
@@ -908,14 +909,16 @@ MTU の注意:
 #### コスト
 
 ```
+※ 以下は参考価格。リージョンにより異なるため、公式料金ページを確認すること。
+
 同一 VPC パターン:
-  ・TGW Attachment: 1 × $0.05/hr = $36/月
+  ・TGW Attachment: 1 × $0.05/hr ≒ $36/月
   ・ALB: 1 台（共有）
 
 別 VPC パターン:
-  ・TGW Attachment: 2 × $0.05/hr = $72/月（移行期間中）
+  ・TGW Attachment: 2 × $0.05/hr ≒ $72/月（移行期間中）
   ・ALB: 2 台（移行期間中）
-  ・デプロイ完了後に旧 VPC の Attachment を削除すれば $36/月に戻る
+  ・デプロイ完了後に旧 VPC の Attachment を削除すれば約 $36/月に戻る
 
 データ処理:
   ・$0.02/GB（双方向）
