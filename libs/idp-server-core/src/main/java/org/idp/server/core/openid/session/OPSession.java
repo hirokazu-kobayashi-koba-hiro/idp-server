@@ -27,9 +27,10 @@ import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionResults;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
-public class OPSession implements Serializable {
+public class OPSession implements Serializable, JsonReadable {
 
   private OPSessionIdentifier id;
   private TenantIdentifier tenantId;

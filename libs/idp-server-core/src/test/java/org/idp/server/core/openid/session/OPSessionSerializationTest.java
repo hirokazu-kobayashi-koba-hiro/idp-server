@@ -162,6 +162,51 @@ class OPSessionSerializationTest {
     }
   }
 
+  @Nested
+  class UnknownFieldHandling {
+
+    @Test
+    void ignoresUnknownFieldsInOPSession() {
+      // FAIL_ON_UNKNOWN_PROPERTIES=false により、未知フィールドを無視してデシリアライズできる
+      // → Jackson 3 で新フィールドが追加されても、ロールバック後の Jackson 2 で読める
+      OPSession original = createTestSession();
+      String json = jsonConverter.write(original);
+
+      // 未知フィールドを注入（Jackson 3 で追加される可能性のあるフィールドを想定）
+      String jsonWithUnknownFields =
+          json.substring(0, json.length() - 1)
+              + ",\"new_feature_flag\":true"
+              + ",\"migration_metadata\":{\"version\":3}"
+              + "}";
+
+      OPSession restored =
+          assertDoesNotThrow(
+              () -> jsonConverter.read(jsonWithUnknownFields, OPSession.class),
+              "OPSession should ignore unknown fields for rollback safety");
+
+      assertEquals(original.id().value(), restored.id().value());
+      assertEquals(original.tenantId().value(), restored.tenantId().value());
+      assertEquals(original.status(), restored.status());
+    }
+
+    @Test
+    void ignoresUnknownFieldsInClientSession() {
+      String json =
+          "{\"sid\":{\"value\":\"cs_test\"},"
+              + "\"op_session_id\":{\"value\":\"ops_test\"},"
+              + "\"status\":\"ACTIVE\","
+              + "\"unknown_new_field\":\"value\"}";
+
+      ClientSession restored =
+          assertDoesNotThrow(
+              () -> jsonConverter.read(json, ClientSession.class),
+              "ClientSession should ignore unknown fields for rollback safety");
+
+      assertEquals("cs_test", restored.sid().value());
+      assertEquals(SessionStatus.ACTIVE, restored.status());
+    }
+  }
+
   private OPSession createTestSession() {
     return createSessionWithInteractionResults(Map.of());
   }
