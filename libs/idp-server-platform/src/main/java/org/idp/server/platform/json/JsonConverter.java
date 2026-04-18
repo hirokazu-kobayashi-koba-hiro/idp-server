@@ -18,12 +18,17 @@ package org.idp.server.platform.json;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.cfg.CoercionAction;
 import tools.jackson.databind.cfg.CoercionInputShape;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.ext.javatime.deser.LocalDateTimeDeserializer;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 import tools.jackson.databind.type.LogicalType;
 
 public class JsonConverter {
@@ -54,8 +59,14 @@ public class JsonConverter {
    * error.
    */
   private static JsonConverter create() {
+    SimpleModule customDateTimeModule = new SimpleModule();
+    customDateTimeModule.addDeserializer(
+        LocalDateTime.class,
+        new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
     JsonMapper jsonMapper =
         JsonMapper.builder()
+            .addModule(customDateTimeModule)
+            .enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
             .changeDefaultVisibility(
                 vc ->
                     vc.withVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
@@ -72,8 +83,14 @@ public class JsonConverter {
 
   /** Creates a snake_case JsonConverter instance. See {@link #create()} for coercion details. */
   private static JsonConverter createWithSnakeCaseStrategy() {
+    SimpleModule customDateTimeModule = new SimpleModule();
+    customDateTimeModule.addDeserializer(
+        LocalDateTime.class,
+        new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
     JsonMapper jsonMapper =
         JsonMapper.builder()
+            .addModule(customDateTimeModule)
+            .enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
             .changeDefaultVisibility(
                 vc ->
                     vc.withVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
