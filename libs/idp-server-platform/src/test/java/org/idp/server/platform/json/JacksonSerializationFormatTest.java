@@ -42,29 +42,32 @@ class JacksonSerializationFormatTest {
   class InstantFormat {
 
     @Test
-    void recordsInstantSerializationFormat() {
+    void serializesInstantAsEpochSeconds() {
+      // Jackson 2 + JavaTimeModule: Instant → epoch seconds (e.g. 1776506400.000000000)
       InstantHolder obj = new InstantHolder();
       obj.timestamp = Instant.parse("2026-04-18T10:00:00Z");
 
       String json = defaultConverter.write(obj);
 
-      // 現在の Jackson 2 + JavaTimeModule の Instant シリアライズ形式を記録
-      // Jackson 3 でこの形式が変わる場合、このテストが失敗して検知できる
-      System.out.println("[Instant format] " + json);
+      assertTrue(
+          json.contains("1776506400"), "Instant should be serialized as epoch seconds: " + json);
+      assertFalse(
+          json.contains("2026-04-18"),
+          "Instant should NOT be serialized as ISO-8601 string: " + json);
 
-      // ラウンドトリップが可能であること（形式に関わらず）
       InstantHolder restored = defaultConverter.read(json, InstantHolder.class);
       assertEquals(obj.timestamp, restored.timestamp);
     }
 
     @Test
-    void recordsInstantSerializationFormatWithSnakeCase() {
+    void serializesInstantAsEpochSecondsWithSnakeCase() {
       InstantHolder obj = new InstantHolder();
       obj.timestamp = Instant.parse("2026-04-18T10:00:00Z");
 
       String json = snakeCaseConverter.write(obj);
 
-      System.out.println("[Instant snake_case format] " + json);
+      assertTrue(
+          json.contains("1776506400"), "Instant should be serialized as epoch seconds: " + json);
 
       InstantHolder restored = snakeCaseConverter.read(json, InstantHolder.class);
       assertEquals(obj.timestamp, restored.timestamp);
@@ -90,22 +93,13 @@ class JacksonSerializationFormatTest {
 
     @Test
     void canDeserializeIso8601StringFormat() {
-      // ISO-8601 文字列形式で書かれた Instant を読めるか
-      // Jackson 3 がこの形式で出力する可能性がある
+      // Jackson 2 + JavaTimeModule は ISO-8601 文字列形式の Instant を読める
+      // → Jackson 3 が ISO-8601 で出力しても、ロールバック時に Jackson 2 で読める
       String json = "{\"timestamp\":\"2026-04-18T10:00:00Z\"}";
 
-      try {
-        InstantHolder result = defaultConverter.read(json, InstantHolder.class);
-        assertNotNull(result.timestamp);
-        assertEquals(Instant.parse("2026-04-18T10:00:00Z"), result.timestamp);
-      } catch (JsonRuntimeException e) {
-        // Jackson 2 がこの形式を読めない場合、Jackson 3 からのロールバック時に問題になる
-        fail(
-            "Jackson 2 cannot deserialize ISO-8601 string format for Instant. "
-                + "This means data written by Jackson 3 may not be readable after rollback. "
-                + "Error: "
-                + e.getMessage());
-      }
+      InstantHolder result =
+          assertDoesNotThrow(() -> defaultConverter.read(json, InstantHolder.class));
+      assertEquals(Instant.parse("2026-04-18T10:00:00Z"), result.timestamp);
     }
   }
 
@@ -113,16 +107,20 @@ class JacksonSerializationFormatTest {
   class LocalDateTimeFormat {
 
     @Test
-    void recordsLocalDateTimeSerializationFormat() {
+    void serializesLocalDateTimeAsArray() {
+      // Jackson 2 + JavaTimeModule (WRITE_DATES_AS_TIMESTAMPS=true): LocalDateTime → 配列形式
       LocalDateTimeHolder obj = new LocalDateTimeHolder();
       obj.timestamp = LocalDateTime.of(2026, 4, 18, 10, 30, 0);
 
       String json = defaultConverter.write(obj);
 
-      System.out.println("[LocalDateTime format] " + json);
+      assertTrue(
+          json.contains("[2026,4,18,10,30]"),
+          "LocalDateTime should be serialized as array: " + json);
+      assertFalse(
+          json.contains("2026-04-18"),
+          "LocalDateTime should NOT be serialized as ISO-8601 string: " + json);
 
-      // Jackson 2 default: array [2026,4,18,10,30]
-      // Jackson 3 でこの形式が変わるかを検知
       LocalDateTimeHolder restored = defaultConverter.read(json, LocalDateTimeHolder.class);
       assertEquals(obj.timestamp, restored.timestamp);
     }
@@ -170,8 +168,6 @@ class JacksonSerializationFormatTest {
 
       String json = defaultConverter.write(obj);
 
-      System.out.println("[Enum format] " + json);
-
       // enum 名（"ACTIVE"）で出力されること
       assertTrue(json.contains("\"ACTIVE\""), "Enum should serialize as name string: " + json);
 
@@ -198,7 +194,11 @@ class JacksonSerializationFormatTest {
 
       String json = snakeCaseConverter.write(obj);
 
-      System.out.println("[Session-like object format] " + json);
+      // Instant が epoch seconds 形式であること
+      assertTrue(json.contains("1776506400"), "auth_time should be epoch seconds: " + json);
+      // snake_case であること
+      assertTrue(json.contains("\"tenant_id\""), "should use snake_case: " + json);
+      assertTrue(json.contains("\"auth_time\""), "should use snake_case: " + json);
 
       // ラウンドトリップ
       SessionLikeObject restored = snakeCaseConverter.read(json, SessionLikeObject.class);
@@ -226,28 +226,19 @@ class JacksonSerializationFormatTest {
     }
 
     @Test
-    void canDeserializeWithExtraFields() {
-      // 新バージョンで追加されたフィールドが JSON に含まれている場合
+    void rejectsUnknownFields() {
+      // Jackson 2 のデフォルト: FAIL_ON_UNKNOWN_PROPERTIES=true
+      // 未知フィールドが含まれると例外が発生する
+      // → Jackson 3 で新フィールドが追加された場合、Jackson 2 でのロールバック時に問題になる可能性
       String json =
           "{\"id\":\"ops_test\",\"status\":\"ACTIVE\","
               + "\"unknown_field\":\"should_be_ignored\","
               + "\"another_new_field\":123}";
 
-      // Jackson のデフォルトは unknown fields を無視しない（FAIL_ON_UNKNOWN_PROPERTIES=true）
-      // JsonConverter の設定次第で挙動が変わる
-      try {
-        SessionLikeObject result = snakeCaseConverter.read(json, SessionLikeObject.class);
-        assertEquals("ops_test", result.id);
-        // 未知フィールドを無視できた
-      } catch (JsonRuntimeException e) {
-        // 未知フィールドでエラーになる場合、新→旧のロールバック時に問題
-        System.out.println(
-            "[WARNING] Unknown fields cause deserialization failure. "
-                + "If Jackson 3 adds new fields, Jackson 2 will fail to read them. "
-                + "Consider enabling DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES=false. "
-                + "Error: "
-                + e.getMessage());
-      }
+      assertThrows(
+          JsonRuntimeException.class,
+          () -> snakeCaseConverter.read(json, SessionLikeObject.class),
+          "Unknown fields should cause deserialization failure with default Jackson 2 settings");
     }
   }
 

@@ -187,9 +187,9 @@ class JsonConverterTest {
     }
 
     @Test
-    void deserializesIso8601Format() {
+    void deserializesArrayFormat() {
       JsonConverter converter = JsonConverter.defaultInstance();
-      // ISO-8601 array format from Jackson serialization
+      // Jackson 2 のデフォルト配列形式
       String json = "{\"timestamp\":[2026,4,18,10,30,0]}";
 
       DateTimeObject result = converter.read(json, DateTimeObject.class);
