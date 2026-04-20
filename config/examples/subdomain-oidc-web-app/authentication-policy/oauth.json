@@ -16,7 +16,9 @@
         "email",
         "fido2",
         "fido-uaf",
-        "initial-registration"
+        "initial-registration",
+        "authentication-device-notification",
+        "authentication-device-deny"
       ],
       "step_definitions": [
         {
@@ -118,6 +120,14 @@
             },
             {
               "path": "$.fido-uaf-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.fido-uaf-authentication.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1

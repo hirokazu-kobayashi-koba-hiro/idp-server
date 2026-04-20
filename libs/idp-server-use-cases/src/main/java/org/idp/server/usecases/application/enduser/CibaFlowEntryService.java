@@ -22,7 +22,6 @@ import org.idp.server.core.extension.ciba.*;
 import org.idp.server.core.extension.ciba.handler.io.*;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.extension.ciba.user.UserHintResolvers;
 import org.idp.server.core.extension.ciba.verifier.additional.CibaRequestAdditionalVerifiers;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
@@ -33,6 +32,7 @@ import org.idp.server.core.openid.identity.authentication.PasswordVerificationDe
 import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.openid.identity.event.UserLifecycleType;
+import org.idp.server.core.openid.identity.hint.UserHintResolvers;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.platform.datasource.Transaction;

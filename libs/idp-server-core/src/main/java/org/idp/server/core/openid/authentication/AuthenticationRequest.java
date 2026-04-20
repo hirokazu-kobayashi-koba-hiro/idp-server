@@ -175,6 +175,7 @@ public class AuthenticationRequest {
   public AuthenticationRequest updateWithUser(
       AuthenticationInteractionRequestResult interactionRequestResult) {
     User user = interactionRequestResult.user();
+    AuthenticationDevice resolvedDevice = resolveAuthenticationDevice(user);
     return new AuthenticationRequest(
         authFlow,
         tenantIdentifier,
@@ -182,7 +183,7 @@ public class AuthenticationRequest {
         requestedClientId,
         clientAttributes,
         user,
-        authenticationDevice,
+        resolvedDevice,
         context,
         createdAt,
         expiresAt);
@@ -190,6 +191,7 @@ public class AuthenticationRequest {
 
   public AuthenticationRequest updateWithUser(FederationInteractionResult result) {
     User user = result.user();
+    AuthenticationDevice resolvedDevice = resolveAuthenticationDevice(user);
     return new AuthenticationRequest(
         authFlow,
         tenantIdentifier,
@@ -197,10 +199,23 @@ public class AuthenticationRequest {
         requestedClientId,
         clientAttributes,
         user,
-        authenticationDevice,
+        resolvedDevice,
         context,
         createdAt,
         expiresAt);
+  }
+
+  private AuthenticationDevice resolveAuthenticationDevice(User user) {
+    if (hasAuthenticationDevice()) {
+      return authenticationDevice;
+    }
+    if (user != null && user.exists()) {
+      AuthenticationDevice primaryDevice = user.findPrimaryAuthenticationDevice();
+      if (primaryDevice.exists()) {
+        return primaryDevice;
+      }
+    }
+    return authenticationDevice;
   }
 
   public AcrValues acrValues() {

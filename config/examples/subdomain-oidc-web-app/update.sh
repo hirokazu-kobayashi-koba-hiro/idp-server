@@ -235,6 +235,45 @@ if [ -f "${FIDO_UAF_CONFIG_FILE}" ]; then
     echo "   Response: ${FIDO_UAF_BODY}" | jq '.' 2>/dev/null || echo "   ${FIDO_UAF_BODY}"
   fi
 fi
+
+# Authentication Device Notification config
+DEVICE_NOTIFICATION_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/authentication-device/push-notification.json"
+if [ -f "${DEVICE_NOTIFICATION_CONFIG_FILE}" ]; then
+  DEVICE_NOTIFICATION_CONFIG_JSON=$(cat "${DEVICE_NOTIFICATION_CONFIG_FILE}")
+  DEVICE_NOTIFICATION_CONFIG_ID=$(echo "${DEVICE_NOTIFICATION_CONFIG_JSON}" | jq -r '.id')
+
+  echo "   Updating Authentication Device Notification config: ${DEVICE_NOTIFICATION_CONFIG_ID}..."
+
+  DEVICE_NOTIFICATION_RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations/${DEVICE_NOTIFICATION_CONFIG_ID}" \
+    -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "${DEVICE_NOTIFICATION_CONFIG_JSON}")
+
+  DEVICE_NOTIFICATION_HTTP_CODE=$(echo "${DEVICE_NOTIFICATION_RESPONSE}" | tail -n1)
+  DEVICE_NOTIFICATION_BODY=$(echo "${DEVICE_NOTIFICATION_RESPONSE}" | sed '$d')
+
+  if [ "${DEVICE_NOTIFICATION_HTTP_CODE}" = "200" ]; then
+    echo "   Authentication Device Notification config updated"
+  elif [ "${DEVICE_NOTIFICATION_HTTP_CODE}" = "404" ]; then
+    echo "   Config not found, creating..."
+    DEVICE_NOTIFICATION_CREATE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations" \
+      -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${DEVICE_NOTIFICATION_CONFIG_JSON}")
+
+    DEVICE_NOTIFICATION_CREATE_HTTP_CODE=$(echo "${DEVICE_NOTIFICATION_CREATE_RESPONSE}" | tail -n1)
+    if [ "${DEVICE_NOTIFICATION_CREATE_HTTP_CODE}" = "200" ] || [ "${DEVICE_NOTIFICATION_CREATE_HTTP_CODE}" = "201" ]; then
+      echo "   Authentication Device Notification config created"
+    else
+      echo "   Warning: Creation failed (HTTP ${DEVICE_NOTIFICATION_CREATE_HTTP_CODE})"
+    fi
+  else
+    echo "   Warning: Update failed (HTTP ${DEVICE_NOTIFICATION_HTTP_CODE})"
+    echo "   Response: ${DEVICE_NOTIFICATION_BODY}" | jq '.' 2>/dev/null || echo "   ${DEVICE_NOTIFICATION_BODY}"
+  fi
+fi
 echo ""
 
 # Step 6: Update authentication policies

@@ -23,11 +23,11 @@ import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRe
 import org.idp.server.core.extension.ciba.repository.CibaGrantRepository;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
-import org.idp.server.core.extension.ciba.user.UserHintResolver;
-import org.idp.server.core.extension.ciba.user.UserHintResolvers;
 import org.idp.server.core.extension.ciba.verifier.additional.CibaRequestAdditionalVerifiers;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.hint.UserHintResolver;
+import org.idp.server.core.openid.identity.hint.UserHintResolvers;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;

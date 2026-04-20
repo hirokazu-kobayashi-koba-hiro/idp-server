@@ -109,7 +109,8 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
             requestedClaimsPayload.idToken(),
             idTokenStrictMode);
     GrantUserinfoClaims grantUserinfoClaims =
-        GrantUserinfoClaims.create(scopes, supportedClaims, requestedClaimsPayload.userinfo());
+        GrantUserinfoClaims.create(
+            removeScopes, supportedClaims, requestedClaimsPayload.userinfo());
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
     ConsentClaims consentClaims = createConsentClaims();
     GrantType grantType = GrantType.authorization_code;
@@ -121,7 +122,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
         requestedClientId,
         clientAttributes,
         grantType,
-        scopes,
+        removeScopes,
         grantIdTokenClaims,
         grantUserinfoClaims,
         customProperties,
