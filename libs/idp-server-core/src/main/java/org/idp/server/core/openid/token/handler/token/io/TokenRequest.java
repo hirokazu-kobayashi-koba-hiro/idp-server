@@ -132,4 +132,14 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
     TokenRequestParameters parameters = toParameters();
     return parameters.isRefreshTokenGrant();
   }
+
+  public boolean isTokenExchangeGrant() {
+    TokenRequestParameters parameters = toParameters();
+    return parameters.grantType().isTokenExchange();
+  }
+
+  public boolean hasActorToken() {
+    TokenRequestParameters parameters = toParameters();
+    return parameters.hasActorToken();
+  }
 }

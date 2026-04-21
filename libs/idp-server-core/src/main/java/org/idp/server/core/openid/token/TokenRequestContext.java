@@ -254,6 +254,14 @@ public class TokenRequestContext implements BackchannelRequestContext {
     return clientConfiguration.findAvailableFederationByIssuer(issuer);
   }
 
+  public Optional<AvailableFederation> findTokenExchangeFederationByIssuer(String issuer) {
+    return clientConfiguration.findTokenExchangeFederationByIssuer(issuer);
+  }
+
+  public Optional<AvailableFederation> findTokenExchangeIntrospectionFederation() {
+    return clientConfiguration.findTokenExchangeIntrospectionFederation();
+  }
+
   public Optional<AvailableFederation> findDeviceFederation() {
     return clientConfiguration.findDeviceFederation();
   }
@@ -264,5 +272,49 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public boolean isSupportedJwtBearerGrant() {
     return Objects.nonNull(jwtBearerUserFindingDelegate);
+  }
+
+  public boolean isTokenExchangeGrant() {
+    return parameters.grantType().isTokenExchange();
+  }
+
+  public SubjectToken subjectToken() {
+    return parameters.subjectToken();
+  }
+
+  public boolean hasSubjectToken() {
+    return parameters.hasSubjectToken();
+  }
+
+  public SubjectTokenType subjectTokenType() {
+    return parameters.subjectTokenType();
+  }
+
+  public boolean hasSubjectTokenType() {
+    return parameters.hasSubjectTokenType();
+  }
+
+  public RequestedTokenType requestedTokenType() {
+    return parameters.requestedTokenType();
+  }
+
+  public boolean hasRequestedTokenType() {
+    return parameters.hasRequestedTokenType();
+  }
+
+  public ActorToken actorToken() {
+    return parameters.actorToken();
+  }
+
+  public boolean hasActorToken() {
+    return parameters.hasActorToken();
+  }
+
+  public SubjectTokenType actorTokenType() {
+    return parameters.actorTokenType();
+  }
+
+  public boolean hasActorTokenType() {
+    return parameters.hasActorTokenType();
   }
 }

@@ -16,8 +16,6 @@
 
 package org.idp.server.core.openid.token.service;
 
-import java.net.URI;
-import java.net.http.HttpRequest;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -41,12 +39,9 @@ import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.validator.JwtBearerGrantValidator;
 import org.idp.server.core.openid.token.verifier.JwtBearerGrantVerifier;
 import org.idp.server.platform.http.HttpRequestExecutor;
-import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
-import org.idp.server.platform.jose.JwtCredential;
-import org.idp.server.platform.jose.JwtSignatureVerifier;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -63,7 +58,7 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
 
   OAuthTokenCommandRepository oAuthTokenCommandRepository;
   DeviceAuthenticationVerifier deviceAuthenticationVerifier;
-  HttpRequestExecutor httpRequestExecutor;
+  FederationJwtVerifier federationJwtVerifier;
   AccessTokenCreator accessTokenCreator;
 
   public JwtBearerGrantService(
@@ -71,7 +66,7 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
       HttpRequestExecutor httpRequestExecutor) {
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.deviceAuthenticationVerifier = new DeviceAuthenticationVerifier();
-    this.httpRequestExecutor = httpRequestExecutor;
+    this.federationJwtVerifier = new FederationJwtVerifier(httpRequestExecutor);
     this.accessTokenCreator = AccessTokenCreator.getInstance();
   }
 
@@ -224,58 +219,6 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
   }
 
   private void verifyExternalIdpSignature(JsonWebSignature jws, AvailableFederation federation) {
-    try {
-      String jwks = resolveJwks(federation);
-
-      JwtCredential jwtCredential = JwtCredential.asymmetric(jwks);
-      JwtSignatureVerifier signatureVerifier = new JwtSignatureVerifier();
-      signatureVerifier.verify(jws, jwtCredential);
-    } catch (TokenBadRequestException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new TokenBadRequestException(
-          "invalid_grant", "External IdP signature verification failed: " + e.getMessage());
-    }
-  }
-
-  private String resolveJwks(AvailableFederation federation) {
-    if (federation.hasJwks()) {
-      return federation.jwks();
-    }
-    if (federation.hasJwksUri()) {
-      return fetchJwks(federation.jwksUri());
-    }
-    throw new TokenBadRequestException(
-        "invalid_grant",
-        String.format(
-            "Federation '%s' does not have JWKS configured (neither jwks nor jwks_uri)",
-            federation.issuer()));
-  }
-
-  private String fetchJwks(String jwksUri) {
-    try {
-      HttpRequest request =
-          HttpRequest.newBuilder()
-              .uri(URI.create(jwksUri))
-              .GET()
-              .header("Accept", "application/json")
-              .build();
-
-      HttpRequestResult result = httpRequestExecutor.execute(request);
-
-      if (result.isClientError() || result.isServerError()) {
-        throw new TokenBadRequestException(
-            "invalid_grant",
-            String.format("Failed to fetch JWKS from '%s': HTTP %d", jwksUri, result.statusCode()));
-      }
-
-      return result.body().toString();
-    } catch (TokenBadRequestException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new TokenBadRequestException(
-          "invalid_grant",
-          String.format("Failed to fetch JWKS from '%s': %s", jwksUri, e.getMessage()));
-    }
+    federationJwtVerifier.verifyExternalIdpSignature(jws, federation);
   }
 }

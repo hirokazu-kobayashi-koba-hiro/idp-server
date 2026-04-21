@@ -30,6 +30,7 @@ public class TokenResponseBuilder {
   TokenType tokenType;
   ExpiresIn expiresIn;
   RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity();
+  IssuedTokenType issuedTokenType = new IssuedTokenType();
   Scopes scopes = new Scopes();
   IdToken idToken = new IdToken();
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
@@ -62,6 +63,14 @@ public class TokenResponseBuilder {
     this.refreshTokenEntity = refreshTokenEntity;
     if (refreshTokenEntity.exists()) {
       values.put("refresh_token", refreshTokenEntity.value());
+    }
+    return this;
+  }
+
+  public TokenResponseBuilder add(IssuedTokenType issuedTokenType) {
+    this.issuedTokenType = issuedTokenType;
+    if (issuedTokenType.exists()) {
+      values.put("issued_token_type", issuedTokenType.value());
     }
     return this;
   }
@@ -111,6 +120,7 @@ public class TokenResponseBuilder {
         tokenType,
         expiresIn,
         refreshTokenEntity,
+        issuedTokenType,
         scopes,
         idToken,
         authorizationDetails,

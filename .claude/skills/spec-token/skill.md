@@ -8,6 +8,7 @@ description: トークン管理（Token Management）機能の開発・修正を
 ## ドキュメント
 
 - `documentation/docs/content_06_developer-guide/03-application-plane/03-token-endpoint.md` - トークンエンドポイント実装ガイド
+- `documentation/docs/content_06_developer-guide/03-application-plane/11-token-exchange.md` - Token Exchange（RFC 8693）実装ガイド
 - `documentation/docs/content_03_concepts/04-tokens-claims/concept-02-token-management.md` - トークン管理概念
 - `documentation/docs/content_05_how-to/phase-2-security/02-token-strategy.md` - トークン有効期限パターン（4パターン、クライアントレベルオーバーライド）
 - `documentation/docs/content_07_reference/transaction-expiration-settings.md` - トランザクションデータの有効期限設定リファレンス
@@ -91,6 +92,7 @@ public class TokenRequestHandler {
 | `RefreshTokenGrantService` | Refresh Token Grant処理 |
 | `ClientCredentialsGrantService` | Client Credentials Grant処理 |
 | `JwtBearerGrantService` | JWT Bearer Grant処理（RFC 7523） |
+| `TokenExchangeGrantService` | Token Exchange Grant処理（RFC 8693） |
 
 ## JWT Bearer Grant（RFC 7523）
 
@@ -240,6 +242,76 @@ JWTの`sub`クレームからユーザーを解決する方法を設定できま
 
 トークンを無効化します。OAuthTokenCommandRepository.delete()を使用します。キャッシュが有効な場合、DB削除と同時にキャッシュも削除されます。
 
+## Token Exchange Grant（RFC 8693）
+
+Token Exchangeは、外部IdPが発行したトークン（JWT/opaque）をidp-serverのアクセストークンに交換するグラントタイプです。
+
+### 概要
+
+- **Grant Type**: `urn:ietf:params:oauth:grant-type:token-exchange`
+- **用途**: IDサービス移行、サードパーティ連携、マイクロサービス間トークン交換
+- **仕様**: [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693)
+- **詳細ガイド**: `documentation/docs/content_06_developer-guide/03-application-plane/11-token-exchange.md`
+
+### サポート機能
+
+| 機能 | 状態 |
+|------|------|
+| JWT署名検証（JWKS） | ✅ |
+| Opaque token（Introspection） | ✅ |
+| JIT Provisioning（ユーザー自動作成） | ✅ |
+| Claim Sync（属性同期） | ✅ |
+| Delegation（actor_token） | 🔜 |
+
+### 関連ファイル
+
+| ファイル | 役割 |
+|---------|------|
+| `TokenExchangeGrantService.java` | Token Exchange処理メイン |
+| `SubjectTokenVerifier.java` | subject_token検証（JWT/Introspection分岐） |
+| `FederationJwtVerifier.java` | 外部IdP JWT署名検証（JWT Bearer Grantと共有） |
+| `ExternalTokenIntrospector.java` | 外部IdP introspection呼び出し |
+| `TokenExchangeGrantValidator.java` | リクエストパラメータ検証 |
+| `TokenExchangeGrantVerifier.java` | JWTクレーム検証 |
+| `SubjectTokenVerificationResult.java` | 検証結果値オブジェクト |
+
+### Federation設定（available_federations）
+
+```json
+{
+  "issuer": "https://old-idp.example.com",
+  "type": "oidc",
+  "token_exchange_grant_enabled": true,
+  "token_exchange_token_verification_method": "jwt",
+  "jit_provisioning_enabled": true,
+  "jwks": "{\"keys\":[...]}",
+  "userinfo_mapping_rules": [
+    { "from": "$.sub", "to": "external_user_id" },
+    { "from": "$.email", "to": "email" },
+    { "from": "$.preferred_username", "to": "preferred_username" }
+  ]
+}
+```
+
+### トラブルシューティング
+
+#### invalid_grant: Issuer is not trusted
+- federation設定の`issuer`がJWTの`iss`クレームと一致しているか確認
+- `token_exchange_grant_enabled: true`が設定されているか確認
+
+#### invalid_grant: External introspection failed
+- `introspection_endpoint`のURL、`introspection_client_id`/`introspection_client_secret`が正しいか確認
+- `introspection_auth_method`が外部IdPの要求と合っているか確認（`client_secret_basic` or `client_secret_post`）
+
+#### server_error: Multiple introspection federations configured
+- 1クライアントに `token_exchange_token_verification_method: "introspection"` のfederationが2つ以上設定されている
+- introspection federationは1クライアントにつき1つのみサポート
+
+#### invalid_grant: User not found
+- `jit_provisioning_enabled: true`が設定されているか確認（JIT無効の場合はユーザーの事前登録が必要）
+- `subject_claim_mapping`の設定を確認
+- `userinfo_mapping_rules`に`external_user_id`と`preferred_username`のマッピングがあるか確認
+
 ## Access Token タイプ（opaque vs JWT）
 
 `authorization_server.extension.access_token_type` で制御（認可サーバーレベルの設定。クライアント単位のオーバーライドは不可）。
@@ -331,6 +403,7 @@ e2e/src/tests/
 │   ├── rfc7009_token_revocation_*.test.js   # Token Revocation
 │   ├── rfc7662_token_introspection_*.test.js # Token Introspection
 │   ├── rfc7523_jwt_bearer_grant_*.test.js   # JWT Bearer Grant
+│   ├── rfc8693_token_exchange.test.js       # Token Exchange（RFC 8693）
 │   └── oidc_core_*.test.js                  # OIDC関連トークンテスト
 │
 ├── usecase/device-credential/
@@ -351,6 +424,7 @@ cd e2e && npm test -- spec/rfc6749_token_endpoint_*.test.js
 cd e2e && npm test -- spec/rfc7009_token_revocation_*.test.js
 cd e2e && npm test -- spec/rfc7662_token_introspection_*.test.js
 cd e2e && npm test -- spec/rfc7523_jwt_bearer_grant_*.test.js
+cd e2e && npm test -- --testPathPattern="rfc8693"
 cd e2e && npm test -- usecase/device-credential/device-credential-04-device-secret-issuance.test.js
 ```
 

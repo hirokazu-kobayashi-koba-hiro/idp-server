@@ -18,8 +18,10 @@ package org.idp.server.core.openid.token;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.SecurityEventUserCreatable;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.event.*;
@@ -113,6 +115,8 @@ public class UserEventCreator implements SecurityEventUserCreatable {
       detailsMap.put("user", toDetailWithSensitiveData(user, tenant));
     }
 
+    addDelegationInfoIfPresent(detailsMap);
+
     builder.add(requestAttributes.getIpAddress());
     builder.add(requestAttributes.getUserAgent());
     detailsMap.putAll(requestAttributes.toMap());
@@ -127,5 +131,26 @@ public class UserEventCreator implements SecurityEventUserCreatable {
     builder.add(securityEventDetail);
 
     return builder.build();
+  }
+
+  /**
+   * Adds delegation actor information to the security event detail if present. This enables audit
+   * tracking of "who acted on behalf of whom" in Token Exchange Delegation (RFC 8693 Section 4.1).
+   */
+  private void addDelegationInfoIfPresent(Map<String, Object> detailsMap) {
+    AuthorizationGrant grant = oAuthToken.authorizationGrant();
+    if (grant == null || !grant.hasCustomProperties()) {
+      return;
+    }
+    CustomProperties customProperties = grant.customProperties();
+    if (customProperties.contains("act_sub")) {
+      Map<String, Object> delegation = new HashMap<>();
+      delegation.put("actor_sub", customProperties.getValue("act_sub"));
+      Object actChain = customProperties.getValue("act_chain");
+      if (actChain != null) {
+        delegation.put("actor_chain", actChain);
+      }
+      detailsMap.put("delegation", delegation);
+    }
   }
 }

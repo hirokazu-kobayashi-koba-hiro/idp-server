@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
+import org.idp.server.core.openid.oauth.configuration.exception.ConfigurationInvalidException;
 import org.idp.server.core.openid.oauth.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.core.openid.oauth.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.openid.oauth.type.oauth.*;
@@ -502,11 +503,37 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return extension.availableFederationsAsMapList();
   }
 
+  public List<Map<String, Object>> availableFederationsAsViewMapList() {
+    return extension.availableFederationsAsViewMapList();
+  }
+
   public Optional<AvailableFederation> findAvailableFederationByIssuer(String issuer) {
     return availableFederations().stream()
         .filter(federation -> federation.jwtBearerGrantEnabled())
         .filter(federation -> federation.matchesIssuer(issuer))
         .findFirst();
+  }
+
+  public Optional<AvailableFederation> findTokenExchangeFederationByIssuer(String issuer) {
+    return availableFederations().stream()
+        .filter(federation -> federation.tokenExchangeGrantEnabled())
+        .filter(federation -> federation.matchesIssuer(issuer))
+        .findFirst();
+  }
+
+  public Optional<AvailableFederation> findTokenExchangeIntrospectionFederation() {
+    List<AvailableFederation> matched =
+        availableFederations().stream()
+            .filter(federation -> federation.tokenExchangeGrantEnabled())
+            .filter(federation -> federation.isIntrospectionVerification())
+            .filter(federation -> federation.hasIntrospectionEndpoint())
+            .toList();
+    if (matched.size() > 1) {
+      throw new ConfigurationInvalidException(
+          "Multiple introspection federations configured for token exchange. "
+              + "Only one introspection federation per client is supported.");
+    }
+    return matched.stream().findFirst();
   }
 
   public Optional<AvailableFederation> findDeviceFederation() {

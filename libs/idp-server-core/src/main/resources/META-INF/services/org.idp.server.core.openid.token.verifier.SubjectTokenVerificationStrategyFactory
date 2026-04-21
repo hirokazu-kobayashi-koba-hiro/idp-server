@@ -1,0 +1,2 @@
+# Extension token type strategies are registered here via SPI.
+# Core token types (jwt, id_token, access_token) are built-in to SubjectTokenVerifier.

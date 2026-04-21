@@ -27,6 +27,7 @@ public class TokenResponse {
   TokenType tokenType;
   ExpiresIn expiresIn;
   RefreshTokenEntity refreshTokenEntity;
+  IssuedTokenType issuedTokenType;
   Scopes scopes;
   IdToken idToken;
   AuthorizationDetails authorizationDetails;
@@ -39,6 +40,7 @@ public class TokenResponse {
       TokenType tokenType,
       ExpiresIn expiresIn,
       RefreshTokenEntity refreshTokenEntity,
+      IssuedTokenType issuedTokenType,
       Scopes scopes,
       IdToken idToken,
       AuthorizationDetails authorizationDetails,
@@ -49,6 +51,7 @@ public class TokenResponse {
     this.tokenType = tokenType;
     this.expiresIn = expiresIn;
     this.refreshTokenEntity = refreshTokenEntity;
+    this.issuedTokenType = issuedTokenType;
     this.scopes = scopes;
     this.idToken = idToken;
     this.authorizationDetails = authorizationDetails;

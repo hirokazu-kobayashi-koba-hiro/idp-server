@@ -69,6 +69,13 @@ public enum OAuthRequestKey {
   client_metadata,
   client_metadata_uri,
   transaction_id,
+  // RFC 8693 Token Exchange
+  subject_token,
+  subject_token_type,
+  requested_token_type,
+  resource,
+  actor_token,
+  actor_token_type,
   // RP-Initiated Logout
   post_logout_redirect_uri,
   logout_hint;

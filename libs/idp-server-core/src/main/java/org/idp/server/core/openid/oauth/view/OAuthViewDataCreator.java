@@ -57,7 +57,7 @@ public class OAuthViewDataCreator {
     List<String> scopes = authorizationRequest.scopes().toStringList();
     boolean sessionEnabled = isSessionEnabled();
     List<Map<String, Object>> availableFederationsAsMapList =
-        clientConfiguration.availableFederationsAsMapList();
+        clientConfiguration.availableFederationsAsViewMapList();
 
     if (clientConfiguration.hasCustomProperties()) {
       additionalViewData.put("client_custom_properties", clientConfiguration.customProperties());
