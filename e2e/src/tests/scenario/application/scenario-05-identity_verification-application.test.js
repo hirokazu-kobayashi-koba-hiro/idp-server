@@ -127,6 +127,21 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.data.list[0].status).toEqual("applying");
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
       expect(applicationsResponse.data.list[0].attributes.label).toEqual("証券口座開設");
+      expect(applicationsResponse.data.list[0]).toHaveProperty("processes");
+      const processes = applicationsResponse.data.list[0].processes;
+      console.log("processes:", JSON.stringify(processes, null, 2));
+      // apply, request-ekyc, complete-ekyc have been called
+      expect(processes).toHaveProperty("apply");
+      expect(processes.apply).toHaveProperty("call_count");
+      expect(processes.apply).toHaveProperty("success_count");
+      expect(processes.apply).toHaveProperty("failure_count");
+      expect(processes.apply.call_count).toBeGreaterThanOrEqual(1);
+      expect(processes.apply.success_count).toBeGreaterThanOrEqual(1);
+      // pagination fields
+      expect(applicationsResponse.data).toHaveProperty("total_count");
+      expect(applicationsResponse.data.total_count).toBeGreaterThanOrEqual(1);
+      expect(applicationsResponse.data).toHaveProperty("limit");
+      expect(applicationsResponse.data).toHaveProperty("offset");
 
       const registrationResponse = await post({
         url: processEndpoint.replace("{process}", "crm-registration"),
@@ -422,6 +437,7 @@ describe("identity-verification application", () => {
       expect(resultsResponse.status).toBe(200);
       expect(resultsResponse.data.list.length).toBe(1);
       expect(resultsResponse.data.list[0]).toHaveProperty("id");
+      expect(resultsResponse.data.list[0]).toHaveProperty("application_id");
       expect(resultsResponse.data.list[0].type).toEqual(type);
       expect(resultsResponse.data.list[0].tenant_id).toEqual(serverConfig.tenantId);
       expect(resultsResponse.data.list[0].user_id).toEqual(user.sub);
@@ -429,7 +445,13 @@ describe("identity-verification application", () => {
       expect(resultsResponse.data.list[0]).toHaveProperty("source_details");
       expect(resultsResponse.data.list[0].source_details.status).not.toBeNull();
       expect(resultsResponse.data.list[0]).toHaveProperty("verified_at");
+      expect(resultsResponse.data.list[0]).toHaveProperty("verified_claims");
       expect(resultsResponse.data.list[0].attributes.label).toEqual("証券口座開設");
+      // pagination fields
+      expect(resultsResponse.data).toHaveProperty("total_count");
+      expect(resultsResponse.data.total_count).toBeGreaterThanOrEqual(1);
+      expect(resultsResponse.data).toHaveProperty("limit");
+      expect(resultsResponse.data).toHaveProperty("offset");
 
       const deleteUrl = serverConfig.identityVerificationApplicationsDeletionEndpoint
         .replace("{type}", type)

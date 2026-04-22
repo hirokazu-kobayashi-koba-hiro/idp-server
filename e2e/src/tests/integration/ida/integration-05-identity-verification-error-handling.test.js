@@ -297,6 +297,53 @@ describe("Identity Verification Error Handling", () => {
 
   });
 
+  describe("403 Forbidden - Insufficient Scope Tests", () => {
+
+    it("should return 403 when deleting application without identity_verification_application_delete scope", async () => {
+      console.log("\n🧪 Test: 403 - DELETE without identity_verification_application_delete scope");
+
+      // Create a token WITHOUT identity_verification_application_delete scope
+      const { user: noDeleteScopeUser, accessToken: noDeleteScopeToken } = await createFederatedUser({
+        serverConfig: serverConfig,
+        federationServerConfig: federationServerConfig,
+        client: clientSecretPostClient,
+        adminClient: clientSecretPostClient,
+        scope: "openid profile phone email identity_verification_application identity_verification_result " + clientSecretPostClient.identityVerificationScope
+      });
+
+      // First create an application with the limited-scope token
+      const applyUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${configurationType}/apply`;
+      const applyResponse = await postWithJson({
+        url: applyUrl,
+        body: { "name": "Delete Scope Test" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${noDeleteScopeToken}`
+        }
+      });
+      expect(applyResponse.status).toBe(200);
+      const applicationId = applyResponse.data.id;
+
+      // Attempt to delete without the required scope
+      const deleteUrl = `${backendUrl}/${tenantId}/v1/me/identity-verification/applications/${configurationType}/${applicationId}`;
+      const deleteResponse = await deletion({
+        url: deleteUrl,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${noDeleteScopeToken}`
+        }
+      });
+
+      console.log(`Response status: ${deleteResponse.status}`);
+      console.log("Response data:", JSON.stringify(deleteResponse.data, null, 2));
+
+      expect(deleteResponse.status).toBe(403);
+
+      console.log("✅ Correctly returned 403 for DELETE without identity_verification_application_delete scope");
+    });
+
+  });
+
   describe("404 Not Found Tests", () => {
 
     it("should return 404 when accessing subsequent process with non-existent application ID", async () => {
