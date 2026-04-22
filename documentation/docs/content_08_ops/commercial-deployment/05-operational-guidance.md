@@ -809,6 +809,49 @@ idp-server は 3 つの非同期キューを持ち、キュー容量を超える
 | `USER_LIFECYCLE_EVENT_MAX_POOL_SIZE` | `10` | ユーザーライフサイクル 最大スレッド数 |
 | `USER_LIFECYCLE_EVENT_QUEUE_CAPACITY` | `1000` | ユーザーライフサイクル タスクキュー容量 |
 
+#### Shutdown 時のイベントロスト
+
+Graceful Shutdown（[3.1 参照](#31-graceful-shutdown)）の過程で、非同期キュー内のイベントがロストする場合があります。
+
+**Executor タイムアウト時の部分コミット挙動**:
+
+`ThreadPoolTaskExecutor` は `waitForTasksToCompleteOnShutdown=true` / `awaitTerminationSeconds=30` で設定されています（`AsyncConfig.java`）。Shutdown 開始後、executor は新規タスクの受付を停止し、キュー内の残タスクを処理し続けます。30秒以内に完了しなかった場合、以下のログが出力されます:
+
+```
+Timed out while waiting for executor 'securityEventTaskExecutor' to terminate
+```
+
+このとき、**タイムアウト前に処理されたイベントは個別にDBコミット済み**です。ロストするのはタイムアウト時点で未処理だったキュー残り分のみであり、0件 or 全件ではなく途中まで処理が進んでいます。
+
+**複合シナリオ: Executor タイムアウト + リトライキュー残存**:
+
+以下の2つのログが同時に出現した場合:
+
+```
+shutdown with N security events in retry queue, attempting flush
+Timed out while waiting for executor 'securityEventTaskExecutor' to terminate
+```
+
+これは負荷超過状態で Shutdown に入ったことを示します:
+
+1. タスクキューが満杯でリトライキューに退避されたイベントがある
+2. Executor が30秒以内にタスクキューを消化しきれなかった
+3. `@PreDestroy` の flush（`SecurityEventRetryScheduler.onShutdown()`）はリトライキューの再送を試みるが、DB接続が切断済みの場合は失敗する
+
+**ロスト範囲**: Executor 未処理分 + リトライキュー残り分
+
+**ログ発生時の対処手順**:
+
+| ログ | 確認すべきこと | 対処 |
+|------|--------------|------|
+| `Timed out while waiting for executor` | キュー滞留の原因（負荷過多？外部API遅延？） | スレッドプール/キュー容量の見直し（[非同期キュー飽和](#非同期キュー飽和) 参照）、外部呼び出しのタイムアウト確認 |
+| `shutdown with N events in retry queue` | ロスト件数の把握、影響範囲の特定 | `security_event` テーブルとの突合で消失イベントを特定、必要に応じて手動リカバリ |
+| 両方同時 | 上記 + `terminationGracePeriodSeconds` の妥当性 | `awaitTerminationSeconds`（現在: 30秒）の延長を検討。ただし Kubernetes の `terminationGracePeriodSeconds` も合わせて延長が必要 |
+
+**リカバリ手順**:
+
+ロストしたイベントを特定するには、Shutdown 前後の `security_event` テーブルと、アプリケーションログの `security event rejected, queuing for retry` / `retry queue full, dropping security event` メッセージを照合します。外部フック（Webhook/SSF）への配信が漏れた場合は、管理APIから該当イベントを手動で再送できます。
+
 #### Redis 接続プール枯渇
 
 **症状**: セッション操作・キャッシュ操作のタイムアウト。
