@@ -71,4 +71,40 @@ public class IdentityVerificationResultQueryDataSource
 
     return ModelConverter.convert(result);
   }
+
+  @Override
+  public IdentityVerificationResult get(
+      Tenant tenant, IdentityVerificationResultIdentifier identifier) {
+    Map<String, String> result = executor.selectOne(tenant, identifier);
+
+    if (result == null || result.isEmpty()) {
+      throw new IdentityVerificationApplicationNotFoundException(
+          String.format("IdentityVerificationResult not found (%s)", identifier.value()));
+    }
+
+    return ModelConverter.convert(result);
+  }
+
+  @Override
+  public List<IdentityVerificationResult> findList(
+      Tenant tenant, IdentityVerificationResultQueries queries) {
+    List<Map<String, String>> result = executor.selectList(tenant, queries);
+
+    if (result == null || result.isEmpty()) {
+      return new ArrayList<>();
+    }
+
+    return result.stream().map(ModelConverter::convert).toList();
+  }
+
+  @Override
+  public long findTotalCount(Tenant tenant, IdentityVerificationResultQueries queries) {
+    Map<String, String> result = executor.selectCount(tenant, queries);
+
+    if (result == null || result.isEmpty()) {
+      return 0;
+    }
+
+    return Long.parseLong(result.get("count"));
+  }
 }

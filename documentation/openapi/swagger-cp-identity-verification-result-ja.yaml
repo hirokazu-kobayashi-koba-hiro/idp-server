@@ -1,0 +1,309 @@
+openapi: 3.0.3
+info:
+  title: idp-server コントロールプレーン 身元確認結果管理 API
+  description: 身元確認結果（Identity Verification Result）の管理API仕様書
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+servers:
+- url: http://localhost:8080
+tags:
+- name: organization-identity-verification-result
+  description: 組織レベル身元確認結果管理
+paths:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/identity-verification-results:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: 組織内身元確認結果一覧取得
+      description: 指定した組織・テナント内の身元確認結果一覧を取得します。各種フィルタリングおよびページネーションに対応しています。
+      tags:
+      - organization-identity-verification-result
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      - name: id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: 結果IDでフィルタリング
+      - name: type
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 検証タイプでフィルタリング
+      - name: application_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: 申請IDでフィルタリング
+      - name: source
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - application
+          - direct
+          - manual
+          - import
+        description: ソースタイプでフィルタリング
+      - name: verified_at_from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 検証日時の開始（ISO 8601形式）
+      - name: verified_at_to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 検証日時の終了（ISO 8601形式）
+      - name: verified_until_from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 有効期限の開始（ISO 8601形式）
+      - name: verified_until_to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 有効期限の終了（ISO 8601形式）
+      responses:
+        '200':
+          description: 身元確認結果一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityVerificationResultListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/identity-verification-results/{result-id}:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/ResultId'
+    get:
+      summary: 組織内身元確認結果詳細取得
+      description: 指定した組織・テナント内の特定の身元確認結果の詳細を取得します
+      tags:
+      - organization-identity-verification-result
+      responses:
+        '200':
+          description: 身元確認結果詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityVerificationResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、または身元確認結果が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: テナントの識別子
+    OrganizationId:
+      name: organization-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 組織の識別子
+    ResultId:
+      name: result-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 身元確認結果の識別子
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 20
+      description: 返すアイテムの最大数
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: アイテムを返す開始インデックス
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        error_description:
+          type: string
+          description: Human-readable error description
+      required:
+      - error
+      - error_description
+    IdentityVerificationResult:
+      type: object
+      description: 身元確認結果
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 結果ID
+          example: d02d9859-aad5-4672-bcc9-8fa42d5f2793
+        type:
+          type: string
+          description: 検証タイプ（身元確認設定のタイプに対応）
+          example: investment-account-opening
+        tenant_id:
+          type: string
+          description: テナントID
+          example: 67e7eae6-62b0-4500-9eff-87459f63fc66
+        user_id:
+          type: string
+          description: ユーザーID
+          example: 3ec055a8-8000-44a2-8677-e70ebff414e2
+        application_id:
+          type: string
+          format: uuid
+          description: 申請ID（オプション、ソースがapplicationの場合）
+          example: bd3b53e7-bcf2-490e-b1b7-416b086c9cee
+        verified_claims:
+          type: object
+          description: 検証済みクレーム
+          additionalProperties: true
+        verified_at:
+          type: string
+          format: date-time
+          description: 検証日時
+          example: "2026-03-18T10:30:00"
+        verified_until:
+          type: string
+          format: date-time
+          description: 有効期限（オプション）
+          example: "2027-03-18T10:30:00"
+          nullable: true
+        source:
+          type: string
+          description: ソースタイプ
+          enum:
+          - application
+          - direct
+          - manual
+          - import
+          example: application
+        source_details:
+          type: object
+          description: ソース詳細情報（オプション）
+          additionalProperties: true
+        attributes:
+          type: object
+          description: 属性（オプション）
+          additionalProperties: true
+      required:
+      - id
+      - type
+      - tenant_id
+      - user_id
+      - verified_claims
+      - verified_at
+      - source
+    IdentityVerificationResultListResponse:
+      type: object
+      description: 身元確認結果一覧レスポンス
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/IdentityVerificationResult'
+        total_count:
+          type: integer
+          description: フィルタ条件に一致する総件数
+          example: 10
+        limit:
+          type: integer
+          description: リクエストされたlimit値
+          example: 20
+        offset:
+          type: integer
+          description: リクエストされたoffset値
+          example: 0
+      required:
+      - list
+      - total_count
+      - limit
+      - offset
+  responses:
+    Unauthorized:
+      description: Unauthorized - Authentication required or invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: unauthorized
+              error_description:
+                type: string
+                example: Authentication required
+            required:
+            - error
+            - error_description
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: access_denied
+              error_description:
+                type: string
+                example: Insufficient permissions to access this resource
+            required:
+            - error
+            - error_description

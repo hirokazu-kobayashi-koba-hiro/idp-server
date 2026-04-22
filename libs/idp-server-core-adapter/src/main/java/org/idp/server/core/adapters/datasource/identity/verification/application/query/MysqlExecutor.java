@@ -224,6 +224,123 @@ public class MysqlExecutor implements IdentityVerificationApplicationQuerySqlExe
     return sqlExecutor.selectOne(sql, params);
   }
 
+  @Override
+  public List<Map<String, String>> selectList(
+      Tenant tenant, IdentityVerificationApplicationQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder sqlBuilder = new StringBuilder();
+    sqlBuilder.append(selectSql);
+    sqlBuilder.append(" WHERE tenant_id = ?");
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifier().value());
+
+    if (queries.hasFrom()) {
+      sqlBuilder.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      sqlBuilder.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasId()) {
+      sqlBuilder.append(" AND id = ?");
+      params.add(queries.id());
+    }
+
+    if (queries.hasType()) {
+      sqlBuilder.append(" AND verification_type = ?");
+      params.add(queries.type());
+    }
+
+    if (queries.hasClientId()) {
+      sqlBuilder.append(" AND client_id = ?");
+      params.add(queries.clientId());
+    }
+
+    if (queries.hasStatus()) {
+      sqlBuilder.append(" AND status = ?");
+      params.add(queries.status());
+    }
+
+    if (queries.hasApplicationDetails()) {
+      for (Map.Entry<String, String> entry : queries.applicationDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        sqlBuilder.append(" AND JSON_EXTRACT(application_details, CONCAT('$.\"', ?, '\"')) = ?");
+        params.add(key);
+        params.add(value);
+      }
+    }
+
+    sqlBuilder.append(" ORDER BY created_at DESC");
+    sqlBuilder.append(" LIMIT ? OFFSET ?;");
+    params.add(queries.limit());
+    params.add(queries.offset());
+
+    String sql = sqlBuilder.toString();
+    return sqlExecutor.selectList(sql, params);
+  }
+
+  @Override
+  public Map<String, String> selectCount(
+      Tenant tenant, IdentityVerificationApplicationQueries queries) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder sqlBuilder = new StringBuilder();
+    sqlBuilder.append("SELECT COUNT(*) as count FROM identity_verification_application");
+    sqlBuilder.append(" WHERE tenant_id = ?");
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifier().value());
+
+    if (queries.hasFrom()) {
+      sqlBuilder.append(" AND created_at >= ?");
+      params.add(queries.from());
+    }
+
+    if (queries.hasTo()) {
+      sqlBuilder.append(" AND created_at <= ?");
+      params.add(queries.to());
+    }
+
+    if (queries.hasId()) {
+      sqlBuilder.append(" AND id = ?");
+      params.add(queries.id());
+    }
+
+    if (queries.hasType()) {
+      sqlBuilder.append(" AND verification_type = ?");
+      params.add(queries.type());
+    }
+
+    if (queries.hasClientId()) {
+      sqlBuilder.append(" AND client_id = ?");
+      params.add(queries.clientId());
+    }
+
+    if (queries.hasStatus()) {
+      sqlBuilder.append(" AND status = ?");
+      params.add(queries.status());
+    }
+
+    if (queries.hasApplicationDetails()) {
+      for (Map.Entry<String, String> entry : queries.applicationDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        sqlBuilder.append(" AND JSON_EXTRACT(application_details, CONCAT('$.\"', ?, '\"')) = ?");
+        params.add(key);
+        params.add(value);
+      }
+    }
+
+    String sql = sqlBuilder.toString();
+    return sqlExecutor.selectOne(sql, params);
+  }
+
   String selectSql =
       """
           SELECT id,

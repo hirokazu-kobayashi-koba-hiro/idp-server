@@ -39,4 +39,9 @@ public interface IdentityVerificationApplicationQuerySqlExecutor {
 
   Map<String, String> selectCount(
       Tenant tenant, User user, IdentityVerificationApplicationQueries queries);
+
+  List<Map<String, String>> selectList(
+      Tenant tenant, IdentityVerificationApplicationQueries queries);
+
+  Map<String, String> selectCount(Tenant tenant, IdentityVerificationApplicationQueries queries);
 }

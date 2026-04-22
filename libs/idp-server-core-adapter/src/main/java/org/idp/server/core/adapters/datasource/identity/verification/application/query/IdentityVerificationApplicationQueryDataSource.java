@@ -126,4 +126,29 @@ public class IdentityVerificationApplicationQueryDataSource
 
     return Long.parseLong(result.get("count"));
   }
+
+  @Override
+  public IdentityVerificationApplications findList(
+      Tenant tenant, IdentityVerificationApplicationQueries queries) {
+    List<Map<String, String>> result = executor.selectList(tenant, queries);
+
+    if (result == null || result.isEmpty()) {
+      return new IdentityVerificationApplications();
+    }
+
+    List<IdentityVerificationApplication> applicationList =
+        result.stream().map(ModelConverter::convert).toList();
+    return new IdentityVerificationApplications(applicationList);
+  }
+
+  @Override
+  public long findTotalCount(Tenant tenant, IdentityVerificationApplicationQueries queries) {
+    Map<String, String> result = executor.selectCount(tenant, queries);
+
+    if (result == null || result.isEmpty()) {
+      return 0;
+    }
+
+    return Long.parseLong(result.get("count"));
+  }
 }

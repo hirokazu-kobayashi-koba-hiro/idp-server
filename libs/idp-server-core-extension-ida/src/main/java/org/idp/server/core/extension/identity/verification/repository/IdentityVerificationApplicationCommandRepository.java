@@ -28,4 +28,6 @@ public interface IdentityVerificationApplicationCommandRepository {
   void update(Tenant tenant, IdentityVerificationApplication application);
 
   void delete(Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier);
+
+  void delete(Tenant tenant, IdentityVerificationApplicationIdentifier identifier);
 }

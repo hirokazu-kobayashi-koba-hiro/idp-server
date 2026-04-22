@@ -126,4 +126,22 @@ public class PostgresqlExecutor implements IdentityVerificationApplicationComman
 
     sqlExecutor.execute(sqlTemplate, params);
   }
+
+  @Override
+  public void delete(Tenant tenant, IdentityVerificationApplicationIdentifier identifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+            DELETE FROM identity_verification_application
+            WHERE tenant_id = ?::uuid
+            AND id = ?::uuid;
+            """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(identifier.valueAsUuid());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
 }
