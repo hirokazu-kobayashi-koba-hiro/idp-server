@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
     implementation 'org.postgresql:postgresql:42.7.2'
-    implementation 'com.mysql:mysql-connector-j:9.2.0'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:3.5.3'
 }
 
 flyway {
@@ -31,7 +31,7 @@ flyway {
         locations = ["filesystem:./postgresql"]
         schemas = ["public"]
     } else if (dbType == "mysql") {
-        url = env.DB_URL ?: "jdbc:mysql://localhost:3306/idpserver"
+        url = env.DB_URL ?: "jdbc:mariadb://localhost:3306/idpserver"
         user = env.DB_USER_NAME ?: "idpserver"
         password = env.DB_PASSWORD ?: "idpserver"
         locations = ["filesystem:./mysql"]

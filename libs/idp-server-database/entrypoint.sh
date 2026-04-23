@@ -9,7 +9,7 @@ if [ -z "${DB_URL:-}" ]; then
   if [ "$DB_TYPE" = "postgresql" ]; then
     DB_URL="jdbc:postgresql://localhost:5432/idpserver"
   elif [ "$DB_TYPE" = "mysql" ]; then
-    DB_URL="jdbc:mysql://localhost:3306/idpserver"
+    DB_URL="jdbc:mariadb://localhost:3306/idpserver"
   else
     echo "Unknown DB_TYPE: $DB_TYPE" >&2
     exit 1
