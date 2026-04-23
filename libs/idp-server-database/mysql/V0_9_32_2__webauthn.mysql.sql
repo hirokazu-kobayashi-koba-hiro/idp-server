@@ -7,7 +7,7 @@ CREATE TABLE webauthn_credentials
     id                       VARCHAR(512) PRIMARY KEY,        -- Credential ID (Base64URL encoded)
 
     -- Multi-Tenant
-    tenant_id                BINARY(16) NOT NULL,             -- Tenant ID for multi-tenancy (UUID as binary)
+    tenant_id                CHAR(36) NOT NULL,               -- Tenant ID for multi-tenancy
 
     -- User Information
     user_id                  VARCHAR(256) NOT NULL,           -- FIDO2 User ID (WebAuthn user.id)
