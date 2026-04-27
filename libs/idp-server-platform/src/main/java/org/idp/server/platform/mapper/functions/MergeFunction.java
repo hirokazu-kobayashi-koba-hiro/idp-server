@@ -74,9 +74,6 @@ public class MergeFunction implements ValueFunction {
     }
 
     Object sourceArg = args.get("source");
-    if (sourceArg == null) {
-      throw new IllegalArgumentException("merge: 'source' argument is required");
-    }
 
     boolean distinct = getBooleanArg(args, "distinct", false);
     String key = getStringArg(args, "key");
@@ -88,7 +85,8 @@ public class MergeFunction implements ValueFunction {
       baseList = new ArrayList<>(toCollection(input));
     }
 
-    Collection<?> sourceCollection = toCollection(sourceArg);
+    Collection<?> sourceCollection =
+        sourceArg == null ? Collections.emptyList() : toCollection(sourceArg);
     List<Object> merged = new ArrayList<>(baseList);
     merged.addAll(sourceCollection);
 

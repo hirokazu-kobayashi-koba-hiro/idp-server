@@ -84,8 +84,10 @@ class MergeFunctionTest {
     }
 
     @Test
-    void apply_throwsException_whenSourceIsMissing() {
-      assertThrows(IllegalArgumentException.class, () -> function.apply(List.of("a"), Map.of()));
+    void apply_treatsNullSourceAsEmptyList() {
+      List<String> input = List.of("a", "b");
+      Object result = function.apply(input, Map.of());
+      assertEquals(List.of("a", "b"), result);
     }
   }
 
