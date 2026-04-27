@@ -168,6 +168,7 @@ public class IdentityVerificationApplicationEntryService
         new IdentityVerificationContextBuilder()
             .previousContext(applyingResult.applicationContext())
             .application(application)
+            .user(user)
             .build();
     Map<String, Object> response =
         IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
@@ -334,6 +335,7 @@ public class IdentityVerificationApplicationEntryService
         new IdentityVerificationContextBuilder()
             .previousContext(applyingResult.applicationContext())
             .application(application)
+            .user(user)
             .build();
 
     Map<String, Object> response =

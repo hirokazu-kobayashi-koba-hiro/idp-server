@@ -121,6 +121,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
         new IdentityVerificationContextBuilder()
             .request(request)
             .requestAttributes(requestAttributes)
+            .user(user)
             .build();
 
     IdentityVerificationResult identityVerificationResult =
