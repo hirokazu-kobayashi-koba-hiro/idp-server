@@ -576,4 +576,93 @@ class MappingRuleObjectMapperArgsResolutionTest {
       assertEquals(List.of("JP001", "JP003"), result.get("active_codes"));
     }
   }
+
+  @Nested
+  @DisplayName("Object to array wrapping: append with null input + dynamic value")
+  class ObjectToArrayWrappingTests {
+
+    @Test
+    void append_nullInput_wrapsSingleObjectIntoArray() {
+      // ユースケース: 外部APIが単一オブジェクトを返すが、配列として累積したい
+      String json =
+          """
+          {
+            "response_body": {
+              "account": {"id": "1", "name": "Alice", "type": "savings"}
+            }
+          }
+          """;
+
+      JsonPathWrapper jsonPath = new JsonPathWrapper(json);
+
+      // static_value=null → input=null, append value=動的に解決されたオブジェクト
+      List<MappingRule> rules =
+          List.of(
+              new MappingRule(
+                  (Object) null,
+                  "accounts",
+                  List.of(new FunctionSpec("append", Map.of("value", "$.response_body.account")))));
+
+      Map<String, Object> result = MappingRuleObjectMapper.execute(rules, jsonPath);
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> accounts = (List<Map<String, Object>>) result.get("accounts");
+      assertNotNull(accounts);
+      assertEquals(1, accounts.size());
+      assertEquals("1", accounts.get(0).get("id"));
+      assertEquals("Alice", accounts.get(0).get("name"));
+      assertEquals("savings", accounts.get(0).get("type"));
+    }
+
+    @Test
+    void append_nullInput_thenMerge_accumulatesSingleObjects() {
+      // ユースケース: 初回は単一オブジェクト→配列化、2回目以降は既存配列にmerge
+      // ここでは1回のmapping_rulesで: append(null→[obj]) を確認
+      String json =
+          """
+          {
+            "user": {
+              "verified_claims": {
+                "claims": {
+                  "accounts": [{"id": "existing", "name": "Old"}]
+                }
+              }
+            },
+            "response_body": {
+              "new_account": {"id": "new1", "name": "New Account"}
+            }
+          }
+          """;
+
+      JsonPathWrapper jsonPath = new JsonPathWrapper(json);
+
+      // append で単一オブジェクトを配列化し、merge で既存に結合
+      List<MappingRule> rules =
+          List.of(
+              new MappingRule(
+                  (Object) null,
+                  "accounts",
+                  List.of(
+                      new FunctionSpec("append", Map.of("value", "$.response_body.new_account")),
+                      new FunctionSpec(
+                          "merge",
+                          Map.of(
+                              "source", "$.user.verified_claims.claims.accounts",
+                              "key", "id")))));
+
+      Map<String, Object> result = MappingRuleObjectMapper.execute(rules, jsonPath);
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> accounts = (List<Map<String, Object>>) result.get("accounts");
+      assertEquals(2, accounts.size());
+
+      Map<String, Object> newAccount =
+          accounts.stream().filter(a -> "new1".equals(a.get("id"))).findFirst().orElseThrow();
+      assertEquals("New Account", newAccount.get("name"));
+
+      Map<String, Object> existing =
+          accounts.stream().filter(a -> "existing".equals(a.get("id"))).findFirst().orElseThrow();
+      assertEquals("Old", existing.get("name"));
+    }
+  }
 }
