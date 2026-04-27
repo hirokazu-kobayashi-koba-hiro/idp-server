@@ -1,0 +1,158 @@
+spec_name: "OpenID Connect for Identity Assurance 1.0"
+spec_url: "https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html"
+extraction_timestamp: "2026-04-27T15:30:00"
+extractor_version: "1.0.0"
+
+summary:
+  total_requirements: 24
+  must_shall_requirements: 16
+  should_requirements: 3
+  optional_requirements: 5
+  focus: "verified_claims の構造・配信・リクエスト方法"
+
+requirements_by_category:
+  verified_claims_structure:
+    description: "verified_claims の構造要件"
+    must_shall:
+      - section: "5.1"
+        requirement: "verified_claims はネストされた verification と claims オブジェクトを含む構造でなければならない"
+        rationale: "IDA-verified-claims スキーマに従う"
+        json_example: |
+          {
+            "verified_claims": {
+              "verification": { "trust_framework": "..." },
+              "claims": { "given_name": "...", "family_name": "..." }
+            }
+          }
+        impact: "AT の verified_claims が claims をフラット展開している現状は仕様違反"
+
+  verified_claims_delivery:
+    description: "verified_claims の配信場所"
+    can:
+      - section: "5.2"
+        requirement: "verified_claims は UserInfo レスポンスに追加できる (CAN)"
+        rationale: "配信場所はオプション"
+      - section: "5.2"
+        requirement: "verified_claims は ID Token に追加できる (CAN)"
+        rationale: "配信場所はオプション"
+      - section: "4.7"
+        requirement: "OAuth Access Token やトークンイントロスペクションレスポンスでも利用可能 (CAN)"
+        rationale: "リソースサーバーに verified claims を伝達するユースケース。詳細要件は未規定"
+
+  verification_object:
+    description: "verification オブジェクトの要件"
+    must_shall:
+      - section: "5.4"
+        requirement: "RP は verification 要素内のデータを明示的にリクエストしなければならない (SHALL)"
+        rationale: "不要なデータの返却を防ぐ"
+      - section: "5.5.1"
+        requirement: "OP はリクエストの制約を無視してはならない (SHALL NOT)"
+        rationale: "RP のポリシー準拠を保証"
+      - section: "5.5.1"
+        requirement: "OP は制約外のデータを返却してはならない (SHALL NOT)"
+        rationale: "データ最小化原則"
+    should:
+      - section: "5.5.2"
+        requirement: "OP は max_age による鮮度要件を満たそうとすべきである (SHOULD)"
+        rationale: "検証データの鮮度保証"
+
+  claims_object:
+    description: "claims オブジェクトの要件"
+    must_shall:
+      - section: "5.3"
+        requirement: "クレームは verified_claims 内のネストされた claims 要素でリクエストする"
+        rationale: "verified_claims の構造規定"
+
+  returning_less_data:
+    description: "データ返却時のルール"
+    must_shall:
+      - section: "5.7.2"
+        requirement: "OP は保持していないまたはサポートしていないクレームを省略しなければならない (SHALL)"
+        rationale: "データの正確性"
+      - section: "5.7.3"
+        requirement: "OP はエンドユーザーの同意がないデータを省略しなければならない (SHALL)"
+        rationale: "プライバシー保護"
+      - section: "5.7.4"
+        requirement: "verification 要素の要件が満たされない場合、verified_claims 全体を省略しなければならない (SHALL)"
+        rationale: "部分的に信頼できない検証データの返却防止"
+      - section: "5.7.4"
+        requirement: "個別クレームの要件が満たされない場合、そのクレームのみ省略しなければならない (SHALL)"
+        rationale: "利用可能なデータは返却する"
+      - section: "5.7.4"
+        requirement: "要件が満たされない場合にエラーを返してはならない (SHALL NOT)"
+        rationale: "グレースフルデグラデーション"
+      - section: "5.7.5"
+        requirement: "子要素の省略が必要で親要素がそれを必須とする場合、親要素も省略しなければならない (SHALL)"
+        rationale: "構造の一貫性"
+
+  requesting_verified_claims:
+    description: "verified_claims のリクエスト方法"
+    must_shall:
+      - section: "7"
+        requirement: "OP はリクエストされていないデータを提供してはならない (SHALL NOT)"
+        rationale: "データ最小化"
+    can:
+      - section: "7"
+        requirement: "claims パラメータを使用してリクエストできる (CAN)"
+        rationale: "OpenID Connect の標準メカニズム"
+      - section: "7"
+        requirement: "scope パラメータで事前定義されたクレームセットをリクエストできる (CAN)"
+        rationale: "簡便なリクエスト方法"
+
+  aggregated_distributed_claims:
+    description: "集約・分散クレームの要件"
+    must_shall:
+      - section: "6.1"
+        requirement: "アサーションの typ ヘッダーに provided-claims+jwt を含めなければならない (SHALL)"
+        rationale: "アサーション種別の識別"
+      - section: "6.1"
+        requirement: "iss, sub, verified_claims クレームを含めなければならない (SHALL)"
+        rationale: "最小限の必須情報"
+      - section: "6.1"
+        requirement: "exp や aud クレームを含めてはならない (SHALL NOT)"
+        rationale: "仕様で禁止"
+    should:
+      - section: "6.1"
+        requirement: "アサーションは真正性のために署名すべきである (SHOULD)"
+        rationale: "改ざん防止"
+
+  op_metadata:
+    description: "OP メタデータ要件"
+    must_shall:
+      - section: "8"
+        requirement: "trust_frameworks_supported を公開しなければならない (REQUIRED)"
+        rationale: "RP がサポートを判断するため"
+      - section: "8"
+        requirement: "claims_in_verified_claims_supported を公開しなければならない (REQUIRED)"
+        rationale: "RP がリクエスト可能なクレームを知るため"
+
+key_findings:
+  critical_for_issue_1435:
+    - finding: "verified_claims は必ず {verification: {...}, claims: {...}} のネスト構造"
+      implication: "AT の AccessTokenVerifiedClaimsCreator がフラット展開しているのは仕様違反"
+    - finding: "verified_claims は ID Token と UserInfo の両方で返却可能 (CAN)"
+      implication: "UserInfo 用の Creator が未実装なのは機能不足"
+    - finding: "AT での利用は 'can be utilized' であり必須ではないが、使う場合は同じ構造"
+      implication: "AT に含める場合も verification + claims のネスト構造が必要"
+    - finding: "RP が明示的にリクエストしたデータのみ返却 (SHALL NOT provide unrequested data)"
+      implication: "Selective creator の方が仕様に近い設計"
+
+  claims_request_structure:
+    id_token: |
+      {
+        "id_token": {
+          "verified_claims": {
+            "verification": { "trust_framework": null },
+            "claims": { "given_name": null, "family_name": null }
+          }
+        }
+      }
+    userinfo: |
+      {
+        "userinfo": {
+          "verified_claims": {
+            "verification": { "trust_framework": null },
+            "claims": { "given_name": null, "family_name": null }
+          }
+        }
+      }
