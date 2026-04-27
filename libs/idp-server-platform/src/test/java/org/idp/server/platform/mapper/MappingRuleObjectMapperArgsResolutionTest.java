@@ -272,4 +272,308 @@ class MappingRuleObjectMapperArgsResolutionTest {
       assertEquals(List.of("123", "456"), result.get("account_numbers"));
     }
   }
+
+  @Nested
+  @DisplayName("Composite: map(reshape) → merge chain")
+  class CompositeReshapeMergeTests {
+
+    @Test
+    void reshape_then_merge_normalizesAndAccumulatesEntities() {
+      // ユースケース: 外部APIレスポンス(別schema)をreshapeで正規化し、既存データにmerge
+      String json =
+          """
+          {
+            "user": {
+              "custom_properties": {
+                "entities": [
+                  {"id": "1", "name": "Existing Corp", "type": "organization"}
+                ]
+              }
+            },
+            "response_body": {
+              "items": [
+                {"entity_id": "2", "entity_name": "New Inc", "kind": "organization"},
+                {"entity_id": "3", "entity_name": "Third LLC", "kind": "person"}
+              ]
+            }
+          }
+          """;
+
+      JsonPathWrapper jsonPath = new JsonPathWrapper(json);
+
+      // map(reshape) → merge: 外部レスポンスを正規化して既存entitiesにマージ
+      List<MappingRule> rules =
+          List.of(
+              new MappingRule(
+                  "$.response_body.items",
+                  "entities",
+                  List.of(
+                      new FunctionSpec(
+                          "map",
+                          Map.of(
+                              "function",
+                              "reshape",
+                              "function_args",
+                              Map.of(
+                                  "fields",
+                                  Map.of(
+                                      "id", "$.entity_id",
+                                      "name", "$.entity_name",
+                                      "type", "$.kind")))),
+                      new FunctionSpec(
+                          "merge",
+                          Map.of(
+                              "source", "$.user.custom_properties.entities",
+                              "key", "id")))));
+
+      Map<String, Object> result = MappingRuleObjectMapper.execute(rules, jsonPath);
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> entities = (List<Map<String, Object>>) result.get("entities");
+
+      // reshape で正規化された2件 + 既存1件 = 3件（id重複なし）
+      assertEquals(3, entities.size());
+
+      // reshape された新規データが正しい shape
+      Map<String, Object> entity2 =
+          entities.stream().filter(e -> "2".equals(e.get("id"))).findFirst().orElseThrow();
+      assertEquals("New Inc", entity2.get("name"));
+      assertEquals("organization", entity2.get("type"));
+
+      Map<String, Object> entity3 =
+          entities.stream().filter(e -> "3".equals(e.get("id"))).findFirst().orElseThrow();
+      assertEquals("Third LLC", entity3.get("name"));
+      assertEquals("person", entity3.get("type"));
+
+      // 既存データもマージされている
+      Map<String, Object> entity1 =
+          entities.stream().filter(e -> "1".equals(e.get("id"))).findFirst().orElseThrow();
+      assertEquals("Existing Corp", entity1.get("name"));
+      assertEquals("organization", entity1.get("type"));
+    }
+
+    @Test
+    void reshape_then_merge_deduplicatesByKey() {
+      // ユースケース: 既存エンティティのID重複時は後勝ちで更新
+      // merge の動作: input(from) + source を結合し、key重複は後勝ち
+      // 新データで上書きしたいなら: from=既存, source=新データ(reshape後)
+      String json =
+          """
+          {
+            "user": {
+              "custom_properties": {
+                "accounts": [
+                  {"id": "A001", "name": "Old Name", "type": "savings"}
+                ]
+              }
+            },
+            "response_body": {
+              "bank_accounts": [
+                {"account_code": "A001", "account_name": "Updated Name", "account_type": "premium_savings"},
+                {"account_code": "A002", "account_name": "New Account", "account_type": "checking"}
+              ]
+            }
+          }
+          """;
+
+      JsonPathWrapper jsonPath = new JsonPathWrapper(json);
+
+      // from=既存accounts(input), reshape後の新データをsourceに渡すパターンは
+      // 現状のfunction chainでは直接表現できないため、
+      // from=新データ(reshape後), source=既存 で merge し、source(既存)が後勝ちになることを確認
+      List<MappingRule> rules =
+          List.of(
+              new MappingRule(
+                  "$.response_body.bank_accounts",
+                  "accounts",
+                  List.of(
+                      new FunctionSpec(
+                          "map",
+                          Map.of(
+                              "function",
+                              "reshape",
+                              "function_args",
+                              Map.of(
+                                  "fields",
+                                  Map.of(
+                                      "id", "$.account_code",
+                                      "name", "$.account_name",
+                                      "type", "$.account_type")))),
+                      new FunctionSpec(
+                          "merge",
+                          Map.of(
+                              "source", "$.user.custom_properties.accounts",
+                              "key", "id")))));
+
+      Map<String, Object> result = MappingRuleObjectMapper.execute(rules, jsonPath);
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> accounts = (List<Map<String, Object>>) result.get("accounts");
+
+      // merge: [reshape後 A001, A002] + [既存 A001] → key "A001" は後勝ち(既存)
+      assertEquals(2, accounts.size());
+
+      // A001 は source(既存) が後勝ちで残る
+      Map<String, Object> a001 =
+          accounts.stream().filter(a -> "A001".equals(a.get("id"))).findFirst().orElseThrow();
+      assertEquals("Old Name", a001.get("name"));
+      assertEquals("savings", a001.get("type"));
+
+      // A002 は新規
+      Map<String, Object> a002 =
+          accounts.stream().filter(a -> "A002".equals(a.get("id"))).findFirst().orElseThrow();
+      assertEquals("New Account", a002.get("name"));
+      assertEquals("checking", a002.get("type"));
+    }
+
+    @Test
+    void reshape_then_pluck_extractsFieldAfterRename() {
+      // reshape → pluck: リネーム後にフラット配列を抽出
+      String json =
+          """
+          {
+            "items": [
+              {"code": "JP001", "label": "Tokyo"},
+              {"code": "JP002", "label": "Osaka"}
+            ]
+          }
+          """;
+
+      JsonPathWrapper jsonPath = new JsonPathWrapper(json);
+
+      List<MappingRule> rules =
+          List.of(
+              new MappingRule(
+                  "$.items",
+                  "region_codes",
+                  List.of(
+                      new FunctionSpec(
+                          "map",
+                          Map.of(
+                              "function",
+                              "reshape",
+                              "function_args",
+                              Map.of("fields", Map.of("id", "$.code", "name", "$.label")))),
+                      new FunctionSpec("pluck", Map.of("field", "id")))));
+
+      Map<String, Object> result = MappingRuleObjectMapper.execute(rules, jsonPath);
+
+      assertEquals(List.of("JP001", "JP002"), result.get("region_codes"));
+    }
+
+    @Test
+    void reshape_then_filter_then_merge_fullPipeline() {
+      // ユースケース: 外部APIレスポンスをreshape → typeでfilter → 既存データにmerge
+      String json =
+          """
+          {
+            "user": {
+              "custom_properties": {
+                "accounts": [
+                  {"id": "A001", "name": "Existing Savings", "type": "savings"}
+                ]
+              }
+            },
+            "response_body": {
+              "bank_accounts": [
+                {"account_code": "A002", "account_name": "Checking", "account_type": "checking"},
+                {"account_code": "A003", "account_name": "New Savings", "account_type": "savings"},
+                {"account_code": "A004", "account_name": "Investment", "account_type": "investment"}
+              ]
+            }
+          }
+          """;
+
+      JsonPathWrapper jsonPath = new JsonPathWrapper(json);
+
+      // reshape → filter(savings のみ) → merge
+      List<MappingRule> rules =
+          List.of(
+              new MappingRule(
+                  "$.response_body.bank_accounts",
+                  "accounts",
+                  List.of(
+                      new FunctionSpec(
+                          "map",
+                          Map.of(
+                              "function",
+                              "reshape",
+                              "function_args",
+                              Map.of(
+                                  "fields",
+                                  Map.of(
+                                      "id", "$.account_code",
+                                      "name", "$.account_name",
+                                      "type", "$.account_type")))),
+                      new FunctionSpec(
+                          "filter", Map.of("field", "type", "condition", "{{value}} == 'savings'")),
+                      new FunctionSpec(
+                          "merge",
+                          Map.of(
+                              "source", "$.user.custom_properties.accounts",
+                              "key", "id")))));
+
+      Map<String, Object> result = MappingRuleObjectMapper.execute(rules, jsonPath);
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> accounts = (List<Map<String, Object>>) result.get("accounts");
+
+      // filter で savings のみ残る → A003 のみ。merge で既存 A001 を追加 → 2件
+      assertEquals(2, accounts.size());
+
+      Map<String, Object> a003 =
+          accounts.stream().filter(a -> "A003".equals(a.get("id"))).findFirst().orElseThrow();
+      assertEquals("New Savings", a003.get("name"));
+      assertEquals("savings", a003.get("type"));
+
+      Map<String, Object> a001 =
+          accounts.stream().filter(a -> "A001".equals(a.get("id"))).findFirst().orElseThrow();
+      assertEquals("Existing Savings", a001.get("name"));
+      assertEquals("savings", a001.get("type"));
+    }
+
+    @Test
+    void reshape_then_filter_then_pluck_extractsFilteredIds() {
+      // reshape → filter → pluck: 条件付きIDリスト抽出
+      String json =
+          """
+          {
+            "items": [
+              {"code": "JP001", "label": "Tokyo", "status": "active"},
+              {"code": "JP002", "label": "Osaka", "status": "inactive"},
+              {"code": "JP003", "label": "Nagoya", "status": "active"}
+            ]
+          }
+          """;
+
+      JsonPathWrapper jsonPath = new JsonPathWrapper(json);
+
+      List<MappingRule> rules =
+          List.of(
+              new MappingRule(
+                  "$.items",
+                  "active_codes",
+                  List.of(
+                      new FunctionSpec(
+                          "map",
+                          Map.of(
+                              "function",
+                              "reshape",
+                              "function_args",
+                              Map.of(
+                                  "fields",
+                                  Map.of(
+                                      "id", "$.code",
+                                      "name", "$.label",
+                                      "status", "$.status")))),
+                      new FunctionSpec(
+                          "filter",
+                          Map.of("field", "status", "condition", "{{value}} == 'active'")),
+                      new FunctionSpec("pluck", Map.of("field", "id")))));
+
+      Map<String, Object> result = MappingRuleObjectMapper.execute(rules, jsonPath);
+
+      assertEquals(List.of("JP001", "JP003"), result.get("active_codes"));
+    }
+  }
 }

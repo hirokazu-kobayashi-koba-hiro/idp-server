@@ -588,4 +588,402 @@ describe("Identity Verification - Array Functions in verified_claims", () => {
 
   });
 
+  describe("map(reshape) to normalize external schema and merge", () => {
+
+    it("should reshape external format to canonical shape and merge into existing accounts", async () => {
+      // Step 1: 初回設定 - canonical shape の accounts を設定
+      const config1Id = uuidv4();
+      const config1Type = uuidv4();
+      configIds.push(config1Id);
+
+      const accountSchema = {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "type": { "type": "string" }
+          }
+        }
+      };
+
+      const commonExecution = {
+        "type": "http_request",
+        "http_request": {
+          "url": `${mockApiBaseUrl}/crm-registration`,
+          "method": "POST",
+          "auth_type": "none",
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" }
+          ],
+          "body_mapping_rules": [
+            { "from": "$.request_body", "to": "*" },
+            { "from": "$.user.sub", "to": "user_id" }
+          ]
+        }
+      };
+
+      await createIdaConfig(config1Id, config1Type, {
+        "apply": {
+          "request": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "accounts": accountSchema,
+                "given_name": { "type": "string" },
+                "family_name": { "type": "string" },
+                "birthdate": { "type": "string" }
+              },
+              "required": ["accounts", "given_name", "family_name", "birthdate"]
+            }
+          },
+          "execution": commonExecution,
+          "store": { "application_details_mapping_rules": [{ "from": "$.request_body", "to": "*" }] },
+          "response": { "body_mapping_rules": [{ "from": "$.response_body", "to": "*" }] }
+        },
+        "verify": {
+          "request": { "schema": { "type": "object", "properties": { "trust_framework": { "type": "string" } }, "required": ["trust_framework"] } },
+          "execution": commonExecution,
+          "store": { "application_details_mapping_rules": [{ "from": "$.response_body", "to": "external_response" }] },
+          "response": { "body_mapping_rules": [{ "from": "$.response_body", "to": "*" }] }
+        }
+      }, [
+        { "from": "$.application.application_details.accounts", "to": "claims.accounts" },
+        { "from": "$.application.application_details.given_name", "to": "claims.given_name" },
+        { "from": "$.application.application_details.family_name", "to": "claims.family_name" }
+      ]);
+
+      // 初回: canonical shape の accounts を設定
+      await applyAndApprove(
+        config1Type, "apply", "verify",
+        {
+          "accounts": [
+            { "id": "1", "name": "Existing Corp", "type": "organization" }
+          ],
+          "given_name": "ReshapeTest",
+          "family_name": "User",
+          "birthdate": "1990-01-01"
+        },
+        { "trust_framework": "eidas" }
+      );
+
+      // Step 2: 2回目 - 外部形式(entity_id/entity_name/kind)をreshapeで正規化してmerge
+      const config2Id = uuidv4();
+      const config2Type = uuidv4();
+      configIds.push(config2Id);
+
+      const externalSchema = {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "entity_id": { "type": "string" },
+            "entity_name": { "type": "string" },
+            "kind": { "type": "string" }
+          }
+        }
+      };
+
+      await createIdaConfig(config2Id, config2Type, {
+        "apply": {
+          "request": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "external_entities": externalSchema,
+                "given_name": { "type": "string" },
+                "family_name": { "type": "string" },
+                "birthdate": { "type": "string" }
+              },
+              "required": ["external_entities", "given_name", "family_name", "birthdate"]
+            }
+          },
+          "execution": commonExecution,
+          "store": { "application_details_mapping_rules": [{ "from": "$.request_body", "to": "*" }] },
+          "response": { "body_mapping_rules": [{ "from": "$.response_body", "to": "*" }] }
+        },
+        "verify": {
+          "request": { "schema": { "type": "object", "properties": { "trust_framework": { "type": "string" } }, "required": ["trust_framework"] } },
+          "execution": commonExecution,
+          "store": { "application_details_mapping_rules": [{ "from": "$.response_body", "to": "external_response" }] },
+          "response": { "body_mapping_rules": [{ "from": "$.response_body", "to": "*" }] }
+        }
+      }, [
+        // map(reshape): 外部形式 → canonical shape に変換し、既存accountsにmerge
+        {
+          "from": "$.application.application_details.external_entities",
+          "to": "claims.accounts",
+          "functions": [
+            {
+              "name": "map",
+              "args": {
+                "function": "reshape",
+                "function_args": {
+                  "fields": {
+                    "id": "$.entity_id",
+                    "name": "$.entity_name",
+                    "type": "$.kind"
+                  }
+                }
+              }
+            },
+            {
+              "name": "merge",
+              "args": {
+                "source": "$.user.verified_claims.claims.accounts",
+                "key": "id"
+              }
+            }
+          ]
+        },
+        { "from": "$.application.application_details.given_name", "to": "claims.given_name" },
+        { "from": "$.application.application_details.family_name", "to": "claims.family_name" }
+      ]);
+
+      // 2回目: 外部形式のデータを渡す
+      const application2Id = await applyAndApprove(
+        config2Type, "apply", "verify",
+        {
+          "external_entities": [
+            { "entity_id": "2", "entity_name": "New Inc", "kind": "company" },
+            { "entity_id": "3", "entity_name": "Third LLC", "kind": "person" }
+          ],
+          "given_name": "ReshapeTest",
+          "family_name": "User",
+          "birthdate": "1990-01-01"
+        },
+        { "trust_framework": "eidas" }
+      );
+
+      // 検証
+      const resultsResponse = await get({
+        url: serverConfig.identityVerificationResultResourceOwnerEndpoint + `?application_id=${application2Id}&type=${config2Type}`,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log("Reshape+merge results:", JSON.stringify(resultsResponse.data, null, 2));
+      expect(resultsResponse.status).toBe(200);
+      expect(resultsResponse.data.list.length).toBe(1);
+
+      const verifiedClaims = resultsResponse.data.list[0].verified_claims;
+
+      // reshape + merge: 新規2件(reshape済み) + 既存1件(source) = 3件
+      expect(verifiedClaims.claims).toHaveProperty("accounts");
+      expect(verifiedClaims.claims.accounts).toHaveLength(3);
+
+      // reshape された新規データが canonical shape (id/name/type)
+      const entity2 = verifiedClaims.claims.accounts.find(a => a.id === "2");
+      expect(entity2).toBeDefined();
+      expect(entity2.name).toBe("New Inc");
+      expect(entity2.type).toBe("company");
+
+      const entity3 = verifiedClaims.claims.accounts.find(a => a.id === "3");
+      expect(entity3).toBeDefined();
+      expect(entity3.name).toBe("Third LLC");
+      expect(entity3.type).toBe("person");
+
+      // 既存データも merge されている
+      const entity1 = verifiedClaims.claims.accounts.find(a => a.id === "1");
+      expect(entity1).toBeDefined();
+      expect(entity1.name).toBe("Existing Corp");
+      expect(entity1.type).toBe("organization");
+
+      console.log("map(reshape) → merge works correctly: external schema normalized and accumulated");
+    });
+
+    it("should reshape, filter by type, and merge only matching entries", async () => {
+      // Step 1: 初回設定 - canonical shape の accounts を設定
+      const config1Id = uuidv4();
+      const config1Type = uuidv4();
+      configIds.push(config1Id);
+
+      const commonExecution = {
+        "type": "http_request",
+        "http_request": {
+          "url": `${mockApiBaseUrl}/crm-registration`,
+          "method": "POST",
+          "auth_type": "none",
+          "header_mapping_rules": [
+            { "static_value": "application/json", "to": "Content-Type" }
+          ],
+          "body_mapping_rules": [
+            { "from": "$.request_body", "to": "*" },
+            { "from": "$.user.sub", "to": "user_id" }
+          ]
+        }
+      };
+
+      await createIdaConfig(config1Id, config1Type, {
+        "apply": {
+          "request": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "accounts": { "type": "array" },
+                "given_name": { "type": "string" },
+                "family_name": { "type": "string" },
+                "birthdate": { "type": "string" }
+              },
+              "required": ["accounts", "given_name", "family_name", "birthdate"]
+            }
+          },
+          "execution": commonExecution,
+          "store": { "application_details_mapping_rules": [{ "from": "$.request_body", "to": "*" }] },
+          "response": { "body_mapping_rules": [{ "from": "$.response_body", "to": "*" }] }
+        },
+        "verify": {
+          "request": { "schema": { "type": "object", "properties": { "trust_framework": { "type": "string" } }, "required": ["trust_framework"] } },
+          "execution": commonExecution,
+          "store": { "application_details_mapping_rules": [{ "from": "$.response_body", "to": "external_response" }] },
+          "response": { "body_mapping_rules": [{ "from": "$.response_body", "to": "*" }] }
+        }
+      }, [
+        { "from": "$.application.application_details.accounts", "to": "claims.accounts" },
+        { "from": "$.application.application_details.given_name", "to": "claims.given_name" },
+        { "from": "$.application.application_details.family_name", "to": "claims.family_name" }
+      ]);
+
+      // 初回: savings の口座を1件設定
+      await applyAndApprove(
+        config1Type, "apply", "verify",
+        {
+          "accounts": [
+            { "id": "A001", "name": "My Savings", "type": "savings" }
+          ],
+          "given_name": "FilterTest",
+          "family_name": "User",
+          "birthdate": "1990-01-01"
+        },
+        { "trust_framework": "eidas" }
+      );
+
+      // Step 2: 2回目 - 外部形式を reshape → savings のみ filter → 既存に merge
+      const config2Id = uuidv4();
+      const config2Type = uuidv4();
+      configIds.push(config2Id);
+
+      await createIdaConfig(config2Id, config2Type, {
+        "apply": {
+          "request": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "external_accounts": { "type": "array" },
+                "given_name": { "type": "string" },
+                "family_name": { "type": "string" },
+                "birthdate": { "type": "string" }
+              },
+              "required": ["external_accounts", "given_name", "family_name", "birthdate"]
+            }
+          },
+          "execution": commonExecution,
+          "store": { "application_details_mapping_rules": [{ "from": "$.request_body", "to": "*" }] },
+          "response": { "body_mapping_rules": [{ "from": "$.response_body", "to": "*" }] }
+        },
+        "verify": {
+          "request": { "schema": { "type": "object", "properties": { "trust_framework": { "type": "string" } }, "required": ["trust_framework"] } },
+          "execution": commonExecution,
+          "store": { "application_details_mapping_rules": [{ "from": "$.response_body", "to": "external_response" }] },
+          "response": { "body_mapping_rules": [{ "from": "$.response_body", "to": "*" }] }
+        }
+      }, [
+        // map(reshape) → filter(savings のみ) → merge(既存に追加)
+        {
+          "from": "$.application.application_details.external_accounts",
+          "to": "claims.accounts",
+          "functions": [
+            {
+              "name": "map",
+              "args": {
+                "function": "reshape",
+                "function_args": {
+                  "fields": {
+                    "id": "$.account_code",
+                    "name": "$.account_name",
+                    "type": "$.account_type"
+                  }
+                }
+              }
+            },
+            {
+              "name": "filter",
+              "args": {
+                "field": "type",
+                "condition": "{{value}} == 'savings'"
+              }
+            },
+            {
+              "name": "merge",
+              "args": {
+                "source": "$.user.verified_claims.claims.accounts",
+                "key": "id"
+              }
+            }
+          ]
+        },
+        { "from": "$.application.application_details.given_name", "to": "claims.given_name" },
+        { "from": "$.application.application_details.family_name", "to": "claims.family_name" }
+      ]);
+
+      // 2回目: 3件の外部口座データを渡す（うち savings は1件のみ）
+      const application2Id = await applyAndApprove(
+        config2Type, "apply", "verify",
+        {
+          "external_accounts": [
+            { "account_code": "A002", "account_name": "Checking Account", "account_type": "checking" },
+            { "account_code": "A003", "account_name": "New Savings", "account_type": "savings" },
+            { "account_code": "A004", "account_name": "Investment", "account_type": "investment" }
+          ],
+          "given_name": "FilterTest",
+          "family_name": "User",
+          "birthdate": "1990-01-01"
+        },
+        { "trust_framework": "eidas" }
+      );
+
+      // 検証
+      const resultsResponse = await get({
+        url: serverConfig.identityVerificationResultResourceOwnerEndpoint + `?application_id=${application2Id}&type=${config2Type}`,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log("Reshape+filter+merge results:", JSON.stringify(resultsResponse.data, null, 2));
+      expect(resultsResponse.status).toBe(200);
+      expect(resultsResponse.data.list.length).toBe(1);
+
+      const verifiedClaims = resultsResponse.data.list[0].verified_claims;
+
+      // reshape(3件) → filter(savings のみ → A003) → merge(既存 A001) = 2件
+      expect(verifiedClaims.claims).toHaveProperty("accounts");
+      expect(verifiedClaims.claims.accounts).toHaveLength(2);
+
+      const ids = verifiedClaims.claims.accounts.map(a => a.id);
+      expect(ids).toContain("A001");
+      expect(ids).toContain("A003");
+      // checking, investment はフィルタで除外されている
+      expect(ids).not.toContain("A002");
+      expect(ids).not.toContain("A004");
+
+      // filter 後のデータが canonical shape
+      const a003 = verifiedClaims.claims.accounts.find(a => a.id === "A003");
+      expect(a003.name).toBe("New Savings");
+      expect(a003.type).toBe("savings");
+
+      // 既存データもマージされている
+      const a001 = verifiedClaims.claims.accounts.find(a => a.id === "A001");
+      expect(a001.name).toBe("My Savings");
+      expect(a001.type).toBe("savings");
+
+      console.log("map(reshape) → filter(field) → merge works: only savings accounts accumulated");
+    });
+
+  });
+
 });
