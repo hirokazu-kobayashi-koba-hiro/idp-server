@@ -55,8 +55,16 @@ public class AccessTokenVerifiedClaimsCreator implements AccessTokenCustomClaims
     User user = authorizationGrant.user();
     JsonNodeWrapper userVerifiedClaims = user.verifiedClaimsNodeWrapper();
 
+    Map<String, Object> verification =
+        userVerifiedClaims.contains("verification")
+            ? userVerifiedClaims.getValueAsJsonNode("verification").toMap()
+            : new HashMap<>();
     Map<String, Object> userClaims = userVerifiedClaims.getValueAsJsonNode("claims").toMap();
-    map.put("verified_claims", userClaims);
+
+    Map<String, Object> verified = new HashMap<>();
+    verified.put("verification", verification);
+    verified.put("claims", userClaims);
+    map.put("verified_claims", verified);
 
     return map;
   }
