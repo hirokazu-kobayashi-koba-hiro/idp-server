@@ -1,8 +1,8 @@
 # 外部サービス連携
 
 > **関連ドキュメント**
-> - [HTTP Request Executor](impl-16-http-request-executor.md) - リトライ制御と認証設定
-> - [Mapping Functions 開発ガイド](impl-20-mapping-functions.md) - データ変換の詳細（19個のFunction）
+> - [HTTP Request Executor](./http-request-executor.md) - リトライ制御と認証設定
+> - [Mapping Functions 開発ガイド](../advanced/mapping-functions.md) - データ変換の詳細（19個のFunction）
 
 ## このドキュメントの目的
 
@@ -13,7 +13,7 @@
 
 ### 前提知識
 - [03. 共通実装パターン](../03-common-patterns.md)
-- [Mapping Functions 開発ガイド](impl-20-mapping-functions.md) - リクエスト/レスポンス変換
+- [Mapping Functions 開発ガイド](../advanced/mapping-functions.md) - リクエスト/レスポンス変換
 
 ---
 

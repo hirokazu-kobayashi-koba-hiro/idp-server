@@ -79,8 +79,8 @@ idp-serverの**コア機能の実装方法**を説明する技術ドキュメン
 | # | ファイル | タイトル | 内容 | 行数 |
 |---|---------|---------|------|------|
 | 16 | [impl-15-security-event-hooks.md](./impl-15-security-event-hooks.md) | セキュリティイベントフック実装 | Hook実装・リトライ戦略・エラーハンドリング | 412 |
-| 17 | [impl-16-http-request-executor.md](./impl-16-http-request-executor.md) | HTTP Request Executor | リトライ機構と包括的エラーハンドリング | 521 |
-| 18 | [impl-17-external-integration.md](./impl-17-external-integration.md) | 外部サービス連携ガイド | HttpRequestExecutorを使った外部API連携 | 413 |
+| 17 | [http-request-executor.md](./integration/http-request-executor.md) | HTTP Request Executor | リトライ機構と包括的エラーハンドリング | 521 |
+| 18 | [external-integration.md](./integration/external-integration.md) | 外部サービス連携ガイド | HttpRequestExecutorを使った外部API連携 | 413 |
 | 19 | [impl-18-spring-session.md](./impl-18-spring-session.md) | Spring Session統合ガイド | RedisセッションストアとSafeRedisSessionRepository | 476 |
 | 20 | [impl-24-notification-fcm-apns.md](./impl-24-notification-fcm-apns.md) | FCM/APNs プッシュ通知実装 | AuthenticationDeviceNotifier プラグイン、JWT トークンキャッシュ | 570 |
 | 21 | [impl-25-audit-logging.md](./impl-25-audit-logging.md) | Audit Logging実装ガイド | AuditLogWriter プラグイン、非同期処理、カスタムログ出力先 | 489 |

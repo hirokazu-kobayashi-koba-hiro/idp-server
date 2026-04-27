@@ -84,6 +84,15 @@ public class FunctionRegistry {
     SplitFunction splitFunction = new SplitFunction();
     temp.put(splitFunction.name(), splitFunction);
 
+    AppendFunction appendFunction = new AppendFunction();
+    temp.put(appendFunction.name(), appendFunction);
+
+    MergeFunction mergeFunction = new MergeFunction();
+    temp.put(mergeFunction.name(), mergeFunction);
+
+    PluckFunction pluckFunction = new PluckFunction();
+    temp.put(pluckFunction.name(), pluckFunction);
+
     MimeEncodedWordFunction mimeEncodedWordFunction = new MimeEncodedWordFunction();
     temp.put(mimeEncodedWordFunction.name(), mimeEncodedWordFunction);
 

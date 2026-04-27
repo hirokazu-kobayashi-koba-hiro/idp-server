@@ -1,8 +1,8 @@
 # HTTP Request Executor
 
 > **関連ドキュメント**
-> - [Mapping Functions 開発ガイド](impl-20-mapping-functions.md) - リクエスト/レスポンスのデータ変換（19個のFunction）
-> - [外部サービス連携ガイド](impl-17-external-integration.md) - 完全な実装例
+> - [Mapping Functions 開発ガイド](../advanced/mapping-functions.md) - リクエスト/レスポンスのデータ変換（19個のFunction）
+> - [外部サービス連携ガイド](./external-integration.md) - 完全な実装例
 
 このドキュメントでは、`idp-server` における **HTTP Request Executor** システムについて説明します。
 これは、外部サービスとの HTTP 通信において、堅牢な再試行メカニズム、包括的なエラーハンドリング、および**動的なデータマッピング（Mapping Functions）**を提供することを目的としています。
@@ -543,7 +543,7 @@ HTTPリクエストの動的な構築とレスポンスの変換を行うMapping
 | `body_mapping_rules` | リクエストボディ | JSONボディの動的構築 |
 | `query_mapping_rules` | クエリパラメータ | URLクエリパラメータの動的設定 |
 
-**詳細**: [Mapping Functions 開発ガイド](impl-20-mapping-functions.md)
+**詳細**: [Mapping Functions 開発ガイド](../advanced/mapping-functions.md)
 
 ### path_mapping_rules
 
@@ -579,7 +579,7 @@ URLパスパラメータを動的に設定する機能です。
 
 ### header_mapping_rules / body_mapping_rules
 
-ヘッダーとボディのマッピングについては、[Mapping Functions 開発ガイド](impl-20-mapping-functions.md)を参照してください。
+ヘッダーとボディのマッピングについては、[Mapping Functions 開発ガイド](../advanced/mapping-functions.md)を参照してください。
 
 ---
 
@@ -931,5 +931,5 @@ public void handleResult(HttpRequestResult result) {
 
 ### 実装ガイド
 - [設定管理 API](configuration-management-api.md)
-- [タスクガイド: 外部サービス連携](../04-implementation-guides/impl-17-external-integration.md) - HttpRequestExecutor実践ガイド
+- [タスクガイド: 外部サービス連携](../04-implementation-guides/./external-integration.md) - HttpRequestExecutor実践ガイド
 
