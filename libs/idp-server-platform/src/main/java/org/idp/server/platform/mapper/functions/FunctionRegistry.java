@@ -93,6 +93,9 @@ public class FunctionRegistry {
     PluckFunction pluckFunction = new PluckFunction();
     temp.put(pluckFunction.name(), pluckFunction);
 
+    ReshapeFunction reshapeFunction = new ReshapeFunction();
+    temp.put(reshapeFunction.name(), reshapeFunction);
+
     MimeEncodedWordFunction mimeEncodedWordFunction = new MimeEncodedWordFunction();
     temp.put(mimeEncodedWordFunction.name(), mimeEncodedWordFunction);
 
