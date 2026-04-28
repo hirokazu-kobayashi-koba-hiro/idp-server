@@ -657,7 +657,7 @@ Step 5: 結果配置
 
 ### 13. reshape - オブジェクトのフィールドリネーム/再構成
 
-**用途**: オブジェクトのフィールドを別名に変換して新しい shape のオブジェクトを生成する
+**用途**: オブジェクトのフィールドを別名に変換し、必要に応じて各フィールドの値を関数で加工して新しい shape のオブジェクトを生成する
 
 ```json
 {
@@ -675,12 +675,60 @@ Step 5: 結果配置
 **変換例**: `{"entity_id": "1", "entity_name": "Foo", "kind": "bar"}` → `{"id": "1", "name": "Foo", "type": "bar"}`
 
 **引数**:
-- `fields` (必須): 出力フィールドの定義 Map。キーが出力フィールド名、値が JSONPath（`$.` で始まる）または静的値
+- `fields` (必須): 出力フィールドの定義 Map。キーが出力フィールド名、値は以下の3形式:
+
+**fields の値の形式:**
+
+| 形式 | 説明 | 例 |
+|------|------|-----|
+| JSONPath 文字列 | `$.` で始まる文字列。入力オブジェクトから値を取得 | `"$.entity_id"` |
+| Map (`from` + `functions`) | 値を取得して関数チェーンで加工 | `{"from": "$.amount", "functions": [...]}` |
+| Map (`static_value`) | 固定値を設定 | `{"static_value": "external"}` |
+| その他 | 静的値としてそのまま使用 | `1`, `true` |
+
+**per-field 関数チェーンの例:**
+
+```json
+{
+  "name": "reshape",
+  "args": {
+    "fields": {
+      "id": "$.entity_id",
+      "amount": {
+        "from": "$.amount_str",
+        "functions": [
+          {"name": "convert_type", "args": {"type": "integer"}}
+        ]
+      },
+      "status": {
+        "from": "$.status_code",
+        "functions": [
+          {"name": "switch", "args": {"cases": {"A": "active", "I": "inactive"}, "default": "unknown"}}
+        ]
+      },
+      "name": {
+        "from": "$.raw_name",
+        "functions": [
+          {"name": "trim"},
+          {"name": "case", "args": {"mode": "upper"}}
+        ]
+      },
+      "tag": {"static_value": "external"}
+    }
+  }
+}
+```
+
+```
+Input:  {"entity_id": "1", "amount_str": "9999", "status_code": "A", "raw_name": "  alice  "}
+Output: {"id": "1", "amount": 9999, "status": "active", "name": "ALICE", "tag": "external"}
+```
 
 **主な使用例**:
 - 外部 API レスポンスの schema を canonical shape に正規化
 - `map(reshape)` で配列内の各オブジェクトを一括変換
 - フィールドのサブセット抽出（必要なフィールドだけ残す）
+- per-field の型変換・値マッピング・文字列正規化
 
 **`map` との組み合わせ（配列の各要素を変換）**:
 
