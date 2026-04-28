@@ -71,16 +71,19 @@ public class UserinfoHandler {
             throw new TokenInvalidException("not found token");
         }
 
-        // ユーザー取得
-        User user = delegate.findUser(tenant, oAuthToken.subject());
-
-        // 検証
+        // 検証（トークン検証）
         UserinfoVerifier verifier = new UserinfoVerifier(
             oAuthToken,
             request.toClientCert(),
-            user
+            request.dpopProof(),
+            request.httpMethod(),
+            request.httpUri()
         );
-        verifier.verify();
+        verifier.verifyToken();
+
+        // ユーザー取得
+        User user = delegate.findUser(tenant, oAuthToken.subject());
+        verifier.verifyUser(user);
 
         // クレーム生成
         UserinfoClaimsCreator claimsCreator =
