@@ -241,18 +241,18 @@ public class UserinfoHandler {
           "token does not have a subject, userinfo endpoint requires a user-bound token");
     }
 
-    // 5. Delegate経由でユーザー取得
-    User user = delegate.findUser(tenant, oAuthToken.subject());
-
-    // 6. Verifier: ビジネスルール検証
+    // 5. Verifier: トークン検証（DPoP含む）
     UserinfoVerifier verifier = new UserinfoVerifier(
         oAuthToken,
         request.toClientCert(),
         request.dpopProof(),      // DPoP対応
         request.httpMethod(),
-        request.httpUri(),
-        user);
-    verifier.verify();
+        request.httpUri());
+    verifier.verifyToken();
+
+    // 6. Delegate経由でユーザー取得して検証
+    User user = delegate.findUser(tenant, oAuthToken.subject());
+    verifier.verifyUser(user);
 
     // 7. Claims抽出（Scope別フィルタリング）
     UserinfoClaimsCreator claimsCreator =

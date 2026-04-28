@@ -63,7 +63,13 @@ public class UserinfoHandler {
 
     OAuthToken oAuthToken = oAuthTokenQueryRepository.find(tenant, accessTokenEntity);
 
-    UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken, request.toClientCert());
+    UserinfoVerifier verifier =
+        new UserinfoVerifier(
+            oAuthToken,
+            request.toClientCert(),
+            request.dpopProof(),
+            request.httpMethod(),
+            request.httpUri());
     verifier.verifyToken();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =

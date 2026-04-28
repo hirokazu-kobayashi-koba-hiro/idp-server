@@ -57,39 +57,34 @@ public class UserinfoVerifier {
 
   OAuthToken oAuthToken;
   ClientCert clientCert;
-    DPoPProof dpopProof;
-    String httpMethod;
-    String httpUri;
-    User user;
+  DPoPProof dpopProof;
+  String httpMethod;
+  String httpUri;
 
   public UserinfoVerifier(OAuthToken oAuthToken, ClientCert clientCert) {
     this.oAuthToken = oAuthToken;
     this.clientCert = clientCert;
   }
 
-    public UserinfoVerifier(
-            OAuthToken oAuthToken,
-            ClientCert clientCert,
-            DPoPProof dpopProof,
-            String httpMethod,
-            String httpUri,
-            User user) {
-        this.oAuthToken = oAuthToken;
-        this.clientCert = clientCert;
-        this.dpopProof = dpopProof;
-        this.httpMethod = httpMethod;
-        this.httpUri = httpUri;
-        this.user = user;
-    }
+  public UserinfoVerifier(
+      OAuthToken oAuthToken,
+      ClientCert clientCert,
+      DPoPProof dpopProof,
+      String httpMethod,
+      String httpUri) {
+    this.oAuthToken = oAuthToken;
+    this.clientCert = clientCert;
+    this.dpopProof = dpopProof;
+    this.httpMethod = httpMethod;
+    this.httpUri = httpUri;
+  }
 
   /** Verify token validity: existence, expiration, subject presence, and client certificate. */
   public void verifyToken() {
     throwExceptionIfNotFoundToken();
     throwExceptionIfNoSubject();
     throwExceptionIfUnMatchClientCert();
-      throwExceptionIfUnMatchDPoPProof();
-      throwExceptionIfNotFoundUser();
-      throwExceptionIfInactiveUser();
+    throwExceptionIfUnMatchDPoPProof();
   }
 
   /** Verify user state: existence and active status. */
@@ -117,34 +112,28 @@ public class UserinfoVerifier {
     }
   }
 
-    void throwExceptionIfNotFoundUser() {
-        if (!user.exists()) {
-            throw new TokenInvalidException("not found user");
-        }
+  void throwExceptionIfUnMatchDPoPProof() {
+    AccessToken accessToken = oAuthToken.accessToken();
+    if (!accessToken.hasDPoPBinding()) {
+      return;
     }
-
-    void throwExceptionIfUnMatchDPoPProof() {
-        AccessToken accessToken = oAuthToken.accessToken();
-        if (!accessToken.hasDPoPBinding()) {
-            return;
-        }
-        if (dpopProof == null || !dpopProof.exists()) {
-            throw new TokenInvalidException(
-                    "access token is DPoP-bound, but DPoP proof header is missing");
-        }
-        try {
-            String accessTokenValue = oAuthToken.accessTokenEntity().value();
-            String ath = new AccessTokenHashCalculator(accessTokenValue).calculate();
-            DPoPProofVerifier verifier = new DPoPProofVerifier();
-            DPoPProofVerifiedResult result = verifier.verify(dpopProof, httpMethod, httpUri, ath);
-            if (!accessToken.matchJwkThumbprint(result.jwkThumbprint())) {
-                throw new TokenInvalidException(
-                        "DPoP proof JWK thumbprint does not match the access token binding");
-            }
-        } catch (DPoPProofInvalidException e) {
-            throw new TokenInvalidException("DPoP proof validation failed: " + e.getMessage());
-        }
+    if (dpopProof == null || !dpopProof.exists()) {
+      throw new TokenInvalidException(
+          "access token is DPoP-bound, but DPoP proof header is missing");
     }
+    try {
+      String accessTokenValue = oAuthToken.accessTokenEntity().value();
+      String ath = new AccessTokenHashCalculator(accessTokenValue).calculate();
+      DPoPProofVerifier verifier = new DPoPProofVerifier();
+      DPoPProofVerifiedResult result = verifier.verify(dpopProof, httpMethod, httpUri, ath);
+      if (!accessToken.matchJwkThumbprint(result.jwkThumbprint())) {
+        throw new TokenInvalidException(
+            "DPoP proof JWK thumbprint does not match the access token binding");
+      }
+    } catch (DPoPProofInvalidException e) {
+      throw new TokenInvalidException("DPoP proof validation failed: " + e.getMessage());
+    }
+  }
 
   /**
    * Reject tokens without a subject claim.
