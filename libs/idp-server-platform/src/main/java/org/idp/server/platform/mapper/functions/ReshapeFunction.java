@@ -17,54 +17,60 @@
 package org.idp.server.platform.mapper.functions;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 
 /**
- * {@code ReshapeFunction} transforms a single object (Map) into a new shape by extracting and
- * renaming fields.
+ * {@code ReshapeFunction} transforms a single object (Map) into a new shape by extracting,
+ * renaming, and optionally transforming fields.
  *
- * <p>This function takes a Map input and produces a new Map with field names and values defined by
- * the {@code fields} argument. Each field value can be:
+ * <p>Each field value in the {@code fields} argument can be:
  *
  * <ul>
  *   <li>A JSONPath string (e.g., {@code "$.entity_id"}) — resolved against the input object
  *   <li>A static value (non-string or string not starting with "$.")
+ *   <li>A Map with {@code from}/{@code static_value} and optional {@code functions} — a
+ *       mapping_rule subset that enables per-field value transformation
  * </ul>
  *
- * <p>Combined with {@code map}, this enables per-element object transformation of arrays:
+ * <p>Example with per-field functions:
  *
  * <pre>{@code
- * // Rename fields in each element of an array
- * "functions": [
- *   {
- *     "name": "map",
- *     "args": {
- *       "function": "reshape",
- *       "function_args": {
- *         "fields": {
- *           "id": "$.entity_id",
- *           "name": "$.entity_name",
- *           "type": "$.kind"
- *         }
- *       }
+ * {
+ *   "name": "reshape",
+ *   "args": {
+ *     "fields": {
+ *       "id": "$.entity_id",
+ *       "name": "$.entity_name",
+ *       "amount": {
+ *         "from": "$.amount_str",
+ *         "functions": [{"name": "convert_type", "args": {"type": "integer"}}]
+ *       },
+ *       "status": {
+ *         "from": "$.raw_status",
+ *         "functions": [{"name": "switch", "args": {"cases": {"A": "active", "I": "inactive"}}}]
+ *       },
+ *       "tag": {"static_value": "external"}
  *     }
  *   }
- * ]
- *
- * // Input:  [{"entity_id": "1", "entity_name": "Foo", "kind": "bar"}]
- * // Output: [{"id": "1", "name": "Foo", "type": "bar"}]
+ * }
  * }</pre>
  *
  * <p>Arguments:
  *
  * <ul>
- *   <li><b>fields</b> (required): A Map defining the output shape. Keys are output field names,
- *       values are JSONPath expressions or static values.
+ *   <li><b>fields</b> (required): A Map defining the output shape. Keys are output field names.
  * </ul>
  */
 public class ReshapeFunction implements ValueFunction {
+
+  private FunctionRegistry functionRegistry;
+
+  public void setFunctionRegistry(FunctionRegistry functionRegistry) {
+    this.functionRegistry = functionRegistry;
+  }
 
   @Override
   @SuppressWarnings("unchecked")
@@ -89,7 +95,6 @@ public class ReshapeFunction implements ValueFunction {
     Map<String, Object> fields = (Map<String, Object>) fieldsArg;
     Map<String, Object> inputMap = (Map<String, Object>) input;
 
-    // Create a JsonPathWrapper from the input object for JSONPath evaluation
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(inputMap);
     JsonPathWrapper jsonPath = new JsonPathWrapper(jsonNodeWrapper.toJson());
 
@@ -113,13 +118,68 @@ public class ReshapeFunction implements ValueFunction {
   /**
    * Resolve a field value from the field specification.
    *
-   * <p>If the spec is a String starting with "$.", it's evaluated as JSONPath against the input
-   * object. Otherwise, it's treated as a static value.
+   * <p>Three forms:
+   *
+   * <ol>
+   *   <li>String starting with "$." → JSONPath evaluation
+   *   <li>Map with "from"/"static_value" + optional "functions" → mapping_rule subset
+   *   <li>Other → static value
+   * </ol>
    */
+  @SuppressWarnings("unchecked")
   private Object resolveFieldValue(Object fieldSpec, JsonPathWrapper jsonPath) {
+    // Form 1: JSONPath string
     if (fieldSpec instanceof String str && str.startsWith("$.")) {
       return jsonPath.readRaw(str);
     }
+
+    // Form 2: mapping_rule subset { from, static_value, functions }
+    if (fieldSpec instanceof Map) {
+      Map<String, Object> spec = (Map<String, Object>) fieldSpec;
+      Object value = resolveBaseValue(spec, jsonPath);
+      return applyFunctions(spec, value);
+    }
+
+    // Form 3: static value
     return fieldSpec;
+  }
+
+  private Object resolveBaseValue(Map<String, Object> spec, JsonPathWrapper jsonPath) {
+    if (spec.containsKey("static_value")) {
+      return spec.get("static_value");
+    }
+    Object from = spec.get("from");
+    if (from instanceof String str && str.startsWith("$.")) {
+      return jsonPath.readRaw(str);
+    }
+    return from;
+  }
+
+  @SuppressWarnings("unchecked")
+  private Object applyFunctions(Map<String, Object> spec, Object value) {
+    Object functionsObj = spec.get("functions");
+    if (functionsObj == null || !(functionsObj instanceof List)) {
+      return value;
+    }
+    if (functionRegistry == null) {
+      return value;
+    }
+
+    List<Map<String, Object>> functionSpecs = (List<Map<String, Object>>) functionsObj;
+    Object v = value;
+    for (Map<String, Object> funcSpec : functionSpecs) {
+      String funcName = (String) funcSpec.get("name");
+      Map<String, Object> funcArgs = (Map<String, Object>) funcSpec.get("args");
+      if (funcArgs == null) {
+        funcArgs = new HashMap<>();
+      }
+
+      ValueFunction fn = functionRegistry.get(funcName);
+      if (fn == null) {
+        continue;
+      }
+      v = fn.apply(v, funcArgs);
+    }
+    return v;
   }
 }

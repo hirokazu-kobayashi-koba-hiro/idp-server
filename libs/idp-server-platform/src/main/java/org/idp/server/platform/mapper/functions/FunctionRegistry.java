@@ -105,6 +105,7 @@ public class FunctionRegistry {
 
     // Set registry reference after map initialization to ensure thread-safety
     mapFunction.setFunctionRegistry(this);
+    reshapeFunction.setFunctionRegistry(this);
   }
 
   public ValueFunction get(String name) {

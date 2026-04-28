@@ -220,4 +220,144 @@ class ReshapeFunctionTest {
       assertEquals(10000, resultMap.get("balance"));
     }
   }
+
+  @Nested
+  @DisplayName("Per-field Function Tests")
+  class PerFieldFunctionTests {
+
+    private ReshapeFunction functionWithRegistry;
+
+    @BeforeEach
+    void setUp() {
+      functionWithRegistry = new ReshapeFunction();
+      FunctionRegistry registry = new FunctionRegistry();
+      functionWithRegistry.setFunctionRegistry(registry);
+    }
+
+    @Test
+    void apply_convertsTypeWithFunction() {
+      Map<String, Object> input = Map.of("amount_str", "12345", "name", "Test");
+
+      Map<String, Object> fields = new HashMap<>();
+      fields.put("name", "$.name");
+      fields.put(
+          "amount",
+          Map.of(
+              "from",
+              "$.amount_str",
+              "functions",
+              List.of(Map.of("name", "convert_type", "args", Map.of("type", "integer")))));
+
+      Map<String, Object> args = Map.of("fields", fields);
+      Object result = functionWithRegistry.apply(input, args);
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> resultMap = (Map<String, Object>) result;
+      assertEquals("Test", resultMap.get("name"));
+      assertEquals(12345, resultMap.get("amount"));
+    }
+
+    @Test
+    void apply_usesStaticValueInFieldSpec() {
+      Map<String, Object> input = Map.of("id", "1");
+
+      Map<String, Object> fields = new HashMap<>();
+      fields.put("id", "$.id");
+      fields.put("source", Map.of("static_value", "external"));
+
+      Map<String, Object> args = Map.of("fields", fields);
+      Object result = functionWithRegistry.apply(input, args);
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> resultMap = (Map<String, Object>) result;
+      assertEquals("1", resultMap.get("id"));
+      assertEquals("external", resultMap.get("source"));
+    }
+
+    @Test
+    void apply_switchesFunctionInField() {
+      Map<String, Object> input = Map.of("status_code", "A", "id", "1");
+
+      Map<String, Object> fields = new HashMap<>();
+      fields.put("id", "$.id");
+      fields.put(
+          "status",
+          Map.of(
+              "from",
+              "$.status_code",
+              "functions",
+              List.of(
+                  Map.of(
+                      "name",
+                      "switch",
+                      "args",
+                      Map.of(
+                          "cases",
+                          Map.of("A", "active", "I", "inactive"),
+                          "default",
+                          "unknown")))));
+
+      Map<String, Object> args = Map.of("fields", fields);
+      Object result = functionWithRegistry.apply(input, args);
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> resultMap = (Map<String, Object>) result;
+      assertEquals("1", resultMap.get("id"));
+      assertEquals("active", resultMap.get("status"));
+    }
+
+    @Test
+    void apply_chainsMultipleFunctionsInField() {
+      Map<String, Object> input = Map.of("raw_name", "  alice  ");
+
+      Map<String, Object> fields = new HashMap<>();
+      fields.put(
+          "name",
+          Map.of(
+              "from",
+              "$.raw_name",
+              "functions",
+              List.of(
+                  Map.of("name", "trim", "args", Map.of()),
+                  Map.of("name", "case", "args", Map.of("mode", "upper")))));
+
+      Map<String, Object> args = Map.of("fields", fields);
+      Object result = functionWithRegistry.apply(input, args);
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> resultMap = (Map<String, Object>) result;
+      assertEquals("ALICE", resultMap.get("name"));
+    }
+
+    @Test
+    void apply_mixesAllFieldSpecForms() {
+      Map<String, Object> input = Map.of("entity_id", "42", "raw_amount", "9999", "code", "JP");
+
+      Map<String, Object> fields = new HashMap<>();
+      // Form 1: JSONPath string
+      fields.put("id", "$.entity_id");
+      // Form 2: Map with from + functions
+      fields.put(
+          "amount",
+          Map.of(
+              "from",
+              "$.raw_amount",
+              "functions",
+              List.of(Map.of("name", "convert_type", "args", Map.of("type", "integer")))));
+      // Form 2: Map with static_value
+      fields.put("region", Map.of("static_value", "asia"));
+      // Form 3: static value (non-string)
+      fields.put("priority", 1);
+
+      Map<String, Object> args = Map.of("fields", fields);
+      Object result = functionWithRegistry.apply(input, args);
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> resultMap = (Map<String, Object>) result;
+      assertEquals("42", resultMap.get("id"));
+      assertEquals(9999, resultMap.get("amount"));
+      assertEquals("asia", resultMap.get("region"));
+      assertEquals(1, resultMap.get("priority"));
+    }
+  }
 }
