@@ -93,6 +93,9 @@ public class FunctionRegistry {
     PluckFunction pluckFunction = new PluckFunction();
     temp.put(pluckFunction.name(), pluckFunction);
 
+    ConcatFunction concatFunction = new ConcatFunction();
+    temp.put(concatFunction.name(), concatFunction);
+
     ReshapeFunction reshapeFunction = new ReshapeFunction();
     temp.put(reshapeFunction.name(), reshapeFunction);
 

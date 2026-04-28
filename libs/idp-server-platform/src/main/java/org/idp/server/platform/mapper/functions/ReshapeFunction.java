@@ -137,7 +137,7 @@ public class ReshapeFunction implements ValueFunction {
     if (fieldSpec instanceof Map) {
       Map<String, Object> spec = (Map<String, Object>) fieldSpec;
       Object value = resolveBaseValue(spec, jsonPath);
-      return applyFunctions(spec, value);
+      return applyFunctions(spec, value, jsonPath);
     }
 
     // Form 3: static value
@@ -155,8 +155,15 @@ public class ReshapeFunction implements ValueFunction {
     return from;
   }
 
+  /**
+   * Apply per-field functions with args resolved against the input object context.
+   *
+   * <p>Args values starting with "$." are resolved from the input object's JsonPath, enabling
+   * cross-field references within reshape. For example, a concat function can reference multiple
+   * fields of the input object via its {@code values} arg.
+   */
   @SuppressWarnings("unchecked")
-  private Object applyFunctions(Map<String, Object> spec, Object value) {
+  private Object applyFunctions(Map<String, Object> spec, Object value, JsonPathWrapper jsonPath) {
     Object functionsObj = spec.get("functions");
     if (functionsObj == null || !(functionsObj instanceof List)) {
       return value;
@@ -178,8 +185,44 @@ public class ReshapeFunction implements ValueFunction {
       if (fn == null) {
         continue;
       }
-      v = fn.apply(v, funcArgs);
+      // Resolve "$." references in args against the input object
+      Map<String, Object> resolvedArgs = resolveArgs(funcArgs, jsonPath);
+      v = fn.apply(v, resolvedArgs);
     }
     return v;
+  }
+
+  /**
+   * Resolve JSONPath references in function args against the input object.
+   *
+   * <p>Same pattern as {@code MappingRuleObjectMapper.resolveArgs}, but the context is the input
+   * object (not the entire source data). This enables cross-field references within reshape.
+   *
+   * <p>Special handling for List values: each element starting with "$." is resolved individually,
+   * enabling concat's {@code values} arg to reference multiple fields.
+   */
+  private Map<String, Object> resolveArgs(Map<String, Object> args, JsonPathWrapper jsonPath) {
+    if (args == null || args.isEmpty()) {
+      return args;
+    }
+    Map<String, Object> resolved = new HashMap<>(args);
+    for (Map.Entry<String, Object> entry : resolved.entrySet()) {
+      Object val = entry.getValue();
+      if (val instanceof String str && str.startsWith("$.")) {
+        entry.setValue(jsonPath.readRaw(str));
+      } else if (val instanceof List<?> list) {
+        // Resolve "$." references within List elements (for concat's values arg)
+        List<Object> resolvedList = new java.util.ArrayList<>();
+        for (Object item : list) {
+          if (item instanceof String str && str.startsWith("$.")) {
+            resolvedList.add(jsonPath.readRaw(str));
+          } else {
+            resolvedList.add(item);
+          }
+        }
+        entry.setValue(resolvedList);
+      }
+    }
+    return resolved;
   }
 }
