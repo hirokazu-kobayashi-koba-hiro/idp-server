@@ -359,5 +359,209 @@ class ReshapeFunctionTest {
       assertEquals("asia", resultMap.get("region"));
       assertEquals(1, resultMap.get("priority"));
     }
+
+    @Test
+    void apply_concatsCrossFieldValues() {
+      Map<String, Object> input = Map.of("first_name", "Taro", "last_name", "Tanaka", "id", "1");
+
+      Map<String, Object> fields = new HashMap<>();
+      fields.put("id", "$.id");
+      Map<String, Object> fullNameSpec = new HashMap<>();
+      fullNameSpec.put("static_value", null);
+      fullNameSpec.put(
+          "functions",
+          List.of(
+              Map.of(
+                  "name",
+                  "concat",
+                  "args",
+                  Map.of("values", List.of("$.first_name", " ", "$.last_name")))));
+      fields.put("full_name", fullNameSpec);
+
+      Map<String, Object> args = Map.of("fields", fields);
+      Object result = functionWithRegistry.apply(input, args);
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> resultMap = (Map<String, Object>) result;
+      assertEquals("1", resultMap.get("id"));
+      assertEquals("Taro Tanaka", resultMap.get("full_name"));
+    }
+
+    @Test
+    void apply_concatThenTrimThenCase() {
+      Map<String, Object> input = Map.of("first", "  taro  ", "last", "  tanaka  ");
+
+      Map<String, Object> fields = new HashMap<>();
+      Map<String, Object> nameSpec = new HashMap<>();
+      nameSpec.put("static_value", null);
+      nameSpec.put(
+          "functions",
+          List.of(
+              Map.of("name", "concat", "args", Map.of("values", List.of("$.first", " ", "$.last"))),
+              Map.of("name", "trim", "args", Map.of()),
+              Map.of("name", "case", "args", Map.of("mode", "upper"))));
+      fields.put("name", nameSpec);
+
+      Map<String, Object> args = Map.of("fields", fields);
+      Object result = functionWithRegistry.apply(input, args);
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> resultMap = (Map<String, Object>) result;
+      // concat: "  taro  " + " " + "  tanaka  " = "  taro     tanaka  "
+      // → trim: "taro     tanaka" → upper: "TARO     TANAKA"
+      assertEquals("TARO     TANAKA", resultMap.get("name"));
+    }
+  }
+
+  @Nested
+  @DisplayName("Per-field Args Resolution Tests")
+  class PerFieldArgsResolutionTests {
+
+    private ReshapeFunction functionWithRegistry;
+
+    @BeforeEach
+    void setUp() {
+      functionWithRegistry = new ReshapeFunction();
+      FunctionRegistry registry = new FunctionRegistry();
+      functionWithRegistry.setFunctionRegistry(registry);
+    }
+
+    @Test
+    void resolveArgs_resolvesStringValueFromInputObject() {
+      // args 内の "$." 文字列値が入力オブジェクトから解決される
+      Map<String, Object> input = Map.of("status", "active", "id", "1");
+
+      Map<String, Object> fields = new HashMap<>();
+      fields.put(
+          "is_active",
+          Map.of(
+              "from",
+              "$.status",
+              "functions",
+              List.of(
+                  Map.of(
+                      "name",
+                      "if",
+                      "args",
+                      Map.of("condition", "equals:active", "then", true, "else", false)))));
+
+      Map<String, Object> args = Map.of("fields", fields);
+      Object result = functionWithRegistry.apply(input, args);
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> resultMap = (Map<String, Object>) result;
+      assertEquals(true, resultMap.get("is_active"));
+    }
+
+    @Test
+    void resolveArgs_resolvesListElementsFromInputObject() {
+      // args 内の List の各 "$." 要素が個別に入力オブジェクトから解決される
+      Map<String, Object> input =
+          Map.of("city", "Tokyo", "street", "Shibuya 1-2-3", "zip", "150-0001");
+
+      Map<String, Object> fields = new HashMap<>();
+      Map<String, Object> addressSpec = new HashMap<>();
+      addressSpec.put("static_value", null);
+      addressSpec.put(
+          "functions",
+          List.of(
+              Map.of(
+                  "name",
+                  "concat",
+                  "args",
+                  Map.of("values", List.of("$.zip", " ", "$.city", " ", "$.street")))));
+      fields.put("full_address", addressSpec);
+
+      Map<String, Object> args = Map.of("fields", fields);
+      Object result = functionWithRegistry.apply(input, args);
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> resultMap = (Map<String, Object>) result;
+      assertEquals("150-0001 Tokyo Shibuya 1-2-3", resultMap.get("full_address"));
+    }
+
+    @Test
+    void resolveArgs_preservesStaticValues() {
+      // "$." で始まらない値はそのまま保持される
+      Map<String, Object> input = Map.of("id", "1");
+
+      Map<String, Object> fields = new HashMap<>();
+      fields.put(
+          "label",
+          Map.of(
+              "from",
+              "$.id",
+              "functions",
+              List.of(Map.of("name", "format", "args", Map.of("template", "ID-{{value}}")))));
+
+      Map<String, Object> args = Map.of("fields", fields);
+      Object result = functionWithRegistry.apply(input, args);
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> resultMap = (Map<String, Object>) result;
+      assertEquals("ID-1", resultMap.get("label"));
+    }
+
+    @Test
+    void resolveArgs_resolvesNonexistentPathToNull() {
+      // 存在しないパスは null に解決される
+      Map<String, Object> input = Map.of("id", "1");
+
+      Map<String, Object> fields = new HashMap<>();
+      Map<String, Object> nameSpec = new HashMap<>();
+      nameSpec.put("static_value", null);
+      nameSpec.put(
+          "functions",
+          List.of(
+              Map.of(
+                  "name",
+                  "concat",
+                  "args",
+                  Map.of("values", List.of("$.id", "-", "$.nonexistent"), "skipNull", true))));
+      fields.put("result", nameSpec);
+
+      Map<String, Object> args = Map.of("fields", fields);
+      Object result = functionWithRegistry.apply(input, args);
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> resultMap = (Map<String, Object>) result;
+      // skipNull=true なので null 要素はスキップ: ["1", "-", null(skip)] → "1-"
+      assertEquals("1-", resultMap.get("result"));
+    }
+
+    @Test
+    void resolveArgs_mergeSourceFromInputObject() {
+      // merge の source を入力オブジェクトの別フィールドから解決
+      Map<String, Object> input =
+          Map.of(
+              "new_tags", List.of("premium", "vip"),
+              "existing_tags", List.of("basic"));
+
+      Map<String, Object> fields = new HashMap<>();
+      fields.put(
+          "all_tags",
+          Map.of(
+              "from",
+              "$.new_tags",
+              "functions",
+              List.of(
+                  Map.of(
+                      "name",
+                      "merge",
+                      "args",
+                      Map.of("source", "$.existing_tags", "distinct", true)))));
+
+      Map<String, Object> args = Map.of("fields", fields);
+      Object result = functionWithRegistry.apply(input, args);
+
+      @SuppressWarnings("unchecked")
+      Map<String, Object> resultMap = (Map<String, Object>) result;
+      @SuppressWarnings("unchecked")
+      List<String> allTags = (List<String>) resultMap.get("all_tags");
+      assertEquals(3, allTags.size());
+      assertTrue(allTags.contains("premium"));
+      assertTrue(allTags.contains("vip"));
+      assertTrue(allTags.contains("basic"));
+    }
   }
 }
