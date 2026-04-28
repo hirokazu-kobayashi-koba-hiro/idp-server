@@ -99,6 +99,7 @@ public class FilterFunction implements ValueFunction {
     }
 
     boolean negate = getBooleanArg(args, "negate", false);
+    String field = getStringArg(args, "field");
 
     Collection<?> collection = toCollection(input);
     if (collection == null) {
@@ -108,7 +109,11 @@ public class FilterFunction implements ValueFunction {
     List<Object> result = new ArrayList<>();
     for (Object element : collection) {
       try {
-        boolean matches = evaluateCondition(element, condition);
+        Object evaluationTarget = element;
+        if (field != null && !field.isEmpty()) {
+          evaluationTarget = extractField(element, field);
+        }
+        boolean matches = evaluateCondition(evaluationTarget, condition);
         if (negate) {
           matches = !matches;
         }
@@ -545,6 +550,18 @@ public class FilterFunction implements ValueFunction {
 
     // Single element - treat as single-element collection
     return Collections.singletonList(input);
+  }
+
+  /**
+   * Extract a field value from a Map element. Returns null if element is not a Map or field is
+   * missing.
+   */
+  @SuppressWarnings("unchecked")
+  private Object extractField(Object element, String field) {
+    if (element instanceof Map) {
+      return ((Map<String, Object>) element).get(field);
+    }
+    return null;
   }
 
   /** Helper method to extract string argument. */

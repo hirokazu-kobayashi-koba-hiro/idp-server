@@ -676,4 +676,108 @@ class FilterFunctionTest {
       assertEquals(List.of("valid1", "valid2"), result);
     }
   }
+
+  @Nested
+  @DisplayName("Object Field Filtering Tests")
+  class ObjectFieldFilteringTests {
+
+    @Test
+    void apply_filtersObjectsByFieldValue() {
+      List<Map<String, Object>> input =
+          List.of(
+              Map.of("id", "1", "name", "Corp A", "type", "company"),
+              Map.of("id", "2", "name", "Alice", "type", "person"),
+              Map.of("id", "3", "name", "Corp B", "type", "company"));
+
+      Map<String, Object> args = Map.of("field", "type", "condition", "{{value}} == 'company'");
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> result = (List<Map<String, Object>>) function.apply(input, args);
+
+      assertEquals(2, result.size());
+      assertEquals("1", result.get(0).get("id"));
+      assertEquals("3", result.get(1).get("id"));
+    }
+
+    @Test
+    void apply_filtersObjectsByFieldWithNegate() {
+      List<Map<String, Object>> input =
+          List.of(
+              Map.of("id", "1", "type", "company"),
+              Map.of("id", "2", "type", "person"),
+              Map.of("id", "3", "type", "company"));
+
+      Map<String, Object> args =
+          Map.of("field", "type", "condition", "{{value}} == 'company'", "negate", true);
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> result = (List<Map<String, Object>>) function.apply(input, args);
+
+      assertEquals(1, result.size());
+      assertEquals("2", result.get(0).get("id"));
+    }
+
+    @Test
+    void apply_filtersObjectsByFieldContains() {
+      List<Map<String, Object>> input =
+          List.of(
+              Map.of("id", "1", "name", "Tokyo Branch"),
+              Map.of("id", "2", "name", "Osaka Office"),
+              Map.of("id", "3", "name", "Tokyo HQ"));
+
+      Map<String, Object> args = Map.of("field", "name", "condition", "{{value}} contains 'Tokyo'");
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> result = (List<Map<String, Object>>) function.apply(input, args);
+
+      assertEquals(2, result.size());
+      assertEquals("1", result.get(0).get("id"));
+      assertEquals("3", result.get(1).get("id"));
+    }
+
+    @Test
+    void apply_filtersObjectsWithMissingField() {
+      Map<String, Object> obj1 = Map.of("id", "1", "type", "company");
+      Map<String, Object> obj2 = Map.of("id", "2");
+      Map<String, Object> obj3 = Map.of("id", "3", "type", "person");
+
+      List<Map<String, Object>> input = List.of(obj1, obj2, obj3);
+      Map<String, Object> args = Map.of("field", "type", "condition", "{{value}} != null");
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> result = (List<Map<String, Object>>) function.apply(input, args);
+
+      assertEquals(2, result.size());
+      assertEquals("1", result.get(0).get("id"));
+      assertEquals("3", result.get(1).get("id"));
+    }
+
+    @Test
+    void apply_withoutFieldFallsBackToExistingBehavior() {
+      List<String> input = List.of("admin", "user", "guest");
+      Map<String, Object> args = Map.of("condition", "{{value}} != 'guest'");
+
+      @SuppressWarnings("unchecked")
+      List<Object> result = (List<Object>) function.apply(input, args);
+
+      assertEquals(List.of("admin", "user"), result);
+    }
+
+    @Test
+    void apply_preservesFullObjectOnMatch() {
+      List<Map<String, Object>> input =
+          List.of(
+              Map.of("account_no", "123", "type", "savings", "balance", 10000),
+              Map.of("account_no", "456", "type", "checking", "balance", 5000));
+
+      Map<String, Object> args = Map.of("field", "type", "condition", "{{value}} == 'savings'");
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> result = (List<Map<String, Object>>) function.apply(input, args);
+
+      assertEquals(1, result.size());
+      assertEquals("123", result.get(0).get("account_no"));
+      assertEquals(10000, result.get(0).get("balance"));
+    }
+  }
 }
