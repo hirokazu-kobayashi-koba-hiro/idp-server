@@ -16,10 +16,12 @@
 
 package org.idp.server.usecases.application.system;
 
+import java.util.List;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserAuthenticationApi;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.dpop.DPoPHeaderValidator;
 import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenProtocol;
@@ -58,9 +60,11 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
       TenantIdentifier tenantIdentifier,
       String authorizationHeader,
       String clientCert,
-      String dpopProof,
+      List<String> dpopProofHeaders,
       String httpMethod,
       String httpUri) {
+    new DPoPHeaderValidator(dpopProofHeaders).validate();
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     TokenIntrospectionInternalRequest tokenIntrospectionInternalRequest =
@@ -77,6 +81,8 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
 
     OAuthToken oAuthToken = introspectionResponse.oAuthToken();
 
+    String dpopProof =
+        (dpopProofHeaders == null || dpopProofHeaders.isEmpty()) ? null : dpopProofHeaders.get(0);
     DPoPBindingVerifier dpopBindingVerifier = new DPoPBindingVerifier();
     dpopBindingVerifier.verify(new DPoPProof(dpopProof), httpMethod, httpUri, oAuthToken);
 

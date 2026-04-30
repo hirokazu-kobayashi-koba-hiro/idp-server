@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.userinfo.handler.io;
 
+import java.util.List;
 import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
@@ -26,7 +27,7 @@ public class UserinfoRequest implements AuthorizationHeaderHandlerable {
   Tenant tenant;
   String authorizationHeaders;
   String clientCert;
-  String dpopProof;
+  List<String> dpopProofHeaders;
   String httpMethod;
   String httpUri;
 
@@ -61,11 +62,18 @@ public class UserinfoRequest implements AuthorizationHeaderHandlerable {
   }
 
   public DPoPProof dpopProof() {
-    return new DPoPProof(dpopProof);
+    if (dpopProofHeaders == null || dpopProofHeaders.isEmpty()) {
+      return new DPoPProof();
+    }
+    return new DPoPProof(dpopProofHeaders.get(0));
   }
 
-  public UserinfoRequest setDPoPProof(String dpopProof) {
-    this.dpopProof = dpopProof;
+  public List<String> dpopProofHeaders() {
+    return dpopProofHeaders;
+  }
+
+  public UserinfoRequest setDPoPProofHeaders(List<String> dpopProofHeaders) {
+    this.dpopProofHeaders = dpopProofHeaders;
     return this;
   }
 

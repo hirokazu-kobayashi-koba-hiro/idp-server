@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.userinfo;
 
+import java.util.List;
 import org.idp.server.core.openid.userinfo.handler.io.UserinfoRequestResponse;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -26,6 +27,6 @@ public interface UserinfoApi {
       TenantIdentifier tenantId,
       String authorizationHeader,
       String clientCert,
-      String dpopProof,
+      List<String> dpopProofHeaders,
       RequestAttributes requestAttributes);
 }

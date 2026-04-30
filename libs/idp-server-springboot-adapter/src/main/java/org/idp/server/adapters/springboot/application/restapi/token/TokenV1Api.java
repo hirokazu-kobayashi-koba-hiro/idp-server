@@ -17,6 +17,7 @@
 package org.idp.server.adapters.springboot.application.restapi.token;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
@@ -49,10 +50,10 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @RequestHeader(required = false, value = "DPoP") String dpopProof,
       @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
 
+    List<String> dpopProofHeaders = extractDPoPProofHeaders(httpServletRequest);
     Map<String, String[]> request = transform(body);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
@@ -62,7 +63,7 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
             request,
             authorizationHeader,
             clientCert,
-            dpopProof,
+            dpopProofHeaders,
             requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
@@ -99,10 +100,10 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @RequestHeader(required = false, value = "DPoP") String dpopProof,
       @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
 
+    List<String> dpopProofHeaders = extractDPoPProofHeaders(httpServletRequest);
     Map<String, String[]> request = transform(body);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
@@ -112,7 +113,7 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
             request,
             authorizationHeader,
             clientCert,
-            dpopProof,
+            dpopProofHeaders,
             requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
