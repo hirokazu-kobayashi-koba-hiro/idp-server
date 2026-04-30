@@ -72,6 +72,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   List<String> codeChallengeMethodsSupported = new ArrayList<>();
   boolean tlsClientCertificateBoundAccessTokens = false;
   Map<String, String> mtlsEndpointAliases = new HashMap<>();
+  List<String> dpopSigningAlgValuesSupported = new ArrayList<>();
   boolean requireSignedRequestObject = false;
   boolean authorizationResponseIssParameterSupported = false;
 
@@ -284,6 +285,18 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
 
   public boolean hasMtlsEndpointAliases() {
     return mtlsEndpointAliases != null && !mtlsEndpointAliases.isEmpty();
+  }
+
+  public List<String> dpopSigningAlgValuesSupported() {
+    return dpopSigningAlgValuesSupported;
+  }
+
+  public boolean hasDpopSigningAlgValuesSupported() {
+    return dpopSigningAlgValuesSupported != null && !dpopSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean isDPoPSupported() {
+    return hasDpopSigningAlgValuesSupported();
   }
 
   public boolean requireSignedRequestObject() {
@@ -772,6 +785,9 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     map.put("tls_client_certificate_bound_access_tokens", tlsClientCertificateBoundAccessTokens);
     if (hasMtlsEndpointAliases()) {
       map.put("mtls_endpoint_aliases", mtlsEndpointAliases);
+    }
+    if (hasDpopSigningAlgValuesSupported()) {
+      map.put("dpop_signing_alg_values_supported", dpopSigningAlgValuesSupported);
     }
     if (hasBackchannelTokenDeliveryModesSupported()) {
       map.put("backchannel_token_delivery_modes_supported", backchannelTokenDeliveryModesSupported);

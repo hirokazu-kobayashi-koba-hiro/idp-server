@@ -133,10 +133,14 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
       Map<String, String[]> params,
       String authorizationHeader,
       String clientCert,
+      List<String> dpopProofHeaders,
       RequestAttributes requestAttributes) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     OAuthPushedRequest pushedRequest = new OAuthPushedRequest(tenant, authorizationHeader, params);
     pushedRequest.setClientCert(clientCert);
+    pushedRequest.setDPoPProofHeaders(dpopProofHeaders);
+    pushedRequest.setHttpMethod(requestAttributes.optValueAsString("action", "POST"));
+    pushedRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 

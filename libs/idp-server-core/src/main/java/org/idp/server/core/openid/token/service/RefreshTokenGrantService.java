@@ -22,12 +22,15 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.openid.token.*;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.validator.RefreshTokenGrantValidator;
+import org.idp.server.core.openid.token.verifier.RefreshTokenDPoPBindingVerifier;
 import org.idp.server.core.openid.token.verifier.RefreshTokenUserVerifier;
 import org.idp.server.core.openid.token.verifier.RefreshTokenVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -74,13 +77,26 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
     userVerifier.verify();
     AuthorizationGrant authorizationGrant = oAuthToken.authorizationGrant();
 
+    DPoPProofVerifiedResult dpopResult =
+        new DPoPProofVerifier()
+            .verifyIfNeeded(
+                context.dpopProof(),
+                context.httpMethod(),
+                context.httpUri(),
+                authorizationServerConfiguration.dpopSigningAlgValuesSupported());
+
+    RefreshTokenDPoPBindingVerifier dpopBindingVerifier =
+        new RefreshTokenDPoPBindingVerifier(oAuthToken.accessToken(), dpopResult);
+    dpopBindingVerifier.verify();
+
     AccessToken accessToken =
         accessTokenCreator.refresh(
             oAuthToken.accessToken(),
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,
-            clientCredentials);
+            clientCredentials,
+            dpopResult);
 
     RefreshToken refreshToken =
         refresh(oAuthToken.refreshToken(), authorizationServerConfiguration, clientConfiguration);

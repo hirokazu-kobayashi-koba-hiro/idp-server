@@ -32,6 +32,7 @@ export const requestAuthorizations = async ({
   requestUri,
   codeChallenge,
   codeChallengeMethod,
+  dpopJkt,
   authorizationDetails,
   customParams,
   action = "authorize",
@@ -76,6 +77,7 @@ export const requestAuthorizations = async ({
       requestUri,
       codeChallenge,
       codeChallengeMethod,
+      dpopJkt,
       authorizationDetails,
       customParams,
     });
@@ -182,11 +184,13 @@ export const pushAuthorizations = async ({
    requestUri,
    codeChallenge,
    codeChallengeMethod,
+   dpopJkt,
    authorizationDetails,
    customParams,
    clientSecret,
    clientAssertion,
    clientAssertionType,
+   additionalHeaders,
   }) => {
   const params = createParams({
     endpoint,
@@ -209,6 +213,7 @@ export const pushAuthorizations = async ({
     requestUri,
     codeChallenge,
     codeChallengeMethod,
+    dpopJkt,
     authorizationDetails,
     customParams,
     clientSecret,
@@ -217,9 +222,10 @@ export const pushAuthorizations = async ({
   });
   console.log(params);
 
+  const headers = additionalHeaders ? { ...additionalHeaders } : {};
   return await post({
     url: endpoint,
-    headers: {},
+    headers,
     body: params,
   });
 };

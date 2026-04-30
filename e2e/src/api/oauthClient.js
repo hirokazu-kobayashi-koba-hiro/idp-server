@@ -22,6 +22,7 @@ export const createParams = ({
  requestUri,
  codeChallenge,
  codeChallengeMethod,
+ dpopJkt,
  authorizationDetails,
  customParams,
  clientSecret,
@@ -48,6 +49,7 @@ export const createParams = ({
     requestUri,
     codeChallenge,
     codeChallengeMethod,
+    dpopJkt,
     authorizationDetails,
     customParams,
     clientSecret,
@@ -83,6 +85,7 @@ export const createAuthorizationRequest = ({
  requestUri,
  codeChallenge,
  codeChallengeMethod,
+ dpopJkt,
  authorizationDetails,
  presentationDefinition,
  customParams
@@ -107,6 +110,7 @@ export const createAuthorizationRequest = ({
     requestUri,
     codeChallenge,
     codeChallengeMethod,
+    dpopJkt,
     authorizationDetails,
     presentationDefinition,
     customParams
@@ -137,6 +141,7 @@ export const getAuthorizations = async ({
   requestUri,
   codeChallenge,
   codeChallengeMethod,
+  dpopJkt,
   authorizationDetails,
   presentationDefinition,
   customParams
@@ -162,6 +167,7 @@ export const getAuthorizations = async ({
     requestUri,
     codeChallenge,
     codeChallengeMethod,
+    dpopJkt,
     authorizationDetails,
     presentationDefinition,
     customParams
@@ -352,7 +358,8 @@ export const inspectTokenWithVerification = async ({
  clientAssertionType,
  basicAuth,
  clientCert,
- clientCertFile
+ clientCertFile,
+ additionalHeaders
 }) => {
   let params = new URLSearchParams();
   if (params) {
@@ -393,6 +400,12 @@ export const inspectTokenWithVerification = async ({
     headers = {
       ...headers,
       "x-ssl-cert": encoded
+    };
+  }
+  if (additionalHeaders) {
+    headers = {
+      ...headers,
+      ...additionalHeaders
     };
   }
 
