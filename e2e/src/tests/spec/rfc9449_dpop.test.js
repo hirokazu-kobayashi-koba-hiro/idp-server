@@ -13,7 +13,7 @@ import crypto from "crypto";
 import { requestToken, getUserinfo, inspectToken, inspectTokenWithVerification } from "../../api/oauthClient";
 import { get } from "../../lib/http";
 import { backendUrl, clientSecretPostClient, serverConfig } from "../testConfig";
-import { requestAuthorizations } from "../../oauth/request";
+import { pushAuthorizations, requestAuthorizations } from "../../oauth/request";
 
 // eslint-disable-next-line no-undef
 const jose = require("jose");
@@ -1394,6 +1394,175 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
 
       expect(refreshResponse.status).toBe(400);
       expect(refreshResponse.data.error).toBe("invalid_dpop_proof");
+    });
+  });
+
+  /**
+   * RFC 9449 Section 10.1: PAR + DPoP integration
+   *
+   * "If the dpop_jkt parameter is included in a PAR request, it MUST match the JWK Thumbprint of
+   *  the public key from the DPoP HTTP request header field if a DPoP proof is also included."
+   *
+   * "If the dpop_jkt parameter is omitted from a PAR request that includes a DPoP HTTP request
+   *  header field, the authorization server MUST set dpop_jkt to the JWK Thumbprint of the public
+   *  key from that DPoP proof."
+   */
+  describe("Section 10.1: PAR + DPoP integration", () => {
+
+    const computeJwkThumbprint = async (publicJwk) => {
+      return await jose.calculateJwkThumbprint(publicJwk, "sha256");
+    };
+
+    it("MUST bind dpop_jkt to PAR-issued request_uri when only DPoP proof is presented (no dpop_jkt parameter)", async () => {
+      const parEndpoint = serverConfig.authorizationEndpoint + "/push";
+      const parDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: parEndpoint,
+      });
+
+      const parResponse = await pushAuthorizations({
+        endpoint: parEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        responseType: "code",
+        state: "par-dpop-bind",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        additionalHeaders: { DPoP: parDpopProof },
+      });
+      expect(parResponse.status).toBe(201);
+      const requestUri = parResponse.data.request_uri;
+      expect(requestUri).toBeDefined();
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        requestUri,
+      });
+      expect(authorizationResponse.code).toBeDefined();
+
+      const tokenDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: tokenDpopProof },
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("DPoP");
+    });
+
+    it("MUST reject token request when token DPoP key differs from PAR DPoP key", async () => {
+      const parEndpoint = serverConfig.authorizationEndpoint + "/push";
+      const parDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: parEndpoint,
+      });
+
+      const parResponse = await pushAuthorizations({
+        endpoint: parEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        responseType: "code",
+        state: "par-dpop-mismatch",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        additionalHeaders: { DPoP: parDpopProof },
+      });
+      expect(parResponse.status).toBe(201);
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        requestUri: parResponse.data.request_uri,
+      });
+      expect(authorizationResponse.code).toBeDefined();
+
+      const otherKeyPair = await generateDPoPKeyPair();
+      const wrongDpopProof = await createDPoPProof({
+        privateKey: otherKeyPair.privateKey,
+        publicJwk: otherKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: wrongDpopProof },
+      });
+
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toBe("invalid_grant");
+    });
+
+    it("MUST accept PAR with both dpop_jkt parameter and DPoP proof when they match", async () => {
+      const jkt = await computeJwkThumbprint(dpopKeyPair.publicJwk);
+      const parEndpoint = serverConfig.authorizationEndpoint + "/push";
+      const parDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: parEndpoint,
+      });
+
+      const parResponse = await pushAuthorizations({
+        endpoint: parEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        responseType: "code",
+        state: "par-dpop-both-match",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        dpopJkt: jkt,
+        additionalHeaders: { DPoP: parDpopProof },
+      });
+      expect(parResponse.status).toBe(201);
+      expect(parResponse.data.request_uri).toBeDefined();
+    });
+
+    it("MUST reject PAR when dpop_jkt parameter mismatches DPoP proof JWK thumbprint", async () => {
+      const wrongJkt = await computeJwkThumbprint((await generateDPoPKeyPair()).publicJwk);
+      const parEndpoint = serverConfig.authorizationEndpoint + "/push";
+      const parDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: parEndpoint,
+      });
+
+      const parResponse = await pushAuthorizations({
+        endpoint: parEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        responseType: "code",
+        state: "par-dpop-both-mismatch",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        dpopJkt: wrongJkt,
+        additionalHeaders: { DPoP: parDpopProof },
+      });
+
+      expect(parResponse.status).toBeGreaterThanOrEqual(400);
+      expect(parResponse.status).toBeLessThan(500);
     });
   });
 

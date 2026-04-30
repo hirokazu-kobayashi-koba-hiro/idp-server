@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth.io;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.request.OAuthPushedRequestParameters;
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
@@ -32,6 +33,9 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
   String authorizationHeaders;
   Map<String, String[]> params;
   String clientCert;
+  List<String> dpopProofHeaders;
+  String httpMethod;
+  String httpUri;
 
   public OAuthPushedRequest(
       Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
@@ -43,6 +47,33 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
   public OAuthPushedRequest setClientCert(String clientCert) {
     this.clientCert = clientCert;
     return this;
+  }
+
+  public OAuthPushedRequest setDPoPProofHeaders(List<String> dpopProofHeaders) {
+    this.dpopProofHeaders = dpopProofHeaders;
+    return this;
+  }
+
+  public List<String> dpopProofHeaders() {
+    return dpopProofHeaders;
+  }
+
+  public OAuthPushedRequest setHttpMethod(String httpMethod) {
+    this.httpMethod = httpMethod;
+    return this;
+  }
+
+  public String httpMethod() {
+    return httpMethod != null ? httpMethod : "POST";
+  }
+
+  public OAuthPushedRequest setHttpUri(String httpUri) {
+    this.httpUri = httpUri;
+    return this;
+  }
+
+  public String httpUri() {
+    return httpUri != null ? httpUri : "";
   }
 
   public Map<String, String[]> getParams() {
