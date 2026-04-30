@@ -17,6 +17,7 @@
 package org.idp.server.adapters.springboot.application.restapi.userinfo;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
@@ -44,15 +45,15 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
   public ResponseEntity<?> get(
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @RequestHeader(required = false, value = "DPoP") String dpopProof,
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       HttpServletRequest httpServletRequest) {
 
+    List<String> dpopProofHeaders = extractDPoPProofHeaders(httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserinfoRequestResponse response =
         userinfoApi.request(
-            tenantId, authorizationHeader, clientCert, dpopProof, requestAttributes);
+            tenantId, authorizationHeader, clientCert, dpopProofHeaders, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");
@@ -65,15 +66,15 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
   public ResponseEntity<?> post(
       @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
       @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @RequestHeader(required = false, value = "DPoP") String dpopProof,
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       HttpServletRequest httpServletRequest) {
 
+    List<String> dpopProofHeaders = extractDPoPProofHeaders(httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserinfoRequestResponse response =
         userinfoApi.request(
-            tenantId, authorizationHeader, clientCert, dpopProof, requestAttributes);
+            tenantId, authorizationHeader, clientCert, dpopProofHeaders, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");

@@ -24,6 +24,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.dpop.DPoPHeaderValidator;
 import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
@@ -91,6 +92,7 @@ public class TokenRequestHandler {
     TokenRequestParameters parameters = tokenRequest.toParameters();
     TokenRequestValidator baseValidator = new TokenRequestValidator(parameters);
     baseValidator.validate();
+    new DPoPHeaderValidator(tokenRequest.dpopProofHeaders()).validate();
 
     ClientSecretBasic clientSecretBasic = tokenRequest.clientSecretBasic();
     ClientCert clientCert = tokenRequest.toClientCert();

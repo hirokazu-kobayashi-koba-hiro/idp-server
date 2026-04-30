@@ -24,6 +24,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.dpop.DPoPHeaderValidator;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenUserFindingDelegate;
@@ -63,6 +64,7 @@ public class TokenIntrospectionExtensionHandler {
       TokenIntrospectionExtensionRequest request, TokenUserFindingDelegate delegate) {
     TokenIntrospectionValidator validator = new TokenIntrospectionValidator(request.toParameters());
     validator.validate();
+    new DPoPHeaderValidator(request.dpopProofHeaders()).validate();
 
     Tenant tenant = request.tenant();
     AuthorizationServerConfiguration authorizationServerConfiguration =

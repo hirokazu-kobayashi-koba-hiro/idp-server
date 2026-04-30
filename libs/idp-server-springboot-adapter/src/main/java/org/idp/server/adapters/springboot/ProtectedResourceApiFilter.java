@@ -60,7 +60,7 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter
 
     String authorization = request.getHeader("Authorization");
     String clientCert = request.getHeader("x-ssl-cert");
-    String dpopProof = request.getHeader("DPoP");
+    List<String> dpopProofHeaders = extractDPoPProofHeaders(request);
     String httpMethod = request.getMethod();
     String httpUri = resolveRequestUrl(request);
     String authScheme = resolveAuthScheme(authorization);
@@ -69,7 +69,12 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter
       TenantIdentifier adminTenantIdentifier = extractTenantIdentifier(request);
       Pairs<User, OAuthToken> result =
           userAuthenticationApi.authenticate(
-              adminTenantIdentifier, authorization, clientCert, dpopProof, httpMethod, httpUri);
+              adminTenantIdentifier,
+              authorization,
+              clientCert,
+              dpopProofHeaders,
+              httpMethod,
+              httpUri);
       User user = result.getLeft();
       OAuthToken oAuthToken = result.getRight();
 

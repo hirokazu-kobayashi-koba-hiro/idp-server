@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.token.handler.token.io;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
@@ -33,7 +34,7 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
   String authorizationHeaders;
   Map<String, String[]> params;
   String clientCert;
-  String dpopProof;
+  List<String> dpopProofHeaders;
   String httpMethod;
   String httpUri;
   Map<String, Object> customProperties = new HashMap<>();
@@ -49,9 +50,13 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
     return this;
   }
 
-  public TokenRequest setDPoPProof(String dpopProof) {
-    this.dpopProof = dpopProof;
+  public TokenRequest setDPoPProofHeaders(List<String> dpopProofHeaders) {
+    this.dpopProofHeaders = dpopProofHeaders;
     return this;
+  }
+
+  public List<String> dpopProofHeaders() {
+    return dpopProofHeaders;
   }
 
   public TokenRequest setHttpMethod(String httpMethod) {
@@ -65,7 +70,10 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
   }
 
   public DPoPProof toDPoPProof() {
-    return new DPoPProof(dpopProof);
+    if (dpopProofHeaders == null || dpopProofHeaders.isEmpty()) {
+      return new DPoPProof();
+    }
+    return new DPoPProof(dpopProofHeaders.get(0));
   }
 
   public String httpMethod() {
