@@ -1396,4 +1396,136 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
       expect(refreshResponse.data.error).toBe("invalid_dpop_proof");
     });
   });
+
+  /**
+   * RFC 9449 Section 10: Authorization Code Binding to a DPoP Key
+   *
+   * "The dpop_jkt authorization request parameter, if present, MUST be a JSON Web Key (JWK)
+   *  Thumbprint [RFC7638] of the public key the client wishes to use to bind the access token to."
+   *
+   * "If the value of the dpop_jkt authorization request parameter does not match the JWK Thumbprint
+   *  of the DPoP proof JWT presented at the token endpoint, the authorization server MUST refuse
+   *  the request and respond with an invalid_grant error."
+   */
+  describe("Section 10: Authorization Code Binding to a DPoP Key (dpop_jkt)", () => {
+
+    const computeJwkThumbprint = async (publicJwk) => {
+      const thumbprint = await jose.calculateJwkThumbprint(publicJwk, "sha256");
+      return thumbprint;
+    };
+
+    it("MUST issue an authorization code when dpop_jkt is provided", async () => {
+      const jkt = await computeJwkThumbprint(dpopKeyPair.publicJwk);
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "dpop-jkt-test",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        dpopJkt: jkt,
+      });
+
+      expect(authorizationResponse.code).toBeDefined();
+    });
+
+    it("MUST exchange code for token when DPoP proof matches dpop_jkt", async () => {
+      const jkt = await computeJwkThumbprint(dpopKeyPair.publicJwk);
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "dpop-jkt-match",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        dpopJkt: jkt,
+      });
+      expect(authorizationResponse.code).toBeDefined();
+
+      const dpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: dpopProof },
+      });
+
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("DPoP");
+    });
+
+    it("MUST reject token request when DPoP proof key does not match dpop_jkt (invalid_grant)", async () => {
+      const jkt = await computeJwkThumbprint(dpopKeyPair.publicJwk);
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "dpop-jkt-mismatch",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        dpopJkt: jkt,
+      });
+      expect(authorizationResponse.code).toBeDefined();
+
+      const otherKeyPair = await generateDPoPKeyPair();
+      const wrongDpopProof = await createDPoPProof({
+        privateKey: otherKeyPair.privateKey,
+        publicJwk: otherKeyPair.publicJwk,
+        htm: "POST",
+        htu: serverConfig.tokenEndpoint,
+      });
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        additionalHeaders: { DPoP: wrongDpopProof },
+      });
+
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toBe("invalid_grant");
+    });
+
+    it("MUST reject token request when dpop_jkt is bound but no DPoP proof is presented", async () => {
+      const jkt = await computeJwkThumbprint(dpopKeyPair.publicJwk);
+
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "dpop-jkt-no-proof",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        dpopJkt: jkt,
+      });
+      expect(authorizationResponse.code).toBeDefined();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toBe("invalid_grant");
+    });
+  });
 });
