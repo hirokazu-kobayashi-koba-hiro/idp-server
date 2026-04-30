@@ -17,6 +17,14 @@
 
 **合計**: 4仕様書、220要件
 
+## ギャップ分析
+
+| 仕様書 | ファイル | 分析日 |
+|--------|---------|--------|
+| FAPI 1.0 Baseline & Advanced | [fapi-1.0-gap-analysis.yaml](./fapi-1.0-gap-analysis.yaml) | 2026-02-14 |
+| OAuth 2.0 DPoP (RFC 9449) | [oauth2-dpop-gap-analysis.md](./oauth2-dpop-gap-analysis.md) | 2026-04-30 |
+| FAPI 2.0 Security Profile Final | [fapi-2.0-gap-analysis.md](./fapi-2.0-gap-analysis.md) | 2026-04-30 |
+
 ## 未抽出の重要仕様書
 
 ### 優先度: 高
