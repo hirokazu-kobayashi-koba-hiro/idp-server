@@ -63,6 +63,7 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
                     request_uri,
                     code_challenge,
                     code_challenge_method,
+                    dpop_jkt,
                     authorization_details,
                     custom_params,
                     expires_in,
@@ -76,6 +77,7 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
                     ?,
                     ?,
                     ?::jsonb,
+                    ?,
                     ?,
                     ?,
                     ?,
@@ -203,6 +205,12 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
       params.add(null);
     }
 
+    if (authorizationRequest.hasDPoPJkt()) {
+      params.add(authorizationRequest.dpopJkt().value());
+    } else {
+      params.add(null);
+    }
+
     if (authorizationRequest.hasAuthorizationDetails()) {
       params.add(convertJsonAuthorizationDetails(authorizationRequest.authorizationDetails()));
     } else {
@@ -263,6 +271,7 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
                 request_uri,
                 code_challenge,
                 code_challenge_method,
+                dpop_jkt,
                 authorization_details,
                 custom_params,
                 expires_in,

@@ -32,6 +32,7 @@ export const requestAuthorizations = async ({
   requestUri,
   codeChallenge,
   codeChallengeMethod,
+  dpopJkt,
   authorizationDetails,
   customParams,
   action = "authorize",
@@ -76,6 +77,7 @@ export const requestAuthorizations = async ({
       requestUri,
       codeChallenge,
       codeChallengeMethod,
+      dpopJkt,
       authorizationDetails,
       customParams,
     });

@@ -155,6 +155,22 @@ public class AuthorizationCodeGrantService
                 tokenRequestContext.httpMethod(),
                 tokenRequestContext.httpUri(),
                 authorizationServerConfiguration.dpopSigningAlgValuesSupported());
+
+    // RFC 9449 §10: Authorization Code Binding to a DPoP Key
+    if (authorizationRequest.hasDPoPJkt()) {
+      if (!dpopResult.exists()) {
+        throw new TokenBadRequestException(
+            "invalid_grant",
+            "authorization request was bound to a DPoP key (dpop_jkt) but no DPoP proof was presented");
+      }
+      String boundJkt = authorizationRequest.dpopJkt().value();
+      String proofJkt = dpopResult.jwkThumbprint().value();
+      if (!boundJkt.equals(proofJkt)) {
+        throw new TokenBadRequestException(
+            "invalid_grant", "DPoP proof key thumbprint does not match the bound dpop_jkt");
+      }
+    }
+
     AccessToken accessToken =
         accessTokenCreator.create(
             authorizationGrant,
