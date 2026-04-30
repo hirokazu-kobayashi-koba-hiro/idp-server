@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.OAuthRequestPattern;
+import org.idp.server.core.openid.oauth.dpop.DPoPJkt;
 import org.idp.server.core.openid.oauth.type.ArrayValueMap;
 import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
 import org.idp.server.core.openid.oauth.type.oauth.*;
@@ -200,6 +201,14 @@ public class OAuthRequestParameters {
 
   public boolean hasCodeChallengeMethod() {
     return contains(code_challenge_method);
+  }
+
+  public DPoPJkt dpopJkt() {
+    return new DPoPJkt(getValueOrEmpty(dpop_jkt));
+  }
+
+  public boolean hasDPoPJkt() {
+    return contains(dpop_jkt);
   }
 
   public String getValueOrEmpty(OAuthRequestKey key) {
