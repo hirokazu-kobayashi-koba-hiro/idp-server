@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
@@ -37,6 +38,7 @@ public interface OAuthFlowApi {
       Map<String, String[]> params,
       String authorizationHeader,
       String clientCert,
+      List<String> dpopProofHeaders,
       RequestAttributes requestAttributes);
 
   OAuthRequestResponse request(
