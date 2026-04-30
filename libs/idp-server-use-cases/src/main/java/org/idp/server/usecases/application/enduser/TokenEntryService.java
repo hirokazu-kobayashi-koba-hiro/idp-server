@@ -16,6 +16,7 @@
 
 package org.idp.server.usecases.application.enduser;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
@@ -63,13 +64,13 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
       Map<String, String[]> params,
       String authorizationHeader,
       String clientCert,
-      String dpopProof,
+      List<String> dpopProofHeaders,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     TokenRequest tokenRequest = new TokenRequest(tenant, authorizationHeader, params);
     tokenRequest.setClientCert(clientCert);
-    tokenRequest.setDPoPProof(dpopProof);
+    tokenRequest.setDPoPProofHeaders(dpopProofHeaders);
     tokenRequest.setHttpMethod(requestAttributes.optValueAsString("action", "POST"));
     tokenRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
 
@@ -117,14 +118,14 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
       Map<String, String[]> params,
       String authorizationHeader,
       String clientCert,
-      String dpopProof,
+      List<String> dpopProofHeaders,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     TokenIntrospectionExtensionRequest tokenIntrospectionRequest =
         new TokenIntrospectionExtensionRequest(tenant, authorizationHeader, params);
     tokenIntrospectionRequest.setClientCert(clientCert);
-    tokenIntrospectionRequest.setDPoPProof(dpopProof);
+    tokenIntrospectionRequest.setDPoPProofHeaders(dpopProofHeaders);
     tokenIntrospectionRequest.setHttpMethod(requestAttributes.optValueAsString("action", "POST"));
     tokenIntrospectionRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
 

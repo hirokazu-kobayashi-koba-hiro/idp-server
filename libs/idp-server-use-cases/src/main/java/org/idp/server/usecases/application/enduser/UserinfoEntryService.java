@@ -16,6 +16,7 @@
 
 package org.idp.server.usecases.application.enduser;
 
+import java.util.List;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
@@ -63,13 +64,13 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
       TenantIdentifier tenantIdentifier,
       String authorizationHeader,
       String clientCert,
-      String dpopProof,
+      List<String> dpopProofHeaders,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
     userinfoRequest.setClientCert(clientCert);
-    userinfoRequest.setDPoPProof(dpopProof);
+    userinfoRequest.setDPoPProofHeaders(dpopProofHeaders);
     userinfoRequest.setHttpMethod(requestAttributes.optValueAsString("action", "GET"));
     userinfoRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
 

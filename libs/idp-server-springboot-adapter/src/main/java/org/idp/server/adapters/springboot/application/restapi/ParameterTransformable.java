@@ -87,4 +87,19 @@ public interface ParameterTransformable extends AuthorizationHeaderHandlerable {
 
     return request.getRequestURL().toString();
   }
+
+  /**
+   * Extracts all values of the {@code DPoP} HTTP header.
+   *
+   * <p>The single-header invariant (RFC 9449 Section 4.3 Check 1) is enforced in the core layer by
+   * {@code DPoPHeaderValidator}. This method only handles the HTTP transport concern of enumerating
+   * header values.
+   */
+  default List<String> extractDPoPProofHeaders(HttpServletRequest request) {
+    Enumeration<String> headers = request.getHeaders("DPoP");
+    if (headers == null) {
+      return List.of();
+    }
+    return Collections.list(headers);
+  }
 }

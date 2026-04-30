@@ -19,6 +19,7 @@ package org.idp.server.adapters.springboot;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.format.DateTimeParseException;
 import java.util.Map;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
 import org.idp.server.platform.datasource.SqlDuplicateKeyException;
 import org.idp.server.platform.datasource.SqlForeignKeyViolationException;
 import org.idp.server.platform.datasource.SqlTransactionConflictException;
@@ -61,6 +62,20 @@ public class ApiExceptionHandler {
     log.warn(exception.getMessage(), exception);
     Map<String, String> response =
         Map.of("error", "invalid_request", "error_description", exception.getMessage());
+    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+  }
+
+  /**
+   * Handles DPoP proof validation failures originating before the use case (e.g., multiple DPoP
+   * headers detected at the controller layer).
+   *
+   * <p>Maps to "invalid_dpop_proof" per RFC 9449 Section 5.10.
+   */
+  @ExceptionHandler(DPoPProofInvalidException.class)
+  public ResponseEntity<?> handleException(DPoPProofInvalidException exception) {
+    log.debug("DPoP proof validation failed: {}", exception.getMessage());
+    Map<String, String> response =
+        Map.of("error", "invalid_dpop_proof", "error_description", exception.getMessage());
     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
   }
 

@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.token;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
@@ -30,7 +31,7 @@ public interface TokenApi {
       Map<String, String[]> params,
       String authorizationHeader,
       String clientCert,
-      String dpopProof,
+      List<String> dpopProofHeaders,
       RequestAttributes requestAttributes);
 
   TokenIntrospectionResponse inspect(
@@ -45,7 +46,7 @@ public interface TokenApi {
       Map<String, String[]> params,
       String authorizationHeader,
       String clientCert,
-      String dpopProof,
+      List<String> dpopProofHeaders,
       RequestAttributes requestAttributes);
 
   TokenRevocationResponse revoke(

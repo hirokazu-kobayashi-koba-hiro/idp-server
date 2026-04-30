@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.token.handler.tokenintrospection.io;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
@@ -32,7 +33,7 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
   String authorizationHeaders;
   Map<String, String[]> params;
   String clientCert;
-  String dpopProof;
+  List<String> dpopProofHeaders;
   String httpMethod;
   String httpUri;
 
@@ -48,9 +49,13 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
     return this;
   }
 
-  public TokenIntrospectionExtensionRequest setDPoPProof(String dpopProof) {
-    this.dpopProof = dpopProof;
+  public TokenIntrospectionExtensionRequest setDPoPProofHeaders(List<String> dpopProofHeaders) {
+    this.dpopProofHeaders = dpopProofHeaders;
     return this;
+  }
+
+  public List<String> dpopProofHeaders() {
+    return dpopProofHeaders;
   }
 
   public TokenIntrospectionExtensionRequest setHttpMethod(String httpMethod) {
@@ -149,7 +154,10 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
   }
 
   public DPoPProof dpopProof() {
-    return new DPoPProof(dpopProof);
+    if (dpopProofHeaders == null || dpopProofHeaders.isEmpty()) {
+      return new DPoPProof();
+    }
+    return new DPoPProof(dpopProofHeaders.get(0));
   }
 
   public String httpMethod() {
