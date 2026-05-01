@@ -1,0 +1,155 @@
+{
+  "organization": {
+    "id": "${ORGANIZATION_ID}",
+    "name": "${ORGANIZATION_NAME}",
+    "description": "Financial-Grade (FAPI Advanced + CIBA) organization"
+  },
+  "tenant": {
+    "id": "${ORGANIZER_TENANT_ID}",
+    "name": "${ORGANIZATION_NAME} Organizer",
+    "type": "ORGANIZER",
+    "domain": "${BASE_URL}",
+    "authorization_provider": "idp-server",
+    "ui_config": {
+      "base_url": "${UI_BASE_URL}",
+      "signin_page": "/signin/",
+      "signup_page": "/signup/"
+    },
+    "session_config": {
+      "cookie_name": "${COOKIE_NAME}_ADMIN",
+      "cookie_same_site": "Lax",
+      "use_secure_cookie": true,
+      "use_http_only_cookie": true,
+      "cookie_path": "/",
+      "timeout_seconds": 3600
+    },
+    "cors_config": {
+      "allow_origins": [
+        "${BASE_URL}",
+        "${MTLS_BASE_URL}",
+        "${UI_BASE_URL}"
+      ],
+      "allow_headers": "Authorization, Content-Type, Accept, x-device-id, X-SSL-Client-Cert",
+      "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "allow_credentials": true
+    },
+    "security_event_log_config": {
+      "format": "structured_json",
+      "stage": "processed",
+      "include_user_id": true,
+      "include_user_ex_sub": true,
+      "include_client_id": true,
+      "include_ip_address": true,
+      "persistence_enabled": true,
+      "statistics_enabled": true,
+      "include_event_detail": true
+    },
+    "identity_policy_config": {
+      "identity_unique_key_type": "EMAIL",
+      "authentication_device_rule": {
+        "max_devices": 100,
+        "required_identity_verification": true
+      }
+    }
+  },
+  "authorization_server": {
+    "issuer": "${BASE_URL}/${ORGANIZER_TENANT_ID}",
+    "authorization_endpoint": "${BASE_URL}/${ORGANIZER_TENANT_ID}/v1/authorizations",
+    "token_endpoint": "${BASE_URL}/${ORGANIZER_TENANT_ID}/v1/tokens",
+    "token_endpoint_auth_methods_supported": [
+      "client_secret_post",
+      "client_secret_basic"
+    ],
+    "token_endpoint_auth_signing_alg_values_supported": [
+      "ES256",
+      "PS256"
+    ],
+    "userinfo_endpoint": "${BASE_URL}/${ORGANIZER_TENANT_ID}/v1/userinfo",
+    "jwks_uri": "${BASE_URL}/${ORGANIZER_TENANT_ID}/v1/jwks",
+    "jwks": "${JWKS_CONTENT}",
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token",
+      "password"
+    ],
+    "token_signed_key_id": "${TOKEN_SIGNING_KEY_ID}",
+    "id_token_signed_key_id": "${ID_TOKEN_SIGNING_KEY_ID}",
+    "scopes_supported": [
+      "openid",
+      "profile",
+      "email",
+      "management",
+      "claims:roles",
+      "claims:permissions",
+      "claims:assigned_tenants"
+    ],
+    "response_types_supported": [
+      "code"
+    ],
+    "response_modes_supported": [
+      "query"
+    ],
+    "subject_types_supported": [
+      "public"
+    ],
+    "id_token_signing_alg_values_supported": [
+      "ES256",
+      "PS256"
+    ],
+    "claims_parameter_supported": true,
+    "claims_supported": [
+      "sub",
+      "iss",
+      "auth_time",
+      "acr",
+      "name",
+      "given_name",
+      "family_name",
+      "email",
+      "email_verified",
+      "phone_number",
+      "phone_number_verified",
+      "address",
+      "birthdate"
+    ],
+    "introspection_endpoint": "${BASE_URL}/${ORGANIZER_TENANT_ID}/v1/tokens/introspection",
+    "revocation_endpoint": "${BASE_URL}/${ORGANIZER_TENANT_ID}/v1/tokens/revocation",
+    "extension": {
+      "access_token_type": "JWT",
+      "token_signed_key_id": "${TOKEN_SIGNING_KEY_ID}",
+      "id_token_signed_key_id": "${ID_TOKEN_SIGNING_KEY_ID}",
+      "access_token_duration": 3600,
+      "id_token_duration": 3600,
+      "refresh_token_duration": 86400,
+      "custom_claims_scope_mapping": true
+    }
+  },
+  "user": {
+    "sub": "${ADMIN_USER_SUB}",
+    "provider_id": "idp-server",
+    "name": "${ADMIN_EMAIL}",
+    "email": "${ADMIN_EMAIL}",
+    "email_verified": true,
+    "raw_password": "${ADMIN_PASSWORD}"
+  },
+  "client": {
+    "client_id": "${ADMIN_CLIENT_ID}",
+    "client_id_alias": "${ORGANIZATION_NAME}-admin-client",
+    "client_secret": "${ADMIN_CLIENT_SECRET}",
+    "redirect_uris": [
+      "${BASE_URL}/callback/"
+    ],
+    "response_types": [
+      "code"
+    ],
+    "grant_types": [
+      "authorization_code",
+      "refresh_token",
+      "password"
+    ],
+    "scope": "openid profile email management claims:roles claims:permissions claims:assigned_tenants",
+    "client_name": "${ORGANIZATION_NAME} Admin Client",
+    "token_endpoint_auth_method": "client_secret_post",
+    "application_type": "web"
+  }
+}

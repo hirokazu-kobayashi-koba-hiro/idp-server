@@ -1,0 +1,28 @@
+{
+  "client_id": "${PKJ_CLIENT_ID}",
+  "client_id_alias": "${PKJ_CLIENT_ALIAS}",
+  "redirect_uris": [
+    "${REDIRECT_URI}"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "scope": "openid profile email address phone offline_access account transfers read write identity_verification_application identity_verification_result verified_claims:given_name verified_claims:family_name verified_claims:birthdate verified_claims:address",
+  "client_name": "${PKJ_CLIENT_NAME}",
+  "token_endpoint_auth_method": "private_key_jwt",
+  "jwks": "${PKJ_CLIENT_JWKS}",
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_authentication_request_signing_alg": "ES256",
+  "backchannel_user_code_parameter": false,
+  "application_type": "web",
+  "tls_client_certificate_bound_access_tokens": false,
+  "id_token_signed_response_alg": "ES256",
+  "authorization_signed_response_alg": "ES256",
+  "default_max_age": 300,
+  "require_auth_time": true
+}

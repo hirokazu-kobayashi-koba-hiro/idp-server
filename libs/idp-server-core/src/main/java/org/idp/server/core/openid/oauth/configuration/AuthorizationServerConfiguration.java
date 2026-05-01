@@ -36,6 +36,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   String registrationEndpoint = "";
   String endSessionEndpoint = "";
   String pushedAuthorizationRequestEndpoint = "";
+  boolean requirePushedAuthorizationRequests = false;
   List<String> scopesSupported = new ArrayList<>();
   List<String> responseTypesSupported = new ArrayList<>();
   List<String> responseModesSupported = new ArrayList<>();
@@ -324,6 +325,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return extension.hasFapiAdvanceScope(scopes);
   }
 
+  public boolean hasFapi20Scope(Set<String> scopes) {
+    return extension.hasFapi20Scope(scopes);
+  }
+
   public boolean hasRequiredIdentityVerificationScope(Set<String> scopes) {
     return extension.hasRequiredIdentityVerificationScope(scopes);
   }
@@ -402,6 +407,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
 
   public String pushedAuthorizationRequestEndpoint() {
     return pushedAuthorizationRequestEndpoint;
+  }
+
+  public boolean requirePushedAuthorizationRequests() {
+    return requirePushedAuthorizationRequests;
   }
 
   public boolean hasPushedAuthorizationRequestEndpoint() {

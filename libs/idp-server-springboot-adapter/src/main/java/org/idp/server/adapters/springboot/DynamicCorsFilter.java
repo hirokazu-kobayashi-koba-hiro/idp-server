@@ -42,6 +42,19 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
   private static final Pattern ORG_PATH_PATTERN =
       Pattern.compile("^/v1/management/organizations/([^/]+)/");
 
+  /**
+   * FAPI 2.0 SP §5.2.3.3 / OAuth 2.1 best practice: the authorization endpoint MUST NOT support
+   * CORS. The endpoint is intended to be reached via top-level browser navigation (redirect / form
+   * submission), not via XHR/fetch.
+   *
+   * <p>This pattern matches only the root path of the authorization endpoint ({@code
+   * /{tenant}/v1/authorizations} for GET/POST). Subpaths such as {@code /push} (PAR), {@code
+   * /{id}/view-data}, {@code /{id}/authorize}, {@code /federations/*} continue to receive CORS
+   * headers because they are legitimately accessed by JavaScript clients.
+   */
+  private static final Pattern AUTHORIZATION_ENDPOINT_PATTERN =
+      Pattern.compile("^/[^/]+/v1/authorizations/?$");
+
   TenantMetaDataApi tenantMetaDataApi;
   OrganizationTenantResolverApi organizationTenantResolverApi;
   LoggerWrapper log = LoggerWrapper.getLogger(DynamicCorsFilter.class);
@@ -142,12 +155,23 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
     String uri = request.getRequestURI();
+    String method = request.getMethod();
     // Skip CORS for actuator endpoints and simple /health, but allow CORS for tenant-specific
     // /v1/health
     return uri.equals("/health")
         || uri.startsWith("/actuator/")
         || uri.contains("/admin")
         || uri.contains("/backchannel")
-        || uri.contains("/auth-views/");
+        || uri.contains("/auth-views/")
+        || isAuthorizationEndpoint(uri, method);
+  }
+
+  private boolean isAuthorizationEndpoint(String uri, String method) {
+    if (!"GET".equalsIgnoreCase(method)
+        && !"POST".equalsIgnoreCase(method)
+        && !"OPTIONS".equalsIgnoreCase(method)) {
+      return false;
+    }
+    return AUTHORIZATION_ENDPOINT_PATTERN.matcher(uri).matches();
   }
 }
