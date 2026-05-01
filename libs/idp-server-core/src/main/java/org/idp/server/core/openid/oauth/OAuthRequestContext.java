@@ -59,6 +59,7 @@ public class OAuthRequestContext implements ResponseModeDecidable {
   ClientConfiguration clientConfiguration;
   OPSession opSession;
   AuthorizationGranted authorizationGranted;
+  boolean atPushedEndpoint;
 
   public OAuthRequestContext() {}
 
@@ -70,6 +71,26 @@ public class OAuthRequestContext implements ResponseModeDecidable {
       AuthorizationRequest authorizationRequest,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
+    this(
+        tenant,
+        pattern,
+        parameters,
+        joseContext,
+        authorizationRequest,
+        authorizationServerConfiguration,
+        clientConfiguration,
+        false);
+  }
+
+  public OAuthRequestContext(
+      Tenant tenant,
+      OAuthRequestPattern pattern,
+      OAuthRequestParameters parameters,
+      JoseContext joseContext,
+      AuthorizationRequest authorizationRequest,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
+      boolean atPushedEndpoint) {
     this.tenant = tenant;
     this.pattern = pattern;
     this.parameters = parameters;
@@ -77,6 +98,16 @@ public class OAuthRequestContext implements ResponseModeDecidable {
     this.authorizationRequest = authorizationRequest;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
+    this.atPushedEndpoint = atPushedEndpoint;
+  }
+
+  /**
+   * Returns whether this request is being processed at the PAR (Pushed Authorization Request)
+   * endpoint. This is distinct from {@link #isPushedRequest()} which indicates the authorization
+   * endpoint received a PAR-issued {@code request_uri}.
+   */
+  public boolean isAtPushedEndpoint() {
+    return atPushedEndpoint;
   }
 
   public void setOPSession(OPSession opSession) {

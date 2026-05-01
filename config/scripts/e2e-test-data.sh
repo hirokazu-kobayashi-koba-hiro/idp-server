@@ -270,3 +270,34 @@ for security_event_hook_config_file in "${security_event_hook_config_files[@]}";
   -d "${DRY_RUN}"
 
 done
+
+
+#fapi2-tenant
+echo "-------------------------------------------------"
+echo ""
+echo "fapi2-tenant"
+
+./config/scripts/upsert-tenant.sh \
+  -f "./config/examples/e2e/fapi2-tenant/tenants/fapi2-tenant.json" \
+  -o "${ORGANIZATION_ID}" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+FAPI2_TENANT_ID="edc3e984-05b6-499f-bd05-d48e5aaea1e4"
+
+./config/scripts/upsert-authorization-server.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/authorization-server/idp-server.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/privateKeyJwt.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
