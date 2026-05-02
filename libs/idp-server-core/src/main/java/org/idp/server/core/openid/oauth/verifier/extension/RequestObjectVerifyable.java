@@ -24,6 +24,8 @@ import org.idp.server.core.openid.oauth.exception.RequestObjectInvalidException;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
+import org.idp.server.platform.jose.JwtClockSkewException;
+import org.idp.server.platform.jose.JwtClockSkewValidator;
 
 public interface RequestObjectVerifyable {
 
@@ -40,8 +42,23 @@ public interface RequestObjectVerifyable {
     throwExceptionIfInvalidAud(joseContext, authorizationServerConfiguration, clientConfiguration);
     throwExceptionIfInvalidJti(joseContext, authorizationServerConfiguration, clientConfiguration);
     throwExceptionIfInvalidExp(joseContext, authorizationServerConfiguration, clientConfiguration);
+    throwExceptionIfClockSkewTooLarge(joseContext);
     throwExceptionIfMissingScopeWhenRequired(
         joseContext, authorizationServerConfiguration, clientConfiguration);
+  }
+
+  /**
+   * FAPI 2.0 Security Profile §5.3.2.1-2.13: rejects request objects with iat/nbf more than 60
+   * seconds in the future.
+   */
+  default void throwExceptionIfClockSkewTooLarge(JoseContext joseContext)
+      throws RequestObjectInvalidException {
+    try {
+      JwtClockSkewValidator.validateIatNbf(joseContext.claims());
+    } catch (JwtClockSkewException e) {
+      throw new RequestObjectInvalidException(
+          "invalid_request_object", "request object " + e.getMessage());
+    }
   }
 
   /**

@@ -29,6 +29,8 @@ import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebSignatureHeader;
 import org.idp.server.platform.jose.JsonWebSignatureVerifier;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
+import org.idp.server.platform.jose.JwtClockSkewException;
+import org.idp.server.platform.jose.JwtClockSkewValidator;
 import org.idp.server.platform.log.LoggerWrapper;
 
 /**
@@ -165,6 +167,13 @@ public class DPoPProofVerifier {
 
     // Check 11: The creation time (iat) is within an acceptable window
     verifyIat(claims);
+
+    // FAPI 2.0 §5.3.2.1-2.13: reject iat/nbf more than 60 seconds in the future
+    try {
+      JwtClockSkewValidator.validateIatNbf(claims);
+    } catch (JwtClockSkewException e) {
+      throw new DPoPProofInvalidException("DPoP proof " + e.getMessage());
+    }
 
     // RFC 9449 Section 4.2: When the DPoP proof is used in conjunction with an access token,
     // the ath claim MUST be included and match the hash of the access token
