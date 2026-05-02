@@ -523,4 +523,290 @@ describe("FAPI 2.0 Security Profile Final - mTLS (tls_client_auth)", () => {
       );
     });
   });
+
+  /**
+   * introspection-extensions の sender-constraint 検証で発生する代表的な異常系。
+   *
+   * 1 件 CIBA でトークン (mTLS + DPoP の二重 cnf) を取得し、その同一トークンに対して
+   * `client_cert` / `dpop_proof` / `dpop_htm` / `dpop_htu` を様々な形で改竄したリクエストを送り、
+   * AS が `active:false` + `error: invalid_token` を返すことを確認する。
+   */
+  describe("Negative: introspection-extensions sender-constraint mismatch", () => {
+    let accessToken;
+    let dpopKeyPair;
+    let introspectionExtUrl;
+
+    beforeAll(async () => {
+      introspectionExtUrl = `${mtlBackendUrl}/${serverConfig.tenantId}/v1/tokens/introspection-extensions`;
+      dpopKeyPair = await generateDPoPKeyPair();
+
+      const backchannelEndpoint = `${mtlBackendUrl}/${serverConfig.tenantId}/v1/backchannel/authentications`;
+      const backchannelBody = new URLSearchParams();
+      backchannelBody.append("scope", "openid " + FAPI2_TLS_CLIENT_1.fapi20Scope);
+      backchannelBody.append("login_hint", `email:${FAPI2_TEST_USER.email},idp:idp-server`);
+      backchannelBody.append("binding_message", "999");
+      backchannelBody.append("client_id", FAPI2_TLS_CLIENT_1.clientIdUuid);
+
+      const backchannelResponse = await mtlsPost({
+        url: backchannelEndpoint,
+        body: backchannelBody.toString(),
+        certPath: FAPI2_TLS_CLIENT_1.certPath,
+        keyPath: FAPI2_TLS_CLIENT_1.keyPath,
+      });
+      expect(backchannelResponse.status).toBe(200);
+      const authReqId = backchannelResponse.data.auth_req_id;
+
+      const deviceEndpoint = `${backendUrl}/${serverConfig.tenantId}/v1/authentication-devices/{id}/authentications`;
+      const txResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: deviceEndpoint,
+        deviceId: FAPI2_TEST_USER.authenticationDeviceId,
+        params: { "attributes.auth_req_id": authReqId },
+      });
+      expect(txResponse.status).toBe(200);
+      const tx = txResponse.data.list[0];
+
+      const completeResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: tx.flow,
+        id: tx.id,
+        interactionType: "password-authentication",
+        body: {
+          username: FAPI2_TEST_USER.email,
+          password: "successUserCode001",
+        },
+      });
+      expect(completeResponse.status).toBe(200);
+
+      const tokenEndpointMtls = `${mtlBackendUrl}/${serverConfig.tenantId}/v1/tokens`;
+      const tokenDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: tokenEndpointMtls,
+      });
+      const tokenBody = new URLSearchParams();
+      tokenBody.append("grant_type", "urn:openid:params:grant-type:ciba");
+      tokenBody.append("auth_req_id", authReqId);
+      tokenBody.append("client_id", FAPI2_TLS_CLIENT_1.clientIdUuid);
+
+      const tokenResponse = await mtlsPost({
+        url: tokenEndpointMtls,
+        body: tokenBody.toString(),
+        headers: { DPoP: tokenDpopProof },
+        certPath: FAPI2_TLS_CLIENT_1.certPath,
+        keyPath: FAPI2_TLS_CLIENT_1.keyPath,
+      });
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.token_type).toBe("DPoP");
+      accessToken = tokenResponse.data.access_token;
+    });
+
+    const buildValidDpopProof = async () => {
+      const ath = computeAth(accessToken);
+      return await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: introspectionExtUrl,
+        ath,
+      });
+    };
+
+    it("MUST reject when client_cert body parameter is missing (mTLS-bound token)", async () => {
+      const dpopProof = await buildValidDpopProof();
+      const body = new URLSearchParams();
+      body.append("token", accessToken);
+      body.append("client_id", FAPI2_TLS_CLIENT_1.clientIdUuid);
+      body.append("dpop_proof", dpopProof);
+      body.append("dpop_htm", "POST");
+      body.append("dpop_htu", introspectionExtUrl);
+      // client_cert を意図的に省略
+
+      const res = await mtlsPost({
+        url: introspectionExtUrl,
+        body: body.toString(),
+        certPath: FAPI2_TLS_CLIENT_1.certPath,
+        keyPath: FAPI2_TLS_CLIENT_1.keyPath,
+      });
+      console.log("missing-cert:", JSON.stringify(res.data));
+      expect(res.status).toBe(200);
+      expect(res.data.active).toBe(false);
+      expect(res.data.error).toBe("invalid_token");
+      expect(res.data.status_code).toBe(401);
+    });
+
+    it("MUST reject when client_cert thumbprint does not match token binding", async () => {
+      const dpopProof = await buildValidDpopProof();
+      // FAPI2_TLS_CLIENT_2 の cert を body の client_cert にセット (token は client 1 でバインド)
+      const wrongCertPem = fs.readFileSync(FAPI2_TLS_CLIENT_2.certPath, "utf8");
+      const body = new URLSearchParams();
+      body.append("token", accessToken);
+      body.append("client_id", FAPI2_TLS_CLIENT_1.clientIdUuid);
+      body.append("client_cert", wrongCertPem);
+      body.append("dpop_proof", dpopProof);
+      body.append("dpop_htm", "POST");
+      body.append("dpop_htu", introspectionExtUrl);
+
+      // mTLS 接続層は引き続き client 1 (caller 認証) で行う。検証対象は body の client_cert。
+      const res = await mtlsPost({
+        url: introspectionExtUrl,
+        body: body.toString(),
+        certPath: FAPI2_TLS_CLIENT_1.certPath,
+        keyPath: FAPI2_TLS_CLIENT_1.keyPath,
+      });
+      console.log("wrong-cert:", JSON.stringify(res.data));
+      expect(res.status).toBe(200);
+      expect(res.data.active).toBe(false);
+      expect(res.data.error).toBe("invalid_token");
+      expect(res.data.status_code).toBe(401);
+    });
+
+    it("MUST reject when dpop_proof body parameter is missing (DPoP-bound token)", async () => {
+      const clientCertPem = fs.readFileSync(FAPI2_TLS_CLIENT_1.certPath, "utf8");
+      const body = new URLSearchParams();
+      body.append("token", accessToken);
+      body.append("client_id", FAPI2_TLS_CLIENT_1.clientIdUuid);
+      body.append("client_cert", clientCertPem);
+      // dpop_proof を意図的に省略
+
+      const res = await mtlsPost({
+        url: introspectionExtUrl,
+        body: body.toString(),
+        certPath: FAPI2_TLS_CLIENT_1.certPath,
+        keyPath: FAPI2_TLS_CLIENT_1.keyPath,
+      });
+      console.log("missing-dpop:", JSON.stringify(res.data));
+      expect(res.status).toBe(200);
+      expect(res.data.active).toBe(false);
+      expect(res.data.error).toBe("invalid_token");
+      expect(res.data.status_code).toBe(401);
+    });
+
+    it("MUST reject when dpop_proof is signed with a different key than token binding", async () => {
+      const otherKeyPair = await generateDPoPKeyPair();
+      const ath = computeAth(accessToken);
+      const wrongDpopProof = await createDPoPProof({
+        privateKey: otherKeyPair.privateKey,
+        publicJwk: otherKeyPair.publicJwk,
+        htm: "POST",
+        htu: introspectionExtUrl,
+        ath,
+      });
+      const clientCertPem = fs.readFileSync(FAPI2_TLS_CLIENT_1.certPath, "utf8");
+      const body = new URLSearchParams();
+      body.append("token", accessToken);
+      body.append("client_id", FAPI2_TLS_CLIENT_1.clientIdUuid);
+      body.append("client_cert", clientCertPem);
+      body.append("dpop_proof", wrongDpopProof);
+      body.append("dpop_htm", "POST");
+      body.append("dpop_htu", introspectionExtUrl);
+
+      const res = await mtlsPost({
+        url: introspectionExtUrl,
+        body: body.toString(),
+        certPath: FAPI2_TLS_CLIENT_1.certPath,
+        keyPath: FAPI2_TLS_CLIENT_1.keyPath,
+      });
+      console.log("wrong-dpop-key:", JSON.stringify(res.data));
+      expect(res.status).toBe(200);
+      expect(res.data.active).toBe(false);
+      expect(res.data.error).toBe("invalid_token");
+      expect(res.data.status_code).toBe(401);
+    });
+
+    it("MUST reject when dpop_proof htm claim does not match dpop_htm body parameter", async () => {
+      const ath = computeAth(accessToken);
+      // proof は htm="GET" で作るが body は dpop_htm="POST" → mismatch
+      const dpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "GET",
+        htu: introspectionExtUrl,
+        ath,
+      });
+      const clientCertPem = fs.readFileSync(FAPI2_TLS_CLIENT_1.certPath, "utf8");
+      const body = new URLSearchParams();
+      body.append("token", accessToken);
+      body.append("client_id", FAPI2_TLS_CLIENT_1.clientIdUuid);
+      body.append("client_cert", clientCertPem);
+      body.append("dpop_proof", dpopProof);
+      body.append("dpop_htm", "POST");
+      body.append("dpop_htu", introspectionExtUrl);
+
+      const res = await mtlsPost({
+        url: introspectionExtUrl,
+        body: body.toString(),
+        certPath: FAPI2_TLS_CLIENT_1.certPath,
+        keyPath: FAPI2_TLS_CLIENT_1.keyPath,
+      });
+      console.log("htm-mismatch:", JSON.stringify(res.data));
+      expect(res.status).toBe(200);
+      expect(res.data.active).toBe(false);
+      expect(res.data.error).toBe("invalid_token");
+      expect(res.data.status_code).toBe(401);
+    });
+
+    it("MUST reject when dpop_proof htu claim does not match dpop_htu body parameter", async () => {
+      const ath = computeAth(accessToken);
+      // proof は別 URL で作るが body の dpop_htu は本来の URL → mismatch
+      const dpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: "https://attacker.example.com/forwarded",
+        ath,
+      });
+      const clientCertPem = fs.readFileSync(FAPI2_TLS_CLIENT_1.certPath, "utf8");
+      const body = new URLSearchParams();
+      body.append("token", accessToken);
+      body.append("client_id", FAPI2_TLS_CLIENT_1.clientIdUuid);
+      body.append("client_cert", clientCertPem);
+      body.append("dpop_proof", dpopProof);
+      body.append("dpop_htm", "POST");
+      body.append("dpop_htu", introspectionExtUrl);
+
+      const res = await mtlsPost({
+        url: introspectionExtUrl,
+        body: body.toString(),
+        certPath: FAPI2_TLS_CLIENT_1.certPath,
+        keyPath: FAPI2_TLS_CLIENT_1.keyPath,
+      });
+      console.log("htu-mismatch:", JSON.stringify(res.data));
+      expect(res.status).toBe(200);
+      expect(res.data.active).toBe(false);
+      expect(res.data.error).toBe("invalid_token");
+      expect(res.data.status_code).toBe(401);
+    });
+
+    it("MUST reject when dpop_proof ath claim does not match access token hash", async () => {
+      // ath を別トークンのハッシュで作る → mismatch
+      const dpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: introspectionExtUrl,
+        ath: computeAth("eyJtampered.token.value"),
+      });
+      const clientCertPem = fs.readFileSync(FAPI2_TLS_CLIENT_1.certPath, "utf8");
+      const body = new URLSearchParams();
+      body.append("token", accessToken);
+      body.append("client_id", FAPI2_TLS_CLIENT_1.clientIdUuid);
+      body.append("client_cert", clientCertPem);
+      body.append("dpop_proof", dpopProof);
+      body.append("dpop_htm", "POST");
+      body.append("dpop_htu", introspectionExtUrl);
+
+      const res = await mtlsPost({
+        url: introspectionExtUrl,
+        body: body.toString(),
+        certPath: FAPI2_TLS_CLIENT_1.certPath,
+        keyPath: FAPI2_TLS_CLIENT_1.keyPath,
+      });
+      console.log("ath-mismatch:", JSON.stringify(res.data));
+      expect(res.status).toBe(200);
+      expect(res.data.active).toBe(false);
+      expect(res.data.error).toBe("invalid_token");
+      expect(res.data.status_code).toBe(401);
+    });
+  });
 });
