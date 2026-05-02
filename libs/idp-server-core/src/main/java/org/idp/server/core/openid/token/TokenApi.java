@@ -41,12 +41,20 @@ public interface TokenApi {
       String clientCert,
       RequestAttributes requestAttributes);
 
+  /**
+   * Introspect a token with full sender-constraint verification (RS forwarding pattern).
+   *
+   * <p>The Resource Server forwards the artifacts the Client presented at the resource endpoint via
+   * the request body parameters: {@code client_cert} (mTLS, RFC 8705), {@code dpop_proof} (DPoP,
+   * RFC 9449) and the corresponding {@code dpop_htm} / {@code dpop_htu}. The {@code clientCert}
+   * parameter passed here is the RS's own TLS client certificate used to authenticate to the AS,
+   * which is independent from the token-binding cert.
+   */
   TokenIntrospectionResponse inspectWithVerification(
       TenantIdentifier tenantIdentifier,
       Map<String, String[]> params,
       String authorizationHeader,
       String clientCert,
-      List<String> dpopProofHeaders,
       RequestAttributes requestAttributes);
 
   TokenRevocationResponse revoke(

@@ -16,7 +16,6 @@
 
 package org.idp.server.core.openid.token.handler.tokenintrospection.io;
 
-import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
@@ -28,14 +27,32 @@ import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionReq
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
+/**
+ * Request for the {@code /v1/tokens/introspection-extensions} endpoint (Resource Server forwarding
+ * pattern).
+ *
+ * <p>Unlike {@code /v1/tokens/introspection} (RFC 7662, basic introspection), this endpoint is
+ * designed for a Resource Server (RS) to verify the sender-constraint of an access token (RFC 8705
+ * mTLS or RFC 9449 DPoP) on behalf of the request it just received from the Client. To do so the RS
+ * must hand the AS the artifacts the Client presented at the RS's resource endpoint:
+ *
+ * <ul>
+ *   <li>{@code client_cert} (body): the PEM-encoded client certificate the Client used at the RS.
+ *       Used for token-binding verification (RFC 8705 §3).
+ *   <li>{@code dpop_proof} (body): the DPoP proof JWT the Client used at the RS. Used for binding
+ *       verification (RFC 9449 §7).
+ *   <li>{@code dpop_htm} / {@code dpop_htu} (body): the HTTP method / URI the Client used at the
+ *       RS, against which the DPoP proof's {@code htm} / {@code htu} claims must match.
+ * </ul>
+ *
+ * <p>The TLS-layer {@code x-ssl-cert} header is the RS's own client certificate used to
+ * authenticate to the AS, which is independent from the token-binding certificate.
+ */
 public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHandlerable {
   Tenant tenant;
   String authorizationHeaders;
   Map<String, String[]> params;
   String clientCert;
-  List<String> dpopProofHeaders;
-  String httpMethod;
-  String httpUri;
 
   public TokenIntrospectionExtensionRequest(
       Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
@@ -46,25 +63,6 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
 
   public TokenIntrospectionExtensionRequest setClientCert(String clientCert) {
     this.clientCert = clientCert;
-    return this;
-  }
-
-  public TokenIntrospectionExtensionRequest setDPoPProofHeaders(List<String> dpopProofHeaders) {
-    this.dpopProofHeaders = dpopProofHeaders;
-    return this;
-  }
-
-  public List<String> dpopProofHeaders() {
-    return dpopProofHeaders;
-  }
-
-  public TokenIntrospectionExtensionRequest setHttpMethod(String httpMethod) {
-    this.httpMethod = httpMethod;
-    return this;
-  }
-
-  public TokenIntrospectionExtensionRequest setHttpUri(String httpUri) {
-    this.httpUri = httpUri;
     return this;
   }
 
@@ -153,18 +151,52 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
     return new ClientCert(clientCert);
   }
 
+  /**
+   * Returns the DPoP proof JWT the Client used at the Resource Server, forwarded to the AS via the
+   * {@code dpop_proof} body parameter (RS forwarding pattern, mirror of {@code client_cert}).
+   *
+   * <p>This endpoint intentionally does NOT consult the {@code DPoP} HTTP header — the header value
+   * would be the RS's own DPoP proof for the introspection call (with {@code htu} pointing at the
+   * introspection endpoint), which is not what we want to verify here.
+   */
   public DPoPProof dpopProof() {
-    if (dpopProofHeaders == null || dpopProofHeaders.isEmpty()) {
+    if (!params.containsKey("dpop_proof")) {
       return new DPoPProof();
     }
-    return new DPoPProof(dpopProofHeaders.get(0));
+    String value = params.get("dpop_proof")[0];
+    if (value == null || value.isEmpty()) {
+      return new DPoPProof();
+    }
+    return new DPoPProof(value);
   }
 
+  /**
+   * Returns the HTTP method the Client used at the Resource Server, forwarded via the {@code
+   * dpop_htm} body parameter, against which the DPoP proof's {@code htm} claim must match. Defaults
+   * to {@code POST} when not provided (typical for fresh proofs).
+   */
   public String httpMethod() {
-    return httpMethod != null ? httpMethod : "POST";
+    if (params.containsKey("dpop_htm")) {
+      String value = params.get("dpop_htm")[0];
+      if (value != null && !value.isEmpty()) {
+        return value;
+      }
+    }
+    return "POST";
   }
 
+  /**
+   * Returns the URL the Client used at the Resource Server, forwarded via the {@code dpop_htu} body
+   * parameter, against which the DPoP proof's {@code htu} claim must match. Empty string when not
+   * provided.
+   */
   public String httpUri() {
-    return httpUri != null ? httpUri : "";
+    if (params.containsKey("dpop_htu")) {
+      String value = params.get("dpop_htu")[0];
+      if (value != null && !value.isEmpty()) {
+        return value;
+      }
+    }
+    return "";
   }
 }

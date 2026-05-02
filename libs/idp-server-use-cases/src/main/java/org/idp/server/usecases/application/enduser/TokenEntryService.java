@@ -118,16 +118,14 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
       Map<String, String[]> params,
       String authorizationHeader,
       String clientCert,
-      List<String> dpopProofHeaders,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     TokenIntrospectionExtensionRequest tokenIntrospectionRequest =
         new TokenIntrospectionExtensionRequest(tenant, authorizationHeader, params);
+    // RS forwarding pattern: dpop_proof / dpop_htm / dpop_htu / client_cert はすべて body 渡し
+    // (TokenIntrospectionExtensionRequest 内で参照される)。x-ssl-cert は RS 自身の AS 認証用 mTLS。
     tokenIntrospectionRequest.setClientCert(clientCert);
-    tokenIntrospectionRequest.setDPoPProofHeaders(dpopProofHeaders);
-    tokenIntrospectionRequest.setHttpMethod(requestAttributes.optValueAsString("action", "POST"));
-    tokenIntrospectionRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 
