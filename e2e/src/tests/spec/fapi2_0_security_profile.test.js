@@ -118,7 +118,7 @@ describe("FAPI 2.0 Security Profile Final", () => {
 
       const clientAssertion = createClientAssertion({
         client: privateKeyJwtClient,
-        issuer: serverConfig.tokenEndpoint,
+        issuer: serverConfig.issuer,
       });
 
       const response = await pushAuthorizations({
@@ -148,7 +148,7 @@ describe("FAPI 2.0 Security Profile Final", () => {
     it("MUST reject PAR without code_challenge", async () => {
       const clientAssertion = createClientAssertion({
         client: privateKeyJwtClient,
-        issuer: serverConfig.tokenEndpoint,
+        issuer: serverConfig.issuer,
       });
 
       const response = await pushAuthorizations({
@@ -190,7 +190,7 @@ describe("FAPI 2.0 Security Profile Final", () => {
 
       const clientAssertion = createClientAssertion({
         client: privateKeyJwtClient,
-        issuer: serverConfig.tokenEndpoint,
+        issuer: serverConfig.issuer,
       });
 
       const response = await pushAuthorizations({

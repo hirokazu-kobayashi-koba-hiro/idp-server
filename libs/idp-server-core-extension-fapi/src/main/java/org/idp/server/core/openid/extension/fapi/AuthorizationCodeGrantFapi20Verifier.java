@@ -16,8 +16,11 @@
 
 package org.idp.server.core.openid.extension.fapi;
 
+import java.util.Set;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationCodeGrant;
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAssertionJwt;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
@@ -46,6 +49,10 @@ import org.idp.server.core.openid.token.verifier.AuthorizationCodeGrantVerifierI
 public class AuthorizationCodeGrantFapi20Verifier
     implements AuthorizationCodeGrantVerifierInterface {
 
+  /** FAPI 2.0 §5.4: signing algorithms permitted on client assertions. */
+  static final Set<String> ALLOWED_CLIENT_ASSERTION_ALGORITHMS =
+      Set.of("PS256", "PS384", "PS512", "ES256", "ES384", "ES512", "EdDSA");
+
   AuthorizationCodeGrantBaseVerifier baseVerifier = new AuthorizationCodeGrantBaseVerifier();
 
   @Override
@@ -62,6 +69,10 @@ public class AuthorizationCodeGrantFapi20Verifier
     baseVerifier.verify(tokenRequestContext, authorizationRequest, authorizationCodeGrant);
     throwExceptionIfWeakClientAuthentication(tokenRequestContext);
     throwExceptionIfNotSenderConstrained(tokenRequestContext, clientCredentials);
+    throwExceptionIfInvalidSigningAlgorithmForClientAssertion(
+        tokenRequestContext, clientCredentials);
+    throwExceptionIfClientAssertionAudIsArray(tokenRequestContext, clientCredentials);
+    throwExceptionIfClientAssertionAudIsNotIssuer(tokenRequestContext, clientCredentials);
   }
 
   /**
@@ -97,6 +108,88 @@ public class AuthorizationCodeGrantFapi20Verifier
       throw new TokenBadRequestException(
           "invalid_request",
           "When FAPI 2.0 Security Profile, the access token MUST be sender-constrained via mTLS or DPoP.");
+    }
+  }
+
+  /**
+   * FAPI 2.0 §5.4: client assertion JWS の署名アルゴリズムを PS256/PS384/PS512, ES256/ES384/ES512, EdDSA に制限。
+   * RSASSA-PKCS1-v1_5 (RS256 等) や対称鍵 (HS256 等) は禁止。
+   *
+   * <p>合わせて FAPI 2.0 §5.4 由来の鍵長要件 (RSA ≥ 2048 bits, EC ≥ 224 bits) もここで強制する。
+   */
+  void throwExceptionIfInvalidSigningAlgorithmForClientAssertion(
+      TokenRequestContext tokenRequestContext, ClientCredentials clientCredentials) {
+    if (!tokenRequestContext.clientAuthenticationType().isPrivateKeyJwt()) {
+      return;
+    }
+
+    ClientAssertionJwt clientAssertionJwt = clientCredentials.clientAssertionJwt();
+    String algorithm = clientAssertionJwt.algorithm();
+
+    if (!ALLOWED_CLIENT_ASSERTION_ALGORITHMS.contains(algorithm)) {
+      throw new TokenBadRequestException(
+          "invalid_client",
+          String.format(
+              "When FAPI 2.0 Security Profile (§5.4), client assertion signing algorithm must be one of %s. Current algorithm: %s",
+              ALLOWED_CLIENT_ASSERTION_ALGORITHMS, algorithm));
+    }
+
+    ClientAuthenticationPublicKey publicKey = clientCredentials.clientAuthenticationPublicKey();
+    int keySize = publicKey.size();
+
+    if (algorithm.startsWith("PS") && keySize < 2048) {
+      throw new TokenBadRequestException(
+          "invalid_client",
+          String.format(
+              "When FAPI 2.0 Security Profile, RSA key size must be 2048 bits or larger. Current key size: %d bits",
+              keySize));
+    }
+    if (algorithm.startsWith("ES") && keySize < 224) {
+      throw new TokenBadRequestException(
+          "invalid_client",
+          String.format(
+              "When FAPI 2.0 Security Profile, elliptic curve key size must be 224 bits or larger. Current key size: %d bits",
+              keySize));
+    }
+  }
+
+  /**
+   * FAPI 2.0 §5.3.2.1-2.8: "shall only accept its issuer identifier value as a string in the aud
+   * claim". client assertion の {@code aud} が配列で送られた場合は拒否する。
+   */
+  void throwExceptionIfClientAssertionAudIsArray(
+      TokenRequestContext tokenRequestContext, ClientCredentials clientCredentials) {
+    if (!tokenRequestContext.clientAuthenticationType().isPrivateKeyJwt()) {
+      return;
+    }
+    if (clientCredentials.clientAssertionJwt().isAudArray()) {
+      throw new TokenBadRequestException(
+          "invalid_client",
+          "When FAPI 2.0 Security Profile (§5.3.2.1-2.8), client assertion aud claim must be a string, not an array.");
+    }
+  }
+
+  /**
+   * FAPI 2.0 §5.3.2.1-2.8: "shall only accept its <b>issuer identifier value</b> (as defined in
+   * [RFC8414]) as a string in the aud claim". token_endpoint URL や mTLS alias など issuer 以外を {@code
+   * aud} に指定した client assertion は拒否する。
+   */
+  void throwExceptionIfClientAssertionAudIsNotIssuer(
+      TokenRequestContext tokenRequestContext, ClientCredentials clientCredentials) {
+    if (!tokenRequestContext.clientAuthenticationType().isPrivateKeyJwt()) {
+      return;
+    }
+    Object rawAud = clientCredentials.clientAssertionJwt().getFromRawPayload("aud");
+    if (!(rawAud instanceof String)) {
+      return; // already rejected by other checks (missing / array)
+    }
+    String issuer = tokenRequestContext.serverConfiguration().tokenIssuer().value();
+    if (!issuer.equals(rawAud)) {
+      throw new TokenBadRequestException(
+          "invalid_client",
+          String.format(
+              "When FAPI 2.0 Security Profile (§5.3.2.1-2.8), client assertion aud must be the AS issuer identifier (%s). Received: %s",
+              issuer, rawAud));
     }
   }
 }
