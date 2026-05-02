@@ -81,7 +81,7 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 | `iss` パラメータを Authorization Response に含める | MUST | ✅ | `AuthorizationResponseBuilder.java`, `JarmCreatable.java` |
 | Open Redirector 禁止 | MUST | ✅ | `OAuthRequestBaseVerifier` |
 | `aud` クレームは文字列 | MUST | ✅ | `ClientAuthenticationJwtValidatable.java` |
-| Refresh Token Rotation デフォルト無効 | MUST | ✅ | デフォルト設定 |
+| Refresh Token Rotation 無効 (§5.3.2.1-9) | MUST | ⚠️ | グローバルデフォルトは `true`。FAPI 2.0 テナントは `extension.rotate_refresh_token: false` を必ず設定すること（`config/examples/e2e/fapi2-tenant/` 参照）。RT は `client_id` ＋ クライアント認証で sender-constrained されているためローテーション不要（RFC 9449 §5） |
 
 #### 2.2.2 PAR + PKCE
 

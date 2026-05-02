@@ -111,6 +111,13 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return refreshTokenStrategy().isExtends();
   }
 
+  /**
+   * Whether the AS rotates the refresh token value on each refresh.
+   *
+   * <p>Defaults to {@code true} (rotate). FAPI 2.0 Security Profile §5.3.2.1-9 prohibits rotation
+   * "except in extraordinary circumstances", so FAPI 2.0 tenants must override this to {@code
+   * false} in their configuration.
+   */
   public boolean isRotateRefreshToken() {
     return rotateRefreshToken;
   }
