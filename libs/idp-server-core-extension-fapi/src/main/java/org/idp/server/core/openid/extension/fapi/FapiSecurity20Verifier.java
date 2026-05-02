@@ -75,16 +75,10 @@ public class FapiSecurity20Verifier implements AuthorizationRequestVerifier {
     // FAPI 2.0 Section 5.3.2.1: response_type code only (Hybrid Flow prohibited)
     throwExceptionIfNotResponseTypeCode(context);
 
-    // FAPI 2.0 Section 5.3.2.1.7: PKCE S256 required
+    // FAPI 2.0 Section 5.3.2.2-2.5: PKCE S256 required
     throwExceptionIfNotS256CodeChallengeMethod(context);
 
-    // FAPI 2.0 Section 5.3.2.1.5b: nonce required when openid scope
-    throwExceptionIfHasOpenidScopeAndNotContainsNonce(context);
-
-    // FAPI 2.0 Section 5.3.2.1.5a: state required when no openid scope
-    throwExceptionIfNotHasOpenidScopeAndNotContainsState(context);
-
-    // FAPI 2.0 Section 5.3.2.1.6: redirect_uri https scheme required
+    // FAPI 2.0 Section 5.3.2.2-2.8: redirect_uri https scheme required
     throwExceptionIfNotHttpsRedirectUri(context);
 
     // FAPI 2.0 Section 5.3.3.4: client authentication restriction
@@ -153,33 +147,7 @@ public class FapiSecurity20Verifier implements AuthorizationRequestVerifier {
     }
   }
 
-  /** FAPI 2.0: nonce parameter required when openid scope is requested. */
-  void throwExceptionIfHasOpenidScopeAndNotContainsNonce(OAuthRequestContext context) {
-    if (!context.hasOpenidScope()) {
-      return;
-    }
-    if (!context.authorizationRequest().hasNonce()) {
-      throw new OAuthRedirectableBadRequestException(
-          "invalid_request",
-          "When FAPI 2.0 Security Profile and openid scope is requested, nonce parameter is required.",
-          context);
-    }
-  }
-
-  /** FAPI 2.0: state parameter required when openid scope is not requested. */
-  void throwExceptionIfNotHasOpenidScopeAndNotContainsState(OAuthRequestContext context) {
-    if (context.hasOpenidScope()) {
-      return;
-    }
-    if (!context.authorizationRequest().hasState()) {
-      throw new OAuthRedirectableBadRequestException(
-          "invalid_request",
-          "When FAPI 2.0 Security Profile without openid scope, state parameter is required.",
-          context);
-    }
-  }
-
-  /** FAPI 2.0 Section 5.3.2.1.6: redirect URIs MUST use the https scheme. */
+  /** FAPI 2.0 Section 5.3.2.2-2.8: redirect URIs MUST use the https scheme. */
   void throwExceptionIfNotHttpsRedirectUri(OAuthRequestContext context) {
     RedirectUri redirectUri = context.redirectUri();
     if (!redirectUri.isHttps()) {
