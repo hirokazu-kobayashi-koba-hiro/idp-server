@@ -22,6 +22,7 @@ import org.idp.server.core.openid.grant_management.AuthorizationGranted;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.oauth.*;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
@@ -130,9 +131,10 @@ public class OAuthRequestHandler {
             pushedRequest.clientSecretBasic(),
             pushedRequest.toClientCert(),
             pushedRequest.toBackchannelParameters());
-    clientAuthenticationHandler.authenticate(oAuthPushedRequestContext);
+    ClientCredentials clientCredentials =
+        clientAuthenticationHandler.authenticate(oAuthPushedRequestContext);
 
-    verifier.verify(context);
+    verifier.verify(context, clientCredentials);
 
     authorizationRequestRepository.register(tenant, context.authorizationRequest());
 

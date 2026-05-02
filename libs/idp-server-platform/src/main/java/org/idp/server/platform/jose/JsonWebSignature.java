@@ -22,6 +22,7 @@ import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import java.text.ParseException;
+import java.util.Map;
 import java.util.Objects;
 
 /** JsonWebSignature */
@@ -66,6 +67,20 @@ public class JsonWebSignature {
     } catch (ParseException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Returns the raw payload JSON without Nimbus normalization.
+   *
+   * <p>Unlike {@link #claims()} — which returns {@link JWTClaimsSet} with normalized values (e.g.,
+   * a single-string {@code aud} is coerced to a list) — this method exposes the payload exactly as
+   * it appears on the wire. Use this when distinguishing the original JSON type of a claim matters
+   * (string vs array, scalar vs object).
+   *
+   * @return the parsed payload JSON object
+   */
+  public Map<String, Object> rawPayload() {
+    return value.getPayload().toJSONObject();
   }
 
   boolean verify(JWSVerifier verifier) throws JoseInvalidException {
