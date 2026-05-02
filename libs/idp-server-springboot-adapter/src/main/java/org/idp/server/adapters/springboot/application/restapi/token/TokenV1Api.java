@@ -103,18 +103,17 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
       @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
 
-    List<String> dpopProofHeaders = extractDPoPProofHeaders(httpServletRequest);
     Map<String, String[]> request = transform(body);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
+    // RS forwarding pattern (RFC 8705 §3 + RFC 9449 §7): the Resource Server forwards the
+    // artifacts the Client presented at the resource endpoint via body parameters
+    // (`client_cert`, `dpop_proof`, `dpop_htm`, `dpop_htu`). The DPoP request header on this
+    // endpoint is intentionally not consumed — it would belong to the RS's own request to the AS,
+    // not to the resource access being verified.
     TokenIntrospectionResponse response =
         tokenApi.inspectWithVerification(
-            tenantIdentifier,
-            request,
-            authorizationHeader,
-            clientCert,
-            dpopProofHeaders,
-            requestAttributes);
+            tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setAll(response.responseHeaders());

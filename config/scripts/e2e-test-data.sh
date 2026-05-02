@@ -310,6 +310,35 @@ FAPI2_TENANT_ID="edc3e984-05b6-499f-bd05-d48e5aaea1e4"
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
 
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/tlsClientAuth.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/tlsClientAuth2.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+##fapi2-tenant test user (CIBA / authentication-device 経由のフロー用)
+echo "-------------------------------------------------"
+echo ""
+echo "fapi2-tenant test user"
+
+./config/scripts/upsert-user.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/user/test-user.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
 ##fapi2-tenant authentication-config
 echo "-------------------------------------------------"
 echo ""

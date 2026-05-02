@@ -1,0 +1,46 @@
+{
+  "alias": "idp-server-fapi2-mtls",
+  "description": "FAPI 2.0 Security Profile Final test configuration for local idp-server with tls_client_auth (mTLS) authentication",
+  "server": {
+    "discoveryUrl": "https://api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/.well-known/openid-configuration"
+  },
+  "client": {
+    "client_id": "b58f5dec-dedb-4ee6-a7af-b03441d0e143",
+    "scope": "openid profile email fapi-2.0"
+  },
+  "client2": {
+    "client_id": "2fcc1a71-b916-4e3f-a056-8092ff3f796e",
+    "scope": "openid profile email fapi-2.0"
+  },
+  "mtls": {
+    "cert": "-----BEGIN CERTIFICATE-----\nMIIC0zCCAbugAwIBAgIUSH+VTlUaiOOOcZfeJ2D3oMvFiOswDQYJKoZIhvcNAQEL\nBQAwXDELMAkGA1UEBhMCSlAxDjAMBgNVBAgMBVRva3lvMQ4wDAYDVQQHDAVUb2t5\nbzETMBEGA1UECgwKRXhhbXBsZSBDQTEYMBYGA1UEAwwPRXhhbXBsZSBSb290IENB\nMB4XDTI2MDUwMjExMjMwNVoXDTI3MDUwMjExMjMwNVowSTEZMBcGA1UEAwwQZmFw\naTItdGxzLWNsaWVudDEfMB0GA1UECgwWRkFQSSAyLjAgQ2VydGlmaWNhdGlvbjEL\nMAkGA1UEBhMCSlAwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAS6dx0642XKXm2q\nNnk6RAloFLpqLG+uPNAEIaVGW+CEMOZAKfQ1n9GgFk6+hRTODXxgQw3l7ZAiSFxh\nJsumoI34o2swaTAnBgNVHREEIDAeghxmYXBpMi10bHMtY2xpZW50LmV4YW1wbGUu\nY29tMB0GA1UdDgQWBBRqSSvm9woEVemHXVmMJk3gI67YcjAfBgNVHSMEGDAWgBSH\nV3b6X2bWEHc7Iwb3QCjS/n2EjzANBgkqhkiG9w0BAQsFAAOCAQEAaFaXKK7hnWma\niks6apX/BlDkd/7IdqNLkdN1C2uZlACcU5n955v7ISNgzNHTt/r/j6uqgJjx0CIo\nApo+JA2RWb5Dm1Coybv6ld1o/FrxAKGt95lA5HXoX19lg4zxXvUWpFxe3PawDxA/\n5uTdxHDtKtsxkiX5+k8dvUOPbjGJEoOC6QvPcb00x96UvPN18PcpxSQ/Ib2/VikV\nPhk2MMmgT++5GfZWnAsXm4KGT3p1eVEwW1oecp+JmEiLmps57x2T6fHbMB47RGJC\nGO4ZkcTKgMSh77IbkvONidOG8nd/pxF2hNw/3lIrqVaXNJgK6qbUaLulRaMMTPSm\n/htc/Mh16Q==\n-----END CERTIFICATE-----\n",
+    "key": "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEINXexslAzUcpXZKrMHZdrFe/mprdAVl3NmalHqTV6blIoAoGCCqGSM49\nAwEHoUQDQgAEuncdOuNlyl5tqjZ5OkQJaBS6aixvrjzQBCGlRlvghDDmQCn0NZ/R\noBZOvoUUzg18YEMN5e2QIkhcYSbLpqCN+A==\n-----END EC PRIVATE KEY-----\n"
+  },
+  "mtls2": {
+    "cert": "-----BEGIN CERTIFICATE-----\nMIIC1zCCAb+gAwIBAgIUSH+VTlUaiOOOcZfeJ2D3oMvFiOwwDQYJKoZIhvcNAQEL\nBQAwXDELMAkGA1UEBhMCSlAxDjAMBgNVBAgMBVRva3lvMQ4wDAYDVQQHDAVUb2t5\nbzETMBEGA1UECgwKRXhhbXBsZSBDQTEYMBYGA1UEAwwPRXhhbXBsZSBSb290IENB\nMB4XDTI2MDUwMjExMjMyOVoXDTI3MDUwMjExMjMyOVowSzEbMBkGA1UEAwwSZmFw\naTItdGxzLWNsaWVudC0yMR8wHQYDVQQKDBZGQVBJIDIuMCBDZXJ0aWZpY2F0aW9u\nMQswCQYDVQQGEwJKUDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABN17fVgWnOLH\n6zoT8DFoun9JA2D8BX1ZBpoWIabPOXZKQjbI2c7TIjAwqzDwE4ADHatUk6StiPAG\nQx8s4aiyWJ2jbTBrMCkGA1UdEQQiMCCCHmZhcGkyLXRscy1jbGllbnQtMi5leGFt\ncGxlLmNvbTAdBgNVHQ4EFgQUAjcF8Zn0zZ6RmOjrsAZDhRvs4v4wHwYDVR0jBBgw\nFoAUh1d2+l9m1hB3OyMG90Ao0v59hI8wDQYJKoZIhvcNAQELBQADggEBAB8Jh2F+\n2AytwkNXuoUglBJ9n8bIhol7wrmwXF+Es1wceaIJVIJ1khoLGB7br0l+qbZnhqt2\n+ohKj52elNrMZDl48Pra8OGr35yRj5UTfQM1dggCpYL9M9O3RvLNsmcP8GCoDXe3\nSWsI3D3SKzHOF2NochExtVIlw6sS3pPnaBR99kcqSjJYqOaA74CZbru2/1c2X4ha\nzTjPtPesYrm5s66P/nBV7BC4ZEVIxnq4AQteTtLLaMKe7jJiA+Odo3mAvQ/0m20n\nA8Kny1LjOe0AIXIyw2ceH+28uxnMJH1gZOXxyRdwL13b6VUN48F13WNRtuxgbkTU\nt9+GATYXviJdHNw=\n-----END CERTIFICATE-----\n",
+    "key": "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIDVoz1A94zIppr7w+1addARRAR2BKeY3RD17doFFGjWaoAoGCCqGSM49\nAwEHoUQDQgAE3Xt9WBac4sfrOhPwMWi6f0kDYPwFfVkGmhYhps85dkpCNsjZztMi\nMDCrMPATgAMdq1STpK2I8AZDHyzhqLJYnQ==\n-----END EC PRIVATE KEY-----\n"
+  },
+  "resource": {
+    "resourceUrl": "https://mtls.api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/userinfo",
+    "richAuthorizationRequest": {
+      "type": "payment_initiation",
+      "actions": [
+        "initiate",
+        "status",
+        "cancel"
+      ],
+      "locations": [
+        "https://example.com/payments"
+      ],
+      "instructedAmount": {
+        "currency": "EUR",
+        "amount": "123.50"
+      },
+      "creditorName": "Merchant A",
+      "creditorAccount": {
+        "iban": "DE02100100109307118603"
+      },
+      "remittanceInformationUnstructured": "Ref Number Merchant"
+    }
+  }
+}

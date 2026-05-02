@@ -8,7 +8,6 @@
  * @see https://openid.net/specs/fapi-security-profile-2_0.html
  */
 import { describe, expect, it, beforeAll } from "@jest/globals";
-import { v4 as uuidv4 } from "uuid";
 
 import {
   getAuthorizations,
@@ -25,28 +24,7 @@ import {
   generateCodeVerifier,
 } from "../../lib/oauth";
 import { createClientAssertion } from "../../lib/oauth";
-
-// eslint-disable-next-line no-undef
-const jose = require("jose");
-
-const generateDPoPKeyPair = async () => {
-  const { publicKey, privateKey } = await jose.generateKeyPair("ES256", {
-    extractable: true,
-  });
-  const publicJwk = await jose.exportJWK(publicKey);
-  return { publicJwk, privateKey };
-};
-
-const createDPoPProof = async ({ privateKey, publicJwk, htm = "POST", htu }) => {
-  return await new jose.SignJWT({
-    jti: uuidv4(),
-    htm,
-    htu,
-    iat: Math.floor(Date.now() / 1000),
-  })
-    .setProtectedHeader({ typ: "dpop+jwt", alg: "ES256", jwk: publicJwk })
-    .sign(privateKey);
-};
+import { createDPoPProof, generateDPoPKeyPair } from "../../lib/dpop";
 
 describe("FAPI 2.0 Security Profile Final", () => {
   /**

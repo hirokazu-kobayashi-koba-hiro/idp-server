@@ -12,7 +12,6 @@
  * @see https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html
  */
 import { describe, expect, it, beforeAll } from "@jest/globals";
-import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
 
 import {
@@ -26,48 +25,11 @@ import {
   clientSecretPostClient,
   serverConfig,
 } from "../testConfig";
-
-// eslint-disable-next-line no-undef
-const jose = require("jose");
-
-const generateDPoPKeyPair = async () => {
-  const { publicKey, privateKey } = await jose.generateKeyPair("ES256", {
-    extractable: true,
-  });
-  const publicJwk = await jose.exportJWK(publicKey);
-  const privateJwk = await jose.exportJWK(privateKey);
-  return { publicJwk, privateJwk, privateKey };
-};
+import { createDPoPProof, generateDPoPKeyPair } from "../../lib/dpop";
 
 const computeAth = (accessToken) => {
   const hash = crypto.createHash("sha256").update(accessToken).digest();
   return hash.toString("base64url");
-};
-
-const createDPoPProof = async ({
-  privateKey,
-  publicJwk,
-  htm = "POST",
-  htu,
-  ath,
-}) => {
-  const payload = {
-    jti: uuidv4(),
-    htm,
-    htu,
-    iat: Math.floor(Date.now() / 1000),
-  };
-  if (ath) payload.ath = ath;
-
-  const header = {
-    typ: "dpop+jwt",
-    alg: "ES256",
-    jwk: publicJwk,
-  };
-
-  return await new jose.SignJWT(payload)
-    .setProtectedHeader(header)
-    .sign(privateKey);
 };
 
 const completeBackchannelAuthentication = async () => {
