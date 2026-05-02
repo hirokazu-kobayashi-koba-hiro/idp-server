@@ -1,0 +1,50 @@
+{
+  "id": "23e0e45d-0f88-4e6b-af57-fd4814cd8c81",
+  "flow": "fido-uaf-registration",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "default",
+      "priority": 1,
+      "available_methods": [
+        "fido-uaf"
+      ],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-registration.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-registration.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

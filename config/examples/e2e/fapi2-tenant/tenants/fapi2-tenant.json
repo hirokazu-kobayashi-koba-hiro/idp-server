@@ -5,14 +5,25 @@
     "domain": "https://api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4",
     "authorization_provider": "idp-server",
     "database_type": "postgresql",
+    "ui_config": {
+      "base_url": "https://auth.local.test",
+      "signin_page": "/signin/fido2/",
+      "signup_page": "/signup/"
+    },
     "session_config": {
       "cookie_name": "FAPI2_TENANT_IDP_SERVER_SESSION",
       "use_secure_cookie": false
     },
     "cors_config": {
       "allow_origins": [
-        "http://localhost:3000"
-      ]
+        "https://localhost.emobix.co.uk:8443",
+        "https://api.local.test",
+        "https://mtls.api.local.test",
+        "https://auth.local.test"
+      ],
+      "allow_headers": "Authorization, Content-Type, Accept, x-device-id, X-SSL-Client-Cert, DPoP",
+      "allow_methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "allow_credentials": true
     },
     "security_event_log_config": {
       "format": "structured_json",
@@ -93,8 +104,12 @@
       "jwt",
       "query.jwt"
     ],
+    "pushed_authorization_request_endpoint": "https://api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/authorizations/push",
     "require_pushed_authorization_requests": true,
     "authorization_response_iss_parameter_supported": true,
+    "code_challenge_methods_supported": [
+      "S256"
+    ],
     "dpop_signing_alg_values_supported": [
       "RS256",
       "RS384",
@@ -116,9 +131,8 @@
       "pairwise"
     ],
     "userinfo_signing_alg_values_supported": [
-      "RS256",
       "ES256",
-      "HS256"
+      "PS256"
     ],
     "userinfo_encryption_alg_values_supported": [
       "RSA1_5",
@@ -129,9 +143,8 @@
       "A128GCM"
     ],
     "id_token_signing_alg_values_supported": [
-      "RS256",
       "ES256",
-      "HS256"
+      "PS256"
     ],
     "id_token_encryption_alg_values_supported": [
       "RSA1_5",
@@ -228,21 +241,23 @@
     ],
     "tls_client_certificate_bound_access_tokens": true,
     "mtls_endpoint_aliases": {
-      "token_endpoint": "https:///host.docker.internal:8445/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/tokens",
-      "revocation_endpoint": "https:///host.docker.internal:8445/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/tokens/revocation",
-      "introspection_endpoint": "https:///host.docker.internal:8445/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/tokens/introspection",
-      "userinfo_endpoint": "https:///host.docker.internal:8445/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/userinfo",
-      "backchannel_authentication_endpoint": "https:///host.docker.internal:8445/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/backchannel/authentications"
+      "pushed_authorization_request_endpoint": "https://mtls.api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/authorizations/push",
+      "token_endpoint": "https://mtls.api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/tokens",
+      "revocation_endpoint": "https://mtls.api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/tokens/revocation",
+      "introspection_endpoint": "https://mtls.api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/tokens/introspection",
+      "userinfo_endpoint": "https://mtls.api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/userinfo",
+      "backchannel_authentication_endpoint": "https://mtls.api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/backchannel/authentications"
     },
     "extension": {
       "access_token_type": "JWT",
-      "token_signed_key_id": "id_token_nextauth",
-      "id_token_signed_key_id": "id_token_nextauth",
+      "token_signed_key_id": "access_token",
+      "id_token_signed_key_id": "access_token",
       "authorization_code_valid_duration": 10,
       "access_token_duration": 3600,
       "id_token_duration": 3600,
       "id_token_strict_mode": false,
       "default_max_age": 86400,
+      "rotate_refresh_token": false,
       "fapi_baseline_scopes": [
         "read"
       ],
