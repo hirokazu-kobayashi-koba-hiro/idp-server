@@ -1,0 +1,68 @@
+{
+  "alias": "idp-server-fapi2-private_key_jwt",
+  "description": "FAPI 2.0 Security Profile Final test configuration for local idp-server with private_key_jwt authentication",
+  "server": {
+    "discoveryUrl": "https://api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/.well-known/openid-configuration"
+  },
+  "client": {
+    "client_id": "a7c57646-089b-4fe5-8301-353e7f460319",
+    "scope": "openid profile email fapi-2.0",
+    "jwks": {
+      "keys": [
+        {
+          "kty": "EC",
+          "d": "FF0zmDj2BkOScQ5VSh1xska2Ivfji8Sq7srE86Zx1iI",
+          "use": "sig",
+          "crv": "P-256",
+          "kid": "fapi2_client_key",
+          "x": "HwJdDx17gQ63N5ydDoblIMw5w937QbrbSoqz1uS2w-8",
+          "y": "lcnyJYeeKEymg_ubrlOzaHpyOb1PioNgHi4d3fRM1HA",
+          "alg": "ES256"
+        }
+      ]
+    },
+    "dpop_signing_alg": "ES256"
+  },
+  "client2": {
+    "client_id": "b8d68757-19ac-5fe6-9412-464f8f571430",
+    "scope": "openid profile email fapi-2.0",
+    "jwks": {
+      "keys": [
+        {
+          "kty": "EC",
+          "d": "Qc8NoXvkELWPSWhAMQDGrQzWq_l53iVb90uk5Lxrshc",
+          "use": "sig",
+          "crv": "P-256",
+          "kid": "fapi2_client_key_2",
+          "x": "-5JdudenA0d49MtnRCPbiXWEhP3lDEUp3bE4dygYgWw",
+          "y": "H6744cgDBFF40HFuj5R-LK3fnR4tUv13L0QXIlq6Dr0",
+          "alg": "ES256"
+        }
+      ]
+    },
+    "dpop_signing_alg": "ES256"
+  },
+  "resource": {
+    "resourceUrl": "https://api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/userinfo",
+    "richAuthorizationRequest": {
+      "type": "payment_initiation",
+      "actions": [
+        "initiate",
+        "status",
+        "cancel"
+      ],
+      "locations": [
+        "https://example.com/payments"
+      ],
+      "instructedAmount": {
+        "currency": "EUR",
+        "amount": "123.50"
+      },
+      "creditorName": "Merchant A",
+      "creditorAccount": {
+        "iban": "DE02100100109307118603"
+      },
+      "remittanceInformationUnstructured": "Ref Number Merchant"
+    }
+  }
+}
