@@ -136,7 +136,6 @@
     "gender",
     "preferred_username",
     "middle_name",
-    "updated_at",
     "address",
     "phone_number",
     "phone_number_verified",
