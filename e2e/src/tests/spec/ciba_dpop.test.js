@@ -367,12 +367,16 @@ describe("CIBA + RFC 9449 (DPoP)", () => {
       expect(refreshResponse.data).toHaveProperty("access_token");
     });
 
-    it("MUST reject refresh request with a different DPoP key (key rotation prohibited)", async () => {
+    it("MUST allow confidential client to refresh with a rotated DPoP key (RFC 9449 §5)", async () => {
+      // RFC 9449 §5: Refresh tokens issued to confidential clients are NOT bound to the DPoP
+      // public key — they are sender-constrained by client authentication. The AS therefore
+      // must accept a refresh request that presents a freshly generated DPoP key, allowing
+      // client key rotation without invalidating the refresh token.
       const tokens = await obtainCibaDPoPBoundTokens(dpopKeyPair);
       const refreshToken = tokens.refresh_token;
 
       const otherKeyPair = await generateDPoPKeyPair();
-      const wrongKeyProof = await createDPoPProof({
+      const rotatedKeyProof = await createDPoPProof({
         privateKey: otherKeyPair.privateKey,
         publicJwk: otherKeyPair.publicJwk,
         htm: "POST",
@@ -385,11 +389,12 @@ describe("CIBA + RFC 9449 (DPoP)", () => {
         refreshToken,
         clientId: clientSecretPostClient.clientId,
         clientSecret: clientSecretPostClient.clientSecret,
-        additionalHeaders: { DPoP: wrongKeyProof },
+        additionalHeaders: { DPoP: rotatedKeyProof },
       });
 
-      expect(refreshResponse.status).toBeGreaterThanOrEqual(400);
-      expect(refreshResponse.status).toBeLessThan(500);
+      expect(refreshResponse.status).toBe(200);
+      expect(refreshResponse.data.token_type).toBe("DPoP");
+      expect(refreshResponse.data.access_token).toBeDefined();
     });
   });
 });
