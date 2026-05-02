@@ -16,28 +16,45 @@
 
 package org.idp.server.core.openid.token.verifier;
 
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
 import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
 import org.idp.server.core.openid.token.AccessToken;
+import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 
 /**
- * Verifies DPoP key continuity for refresh token grants per RFC 9449 Section 10.
+ * Verifies DPoP behavior on the refresh token grant per RFC 9449 Section 5.
  *
- * <p>When an access token was originally issued with DPoP binding (cnf.jkt), the refresh token
- * request MUST include a DPoP proof signed with the same key. This prevents a downgrade attack
- * where a stolen refresh token could be used to obtain a Bearer token without sender constraint.
+ * <p>Per RFC 9449 §5:
  *
- * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-10">RFC 9449 Section 10</a>
+ * <ul>
+ *   <li><b>Public clients</b>: refresh tokens are bound to the DPoP public key. The refresh request
+ *       MUST present a DPoP proof signed with the same key as the original binding.
+ *   <li><b>Confidential clients</b>: refresh tokens are NOT bound to the DPoP public key. They are
+ *       sender-constrained by client authentication (private_key_jwt / mTLS / client_secret_*).
+ *       Therefore the DPoP key MAY rotate between the initial issuance and any refresh, allowing
+ *       client key rotation without invalidating refresh tokens.
+ * </ul>
+ *
+ * <p>If the access token was DPoP-bound, the refresh request still MUST include a DPoP proof so
+ * that the new access token can be re-bound (to the same key for public clients, or to the new key
+ * for confidential clients).
+ *
+ * @see <a href="https://www.rfc-editor.org/rfc/rfc9449.html#section-5">RFC 9449 Section 5</a>
  */
 public class RefreshTokenDPoPBindingVerifier {
 
   AccessToken originalAccessToken;
   DPoPProofVerifiedResult dpopResult;
+  ClientConfiguration clientConfiguration;
 
   public RefreshTokenDPoPBindingVerifier(
-      AccessToken originalAccessToken, DPoPProofVerifiedResult dpopResult) {
+      AccessToken originalAccessToken,
+      DPoPProofVerifiedResult dpopResult,
+      ClientConfiguration clientConfiguration) {
     this.originalAccessToken = originalAccessToken;
     this.dpopResult = dpopResult;
+    this.clientConfiguration = clientConfiguration;
   }
 
   public void verify() {
@@ -46,16 +63,32 @@ public class RefreshTokenDPoPBindingVerifier {
     }
 
     throwExceptionIfDPoPProofMissing();
-    throwExceptionIfDPoPKeyMismatch();
-  }
 
-  private void throwExceptionIfDPoPProofMissing() {
-    if (!dpopResult.exists()) {
-      throw new DPoPProofInvalidException(
-          "Original token was DPoP-bound, refresh requires DPoP proof");
+    if (isPublicClient()) {
+      throwExceptionIfDPoPKeyMismatch();
     }
   }
 
+  private boolean isPublicClient() {
+    return clientConfiguration.clientAuthenticationType().isNone();
+  }
+
+  /**
+   * A missing DPoP header is "the request is missing a required parameter" per RFC 6749 §5.2, so
+   * surface it as {@code invalid_request} rather than {@code invalid_dpop_proof}. The latter is
+   * reserved by RFC 9449 §5.2 for cases where a DPoP proof is present but cannot be verified.
+   */
+  private void throwExceptionIfDPoPProofMissing() {
+    if (!dpopResult.exists()) {
+      throw new TokenBadRequestException(
+          "invalid_request", "Original token was DPoP-bound, refresh requires DPoP proof");
+    }
+  }
+
+  /**
+   * Public-client refresh keys are bound to the original DPoP public key (RFC 9449 §5). Refusing a
+   * mismatched key here prevents a stolen refresh token from being used with a different key pair.
+   */
   private void throwExceptionIfDPoPKeyMismatch() {
     if (!originalAccessToken.matchJwkThumbprint(dpopResult.jwkThumbprint())) {
       throw new DPoPProofInvalidException("DPoP proof key does not match original token binding");
