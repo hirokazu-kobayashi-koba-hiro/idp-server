@@ -151,6 +151,15 @@ public class AuthorizationCodeGrantFapi20Verifier
               "When FAPI 2.0 Security Profile, elliptic curve key size must be 224 bits or larger. Current key size: %d bits",
               keySize));
     }
+    // EdDSA: Ed25519 は 256bit / Ed448 は 456bit が標準だが、defense-in-depth で最小を 256bit と
+    // して明示チェック。RFC 8037 で定義された Ed25519 / Ed448 はいずれもこの基準を満たす。
+    if ("EdDSA".equals(algorithm) && keySize < 256) {
+      throw new TokenBadRequestException(
+          "invalid_client",
+          String.format(
+              "When FAPI 2.0 Security Profile, EdDSA key size must be 256 bits or larger. Current key size: %d bits",
+              keySize));
+    }
   }
 
   /**
