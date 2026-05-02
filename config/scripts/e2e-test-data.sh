@@ -301,3 +301,61 @@ FAPI2_TENANT_ID="edc3e984-05b6-499f-bd05-d48e5aaea1e4"
   -b "${AUTHORIZATION_SERVER_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/privateKeyJwt2.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+##fapi2-tenant authentication-config
+echo "-------------------------------------------------"
+echo ""
+echo "fapi2-tenant authentication-config"
+
+fapi2_authentication_config_files=(
+  email/no-action.json
+  fido-uaf/external.json
+  fido2/webauthn4j.json
+  initial-registration/standard.json
+  sms/external.json
+)
+
+for authentication_config_file in "${fapi2_authentication_config_files[@]}"; do
+  echo "🔧 Registering: $(basename "$authentication_config_file")"
+
+./config/scripts/upsert-authentication-config.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/authentication-config/${authentication_config_file}" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+done
+
+##fapi2-tenant authentication-policy
+echo "-------------------------------------------------"
+echo ""
+echo "fapi2-tenant authentication-policy"
+
+fapi2_authentication_policy_files=(
+  ciba.json
+  fido-uaf-registration.json
+  oauth.json
+)
+
+for authentication_policy_file in "${fapi2_authentication_policy_files[@]}"; do
+  echo "🔧 Registering: $(basename "$authentication_policy_file")"
+
+./config/scripts/upsert-authentication-policy.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/authentication-policy/${authentication_policy_file}" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+done
