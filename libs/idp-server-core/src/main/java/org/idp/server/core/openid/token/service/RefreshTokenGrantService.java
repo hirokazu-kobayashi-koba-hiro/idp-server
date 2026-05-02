@@ -86,7 +86,8 @@ public class RefreshTokenGrantService implements OAuthTokenCreationService, Refr
                 authorizationServerConfiguration.dpopSigningAlgValuesSupported());
 
     RefreshTokenDPoPBindingVerifier dpopBindingVerifier =
-        new RefreshTokenDPoPBindingVerifier(oAuthToken.accessToken(), dpopResult);
+        new RefreshTokenDPoPBindingVerifier(
+            oAuthToken.accessToken(), dpopResult, clientConfiguration);
     dpopBindingVerifier.verify();
 
     AccessToken accessToken =

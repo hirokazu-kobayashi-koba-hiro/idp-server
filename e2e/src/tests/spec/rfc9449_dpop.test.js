@@ -1235,7 +1235,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
     });
   });
 
-  describe("Section 10: Refresh Token DPoP Key Continuity", () => {
+  describe("Section 5: Refresh Token DPoP Behavior", () => {
 
     it("MUST accept refresh with same DPoP key that was used for original token", async () => {
       // 1. Get authorization code
@@ -1293,19 +1293,20 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
       expect(refreshResponse.data.access_token).toBeDefined();
     });
 
-    it("MUST reject refresh with different DPoP key (downgrade attack prevention)", async () => {
-      // 1. Get authorization code
+    it("MUST allow confidential client to refresh with rotated DPoP key (RFC 9449 §5)", async () => {
+      // RFC 9449 §5: Refresh tokens issued to confidential clients are NOT bound to the DPoP
+      // public key. They are sender-constrained by client authentication, so the DPoP key MAY
+      // rotate between issuance and refresh without invalidating the refresh token.
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         responseType: "code",
-        state: "dpop-refresh-diff-key",
+        state: "dpop-refresh-rotated-key",
         scope: "openid profile email " + clientSecretPostClient.scope,
         redirectUri: clientSecretPostClient.redirectUri,
       });
       expect(authorizationResponse.code).toBeDefined();
 
-      // 2. Exchange code with DPoP proof
       const tokenDpopProof = await createDPoPProof({
         privateKey: dpopKeyPair.privateKey,
         publicJwk: dpopKeyPair.publicJwk,
@@ -1327,11 +1328,11 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
       expect(tokenResponse.data.token_type).toBe("DPoP");
       expect(tokenResponse.data.refresh_token).toBeDefined();
 
-      // 3. Refresh with DIFFERENT DPoP key - must be rejected
-      const attackerKeyPair = await generateDPoPKeyPair();
-      const attackerDpopProof = await createDPoPProof({
-        privateKey: attackerKeyPair.privateKey,
-        publicJwk: attackerKeyPair.publicJwk,
+      // Refresh with a freshly generated (rotated) DPoP key — confidential clients MUST be allowed.
+      const rotatedKeyPair = await generateDPoPKeyPair();
+      const rotatedDpopProof = await createDPoPProof({
+        privateKey: rotatedKeyPair.privateKey,
+        publicJwk: rotatedKeyPair.publicJwk,
         htm: "POST",
         htu: serverConfig.tokenEndpoint,
       });
@@ -1342,14 +1343,15 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         grantType: "refresh_token",
         clientId: clientSecretPostClient.clientId,
         clientSecret: clientSecretPostClient.clientSecret,
-        additionalHeaders: { DPoP: attackerDpopProof },
+        additionalHeaders: { DPoP: rotatedDpopProof },
       });
 
-      expect(refreshResponse.status).toBe(400);
-      expect(refreshResponse.data.error).toBe("invalid_dpop_proof");
+      expect(refreshResponse.status).toBe(200);
+      expect(refreshResponse.data.token_type).toBe("DPoP");
+      expect(refreshResponse.data.access_token).toBeDefined();
     });
 
-    it("MUST reject refresh without DPoP proof when original token was DPoP-bound", async () => {
+    it("MUST reject refresh without DPoP proof when original token was DPoP-bound (RFC 6749 §5.2 invalid_request)", async () => {
       // 1. Get authorization code
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
@@ -1393,7 +1395,8 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
       });
 
       expect(refreshResponse.status).toBe(400);
-      expect(refreshResponse.data.error).toBe("invalid_dpop_proof");
+      // Missing DPoP header = "missing required parameter" per RFC 6749 §5.2, not invalid_dpop_proof.
+      expect(refreshResponse.data.error).toBe("invalid_request");
     });
   });
 

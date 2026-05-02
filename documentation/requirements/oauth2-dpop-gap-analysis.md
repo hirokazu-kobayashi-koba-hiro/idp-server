@@ -76,12 +76,14 @@
 | `invalid_dpop_proof` エラー | OPTIONAL | ✅ | `TokenRequestErrorHandler.java:50-60` |
 | DPoP proof なしでも Bearer 発行可 | OPTIONAL | ✅ | `DPoPProofVerifier.java:76-88` |
 
-### 2.4 §5.8 Refresh Token Binding
+### 2.4 §5 Refresh Token Binding
 
 | 要件 | レベル | 状況 | 実装箇所 |
 |------|--------|------|---------|
-| パブリッククライアントの RT を DPoP 鍵にバインド | MUST | ✅ | `RefreshTokenGrantService.java:88-90` |
-| RT 使用時に同じ DPoP 鍵の proof 必須 | MUST | ✅ | `RefreshTokenDPoPBindingVerifier.java:43-63` |
+| パブリッククライアント: RT を DPoP 鍵にバインド | MUST | ✅ | `RefreshTokenGrantService.java`, `RefreshTokenDPoPBindingVerifier.java` |
+| パブリッククライアント: RT 使用時に同じ DPoP 鍵の proof 必須 | MUST | ✅ | `RefreshTokenDPoPBindingVerifier.throwExceptionIfDPoPKeyMismatch` |
+| confidential クライアント: RT を DPoP 鍵にバインドしない | MUST | ✅ | `RefreshTokenDPoPBindingVerifier.verify` で client_auth=none のみキー一致を強制（RFC 9449 §5） |
+| RT 使用時の DPoP proof 必須（access token が DPoP-bound の場合） | MUST | ✅ | `RefreshTokenDPoPBindingVerifier.throwExceptionIfDPoPProofMissing`（DPoP ヘッダ欠落は RFC 6749 §5.2 の "missing required parameter" として `invalid_request` を返す） |
 
 ### 2.5 §6 Public Key Confirmation
 
