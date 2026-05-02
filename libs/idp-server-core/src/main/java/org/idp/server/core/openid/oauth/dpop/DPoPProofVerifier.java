@@ -165,10 +165,17 @@ public class DPoPProofVerifier {
     // Check 9: The htu claim matches the HTTP URI of the current request (scheme, authority, path)
     verifyHtu(claims, httpUri);
 
-    // Check 11: The creation time (iat) is within an acceptable window
+    // Check 11: The creation time (iat) is within an acceptable window.
+    //
+    // 二重チェックの意図:
+    //   verifyIat                       — RFC 9449 §11.1 リプレイ対策のための ±5 分の対称ウィンドウ。
+    //                                     iat が古すぎる proof / 未来すぎる proof いずれも拒否し、
+    //                                     再利用や時計ズレ攻撃の枠を絞る。
+    //   JwtClockSkewValidator           — FAPI 2.0 §5.3.2.1-2.13 が要求する forward skew 60 秒以内
+    //                                     という更に厳しい上限。FAPI 2.0 では 5 分は許容されない。
+    // 両方を通過した DPoP proof のみが有効。
     verifyIat(claims);
 
-    // FAPI 2.0 §5.3.2.1-2.13: reject iat/nbf more than 60 seconds in the future
     try {
       JwtClockSkewValidator.validateIatNbf(claims);
     } catch (JwtClockSkewException e) {

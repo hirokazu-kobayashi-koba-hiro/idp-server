@@ -51,6 +51,27 @@ import org.idp.server.core.openid.oauth.verifier.base.OidcRequestBaseVerifier;
  *
  * <p>Request Object は PAR で代替されるため、FAPI 1.0 Advanced のような JWS 署名済み Request Object の必須要件はない。
  *
+ * <h3>意図的に強制していない要件</h3>
+ *
+ * <p><b>{@code nonce} は必須にしていない。</b> FAPI 1.0 Advanced とは異なり、FAPI 2.0 SP は client から の {@code
+ * nonce} 送信を必須化していない。
+ *
+ * <ul>
+ *   <li>§5.3.2.2-2.14: "if supporting [OIDC], shall <b>support</b> nonce parameter values up to 64
+ *       characters" — AS 側で「サポート」が要求されているだけで、client 送信は必須化されていない。
+ *   <li>OIDF Conformance Suite の {@code
+ *       fapi2-security-profile-final-ensure-authorization-request-without-nonce-success} は nonce
+ *       なしのリクエストが成功することを期待している。
+ * </ul>
+ *
+ * <p><b>{@code state} も必須にしていない。</b> FAPI 2.0 では PKCE が CSRF 対策を担うため、{@code state} は CSRF
+ * 用途では用いられない。
+ *
+ * <ul>
+ *   <li>§5.3.2.2-6 NOTE 4: "the state parameter is <b>not used for CSRF protection</b>, but may be
+ *       used by the client for application state."
+ * </ul>
+ *
  * @see <a href="https://openid.net/specs/fapi-security-profile-2_0.html">FAPI 2.0 Security Profile
  *     Final</a>
  */
@@ -268,6 +289,16 @@ public class FapiSecurity20Verifier implements AuthorizationRequestVerifier {
           "invalid_client",
           String.format(
               "When FAPI 2.0 Security Profile, elliptic curve key size must be 224 bits or larger. Current key size: %d bits",
+              keySize),
+          context.tenant());
+    }
+    // EdDSA: Ed25519 は 256bit / Ed448 は 456bit が標準だが、defense-in-depth で最小を 256bit と
+    // して明示チェック。RFC 8037 で定義された Ed25519 / Ed448 はいずれもこの基準を満たす。
+    if ("EdDSA".equals(algorithm) && keySize < 256) {
+      throw new OAuthBadRequestException(
+          "invalid_client",
+          String.format(
+              "When FAPI 2.0 Security Profile, EdDSA key size must be 256 bits or larger. Current key size: %d bits",
               keySize),
           context.tenant());
     }
