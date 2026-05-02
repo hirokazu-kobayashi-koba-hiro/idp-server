@@ -167,6 +167,33 @@ export const fapi2PrivateKeyJwtClient = {
   },
 };
 
+/**
+ * FAPI 2.0 SP Final - mTLS (tls_client_auth) Client
+ *
+ * Registered against fapi2-tenant with subject DN
+ * "C=JP,O=FAPI 2.0 Certification,CN=fapi2-tls-client".
+ * Certificate is signed by the development CA bundled in nginx (docker/nginx/ca.crt).
+ */
+export const fapi2TlsClientAuthClient = {
+  clientId: "fapi2TlsClientAuth",
+  clientIdUuid: "b58f5dec-dedb-4ee6-a7af-b03441d0e143",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "openid profile email",
+  fapi20Scope: "fapi-2.0",
+  idTokenAlg: "ES256",
+  clientCertFile: "fapi2TlsClientAuth.pem",
+};
+
+export const fapi2TlsClientAuthClient2 = {
+  clientId: "fapi2TlsClientAuth2",
+  clientIdUuid: "2fcc1a71-b916-4e3f-a056-8092ff3f796e",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "openid profile email",
+  fapi20Scope: "fapi-2.0",
+  idTokenAlg: "ES256",
+  clientCertFile: "fapi2TlsClientAuth2.pem",
+};
+
 
 export const federationServerConfig = {
   organizationId,

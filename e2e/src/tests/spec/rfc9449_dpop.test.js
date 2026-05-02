@@ -14,36 +14,8 @@ import { requestToken, getUserinfo, inspectToken, inspectTokenWithVerification }
 import { get } from "../../lib/http";
 import { backendUrl, clientSecretPostClient, serverConfig } from "../testConfig";
 import { pushAuthorizations, requestAuthorizations } from "../../oauth/request";
+import { calculateDPoPJkt, createDPoPProof, generateDPoPKeyPair } from "../../lib/dpop";
 
-// eslint-disable-next-line no-undef
-const jose = require("jose");
-
-/**
- * Generate an EC P-256 key pair for DPoP proof signing.
- * RFC 9449 Section 4.1: DPoP proofs MUST use asymmetric algorithms.
- */
-const generateDPoPKeyPair = async () => {
-  const { publicKey, privateKey } = await jose.generateKeyPair("ES256", {
-    extractable: true,
-  });
-  const publicJwk = await jose.exportJWK(publicKey);
-  const privateJwk = await jose.exportJWK(privateKey);
-  return { publicJwk, privateJwk, privateKey };
-};
-
-/**
- * Create a DPoP proof JWT per RFC 9449 Section 4.2.
- *
- * @param {Object} params
- * @param {CryptoKey} params.privateKey - Private key for signing
- * @param {Object} params.publicJwk - Public JWK to include in header
- * @param {string} params.htm - HTTP method (e.g., "POST")
- * @param {string} params.htu - HTTP target URI
- * @param {Object} [params.overrides] - Override payload claims
- * @param {Object} [params.headerOverrides] - Override header fields
- * @param {string[]} [params.omitClaims] - Claims to omit from payload
- * @returns {Promise<string>} Signed DPoP proof JWT
- */
 /**
  * Compute the access token hash (ath) for DPoP proof at resource endpoints.
  * RFC 9449 Section 4.2: ath = base64url(SHA-256(access_token))
@@ -91,40 +63,6 @@ const obtainDPoPBoundTokenViaAuthCodeFlow = async (keyPair) => {
   expect(tokenResponse.status).toBe(200);
   expect(tokenResponse.data.token_type).toBe("DPoP");
   return tokenResponse.data.access_token;
-};
-
-const createDPoPProof = async ({
-  privateKey,
-  publicJwk,
-  htm = "POST",
-  htu,
-  overrides = {},
-  headerOverrides = {},
-  omitClaims = [],
-}) => {
-  const payload = {
-    jti: uuidv4(),
-    htm,
-    htu,
-    iat: Math.floor(Date.now() / 1000),
-    ...overrides,
-  };
-
-  // Remove specified claims
-  for (const claim of omitClaims) {
-    delete payload[claim];
-  }
-
-  const header = {
-    typ: "dpop+jwt",
-    alg: "ES256",
-    jwk: publicJwk,
-    ...headerOverrides,
-  };
-
-  return await new jose.SignJWT(payload)
-    .setProtectedHeader(header)
-    .sign(privateKey);
 };
 
 describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
@@ -974,7 +912,8 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
       expect(tokenResponse.status).toBe(200);
       expect(tokenResponse.data.token_type).toBe("DPoP");
 
-      // 2. Introspect with DPoP proof (ath required for resource endpoint)
+      // 2. Introspect with DPoP proof (ath required for resource endpoint).
+      // RS forwarding pattern: dpop_proof / dpop_htm / dpop_htu はすべて body parameter で渡す。
       const ath = computeAth(tokenResponse.data.access_token);
       const introspectionDpopProof = await createDPoPProof({
         privateKey: dpopKeyPair.privateKey,
@@ -989,7 +928,9 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         token: tokenResponse.data.access_token,
         clientId: clientSecretPostClient.clientId,
         clientSecret: clientSecretPostClient.clientSecret,
-        additionalHeaders: { DPoP: introspectionDpopProof },
+        dpopProof: introspectionDpopProof,
+        dpopHtm: "POST",
+        dpopHtu: serverConfig.tokenIntrospectionExtensionsEndpoint,
       });
 
 
@@ -1021,7 +962,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
       expect(tokenResponse.status).toBe(200);
       expect(tokenResponse.data.token_type).toBe("DPoP");
 
-      // 2. Introspect with DPoP proof signed by DIFFERENT key
+      // 2. Introspect with DPoP proof signed by DIFFERENT key (RS forwarding pattern: body 渡し)
       const otherKeyPair = await generateDPoPKeyPair();
       const ath = computeAth(tokenResponse.data.access_token);
       const introspectionDpopProof = await createDPoPProof({
@@ -1037,7 +978,9 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
         token: tokenResponse.data.access_token,
         clientId: clientSecretPostClient.clientId,
         clientSecret: clientSecretPostClient.clientSecret,
-        additionalHeaders: { DPoP: introspectionDpopProof },
+        dpopProof: introspectionDpopProof,
+        dpopHtm: "POST",
+        dpopHtu: serverConfig.tokenIntrospectionExtensionsEndpoint,
       });
 
 
@@ -1412,9 +1355,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
    */
   describe("Section 10.1: PAR + DPoP integration", () => {
 
-    const computeJwkThumbprint = async (publicJwk) => {
-      return await jose.calculateJwkThumbprint(publicJwk, "sha256");
-    };
+    const computeJwkThumbprint = calculateDPoPJkt;
 
     it("MUST bind dpop_jkt to PAR-issued request_uri when only DPoP proof is presented (no dpop_jkt parameter)", async () => {
       const parEndpoint = serverConfig.authorizationEndpoint + "/push";
@@ -1581,10 +1522,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
    */
   describe("Section 10: Authorization Code Binding to a DPoP Key (dpop_jkt)", () => {
 
-    const computeJwkThumbprint = async (publicJwk) => {
-      const thumbprint = await jose.calculateJwkThumbprint(publicJwk, "sha256");
-      return thumbprint;
-    };
+    const computeJwkThumbprint = calculateDPoPJkt;
 
     it("MUST issue an authorization code when dpop_jkt is provided", async () => {
       const jkt = await computeJwkThumbprint(dpopKeyPair.publicJwk);
