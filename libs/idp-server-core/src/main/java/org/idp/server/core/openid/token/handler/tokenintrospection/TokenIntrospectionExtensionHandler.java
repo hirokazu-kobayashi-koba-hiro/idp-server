@@ -66,6 +66,8 @@ public class TokenIntrospectionExtensionHandler {
       TokenIntrospectionExtensionRequest request, TokenUserFindingDelegate delegate) {
     TokenIntrospectionValidator validator = new TokenIntrospectionValidator(request.toParameters());
     validator.validate();
+    // RS forwarding pattern: DPoP proof は body の `dpop_proof` で受け取るため、リクエスト header の
+    // DPoP は consume しない (ここで複数ヘッダ検証もしない)。
 
     Tenant tenant = request.tenant();
     AuthorizationServerConfiguration authorizationServerConfiguration =
@@ -86,6 +88,9 @@ public class TokenIntrospectionExtensionHandler {
     TokenIntrospectionExtensionVerifier verifier =
         new TokenIntrospectionExtensionVerifier(
             request.clientCertForTokenBinding(),
+            request.dpopProof(),
+            request.httpMethod(),
+            request.httpUri(),
             request.scopes(),
             oAuthToken,
             authorizationServerConfiguration,

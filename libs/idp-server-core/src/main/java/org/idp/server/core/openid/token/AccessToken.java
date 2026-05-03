@@ -23,6 +23,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
 import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
+import org.idp.server.core.openid.oauth.dpop.JwkThumbprint;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.extension.CreatedAt;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
@@ -37,6 +38,7 @@ public class AccessToken {
   AccessTokenEntity accessTokenEntity;
   AuthorizationGrant authorizationGrant;
   ClientCertificationThumbprint clientCertificationThumbprint;
+  JwkThumbprint jwkThumbprint;
   AccessTokenCustomClaims customClaims;
   CreatedAt createdAt;
   ExpiresIn expiresIn;
@@ -51,6 +53,7 @@ public class AccessToken {
       AccessTokenEntity accessTokenEntity,
       AuthorizationGrant authorizationGrant,
       ClientCertificationThumbprint clientCertificationThumbprint,
+      JwkThumbprint jwkThumbprint,
       AccessTokenCustomClaims customClaims,
       CreatedAt createdAt,
       ExpiresIn expiresIn,
@@ -61,6 +64,7 @@ public class AccessToken {
     this.accessTokenEntity = accessTokenEntity;
     this.authorizationGrant = authorizationGrant;
     this.clientCertificationThumbprint = clientCertificationThumbprint;
+    this.jwkThumbprint = jwkThumbprint;
     this.customClaims = customClaims;
     this.createdAt = createdAt;
     this.expiresIn = expiresIn;
@@ -100,7 +104,19 @@ public class AccessToken {
   }
 
   public boolean isSenderConstrained() {
-    return clientCertificationThumbprint.exists();
+    return clientCertificationThumbprint.exists() || hasDPoPBinding();
+  }
+
+  public JwkThumbprint jwkThumbprint() {
+    return jwkThumbprint;
+  }
+
+  public boolean hasDPoPBinding() {
+    return jwkThumbprint != null && jwkThumbprint.exists();
+  }
+
+  public boolean matchJwkThumbprint(JwkThumbprint thumbprint) {
+    return jwkThumbprint != null && jwkThumbprint.equals(thumbprint);
   }
 
   public AccessTokenCustomClaims customClaims() {

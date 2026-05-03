@@ -74,6 +74,7 @@ public class NormalRequestFactory implements AuthorizationRequestFactory {
     builder.add(convertClaimsPayload(parameters.claims()));
     builder.add(parameters.codeChallenge());
     builder.add(parameters.codeChallengeMethod());
+    builder.add(parameters.dpopJkt());
     builder.add(convertAuthorizationDetails(parameters.authorizationDetailsValue()));
     builder.add(parameters.customParams());
     int expiresIn =

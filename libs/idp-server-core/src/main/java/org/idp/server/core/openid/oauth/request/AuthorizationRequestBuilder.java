@@ -19,6 +19,7 @@ package org.idp.server.core.openid.oauth.request;
 import org.idp.server.core.openid.identity.id_token.RequestedClaimsPayload;
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
+import org.idp.server.core.openid.oauth.dpop.DPoPJkt;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
 import org.idp.server.core.openid.oauth.type.oauth.*;
@@ -55,6 +56,7 @@ public class AuthorizationRequestBuilder {
   RequestedClaimsPayload requestedClaimsPayload = new RequestedClaimsPayload();
   CodeChallenge codeChallenge = new CodeChallenge();
   CodeChallengeMethod codeChallengeMethod = CodeChallengeMethod.undefined;
+  DPoPJkt dpopJkt = new DPoPJkt();
   AuthorizationDetails authorizationDetails = new AuthorizationDetails();
   CustomParams customParams = new CustomParams();
   ExpiresIn expiresIn = new ExpiresIn(1800);
@@ -182,6 +184,11 @@ public class AuthorizationRequestBuilder {
     return this;
   }
 
+  public AuthorizationRequestBuilder add(DPoPJkt dpopJkt) {
+    this.dpopJkt = dpopJkt;
+    return this;
+  }
+
   public AuthorizationRequestBuilder add(AuthorizationDetails authorizationDetails) {
     this.authorizationDetails = authorizationDetails;
     return this;
@@ -228,6 +235,7 @@ public class AuthorizationRequestBuilder {
         requestedClaimsPayload,
         codeChallenge,
         codeChallengeMethod,
+        dpopJkt,
         authorizationDetails,
         customParams,
         expiresIn,

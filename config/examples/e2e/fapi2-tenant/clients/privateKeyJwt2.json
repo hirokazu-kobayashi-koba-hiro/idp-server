@@ -1,0 +1,40 @@
+{
+  "client_id": "b8d68757-19ac-5fe6-9412-464f8f571430",
+  "client_id_alias": "privateKeyJwt2",
+  "client_secret": "privateKeyJwt2Secret",
+  "client_id_issued_at": 2893256800,
+  "client_secret_expires_at": 2893276800,
+  "redirect_uris": [
+    "https://client.example.org/callback",
+    "https://client.example.org/callback2",
+    "http://localhost:8081/callback",
+    "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_implicit/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_hybrid/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp-server-fapi2-private_key_jwt/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp-server-fapi2-private_key_jwt/callback?dummy1=lorem&dummy2=ipsum"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email address phone offline_access account transfers read write fapi-2.0 identity_verification_application identity_verification_application_delete identity_verification_result",
+  "client_name": "FAPI 2.0 Second Client",
+  "client_name#ja-Jpan-JP": "FAPI 2.0 セカンドクライアント",
+  "token_endpoint_auth_method": "private_key_jwt",
+  "logo_uri": "https://client.example.org/logo.png",
+  "tos_uri": "https://idp-auth-frontend-diqt.vercel.app/terms",
+  "policy_uri": "https://idp-auth-frontend-diqt.vercel.app/privacy",
+  "jwks_uri": "https://client.example.org/my_public_keys.jwks",
+  "application_type": "web",
+  "jwks": "{\n    \"keys\": [\n        {\n            \"kty\": \"EC\",\n            \"use\": \"sig\",\n            \"crv\": \"P-256\",\n            \"kid\": \"fapi2_client_key_2\",\n            \"x\": \"-5JdudenA0d49MtnRCPbiXWEhP3lDEUp3bE4dygYgWw\",\n            \"y\": \"H6744cgDBFF40HFuj5R-LK3fnR4tUv13L0QXIlq6Dr0\",\n            \"alg\": \"ES256\"\n        }\n    ]\n}",
+  "authorization_details_types":[
+    "payment_initiation",
+    "account_information",
+    "openid_credential"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "sub": "0bfd250e-4703-4cee-bc4d-06ab2ca195ae",
+  "provider_id": "idp-server",
+  "external_user_id": "0bfd250e-4703-4cee-bc4d-06ab2ca195ae",
+  "name": "fapi2.tester",
+  "given_name": "tester",
+  "family_name": "fapi2",
+  "preferred_username": "fapi2",
+  "email": "fapi2.tester@example.com",
+  "email_verified": true,
+  "phone_number": "09098765432",
+  "phone_number_verified": true,
+  "authentication_devices": [
+    {
+      "id": "fa14bee7-6f2b-4cac-9906-77ad139966fc",
+      "platform": "iOS",
+      "os": "iOS 18.5",
+      "model": "iPhone15",
+      "notification_channel": "fcm",
+      "notification_token": "test token",
+      "preferred_for_notification": true
+    }
+  ],
+  "raw_password": "successUserCode001",
+  "role": "User"
+}

@@ -180,6 +180,9 @@ public class ServerConfigurationResponseCreator {
           "pushed_authorization_request_endpoint",
           authorizationServerConfiguration.pushedAuthorizationRequestEndpoint());
     }
+    map.put(
+        "require_pushed_authorization_requests",
+        authorizationServerConfiguration.requirePushedAuthorizationRequests());
 
     // RFC 8414 - PKCE code challenge methods
     if (authorizationServerConfiguration.hasCodeChallengeMethodsSupported()) {
@@ -211,6 +214,13 @@ public class ServerConfigurationResponseCreator {
         authorizationServerConfiguration.isTlsClientCertificateBoundAccessTokens());
     if (authorizationServerConfiguration.hasMtlsEndpointAliases()) {
       map.put("mtls_endpoint_aliases", authorizationServerConfiguration.mtlsEndpointAliases());
+    }
+
+    // RFC 9449 - DPoP
+    if (authorizationServerConfiguration.hasDpopSigningAlgValuesSupported()) {
+      map.put(
+          "dpop_signing_alg_values_supported",
+          authorizationServerConfiguration.dpopSigningAlgValuesSupported());
     }
 
     // RFC 8414 - Introspection and Revocation endpoints

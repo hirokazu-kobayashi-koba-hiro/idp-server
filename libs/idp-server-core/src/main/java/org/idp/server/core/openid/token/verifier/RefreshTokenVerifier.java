@@ -40,7 +40,7 @@ public class RefreshTokenVerifier {
   public void verify() {
     throwIfNotFoundToken();
     throwExceptionIfExpiredToken();
-    throwExceptionIfSenderConstrainedButNoCertificate();
+    throwExceptionIfCertificateBoundButNoCertificate();
   }
 
   void throwIfNotFoundToken() {
@@ -60,19 +60,22 @@ public class RefreshTokenVerifier {
   }
 
   /**
-   * RFC 8705 - If the original access token was sender-constrained (certificate-bound), the client
-   * certificate MUST be present in the refresh token request.
+   * RFC 8705 - If the original access token was certificate-bound (mTLS), the client certificate
+   * MUST be present in the refresh token request.
    *
    * <p>This check is based on the actual token state, not server/client configuration, because a
    * token that was issued with certificate binding must always require proof of possession
    * regardless of current configuration.
+   *
+   * <p>Note: DPoP binding is verified separately by {@link RefreshTokenDPoPBindingVerifier}.
    */
-  void throwExceptionIfSenderConstrainedButNoCertificate() {
+  void throwExceptionIfCertificateBoundButNoCertificate() {
     AccessToken originalAccessToken = oAuthToken.accessToken();
-    if (originalAccessToken.isSenderConstrained() && !clientCredentials.hasClientCertification()) {
+    if (originalAccessToken.hasClientCertification()
+        && !clientCredentials.hasClientCertification()) {
       throw new TokenBadRequestException(
           "invalid_grant",
-          "original access token is sender-constrained, client certificate MUST be present in refresh token request");
+          "original access token is certificate-bound, client certificate MUST be present in refresh token request");
     }
   }
 }

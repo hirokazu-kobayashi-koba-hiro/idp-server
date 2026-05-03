@@ -36,6 +36,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   String registrationEndpoint = "";
   String endSessionEndpoint = "";
   String pushedAuthorizationRequestEndpoint = "";
+  boolean requirePushedAuthorizationRequests = false;
   List<String> scopesSupported = new ArrayList<>();
   List<String> responseTypesSupported = new ArrayList<>();
   List<String> responseModesSupported = new ArrayList<>();
@@ -72,6 +73,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   List<String> codeChallengeMethodsSupported = new ArrayList<>();
   boolean tlsClientCertificateBoundAccessTokens = false;
   Map<String, String> mtlsEndpointAliases = new HashMap<>();
+  List<String> dpopSigningAlgValuesSupported = new ArrayList<>();
   boolean requireSignedRequestObject = false;
   boolean authorizationResponseIssParameterSupported = false;
 
@@ -286,6 +288,18 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return mtlsEndpointAliases != null && !mtlsEndpointAliases.isEmpty();
   }
 
+  public List<String> dpopSigningAlgValuesSupported() {
+    return dpopSigningAlgValuesSupported;
+  }
+
+  public boolean hasDpopSigningAlgValuesSupported() {
+    return dpopSigningAlgValuesSupported != null && !dpopSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean isDPoPSupported() {
+    return hasDpopSigningAlgValuesSupported();
+  }
+
   public boolean requireSignedRequestObject() {
     return requireSignedRequestObject;
   }
@@ -309,6 +323,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
 
   public boolean hasFapiAdvanceScope(Set<String> scopes) {
     return extension.hasFapiAdvanceScope(scopes);
+  }
+
+  public boolean hasFapi20Scope(Set<String> scopes) {
+    return extension.hasFapi20Scope(scopes);
   }
 
   public boolean hasRequiredIdentityVerificationScope(Set<String> scopes) {
@@ -389,6 +407,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
 
   public String pushedAuthorizationRequestEndpoint() {
     return pushedAuthorizationRequestEndpoint;
+  }
+
+  public boolean requirePushedAuthorizationRequests() {
+    return requirePushedAuthorizationRequests;
   }
 
   public boolean hasPushedAuthorizationRequestEndpoint() {
@@ -772,6 +794,9 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     map.put("tls_client_certificate_bound_access_tokens", tlsClientCertificateBoundAccessTokens);
     if (hasMtlsEndpointAliases()) {
       map.put("mtls_endpoint_aliases", mtlsEndpointAliases);
+    }
+    if (hasDpopSigningAlgValuesSupported()) {
+      map.put("dpop_signing_alg_values_supported", dpopSigningAlgValuesSupported);
     }
     if (hasBackchannelTokenDeliveryModesSupported()) {
       map.put("backchannel_token_delivery_modes_supported", backchannelTokenDeliveryModesSupported);

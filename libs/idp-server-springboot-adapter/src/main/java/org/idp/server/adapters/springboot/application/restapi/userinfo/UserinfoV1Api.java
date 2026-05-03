@@ -17,6 +17,7 @@
 package org.idp.server.adapters.springboot.application.restapi.userinfo;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
@@ -47,10 +48,12 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       HttpServletRequest httpServletRequest) {
 
+    List<String> dpopProofHeaders = extractDPoPProofHeaders(httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserinfoRequestResponse response =
-        userinfoApi.request(tenantId, authorizationHeader, clientCert, requestAttributes);
+        userinfoApi.request(
+            tenantId, authorizationHeader, clientCert, dpopProofHeaders, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");
@@ -66,10 +69,12 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
       @PathVariable("tenant-id") TenantIdentifier tenantId,
       HttpServletRequest httpServletRequest) {
 
+    List<String> dpopProofHeaders = extractDPoPProofHeaders(httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserinfoRequestResponse response =
-        userinfoApi.request(tenantId, authorizationHeader, clientCert, requestAttributes);
+        userinfoApi.request(
+            tenantId, authorizationHeader, clientCert, dpopProofHeaders, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");

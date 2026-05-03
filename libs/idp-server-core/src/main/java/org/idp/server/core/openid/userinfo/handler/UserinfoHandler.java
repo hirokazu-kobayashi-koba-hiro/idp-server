@@ -22,6 +22,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.dpop.DPoPHeaderValidator;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
@@ -60,10 +61,17 @@ public class UserinfoHandler {
 
     UserinfoValidator validator = new UserinfoValidator(request);
     validator.validate();
+    new DPoPHeaderValidator(request.dpopProofHeaders()).validate();
 
     OAuthToken oAuthToken = oAuthTokenQueryRepository.find(tenant, accessTokenEntity);
 
-    UserinfoVerifier verifier = new UserinfoVerifier(oAuthToken, request.toClientCert());
+    UserinfoVerifier verifier =
+        new UserinfoVerifier(
+            oAuthToken,
+            request.toClientCert(),
+            request.dpopProof(),
+            request.httpMethod(),
+            request.httpUri());
     verifier.verifyToken();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =

@@ -1,0 +1,40 @@
+{
+  "client_id": "a7c57646-089b-4fe5-8301-353e7f460319",
+  "client_id_alias": "privateKeyJwt",
+  "client_secret": "privateKeyJwtSecret",
+  "client_id_issued_at": 2893256800,
+  "client_secret_expires_at": 2893276800,
+  "redirect_uris": [
+    "https://client.example.org/callback",
+    "https://client.example.org/callback2",
+    "http://localhost:8081/callback",
+    "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_basic/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_implicit/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp_oidc_hybrid/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp-server-fapi2-private_key_jwt/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp-server-fapi2-private_key_jwt/callback?dummy1=lorem&dummy2=ipsum"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email address phone offline_access account transfers read write fapi-2.0 identity_verification_application identity_verification_application_delete identity_verification_result",
+  "client_name": "My Example Client",
+  "client_name#ja-Jpan-JP": "クライアント名",
+  "token_endpoint_auth_method": "private_key_jwt",
+  "logo_uri": "https://client.example.org/logo.png",
+  "tos_uri": "https://idp-auth-frontend-diqt.vercel.app/terms",
+  "policy_uri": "https://idp-auth-frontend-diqt.vercel.app/privacy",
+  "jwks_uri": "https://client.example.org/my_public_keys.jwks",
+  "application_type": "web",
+  "jwks": "{\n    \"keys\": [\n        {\n            \"kty\": \"EC\",\n            \"use\": \"sig\",\n            \"crv\": \"P-256\",\n            \"kid\": \"fapi2_client_key\",\n            \"x\": \"HwJdDx17gQ63N5ydDoblIMw5w937QbrbSoqz1uS2w-8\",\n            \"y\": \"lcnyJYeeKEymg_ubrlOzaHpyOb1PioNgHi4d3fRM1HA\",\n            \"alg\": \"ES256\"\n        }\n    ]\n}",
+  "authorization_details_types":[
+    "payment_initiation",
+    "account_information",
+    "openid_credential"
+  ]
+}

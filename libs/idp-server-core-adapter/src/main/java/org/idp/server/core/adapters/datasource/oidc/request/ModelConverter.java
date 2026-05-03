@@ -20,6 +20,7 @@ import java.util.Map;
 import org.idp.server.core.openid.identity.id_token.RequestedClaimsPayload;
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
+import org.idp.server.core.openid.oauth.dpop.DPoPJkt;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestBuilder;
@@ -62,6 +63,7 @@ class ModelConverter {
     builder.add(convertClaimsPayload(stringMap.get("claims_value")));
     builder.add(new CodeChallenge(stringMap.get("code_challenge")));
     builder.add(CodeChallengeMethod.of(stringMap.get("code_challenge_method")));
+    builder.add(new DPoPJkt(stringMap.get("dpop_jkt")));
     builder.add(AuthorizationDetails.fromString(stringMap.get("authorization_details")));
     builder.add(convertCustomParams(stringMap.get("custom_params")));
     builder.add(new ExpiresIn(stringMap.get("expires_in")));

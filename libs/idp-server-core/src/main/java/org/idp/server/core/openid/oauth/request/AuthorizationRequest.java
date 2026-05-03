@@ -22,6 +22,7 @@ import org.idp.server.core.openid.identity.id_token.RequestedIdTokenClaims;
 import org.idp.server.core.openid.identity.id_token.RequestedUserinfoClaims;
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
+import org.idp.server.core.openid.oauth.dpop.DPoPJkt;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
 import org.idp.server.core.openid.oauth.type.oauth.*;
@@ -57,6 +58,7 @@ public class AuthorizationRequest {
   RequestedClaimsPayload requestedClaimsPayload;
   CodeChallenge codeChallenge;
   CodeChallengeMethod codeChallengeMethod;
+  DPoPJkt dpopJkt;
   AuthorizationDetails authorizationDetails;
   CustomParams customParams;
   ExpiresIn expiresIn;
@@ -89,6 +91,7 @@ public class AuthorizationRequest {
       RequestedClaimsPayload requestedClaimsPayload,
       CodeChallenge codeChallenge,
       CodeChallengeMethod codeChallengeMethod,
+      DPoPJkt dpopJkt,
       AuthorizationDetails authorizationDetails,
       CustomParams customParams,
       ExpiresIn expiresIn,
@@ -117,6 +120,7 @@ public class AuthorizationRequest {
     this.requestedClaimsPayload = requestedClaimsPayload;
     this.codeChallenge = codeChallenge;
     this.codeChallengeMethod = codeChallengeMethod;
+    this.dpopJkt = dpopJkt;
     this.authorizationDetails = authorizationDetails;
     this.customParams = customParams;
     this.expiresIn = expiresIn;
@@ -325,6 +329,14 @@ public class AuthorizationRequest {
 
   public boolean hasCodeChallengeMethod() {
     return codeChallengeMethod.isDefined();
+  }
+
+  public DPoPJkt dpopJkt() {
+    return dpopJkt;
+  }
+
+  public boolean hasDPoPJkt() {
+    return dpopJkt != null && dpopJkt.exists();
   }
 
   public AuthorizationDetails authorizationDetails() {

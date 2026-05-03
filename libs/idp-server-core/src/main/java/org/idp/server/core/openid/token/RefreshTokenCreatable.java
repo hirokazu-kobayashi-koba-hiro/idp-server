@@ -42,7 +42,16 @@ import org.idp.server.platform.random.RandomStringGenerator;
  *   <tr><td>FIXED</td><td>false</td><td>Old</td><td>Old (unchanged)</td></tr>
  * </table>
  *
+ * <h3>Profile guidance</h3>
+ *
+ * <p><b>FAPI 2.0 Security Profile §5.3.2.1-9</b> states that the authorization server "shall not
+ * use refresh token rotation except in extraordinary circumstances". Tenants configured for FAPI
+ * 2.0 should therefore set {@code rotate_refresh_token=false}. The default value ({@code true}) is
+ * preserved for non-FAPI deployments where rotation is a common defence-in-depth measure.
+ *
  * @see org.idp.server.core.openid.oauth.configuration.RefreshTokenStrategy
+ * @see <a href="https://openid.net/specs/fapi-security-profile-2_0.html#section-5.3.2.1">FAPI 2.0
+ *     Security Profile §5.3.2.1</a>
  */
 public interface RefreshTokenCreatable {
 

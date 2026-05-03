@@ -17,7 +17,9 @@
 package org.idp.server.core.openid.token.handler.token.io;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
@@ -32,6 +34,9 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
   String authorizationHeaders;
   Map<String, String[]> params;
   String clientCert;
+  List<String> dpopProofHeaders;
+  String httpMethod;
+  String httpUri;
   Map<String, Object> customProperties = new HashMap<>();
 
   public TokenRequest(Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
@@ -43,6 +48,40 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
   public TokenRequest setClientCert(String clientCert) {
     this.clientCert = clientCert;
     return this;
+  }
+
+  public TokenRequest setDPoPProofHeaders(List<String> dpopProofHeaders) {
+    this.dpopProofHeaders = dpopProofHeaders;
+    return this;
+  }
+
+  public List<String> dpopProofHeaders() {
+    return dpopProofHeaders;
+  }
+
+  public TokenRequest setHttpMethod(String httpMethod) {
+    this.httpMethod = httpMethod;
+    return this;
+  }
+
+  public TokenRequest setHttpUri(String httpUri) {
+    this.httpUri = httpUri;
+    return this;
+  }
+
+  public DPoPProof toDPoPProof() {
+    if (dpopProofHeaders == null || dpopProofHeaders.isEmpty()) {
+      return new DPoPProof();
+    }
+    return new DPoPProof(dpopProofHeaders.get(0));
+  }
+
+  public String httpMethod() {
+    return httpMethod != null ? httpMethod : "POST";
+  }
+
+  public String httpUri() {
+    return httpUri != null ? httpUri : "";
   }
 
   public String getAuthorizationHeaders() {
