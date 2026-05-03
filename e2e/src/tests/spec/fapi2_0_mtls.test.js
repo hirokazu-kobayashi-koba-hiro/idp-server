@@ -809,4 +809,101 @@ describe("FAPI 2.0 Security Profile Final - mTLS (tls_client_auth)", () => {
       expect(res.data.status_code).toBe(401);
     });
   });
+
+  /**
+   * §5.3.2.1: "shall not use refresh token rotation except in extraordinary circumstances".
+   *
+   * fapi2-tenant の設定 {@code rotate_refresh_token: false} により、refresh エンドポイントは
+   * 同じ refresh_token をレスポンスに返却する (新規発行しない)。本テストは CIBA 経由で取得した
+   * RT を refresh し、同一の RT が返却されることを確認する。
+   */
+  describe("§5.3.2.1: MUST NOT rotate refresh tokens", () => {
+    it("MUST return the same refresh_token after refresh (no rotation)", async () => {
+      const dpopKeyPair = await generateDPoPKeyPair();
+
+      // Step 1: backchannel + device interaction (CIBA flow)
+      const backchannelEndpoint = `${mtlBackendUrl}/${serverConfig.tenantId}/v1/backchannel/authentications`;
+      const backchannelBody = new URLSearchParams();
+      backchannelBody.append("scope", "openid offline_access " + FAPI2_TLS_CLIENT_1.fapi20Scope);
+      backchannelBody.append("login_hint", `email:${FAPI2_TEST_USER.email},idp:idp-server`);
+      backchannelBody.append("binding_message", "999");
+      backchannelBody.append("client_id", FAPI2_TLS_CLIENT_1.clientIdUuid);
+
+      const backchannelResponse = await mtlsPost({
+        url: backchannelEndpoint,
+        body: backchannelBody.toString(),
+        certPath: FAPI2_TLS_CLIENT_1.certPath,
+        keyPath: FAPI2_TLS_CLIENT_1.keyPath,
+      });
+      expect(backchannelResponse.status).toBe(200);
+      const authReqId = backchannelResponse.data.auth_req_id;
+
+      const txResponse = await getAuthenticationDeviceAuthenticationTransaction({
+        endpoint: `${backendUrl}/${serverConfig.tenantId}/v1/authentication-devices/{id}/authentications`,
+        deviceId: FAPI2_TEST_USER.authenticationDeviceId,
+        params: { "attributes.auth_req_id": authReqId },
+      });
+      expect(txResponse.status).toBe(200);
+      const tx = txResponse.data.list[0];
+      const completeResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: tx.flow,
+        id: tx.id,
+        interactionType: "password-authentication",
+        body: { username: FAPI2_TEST_USER.email, password: "successUserCode001" },
+      });
+      expect(completeResponse.status).toBe(200);
+
+      // Step 2: Token endpoint over mTLS + DPoP
+      const tokenEndpointMtls = `${mtlBackendUrl}/${serverConfig.tenantId}/v1/tokens`;
+      const tokenDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: tokenEndpointMtls,
+      });
+      const tokenBody = new URLSearchParams();
+      tokenBody.append("grant_type", "urn:openid:params:grant-type:ciba");
+      tokenBody.append("auth_req_id", authReqId);
+      tokenBody.append("client_id", FAPI2_TLS_CLIENT_1.clientIdUuid);
+
+      const tokenResponse = await mtlsPost({
+        url: tokenEndpointMtls,
+        body: tokenBody.toString(),
+        headers: { DPoP: tokenDpopProof },
+        certPath: FAPI2_TLS_CLIENT_1.certPath,
+        keyPath: FAPI2_TLS_CLIENT_1.keyPath,
+      });
+      console.log("token-issued:", JSON.stringify(tokenResponse.data));
+      expect(tokenResponse.status).toBe(200);
+      const originalRefreshToken = tokenResponse.data.refresh_token;
+      // FAPI 2.0 client は offline_access を要求しているのでサーバから RT が返るはず
+      expect(originalRefreshToken).toBeDefined();
+
+      // Step 3: refresh — DPoP rotation OK だが refresh_token rotation は行われない想定
+      const refreshDpopProof = await createDPoPProof({
+        privateKey: dpopKeyPair.privateKey,
+        publicJwk: dpopKeyPair.publicJwk,
+        htm: "POST",
+        htu: tokenEndpointMtls,
+      });
+      const refreshBody = new URLSearchParams();
+      refreshBody.append("grant_type", "refresh_token");
+      refreshBody.append("refresh_token", originalRefreshToken);
+      refreshBody.append("client_id", FAPI2_TLS_CLIENT_1.clientIdUuid);
+
+      const refreshResponse = await mtlsPost({
+        url: tokenEndpointMtls,
+        body: refreshBody.toString(),
+        headers: { DPoP: refreshDpopProof },
+        certPath: FAPI2_TLS_CLIENT_1.certPath,
+        keyPath: FAPI2_TLS_CLIENT_1.keyPath,
+      });
+      console.log("refresh-result:", JSON.stringify(refreshResponse.data));
+      expect(refreshResponse.status).toBe(200);
+      expect(refreshResponse.data.access_token).toBeDefined();
+      // RT rotation 無効: response.refresh_token は元の RT と同一であるべき
+      expect(refreshResponse.data.refresh_token).toBe(originalRefreshToken);
+    });
+  });
 });
