@@ -9,6 +9,7 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
+import * as jose from "jose";
 
 import { requestToken, getUserinfo, inspectToken, inspectTokenWithVerification } from "../../api/oauthClient";
 import { get } from "../../lib/http";
@@ -124,15 +125,175 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
     /**
      * RFC 9449 Section 4.3: Checking DPoP Proofs
      *
-     * "To validate a DPoP proof, the authorization server MUST ensure that..."
+     * "To validate a DPoP proof, the receiving server MUST ensure the following:" — followed by
+     * 12 numbered checks. Each `describe` block below maps 1:1 to a Check using the verbatim
+     * RFC text. File order follows the RFC's numbering.
+     *
+     * <ul>
+     *   <li>Check 10 (server-provided nonce) is intentionally omitted — the server does not
+     *       currently issue DPoP nonces.
+     *   <li>Check 12 (RS-side ath / jwk binding) is covered in the Section 7 / 8 describe blocks
+     *       (UserInfo, introspection, /me) where DPoP proofs are presented to a protected resource.
+     * </ul>
+     *
+     * @see https://www.rfc-editor.org/rfc/rfc9449.html#section-4.3
      */
     describe("4.3 Checking DPoP Proofs - Validation Requirements", () => {
 
-      /**
-       * RFC 9449 Section 4.3, Check 1:
-       * "the header of the JWS [...] contains a typ field with the value dpop+jwt"
-       */
-      describe("4.3.1 typ header - 'the header contains a typ field with the value dpop+jwt'", () => {
+      describe("Check 1: There is not more than one DPoP HTTP request header field", () => {
+
+        it("MUST reject token request with multiple DPoP headers", async () => {
+          const proofA = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "POST",
+            htu: serverConfig.tokenEndpoint,
+          });
+          const proofB = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "POST",
+            htu: serverConfig.tokenEndpoint,
+          });
+
+          // axios serializes array header values as multiple distinct header lines
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: [proofA, proofB] },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+      });
+
+      describe("Check 2: The DPoP HTTP request header field value is a single and well-formed JWT", () => {
+
+        it("MUST reject completely invalid DPoP proof (not a JWT)", async () => {
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: "not-a-valid-jwt" },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+
+        it("MUST reject empty DPoP header value", async () => {
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: "" },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+      });
+
+      describe("Check 3: All required claims per Section 4.2 are contained in the JWT", () => {
+
+        it("MUST reject DPoP proof without jti claim", async () => {
+          const dpopProof = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "POST",
+            htu: serverConfig.tokenEndpoint,
+            omitClaims: ["jti"],
+          });
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: dpopProof },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+
+        it("MUST reject DPoP proof without htm claim", async () => {
+          const dpopProof = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "POST",
+            htu: serverConfig.tokenEndpoint,
+            omitClaims: ["htm"],
+          });
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: dpopProof },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+
+        it("MUST reject DPoP proof without htu claim", async () => {
+          const dpopProof = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "POST",
+            htu: serverConfig.tokenEndpoint,
+            omitClaims: ["htu"],
+          });
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: dpopProof },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+
+        it("MUST reject DPoP proof without iat claim", async () => {
+          const dpopProof = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "POST",
+            htu: serverConfig.tokenEndpoint,
+            omitClaims: ["iat"],
+          });
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: dpopProof },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+      });
+
+      describe("Check 4: The typ JOSE Header Parameter has the value dpop+jwt", () => {
 
         it("MUST reject DPoP proof without typ header", async () => {
           const dpopProof = await createDPoPProof({
@@ -152,7 +313,6 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -175,17 +335,12 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
       });
 
-      /**
-       * RFC 9449 Section 4.3, Check 2:
-       * "the alg field is not none and is a supported algorithm"
-       */
-      describe("4.3.2 alg header - 'the alg field is not none and is a supported algorithm'", () => {
+      describe("Check 5: The alg JOSE Header Parameter indicates a registered asymmetric digital signature algorithm, is not none, is supported by the application, and is acceptable per local policy", () => {
 
         it("MUST reject DPoP proof with alg: none", async () => {
           // Manually create a JWT with alg: none (unsigned)
@@ -209,19 +364,69 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: unsignedDpop },
           });
 
-  
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+
+        it("MUST reject DPoP proof with symmetric alg (HS256)", async () => {
+          // alg must be a registered ASYMMETRIC digital signature algorithm.
+          const secret = crypto.randomBytes(32);
+          const hsProof = await new jose.SignJWT({
+            jti: uuidv4(),
+            htm: "POST",
+            htu: serverConfig.tokenEndpoint,
+            iat: Math.floor(Date.now() / 1000),
+          })
+            .setProtectedHeader({ typ: "dpop+jwt", alg: "HS256", jwk: dpopKeyPair.publicJwk })
+            .sign(secret);
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: hsProof },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+
+        it("MUST reject DPoP proof with alg outside dpop_signing_alg_values_supported (EdDSA)", async () => {
+          // test-tenant の dpop_signing_alg_values_supported は RS*/ES*/PS* のみで EdDSA は含まれない。
+          // EdDSA 自体は registered asymmetric alg だが server policy 違反として拒否されるべき。
+          const { publicKey, privateKey } = await jose.generateKeyPair("EdDSA", {
+            extractable: true,
+          });
+          const edPublicJwk = await jose.exportJWK(publicKey);
+          const edProof = await new jose.SignJWT({
+            jti: uuidv4(),
+            htm: "POST",
+            htu: serverConfig.tokenEndpoint,
+            iat: Math.floor(Date.now() / 1000),
+          })
+            .setProtectedHeader({ typ: "dpop+jwt", alg: "EdDSA", jwk: edPublicJwk })
+            .sign(privateKey);
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: edProof },
+          });
+
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
       });
 
-      /**
-       * RFC 9449 Section 4.3, Check 3:
-       * "the header contains a jwk field with the public key"
-       */
-      describe("4.3.3 jwk header - 'the header contains a jwk field with the public key'", () => {
+      describe("Check 6: The JWT signature verifies with the public key contained in the jwk JOSE Header Parameter", () => {
 
         it("MUST reject DPoP proof without jwk in header", async () => {
+          // jwk が無いと公開鍵を取得できず、署名検証 (Check 6) の前提が成立しない。
           const dpopProof = await createDPoPProof({
             privateKey: dpopKeyPair.privateKey,
             publicJwk: dpopKeyPair.publicJwk,
@@ -239,254 +444,9 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-  
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
-
-        /**
-         * RFC 9449 Section 4.3, Check 4:
-         * "the JWK in the header does not contain a private key"
-         */
-        it("MUST reject DPoP proof with private key in jwk header", async () => {
-          const dpopProof = await createDPoPProof({
-            privateKey: dpopKeyPair.privateKey,
-            publicJwk: dpopKeyPair.publicJwk,
-            htm: "POST",
-            htu: serverConfig.tokenEndpoint,
-            headerOverrides: { jwk: dpopKeyPair.privateJwk },
-          });
-
-          const tokenResponse = await requestToken({
-            endpoint: serverConfig.tokenEndpoint,
-            grantType: "client_credentials",
-            scope: clientSecretPostClient.scope,
-            clientId: clientSecretPostClient.clientId,
-            clientSecret: clientSecretPostClient.clientSecret,
-            additionalHeaders: { DPoP: dpopProof },
-          });
-
-  
-          expect(tokenResponse.status).toBe(400);
-          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
-        });
-      });
-
-      /**
-       * RFC 9449 Section 4.3, Check 6-8:
-       * Required payload claims: jti, htm, htu, iat
-       */
-      describe("4.3.4 Required payload claims - 'the payload contains required claims jti, htm, htu, iat'", () => {
-
-        it("MUST reject DPoP proof without jti claim", async () => {
-          const dpopProof = await createDPoPProof({
-            privateKey: dpopKeyPair.privateKey,
-            publicJwk: dpopKeyPair.publicJwk,
-            htm: "POST",
-            htu: serverConfig.tokenEndpoint,
-            omitClaims: ["jti"],
-          });
-
-          const tokenResponse = await requestToken({
-            endpoint: serverConfig.tokenEndpoint,
-            grantType: "client_credentials",
-            scope: clientSecretPostClient.scope,
-            clientId: clientSecretPostClient.clientId,
-            clientSecret: clientSecretPostClient.clientSecret,
-            additionalHeaders: { DPoP: dpopProof },
-          });
-
-  
-          expect(tokenResponse.status).toBe(400);
-          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
-        });
-
-        it("MUST reject DPoP proof without htm claim", async () => {
-          const dpopProof = await createDPoPProof({
-            privateKey: dpopKeyPair.privateKey,
-            publicJwk: dpopKeyPair.publicJwk,
-            htm: "POST",
-            htu: serverConfig.tokenEndpoint,
-            omitClaims: ["htm"],
-          });
-
-          const tokenResponse = await requestToken({
-            endpoint: serverConfig.tokenEndpoint,
-            grantType: "client_credentials",
-            scope: clientSecretPostClient.scope,
-            clientId: clientSecretPostClient.clientId,
-            clientSecret: clientSecretPostClient.clientSecret,
-            additionalHeaders: { DPoP: dpopProof },
-          });
-
-  
-          expect(tokenResponse.status).toBe(400);
-          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
-        });
-
-        it("MUST reject DPoP proof without htu claim", async () => {
-          const dpopProof = await createDPoPProof({
-            privateKey: dpopKeyPair.privateKey,
-            publicJwk: dpopKeyPair.publicJwk,
-            htm: "POST",
-            htu: serverConfig.tokenEndpoint,
-            omitClaims: ["htu"],
-          });
-
-          const tokenResponse = await requestToken({
-            endpoint: serverConfig.tokenEndpoint,
-            grantType: "client_credentials",
-            scope: clientSecretPostClient.scope,
-            clientId: clientSecretPostClient.clientId,
-            clientSecret: clientSecretPostClient.clientSecret,
-            additionalHeaders: { DPoP: dpopProof },
-          });
-
-  
-          expect(tokenResponse.status).toBe(400);
-          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
-        });
-
-        it("MUST reject DPoP proof without iat claim", async () => {
-          const dpopProof = await createDPoPProof({
-            privateKey: dpopKeyPair.privateKey,
-            publicJwk: dpopKeyPair.publicJwk,
-            htm: "POST",
-            htu: serverConfig.tokenEndpoint,
-            omitClaims: ["iat"],
-          });
-
-          const tokenResponse = await requestToken({
-            endpoint: serverConfig.tokenEndpoint,
-            grantType: "client_credentials",
-            scope: clientSecretPostClient.scope,
-            clientId: clientSecretPostClient.clientId,
-            clientSecret: clientSecretPostClient.clientSecret,
-            additionalHeaders: { DPoP: dpopProof },
-          });
-
-  
-          expect(tokenResponse.status).toBe(400);
-          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
-        });
-      });
-
-      /**
-       * RFC 9449 Section 4.3, Check 8:
-       * "the htm claim matches the HTTP method of the current request"
-       */
-      describe("4.3.5 htm matching - 'the htm claim matches the HTTP method of the current request'", () => {
-
-        it("MUST reject DPoP proof with htm not matching request method", async () => {
-          const dpopProof = await createDPoPProof({
-            privateKey: dpopKeyPair.privateKey,
-            publicJwk: dpopKeyPair.publicJwk,
-            htm: "GET",  // Token endpoint uses POST
-            htu: serverConfig.tokenEndpoint,
-          });
-
-          const tokenResponse = await requestToken({
-            endpoint: serverConfig.tokenEndpoint,
-            grantType: "client_credentials",
-            scope: clientSecretPostClient.scope,
-            clientId: clientSecretPostClient.clientId,
-            clientSecret: clientSecretPostClient.clientSecret,
-            additionalHeaders: { DPoP: dpopProof },
-          });
-
-  
-          expect(tokenResponse.status).toBe(400);
-          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
-        });
-      });
-
-      /**
-       * RFC 9449 Section 4.3, Check 9:
-       * "the htu claim matches the HTTP URI value for the HTTP request"
-       */
-      describe("4.3.6 htu matching - 'the htu claim matches the HTTP URI value for the HTTP request'", () => {
-
-        it("MUST reject DPoP proof with htu not matching request URI", async () => {
-          const dpopProof = await createDPoPProof({
-            privateKey: dpopKeyPair.privateKey,
-            publicJwk: dpopKeyPair.publicJwk,
-            htm: "POST",
-            htu: "https://wrong-server.example.com/tokens",
-          });
-
-          const tokenResponse = await requestToken({
-            endpoint: serverConfig.tokenEndpoint,
-            grantType: "client_credentials",
-            scope: clientSecretPostClient.scope,
-            clientId: clientSecretPostClient.clientId,
-            clientSecret: clientSecretPostClient.clientSecret,
-            additionalHeaders: { DPoP: dpopProof },
-          });
-
-  
-          expect(tokenResponse.status).toBe(400);
-          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
-        });
-      });
-
-      /**
-       * RFC 9449 Section 4.3, Check 11:
-       * "the iat value is within an acceptable window"
-       */
-      describe("4.3.7 iat time window - 'the iat value is within an acceptable window'", () => {
-
-        it("MUST reject DPoP proof with iat too far in the past", async () => {
-          const dpopProof = await createDPoPProof({
-            privateKey: dpopKeyPair.privateKey,
-            publicJwk: dpopKeyPair.publicJwk,
-            htm: "POST",
-            htu: serverConfig.tokenEndpoint,
-            overrides: { iat: Math.floor(Date.now() / 1000) - 600 }, // 10 minutes ago
-          });
-
-          const tokenResponse = await requestToken({
-            endpoint: serverConfig.tokenEndpoint,
-            grantType: "client_credentials",
-            scope: clientSecretPostClient.scope,
-            clientId: clientSecretPostClient.clientId,
-            clientSecret: clientSecretPostClient.clientSecret,
-            additionalHeaders: { DPoP: dpopProof },
-          });
-
-  
-          expect(tokenResponse.status).toBe(400);
-          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
-        });
-
-        it("MUST reject DPoP proof with iat too far in the future", async () => {
-          const dpopProof = await createDPoPProof({
-            privateKey: dpopKeyPair.privateKey,
-            publicJwk: dpopKeyPair.publicJwk,
-            htm: "POST",
-            htu: serverConfig.tokenEndpoint,
-            overrides: { iat: Math.floor(Date.now() / 1000) + 600 }, // 10 minutes ahead
-          });
-
-          const tokenResponse = await requestToken({
-            endpoint: serverConfig.tokenEndpoint,
-            grantType: "client_credentials",
-            scope: clientSecretPostClient.scope,
-            clientId: clientSecretPostClient.clientId,
-            clientSecret: clientSecretPostClient.clientSecret,
-            additionalHeaders: { DPoP: dpopProof },
-          });
-
-  
-          expect(tokenResponse.status).toBe(400);
-          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
-        });
-      });
-
-      /**
-       * RFC 9449 Section 4.3, Check 5:
-       * "the JWS signature can be verified with the public key in the jwk header"
-       */
-      describe("4.3.8 Signature verification - 'the JWS signature can be verified with the public key in the jwk header'", () => {
 
         it("MUST reject DPoP proof signed with different key than jwk header", async () => {
           // Generate a different key pair for signing
@@ -509,7 +469,151 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
             additionalHeaders: { DPoP: dpopProof },
           });
 
-  
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+      });
+
+      describe("Check 7: The jwk JOSE Header Parameter does not contain a private key", () => {
+
+        it("MUST reject DPoP proof with private key in jwk header", async () => {
+          const dpopProof = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "POST",
+            htu: serverConfig.tokenEndpoint,
+            headerOverrides: { jwk: dpopKeyPair.privateJwk },
+          });
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: dpopProof },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+      });
+
+      describe("Check 8: The htm claim matches the HTTP method of the current request", () => {
+
+        it("MUST reject DPoP proof with htm not matching request method", async () => {
+          const dpopProof = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "GET",  // Token endpoint uses POST
+            htu: serverConfig.tokenEndpoint,
+          });
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: dpopProof },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+      });
+
+      describe("Check 9: The htu claim matches the HTTP URI value for the HTTP request in which the JWT was received, ignoring any query and fragment parts", () => {
+
+        it("MUST reject DPoP proof with htu not matching request URI", async () => {
+          const dpopProof = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "POST",
+            htu: "https://wrong-server.example.com/tokens",
+          });
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: dpopProof },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+
+        it("MUST accept DPoP proof when htu contains query/fragment (ignored per RFC)", async () => {
+          // 比較は scheme/authority/path のみで query/fragment は無視する。
+          // proof 側の htu に query/fragment を含めても scheme/host/path が一致すれば受理されるべき。
+          const dpopProof = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "POST",
+            htu: `${serverConfig.tokenEndpoint}?ignored=foo#frag`,
+          });
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: dpopProof },
+          });
+
+          expect(tokenResponse.status).toBe(200);
+          expect(tokenResponse.data.token_type).toBe("DPoP");
+        });
+      });
+
+      // Check 10 (server-provided nonce) — intentionally omitted; nonce issuance not implemented.
+
+      describe("Check 11: The creation time of the JWT, as determined by either the iat claim or a server managed timestamp via the nonce claim, is within an acceptable window", () => {
+
+        it("MUST reject DPoP proof with iat too far in the past", async () => {
+          const dpopProof = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "POST",
+            htu: serverConfig.tokenEndpoint,
+            overrides: { iat: Math.floor(Date.now() / 1000) - 600 }, // 10 minutes ago
+          });
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: dpopProof },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
+
+        it("MUST reject DPoP proof with iat too far in the future", async () => {
+          const dpopProof = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "POST",
+            htu: serverConfig.tokenEndpoint,
+            overrides: { iat: Math.floor(Date.now() / 1000) + 600 }, // 10 minutes ahead
+          });
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: dpopProof },
+          });
+
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
@@ -563,41 +667,6 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
       });
     });
 
-    /**
-     * Malformed DPoP proof edge cases
-     */
-    describe("4.3.9 Malformed DPoP proofs", () => {
-
-      it("MUST reject completely invalid DPoP proof (not a JWT)", async () => {
-        const tokenResponse = await requestToken({
-          endpoint: serverConfig.tokenEndpoint,
-          grantType: "client_credentials",
-          scope: clientSecretPostClient.scope,
-          clientId: clientSecretPostClient.clientId,
-          clientSecret: clientSecretPostClient.clientSecret,
-          additionalHeaders: { DPoP: "not-a-valid-jwt" },
-        });
-
-
-        expect(tokenResponse.status).toBe(400);
-        expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
-      });
-
-      it("MUST reject empty DPoP header value", async () => {
-        const tokenResponse = await requestToken({
-          endpoint: serverConfig.tokenEndpoint,
-          grantType: "client_credentials",
-          scope: clientSecretPostClient.scope,
-          clientId: clientSecretPostClient.clientId,
-          clientSecret: clientSecretPostClient.clientSecret,
-          additionalHeaders: { DPoP: "" },
-        });
-
-
-        expect(tokenResponse.status).toBe(400);
-        expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
-      });
-    });
   });
 
   /**
