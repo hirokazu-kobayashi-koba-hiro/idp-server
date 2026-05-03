@@ -194,6 +194,72 @@ export const fapi2TlsClientAuthClient2 = {
   clientCertFile: "fapi2TlsClientAuth2.pem",
 };
 
+/**
+ * FAPI 2.0 §5.3.2.1 拒否対象クライアント (fapi-2.0 scope での PAR は AS が拒否する想定)。
+ * いずれも fapi2-tenant に登録済 — 登録自体は management API で許可されるが、
+ * runtime で fapi-2.0 scope を要求すると {@code FapiSecurity20Verifier} により拒否される。
+ */
+export const fapi2PublicClient = {
+  clientId: "fapi2PublicClient",
+  clientIdUuid: "0aaf6d00-36b0-497c-9b53-83aa57d446aa",
+  redirectUri: "https://client.example.org/callback",
+  fapi20Scope: "fapi-2.0",
+};
+
+export const fapi2ClientSecretBasicClient = {
+  clientId: "fapi2ClientSecretBasic",
+  clientIdUuid: "6f4144ab-0b86-4d67-aa52-2501d7f88034",
+  clientSecret:
+    "fapi2ClientSecretBasicSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://client.example.org/callback",
+  fapi20Scope: "fapi-2.0",
+};
+
+export const fapi2ClientSecretPostClient = {
+  clientId: "fapi2ClientSecretPost",
+  clientIdUuid: "4ef74d17-6d72-42d2-bae5-a292c0b7bbe0",
+  clientSecret:
+    "fapi2ClientSecretPostSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://client.example.org/callback",
+  fapi20Scope: "fapi-2.0",
+};
+
+export const fapi2ClientSecretJwtClient = {
+  clientId: "fapi2ClientSecretJwt",
+  clientIdUuid: "1329a462-2548-48e0-951b-83b82055c7e2",
+  clientSecret:
+    "fapi2ClientSecretJwtSecret12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://client.example.org/callback",
+  fapi20Scope: "fapi-2.0",
+};
+
+/**
+ * FAPI 2.0 §5.3.2.1 #4 検証用テナント。
+ *
+ * fapi2-no-sender-tenant は mTLS バインドも DPoP も無効に設定されており、
+ * fapi-2.0 scope で PAR を投げると {@code FapiSecurity20Verifier#throwIfNotSenderConstrainedAccessToken}
+ * によって拒否されることを確認する。
+ */
+const fapi2NoSenderTenantId = "d2a23128-043d-4ad7-8136-e7132663dfe3";
+export const fapi2NoSenderServerConfig = createServerConfig(fapi2NoSenderTenantId);
+export const fapi2NoSenderPrivateKeyJwtClient = {
+  clientId: "fapi2NoSenderPrivateKeyJwt",
+  clientIdUuid: "f441d38c-9ed3-4f9c-8418-efc8f31e49d0",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  fapi20Scope: "fapi-2.0",
+  // fapi2-tenant の privateKeyJwt と同じ公開鍵を使う (登録ファイルもコピー元のまま)
+  clientSecretKey: {
+    kty: "EC",
+    d: "FF0zmDj2BkOScQ5VSh1xska2Ivfji8Sq7srE86Zx1iI",
+    use: "sig",
+    crv: "P-256",
+    kid: "fapi2_client_key",
+    x: "HwJdDx17gQ63N5ydDoblIMw5w937QbrbSoqz1uS2w-8",
+    y: "lcnyJYeeKEymg_ubrlOzaHpyOb1PioNgHi4d3fRM1HA",
+    alg: "ES256",
+  },
+};
+
 
 export const federationServerConfig = {
   organizationId,
