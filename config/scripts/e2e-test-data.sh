@@ -326,6 +326,39 @@ FAPI2_TENANT_ID="edc3e984-05b6-499f-bd05-d48e5aaea1e4"
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
 
+# §5.3.2.1 拒否対象クライアント (fapi-2.0 scope での PAR は AS が拒否する想定)
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/publicClient.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/clientSecretBasic.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/clientSecretPost.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/clientSecretJwt.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
 ##fapi2-tenant test user (CIBA / authentication-device 経由のフロー用)
 echo "-------------------------------------------------"
 echo ""
@@ -388,3 +421,33 @@ for authentication_policy_file in "${fapi2_authentication_policy_files[@]}"; do
   -d "${DRY_RUN}"
 
 done
+
+# fapi2-no-sender-tenant: FAPI 2.0 §5.3.2.1 #4 検証用 (mTLS=false + DPoP=[] で sender-constrained 不可)
+echo "-------------------------------------------------"
+echo ""
+echo "fapi2-no-sender-tenant"
+
+./config/scripts/upsert-tenant.sh \
+  -f "./config/examples/e2e/fapi2-no-sender-tenant/tenants/fapi2-no-sender-tenant.json" \
+  -o "${ORGANIZATION_ID}" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+FAPI2_NO_SENDER_TENANT_ID="d2a23128-043d-4ad7-8136-e7132663dfe3"
+
+./config/scripts/upsert-authorization-server.sh \
+  -t "${FAPI2_NO_SENDER_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-no-sender-tenant/authorization-server/idp-server.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_NO_SENDER_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-no-sender-tenant/clients/privateKeyJwt.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
