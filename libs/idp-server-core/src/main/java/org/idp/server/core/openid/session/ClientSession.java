@@ -21,9 +21,10 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
-public class ClientSession implements Serializable {
+public class ClientSession implements Serializable, JsonReadable {
 
   private ClientSessionIdentifier sid;
   private OPSessionIdentifier opSessionId;
