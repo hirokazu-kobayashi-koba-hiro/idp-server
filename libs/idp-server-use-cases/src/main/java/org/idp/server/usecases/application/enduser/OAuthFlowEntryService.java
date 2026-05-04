@@ -61,6 +61,7 @@ import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.session.SessionValidationResult;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -136,11 +137,19 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
       List<String> dpopProofHeaders,
       RequestAttributes requestAttributes) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    OAuthPushedRequest pushedRequest = new OAuthPushedRequest(tenant, authorizationHeader, params);
-    pushedRequest.setClientCert(clientCert);
-    pushedRequest.setDPoPProofHeaders(dpopProofHeaders);
-    pushedRequest.setHttpMethod(requestAttributes.optValueAsString("action", "POST"));
-    pushedRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
+    Map<String, List<String>> headers =
+        dpopProofHeaders == null || dpopProofHeaders.isEmpty()
+            ? Map.of()
+            : Map.of("DPoP", dpopProofHeaders);
+    HttpRequestInputs http =
+        new HttpRequestInputs(
+            authorizationHeader,
+            params,
+            headers,
+            clientCert,
+            requestAttributes.optValueAsString("action", "POST"),
+            requestAttributes.optValueAsString("request_url", ""));
+    OAuthPushedRequest pushedRequest = new OAuthPushedRequest(tenant, http);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 

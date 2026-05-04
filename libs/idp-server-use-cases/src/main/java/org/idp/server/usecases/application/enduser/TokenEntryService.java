@@ -35,6 +35,7 @@ import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntro
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -68,11 +69,19 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    TokenRequest tokenRequest = new TokenRequest(tenant, authorizationHeader, params);
-    tokenRequest.setClientCert(clientCert);
-    tokenRequest.setDPoPProofHeaders(dpopProofHeaders);
-    tokenRequest.setHttpMethod(requestAttributes.optValueAsString("action", "POST"));
-    tokenRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
+    Map<String, List<String>> headers =
+        dpopProofHeaders == null || dpopProofHeaders.isEmpty()
+            ? Map.of()
+            : Map.of("DPoP", dpopProofHeaders);
+    HttpRequestInputs http =
+        new HttpRequestInputs(
+            authorizationHeader,
+            params,
+            headers,
+            clientCert,
+            requestAttributes.optValueAsString("action", "POST"),
+            requestAttributes.optValueAsString("request_url", ""));
+    TokenRequest tokenRequest = new TokenRequest(tenant, http);
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 
