@@ -16,16 +16,24 @@
 
 package org.idp.server.core.openid.oauth.handler;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.idp.server.core.openid.grant_management.AuthorizationGranted;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.oauth.*;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.context.OAuthRequestContextCreator;
 import org.idp.server.core.openid.oauth.context.OAuthRequestContextCreators;
+import org.idp.server.core.openid.oauth.dpop.DPoPHeaderValidator;
+import org.idp.server.core.openid.oauth.dpop.DPoPProof;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
+import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.openid.oauth.factory.RequestObjectFactories;
 import org.idp.server.core.openid.oauth.gateway.RequestObjectGateway;
 import org.idp.server.core.openid.oauth.io.OAuthPushedRequest;
@@ -91,19 +99,31 @@ public class OAuthRequestHandler {
 
     OAuthPushedRequestValidator validator = new OAuthPushedRequestValidator(tenant, pushedRequest);
     validator.validate();
+    new DPoPHeaderValidator(pushedRequest.dpopProofHeaders()).validate();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, clientId);
 
-    OAuthRequestPattern oAuthRequestPattern = requestParameters.analyzePattern();
+    // RFC 9449 §10.1: PAR + DPoP integration
+    // If a DPoP proof is presented at the PAR endpoint, verify it and bind the resulting JWK
+    // thumbprint to the pushed authorization request as dpop_jkt.
+    OAuthRequestParameters effectiveParameters =
+        applyDPoPProofToParameters(
+            pushedRequest, requestParameters, tenant, authorizationServerConfiguration);
+
+    OAuthRequestPattern oAuthRequestPattern = effectiveParameters.analyzePattern();
     OAuthRequestContextCreator oAuthRequestContextCreator =
         oAuthRequestContextCreators.get(oAuthRequestPattern);
 
     OAuthRequestContext context =
         oAuthRequestContextCreator.create(
-            tenant, requestParameters, authorizationServerConfiguration, clientConfiguration, true);
+            tenant,
+            effectiveParameters,
+            authorizationServerConfiguration,
+            clientConfiguration,
+            true);
 
     OAuthPushedRequestContext oAuthPushedRequestContext =
         new OAuthPushedRequestContext(
@@ -111,9 +131,10 @@ public class OAuthRequestHandler {
             pushedRequest.clientSecretBasic(),
             pushedRequest.toClientCert(),
             pushedRequest.toBackchannelParameters());
-    clientAuthenticationHandler.authenticate(oAuthPushedRequestContext);
+    ClientCredentials clientCredentials =
+        clientAuthenticationHandler.authenticate(oAuthPushedRequestContext);
 
-    verifier.verify(context);
+    verifier.verify(context, clientCredentials);
 
     authorizationRequestRepository.register(tenant, context.authorizationRequest());
 
@@ -165,5 +186,53 @@ public class OAuthRequestHandler {
     }
 
     return context;
+  }
+
+  /**
+   * RFC 9449 §10.1: PAR + DPoP integration.
+   *
+   * <p>If a DPoP proof is presented at the PAR endpoint:
+   *
+   * <ul>
+   *   <li>verify the proof JWT
+   *   <li>if a {@code dpop_jkt} parameter is also present, the two JWK thumbprints MUST match
+   *   <li>otherwise, override {@code dpop_jkt} with the thumbprint extracted from the proof so that
+   *       the issued request_uri is bound to that key
+   * </ul>
+   *
+   * <p>If no DPoP proof is presented, the parameters pass through unchanged (the {@code dpop_jkt}
+   * parameter, if any, has already been validated upstream by RFC 9449 §10).
+   */
+  private OAuthRequestParameters applyDPoPProofToParameters(
+      OAuthPushedRequest pushedRequest,
+      OAuthRequestParameters requestParameters,
+      Tenant tenant,
+      AuthorizationServerConfiguration authorizationServerConfiguration) {
+    if (pushedRequest.dpopProofHeaders() == null || pushedRequest.dpopProofHeaders().isEmpty()) {
+      return requestParameters;
+    }
+    DPoPProof dpopProof = new DPoPProof(pushedRequest.dpopProofHeaders().get(0));
+    DPoPProofVerifiedResult dpopResult =
+        new DPoPProofVerifier()
+            .verifyIfNeeded(
+                dpopProof,
+                pushedRequest.httpMethod(),
+                pushedRequest.httpUri(),
+                authorizationServerConfiguration.dpopSigningAlgValuesSupported());
+    if (!dpopResult.exists()) {
+      return requestParameters;
+    }
+    String proofJkt = dpopResult.jwkThumbprint().value();
+
+    if (requestParameters.hasDPoPJkt() && !requestParameters.dpopJkt().value().equals(proofJkt)) {
+      throw new OAuthBadRequestException(
+          "invalid_request",
+          "dpop_jkt parameter does not match the JWK thumbprint of the DPoP proof",
+          tenant);
+    }
+
+    Map<String, String[]> overridden = new HashMap<>(pushedRequest.getParams());
+    overridden.put("dpop_jkt", new String[] {proofJkt});
+    return new OAuthRequestParameters(overridden);
   }
 }

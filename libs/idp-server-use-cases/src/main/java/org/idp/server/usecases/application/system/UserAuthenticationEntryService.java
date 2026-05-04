@@ -16,15 +16,19 @@
 
 package org.idp.server.usecases.application.system;
 
+import java.util.List;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserAuthenticationApi;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.dpop.DPoPHeaderValidator;
+import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenProtocol;
 import org.idp.server.core.openid.token.TokenProtocols;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionInternalRequest;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
+import org.idp.server.core.openid.token.tokenintrospection.verifier.DPoPBindingVerifier;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.exception.UnauthorizedException;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
@@ -53,7 +57,14 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
   }
 
   public Pairs<User, OAuthToken> authenticate(
-      TenantIdentifier tenantIdentifier, String authorizationHeader, String clientCert) {
+      TenantIdentifier tenantIdentifier,
+      String authorizationHeader,
+      String clientCert,
+      List<String> dpopProofHeaders,
+      String httpMethod,
+      String httpUri) {
+    new DPoPHeaderValidator(dpopProofHeaders).validate();
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     TokenIntrospectionInternalRequest tokenIntrospectionInternalRequest =
@@ -68,13 +79,20 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
       throw new UnauthorizedException("error=invalid_token error_description=token is not active");
     }
 
+    OAuthToken oAuthToken = introspectionResponse.oAuthToken();
+
+    String dpopProof =
+        (dpopProofHeaders == null || dpopProofHeaders.isEmpty()) ? null : dpopProofHeaders.get(0);
+    DPoPBindingVerifier dpopBindingVerifier = new DPoPBindingVerifier();
+    dpopBindingVerifier.verify(new DPoPProof(dpopProof), httpMethod, httpUri, oAuthToken);
+
     if (introspectionResponse.isClientCredentialsGrant()) {
-      return Pairs.of(User.notFound(), introspectionResponse.oAuthToken());
+      return Pairs.of(User.notFound(), oAuthToken);
     }
 
     UserIdentifier userIdentifier = new UserIdentifier(introspectionResponse.subject());
     User user = userQueryRepository.get(tenant, userIdentifier);
 
-    return new Pairs<>(user, introspectionResponse.oAuthToken());
+    return new Pairs<>(user, oAuthToken);
   }
 }

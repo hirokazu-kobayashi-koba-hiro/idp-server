@@ -678,22 +678,32 @@ paths:
         - トークン
       summary: トークン検証（拡張）
       description: |
-        アクセストークンやリフレッシュトークンの状態を確認するための標準仕様を拡張したエンドポイントです。
-        リソースサーバー側で実施している許可している
-         - スコープを含んでいるか
-         - クライアント証明書がバインディングされているか
+        アクセストークンやリフレッシュトークンの状態を、リソースサーバー（RS）が**クライアントから受け取ったリクエストの正当性込み**で検証する拡張エンドポイントです。
+        標準仕様（RFC 7662）に加えて、以下も同時に検証します：
 
-        の検証も実施してトークンの有効性を確認することができます。
+         - 要求スコープがアクセストークンに含まれているか
+         - mTLS sender-constrained: クライアント証明書のサムプリントがトークンの `cnf.x5t#S256` と一致しているか（RFC 8705 §3）
+         - DPoP sender-constrained: DPoP proof JWT の鍵サムプリント（jkt）がトークンの `cnf.jkt` と一致し、`htm` / `htu` / `ath` 等の検証も成立しているか（RFC 9449 §7）
 
         トークンが有効な場合は、標準仕様に沿ったレスポンスを返却します。
-
         トークンが無効な場合は、エラーの原因を含めてレスポンスを返却します。
 
-        📘 **RFC 7662 拡張**: OAuth 2.0 Token Introspection の拡張実装
+        📘 **RFC 7662 拡張** + **RFC 8705 §3** + **RFC 9449 §7**: OAuth 2.0 Token Introspection の拡張実装
+
+        ## RS forwarding pattern（重要）
+
+        このエンドポイントは Resource Server forwarding pattern で設計されており、RS は**クライアントが RS のリソースエンドポイントに対して提示した**以下の artifact を、すべて **HTTP リクエストボディの form パラメータ**として AS に forward する必要があります：
+
+        - `client_cert` — クライアントが RS に提示した PEM 形式の TLS クライアント証明書（mTLS 検証用）
+        - `dpop_proof` — クライアントが RS に提示した DPoP proof JWT（DPoP 検証用）
+        - `dpop_htm` — クライアントが RS に対して使用した HTTP メソッド（`dpop_proof` の `htm` クレームと一致すること）
+        - `dpop_htu` — クライアントが RS に対して使用したリソース URI（`dpop_proof` の `htu` クレームと一致すること）
+
+        > ⚠️ **注意**: このエンドポイントは HTTP リクエストヘッダの `DPoP` を**意図的に参照しません**。`DPoP` ヘッダの値は「RS 自身がこの introspection 呼び出しのために生成した proof」となり、検証対象である「クライアント → RS」のリソースアクセスとは別物だからです。同様に、TLS 接続層の `x-ssl-cert` ヘッダは「RS が AS に対して mTLS 認証する際の RS 自身のクライアント証明書」であり、`client_cert` body パラメータ（クライアントの token-binding 証明書）とは独立しています。
 
         ## エラーハンドリング
 
-        このエンドポイントでは、クライアント認証失敗・トークン無効・スコープ不足等の **すべてのエラーが HTTP 200 で返却** されます（HTTP 401/403 は返りません）。
+        このエンドポイントでは、クライアント認証失敗・トークン無効・スコープ不足・sender-constraint 不一致等の **すべてのエラーが HTTP 200 で返却** されます（HTTP 401/403 は返りません）。
         エラーの判別には `active: false` と `error` / `status_code` フィールドを使用してください。
         `status_code` はリソースサーバーがエンドユーザーに返すべき論理的な HTTP ステータスの参考値です。
 
@@ -2346,8 +2356,9 @@ components:
     TokenIntrospectionExtensionRequest:
       type: object
       description: |
-        RFC 7662 - Token Introspectionをベースとした拡張APIのリクエスト。
-        scope client_certの指定し、リソースサーバー側で検証するロジックをませることが可能。
+        RFC 7662 - Token Introspection をベースとした拡張 API のリクエスト。
+        Resource Server forwarding pattern で設計されており、RS は**クライアントが RS に対して提示した sender-constraint 関連 artifact**
+        （クライアント証明書 / DPoP proof / htm / htu）をすべて body parameter で forward します。
         クライアント認証が必須です。
       required:
         - token
@@ -2367,8 +2378,30 @@ components:
         client_cert:
           type: string
           description: |
-            相互TLS通信で取得したPEM形式のクライアント証明書。
-            証明書バインディングされているクライアント証明書のサムプリントと一致しているかを検証します。
+            **クライアントが RS のリソースエンドポイントに対して提示した** PEM 形式の TLS クライアント証明書。
+            アクセストークンの `cnf.x5t#S256`（RFC 8705 §3 token binding）との一致を検証します。
+
+            > 注: TLS 接続層の `x-ssl-cert` ヘッダは「RS が AS に対して mTLS 認証する際の RS 自身の証明書」であり、
+            > このパラメータ（クライアントの token-binding 証明書）とは独立しています。
+        dpop_proof:
+          type: string
+          description: |
+            **クライアントが RS のリソースエンドポイントに対して提示した** DPoP proof JWT（RFC 9449 §7）。
+            アクセストークンの `cnf.jkt` との一致、および `htm` / `htu` / `ath` / `iat` / `jti` 等の検証を実施します。
+
+            > 注: HTTP リクエストヘッダの `DPoP` は意図的に参照されません。
+            > ヘッダ値は「RS 自身がこの introspection 呼び出しのために生成した proof」となり、
+            > 検証対象である「クライアント → RS」のリソースアクセスとは別物だからです。
+        dpop_htm:
+          type: string
+          description: |
+            **クライアントが RS に対して使用した HTTP メソッド**（例: `GET`, `POST`）。
+            `dpop_proof` の `htm` クレームと一致することが要求されます。省略時のデフォルトは `POST`。
+        dpop_htu:
+          type: string
+          description: |
+            **クライアントが RS に対して使用したリソース URI**。
+            `dpop_proof` の `htu` クレームと一致することが要求されます。
         client_id:
           type: string
           description: |

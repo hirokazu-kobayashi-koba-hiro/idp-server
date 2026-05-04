@@ -1,0 +1,18 @@
+{
+  "client_id": "0aaf6d00-36b0-497c-9b53-83aa57d446aa",
+  "client_id_alias": "fapi2PublicClient",
+  "client_id_issued_at": 2893256800,
+  "redirect_uris": [
+    "https://client.example.org/callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code"
+  ],
+  "scope": "openid profile email fapi-2.0",
+  "client_name": "FAPI 2.0 Public Client (rejection target)",
+  "token_endpoint_auth_method": "none",
+  "application_type": "web"
+}

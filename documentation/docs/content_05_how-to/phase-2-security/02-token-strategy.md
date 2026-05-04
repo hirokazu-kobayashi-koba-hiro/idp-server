@@ -183,6 +183,23 @@ curl -X PUT https://api.local.test/v1/management/tenants/{tenant-id}/authorizati
 - `refresh_token_strategy`: `"FIXED"`
 - `rotate_refresh_token`: `true`
 
+### FAPI 2.0 利用時の注意
+
+[FAPI 2.0 Security Profile §5.3.2.1-9](https://openid.net/specs/fapi-security-profile-2_0.html#section-5.3.2.1) は、認可サーバーに対して
+> "shall not use refresh token rotation except in extraordinary circumstances"
+
+と定めています。FAPI 2.0 を採用するテナント／クライアントでは必ず以下を設定してください：
+
+```json
+{
+  "extension": {
+    "rotate_refresh_token": false
+  }
+}
+```
+
+FAPI 2.0 ではリフレッシュトークンは `client_id` ＋ クライアント認証（`private_key_jwt` または mTLS）で sender-constrained されているため、ローテーションせずとも漏洩リスクは抑制されます（[RFC 9449 §5](https://www.rfc-editor.org/rfc/rfc9449.html#section-5)）。
+
 ---
 
 ## クライアントレベルのオーバーライド

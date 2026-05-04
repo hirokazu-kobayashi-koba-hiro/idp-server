@@ -22,12 +22,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.model.IdPApplicationScope;
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserAuthenticationApi;
 import org.idp.server.core.openid.identity.exception.UserNotFoundException;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.exception.UnauthorizedException;
@@ -41,7 +44,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
-public class ProtectedResourceApiFilter extends OncePerRequestFilter {
+public class ProtectedResourceApiFilter extends OncePerRequestFilter
+    implements ParameterTransformable {
 
   UserAuthenticationApi userAuthenticationApi;
   LoggerWrapper logger = LoggerWrapper.getLogger(ProtectedResourceApiFilter.class);
@@ -56,11 +60,21 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter {
 
     String authorization = request.getHeader("Authorization");
     String clientCert = request.getHeader("x-ssl-cert");
+    List<String> dpopProofHeaders = extractDPoPProofHeaders(request);
+    String httpMethod = request.getMethod();
+    String httpUri = resolveRequestUrl(request);
+    String authScheme = resolveAuthScheme(authorization);
 
     try {
       TenantIdentifier adminTenantIdentifier = extractTenantIdentifier(request);
       Pairs<User, OAuthToken> result =
-          userAuthenticationApi.authenticate(adminTenantIdentifier, authorization, clientCert);
+          userAuthenticationApi.authenticate(
+              adminTenantIdentifier,
+              authorization,
+              clientCert,
+              dpopProofHeaders,
+              httpMethod,
+              httpUri);
       User user = result.getLeft();
       OAuthToken oAuthToken = result.getRight();
 
@@ -75,28 +89,37 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter {
       filterChain.doFilter(request, response);
     } catch (UnauthorizedException e) {
       logger.debug("Authentication failed: {}", e.getMessage());
-      writeErrorResponse(response, "invalid_token", e.getMessage());
+      writeErrorResponse(response, authScheme, "invalid_token", e.getMessage());
+    } catch (TokenInvalidException e) {
+      logger.debug("Token binding verification failed: {}", e.getMessage());
+      writeErrorResponse(response, authScheme, "invalid_token", e.getMessage());
+    } catch (DPoPProofInvalidException e) {
+      logger.debug("DPoP proof validation failed: {}", e.getMessage());
+      writeErrorResponse(response, authScheme, "invalid_dpop_proof", e.getMessage());
     } catch (UserNotFoundException e) {
       logger.warn("User not found for token authentication: {}", e.getMessage());
       writeErrorResponse(
           response,
+          authScheme,
           "invalid_token",
           "The resource owner associated with the token no longer exists");
     } catch (NotFoundException e) {
       logger.warn("Resource not found during token authentication: {}", e.getMessage());
-      writeErrorResponse(response, "invalid_token", "The requested resource no longer exists");
+      writeErrorResponse(
+          response, authScheme, "invalid_token", "The requested resource no longer exists");
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
-      writeErrorResponse(response, "invalid_token", "Unexpected error occurred");
+      writeErrorResponse(response, authScheme, "invalid_token", "Unexpected error occurred");
     }
   }
 
   private void writeErrorResponse(
-      HttpServletResponse response, String error, String errorDescription) {
+      HttpServletResponse response, String scheme, String error, String errorDescription) {
     try {
-      // Set WWW-Authenticate header per RFC 6750
+      // Set WWW-Authenticate header per RFC 6750 / RFC 9449 Section 7.2
       String wwwAuthenticate =
-          String.format("Bearer error=\"%s\", error_description=\"%s\"", error, errorDescription);
+          String.format(
+              "%s error=\"%s\", error_description=\"%s\"", scheme, error, errorDescription);
       response.setHeader(HttpHeaders.WWW_AUTHENTICATE, wwwAuthenticate);
 
       // Set status code
@@ -117,6 +140,13 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter {
     } catch (IOException ioException) {
       logger.error("Failed to write error response", ioException);
     }
+  }
+
+  private String resolveAuthScheme(String authorization) {
+    if (authorization != null && authorization.regionMatches(true, 0, "DPoP ", 0, 5)) {
+      return "DPoP";
+    }
+    return "Bearer";
   }
 
   private TenantIdentifier extractTenantIdentifier(HttpServletRequest request) {

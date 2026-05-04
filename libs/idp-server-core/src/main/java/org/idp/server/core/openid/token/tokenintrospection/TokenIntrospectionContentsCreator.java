@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.token.tokenintrospection;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.token.AccessToken;
@@ -41,8 +42,17 @@ public class TokenIntrospectionContentsCreator {
     if (accessToken.hasAuthorizationDetails()) {
       contents.put("authorization_details", accessToken.authorizationDetails().toMapValues());
     }
+    // Sender-constrained token binding: DPoP (RFC 9449) and/or mTLS (RFC 8705)
+    Map<String, Object> cnf = new LinkedHashMap<>();
+    if (accessToken.hasDPoPBinding()) {
+      cnf.put("jkt", accessToken.jwkThumbprint().value());
+      contents.put("token_type", "DPoP");
+    }
     if (accessToken.hasClientCertification()) {
-      contents.put("cnf", Map.of("x5t#S256", accessToken.clientCertificationThumbprint().value()));
+      cnf.put("x5t#S256", accessToken.clientCertificationThumbprint().value());
+    }
+    if (!cnf.isEmpty()) {
+      contents.put("cnf", cnf);
     }
     // RFC 9068: Add authentication information claims
     if (accessToken.hasAuthentication()) {

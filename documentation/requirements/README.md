@@ -1,6 +1,6 @@
 # OIDC/OAuth 2.0 仕様書要件インデックス
 
-最終更新: 2026-01-29
+最終更新: 2026-03-11
 
 ## 概要
 
@@ -13,8 +13,17 @@
 | FAPI 2.0 Security Profile | [fapi-2.0-requirements.yaml](./fapi-2.0-requirements.yaml) | [Spec](https://openid.net/specs/fapi-security-profile-2_0.html) | 94 | 76 | 11 | 7 | 2026-01-29 |
 | OAuth 2.0 PAR (RFC 9126) | [oauth2-par-requirements.yaml](./oauth2-par-requirements.yaml) | [RFC](https://www.rfc-editor.org/rfc/rfc9126.html) | 31 | 15 | 6 | 10 | 2026-01-29 |
 | OAuth 2.0 PKCE (RFC 7636) | [oauth2-pkce-requirements.yaml](./oauth2-pkce-requirements.yaml) | [RFC](https://www.rfc-editor.org/rfc/rfc7636.html) | 28 | 14 | 7 | 4 | 2026-01-29 |
+| OAuth 2.0 DPoP (RFC 9449) | [oauth2-dpop-requirements.yaml](./oauth2-dpop-requirements.yaml) | [RFC](https://www.rfc-editor.org/rfc/rfc9449.html) | 67 | 38 | 12 | 17 | 2026-03-11 |
 
-**合計**: 3仕様書、153要件
+**合計**: 4仕様書、220要件
+
+## ギャップ分析
+
+| 仕様書 | ファイル | 分析日 |
+|--------|---------|--------|
+| FAPI 1.0 Baseline & Advanced | [fapi-1.0-gap-analysis.yaml](./fapi-1.0-gap-analysis.yaml) | 2026-02-14 |
+| OAuth 2.0 DPoP (RFC 9449) | [oauth2-dpop-gap-analysis.md](./oauth2-dpop-gap-analysis.md) | 2026-04-30 |
+| FAPI 2.0 Security Profile Final | [fapi-2.0-gap-analysis.md](./fapi-2.0-gap-analysis.md) | 2026-04-30 |
 
 ## 未抽出の重要仕様書
 
@@ -35,10 +44,10 @@
   - 目的: PAR要件（FAPI 2.0必須）
   - ファイル名: `oauth2-par-requirements.yaml`
 
-- [ ] **OAuth 2.0 Demonstrating Proof of Possession (RFC 9449)**
+- [x] ~~**OAuth 2.0 Demonstrating Proof of Possession (RFC 9449)**~~ ✅ 抽出済み
   - URL: https://www.rfc-editor.org/rfc/rfc9449.html
   - 目的: DPoP要件（FAPI 2.0必須）
-  - 予想ファイル名: `oauth2-dpop-requirements.yaml`
+  - ファイル名: `oauth2-dpop-requirements.yaml`
 
 - [ ] **OAuth 2.0 Mutual-TLS (RFC 8705)**
   - URL: https://www.rfc-editor.org/rfc/rfc8705.html

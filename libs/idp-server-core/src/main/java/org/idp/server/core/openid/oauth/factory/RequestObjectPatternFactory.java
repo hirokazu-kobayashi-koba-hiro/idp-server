@@ -20,6 +20,7 @@ import java.util.Set;
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.dpop.DPoPJkt;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestBuilder;
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
@@ -132,6 +133,10 @@ public class RequestObjectPatternFactory implements AuthorizationRequestObjectFa
         requestObjectParameters.hasCodeChallengeMethod()
             ? requestObjectParameters.codeChallengeMethod()
             : parameters.codeChallengeMethod();
+    DPoPJkt dpopJkt =
+        requestObjectParameters.hasDPoPJkt()
+            ? requestObjectParameters.dpopJkt()
+            : parameters.dpopJkt();
     AuthorizationDetailsEntity authorizationDetailsEntity =
         requestObjectParameters.hasAuthorizationDetailsValue()
             ? requestObjectParameters.authorizationDetailsEntity()
@@ -166,6 +171,7 @@ public class RequestObjectPatternFactory implements AuthorizationRequestObjectFa
     builder.add(convertClaimsPayload(claimsValue));
     builder.add(codeChallenge);
     builder.add(codeChallengeMethod);
+    builder.add(dpopJkt);
     builder.add(convertAuthorizationDetails(authorizationDetailsEntity));
     builder.add(parameters.customParams());
     int expiresIn =

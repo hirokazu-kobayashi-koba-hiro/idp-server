@@ -23,6 +23,12 @@ public enum ClientAuthenticationType {
   private_key_jwt,
   tls_client_auth,
   self_signed_tls_client_auth,
+  /**
+   * RFC: draft-ietf-oauth-attestation-based-client-auth — クライアント instance attestation + PoP JWT
+   * によるクライアント認証。HTTP ヘッダ {@code OAuth-Client-Attestation} と {@code OAuth-Client-Attestation-PoP} で
+   * 2 段の JWT を提示する。
+   */
+  attest_jwt_client_auth,
   none;
 
   public boolean isClientSecretBasic() {
@@ -51,5 +57,9 @@ public enum ClientAuthenticationType {
 
   public boolean isNone() {
     return this == none;
+  }
+
+  public boolean isAttestJwtClientAuth() {
+    return this == attest_jwt_client_auth;
   }
 }

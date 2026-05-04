@@ -20,6 +20,7 @@ import java.util.Set;
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.dpop.DPoPJkt;
 import org.idp.server.core.openid.oauth.factory.AuthorizationRequestObjectFactory;
 import org.idp.server.core.openid.oauth.factory.RequestObjectFactoryType;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
@@ -81,6 +82,10 @@ public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequ
     RequestUri requestUri = parameters.requestUri();
     CodeChallenge codeChallenge = requestObjectParameters.codeChallenge();
     CodeChallengeMethod codeChallengeMethod = requestObjectParameters.codeChallengeMethod();
+    DPoPJkt dpopJkt =
+        requestObjectParameters.hasDPoPJkt()
+            ? requestObjectParameters.dpopJkt()
+            : parameters.dpopJkt();
     AuthorizationDetailsEntity authorizationDetailsEntity =
         requestObjectParameters.authorizationDetailsEntity();
 
@@ -113,6 +118,7 @@ public class FapiAdvanceRequestObjectPatternFactory implements AuthorizationRequ
     builder.add(convertClaimsPayload(claimsValue));
     builder.add(codeChallenge);
     builder.add(codeChallengeMethod);
+    builder.add(dpopJkt);
     builder.add(convertAuthorizationDetails(authorizationDetailsEntity));
     builder.add(parameters.customParams());
     int expiresIn =

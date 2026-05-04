@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.token;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
@@ -30,6 +31,7 @@ public interface TokenApi {
       Map<String, String[]> params,
       String authorizationHeader,
       String clientCert,
+      List<String> dpopProofHeaders,
       RequestAttributes requestAttributes);
 
   TokenIntrospectionResponse inspect(
@@ -39,6 +41,15 @@ public interface TokenApi {
       String clientCert,
       RequestAttributes requestAttributes);
 
+  /**
+   * Introspect a token with full sender-constraint verification (RS forwarding pattern).
+   *
+   * <p>The Resource Server forwards the artifacts the Client presented at the resource endpoint via
+   * the request body parameters: {@code client_cert} (mTLS, RFC 8705), {@code dpop_proof} (DPoP,
+   * RFC 9449) and the corresponding {@code dpop_htm} / {@code dpop_htu}. The {@code clientCert}
+   * parameter passed here is the RS's own TLS client certificate used to authenticate to the AS,
+   * which is independent from the token-binding cert.
+   */
   TokenIntrospectionResponse inspectWithVerification(
       TenantIdentifier tenantIdentifier,
       Map<String, String[]> params,

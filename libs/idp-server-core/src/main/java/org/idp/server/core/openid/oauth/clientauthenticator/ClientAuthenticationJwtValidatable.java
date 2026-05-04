@@ -25,6 +25,8 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JoseContext;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
+import org.idp.server.platform.jose.JwtClockSkewException;
+import org.idp.server.platform.jose.JwtClockSkewValidator;
 
 public interface ClientAuthenticationJwtValidatable {
 
@@ -35,6 +37,20 @@ public interface ClientAuthenticationJwtValidatable {
     throwExceptionIfInvalidAud(joseContext, context);
     throwExceptionIfInvalidJti(joseContext, context);
     throwExceptionIfInvalidExp(joseContext, context);
+    throwExceptionIfClockSkewTooLarge(joseContext);
+  }
+
+  /**
+   * FAPI 2.0 Security Profile §5.3.2.1-2.13: rejects client assertions with iat/nbf more than 60
+   * seconds in the future. Translates {@link JwtClockSkewException} into {@link
+   * ClientUnAuthorizedException}.
+   */
+  default void throwExceptionIfClockSkewTooLarge(JoseContext joseContext) {
+    try {
+      JwtClockSkewValidator.validateIatNbf(joseContext.claims());
+    } catch (JwtClockSkewException e) {
+      throw new ClientUnAuthorizedException("client assertion " + e.getMessage());
+    }
   }
 
   /**
