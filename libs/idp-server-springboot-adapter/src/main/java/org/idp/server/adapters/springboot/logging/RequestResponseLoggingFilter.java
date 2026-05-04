@@ -66,6 +66,7 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
 public class RequestResponseLoggingFilter extends OncePerRequestFilter {
 
+  private static final int MAX_CONTENT_CACHE_SIZE = 50000;
   private static final LoggerWrapper logger =
       LoggerWrapper.getLogger(RequestResponseLoggingFilter.class);
 
@@ -91,7 +92,8 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     }
 
     if (logger.isDebugEnabled()) {
-      ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request);
+      ContentCachingRequestWrapper wrappedRequest =
+          new ContentCachingRequestWrapper(request, MAX_CONTENT_CACHE_SIZE);
       ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
 
       try {

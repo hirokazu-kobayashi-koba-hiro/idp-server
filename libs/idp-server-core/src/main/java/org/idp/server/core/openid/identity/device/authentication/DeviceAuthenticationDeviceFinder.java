@@ -32,7 +32,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  */
 public class DeviceAuthenticationDeviceFinder implements DeviceAuthenticationDeviceFindingDelegate {
 
-  private final UserQueryRepository userQueryRepository;
+  private UserQueryRepository userQueryRepository;
 
   public DeviceAuthenticationDeviceFinder(UserQueryRepository userQueryRepository) {
     this.userQueryRepository = userQueryRepository;

@@ -50,7 +50,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping
 public class HealthV1Api implements ParameterTransformable {
 
-  private final HealthCheckApi healthCheckApi;
+  private HealthCheckApi healthCheckApi;
 
   public HealthV1Api(IdpServerApplication idpServerApplication) {
     this.healthCheckApi = idpServerApplication.healthCheckApi();

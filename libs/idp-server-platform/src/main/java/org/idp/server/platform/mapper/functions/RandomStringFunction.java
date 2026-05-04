@@ -23,7 +23,7 @@ public class RandomStringFunction implements ValueFunction {
 
   private static final String DEFAULT_ALPHABET =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  private final SecureRandom random = new SecureRandom();
+  private SecureRandom random = new SecureRandom();
 
   @Override
   public Object apply(Object input, Map<String, Object> args) {

@@ -19,9 +19,9 @@ package org.idp.server.core.openid.oauth.clientauthenticator.exception;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 
 public class ClientUnAuthorizedException extends RuntimeException {
-  private final String method;
-  private final RequestedClientId clientId;
-  private final String reason;
+  private String method;
+  private RequestedClientId clientId;
+  private String reason;
 
   public ClientUnAuthorizedException(String message) {
     super(message);

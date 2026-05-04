@@ -45,9 +45,9 @@ import org.idp.server.control_plane.management.identity.verification.io.Identity
  */
 public class IdentityVerificationConfigManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final IdentityVerificationConfigManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private IdentityVerificationConfigManagementResponse response;
 
   private IdentityVerificationConfigManagementResult(
       AuditableContext context,

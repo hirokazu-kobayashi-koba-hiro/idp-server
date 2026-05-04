@@ -18,17 +18,18 @@ package org.idp.server.platform.json;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.cfg.CoercionAction;
-import com.fasterxml.jackson.databind.cfg.CoercionInputShape;
-import com.fasterxml.jackson.databind.type.LogicalType;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.cfg.CoercionAction;
+import tools.jackson.databind.cfg.CoercionInputShape;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.ext.javatime.deser.LocalDateTimeDeserializer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.type.LogicalType;
 
 public class JsonConverter {
 
@@ -43,10 +44,10 @@ public class JsonConverter {
     return SNAKE_CASE;
   }
 
-  private final ObjectMapper objectMapper;
+  private final JsonMapper jsonMapper;
 
-  private JsonConverter(ObjectMapper objectMapper) {
-    this.objectMapper = objectMapper;
+  private JsonConverter(JsonMapper jsonMapper) {
+    this.jsonMapper = jsonMapper;
   }
 
   /**
@@ -58,74 +59,85 @@ public class JsonConverter {
    * error.
    */
   private static JsonConverter create() {
-    JavaTimeModule javaTimeModule = new JavaTimeModule();
-    javaTimeModule.addDeserializer(
+    SimpleModule customDateTimeModule = new SimpleModule();
+    customDateTimeModule.addDeserializer(
         LocalDateTime.class,
         new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
-    ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
-    objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-    objectMapper.registerModule(javaTimeModule);
-    objectMapper
-        .coercionConfigFor(LogicalType.Collection)
-        .setCoercion(CoercionInputShape.String, CoercionAction.AsNull)
-        .setCoercion(CoercionInputShape.EmptyString, CoercionAction.AsNull);
-    return new JsonConverter(objectMapper);
+    JsonMapper jsonMapper =
+        JsonMapper.builder()
+            .addModule(customDateTimeModule)
+            .enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .changeDefaultVisibility(
+                vc ->
+                    vc.withVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
+                        .withVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY))
+            .withCoercionConfig(
+                LogicalType.Collection,
+                config -> {
+                  config.setCoercion(CoercionInputShape.String, CoercionAction.AsNull);
+                  config.setCoercion(CoercionInputShape.EmptyString, CoercionAction.AsNull);
+                })
+            .build();
+    return new JsonConverter(jsonMapper);
   }
 
   /** Creates a snake_case JsonConverter instance. See {@link #create()} for coercion details. */
   private static JsonConverter createWithSnakeCaseStrategy() {
-    JavaTimeModule javaTimeModule = new JavaTimeModule();
-    javaTimeModule.addDeserializer(
+    SimpleModule customDateTimeModule = new SimpleModule();
+    customDateTimeModule.addDeserializer(
         LocalDateTime.class,
         new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
-    ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
-    objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-    objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-    objectMapper.registerModule(javaTimeModule);
-    objectMapper
-        .coercionConfigFor(LogicalType.Collection)
-        .setCoercion(CoercionInputShape.String, CoercionAction.AsNull)
-        .setCoercion(CoercionInputShape.EmptyString, CoercionAction.AsNull);
-    return new JsonConverter(objectMapper);
+    JsonMapper jsonMapper =
+        JsonMapper.builder()
+            .addModule(customDateTimeModule)
+            .enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .changeDefaultVisibility(
+                vc ->
+                    vc.withVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
+                        .withVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY))
+            .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+            .withCoercionConfig(
+                LogicalType.Collection,
+                config -> {
+                  config.setCoercion(CoercionInputShape.String, CoercionAction.AsNull);
+                  config.setCoercion(CoercionInputShape.EmptyString, CoercionAction.AsNull);
+                })
+            .build();
+    return new JsonConverter(jsonMapper);
   }
 
   public <TYPE> TYPE read(Object jsonObject, Class<TYPE> type) {
-    return objectMapper.convertValue(jsonObject, type);
+    return jsonMapper.convertValue(jsonObject, type);
   }
 
   public <TYPE> TYPE read(String value, Class<TYPE> typeClass) {
     try {
-      return objectMapper.readValue(value, typeClass);
-    } catch (JsonProcessingException exception) {
+      return jsonMapper.readValue(value, typeClass);
+    } catch (JacksonException exception) {
       throw new JsonRuntimeException(exception);
     }
   }
 
   public JsonNodeWrapper readTree(String jsonString) {
     try {
-
-      return new JsonNodeWrapper(objectMapper.readTree(jsonString));
-    } catch (JsonProcessingException exception) {
+      return new JsonNodeWrapper(jsonMapper.readTree(jsonString));
+    } catch (JacksonException exception) {
       throw new JsonRuntimeException(exception);
     }
   }
 
   public JsonNodeWrapper readTree(Map<String, Object> jsonObject) {
-
-    return new JsonNodeWrapper(objectMapper.valueToTree(jsonObject));
+    return new JsonNodeWrapper(jsonMapper.valueToTree(jsonObject));
   }
 
   public JsonNodeWrapper readTree(Object jsonObject) {
-
-    return new JsonNodeWrapper(objectMapper.valueToTree(jsonObject));
+    return new JsonNodeWrapper(jsonMapper.valueToTree(jsonObject));
   }
 
   public String write(Object value) {
     try {
-      return objectMapper.writeValueAsString(value);
-    } catch (JsonProcessingException exception) {
+      return jsonMapper.writeValueAsString(value);
+    } catch (JacksonException exception) {
       throw new JsonRuntimeException(exception);
     }
   }

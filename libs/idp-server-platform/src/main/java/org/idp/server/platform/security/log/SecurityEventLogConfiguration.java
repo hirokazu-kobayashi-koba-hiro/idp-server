@@ -27,26 +27,26 @@ import java.util.Set;
 
 public class SecurityEventLogConfiguration {
 
-  private final SecurityEventLogFormatter.Format format;
-  private final boolean debugEnabled;
-  private final String stage;
-  private final boolean includeUserId;
-  private final boolean includeUserName;
-  private final boolean includeUserExSub;
-  private final boolean includeClientId;
-  private final boolean includeIpAddress;
-  private final boolean includeUserAgent;
-  private final boolean includeEventDetail;
-  private final boolean includeUserDetail;
-  private final boolean includeUserPii;
-  private final List<String> allowedUserPiiKeys;
-  private final boolean includeTraceContext;
-  private final String serviceName;
-  private final List<String> customTags;
-  private final boolean tracingEnabled;
-  private final boolean persistenceEnabled;
-  private final boolean statisticsEnabled;
-  private final List<String> detailScrubKeys;
+  private SecurityEventLogFormatter.Format format;
+  private boolean debugEnabled;
+  private String stage;
+  private boolean includeUserId;
+  private boolean includeUserName;
+  private boolean includeUserExSub;
+  private boolean includeClientId;
+  private boolean includeIpAddress;
+  private boolean includeUserAgent;
+  private boolean includeEventDetail;
+  private boolean includeUserDetail;
+  private boolean includeUserPii;
+  private List<String> allowedUserPiiKeys;
+  private boolean includeTraceContext;
+  private String serviceName;
+  private List<String> customTags;
+  private boolean tracingEnabled;
+  private boolean persistenceEnabled;
+  private boolean statisticsEnabled;
+  private List<String> detailScrubKeys;
 
   private static final List<String> ESSENTIAL_SCRUB_KEYS =
       List.of(

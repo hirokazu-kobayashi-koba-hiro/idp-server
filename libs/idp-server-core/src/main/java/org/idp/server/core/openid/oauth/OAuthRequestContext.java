@@ -45,11 +45,13 @@ import org.idp.server.core.openid.oauth.view.OAuthViewUrlResolver;
 import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JoseContext;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /** OAuthRequestContext */
 public class OAuthRequestContext implements ResponseModeDecidable {
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(OAuthRequestContext.class);
   Tenant tenant;
   OAuthRequestPattern pattern;
   OAuthRequestParameters parameters;
@@ -92,11 +94,18 @@ public class OAuthRequestContext implements ResponseModeDecidable {
       return false;
     }
 
+    log.debug(
+        "canAutomaticallyAuthorize: opSession={}, opSessionExists={}, opSessionIsNull={}",
+        opSession != null ? opSession.id() : "null",
+        opSession != null ? opSession.exists() : "N/A",
+        opSession == null);
+
     if (opSession == null || !opSession.exists()) {
       throw new OAuthRedirectableBadRequestException(
           "login_required", "invalid session, session is not registered", this);
     }
     if (!opSession.isActive()) {
+      log.debug("canAutomaticallyAuthorize: session not active, status={}", opSession.status());
       throw new OAuthRedirectableBadRequestException(
           "login_required", "invalid session, session is expired or terminated", this);
     }

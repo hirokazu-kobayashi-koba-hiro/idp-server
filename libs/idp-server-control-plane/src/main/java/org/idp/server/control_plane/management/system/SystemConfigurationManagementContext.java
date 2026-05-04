@@ -34,14 +34,14 @@ import org.idp.server.platform.type.RequestAttributes;
  */
 public class SystemConfigurationManagementContext implements AuditableContext {
 
-  private final User operator;
-  private final OAuthToken oAuthToken;
-  private final RequestAttributes requestAttributes;
-  private final SystemConfiguration before;
-  private final SystemConfiguration after;
-  private final SystemConfigurationUpdateRequest request;
-  private final boolean dryRun;
-  private final ManagementApiException exception;
+  private User operator;
+  private OAuthToken oAuthToken;
+  private RequestAttributes requestAttributes;
+  private SystemConfiguration before;
+  private SystemConfiguration after;
+  private SystemConfigurationUpdateRequest request;
+  private boolean dryRun;
+  private ManagementApiException exception;
 
   public SystemConfigurationManagementContext(
       User operator,

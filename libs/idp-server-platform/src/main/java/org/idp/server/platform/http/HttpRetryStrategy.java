@@ -53,8 +53,8 @@ import org.idp.server.platform.log.LoggerWrapper;
  */
 public class HttpRetryStrategy {
 
-  private final IdempotencyKeyManager idempotencyKeyManager;
-  private final LoggerWrapper log;
+  private IdempotencyKeyManager idempotencyKeyManager;
+  private LoggerWrapper log;
 
   public HttpRetryStrategy() {
     this.idempotencyKeyManager = new IdempotencyKeyManager();

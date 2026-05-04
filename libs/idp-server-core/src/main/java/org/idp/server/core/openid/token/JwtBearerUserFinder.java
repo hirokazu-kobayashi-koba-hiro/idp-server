@@ -33,7 +33,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  */
 public class JwtBearerUserFinder implements JwtBearerUserFindingDelegate {
 
-  private final UserQueryRepository userQueryRepository;
+  private UserQueryRepository userQueryRepository;
 
   public JwtBearerUserFinder(UserQueryRepository userQueryRepository) {
     this.userQueryRepository = userQueryRepository;

@@ -57,7 +57,7 @@ import org.idp.server.platform.log.LoggerWrapper;
  */
 public class IdempotencyKeyManager {
 
-  private final LoggerWrapper log = LoggerWrapper.getLogger(IdempotencyKeyManager.class);
+  private LoggerWrapper log = LoggerWrapper.getLogger(IdempotencyKeyManager.class);
 
   /**
    * Generates a unique idempotency key for the given HTTP request.

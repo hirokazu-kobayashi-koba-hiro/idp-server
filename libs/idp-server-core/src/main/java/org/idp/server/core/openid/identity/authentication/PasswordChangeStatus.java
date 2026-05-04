@@ -24,7 +24,7 @@ public enum PasswordChangeStatus {
   INVALID_REQUEST(400),
   FORBIDDEN(403);
 
-  private final int statusCode;
+  private int statusCode;
 
   PasswordChangeStatus(int statusCode) {
     this.statusCode = statusCode;

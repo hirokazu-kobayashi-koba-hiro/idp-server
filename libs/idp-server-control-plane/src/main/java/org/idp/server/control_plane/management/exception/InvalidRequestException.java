@@ -34,7 +34,7 @@ import java.util.Map;
  */
 public class InvalidRequestException extends ManagementApiException {
 
-  private final List<String> errorMessages;
+  private List<String> errorMessages;
 
   public InvalidRequestException(String message, List<String> errorMessages) {
     super(message);

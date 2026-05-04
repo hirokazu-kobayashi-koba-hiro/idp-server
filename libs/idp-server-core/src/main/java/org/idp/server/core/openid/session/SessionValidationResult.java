@@ -26,10 +26,10 @@ import org.idp.server.platform.security.event.DefaultSecurityEventType;
  */
 public class SessionValidationResult {
 
-  private final boolean valid;
-  private final String errorCode;
-  private final String errorDescription;
-  private final DefaultSecurityEventType eventType;
+  private boolean valid;
+  private String errorCode;
+  private String errorDescription;
+  private DefaultSecurityEventType eventType;
 
   private SessionValidationResult(
       boolean valid,

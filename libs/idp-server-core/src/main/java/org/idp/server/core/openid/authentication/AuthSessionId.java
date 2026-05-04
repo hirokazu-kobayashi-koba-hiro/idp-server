@@ -34,7 +34,7 @@ public class AuthSessionId {
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
   private static final int TOKEN_LENGTH = 32; // 256 bits
 
-  private final String value;
+  private String value;
 
   public AuthSessionId() {
     this.value = "";

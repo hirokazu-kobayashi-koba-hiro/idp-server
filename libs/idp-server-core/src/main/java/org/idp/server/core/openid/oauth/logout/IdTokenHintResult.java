@@ -26,8 +26,8 @@ import org.idp.server.platform.jose.JsonWebTokenClaims;
  */
 public class IdTokenHintResult {
 
-  private final JsonWebTokenClaims claims;
-  private final ClientConfiguration clientConfiguration;
+  private JsonWebTokenClaims claims;
+  private ClientConfiguration clientConfiguration;
 
   public IdTokenHintResult(JsonWebTokenClaims claims, ClientConfiguration clientConfiguration) {
     this.claims = claims;
