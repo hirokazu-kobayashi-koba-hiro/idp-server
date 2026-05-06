@@ -189,8 +189,12 @@ describe("Advance Use Case: External Password Auth Config Effects", () => {
   it("B-27: unreachable external auth URL causes authentication error", async () => {
     console.log("\n=== Unreachable External Auth URL ===");
 
+    // RFC 6761 §6.4: ".invalid" は予約 TLD で必ず DNS 解決失敗する。
+    // host.docker.internal:9999 を使うと OIDF Conformance Suite (port 9999 に JDWP listen)
+    // が稼働している環境で TCP connect が成功してしまい、502 (Bad Gateway) が返って
+    // テストが落ちる。UnknownHostException を確実に発生させて 503 を担保する。
     const env = await createExternalAuthEnv({
-      authUrl: "http://host.docker.internal:9999/auth/not-exist",
+      authUrl: "http://nonexistent-auth.invalid:9999/auth/not-exist",
       providerId: "unreachable",
     });
     try {
