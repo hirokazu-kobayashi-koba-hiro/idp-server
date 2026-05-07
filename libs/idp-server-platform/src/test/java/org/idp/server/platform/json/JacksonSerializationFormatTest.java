@@ -226,19 +226,37 @@ class JacksonSerializationFormatTest {
     }
 
     @Test
-    void rejectsUnknownFields() {
-      // Jackson 2 のデフォルト: FAIL_ON_UNKNOWN_PROPERTIES=true
-      // 未知フィールドが含まれると例外が発生する
-      // → Jackson 3 で新フィールドが追加された場合、Jackson 2 でのロールバック時に問題になる可能性
+    void rejectsUnknownFieldsByDefault() {
+      // JsonConverter のデフォルト: FAIL_ON_UNKNOWN_PROPERTIES=true
+      // JsonReadable を実装しないクラスは未知フィールドでエラーになる
+      // → 設定 JSON や API リクエストの typo を検出できる
       String json =
           "{\"id\":\"ops_test\",\"status\":\"ACTIVE\","
-              + "\"unknown_field\":\"should_be_ignored\","
+              + "\"unknown_field\":\"should_be_rejected\","
               + "\"another_new_field\":123}";
 
       assertThrows(
           JsonRuntimeException.class,
           () -> snakeCaseConverter.read(json, SessionLikeObject.class),
-          "Unknown fields should cause deserialization failure with default Jackson 2 settings");
+          "Classes without JsonReadable should reject unknown fields");
+    }
+
+    @Test
+    void ignoresUnknownFieldsWithJsonReadable() {
+      // JsonReadable を実装したクラスは未知フィールドを無視する
+      // → Jackson 3 移行時のロールバック安全性を確保
+      String json =
+          "{\"id\":\"ops_test\",\"status\":\"ACTIVE\","
+              + "\"unknown_field\":\"should_be_ignored\","
+              + "\"another_new_field\":123}";
+
+      JsonReadableSessionLikeObject result =
+          assertDoesNotThrow(
+              () -> snakeCaseConverter.read(json, JsonReadableSessionLikeObject.class),
+              "Classes with JsonReadable should ignore unknown fields");
+
+      assertEquals("ops_test", result.id);
+      assertEquals(Status.ACTIVE, result.status);
     }
   }
 
@@ -279,5 +297,12 @@ class JacksonSerializationFormatTest {
     Map<String, String> metadata;
 
     SessionLikeObject() {}
+  }
+
+  static class JsonReadableSessionLikeObject implements JsonReadable {
+    String id;
+    Status status;
+
+    JsonReadableSessionLikeObject() {}
   }
 }
