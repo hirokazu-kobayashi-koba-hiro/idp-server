@@ -2,16 +2,16 @@
 
 ## 概要
 
-Spring Boot 3.5.6 → 4.0.4 + Jackson 2 → 3 への移行で発生した問題と対応をまとめる。
+Spring Boot 3.5.6 → 4.0.6 + Jackson 2 → 3 への移行で発生した問題と対応をまとめる。
 
 ### バージョン変更
 
 | コンポーネント | Before | After |
 |-------------|--------|-------|
-| Spring Boot | 3.5.6 | 4.0.4 |
+| Spring Boot | 3.5.6 | 4.0.6 |
 | Spring Framework | 6.x | 7.x |
 | Spring Security | 6.x | 7.x |
-| Jackson | 2.14.2 | 3.1.0 |
+| Jackson | 2.14.2 | 3.1.2 |
 | Servlet API | 6.0 (Tomcat 10.x) | 6.1 (Tomcat 11) |
 | dependency-management plugin | 1.1.4 | 1.1.7 |
 
@@ -105,6 +105,24 @@ public class SecurityEventLogConfiguration {
 - テナント設定クラス（`SecurityEventLogConfiguration`, `SessionConfiguration`, `CorsConfiguration`, `UIConfiguration` 等）
 - セッション関連値オブジェクト（`OPSessionIdentifier`, `BrowserState` 等）
 - Redis キャッシュ経由でシリアライズ/デシリアライズされる全オブジェクト
+
+### 1.4 FAIL_ON_UNKNOWN_PROPERTIES のデフォルト変更（重要）
+
+**Jackson 3 ではデシリアライズ時の未知フィールドの扱いが Jackson 2 と逆になった。**
+
+| バージョン | デフォルト | 未知フィールド遭遇時 |
+|----------|----------|----------|
+| Jackson 2.x | `true` | `UnrecognizedPropertyException` を投げる |
+| Jackson 3.x | `false` | 黙って無視する |
+
+`JsonConverter` は明示的な設定をしていないため、Jackson 3 のデフォルト挙動（**未知フィールドを無視**）が適用される。
+
+**影響**:
+- 設定 JSON や API リクエストの typo は実行時エラーにならない
+- 旧→新、新→旧 の双方向ロールバックで未知フィールドを許容できる（前方互換性向上）
+- Jackson 3.1.0 にはこの設定が `@JsonIgnoreProperties` と相互作用するバグがあり、3.1.2 で修正された
+
+> Jackson 2 互換の厳格挙動を維持したい場合は、`JsonMapper.builder().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)` を明示する必要がある。
 
 ---
 
