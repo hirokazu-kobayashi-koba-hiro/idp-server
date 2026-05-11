@@ -136,9 +136,7 @@ public class MdsCacheEntry implements JsonReadable {
     }
     try {
       MetadataStatement statement =
-          objectConverter
-              .getJsonMapper()
-              .readValue(metadataStatementJson, MetadataStatement.class);
+          objectConverter.getJsonMapper().readValue(metadataStatementJson, MetadataStatement.class);
       return Optional.ofNullable(statement);
     } catch (Exception e) {
       return Optional.empty();
