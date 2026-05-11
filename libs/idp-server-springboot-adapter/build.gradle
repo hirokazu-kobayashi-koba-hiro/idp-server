@@ -39,7 +39,7 @@ dependencies {
 	implementation 'org.springframework.session:spring-session-core'
 
 	//webauthn
-	implementation 'com.webauthn4j:webauthn4j-core:0.28.5.RELEASE'
+	implementation 'com.webauthn4j:webauthn4j-core:0.31.5.RELEASE'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
