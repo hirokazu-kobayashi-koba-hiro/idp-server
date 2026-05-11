@@ -21,7 +21,7 @@ import java.util.Objects;
 /** Identifier for TenantYearlyStatistics */
 public class TenantYearlyStatisticsIdentifier {
 
-  private final String value;
+  private String value;
 
   public TenantYearlyStatisticsIdentifier(String value) {
     this.value = value;

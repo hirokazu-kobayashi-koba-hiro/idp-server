@@ -53,13 +53,13 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
  */
 public class TenantStatistics {
 
-  private final TenantStatisticsIdentifier id;
-  private final TenantIdentifier tenantId;
-  private final String statMonth;
-  private final Map<String, Object> monthlySummary;
-  private final Map<String, Map<String, Object>> dailyMetrics;
-  private final Instant createdAt;
-  private final Instant updatedAt;
+  private TenantStatisticsIdentifier id;
+  private TenantIdentifier tenantId;
+  private String statMonth;
+  private Map<String, Object> monthlySummary;
+  private Map<String, Map<String, Object>> dailyMetrics;
+  private Instant createdAt;
+  private Instant updatedAt;
 
   private TenantStatistics(Builder builder) {
     this.id = builder.id;

@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public class TenantStatisticsReportQuery {
 
-  private final String year;
+  private String year;
 
   public TenantStatisticsReportQuery(String year) {
     this.year = Objects.requireNonNull(year, "year must not be null");

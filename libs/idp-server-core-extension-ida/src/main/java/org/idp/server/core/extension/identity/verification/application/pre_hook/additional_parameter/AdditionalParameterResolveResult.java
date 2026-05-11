@@ -27,10 +27,10 @@ import org.idp.server.core.extension.identity.verification.io.IdentityVerificati
  */
 public class AdditionalParameterResolveResult {
 
-  private final boolean success;
-  private final Map<String, Object> data;
-  private final IdentityVerificationErrorDetails errorDetails;
-  private final boolean failFast;
+  private boolean success;
+  private Map<String, Object> data;
+  private IdentityVerificationErrorDetails errorDetails;
+  private boolean failFast;
 
   private AdditionalParameterResolveResult(
       boolean success,

@@ -226,25 +226,29 @@ class JacksonSerializationFormatTest {
     }
 
     @Test
-    void rejectsUnknownFieldsByDefault() {
-      // JsonConverter のデフォルト: FAIL_ON_UNKNOWN_PROPERTIES=true
-      // JsonReadable を実装しないクラスは未知フィールドでエラーになる
-      // → 設定 JSON や API リクエストの typo を検出できる
+    void ignoresUnknownFieldsByDefault() {
+      // Jackson 3 のデフォルト: FAIL_ON_UNKNOWN_PROPERTIES=false
+      // → 未知フィールドは黙って無視される（Jackson 2 では例外を投げていた）
+      // → 旧→新、新→旧 双方向のロールバック安全性が標準で確保される
       String json =
           "{\"id\":\"ops_test\",\"status\":\"ACTIVE\","
-              + "\"unknown_field\":\"should_be_rejected\","
+              + "\"unknown_field\":\"should_be_ignored\","
               + "\"another_new_field\":123}";
 
-      assertThrows(
-          JsonRuntimeException.class,
-          () -> snakeCaseConverter.read(json, SessionLikeObject.class),
-          "Classes without JsonReadable should reject unknown fields");
+      SessionLikeObject result =
+          assertDoesNotThrow(
+              () -> snakeCaseConverter.read(json, SessionLikeObject.class),
+              "Jackson 3 ignores unknown fields by default");
+
+      assertEquals("ops_test", result.id);
+      assertEquals(Status.ACTIVE, result.status);
     }
 
     @Test
     void ignoresUnknownFieldsWithJsonReadable() {
-      // JsonReadable を実装したクラスは未知フィールドを無視する
-      // → Jackson 3 移行時のロールバック安全性を確保
+      // JsonReadable を実装したクラスも未知フィールドを無視する
+      // Jackson 3 ではデフォルトで無視されるため、デフォルト挙動と同じ結果になる
+      // （JsonReadable は意図の明示マーカーとして機能）
       String json =
           "{\"id\":\"ops_test\",\"status\":\"ACTIVE\","
               + "\"unknown_field\":\"should_be_ignored\","

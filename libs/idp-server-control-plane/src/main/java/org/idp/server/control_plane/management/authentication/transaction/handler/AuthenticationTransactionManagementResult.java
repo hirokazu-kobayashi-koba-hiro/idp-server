@@ -43,9 +43,9 @@ import org.idp.server.control_plane.management.exception.ResourceNotFoundExcepti
  */
 public class AuthenticationTransactionManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final AuthenticationTransactionManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private AuthenticationTransactionManagementResponse response;
 
   private AuthenticationTransactionManagementResult(
       AuditableContext context,

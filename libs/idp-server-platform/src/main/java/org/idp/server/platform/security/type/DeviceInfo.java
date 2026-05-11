@@ -27,12 +27,12 @@ import java.util.regex.Pattern;
  */
 public class DeviceInfo {
 
-  private final String device;
-  private final String os;
-  private final String osVersion;
-  private final String browser;
-  private final String browserVersion;
-  private final boolean mobile;
+  private String device;
+  private String os;
+  private String osVersion;
+  private String browser;
+  private String browserVersion;
+  private boolean mobile;
 
   public DeviceInfo(
       String device,

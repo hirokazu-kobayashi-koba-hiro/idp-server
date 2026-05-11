@@ -23,7 +23,7 @@ public enum GrantManagementStatus {
   FORBIDDEN(403),
   NOT_FOUND(404);
 
-  private final int statusCode;
+  private int statusCode;
 
   GrantManagementStatus(int statusCode) {
     this.statusCode = statusCode;

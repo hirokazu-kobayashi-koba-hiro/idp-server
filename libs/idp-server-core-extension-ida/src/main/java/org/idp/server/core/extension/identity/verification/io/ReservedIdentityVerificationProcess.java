@@ -23,7 +23,7 @@ public enum ReservedIdentityVerificationProcess {
   CALLBACK_RESULT("callback-result"),
   EVALUATE_RESULT("evaluate-result");
 
-  private final String value;
+  private String value;
 
   ReservedIdentityVerificationProcess(String value) {
     this.value = value;

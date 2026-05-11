@@ -38,9 +38,9 @@ import org.idp.server.control_plane.management.organization.io.OrganizationManag
  */
 public class OrganizationManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final OrganizationManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private OrganizationManagementResponse response;
 
   private OrganizationManagementResult(
       AuditableContext context,

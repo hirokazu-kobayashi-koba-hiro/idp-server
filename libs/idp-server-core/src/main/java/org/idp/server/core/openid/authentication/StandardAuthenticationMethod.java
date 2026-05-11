@@ -23,7 +23,7 @@ public enum StandardAuthenticationMethod {
   FIDO_UAF("fido-uaf"),
   FIDO2("fido2");
 
-  private final String type;
+  private String type;
 
   StandardAuthenticationMethod(String type) {
     this.type = type;

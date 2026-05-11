@@ -143,8 +143,8 @@ public enum DefaultAdminPermission {
   SYSTEM_READ("idp:system:read", "Admin Read system configuration"),
   SYSTEM_WRITE("idp:system:write", "Admin Write system configuration");
 
-  private final String value;
-  private final String description;
+  private String value;
+  private String description;
 
   DefaultAdminPermission(String value, String description) {
     this.value = value;

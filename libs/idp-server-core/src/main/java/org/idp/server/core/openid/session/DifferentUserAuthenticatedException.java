@@ -29,8 +29,8 @@ import org.idp.server.platform.exception.ForbiddenException;
  */
 public class DifferentUserAuthenticatedException extends ForbiddenException {
 
-  private final String existingUserSub;
-  private final String authenticatedUserSub;
+  private String existingUserSub;
+  private String authenticatedUserSub;
 
   public DifferentUserAuthenticatedException(String existingUserSub, String authenticatedUserSub) {
     super(

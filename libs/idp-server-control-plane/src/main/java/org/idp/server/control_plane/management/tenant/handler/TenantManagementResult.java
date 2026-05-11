@@ -38,9 +38,9 @@ import org.idp.server.control_plane.management.tenant.io.TenantManagementStatus;
  */
 public class TenantManagementResult {
 
-  private final AuditableContext context;
-  private final ManagementApiException exception;
-  private final TenantManagementResponse response;
+  private AuditableContext context;
+  private ManagementApiException exception;
+  private TenantManagementResponse response;
 
   private TenantManagementResult(
       AuditableContext context,

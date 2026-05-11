@@ -38,8 +38,8 @@ public interface SecurityEventLogFormatter {
     OBSERVABILITY("observability", "Enhanced format for observability platforms"),
     DISABLED("disabled", "Disable security event logging");
 
-    private final String value;
-    private final String description;
+    private String value;
+    private String description;
 
     Format(String value, String description) {
       this.value = value;

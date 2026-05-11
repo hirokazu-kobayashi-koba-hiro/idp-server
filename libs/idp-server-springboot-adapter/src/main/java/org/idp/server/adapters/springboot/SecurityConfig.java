@@ -56,6 +56,7 @@ public class SecurityConfig {
             httpSecuritySessionManagementConfigurer.sessionCreationPolicy(
                 SessionCreationPolicy.STATELESS));
     http.csrf(AbstractHttpConfigurer::disable);
+    http.httpBasic(AbstractHttpConfigurer::disable);
 
     http.authorizeHttpRequests(
         (authorize) ->

@@ -70,7 +70,7 @@ public class UuidShortFunction implements ValueFunction {
   private static final int MIN_LENGTH = 4;
   private static final int MAX_LENGTH = 32;
 
-  private final SecureRandom random = new SecureRandom();
+  private SecureRandom random = new SecureRandom();
 
   /**
    * Generates a short UUID-like identifier.

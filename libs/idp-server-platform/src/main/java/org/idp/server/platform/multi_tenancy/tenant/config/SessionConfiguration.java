@@ -28,14 +28,14 @@ import java.util.Objects;
  */
 public class SessionConfiguration {
 
-  private final String cookieName;
-  private final String cookieDomain;
-  private final String cookieSameSite;
-  private final boolean useSecureCookie;
-  private final boolean useHttpOnlyCookie;
-  private final String cookiePath;
-  private final int timeoutSeconds;
-  private final String switchPolicy;
+  private String cookieName;
+  private String cookieDomain;
+  private String cookieSameSite;
+  private boolean useSecureCookie;
+  private boolean useHttpOnlyCookie;
+  private String cookiePath;
+  private int timeoutSeconds;
+  private String switchPolicy;
 
   public SessionConfiguration() {
     this.cookieName = null;

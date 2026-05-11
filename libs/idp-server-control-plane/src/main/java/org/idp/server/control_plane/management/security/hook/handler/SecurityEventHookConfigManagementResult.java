@@ -48,9 +48,9 @@ import org.idp.server.control_plane.management.security.hook.io.SecurityEventHoo
  */
 public class SecurityEventHookConfigManagementResult {
 
-  private final ManagementApiException exception;
-  private final SecurityEventHookConfigManagementResponse response;
-  private final AuditableContext context;
+  private ManagementApiException exception;
+  private SecurityEventHookConfigManagementResponse response;
+  private AuditableContext context;
 
   private SecurityEventHookConfigManagementResult(
       ManagementApiException exception,

@@ -24,7 +24,7 @@ public enum SystemConfigurationManagementStatus {
   FORBIDDEN(403),
   ERROR(500);
 
-  private final int statusCode;
+  private int statusCode;
 
   SystemConfigurationManagementStatus(int statusCode) {
     this.statusCode = statusCode;

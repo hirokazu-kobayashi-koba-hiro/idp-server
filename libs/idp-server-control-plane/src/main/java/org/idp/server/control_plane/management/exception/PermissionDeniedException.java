@@ -36,8 +36,8 @@ import org.idp.server.control_plane.base.definition.AdminPermissions;
  */
 public class PermissionDeniedException extends ManagementApiException {
 
-  private final AdminPermissions required;
-  private final Set<String> actual;
+  private AdminPermissions required;
+  private Set<String> actual;
 
   public PermissionDeniedException(AdminPermissions required, Set<String> actual) {
     super(

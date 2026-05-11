@@ -20,6 +20,7 @@ import java.util.Map;
 import org.idp.server.platform.http.BasicAuth;
 import org.idp.server.platform.http.BasicAuthConvertable;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.security.type.Action;
 import org.idp.server.platform.security.type.IpAddress;
 import org.idp.server.platform.security.type.Resource;
@@ -27,6 +28,7 @@ import org.idp.server.platform.security.type.UserAgent;
 
 public class RequestAttributes implements BasicAuthConvertable {
 
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(RequestAttributes.class);
   JsonNodeWrapper jsonNodeWrapper;
 
   public RequestAttributes() {}
@@ -91,8 +93,21 @@ public class RequestAttributes implements BasicAuthConvertable {
 
   public BasicAuth basicAuth() {
     JsonNodeWrapper headersNode = getJsonNode("headers");
-    String authorization = headersNode.getValueOrEmptyAsString("authorization");
+    String authorization = getHeaderValueCaseInsensitive(headersNode, "authorization");
     return convertBasicAuth(authorization);
+  }
+
+  private String getHeaderValueCaseInsensitive(JsonNodeWrapper headersNode, String headerName) {
+    String value = headersNode.getValueOrEmptyAsString(headerName);
+    if (!value.isEmpty()) {
+      return value;
+    }
+    for (String key : headersNode.fieldNamesAsList()) {
+      if (key.equalsIgnoreCase(headerName)) {
+        return headersNode.getValueOrEmptyAsString(key);
+      }
+    }
+    return "";
   }
 
   public boolean hasBasicAuth() {
