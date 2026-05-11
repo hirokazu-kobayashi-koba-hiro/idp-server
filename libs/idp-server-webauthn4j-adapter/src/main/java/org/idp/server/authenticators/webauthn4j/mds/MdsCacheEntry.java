@@ -73,7 +73,7 @@ public class MdsCacheEntry implements JsonReadable {
       description = statement.getDescription();
       icon = statement.getIcon();
       try {
-        metadataStatementJson = objectConverter.getJsonConverter().writeValueAsString(statement);
+        metadataStatementJson = objectConverter.getJsonMapper().writeValueAsString(statement);
       } catch (Exception e) {
         // Ignore serialization errors
       }
@@ -136,9 +136,7 @@ public class MdsCacheEntry implements JsonReadable {
     }
     try {
       MetadataStatement statement =
-          objectConverter
-              .getJsonConverter()
-              .readValue(metadataStatementJson, MetadataStatement.class);
+          objectConverter.getJsonMapper().readValue(metadataStatementJson, MetadataStatement.class);
       return Optional.ofNullable(statement);
     } catch (Exception e) {
       return Optional.empty();
