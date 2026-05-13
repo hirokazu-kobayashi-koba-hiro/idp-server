@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 510" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 22px; font-weight: 700; fill: #1f2328; }
+      .subtitle { font-size: 14px; fill: #57606a; }
+      .boxTitle { font-size: 13px; font-weight: 700; fill: #1f2328; }
+      .boxText { font-size: 11px; fill: #1f2328; }
+      .key { font-size: 10px; font-family: 'SF Mono', Menlo, Consolas, monospace; fill: #57606a; }
+      .legendTitle { font-size: 13px; font-weight: 700; fill: #1f2328; }
+      .flowLabel { font-size: 12px; font-weight: 700; fill: #ffffff; }
+      .flowSub { font-size: 10px; fill: #ffffff; opacity: 0.95; }
+    </style>
+    <marker id="arrM" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1f2328"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1320" height="510" fill="#f6f8fa"/>
+
+  <!-- Title -->
+  <text x="660" y="38" class="title" text-anchor="middle">アクセストークン発行をどう守っているか — 鍵と関係性</text>
+  <text x="660" y="58" class="subtitle" text-anchor="middle">秘密鍵 (Mobile/HW) で署名 → 公開鍵 (idp-server) で検証 → AT 発行 / 秘密はネットワークに出ない</text>
+
+  <!-- =========== AT 発行の仕組みと防御の関係性 =========== -->
+  <g id="protection">
+    <!-- Left: Mobile side -->
+    <rect x="80" y="100" width="320" height="380" rx="10" fill="#ddf4ff" stroke="#0969da" stroke-width="2"/>
+    <text x="240" y="122" class="boxTitle" text-anchor="middle">📱 Mobile (秘密鍵を持つ側)</text>
+
+    <!-- HW box -->
+    <rect x="100" y="136" width="280" height="100" rx="8" fill="#fffbe6" stroke="#bf8700" stroke-width="2" stroke-dasharray="5,3"/>
+    <text x="240" y="156" class="boxTitle" text-anchor="middle">🔒 HW (Secure Enclave)</text>
+    <rect x="120" y="170" width="240" height="50" rx="6" fill="#ffffff" stroke="#bf8700"/>
+    <text x="240" y="190" class="boxTitle" text-anchor="middle">🔑 秘密鍵 (ES256)</text>
+    <text x="240" y="208" class="key" text-anchor="middle">HW から永遠に出ない</text>
+
+    <!-- Action: 署名 -->
+    <rect x="100" y="260" width="280" height="50" rx="8" fill="#0969da"/>
+    <text x="240" y="280" class="flowLabel" text-anchor="middle">署名 (sign)</text>
+    <text x="240" y="296" class="flowSub" text-anchor="middle">JWT を秘密鍵で署名 (HW 内で完結)</text>
+
+    <!-- Protection annotations on Mobile side -->
+    <rect x="100" y="330" width="280" height="80" rx="6" fill="#ffffff" stroke="#0969da"/>
+    <text x="110" y="350" class="boxTitle">守られているもの</text>
+    <text x="110" y="368" class="boxText">🔒 脱獄 / Root → FIDO-UAF SDK 検知</text>
+    <text x="110" y="386" class="boxText">🔒 メモリダンプ → 鍵が HW 内のみ</text>
+    <text x="110" y="404" class="boxText">🔒 物理盗難 → HW チップ要解析</text>
+
+    <!-- Center: 通信 -->
+    <g id="transit">
+      <path d="M 400,280 L 920,280" stroke="#1f2328" stroke-width="3" marker-end="url(#arrM)" fill="none"/>
+      <rect x="430" y="200" width="460" height="60" rx="8" fill="#fff8c5" stroke="#bf8700" stroke-width="1"/>
+      <text x="660" y="220" class="boxTitle" text-anchor="middle">経路に流れるもの</text>
+      <text x="660" y="240" class="boxText" text-anchor="middle">✓ 署名済み JWT (公開情報)</text>
+      <text x="660" y="254" class="key" text-anchor="middle">秘密鍵そのものは絶対に流れない</text>
+
+      <text x="660" y="290" class="key" text-anchor="middle" fill="#57606a">POST /v1/tokens (JWT Bearer + DPoP + Nonce)</text>
+
+      <rect x="430" y="330" width="460" height="80" rx="6" fill="#ffffff" stroke="#bf8700"/>
+      <text x="440" y="350" class="boxTitle">経路で守られているもの</text>
+      <text x="440" y="368" class="boxText">🔒 TLS 中継点での平文露出 → 秘密が流れないので無害</text>
+      <text x="440" y="386" class="boxText">🔒 MITM / リプレイ → Nonce で鮮度保証</text>
+      <text x="440" y="404" class="boxText">🔒 経路改ざん → JWT 署名検証で検出</text>
+    </g>
+
+    <!-- Right: Server side -->
+    <rect x="920" y="100" width="320" height="380" rx="10" fill="#f1eafb" stroke="#8250df" stroke-width="2"/>
+    <text x="1080" y="122" class="boxTitle" text-anchor="middle">🛡️ idp-server (公開鍵を持つ側)</text>
+
+    <!-- Public key store -->
+    <rect x="940" y="136" width="280" height="100" rx="8" fill="#ffffff" stroke="#8250df" stroke-width="1"/>
+    <text x="1080" y="156" class="boxTitle" text-anchor="middle">DB</text>
+    <rect x="960" y="170" width="240" height="50" rx="6" fill="#ffffff" stroke="#8250df"/>
+    <text x="1080" y="190" class="boxTitle" text-anchor="middle">🔓 公開鍵 (ES256)</text>
+    <text x="1080" y="208" class="key" text-anchor="middle">漏洩しても無害</text>
+
+    <!-- Action: 検証 + AT 発行 -->
+    <rect x="940" y="260" width="280" height="50" rx="8" fill="#8250df"/>
+    <text x="1080" y="280" class="flowLabel" text-anchor="middle">署名検証 → AT 発行</text>
+    <text x="1080" y="296" class="flowSub" text-anchor="middle">公開鍵で OK なら AT に DPoP jkt bind</text>
+
+    <!-- Protection on server side -->
+    <rect x="940" y="330" width="280" height="80" rx="6" fill="#ffffff" stroke="#8250df"/>
+    <text x="950" y="350" class="boxTitle">守られているもの</text>
+    <text x="950" y="368" class="boxText">🔒 DB 漏洩 → 公開鍵だけ (なりすまし不可)</text>
+    <text x="950" y="386" class="boxText">🔒 AT 盗難 → jkt 一致しないと使えない</text>
+    <text x="950" y="404" class="boxText">🔒 偽 issuer → JWS 署名鍵で識別</text>
+  </g>
+</svg>
