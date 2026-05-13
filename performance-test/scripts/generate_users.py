@@ -26,6 +26,9 @@ import uuid
 import os
 import json
 import argparse
+import base64
+import secrets
+import time
 from pathlib import Path
 
 
@@ -37,6 +40,20 @@ OUTPUT_DIR = "./performance-test/data"
 PROVIDER_ID = "idp-server"
 EMAIL_DOMAIN = "example.com"
 TEST_USERS_LIMIT = 500  # Number of test users per tenant for k6
+
+# Device secret defaults (matches DeviceSecretIssuer.java)
+DEVICE_SECRET_ALGORITHM = "HS256"
+DEVICE_SECRET_BYTES = 32  # HS256 minimum per OIDC Core Section 16.19
+
+
+def generate_device_secret() -> str:
+    """Generate a Base64URL-encoded random secret (no padding), matching backend RandomStringGenerator."""
+    return base64.urlsafe_b64encode(secrets.token_bytes(DEVICE_SECRET_BYTES)).rstrip(b"=").decode("ascii")
+
+
+def csv_escape_json(value: str) -> str:
+    """Escape a JSON string for CSV (FORMAT csv) field embedding."""
+    return '"' + value.replace('"', '""') + '"'
 
 
 def load_tenants(tenants_file: str) -> list:
@@ -61,8 +78,13 @@ def create_single_tenant_config(tenant_id: str, client_id: str, client_secret: s
     }]
 
 
-def generate_users(tenants: list, users_per_tenant: int, first_tenant_users: int, output_prefix: str):
-    """Generate user and device data for all tenants."""
+def generate_users(tenants: list, users_per_tenant: int, first_tenant_users: int, output_prefix: str, issue_device_secret: bool = True):
+    """Generate user and device data for all tenants.
+
+    When issue_device_secret=True, each device gets a jwt_bearer_symmetric credential
+    (matching DeviceSecretIssuer.java output) and the test users JSON includes the
+    device_secret for k6 JWT Bearer Grant scenarios.
+    """
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -129,23 +151,48 @@ def generate_users(tenants: list, users_per_tenant: int, first_tenant_users: int
                 )
                 f_users.write(user_line)
 
-                # idp_user_authentication_devices table data
+                # idp_user_authentication_devices table data (with optional jwt_bearer_symmetric credential)
+                if issue_device_secret:
+                    device_secret = generate_device_secret()
+                    credential_type = "jwt_bearer_symmetric"
+                    credential_id = str(uuid.uuid4())
+                    credential_payload_json = json.dumps(
+                        {"algorithm": DEVICE_SECRET_ALGORITHM, "secret_value": device_secret},
+                        ensure_ascii=False,
+                    )
+                    credential_metadata_json = json.dumps(
+                        {"issued_at": int(time.time() * 1000)}, ensure_ascii=False
+                    )
+                    credential_payload_escaped = csv_escape_json(credential_payload_json)
+                    credential_metadata_escaped = csv_escape_json(credential_metadata_json)
+                else:
+                    device_secret = None
+                    credential_type = ""
+                    credential_id = ""
+                    credential_payload_escaped = "{}"
+                    credential_metadata_escaped = "{}"
+
                 device_line = (
                     f"{device_id}\t{tenant_id}\t{user_sub}\tiOS 18.5\tiPhone15\tiOS\t\t"
-                    f"Test App\t1\t[]\ttest token\tfcm\n"
+                    f"Test App\t1\t[]\ttest token\tfcm\t"
+                    f"{credential_type}\t{credential_id}\t{credential_payload_escaped}\t{credential_metadata_escaped}\n"
                 )
                 f_devices.write(device_line)
 
                 # Collect test users for k6 (first N per tenant)
                 if i <= TEST_USERS_LIMIT:
-                    test_users_per_tenant[tenant_id].append({
+                    test_user = {
                         "device_id": device_id,
                         "user_id": user_sub,
                         "email": email,
                         "phone": phone,
                         "external_user_id": user_id,
-                        "provider_id": PROVIDER_ID
-                    })
+                        "provider_id": PROVIDER_ID,
+                    }
+                    if device_secret:
+                        test_user["device_secret"] = device_secret
+                        test_user["device_secret_algorithm"] = DEVICE_SECRET_ALGORITHM
+                    test_users_per_tenant[tenant_id].append(test_user)
 
                 user_count += 1
                 if user_count % 100000 == 0:
@@ -242,6 +289,12 @@ Examples:
         default=None,
         help='Output file prefix (auto-generated if not specified)'
     )
+    parser.add_argument(
+        '--no-device-secret',
+        action='store_true',
+        default=False,
+        help='Disable jwt_bearer_symmetric credential generation (default: enabled)'
+    )
 
     args = parser.parse_args()
 
@@ -274,7 +327,13 @@ Examples:
         exit(1)
 
     # Generate users
-    total = generate_users(tenants, args.users, args.first_tenant_users, args.output_prefix)
+    total = generate_users(
+        tenants,
+        args.users,
+        args.first_tenant_users,
+        args.output_prefix,
+        issue_device_secret=not args.no_device_secret,
+    )
 
     print("\n" + "=" * 60)
     print(f"Generation complete!")

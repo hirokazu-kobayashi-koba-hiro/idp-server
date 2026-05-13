@@ -111,7 +111,8 @@ echo -e "${YELLOW}Importing devices...${NC}"
 docker exec -i postgres-primary psql -U idpserver -d idpserver -c "\COPY idp_user_authentication_devices (
   id, tenant_id, user_id, os, model, platform, locale,
   app_name, priority, available_methods,
-  notification_token, notification_channel
+  notification_token, notification_channel,
+  credential_type, credential_id, credential_payload, credential_metadata
 ) FROM STDIN WITH (FORMAT csv, HEADER false, DELIMITER E'\t')" < "$DEVICES_FILE"
 
 echo -e "${GREEN}Devices imported successfully!${NC}"
