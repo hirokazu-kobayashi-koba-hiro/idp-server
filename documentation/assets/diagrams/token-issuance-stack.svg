@@ -1,0 +1,200 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 1480" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 22px; font-weight: 700; fill: #1f2328; }
+      .subtitle { font-size: 14px; fill: #57606a; }
+      .phase { font-size: 18px; font-weight: 700; fill: #ffffff; }
+      .lane-label { font-size: 14px; font-weight: 700; fill: #1f2328; text-anchor: middle; }
+      .lane-sub { font-size: 11px; fill: #57606a; text-anchor: middle; }
+      .msg { font-size: 12px; fill: #1f2328; }
+      .msg-bold { font-size: 12px; font-weight: 700; fill: #1f2328; }
+      .note { font-size: 11px; fill: #57606a; font-style: italic; }
+      .stepnum { font-size: 11px; font-weight: 700; fill: #ffffff; text-anchor: middle; }
+      .key { font-size: 10px; font-family: 'SF Mono', Menlo, Consolas, monospace; fill: #1f2328; }
+      .legend-text { font-size: 11px; fill: #1f2328; }
+    </style>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1f2328"/>
+    </marker>
+    <marker id="arr-rev" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0969da"/>
+    </marker>
+    <marker id="arr-rs" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a7f37"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="1480" fill="#f6f8fa"/>
+
+  <!-- Title -->
+  <text x="640" y="42" class="title" text-anchor="middle">FIDO-UAF anchored JWT Bearer + DPoP + Nonce — トークン発行スタック</text>
+  <text x="640" y="64" class="subtitle" text-anchor="middle">非対称鍵 (ES256, HW-backed) で sender-constrained + フィッシング耐性継承 + 1 API call / ~200ms</text>
+
+  <!-- Actors / Lanes -->
+  <g id="actors">
+    <!-- Mobile App box -->
+    <rect x="80" y="92" width="280" height="60" rx="8" fill="#0969da" stroke="#0550ae" stroke-width="1"/>
+    <text x="220" y="118" class="phase" text-anchor="middle">Mobile App</text>
+    <text x="220" y="138" class="lane-sub" fill="#ffffff" text-anchor="middle">Secure Enclave / StrongBox + FIDO-UAF SDK</text>
+
+    <!-- idp-server box -->
+    <rect x="500" y="92" width="280" height="60" rx="8" fill="#8250df" stroke="#6639ba" stroke-width="1"/>
+    <text x="640" y="118" class="phase" text-anchor="middle">idp-server</text>
+    <text x="640" y="138" class="lane-sub" fill="#ffffff" text-anchor="middle">Authorization Server</text>
+
+    <!-- Resource Server box -->
+    <rect x="920" y="92" width="280" height="60" rx="8" fill="#1a7f37" stroke="#0f5125" stroke-width="1"/>
+    <text x="1060" y="118" class="phase" text-anchor="middle">Resource Server</text>
+    <text x="1060" y="138" class="lane-sub" fill="#ffffff" text-anchor="middle">API endpoint (stateless verify)</text>
+
+    <!-- Lifelines -->
+    <line x1="220" y1="152" x2="220" y2="1440" stroke="#d0d7de" stroke-width="2" stroke-dasharray="4,4"/>
+    <line x1="640" y1="152" x2="640" y2="1440" stroke="#d0d7de" stroke-width="2" stroke-dasharray="4,4"/>
+    <line x1="1060" y1="152" x2="1060" y2="1440" stroke="#d0d7de" stroke-width="2" stroke-dasharray="4,4"/>
+  </g>
+
+  <!-- =================== PHASE 1: Registration =================== -->
+  <g id="phase-1">
+    <!-- Phase banner -->
+    <rect x="40" y="172" width="1200" height="36" rx="6" fill="#d4a72c" stroke="#8a6300" stroke-width="1"/>
+    <text x="640" y="195" class="phase" text-anchor="middle">PHASE 1: 初回登録 (Bootstrap) — FIDO-UAF anchor</text>
+
+    <!-- Step 1: FIDO-UAF auth -->
+    <circle cx="220" cy="230" r="11" fill="#d4a72c"/>
+    <text x="220" y="234" class="stepnum">1</text>
+    <text x="380" y="225" class="msg-bold">FIDO-UAF 認証実行</text>
+    <text x="380" y="240" class="note">rpId / AppID 検証 → phishing 耐性確保 / 生体認証 (UV)</text>
+
+    <!-- Step 2: keypair generation -->
+    <circle cx="220" cy="280" r="11" fill="#d4a72c"/>
+    <text x="220" y="284" class="stepnum">2</text>
+    <text x="380" y="275" class="msg-bold">ES256 鍵ペア生成 (HW)</text>
+    <text x="380" y="290" class="note">Secure Enclave / StrongBox 内で生成、private key は永遠に外に出ない</text>
+
+    <!-- Step 3: send public key + UAF assertion -->
+    <circle cx="430" cy="330" r="11" fill="#d4a72c"/>
+    <text x="430" y="334" class="stepnum">3</text>
+    <line x1="232" y1="330" x2="628" y2="330" stroke="#1f2328" stroke-width="2" marker-end="url(#arr)"/>
+    <rect x="240" y="305" width="380" height="20" rx="4" fill="#ffffff" stroke="#d4a72c"/>
+    <text x="430" y="319" class="msg" text-anchor="middle">POST /credentials/register</text>
+    <text x="430" y="354" class="key" text-anchor="middle">{ uaf_assertion, public_key (JWK) }</text>
+
+    <!-- Step 4: verify + store -->
+    <circle cx="640" cy="380" r="11" fill="#d4a72c"/>
+    <text x="640" y="384" class="stepnum">4</text>
+    <text x="640" y="375" class="msg-bold" text-anchor="middle">UAF assertion 検証 / authenticator bind</text>
+    <text x="640" y="405" class="note" text-anchor="middle">credential_type = jwt_bearer_asymmetric / linked_authenticator_id 保存</text>
+
+    <!-- Step 5: response -->
+    <circle cx="430" cy="430" r="11" fill="#d4a72c"/>
+    <text x="430" y="434" class="stepnum">5</text>
+    <line x1="628" y1="430" x2="232" y2="430" stroke="#0969da" stroke-width="2" marker-end="url(#arr-rev)"/>
+    <rect x="240" y="448" width="380" height="20" rx="4" fill="#ffffff" stroke="#0969da"/>
+    <text x="430" y="462" class="msg" text-anchor="middle">{ credential_id, registered: true }</text>
+
+    <!-- Phase summary note -->
+    <rect x="80" y="490" width="1120" height="50" rx="6" fill="#fff8c5" stroke="#d4a72c"/>
+    <text x="640" y="510" class="msg-bold" text-anchor="middle">✅ 登録完了: device は HW 鍵を保有、idp-server は公開鍵のみ保有 (DB 漏洩しても無害)</text>
+    <text x="640" y="528" class="note" text-anchor="middle">authenticator が失効すれば credential も即失効 (cascade)</text>
+  </g>
+
+  <!-- =================== PHASE 2: Token Issuance =================== -->
+  <g id="phase-2">
+    <!-- Phase banner -->
+    <rect x="40" y="560" width="1200" height="36" rx="6" fill="#8250df" stroke="#6639ba" stroke-width="1"/>
+    <text x="640" y="583" class="phase" text-anchor="middle">PHASE 2: トークン発行 — JWT Bearer + DPoP + Nonce piggyback (1 API call / ~200ms)</text>
+
+    <!-- Step 1: build JWT Bearer assertion -->
+    <circle cx="220" cy="620" r="11" fill="#8250df"/>
+    <text x="220" y="624" class="stepnum">1</text>
+    <text x="380" y="615" class="msg-bold">JWT Bearer assertion 構築 (ES256 で署名)</text>
+    <text x="380" y="630" class="key">{ iss: "device:DEV_ID", sub: DEV_ID, aud, jti, iat, exp }</text>
+
+    <!-- Step 2: build DPoP proof -->
+    <circle cx="220" cy="670" r="11" fill="#8250df"/>
+    <text x="220" y="674" class="stepnum">2</text>
+    <text x="380" y="665" class="msg-bold">DPoP proof 構築 (DPoP 鍵で署名 / 前回 nonce 同梱)</text>
+    <text x="380" y="680" class="key">{ jti, htm: "POST", htu, iat, nonce }</text>
+
+    <!-- Step 3: send -->
+    <circle cx="430" cy="720" r="11" fill="#8250df"/>
+    <text x="430" y="724" class="stepnum">3</text>
+    <line x1="232" y1="720" x2="628" y2="720" stroke="#1f2328" stroke-width="2" marker-end="url(#arr)"/>
+    <rect x="240" y="695" width="380" height="20" rx="4" fill="#ffffff" stroke="#8250df"/>
+    <text x="430" y="709" class="msg" text-anchor="middle">POST /v1/tokens (1 API call)</text>
+    <text x="430" y="744" class="key" text-anchor="middle">grant_type=jwt-bearer &amp; assertion=&lt;JWT&gt;</text>
+    <text x="430" y="758" class="key" text-anchor="middle">Header: DPoP: &lt;proof&gt;</text>
+
+    <!-- Step 4: verify everything -->
+    <circle cx="640" cy="800" r="11" fill="#8250df"/>
+    <text x="640" y="804" class="stepnum">4</text>
+    <text x="640" y="795" class="msg-bold" text-anchor="middle">統合検証</text>
+    <g transform="translate(450,810)">
+      <rect x="0" y="0" width="380" height="80" rx="4" fill="#ffffff" stroke="#8250df"/>
+      <text x="10" y="16" class="msg">① 公開鍵で JWT Bearer assertion 署名検証</text>
+      <text x="10" y="32" class="msg">② DPoP proof 署名 + htm/htu/jti/iat 検証</text>
+      <text x="10" y="48" class="msg">③ DPoP nonce 検証 (サーバ署名 / 鮮度)</text>
+      <text x="10" y="64" class="msg">④ AT / RT を DPoP 公開鍵に bind (jkt)</text>
+      <text x="10" y="78" class="key" fill="#8250df">→ sender-constrained tokens 発行</text>
+    </g>
+
+    <!-- Step 5: response with new nonce piggyback -->
+    <circle cx="430" cy="920" r="11" fill="#8250df"/>
+    <text x="430" y="924" class="stepnum">5</text>
+    <line x1="628" y1="920" x2="232" y2="920" stroke="#0969da" stroke-width="2" marker-end="url(#arr-rev)"/>
+    <rect x="240" y="938" width="380" height="20" rx="4" fill="#ffffff" stroke="#0969da"/>
+    <text x="430" y="952" class="msg" text-anchor="middle">200 OK + DPoP-Nonce: &lt;next-nonce&gt; (piggyback)</text>
+    <text x="430" y="975" class="key" text-anchor="middle">{ access_token (DPoP-bound), refresh_token, expires_in }</text>
+
+    <!-- Phase summary -->
+    <rect x="80" y="996" width="1120" height="50" rx="6" fill="#f1eafb" stroke="#8250df"/>
+    <text x="640" y="1016" class="msg-bold" text-anchor="middle">✅ 1 RT 完結 / nonce piggyback で 0 RT 追加 / 全防御層動作</text>
+    <text x="640" y="1034" class="note" text-anchor="middle">秘密はネットワークに出ず、AT/RT は DPoP 鍵にバインド (盗難単体で無効)</text>
+  </g>
+
+  <!-- =================== PHASE 3: API Access =================== -->
+  <g id="phase-3">
+    <!-- Phase banner -->
+    <rect x="40" y="1066" width="1200" height="36" rx="6" fill="#1a7f37" stroke="#0f5125" stroke-width="1"/>
+    <text x="640" y="1089" class="phase" text-anchor="middle">PHASE 3: API アクセス — DPoP-bound Access Token (毎リクエスト proof)</text>
+
+    <!-- Step 1: build DPoP proof for RS -->
+    <circle cx="220" cy="1130" r="11" fill="#1a7f37"/>
+    <text x="220" y="1134" class="stepnum">1</text>
+    <text x="380" y="1125" class="msg-bold">DPoP proof (RS 向け) 構築 / htu = RS URL</text>
+    <text x="380" y="1140" class="key">{ jti, htm: "GET", htu: "https://rs/...", iat, nonce, ath }</text>
+
+    <!-- Step 2: call API -->
+    <circle cx="640" cy="1180" r="11" fill="#1a7f37"/>
+    <text x="640" y="1184" class="stepnum">2</text>
+    <line x1="232" y1="1180" x2="1048" y2="1180" stroke="#1f2328" stroke-width="2" marker-end="url(#arr)"/>
+    <rect x="320" y="1155" width="640" height="20" rx="4" fill="#ffffff" stroke="#1a7f37"/>
+    <text x="640" y="1169" class="msg" text-anchor="middle">GET /api/resource</text>
+    <text x="640" y="1204" class="key" text-anchor="middle">Authorization: DPoP &lt;access_token&gt; / DPoP: &lt;proof&gt;</text>
+
+    <!-- Step 3: verify at RS -->
+    <circle cx="1060" cy="1240" r="11" fill="#1a7f37"/>
+    <text x="1060" y="1244" class="stepnum">3</text>
+    <g transform="translate(870,1255)">
+      <rect x="0" y="0" width="380" height="80" rx="4" fill="#ffffff" stroke="#1a7f37"/>
+      <text x="10" y="16" class="msg">① JWKS で AT (JWT) 署名検証 (ステートレス)</text>
+      <text x="10" y="32" class="msg">② DPoP proof 検証 (htm/htu/nonce 含む)</text>
+      <text x="10" y="48" class="msg">③ AT の jkt と DPoP 公開鍵が一致するか</text>
+      <text x="10" y="64" class="msg">④ ath = SHA256(AT) 一致を検証 (RFC 9449 §7)</text>
+      <text x="10" y="78" class="key" fill="#1a7f37">→ 全部通れば API 応答</text>
+    </g>
+
+    <!-- Step 4: response -->
+    <circle cx="640" cy="1365" r="11" fill="#1a7f37"/>
+    <text x="640" y="1369" class="stepnum">4</text>
+    <line x1="1048" y1="1365" x2="232" y2="1365" stroke="#1a7f37" stroke-width="2" marker-end="url(#arr-rs)"/>
+    <rect x="320" y="1383" width="640" height="20" rx="4" fill="#ffffff" stroke="#1a7f37"/>
+    <text x="640" y="1397" class="msg" text-anchor="middle">200 OK + DPoP-Nonce: &lt;next-nonce&gt; (RS 独自 nonce)</text>
+
+    <!-- Phase summary -->
+    <rect x="80" y="1410" width="1120" height="50" rx="6" fill="#dafbe1" stroke="#1a7f37"/>
+    <text x="640" y="1430" class="msg-bold" text-anchor="middle">✅ AT 盗難単体では使えない (DPoP 鍵必須) / リプレイも nonce で完封</text>
+    <text x="640" y="1448" class="note" text-anchor="middle">RS は JWKS のみで stateless 検証 → DB ヒットなし、爆速応答</text>
+  </g>
+</svg>
