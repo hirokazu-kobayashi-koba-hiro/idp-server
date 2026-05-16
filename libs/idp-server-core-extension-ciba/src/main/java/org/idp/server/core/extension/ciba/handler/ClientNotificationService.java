@@ -81,6 +81,7 @@ public class ClientNotificationService implements RefreshTokenCreatable {
     if (backchannelAuthenticationRequest.isPushMode()) {
       AccessToken accessToken =
           accessTokenCreator.create(
+              tenant,
               cibaGrant.authorizationGrant(),
               authorizationServerConfiguration,
               clientConfiguration,

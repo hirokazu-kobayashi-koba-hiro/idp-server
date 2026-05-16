@@ -41,10 +41,12 @@ import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
 import org.idp.server.core.openid.oauth.type.oauth.*;
 import org.idp.server.core.openid.oauth.type.oidc.ResponseMode;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /** OAuthAuthorizeContext */
 public class OAuthAuthorizeContext implements ResponseModeDecidable {
+  Tenant tenant;
   AuthorizationRequest authorizationRequest;
   User user;
   Authentication authentication;
@@ -56,6 +58,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
   public OAuthAuthorizeContext() {}
 
   public OAuthAuthorizeContext(
+      Tenant tenant,
       AuthorizationRequest authorizationRequest,
       User user,
       Authentication authentication,
@@ -63,6 +66,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
       DeniedScopes deniedScopes,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
+    this.tenant = tenant;
     this.authorizationRequest = authorizationRequest;
     this.user = user;
     this.authentication = authentication;
@@ -70,6 +74,10 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     this.deniedScopes = deniedScopes;
     this.clientConfiguration = clientConfiguration;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
+  }
+
+  public Tenant tenant() {
+    return tenant;
   }
 
   public AuthorizationRequest authorizationRequest() {

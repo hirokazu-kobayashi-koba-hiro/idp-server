@@ -110,6 +110,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
 
     AccessToken accessToken =
         accessTokenCreator.create(
+            tenant,
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,

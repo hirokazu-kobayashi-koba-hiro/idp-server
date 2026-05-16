@@ -255,6 +255,19 @@ JWTの`sub`クレームからユーザーを解決する方法を設定できま
 
 JWTの場合、ペイロードに `iss`, `sub`, `scope`, `client_id`, `exp` 等が含まれる。JWKSエンドポイント（`/v1/jwks`）で公開鍵を取得して署名検証する。Introspectionも引き続き動作する。
 
+### カスタムクレームの扱いの違い
+
+`AccessTokenCustomClaimsCreator` で追加されたカスタムクレーム（`claims:*` スコープマッピング、verified_claims等）は、ATタイプによって格納先が異なる。
+
+| タイプ | ATの値に含まれるか | DBに保存 | Introspectionで返却 | セキュリティ |
+|-------|-------------------|---------|-------------------|------------|
+| opaque | **含まれない** | ✅ `AccessTokenCustomClaims` として保存 | ✅ | クレームが露出しない |
+| JWT | **JWTペイロードに平文で含まれる** | ✅ | ✅ | ATを持つ者がクレームを読める |
+
+**実装**: `AccessTokenCreator.issueAccessToken()` で `AccessTokenPayloadBuilder` にカスタムクレームを追加。opaque型の場合は `AccessTokenEntity` がランダム文字列になるためペイロードはATの値に含まれないが、`AccessTokenCustomClaims` としてDBに保存される。
+
+**セキュリティ上の注意**: 機密情報（外部IdPトークン等）をカスタムクレームに含める場合、JWT ATでは平文で露出するため、opaque ATを使用するかJWEで暗号化する必要がある。
+
 ## リフレッシュトークン戦略
 
 `RefreshTokenCreatable` が以下の4パターンで動作する。

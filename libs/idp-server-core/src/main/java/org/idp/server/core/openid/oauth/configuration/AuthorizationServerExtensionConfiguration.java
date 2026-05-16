@@ -51,6 +51,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   boolean accessTokenSelectiveUserCustomProperties = false;
   boolean accessTokenVerifiedClaims = false;
   boolean accessTokenSelectiveVerifiedClaims = false;
+  boolean accessTokenSsoCredentials = false;
 
   public AuthorizationServerExtensionConfiguration() {}
 
@@ -182,6 +183,10 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return accessTokenSelectiveVerifiedClaims;
   }
 
+  public boolean enabledAccessTokenSsoCredentials() {
+    return accessTokenSsoCredentials;
+  }
+
   public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {
     return new AuthenticationInteractionType(defaultCibaAuthenticationInteractionType);
   }
@@ -218,6 +223,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
         "access_token_selective_user_custom_properties", accessTokenSelectiveUserCustomProperties);
     map.put("access_token_verified_claims", accessTokenVerifiedClaims);
     map.put("access_token_selective_verified_claims", accessTokenSelectiveVerifiedClaims);
+    map.put("access_token_sso_credentials", accessTokenSsoCredentials);
     return map;
   }
 }

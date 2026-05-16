@@ -25,6 +25,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class ScopeMappingCustomClaimsCreator implements AccessTokenCustomClaimsCreator {
 
@@ -32,6 +33,7 @@ public class ScopeMappingCustomClaimsCreator implements AccessTokenCustomClaimsC
 
   @Override
   public boolean shouldCreate(
+      Tenant tenant,
       AuthorizationGrant authorizationGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
@@ -46,6 +48,7 @@ public class ScopeMappingCustomClaimsCreator implements AccessTokenCustomClaimsC
 
   @Override
   public Map<String, Object> create(
+      Tenant tenant,
       AuthorizationGrant authorizationGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,

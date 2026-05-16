@@ -44,6 +44,7 @@ public class AuthorizationResponseTokenCreator
 
     AccessToken accessToken =
         accessTokenCreator.create(
+            context.tenant(),
             authorizationGrant,
             context.serverConfiguration(),
             context.clientConfiguration(),

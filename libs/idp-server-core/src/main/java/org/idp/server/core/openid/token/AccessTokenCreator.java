@@ -34,10 +34,12 @@ import org.idp.server.core.openid.oauth.type.oauth.ExpiresIn;
 import org.idp.server.core.openid.oauth.type.oauth.TokenType;
 import org.idp.server.core.openid.token.plugin.AccessTokenCustomClaimsCreators;
 import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebKeyInvalidException;
 import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebSignatureFactory;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.random.RandomStringGenerator;
 
 /**
@@ -62,11 +64,16 @@ public class AccessTokenCreator {
     return INSTANCE;
   }
 
+  public static void initialize(ApplicationComponentDependencyContainer container) {
+    INSTANCE.customClaimsCreators = new AccessTokenCustomClaimsCreators(container);
+  }
+
   private AccessTokenCreator() {
     this.customClaimsCreators = new AccessTokenCustomClaimsCreators();
   }
 
   public AccessToken create(
+      Tenant tenant,
       AuthorizationGrant authorizationGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
@@ -84,6 +91,7 @@ public class AccessTokenCreator {
       ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(accessTokenDuration));
 
       return issueAccessToken(
+          tenant,
           authorizationGrant,
           authorizationServerConfiguration,
           clientConfiguration,
@@ -97,6 +105,7 @@ public class AccessTokenCreator {
   }
 
   public AccessToken refresh(
+      Tenant tenant,
       AccessToken oldAccessToken,
       AuthorizationGrant authorizationGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
@@ -115,6 +124,7 @@ public class AccessTokenCreator {
       ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(accessTokenDuration));
 
       return issueAccessToken(
+          tenant,
           authorizationGrant,
           authorizationServerConfiguration,
           clientConfiguration,
@@ -128,6 +138,7 @@ public class AccessTokenCreator {
   }
 
   private AccessToken issueAccessToken(
+      Tenant tenant,
       AuthorizationGrant authorizationGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
@@ -142,6 +153,7 @@ public class AccessTokenCreator {
     // This prevents custom claims from overwriting standard JWT claims (sub, iss, client_id, etc.)
     Map<String, Object> customClaims =
         customClaimsCreators.create(
+            tenant,
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,

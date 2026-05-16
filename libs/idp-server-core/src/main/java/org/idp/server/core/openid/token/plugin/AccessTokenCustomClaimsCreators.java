@@ -25,7 +25,9 @@ import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.Cl
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.plugin.token.AccessTokenCustomClaimsCreationPluginLoader;
+import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class AccessTokenCustomClaimsCreators {
 
@@ -38,7 +40,15 @@ public class AccessTokenCustomClaimsCreators {
     creators.addAll(AccessTokenCustomClaimsCreationPluginLoader.load());
   }
 
+  public AccessTokenCustomClaimsCreators(ApplicationComponentDependencyContainer container) {
+    this.creators = new ArrayList<>();
+    this.creators.add(new ScopeMappingCustomClaimsCreator());
+    creators.addAll(AccessTokenCustomClaimsCreationPluginLoader.load());
+    creators.addAll(AccessTokenCustomClaimsCreationPluginLoader.loadWithFactory(container));
+  }
+
   public Map<String, Object> create(
+      Tenant tenant,
       AuthorizationGrant authorizationGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
@@ -48,6 +58,7 @@ public class AccessTokenCustomClaimsCreators {
     creators.forEach(
         creator -> {
           if (creator.shouldCreate(
+              tenant,
               authorizationGrant,
               authorizationServerConfiguration,
               clientConfiguration,
@@ -55,6 +66,7 @@ public class AccessTokenCustomClaimsCreators {
             log.debug("Execute AccessTokenCustomClaimsCreators : {}", creator.getClass().getName());
             Map<String, Object> claims =
                 creator.create(
+                    tenant,
                     authorizationGrant,
                     authorizationServerConfiguration,
                     clientConfiguration,

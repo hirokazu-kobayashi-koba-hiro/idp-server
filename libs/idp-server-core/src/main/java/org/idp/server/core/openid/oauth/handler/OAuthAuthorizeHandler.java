@@ -102,6 +102,7 @@ public class OAuthAuthorizeHandler {
 
     OAuthAuthorizeContext context =
         new OAuthAuthorizeContext(
+            tenant,
             authorizationRequest,
             user,
             authentication,

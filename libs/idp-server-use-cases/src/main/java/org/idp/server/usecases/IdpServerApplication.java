@@ -309,6 +309,7 @@ public class IdpServerApplication {
     dependencyContainer.register(DatabaseTypeConfiguration.class, databaseTypeConfig);
     ApplicationComponentContainer applicationComponentContainer =
         ApplicationComponentContainerPluginLoader.load(dependencyContainer);
+    AccessTokenCreator.initialize(dependencyContainer);
     applicationComponentContainer.register(SessionCookieDelegate.class, sessionCookieDelegate);
     applicationComponentContainer.register(
         AuthSessionCookieDelegate.class, authSessionCookieDelegate);
