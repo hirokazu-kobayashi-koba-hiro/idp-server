@@ -25,7 +25,10 @@ dependencies {
 	runtimeOnly 'com.mysql:mysql-connector-j:9.2.0'
 	implementation 'com.zaxxer:HikariCP:6.3.0'
 	//cache
-	implementation("redis.clients:jedis:5.1.0")
+	implementation("redis.clients:jedis:5.1.0") {
+		// org.json はライセンス審査の観点で transitive 取り込みを避ける (Public Domain 表記の不確実性)
+		exclude group: 'org.json', module: 'json'
+	}
 
 	testImplementation platform('org.junit:junit-bom:5.10.0')
 	testImplementation 'org.junit.jupiter:junit-jupiter'

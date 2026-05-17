@@ -14,7 +14,10 @@ repositories {
 dependencies {
 	//json (Jackson 3: java.time support is built-in, no separate jsr310 module needed)
 	implementation 'tools.jackson.core:jackson-databind:3.1.2'
-	implementation 'com.jayway.jsonpath:json-path:2.9.0'
+	implementation('com.jayway.jsonpath:json-path:2.9.0') {
+		// org.json はライセンス審査の観点で transitive 取り込みを避ける (Public Domain 表記の不確実性)
+		exclude group: 'org.json', module: 'json'
+	}
 	//jose
 	implementation 'com.nimbusds:nimbus-jose-jwt:9.40'
 	// BouncyCastle for PEM key parsing
