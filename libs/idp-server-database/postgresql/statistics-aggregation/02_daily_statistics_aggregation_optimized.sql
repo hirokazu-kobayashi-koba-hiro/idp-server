@@ -77,18 +77,36 @@ BEGIN
     CREATE INDEX ON tmp_tenant_tz (tenant_id);
 
     -- =====================================================
-    -- Step 1: Aggregate event counts into statistics_events
+    -- Step 0: Clear existing bucket-distributed rows for the target date
+    --
+    -- statistics_event_buckets (Issue #1443) scatters real-time UPSERTs
+    -- across bucket_id [0, N). To overwrite with the authoritative
+    -- absolute count from security_event we must first remove any
+    -- partial counts that may sit in buckets != 0; then Step 1 / Step 5
+    -- write the total into bucket_id = 0.
+    --
+    -- Assumption: this function is run for COMPLETED days
+    -- (default = CURRENT_DATE - 1). Real-time writes are not expected
+    -- on the target date, so the DELETE → INSERT window is race-free.
+    -- =====================================================
+    DELETE FROM statistics_event_buckets
+    WHERE stat_date = p_target_date
+      AND tenant_id IN (SELECT tenant_id FROM tmp_tenant_tz);
+
+    -- =====================================================
+    -- Step 1: Aggregate event counts into statistics_event_buckets (bucket 0)
     --
     -- All event types are counted (no filtering).
     -- The app-layer (SecurityEventHandler) excluded inspect_token_success
     -- to reduce real-time UPSERT lock contention, but in batch mode
     -- there is no cost difference since we COUNT(*) the entire day at once.
     -- =====================================================
-    INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
+    INSERT INTO statistics_event_buckets (tenant_id, stat_date, event_type, bucket_id, count)
     SELECT
         ev.tenant_id,
         p_target_date,
         ev.type,
+        0,
         COUNT(*)
     FROM security_event ev
     JOIN tmp_tenant_tz tt ON ev.tenant_id = tt.tenant_id
@@ -97,12 +115,12 @@ BEGIN
       AND ev.created_at >= tr.utc_start
       AND ev.created_at < tr.utc_end
     GROUP BY ev.tenant_id, ev.type
-    ON CONFLICT (tenant_id, stat_date, event_type)
+    ON CONFLICT (tenant_id, stat_date, event_type, bucket_id)
     DO UPDATE SET count = EXCLUDED.count,
                   updated_at = CURRENT_TIMESTAMP;
 
     GET DIAGNOSTICS v_count = ROW_COUNT;
-    step := 'statistics_events';
+    step := 'statistics_event_buckets';
     rows_affected := v_count;
     RETURN NEXT;
 
@@ -199,28 +217,28 @@ BEGIN
     RETURN NEXT;
 
     -- =====================================================
-    -- Step 5: Aggregate DAU/MAU/YAU counts into statistics_events
+    -- Step 5: Aggregate DAU/MAU/YAU counts into statistics_event_buckets (bucket 0)
     -- =====================================================
-    INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
-    SELECT tenant_id, p_target_date, 'dau', COUNT(DISTINCT user_id)
+    INSERT INTO statistics_event_buckets (tenant_id, stat_date, event_type, bucket_id, count)
+    SELECT tenant_id, p_target_date, 'dau', 0, COUNT(DISTINCT user_id)
     FROM statistics_daily_users
     WHERE stat_date = p_target_date
     GROUP BY tenant_id
-    ON CONFLICT (tenant_id, stat_date, event_type)
+    ON CONFLICT (tenant_id, stat_date, event_type, bucket_id)
     DO UPDATE SET count = EXCLUDED.count,
                   updated_at = CURRENT_TIMESTAMP;
 
-    INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
-    SELECT tenant_id, p_target_date, 'mau', COUNT(DISTINCT user_id)
+    INSERT INTO statistics_event_buckets (tenant_id, stat_date, event_type, bucket_id, count)
+    SELECT tenant_id, p_target_date, 'mau', 0, COUNT(DISTINCT user_id)
     FROM statistics_monthly_users
     WHERE stat_month = DATE_TRUNC('month', p_target_date)::date
     GROUP BY tenant_id
-    ON CONFLICT (tenant_id, stat_date, event_type)
+    ON CONFLICT (tenant_id, stat_date, event_type, bucket_id)
     DO UPDATE SET count = EXCLUDED.count,
                   updated_at = CURRENT_TIMESTAMP;
 
-    INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
-    SELECT yu.tenant_id, p_target_date, 'yau', COUNT(DISTINCT yu.user_id)
+    INSERT INTO statistics_event_buckets (tenant_id, stat_date, event_type, bucket_id, count)
+    SELECT yu.tenant_id, p_target_date, 'yau', 0, COUNT(DISTINCT yu.user_id)
     FROM statistics_yearly_users yu
     JOIN tmp_tenant_tz tt ON yu.tenant_id = tt.tenant_id
     WHERE yu.stat_year = CASE
@@ -229,12 +247,12 @@ BEGIN
             ELSE MAKE_DATE(EXTRACT(YEAR FROM p_target_date)::int, tt.fiscal_month, 1)
         END
     GROUP BY yu.tenant_id
-    ON CONFLICT (tenant_id, stat_date, event_type)
+    ON CONFLICT (tenant_id, stat_date, event_type, bucket_id)
     DO UPDATE SET count = EXCLUDED.count,
                   updated_at = CURRENT_TIMESTAMP;
 
     GET DIAGNOSTICS v_count = ROW_COUNT;
-    step := 'statistics_events_dau_mau_yau';
+    step := 'statistics_event_buckets_dau_mau_yau';
     rows_affected := v_count;
     RETURN NEXT;
 
