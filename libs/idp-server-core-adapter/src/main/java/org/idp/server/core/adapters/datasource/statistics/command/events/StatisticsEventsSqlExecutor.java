@@ -24,7 +24,10 @@ import org.idp.server.platform.statistics.StatisticsEventRecord;
 /**
  * SQL executor interface for statistics events operations.
  *
- * <p>Implementations provide database-specific upsert operations for the statistics_events table.
+ * <p>Implementations provide database-specific upsert operations for the statistics_event_buckets
+ * table (Issue #1443). Each UPSERT picks a bucket_id to scatter writes across N rows per logical
+ * key (tenant_id, stat_date, event_type), eliminating hot-row lock contention. Reads aggregate with
+ * SUM(count) GROUP BY (tenant_id, stat_date, event_type).
  */
 public interface StatisticsEventsSqlExecutor {
 

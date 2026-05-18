@@ -27,8 +27,8 @@ import org.idp.server.platform.statistics.TenantYearlyStatisticsIdentifier;
 /**
  * Converts aggregated statistics data from SqlExecutor to TenantYearlyStatistics domain model.
  *
- * <p>The SqlExecutor already performs aggregation from statistics_events table, so this class only
- * handles the domain conversion.
+ * <p>The SqlExecutor already performs aggregation from statistics_event_buckets table, so this
+ * class only handles the domain conversion.
  */
 public class ModelConvertor {
 
