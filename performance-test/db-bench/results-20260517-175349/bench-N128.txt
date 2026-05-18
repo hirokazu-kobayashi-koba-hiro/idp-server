@@ -1,0 +1,12 @@
+
+=== bench: threads=100 ops/thread=200 strategy=random buckets=128 ===
+  → target row(s) cleared
+
+  RESULT:
+    elapsed:       1.92 s
+    ops total:  20000 / expected 20000
+    SUM count:  20000 / expected 20000  (OK)
+    rows:       128  (active bucket count)
+    errors:     0
+    ops/sec:     10420.1
+    latency:    avg=   7.0ms  p50=   5.3ms  p95=  14.7ms  p99=  45.0ms  max= 291.6ms

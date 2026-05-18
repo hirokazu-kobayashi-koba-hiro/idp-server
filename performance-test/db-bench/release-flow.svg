@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1080" font-family="-apple-system, 'Hiragino Sans', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <linearGradient id="gradOld" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f3f4f6"/>
+      <stop offset="100%" stop-color="#e5e7eb"/>
+    </linearGradient>
+    <linearGradient id="gradNew" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#dbeafe"/>
+      <stop offset="100%" stop-color="#bfdbfe"/>
+    </linearGradient>
+    <linearGradient id="gradDone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#dcfce7"/>
+      <stop offset="100%" stop-color="#bbf7d0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="480" y="36" text-anchor="middle" font-size="22" font-weight="700" fill="#0f172a">
+    statistics_event_buckets 新設リリース手順
+  </text>
+  <text x="480" y="60" text-anchor="middle" font-size="13" fill="#64748b">
+    Issue #1443 / 既存テーブル無変更・新テーブル新設 + 後追いデータ移行で実質無停止リリース
+  </text>
+
+  <!-- ============== Phase 0 ============== -->
+  <g transform="translate(40, 90)">
+    <rect width="880" height="180" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <circle cx="36" cy="36" r="20" fill="#2563eb"/>
+    <text x="36" y="42" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">0</text>
+    <text x="72" y="34" font-size="17" font-weight="700" fill="#0f172a">コード変更 (PR マージ)</text>
+    <text x="72" y="54" font-size="12" fill="#64748b">新テーブル statistics_event_buckets を新設、書込み/読込みの参照先を新テーブルに切替</text>
+
+    <!-- DB column -->
+    <text x="32" y="92" font-size="13" font-weight="700" fill="#1e293b">DB スキーマ</text>
+    <g transform="translate(30, 102)">
+      <rect width="220" height="60" rx="6" fill="url(#gradOld)" stroke="#9ca3af"/>
+      <text x="110" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#374151">statistics_events</text>
+      <text x="110" y="42" text-anchor="middle" font-size="11" fill="#475569">変更なし (旧テーブルそのまま)</text>
+    </g>
+
+    <!-- App column -->
+    <text x="290" y="92" font-size="13" font-weight="700" fill="#1e293b">アプリ Pod</text>
+    <g transform="translate(290, 102)">
+      <rect width="200" height="60" rx="6" fill="url(#gradOld)" stroke="#9ca3af"/>
+      <text x="100" y="24" text-anchor="middle" font-size="12" font-weight="700" fill="#374151">旧バージョン稼働中</text>
+      <text x="100" y="44" text-anchor="middle" font-size="11" fill="#475569">(まだデプロイしない)</text>
+    </g>
+
+    <!-- Change column -->
+    <text x="530" y="92" font-size="13" font-weight="700" fill="#1e293b">変更内容</text>
+    <g transform="translate(530, 102)">
+      <rect width="320" height="60" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
+      <text x="12" y="22" font-size="11" fill="#92400e">Flyway: CREATE TABLE statistics_event_buckets</text>
+      <text x="12" y="38" font-size="11" fill="#92400e">Code:   書込み/読込みの参照先を新テーブルへ</text>
+      <text x="12" y="54" font-size="11" fill="#92400e">        バケットID分散 UPSERT を有効化</text>
+    </g>
+  </g>
+
+  <!-- arrow 0->1 -->
+  <line x1="480" y1="278" x2="480" y2="304" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ============== Phase 1 ============== -->
+  <g transform="translate(40, 312)">
+    <rect width="880" height="220" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <circle cx="36" cy="36" r="20" fill="#2563eb"/>
+    <text x="36" y="42" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">1</text>
+    <text x="72" y="34" font-size="17" font-weight="700" fill="#0f172a">デプロイ実行 (ローリング)</text>
+    <text x="72" y="54" font-size="12" fill="#64748b">Flyway で新テーブル作成、Pod を順次入れ替え。旧/新テーブルが並存する過渡期</text>
+
+    <!-- DB column -->
+    <text x="32" y="92" font-size="13" font-weight="700" fill="#1e293b">DB</text>
+    <g transform="translate(30, 102)">
+      <rect width="220" height="100" rx="6" fill="#fff" stroke="#9ca3af" stroke-dasharray="4,2"/>
+      <rect x="10" y="10" width="200" height="36" rx="4" fill="url(#gradOld)" stroke="#9ca3af"/>
+      <text x="110" y="26" text-anchor="middle" font-size="11" font-weight="700" fill="#374151">statistics_events</text>
+      <text x="110" y="40" text-anchor="middle" font-size="10" fill="#475569">旧Podが書込み中</text>
+      <rect x="10" y="54" width="200" height="36" rx="4" fill="url(#gradNew)" stroke="#2563eb"/>
+      <text x="110" y="70" text-anchor="middle" font-size="11" font-weight="700" fill="#1e3a8a">statistics_event_buckets</text>
+      <text x="110" y="84" text-anchor="middle" font-size="10" fill="#1e40af">新Podが書込み中 (bucket分散)</text>
+    </g>
+
+    <!-- App column -->
+    <text x="290" y="92" font-size="13" font-weight="700" fill="#1e293b">アプリ Pod (混在期)</text>
+    <g transform="translate(290, 102)">
+      <rect width="200" height="60" rx="6" fill="#fff" stroke="#9ca3af" stroke-dasharray="4,2"/>
+      <rect x="10" y="18" width="80" height="28" rx="4" fill="url(#gradOld)" stroke="#9ca3af"/>
+      <text x="50" y="36" text-anchor="middle" font-size="11" fill="#374151">旧 Pod</text>
+      <text x="100" y="36" text-anchor="middle" font-size="14" fill="#475569">⇄</text>
+      <rect x="110" y="18" width="80" height="28" rx="4" fill="url(#gradNew)" stroke="#2563eb"/>
+      <text x="150" y="36" text-anchor="middle" font-size="11" fill="#1e3a8a">新 Pod</text>
+    </g>
+
+    <!-- Behavior column -->
+    <text x="530" y="92" font-size="13" font-weight="700" fill="#1e293b">挙動</text>
+    <g transform="translate(530, 102)">
+      <rect width="320" height="100" rx="6" fill="#f0f9ff" stroke="#0284c7"/>
+      <text x="12" y="20" font-size="11" font-weight="700" fill="#15803d">書込み: 旧Pod / 新Pod ともに成功</text>
+      <text x="12" y="36" font-size="10" fill="#0c4a6e">旧Pod → statistics_events、新Pod → 新テーブル</text>
+      <text x="12" y="50" font-size="10" fill="#0c4a6e">テーブル分離で衝突なし、ロールバックも個別不要</text>
+      <line x1="12" y1="60" x2="308" y2="60" stroke="#cbd5e1"/>
+      <text x="12" y="78" font-size="11" font-weight="700" fill="#92400e">読込み: 新テーブルのみ参照</text>
+      <text x="12" y="94" font-size="10" fill="#7f1d1d">→ 過渡期は管理APIの数値が一時的に薄い</text>
+    </g>
+  </g>
+
+  <!-- arrow 1->2 -->
+  <line x1="480" y1="540" x2="480" y2="566" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ============== Phase 2 ============== -->
+  <g transform="translate(40, 574)">
+    <rect width="880" height="220" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <circle cx="36" cy="36" r="20" fill="#d97706"/>
+    <text x="36" y="42" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">2</text>
+    <text x="72" y="34" font-size="17" font-weight="700" fill="#0f172a">データ移行スクリプト実行 (手動)</text>
+    <text x="72" y="54" font-size="12" fill="#64748b">ローリング完了後、旧テーブルの全行を新テーブルへ加算マージ。バッチ集計関数は使わない</text>
+
+    <!-- DB column -->
+    <text x="32" y="92" font-size="13" font-weight="700" fill="#1e293b">SQL</text>
+    <g transform="translate(30, 102)">
+      <rect width="380" height="100" rx="6" fill="#fffbeb" stroke="#d97706"/>
+      <text x="10" y="20" font-size="10" font-family="monospace" fill="#92400e">INSERT INTO statistics_event_buckets</text>
+      <text x="10" y="34" font-size="10" font-family="monospace" fill="#92400e">    (tenant_id, stat_date, event_type, bucket_id, count, ...)</text>
+      <text x="10" y="48" font-size="10" font-family="monospace" fill="#92400e">SELECT tenant_id, stat_date, event_type, 0, count, ...</text>
+      <text x="10" y="62" font-size="10" font-family="monospace" fill="#92400e">FROM statistics_events</text>
+      <text x="10" y="76" font-size="10" font-family="monospace" fill="#92400e">ON CONFLICT (...) DO UPDATE SET</text>
+      <text x="10" y="90" font-size="10" font-family="monospace" fill="#92400e">    count = bucket.count + EXCLUDED.count;</text>
+    </g>
+
+    <!-- Result column -->
+    <text x="450" y="92" font-size="13" font-weight="700" fill="#1e293b">結果</text>
+    <g transform="translate(450, 102)">
+      <rect width="400" height="100" rx="6" fill="#f0f9ff" stroke="#0284c7"/>
+      <text x="12" y="20" font-size="11" font-weight="700" fill="#0c4a6e">過去日付:</text>
+      <text x="12" y="36" font-size="10" fill="#0c4a6e">新テーブル空 → 旧の count をそのまま bucket_0 にコピー</text>
+      <line x1="12" y1="46" x2="388" y2="46" stroke="#cbd5e1"/>
+      <text x="12" y="62" font-size="11" font-weight="700" fill="#0c4a6e">当日:</text>
+      <text x="12" y="78" font-size="10" fill="#0c4a6e">既存の新Pod書込みに、旧Pod書込みを加算マージ</text>
+      <text x="12" y="92" font-size="10" font-weight="700" fill="#15803d">→ 旧+新の真の累計に統合</text>
+    </g>
+  </g>
+
+  <!-- arrow 2->3 -->
+  <line x1="480" y1="802" x2="480" y2="828" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ============== Done ============== -->
+  <g transform="translate(40, 836)">
+    <rect width="880" height="170" rx="12" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+    <circle cx="36" cy="36" r="20" fill="#16a34a"/>
+    <text x="36" y="42" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">✓</text>
+    <text x="72" y="34" font-size="17" font-weight="700" fill="#0f172a">完了 — バケット分散有効化</text>
+    <text x="72" y="54" font-size="12" fill="#64748b">ホット行コンテンション解消、CIBA で UPSERT 平均 91倍速 (69ms → 0.76ms)</text>
+
+    <!-- Final state -->
+    <g transform="translate(30, 78)">
+      <rect width="820" height="78" rx="6" fill="url(#gradDone)" stroke="#16a34a"/>
+      <text x="20" y="22" font-size="12" font-weight="700" fill="#14532d">DB</text>
+      <text x="20" y="40" font-size="11" fill="#166534">statistics_event_buckets (4カラムPK、bucket分散)</text>
+      <text x="20" y="56" font-size="11" fill="#166534">statistics_events (旧、バックアップ扱いで残存)</text>
+
+      <text x="500" y="22" font-size="12" font-weight="700" fill="#14532d">App</text>
+      <text x="500" y="40" font-size="11" fill="#166534">読み書きとも statistics_event_buckets を使用</text>
+      <text x="500" y="56" font-size="11" fill="#166534">将来 PR2 で旧テーブル DROP + バッチ関数移行</text>
+    </g>
+  </g>
+
+  <!-- Footer legend -->
+  <g transform="translate(40, 1024)">
+    <rect width="880" height="48" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+    <text x="20" y="22" font-size="11" fill="#334155">• 既存 statistics_events に DDL を一切かけないので、PK swap や ADD COLUMN 由来のロック停止が発生しない</text>
+    <text x="20" y="38" font-size="11" fill="#334155">• 旧/新テーブルでデータ領域が分離されており、旧Pod の書込みが新コードでエラーになる過渡期問題が起きない</text>
+  </g>
+</svg>
