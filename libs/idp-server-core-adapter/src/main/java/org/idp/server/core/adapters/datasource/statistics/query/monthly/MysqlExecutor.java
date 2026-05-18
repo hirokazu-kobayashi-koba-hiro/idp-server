@@ -36,13 +36,20 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
       TenantIdentifier tenantId, LocalDate fromDate, LocalDate toDate) {
 
     SqlExecutor sqlExecutor = new SqlExecutor();
+    // Bucket distribution (Issue #1443): aggregate write-side shards back into a single
+    // row per (stat_date, event_type) for downstream consumers.
     String sql =
         """
-            SELECT stat_date, event_type, count, created_at, updated_at
-            FROM statistics_events
+            SELECT stat_date,
+                   event_type,
+                   SUM(count) AS count,
+                   MIN(created_at) AS created_at,
+                   MAX(updated_at) AS updated_at
+            FROM statistics_event_buckets
             WHERE tenant_id = ?
               AND stat_date >= ?
               AND stat_date < ?
+            GROUP BY stat_date, event_type
             ORDER BY stat_date, event_type
             """;
 
@@ -62,7 +69,7 @@ public class MysqlExecutor implements TenantStatisticsSqlExecutor {
     String sql =
         """
             SELECT COUNT(DISTINCT DATE_FORMAT(stat_date, '%Y-%m-01')) as count
-            FROM statistics_events
+            FROM statistics_event_buckets
             WHERE tenant_id = ?
               AND stat_date >= ?
               AND stat_date < ?
