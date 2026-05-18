@@ -27,6 +27,10 @@ import org.idp.server.platform.statistics.StatisticsEventRecord;
  * MySQL implementation of statistics events upsert.
  *
  * <p>Uses INSERT ... ON DUPLICATE KEY UPDATE for efficient upserts.
+ *
+ * <p>Writes are distributed across {@link StatisticsEventBuckets#BUCKET_COUNT} buckets per logical
+ * key (tenant_id, stat_date, event_type) to eliminate UPSERT lock contention on hot rows (Issue
+ * #1443). Bucket id is derived per writer thread via {@link StatisticsEventBuckets}.
  */
 public class MysqlExecutor implements StatisticsEventsSqlExecutor {
 
@@ -34,17 +38,19 @@ public class MysqlExecutor implements StatisticsEventsSqlExecutor {
 
   private static final String INCREMENT_SQL =
       """
-      INSERT INTO statistics_events (tenant_id, stat_date, event_type, count, created_at, updated_at)
-      VALUES (?, ?, ?, 1, NOW(6), NOW(6))
+      INSERT INTO statistics_event_buckets (tenant_id, stat_date, event_type, bucket_id, count, created_at, updated_at)
+      VALUES (?, ?, ?, ?, 1, NOW(6), NOW(6))
       ON DUPLICATE KEY UPDATE
-          count = statistics_events.count + 1,
+          count = statistics_event_buckets.count + 1,
           updated_at = NOW(6)
       """;
 
   @Override
   public void increment(TenantIdentifier tenantId, LocalDate statDate, String eventType) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    sqlExecutor.execute(INCREMENT_SQL, List.of(tenantId.value(), statDate, eventType));
+    sqlExecutor.execute(
+        INCREMENT_SQL,
+        List.of(tenantId.value(), statDate, eventType, StatisticsEventBuckets.pickBucketId()));
   }
 
   @Override
@@ -71,22 +77,26 @@ public class MysqlExecutor implements StatisticsEventsSqlExecutor {
     StringBuilder sql = new StringBuilder();
     sql.append(
         """
-        INSERT INTO statistics_events (tenant_id, stat_date, event_type, count, created_at, updated_at)
+        INSERT INTO statistics_event_buckets (tenant_id, stat_date, event_type, bucket_id, count, created_at, updated_at)
         VALUES
         """);
 
     List<Object> params = new ArrayList<>();
 
+    // Pick one bucket per batch call (see PostgresqlExecutor for rationale).
+    int bucketId = StatisticsEventBuckets.pickBucketId();
+
     for (int i = 0; i < batch.size(); i++) {
       if (i > 0) {
         sql.append(",\n");
       }
-      sql.append("(?, ?, ?, ?, NOW(6), NOW(6))");
+      sql.append("(?, ?, ?, ?, ?, NOW(6), NOW(6))");
 
       StatisticsEventRecord record = batch.get(i);
       params.add(record.tenantIdValue());
       params.add(record.statDate());
       params.add(record.eventType());
+      params.add(bucketId);
       params.add(record.count());
     }
 
@@ -94,7 +104,7 @@ public class MysqlExecutor implements StatisticsEventsSqlExecutor {
         """
 
         ON DUPLICATE KEY UPDATE
-            count = statistics_events.count + VALUES(count),
+            count = statistics_event_buckets.count + VALUES(count),
             updated_at = NOW(6)
         """);
 
