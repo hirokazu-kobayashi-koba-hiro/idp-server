@@ -65,6 +65,10 @@ $$;
 
 BEGIN;
 
+-- updated_at: migration uses GREATEST() to preserve whichever timestamp is more
+-- recent (typically the existing real-time post-deploy write). Real-time UPSERTs
+-- in PostgresqlExecutor use now(), so the column remains monotonically
+-- non-decreasing across migration + steady-state writes.
 INSERT INTO statistics_event_buckets
     (tenant_id, stat_date, event_type, bucket_id, count, created_at, updated_at)
 SELECT

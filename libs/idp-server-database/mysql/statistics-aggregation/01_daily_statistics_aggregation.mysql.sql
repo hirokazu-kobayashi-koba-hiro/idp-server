@@ -32,16 +32,25 @@ BEGIN
     SET v_window_start = DATE_SUB(p_target_date, INTERVAL 14 HOUR);
     SET v_window_end   = DATE_ADD(p_target_date, INTERVAL 36 HOUR);
 
-    -- Step 1: Aggregate event counts into statistics_events
+    -- Step 0: Clear bucket-distributed rows for target date (Issue #1443)
+    -- statistics_event_buckets scatters real-time UPSERTs across bucket_id [0, N).
+    -- The batch writes absolute counts to bucket_id = 0, so we first remove
+    -- any other bucket rows for this date to prevent double-counting when
+    -- reads SUM across buckets.
+    DELETE FROM statistics_event_buckets
+    WHERE stat_date = p_target_date;
+
+    -- Step 1: Aggregate event counts into statistics_event_buckets (bucket 0)
     -- All event types are counted (no filtering).
     -- The app-layer (SecurityEventHandler) excluded inspect_token_success
     -- to reduce real-time UPSERT lock contention, but in batch mode
     -- there is no cost difference since we COUNT(*) the entire day at once.
-    INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
+    INSERT INTO statistics_event_buckets (tenant_id, stat_date, event_type, bucket_id, count)
     SELECT
         ev.tenant_id,
         p_target_date,
         ev.type,
+        0,
         COUNT(*)
     FROM security_event ev
     JOIN tenant t ON ev.tenant_id = t.id
@@ -133,9 +142,9 @@ BEGIN
     ON DUPLICATE KEY UPDATE
         last_used_at = GREATEST(statistics_yearly_users.last_used_at, VALUES(last_used_at));
 
-    -- Step 5: Aggregate DAU/MAU/YAU counts into statistics_events
-    INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
-    SELECT tenant_id, p_target_date, 'dau', COUNT(DISTINCT user_id)
+    -- Step 5: Aggregate DAU/MAU/YAU counts into statistics_event_buckets (bucket 0)
+    INSERT INTO statistics_event_buckets (tenant_id, stat_date, event_type, bucket_id, count)
+    SELECT tenant_id, p_target_date, 'dau', 0, COUNT(DISTINCT user_id)
     FROM statistics_daily_users
     WHERE stat_date = p_target_date
     GROUP BY tenant_id
@@ -143,8 +152,8 @@ BEGIN
         count = VALUES(count),
         updated_at = CURRENT_TIMESTAMP(6);
 
-    INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
-    SELECT tenant_id, p_target_date, 'mau', COUNT(DISTINCT user_id)
+    INSERT INTO statistics_event_buckets (tenant_id, stat_date, event_type, bucket_id, count)
+    SELECT tenant_id, p_target_date, 'mau', 0, COUNT(DISTINCT user_id)
     FROM statistics_monthly_users
     WHERE stat_month = DATE_FORMAT(p_target_date, '%Y-%m-01')
     GROUP BY tenant_id
@@ -152,8 +161,8 @@ BEGIN
         count = VALUES(count),
         updated_at = CURRENT_TIMESTAMP(6);
 
-    INSERT INTO statistics_events (tenant_id, stat_date, event_type, count)
-    SELECT yu.tenant_id, p_target_date, 'yau', COUNT(DISTINCT yu.user_id)
+    INSERT INTO statistics_event_buckets (tenant_id, stat_date, event_type, bucket_id, count)
+    SELECT yu.tenant_id, p_target_date, 'yau', 0, COUNT(DISTINCT yu.user_id)
     FROM statistics_yearly_users yu
     JOIN tenant t ON yu.tenant_id = t.id
     WHERE yu.stat_year = CASE

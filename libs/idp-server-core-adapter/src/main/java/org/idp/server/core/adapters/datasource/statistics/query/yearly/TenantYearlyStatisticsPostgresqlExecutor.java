@@ -26,7 +26,8 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 /**
  * PostgreSQL executor for yearly statistics queries.
  *
- * <p>Queries from statistics_events table and aggregates into TenantYearlyStatistics format.
+ * <p>Queries from statistics_event_buckets table (SUM(count) GROUP BY for bucket-distributed rows)
+ * and aggregates into TenantYearlyStatistics format.
  */
 public class TenantYearlyStatisticsPostgresqlExecutor implements TenantYearlyStatisticsSqlExecutor {
 
