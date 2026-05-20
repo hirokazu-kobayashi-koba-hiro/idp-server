@@ -156,7 +156,9 @@ public class AuthenticationTransaction {
       throw new BadRequestException("User is not the same as the request");
     }
 
-    return request;
+    // Same user: update with latest user data (e.g., 2nd factor user_resolve adds
+    // custom_properties)
+    return request.updateWithUser(interactionRequestResult);
   }
 
   public AuthenticationTransaction updateWith(FederationInteractionResult result) {

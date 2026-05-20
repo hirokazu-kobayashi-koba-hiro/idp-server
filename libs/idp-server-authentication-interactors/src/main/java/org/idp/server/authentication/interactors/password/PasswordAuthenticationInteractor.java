@@ -337,6 +337,30 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
         return User.notFound();
       }
 
+      // 2nd factor with user_resolve: apply userMappingRules to merge external data
+      if (stepDefinition.allowRegistration()
+          && configuration.exists()
+          && executionResult.isSuccess()) {
+        AuthenticationInteractionConfig interactionConfig =
+            configuration.getAuthenticationConfig("password-authentication");
+
+        if (!interactionConfig.userResolve().userMappingRules().isEmpty()) {
+          log.debug(
+              "2nd factor: applying userMappingRules to authenticated user. method={}, sub={}",
+              method(),
+              transaction.user().sub());
+          User resolved =
+              resolveUserFromExternalAuth(
+                  tenant,
+                  providerId,
+                  request,
+                  executionResult,
+                  interactionConfig.userResolve().userMappingRules(),
+                  userQueryRepository);
+          return transaction.user().updateWith(resolved);
+        }
+      }
+
       log.debug(
           "2nd factor: returning authenticated user. method={}, sub={}",
           method(),
