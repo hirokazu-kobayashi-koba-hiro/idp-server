@@ -19,6 +19,10 @@ package org.idp.server.usecases.application.enduser;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.extension.ciba.CibaFlowApi;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
@@ -26,10 +30,12 @@ import org.idp.server.core.openid.authentication.AuthenticationTransactionQuerie
 import org.idp.server.core.openid.authentication.io.AuthenticationTransactionFindingResponse;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionQueryRepository;
+import org.idp.server.core.openid.identity.UserOperationApi;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.device.authentication.DeviceAuthenticationDeviceFinder;
 import org.idp.server.core.openid.identity.device.authentication.DeviceEndpointAuthenticationHandler;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.OAuthFlowApi;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -56,19 +62,28 @@ public class AuthenticationTransactionEntryService implements AuthenticationTran
   AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository;
   AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository;
   DeviceEndpointAuthenticationHandler deviceEndpointAuthenticationHandler;
+  OAuthFlowApi rawOAuthFlowApi;
+  CibaFlowApi rawCibaFlowApi;
+  UserOperationApi rawUserOperationApi;
 
   public AuthenticationTransactionEntryService(
       TenantQueryRepository tenantQueryRepository,
       AuthenticationTransactionCommandRepository authenticationTransactionCommandRepository,
       AuthenticationTransactionQueryRepository authenticationTransactionQueryRepository,
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
-      UserQueryRepository userQueryRepository) {
+      UserQueryRepository userQueryRepository,
+      OAuthFlowApi rawOAuthFlowApi,
+      CibaFlowApi rawCibaFlowApi,
+      UserOperationApi rawUserOperationApi) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.authenticationTransactionCommandRepository = authenticationTransactionCommandRepository;
     this.authenticationTransactionQueryRepository = authenticationTransactionQueryRepository;
     this.deviceEndpointAuthenticationHandler =
         new DeviceEndpointAuthenticationHandler(
             oAuthTokenQueryRepository, new DeviceAuthenticationDeviceFinder(userQueryRepository));
+    this.rawOAuthFlowApi = rawOAuthFlowApi;
+    this.rawCibaFlowApi = rawCibaFlowApi;
+    this.rawUserOperationApi = rawUserOperationApi;
   }
 
   public AuthenticationTransaction get(
@@ -78,6 +93,36 @@ public class AuthenticationTransactionEntryService implements AuthenticationTran
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     return authenticationTransactionQueryRepository.get(
         tenant, authenticationTransactionIdentifier);
+  }
+
+  @Override
+  public AuthenticationInteractionRequestResult interact(
+      TenantIdentifier tenantIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    // Single getForUpdate for the entire interact flow. The lock is held across the dispatched
+    // flow-specific handler since the downstream interactInternal runs within this transaction.
+    AuthenticationTransaction lockedTransaction =
+        authenticationTransactionQueryRepository.getForUpdate(
+            tenant, authenticationTransactionIdentifier);
+
+    String flow = lockedTransaction.flow().name();
+    return switch (flow) {
+      case "oauth" ->
+          rawOAuthFlowApi.interactInternal(
+              tenant, lockedTransaction, type, request, requestAttributes);
+      case "ciba" ->
+          rawCibaFlowApi.interactInternal(
+              tenant, lockedTransaction, type, request, requestAttributes);
+      default ->
+          rawUserOperationApi.interactInternal(
+              tenant, lockedTransaction, type, request, requestAttributes);
+    };
   }
 
   @Override

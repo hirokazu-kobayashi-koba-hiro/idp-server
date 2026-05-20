@@ -33,4 +33,21 @@ public interface AuthenticationTransactionApi {
       String authorizationHeader,
       AuthenticationTransactionQueries queries,
       RequestAttributes requestAttributes);
+
+  /**
+   * Consolidated entry point for authentication interaction across all flows (OAuth, CIBA, user
+   * operation). Performs the tenant lookup and pessimistic lock acquisition once, then dispatches
+   * to the appropriate flow-specific handler (via the raw, non-proxied API) so the entire
+   * interaction runs in a single transaction.
+   *
+   * <p>This avoids the duplicate transaction / duplicate {@code set_config} pattern that occurs
+   * when the controller pre-fetches the transaction and the downstream entry service re-acquires it
+   * with {@code getForUpdate()}.
+   */
+  AuthenticationInteractionRequestResult interact(
+      TenantIdentifier tenantIdentifier,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes);
 }
