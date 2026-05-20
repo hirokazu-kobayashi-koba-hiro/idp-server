@@ -18,6 +18,7 @@ package org.idp.server.core.adapters.datasource.authentication.policy.query;
 
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
 import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -38,6 +39,7 @@ public class AuthenticationPolicyConfigurationQueryDataSourceProvider
         new AuthenticationPolicyConfigurationSqlExecutors();
     AuthenticationPolicyConfigurationSqlExecutor executor =
         executors.get(databaseTypeProvider.provide());
-    return new AuthenticationPolicyConfigurationQueryDataSource(executor);
+    CacheStore cacheStore = container.resolve(CacheStore.class);
+    return new AuthenticationPolicyConfigurationQueryDataSource(executor, cacheStore);
   }
 }

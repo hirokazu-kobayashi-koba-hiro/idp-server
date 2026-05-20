@@ -19,26 +19,39 @@ package org.idp.server.core.adapters.datasource.authentication.config.query;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.exception.AuthenticationConfigurationNotFoundException;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class AuthenticationConfigurationQueryDataSource
     implements AuthenticationConfigurationQueryRepository {
 
   AuthenticationConfigSqlExecutor executor;
   JsonConverter jsonConverter;
+  CacheStore cacheStore;
 
-  public AuthenticationConfigurationQueryDataSource(AuthenticationConfigSqlExecutor executor) {
+  public AuthenticationConfigurationQueryDataSource(
+      AuthenticationConfigSqlExecutor executor, CacheStore cacheStore) {
     this.executor = executor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
+    this.cacheStore = cacheStore;
   }
 
   @Override
   public AuthenticationConfiguration get(Tenant tenant, String type) {
+    String key = typeKey(tenant.identifier(), type);
+    Optional<AuthenticationConfiguration> cached =
+        cacheStore.find(key, AuthenticationConfiguration.class);
+    if (cached.isPresent()) {
+      return cached.get();
+    }
+
     Map<String, String> result = executor.selectOne(tenant, type);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -48,18 +61,31 @@ public class AuthenticationConfigurationQueryDataSource
               tenant.identifierValue(), type));
     }
 
-    return jsonConverter.read(result.get("payload"), AuthenticationConfiguration.class);
+    AuthenticationConfiguration configuration =
+        jsonConverter.read(result.get("payload"), AuthenticationConfiguration.class);
+    cacheStore.put(key, configuration);
+    return configuration;
   }
 
   @Override
   public AuthenticationConfiguration find(Tenant tenant, String type) {
+    String key = typeKey(tenant.identifier(), type);
+    Optional<AuthenticationConfiguration> cached =
+        cacheStore.find(key, AuthenticationConfiguration.class);
+    if (cached.isPresent()) {
+      return cached.get();
+    }
+
     Map<String, String> result = executor.selectOne(tenant, type);
 
     if (Objects.isNull(result) || result.isEmpty()) {
       return new AuthenticationConfiguration();
     }
 
-    return jsonConverter.read(result.get("payload"), AuthenticationConfiguration.class);
+    AuthenticationConfiguration configuration =
+        jsonConverter.read(result.get("payload"), AuthenticationConfiguration.class);
+    cacheStore.put(key, configuration);
+    return configuration;
   }
 
   @Override
@@ -108,5 +134,14 @@ public class AuthenticationConfigurationQueryDataSource
     return results.stream()
         .map(result -> jsonConverter.read(result.get("payload"), AuthenticationConfiguration.class))
         .toList();
+  }
+
+  public static String typeKey(TenantIdentifier tenantIdentifier, String type) {
+    return "tenantId:"
+        + tenantIdentifier.value()
+        + ":"
+        + AuthenticationConfiguration.class.getSimpleName()
+        + ":type:"
+        + type;
   }
 }
