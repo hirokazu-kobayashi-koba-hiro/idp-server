@@ -18,6 +18,7 @@ package org.idp.server.core.adapters.datasource.authentication.policy.command;
 
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
 import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 import org.idp.server.platform.json.JsonConverter;
@@ -40,6 +41,8 @@ public class AuthenticationPolicyConfigurationCommandDataSourceProvider
     AuthenticationPolicyConfigurationSqlExecutor executor =
         executors.get(databaseTypeProvider.provide());
     JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-    return new AuthenticationPolicyConfigurationCommandDataSource(executor, jsonConverter);
+    CacheStore cacheStore = container.resolve(CacheStore.class);
+    return new AuthenticationPolicyConfigurationCommandDataSource(
+        executor, jsonConverter, cacheStore);
   }
 }

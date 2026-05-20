@@ -19,39 +19,61 @@ package org.idp.server.core.adapters.datasource.authentication.policy.query;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.idp.server.core.openid.authentication.exception.AuthenticationPolicyNotFoundException;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfigurationIdentifier;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 public class AuthenticationPolicyConfigurationQueryDataSource
     implements AuthenticationPolicyConfigurationQueryRepository {
 
   AuthenticationPolicyConfigurationSqlExecutor executor;
   JsonConverter jsonConverter;
+  CacheStore cacheStore;
 
   public AuthenticationPolicyConfigurationQueryDataSource(
-      AuthenticationPolicyConfigurationSqlExecutor executor) {
+      AuthenticationPolicyConfigurationSqlExecutor executor, CacheStore cacheStore) {
     this.executor = executor;
     this.jsonConverter = JsonConverter.snakeCaseInstance();
+    this.cacheStore = cacheStore;
   }
 
   @Override
   public AuthenticationPolicyConfiguration find(Tenant tenant, AuthFlow authFlow) {
+    String key = flowKey(tenant.identifier(), authFlow);
+    Optional<AuthenticationPolicyConfiguration> cached =
+        cacheStore.find(key, AuthenticationPolicyConfiguration.class);
+    if (cached.isPresent()) {
+      return cached.get();
+    }
+
     Map<String, String> result = executor.selectOne(tenant, authFlow);
 
     if (Objects.isNull(result) || result.isEmpty()) {
       return new AuthenticationPolicyConfiguration();
     }
 
-    return jsonConverter.read(result.get("payload"), AuthenticationPolicyConfiguration.class);
+    AuthenticationPolicyConfiguration configuration =
+        jsonConverter.read(result.get("payload"), AuthenticationPolicyConfiguration.class);
+    cacheStore.put(key, configuration);
+    return configuration;
   }
 
   @Override
   public AuthenticationPolicyConfiguration get(Tenant tenant, AuthFlow authFlow) {
+    String key = flowKey(tenant.identifier(), authFlow);
+    Optional<AuthenticationPolicyConfiguration> cached =
+        cacheStore.find(key, AuthenticationPolicyConfiguration.class);
+    if (cached.isPresent()) {
+      return cached.get();
+    }
+
     Map<String, String> result = executor.selectOne(tenant, authFlow);
 
     if (Objects.isNull(result) || result.isEmpty()) {
@@ -59,7 +81,10 @@ public class AuthenticationPolicyConfigurationQueryDataSource
           "Authentication policy configuration not found");
     }
 
-    return jsonConverter.read(result.get("payload"), AuthenticationPolicyConfiguration.class);
+    AuthenticationPolicyConfiguration configuration =
+        jsonConverter.read(result.get("payload"), AuthenticationPolicyConfiguration.class);
+    cacheStore.put(key, configuration);
+    return configuration;
   }
 
   @Override
@@ -110,5 +135,14 @@ public class AuthenticationPolicyConfigurationQueryDataSource
     return results.stream()
         .map(result -> jsonConverter.read(result, AuthenticationPolicyConfiguration.class))
         .toList();
+  }
+
+  public static String flowKey(TenantIdentifier tenantIdentifier, AuthFlow authFlow) {
+    return "tenantId:"
+        + tenantIdentifier.value()
+        + ":"
+        + AuthenticationPolicyConfiguration.class.getSimpleName()
+        + ":flow:"
+        + authFlow.name();
   }
 }
