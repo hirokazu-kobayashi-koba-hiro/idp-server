@@ -20,6 +20,7 @@ import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
+import org.idp.server.core.openid.authentication.AuthenticationTransaction;
 import org.idp.server.core.openid.federation.FederationInteractionResult;
 import org.idp.server.core.openid.federation.FederationType;
 import org.idp.server.core.openid.federation.io.FederationCallbackRequest;
@@ -27,6 +28,7 @@ import org.idp.server.core.openid.federation.io.FederationRequestResponse;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -52,6 +54,21 @@ public interface OAuthFlowApi {
   AuthenticationInteractionRequestResult interact(
       TenantIdentifier tenantIdentifier,
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes);
+
+  /**
+   * Variant of {@link #interact} that accepts an already-locked {@link AuthenticationTransaction}.
+   *
+   * <p>Intended for the consolidated dispatcher in {@code AuthenticationTransactionEntryService} to
+   * avoid redundant {@code tenantQueryRepository.get()} and {@code getForUpdate()} calls. Invoke
+   * via the {@link org.idp.server.usecases.IdpServerApplication#rawOAuthFlowApi() raw
+   * (non-proxied)} accessor so it joins the caller's transaction.
+   */
+  AuthenticationInteractionRequestResult interactInternal(
+      Tenant tenant,
+      AuthenticationTransaction lockedTransaction,
       AuthenticationInteractionType type,
       AuthenticationInteractionRequest request,
       RequestAttributes requestAttributes);
