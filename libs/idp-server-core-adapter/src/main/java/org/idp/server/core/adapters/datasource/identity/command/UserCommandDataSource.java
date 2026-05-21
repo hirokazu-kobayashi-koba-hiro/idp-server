@@ -16,17 +16,21 @@
 
 package org.idp.server.core.adapters.datasource.identity.command;
 
+import org.idp.server.core.adapters.datasource.identity.UserQueryDataSource;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserCommandDataSource implements UserCommandRepository {
 
   UserCommandSqlExecutor executor;
+  CacheStore cacheStore;
 
-  public UserCommandDataSource(UserCommandSqlExecutor executor) {
+  public UserCommandDataSource(UserCommandSqlExecutor executor, CacheStore cacheStore) {
     this.executor = executor;
+    this.cacheStore = cacheStore;
   }
 
   @Override
@@ -47,11 +51,13 @@ public class UserCommandDataSource implements UserCommandRepository {
     if (user.hasCurrentOrganizationId()) {
       executor.upsertCurrentOrganization(tenant, user);
     }
+    invalidate(tenant, user);
   }
 
   @Override
   public void update(Tenant tenant, User user) {
     executor.update(tenant, user);
+    invalidate(tenant, user);
   }
 
   @Override
@@ -60,6 +66,7 @@ public class UserCommandDataSource implements UserCommandRepository {
     if (user.hasRoles()) {
       executor.upsertRoles(tenant, user);
     }
+    invalidate(tenant, user);
   }
 
   @Override
@@ -72,6 +79,7 @@ public class UserCommandDataSource implements UserCommandRepository {
     if (user.hasCurrentTenantId()) {
       executor.upsertCurrentTenant(tenant, user);
     }
+    invalidate(tenant, user);
   }
 
   @Override
@@ -84,15 +92,29 @@ public class UserCommandDataSource implements UserCommandRepository {
     if (user.hasCurrentOrganizationId()) {
       executor.upsertCurrentOrganization(tenant, user);
     }
+    invalidate(tenant, user);
   }
 
   @Override
   public void updatePassword(Tenant tenant, User user) {
     executor.updatePassword(tenant, user);
+    invalidate(tenant, user);
   }
 
   @Override
   public void delete(Tenant tenant, UserIdentifier userIdentifier) {
     executor.delete(tenant, userIdentifier);
+    invalidate(tenant, userIdentifier);
+  }
+
+  private void invalidate(Tenant tenant, User user) {
+    if (user == null || user.sub() == null) {
+      return;
+    }
+    invalidate(tenant, new UserIdentifier(user.sub()));
+  }
+
+  private void invalidate(Tenant tenant, UserIdentifier userIdentifier) {
+    cacheStore.delete(UserQueryDataSource.userKey(tenant.identifier(), userIdentifier));
   }
 }
