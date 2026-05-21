@@ -140,6 +140,118 @@ describe("System-Level Tenant Management API", () => {
       console.log("Delete tenant response:", deleteResponse.status);
       expect(deleteResponse.status).toBe(204);
     });
+
+    it("identity_policy_config.user_attribute_load_rule is persisted and updatable", async () => {
+      const timestamp = Date.now();
+      const tenantId = uuidv4();
+
+      // Create a tenant with user_attribute_load_rule explicitly set to false
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/tenants`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          tenant: {
+            "id": tenantId,
+            "name": `UserAttributeLoadRule Test ${timestamp}`,
+            "domain": "http://localhost:8080",
+            "description": "verify user_attribute_load_rule round-trip",
+            "authorization_provider": "idp-server",
+            "identity_policy_config": {
+              "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID",
+              "user_attribute_load_rule": {
+                "include_assigned_organizations": false,
+                "include_assigned_tenants": false
+              }
+            }
+          },
+          authorization_server: {
+            "issuer": `http://localhost:8080/${adminServerConfig.tenantId}`,
+            "authorization_endpoint": `http://localhost:8080/${adminServerConfig.tenantId}/v1/authorizations`,
+            "token_endpoint": `http://localhost:8080/${adminServerConfig.tenantId}/v1/tokens`,
+            "userinfo_endpoint": `http://localhost:8080/${adminServerConfig.tenantId}/v1/userinfo`,
+            "jwks_uri": `http://localhost:8080/${adminServerConfig.tenantId}/v1/jwks`,
+            "scopes_supported": ["openid", "profile", "email", "account", "management"],
+            "response_types_supported": ["code"],
+            "response_modes_supported": ["query"],
+            "subject_types_supported": ["public"],
+            "grant_types_supported": [
+              "authorization_code",
+              "refresh_token",
+              "password",
+              "client_credentials"
+            ],
+            "token_endpoint_auth_methods_supported": [
+              "client_secret_post",
+              "client_secret_basic"
+            ],
+            "extension": {
+              "access_token_type": "JWT",
+              "access_token_duration": 3600,
+              "id_token_duration": 3600
+            }
+          }
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      // Verify GET response includes user_attribute_load_rule with the configured values
+      const getResponse = await get({
+        url: `${backendUrl}/v1/management/tenants/${tenantId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(getResponse.status).toBe(200);
+      const loadRule = getResponse.data?.identity_policy_config?.user_attribute_load_rule;
+      console.log("Initial user_attribute_load_rule:", loadRule);
+      expect(loadRule).toBeDefined();
+      expect(loadRule.include_assigned_organizations).toBe(false);
+      expect(loadRule.include_assigned_tenants).toBe(false);
+
+      // Update only one flag (the other should remain false)
+      const updateResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/tenants/${tenantId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: {
+          "name": `UserAttributeLoadRule Test ${timestamp}`,
+          "domain": "http://localhost:8080",
+          "identity_policy_config": {
+            "identity_unique_key_type": "EMAIL_OR_EXTERNAL_USER_ID",
+            "user_attribute_load_rule": {
+              "include_assigned_organizations": true,
+              "include_assigned_tenants": false
+            }
+          }
+        }
+      });
+      expect(updateResponse.status).toBe(200);
+
+      // Verify the update is reflected on GET
+      const updatedGetResponse = await get({
+        url: `${backendUrl}/v1/management/tenants/${tenantId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(updatedGetResponse.status).toBe(200);
+      const updatedRule = updatedGetResponse.data?.identity_policy_config?.user_attribute_load_rule;
+      console.log("Updated user_attribute_load_rule:", updatedRule);
+      expect(updatedRule.include_assigned_organizations).toBe(true);
+      expect(updatedRule.include_assigned_tenants).toBe(false);
+
+      // Cleanup
+      const deleteResponse = await deletion({
+        url: `${backendUrl}/v1/management/tenants/${tenantId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      expect(deleteResponse.status).toBe(204);
+    });
   });
 
   describe("Resource Not Found Tests", () => {

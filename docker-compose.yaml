@@ -263,6 +263,10 @@ services:
       context: ./docker/postgresql/primary
     image: idp-postgres-primary:15
     container_name: postgres-primary
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
     environment:
       - POSTGRES_USER=idpserver
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
@@ -297,6 +301,10 @@ services:
     build:
       context: ./docker/postgresql/replica
     container_name: postgres-replica
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
     environment:
       - POSTGRES_USER=idpserver
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}

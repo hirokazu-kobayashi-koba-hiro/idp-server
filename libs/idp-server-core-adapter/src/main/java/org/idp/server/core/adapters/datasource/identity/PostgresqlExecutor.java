@@ -24,6 +24,7 @@ import org.idp.server.core.openid.identity.UserQueries;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.policy.UserAttributeLoadRule;
 
 public class PostgresqlExecutor implements UserSqlExecutor {
 
@@ -32,7 +33,8 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
-        String.format(selectSql, "WHERE idp_user.tenant_id = ?::uuid AND idp_user.id = ?::uuid");
+        String.format(
+            selectSql(tenant), "WHERE idp_user.tenant_id = ?::uuid AND idp_user.id = ?::uuid");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(userIdentifier.valueAsUuid());
@@ -47,7 +49,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                         WHERE idp_user.tenant_id = ?::uuid
                         AND idp_user.external_user_id = ?
@@ -67,7 +69,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                                 WHERE idp_user.tenant_id = ?::uuid
                                 AND idp_user.name = ?
@@ -89,7 +91,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     // Search by device id using subquery on idp_user_authentication_devices table
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                 WHERE idp_user.id = (
                     SELECT user_id FROM idp_user_authentication_devices
@@ -111,7 +113,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                 WHERE idp_user.tenant_id = ?::uuid
                 AND idp_user.email = ?
@@ -131,7 +133,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                         WHERE idp_user.tenant_id = ?::uuid
                         AND idp_user.phone_number = ?
@@ -357,7 +359,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
 
     String pagedSql =
         cteSql
-            + String.format(selectSql, "WHERE idp_user.id IN (SELECT id FROM paged_users)")
+            + String.format(selectSql(tenant), "WHERE idp_user.id IN (SELECT id FROM paged_users)")
             + """
           ORDER BY idp_user.created_at DESC, idp_user.id DESC
         """;
@@ -372,7 +374,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                 WHERE
                 idp_user.tenant_id = ?::uuid
@@ -394,7 +396,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     // Search by device id using subquery on idp_user_authentication_devices table
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                 WHERE idp_user.id = (
                     SELECT user_id FROM idp_user_authentication_devices
@@ -415,7 +417,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                         WHERE idp_user.tenant_id = ?::uuid
                         AND idp_user.provider_id = ?
@@ -436,7 +438,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                                     WHERE idp_user.tenant_id = ?::uuid
                                     AND idp_user.preferred_username = ?
@@ -512,7 +514,7 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     // Search by FIDO2 credential_id directly in authentication_devices table
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                 WHERE idp_user.id = (
                     SELECT user_id FROM idp_user_authentication_devices
@@ -527,9 +529,8 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
-  String selectSql =
+  private static final String SELECT_BASE_FIELDS =
       """
-          SELECT
               idp_user.id,
               idp_user.provider_id,
               idp_user.external_user_id,
@@ -574,28 +575,41 @@ public class PostgresqlExecutor implements UserSqlExecutor {
               idp_user.verified_claims,
               idp_user.status,
               idp_user.created_at,
-              idp_user.updated_at,
+              idp_user.updated_at""";
+
+  private static final String SELECT_ROLES_FIELD =
+      """
               COALESCE(
                   JSON_AGG(
                       JSON_BUILD_OBJECT('role_id', role.id, 'role_name', role.name)
                   ) FILTER (WHERE role.id IS NOT NULL),
                   '[]'
-              ) AS roles,
+              ) AS roles""";
+
+  private static final String SELECT_PERMISSIONS_FIELD =
+      """
               COALESCE(
                   JSON_AGG(DISTINCT permission.name)
                   FILTER (WHERE permission.id IS NOT NULL),
                   '[]'
-              ) AS permissions
-          FROM idp_user
+              ) AS permissions""";
+
+  private static final String ROLE_JOINS =
+      """
           LEFT JOIN idp_user_roles
               ON idp_user.id = idp_user_roles.user_id
           LEFT JOIN role
-              ON idp_user_roles.role_id = role.id
+              ON idp_user_roles.role_id = role.id""";
+
+  private static final String PERMISSION_JOINS =
+      """
           LEFT JOIN role_permission
               ON role.id = role_permission.role_id
           LEFT JOIN permission
-              ON role_permission.permission_id = permission.id
-          %s
+              ON role_permission.permission_id = permission.id""";
+
+  private static final String GROUP_BY_CLAUSE =
+      """
           GROUP BY
               idp_user.id,
               idp_user.provider_id,
@@ -625,6 +639,40 @@ public class PostgresqlExecutor implements UserSqlExecutor {
               idp_user.verified_claims,
               idp_user.status,
               idp_user.created_at,
-              idp_user.updated_at
-            """;
+              idp_user.updated_at""";
+
+  /**
+   * Builds the user SELECT SQL with {@code %s} placeholder for the WHERE clause, dynamically
+   * including or omitting the role / permission JOIN chain and aggregation based on the tenant's
+   * {@link UserAttributeLoadRule}.
+   *
+   * <p>When both roles and permissions are disabled, the SQL skips all four LEFT JOIN clauses and
+   * the GROUP BY entirely, which avoids unnecessary JOIN cost on RBAC tables for tenants that do
+   * not use role-based access control.
+   */
+  String selectSql(Tenant tenant) {
+    UserAttributeLoadRule rule = tenant.userAttributeLoadRule();
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("SELECT\n").append(SELECT_BASE_FIELDS);
+    if (rule.includeRoles()) {
+      sb.append(",\n").append(SELECT_ROLES_FIELD);
+    }
+    if (rule.includePermissions()) {
+      sb.append(",\n").append(SELECT_PERMISSIONS_FIELD);
+    }
+    sb.append("\n          FROM idp_user");
+    if (rule.needsRoleJoin()) {
+      sb.append("\n").append(ROLE_JOINS);
+    }
+    if (rule.includePermissions()) {
+      sb.append("\n").append(PERMISSION_JOINS);
+    }
+    sb.append("\n          %s");
+    if (rule.needsRoleJoin()) {
+      sb.append("\n").append(GROUP_BY_CLAUSE);
+    }
+    sb.append("\n");
+    return sb.toString();
+  }
 }
