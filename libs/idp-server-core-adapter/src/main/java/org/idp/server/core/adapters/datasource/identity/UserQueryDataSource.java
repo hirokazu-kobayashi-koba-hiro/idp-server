@@ -30,6 +30,7 @@ import org.idp.server.core.openid.identity.exception.UserTooManyFoundResultExcep
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.datasource.SqlTooManyResultsException;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.policy.UserAttributeLoadRule;
 
 public class UserQueryDataSource implements UserQueryRepository {
 
@@ -58,14 +59,7 @@ public class UserQueryDataSource implements UserQueryRepository {
       return User.notFound();
     }
 
-    HashMap<String, String> mergedResult = new HashMap<>(result);
-    Map<String, String> assignedOrganization =
-        executor.selectAssignedOrganization(tenant, userIdentifier);
-    Map<String, String> assignedTenant = executor.selectAssignedTenant(tenant, userIdentifier);
-    mergedResult.putAll(assignedOrganization);
-    mergedResult.putAll(assignedTenant);
-
-    return ModelConverter.convert(mergedResult);
+    return collectAssignedDataAndConvert(tenant, userIdentifier, executor, result);
   }
 
   @Override
@@ -258,11 +252,19 @@ public class UserQueryDataSource implements UserQueryRepository {
       UserSqlExecutor executor,
       Map<String, String> result) {
     HashMap<String, String> mergedResult = new HashMap<>(result);
-    Map<String, String> assignedOrganization =
-        executor.selectAssignedOrganization(tenant, userIdentifier);
-    Map<String, String> assignedTenant = executor.selectAssignedTenant(tenant, userIdentifier);
-    mergedResult.putAll(assignedOrganization);
-    mergedResult.putAll(assignedTenant);
+
+    UserAttributeLoadRule loadRule = tenant.userAttributeLoadRule();
+
+    if (loadRule.includeAssignedOrganizations()) {
+      Map<String, String> assignedOrganization =
+          executor.selectAssignedOrganization(tenant, userIdentifier);
+      mergedResult.putAll(assignedOrganization);
+    }
+
+    if (loadRule.includeAssignedTenants()) {
+      Map<String, String> assignedTenant = executor.selectAssignedTenant(tenant, userIdentifier);
+      mergedResult.putAll(assignedTenant);
+    }
 
     return ModelConverter.convert(mergedResult);
   }
