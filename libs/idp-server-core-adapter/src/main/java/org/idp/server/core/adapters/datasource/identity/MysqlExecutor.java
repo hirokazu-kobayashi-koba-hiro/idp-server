@@ -531,6 +531,18 @@ public class MysqlExecutor implements UserSqlExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
+  @Override
+  public Map<String, String> selectStatus(Tenant tenant, UserIdentifier userIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate = "SELECT status FROM idp_user WHERE tenant_id = ? AND id = ?";
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+    params.add(userIdentifier.valueAsUuid().toString());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
   private static final String SELECT_BASE_FIELDS =
       """
                    idp_user.id,

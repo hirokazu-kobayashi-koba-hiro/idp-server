@@ -20,6 +20,7 @@ import java.util.List;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserQueries;
+import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -52,4 +53,14 @@ public interface UserQueryRepository {
   User findByPreferredUsernameNoProvider(Tenant tenant, String preferredUsername);
 
   User findByFidoCredentialId(Tenant tenant, String credentialId);
+
+  /**
+   * Lightweight lookup that returns only the user's {@link UserStatus}.
+   *
+   * <p>Used by hot-path checks (e.g., token introspection) where the full user payload is not
+   * needed. The query reads a single column and skips role / permission JOINs.
+   *
+   * @return current {@link UserStatus}, or {@code null} if the user does not exist
+   */
+  UserStatus findStatusById(Tenant tenant, UserIdentifier userIdentifier);
 }
