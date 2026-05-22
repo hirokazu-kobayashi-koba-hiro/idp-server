@@ -25,6 +25,7 @@ import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntro
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface TokenProtocol {
 
@@ -41,4 +42,12 @@ public interface TokenProtocol {
   TokenIntrospectionResponse inspectForInternal(TokenIntrospectionInternalRequest request);
 
   TokenRevocationResponse revoke(TokenRevocationRequest request);
+
+  /**
+   * Deletes the given access token if it carries the RAR {@code oneshot_token} flag.
+   *
+   * <p>Invoked from the use-case layer after a read-only introspection completes, so the delete
+   * runs in its own writer-side transaction.
+   */
+  void deleteOneshotTokenIfNeeded(Tenant tenant, OAuthToken oAuthToken);
 }

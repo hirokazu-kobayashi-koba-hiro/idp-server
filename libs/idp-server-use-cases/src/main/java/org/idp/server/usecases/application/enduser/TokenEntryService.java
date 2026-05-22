@@ -21,6 +21,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.Subject;
+import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenApi;
 import org.idp.server.core.openid.token.TokenProtocol;
 import org.idp.server.core.openid.token.TokenProtocols;
@@ -84,6 +85,7 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
     return requestResponse;
   }
 
+  @Transaction(readOnly = true)
   public TokenIntrospectionResponse inspect(
       TenantIdentifier tenantIdentifier,
       Map<String, String[]> params,
@@ -108,6 +110,7 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
     return result;
   }
 
+  @Transaction(readOnly = true)
   public TokenIntrospectionResponse inspectWithVerification(
       TenantIdentifier tenantIdentifier,
       Map<String, String[]> params,
@@ -131,6 +134,16 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
     }
 
     return result;
+  }
+
+  @Override
+  public void deleteOneshotTokenIfNeeded(TenantIdentifier tenantIdentifier, OAuthToken oAuthToken) {
+    if (oAuthToken == null || !oAuthToken.exists() || !oAuthToken.isOneshotToken()) {
+      return;
+    }
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
+    tokenProtocol.deleteOneshotTokenIfNeeded(tenant, oAuthToken);
   }
 
   public TokenRevocationResponse revoke(

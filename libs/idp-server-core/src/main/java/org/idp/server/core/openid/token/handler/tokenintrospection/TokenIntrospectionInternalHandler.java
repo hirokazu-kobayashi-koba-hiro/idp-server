@@ -22,7 +22,6 @@ import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionInternalRequest;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionRequestStatus;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
-import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionContentsCreator;
 import org.idp.server.core.openid.token.tokenintrospection.validator.TokenIntrospectionValidator;
@@ -33,14 +32,10 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenIntrospectionInternalHandler {
 
-  OAuthTokenCommandRepository oAuthTokenCommandRepository;
   OAuthTokenQueryRepository oAuthTokenQueryRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(TokenIntrospectionInternalHandler.class);
 
-  public TokenIntrospectionInternalHandler(
-      OAuthTokenCommandRepository oAuthTokenCommandRepository,
-      OAuthTokenQueryRepository oAuthTokenQueryRepository) {
-    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
+  public TokenIntrospectionInternalHandler(OAuthTokenQueryRepository oAuthTokenQueryRepository) {
     this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
   }
 
@@ -73,11 +68,6 @@ public class TokenIntrospectionInternalHandler {
 
     Map<String, Object> contents =
         TokenIntrospectionContentsCreator.createSuccessContents(oAuthToken);
-
-    if (oAuthToken.isOneshotToken()) {
-      log.debug("Deleting one-shot token");
-      oAuthTokenCommandRepository.delete(request.tenant(), oAuthToken);
-    }
 
     log.debug("Internal token introspection succeeded");
     return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
