@@ -19,6 +19,7 @@ package org.idp.server.usecases.application.enduser;
 import java.util.Map;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.Subject;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -174,5 +175,11 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
   public User findUser(Tenant tenant, Subject subject) {
     UserIdentifier userIdentifier = new UserIdentifier(subject.value());
     return userQueryRepository.findById(tenant, userIdentifier);
+  }
+
+  @Override
+  public UserStatus findUserStatus(Tenant tenant, Subject subject) {
+    UserIdentifier userIdentifier = new UserIdentifier(subject.value());
+    return userQueryRepository.findStatusById(tenant, userIdentifier);
   }
 }
