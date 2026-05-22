@@ -20,24 +20,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserQueries;
+import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.exception.UserNotFoundException;
 import org.idp.server.core.openid.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.datasource.SqlTooManyResultsException;
+import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.policy.UserAttributeLoadRule;
 
 public class UserQueryDataSource implements UserQueryRepository {
 
   UserSqlExecutor executor;
+  CacheStore cacheStore;
 
   public UserQueryDataSource(UserSqlExecutor executor) {
+    this(executor, new NoOperationCacheStore());
+  }
+
+  public UserQueryDataSource(UserSqlExecutor executor, CacheStore cacheStore) {
     this.executor = executor;
+    this.cacheStore = cacheStore;
   }
 
   @Override
@@ -244,6 +255,33 @@ public class UserQueryDataSource implements UserQueryRepository {
     } catch (SqlTooManyResultsException exception) {
       throw new UserTooManyFoundResultException(exception.getMessage());
     }
+  }
+
+  @Override
+  public UserStatus findStatusById(Tenant tenant, UserIdentifier userIdentifier) {
+    String key = statusKey(tenant.identifier(), userIdentifier);
+    Optional<UserStatus> cached = cacheStore.find(key, UserStatus.class);
+    if (cached.isPresent()) {
+      return cached.get();
+    }
+
+    Map<String, String> result = executor.selectStatus(tenant, userIdentifier);
+    if (Objects.isNull(result) || result.isEmpty()) {
+      return null;
+    }
+
+    String statusName = result.get("status");
+    if (statusName == null) {
+      return null;
+    }
+
+    UserStatus status = UserStatus.valueOf(statusName);
+    cacheStore.put(key, status);
+    return status;
+  }
+
+  public static String statusKey(TenantIdentifier tenantIdentifier, UserIdentifier userIdentifier) {
+    return "tenantId:" + tenantIdentifier.value() + ":UserStatus:" + userIdentifier.value();
   }
 
   private User collectAssignedDataAndConvert(

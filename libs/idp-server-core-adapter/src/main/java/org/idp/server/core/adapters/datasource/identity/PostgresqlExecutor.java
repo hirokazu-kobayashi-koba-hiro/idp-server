@@ -529,6 +529,18 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
+  @Override
+  public Map<String, String> selectStatus(Tenant tenant, UserIdentifier userIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate = "SELECT status FROM idp_user WHERE tenant_id = ?::uuid AND id = ?::uuid";
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(userIdentifier.valueAsUuid());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
   private static final String SELECT_BASE_FIELDS =
       """
               idp_user.id,

@@ -18,6 +18,7 @@ package org.idp.server.core.openid.token.handler.tokenintrospection;
 
 import java.util.Map;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
@@ -92,8 +93,13 @@ public class TokenIntrospectionHandler {
     }
 
     if (!oAuthToken.isClientCredentialsGrant()) {
-      User user = delegate.findUser(tenant, oAuthToken.subject());
-      TokenIntrospectionUserVerifier userVerifier = new TokenIntrospectionUserVerifier(user);
+      UserStatus status = delegate.findUserStatus(tenant, oAuthToken.subject());
+      User minimal = new User();
+      if (status != null) {
+        minimal.setSub(oAuthToken.subject().value());
+        minimal.setStatus(status);
+      }
+      TokenIntrospectionUserVerifier userVerifier = new TokenIntrospectionUserVerifier(minimal);
       userVerifier.verify();
     }
 

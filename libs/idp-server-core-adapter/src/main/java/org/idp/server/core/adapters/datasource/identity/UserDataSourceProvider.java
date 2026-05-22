@@ -18,6 +18,7 @@ package org.idp.server.core.adapters.datasource.identity;
 
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -34,6 +35,7 @@ public class UserDataSourceProvider implements ApplicationComponentProvider<User
         container.resolve(ApplicationDatabaseTypeProvider.class);
     UserSqlExecutors executors = new UserSqlExecutors();
     UserSqlExecutor executor = executors.get(databaseTypeProvider.provide());
-    return new UserQueryDataSource(executor);
+    CacheStore cacheStore = container.resolve(CacheStore.class);
+    return new UserQueryDataSource(executor, cacheStore);
   }
 }

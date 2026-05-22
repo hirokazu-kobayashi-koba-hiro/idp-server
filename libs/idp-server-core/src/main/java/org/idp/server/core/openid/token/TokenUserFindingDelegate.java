@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.token;
 
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.oauth.type.oauth.Subject;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -38,4 +39,16 @@ public interface TokenUserFindingDelegate {
    * @return the user object (may be empty if not found)
    */
   User findUser(Tenant tenant, Subject subject);
+
+  /**
+   * Lightweight lookup that returns only the user's {@link UserStatus}.
+   *
+   * <p>Used by hot-path checks (e.g., token introspection) where only the active-state needs to be
+   * verified. Implementations should avoid loading the full user payload.
+   *
+   * @param tenant the tenant context
+   * @param subject the user's subject identifier
+   * @return current {@link UserStatus}, or {@code null} if the user does not exist
+   */
+  UserStatus findUserStatus(Tenant tenant, Subject subject);
 }

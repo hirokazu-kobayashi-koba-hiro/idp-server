@@ -16,17 +16,26 @@
 
 package org.idp.server.core.adapters.datasource.identity.command;
 
+import org.idp.server.core.adapters.datasource.identity.UserQueryDataSource;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
+import org.idp.server.platform.datasource.cache.CacheStore;
+import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserCommandDataSource implements UserCommandRepository {
 
   UserCommandSqlExecutor executor;
+  CacheStore cacheStore;
 
   public UserCommandDataSource(UserCommandSqlExecutor executor) {
+    this(executor, new NoOperationCacheStore());
+  }
+
+  public UserCommandDataSource(UserCommandSqlExecutor executor, CacheStore cacheStore) {
     this.executor = executor;
+    this.cacheStore = cacheStore;
   }
 
   @Override
@@ -47,11 +56,13 @@ public class UserCommandDataSource implements UserCommandRepository {
     if (user.hasCurrentOrganizationId()) {
       executor.upsertCurrentOrganization(tenant, user);
     }
+    invalidateStatusCache(tenant, user.userIdentifier());
   }
 
   @Override
   public void update(Tenant tenant, User user) {
     executor.update(tenant, user);
+    invalidateStatusCache(tenant, user.userIdentifier());
   }
 
   @Override
@@ -94,5 +105,13 @@ public class UserCommandDataSource implements UserCommandRepository {
   @Override
   public void delete(Tenant tenant, UserIdentifier userIdentifier) {
     executor.delete(tenant, userIdentifier);
+    invalidateStatusCache(tenant, userIdentifier);
+  }
+
+  private void invalidateStatusCache(Tenant tenant, UserIdentifier userIdentifier) {
+    if (userIdentifier == null || userIdentifier.value() == null) {
+      return;
+    }
+    cacheStore.delete(UserQueryDataSource.statusKey(tenant.identifier(), userIdentifier));
   }
 }
