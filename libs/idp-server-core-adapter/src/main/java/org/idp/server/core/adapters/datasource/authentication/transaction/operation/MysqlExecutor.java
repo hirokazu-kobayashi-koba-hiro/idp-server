@@ -28,7 +28,7 @@ public class MysqlExecutor implements AuthenticationTransactionSqlExecutor {
 
     String sqlTemplate =
         """
-        DELETE FROM authentication_transaction
+        DELETE FROM authentication_transaction_v2
         WHERE expires_at < now()
         LIMIT ?;
     """;

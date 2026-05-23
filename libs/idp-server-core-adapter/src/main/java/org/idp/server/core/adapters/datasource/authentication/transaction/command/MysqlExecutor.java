@@ -37,7 +37,7 @@ public class MysqlExecutor implements AuthenticationTransactionCommandSqlExecuto
 
     String sqlTemplate =
         """
-            INSERT INTO authentication_transaction
+            INSERT INTO authentication_transaction_v2
             (
             id,
             tenant_id,
@@ -135,7 +135,7 @@ public class MysqlExecutor implements AuthenticationTransactionCommandSqlExecuto
 
     String sqlTemplate =
         """
-                UPDATE authentication_transaction
+                UPDATE authentication_transaction_v2
                 SET user_id = ?,
                 user_payload = ?,
                 authentication_device_id = ?,
@@ -183,7 +183,7 @@ public class MysqlExecutor implements AuthenticationTransactionCommandSqlExecuto
 
     String sqlTemplate =
         """
-        DELETE FROM authentication_transaction
+        DELETE FROM authentication_transaction_v2
         WHERE id = ?
         AND tenant_id = ?
     """;
@@ -201,7 +201,7 @@ public class MysqlExecutor implements AuthenticationTransactionCommandSqlExecuto
 
     String sqlTemplate =
         """
-        DELETE FROM authentication_transaction
+        DELETE FROM authentication_transaction_v2
         WHERE authorization_id = ?
         AND tenant_id = ?
     """;

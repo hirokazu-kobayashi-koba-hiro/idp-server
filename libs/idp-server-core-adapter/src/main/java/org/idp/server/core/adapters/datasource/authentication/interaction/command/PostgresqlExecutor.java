@@ -34,7 +34,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
 
     String sqlTemplate =
         """
-            INSERT INTO authentication_interactions
+            INSERT INTO authentication_interactions_v2
             (
             authentication_transaction_id,
             tenant_id,
@@ -46,9 +46,9 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
             ?::uuid,
             ?::uuid,
             ?,
-            ?::jsonb
+            ?
             )
-            ON CONFLICT (authentication_transaction_id, interaction_type) DO UPDATE SET payload = ?::jsonb, updated_at = now()
+            ON CONFLICT (authentication_transaction_id, interaction_type) DO UPDATE SET payload = ?, updated_at = now()
             """;
 
     String json = jsonConverter.write(payload);
@@ -70,8 +70,8 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
 
     String sqlTemplate =
         """
-                UPDATE authentication_interactions
-                SET payload = ?::jsonb,
+                UPDATE authentication_interactions_v2
+                SET payload = ?,
                 updated_at = now()
                 WHERE authentication_transaction_id = ?
                 AND tenant_id = ?::uuid
@@ -93,7 +93,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionCommandSqlEx
 
     String sqlTemplate =
         """
-                DELETE FROM authentication_interactions
+                DELETE FROM authentication_interactions_v2
                 WHERE authentication_transaction_id = ?
                 AND tenant_id = ?::uuid
                 AND interaction_type = ?

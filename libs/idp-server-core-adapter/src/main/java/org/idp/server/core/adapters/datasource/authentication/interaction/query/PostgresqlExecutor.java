@@ -36,7 +36,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionQuerySqlExec
             authentication_transaction_id,
             interaction_type,
             payload
-            FROM authentication_interactions
+            FROM authentication_interactions_v2
             WHERE authentication_transaction_id = ?::uuid
             AND tenant_id = ?::uuid
             AND interaction_type = ?
@@ -53,7 +53,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionQuerySqlExec
   @Override
   public Map<String, String> selectCount(Tenant tenant, AuthenticationInteractionQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM authentication_interactions");
+    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM authentication_interactions_v2");
     sql.append(" WHERE tenant_id = ?::uuid");
     sql.append(" AND created_at BETWEEN ? AND ?");
     List<Object> params = new ArrayList<>();
@@ -80,7 +80,7 @@ public class PostgresqlExecutor implements AuthenticationInteractionQuerySqlExec
             authentication_transaction_id,
             interaction_type,
             payload
-            FROM authentication_interactions
+            FROM authentication_interactions_v2
             """);
     sql.append(" WHERE tenant_id = ?::uuid");
     sql.append(" AND created_at BETWEEN ? AND ?");

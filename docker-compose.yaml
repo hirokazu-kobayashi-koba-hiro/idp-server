@@ -268,7 +268,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2.0'
+          cpus: '0.5'
     environment:
       - POSTGRES_USER=idpserver
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
@@ -306,7 +306,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2.0'
+          cpus: '0.5'
     environment:
       - POSTGRES_USER=idpserver
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}

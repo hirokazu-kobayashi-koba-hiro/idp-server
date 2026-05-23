@@ -34,7 +34,7 @@ public class MysqlExecutor implements AuthenticationInteractionCommandSqlExecuto
 
     String sqlTemplate =
         """
-            INSERT INTO authentication_interactions (
+            INSERT INTO authentication_interactions_v2 (
             authentication_transaction_id,
             tenant_id,
             interaction_type,
@@ -63,7 +63,7 @@ public class MysqlExecutor implements AuthenticationInteractionCommandSqlExecuto
 
     String sqlTemplate =
         """
-                UPDATE authentication_interactions
+                UPDATE authentication_interactions_v2
                 SET payload = ?,
                 updated_at = now()
                 WHERE authentication_transaction_id = ?
@@ -86,7 +86,7 @@ public class MysqlExecutor implements AuthenticationInteractionCommandSqlExecuto
 
     String sqlTemplate =
         """
-                DELETE FROM authentication_interactions
+                DELETE FROM authentication_interactions_v2
                 WHERE authentication_transaction_id = ?
                 AND tenant_id = ?
                 AND interaction_type = ?

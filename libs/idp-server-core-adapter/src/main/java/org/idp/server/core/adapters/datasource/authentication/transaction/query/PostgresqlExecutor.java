@@ -141,7 +141,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
       AuthenticationTransactionQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     StringBuilder sql =
-        new StringBuilder("SELECT COUNT(*) FROM authentication_transaction")
+        new StringBuilder("SELECT COUNT(*) FROM authentication_transaction_v2")
             .append(" WHERE tenant_id = ?::uuid AND authentication_device_id = ?::uuid");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
@@ -203,7 +203,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
   @Override
   public Map<String, String> selectCount(Tenant tenant, AuthenticationTransactionQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM authentication_transaction");
+    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM authentication_transaction_v2");
     sql.append(" WHERE tenant_id = ?::uuid");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
@@ -387,6 +387,6 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
           attributes,
           created_at,
           expires_at
-          FROM authentication_transaction
+          FROM authentication_transaction_v2
           """;
 }

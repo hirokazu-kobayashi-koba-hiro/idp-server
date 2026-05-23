@@ -36,7 +36,7 @@ public class MysqlExecutor implements AuthenticationInteractionQuerySqlExecutor 
             authentication_transaction_id,
             interaction_type,
             payload
-            FROM authentication_interactions
+            FROM authentication_interactions_v2
             WHERE authentication_transaction_id = ?
             AND tenant_id = ?
             AND interaction_type = ?
@@ -54,7 +54,7 @@ public class MysqlExecutor implements AuthenticationInteractionQuerySqlExecutor 
   public Map<String, String> selectCount(Tenant tenant, AuthenticationInteractionQueries queries) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     StringBuilder sql =
-        new StringBuilder("SELECT COUNT(*) as count FROM authentication_interactions");
+        new StringBuilder("SELECT COUNT(*) as count FROM authentication_interactions_v2");
     sql.append(" WHERE tenant_id = ?");
     sql.append(" AND created_at BETWEEN ? AND ?");
     List<Object> params = new ArrayList<>();
@@ -85,7 +85,7 @@ public class MysqlExecutor implements AuthenticationInteractionQuerySqlExecutor 
             authentication_transaction_id,
             type,
             payload
-            FROM authentication_interactions
+            FROM authentication_interactions_v2
             """);
     sql.append(" WHERE tenant_id = ?");
     sql.append(" AND created_at BETWEEN ? AND ?");

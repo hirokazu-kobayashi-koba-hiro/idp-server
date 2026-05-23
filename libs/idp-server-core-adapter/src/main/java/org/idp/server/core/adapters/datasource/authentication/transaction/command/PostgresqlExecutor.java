@@ -37,7 +37,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
 
     String sqlTemplate =
         """
-            INSERT INTO authentication_transaction
+            INSERT INTO authentication_transaction_v2
             (
             id,
             tenant_id,
@@ -61,18 +61,18 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
             (
             ?::uuid,
             ?::uuid,
-            ?::jsonb,
+            ?,
             ?,
             ?::uuid,
             ?,
-            ?::jsonb,
+            ?,
             ?::uuid,
-            ?::jsonb,
-            ?::jsonb,
+            ?,
+            ?,
             ?::uuid,
-            ?::jsonb,
-            ?::jsonb,
-            ?::jsonb,
+            ?,
+            ?,
+            ?,
             ?::jsonb,
             ?,
             ?
@@ -135,12 +135,12 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
 
     String sqlTemplate =
         """
-                UPDATE authentication_transaction
+                UPDATE authentication_transaction_v2
                 SET user_id = ?::uuid,
-                user_payload = ?::jsonb,
+                user_payload = ?,
                 authentication_device_id = ?::uuid,
-                authentication_device_payload = ?::jsonb,
-                interactions = ?::jsonb,
+                authentication_device_payload = ?,
+                interactions = ?,
                 updated_at = now()
                 WHERE id = ?::uuid
                 AND tenant_id = ?::uuid
@@ -183,7 +183,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
 
     String sqlTemplate =
         """
-        DELETE FROM authentication_transaction
+        DELETE FROM authentication_transaction_v2
         WHERE id = ?::uuid
         AND tenant_id = ?::uuid
     """;
@@ -201,7 +201,7 @@ public class PostgresqlExecutor implements AuthenticationTransactionCommandSqlEx
 
     String sqlTemplate =
         """
-        DELETE FROM authentication_transaction
+        DELETE FROM authentication_transaction_v2
         WHERE authorization_id = ?::uuid
         AND tenant_id = ?::uuid
     """;

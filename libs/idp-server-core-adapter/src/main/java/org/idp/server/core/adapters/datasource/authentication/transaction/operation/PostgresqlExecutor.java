@@ -28,9 +28,9 @@ public class PostgresqlExecutor implements AuthenticationTransactionSqlExecutor 
 
     String sqlTemplate =
         """
-        DELETE FROM authentication_transaction
+        DELETE FROM authentication_transaction_v2
             WHERE ctid IN (
-              SELECT ctid FROM authentication_transaction
+              SELECT ctid FROM authentication_transaction_v2
               WHERE expires_at < now()
               LIMIT ?
             );
