@@ -33,7 +33,7 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                INSERT INTO backchannel_authentication_request
+                INSERT INTO backchannel_authentication_request_v2
                 (
                 id,
                 tenant_id,
@@ -70,7 +70,7 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
                 ?,
                 ?,
                 ?,
-                ?::jsonb,
+                ?,
                 ?,
                 ?);
                 """;
@@ -164,7 +164,7 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
                         authorization_details,
                         expires_in,
                         expires_at
-                        FROM backchannel_authentication_request
+                        FROM backchannel_authentication_request_v2
                         WHERE id = ?::uuid;
                         """;
 
@@ -179,7 +179,7 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM backchannel_authentication_request
+            DELETE FROM backchannel_authentication_request_v2
             WHERE id = ?::uuid;
             """;
     List<Object> params = new ArrayList<>();

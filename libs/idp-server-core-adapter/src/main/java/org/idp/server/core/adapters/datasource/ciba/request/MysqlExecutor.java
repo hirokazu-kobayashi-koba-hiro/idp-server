@@ -33,7 +33,7 @@ public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecuto
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                INSERT INTO backchannel_authentication_request
+                INSERT INTO backchannel_authentication_request_v2
                 (
                 id,
                 tenant_id,
@@ -164,7 +164,7 @@ public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecuto
                         authorization_details,
                         expires_in,
                         expires_at
-                        FROM backchannel_authentication_request
+                        FROM backchannel_authentication_request_v2
                         WHERE id = ?;
                         """;
 
@@ -179,7 +179,7 @@ public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecuto
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM backchannel_authentication_request
+            DELETE FROM backchannel_authentication_request_v2
             WHERE id = ?;
             """;
     List<Object> params = new ArrayList<>();

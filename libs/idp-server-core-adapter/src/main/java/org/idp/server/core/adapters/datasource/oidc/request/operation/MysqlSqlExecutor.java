@@ -27,7 +27,7 @@ public class MysqlSqlExecutor implements AuthorizationRequestSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqpTemplate =
         """
-          DELETE FROM authorization_request
+          DELETE FROM authorization_request_v2
           WHERE expires_at < NOW()
           LIMIT ?;
         """;

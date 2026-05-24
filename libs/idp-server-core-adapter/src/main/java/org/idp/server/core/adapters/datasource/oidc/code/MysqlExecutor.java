@@ -35,7 +35,7 @@ public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                    INSERT INTO authorization_code_grant
+                    INSERT INTO authorization_code_grant_v2
                     (
                     authorization_request_id,
                     tenant_id,
@@ -143,7 +143,7 @@ public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
                 authorization_details,
                 expires_at,
                 consent_claims
-                FROM authorization_code_grant
+                FROM authorization_code_grant_v2
                 WHERE authorization_code = ?
                 AND tenant_id = ?;
                 """;
@@ -159,7 +159,7 @@ public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                DELETE FROM authorization_code_grant
+                DELETE FROM authorization_code_grant_v2
                 WHERE authorization_request_id = ?
                 AND tenant_id = ?;
             """;

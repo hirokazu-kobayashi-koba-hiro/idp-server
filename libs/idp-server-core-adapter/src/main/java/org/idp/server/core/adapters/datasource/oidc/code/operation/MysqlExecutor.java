@@ -26,7 +26,7 @@ public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-           DELETE FROM authorization_code_grant
+           DELETE FROM authorization_code_grant_v2
             WHERE expires_at < now()
             LIMIT ?;
         """;

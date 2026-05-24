@@ -26,9 +26,9 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-           DELETE FROM authorization_code_grant
+           DELETE FROM authorization_code_grant_v2
             WHERE ctid IN (
-              SELECT ctid FROM authorization_code_grant
+              SELECT ctid FROM authorization_code_grant_v2
               WHERE expires_at < now()
               LIMIT ?
             );

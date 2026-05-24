@@ -35,7 +35,7 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                    INSERT INTO ciba_grant (
+                    INSERT INTO ciba_grant_v2 (
                     backchannel_authentication_request_id,
                     tenant_id,
                     auth_req_id,
@@ -63,17 +63,17 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
                     ?,
                     ?,
                     ?::uuid,
-                    ?::jsonb,
-                    ?::jsonb,
-                    ?,
-                    ?::jsonb,
                     ?,
                     ?,
                     ?,
                     ?,
-                    ?::jsonb,
-                    ?::jsonb,
-                    ?::jsonb
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?
                     );
                     """;
     List<Object> params = new ArrayList<>();
@@ -131,8 +131,8 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
 
     String sqlTemplate =
         """
-                UPDATE ciba_grant
-                SET authentication = ?::jsonb,
+                UPDATE ciba_grant_v2
+                SET authentication = ?,
                 scopes = ?,
                 status = ?
                 WHERE backchannel_authentication_request_id = ?::uuid;
@@ -182,7 +182,7 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM ciba_grant
+            DELETE FROM ciba_grant_v2
             WHERE backchannel_authentication_request_id = ?::uuid;
             """;
     List<Object> params = new ArrayList<>();
@@ -216,6 +216,6 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
                   custom_properties,
                   authorization_details,
                   consent_claims
-                  FROM ciba_grant
+                  FROM ciba_grant_v2
                   """;
 }

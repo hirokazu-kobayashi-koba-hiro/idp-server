@@ -27,7 +27,7 @@ public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecuto
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM backchannel_authentication_request
+            DELETE FROM backchannel_authentication_request_v2
             WHERE expires_at < now()
             LIMIT ?;
             """;

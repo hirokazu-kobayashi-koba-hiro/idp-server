@@ -27,9 +27,9 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM ciba_grant
+            DELETE FROM ciba_grant_v2
             WHERE ctid IN (
-              SELECT ctid FROM ciba_grant
+              SELECT ctid FROM ciba_grant_v2
               WHERE expires_at < now()
               LIMIT ?
             );

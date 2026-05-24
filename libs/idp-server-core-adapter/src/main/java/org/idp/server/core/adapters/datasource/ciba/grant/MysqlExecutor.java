@@ -35,7 +35,7 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                        INSERT INTO ciba_grant (
+                        INSERT INTO ciba_grant_v2 (
                         backchannel_authentication_request_id,
                         tenant_id,
                         auth_req_id,
@@ -131,7 +131,7 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
 
     String sqlTemplate =
         """
-                UPDATE ciba_grant
+                UPDATE ciba_grant_v2
                 SET authentication = ?,
                 scopes = ?,
                 status = ?
@@ -152,7 +152,7 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
     String sqlTemplate =
         """
             SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expires_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
-            FROM ciba_grant
+            FROM ciba_grant_v2
             WHERE auth_req_id = ?;
             """;
 
@@ -182,7 +182,7 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM ciba_grant
+            DELETE FROM ciba_grant_v2
             WHERE backchannel_authentication_request_id = ?;
             """;
     List<Object> params = new ArrayList<>();
@@ -216,6 +216,6 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
                       custom_properties,
                       authorization_details,
                       consent_claims
-                      FROM ciba_grant \n
+                      FROM ciba_grant_v2 \n
                       """;
 }

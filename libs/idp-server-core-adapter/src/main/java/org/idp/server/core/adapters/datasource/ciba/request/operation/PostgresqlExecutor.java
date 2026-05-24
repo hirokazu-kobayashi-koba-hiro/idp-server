@@ -27,9 +27,9 @@ public class PostgresqlExecutor implements BackchannelAuthenticationRequestSqlEx
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM backchannel_authentication_request
+            DELETE FROM backchannel_authentication_request_v2
             WHERE ctid IN (
-              SELECT ctid FROM backchannel_authentication_request
+              SELECT ctid FROM backchannel_authentication_request_v2
               WHERE expires_at < now()
               LIMIT ?
             );

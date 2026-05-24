@@ -39,7 +39,7 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
 
     String sqlTemplate =
         """
-                    INSERT INTO authorization_request
+                    INSERT INTO authorization_request_v2
                     (id,
                     tenant_id,
                     profile,
@@ -75,7 +75,6 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
                     ?,
                     ?,
                     ?,
-                    ?::jsonb,
                     ?,
                     ?,
                     ?,
@@ -92,8 +91,9 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
                     ?,
                     ?,
                     ?,
-                    ?::jsonb,
-                    ?::jsonb,
+                    ?,
+                    ?,
+                    ?,
                     ?,
                     ?);
                     """;
@@ -267,7 +267,7 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
                 custom_params,
                 expires_in,
                 expires_at
-                FROM authorization_request
+                FROM authorization_request_v2
                 WHERE id = ?::uuid
                 AND tenant_id = ?::uuid;
                 """;
@@ -283,7 +283,7 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqpTemplate =
         """
-            DELETE FROM authorization_request
+            DELETE FROM authorization_request_v2
             WHERE id = ?::uuid
             AND tenant_id = ?::uuid;
             """;

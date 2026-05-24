@@ -35,7 +35,7 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                    INSERT INTO authorization_code_grant
+                    INSERT INTO authorization_code_grant_v2
                     (
                     authorization_request_id,
                     tenant_id,
@@ -59,18 +59,18 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
                     ?::uuid,
                     ?,
                     ?::uuid,
-                    ?::jsonb,
-                    ?::jsonb,
-                    ?,
-                    ?::jsonb,
                     ?,
                     ?,
                     ?,
                     ?,
-                    ?::jsonb,
-                    ?::jsonb,
                     ?,
-                    ?::jsonb
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?
                     );
                     """;
     List<Object> params = new ArrayList<>();
@@ -143,7 +143,7 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
                 authorization_details,
                 expires_at,
                 consent_claims
-                FROM authorization_code_grant
+                FROM authorization_code_grant_v2
                 WHERE authorization_code = ?
                 AND tenant_id = ?::uuid;
                 """;
@@ -159,7 +159,7 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-                DELETE FROM authorization_code_grant
+                DELETE FROM authorization_code_grant_v2
                 WHERE authorization_request_id = ?::uuid
                 AND tenant_id = ?::uuid;
             """;

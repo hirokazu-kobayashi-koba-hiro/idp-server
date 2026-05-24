@@ -27,7 +27,7 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM ciba_grant
+            DELETE FROM ciba_grant_v2
             WHERE expires_at < now()
             LIMIT ?;
             """;

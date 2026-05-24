@@ -39,7 +39,7 @@ public class MysqlSqlExecutor implements AuthorizationRequestSqlExecutor {
 
     String sqlTemplate =
         """
-                    INSERT INTO authorization_request
+                    INSERT INTO authorization_request_v2
                     (id,
                     tenant_id,
                     profile,
@@ -267,7 +267,7 @@ public class MysqlSqlExecutor implements AuthorizationRequestSqlExecutor {
                 custom_params,
                 expires_in,
                 expires_at
-                FROM authorization_request
+                FROM authorization_request_v2
                 WHERE id = ?
                 AND tenant_id = ?;
                 """;
@@ -283,7 +283,7 @@ public class MysqlSqlExecutor implements AuthorizationRequestSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqpTemplate =
         """
-            DELETE FROM authorization_request
+            DELETE FROM authorization_request_v2
             WHERE id = ?
             AND tenant_id = ?;
             """;
