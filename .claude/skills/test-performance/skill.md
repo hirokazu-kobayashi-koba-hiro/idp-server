@@ -387,6 +387,82 @@ k6 run --out json=result.json ./performance-test/stress/...
 
 ---
 
+## 計測の作法（重要）
+
+### Warm-up は必須
+
+初回 Run の RPS / p95 は信頼性低い：
+
+- **shared_buffers / OS page cache が未温**
+- **JIT コンパイル未温**
+- **PostgreSQL statistics が未温**（特に新規テーブル）
+
+→ **1 Run 目は捨てて、Run 2-4 を平均する**ことを推奨。
+
+```bash
+# 4 runs 取って 1 つ目を捨てる
+for i in 1 2 3 4; do
+  echo "===== Run $i/4 ====="
+  ./performance-test/scripts/run-stress-test.sh scenario-X
+done
+```
+
+### 同条件再現の難しさ
+
+ローカル計測の数値は **±20% 揺れる**ことが普通。原因：
+
+| 要因 | 影響 |
+|---|---|
+| PC 全体の負荷（他プロセス）| RPS が大幅変動 |
+| autovacuum のタイミング | I/O 競合 |
+| Docker コンテナ再作成 | キャッシュリセット |
+| アプリ・DB の再起動 | warm-up からやり直し |
+
+→ **別日計測の数値は信頼しない**、同セッションでの相対比較を基本とする。
+
+### 計測前のリセット
+
+```sql
+-- pg_stat_statements を計測ごとにリセット
+SELECT pg_stat_statements_reset();
+```
+
+これをやらないと前回計測の累積が混入し、改善前後の差分が薄まる。
+
+### TOP SQL の見方（mean × calls で分解）
+
+`pg_stat_statements` の `total_exec_time` は **mean × calls**：
+
+| パターン | mean | calls | 改善方向 |
+|---|---:|---:|---|
+| A. 重い × 多い | 大 | 大 | クエリ最適化 + 呼び出し削減 |
+| B. 重い × 普通 | 大 | 中 | クエリ最適化（index, JSONB 等） |
+| C. 軽い × 異常に多い | 小 | 超大 | **アプリ側の N+1 / キャッシュ** |
+| D. 軽い × 普通 | 小 | 中 | チューニング対象外 |
+
+「total 上位 = 遅いクエリ」と早合点しない。`mean` も同時に見る。
+
+### ローカル CPU 0.5 制限の意味
+
+`docker-compose.yaml` の postgres-primary / postgres-replica の `deploy.resources.limits.cpus: '0.5'`：
+
+- ローカル PC で本番相当の CPU 制約をシミュレートする目的
+- 「ローカルで天井に当たれば本番でも当たる」前提のスクリーニング用途
+- 上限解除して計測したい場合は、`cpus` の値を変更してコンテナ再作成（`docker compose up -d --force-recreate`、restart だけでは HostConfig 反映されない）
+
+### ローカル計測の限界
+
+ローカルで効果が見えない = 本番でも効果ない、とは限らない：
+
+- 書き込み軽量化（GIN 削除、JSONB→TEXT）は **1 行あたりの数 ms 改善**
+- シナリオ 1 iteration で発火する書き込み件数が少ないと、全体 RPS への寄与は誤差レベル
+- ただし本番で **1日 数百万 INSERT** されるテーブルなら累積で巨大効果
+- → **本番想定の負荷規模で計測**しないと真の効果は見えない
+
+→ 最終確認は AWS staging（本番相当データ量）で実施が望ましい。
+
+---
+
 ## 関連スキル
 
 | スキル | 用途 |
@@ -394,3 +470,4 @@ k6 run --out json=result.json ./performance-test/stress/...
 | `/ops-local-env` | ローカル環境構築 |
 | `/ops-deployment` | 運用・監視 |
 | `/dev-database` | データベース設定・チューニング |
+| `/perf-improvement-playbook` | 性能改善 現状調査プレイブック |

@@ -859,3 +859,64 @@ Controller / Spring Boot
 ```
 
 EntryService 実装を生成し、`TenantAwareEntryServiceProxy.createProxy()` でラップすることで、`@Transaction` アノテーション駆動のトランザクション管理を自動化する。
+
+---
+
+## Zero-downtime な型変更戦略（v2 新規テーブル swap）
+
+性能改善や設計修正で **DB カラムの型を変えたい**ケース（典型: JSONB → TEXT）で、本番のロックを最小化するためのアーキテクチャパターン。
+
+### 課題: ALTER TABLE のロック
+
+`ALTER TABLE ... ALTER COLUMN TYPE` は PostgreSQL で **`AccessExclusiveLock` + 全行 rewrite** を引き起こす：
+
+- 本番テーブルが大きいほどロック時間が長い
+- ロック中は読み書き完全停止
+- → **本番停止メンテナンスが必要**
+
+### 解決: 新規テーブル swap
+
+旧テーブルを ALTER せず、新しい型の `*_v2` テーブルを CREATE し、アプリの書き込み先を切り替える。
+
+```
+┌──────────────────┐         ┌─────────────────────┐
+│ table_v1 (JSONB) │         │ table_v2 (TEXT)     │
+│  - 旧データ残存  │  並行   │  - 新規データ書込   │
+│  - expire 待ち   │ ───→    │  - アプリは v2 使用 │
+└──────────────────┘         └─────────────────────┘
+```
+
+### 適用ステップ
+
+1. **migration で `*_v2` テーブル CREATE**
+   - 同等スキーマ（PK, FK, Index, RLS policy 全部移植）
+   - FK が他の v2 テーブルを参照する場合は v2 同士で繋ぐ
+2. **Executor を v2 へ向けて修正**（INSERT/UPDATE/DELETE/SELECT 全て）
+3. **アプリデプロイ**
+   - 新規データ → v2、旧 v1 への書き込みは停止
+4. **expire 待ち**（短命データなら数時間〜数日で v1 が空に）
+5. **旧 v1 を DROP**（別 migration）
+
+### 適用条件
+
+| データ寿命 | 戦略 |
+|---|---|
+| 数分〜数時間（短命） | ✅ swap だけで OK（自然減）|
+| 数時間〜数日 | ✅ swap、ただし expire 待ち期間長い |
+| 長命（同意保持、ユーザー等） | ⚠️ dual-write + backfill 必要 |
+
+### idp-server での実例
+
+| 対象 | テーブル | migration |
+|---|---|---|
+| authentication 系 | `authentication_transaction_v2`、`authentication_interactions_v2` | `V0_10_2__authentication_v2_text_tables.sql` |
+| OAuth/CIBA 系 | `authorization_request_v2`、`authorization_code_grant_v2`、`backchannel_authentication_request_v2`、`ciba_grant_v2` | `V0_10_4__oauth_ciba_v2_text_tables.sql` |
+
+### 注意点
+
+- **Executor 修正は機械的にできるが**、`authorization_request_id` 等の **`_id` サフィックスを持つカラム名** を誤置換しないよう、テーブル名置換では `\b` 境界を使う
+- **`?::jsonb` キャスト削除**を忘れない（TEXT 化したカラム全部）
+- **`attributes` 等の GIN 維持カラム**がある場合、その `?::jsonb` キャストは残す
+- アプリ層で **JSON.parse / JSON.stringify** ライフサイクルが完結してることを事前確認（`->>` で内部 path 検索してたら破綻）
+
+詳細は `/dev-database` の「v2 新規テーブル swap パターン」セクション参照。

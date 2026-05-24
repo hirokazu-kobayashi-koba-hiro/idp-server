@@ -532,6 +532,157 @@ MySQL では RLS 非対応のため、アプリケーション層での明示的
 
 ---
 
+## JSONB vs TEXT 設計判断
+
+### TEXT 化判断軸
+
+JSONB カラムを TEXT に変える判断は、アプリ層の使い方で決まる：
+
+| アプリ層の使い方 | TEXT 化可否 |
+|---|---|
+| `JSON.stringify` で write、`JSON.parse` で read（フルスナップショット）| ✅ TEXT 化可能 |
+| `->>` / `->` 演算子で内部 path クエリ | ⚠️ クエリ実装次第（後述）|
+| `@>` 演算子（JSONB 含包）+ GIN index | ❌ JSONB 維持 |
+| `?` / `?&` / `?|` 演算子 + GIN index | ❌ JSONB 維持 |
+
+→ **アプリで `JSON.parse` してドメインオブジェクト化するだけのカラムは TEXT 化候補**。  
+→ JSONB の検索能力を使ってないカラムは、**書き込みコストだけ払って読みで得てない**。
+
+### GIN(JSONB) の落とし穴
+
+**`->>` 演算子では GIN が使われない**:
+
+- GIN(detail) は `@>` / `?` / `?&` / `?|` でのみ planner に選ばれる
+- アプリが `detail ->> 'key' = ?` で検索してる場合、**GIN は無視され Seq Scan + Filter**
+- それでも書き込み時は GIN entry 更新コストが発生 → 完全に無駄
+
+**確認方法**:
+
+```sql
+-- 該当カラムでの実際の検索クエリパターンを EXPLAIN ANALYZE
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT ... FROM target_table WHERE detail @> '...'::jsonb;
+-- vs
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT ... FROM target_table WHERE detail ->> 'key' = '...';
+```
+
+`idx_scan = 0` の GIN は削除候補：
+
+```sql
+SELECT indexrelname, idx_scan, pg_size_pretty(pg_relation_size(indexrelid))
+FROM pg_stat_user_indexes
+WHERE indexrelname LIKE '%detail%';
+```
+
+### TEXT 化の効果と代償
+
+**効果**:
+- INSERT/UPDATE 毎の `jsonb_in` パースコスト削減（大きい payload で顕著）
+- GIN index 更新コスト削減（GIN を同時削除した場合）
+
+**代償**:
+- DB レベルで JSON 構造検証されなくなる → アプリ層で保証する責任
+- 将来 JSON path 検索が必要になった場合、TEXT のままだと Seq Scan + Filter（パフォーマンス劣化）
+- 該当カラムへの GIN/部分インデックスは作れない
+
+---
+
+## v2 新規テーブル swap パターン（zero-downtime な型変更）
+
+`ALTER TABLE ... ALTER COLUMN TYPE` は **`AccessExclusiveLock` で全行 rewrite** が走り、本番では長時間ロックの原因に。新規テーブル方式で回避する。
+
+### 適用条件
+
+- **短命データ**（数分〜数時間）が理想：旧テーブルは expire 待ちで自然減
+- 例: `authorization_request`、`authentication_transaction`、`ciba_grant` などの OAuth/CIBA フロー中間状態テーブル
+- 長命データ（同意保持等）は dual-write + backfill が必要
+
+### 手順
+
+1. **新テーブル `*_v2` を `CREATE`**（既存と並行）
+   - JSONB → TEXT、その他スキーマは同等
+   - PK / FK / Index / RLS policy も移植
+   - FK が他の v2 テーブルを参照する場合は v2 同士で繋ぐ（例: `authorization_code_grant_v2.authorization_request_id` → `authorization_request_v2.id`）
+2. **Executor の SQL 文を v2 テーブルへ切替**
+   - INSERT/UPDATE/DELETE/SELECT すべて v2 へ
+   - `?::jsonb` キャストも同時削除（TEXT 化したカラム分）
+3. **アプリをデプロイ**
+   - 新規データは v2 に書き込まれる
+   - 旧 v1 テーブルへは書き込みなし、読み取りもなし
+4. **旧データの expire を待つ**
+   - 数時間〜数日で v1 は空になる
+5. **旧 v1 テーブルを DROP**（別 migration で）
+
+### 制約
+
+- 旧 v1 データを参照する経路がある場合（例: 起動直後の進行中フロー）、**dual-read** or **dual-write** 期間が必要
+- Executor 修正時、テーブル名置換で `authorization_request_id` 等のカラム名を誤置換しないよう注意（`\b` 境界での置換が安全）
+
+### 該当 migration 例
+
+- PostgreSQL: `V0_10_2__authentication_v2_text_tables.sql`、`V0_10_4__oauth_ciba_v2_text_tables.sql`
+- MySQL: 同名の `.mysql.sql`
+
+---
+
+## Index 設計の原則
+
+### 単独 index vs 複合 index
+
+`(A)` 単独 index と `(A, B, C)` 複合 index が両方ある場合、**多くのケースで単独は冗長**：
+
+- 複合 index は `WHERE A = ?` でも **プレフィックス検索**で使える
+- planner はテーブルサイズ次第で複合を選ぶ
+- 単独 index は書き込みコストだけ払う
+
+### 冗長 index の検出
+
+```sql
+-- 各 index の使用統計
+SELECT
+  relname, indexrelname, idx_scan, idx_tup_read,
+  pg_size_pretty(pg_relation_size(indexrelid)) AS size
+FROM pg_stat_user_indexes
+WHERE schemaname = 'public'
+ORDER BY idx_scan ASC, pg_relation_size(indexrelid) DESC;
+```
+
+- `idx_scan = 0` → 読み取りで使われてない、書き込みコストだけ
+- 単独 index が複合 index にカバーされるか確認:
+  ```sql
+  SELECT indexrelname, pg_get_indexdef(indexrelid)
+  FROM pg_stat_user_indexes WHERE relname = '<table>';
+  ```
+
+### 削除判断フロー
+
+```
+[index 候補]
+   │
+   ▼
+[idx_scan = 0?]
+   │ Yes
+   ▼ → 削除可（書き込みコストだけ払ってる）
+   │ No
+   ▼
+[プレフィックスとして複合にカバーされる?]
+   │ Yes
+   ▼ → 削除可（planner は複合を選ぶ）
+   │ No
+   ▼
+[特定の検索クエリで実際に選ばれる?]
+   ├ Yes → 維持
+   └ No  → 削除候補（EXPLAIN ANALYZE で再確認）
+```
+
+### バッチ統計集計と index
+
+バッチ集計クエリ（`WHERE created_at >= X`）はパーティション pruning が一次フィルタとして効くので、**`created_at` 単独 index は必須ではない**。  
+ただし、パーティション内で Index Only Scan を期待する場合は維持が安全。
+
+---
+
 ## 関連スキル
 
 | スキル | 用途 |
@@ -539,3 +690,5 @@ MySQL では RLS 非対応のため、アプリケーション層での明示的
 | `/ops-local-env` | ローカルDB環境構築 |
 | `/dev-architecture` | アーキテクチャ全体像 |
 | `/ops-deployment` | 運用・監視 |
+| `/test-performance` | 性能計測・チューニング |
+| `/perf-improvement-playbook` | 性能改善 現状調査プレイブック |
