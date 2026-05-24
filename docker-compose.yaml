@@ -285,7 +285,8 @@ services:
       "-c", "shared_buffers=1GB",
       "-c", "work_mem=64MB",
       "-c", "effective_cache_size=2GB",
-      "-c", "max_parallel_workers_per_gather=4"
+      "-c", "max_parallel_workers_per_gather=4",
+      "-c", "track_io_timing=on"
     ]
     volumes:
       - ./libs/idp-server-database/postgresql/init/00-init-app-user.sh:/docker-entrypoint-initdb.d/00-init-app-user.sh
@@ -312,6 +313,10 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
       - POSTGRES_DB=idpserver
       - TZ=UTC
+    command: [
+      "postgres",
+      "-c", "track_io_timing=on"
+    ]
     ports:
       - "5433:5432"
     depends_on:
