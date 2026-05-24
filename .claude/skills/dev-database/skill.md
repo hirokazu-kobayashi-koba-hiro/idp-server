@@ -683,6 +683,21 @@ ORDER BY idx_scan ASC, pg_relation_size(indexrelid) DESC;
 
 ---
 
+## 設計時の CPU 視点
+
+新規テーブル・カラム・index を追加する際の **DB CPU 観点のチェック**は以下を参照：
+
+→ **`documentation/docs/content_08_ops/performance/08-postgresql-cpu-patterns.md`**
+
+主なチェック項目（抜粋）:
+- データ寿命（短命なら v2 swap が選べる）
+- JSONB の検索演算子確認（`->>` なら GIN は無駄）
+- 複合 index にカバーされる単独 index は冗長
+- 高更新テーブルへの index 追加は慎重に
+- read-only API は read-only tx 化で set_config 削減
+
+---
+
 ## 関連スキル
 
 | スキル | 用途 |
@@ -692,3 +707,9 @@ ORDER BY idx_scan ASC, pg_relation_size(indexrelid) DESC;
 | `/ops-deployment` | 運用・監視 |
 | `/test-performance` | 性能計測・チューニング |
 | `/perf-improvement-playbook` | 性能改善 現状調査プレイブック |
+
+## 関連ドキュメント
+
+| ドキュメント | 内容 |
+|---|---|
+| `documentation/docs/content_08_ops/performance/08-postgresql-cpu-patterns.md` | PostgreSQL CPU 消費パターン（設計者向けリファレンス）|

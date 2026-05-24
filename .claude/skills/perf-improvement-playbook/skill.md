@@ -268,4 +268,5 @@ idp-server staging で、`security_event` INSERT mean が **14.5ms**（通常の
 | `/test-performance` | k6 計測の実行手順・作法 |
 | `/dev-database` | JSONB/TEXT 判断、index 設計、v2 swap パターン |
 | `/dev-architecture` | zero-downtime な型変更戦略 |
+| `documentation/docs/content_08_ops/performance/08-postgresql-cpu-patterns.md` | **PostgreSQL CPU 消費パターン（設計者向け）** |
 | `documentation/docs/content_08_ops/performance/` | 性能検証ドキュメント一式 |
