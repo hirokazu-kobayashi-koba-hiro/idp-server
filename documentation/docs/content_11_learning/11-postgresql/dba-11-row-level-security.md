@@ -63,7 +63,7 @@ SELECT * FROM orders;  -- 自動で「tenant_id = 'A' のもの」だけ返る
 
 ### 2.1 動作レイヤー
 
-RLS は **planner レベル** で動作する：
+RLS は **Rewriter で条件式を追加し、Planner が LEAKPROOF 制約を考慮して実行プランを決定する** 2 段構えで動作する：
 
 ```
 ┌───────────────────────────────────┐
@@ -95,8 +95,10 @@ RLS は **planner レベル** で動作する：
 ```
 
 ポイント：
-- アプリのクエリは **書き換えられた状態**で planner に渡される
-- アプリ側のコードは RLS の存在を意識する必要がない（透過的）
+- **Rewriter** が policy の `USING` / `WITH CHECK` をクエリの条件式として注入する（書き換え本体）
+- **Planner** はその書き換え済みクエリに対して、LEAKPROOF 属性を含む安全性ルールを考慮しながら実行プランを選ぶ
+- アプリのクエリは書き換えられた状態で planner に渡されるため、アプリ側のコードは RLS の存在を意識する必要がない（透過的）
+- 「LEAKPROOF 制約で index が使われない」現象（[8章](#8-落とし穴と回避策重要)）は、この Planner 側の判断が原因で発生する
 
 ### 2.2 クエリ書き換えの例
 
@@ -475,7 +477,7 @@ WHERE relname = 'orders';
 | (D) Expression index | `((payload ->> 'key'))` 形式の btree index | jsonb_object_field_text が leakproof でないため、これ単独では効かない（(A) との併用が前提） |
 | (E) 現状維持 | 何もしない | データ量に応じて線形に遅くなる |
 
-実例については [プロジェクトの実証分析](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1550) も参照。
+LEAKPROOF 制約の実機検証および各回避策の影響比較については [idp-server Issue #1550](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1550) のコメント群で詳細を扱っている。同 Issue は当初 `@>` 演算子への書き換え（GIN ops 互換性）を起点に始まったが、その過程で本章で扱う LEAKPROOF 制約が真の原因として明らかになった経緯がある。
 
 ### 8.5 LEAKPROOF マークの安全性評価ポイント
 
@@ -513,7 +515,7 @@ AWS RDS / Aurora / Google Cloud SQL / Azure Database for PostgreSQL などの **
 | 戦略 | 内容 | 適用条件 |
 |-----|------|---------|
 | **Expression index + 検索キー限定** | `((payload ->> 'fixed_key'))` の btree index | 検索キーが事前に特定できる |
-| **BYPASSRLS 付与 + index 追加** | アプリロールに BYPASSRLS（マネージド DB でも `rds_superuser` 等で実行可能なケースが多い） | テナント分離をアプリ層で完全保証できる |
+| **BYPASSRLS 付与 + index 追加** | アプリロールに BYPASSRLS を付与（`ALTER ROLE ... BYPASSRLS` の実行可否はマネージド DB のロール権限設計に依存、事前検証必須） | テナント分離をアプリ層で完全保証できる |
 | **RLS policy 削除** | RLS そのものを使わない | テナント分離の二重防御を諦める判断 |
 | **Column 化 / 正規化** | JSONB を諦めて通常 column に | スキーマが安定している項目 |
 | **検索エンジン外出し** | Elasticsearch 等で別途検索 | 全文検索や複雑なクエリが必要な場合 |
@@ -650,8 +652,10 @@ RLS が有効でも、適切に設計されていれば overhead は最小限：
 | 用途 | 推奨 index |
 |------|----------|
 | tenant_id での絞り込み | btree on `tenant_id` (uuid_eq は leakproof で問題なし) |
-| `payload @> '{...}'` JSONB containment | GIN on `payload` + 必要なら `jsonb_contains` を LEAKPROOF マーク |
-| `payload ->> 'key' = '...'` JSON 値 | btree on `((payload ->> 'key'))` + `jsonb_object_field_text` LEAKPROOF マーク |
+| `payload @> '{...}'` JSONB containment | GIN on `payload` + 必要なら `jsonb_contains` を LEAKPROOF マーク※ |
+| `payload ->> 'key' = '...'` JSON 値 | btree on `((payload ->> 'key'))` + `jsonb_object_field_text` LEAKPROOF マーク※ |
+
+※ LEAKPROOF マークは **AWS RDS / Aurora 等のマネージド DB では実行不可**（組み込み関数の owner が `rdsadmin` 等のシステムロールに固定されているため）。マネージド DB 環境では [8.6 マネージド DB 環境での設計指針](#86-マネージド-db-環境での設計指針) を参照し、BYPASSRLS 付与や RLS 削除等の代替戦略を検討。
 
 ### 11.3 連結 index による高速化
 
