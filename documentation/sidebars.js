@@ -404,7 +404,9 @@ const sidebars = {
                 "content_11_learning/postgresql/dba-06-maintenance",
                 "content_11_learning/postgresql/dba-07-partitioning",
                 "content_11_learning/postgresql/dba-08-planner",
-                "content_11_learning/postgresql/dba-09-extensions"
+                "content_11_learning/postgresql/dba-09-extensions",
+                "content_11_learning/postgresql/dba-10-procarraylock-internals",
+                "content_11_learning/postgresql/dba-11-row-level-security"
               ]
             },
             {
