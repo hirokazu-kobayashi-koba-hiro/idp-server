@@ -381,7 +381,7 @@ GIN は **2 段構造**で構成される：
 
 - **Entry Tree**: B-tree 構造で **ユニークなキー値**を索引（K = 全テーブルのユニーク key 数）
 - **Posting List**: 各キーに紐づく `TID` のリスト（少量なら配列、多量なら Posting Tree）
-- **Posting Tree**: posting list が大きくなると（既定 ~1700 件以上）B-tree に昇格
+- **Posting Tree**: posting list が **1 page (8KB) に収まらなくなった時点**で B-tree に昇格（概ね数千 TID 規模）
 
 #### 1 行から複数エントリ
 
@@ -519,7 +519,7 @@ planner が **意図的に Seq Scan を選ぶ**ことがある。これは正常
 | 統計情報が古い | `ANALYZE` 実行 |
 | `WHERE` 句で関数適用（例: `LOWER(col) = ?`） | 式インデックス追加 |
 | 型変換が暗黙発生（例: `text` カラムに数値比較） | 型を揃える |
-| **leakproof でない関数 + RLS** | [dba-11 §8.6](../11-postgresql/dba-11-row-level-security#86-マネージド-db-環境での設計指針) 参照 |
+| **leakproof でない関数 + RLS** | [dba-11 §8.6](./dba-11-row-level-security#86-マネージド-db-環境での設計指針) 参照 |
 | 結果が全体の 30% 超 | index 経由が遅いと planner が判断（正しい挙動） |
 
 #### 選び分けの目安
@@ -559,11 +559,13 @@ xychart-beta
     x-axis ["10M", "20M", "30M", "40M", "50M", "60M"]
     y-axis "検索時間 (ms)" 0 --> 6500
     line "Seq Scan O(n)" [1000, 2000, 3000, 4000, 5000, 6000]
-    line "B-tree O(log n)" [0.15, 0.17, 0.18, 0.19, 0.195, 0.2]
+    line "B-tree O(log n)" [0.15, 0.18, 0.19, 0.20, 0.21, 0.215]
     line "GIN O(log K + R)" [1, 1.5, 2, 2.5, 3, 3.5]
 ```
 
 → X 軸を等差（10M 刻み）にすると、Seq Scan は **完全に比例の直線**（O(n)）。B-tree / GIN は底辺に張り付くほど **ほぼ水平**（O(log n)）。両者の傾きの違いがそのまま「データ増加への耐性」の差。
+
+> ⚠️ **数値はあくまでイメージ**: 実時間は SSD/HDD 種別・shared_buffers サイズ・OS page cache の状態で 10 倍以上ブレうる。本番運用の意思決定は `EXPLAIN (ANALYZE, BUFFERS)` で実測して判断する。
 
 小規模域も含めた全体像（対数で見るなら）：
 
