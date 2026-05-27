@@ -126,7 +126,7 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         TransactionManager.createConnection(databaseType, tenantIdentifier);
         Object result = method.invoke(target, args);
 
-        TransactionManager.closeConnection();
+        TransactionManager.endReadTransaction();
 
         long duration = System.currentTimeMillis() - startTime;
         if (duration > 1000) {

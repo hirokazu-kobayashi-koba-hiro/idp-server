@@ -111,6 +111,32 @@ public class TransactionManager {
     }
   }
 
+  /**
+   * READ パス専用の終了処理。
+   *
+   * <p>HikariCP の {@code autoCommit=false} 設定下では、{@link #setTenantId} の {@code set_config()}
+   * 呼び出し（または最初の SELECT）で暗黙的に transaction が開始される。READ パスでも明示的に {@code commit()} を呼ばずに connection を
+   * close すると、HikariCP が pool 返却時に強制 rollback を発行し、特に reader (replica) DB の {@code
+   * pg_stat_database.xact_rollback} が READ 操作ごとに加算されてしまう（commit 成功率メトリクスの汚染）。
+   *
+   * <p>このメソッドは READ パスでも {@code commit()} を発行することで、上記のメトリクス汚染を防ぐ。 例外時は {@code finally} 側の {@link
+   * #closeConnection} に任せて HikariCP の rollback で破棄させる構造。
+   *
+   * @see <a href="https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1552">Issue
+   *     #1552</a>
+   */
+  public static void endReadTransaction() {
+    Connection conn = connectionHolder.get();
+    if (conn == null) return;
+    try {
+      conn.commit();
+    } catch (SQLException e) {
+      throw new SqlRuntimeException("Failed to commit read transaction", e);
+    } finally {
+      closeConnection();
+    }
+  }
+
   public static void closeConnection() {
     Connection conn = connectionHolder.get();
     if (conn != null) {
