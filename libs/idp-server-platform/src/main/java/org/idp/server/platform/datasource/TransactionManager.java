@@ -119,8 +119,13 @@ public class TransactionManager {
    * close すると、HikariCP が pool 返却時に強制 rollback を発行し、特に reader (replica) DB の {@code
    * pg_stat_database.xact_rollback} が READ 操作ごとに加算されてしまう（commit 成功率メトリクスの汚染）。
    *
-   * <p>このメソッドは READ パスでも {@code commit()} を発行することで、上記のメトリクス汚染を防ぐ。 例外時は {@code finally} 側の {@link
-   * #closeConnection} に任せて HikariCP の rollback で破棄させる構造。
+   * <p>このメソッドは READ パスでも {@code commit()} を発行することで、上記のメトリクス汚染を防ぐ。
+   *
+   * <p><strong>例外時に explicit rollback を呼ばない理由</strong>: explicit rollback を発行しても、HikariCP が close
+   * 時に reset 処理として rollback を発行しても、どちらも DB 側では同じ 1 件の {@code xact_rollback} としてカウントされる。READ
+   * パスの例外は元々まれであり、本 PR の主目的である「正常系の commit 集計回復」には寄与しない。シンプルさのため {@code finally} 側の {@link
+   * #closeConnection} 経由で HikariCP の reset rollback に任せる構造を採用している（WRITE パスは正常系・例外系の意味論的差を明示するため
+   * explicit に commit/rollback を発行する）。
    *
    * @see <a href="https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1552">Issue
    *     #1552</a>
