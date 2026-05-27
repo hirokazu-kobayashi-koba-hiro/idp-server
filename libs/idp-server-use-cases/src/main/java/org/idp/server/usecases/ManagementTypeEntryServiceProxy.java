@@ -124,7 +124,7 @@ public class ManagementTypeEntryServiceProxy implements InvocationHandler {
         TransactionManager.createConnection(databaseType);
         Object result = method.invoke(target, args);
 
-        TransactionManager.closeConnection();
+        TransactionManager.endReadTransaction();
         log.trace("READ end: class={}, method={}", target.getClass().getName(), method.getName());
 
         return result;
