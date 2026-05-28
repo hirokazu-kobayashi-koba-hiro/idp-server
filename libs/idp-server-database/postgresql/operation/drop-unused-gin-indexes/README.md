@@ -116,6 +116,19 @@ grep -rn "detail @>\|detail ?\|detail ?|\|detail ?&" libs/
 # → 結果が空であることを確認
 ```
 
+### 4. DROP 後の ANALYZE 推奨
+
+GIN 削除により planner の cost 推定が変わるため、関連クエリのプランが意図せず変わる可能性がある (cached plan の無効化は自動だが、統計は更新されない)。
+
+```sql
+ANALYZE security_event;
+```
+
+partitioned table の場合は全 partition の統計が更新される (~数十秒〜数分)。
+業務影響なし (read lock のみ、書き込みもブロックしない)。
+
+DROP 後に必ず 1 度実行する。
+
 ## 設定変数（02-drop-parent-retry.sh）
 
 | 変数 | デフォルト | 説明 |
@@ -124,6 +137,22 @@ grep -rn "detail @>\|detail ?\|detail ?|\|detail ?&" libs/
 | `MAX_ATTEMPTS` | `50` | リトライ回数上限 |
 | `LOCK_TIMEOUT` | `200ms` | 1 トライあたりのロック待ち時間 |
 | `RETRY_INTERVAL_SEC` | `2` | リトライ間の待ち秒数 |
+
+### TPS 別の推奨設定 (目安)
+
+INSERT 頻度に応じて `LOCK_TIMEOUT` と `MAX_ATTEMPTS` を調整する:
+
+| 想定 TPS | `LOCK_TIMEOUT` | `MAX_ATTEMPTS` | 想定リトライ回数 |
+|---------|---------------|---------------|----------------|
+| 〜10 TPS (深夜) | `200ms` | `50` | 1-3 |
+| 30 TPS (一般低 traffic) | `200ms` | `50` | 1-5 |
+| 100 TPS | `300ms` | `100` | 5-20 |
+| 200 TPS+ (ピーク時間帯) | **実行非推奨** | - | - |
+
+200ms はかなり短い設定なので、**高 traffic 時間帯だと 50 回連続で外れる可能性**がある。
+その場合は `LOCK_TIMEOUT` を上げる (300ms-1s) か、low traffic 時間帯にリトライする。
+
+`lock_timeout` で諦める設計のため **全リトライ失敗してもアプリ無影響** だが、ピーク時間帯にやって 50 回スカ続きだと運用上の意味がない。
 
 ## トラブルシューティング
 

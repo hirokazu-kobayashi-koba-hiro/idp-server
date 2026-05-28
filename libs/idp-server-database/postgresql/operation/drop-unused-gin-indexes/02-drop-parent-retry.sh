@@ -23,7 +23,9 @@
 #     ./02-drop-parent-retry.sh
 # ================================================
 
-set -u
+# set -e は使わない: psql の失敗 (lock_timeout 等) を意図的にハンドリングする必要があるため
+# set -u + set -o pipefail で「未定義変数」「pipe 失敗」だけ検出
+set -uo pipefail
 
 INDEX_NAME="${INDEX_NAME:-idx_events_detail_jsonb}"
 MAX_ATTEMPTS="${MAX_ATTEMPTS:-50}"

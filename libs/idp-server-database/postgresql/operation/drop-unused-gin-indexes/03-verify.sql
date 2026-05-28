@@ -130,3 +130,23 @@ SELECT
     COUNT(*) AS inserts_last_24h
 FROM security_event
 WHERE created_at > now() - interval '24 hours';
+
+
+-- ------------------------------------------------
+-- 7) 次のステップ: ANALYZE を実行 (planner の cost 推定を更新)
+-- ------------------------------------------------
+-- GIN 削除により planner の cost 推定が変わるため、
+-- 関連クエリのプランが意図せず変わる可能性がある (cached plan は自動無効化されるが、統計は古いまま)。
+-- → DROP 後に必ず 1 度 ANALYZE を実行すること。
+--
+-- 実行コマンド (本 verify とは別 session で):
+--   ANALYZE security_event;
+--
+-- ・read lock のみ取得、書き込みブロックなし (本番稼働中も実行可能)
+-- ・partitioned table なので全 partition の統計が更新される
+-- ・所要時間: テーブルサイズ次第で数十秒〜数分
+\echo ''
+\echo '=== 7) Next step: run ANALYZE ==='
+\echo 'Recommended next command (run in a separate session):'
+\echo '  ANALYZE security_event;'
+\echo '  -- read-only lock, no write blocking'
