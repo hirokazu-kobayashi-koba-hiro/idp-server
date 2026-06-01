@@ -1,4 +1,4 @@
--- V0_10_1__statistics_events_bucket_distribution.mysql.sql
+-- V0_10_0_1__statistics_events_bucket_distribution.mysql.sql
 -- Issue #1443: statistics_event_buckets (bucket-distributed counters)
 --
 -- Real-time UPSERT to statistics_events causes row lock contention on the

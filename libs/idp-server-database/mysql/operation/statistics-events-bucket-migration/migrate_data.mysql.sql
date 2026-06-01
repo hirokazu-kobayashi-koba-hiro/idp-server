@@ -2,7 +2,7 @@
 --              statistics_events  →  statistics_event_buckets (MySQL)
 --
 -- Run AFTER:
---   1. V0_10_1 migration has created statistics_event_buckets.
+--   1. V0_10_0_1 migration has created statistics_event_buckets.
 --   2. All pods have rolled to the new code (writes target the new table).
 --
 -- What this does:
