@@ -110,9 +110,23 @@ DROP TABLE statistics_event_buckets;
 
 アプリのロールバック時、新コードが書き込んだぶんは新テーブル消滅で失われる (それ以降の新規書込みは旧コードが旧テーブルに行う)。raw `security_event` は無傷なので、必要なら `aggregate_daily_statistics()` で旧テーブルを rebuild できる。
 
+## bucket_id = 0 の予約
+
+`migrate_data.sql` が挿入する行はすべて `bucket_id = 0` で固定する。これは設計上の予約で、リアルタイム書込み (`StatisticsEventBuckets.pickBucketId`) は `bucket_id ∈ [1, BUCKET_COUNT]` のみを返す。
+
+この分離により:
+
+- **移行された過去分を後から識別可能**: `SELECT count FROM statistics_event_buckets WHERE bucket_id = 0` で、デプロイ前の集計値を論理キーごとに完全に再現できる。
+- **旧テーブル DROP 後も値を失わない**: `statistics_events` を将来 DROP しても、移行値そのものは新テーブルの `bucket_id = 0` 行に永続化される。
+- **読み出し透過**: 読み出しは全 bucket_id を `SUM(count)` するので、消費者からは合算後の総和しか見えない。
+
+→ 「移行後にリアルタイム書込みが既存の bucket_0 行に加算されて過去分が分からなくなる」問題は発生しない。
+
 ## 旧テーブルの扱い
 
 このスクリプト後も `statistics_events` は残る (バックアップ扱い)。
 将来の別 PR で:
 - バッチ集計関数 `aggregate_daily_statistics()` の出力先を新テーブルに切替
 - 必要なら旧テーブルを `DROP TABLE statistics_events;`
+
+DROP しても、移行値そのものは新テーブルの `bucket_id = 0` 行に保持される (上述の予約)。

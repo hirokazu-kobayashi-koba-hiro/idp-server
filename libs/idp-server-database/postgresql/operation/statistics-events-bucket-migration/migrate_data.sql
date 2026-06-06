@@ -32,6 +32,12 @@
 --   See verify_migration.sql in the same directory.
 -- =====================================================
 
+-- Abort immediately on the first error (including the guard's RAISE EXCEPTION
+-- below). Without this, psql would print the error from the DO block and then
+-- happily continue into the BEGIN/INSERT/COMMIT block, defeating the guard
+-- entirely.
+\set ON_ERROR_STOP on
+
 \echo 'Counting rows before migration...'
 SELECT
     (SELECT COUNT(*) FROM statistics_events) AS legacy_rows,
