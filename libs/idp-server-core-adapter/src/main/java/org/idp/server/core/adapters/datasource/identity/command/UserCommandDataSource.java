@@ -65,6 +65,11 @@ public class UserCommandDataSource implements UserCommandRepository {
     invalidateStatusCache(tenant, user.userIdentifier());
   }
 
+  // The status cache is keyed by user_id and only stores user.status (lifecycle state). The
+  // updateRoles / updateTenantAssignments / updateOrganizationAssignments methods below mutate
+  // related tables (roles, tenant assignments, org assignments) but never touch user.status, so the
+  // cached value remains valid and intentionally is not invalidated here.
+
   @Override
   public void updateRoles(Tenant tenant, User user) {
     executor.deleteRoles(tenant, user);

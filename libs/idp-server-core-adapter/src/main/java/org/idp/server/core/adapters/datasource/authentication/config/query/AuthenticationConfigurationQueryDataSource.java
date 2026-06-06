@@ -137,11 +137,21 @@ public class AuthenticationConfigurationQueryDataSource
   }
 
   public static String typeKey(TenantIdentifier tenantIdentifier, String type) {
+    return tenantKeyPrefix(tenantIdentifier) + type;
+  }
+
+  /**
+   * Returns the shared prefix of all {@link AuthenticationConfiguration} cache keys for a tenant.
+   *
+   * <p>Used by command-side invalidation to drop every cached entry in one shot when an individual
+   * key-based invalidation could miss the right entry — e.g. when the {@code type} portion of the
+   * key is itself mutated by an update.
+   */
+  public static String tenantKeyPrefix(TenantIdentifier tenantIdentifier) {
     return "tenantId:"
         + tenantIdentifier.value()
         + ":"
         + AuthenticationConfiguration.class.getSimpleName()
-        + ":type:"
-        + type;
+        + ":type:";
   }
 }

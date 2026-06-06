@@ -42,6 +42,10 @@ public final class StatisticsEventBuckets {
    *
    * <p>Override at startup via system property {@code idp.statistics.bucket_count} or environment
    * variable {@code IDP_STATISTICS_BUCKET_COUNT} (useful for benchmarking different N).
+   *
+   * <p>The value 32 is grounded in measurement: see {@code
+   * performance-test/db-bench/REPORT-issue-1443.md} for the N=1/32/128 benchmark results that
+   * informed this default.
    */
   static final int DEFAULT_BUCKET_COUNT = 32;
 

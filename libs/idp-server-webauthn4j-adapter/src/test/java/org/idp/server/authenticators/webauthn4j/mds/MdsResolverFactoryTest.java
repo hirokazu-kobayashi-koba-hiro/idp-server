@@ -97,6 +97,11 @@ class MdsResolverFactoryTest {
     }
 
     @Override
+    public void deleteByPrefix(String prefix) {
+      cache.keySet().removeIf(k -> k.startsWith(prefix));
+    }
+
+    @Override
     public long increment(String key, int timeToLiveSeconds) {
       return 0;
     }
