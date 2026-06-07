@@ -6,78 +6,40 @@
  */
 
 -- =====================================================
--- Issue #1443: Verification queries for the
---              statistics_events → statistics_event_buckets migration.
+-- Issue #1443: Migration verification for
+--              statistics_events → statistics_event_buckets.
 --
--- Each query below returns rows ONLY when the legacy table and the new
--- bucket-aggregated counts disagree. An empty result set means the
--- migration is consistent for that check.
+-- Sole purpose: assert that every legacy row was migrated into
+-- statistics_event_buckets at bucket_id = 0, with the count preserved
+-- exactly.
 --
--- A small per-tenant discrepancy on CURRENT_DATE is expected if:
---   - Real-time writes from new pods occurred between deploy completion
---     and migrate_data.sql execution (those events are only in the new
---     table). The total on the new side will be HIGHER than the legacy
---     side by the volume of post-deploy events. That is correct.
+-- An empty result set means the migration is consistent. Any returned
+-- row indicates a mismatch (missing bucket_0 entry, or value drift).
 --
--- A discrepancy on PAST dates indicates a real problem.
+-- About bucket_id (see StatisticsEventBuckets.java):
+--   bucket_id = 0 is reserved for migrate_data.sql output. Real-time
+--   writes land in bucket_id ∈ [1, BUCKET_COUNT] and are deliberately
+--   excluded from this check; including them would inflate the new
+--   side and produce false-positive diffs. The total count exposed to
+--   readers (SUM across all bucket_id) is a separate concern; eyeball
+--   it via the management API / dashboards, not here.
 -- =====================================================
 
-\echo '=== 1. Past-date totals must match exactly ==='
+\echo '=== Migration check: bucket_0 count must equal legacy.count exactly ==='
+\echo '   Empty result = OK. Any row = mismatch that must be investigated.'
 SELECT
     legacy.tenant_id,
     legacy.stat_date,
     legacy.event_type,
-    legacy.count        AS legacy_count,
-    new_agg.total_count AS new_total_count,
-    new_agg.total_count - legacy.count AS diff
+    legacy.count           AS legacy_count,
+    new_bucket0.count      AS migrated_count,
+    COALESCE(new_bucket0.count, 0) - legacy.count AS diff
 FROM statistics_events legacy
-LEFT JOIN (
-    SELECT tenant_id, stat_date, event_type, SUM(count) AS total_count
-    FROM statistics_event_buckets
-    WHERE stat_date < CURRENT_DATE
-    GROUP BY tenant_id, stat_date, event_type
-) new_agg
-    ON legacy.tenant_id  = new_agg.tenant_id
-   AND legacy.stat_date  = new_agg.stat_date
-   AND legacy.event_type = new_agg.event_type
-WHERE legacy.stat_date < CURRENT_DATE
-  AND (new_agg.total_count IS NULL OR new_agg.total_count <> legacy.count)
+LEFT JOIN statistics_event_buckets new_bucket0
+    ON  new_bucket0.tenant_id  = legacy.tenant_id
+   AND  new_bucket0.stat_date  = legacy.stat_date
+   AND  new_bucket0.event_type = legacy.event_type
+   AND  new_bucket0.bucket_id  = 0
+WHERE new_bucket0.count IS NULL OR new_bucket0.count <> legacy.count
 ORDER BY legacy.stat_date DESC, legacy.tenant_id, legacy.event_type
 LIMIT 100;
-
-\echo ''
-\echo '=== 2. Current-date totals: new side must be >= legacy (post-deploy events added on top) ==='
-SELECT
-    legacy.tenant_id,
-    legacy.stat_date,
-    legacy.event_type,
-    legacy.count        AS legacy_count,
-    new_agg.total_count AS new_total_count,
-    new_agg.total_count - legacy.count AS diff_should_be_ge_0
-FROM statistics_events legacy
-LEFT JOIN (
-    SELECT tenant_id, stat_date, event_type, SUM(count) AS total_count
-    FROM statistics_event_buckets
-    WHERE stat_date = CURRENT_DATE
-    GROUP BY tenant_id, stat_date, event_type
-) new_agg
-    ON legacy.tenant_id  = new_agg.tenant_id
-   AND legacy.stat_date  = new_agg.stat_date
-   AND legacy.event_type = new_agg.event_type
-WHERE legacy.stat_date = CURRENT_DATE
-  AND (new_agg.total_count IS NULL OR new_agg.total_count < legacy.count)
-ORDER BY legacy.tenant_id, legacy.event_type
-LIMIT 100;
-
-\echo ''
-\echo '=== 3. Sample top tenants/dates for spot-check ==='
-SELECT
-    b.tenant_id,
-    b.stat_date,
-    b.event_type,
-    SUM(b.count) AS total_count,
-    COUNT(*)     AS bucket_rows
-FROM statistics_event_buckets b
-GROUP BY b.tenant_id, b.stat_date, b.event_type
-ORDER BY b.stat_date DESC, total_count DESC
-LIMIT 20;

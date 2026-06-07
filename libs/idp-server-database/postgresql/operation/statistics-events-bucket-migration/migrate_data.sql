@@ -25,8 +25,10 @@
 -- Idempotency:
 --   Running this script twice will double-count. It is intended to be a
 --   one-shot operation immediately after the rollout. If a re-run is
---   needed (e.g. recovery), truncate the new table for the affected
---   rows first.
+--   needed (e.g. recovery), delete bucket_0 rows first:
+--     DELETE FROM statistics_event_buckets WHERE bucket_id = 0;
+--   (do NOT TRUNCATE; that would also wipe real-time writes in
+--   bucket_id ∈ [1, BUCKET_COUNT]).
 --
 -- Verification:
 --   See verify_migration.sql in the same directory.
@@ -44,26 +46,38 @@ SELECT
     (SELECT COUNT(*) FROM statistics_event_buckets) AS new_rows_before;
 
 -- =====================================================
--- Pre-flight guard: abort if the new table already contains historical
--- data. Running migrate_data.sql twice would ADD legacy counts on top of
--- already-migrated rows and produce double-counts. If a re-run is
--- genuinely required (e.g. after a partial failure), explicitly clear
--- the affected rows first:
+-- Pre-flight guard: abort only if THIS migration has run before.
 --
---   TRUNCATE TABLE statistics_event_buckets;
---   -- or, per-tenant:
---   DELETE FROM statistics_event_buckets WHERE tenant_id = '<uuid>';
+-- The check is narrowed to "past-date rows at bucket_id = 0", because:
+--   - bucket_id = 0 is reserved for migrate_data.sql output (see
+--     StatisticsEventBuckets javadoc and README.md).
+--   - Past-date rows at bucket_id in [1, BUCKET_COUNT] are legitimate
+--     real-time writes that landed on a historical stat_date (e.g. an
+--     event whose tenant timezone shifted the local date backwards).
+--     They are unrelated to this migration and must not block it.
+--
+-- Running migrate_data.sql twice would ADD legacy counts on top of
+-- already-migrated bucket_0 rows. If a re-run is genuinely required
+-- (e.g. after a partial failure), explicitly clear the affected rows
+-- first:
+--
+--   -- all migrated rows for all tenants:
+--   DELETE FROM statistics_event_buckets WHERE bucket_id = 0;
+--   -- or per-tenant:
+--   DELETE FROM statistics_event_buckets WHERE tenant_id = '<uuid>' AND bucket_id = 0;
 -- =====================================================
 
 DO $$
 BEGIN
     IF EXISTS (
-        SELECT 1 FROM statistics_event_buckets WHERE stat_date < CURRENT_DATE
+        SELECT 1
+        FROM statistics_event_buckets
+        WHERE stat_date < CURRENT_DATE AND bucket_id = 0
     ) THEN
         RAISE EXCEPTION
-            'statistics_event_buckets already contains historical rows (stat_date < CURRENT_DATE). '
+            'statistics_event_buckets already contains migrated rows (past-date at bucket_id = 0). '
             'Aborting to prevent double-counting. '
-            'If a re-run is intended, clear the affected rows first and retry. '
+            'If a re-run is intended, clear the bucket_0 rows first and retry. '
             'See README.md for recovery steps.';
     END IF;
 END
@@ -71,10 +85,11 @@ $$;
 
 BEGIN;
 
--- updated_at: migration uses GREATEST() to preserve whichever timestamp is more
--- recent (typically the existing real-time post-deploy write). Real-time UPSERTs
--- in PostgresqlExecutor use now(), so the column remains monotonically
--- non-decreasing across migration + steady-state writes.
+-- updated_at: under the bucket_id = 0 reservation, the INSERT below normally
+-- creates fresh rows (real-time writes go to bucket_id ∈ [1, BUCKET_COUNT]).
+-- GREATEST() defends against the only remaining edge: aggregate or recovery
+-- jobs that wrote bucket_0 directly. Picking the larger timestamp keeps the
+-- column monotonically non-decreasing across migration + downstream writes.
 INSERT INTO statistics_event_buckets
     (tenant_id, stat_date, event_type, bucket_id, count, created_at, updated_at)
 SELECT
