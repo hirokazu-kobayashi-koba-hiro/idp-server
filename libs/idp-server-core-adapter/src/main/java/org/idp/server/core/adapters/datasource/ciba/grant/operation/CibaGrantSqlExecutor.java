@@ -18,5 +18,5 @@ package org.idp.server.core.adapters.datasource.ciba.grant.operation;
 
 public interface CibaGrantSqlExecutor {
 
-  void deleteExpiredGrant(int limit);
+  int deleteExpiredGrant(int limit);
 }

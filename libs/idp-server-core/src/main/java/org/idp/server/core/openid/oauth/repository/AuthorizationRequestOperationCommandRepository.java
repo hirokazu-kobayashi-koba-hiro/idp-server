@@ -20,5 +20,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthorizationRequestOperationCommandRepository {
 
-  void deleteExpiredRequest(Tenant tenant, int limit);
+  /**
+   * Delete expired authorization requests across <strong>all tenants</strong> (system-wide batch).
+   * The {@code tenant} argument carries the admin tenant context used by the caller for audit /
+   * logging purposes; it is intentionally not applied as a SQL filter.
+   *
+   * @param tenant admin tenant context (not used as SQL filter)
+   * @param limit max number of rows to delete in one batch
+   * @return number of rows deleted
+   */
+  int deleteExpiredRequest(Tenant tenant, int limit);
 }

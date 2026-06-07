@@ -23,7 +23,7 @@ import org.idp.server.platform.datasource.SqlExecutor;
 public class MysqlExecutor implements CibaGrantSqlExecutor {
 
   @Override
-  public void deleteExpiredGrant(int limit) {
+  public int deleteExpiredGrant(int limit) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
@@ -34,6 +34,6 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(limit);
 
-    sqlExecutor.execute(sqlTemplate, params);
+    return sqlExecutor.executeAndReturnAffectedRows(sqlTemplate, params);
   }
 }

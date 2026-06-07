@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.authentication.transaction.operation;
+package org.idp.server.core.adapters.datasource.federation.session.operation;
 
-public interface AuthenticationTransactionSqlExecutor {
+public interface SsoSessionOperationSqlExecutor {
 
-  int deleteExpiredTransaction(int limit);
+  int deleteExpired(int limit);
 }

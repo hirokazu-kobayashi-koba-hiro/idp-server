@@ -23,9 +23,9 @@ import org.idp.server.platform.datasource.SqlExecutor;
 public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
 
   @Override
-  public void deleteExpiredRequest(int limit) {
+  public int deleteExpiredRequest(int limit) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqpTemplate =
+    String sqlTemplate =
         """
             DELETE FROM authorization_request
             WHERE ctid IN (
@@ -37,6 +37,6 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(limit);
 
-    sqlExecutor.execute(sqpTemplate, params);
+    return sqlExecutor.executeAndReturnAffectedRows(sqlTemplate, params);
   }
 }

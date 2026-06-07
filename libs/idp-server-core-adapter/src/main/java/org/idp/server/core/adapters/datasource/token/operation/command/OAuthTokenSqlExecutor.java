@@ -28,7 +28,7 @@ public interface OAuthTokenSqlExecutor {
 
   void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
 
-  void deleteExpiredToken(int limit);
+  int deleteExpiredToken(int limit);
 
   void deleteAll(Tenant tenant, User user);
 }

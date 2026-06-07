@@ -18,5 +18,5 @@ package org.idp.server.core.adapters.datasource.oidc.request.operation;
 
 public interface AuthorizationRequestSqlExecutor {
 
-  void deleteExpiredRequest(int limit);
+  int deleteExpiredRequest(int limit);
 }

@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.ciba.repository;
+package org.idp.server.core.adapters.datasource.federation.session.operation;
 
+import org.idp.server.core.openid.federation.sso.SsoSessionOperationCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public interface CibaGrantOperationCommandRepository {
+public class SsoSessionOperationCommandDataSource implements SsoSessionOperationCommandRepository {
 
-  /**
-   * Delete expired CIBA grants across <strong>all tenants</strong> (system-wide batch). The {@code
-   * tenant} argument carries the admin tenant context used by the caller for audit / logging
-   * purposes; it is intentionally not applied as a SQL filter.
-   *
-   * @param tenant admin tenant context (not used as SQL filter)
-   * @param limit max number of rows to delete in one batch
-   * @return number of rows deleted
-   */
-  int deleteExpiredGrant(Tenant tenant, int limit);
+  SsoSessionOperationSqlExecutor executor;
+
+  public SsoSessionOperationCommandDataSource(SsoSessionOperationSqlExecutor executor) {
+    this.executor = executor;
+  }
+
+  @Override
+  public int deleteExpired(Tenant tenant, int limit) {
+    return executor.deleteExpired(limit);
+  }
 }

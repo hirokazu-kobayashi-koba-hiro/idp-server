@@ -30,7 +30,7 @@ public class AuthenticationTransactionOperationCommandDataSource
   }
 
   @Override
-  public void deleteExpiredTransaction(Tenant tenant, int limit) {
-    executor.deleteExpiredTransaction(limit);
+  public int deleteExpiredTransaction(Tenant tenant, int limit) {
+    return executor.deleteExpiredTransaction(limit);
   }
 }

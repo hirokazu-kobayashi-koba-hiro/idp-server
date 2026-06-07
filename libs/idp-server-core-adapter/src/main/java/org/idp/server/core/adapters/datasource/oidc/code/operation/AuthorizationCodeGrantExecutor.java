@@ -18,5 +18,5 @@ package org.idp.server.core.adapters.datasource.oidc.code.operation;
 
 public interface AuthorizationCodeGrantExecutor {
 
-  void deleteExpiredCodeGrant(int limit);
+  int deleteExpiredCodeGrant(int limit);
 }

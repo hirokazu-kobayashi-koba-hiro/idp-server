@@ -101,6 +101,7 @@ import org.idp.server.core.openid.federation.FederationInteractors;
 import org.idp.server.core.openid.federation.plugin.FederationDependencyContainer;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationCommandRepository;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
+import org.idp.server.core.openid.federation.sso.SsoSessionOperationCommandRepository;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedQueryRepository;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.identity.*;
@@ -421,6 +422,8 @@ public class IdpServerApplication {
                 BackchannelAuthenticationRequestOperationCommandRepository.class);
     CibaGrantOperationCommandRepository cibaGrantOperationCommandRepository =
         applicationComponentContainer.resolve(CibaGrantOperationCommandRepository.class);
+    SsoSessionOperationCommandRepository ssoSessionOperationCommandRepository =
+        applicationComponentContainer.resolve(SsoSessionOperationCommandRepository.class);
     SecurityEventQueryRepository securityEventQueryRepository =
         applicationComponentContainer.resolve(SecurityEventQueryRepository.class);
     SecurityEventHookResultQueryRepository securityEventHookResultQueryRepository =
@@ -584,7 +587,8 @@ public class IdpServerApplication {
                 authorizationRequestOperationCommandRepository,
                 authorizationCodeGrantOperationCommandRepository,
                 backchannelAuthenticationRequestOperationCommandRepository,
-                cibaGrantOperationCommandRepository),
+                cibaGrantOperationCommandRepository,
+                ssoSessionOperationCommandRepository),
             IdpServerOperationApi.class,
             databaseTypeProvider);
 

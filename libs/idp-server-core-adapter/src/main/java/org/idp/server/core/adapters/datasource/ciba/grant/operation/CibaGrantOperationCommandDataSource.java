@@ -28,7 +28,7 @@ public class CibaGrantOperationCommandDataSource implements CibaGrantOperationCo
   }
 
   @Override
-  public void deleteExpiredGrant(Tenant tenant, int limit) {
-    executor.deleteExpiredGrant(limit);
+  public int deleteExpiredGrant(Tenant tenant, int limit) {
+    return executor.deleteExpiredGrant(limit);
   }
 }

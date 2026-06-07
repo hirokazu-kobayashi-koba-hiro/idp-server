@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.ciba.grant.operation;
+package org.idp.server.core.adapters.datasource.federation.session.operation;
 
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.platform.datasource.SqlExecutor;
 
-public class PostgresqlExecutor implements CibaGrantSqlExecutor {
+public class PostgresqlExecutor implements SsoSessionOperationSqlExecutor {
 
   @Override
-  public int deleteExpiredGrant(int limit) {
+  public int deleteExpired(int limit) {
+    // federation_sso_session has no expires_at column; SSO sessions complete within minutes,
+    // so anything older than 1 hour is abandoned.
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
-            DELETE FROM ciba_grant
+            DELETE FROM federation_sso_session
             WHERE ctid IN (
-              SELECT ctid FROM ciba_grant
-              WHERE expires_at < now()
+              SELECT ctid FROM federation_sso_session
+              WHERE created_at < (now() - interval '1 hour')
               LIMIT ?
             );
             """;
