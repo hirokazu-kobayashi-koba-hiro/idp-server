@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationExternalApplicationIdentifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -30,6 +31,19 @@ public interface IdentityVerificationApplicationQuerySqlExecutor {
   Map<String, String> selectOne(
       Tenant tenant, IdentityVerificationApplicationIdentifier identifier);
 
+  /**
+   * Fast path: lookup by the dedicated {@code external_application_id} column (B-tree indexed).
+   * Returns empty / null if the row pre-dates the backfill, in which case callers should fall back
+   * to {@link #selectOneByDetail(Tenant, String, String)}.
+   */
+  Map<String, String> selectOneByExternalApplicationId(
+      Tenant tenant, IdentityVerificationExternalApplicationIdentifier externalApplicationId);
+
+  /**
+   * Legacy / fallback path: lookup by {@code application_details ->> key = value}. Kept for
+   * pre-backfill rows and as a safety net for rollbacks. The GIN index on {@code
+   * application_details} is not actually used due to RLS + LEAKPROOF; treat this as a slow path.
+   */
   Map<String, String> selectOneByDetail(Tenant tenant, String key, String identifier);
 
   List<Map<String, String>> selectList(Tenant tenant, User user);

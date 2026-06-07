@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationExternalApplicationIdentifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -62,6 +63,25 @@ public class MysqlExecutor implements IdentityVerificationApplicationQuerySqlExe
 
     List<Object> params = new ArrayList<>();
     params.add(identifier.value());
+    params.add(tenant.identifier().value());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
+  public Map<String, String> selectOneByExternalApplicationId(
+      Tenant tenant, IdentityVerificationExternalApplicationIdentifier externalApplicationId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
+                 WHERE external_application_id = ?
+                 AND tenant_id = ?;
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(externalApplicationId.value());
     params.add(tenant.identifier().value());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
@@ -231,6 +251,7 @@ public class MysqlExecutor implements IdentityVerificationApplicationQuerySqlExe
                  client_id,
                  user_id,
                  verification_type,
+                 external_application_id,
                  application_details,
                  processes,
                  attributes,

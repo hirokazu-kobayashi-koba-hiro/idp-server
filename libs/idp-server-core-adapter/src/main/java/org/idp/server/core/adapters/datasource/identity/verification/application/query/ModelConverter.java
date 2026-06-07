@@ -37,6 +37,8 @@ public class ModelConverter {
     IdentityVerificationType verificationType =
         new IdentityVerificationType(map.get("verification_type"));
     UserIdentifier sub = new UserIdentifier(map.get("user_id"));
+    IdentityVerificationExternalApplicationIdentifier externalApplicationId =
+        new IdentityVerificationExternalApplicationIdentifier(map.get("external_application_id"));
     IdentityVerificationApplicationDetails details =
         IdentityVerificationApplicationDetails.fromJson(map.get("application_details"));
     IdentityVerificationApplicationAttributes attributes =
@@ -54,6 +56,7 @@ public class ModelConverter {
         tenantIdentifier,
         requestedClientId,
         sub,
+        externalApplicationId,
         details,
         processes,
         attributes,
