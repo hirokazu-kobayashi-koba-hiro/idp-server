@@ -46,6 +46,7 @@ public class IdentityVerificationApplication {
   TenantIdentifier tenantIdentifier;
   RequestedClientId requestedClientId;
   UserIdentifier userIdentifier;
+  IdentityVerificationExternalApplicationIdentifier externalApplicationId;
   IdentityVerificationApplicationDetails applicationDetails;
   IdentityVerificationApplicationProcessResults processes;
   IdentityVerificationApplicationAttributes attributes;
@@ -60,6 +61,7 @@ public class IdentityVerificationApplication {
       TenantIdentifier tenantIdentifier,
       RequestedClientId requestedClientId,
       UserIdentifier userIdentifier,
+      IdentityVerificationExternalApplicationIdentifier externalApplicationId,
       IdentityVerificationApplicationDetails applicationDetails,
       IdentityVerificationApplicationProcessResults processes,
       IdentityVerificationApplicationAttributes attributes,
@@ -70,11 +72,16 @@ public class IdentityVerificationApplication {
     this.tenantIdentifier = tenantIdentifier;
     this.requestedClientId = requestedClientId;
     this.userIdentifier = userIdentifier;
+    this.externalApplicationId = externalApplicationId;
     this.applicationDetails = applicationDetails;
     this.processes = processes;
     this.attributes = attributes;
     this.status = status;
     this.requestedAt = requestedAt;
+  }
+
+  public IdentityVerificationExternalApplicationIdentifier externalApplicationId() {
+    return externalApplicationId;
   }
 
   public static IdentityVerificationApplication create(
@@ -97,6 +104,11 @@ public class IdentityVerificationApplication {
     IdentityVerificationApplicationDetails details =
         IdentityVerificationApplicationDetails.create(applicationContext, mappingRules);
 
+    IdentityVerificationExternalApplicationIdentifier externalApplicationId =
+        new IdentityVerificationExternalApplicationIdentifier(
+            details.getValueOrEmptyAsString(
+                verificationConfiguration.getCallbackApplicationId(process)));
+
     LocalDateTime requestedAt = SystemDateTime.now();
     IdentityVerificationApplicationProcessResult applicationProcess =
         new IdentityVerificationApplicationProcessResult(1, 1, 0);
@@ -112,6 +124,7 @@ public class IdentityVerificationApplication {
         tenantIdentifier,
         requestedClientId,
         userIdentifier,
+        externalApplicationId,
         details,
         processes,
         attributes,
@@ -162,6 +175,7 @@ public class IdentityVerificationApplication {
         tenantIdentifier,
         requestedClientId,
         userIdentifier,
+        externalApplicationId,
         mergedApplicationDetails,
         processResults,
         attributes,
@@ -209,6 +223,7 @@ public class IdentityVerificationApplication {
         tenantIdentifier,
         requestedClientId,
         userIdentifier,
+        externalApplicationId,
         mergedApplicationDetails,
         processResults,
         attributes,

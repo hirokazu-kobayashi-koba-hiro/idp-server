@@ -23,6 +23,7 @@ import org.idp.server.core.extension.identity.verification.application.model.Ide
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationExternalApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationApplicationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.datasource.SqlTooManyResultsException;
@@ -70,7 +71,23 @@ public class IdentityVerificationApplicationQueryDataSource
   @Override
   public IdentityVerificationApplication get(Tenant tenant, String key, String identifier) {
     try {
-      Map<String, String> result = executor.selectOneByDetail(tenant, key, identifier);
+      // Fast path: dedicated external_application_id column (B-tree). The `key` argument is
+      // intentionally ignored here — by design, a row holds a single external_application_id
+      // regardless of which configured key name was used to extract it. The key is only
+      // needed by the JSONB fallback below.
+      // Misses for rows that pre-date the backfill, so we fall back to the JSONB lookup
+      // when nothing is found.
+      IdentityVerificationExternalApplicationIdentifier externalId =
+          new IdentityVerificationExternalApplicationIdentifier(identifier);
+      Map<String, String> result = executor.selectOneByExternalApplicationId(tenant, externalId);
+
+      if (result == null || result.isEmpty()) {
+        log.info(
+            "external_application_id miss, falling back to application_details ->> for key={}. "
+                + "This indicates pre-backfill data or a deployment in transition.",
+            key);
+        result = executor.selectOneByDetail(tenant, key, identifier);
+      }
 
       if (result == null || result.isEmpty()) {
         throw new IdentityVerificationApplicationNotFoundException(

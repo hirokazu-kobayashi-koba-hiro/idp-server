@@ -41,12 +41,14 @@ public class MysqlExecutor implements IdentityVerificationApplicationCommandSqlE
                     client_id,
                     user_id,
                     verification_type,
+                    external_application_id,
                     application_details,
                     processes,
                     attributes,
                     status,
                     requested_at)
                     VALUES (
+                    ?,
                     ?,
                     ?,
                     ?,
@@ -66,6 +68,7 @@ public class MysqlExecutor implements IdentityVerificationApplicationCommandSqlE
     params.add(application.requestedClientId().value());
     params.add(application.userIdentifier().value());
     params.add(application.identityVerificationType().name());
+    params.add(application.externalApplicationId().value());
     params.add(application.applicationDetails().toJson());
     params.add(jsonConverter.write(application.processesAsMapObject()));
     if (application.hasAttributes()) {
