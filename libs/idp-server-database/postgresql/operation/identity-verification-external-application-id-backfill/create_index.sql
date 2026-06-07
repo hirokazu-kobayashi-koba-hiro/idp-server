@@ -18,7 +18,7 @@
 --   FROM pg_stat_progress_create_index;
 -- =====================================================
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_verification_external_application_id
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_verification_external_application_id
     ON identity_verification_application (tenant_id, external_application_id);
 
 -- 完了後: INVALID な index が残っていないことを確認 (見つかったら DROP CONCURRENTLY して再実行)

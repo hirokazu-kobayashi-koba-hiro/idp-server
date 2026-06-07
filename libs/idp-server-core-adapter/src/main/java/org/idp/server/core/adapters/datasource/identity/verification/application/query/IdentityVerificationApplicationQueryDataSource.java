@@ -71,8 +71,12 @@ public class IdentityVerificationApplicationQueryDataSource
   @Override
   public IdentityVerificationApplication get(Tenant tenant, String key, String identifier) {
     try {
-      // Fast path: dedicated external_application_id column (B-tree). Misses for rows that
-      // pre-date the backfill, so we fall back to the JSONB lookup when nothing is found.
+      // Fast path: dedicated external_application_id column (B-tree). The `key` argument is
+      // intentionally ignored here — by design, a row holds a single external_application_id
+      // regardless of which configured key name was used to extract it. The key is only
+      // needed by the JSONB fallback below.
+      // Misses for rows that pre-date the backfill, so we fall back to the JSONB lookup
+      // when nothing is found.
       IdentityVerificationExternalApplicationIdentifier externalId =
           new IdentityVerificationExternalApplicationIdentifier(identifier);
       Map<String, String> result = executor.selectOneByExternalApplicationId(tenant, externalId);

@@ -8,5 +8,7 @@
 -- `CREATE INDEX IF NOT EXISTS` なので本ファイルは no-op となり安全。
 -- =====================================================
 
-CREATE INDEX IF NOT EXISTS idx_verification_external_application_id
+-- UNIQUE: 外部 vendor 発行 ID は tenant 内で一意な前提。NULL は UNIQUE 制約の
+-- 対象外 (MySQL の標準挙動) なので、backfill 未完了の NULL 行は許容される。
+CREATE UNIQUE INDEX IF NOT EXISTS idx_verification_external_application_id
     ON identity_verification_application (tenant_id, external_application_id);

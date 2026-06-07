@@ -27,9 +27,14 @@ WHERE external_application_id IS NULL;
 
 BEGIN;
 
+-- NULLIF: 万一 application_details の値が空文字の場合、UNIQUE 制約 (NULL は対象外、
+-- 空文字は厳格判定) に違反するのを防ぐ。値オブジェクト側でも normalize しているが、
+-- backfill 経路でも同等の保険を入れる。
 UPDATE identity_verification_application AS app
-SET external_application_id = app.application_details ->>
-        (conf.payload -> 'common' ->> 'callback_application_id_param')
+SET external_application_id = NULLIF(
+        app.application_details ->>
+            (conf.payload -> 'common' ->> 'callback_application_id_param'),
+        '')
 FROM identity_verification_configuration AS conf
 WHERE conf.tenant_id = app.tenant_id
   AND conf.type = app.verification_type

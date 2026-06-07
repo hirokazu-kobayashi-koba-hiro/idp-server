@@ -15,7 +15,7 @@ MySQL を本番で使う場合は `libs/idp-server-database/mysql/operation/iden
 ### 前提条件
 
 - [ ] `V0_10_0_2` Flyway マイグレーション適用済み (`ADD COLUMN external_application_id`)
-- [ ] index 用の `V0_10_0_3` Flyway ファイルを本番に deploy していないこと (本番は CONCURRENTLY で個別作成するため、ファイル名先頭に `_` を付けて Flyway から除外している)
+- [ ] 本番運用で書込みブロックを避けるため、`V0_10_0_3` 適用前に Step 2 (`create_index.sql` で `CONCURRENTLY`) を済ませること。`V0_10_0_3` 自体は `CREATE INDEX IF NOT EXISTS` なので、index が既にあれば no-op で安全
 - [ ] 新コードのデプロイ完了
 
 ---
@@ -43,6 +43,27 @@ cd libs/idp-server-database/postgresql/operation/identity-verification-external-
 ```bash
 psql -c "SELECT current_database(), current_user, now();"
 ```
+
+---
+
+## 1.5 事前の重複チェック (UNIQUE 制約のため)
+
+index は `UNIQUE (tenant_id, external_application_id)` で作るため、重複行があると build 失敗 (INVALID state) する。事前に確認:
+
+```bash
+psql -c "
+  SELECT tenant_id, external_application_id, COUNT(*) AS dup_count
+  FROM identity_verification_application
+  WHERE external_application_id IS NOT NULL
+    AND external_application_id <> ''
+  GROUP BY tenant_id, external_application_id
+  HAVING COUNT(*) > 1
+  ORDER BY dup_count DESC
+  LIMIT 100;
+"
+```
+
+0 行で OK。返ってきたら外部 vendor 側のロジックに何か起きている可能性大なので、業務側と確認してから対応。
 
 ---
 

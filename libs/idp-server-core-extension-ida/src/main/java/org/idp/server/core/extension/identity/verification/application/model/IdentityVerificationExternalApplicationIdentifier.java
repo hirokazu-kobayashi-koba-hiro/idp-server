@@ -31,7 +31,10 @@ public class IdentityVerificationExternalApplicationIdentifier {
   public IdentityVerificationExternalApplicationIdentifier() {}
 
   public IdentityVerificationExternalApplicationIdentifier(String value) {
-    this.value = value;
+    // Empty string is normalized to null so that "absent" maps to a single representation in DB.
+    // Required for the (tenant_id, external_application_id) UNIQUE index: empty strings would
+    // collide under that constraint, while NULL is exempt.
+    this.value = (value == null || value.isEmpty()) ? null : value;
   }
 
   public String value() {
