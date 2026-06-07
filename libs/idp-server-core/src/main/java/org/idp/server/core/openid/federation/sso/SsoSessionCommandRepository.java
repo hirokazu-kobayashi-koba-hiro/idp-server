@@ -23,14 +23,4 @@ public interface SsoSessionCommandRepository {
   <T> void register(Tenant tenant, SsoSessionIdentifier identifier, T payload);
 
   void delete(Tenant tenant, SsoSessionIdentifier identifier);
-
-  /**
-   * Delete expired sso sessions. SSO sessions are short-lived (typically completed within minutes);
-   * any row older than 1 hour is considered abandoned and removed.
-   *
-   * @param tenant tenant context
-   * @param limit max number of rows to delete in one batch
-   * @return number of rows deleted
-   */
-  int deleteExpired(Tenant tenant, int limit);
 }

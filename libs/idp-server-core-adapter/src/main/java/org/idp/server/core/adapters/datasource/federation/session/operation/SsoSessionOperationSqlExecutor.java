@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.federation.session.command;
+package org.idp.server.core.adapters.datasource.federation.session.operation;
 
-import org.idp.server.core.openid.federation.sso.SsoSessionIdentifier;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+public interface SsoSessionOperationSqlExecutor {
 
-public interface SsoSessionCommandSqlExecutor {
-
-  <T> void insert(Tenant tenant, SsoSessionIdentifier identifier, T payload);
-
-  void delete(Tenant tenant, SsoSessionIdentifier identifier);
+  int deleteExpired(int limit);
 }

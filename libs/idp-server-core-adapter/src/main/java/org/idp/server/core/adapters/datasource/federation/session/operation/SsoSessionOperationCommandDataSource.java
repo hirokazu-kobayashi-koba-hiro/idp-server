@@ -14,14 +14,21 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.federation.session.command;
+package org.idp.server.core.adapters.datasource.federation.session.operation;
 
-import org.idp.server.core.openid.federation.sso.SsoSessionIdentifier;
+import org.idp.server.core.openid.federation.sso.SsoSessionOperationCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public interface SsoSessionCommandSqlExecutor {
+public class SsoSessionOperationCommandDataSource implements SsoSessionOperationCommandRepository {
 
-  <T> void insert(Tenant tenant, SsoSessionIdentifier identifier, T payload);
+  SsoSessionOperationSqlExecutor executor;
 
-  void delete(Tenant tenant, SsoSessionIdentifier identifier);
+  public SsoSessionOperationCommandDataSource(SsoSessionOperationSqlExecutor executor) {
+    this.executor = executor;
+  }
+
+  @Override
+  public int deleteExpired(Tenant tenant, int limit) {
+    return executor.deleteExpired(limit);
+  }
 }

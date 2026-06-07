@@ -21,6 +21,15 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface OAuthTokenOperationCommandRepository {
 
+  /**
+   * Delete expired oauth tokens across <strong>all tenants</strong> (system-wide batch). The {@code
+   * tenant} argument carries the admin tenant context used by the caller for audit / logging
+   * purposes; it is intentionally not applied as a SQL filter.
+   *
+   * @param tenant admin tenant context (not used as SQL filter)
+   * @param limit max number of rows to delete in one batch
+   * @return number of rows deleted
+   */
   int deleteExpiredToken(Tenant tenant, int limit);
 
   void deleteAll(Tenant tenant, User user);

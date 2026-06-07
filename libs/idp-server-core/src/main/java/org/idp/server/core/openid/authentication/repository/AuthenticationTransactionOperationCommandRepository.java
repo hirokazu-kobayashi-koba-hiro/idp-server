@@ -19,5 +19,14 @@ package org.idp.server.core.openid.authentication.repository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationTransactionOperationCommandRepository {
+  /**
+   * Delete expired authentication transactions across <strong>all tenants</strong> (system-wide
+   * batch). The {@code tenant} argument carries the admin tenant context used by the caller for
+   * audit / logging purposes; it is intentionally not applied as a SQL filter.
+   *
+   * @param tenant admin tenant context (not used as SQL filter)
+   * @param limit max number of rows to delete in one batch
+   * @return number of rows deleted
+   */
   int deleteExpiredTransaction(Tenant tenant, int limit);
 }

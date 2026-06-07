@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.ciba.repository;
+package org.idp.server.core.openid.federation.sso;
 
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-public interface CibaGrantOperationCommandRepository {
+public interface SsoSessionOperationCommandRepository {
 
   /**
-   * Delete expired CIBA grants across <strong>all tenants</strong> (system-wide batch). The {@code
-   * tenant} argument carries the admin tenant context used by the caller for audit / logging
-   * purposes; it is intentionally not applied as a SQL filter.
+   * Delete expired sso sessions across <strong>all tenants</strong> (system-wide batch). SSO
+   * sessions are short-lived (typically completed within minutes); any row older than 1 hour is
+   * considered abandoned and removed. The {@code tenant} argument carries the admin tenant context
+   * used by the caller for audit / logging purposes; it is intentionally not applied as a SQL
+   * filter.
    *
    * @param tenant admin tenant context (not used as SQL filter)
    * @param limit max number of rows to delete in one batch
    * @return number of rows deleted
    */
-  int deleteExpiredGrant(Tenant tenant, int limit);
+  int deleteExpired(Tenant tenant, int limit);
 }
