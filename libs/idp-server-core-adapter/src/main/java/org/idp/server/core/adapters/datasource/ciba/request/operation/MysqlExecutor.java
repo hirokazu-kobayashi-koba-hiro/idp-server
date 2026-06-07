@@ -23,7 +23,7 @@ import org.idp.server.platform.datasource.SqlExecutor;
 public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecutor {
 
   @Override
-  public void deleteExpiredRequest(int limit) {
+  public int deleteExpiredRequest(int limit) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
@@ -34,6 +34,6 @@ public class MysqlExecutor implements BackchannelAuthenticationRequestSqlExecuto
     List<Object> params = new ArrayList<>();
     params.add(limit);
 
-    sqlExecutor.execute(sqlTemplate, params);
+    return sqlExecutor.executeAndReturnAffectedRows(sqlTemplate, params);
   }
 }

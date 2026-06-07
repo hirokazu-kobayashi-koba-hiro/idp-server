@@ -30,7 +30,7 @@ public class BackchannelAuthenticationRequestOperationCommandDataSource
   }
 
   @Override
-  public void deleteExpiredRequest(Tenant tenant, int limit) {
-    executor.deleteExpiredRequest(limit);
+  public int deleteExpiredRequest(Tenant tenant, int limit) {
+    return executor.deleteExpiredRequest(limit);
   }
 }

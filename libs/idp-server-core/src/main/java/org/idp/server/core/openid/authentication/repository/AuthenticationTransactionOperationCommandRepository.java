@@ -19,5 +19,5 @@ package org.idp.server.core.openid.authentication.repository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthenticationTransactionOperationCommandRepository {
-  void deleteExpiredTransaction(Tenant tenant, int limit);
+  int deleteExpiredTransaction(Tenant tenant, int limit);
 }

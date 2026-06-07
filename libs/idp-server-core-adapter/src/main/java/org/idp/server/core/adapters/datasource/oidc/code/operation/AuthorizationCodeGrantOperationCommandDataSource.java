@@ -29,7 +29,7 @@ public class AuthorizationCodeGrantOperationCommandDataSource
   }
 
   @Override
-  public void deleteExpiredCodeGrant(Tenant tenant, int authorizationCodeGrant) {
-    executor.deleteExpiredCodeGrant(authorizationCodeGrant);
+  public int deleteExpiredCodeGrant(Tenant tenant, int limit) {
+    return executor.deleteExpiredCodeGrant(limit);
   }
 }

@@ -73,4 +73,24 @@ public class PostgresqlExecutor implements SsoSessionCommandSqlExecutor {
     params.add(tenant.identifierUUID());
     sqlExecutor.execute(sqlTemplate, params);
   }
+
+  @Override
+  public int deleteExpired(int limit) {
+    // federation_sso_session has no expires_at column; SSO sessions complete within minutes,
+    // so anything older than 1 hour is abandoned.
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+            DELETE FROM federation_sso_session
+            WHERE ctid IN (
+              SELECT ctid FROM federation_sso_session
+              WHERE created_at < (now() - interval '1 hour')
+              LIMIT ?
+            );
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(limit);
+
+    return sqlExecutor.executeAndReturnAffectedRows(sqlTemplate, params);
+  }
 }

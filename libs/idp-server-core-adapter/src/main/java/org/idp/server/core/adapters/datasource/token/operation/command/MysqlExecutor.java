@@ -212,7 +212,7 @@ public class MysqlExecutor implements OAuthTokenSqlExecutor {
   }
 
   @Override
-  public void deleteExpiredToken(int limit) {
+  public int deleteExpiredToken(int limit) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
@@ -223,7 +223,7 @@ public class MysqlExecutor implements OAuthTokenSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(limit);
 
-    sqlExecutor.execute(sqlTemplate, params);
+    return sqlExecutor.executeAndReturnAffectedRows(sqlTemplate, params);
   }
 
   @Override

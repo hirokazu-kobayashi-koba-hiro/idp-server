@@ -22,7 +22,8 @@ import org.idp.server.platform.datasource.SqlExecutor;
 
 public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
 
-  public void deleteExpiredCodeGrant(int limit) {
+  @Override
+  public int deleteExpiredCodeGrant(int limit) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
@@ -33,6 +34,6 @@ public class MysqlExecutor implements AuthorizationCodeGrantExecutor {
     List<Object> params = new ArrayList<>();
     params.add(limit);
 
-    sqlExecutor.execute(sqlTemplate, params);
+    return sqlExecutor.executeAndReturnAffectedRows(sqlTemplate, params);
   }
 }

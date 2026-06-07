@@ -18,5 +18,5 @@ package org.idp.server.core.adapters.datasource.ciba.request.operation;
 
 public interface BackchannelAuthenticationRequestSqlExecutor {
 
-  void deleteExpiredRequest(int limit);
+  int deleteExpiredRequest(int limit);
 }

@@ -20,5 +20,5 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthorizationCodeGrantOperationCommandRepository {
 
-  void deleteExpiredCodeGrant(Tenant tenant, int limit);
+  int deleteExpiredCodeGrant(Tenant tenant, int limit);
 }

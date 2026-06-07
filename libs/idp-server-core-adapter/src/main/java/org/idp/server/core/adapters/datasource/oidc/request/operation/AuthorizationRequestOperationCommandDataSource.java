@@ -29,5 +29,7 @@ public class AuthorizationRequestOperationCommandDataSource
   }
 
   @Override
-  public void deleteExpiredRequest(Tenant tenant, int limit) {}
+  public int deleteExpiredRequest(Tenant tenant, int limit) {
+    return executor.deleteExpiredRequest(limit);
+  }
 }

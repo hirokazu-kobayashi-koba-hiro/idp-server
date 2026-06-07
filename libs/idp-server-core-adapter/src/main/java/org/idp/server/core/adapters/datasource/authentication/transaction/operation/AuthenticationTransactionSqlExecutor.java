@@ -18,5 +18,5 @@ package org.idp.server.core.adapters.datasource.authentication.transaction.opera
 
 public interface AuthenticationTransactionSqlExecutor {
 
-  void deleteExpiredTransaction(int limit);
+  int deleteExpiredTransaction(int limit);
 }

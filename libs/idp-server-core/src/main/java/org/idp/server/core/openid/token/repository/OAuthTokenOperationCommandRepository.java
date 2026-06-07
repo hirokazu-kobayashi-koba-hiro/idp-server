@@ -21,7 +21,7 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface OAuthTokenOperationCommandRepository {
 
-  void deleteExpiredToken(Tenant tenant, int limit);
+  int deleteExpiredToken(Tenant tenant, int limit);
 
   void deleteAll(Tenant tenant, User user);
 }

@@ -41,4 +41,9 @@ public class SsoSessionCommandDataSource implements SsoSessionCommandRepository 
   public void delete(Tenant tenant, SsoSessionIdentifier identifier) {
     executor.delete(tenant, identifier);
   }
+
+  @Override
+  public int deleteExpired(Tenant tenant, int limit) {
+    return executor.deleteExpired(limit);
+  }
 }

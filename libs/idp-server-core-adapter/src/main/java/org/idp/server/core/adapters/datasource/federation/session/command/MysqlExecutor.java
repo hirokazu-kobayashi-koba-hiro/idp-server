@@ -74,4 +74,21 @@ public class MysqlExecutor implements SsoSessionCommandSqlExecutor {
 
     sqlExecutor.execute(sqlTemplate, params);
   }
+
+  @Override
+  public int deleteExpired(int limit) {
+    // federation_sso_session has no expires_at column; SSO sessions complete within minutes,
+    // so anything older than 1 hour is abandoned.
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+            DELETE FROM federation_sso_session
+            WHERE created_at < (now() - INTERVAL 1 HOUR)
+            LIMIT ?;
+            """;
+    List<Object> params = new ArrayList<>();
+    params.add(limit);
+
+    return sqlExecutor.executeAndReturnAffectedRows(sqlTemplate, params);
+  }
 }

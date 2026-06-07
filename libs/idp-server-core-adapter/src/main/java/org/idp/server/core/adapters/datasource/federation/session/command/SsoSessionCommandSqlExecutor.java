@@ -24,4 +24,6 @@ public interface SsoSessionCommandSqlExecutor {
   <T> void insert(Tenant tenant, SsoSessionIdentifier identifier, T payload);
 
   void delete(Tenant tenant, SsoSessionIdentifier identifier);
+
+  int deleteExpired(int limit);
 }

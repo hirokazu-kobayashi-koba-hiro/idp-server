@@ -36,8 +36,8 @@ public class OAuthTokenOperationCommandDataSource implements OAuthTokenOperation
   }
 
   @Override
-  public void deleteExpiredToken(Tenant tenant, int limit) {
-    executor.deleteExpiredToken(limit);
+  public int deleteExpiredToken(Tenant tenant, int limit) {
+    return executor.deleteExpiredToken(limit);
   }
 
   @Override

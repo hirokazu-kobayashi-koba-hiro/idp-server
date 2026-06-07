@@ -20,5 +20,5 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface AuthorizationRequestOperationCommandRepository {
 
-  void deleteExpiredRequest(Tenant tenant, int limit);
+  int deleteExpiredRequest(Tenant tenant, int limit);
 }

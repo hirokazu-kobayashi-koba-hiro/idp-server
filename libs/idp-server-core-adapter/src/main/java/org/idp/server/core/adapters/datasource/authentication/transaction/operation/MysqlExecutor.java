@@ -23,7 +23,7 @@ import org.idp.server.platform.datasource.SqlExecutor;
 public class MysqlExecutor implements AuthenticationTransactionSqlExecutor {
 
   @Override
-  public void deleteExpiredTransaction(int limit) {
+  public int deleteExpiredTransaction(int limit) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -36,6 +36,6 @@ public class MysqlExecutor implements AuthenticationTransactionSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(limit);
 
-    sqlExecutor.execute(sqlTemplate, params);
+    return sqlExecutor.executeAndReturnAffectedRows(sqlTemplate, params);
   }
 }

@@ -20,5 +20,5 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface CibaGrantOperationCommandRepository {
 
-  void deleteExpiredGrant(Tenant tenant, int limit);
+  int deleteExpiredGrant(Tenant tenant, int limit);
 }
