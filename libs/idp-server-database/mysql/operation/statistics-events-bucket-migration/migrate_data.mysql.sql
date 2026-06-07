@@ -15,9 +15,12 @@
 --
 -- Idempotency:
 --   Running this script twice would double-count. A pre-flight guard
---   below aborts the migration if historical rows already exist in the
---   new table. If a re-run is intended, clear the affected rows first
---   (TRUNCATE TABLE statistics_event_buckets) and retry.
+--   below aborts if past-date rows at bucket_id = 0 already exist (i.e.
+--   this migration has run before). If a re-run is intended, delete
+--   bucket_0 rows first:
+--     DELETE FROM statistics_event_buckets WHERE bucket_id = 0;
+--   (do NOT TRUNCATE; that would also wipe real-time writes in
+--   bucket_id ∈ [1, BUCKET_COUNT]).
 
 SELECT
     (SELECT COUNT(*) FROM statistics_events) AS legacy_rows,
@@ -38,12 +41,12 @@ BEGIN
 
     SELECT COUNT(*) INTO existing_historical
     FROM statistics_event_buckets
-    WHERE stat_date < CURRENT_DATE;
+    WHERE stat_date < CURRENT_DATE AND bucket_id = 0;
 
     IF existing_historical > 0 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT =
-                'statistics_event_buckets already contains historical rows (stat_date < CURRENT_DATE). Aborting to prevent double-counting. Clear the affected rows and retry. See README.md.';
+                'statistics_event_buckets already contains migrated rows (past-date at bucket_id = 0). Aborting to prevent double-counting. Clear bucket_0 rows and retry. See README.md.';
     END IF;
 
     START TRANSACTION;
