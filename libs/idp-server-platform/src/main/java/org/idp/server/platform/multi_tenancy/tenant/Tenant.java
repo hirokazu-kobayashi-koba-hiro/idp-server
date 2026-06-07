@@ -29,6 +29,7 @@ import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.policy.AuthenticationDeviceRule;
 import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
+import org.idp.server.platform.multi_tenancy.tenant.policy.UserAttributeLoadRule;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 
@@ -258,5 +259,20 @@ public class Tenant implements Configurable {
       return AuthenticationDeviceRule.defaultRule().requiredIdentityVerification();
     }
     return identityPolicyConfig.requiresIdentityVerificationForDeviceRegistration();
+  }
+
+  /**
+   * Returns the user attribute load rule for this tenant.
+   *
+   * <p>Controls which optional user associations are loaded by {@code UserQueryRepository}.
+   *
+   * @return user attribute load rule (defaults to {@link UserAttributeLoadRule#defaultRule()} when
+   *     identity policy is not configured)
+   */
+  public UserAttributeLoadRule userAttributeLoadRule() {
+    if (identityPolicyConfig == null) {
+      return UserAttributeLoadRule.defaultRule();
+    }
+    return identityPolicyConfig.userAttributeLoadRule();
   }
 }

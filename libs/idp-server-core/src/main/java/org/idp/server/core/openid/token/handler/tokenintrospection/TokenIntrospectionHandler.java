@@ -18,6 +18,7 @@ package org.idp.server.core.openid.token.handler.tokenintrospection;
 
 import java.util.Map;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
@@ -30,7 +31,6 @@ import org.idp.server.core.openid.token.TokenUserFindingDelegate;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionRequestStatus;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
-import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenQueryRepository;
 import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionContentsCreator;
 import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionRequestContext;
@@ -42,19 +42,16 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenIntrospectionHandler {
 
-  OAuthTokenCommandRepository oAuthTokenCommandRepository;
   OAuthTokenQueryRepository oAuthTokenQueryRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   ClientAuthenticationHandler clientAuthenticationHandler;
 
   public TokenIntrospectionHandler(
-      OAuthTokenCommandRepository oAuthTokenCommandRepository,
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
-    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
@@ -92,17 +89,18 @@ public class TokenIntrospectionHandler {
     }
 
     if (!oAuthToken.isClientCredentialsGrant()) {
-      User user = delegate.findUser(tenant, oAuthToken.subject());
-      TokenIntrospectionUserVerifier userVerifier = new TokenIntrospectionUserVerifier(user);
+      UserStatus status = delegate.findUserStatus(tenant, oAuthToken.subject());
+      User minimal = new User();
+      if (status != null) {
+        minimal.setSub(oAuthToken.subject().value());
+        minimal.setStatus(status);
+      }
+      TokenIntrospectionUserVerifier userVerifier = new TokenIntrospectionUserVerifier(minimal);
       userVerifier.verify();
     }
 
     Map<String, Object> contents =
         TokenIntrospectionContentsCreator.createSuccessContents(oAuthToken);
-
-    if (oAuthToken.isOneshotToken()) {
-      oAuthTokenCommandRepository.delete(request.tenant(), oAuthToken);
-    }
 
     return new TokenIntrospectionResponse(verifiedStatus, oAuthToken, contents);
   }

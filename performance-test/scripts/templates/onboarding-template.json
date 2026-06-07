@@ -32,6 +32,12 @@
       "authentication_device_rule": {
         "max_devices": 100,
         "required_identity_verification": false
+      },
+      "user_attribute_load_rule": {
+        "include_assigned_organizations": false,
+        "include_assigned_tenants": false,
+        "include_roles": false,
+        "include_permissions": false
       }
     }
   },

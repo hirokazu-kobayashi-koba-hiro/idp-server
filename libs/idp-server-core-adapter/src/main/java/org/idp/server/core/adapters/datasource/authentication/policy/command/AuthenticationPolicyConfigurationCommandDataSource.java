@@ -16,8 +16,11 @@
 
 package org.idp.server.core.adapters.datasource.authentication.policy.command;
 
+import org.idp.server.core.adapters.datasource.authentication.policy.query.AuthenticationPolicyConfigurationQueryDataSource;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationPolicyConfigurationCommandRepository;
+import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -26,25 +29,39 @@ public class AuthenticationPolicyConfigurationCommandDataSource
 
   AuthenticationPolicyConfigurationSqlExecutor executor;
   JsonConverter jsonConverter;
+  CacheStore cacheStore;
 
   public AuthenticationPolicyConfigurationCommandDataSource(
-      AuthenticationPolicyConfigurationSqlExecutor executor, JsonConverter jsonConverter) {
+      AuthenticationPolicyConfigurationSqlExecutor executor,
+      JsonConverter jsonConverter,
+      CacheStore cacheStore) {
     this.executor = executor;
     this.jsonConverter = jsonConverter;
+    this.cacheStore = cacheStore;
   }
 
   @Override
   public void register(Tenant tenant, AuthenticationPolicyConfiguration configuration) {
     executor.insert(tenant, configuration);
+    invalidate(tenant, configuration);
   }
 
   @Override
   public void update(Tenant tenant, AuthenticationPolicyConfiguration configuration) {
     executor.update(tenant, configuration);
+    invalidate(tenant, configuration);
   }
 
   @Override
   public void delete(Tenant tenant, AuthenticationPolicyConfiguration configuration) {
     executor.delete(tenant, configuration);
+    invalidate(tenant, configuration);
+  }
+
+  private void invalidate(Tenant tenant, AuthenticationPolicyConfiguration configuration) {
+    AuthFlow authFlow = new AuthFlow(configuration.flow());
+    String key =
+        AuthenticationPolicyConfigurationQueryDataSource.flowKey(tenant.identifier(), authFlow);
+    cacheStore.delete(key);
   }
 }

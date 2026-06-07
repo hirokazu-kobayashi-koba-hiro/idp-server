@@ -207,10 +207,12 @@ public class IdpServerApplication {
   IdpServerStarterApi idpServerStarterApi;
   IdpServerOperationApi idpServerOperationApi;
   OAuthFlowApi oAuthFlowApi;
+  OAuthFlowApi rawOAuthFlowApi;
   TokenApi tokenApi;
   OidcMetaDataApi oidcMetaDataApi;
   UserinfoApi userinfoApi;
   CibaFlowApi cibaFlowApi;
+  CibaFlowApi rawCibaFlowApi;
   AuthenticationMetaDataApi authenticationMetaDataApi;
   AuthenticationTransactionApi authenticationTransactionApi;
   IdentityVerificationApplicationApi identityVerificationApplicationApi;
@@ -224,6 +226,7 @@ public class IdpServerApplication {
   OrganizationTenantResolverApi organizationTenantResolverApi;
   TenantInvitationMetaDataApi tenantInvitationMetaDataApi;
   UserOperationApi userOperationApi;
+  UserOperationApi rawUserOperationApi;
   UserLifecycleEventApi userLifecycleEventApi;
   AuthenticationDeviceLogApi authenticationDeviceLogApi;
   OnboardingApi onboardingApi;
@@ -606,25 +609,26 @@ public class IdpServerApplication {
     AuditLogWriters auditLogWriters =
         AuditLogWriterPluginLoader.load(applicationComponentContainer);
 
+    OAuthFlowEntryService oAuthFlowEntryService =
+        new OAuthFlowEntryService(
+            new OAuthProtocols(protocolContainer.resolveAll(OAuthProtocol.class)),
+            sessionCookieDelegate,
+            authSessionCookieDelegate,
+            authenticationInteractors,
+            federationInteractors,
+            userQueryRepository,
+            userCommandRepository,
+            tenantQueryRepository,
+            authenticationTransactionCommandRepository,
+            authenticationTransactionQueryRepository,
+            authenticationPolicyConfigurationQueryRepository,
+            oAuthFLowEventPublisher,
+            userLifecycleEventPublisher,
+            oidcSessionHandler);
+    this.rawOAuthFlowApi = oAuthFlowEntryService;
     this.oAuthFlowApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new OAuthFlowEntryService(
-                new OAuthProtocols(protocolContainer.resolveAll(OAuthProtocol.class)),
-                sessionCookieDelegate,
-                authSessionCookieDelegate,
-                authenticationInteractors,
-                federationInteractors,
-                userQueryRepository,
-                userCommandRepository,
-                tenantQueryRepository,
-                authenticationTransactionCommandRepository,
-                authenticationTransactionQueryRepository,
-                authenticationPolicyConfigurationQueryRepository,
-                oAuthFLowEventPublisher,
-                userLifecycleEventPublisher,
-                oidcSessionHandler),
-            OAuthFlowApi.class,
-            databaseTypeProvider);
+            oAuthFlowEntryService, OAuthFlowApi.class, databaseTypeProvider);
 
     this.tokenApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -654,21 +658,22 @@ public class IdpServerApplication {
             UserinfoApi.class,
             databaseTypeProvider);
 
+    CibaFlowEntryService cibaFlowEntryService =
+        new CibaFlowEntryService(
+            new CibaProtocols(protocolContainer.resolveAll(CibaProtocol.class)),
+            authenticationInteractors,
+            userQueryRepository,
+            tenantQueryRepository,
+            authenticationTransactionCommandRepository,
+            authenticationTransactionQueryRepository,
+            authenticationPolicyConfigurationQueryRepository,
+            cibaFlowEventPublisher,
+            userLifecycleEventPublisher,
+            passwordVerificationDelegation);
+    this.rawCibaFlowApi = cibaFlowEntryService;
     this.cibaFlowApi =
         TenantAwareEntryServiceProxy.createProxy(
-            new CibaFlowEntryService(
-                new CibaProtocols(protocolContainer.resolveAll(CibaProtocol.class)),
-                authenticationInteractors,
-                userQueryRepository,
-                tenantQueryRepository,
-                authenticationTransactionCommandRepository,
-                authenticationTransactionQueryRepository,
-                authenticationPolicyConfigurationQueryRepository,
-                cibaFlowEventPublisher,
-                userLifecycleEventPublisher,
-                passwordVerificationDelegation),
-            CibaFlowApi.class,
-            databaseTypeProvider);
+            cibaFlowEntryService, CibaFlowApi.class, databaseTypeProvider);
 
     this.authenticationMetaDataApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -683,6 +688,25 @@ public class IdpServerApplication {
     OAuthTokenQueryRepository oAuthTokenQueryRepository =
         applicationComponentContainer.resolve(OAuthTokenQueryRepository.class);
 
+    UserOperationEntryService userOperationEntryService =
+        new UserOperationEntryService(
+            userQueryRepository,
+            userCommandRepository,
+            tenantQueryRepository,
+            authenticationTransactionCommandRepository,
+            authenticationTransactionQueryRepository,
+            authenticationPolicyConfigurationQueryRepository,
+            authenticationInteractors,
+            userEventPublisher,
+            userOperationEventPublisher,
+            userLifecycleEventPublisher,
+            passwordVerificationDelegation,
+            passwordEncodeDelegation);
+    this.rawUserOperationApi = userOperationEntryService;
+    this.userOperationApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            userOperationEntryService, UserOperationApi.class, databaseTypeProvider);
+
     this.authenticationTransactionApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AuthenticationTransactionEntryService(
@@ -690,7 +714,10 @@ public class IdpServerApplication {
                 authenticationTransactionCommandRepository,
                 authenticationTransactionQueryRepository,
                 oAuthTokenQueryRepository,
-                userQueryRepository),
+                userQueryRepository,
+                oAuthFlowEntryService,
+                cibaFlowEntryService,
+                userOperationEntryService),
             AuthenticationTransactionApi.class,
             databaseTypeProvider);
 
@@ -792,24 +819,6 @@ public class IdpServerApplication {
             new TenantInvitationMetaDataEntryService(
                 tenantInvitationQueryRepository, tenantQueryRepository),
             TenantInvitationMetaDataApi.class,
-            databaseTypeProvider);
-
-    this.userOperationApi =
-        TenantAwareEntryServiceProxy.createProxy(
-            new UserOperationEntryService(
-                userQueryRepository,
-                userCommandRepository,
-                tenantQueryRepository,
-                authenticationTransactionCommandRepository,
-                authenticationTransactionQueryRepository,
-                authenticationPolicyConfigurationQueryRepository,
-                authenticationInteractors,
-                userEventPublisher,
-                userOperationEventPublisher,
-                userLifecycleEventPublisher,
-                passwordVerificationDelegation,
-                passwordEncodeDelegation),
-            UserOperationApi.class,
             databaseTypeProvider);
 
     this.userLifecycleEventApi =
@@ -1281,6 +1290,10 @@ public class IdpServerApplication {
     return oAuthFlowApi;
   }
 
+  public OAuthFlowApi rawOAuthFlowApi() {
+    return rawOAuthFlowApi;
+  }
+
   public TokenApi tokenAPi() {
     return tokenApi;
   }
@@ -1295,6 +1308,10 @@ public class IdpServerApplication {
 
   public CibaFlowApi cibaFlowApi() {
     return cibaFlowApi;
+  }
+
+  public CibaFlowApi rawCibaFlowApi() {
+    return rawCibaFlowApi;
   }
 
   public AuthenticationMetaDataApi authenticationMetaDataApi() {
@@ -1343,6 +1360,10 @@ public class IdpServerApplication {
 
   public UserOperationApi userOperationApi() {
     return userOperationApi;
+  }
+
+  public UserOperationApi rawUserOperationApi() {
+    return rawUserOperationApi;
   }
 
   public SharedSignalsFrameworkMetaDataApi sharedSignalsFrameworkMetaDataApi() {

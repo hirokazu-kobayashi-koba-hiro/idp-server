@@ -143,40 +143,42 @@ public class UserOperationEntryService implements UserOperationApi {
       RequestAttributes requestAttributes) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
-
-    AuthenticationTransaction authenticationTransaction =
+    AuthenticationTransaction lockedTransaction =
         authenticationTransactionQueryRepository.getForUpdate(
             tenant, authenticationTransactionIdentifier);
 
+    return interactInternal(tenant, lockedTransaction, type, request, requestAttributes);
+  }
+
+  @Override
+  public AuthenticationInteractionRequestResult interactInternal(
+      Tenant tenant,
+      AuthenticationTransaction lockedTransaction,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes) {
+
+    AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
+
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
-            tenant,
-            authenticationTransaction,
-            type,
-            request,
-            requestAttributes,
-            userQueryRepository);
+            tenant, lockedTransaction, type, request, requestAttributes, userQueryRepository);
 
-    AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
+    AuthenticationTransaction updatedTransaction = lockedTransaction.updateWith(result);
 
     if (result.isError()) {
       userOperationEventPublisher.publish(
-          tenant,
-          authenticationTransaction,
-          result.eventType(),
-          result.response(),
-          requestAttributes);
+          tenant, lockedTransaction, result.eventType(), result.response(), requestAttributes);
     } else {
       userOperationEventPublisher.publish(
-          tenant, authenticationTransaction, result.eventType(), requestAttributes);
+          tenant, lockedTransaction, result.eventType(), requestAttributes);
     }
 
     if (updatedTransaction.isSuccess()) {
       // IMPORTANT: User is MUTABLE - addAuthenticationDevice() modifies the same instance
-      // authenticationTransaction.user(), updatedTransaction.user(), and result.user()
+      // lockedTransaction.user(), updatedTransaction.user(), and result.user()
       // all reference the same User instance, so any of them will have the updated devices.
-      userCommandRepository.update(tenant, authenticationTransaction.user());
+      userCommandRepository.update(tenant, lockedTransaction.user());
     }
 
     if (updatedTransaction.isLocked()) {
@@ -186,8 +188,7 @@ public class UserOperationEntryService implements UserOperationApi {
     }
 
     if (updatedTransaction.isComplete()) {
-      authenticationTransactionCommandRepository.delete(
-          tenant, authenticationTransactionIdentifier);
+      authenticationTransactionCommandRepository.delete(tenant, lockedTransaction.identifier());
     } else {
       authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
     }

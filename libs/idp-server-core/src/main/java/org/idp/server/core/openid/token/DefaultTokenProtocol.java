@@ -42,6 +42,7 @@ import org.idp.server.core.openid.token.tokenintrospection.exception.TokenUserIn
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.dependency.protocol.DefaultAuthorizationProvider;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class DefaultTokenProtocol implements TokenProtocol {
 
@@ -55,6 +56,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
   TokenRevocationErrorHandler revocationErrorHandler;
   PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate;
   JwtBearerUserFindingDelegate jwtBearerUserFindingDelegate;
+  OAuthTokenCommandRepository oAuthTokenCommandRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(DefaultTokenProtocol.class);
 
   public DefaultTokenProtocol(
@@ -82,25 +84,16 @@ public class DefaultTokenProtocol implements TokenProtocol {
     this.errorHandler = new TokenRequestErrorHandler();
     this.introspectionHandler =
         new TokenIntrospectionHandler(
-            oAuthTokenCommandRepository,
-            oAuthTokenQueryRepository,
-            authorizationServerConfigurationQueryRepository,
-            clientConfigurationQueryRepository);
-    this.introspectionHandler =
-        new TokenIntrospectionHandler(
-            oAuthTokenCommandRepository,
             oAuthTokenQueryRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.introspectionExtensionHandler =
         new TokenIntrospectionExtensionHandler(
-            oAuthTokenCommandRepository,
             oAuthTokenQueryRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository);
     this.introspectionInternalHandler =
-        new TokenIntrospectionInternalHandler(
-            oAuthTokenCommandRepository, oAuthTokenQueryRepository);
+        new TokenIntrospectionInternalHandler(oAuthTokenQueryRepository);
     this.introspectionErrorHandler = new TokenIntrospectionErrorHandler();
     this.revocationHandler =
         new TokenRevocationHandler(
@@ -111,6 +104,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
     this.revocationErrorHandler = new TokenRevocationErrorHandler();
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
     this.jwtBearerUserFindingDelegate = jwtBearerUserFindingDelegate;
+    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
   }
 
   @Override
@@ -183,5 +177,13 @@ public class DefaultTokenProtocol implements TokenProtocol {
 
       return revocationErrorHandler.handle(exception);
     }
+  }
+
+  @Override
+  public void deleteOneshotTokenIfNeeded(Tenant tenant, OAuthToken oAuthToken) {
+    if (oAuthToken == null || !oAuthToken.exists() || !oAuthToken.isOneshotToken()) {
+      return;
+    }
+    oAuthTokenCommandRepository.delete(tenant, oAuthToken);
   }
 }

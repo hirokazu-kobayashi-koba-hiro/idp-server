@@ -237,33 +237,43 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
+    AuthorizationIdentifier authorizationIdentifier =
+        new AuthorizationIdentifier(authorizationRequestIdentifier.value());
+    AuthenticationTransaction lockedTransaction =
+        authenticationTransactionQueryRepository.getForUpdate(tenant, authorizationIdentifier);
+
+    return interactInternal(tenant, lockedTransaction, type, request, requestAttributes);
+  }
+
+  @Override
+  public AuthenticationInteractionRequestResult interactInternal(
+      Tenant tenant,
+      AuthenticationTransaction lockedTransaction,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes) {
+
+    AuthorizationRequestIdentifier authorizationRequestIdentifier =
+        new AuthorizationRequestIdentifier(lockedTransaction.authorizationIdentifier().value());
+
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
     AuthorizationRequest authorizationRequest =
         oAuthProtocol.get(tenant, authorizationRequestIdentifier);
 
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
-    AuthorizationIdentifier authorizationIdentifier =
-        new AuthorizationIdentifier(authorizationRequestIdentifier.value());
-    AuthenticationTransaction authenticationTransaction =
-        authenticationTransactionQueryRepository.getForUpdate(tenant, authorizationIdentifier);
 
     // Validate AUTH_SESSION cookie to prevent session fixation attacks
     // Skip validation for device-based interactors (e.g., push notification) as they don't have the
     // cookie
     if (authenticationInteractor.isBrowserBased()) {
-      validateAuthSession(authenticationTransaction);
+      validateAuthSession(lockedTransaction);
     }
 
     AuthenticationInteractionRequestResult result =
         authenticationInteractor.interact(
-            tenant,
-            authenticationTransaction,
-            type,
-            request,
-            requestAttributes,
-            userQueryRepository);
+            tenant, lockedTransaction, type, request, requestAttributes, userQueryRepository);
 
-    AuthenticationTransaction updatedTransaction = authenticationTransaction.updateWith(result);
+    AuthenticationTransaction updatedTransaction = lockedTransaction.updateWith(result);
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);
 
     if (updatedTransaction.isSuccess()) {

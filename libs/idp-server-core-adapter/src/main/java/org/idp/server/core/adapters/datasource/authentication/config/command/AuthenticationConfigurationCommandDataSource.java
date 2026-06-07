@@ -16,8 +16,10 @@
 
 package org.idp.server.core.adapters.datasource.authentication.config.command;
 
+import org.idp.server.core.adapters.datasource.authentication.config.query.AuthenticationConfigurationQueryDataSource;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationCommandRepository;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -26,25 +28,46 @@ public class AuthenticationConfigurationCommandDataSource
 
   AuthenticationConfigCommandSqlExecutor executor;
   JsonConverter jsonConverter;
+  CacheStore cacheStore;
 
   public AuthenticationConfigurationCommandDataSource(
-      AuthenticationConfigCommandSqlExecutor executor, JsonConverter jsonConverter) {
+      AuthenticationConfigCommandSqlExecutor executor,
+      JsonConverter jsonConverter,
+      CacheStore cacheStore) {
     this.executor = executor;
     this.jsonConverter = jsonConverter;
+    this.cacheStore = cacheStore;
   }
 
   @Override
   public void register(Tenant tenant, AuthenticationConfiguration configuration) {
     executor.insert(tenant, configuration);
+    invalidateTenant(tenant);
   }
 
   @Override
   public void update(Tenant tenant, AuthenticationConfiguration configuration) {
     executor.update(tenant, configuration);
+    invalidateTenant(tenant);
   }
 
   @Override
   public void delete(Tenant tenant, AuthenticationConfiguration configuration) {
     executor.delete(tenant, configuration);
+    invalidateTenant(tenant);
+  }
+
+  /**
+   * Invalidate every cached {@link AuthenticationConfiguration} entry for the tenant.
+   *
+   * <p>A per-key invalidation keyed on {@code configuration.type()} would leak stale entries when
+   * an update mutates {@code type} itself (old key stays cached) or in any other future scenario
+   * where the writer's view of the key differs from what reads use. Dropping the whole tenant group
+   * is cheap (mutations to authentication configuration are infrequent) and trades a small
+   * cold-cache cost for a structural guarantee that reads cannot observe stale data.
+   */
+  private void invalidateTenant(Tenant tenant) {
+    String prefix = AuthenticationConfigurationQueryDataSource.tenantKeyPrefix(tenant.identifier());
+    cacheStore.deleteByPrefix(prefix);
   }
 }

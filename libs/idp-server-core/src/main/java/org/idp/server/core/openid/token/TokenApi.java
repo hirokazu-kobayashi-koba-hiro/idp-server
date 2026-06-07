@@ -52,4 +52,14 @@ public interface TokenApi {
       String authorizationHeader,
       String clientCert,
       RequestAttributes requestAttributes);
+
+  /**
+   * Deletes the access token if it carries the RAR {@code oneshot_token} flag.
+   *
+   * <p>Separate write-side entry point invoked by callers after {@link #inspect} or {@link
+   * #inspectWithVerification} so the introspection path itself can run as a read-only transaction
+   * (and be routed to a read replica). Callers should invoke this only when the introspection
+   * response carries an {@link OAuthToken}.
+   */
+  void deleteOneshotTokenIfNeeded(TenantIdentifier tenantIdentifier, OAuthToken oAuthToken);
 }

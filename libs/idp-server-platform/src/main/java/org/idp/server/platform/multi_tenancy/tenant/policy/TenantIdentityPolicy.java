@@ -31,6 +31,7 @@ public class TenantIdentityPolicy {
   public TenantIdentityPolicy() {
     this.passwordPolicyConfig = PasswordPolicyConfig.defaultPolicy();
     this.authenticationDeviceRule = AuthenticationDeviceRule.defaultRule();
+    this.userAttributeLoadRule = UserAttributeLoadRule.defaultRule();
   }
 
   public enum UniqueKeyType {
@@ -75,12 +76,14 @@ public class TenantIdentityPolicy {
   private UniqueKeyType uniqueKeyType;
   private PasswordPolicyConfig passwordPolicyConfig;
   private AuthenticationDeviceRule authenticationDeviceRule;
+  private UserAttributeLoadRule userAttributeLoadRule;
 
   public TenantIdentityPolicy(UniqueKeyType uniqueKeyType) {
     this.uniqueKeyType =
         uniqueKeyType != null ? uniqueKeyType : UniqueKeyType.EMAIL_OR_EXTERNAL_USER_ID;
     this.passwordPolicyConfig = PasswordPolicyConfig.defaultPolicy();
     this.authenticationDeviceRule = AuthenticationDeviceRule.defaultRule();
+    this.userAttributeLoadRule = UserAttributeLoadRule.defaultRule();
   }
 
   public TenantIdentityPolicy(
@@ -90,12 +93,21 @@ public class TenantIdentityPolicy {
     this.passwordPolicyConfig =
         passwordPolicyConfig != null ? passwordPolicyConfig : PasswordPolicyConfig.defaultPolicy();
     this.authenticationDeviceRule = AuthenticationDeviceRule.defaultRule();
+    this.userAttributeLoadRule = UserAttributeLoadRule.defaultRule();
   }
 
   public TenantIdentityPolicy(
       UniqueKeyType uniqueKeyType,
       PasswordPolicyConfig passwordPolicyConfig,
       AuthenticationDeviceRule authenticationDeviceRule) {
+    this(uniqueKeyType, passwordPolicyConfig, authenticationDeviceRule, null);
+  }
+
+  public TenantIdentityPolicy(
+      UniqueKeyType uniqueKeyType,
+      PasswordPolicyConfig passwordPolicyConfig,
+      AuthenticationDeviceRule authenticationDeviceRule,
+      UserAttributeLoadRule userAttributeLoadRule) {
     this.uniqueKeyType =
         uniqueKeyType != null ? uniqueKeyType : UniqueKeyType.EMAIL_OR_EXTERNAL_USER_ID;
     this.passwordPolicyConfig =
@@ -104,6 +116,8 @@ public class TenantIdentityPolicy {
         authenticationDeviceRule != null
             ? authenticationDeviceRule
             : AuthenticationDeviceRule.defaultRule();
+    this.userAttributeLoadRule =
+        userAttributeLoadRule != null ? userAttributeLoadRule : UserAttributeLoadRule.defaultRule();
   }
 
   /**
@@ -157,7 +171,14 @@ public class TenantIdentityPolicy {
       authenticationDeviceRule = AuthenticationDeviceRule.fromMap(deviceRuleMap);
     }
 
-    return new TenantIdentityPolicy(uniqueKeyType, passwordPolicyConfig, authenticationDeviceRule);
+    UserAttributeLoadRule userAttributeLoadRule = UserAttributeLoadRule.defaultRule();
+    if (map.containsKey("user_attribute_load_rule")) {
+      Map<String, Object> loadRuleMap = (Map<String, Object>) map.get("user_attribute_load_rule");
+      userAttributeLoadRule = UserAttributeLoadRule.fromMap(loadRuleMap);
+    }
+
+    return new TenantIdentityPolicy(
+        uniqueKeyType, passwordPolicyConfig, authenticationDeviceRule, userAttributeLoadRule);
   }
 
   /**
@@ -207,6 +228,20 @@ public class TenantIdentityPolicy {
   }
 
   /**
+   * Returns the user attribute load rule for this tenant.
+   *
+   * <p>Controls which optional associations (assigned_organizations / assigned_tenants) are loaded
+   * by {@code UserQueryRepository}.
+   *
+   * @return user attribute load rule
+   */
+  public UserAttributeLoadRule userAttributeLoadRule() {
+    return userAttributeLoadRule != null
+        ? userAttributeLoadRule
+        : UserAttributeLoadRule.defaultRule();
+  }
+
+  /**
    * Returns maximum number of authentication devices allowed per user.
    *
    * @return maximum device count
@@ -251,6 +286,9 @@ public class TenantIdentityPolicy {
     }
     if (authenticationDeviceRule != null) {
       map.put("authentication_device_rule", authenticationDeviceRule.toMap());
+    }
+    if (userAttributeLoadRule != null) {
+      map.put("user_attribute_load_rule", userAttributeLoadRule.toMap());
     }
     return map;
   }

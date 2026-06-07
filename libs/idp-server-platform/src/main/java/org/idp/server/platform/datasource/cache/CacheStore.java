@@ -29,5 +29,16 @@ public interface CacheStore {
 
   void delete(String key);
 
+  /**
+   * Delete all cache entries whose key starts with the given prefix.
+   *
+   * <p>Useful for invalidating a logical group of entries when a per-key invalidation could leave
+   * stale values behind (e.g. when the field used as part of the cache key is itself mutable).
+   *
+   * <p>Implementations should make this safe to call on Redis-backed stores by using a cursor-based
+   * scan rather than {@code KEYS *}.
+   */
+  void deleteByPrefix(String prefix);
+
   long increment(String key, int timeToLiveSeconds);
 }

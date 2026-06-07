@@ -165,6 +165,21 @@ public class CibaFlowEntryService implements CibaFlowApi {
         authenticationTransactionQueryRepository.getForUpdate(
             tenant, authenticationTransaction.identifier());
 
+    return interactInternal(tenant, lockedTransaction, type, request, requestAttributes);
+  }
+
+  @Override
+  public AuthenticationInteractionRequestResult interactInternal(
+      Tenant tenant,
+      AuthenticationTransaction lockedTransaction,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes) {
+
+    BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier =
+        new BackchannelAuthenticationRequestIdentifier(
+            lockedTransaction.authorizationIdentifier().value());
+
     CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProvider());
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =
         cibaProtocol.get(tenant, backchannelAuthenticationRequestIdentifier);

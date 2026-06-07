@@ -16,6 +16,7 @@
 
 package org.idp.server.core.adapters.datasource.cache;
 
+import java.util.List;
 import java.util.Optional;
 import org.idp.server.platform.datasource.cache.CacheConfiguration;
 import org.idp.server.platform.datasource.cache.CacheStore;
@@ -24,6 +25,8 @@ import org.idp.server.platform.log.LoggerWrapper;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.params.ScanParams;
+import redis.clients.jedis.resps.ScanResult;
 
 public class JedisCacheStore implements CacheStore {
 
@@ -115,6 +118,26 @@ public class JedisCacheStore implements CacheStore {
       resource.del(key);
     } catch (Exception e) {
       log.error("Failed to delete cache", e);
+    }
+  }
+
+  @Override
+  public void deleteByPrefix(String prefix) {
+    // Use cursor-based SCAN to avoid blocking the Redis main thread on large keyspaces.
+    // KEYS pattern would scan the entire dataset in one shot and stall production traffic.
+    try (Jedis resource = jedisPool.getResource()) {
+      String cursor = ScanParams.SCAN_POINTER_START;
+      ScanParams params = new ScanParams().match(prefix + "*").count(100);
+      do {
+        ScanResult<String> scanResult = resource.scan(cursor, params);
+        List<String> keys = scanResult.getResult();
+        if (!keys.isEmpty()) {
+          resource.del(keys.toArray(new String[0]));
+        }
+        cursor = scanResult.getCursor();
+      } while (!ScanParams.SCAN_POINTER_START.equals(cursor));
+    } catch (Exception e) {
+      log.error("Failed to delete cache by prefix: {}", prefix, e);
     }
   }
 

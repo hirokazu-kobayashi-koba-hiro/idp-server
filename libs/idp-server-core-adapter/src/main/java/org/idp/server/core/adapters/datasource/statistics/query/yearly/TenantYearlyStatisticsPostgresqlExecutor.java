@@ -26,7 +26,8 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 /**
  * PostgreSQL executor for yearly statistics queries.
  *
- * <p>Queries from statistics_events table and aggregates into TenantYearlyStatistics format.
+ * <p>Queries from statistics_event_buckets table (SUM(count) GROUP BY for bucket-distributed rows)
+ * and aggregates into TenantYearlyStatistics format.
  */
 public class TenantYearlyStatisticsPostgresqlExecutor implements TenantYearlyStatisticsSqlExecutor {
 
@@ -56,7 +57,7 @@ public class TenantYearlyStatisticsPostgresqlExecutor implements TenantYearlySta
     String sql =
         """
             SELECT COUNT(*) as count
-            FROM statistics_events
+            FROM statistics_event_buckets
             WHERE tenant_id = ?::uuid
               AND stat_date >= ?::date
               AND stat_date < ?::date
@@ -73,13 +74,20 @@ public class TenantYearlyStatisticsPostgresqlExecutor implements TenantYearlySta
   private List<Map<String, String>> selectEventsForDateRange(
       TenantIdentifier tenantId, LocalDate fromDate, LocalDate toDate) {
     SqlExecutor sqlExecutor = new SqlExecutor();
+    // Bucket distribution (Issue #1443): aggregate write-side shards back into a single
+    // row per (stat_date, event_type) for downstream consumers.
     String sql =
         """
-            SELECT stat_date, event_type, count, created_at, updated_at
-            FROM statistics_events
+            SELECT stat_date,
+                   event_type,
+                   SUM(count) AS count,
+                   MIN(created_at) AS created_at,
+                   MAX(updated_at) AS updated_at
+            FROM statistics_event_buckets
             WHERE tenant_id = ?::uuid
               AND stat_date >= ?::date
               AND stat_date < ?::date
+            GROUP BY stat_date, event_type
             ORDER BY stat_date, event_type
             """;
 

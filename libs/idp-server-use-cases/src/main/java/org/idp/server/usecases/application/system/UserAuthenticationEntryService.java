@@ -52,6 +52,7 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
     this.organizationRepository = organizationRepository;
   }
 
+  @Transaction(readOnly = true)
   public Pairs<User, OAuthToken> authenticate(
       TenantIdentifier tenantIdentifier, String authorizationHeader, String clientCert) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);

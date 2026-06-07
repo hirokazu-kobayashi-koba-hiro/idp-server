@@ -24,6 +24,7 @@ import org.idp.server.core.openid.identity.UserQueries;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.policy.UserAttributeLoadRule;
 
 public class MysqlExecutor implements UserSqlExecutor {
 
@@ -32,7 +33,7 @@ public class MysqlExecutor implements UserSqlExecutor {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
-        String.format(selectSql, "WHERE idp_user.tenant_id = ? AND idp_user.id = ?");
+        String.format(selectSql(tenant), "WHERE idp_user.tenant_id = ? AND idp_user.id = ?");
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(userIdentifier.valueAsUuid().toString());
@@ -47,7 +48,7 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                         WHERE idp_user.tenant_id = ?
                         AND idp_user.external_user_id = ?
@@ -67,7 +68,7 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                                 WHERE idp_user.tenant_id = ?
                                 AND idp_user.name = ?
@@ -89,7 +90,7 @@ public class MysqlExecutor implements UserSqlExecutor {
     // Search by device id using subquery on idp_user_authentication_devices table
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                 WHERE idp_user.id = (
                     SELECT user_id FROM idp_user_authentication_devices
@@ -111,7 +112,7 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                 WHERE idp_user.tenant_id = ?
                 AND idp_user.email = ?
@@ -131,7 +132,7 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                         WHERE idp_user.tenant_id = ?
                         AND idp_user.phone_number = ?
@@ -361,7 +362,7 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     String pagedSql =
         cteSql
-            + String.format(selectSql, "WHERE idp_user.id IN (SELECT id FROM paged_users)")
+            + String.format(selectSql(tenant), "WHERE idp_user.id IN (SELECT id FROM paged_users)")
             + """
           ORDER BY idp_user.created_at DESC, idp_user.id DESC
         """;
@@ -376,7 +377,7 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                 WHERE
                 idp_user.tenant_id = ?
@@ -398,7 +399,7 @@ public class MysqlExecutor implements UserSqlExecutor {
     // Search by device id using subquery on idp_user_authentication_devices table
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                 WHERE idp_user.id = (
                     SELECT user_id FROM idp_user_authentication_devices
@@ -419,7 +420,7 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                         WHERE idp_user.tenant_id = ?
                         AND idp_user.provider_id = ?
@@ -440,7 +441,7 @@ public class MysqlExecutor implements UserSqlExecutor {
 
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                                     WHERE idp_user.tenant_id = ?
                                     AND idp_user.preferred_username = ?
@@ -515,7 +516,7 @@ public class MysqlExecutor implements UserSqlExecutor {
     // Search by FIDO2 credential_id directly in authentication_devices table
     String sqlTemplate =
         String.format(
-            selectSql,
+            selectSql(tenant),
             """
                 WHERE idp_user.id = (
                     SELECT user_id FROM idp_user_authentication_devices
@@ -530,9 +531,20 @@ public class MysqlExecutor implements UserSqlExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
-  String selectSql =
+  @Override
+  public Map<String, String> selectStatus(Tenant tenant, UserIdentifier userIdentifier) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate = "SELECT status FROM idp_user WHERE tenant_id = ? AND id = ?";
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+    params.add(userIdentifier.valueAsUuid().toString());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  private static final String SELECT_BASE_FIELDS =
       """
-              SELECT
                    idp_user.id,
                    idp_user.provider_id,
                    idp_user.external_user_id,
@@ -577,7 +589,10 @@ public class MysqlExecutor implements UserSqlExecutor {
                    idp_user.verified_claims,
                    idp_user.status,
                    idp_user.created_at,
-                   idp_user.updated_at,
+                   idp_user.updated_at""";
+
+  private static final String SELECT_ROLES_FIELD =
+      """
                    COALESCE((
                                 SELECT JSON_ARRAYAGG(JSON_OBJECT('role_id', r.id, 'role_name', r.name))
                                 FROM (
@@ -586,7 +601,10 @@ public class MysqlExecutor implements UserSqlExecutor {
                                                   JOIN role ON role.id = idp_user_roles.role_id
                                          WHERE idp_user_roles.user_id = idp_user.id
                                      ) AS r
-                            ), JSON_ARRAY()) AS roles,
+                            ), JSON_ARRAY()) AS roles""";
+
+  private static final String SELECT_PERMISSIONS_FIELD =
+      """
                    COALESCE((
                                 SELECT JSON_ARRAYAGG(p.permission_name)
                                 FROM (
@@ -596,17 +614,24 @@ public class MysqlExecutor implements UserSqlExecutor {
                                                   JOIN permission ON permission.id = role_permission.permission_id
                                          WHERE idp_user_roles.user_id = idp_user.id
                                      ) AS p
-                            ), JSON_ARRAY()) AS permissions
-                 FROM idp_user
+                            ), JSON_ARRAY()) AS permissions""";
+
+  private static final String ROLE_JOINS =
+      """
                  LEFT JOIN idp_user_roles
                          ON idp_user.id = idp_user_roles.user_id
                      LEFT JOIN role
-                             ON idp_user_roles.role_id = role.id
+                             ON idp_user_roles.role_id = role.id""";
+
+  private static final String PERMISSION_JOINS =
+      """
                                   LEFT JOIN role_permission
                  ON role.id = role_permission.role_id
                      LEFT JOIN permission
-                     ON role_permission.permission_id = permission.id
-                 %s
+                     ON role_permission.permission_id = permission.id""";
+
+  private static final String GROUP_BY_CLAUSE =
+      """
                  GROUP BY
                    idp_user.id,
                    idp_user.provider_id,
@@ -636,6 +661,40 @@ public class MysqlExecutor implements UserSqlExecutor {
                    idp_user.verified_claims,
                    idp_user.status,
                    idp_user.created_at,
-                   idp_user.updated_at
-                  """;
+                   idp_user.updated_at""";
+
+  /**
+   * Builds the user SELECT SQL with {@code %s} placeholder for the WHERE clause, dynamically
+   * including or omitting the role / permission JOIN chain and aggregation based on the tenant's
+   * {@link UserAttributeLoadRule}.
+   *
+   * <p>Roles and permissions are produced via correlated subqueries (independent of the main
+   * JOINs), so they are skipped individually. The trailing LEFT JOIN chain + GROUP BY exists for
+   * legacy compatibility and is omitted entirely when neither roles nor permissions are requested.
+   */
+  String selectSql(Tenant tenant) {
+    UserAttributeLoadRule rule = tenant.userAttributeLoadRule();
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("SELECT\n").append(SELECT_BASE_FIELDS);
+    if (rule.includeRoles()) {
+      sb.append(",\n").append(SELECT_ROLES_FIELD);
+    }
+    if (rule.includePermissions()) {
+      sb.append(",\n").append(SELECT_PERMISSIONS_FIELD);
+    }
+    sb.append("\n                 FROM idp_user");
+    if (rule.needsRoleJoin()) {
+      sb.append("\n").append(ROLE_JOINS);
+    }
+    if (rule.includePermissions()) {
+      sb.append("\n").append(PERMISSION_JOINS);
+    }
+    sb.append("\n                 %s");
+    if (rule.needsRoleJoin()) {
+      sb.append("\n").append(GROUP_BY_CLAUSE);
+    }
+    sb.append("\n");
+    return sb.toString();
+  }
 }

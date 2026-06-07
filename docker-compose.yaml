@@ -88,6 +88,7 @@ services:
       REDIS_SESSION_MAX_IDLE: 3
       REDIS_SESSION_MIN_IDLE: 2
       IDP_SERVER_SHUTDOWN_DELAY: "5s"
+      IDP_STATISTICS_BUCKET_COUNT: ${IDP_STATISTICS_BUCKET_COUNT:-32}
       SERVER_TOMCAT_THREADS_MAX: 300
       SERVER_TOMCAT_THREADS_MIN_SPARE: 50
       LOGGING_LEVEL_ROOT: info
@@ -202,6 +203,7 @@ services:
       REDIS_SESSION_MAX_IDLE: 3
       REDIS_SESSION_MIN_IDLE: 2
       IDP_SERVER_SHUTDOWN_DELAY: "5s"
+      IDP_STATISTICS_BUCKET_COUNT: ${IDP_STATISTICS_BUCKET_COUNT:-32}
       SERVER_TOMCAT_THREADS_MAX: 300
       SERVER_TOMCAT_THREADS_MIN_SPARE: 50
       LOGGING_LEVEL_ROOT: info
@@ -263,6 +265,10 @@ services:
       context: ./docker/postgresql/primary
     image: idp-postgres-primary:15
     container_name: postgres-primary
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
     environment:
       - POSTGRES_USER=idpserver
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}
@@ -297,6 +303,10 @@ services:
     build:
       context: ./docker/postgresql/replica
     container_name: postgres-replica
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
     environment:
       - POSTGRES_USER=idpserver
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?PostgreSQL password is required. Set POSTGRES_PASSWORD environment variable.}

@@ -11,7 +11,7 @@ COPY gradle /workspace/gradle
 COPY libs /workspace/libs
 COPY app /workspace/app
 
-RUN gradle clean build -x test --no-daemon
+RUN gradle build -x test --no-daemon
 
 # -------- Step 2: Runtime Stage --------
 FROM eclipse-temurin:21-jre-alpine AS runtime

@@ -26,7 +26,12 @@ import org.idp.server.platform.statistics.StatisticsEventRecord;
 /**
  * PostgreSQL implementation of statistics events upsert.
  *
- * <p>Uses INSERT ... ON CONFLICT for efficient upserts.
+ * <p>Writes target the {@code statistics_event_buckets} table (Issue #1443). Each write picks a
+ * bucket id per writer via {@link StatisticsEventBuckets}, scattering UPSERTs across N rows per
+ * logical key (tenant_id, stat_date, event_type) to eliminate hot-row lock contention.
+ *
+ * <p>Reads aggregate with {@code SUM(count) ... GROUP BY tenant_id, stat_date, event_type} so the
+ * bucket dimension is transparent to consumers.
  */
 public class PostgresqlExecutor implements StatisticsEventsSqlExecutor {
 
@@ -34,18 +39,20 @@ public class PostgresqlExecutor implements StatisticsEventsSqlExecutor {
 
   private static final String INCREMENT_SQL =
       """
-      INSERT INTO statistics_events (tenant_id, stat_date, event_type, count, created_at, updated_at)
-      VALUES (?::uuid, ?, ?, 1, now(), now())
-      ON CONFLICT (tenant_id, stat_date, event_type)
+      INSERT INTO statistics_event_buckets (tenant_id, stat_date, event_type, bucket_id, count, created_at, updated_at)
+      VALUES (?::uuid, ?, ?, ?, 1, now(), now())
+      ON CONFLICT (tenant_id, stat_date, event_type, bucket_id)
       DO UPDATE SET
-          count = statistics_events.count + 1,
+          count = statistics_event_buckets.count + 1,
           updated_at = now()
       """;
 
   @Override
   public void increment(TenantIdentifier tenantId, LocalDate statDate, String eventType) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    sqlExecutor.execute(INCREMENT_SQL, List.of(tenantId.value(), statDate, eventType));
+    sqlExecutor.execute(
+        INCREMENT_SQL,
+        List.of(tenantId.value(), statDate, eventType, StatisticsEventBuckets.pickBucketId()));
   }
 
   @Override
@@ -72,31 +79,36 @@ public class PostgresqlExecutor implements StatisticsEventsSqlExecutor {
     StringBuilder sql = new StringBuilder();
     sql.append(
         """
-        INSERT INTO statistics_events (tenant_id, stat_date, event_type, count, created_at, updated_at)
+        INSERT INTO statistics_event_buckets (tenant_id, stat_date, event_type, bucket_id, count, created_at, updated_at)
         VALUES
         """);
 
     List<Object> params = new ArrayList<>();
 
+    // Pick one bucket per batch call: keeps the increment to a single hot row per writer,
+    // while the bucket changes between batches due to thread scheduling.
+    int bucketId = StatisticsEventBuckets.pickBucketId();
+
     for (int i = 0; i < batch.size(); i++) {
       if (i > 0) {
         sql.append(",\n");
       }
-      sql.append("(?::uuid, ?, ?, ?, now(), now())");
+      sql.append("(?::uuid, ?, ?, ?, ?, now(), now())");
 
       StatisticsEventRecord record = batch.get(i);
       params.add(record.tenantIdValue());
       params.add(record.statDate());
       params.add(record.eventType());
+      params.add(bucketId);
       params.add(record.count());
     }
 
     sql.append(
         """
 
-        ON CONFLICT (tenant_id, stat_date, event_type)
+        ON CONFLICT (tenant_id, stat_date, event_type, bucket_id)
         DO UPDATE SET
-            count = statistics_events.count + EXCLUDED.count,
+            count = statistics_event_buckets.count + EXCLUDED.count,
             updated_at = now()
         """);
 

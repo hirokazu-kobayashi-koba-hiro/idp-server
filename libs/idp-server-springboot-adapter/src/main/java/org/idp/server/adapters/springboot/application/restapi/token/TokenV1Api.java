@@ -80,6 +80,10 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
         tokenApi.inspect(
             tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
 
+    if (response.hasOAuthToken() && response.oAuthToken().isOneshotToken()) {
+      tokenApi.deleteOneshotTokenIfNeeded(tenantIdentifier, response.oAuthToken());
+    }
+
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setAll(response.responseHeaders());
     return new ResponseEntity<>(
@@ -102,6 +106,10 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
     TokenIntrospectionResponse response =
         tokenApi.inspectWithVerification(
             tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
+
+    if (response.hasOAuthToken() && response.oAuthToken().isOneshotToken()) {
+      tokenApi.deleteOneshotTokenIfNeeded(tenantIdentifier, response.oAuthToken());
+    }
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setAll(response.responseHeaders());
