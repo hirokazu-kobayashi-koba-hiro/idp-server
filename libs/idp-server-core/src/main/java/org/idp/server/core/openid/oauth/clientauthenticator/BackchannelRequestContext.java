@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.oauth.clientauthenticator;
 
+import org.idp.server.core.openid.oauth.clientauthenticator.attestation.OAuthClientAttestation;
+import org.idp.server.core.openid.oauth.clientauthenticator.attestation.OAuthClientAttestationPop;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
@@ -40,4 +42,21 @@ public interface BackchannelRequestContext {
   ClientAuthenticationType clientAuthenticationType();
 
   RequestedClientId requestedClientId();
+
+  /**
+   * Client Attestation JWT (RFC: draft-ietf-oauth-attestation-based-client-auth, HTTP ヘッダ {@code
+   * OAuth-Client-Attestation})。 各 context 実装は {@link
+   * org.idp.server.platform.http.HttpRequestInputs} 等から抽出した値で override する。 default は empty。
+   */
+  default OAuthClientAttestation oauthClientAttestation() {
+    return new OAuthClientAttestation();
+  }
+
+  /**
+   * Client Attestation Proof of Possession JWT (HTTP ヘッダ {@code OAuth-Client-Attestation-PoP})。
+   * default は empty。
+   */
+  default OAuthClientAttestationPop oauthClientAttestationPop() {
+    return new OAuthClientAttestationPop();
+  }
 }

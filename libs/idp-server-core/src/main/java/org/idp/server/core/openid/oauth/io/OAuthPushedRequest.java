@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth.io;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.request.OAuthPushedRequestParameters;
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
@@ -24,33 +25,99 @@ import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
 import org.idp.server.platform.http.BasicAuth;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
+/**
+ * PAR (Pushed Authorization Request, RFC 9126) endpoint へのリクエストを表現する DTO。
+ *
+ * <p>HTTP 入力 ({@link HttpRequestInputs}) と endpoint 固有の付随状態を持つ。 正準シグネチャは新コンストラクタ {@link
+ * #OAuthPushedRequest(Tenant, HttpRequestInputs)} を用いる。
+ *
+ * <p>旧コンストラクタと setter 群は段階移行のために残しているが、新コードは新シグネチャを使うこと。
+ */
 public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
 
-  Tenant tenant;
-  String authorizationHeaders;
-  Map<String, String[]> params;
-  String clientCert;
+  private final Tenant tenant;
+  private HttpRequestInputs http;
 
+  /**
+   * Canonical constructor.
+   *
+   * @param tenant 対象テナント
+   * @param http HTTP リクエストの入力チャネル ({@code Authorization} / body / headers / mTLS / method / URI)
+   */
+  public OAuthPushedRequest(Tenant tenant, HttpRequestInputs http) {
+    this.tenant = tenant;
+    this.http = http == null ? HttpRequestInputs.empty() : http;
+  }
+
+  /**
+   * 旧コンストラクタ。後方互換のために維持しているが、新規コードでは {@link #OAuthPushedRequest(Tenant, HttpRequestInputs)} を使うこと。
+   */
+  @Deprecated
   public OAuthPushedRequest(
       Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
     this.tenant = tenant;
-    this.authorizationHeaders = authorizationHeaders;
-    this.params = params;
+    this.http = new HttpRequestInputs(authorizationHeaders, params, Map.of(), null, "POST", "");
   }
 
+  // ---------------------------------------------------------------------------
+  // Deprecated mutators — kept for backward compatibility during migration.
+  // ---------------------------------------------------------------------------
+
+  @Deprecated
   public OAuthPushedRequest setClientCert(String clientCert) {
-    this.clientCert = clientCert;
+    this.http = http.withTlsClientCertPem(clientCert);
     return this;
   }
 
+  @Deprecated
+  public OAuthPushedRequest setDPoPProofHeaders(List<String> dpopProofHeaders) {
+    this.http = http.withHeader("DPoP", dpopProofHeaders);
+    return this;
+  }
+
+  @Deprecated
+  public OAuthPushedRequest setHttpMethod(String httpMethod) {
+    this.http = http.withHttpMethod(httpMethod);
+    return this;
+  }
+
+  @Deprecated
+  public OAuthPushedRequest setHttpUri(String httpUri) {
+    this.http = http.withHttpUri(httpUri);
+    return this;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Accessors — protocol layer reads from these.
+  // ---------------------------------------------------------------------------
+
+  public HttpRequestInputs http() {
+    return http;
+  }
+
+  public List<String> dpopProofHeaders() {
+    return http.headerValues("DPoP");
+  }
+
+  public String httpMethod() {
+    String method = http.httpMethod();
+    return method != null && !method.isEmpty() ? method : "POST";
+  }
+
+  public String httpUri() {
+    String uri = http.httpUri();
+    return uri != null ? uri : "";
+  }
+
   public Map<String, String[]> getParams() {
-    return params;
+    return http.bodyParameters();
   }
 
   public String clientCert() {
-    return clientCert;
+    return http.tlsClientCertPem();
   }
 
   public Tenant tenant() {
@@ -58,11 +125,11 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
   }
 
   public OAuthPushedRequestParameters toBackchannelParameters() {
-    return new OAuthPushedRequestParameters(params);
+    return new OAuthPushedRequestParameters(http.bodyParameters());
   }
 
   public OAuthRequestParameters toOAuthRequestParameters() {
-    return new OAuthRequestParameters(params);
+    return new OAuthRequestParameters(http.bodyParameters());
   }
 
   /**
@@ -85,6 +152,7 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
     if (parameters.hasClientId()) {
       return parameters.clientId();
     }
+    String authorizationHeaders = http.authorizationHeader();
     if (isBasicAuth(authorizationHeaders)) {
       BasicAuth basicAuth = convertBasicAuth(authorizationHeaders);
       return new RequestedClientId(basicAuth.username());
@@ -104,6 +172,7 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
   }
 
   public ClientSecretBasic clientSecretBasic() {
+    String authorizationHeaders = http.authorizationHeader();
     if (isBasicAuth(authorizationHeaders)) {
       return new ClientSecretBasic(convertBasicAuth(authorizationHeaders));
     }
@@ -111,6 +180,6 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
   }
 
   public ClientCert toClientCert() {
-    return new ClientCert(clientCert);
+    return new ClientCert(http.tlsClientCertPem());
   }
 }

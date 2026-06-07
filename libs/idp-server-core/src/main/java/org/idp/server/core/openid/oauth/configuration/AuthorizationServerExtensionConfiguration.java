@@ -24,6 +24,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   List<String> fapiBaselineScopes = new ArrayList<>();
   List<String> fapiAdvanceScopes = new ArrayList<>();
+  List<String> fapi20Scopes = new ArrayList<>();
   List<String> requiredIdentityVerificationScopes = new ArrayList<>();
 
   /** opaque: identifier type JWT: consisting type */
@@ -60,6 +61,10 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   public boolean hasFapiAdvanceScope(Set<String> scopes) {
     return scopes.stream().anyMatch(scope -> fapiAdvanceScopes.contains(scope));
+  }
+
+  public boolean hasFapi20Scope(Set<String> scopes) {
+    return scopes.stream().anyMatch(scope -> fapi20Scopes.contains(scope));
   }
 
   public boolean hasRequiredIdentityVerificationScope(Set<String> scopes) {
@@ -106,6 +111,13 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return refreshTokenStrategy().isExtends();
   }
 
+  /**
+   * Whether the AS rotates the refresh token value on each refresh.
+   *
+   * <p>Defaults to {@code true} (rotate). FAPI 2.0 Security Profile §5.3.2.1-9 prohibits rotation
+   * "except in extraordinary circumstances", so FAPI 2.0 tenants must override this to {@code
+   * false} in their configuration.
+   */
   public boolean isRotateRefreshToken() {
     return rotateRefreshToken;
   }
@@ -152,6 +164,10 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   public List<String> fapiBaselineScopes() {
     return fapiBaselineScopes;
+  }
+
+  public List<String> fapi20Scopes() {
+    return fapi20Scopes;
   }
 
   public List<String> fapiAdvanceScopes() {

@@ -1,0 +1,41 @@
+{
+  "client_id": "b58f5dec-dedb-4ee6-a7af-b03441d0e143",
+  "client_id_alias": "fapi2TlsClientAuth",
+  "client_id_issued_at": 2893256800,
+  "redirect_uris": [
+    "https://client.example.org/callback",
+    "http://localhost:8081/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp-server-fapi2-mtls/callback",
+    "https://localhost.emobix.co.uk:8443/test/a/idp-server-fapi2-mtls/callback?dummy1=lorem&dummy2=ipsum"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "urn:openid:params:grant-type:ciba"
+  ],
+  "backchannel_token_delivery_mode": "poll",
+  "backchannel_authentication_request_signing_alg": "ES256",
+  "backchannel_user_code_parameter": false,
+  "backchannel_client_notification_endpoint": "https://localhost.emobix.co.uk:8443/test/a/idp-server-fapi2-mtls/ciba-notification-endpoint",
+  "scope": "openid profile email address phone offline_access account transfers read write fapi-2.0 identity_verification_application identity_verification_application_delete identity_verification_result",
+  "client_name": "FAPI 2.0 mTLS Client",
+  "client_name#ja-Jpan-JP": "FAPI 2.0 mTLS クライアント",
+  "token_endpoint_auth_method": "tls_client_auth",
+  "tls_client_auth_subject_dn": "C=JP,O=FAPI 2.0 Certification,CN=fapi2-tls-client",
+  "logo_uri": "https://client.example.org/logo.png",
+  "tos_uri": "https://idp-auth-frontend-diqt.vercel.app/terms",
+  "policy_uri": "https://idp-auth-frontend-diqt.vercel.app/privacy",
+  "application_type": "web",
+  "tls_client_certificate_bound_access_tokens": true,
+  "id_token_signed_response_alg": "ES256",
+  "userinfo_signed_response_alg": "ES256",
+  "authorization_signed_response_alg": "ES256",
+  "authorization_details_types": [
+    "payment_initiation",
+    "account_information",
+    "openid_credential"
+  ]
+}

@@ -1,0 +1,559 @@
+spec_name: "OAuth 2.0 Demonstrating Proof of Possession (RFC 9449)"
+spec_url: "https://www.rfc-editor.org/rfc/rfc9449.html"
+extraction_timestamp: "2026-03-11T00:00:00Z"
+extractor_version: "1.1.0"
+
+summary:
+  total_requirements: 67
+  must_shall_requirements: 30
+  must_not_requirements: 8
+  should_requirements: 12
+  optional_requirements: 17
+
+sections_covered:
+  - "Section 4: DPoP Proof JWTs"
+  - "Section 4.1: DPoP Header"
+  - "Section 4.2: JWT Structure"
+  - "Section 4.3: Proof Validation"
+  - "Section 5: Token Request"
+  - "Section 5.8: Refresh Token Binding"
+  - "Section 5.9: Non-DPoP Token Handling"
+  - "Section 5.10: Client Token Type Validation"
+  - "Section 6: Public Key Confirmation"
+  - "Section 7: Protected Resource Access"
+  - "Section 7.1: Resource Server Validation"
+  - "Section 7.2: WWW-Authenticate Challenges"
+  - "Section 7.3: Idempotency"
+  - "Section 8: Authorization Server Nonce"
+  - "Section 9: Resource Server Nonce"
+  - "Section 10: Authorization Code Binding"
+  - "Section 10.1: PAR Integration"
+  - "Section 11: Security Considerations"
+
+requirements_by_category:
+  dpop_proof_jwt:
+    must_shall:
+      - section: "4.2"
+        requirement: "The JOSE Header of a DPoP proof MUST contain at least the typ, alg, and jwk parameters"
+        rationale: "Ensures proper JWT identification, algorithm, and public key inclusion"
+        test_implication: "必須: typ/alg/jwkが欠落したDPoP proofを拒否"
+
+      - section: "4.2"
+        requirement: "The typ header parameter MUST be 'dpop+jwt'"
+        rationale: "Prevents confusion with other JWT types"
+        test_implication: "必須: typがdpop+jwtでないDPoP proofを拒否"
+
+      - section: "4.2"
+        requirement: "The payload of a DPoP proof MUST contain at least the jti, htm, htu, and iat claims"
+        rationale: "Provides proof uniqueness, method/URI binding, and timing"
+        test_implication: "必須: jti/htm/htu/iatが欠落したDPoP proofを拒否"
+
+      - section: "4.2"
+        requirement: "When the DPoP proof is used in conjunction with the presentation of an access token, the payload MUST also contain an ath claim"
+        rationale: "Binds the proof to the specific access token"
+        test_implication: "必須: リソースアクセス時にath欠落のDPoP proofを拒否"
+
+      - section: "4.2"
+        requirement: "When the authorization server or resource server provides a nonce value, the DPoP proof MUST also contain a nonce claim"
+        rationale: "Prevents replay attacks via server-provided nonce"
+        test_implication: "必須: サーバーがnonceを提供した場合、nonce欠落のDPoP proofを拒否"
+
+    must_not:
+      - section: "4.2"
+        requirement: "The alg MUST NOT be 'none' or an identifier for a symmetric algorithm"
+        rationale: "Ensures asymmetric cryptographic proof of possession"
+        test_implication: "必須: alg=noneまたはHS256等のDPoP proofを拒否"
+
+      - section: "4.2"
+        requirement: "The jwk MUST NOT contain a private key"
+        rationale: "Prevents private key exposure in HTTP headers"
+        test_implication: "必須: jwkに秘密鍵が含まれるDPoP proofを拒否"
+
+    optional:
+      - section: "4.2"
+        requirement: "A DPoP proof MAY contain other JOSE Header Parameters or claims as defined by extension, profile, or deployment-specific requirements"
+        rationale: "Allows extensibility for specific deployments"
+        test_implication: "任意: 追加ヘッダー/クレームの受け入れを確認"
+
+  proof_validation:
+    must_shall:
+      - section: "4.3"
+        requirement: "The receiving server MUST ensure that there is not more than one DPoP HTTP request header field"
+        rationale: "Prevents ambiguity in proof selection"
+        test_implication: "必須: 複数のDPoPヘッダーを含むリクエストを拒否"
+
+      - section: "4.3"
+        requirement: "The receiving server MUST ensure the value of the DPoP header field is a single and well-formed JWT"
+        rationale: "Validates proof format integrity"
+        test_implication: "必須: 不正なJWT形式のDPoPヘッダーを拒否"
+
+      - section: "4.3"
+        requirement: "The receiving server MUST ensure all required claims per Section 4.2 are contained in the JWT"
+        rationale: "Ensures complete proof structure"
+        test_implication: "必須: 必須クレーム欠落時にエラーを返す"
+
+      - section: "4.3"
+        requirement: "The receiving server MUST ensure the typ JOSE Header Parameter has the value dpop+jwt"
+        rationale: "Validates JWT type identity"
+        test_implication: "必須: typ不一致時にエラーを返す"
+
+      - section: "4.3"
+        requirement: "The receiving server MUST ensure the alg JOSE Header Parameter indicates a registered asymmetric digital signature algorithm, is not none, is supported by the application, and is acceptable per local policy"
+        rationale: "Ensures cryptographic validity"
+        test_implication: "必須: 未サポート/ポリシー外アルゴリズムを拒否"
+
+      - section: "4.3"
+        requirement: "The receiving server MUST ensure the JWT signature verifies with the public key contained in the jwk JOSE Header Parameter"
+        rationale: "Cryptographic proof of key possession"
+        test_implication: "必須: 署名検証失敗時にエラーを返す"
+
+      - section: "4.3"
+        requirement: "The receiving server MUST ensure the jwk JOSE Header Parameter does not contain a private key"
+        rationale: "Security check for key exposure"
+        test_implication: "必須: jwkに秘密鍵が含まれる場合に拒否"
+
+      - section: "4.3"
+        requirement: "The receiving server MUST ensure the htm claim matches the HTTP method of the current request"
+        rationale: "Binds proof to specific HTTP method"
+        test_implication: "必須: htmとリクエストメソッドの不一致時にエラーを返す"
+
+      - section: "4.3"
+        requirement: "The receiving server MUST ensure the htu claim matches the HTTP URI value for the HTTP request in which the JWT was received, ignoring any query and fragment parts"
+        rationale: "Binds proof to specific URI"
+        test_implication: "必須: htuとリクエストURIの不一致時にエラーを返す"
+
+      - section: "4.3"
+        requirement: "The receiving server MUST ensure the nonce claim matches the server-provided nonce value if the server had previously provided a nonce"
+        rationale: "Prevents replay with stale nonces"
+        test_implication: "必須: nonceの不一致時にエラーを返す"
+
+      - section: "4.3"
+        requirement: "The receiving server MUST ensure the creation time of the JWT (iat claim) is within an acceptable window"
+        rationale: "Limits proof lifetime to prevent replay"
+        test_implication: "必須: iat値が許容範囲外のDPoP proofを拒否"
+
+      - section: "4.3"
+        requirement: "The receiving server MUST ensure that the value of the jti claim has not been used before by that same issuer within the time window"
+        rationale: "Prevents proof replay"
+        test_implication: "必須: 同一jtiの再利用を拒否"
+
+    should:
+      - section: "4.3"
+        requirement: "Servers SHOULD employ syntax-based and scheme-based normalization (Section 6.2.2 and Section 6.2.3 of RFC 3986) before comparing the htu claim"
+        rationale: "Ensures URI matching is robust across different representations"
+        test_implication: "推奨: URI正規化後のhtu比較を確認"
+
+  token_request:
+    must_shall:
+      - section: "5"
+        requirement: "The client MUST provide a valid DPoP proof JWT in the DPoP header field for all token requests when using DPoP"
+        rationale: "Establishes proof of possession at token issuance"
+        test_implication: "必須: DPoPヘッダーなしのトークンリクエストを拒否（DPoP使用時）"
+
+      - section: "5"
+        requirement: "The token_type of DPoP MUST be included in the access token response"
+        rationale: "Signals to the client that the token is DPoP-bound"
+        test_implication: "必須: DPoPトークン応答のtoken_typeがDPoPであること"
+
+      - section: "5"
+        requirement: "The authorization server MUST validate the DPoP proof according to the rules in Section 4.3 and additionally ensure the jwk header of the DPoP proof matches the public key to which the access token is bound"
+        rationale: "Ensures consistency between proof key and token binding"
+        test_implication: "必須: DPoP proofの鍵とトークンバインディングの一致を検証"
+
+    should:
+      - section: "5"
+        requirement: "The authorization server SHOULD use the use_dpop_nonce error to signal nonce requirement"
+        rationale: "Provides clear mechanism for nonce enforcement"
+        test_implication: "推奨: use_dpop_nonceエラーでnonce要求を通知"
+
+    optional:
+      - section: "5"
+        requirement: "The authorization server MAY issue an invalid_dpop_proof error for DPoP proof validation failures"
+        rationale: "Standard error code for DPoP-specific failures"
+        test_implication: "任意: invalid_dpop_proofエラーコードの使用"
+
+  refresh_token_binding:
+    must_shall:
+      - section: "5.8"
+        requirement: "The refresh token MUST be bound to the respective public key for public clients"
+        rationale: "Prevents unauthorized use of refresh tokens by public clients"
+        test_implication: "必須: パブリッククライアントのリフレッシュトークンがDPoP鍵にバインドされること"
+
+      - section: "5.8"
+        requirement: "The public client MUST present a DPoP proof for the same key when using the refresh token"
+        rationale: "Validates continued possession of the key"
+        test_implication: "必須: リフレッシュトークン使用時に同じDPoP鍵のproofを要求"
+
+    optional:
+      - section: "5.11"
+        requirement: "Refresh tokens issued to confidential clients are not necessarily bound to the DPoP key"
+        rationale: "Confidential clients have alternative authentication mechanisms"
+        test_implication: "任意: コンフィデンシャルクライアントのリフレッシュトークンのDPoPバインディング"
+
+  token_type_handling:
+    must_shall:
+      - section: "5.10"
+        requirement: "If the client requires DPoP protection, it MUST discard the response if the token_type differs from DPoP"
+        rationale: "Prevents downgrade to bearer tokens when DPoP is required"
+        test_implication: "必須: クライアントがDPoP必須時にBearerトークン応答を拒否"
+
+    optional:
+      - section: "5.9"
+        requirement: "The authorization server MAY elect to issue tokens that are not DPoP-bound even when a DPoP proof is provided"
+        rationale: "Allows gradual DPoP deployment"
+        test_implication: "任意: DPoP proof提供時にもBearerトークンを発行可能"
+
+      - section: "5.9"
+        requirement: "The client MAY continue with a Bearer token if not DPoP-bound"
+        rationale: "Allows fallback to bearer when DPoP is optional"
+        test_implication: "任意: DPoP非対応時のBearerフォールバック"
+
+  public_key_confirmation:
+    must_shall:
+      - section: "6"
+        requirement: "Resource servers MUST be able to reliably identify whether an access token is DPoP-bound and ascertain the public key to which the token is bound"
+        rationale: "Core requirement for resource server DPoP validation"
+        test_implication: "必須: リソースサーバーがDPoPバインドトークンを識別できること"
+
+      - section: "6.1"
+        requirement: "When access tokens are represented as JWTs, the public key confirmation is represented by the jkt member in the cnf claim with the value being the JWK Thumbprint of the DPoP public key"
+        rationale: "Standard JWT-based confirmation method"
+        test_implication: "必須: JWTアクセストークンのcnf.jktクレームにJWK Thumbprintが含まれること"
+
+      - section: "6.2"
+        requirement: "If the token_type member is included, it MUST contain the value DPoP"
+        rationale: "Consistent token type signaling via introspection"
+        test_implication: "必須: イントロスペクション応答のtoken_typeがDPoPであること"
+
+    optional:
+      - section: "6"
+        requirement: "Other methods of associating a public key with an access token are possible"
+        rationale: "Allows deployment-specific confirmation mechanisms"
+        test_implication: "任意: 代替的な公開鍵確認方法"
+
+  protected_resource_access:
+    must_shall:
+      - section: "7"
+        requirement: "Requests to DPoP-protected resources MUST include both the DPoP proof and the access token"
+        rationale: "Both components required for proof of possession"
+        test_implication: "必須: DPoP proofまたはアクセストークン欠落時にリクエストを拒否"
+
+      - section: "7"
+        requirement: "The DPoP proof MUST include the ath claim with a valid hash of the access token"
+        rationale: "Cryptographically binds the proof to the specific token"
+        test_implication: "必須: ath値がアクセストークンハッシュと不一致の場合に拒否"
+
+    must_not:
+      - section: "7.1"
+        requirement: "The resource server MUST NOT grant access unless all validation checks are successful"
+        rationale: "Ensures complete validation before granting access"
+        test_implication: "必須: いずれかの検証失敗時にアクセスを拒否"
+
+      - section: "7.1"
+        requirement: "The DPoP authentication scheme MUST NOT be used with Proxy-Authenticate or Proxy-Authorization header fields"
+        rationale: "Prevents misuse in proxy authentication contexts"
+        test_implication: "必須: Proxy認証ヘッダーでのDPoP使用を禁止"
+
+  resource_server_validation:
+    must_shall:
+      - section: "7.1"
+        requirement: "The resource server MUST check that the DPoP proof is received in the DPoP header"
+        rationale: "Validates proper header placement"
+        test_implication: "必須: DPoP proofがDPoPヘッダーで送信されることを確認"
+
+      - section: "7.1"
+        requirement: "The resource server MUST check that the public key in the DPoP proof matches the one the access token is bound to"
+        rationale: "Ensures proof comes from the legitimate token holder"
+        test_implication: "必須: DPoP proof鍵とトークンバインディング鍵の一致を検証"
+
+    must_not:
+      - section: "7.2"
+        requirement: "A protected resource MUST reject a DPoP-bound access token received as a Bearer token"
+        rationale: "Prevents bearer downgrade attacks"
+        test_implication: "必須: DPoPバインドトークンをBearerとして使用した場合に拒否"
+
+    should:
+      - section: "7.1"
+        requirement: "The error parameter SHOULD be included to indicate the reason the request was declined"
+        rationale: "Helps clients understand and correct errors"
+        test_implication: "推奨: 401応答にerrorパラメータを含む"
+
+      - section: "7.1"
+        requirement: "The algs parameter SHOULD be included in the 401 challenge"
+        rationale: "Informs client of supported DPoP algorithms"
+        test_implication: "推奨: 401応答のDPoPチャレンジにalgsパラメータを含む"
+
+    optional:
+      - section: "7.1"
+        requirement: "The realm parameter MAY be included in the 401 challenge"
+        rationale: "Standard HTTP authentication realm"
+        test_implication: "任意: 401応答にrealmパラメータを含む"
+
+      - section: "7.1"
+        requirement: "The scope authentication parameter MAY be included in the 401 challenge"
+        rationale: "Indicates required scope"
+        test_implication: "任意: 401応答にscopeパラメータを含む"
+
+      - section: "7.1"
+        requirement: "The error_description parameter MAY be included in the 401 response"
+        rationale: "Provides human-readable error information"
+        test_implication: "任意: 401応答にerror_descriptionパラメータを含む"
+
+  www_authenticate_challenges:
+    should:
+      - section: "7.2"
+        requirement: "It is RECOMMENDED that when multiple authentication mechanisms are supported, corresponding challenges SHOULD be used"
+        rationale: "Ensures proper error delivery per authentication mechanism"
+        test_implication: "推奨: Bearer/DPoP両方のWWW-Authenticateチャレンジを含む"
+
+      - section: "7.2"
+        requirement: "Challenges SHOULD NOT include an error code when no authentication information is included in the request"
+        rationale: "Avoids misleading error information"
+        test_implication: "推奨: 認証情報なしリクエストへのチャレンジにerrorを含まない"
+
+      - section: "7.2"
+        requirement: "When the mechanism used for authentication is unambiguous, the corresponding challenge SHOULD be used to deliver the error"
+        rationale: "Clear error attribution to specific mechanism"
+        test_implication: "推奨: 認証メカニズムが明確な場合、対応するチャレンジでエラーを返す"
+
+  idempotency:
+    should:
+      - section: "7.3"
+        requirement: "It is RECOMMENDED that clients generate a unique DPoP proof even for retries"
+        rationale: "Prevents confusion with replay detection"
+        test_implication: "推奨: リトライ時にも新しいDPoP proofを生成"
+
+  authorization_server_nonce:
+    must_shall:
+      - section: "8.3"
+        requirement: "Nonce values MUST be unpredictable"
+        rationale: "Prevents nonce guessing attacks"
+        test_implication: "必須: nonce値の予測不可能性を確認"
+
+    must_not:
+      - section: "8.3"
+        requirement: "There MUST NOT be more than one DPoP-Nonce header in a response"
+        rationale: "Prevents ambiguity in nonce selection"
+        test_implication: "必須: 応答に複数のDPoP-Nonceヘッダーがないことを確認"
+
+      - section: "11.3"
+        requirement: "Server MUST NOT accept DPoP proofs without nonce when nonce had previously been provided"
+        rationale: "Prevents nonce downgrade attacks"
+        test_implication: "必須: nonce提供後にnonce欠落のDPoP proofを拒否"
+
+    should:
+      - section: "8.2"
+        requirement: "Responses including DPoP-Nonce SHOULD be uncacheable"
+        rationale: "Prevents stale nonce caching"
+        test_implication: "推奨: DPoP-Nonceを含む応答にCache-Control: no-storeを含む"
+
+    optional:
+      - section: "8"
+        requirement: "Including a nonce MAY be used to limit the lifetime of DPoP proofs"
+        rationale: "Additional replay protection mechanism"
+        test_implication: "任意: nonceによるDPoP proof有効期限制限"
+
+      - section: "8.2"
+        requirement: "The authorization server MAY supply a new nonce via the DPoP-Nonce header on any response"
+        rationale: "Allows nonce rotation"
+        test_implication: "任意: 任意の応答でnonceローテーション"
+
+  resource_server_nonce:
+    optional:
+      - section: "9"
+        requirement: "Resource servers can also choose to provide nonce values to DPoP-protected requests"
+        rationale: "Extends nonce-based protection to resource servers"
+        test_implication: "任意: リソースサーバーでのnonce提供"
+
+  authorization_code_binding:
+    must_shall:
+      - section: "10"
+        requirement: "The authorization server computes the JWK Thumbprint and verifies it matches the dpop_jkt parameter from the authorization request"
+        rationale: "Ensures the same key is used throughout the flow"
+        test_implication: "必須: dpop_jktとDPoP proof鍵のサムプリント一致を検証"
+
+      - section: "10.2"
+        requirement: "If the JWK Thumbprints do not match, the authorization server MUST reject the token request"
+        rationale: "Prevents key substitution attacks"
+        test_implication: "必須: サムプリント不一致時にトークンリクエストを拒否"
+
+    must_not:
+      - section: "10.1"
+        requirement: "If both dpop_jkt and DPoP header are used simultaneously at PAR and the thumbprints don't match, the server MUST reject the request"
+        rationale: "Prevents conflicting key bindings"
+        test_implication: "必須: PARでのdpop_jktとDPoPヘッダーの鍵不一致時に拒否"
+
+    optional:
+      - section: "10"
+        requirement: "Use of dpop_jkt authorization request parameter is OPTIONAL"
+        rationale: "Authorization code binding is an additional security measure"
+        test_implication: "任意: dpop_jktパラメータのサポート"
+
+      - section: "10.1"
+        requirement: "Both mechanisms (dpop_jkt and DPoP header) MUST be supported when PAR is used"
+        rationale: "Ensures flexibility in PAR-based flows"
+        test_implication: "必須: PAR使用時にdpop_jktとDPoPヘッダーの両方をサポート"
+
+      - section: "10.5"
+        requirement: "dpop_jkt MAY also be used in combination with PKCE"
+        rationale: "Allows layered security with PKCE"
+        test_implication: "任意: dpop_jktとPKCEの併用"
+
+  security_considerations:
+    must_shall:
+      - section: "11.1"
+        requirement: "Servers MUST only accept DPoP proofs for a limited time after their creation"
+        rationale: "Limits window for replay attacks"
+        test_implication: "必須: 期限切れDPoP proofを拒否"
+
+    should:
+      - section: "11.1"
+        requirement: "Servers SHOULD use server-provided nonces in addition to iat-based time limits for robust replay protection"
+        rationale: "Defense in depth against replay"
+        test_implication: "推奨: nonceとiatの両方によるリプレイ防止"
+
+key_findings:
+  critical_must_requirements:
+    - "DPoP proof JOSE header MUST contain typ (dpop+jwt), alg (asymmetric), and jwk (public key only)"
+    - "DPoP proof payload MUST contain jti, htm, htu, iat claims; ath when used with access tokens"
+    - "All 12 validation checks in Section 4.3 MUST pass before accepting a DPoP proof"
+    - "Resource server MUST reject DPoP-bound access tokens received as Bearer tokens"
+    - "Refresh tokens for public clients MUST be bound to the DPoP key"
+
+  security_critical:
+    - "alg MUST NOT be none or symmetric algorithm - prevents algorithm confusion attacks"
+    - "jwk MUST NOT contain private key - prevents key exposure"
+    - "Server MUST NOT accept DPoP proofs without nonce when nonce was previously provided - prevents nonce downgrade"
+    - "MUST NOT grant access unless all validation checks pass"
+    - "Nonce values MUST be unpredictable"
+    - "DPoP-bound token MUST be rejected when presented as Bearer - prevents bearer downgrade"
+
+  prohibited_actions:
+    - "Using alg=none or symmetric algorithms for DPoP proofs"
+    - "Including private keys in jwk header"
+    - "Having multiple DPoP headers in a request"
+    - "Having multiple DPoP-Nonce headers in a response"
+    - "Accepting DPoP proofs without nonce after nonce was provided"
+    - "Using DPoP scheme with Proxy-Authenticate/Proxy-Authorization"
+    - "Accepting DPoP-bound token as Bearer token"
+
+  dpop_proof_structure:
+    jose_header:
+      - "typ: dpop+jwt (REQUIRED)"
+      - "alg: asymmetric algorithm (REQUIRED, MUST NOT be none)"
+      - "jwk: public key (REQUIRED, MUST NOT contain private key)"
+    payload_always:
+      - "jti: unique identifier (REQUIRED)"
+      - "htm: HTTP method (REQUIRED)"
+      - "htu: HTTP URI (REQUIRED)"
+      - "iat: issued at timestamp (REQUIRED)"
+    payload_conditional:
+      - "ath: access token hash (REQUIRED when used with access token)"
+      - "nonce: server-provided nonce (REQUIRED when nonce was provided)"
+
+  validation_checklist:
+    - "Single DPoP header present"
+    - "Well-formed JWT"
+    - "All required claims present"
+    - "typ is dpop+jwt"
+    - "alg is registered asymmetric algorithm"
+    - "Signature verifies with jwk public key"
+    - "jwk contains no private key"
+    - "htm matches HTTP method"
+    - "htu matches request URI (after normalization)"
+    - "nonce matches server-provided value (if applicable)"
+    - "iat within acceptable time window"
+    - "jti not previously used within time window"
+
+test_mapping:
+  e2e_tests:
+    must_requirements:
+      - "DPoP proof構造の必須ヘッダー/クレーム検証"
+      - "DPoP proof署名検証（正常系・異常系）"
+      - "htm/htuのバインディング検証"
+      - "ath（アクセストークンハッシュ）検証"
+      - "jtiリプレイ検出"
+      - "iat時間窓検証"
+      - "token_type=DPoPの応答検証"
+      - "リフレッシュトークンのDPoPバインディング（パブリッククライアント）"
+      - "リソースサーバーでの公開鍵確認（cnf.jkt）"
+      - "Bearerダウングレード防止"
+    should_requirements:
+      - "URI正規化後のhtu比較"
+      - "401応答のerror/algsパラメータ"
+      - "DPoP-Nonceのキャッシュ制御"
+      - "リトライ時のユニークDPoP proof生成"
+    security_requirements:
+      - "alg=none攻撃"
+      - "対称鍵アルゴリズム攻撃"
+      - "秘密鍵露出テスト"
+      - "複数DPoPヘッダー攻撃"
+      - "nonceダウングレード攻撃"
+      - "Bearerダウングレード攻撃"
+      - "鍵すり替え攻撃（authorization code binding）"
+      - "DPoP proofリプレイ攻撃"
+
+compliance_checklist:
+  authorization_server:
+    - check: "DPoP proof validation (Section 4.3)"
+      status: "TODO"
+    - check: "DPoP-bound access token issuance with token_type=DPoP"
+      status: "TODO"
+    - check: "cnf.jkt claim in JWT access tokens"
+      status: "TODO"
+    - check: "Refresh token binding for public clients"
+      status: "TODO"
+    - check: "invalid_dpop_proof error code"
+      status: "TODO"
+    - check: "use_dpop_nonce error for nonce enforcement"
+      status: "TODO"
+    - check: "DPoP-Nonce header support"
+      status: "TODO"
+    - check: "dpop_jkt authorization request parameter"
+      status: "TODO"
+    - check: "Authorization code binding verification"
+      status: "TODO"
+
+  resource_server:
+    - check: "DPoP proof validation at protected resources"
+      status: "TODO"
+    - check: "ath claim verification against access token"
+      status: "TODO"
+    - check: "Public key confirmation (cnf.jkt matching)"
+      status: "TODO"
+    - check: "Bearer downgrade rejection"
+      status: "TODO"
+    - check: "WWW-Authenticate DPoP challenge"
+      status: "TODO"
+
+  client:
+    - check: "DPoP proof JWT generation"
+      status: "TODO"
+    - check: "Asymmetric key pair management"
+      status: "TODO"
+    - check: "token_type validation in responses"
+      status: "TODO"
+    - check: "DPoP proof with ath for resource access"
+      status: "TODO"
+    - check: "Nonce handling and retry"
+      status: "TODO"
+
+gap_analysis_template:
+  instructions: "各要件のstatusをTODO/IMPLEMENTED/PARTIAL/N_Aに更新してください"
+  categories:
+    - name: "DPoP Proof JWT Structure"
+      priority: "CRITICAL"
+    - name: "Proof Validation (Section 4.3)"
+      priority: "CRITICAL"
+    - name: "Token Request Integration"
+      priority: "HIGH"
+    - name: "Refresh Token Binding"
+      priority: "HIGH"
+    - name: "Protected Resource Access"
+      priority: "HIGH"
+    - name: "Authorization Code Binding"
+      priority: "MEDIUM"
+    - name: "Nonce Handling"
+      priority: "MEDIUM"
+    - name: "WWW-Authenticate Challenges"
+      priority: "LOW"

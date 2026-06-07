@@ -27,6 +27,8 @@ import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertifica
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.exception.ConfigurationInvalidException;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
+import org.idp.server.core.openid.oauth.dpop.JwkThumbprint;
 import org.idp.server.core.openid.oauth.type.extension.CreatedAt;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
@@ -71,6 +73,20 @@ public class AccessTokenCreator {
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
       ClientCredentials clientCredentials) {
+    return create(
+        authorizationGrant,
+        authorizationServerConfiguration,
+        clientConfiguration,
+        clientCredentials,
+        new DPoPProofVerifiedResult());
+  }
+
+  public AccessToken create(
+      AuthorizationGrant authorizationGrant,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
+      ClientCredentials clientCredentials,
+      DPoPProofVerifiedResult dpopResult) {
     try {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
@@ -88,6 +104,7 @@ public class AccessTokenCreator {
           authorizationServerConfiguration,
           clientConfiguration,
           clientCredentials,
+          dpopResult,
           createdAt,
           expiresIn,
           expiresAt);
@@ -102,6 +119,22 @@ public class AccessTokenCreator {
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
       ClientCredentials clientCredentials) {
+    return refresh(
+        oldAccessToken,
+        authorizationGrant,
+        authorizationServerConfiguration,
+        clientConfiguration,
+        clientCredentials,
+        new DPoPProofVerifiedResult());
+  }
+
+  public AccessToken refresh(
+      AccessToken oldAccessToken,
+      AuthorizationGrant authorizationGrant,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
+      ClientCredentials clientCredentials,
+      DPoPProofVerifiedResult dpopResult) {
     try {
       LocalDateTime localDateTime = SystemDateTime.now();
       CreatedAt createdAt = new CreatedAt(localDateTime);
@@ -119,6 +152,7 @@ public class AccessTokenCreator {
           authorizationServerConfiguration,
           clientConfiguration,
           clientCredentials,
+          dpopResult,
           createdAt,
           expiresIn,
           expiresAt);
@@ -132,6 +166,7 @@ public class AccessTokenCreator {
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration,
       ClientCredentials clientCredentials,
+      DPoPProofVerifiedResult dpopResult,
       CreatedAt createdAt,
       ExpiresIn expiresIn,
       ExpiresAt expiresAt)
@@ -161,23 +196,31 @@ public class AccessTokenCreator {
     payloadBuilder.add(expiresAt);
     payloadBuilder.addJti(UUID.randomUUID().toString());
 
-    ClientCertificationThumbprint thumbprint =
+    // Sender-constrained token binding: mTLS (RFC 8705) and/or DPoP (RFC 9449)
+    ClientCertificationThumbprint certThumbprint =
         createClientCertificationThumbprint(
             authorizationServerConfiguration, clientConfiguration, clientCredentials);
-    payloadBuilder.add(thumbprint);
+    JwkThumbprint jwkThumbprint =
+        dpopResult.exists() ? dpopResult.jwkThumbprint() : new JwkThumbprint();
+
+    payloadBuilder.addConfirmation(certThumbprint, jwkThumbprint);
 
     Map<String, Object> accessTokenPayload = payloadBuilder.build();
     AccessTokenEntity accessTokenEntity =
         createAccessTokenEntity(authorizationServerConfiguration, accessTokenPayload);
     AccessTokenCustomClaims accessTokenCustomClaims = new AccessTokenCustomClaims(customClaims);
 
+    // RFC 9449 Section 5: token_type MUST be "DPoP" when DPoP-bound
+    TokenType tokenType = jwkThumbprint.exists() ? TokenType.DPoP : TokenType.Bearer;
+
     return new AccessToken(
         authorizationGrant.tenantIdentifier(),
         authorizationServerConfiguration.tokenIssuer(),
-        TokenType.Bearer,
+        tokenType,
         accessTokenEntity,
         authorizationGrant,
-        thumbprint,
+        certThumbprint,
+        jwkThumbprint,
         accessTokenCustomClaims,
         createdAt,
         expiresIn,

@@ -34,6 +34,7 @@ public class ClientAuthenticators {
     map.put(client_secret_post, new ClientSecretPostAuthenticator());
     map.put(client_secret_jwt, new ClientSecretJwtAuthenticator());
     map.put(private_key_jwt, new PrivateKeyJwtAuthenticator());
+    map.put(attest_jwt_client_auth, new AttestationJwtClientAuthenticator());
     map.put(none, new PublicClientAuthenticator());
     Map<ClientAuthenticationType, ClientAuthenticator> loaded =
         ClientAuthenticationPluginLoader.load();
