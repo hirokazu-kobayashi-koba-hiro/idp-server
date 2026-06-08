@@ -58,6 +58,33 @@ ORDER BY created_at DESC
 LIMIT 20;
 
 -- =====================================================
+-- Issue #1565: ページネーション総件数取得 selectCount のベンチ
+--
+-- selectCount は role/permission 絞り込みが無くても 4-way LEFT JOIN を
+-- 実行している。selectList と同じ hasRoleOrPermissionFilter 分岐で
+-- JOIN を外すと、絞り込み無し時は単表 COUNT(*) で済む。
+-- (tenant_id, created_at DESC) index も index-only scan に活用される。
+-- =====================================================
+
+\echo ''
+\echo '=== Step 5: selectCount 現状 (常に 4-way JOIN + COUNT(DISTINCT)) ==='
+EXPLAIN (ANALYZE, BUFFERS, TIMING)
+SELECT COUNT(DISTINCT idp_user.id)
+FROM idp_user
+LEFT JOIN idp_user_roles  ON idp_user.id = idp_user_roles.user_id
+LEFT JOIN role            ON idp_user_roles.role_id = role.id
+LEFT JOIN role_permission ON role.id = role_permission.role_id
+LEFT JOIN permission      ON role_permission.permission_id = permission.id
+WHERE idp_user.tenant_id = :TARGET_TENANT::uuid;
+
+\echo ''
+\echo '=== Step 6: selectCount 改善後 (role/permission 絞り込み無しなら単表 COUNT(*)) ==='
+EXPLAIN (ANALYZE, BUFFERS, TIMING)
+SELECT COUNT(*)
+FROM idp_user
+WHERE tenant_id = :TARGET_TENANT::uuid;
+
+-- =====================================================
 -- ベンチ完了後は bench_cleanup.sql を実行してダミーデータと
 -- 検証用 index を片付ける。
 --   psql -f bench_cleanup.sql
