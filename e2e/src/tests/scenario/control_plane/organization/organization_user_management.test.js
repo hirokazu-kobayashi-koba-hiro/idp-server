@@ -909,6 +909,83 @@ describe("organization user management api", () => {
       expect(paginatedResponse.data).toHaveProperty("offset", 0);
       expect(Array.isArray(paginatedResponse.data.list)).toBe(true);
     });
+
+    it("filter by role and permission", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const rolesResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/roles`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      expect(rolesResponse.status).toBe(200);
+      const targetRole = rolesResponse.data.list.find(r => r.permissions && r.permissions.length > 0);
+      expect(targetRole).toBeDefined();
+      const targetPermission = targetRole.permissions[0];
+
+      const timestamp = Date.now();
+      const userSub = uuidv4();
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: {
+          "sub": userSub,
+          "provider_id": "idp-server",
+          "external_user_id": `filter_${timestamp}`,
+          "name": `Filter Test User ${timestamp}`,
+          "email": `filtertest-${timestamp}@example.com`,
+          "email_verified": true,
+          "preferred_username": `filtertest${timestamp}`,
+          "raw_password": "TempPassword123!",
+          "roles": [{
+            "role_id": targetRole.id,
+            "role_name": targetRole.name
+          }]
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      const byRoleResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users?role=${encodeURIComponent(targetRole.name)}&limit=100`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      expect(byRoleResponse.status).toBe(200);
+      expect(byRoleResponse.data.total_count).toBeGreaterThan(0);
+      expect(byRoleResponse.data.list.some(u => u.sub === userSub)).toBe(true);
+
+      const byPermissionResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users?permission=${encodeURIComponent(targetPermission.name)}&limit=100`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      expect(byPermissionResponse.status).toBe(200);
+      expect(byPermissionResponse.data.total_count).toBeGreaterThan(0);
+      expect(byPermissionResponse.data.list.some(u => u.sub === userSub)).toBe(true);
+
+      const byBothResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users?role=${encodeURIComponent(targetRole.name)}&permission=${encodeURIComponent(targetPermission.name)}&limit=100`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      expect(byBothResponse.status).toBe(200);
+      expect(byBothResponse.data.total_count).toBeGreaterThan(0);
+      expect(byBothResponse.data.list.some(u => u.sub === userSub)).toBe(true);
+
+      const noMatchResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/users?role=__non_existent_role_${timestamp}__&limit=10`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      expect(noMatchResponse.status).toBe(200);
+      expect(noMatchResponse.data.total_count).toBe(0);
+      expect(noMatchResponse.data.list).toHaveLength(0);
+    });
   });
 
   describe("error cases", () => {
