@@ -92,15 +92,25 @@ LIMIT 20;
 
 ## 付録: ベンチマーク再現
 
-ローカル / ステージング限定で再現可能なスクリプトを同梱:
+ローカル / ステージング限定で再現可能なスクリプトを同梱。データ投入と計測を分離して、データ投入は 1 回 / 計測は何度でも繰り返せる構成にしている。
 
 ```bash
-# 1. ベンチ実行 (200 万行ダミー挿入 → 統計更新 → before/after EXPLAIN ANALYZE)
+# 1. データ投入 (200 万行ダミー + role/permission + idp_user_roles + index + ANALYZE)
+#    冪等 (ON CONFLICT DO NOTHING) なので再実行 OK
+psql -f bench_setup.sql
+
+# 2. 計測 (EXPLAIN ANALYZE のみ。状態を変えないので何度でも実行可)
 psql -f bench.sql
 
-# 2. 完了後の後片付け (ダミーユーザー DELETE + 検証用 index DROP)
+# 3. 完了後の後片付け (ダミーデータ DELETE + 検証用 index DROP)
 psql -f bench_cleanup.sql
 ```
+
+| ファイル | 役割 | 冪等 |
+|---------|------|------|
+| `bench_setup.sql` | データ投入 (1 回) | ✅ |
+| `bench.sql` | 計測のみ (何度でも) | ✅ |
+| `bench_cleanup.sql` | 後片付け | ✅ |
 
 ### 計測結果 (ローカル / 同一テナントに 200 万行追加)
 
