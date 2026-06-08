@@ -231,15 +231,25 @@ public class PostgresqlExecutor implements UserSqlExecutor {
       params.add("%" + queries.permission() + "%");
     }
 
-    String sql =
-        """
-    SELECT COUNT(DISTINCT idp_user.id)
-    FROM idp_user
-    LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
-    LEFT JOIN role ON idp_user_roles.role_id = role.id
-    LEFT JOIN role_permission ON role.id = role_permission.role_id
-    LEFT JOIN permission ON role_permission.permission_id = permission.id
-    """;
+    // Mirror selectList: only JOIN role/permission tables when the filter actually uses them.
+    // Without this, every count incurs a 4-way LEFT JOIN + COUNT(DISTINCT) even on the common
+    // "no role/permission filter" path.
+    boolean hasRoleOrPermissionFilter = queries.hasRole() || queries.hasPermission();
+
+    String sql;
+    if (hasRoleOrPermissionFilter) {
+      sql =
+          """
+      SELECT COUNT(DISTINCT idp_user.id)
+      FROM idp_user
+      LEFT JOIN idp_user_roles ON idp_user.id = idp_user_roles.user_id
+      LEFT JOIN role ON idp_user_roles.role_id = role.id
+      LEFT JOIN role_permission ON role.id = role_permission.role_id
+      LEFT JOIN permission ON role_permission.permission_id = permission.id
+      """;
+    } else {
+      sql = "SELECT COUNT(*) FROM idp_user ";
+    }
 
     return sqlExecutor.selectOne(sql + where, params);
   }

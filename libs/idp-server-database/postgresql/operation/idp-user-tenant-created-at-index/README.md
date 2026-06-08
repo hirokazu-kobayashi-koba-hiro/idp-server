@@ -104,9 +104,15 @@ psql -f bench_cleanup.sql
 
 ### 計測結果 (ローカル / 同一テナントに 200 万行追加)
 
+#### `selectList` (Issue #1460): `ORDER BY created_at DESC LIMIT 20`
+
 | 状態 | Execution Time | Plan |
 |------|---------------|------|
 | index なし | 340.568 ms | Parallel Seq Scan + top-N heapsort |
 | index あり |   1.280 ms | Index Scan using idx_idp_user_tenant_created_at |
 
 約 266 倍の改善。Issue #1460 で報告された 75 倍 (185ms → 2.5ms) よりも幅が大きいのは、テナント分散の差 (Issue は 200 万 = 1 テナント想定、ローカルは 200 万 + 既存 4070 行 + 1500 テナント混在) によるものと推測。
+
+#### `selectCount` (Issue #1565): role/permission 絞り込み無しの総件数取得
+
+bench.sql Step 5 (現状: 常に 4-way JOIN + COUNT(DISTINCT)) と Step 6 (改善後: 単表 COUNT(*)) を `(tenant_id, created_at DESC)` index あり状態で比較する。テーブル状態は Step 4 と同じ (200 万行 + index あり)。実行は `psql -f bench.sql` で連続計測可能。
