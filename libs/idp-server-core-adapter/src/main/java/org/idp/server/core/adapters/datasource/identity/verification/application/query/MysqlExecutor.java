@@ -19,6 +19,8 @@ package org.idp.server.core.adapters.datasource.identity.verification.applicatio
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.application.history.HistoryFilter;
+import org.idp.server.core.extension.identity.verification.application.history.HistoryQueryPlan;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationExternalApplicationIdentifier;
@@ -359,6 +361,42 @@ public class MysqlExecutor implements IdentityVerificationApplicationQuerySqlExe
 
     String sql = sqlBuilder.toString();
     return sqlExecutor.selectOne(sql, params);
+  }
+
+  @Override
+  public List<Map<String, String>> selectHistory(Tenant tenant, User user, HistoryQueryPlan plan) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    StringBuilder sqlBuilder = new StringBuilder();
+    sqlBuilder.append(selectSql);
+    sqlBuilder.append(" WHERE tenant_id = ? AND user_id = ? AND (");
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifier().value());
+    params.add(user.sub());
+
+    List<String> filterClauses = new ArrayList<>();
+
+    for (HistoryFilter filter : plan.filters()) {
+      List<String> types = filter.types();
+      List<String> statuses = filter.resolvedStatuses();
+      String typePlaceholders = String.join(",", java.util.Collections.nCopies(types.size(), "?"));
+      String statusPlaceholders =
+          String.join(",", java.util.Collections.nCopies(statuses.size(), "?"));
+      filterClauses.add(
+          "(verification_type IN ("
+              + typePlaceholders
+              + ") AND status IN ("
+              + statusPlaceholders
+              + "))");
+      params.addAll(types);
+      params.addAll(statuses);
+    }
+
+    sqlBuilder.append(String.join(" OR ", filterClauses));
+    sqlBuilder.append(") ORDER BY requested_at DESC;");
+
+    return sqlExecutor.selectList(sqlBuilder.toString(), params);
   }
 
   String selectSql =

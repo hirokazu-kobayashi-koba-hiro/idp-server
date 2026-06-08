@@ -116,7 +116,7 @@ public class IdentityVerificationApplicationEntryService
     }
 
     IdentityVerificationApplications applications =
-        applicationQueryRepository.findAll(tenant, user);
+        applicationQueryRepository.findHistory(tenant, user, processConfig.historyPlan());
 
     IdentityVerificationApplyingResult applyingResult =
         identityVerificationApplicationHandler.executeRequest(
@@ -252,7 +252,7 @@ public class IdentityVerificationApplicationEntryService
     }
 
     IdentityVerificationApplications applications =
-        applicationQueryRepository.findAll(tenant, user);
+        applicationQueryRepository.findHistory(tenant, user, processConfig.historyPlan());
 
     IdentityVerificationApplyingResult applyingResult =
         identityVerificationApplicationHandler.executeRequest(

@@ -18,6 +18,8 @@ package org.idp.server.core.extension.identity.verification.configuration.proces
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.application.history.HistoryQueryPlan;
+import org.idp.server.core.extension.identity.verification.application.history.IdentityVerificationHistoryConfig;
 import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationBasicAuthConfig;
 import org.idp.server.platform.http.HmacAuthenticationConfig;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -27,6 +29,7 @@ import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class IdentityVerificationProcessConfiguration implements JsonReadable {
   IdentityVerificationRequestConfig request = new IdentityVerificationRequestConfig();
+  IdentityVerificationHistoryConfig history = new IdentityVerificationHistoryConfig();
   IdentityVerificationPreHookConfig preHook = new IdentityVerificationPreHookConfig();
   IdentityVerificationExecutionConfig execution = new IdentityVerificationExecutionConfig();
   IdentityVerificationPostHookConfig postHook = new IdentityVerificationPostHookConfig();
@@ -56,6 +59,17 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
       return new JsonSchemaDefinition(JsonNodeWrapper.empty());
     }
     return request.requestSchemaAsDefinition();
+  }
+
+  public IdentityVerificationHistoryConfig history() {
+    if (history == null) {
+      return new IdentityVerificationHistoryConfig();
+    }
+    return history;
+  }
+
+  public HistoryQueryPlan historyPlan() {
+    return history().plan();
   }
 
   public IdentityVerificationPreHookConfig preHook() {
@@ -161,6 +175,7 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (request != null) map.put("request", request.toMap());
+    if (history != null) map.put("history", history.toMap());
     if (preHook != null) map.put("pre_hook", preHook.toMap());
     if (execution != null) map.put("execution", execution.toMap());
     if (postHook != null) map.put("post_hook", postHook.toMap());

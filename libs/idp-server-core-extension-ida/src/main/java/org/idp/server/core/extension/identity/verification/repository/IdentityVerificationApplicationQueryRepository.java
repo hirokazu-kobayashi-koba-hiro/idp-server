@@ -16,6 +16,7 @@
 
 package org.idp.server.core.extension.identity.verification.repository;
 
+import org.idp.server.core.extension.identity.verification.application.history.HistoryQueryPlan;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
@@ -44,4 +45,12 @@ public interface IdentityVerificationApplicationQueryRepository {
       Tenant tenant, IdentityVerificationApplicationQueries queries);
 
   long findTotalCount(Tenant tenant, IdentityVerificationApplicationQueries queries);
+
+  /**
+   * Find past applications matching observations declared by the {@code history} configuration
+   * section. Returns only the rows that satisfy at least one observation (e.g. running applications
+   * for the declared types), so the result set stays small even for heavy users — unlike {@link
+   * #findAll(Tenant, User)} which hydrates the full history including heavy JSONB columns.
+   */
+  IdentityVerificationApplications findHistory(Tenant tenant, User user, HistoryQueryPlan plan);
 }
