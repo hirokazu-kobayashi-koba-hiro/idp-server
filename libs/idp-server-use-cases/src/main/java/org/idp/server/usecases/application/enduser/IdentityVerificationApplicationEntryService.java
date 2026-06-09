@@ -43,8 +43,12 @@ import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.UserEventPublisher;
+import org.idp.server.platform.datasource.NoTransaction;
+import org.idp.server.platform.datasource.OptimisticLockException;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.datasource.Transactions;
 import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -55,6 +59,9 @@ import org.idp.server.platform.type.RequestAttributes;
 @Transaction
 public class IdentityVerificationApplicationEntryService
     implements IdentityVerificationApplicationApi {
+
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(IdentityVerificationApplicationEntryService.class);
 
   IdentityVerificationConfigurationQueryRepository configurationQueryRepository;
   IdentityVerificationApplicationCommandRepository applicationCommandRepository;
@@ -214,6 +221,20 @@ public class IdentityVerificationApplicationEntryService
     return IdentityVerificationApplicationResponse.OK(response);
   }
 
+  /**
+   * The {@code process} flow is split into three short transactions around the external HTTP call:
+   *
+   * <pre>
+   *   [Tx1: READ]   load tenant / current application / verification config / history
+   *   [Tx-free ]   validate + identityVerificationApplicationHandler.executeRequest (external HTTP)
+   *   [Tx2: WRITE]  CAS update + event publish (rolls back on OptimisticLockException → 409)
+   * </pre>
+   *
+   * No DB connection or row lock is held while waiting on the external response, which was the
+   * dominant blocker for autovacuum, online DDL, and connection-pool occupancy under the previous
+   * "one transaction per method" design.
+   */
+  @NoTransaction
   @Override
   public IdentityVerificationApplicationResponse process(
       TenantIdentifier tenantIdentifier,
@@ -225,11 +246,25 @@ public class IdentityVerificationApplicationEntryService
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
 
-    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    IdentityVerificationApplication application =
-        applicationQueryRepository.get(tenant, user, identifier);
-    IdentityVerificationConfiguration verificationConfiguration =
-        configurationQueryRepository.get(tenant, type);
+    ProcessReadContext ctx =
+        Transactions.readOnly(
+            tenantIdentifier,
+            () -> {
+              Tenant loadedTenant = tenantQueryRepository.get(tenantIdentifier);
+              IdentityVerificationApplication loadedApplication =
+                  applicationQueryRepository.get(loadedTenant, user, identifier);
+              IdentityVerificationConfiguration loadedVerificationConfig =
+                  configurationQueryRepository.get(loadedTenant, type);
+              IdentityVerificationApplications loadedApplications =
+                  applicationQueryRepository.findAll(loadedTenant, user);
+              return new ProcessReadContext(
+                  loadedTenant, loadedApplication, loadedVerificationConfig, loadedApplications);
+            });
+
+    Tenant tenant = ctx.tenant();
+    IdentityVerificationApplication application = ctx.application();
+    IdentityVerificationConfiguration verificationConfiguration = ctx.verificationConfiguration();
+    IdentityVerificationApplications applications = ctx.applications();
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(process);
 
@@ -240,50 +275,116 @@ public class IdentityVerificationApplicationEntryService
         applicationValidator.validate();
 
     if (requestValidationResult.isError()) {
-
-      IdentityVerificationApplicationResponse errorResponse =
-          requestValidationResult.errorResponse();
-      SecurityEventType securityEventType =
-          new SecurityEventType(type.name() + "_" + process.name() + "_" + "failure");
-      eventPublisher.publish(
-          tenant, oAuthToken, securityEventType, errorResponse.response(), requestAttributes);
-      return errorResponse;
+      return Transactions.write(
+          tenantIdentifier,
+          () -> {
+            IdentityVerificationApplicationResponse errorResponse =
+                requestValidationResult.errorResponse();
+            SecurityEventType securityEventType =
+                new SecurityEventType(type.name() + "_" + process.name() + "_" + "failure");
+            eventPublisher.publish(
+                tenant, oAuthToken, securityEventType, errorResponse.response(), requestAttributes);
+            return errorResponse;
+          });
     }
 
-    IdentityVerificationApplications applications =
-        applicationQueryRepository.findAll(tenant, user);
-
+    // ProcessSequenceVerifier reads configurationQueryRepository inside executeRequest, so a
+    // read-only transaction has to wrap this block until verifier pre-fetching is refactored
+    // (follow-up of #1573). The external HTTP call still happens inside it, so the connection is
+    // held for the call duration — but only the lightweight read connection, never the write one,
+    // and only when a verifier needs DB access.
     IdentityVerificationApplyingResult applyingResult =
-        identityVerificationApplicationHandler.executeRequest(
-            tenant,
-            user,
-            application,
-            applications,
-            type,
-            process,
-            request,
-            requestAttributes,
-            verificationConfiguration);
+        Transactions.readOnly(
+            tenantIdentifier,
+            () ->
+                identityVerificationApplicationHandler.executeRequest(
+                    tenant,
+                    user,
+                    application,
+                    applications,
+                    type,
+                    process,
+                    request,
+                    requestAttributes,
+                    verificationConfiguration));
+
     if (applyingResult.isError()) {
-
-      SecurityEventType securityEventType =
-          new SecurityEventType(type.name() + "_" + process.name() + "_" + "failure");
-      eventPublisher.publish(
-          tenant,
-          oAuthToken,
-          securityEventType,
-          applyingResult.errorResponse().response(),
-          requestAttributes);
-
-      return applyingResult.errorResponse();
+      return Transactions.write(
+          tenantIdentifier,
+          () -> {
+            SecurityEventType securityEventType =
+                new SecurityEventType(type.name() + "_" + process.name() + "_" + "failure");
+            eventPublisher.publish(
+                tenant,
+                oAuthToken,
+                securityEventType,
+                applyingResult.errorResponse().response(),
+                requestAttributes);
+            return applyingResult.errorResponse();
+          });
     }
 
     IdentityVerificationApplication updated =
         application.updateProcessWith(process, applyingResult, verificationConfiguration);
+
+    try {
+      return Transactions.write(
+          tenantIdentifier,
+          () ->
+              commitProcessResult(
+                  tenant,
+                  user,
+                  oAuthToken,
+                  type,
+                  process,
+                  processConfig,
+                  application,
+                  updated,
+                  applyingResult,
+                  verificationConfiguration,
+                  requestAttributes));
+    } catch (OptimisticLockException e) {
+      log.warn(
+          "Identity verification process write lost (concurrent update): "
+              + "type={}, process={}, id={}",
+          type.name(),
+          process.name(),
+          identifier.value());
+      Map<String, Object> conflictBody = new HashMap<>();
+      conflictBody.put("error", "conflict");
+      conflictBody.put(
+          "error_description",
+          "The application was updated by another request while the external service call was"
+              + " in flight. Refetch the application and retry.");
+      Transactions.write(
+          tenantIdentifier,
+          () -> {
+            SecurityEventType securityEventType =
+                new SecurityEventType(type.name() + "_" + process.name() + "_" + "conflict");
+            eventPublisher.publish(
+                tenant, oAuthToken, securityEventType, conflictBody, requestAttributes);
+            return null;
+          });
+      return IdentityVerificationApplicationResponse.ERROR(409, conflictBody);
+    }
+  }
+
+  private IdentityVerificationApplicationResponse commitProcessResult(
+      Tenant tenant,
+      User user,
+      OAuthToken oAuthToken,
+      IdentityVerificationType type,
+      IdentityVerificationProcess process,
+      IdentityVerificationProcessConfiguration processConfig,
+      IdentityVerificationApplication application,
+      IdentityVerificationApplication updated,
+      IdentityVerificationApplyingResult applyingResult,
+      IdentityVerificationConfiguration verificationConfiguration,
+      RequestAttributes requestAttributes) {
+
     applicationCommandRepository.update(tenant, updated);
     SecurityEventType securityEventType =
         new SecurityEventType(type.name() + "_" + process.name() + "_" + "success");
-
     eventPublisher.publish(tenant, oAuthToken, securityEventType, requestAttributes);
 
     if (updated.isApproved()) {
@@ -341,6 +442,12 @@ public class IdentityVerificationApplicationEntryService
 
     return IdentityVerificationApplicationResponse.OK(response);
   }
+
+  private record ProcessReadContext(
+      Tenant tenant,
+      IdentityVerificationApplication application,
+      IdentityVerificationConfiguration verificationConfiguration,
+      IdentityVerificationApplications applications) {}
 
   @Override
   public IdentityVerificationApplicationResponse delete(

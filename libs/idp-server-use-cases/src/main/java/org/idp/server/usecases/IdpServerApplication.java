@@ -298,6 +298,7 @@ public class IdpServerApplication {
 
     AdminTenantContext.configure(adminTenantId);
     TransactionManager.configure(dbConnectionProvider);
+    Transactions.configure(databaseTypeProvider);
     SystemDateTime.configure(java.time.ZoneId.of(timeConfig.zone()));
 
     ApplicationComponentDependencyContainer dependencyContainer =
