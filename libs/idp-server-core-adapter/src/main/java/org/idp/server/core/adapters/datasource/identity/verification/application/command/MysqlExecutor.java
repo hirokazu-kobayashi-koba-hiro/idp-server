@@ -21,6 +21,7 @@ import java.util.List;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.datasource.OptimisticLockException;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -100,13 +101,22 @@ public class MysqlExecutor implements IdentityVerificationApplicationCommandSqlE
     params.add(jsonConverter.write(application.processesAsMapObject()));
 
     setClauses.add("updated_at = now()");
+    setClauses.add("version = version + 1");
     sqlBuilder.append(String.join(", ", setClauses));
 
-    sqlBuilder.append(" WHERE id = ? AND tenant_id = ?");
+    sqlBuilder.append(" WHERE id = ? AND tenant_id = ? AND version = ?");
     params.add(application.identifier().value());
     params.add(tenant.identifier().value());
+    params.add(application.version());
 
-    sqlExecutor.execute(sqlBuilder.toString(), params);
+    int affected = sqlExecutor.executeAndReturnAffectedRows(sqlBuilder.toString(), params);
+    if (affected == 0) {
+      throw new OptimisticLockException(
+          "identity_verification_application update lost: id="
+              + application.identifier().value()
+              + ", expected_version="
+              + application.version());
+    }
   }
 
   @Override

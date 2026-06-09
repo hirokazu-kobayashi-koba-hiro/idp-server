@@ -81,19 +81,24 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
         method.isAnnotationPresent(Transaction.class)
             || target.getClass().isAnnotationPresent(Transaction.class);
 
-    Transaction tx = method.getClass().getAnnotation(Transaction.class);
-    if (tx == null) {
-      try {
-        Method implMethod =
-            target.getClass().getMethod(method.getName(), method.getParameterTypes());
-        tx = implMethod.getAnnotation(Transaction.class);
-      } catch (NoSuchMethodException e) {
-        log.trace(
-            "Method not found for transaction annotation lookup: class={}, method={}, error={}",
-            target.getClass().getSimpleName(),
-            method.getName(),
-            e.getMessage());
-      }
+    Method implMethod = null;
+    try {
+      implMethod = target.getClass().getMethod(method.getName(), method.getParameterTypes());
+    } catch (NoSuchMethodException e) {
+      log.trace(
+          "Method not found for annotation lookup: class={}, method={}, error={}",
+          target.getClass().getSimpleName(),
+          method.getName(),
+          e.getMessage());
+    }
+
+    if (implMethod != null && implMethod.isAnnotationPresent(NoTransaction.class)) {
+      return invokeWithoutTransaction(method, implMethod, args);
+    }
+
+    Transaction tx = null;
+    if (implMethod != null) {
+      tx = implMethod.getAnnotation(Transaction.class);
     }
     if (tx == null) {
       tx = target.getClass().getAnnotation(Transaction.class);
@@ -221,6 +226,31 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
       }
     } else {
       return method.invoke(target, args);
+    }
+  }
+
+  /**
+   * Invocation path for {@link NoTransaction} methods. The proxy still sets up logging MDC and
+   * resolves tenant context (so observability is identical to a regular invocation) but does not
+   * open a transaction — the method body is expected to delimit its own short transactions via
+   * {@link Transactions}.
+   */
+  private Object invokeWithoutTransaction(Method method, Method implMethod, Object[] args)
+      throws Throwable {
+    try {
+      TenantLoggingContext.setRequestId();
+      TenantIdentifier tenantIdentifier = resolveTenantIdentifier(args);
+      TenantLoggingContext.setTenant(tenantIdentifier);
+      resolveUserContext(args);
+      String clientId = resolveClientIdAsString(args);
+      if (clientId != null) {
+        TenantLoggingContext.setClientId(clientId);
+      }
+      return method.invoke(target, args);
+    } catch (InvocationTargetException e) {
+      throw e.getTargetException();
+    } finally {
+      TenantLoggingContext.clearAll();
     }
   }
 

@@ -256,7 +256,8 @@ public class MysqlExecutor implements IdentityVerificationApplicationQuerySqlExe
                  processes,
                  attributes,
                  status,
-                 requested_at
+                 requested_at,
+                 version
           FROM identity_verification_application
           """;
 }

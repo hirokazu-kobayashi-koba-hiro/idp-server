@@ -49,6 +49,7 @@ public class ModelConverter {
     IdentityVerificationApplicationStatus status =
         IdentityVerificationApplicationStatus.of(map.get("status"));
     LocalDateTime requestedAt = LocalDateTimeParser.parse(map.get("requested_at"));
+    long version = parseVersion(map.get("version"));
 
     return new IdentityVerificationApplication(
         identifier,
@@ -61,7 +62,19 @@ public class ModelConverter {
         processes,
         attributes,
         status,
-        requestedAt);
+        requestedAt,
+        version);
+  }
+
+  private static long parseVersion(String raw) {
+    if (raw == null || raw.isEmpty()) {
+      return 0L;
+    }
+    try {
+      return Long.parseLong(raw);
+    } catch (NumberFormatException e) {
+      return 0L;
+    }
   }
 
   static IdentityVerificationApplicationProcessResults toProcesses(Map<String, String> map) {

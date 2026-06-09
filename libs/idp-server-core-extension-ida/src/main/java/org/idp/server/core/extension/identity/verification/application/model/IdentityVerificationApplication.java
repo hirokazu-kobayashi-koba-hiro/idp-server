@@ -52,6 +52,7 @@ public class IdentityVerificationApplication {
   IdentityVerificationApplicationAttributes attributes;
   IdentityVerificationApplicationStatus status;
   LocalDateTime requestedAt;
+  long version;
 
   public IdentityVerificationApplication() {}
 
@@ -67,6 +68,34 @@ public class IdentityVerificationApplication {
       IdentityVerificationApplicationAttributes attributes,
       IdentityVerificationApplicationStatus status,
       LocalDateTime requestedAt) {
+    this(
+        identifier,
+        identityVerificationType,
+        tenantIdentifier,
+        requestedClientId,
+        userIdentifier,
+        externalApplicationId,
+        applicationDetails,
+        processes,
+        attributes,
+        status,
+        requestedAt,
+        0L);
+  }
+
+  public IdentityVerificationApplication(
+      IdentityVerificationApplicationIdentifier identifier,
+      IdentityVerificationType identityVerificationType,
+      TenantIdentifier tenantIdentifier,
+      RequestedClientId requestedClientId,
+      UserIdentifier userIdentifier,
+      IdentityVerificationExternalApplicationIdentifier externalApplicationId,
+      IdentityVerificationApplicationDetails applicationDetails,
+      IdentityVerificationApplicationProcessResults processes,
+      IdentityVerificationApplicationAttributes attributes,
+      IdentityVerificationApplicationStatus status,
+      LocalDateTime requestedAt,
+      long version) {
     this.identifier = identifier;
     this.identityVerificationType = identityVerificationType;
     this.tenantIdentifier = tenantIdentifier;
@@ -78,6 +107,16 @@ public class IdentityVerificationApplication {
     this.attributes = attributes;
     this.status = status;
     this.requestedAt = requestedAt;
+    this.version = version;
+  }
+
+  /**
+   * Version used as the CAS key for optimistic locking on update. Carried through {@code update*}
+   * derivations unchanged; the repository increments it atomically on a successful {@code UPDATE
+   * ... WHERE version = ?}.
+   */
+  public long version() {
+    return version;
   }
 
   public IdentityVerificationExternalApplicationIdentifier externalApplicationId() {
@@ -180,7 +219,8 @@ public class IdentityVerificationApplication {
         processResults,
         attributes,
         status,
-        requestedAt);
+        requestedAt,
+        version);
   }
 
   public IdentityVerificationApplication updateCallbackWith(
@@ -228,7 +268,8 @@ public class IdentityVerificationApplication {
         processResults,
         attributes,
         status,
-        requestedAt);
+        requestedAt,
+        version);
   }
 
   public IdentityVerificationApplicationIdentifier identifier() {
