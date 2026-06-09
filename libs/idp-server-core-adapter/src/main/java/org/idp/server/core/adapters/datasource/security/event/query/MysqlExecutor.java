@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.json.JsonNestingBuilder;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEventQueries;
 import org.idp.server.platform.security.event.SecurityEventIdentifier;
@@ -103,9 +104,11 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
       for (Map.Entry<String, String> entry : queries.details().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        sql.append(" AND detail ->> ? = ?");
-        params.add(key);
-        params.add(value);
+        // Use JSON_CONTAINS so a multi-valued index on detail can be considered.
+        // Dotted keys (e.g. `user.sub`) are expanded into a nested JSON object
+        // so containment matches values stored at the corresponding path.
+        sql.append(" AND JSON_CONTAINS(detail, ?)");
+        params.add(JsonNestingBuilder.buildNestedObjectJson(key, value));
       }
     }
 
@@ -187,9 +190,11 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
       for (Map.Entry<String, String> entry : queries.details().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        sql.append(" AND detail ->> ? = ?");
-        params.add(key);
-        params.add(value);
+        // Use JSON_CONTAINS so a multi-valued index on detail can be considered.
+        // Dotted keys (e.g. `user.sub`) are expanded into a nested JSON object
+        // so containment matches values stored at the corresponding path.
+        sql.append(" AND JSON_CONTAINS(detail, ?)");
+        params.add(JsonNestingBuilder.buildNestedObjectJson(key, value));
       }
     }
 

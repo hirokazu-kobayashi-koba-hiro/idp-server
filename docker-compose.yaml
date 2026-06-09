@@ -317,6 +317,14 @@ services:
     depends_on:
       postgres-primary:
         condition: service_healthy
+    command: [
+      "postgres",
+      "-c", "shared_preload_libraries=pg_stat_statements",
+      "-c", "shared_buffers=1GB",
+      "-c", "work_mem=64MB",
+      "-c", "effective_cache_size=2GB",
+      "-c", "max_parallel_workers_per_gather=4"
+    ]
     volumes:
       - postgres_replica_data:/var/lib/postgresql/data
     healthcheck:

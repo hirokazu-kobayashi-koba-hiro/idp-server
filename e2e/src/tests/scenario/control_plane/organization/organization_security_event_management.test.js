@@ -128,6 +128,80 @@ describe("organization security event management api", () => {
         console.log("Event types found:", [...new Set(types)]);
       }
     });
+
+    it("filter by details flat key (details.action=POST)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?details.action=POST&limit=20`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("list");
+      expect(response.data.total_count).toBeGreaterThan(0);
+      // 返ってきた全 event の detail.action は POST であるはず
+      for (const event of response.data.list) {
+        expect(event.detail?.action).toBe("POST");
+      }
+    });
+
+    it("filter by details nested key (details.user.status=REGISTERED)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?details.user.status=REGISTERED&limit=20`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("list");
+      expect(response.data.total_count).toBeGreaterThan(0);
+      // 返ってきた全 event の detail.user.status は REGISTERED であるはず
+      for (const event of response.data.list) {
+        expect(event.detail?.user?.status).toBe("REGISTERED");
+      }
+    });
+
+    it("filter by details nested key returns 0 for non-existent value", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?details.user.status=__NON_EXISTENT__&limit=20`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      expect(response.status).toBe(200);
+      expect(response.data.total_count).toBe(0);
+      expect(response.data.list).toHaveLength(0);
+    });
   });
 
   describe("query parameter validation", () => {
