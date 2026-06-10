@@ -103,9 +103,21 @@ public class MysqlExecutor implements OAuthTokenSqlExecutor {
                                 ?
                                 );
                               """;
-    AuthorizationGrant authorizationGrant = oAuthToken.accessToken().authorizationGrant();
     List<Object> params = new ArrayList<>();
-    // row is built in lockstep with params so we can warm the cache without an extra SELECT.
+    Map<String, String> row = buildParamsAndRow(oAuthToken, aesCipher, hmacHasher, params);
+
+    sqlExecutor.execute(sqlTemplate, params);
+    return row;
+  }
+
+  /**
+   * Builds the INSERT params and the cache-shaped row in lockstep, without touching the database,
+   * so the cache can be warmed without an extra SELECT. The row's key set is guarded against the
+   * query-side SELECT columns by {@code OAuthTokenInsertRowParityTest}.
+   */
+  Map<String, String> buildParamsAndRow(
+      OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher, List<Object> params) {
+    AuthorizationGrant authorizationGrant = oAuthToken.accessToken().authorizationGrant();
     Map<String, String> row = new LinkedHashMap<>();
 
     OAuthTokenRowBuilder.add(params, row, "id", oAuthToken.identifier().value());
@@ -249,7 +261,6 @@ public class MysqlExecutor implements OAuthTokenSqlExecutor {
       OAuthTokenRowBuilder.add(params, row, "c_nonce_expires_in", "");
     }
     OAuthTokenRowBuilder.add(params, row, "expires_at", oAuthToken.expiresAt().toLocalDateTime());
-    sqlExecutor.execute(sqlTemplate, params);
     return row;
   }
 

@@ -26,9 +26,10 @@ public interface OAuthTokenSqlExecutor {
 
   /**
    * Insert the token into the DB and return the row representation that is compatible with the
-   * cache layer (same key set as {@code query.selectOneByAccessToken}). This avoids an additional
-   * SELECT after INSERT to warm the cache, which would otherwise hit the replica or add a round
-   * trip on the primary.
+   * cache layer: a superset of {@code query.selectOneByAccessToken}'s key set ({@code
+   * OAuthTokenColumns.SELECT_COLUMNS} plus the INSERT-only {@code expires_at}, which the cache
+   * consumer ignores). This avoids an additional SELECT after INSERT to warm the cache, which would
+   * otherwise hit the replica or add a round trip on the primary.
    */
   Map<String, String> insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
 

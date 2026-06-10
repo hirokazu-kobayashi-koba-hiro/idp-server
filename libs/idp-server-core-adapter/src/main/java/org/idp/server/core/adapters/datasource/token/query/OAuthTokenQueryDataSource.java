@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import org.idp.server.core.adapters.datasource.token.OAuthTokenCacheKeyBuilder;
+import org.idp.server.core.adapters.datasource.token.OAuthTokenCacheStoreResolver;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -33,8 +34,6 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthTokenQueryDataSource implements OAuthTokenQueryRepository {
 
-  private static final int DEFAULT_CACHE_TTL_SECONDS = 60;
-
   OAuthTokenSqlExecutor executor;
   AesCipher aesCipher;
   HmacHasher hmacHasher;
@@ -44,7 +43,12 @@ public class OAuthTokenQueryDataSource implements OAuthTokenQueryRepository {
 
   public OAuthTokenQueryDataSource(
       OAuthTokenSqlExecutor executor, AesCipher aesCipher, HmacHasher hmacHasher) {
-    this(executor, aesCipher, hmacHasher, new NoOperationCacheStore(), DEFAULT_CACHE_TTL_SECONDS);
+    this(
+        executor,
+        aesCipher,
+        hmacHasher,
+        new NoOperationCacheStore(),
+        OAuthTokenCacheStoreResolver.TOKEN_CACHE_TTL_SECONDS);
   }
 
   public OAuthTokenQueryDataSource(

@@ -18,6 +18,7 @@ package org.idp.server.core.adapters.datasource.token.query;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.adapters.datasource.token.OAuthTokenColumns;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.RefreshTokenEntity;
 import org.idp.server.platform.crypto.AesCipher;
@@ -67,37 +68,5 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
-  String selectSql =
-      """
-           SELECT
-           id,
-           tenant_id,
-           token_issuer,
-           token_type,
-           encrypted_access_token,
-           hashed_access_token,
-           access_token_custom_claims,
-           user_id,
-           user_payload,
-           authentication,
-           client_id,
-           client_payload,
-           grant_type,
-           scopes,
-           id_token_claims,
-           userinfo_claims,
-           custom_properties,
-           authorization_details,
-           expires_in,
-           access_token_expires_at,
-           access_token_created_at,
-           encrypted_refresh_token,
-           hashed_refresh_token,
-           refresh_token_expires_at,
-           refresh_token_created_at,
-           id_token,
-           client_certification_thumbprint,
-           c_nonce,
-           c_nonce_expires_in \n
-           """;
+  String selectSql = OAuthTokenColumns.selectClause();
 }

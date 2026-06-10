@@ -137,6 +137,7 @@ flowchart LR
 - 発行時に **write-through で Redis に書き込む**（OAuthTokenCommandDataSource）。初回イントロスペクションが必ず Redis hit になり、reader のレプリケーション遅延の影響を受けない
 - 失効時には必ずキャッシュも削除（整合性保証）
 - キャッシュのTTLは60秒（短命のため、万一の不整合も短時間で解消）
+- 既知の制約: write-through はDBトランザクション内で実行されるため、INSERT後にトランザクションがロールバックした場合、DBに存在しないトークンのキャッシュが最大TTL（60秒）残る。トークン値はクライアントに渡る前なので実害はなく、TTLで自己解消する
 - `TOKEN_CACHE_ENABLED=false` の場合は `NoOperationCacheStore` に切り替わり、register 時の書き込みも実質スキップされる（実装デフォルトは未設定時 OFF / docker-compose・k8s configmap 既定では ON）
 
 ## イントロスペクション vs 自己完結型検証

@@ -104,10 +104,21 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             );
                           """;
 
-    AuthorizationGrant authorizationGrant = oAuthToken.accessToken().authorizationGrant();
     List<Object> params = new ArrayList<>();
-    // row is built in lockstep with params so we can warm the cache without an extra SELECT
-    // (key set matches query.selectOneByAccessToken).
+    Map<String, String> row = buildParamsAndRow(oAuthToken, aesCipher, hmacHasher, params);
+
+    sqlExecutor.execute(sqlTemplate, params);
+    return row;
+  }
+
+  /**
+   * Builds the INSERT params and the cache-shaped row in lockstep, without touching the database,
+   * so the cache can be warmed without an extra SELECT. The row's key set is guarded against the
+   * query-side SELECT columns by {@code OAuthTokenInsertRowParityTest}.
+   */
+  Map<String, String> buildParamsAndRow(
+      OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher, List<Object> params) {
+    AuthorizationGrant authorizationGrant = oAuthToken.accessToken().authorizationGrant();
     Map<String, String> row = new LinkedHashMap<>();
 
     OAuthTokenRowBuilder.add(params, row, "id", oAuthToken.identifier().valueAsUuid());
@@ -252,7 +263,6 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
     }
     OAuthTokenRowBuilder.add(params, row, "expires_at", oAuthToken.expiresAt().toLocalDateTime());
 
-    sqlExecutor.execute(sqlTemplate, params);
     return row;
   }
 
