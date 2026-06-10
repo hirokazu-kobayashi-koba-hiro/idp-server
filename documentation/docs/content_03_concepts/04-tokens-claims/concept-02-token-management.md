@@ -62,15 +62,39 @@ idp-serverでは、Refresh Tokenを使用のたびに新しいトークンを発
 
 識別子型（Opaque）アクセストークンのライフサイクルを示します。
 
+トークンのフェーズ（発行 → 利用 → 失効）と永続層（Redis / DB writer / DB reader）の関係を整理すると以下になります。
+
+```mermaid
+flowchart LR
+    Issued([発行]) --> Active([利用中])
+    Active --> Revoked([失効])
+
+    Issued -. write-through .-> Cache[(Redis)]
+    Issued -. INSERT .-> Writer[(DB writer)]
+    Active -. hit / miss .-> Cache
+    Active -. miss → SELECT .-> Reader[(DB reader)]
+    Revoked -. DEL .-> Cache
+    Revoked -. DELETE .-> Writer
+```
+
+**要点**:
+- **発行** は writer に INSERT すると同時に Redis にも write-through するため、直後の introspection が必ず Redis hit になる（reader のレプリケーション遅延を踏まない）
+- **利用** は Redis hit を優先し、miss なら reader を引いて再格納する cache-aside
+- **失効** は writer の DELETE と Redis の DEL を必ずペアで実行する
+
 ```
 1. 発行（Token Endpoint）
-   └─→ DB INSERT（oauth_tokenテーブル）
-       ※ この時点ではキャッシュなし
+   └─→ DB INSERT（oauth_tokenテーブル、writer接続）
+       └─→ INSERT と並行に組み立てた行マップを Redis にも書き込み（TTL 60秒）
+           ※ 追加 SELECT は発生しない（OAuthTokenRowBuilder が INSERT パラメータと
+             同じ値を Map に積む）。これにより発行直後のイントロスペクションが
+             reader 接続のレプリケーション遅延を踏むことなく Redis から即返却される
 
 2. イントロスペクション（Introspection Endpoint）
    └─→ キャッシュ確認（TOKEN_CACHE_ENABLED=true時）
-       ├─ Hit  → キャッシュから返却
-       └─ Miss → DB SELECT → キャッシュ格納（TTL 60秒）→ 返却
+       ├─ Hit  → キャッシュから返却（発行直後は 1. の write-through により必ず Hit）
+       └─ Miss → DB SELECT（reader）→ キャッシュ格納（TTL 60秒）→ 返却
+                ※ Miss は TTL 経過後の再アクセス時に発生
 
 3. トークン失効（Revocation Endpoint）
    └─→ DB DELETE + キャッシュ削除
@@ -94,11 +118,26 @@ idp-serverでは、Refresh Tokenを使用のたびに新しいトークンを発
    └─ キャッシュ: TTL（60秒）で自動削除
 ```
 
+### キャッシュ格納タイミング
+
+| トリガー | 経路 | 備考 |
+|:---|:---|:---|
+| **発行 (register)** | writer での INSERT 直後に write-through | Read replica の遅延を踏まずに直後のイントロスペクションを Redis hit にする |
+| **イントロスペクション miss → DB hit** | reader での SELECT 後に cache-aside で put | TTL 経過後の再格納パス |
+
+### キャッシュ削除タイミング
+
+| トリガー | 削除対象 |
+|:---|:---|
+| **明示的失効** (`/v1/tokens/revoke`) | 対象トークン 1 件 |
+| **認可グラント削除 / ユーザー単位失効** | `deleteByUserAndClient` 配下の全トークン |
+| **TTL 経過** | Redis 側で自動 (60秒) |
+
 **設計ポイント**:
-- 発行時にはキャッシュしない（Cache-Asideパターン、初回イントロスペクション時にキャッシュ）
+- 発行時に **write-through で Redis に書き込む**（OAuthTokenCommandDataSource）。初回イントロスペクションが必ず Redis hit になり、reader のレプリケーション遅延の影響を受けない
 - 失効時には必ずキャッシュも削除（整合性保証）
 - キャッシュのTTLは60秒（短命のため、万一の不整合も短時間で解消）
-- `TOKEN_CACHE_ENABLED=false`（デフォルト）の場合、常にDBから取得
+- `TOKEN_CACHE_ENABLED=false` の場合は `NoOperationCacheStore` に切り替わり、register 時の書き込みも実質スキップされる（実装デフォルトは未設定時 OFF / docker-compose・k8s configmap 既定では ON）
 
 ## イントロスペクション vs 自己完結型検証
 

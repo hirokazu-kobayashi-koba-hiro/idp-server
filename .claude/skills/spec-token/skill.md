@@ -214,14 +214,21 @@ JWTの`sub`クレームからユーザーを解決する方法を設定できま
 
 トークンのメタデータを検証し、active/inactiveを返却します。
 
-### Introspectionキャッシュ
+### トークンキャッシュ
 
-`TOKEN_CACHE_ENABLED=true`（環境変数）かつRedis有効時、Introspection結果をRedisにキャッシュします。
+`TOKEN_CACHE_ENABLED=true`（環境変数）かつRedis有効時、OAuthToken の DB row を Redis にキャッシュします。
 
-- **パターン**: Cache-Aside（初回Introspection時にキャッシュ格納）
+- **パターン**: 発行時の **Write-Through** + イントロスペクション時の **Cache-Aside** のハイブリッド
 - **キー**: `oauth_token:at:{tenant_id}:{hmac(access_token)}`（`OAuthTokenCacheKeyBuilder`で生成）
-- **TTL**: 60秒固定
-- **デフォルト**: OFF（opt-in）。`OAuthTokenCacheStoreResolver`が`TOKEN_CACHE_ENABLED`を参照し、OFFの場合は`NoOperationCacheStore`を使用
+- **TTL**: 60秒固定（`OAuthTokenCacheStoreResolver.TOKEN_CACHE_TTL_SECONDS`）
+- **デフォルト**: 実装上は未設定時 OFF（`NoOperationCacheStore`に切替）。docker-compose / k8s configmap では既定 ON
+
+### キャッシュ格納タイミング
+
+| トリガー | 経路 | 備考 |
+|---|---|---|
+| **発行** (`OAuthTokenCommandDataSource.register`) | writer での INSERT 直後に write-through | `OAuthTokenRowBuilder` が INSERT params 構築と並行に row map を作るため追加 SELECT なし。reader のレプリケーション遅延を踏まずに直後の introspection を Redis hit にできる |
+| **Introspection の cache miss → DB hit** (`OAuthTokenQueryDataSource.find`) | reader での SELECT 後に cache-aside で put | TTL 経過後の再格納パス |
 
 ### キャッシュ削除の連鎖
 
