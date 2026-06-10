@@ -28,8 +28,6 @@ import org.idp.server.platform.dependency.ApplicationComponentProvider;
 public class OAuthTokenQueryDataSourceProvider
     implements ApplicationComponentProvider<OAuthTokenQueryRepository> {
 
-  private static final int TOKEN_CACHE_TTL_SECONDS = 60;
-
   @Override
   public Class<OAuthTokenQueryRepository> type() {
     return OAuthTokenQueryRepository.class;
@@ -45,6 +43,10 @@ public class OAuthTokenQueryDataSourceProvider
     HmacHasher hmacHasher = container.resolve(HmacHasher.class);
     CacheStore cacheStore = OAuthTokenCacheStoreResolver.resolve(container);
     return new OAuthTokenQueryDataSource(
-        executor, aesCipher, hmacHasher, cacheStore, TOKEN_CACHE_TTL_SECONDS);
+        executor,
+        aesCipher,
+        hmacHasher,
+        cacheStore,
+        OAuthTokenCacheStoreResolver.TOKEN_CACHE_TTL_SECONDS);
   }
 }

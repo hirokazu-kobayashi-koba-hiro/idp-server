@@ -42,6 +42,11 @@ public class OAuthTokenDataSourceProvider
     AesCipher aesCipher = container.resolve(AesCipher.class);
     HmacHasher hmacHasher = container.resolve(HmacHasher.class);
     CacheStore cacheStore = OAuthTokenCacheStoreResolver.resolve(container);
-    return new OAuthTokenCommandDataSource(executor, aesCipher, hmacHasher, cacheStore);
+    return new OAuthTokenCommandDataSource(
+        executor,
+        aesCipher,
+        hmacHasher,
+        cacheStore,
+        OAuthTokenCacheStoreResolver.TOKEN_CACHE_TTL_SECONDS);
   }
 }

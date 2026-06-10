@@ -18,17 +18,17 @@ package org.idp.server.core.adapters.datasource.token.query;
 
 import java.util.Map;
 
-class OAuthTokenCacheEntry {
+public class OAuthTokenCacheEntry {
 
   Map<String, String> values;
 
-  OAuthTokenCacheEntry() {}
+  public OAuthTokenCacheEntry() {}
 
-  OAuthTokenCacheEntry(Map<String, String> values) {
+  public OAuthTokenCacheEntry(Map<String, String> values) {
     this.values = values;
   }
 
-  Map<String, String> values() {
+  public Map<String, String> values() {
     return values;
   }
 }

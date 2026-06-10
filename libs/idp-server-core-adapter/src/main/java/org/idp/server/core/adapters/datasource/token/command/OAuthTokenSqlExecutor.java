@@ -17,13 +17,20 @@
 package org.idp.server.core.adapters.datasource.token.command;
 
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.HmacHasher;
 
 public interface OAuthTokenSqlExecutor {
 
-  void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
+  /**
+   * Insert the token into the DB and return the row representation that is compatible with the
+   * cache layer (same key set as {@code query.selectOneByAccessToken}). This avoids an additional
+   * SELECT after INSERT to warm the cache, which would otherwise hit the replica or add a round
+   * trip on the primary.
+   */
+  Map<String, String> insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
 
   void delete(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher);
 
