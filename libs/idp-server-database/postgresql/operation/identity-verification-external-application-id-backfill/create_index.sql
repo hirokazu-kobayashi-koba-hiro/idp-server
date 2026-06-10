@@ -9,8 +9,14 @@
 -- external_application_id index 追加 (本番運用向け)
 --
 -- CREATE INDEX CONCURRENTLY: 書き込みブロックなしで index を構築する。
--- 想定実行時間: 100万行で 5-30 分 (テーブルサイズ・I/O 次第)。
 -- トランザクション内で実行不可なので psql から直接流す。
+--
+-- 想定実行時間:
+--   - localhost SSD で 100万行 約 1 秒 / 200万行 約 2 秒 (bench 実測)
+--   - AWS RDS では idp_user の同等規模 index 作成時間と同レンジで想定 (数十秒〜数分)
+--   - テーブル幅 (JSONB サイズ) が大きい場合はそのサイズ比に応じて伸びる
+--   - 同時 write 負荷が高い時間帯は CONCURRENTLY の wait で更に伸びる可能性
+--   - 詳細な計測は README 末尾の「付録: ローカル性能計測」を参照
 --
 -- 進行状況の監視 (別 session):
 --   SELECT phase, blocks_done, blocks_total,

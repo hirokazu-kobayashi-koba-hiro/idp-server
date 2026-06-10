@@ -157,3 +157,62 @@ WHERE external_application_id IS NOT NULL;
 ```
 
 その後 `psql -f migrate_data.sql` を再実行 (`IS NULL` のみ更新するので idempotent)。
+
+---
+
+## 付録: ローカル性能計測 (bench)
+
+本番手順 (Step 2 `create_index.sql`) で使う `CREATE UNIQUE INDEX CONCURRENTLY` の所要時間をローカルで実測するためのスクリプト。
+
+### ファイル
+
+| ファイル | 役割 |
+|---------|------|
+| `bench_setup.sql` | bench マーカー (`verification_type = 'BENCH-EXTERNAL-APP-ID'`) で `ROW_COUNT` 行のダミーを投入。半数の `external_application_id` は `NULL`、半数は UUID テキスト |
+| `bench.sql` | DROP CONCURRENTLY → `CREATE UNIQUE INDEX CONCURRENTLY` を `\timing on` 込みで計測 |
+| `bench_cleanup.sql` | bench 用 index と行を削除 |
+
+### 実行例 (1M 行)
+
+```bash
+cd libs/idp-server-database/postgresql/operation/identity-verification-external-application-id-backfill
+
+psql -v ROW_COUNT=1000000 -f bench_setup.sql
+psql -f bench.sql
+psql -f bench_cleanup.sql
+```
+
+200万行で計測したいときは `-v ROW_COUNT=2000000`。
+
+### 注意
+
+- bench の対象テナント ID は `bench_setup.sql` 冒頭の `:TARGET_TENANT` で固定 (e2e admin tenant)。必要に応じて書き換える
+- `CREATE INDEX CONCURRENTLY` はトランザクション内で実行できないため、`psql -f` で直接流す形 (`BEGIN/COMMIT` を入れない)
+- ローカル / ステージング以外では実行しないこと
+
+### 計測結果 (ローカル / Apple Silicon + NVMe SSD)
+
+| 行数 | テーブルサイズ | `CREATE UNIQUE INDEX CONCURRENTLY` | index サイズ | 半数 NULL の内訳 |
+|------|---------------|-----------------------------------|-------------|---------------|
+| 1,000,000 | 336 MB | **1,060 ms** (1.06 s) | 56 MB | 500,000 値あり / 500,000 NULL |
+| 2,000,000 | 676 MB | **2,171 ms** (2.17 s) | 113 MB | 1,000,000 値あり / 1,000,000 NULL |
+
+行数に比例してほぼ線形 (約 2 倍)。
+
+### 本番想定
+
+本番 (AWS RDS 等) では heap scan の I/O コストが支配的で、ローカル SSD よりは遅くなる。実用上は **AWS 環境での `idp_user` の同等規模 index 作成時間と同じレンジ** で見積もるのが現実的:
+
+- 基本想定: 数十秒〜数分のオーダー
+- テーブル幅が大きい本番 (`application_details` の JSONB が太い) の場合、`idp_user` よりサイズ比に応じて伸びる
+- 同時 write 負荷が高い時間帯は `CONCURRENTLY` の wait で更に伸びる可能性
+
+予測したい場合は事前に本番でテーブルサイズを確認し、`idp_user` の実績時間と比例計算するのが安全:
+
+```bash
+# 本番でテーブルサイズを確認
+psql -c "SELECT
+    pg_size_pretty(pg_total_relation_size('identity_verification_application')) AS app_size,
+    pg_size_pretty(pg_total_relation_size('idp_user'))                          AS user_size"
+```
+
