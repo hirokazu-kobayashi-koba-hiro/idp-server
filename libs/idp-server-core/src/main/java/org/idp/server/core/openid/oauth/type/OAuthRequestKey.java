@@ -71,7 +71,9 @@ public enum OAuthRequestKey {
   transaction_id,
   // RP-Initiated Logout
   post_logout_redirect_uri,
-  logout_hint;
+  logout_hint,
+  // RFC 9449 §10 - Authorization Code Binding to a DPoP Key
+  dpop_jkt;
 
   public static boolean contains(String key) {
     for (OAuthRequestKey keys : OAuthRequestKey.values()) {

@@ -29,6 +29,8 @@ import org.idp.server.core.openid.identity.id_token.RequestedClaimsPayload;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oidc.IdToken;
@@ -95,12 +97,20 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
     ClientConfiguration clientConfiguration = tokenRequestContext.clientConfiguration();
 
     AuthorizationGrant authorizationGrant = cibaGrant.authorizationGrant();
+    DPoPProofVerifiedResult dpopResult =
+        new DPoPProofVerifier()
+            .verifyIfNeeded(
+                tokenRequestContext.dpopProof(),
+                tokenRequestContext.httpMethod(),
+                tokenRequestContext.httpUri(),
+                authorizationServerConfiguration.dpopSigningAlgValuesSupported());
     AccessToken accessToken =
         accessTokenCreator.create(
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,
-            clientCredentials);
+            clientCredentials,
+            dpopResult);
     RefreshToken refreshToken =
         createRefreshToken(authorizationServerConfiguration, clientConfiguration);
     OAuthTokenBuilder oAuthTokenBuilder =

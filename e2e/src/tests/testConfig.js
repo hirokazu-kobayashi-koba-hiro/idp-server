@@ -5,6 +5,7 @@ export const mtlBackendUrl = process.env.IDP_SERVER_MTLS_URL || "https://mtls.ap
 const DEFAULT_ADMIN_TENANT_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"; // Admin tenant for Management API tests
 const DEFAULT_ORGANIZATION_ID = "9eb8eb8c-2615-4604-809f-5cae1c00a462"; // Test tenant for OAuth/OIDC tests
 const DEFAULT_TENANT_ID = "67e7eae6-62b0-4500-9eff-87459f63fc66"; // Test tenant for OAuth/OIDC tests
+const DEFAULT_FAPI2_TENANT_ID = "edc3e984-05b6-499f-bd05-d48e5aaea1e4"; // Test tenant for FAPI 2.0 SP Final tests
 const DEFAULT_FEDERATION_TENANT_ID = "1e68932e-ed4a-43e7-b412-460665e42df3";
 const DEFAULT_UNSUPPORTED_TENANT_ID = "94d8598e-f238-4150-85c2-c4accf515784";
 
@@ -12,6 +13,7 @@ const DEFAULT_UNSUPPORTED_TENANT_ID = "94d8598e-f238-4150-85c2-c4accf515784";
 const adminTenantId = process.env.ADMIN_TENANT_ID || DEFAULT_ADMIN_TENANT_ID;
 const organizationId = process.env.E2E_ORGANIZATION_ID || DEFAULT_ORGANIZATION_ID;
 const tenantId = process.env.E2E__TENANT_ID || DEFAULT_TENANT_ID;
+const fapi2TenantId = process.env.E2E_FAPI2_TENANT_ID || DEFAULT_FAPI2_TENANT_ID;
 const federationTenantId = process.env.IDP_SERVER_FEDERATION_TENANT_ID || DEFAULT_FEDERATION_TENANT_ID;
 const unsupportedTenantId = process.env.IDP_SERVER_UNSUPPORTED_TENANT_ID || DEFAULT_UNSUPPORTED_TENANT_ID;
 
@@ -140,6 +142,123 @@ export const adminServerConfig =(() => {
 })();
 
 export const serverConfig = createServerConfig(tenantId);
+export const fapi2ServerConfig = createServerConfig(fapi2TenantId);
+
+export const fapi2PrivateKeyJwtClient = {
+  ...{},
+  clientId: "privateKeyJwt",
+  clientIdUuid: "a7c57646-089b-4fe5-8301-353e7f460319",
+  clientSecret: "privateKeyJwtSecret",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "openid",
+  fapi20Scope: "fapi-2.0",
+  idTokenAlg: "ES256",
+  // FAPI 2.0 §5.4: only PS256/PS384/PS512, ES256/ES384/ES512, EdDSA permitted on client
+  // assertions. The fapi2-tenant client is registered with a P-256 EC key (kid=fapi2_client_key).
+  clientSecretKey: {
+    kty: "EC",
+    d: "FF0zmDj2BkOScQ5VSh1xska2Ivfji8Sq7srE86Zx1iI",
+    use: "sig",
+    crv: "P-256",
+    kid: "fapi2_client_key",
+    x: "HwJdDx17gQ63N5ydDoblIMw5w937QbrbSoqz1uS2w-8",
+    y: "lcnyJYeeKEymg_ubrlOzaHpyOb1PioNgHi4d3fRM1HA",
+    alg: "ES256",
+  },
+};
+
+/**
+ * FAPI 2.0 SP Final - mTLS (tls_client_auth) Client
+ *
+ * Registered against fapi2-tenant with subject DN
+ * "C=JP,O=FAPI 2.0 Certification,CN=fapi2-tls-client".
+ * Certificate is signed by the development CA bundled in nginx (docker/nginx/ca.crt).
+ */
+export const fapi2TlsClientAuthClient = {
+  clientId: "fapi2TlsClientAuth",
+  clientIdUuid: "b58f5dec-dedb-4ee6-a7af-b03441d0e143",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "openid profile email",
+  fapi20Scope: "fapi-2.0",
+  idTokenAlg: "ES256",
+  clientCertFile: "fapi2TlsClientAuth.pem",
+};
+
+export const fapi2TlsClientAuthClient2 = {
+  clientId: "fapi2TlsClientAuth2",
+  clientIdUuid: "2fcc1a71-b916-4e3f-a056-8092ff3f796e",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  scope: "openid profile email",
+  fapi20Scope: "fapi-2.0",
+  idTokenAlg: "ES256",
+  clientCertFile: "fapi2TlsClientAuth2.pem",
+};
+
+/**
+ * FAPI 2.0 §5.3.2.1 拒否対象クライアント (fapi-2.0 scope での PAR は AS が拒否する想定)。
+ * いずれも fapi2-tenant に登録済 — 登録自体は management API で許可されるが、
+ * runtime で fapi-2.0 scope を要求すると {@code FapiSecurity20Verifier} により拒否される。
+ */
+export const fapi2PublicClient = {
+  clientId: "fapi2PublicClient",
+  clientIdUuid: "0aaf6d00-36b0-497c-9b53-83aa57d446aa",
+  redirectUri: "https://client.example.org/callback",
+  fapi20Scope: "fapi-2.0",
+};
+
+export const fapi2ClientSecretBasicClient = {
+  clientId: "fapi2ClientSecretBasic",
+  clientIdUuid: "6f4144ab-0b86-4d67-aa52-2501d7f88034",
+  clientSecret:
+    "fapi2ClientSecretBasicSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://client.example.org/callback",
+  fapi20Scope: "fapi-2.0",
+};
+
+export const fapi2ClientSecretPostClient = {
+  clientId: "fapi2ClientSecretPost",
+  clientIdUuid: "4ef74d17-6d72-42d2-bae5-a292c0b7bbe0",
+  clientSecret:
+    "fapi2ClientSecretPostSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://client.example.org/callback",
+  fapi20Scope: "fapi-2.0",
+};
+
+export const fapi2ClientSecretJwtClient = {
+  clientId: "fapi2ClientSecretJwt",
+  clientIdUuid: "1329a462-2548-48e0-951b-83b82055c7e2",
+  clientSecret:
+    "fapi2ClientSecretJwtSecret12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://client.example.org/callback",
+  fapi20Scope: "fapi-2.0",
+};
+
+/**
+ * FAPI 2.0 §5.3.2.1 #4 検証用テナント。
+ *
+ * fapi2-no-sender-tenant は mTLS バインドも DPoP も無効に設定されており、
+ * fapi-2.0 scope で PAR を投げると {@code FapiSecurity20Verifier#throwIfNotSenderConstrainedAccessToken}
+ * によって拒否されることを確認する。
+ */
+const fapi2NoSenderTenantId = "d2a23128-043d-4ad7-8136-e7132663dfe3";
+export const fapi2NoSenderServerConfig = createServerConfig(fapi2NoSenderTenantId);
+export const fapi2NoSenderPrivateKeyJwtClient = {
+  clientId: "fapi2NoSenderPrivateKeyJwt",
+  clientIdUuid: "f441d38c-9ed3-4f9c-8418-efc8f31e49d0",
+  redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",
+  fapi20Scope: "fapi-2.0",
+  // fapi2-tenant の privateKeyJwt と同じ公開鍵を使う (登録ファイルもコピー元のまま)
+  clientSecretKey: {
+    kty: "EC",
+    d: "FF0zmDj2BkOScQ5VSh1xska2Ivfji8Sq7srE86Zx1iI",
+    use: "sig",
+    crv: "P-256",
+    kid: "fapi2_client_key",
+    x: "HwJdDx17gQ63N5ydDoblIMw5w937QbrbSoqz1uS2w-8",
+    y: "lcnyJYeeKEymg_ubrlOzaHpyOb1PioNgHi4d3fRM1HA",
+    alg: "ES256",
+  },
+};
 
 
 export const federationServerConfig = {
@@ -383,6 +502,7 @@ export const privateKeyJwtClient = {
   scope: "account",
   fapiBaselineScope: "read",
   fapiAdvanceScope: "write",
+  fapi20Scope: "fapi-2.0",
   identityVerificationScope: "transfers",
   idTokenAlg: "RS256",
   clientSecretKey: {

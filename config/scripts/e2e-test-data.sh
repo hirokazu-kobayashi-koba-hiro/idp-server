@@ -270,3 +270,184 @@ for security_event_hook_config_file in "${security_event_hook_config_files[@]}";
   -d "${DRY_RUN}"
 
 done
+
+
+#fapi2-tenant
+echo "-------------------------------------------------"
+echo ""
+echo "fapi2-tenant"
+
+./config/scripts/upsert-tenant.sh \
+  -f "./config/examples/e2e/fapi2-tenant/tenants/fapi2-tenant.json" \
+  -o "${ORGANIZATION_ID}" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+FAPI2_TENANT_ID="edc3e984-05b6-499f-bd05-d48e5aaea1e4"
+
+./config/scripts/upsert-authorization-server.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/authorization-server/idp-server.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/privateKeyJwt.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/privateKeyJwt2.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/tlsClientAuth.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/tlsClientAuth2.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+# §5.3.2.1 拒否対象クライアント (fapi-2.0 scope での PAR は AS が拒否する想定)
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/publicClient.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/clientSecretBasic.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/clientSecretPost.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/clients/clientSecretJwt.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+##fapi2-tenant test user (CIBA / authentication-device 経由のフロー用)
+echo "-------------------------------------------------"
+echo ""
+echo "fapi2-tenant test user"
+
+./config/scripts/upsert-user.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/user/test-user.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+##fapi2-tenant authentication-config
+echo "-------------------------------------------------"
+echo ""
+echo "fapi2-tenant authentication-config"
+
+fapi2_authentication_config_files=(
+  email/no-action.json
+  fido-uaf/external.json
+  fido2/webauthn4j.json
+  initial-registration/standard.json
+  sms/external.json
+)
+
+for authentication_config_file in "${fapi2_authentication_config_files[@]}"; do
+  echo "🔧 Registering: $(basename "$authentication_config_file")"
+
+./config/scripts/upsert-authentication-config.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/authentication-config/${authentication_config_file}" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+done
+
+##fapi2-tenant authentication-policy
+echo "-------------------------------------------------"
+echo ""
+echo "fapi2-tenant authentication-policy"
+
+fapi2_authentication_policy_files=(
+  ciba.json
+  fido-uaf-registration.json
+  oauth.json
+)
+
+for authentication_policy_file in "${fapi2_authentication_policy_files[@]}"; do
+  echo "🔧 Registering: $(basename "$authentication_policy_file")"
+
+./config/scripts/upsert-authentication-policy.sh \
+  -t "${FAPI2_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-tenant/authentication-policy/${authentication_policy_file}" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+done
+
+# fapi2-no-sender-tenant: FAPI 2.0 §5.3.2.1 #4 検証用 (mTLS=false + DPoP=[] で sender-constrained 不可)
+echo "-------------------------------------------------"
+echo ""
+echo "fapi2-no-sender-tenant"
+
+./config/scripts/upsert-tenant.sh \
+  -f "./config/examples/e2e/fapi2-no-sender-tenant/tenants/fapi2-no-sender-tenant.json" \
+  -o "${ORGANIZATION_ID}" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+FAPI2_NO_SENDER_TENANT_ID="d2a23128-043d-4ad7-8136-e7132663dfe3"
+
+./config/scripts/upsert-authorization-server.sh \
+  -t "${FAPI2_NO_SENDER_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-no-sender-tenant/authorization-server/idp-server.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${FAPI2_NO_SENDER_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/fapi2-no-sender-tenant/clients/privateKeyJwt.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"

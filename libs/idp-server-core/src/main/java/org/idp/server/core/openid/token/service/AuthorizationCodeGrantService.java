@@ -25,6 +25,8 @@ import org.idp.server.core.openid.identity.id_token.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifiedResult;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestRepository;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
@@ -146,12 +148,36 @@ public class AuthorizationCodeGrantService
     ClientConfiguration clientConfiguration = tokenRequestContext.clientConfiguration();
 
     AuthorizationGrant authorizationGrant = authorizationCodeGrant.authorizationGrant();
+    DPoPProofVerifiedResult dpopResult =
+        new DPoPProofVerifier()
+            .verifyIfNeeded(
+                tokenRequestContext.dpopProof(),
+                tokenRequestContext.httpMethod(),
+                tokenRequestContext.httpUri(),
+                authorizationServerConfiguration.dpopSigningAlgValuesSupported());
+
+    // RFC 9449 §10: Authorization Code Binding to a DPoP Key
+    if (authorizationRequest.hasDPoPJkt()) {
+      if (!dpopResult.exists()) {
+        throw new TokenBadRequestException(
+            "invalid_grant",
+            "authorization request was bound to a DPoP key (dpop_jkt) but no DPoP proof was presented");
+      }
+      String boundJkt = authorizationRequest.dpopJkt().value();
+      String proofJkt = dpopResult.jwkThumbprint().value();
+      if (!boundJkt.equals(proofJkt)) {
+        throw new TokenBadRequestException(
+            "invalid_grant", "DPoP proof key thumbprint does not match the bound dpop_jkt");
+      }
+    }
+
     AccessToken accessToken =
         accessTokenCreator.create(
             authorizationGrant,
             authorizationServerConfiguration,
             clientConfiguration,
-            clientCredentials);
+            clientCredentials,
+            dpopResult);
     RefreshToken refreshToken =
         createRefreshToken(authorizationServerConfiguration, clientConfiguration);
     OAuthTokenBuilder oAuthTokenBuilder =

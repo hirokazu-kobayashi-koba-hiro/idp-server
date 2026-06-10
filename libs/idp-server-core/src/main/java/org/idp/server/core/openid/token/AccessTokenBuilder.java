@@ -18,6 +18,7 @@ package org.idp.server.core.openid.token;
 
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprint;
+import org.idp.server.core.openid.oauth.dpop.JwkThumbprint;
 import org.idp.server.core.openid.oauth.type.extension.CreatedAt;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
@@ -33,6 +34,7 @@ public class AccessTokenBuilder {
   AccessTokenEntity accessTokenEntity;
   AuthorizationGrant authorizationGrant;
   ClientCertificationThumbprint clientCertificationThumbprint;
+  JwkThumbprint jwkThumbprint = new JwkThumbprint();
   AccessTokenCustomClaims customClaims;
   CreatedAt createdAt;
   ExpiresIn expiresIn;
@@ -67,6 +69,11 @@ public class AccessTokenBuilder {
     return this;
   }
 
+  public AccessTokenBuilder add(JwkThumbprint jwkThumbprint) {
+    this.jwkThumbprint = jwkThumbprint;
+    return this;
+  }
+
   public AccessTokenBuilder add(AccessTokenCustomClaims customClaims) {
     this.customClaims = customClaims;
     return this;
@@ -95,6 +102,7 @@ public class AccessTokenBuilder {
         accessTokenEntity,
         authorizationGrant,
         clientCertificationThumbprint,
+        jwkThumbprint,
         customClaims,
         createdAt,
         expiresIn,

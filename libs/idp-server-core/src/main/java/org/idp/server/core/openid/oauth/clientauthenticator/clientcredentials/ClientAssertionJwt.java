@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials;
 
+import java.util.Map;
 import java.util.Objects;
 import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
@@ -42,6 +43,41 @@ public class ClientAssertionJwt {
 
   public JsonWebTokenClaims claims() {
     return jsonWebSignature.claims();
+  }
+
+  /**
+   * Returns the raw payload JSON of the client assertion.
+   *
+   * <p>Use this when JSON type matters (e.g., FAPI 2.0 §5.3.2.1-2.8 strict {@code aud}-as-string
+   * check) since {@link #claims()} normalizes audience to a list.
+   */
+  public Map<String, Object> rawPayload() {
+    return jsonWebSignature.rawPayload();
+  }
+
+  /**
+   * Returns a single claim value from the raw payload, preserving its original JSON type.
+   *
+   * <p>Unlike {@link #claims()} which goes through Nimbus normalization, this returns the value
+   * exactly as it appeared on the wire (e.g., {@code aud} stays a {@code String} if it was sent as
+   * a string, or a {@code List<String>} if it was sent as an array).
+   *
+   * @param claimName the JWT claim name
+   * @return the raw value, or {@code null} if the claim is absent
+   */
+  public Object getFromRawPayload(String claimName) {
+    return rawPayload().get(claimName);
+  }
+
+  /**
+   * Returns {@code true} when the {@code aud} claim was sent as a JSON array on the wire.
+   *
+   * <p>Necessary because {@link #claims()} (Nimbus-backed) coerces a single-string {@code aud} to a
+   * list, hiding the original JSON shape. FAPI 2.0 §5.3.2.1-2.8 requires {@code aud} to be a string
+   * and rejects arrays.
+   */
+  public boolean isAudArray() {
+    return getFromRawPayload("aud") instanceof java.util.List;
   }
 
   public String subject() {

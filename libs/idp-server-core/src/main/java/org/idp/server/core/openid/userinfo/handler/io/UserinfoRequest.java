@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.userinfo.handler.io;
 
+import java.util.List;
+import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
@@ -25,6 +27,9 @@ public class UserinfoRequest implements AuthorizationHeaderHandlerable {
   Tenant tenant;
   String authorizationHeaders;
   String clientCert;
+  List<String> dpopProofHeaders;
+  String httpMethod;
+  String httpUri;
 
   public UserinfoRequest(Tenant tenant, String authorizationHeaders) {
     this.tenant = tenant;
@@ -53,6 +58,40 @@ public class UserinfoRequest implements AuthorizationHeaderHandlerable {
 
   public UserinfoRequest setClientCert(String clientCert) {
     this.clientCert = clientCert;
+    return this;
+  }
+
+  public DPoPProof dpopProof() {
+    if (dpopProofHeaders == null || dpopProofHeaders.isEmpty()) {
+      return new DPoPProof();
+    }
+    return new DPoPProof(dpopProofHeaders.get(0));
+  }
+
+  public List<String> dpopProofHeaders() {
+    return dpopProofHeaders;
+  }
+
+  public UserinfoRequest setDPoPProofHeaders(List<String> dpopProofHeaders) {
+    this.dpopProofHeaders = dpopProofHeaders;
+    return this;
+  }
+
+  public String httpMethod() {
+    return httpMethod != null ? httpMethod : "GET";
+  }
+
+  public UserinfoRequest setHttpMethod(String httpMethod) {
+    this.httpMethod = httpMethod;
+    return this;
+  }
+
+  public String httpUri() {
+    return httpUri != null ? httpUri : "";
+  }
+
+  public UserinfoRequest setHttpUri(String httpUri) {
+    this.httpUri = httpUri;
     return this;
   }
 

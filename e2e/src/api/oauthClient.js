@@ -22,6 +22,7 @@ export const createParams = ({
  requestUri,
  codeChallenge,
  codeChallengeMethod,
+ dpopJkt,
  authorizationDetails,
  customParams,
  clientSecret,
@@ -48,6 +49,7 @@ export const createParams = ({
     requestUri,
     codeChallenge,
     codeChallengeMethod,
+    dpopJkt,
     authorizationDetails,
     customParams,
     clientSecret,
@@ -83,6 +85,7 @@ export const createAuthorizationRequest = ({
  requestUri,
  codeChallenge,
  codeChallengeMethod,
+ dpopJkt,
  authorizationDetails,
  presentationDefinition,
  customParams
@@ -107,6 +110,7 @@ export const createAuthorizationRequest = ({
     requestUri,
     codeChallenge,
     codeChallengeMethod,
+    dpopJkt,
     authorizationDetails,
     presentationDefinition,
     customParams
@@ -137,6 +141,7 @@ export const getAuthorizations = async ({
   requestUri,
   codeChallenge,
   codeChallengeMethod,
+  dpopJkt,
   authorizationDetails,
   presentationDefinition,
   customParams
@@ -162,6 +167,7 @@ export const getAuthorizations = async ({
     requestUri,
     codeChallenge,
     codeChallengeMethod,
+    dpopJkt,
     authorizationDetails,
     presentationDefinition,
     customParams
@@ -352,7 +358,11 @@ export const inspectTokenWithVerification = async ({
  clientAssertionType,
  basicAuth,
  clientCert,
- clientCertFile
+ clientCertFile,
+ dpopProof,
+ dpopHtm,
+ dpopHtu,
+ additionalHeaders
 }) => {
   let params = new URLSearchParams();
   if (params) {
@@ -387,12 +397,31 @@ export const inspectTokenWithVerification = async ({
     params.append("client_cert", encoded);
   }
 
+  // RS forwarding pattern (RFC 8705 §3 + RFC 9449 §7): DPoP proof / htm / htu はすべて body 渡し。
+  // The /v1/tokens/introspection-extensions endpoint intentionally does NOT consult the DPoP HTTP
+  // header (that header would belong to the RS's own request, not the resource access being verified).
+  if (dpopProof) {
+    params.append("dpop_proof", dpopProof);
+  }
+  if (dpopHtm) {
+    params.append("dpop_htm", dpopHtm);
+  }
+  if (dpopHtu) {
+    params.append("dpop_htu", dpopHtu);
+  }
+
   let headers = basicAuth ? basicAuth : {};
   if (clientCertFile) {
     const encoded = encodedClientCert(clientCertFile);
     headers = {
       ...headers,
       "x-ssl-cert": encoded
+    };
+  }
+  if (additionalHeaders) {
+    headers = {
+      ...headers,
+      ...additionalHeaders
     };
   }
 
