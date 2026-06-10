@@ -288,25 +288,21 @@ public class IdentityVerificationApplicationEntryService
           });
     }
 
-    // ProcessSequenceVerifier reads configurationQueryRepository inside executeRequest, so a
-    // read-only transaction has to wrap this block until verifier pre-fetching is refactored
-    // (follow-up of #1573). The external HTTP call still happens inside it, so the connection is
-    // held for the call duration — but only the lightweight read connection, never the write one,
-    // and only when a verifier needs DB access.
+    // Verifiers and additional-parameter resolvers no longer touch the configuration repository
+    // (verificationConfiguration is passed in directly). The external HTTP call therefore runs
+    // entirely outside any DB transaction — no connection held, no row lock, no ACCESS SHARE on
+    // the configuration table for the duration of the remote response.
     IdentityVerificationApplyingResult applyingResult =
-        Transactions.readOnly(
-            tenantIdentifier,
-            () ->
-                identityVerificationApplicationHandler.executeRequest(
-                    tenant,
-                    user,
-                    application,
-                    applications,
-                    type,
-                    process,
-                    request,
-                    requestAttributes,
-                    verificationConfiguration));
+        identityVerificationApplicationHandler.executeRequest(
+            tenant,
+            user,
+            application,
+            applications,
+            type,
+            process,
+            request,
+            requestAttributes,
+            verificationConfiguration);
 
     if (applyingResult.isError()) {
       return Transactions.write(
