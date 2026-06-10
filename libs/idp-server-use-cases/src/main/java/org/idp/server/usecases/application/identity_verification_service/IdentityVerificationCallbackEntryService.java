@@ -80,8 +80,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
     this.identityVerificationApplicationHandler =
-        new IdentityVerificationApplicationHandler(
-            additional, httpRequestExecutor, configurationQueryRepository);
+        new IdentityVerificationApplicationHandler(additional, httpRequestExecutor);
     this.eventPublisher = eventPublisher;
   }
 

@@ -28,7 +28,6 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
-import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
@@ -42,16 +41,14 @@ public class IdentityVerificationApplicationRequestVerifiers {
   LoggerWrapper log =
       LoggerWrapper.getLogger(IdentityVerificationApplicationRequestVerifiers.class);
 
-  public IdentityVerificationApplicationRequestVerifiers(
-      IdentityVerificationConfigurationQueryRepository configurationRepository) {
+  public IdentityVerificationApplicationRequestVerifiers() {
     this.verifiers = new HashMap<>();
     DenyDuplicateIdentityVerificationApplicationVerifier denyDuplicate =
         new DenyDuplicateIdentityVerificationApplicationVerifier();
     this.verifiers.put(denyDuplicate.type(), denyDuplicate);
     UserClaimVerifier userClaimVerifier = new UserClaimVerifier();
     this.verifiers.put(userClaimVerifier.type(), userClaimVerifier);
-    ProcessSequenceVerifier processSequenceVerifier =
-        new ProcessSequenceVerifier(configurationRepository);
+    ProcessSequenceVerifier processSequenceVerifier = new ProcessSequenceVerifier();
     this.verifiers.put(processSequenceVerifier.type(), processSequenceVerifier);
     Map<String, IdentityVerificationApplicationRequestVerifier> loaded =
         IdentityVerificationApplicationRequestVerifierPluginLoader.load();
@@ -105,7 +102,8 @@ public class IdentityVerificationApplicationRequestVerifiers {
               processes,
               request,
               requestAttributes,
-              verificationConfig);
+              verificationConfig,
+              verificationConfiguration);
 
       if (verifyResult.isError()) {
         return verifyResult;

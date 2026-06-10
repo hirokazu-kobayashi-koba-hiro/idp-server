@@ -27,7 +27,6 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.process.IdentityVerificationProcessConfiguration;
 import org.idp.server.core.extension.identity.verification.configuration.process.ProcessDependencies;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
-import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -93,12 +92,7 @@ public class ProcessSequenceVerifier implements IdentityVerificationApplicationR
 
   private static final LoggerWrapper log = LoggerWrapper.getLogger(ProcessSequenceVerifier.class);
 
-  private final IdentityVerificationConfigurationQueryRepository configurationRepository;
-
-  public ProcessSequenceVerifier(
-      IdentityVerificationConfigurationQueryRepository configurationRepository) {
-    this.configurationRepository = configurationRepository;
-  }
+  public ProcessSequenceVerifier() {}
 
   @Override
   public String type() {
@@ -115,12 +109,11 @@ public class ProcessSequenceVerifier implements IdentityVerificationApplicationR
       IdentityVerificationProcess process,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
-      IdentityVerificationConfig verificationConfig) {
+      IdentityVerificationConfig verificationConfig,
+      IdentityVerificationConfiguration verificationConfiguration) {
 
-    // Get full configuration to access process dependencies
-    IdentityVerificationConfiguration configuration = configurationRepository.get(tenant, type);
     IdentityVerificationProcessConfiguration processConfig =
-        configuration.getProcessConfig(process);
+        verificationConfiguration.getProcessConfig(process);
     ProcessDependencies dependencies = processConfig.dependencies();
 
     log.debug(
