@@ -323,6 +323,173 @@ describe("Identity Verification Process Variations", () => {
     expect(updatedUser.custom_properties).toHaveProperty("verified_document_type", "driver_license");
   });
 
+  it("single process rejects immediately and does not update user", async () => {
+    const { user, accessToken } = await createTestUser();
+
+    const beforeUser = await getUser(user.sub);
+
+    const configId = uuidv4();
+    const type = uuidv4();
+    await registerConfiguration({
+      "id": configId,
+      "type": type,
+      "attributes": { "enabled": true },
+      "common": { "auth_type": "none" },
+      "processes": {
+        "register-rank": {
+          "request": {
+            "schema": {
+              "type": "object",
+              "required": ["action", "rank"],
+              "properties": {
+                "action": { "type": "string" },
+                "rank": { "type": "string" }
+              }
+            }
+          },
+          "execution": { "type": "no_action" },
+          "store": {
+            "application_details_mapping_rules": [
+              { "from": "$.request_body", "to": "*" }
+            ]
+          },
+          "transition": {
+            "approved": {
+              "any_of": [
+                [
+                  {
+                    "path": "$.request_body.action",
+                    "type": "string",
+                    "operation": "eq",
+                    "value": "register"
+                  }
+                ]
+              ]
+            },
+            "rejected": {
+              "any_of": [
+                [
+                  {
+                    "path": "$.request_body.action",
+                    "type": "string",
+                    "operation": "eq",
+                    "value": "deny"
+                  }
+                ]
+              ]
+            }
+          }
+        }
+      },
+      "result": {
+        "custom_properties_mapping_rules": [
+          { "from": "$.request_body.rank", "to": "membership_rank" }
+        ]
+      }
+    });
+
+    const applyUrl = serverConfig.identityVerificationApplyEndpoint
+      .replace("{type}", type)
+      .replace("{process}", "register-rank");
+
+    const response = await callProcess({
+      url: applyUrl,
+      accessToken,
+      body: { "action": "deny", "rank": "gold" }
+    });
+    expect(response.status).toBe(200);
+    const applicationId = response.data.id;
+
+    // 申込みは即時 rejected になる
+    const applicationsResponse = await get({
+      url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}`,
+      headers: { "Authorization": `Bearer ${accessToken}` }
+    });
+    expect(applicationsResponse.status).toBe(200);
+    expect(applicationsResponse.data.list.length).toBe(1);
+    expect(applicationsResponse.data.list[0].status).toBe("rejected");
+
+    // ユーザーは更新されない
+    const afterUser = await getUser(user.sub);
+    console.log("User after immediate rejection:", JSON.stringify(afterUser, null, 2));
+    expect(afterUser.status).toBe(beforeUser.status);
+    if (afterUser.custom_properties) {
+      expect(afterUser.custom_properties).not.toHaveProperty("membership_rank");
+    }
+  });
+
+  it("direct registration route updates user attributes with result extension", async () => {
+    const { user } = await createTestUser();
+
+    const beforeUser = await getUser(user.sub);
+
+    const configId = uuidv4();
+    const type = uuidv4();
+    const basicAuth = { username: "direct_reg_user", password: "direct_reg_password001" };
+
+    await registerConfiguration({
+      "id": configId,
+      "type": type,
+      "attributes": { "enabled": true },
+      "registration": {
+        "basic_auth": basicAuth,
+        "request_validation_schema": {
+          "type": "object",
+          "required": ["user_id", "last_name"],
+          "properties": {
+            "user_id": { "type": "string" },
+            "last_name": { "type": "string" },
+            "first_name": { "type": "string" },
+            "kyc_level": { "type": "string" }
+          }
+        }
+      },
+      "result": {
+        // 直接登録のコンテキストは request_body のみ（application は無い）
+        "verified_claims_mapping_rules": [
+          { "static_value": "eidas", "to": "verification.trust_framework" },
+          { "from": "$.request_body.last_name", "to": "claims.family_name" }
+        ],
+        "user_claims_mapping_rules": [
+          { "from": "$.request_body.last_name", "to": "family_name" },
+          { "from": "$.request_body.first_name", "to": "given_name" }
+        ],
+        "custom_properties_mapping_rules": [
+          { "from": "$.request_body.kyc_level", "to": "kyc_level" }
+        ],
+        "user_status": "KEEP"
+      }
+    });
+
+    // 外部サービスが審査済み結果を直接登録（Basic認証）
+    const registrationUrl = serverConfig.identityVerificationResultEndpoint.replace("{type}", type);
+    const registrationResponse = await callProcess({
+      url: registrationUrl,
+      headers: {
+        "Content-Type": "application/json",
+        ...createBasicAuthHeader(basicAuth)
+      },
+      body: {
+        "user_id": user.sub,
+        "last_name": "Takahashi",
+        "first_name": "Goro",
+        "kyc_level": "platinum"
+      }
+    });
+    expect(registrationResponse.status).toBe(200);
+
+    const updatedUser = await getUser(user.sub);
+    console.log("User after direct registration:", JSON.stringify(updatedUser, null, 2));
+
+    // 直接登録経路でも result 拡張が適用される
+    expect(updatedUser).toHaveProperty("family_name", "Takahashi");
+    expect(updatedUser).toHaveProperty("given_name", "Goro");
+    expect(updatedUser.custom_properties).toHaveProperty("kyc_level", "platinum");
+    expect(updatedUser.verified_claims.claims).toHaveProperty("family_name", "Takahashi");
+    // user_status: KEEP のためステータスは現状維持
+    expect(updatedUser.status).toBe(beforeUser.status);
+  });
+
   it("callback from external service approves and updates user attributes", async () => {
     const { user, accessToken } = await createTestUser();
 

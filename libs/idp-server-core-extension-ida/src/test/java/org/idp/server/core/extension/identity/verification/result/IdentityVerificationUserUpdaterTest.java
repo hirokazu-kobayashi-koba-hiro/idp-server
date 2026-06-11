@@ -27,6 +27,7 @@ import org.idp.server.core.extension.identity.verification.configuration.verifie
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
+import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.json.JsonConverter;
 import org.junit.jupiter.api.Test;
 
@@ -155,6 +156,50 @@ class IdentityVerificationUserUpdaterTest {
     assertEquals(UserStatus.REGISTERED, updated.status());
     assertFalse(updated.customPropertiesValue().containsKey("injected"));
     assertEquals("existing_value", updated.customPropertiesValue().get("existing_key"));
+  }
+
+  @Test
+  void testInvalidUserStatusFailsClosed() {
+    User user = registeredUser();
+    IdentityVerificationResultConfig resultConfig = config(Map.of("user_status", "TYPO_STATUS"));
+
+    // 不正な設定値は UNKNOWN になり、ライフサイクル遷移で拒否される（fail-closed）
+    assertThrows(
+        UnSupportedException.class,
+        () -> IdentityVerificationUserUpdater.update(user, context(Map.of()), resultConfig));
+  }
+
+  @Test
+  void testDisallowedLifecycleTransitionFailsClosed() {
+    User user = registeredUser().setStatus(UserStatus.IDENTITY_VERIFIED);
+    // IDENTITY_VERIFIED -> REGISTERED は UserLifecycleManager で許可されていない
+    IdentityVerificationResultConfig resultConfig = config(Map.of("user_status", "REGISTERED"));
+
+    assertThrows(
+        UnSupportedException.class,
+        () -> IdentityVerificationUserUpdater.update(user, context(Map.of()), resultConfig));
+  }
+
+  @Test
+  void testMissingSourcePathKeepsExistingValues() {
+    User user = registeredUser().setFamilyName("Original");
+    IdentityVerificationResultConfig resultConfig =
+        config(
+            Map.of(
+                "user_claims_mapping_rules",
+                List.of(
+                    Map.of("from", "$.request_body.nonexistent_field", "to", "family_name"),
+                    Map.of("from", "$.request_body.first_name", "to", "given_name")),
+                "user_status",
+                "KEEP"));
+
+    User updated =
+        IdentityVerificationUserUpdater.update(
+            user, context(Map.of("first_name", "Hanako")), resultConfig);
+
+    // マッピング元が存在しない項目は既存値を保持し、存在する項目だけ更新される
+    assertEquals("Original", updated.familyName());
+    assertEquals("Hanako", updated.givenName());
   }
 
   @Test
