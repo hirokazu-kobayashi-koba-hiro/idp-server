@@ -21,13 +21,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.platform.json.JsonReadable;
 import org.idp.server.platform.mapper.MappingRule;
 
 public class IdentityVerificationResultConfig implements JsonReadable {
 
+  static final String USER_STATUS_KEEP = "KEEP";
+
   List<MappingRule> verifiedClaimsMappingRules = new ArrayList<>();
   List<MappingRule> sourceDetailsMappingRules = new ArrayList<>();
+  List<MappingRule> userClaimsMappingRules = new ArrayList<>();
+  List<MappingRule> customPropertiesMappingRules = new ArrayList<>();
+  String userStatus;
 
   public IdentityVerificationResultConfig() {}
 
@@ -65,6 +71,53 @@ public class IdentityVerificationResultConfig implements JsonReadable {
     return sourceDetailsMappingRules.stream().map(MappingRule::toMap).collect(Collectors.toList());
   }
 
+  public List<MappingRule> userClaimsMappingRules() {
+    if (userClaimsMappingRules == null) {
+      return new ArrayList<>();
+    }
+    return userClaimsMappingRules;
+  }
+
+  public List<Map<String, Object>> userClaimsMappingRulesAsMap() {
+    return userClaimsMappingRules().stream().map(MappingRule::toMap).collect(Collectors.toList());
+  }
+
+  public boolean hasUserClaimsMappingRules() {
+    return userClaimsMappingRules != null && !userClaimsMappingRules.isEmpty();
+  }
+
+  public List<MappingRule> customPropertiesMappingRules() {
+    if (customPropertiesMappingRules == null) {
+      return new ArrayList<>();
+    }
+    return customPropertiesMappingRules;
+  }
+
+  public List<Map<String, Object>> customPropertiesMappingRulesAsMap() {
+    return customPropertiesMappingRules().stream()
+        .map(MappingRule::toMap)
+        .collect(Collectors.toList());
+  }
+
+  public boolean hasCustomPropertiesMappingRules() {
+    return customPropertiesMappingRules != null && !customPropertiesMappingRules.isEmpty();
+  }
+
+  public boolean hasUserStatus() {
+    return userStatus != null && !userStatus.isEmpty();
+  }
+
+  public boolean requiresUserStatusTransition() {
+    return !hasUserStatus() || !USER_STATUS_KEEP.equalsIgnoreCase(userStatus);
+  }
+
+  public UserStatus userStatus() {
+    if (!hasUserStatus()) {
+      return UserStatus.IDENTITY_VERIFIED;
+    }
+    return UserStatus.of(userStatus);
+  }
+
   public boolean exists() {
     return verifiedClaimsMappingRules != null && !verifiedClaimsMappingRules.isEmpty();
   }
@@ -73,6 +126,9 @@ public class IdentityVerificationResultConfig implements JsonReadable {
     Map<String, Object> map = new HashMap<>();
     map.put("verified_claims_mapping_rules", verifiedClaimsMappingRulesAsMap());
     map.put("source_details_mapping_rules", sourceDetailsMappingRulesAsMap());
+    map.put("user_claims_mapping_rules", userClaimsMappingRulesAsMap());
+    map.put("custom_properties_mapping_rules", customPropertiesMappingRulesAsMap());
+    if (hasUserStatus()) map.put("user_status", userStatus);
     return map;
   }
 }
