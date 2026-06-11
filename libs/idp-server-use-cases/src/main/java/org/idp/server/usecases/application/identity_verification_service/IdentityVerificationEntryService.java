@@ -37,10 +37,10 @@ import org.idp.server.core.extension.identity.verification.repository.IdentityVe
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultQueryRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultQueries;
+import org.idp.server.core.extension.identity.verification.result.IdentityVerificationUserUpdater;
 import org.idp.server.core.extension.identity.verified.VerifiedClaims;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
-import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -130,9 +130,9 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     resultCommandRepository.register(tenant, identityVerificationResult);
 
-    // TODO dynamic lifecycle management (#1268)
     User verifiedUser =
-        user.transitStatus(UserStatus.IDENTITY_VERIFIED).setVerifiedClaims(verifiedClaims.toMap());
+        IdentityVerificationUserUpdater.update(user, context, verificationConfiguration.result())
+            .setVerifiedClaims(verifiedClaims.toMap());
 
     userCommandRepository.update(tenant, verifiedUser);
 

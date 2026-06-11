@@ -67,7 +67,11 @@ libs/
     }
   },
   "result": {
-    "verified_claims_mapping_rules": []
+    "verified_claims_mapping_rules": [],
+    "source_details_mapping_rules": [],
+    "user_claims_mapping_rules": [],
+    "custom_properties_mapping_rules": [],
+    "user_status": "IDENTITY_VERIFIED | KEEP | <UserStatus名>"
   }
 }
 ```
@@ -264,6 +268,32 @@ Phase 7: Response → IdentityVerificationApplyingResult を返却
 
 `to` のパスは `verification.*`（信頼フレームワーク等）と `claims.*`（クレーム値）の2系統。
 値の指定方法は `static_value`（固定値）と `from`（JSONPath）の2種。
+
+### ユーザー属性更新（result セクション拡張）
+
+承認時に verified_claims 以外のユーザー属性も更新できる。
+
+```json
+"result": {
+  "user_claims_mapping_rules": [
+    { "from": "$.application.application_details.last_name", "to": "family_name" }
+  ],
+  "custom_properties_mapping_rules": [
+    { "from": "$.application.application_details.kyc_level", "to": "kyc_level" }
+  ],
+  "user_status": "KEEP"
+}
+```
+
+| 設定 | 更新先 | セマンティクス |
+|------|-------|--------------|
+| `user_claims_mapping_rules` | 標準クレーム（family_name等） | `User.updateWith()` による部分パッチ。`status`/`custom_properties` キーは無視（専用設定を使う） |
+| `custom_properties_mapping_rules` | custom_properties | `User.addCustomProperties()` によるキー単位マージ |
+| `user_status` | ユーザーステータス | 省略時 `IDENTITY_VERIFIED`（後方互換）、`KEEP` で現状維持、その他 `UserStatus` 名で指定遷移。`UserLifecycleManager` の遷移ルール適用、同一ステータスは no-op |
+
+**実装**: `IdentityVerificationUserUpdater`（result パッケージ）。申込み承認・コールバック承認・直接登録の3経路全てに適用される。
+
+**E2E**: `integration-10-identity-verification-user-attribute-update.test.js`
 
 ### SSOクレデンシャル連携（pre_hook: sso_credentials）
 
