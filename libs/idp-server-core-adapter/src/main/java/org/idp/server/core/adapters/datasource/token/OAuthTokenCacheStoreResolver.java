@@ -24,6 +24,8 @@ public class OAuthTokenCacheStoreResolver {
 
   private static final String ENV_TOKEN_CACHE_ENABLED = "TOKEN_CACHE_ENABLED";
 
+  public static final int TOKEN_CACHE_TTL_SECONDS = 60;
+
   public static CacheStore resolve(ApplicationComponentDependencyContainer container) {
     String tokenCacheEnabled = System.getenv(ENV_TOKEN_CACHE_ENABLED);
     if (!"true".equalsIgnoreCase(tokenCacheEnabled)) {

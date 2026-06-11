@@ -103,7 +103,7 @@ public interface CacheStore {
 | **ClientConfiguration** | `client:{tenant_id}:{client_id}` | ClientConfigurationQueryDataSource | OAuth/OIDCリクエスト検証 |
 | **AuthorizationServerConfiguration** | `authz_server:{tenant_id}` | AuthorizationServerConfigurationQueryDataSource | トークン発行設定 |
 | **パスワード試行カウンター** | `password_attempt:{tenant_id}:{username}` | PasswordAuthenticationExecutor | ブルートフォース対策（`increment`使用） |
-| **OAuthToken** | `oauth_token:at:{tenant_id}:{hmac(access_token)}` | OAuthTokenQueryDataSource | Introspection高速化（`TOKEN_CACHE_ENABLED=true`時のみ） |
+| **OAuthToken** | `oauth_token:at:{tenant_id}:{hmac(access_token)}` | OAuthTokenCommandDataSource (発行時 write-through) + OAuthTokenQueryDataSource (Introspection 時 cache-aside) | Introspection 高速化（`TOKEN_CACHE_ENABLED=true`時のみ）。発行時にも書き込むことで reader 接続のレプリケーション遅延を回避 |
 
 **TTL**: デフォルト5分（CacheConfiguration で設定可能）。パスワード試行カウンターはテナントの `password_policy.lockout_duration_seconds`（デフォルト900秒）を使用。OAuthTokenキャッシュは60秒固定。
 

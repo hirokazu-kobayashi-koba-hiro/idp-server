@@ -17,6 +17,7 @@
 package org.idp.server.core.adapters.datasource.token.command;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
@@ -32,7 +33,8 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
-  public void insert(OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher) {
+  public Map<String, String> insert(
+      OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
         """
@@ -102,99 +104,166 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             );
                           """;
 
-    AuthorizationGrant authorizationGrant = oAuthToken.accessToken().authorizationGrant();
     List<Object> params = new ArrayList<>();
-    params.add(oAuthToken.identifier().valueAsUuid());
-    params.add(oAuthToken.tenantIdentifier().valueAsUuid());
-    params.add(oAuthToken.tokenIssuer().value());
-    params.add(oAuthToken.tokenType().name());
-    params.add(toEncryptedJson(oAuthToken.accessTokenEntity().value(), aesCipher));
-    params.add(hmacHasher.hash(oAuthToken.accessTokenEntity().value()));
+    Map<String, String> row = buildParamsAndRow(oAuthToken, aesCipher, hmacHasher, params);
+
+    sqlExecutor.execute(sqlTemplate, params);
+    return row;
+  }
+
+  /**
+   * Builds the INSERT params and the cache-shaped row in lockstep, without touching the database,
+   * so the cache can be warmed without an extra SELECT. The row's key set is guarded against the
+   * query-side SELECT columns by {@code OAuthTokenInsertRowParityTest}.
+   */
+  Map<String, String> buildParamsAndRow(
+      OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher, List<Object> params) {
+    AuthorizationGrant authorizationGrant = oAuthToken.accessToken().authorizationGrant();
+    Map<String, String> row = new LinkedHashMap<>();
+
+    OAuthTokenRowBuilder.add(params, row, "id", oAuthToken.identifier().valueAsUuid());
+    OAuthTokenRowBuilder.add(params, row, "tenant_id", oAuthToken.tenantIdentifier().valueAsUuid());
+    OAuthTokenRowBuilder.add(params, row, "token_issuer", oAuthToken.tokenIssuer().value());
+    OAuthTokenRowBuilder.add(params, row, "token_type", oAuthToken.tokenType().name());
+    OAuthTokenRowBuilder.add(
+        params,
+        row,
+        "encrypted_access_token",
+        toEncryptedJson(oAuthToken.accessTokenEntity().value(), aesCipher));
+    OAuthTokenRowBuilder.add(
+        params,
+        row,
+        "hashed_access_token",
+        hmacHasher.hash(oAuthToken.accessTokenEntity().value()));
     if (oAuthToken.hasCustomClaims()) {
-      params.add(jsonConverter.write(oAuthToken.accessToken().customClaims().toMap()));
+      OAuthTokenRowBuilder.add(
+          params,
+          row,
+          "access_token_custom_claims",
+          jsonConverter.write(oAuthToken.accessToken().customClaims().toMap()));
     } else {
-      params.add(null);
+      OAuthTokenRowBuilder.add(params, row, "access_token_custom_claims", (Object) null);
     }
 
     if (authorizationGrant.hasUser()) {
-      params.add((authorizationGrant.user().subAsUuid()));
-      params.add(toJson(authorizationGrant.user()));
+      OAuthTokenRowBuilder.add(params, row, "user_id", authorizationGrant.user().subAsUuid());
+      OAuthTokenRowBuilder.add(params, row, "user_payload", toJson(authorizationGrant.user()));
     } else {
-      params.add(null);
-      params.add(null);
+      OAuthTokenRowBuilder.add(params, row, "user_id", (Object) null);
+      OAuthTokenRowBuilder.add(params, row, "user_payload", (Object) null);
     }
 
-    params.add(toJson(authorizationGrant.authentication()));
-    params.add(authorizationGrant.requestedClientId().value());
-    params.add(toJson(authorizationGrant.clientAttributes()));
-    params.add(authorizationGrant.grantType().name());
-    params.add(authorizationGrant.scopes().toStringValues());
+    OAuthTokenRowBuilder.add(
+        params, row, "authentication", toJson(authorizationGrant.authentication()));
+    OAuthTokenRowBuilder.add(
+        params, row, "client_id", authorizationGrant.requestedClientId().value());
+    OAuthTokenRowBuilder.add(
+        params, row, "client_payload", toJson(authorizationGrant.clientAttributes()));
+    OAuthTokenRowBuilder.add(params, row, "grant_type", authorizationGrant.grantType().name());
+    OAuthTokenRowBuilder.add(params, row, "scopes", authorizationGrant.scopes().toStringValues());
 
     if (authorizationGrant.hasIdTokenClaims()) {
-      params.add(authorizationGrant.idTokenClaims().toStringValues());
+      OAuthTokenRowBuilder.add(
+          params, row, "id_token_claims", authorizationGrant.idTokenClaims().toStringValues());
     } else {
-      params.add("");
+      OAuthTokenRowBuilder.add(params, row, "id_token_claims", "");
     }
 
     if (authorizationGrant.hasUserinfoClaim()) {
-      params.add(authorizationGrant.userinfoClaims().toStringValues());
+      OAuthTokenRowBuilder.add(
+          params, row, "userinfo_claims", authorizationGrant.userinfoClaims().toStringValues());
     } else {
-      params.add("");
+      OAuthTokenRowBuilder.add(params, row, "userinfo_claims", "");
     }
 
     if (authorizationGrant.hasCustomProperties()) {
-      params.add(toJson(authorizationGrant.customProperties().values()));
+      OAuthTokenRowBuilder.add(
+          params, row, "custom_properties", toJson(authorizationGrant.customProperties().values()));
     } else {
-      params.add("{}");
+      OAuthTokenRowBuilder.add(params, row, "custom_properties", "{}");
     }
 
     if (authorizationGrant.hasAuthorizationDetails()) {
-      params.add(toJson(authorizationGrant.authorizationDetails().toMapValues()));
+      OAuthTokenRowBuilder.add(
+          params,
+          row,
+          "authorization_details",
+          toJson(authorizationGrant.authorizationDetails().toMapValues()));
     } else {
-      params.add("[]");
+      OAuthTokenRowBuilder.add(params, row, "authorization_details", "[]");
     }
 
-    params.add(oAuthToken.accessToken().expiresIn().toStringValue());
-    params.add(oAuthToken.accessToken().expiresAt().toLocalDateTime());
-    params.add(oAuthToken.accessToken().createdAt().toLocalDateTime());
+    OAuthTokenRowBuilder.add(
+        params, row, "expires_in", oAuthToken.accessToken().expiresIn().toStringValue());
+    OAuthTokenRowBuilder.add(
+        params,
+        row,
+        "access_token_expires_at",
+        oAuthToken.accessToken().expiresAt().toLocalDateTime());
+    OAuthTokenRowBuilder.add(
+        params,
+        row,
+        "access_token_created_at",
+        oAuthToken.accessToken().createdAt().toLocalDateTime());
 
     if (oAuthToken.hasRefreshToken()) {
-      params.add(toEncryptedJson(oAuthToken.refreshTokenEntity().value(), aesCipher));
-      params.add(hmacHasher.hash(oAuthToken.refreshTokenEntity().value()));
-      params.add(oAuthToken.refreshToken().createdAt().toLocalDateTime());
-      params.add(oAuthToken.refreshToken().expiresAt().toLocalDateTime());
+      OAuthTokenRowBuilder.add(
+          params,
+          row,
+          "encrypted_refresh_token",
+          toEncryptedJson(oAuthToken.refreshTokenEntity().value(), aesCipher));
+      OAuthTokenRowBuilder.add(
+          params,
+          row,
+          "hashed_refresh_token",
+          hmacHasher.hash(oAuthToken.refreshTokenEntity().value()));
+      OAuthTokenRowBuilder.add(
+          params,
+          row,
+          "refresh_token_created_at",
+          oAuthToken.refreshToken().createdAt().toLocalDateTime());
+      OAuthTokenRowBuilder.add(
+          params,
+          row,
+          "refresh_token_expires_at",
+          oAuthToken.refreshToken().expiresAt().toLocalDateTime());
     } else {
-      params.add(null);
-      params.add(null);
-      params.add(null);
-      params.add(null);
+      OAuthTokenRowBuilder.add(params, row, "encrypted_refresh_token", (Object) null);
+      OAuthTokenRowBuilder.add(params, row, "hashed_refresh_token", (Object) null);
+      OAuthTokenRowBuilder.add(params, row, "refresh_token_created_at", (Object) null);
+      OAuthTokenRowBuilder.add(params, row, "refresh_token_expires_at", (Object) null);
     }
 
     if (oAuthToken.hasIdToken()) {
-      params.add(oAuthToken.idToken().value());
+      OAuthTokenRowBuilder.add(params, row, "id_token", oAuthToken.idToken().value());
     } else {
-      params.add("");
+      OAuthTokenRowBuilder.add(params, row, "id_token", "");
     }
     if (oAuthToken.hasClientCertification()) {
-      params.add(oAuthToken.accessToken().clientCertificationThumbprint().value());
+      OAuthTokenRowBuilder.add(
+          params,
+          row,
+          "client_certification_thumbprint",
+          oAuthToken.accessToken().clientCertificationThumbprint().value());
     } else {
-      params.add("");
+      OAuthTokenRowBuilder.add(params, row, "client_certification_thumbprint", "");
     }
 
     if (oAuthToken.hasCNonce()) {
-      params.add(oAuthToken.cNonce().value());
+      OAuthTokenRowBuilder.add(params, row, "c_nonce", oAuthToken.cNonce().value());
     } else {
-      params.add("");
+      OAuthTokenRowBuilder.add(params, row, "c_nonce", "");
     }
 
     if (oAuthToken.hasCNonceExpiresIn()) {
-      params.add(oAuthToken.cNonceExpiresIn().toStringValue());
+      OAuthTokenRowBuilder.add(
+          params, row, "c_nonce_expires_in", oAuthToken.cNonceExpiresIn().toStringValue());
     } else {
-      params.add("");
+      OAuthTokenRowBuilder.add(params, row, "c_nonce_expires_in", "");
     }
-    params.add(oAuthToken.expiresAt().toLocalDateTime());
+    OAuthTokenRowBuilder.add(params, row, "expires_at", oAuthToken.expiresAt().toLocalDateTime());
 
-    sqlExecutor.execute(sqlTemplate, params);
+    return row;
   }
 
   private String toJson(Object value) {

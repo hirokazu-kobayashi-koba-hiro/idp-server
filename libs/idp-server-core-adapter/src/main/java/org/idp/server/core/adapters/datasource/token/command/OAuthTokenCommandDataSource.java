@@ -17,7 +17,9 @@
 package org.idp.server.core.adapters.datasource.token.command;
 
 import java.util.List;
+import java.util.Map;
 import org.idp.server.core.adapters.datasource.token.OAuthTokenCacheKeyBuilder;
+import org.idp.server.core.adapters.datasource.token.query.OAuthTokenCacheEntry;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -35,26 +37,39 @@ public class OAuthTokenCommandDataSource implements OAuthTokenCommandRepository 
   AesCipher aesCipher;
   HmacHasher hmacHasher;
   CacheStore cacheStore;
+  int cacheTtlSeconds;
 
   public OAuthTokenCommandDataSource(
       OAuthTokenSqlExecutor executor, AesCipher aesCipher, HmacHasher hmacHasher) {
-    this(executor, aesCipher, hmacHasher, new NoOperationCacheStore());
+    this(executor, aesCipher, hmacHasher, new NoOperationCacheStore(), 0);
   }
 
   public OAuthTokenCommandDataSource(
       OAuthTokenSqlExecutor executor,
       AesCipher aesCipher,
       HmacHasher hmacHasher,
-      CacheStore cacheStore) {
+      CacheStore cacheStore,
+      int cacheTtlSeconds) {
     this.executor = executor;
     this.aesCipher = aesCipher;
     this.hmacHasher = hmacHasher;
     this.cacheStore = cacheStore;
+    this.cacheTtlSeconds = cacheTtlSeconds;
   }
 
   @Override
   public void register(Tenant tenant, OAuthToken oAuthToken) {
-    executor.insert(oAuthToken, aesCipher, hmacHasher);
+    // insert returns the row in the same shape as query.selectOneByAccessToken, built in lockstep
+    // with the INSERT params. This lets us warm the cache without an additional SELECT (which would
+    // either hit the read replica and be subject to replication lag, or add a round trip on the
+    // primary).
+    Map<String, String> row = executor.insert(oAuthToken, aesCipher, hmacHasher);
+    if (row != null && !row.isEmpty()) {
+      String cacheKey =
+          OAuthTokenCacheKeyBuilder.build(
+              tenant.identifierValue(), hmacHasher.hash(oAuthToken.accessTokenEntity().value()));
+      cacheStore.put(cacheKey, new OAuthTokenCacheEntry(row), cacheTtlSeconds);
+    }
   }
 
   @Override
