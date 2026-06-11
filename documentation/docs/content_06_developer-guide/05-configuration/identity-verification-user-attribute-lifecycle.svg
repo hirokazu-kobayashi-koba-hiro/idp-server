@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 920" font-family="'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#555555"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2e7d32"/>
+    </marker>
+    <marker id="arrowPurple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5e35b1"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="920" fill="#ffffff"/>
+  <text x="40" y="36" font-size="20" font-weight="bold" fill="#212121">身元確認（Identity Verification）とユーザー属性のライフサイクル</text>
+
+  <!-- ===== Lane 1: Application lifecycle ===== -->
+  <rect x="20" y="56" width="1160" height="240" rx="10" fill="#f8f9fa" stroke="#e0e0e0"/>
+  <text x="40" y="84" font-size="15" font-weight="bold" fill="#37474f">① 申込みライフサイクル — プロセス実行ごとに transition（approved / rejected / cancelled / applied）を評価</text>
+  <text x="40" y="106" font-size="12" fill="#616161">トリガー: apply（初回プロセス）/ process（後続プロセス）/ callback（外部サービスからの審査結果通知）</text>
+
+  <!-- single process shortcut -->
+  <path d="M 115 126 C 115 88, 880 84, 1012 122" fill="none" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arrowGreen)"/>
+  <text x="430" y="96" font-size="12" fill="#2e7d32">単一プロセス構成なら申込みと同時に承認も可</text>
+
+  <!-- status boxes -->
+  <rect x="40" y="126" width="150" height="44" rx="8" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="115" y="153" font-size="14" text-anchor="middle" fill="#0d47a1">requested（初期）</text>
+
+  <rect x="240" y="126" width="330" height="44" rx="8" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="405" y="145" font-size="13" text-anchor="middle" fill="#0d47a1">applying / applied / examination_processing</text>
+  <text x="405" y="163" font-size="11.5" text-anchor="middle" fill="#1565c0">（設定した transition 条件に従って遷移）</text>
+
+  <rect x="950" y="126" width="140" height="44" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="1020" y="153" font-size="14" font-weight="bold" text-anchor="middle" fill="#1b5e20">approved</text>
+
+  <rect x="950" y="186" width="140" height="36" rx="8" fill="#ffebee" stroke="#c62828"/>
+  <text x="1020" y="209" font-size="13" text-anchor="middle" fill="#b71c1c">rejected</text>
+
+  <rect x="950" y="228" width="140" height="36" rx="8" fill="#eceff1" stroke="#607d8b"/>
+  <text x="1020" y="251" font-size="13" text-anchor="middle" fill="#455a64">cancelled</text>
+
+  <text x="950" y="284" font-size="11.5" fill="#b71c1c">ユーザー属性は更新されない</text>
+
+  <!-- flow arrows -->
+  <line x1="190" y1="148" x2="234" y2="148" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 570 148 L 760 148" fill="none" stroke="#555555" stroke-width="1.5"/>
+  <path d="M 760 148 L 944 148" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 760 148 L 760 204 L 944 204" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 760 148 L 760 246 L 944 246" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- approved to lane 2 -->
+  <path d="M 1090 148 L 1150 148 L 1150 306" fill="none" stroke="#2e7d32" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <text x="1158" y="236" font-size="13" font-weight="bold" fill="#2e7d32">承認</text>
+
+  <!-- ===== Lane 2: result evaluation ===== -->
+  <rect x="20" y="312" width="1160" height="270" rx="10" fill="#f8f9fa" stroke="#e0e0e0"/>
+  <text x="40" y="340" font-size="15" font-weight="bold" fill="#37474f">② 承認（approved）時のみ result セクションを評価</text>
+
+  <rect x="40" y="348" width="700" height="210" rx="10" fill="#ffffff" stroke="#ef6c00" stroke-width="1.5"/>
+
+  <rect x="60" y="364" width="340" height="36" rx="6" fill="#fff3e0" stroke="#ef6c00"/>
+  <text x="70" y="387" font-size="12.5" font-family="Menlo, Consolas, monospace" fill="#e65100">verified_claims_mapping_rules</text>
+  <line x1="404" y1="382" x2="436" y2="382" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="444" y="387" font-size="13" fill="#424242">verified_claims を生成（OIDC4IDA 準拠）</text>
+
+  <rect x="60" y="412" width="340" height="36" rx="6" fill="#fff3e0" stroke="#ef6c00"/>
+  <text x="70" y="435" font-size="12.5" font-family="Menlo, Consolas, monospace" fill="#e65100">user_claims_mapping_rules</text>
+  <line x1="404" y1="430" x2="436" y2="430" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="444" y="435" font-size="13" fill="#424242">標準クレームのパッチを生成</text>
+
+  <rect x="60" y="460" width="340" height="36" rx="6" fill="#fff3e0" stroke="#ef6c00"/>
+  <text x="70" y="483" font-size="12.5" font-family="Menlo, Consolas, monospace" fill="#e65100">custom_properties_mapping_rules</text>
+  <line x1="404" y1="478" x2="436" y2="478" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="444" y="483" font-size="13" fill="#424242">業務属性のマージ値を生成</text>
+
+  <rect x="60" y="508" width="340" height="36" rx="6" fill="#fff3e0" stroke="#ef6c00"/>
+  <text x="70" y="531" font-size="12.5" font-family="Menlo, Consolas, monospace" fill="#e65100">user_status</text>
+  <line x1="404" y1="526" x2="436" y2="526" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="444" y="531" font-size="13" fill="#424242">承認後のユーザーステータスを決定</text>
+
+  <!-- direct registration -->
+  <rect x="800" y="372" width="360" height="110" rx="10" fill="#ede7f6" stroke="#5e35b1" stroke-width="1.5"/>
+  <text x="816" y="398" font-size="13.5" font-weight="bold" fill="#4527a0">直接登録（internal registration API）</text>
+  <text x="816" y="422" font-size="12" fill="#4527a0">申込みフローを経由せず、外部サービスが</text>
+  <text x="816" y="440" font-size="12" fill="#4527a0">審査済みの結果を直接登録（Basic 認証）</text>
+  <text x="816" y="464" font-size="11.5" fill="#7e57c2">コンテキストは request_body のみ（application なし）</text>
+  <path d="M 800 427 L 748 427" fill="none" stroke="#5e35b1" stroke-width="2" marker-end="url(#arrowPurple)"/>
+
+  <!-- ===== Lane 3: user entity update ===== -->
+  <rect x="20" y="598" width="1160" height="290" rx="10" fill="#f8f9fa" stroke="#e0e0e0"/>
+  <text x="40" y="626" font-size="15" font-weight="bold" fill="#37474f">③ User エンティティへの反映 — 1 回の userCommandRepository.update に集約（同一トランザクション）</text>
+
+  <path d="M 215 558 L 215 640" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 390 558 L 390 588 L 590 588 L 590 640" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 600 558 L 600 576 L 965 576 L 965 640" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="40" y="646" width="350" height="84" rx="8" fill="#e8eaf6" stroke="#3949ab"/>
+  <text x="215" y="672" font-size="13.5" font-weight="bold" text-anchor="middle" font-family="Menlo, Consolas, monospace" fill="#283593">verified_claims</text>
+  <text x="215" y="696" font-size="12.5" text-anchor="middle" fill="#37474f">キー単位マージ（mergeVerifiedClaims）</text>
+  <text x="215" y="716" font-size="11.5" text-anchor="middle" fill="#616161">※ 直接登録経路は完全置換（setVerifiedClaims）</text>
+
+  <rect x="415" y="646" width="350" height="84" rx="8" fill="#e8eaf6" stroke="#3949ab"/>
+  <text x="590" y="672" font-size="13.5" font-weight="bold" text-anchor="middle" fill="#283593">標準クレーム（family_name / address 等）</text>
+  <text x="590" y="696" font-size="12.5" text-anchor="middle" fill="#37474f">部分パッチ（updateWith）— マッピング項目のみ更新</text>
+  <text x="590" y="716" font-size="11.5" text-anchor="middle" fill="#616161">sub・パスワード・権限系は保護 / status・custom_properties は無視</text>
+
+  <rect x="790" y="646" width="350" height="84" rx="8" fill="#e8eaf6" stroke="#3949ab"/>
+  <text x="965" y="672" font-size="13.5" font-weight="bold" text-anchor="middle" font-family="Menlo, Consolas, monospace" fill="#283593">custom_properties</text>
+  <text x="965" y="696" font-size="12.5" text-anchor="middle" fill="#37474f">キー単位マージ（addCustomProperties）</text>
+  <text x="965" y="716" font-size="11.5" text-anchor="middle" fill="#616161">既存キーは保持・同一キーは上書き</text>
+
+  <rect x="40" y="756" width="1100" height="110" rx="8" fill="#f3e5f5" stroke="#8e24aa"/>
+  <text x="60" y="782" font-size="14" font-weight="bold" fill="#6a1b9a">user_status によるステータス遷移 — UserLifecycleManager の遷移ルールを適用</text>
+  <text x="64" y="808" font-size="13" fill="#37474f">・省略 → IDENTITY_VERIFIED へ遷移（従来互換）</text>
+  <text x="64" y="830" font-size="13" fill="#37474f">・"KEEP" → 現状維持（遷移なし）</text>
+  <text x="64" y="852" font-size="13" fill="#37474f">・任意の UserStatus 名 → 指定ステータスへ遷移</text>
+  <text x="620" y="808" font-size="13" fill="#37474f">・同一ステータスへの遷移 → no-op（エラーにしない）</text>
+  <text x="620" y="830" font-size="13" fill="#b71c1c">・不正値・許可されない遷移 → fail-closed</text>
+  <text x="620" y="852" font-size="13" fill="#b71c1c">　（承認がエラーとなりユーザーは更新されない）</text>
+</svg>
