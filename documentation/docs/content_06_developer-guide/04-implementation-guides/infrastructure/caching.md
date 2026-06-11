@@ -103,7 +103,7 @@ public interface CacheStore {
 | **ClientConfiguration** | `client:{tenant_id}:{client_id}` | ClientConfigurationQueryDataSource | OAuth/OIDCリクエスト検証 |
 | **AuthorizationServerConfiguration** | `authz_server:{tenant_id}` | AuthorizationServerConfigurationQueryDataSource | トークン発行設定 |
 | **パスワード試行カウンター** | `password_attempt:{tenant_id}:{username}` | PasswordAuthenticationExecutor | ブルートフォース対策（`increment`使用） |
-| **OAuthToken** | `oauth_token:at:{tenant_id}:{hmac(access_token)}` | OAuthTokenCommandDataSource (発行時 write-through) + OAuthTokenQueryDataSource (Introspection 時 cache-aside) | Introspection 高速化（`TOKEN_CACHE_ENABLED=true`時のみ）。発行時にも書き込むことで reader 接続のレプリケーション遅延を回避 |
+| **OAuthToken** | `oauth_token:at:{tenant_id}:{hmac(access_token)}` | OAuthTokenCommandDataSource (発行時 write-through) + OAuthTokenQueryDataSource (Introspection 時 cache-aside) | Introspection 高速化（デフォルト有効。`TOKEN_CACHE_ENABLED=false` で opt-out）。発行時にも書き込むことで reader 接続のレプリケーション遅延を回避 |
 
 **TTL**: デフォルト5分（CacheConfiguration で設定可能）。パスワード試行カウンターはテナントの `password_policy.lockout_duration_seconds`（デフォルト900秒）を使用。OAuthTokenキャッシュは60秒固定。
 
@@ -188,7 +188,6 @@ public class NoOperationCacheStore implements CacheStore {
 | データ | 理由 |
 |-------|------|
 | **Session** | 認証状態は常に最新が必要 |
-| **Token** | `TOKEN_CACHE_ENABLED=true`でキャッシュ可能（デフォルトOFF） |
 | **AuthorizationRequest** | 短命（10分TTL）でキャッシュ効果薄 |
 | **AuthenticationTransaction** | 認証進行中の状態管理 |
 
@@ -238,14 +237,15 @@ idp.cache.enabled=false
 
 **トークンキャッシュのみ制御**:
 ```bash
-# トークンキャッシュを有効化（デフォルトOFF）
-TOKEN_CACHE_ENABLED=true
+# トークンキャッシュはデフォルト有効（未設定時 ON）
 
-# トークンキャッシュを無効化（デフォルト）
+# トークンキャッシュを無効化（opt-out）
 TOKEN_CACHE_ENABLED=false
 ```
 
-`idp.cache.enabled=true`（Redis有効）かつ `TOKEN_CACHE_ENABLED=true` の場合のみトークンキャッシュが有効になります。
+`idp.cache.enabled=true`（Redis有効）かつ `TOKEN_CACHE_ENABLED` が `false` でない場合にトークンキャッシュが有効になります。Redis無効時は `NoOperationCacheStore` に縮退するため、デフォルト有効でも壊れる環境はありません。
+
+**注意**: introspection は reader 接続を使うため、レプリカ構成では無効化するとトークン発行直後の introspection がレプリケーション遅延（Aurora で典型 10〜20ms、書き込みピーク時に増加）により NOT_FOUND になるリスクがあります。性能だけでなく正しさの観点から、レプリカ構成では有効のままにしてください。
 
 ---
 
