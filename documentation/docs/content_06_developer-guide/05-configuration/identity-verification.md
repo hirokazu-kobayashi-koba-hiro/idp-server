@@ -1046,7 +1046,7 @@ idp-server
 申込みが承認（approved）されたときに、ユーザーの属性をどう更新するかを定義するセクションです。
 申込みステータスの遷移から User エンティティへの反映までの全体像は以下の通りです。
 
-![身元確認とユーザー属性のライフサイクル](identity-verification-user-attribute-lifecycle.svg)
+![身元確認とユーザー属性のライフサイクル](../../content_03_concepts/05-advanced-id/identity-verification-user-attribute-lifecycle.svg)
 
 - **評価タイミング**: `result` は承認時のみ評価される。`rejected` / `cancelled` ではユーザー属性は更新されない
 - **更新の集約**: verified_claims・標準クレーム・custom_properties・ステータスは 1 回のユーザー更新に集約される（同一トランザクション）
