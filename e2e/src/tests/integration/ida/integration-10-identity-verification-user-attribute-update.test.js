@@ -156,7 +156,7 @@ describe("Identity Verification User Attribute Update", () => {
     return { user, accessToken };
   };
 
-  const applyAndApprove = async ({ type, accessToken, applyBody, evaluation }) => {
+  const applyAndApprove = async ({ type, accessToken, applyBody, evaluation, expectedEvaluateStatus = 200 }) => {
     const applyUrl = serverConfig.identityVerificationApplyEndpoint
       .replace("{type}", type)
       .replace("{process}", "apply");
@@ -190,7 +190,7 @@ describe("Identity Verification User Attribute Update", () => {
       }
     });
     console.log("Evaluate result response:", evaluateResponse.status, JSON.stringify(evaluateResponse.data, null, 2));
-    expect(evaluateResponse.status).toBe(200);
+    expect(evaluateResponse.status).toBe(expectedEvaluateStatus);
 
     return applicationId;
   };
@@ -588,6 +588,114 @@ describe("Identity Verification User Attribute Update", () => {
     expect(updatedUser).toHaveProperty("address");
     expect(updatedUser.address).toHaveProperty("locality", "Chiyoda-ku");
     expect(updatedUser.address).toHaveProperty("country", "JP");
+  });
+
+  it("fails closed and does not update user when user_status is invalid", async () => {
+    const { user, accessToken } = await createTestUser();
+
+    const beforeUser = await getUser(user.sub);
+
+    const configId = uuidv4();
+    const type = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId,
+        type,
+        result: {
+          "custom_properties_mapping_rules": [
+            {
+              "from": "$.application.application_details.kyc_level",
+              "to": "kyc_level"
+            }
+          ],
+          "user_status": "SUPER_VERIFIED"
+        }
+      })
+    );
+
+    // 不正な user_status は承認時に fail-closed（500）となりユーザーは更新されない
+    await applyAndApprove({
+      type,
+      accessToken,
+      applyBody: {
+        "last_name": "ShouldNotApply",
+        "first_name": "InvalidStatus",
+        "kyc_level": "gold"
+      },
+      expectedEvaluateStatus: 500
+    });
+
+    const afterUser = await getUser(user.sub);
+    console.log("User after invalid user_status approval:", JSON.stringify(afterUser, null, 2));
+
+    expect(afterUser.status).toBe(beforeUser.status);
+    if (afterUser.custom_properties) {
+      expect(afterUser.custom_properties).not.toHaveProperty("kyc_level");
+    }
+  });
+
+  it("fails closed when configured user_status transition is not allowed by lifecycle", async () => {
+    const { user, accessToken } = await createTestUser();
+
+    // まずデフォルト設定で IDENTITY_VERIFIED へ遷移させる
+    const firstConfigId = uuidv4();
+    const firstType = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId: firstConfigId,
+        type: firstType,
+        result: {
+          "custom_properties_mapping_rules": [
+            {
+              "from": "$.application.application_details.kyc_level",
+              "to": "kyc_level"
+            }
+          ]
+        }
+      })
+    );
+    await applyAndApprove({
+      type: firstType,
+      accessToken,
+      applyBody: { "last_name": "Yamada", "first_name": "Hanako", "kyc_level": "gold" }
+    });
+
+    const verifiedUser = await getUser(user.sub);
+    expect(verifiedUser).toHaveProperty("status", "IDENTITY_VERIFIED");
+
+    // IDENTITY_VERIFIED -> REGISTERED は UserLifecycleManager で許可されない遷移
+    const secondConfigId = uuidv4();
+    const secondType = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId: secondConfigId,
+        type: secondType,
+        result: {
+          "custom_properties_mapping_rules": [
+            {
+              "from": "$.application.application_details.kyc_level",
+              "to": "denied_marker"
+            }
+          ],
+          "user_status": "REGISTERED"
+        }
+      })
+    );
+
+    await applyAndApprove({
+      type: secondType,
+      accessToken,
+      applyBody: { "last_name": "Yamada", "first_name": "Hanako", "kyc_level": "should-not-apply" },
+      expectedEvaluateStatus: 500
+    });
+
+    const afterUser = await getUser(user.sub);
+    console.log("User after disallowed transition approval:", JSON.stringify(afterUser, null, 2));
+
+    // ステータスも属性も変わらない
+    expect(afterUser).toHaveProperty("status", "IDENTITY_VERIFIED");
+    expect(afterUser.custom_properties).not.toHaveProperty("denied_marker");
+    expect(afterUser.custom_properties).toHaveProperty("kyc_level", "gold");
   });
 
   it("does not update user attributes when application is rejected", async () => {
