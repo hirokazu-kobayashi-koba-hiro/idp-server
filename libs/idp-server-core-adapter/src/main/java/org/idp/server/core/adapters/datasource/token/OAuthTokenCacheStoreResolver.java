@@ -27,8 +27,13 @@ public class OAuthTokenCacheStoreResolver {
   public static final int TOKEN_CACHE_TTL_SECONDS = 60;
 
   public static CacheStore resolve(ApplicationComponentDependencyContainer container) {
+    // Default ON (opt-out): introspection reads go through the reader connection, so without the
+    // cache a token can be reported inactive right after issuance due to replication lag
+    // (Aurora: typically 10-20ms, spikes under write-heavy load; non-Aurora replicas can lag
+    // seconds). When the cache backend is disabled (CACHE_ENABLE=false), the resolved CacheStore
+    // is a NoOperationCacheStore, so this degrades safely to a no-op.
     String tokenCacheEnabled = System.getenv(ENV_TOKEN_CACHE_ENABLED);
-    if (!"true".equalsIgnoreCase(tokenCacheEnabled)) {
+    if ("false".equalsIgnoreCase(tokenCacheEnabled)) {
       return new NoOperationCacheStore();
     }
     return container.resolve(CacheStore.class);

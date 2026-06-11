@@ -29,7 +29,6 @@ import org.idp.server.platform.crypto.AesCipher;
 import org.idp.server.platform.crypto.HmacHasher;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.datasource.cache.NoOperationCacheStore;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthTokenQueryDataSource implements OAuthTokenQueryRepository {
@@ -39,7 +38,6 @@ public class OAuthTokenQueryDataSource implements OAuthTokenQueryRepository {
   HmacHasher hmacHasher;
   CacheStore cacheStore;
   int cacheTtlSeconds;
-  LoggerWrapper log = LoggerWrapper.getLogger(OAuthTokenQueryDataSource.class);
 
   public OAuthTokenQueryDataSource(
       OAuthTokenSqlExecutor executor, AesCipher aesCipher, HmacHasher hmacHasher) {
@@ -70,7 +68,6 @@ public class OAuthTokenQueryDataSource implements OAuthTokenQueryRepository {
 
     Optional<OAuthTokenCacheEntry> cached = cacheStore.find(cacheKey, OAuthTokenCacheEntry.class);
     if (cached.isPresent()) {
-      log.debug("Cache hit for access token query. tenant:{}", tenant.identifierValue());
       return ModelConverter.convert(cached.get().values(), aesCipher);
     }
 
@@ -82,10 +79,6 @@ public class OAuthTokenQueryDataSource implements OAuthTokenQueryRepository {
     }
 
     cacheStore.put(cacheKey, new OAuthTokenCacheEntry(stringMap), cacheTtlSeconds);
-    log.debug(
-        "Cached access token query result. tenant:{}, ttl:{}s",
-        tenant.identifierValue(),
-        cacheTtlSeconds);
 
     return ModelConverter.convert(stringMap, aesCipher);
   }

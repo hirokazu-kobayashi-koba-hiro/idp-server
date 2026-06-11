@@ -216,12 +216,13 @@ JWTの`sub`クレームからユーザーを解決する方法を設定できま
 
 ### トークンキャッシュ
 
-`TOKEN_CACHE_ENABLED=true`（環境変数）かつRedis有効時、OAuthToken の DB row を Redis にキャッシュします。
+Redis有効時、OAuthToken の DB row を Redis にキャッシュします（デフォルト有効）。
 
 - **パターン**: 発行時の **Write-Through** + イントロスペクション時の **Cache-Aside** のハイブリッド
 - **キー**: `oauth_token:at:{tenant_id}:{hmac(access_token)}`（`OAuthTokenCacheKeyBuilder`で生成）
 - **TTL**: 60秒固定（`OAuthTokenCacheStoreResolver.TOKEN_CACHE_TTL_SECONDS`）
-- **デフォルト**: 実装上は未設定時 OFF（`NoOperationCacheStore`に切替）。docker-compose / k8s configmap では既定 ON
+- **デフォルト**: 有効（opt-out 方式）。明示的に `TOKEN_CACHE_ENABLED=false` を設定した場合のみ `NoOperationCacheStore` に切替。Redis 無効（`CACHE_ENABLE=false`）時は自動的に no-op に縮退
+- **デフォルト有効の理由**: introspection は reader 接続を使うため、レプリカ構成ではキャッシュ無効だと発行直後の introspection が replication lag（Aurora で典型 10〜20ms）で NOT_FOUND になり得る。性能ではなく正しさの問題
 
 ### キャッシュ格納タイミング
 
@@ -373,7 +374,7 @@ cd e2e && npm test -- usecase/device-credential/device-credential-04-device-secr
 - OAuthTokenが正しく保存されているか確認
 
 ### Introspectionキャッシュが効かない
-- `TOKEN_CACHE_ENABLED=true`が環境変数に設定されているか確認
+- `TOKEN_CACHE_ENABLED=false`が環境変数に設定されていないか確認（デフォルトは有効）
 - `CACHE_ENABLE=true`（Redis自体）が有効か確認
 - `OAuthTokenCacheStoreResolver`が`NoOperationCacheStore`を返していないか確認
 
