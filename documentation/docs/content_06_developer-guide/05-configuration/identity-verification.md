@@ -1051,6 +1051,7 @@ idp-server
 - **評価タイミング**: `result` は承認時のみ評価される。`rejected` / `cancelled` ではユーザー属性は更新されない
 - **更新の集約**: verified_claims・標準クレーム・custom_properties・ステータスは 1 回のユーザー更新に集約される（同一トランザクション）
 - **適用経路**: 申込み承認・コールバック承認・直接登録の 3 経路すべてに適用される
+- **マッピングの参照元**: 後続プロセス・コールバックでの承認時は `$.application.application_details.*` を参照できるが、**単一プロセスの即時承認では申込み（application）が未生成のため `$.request_body.*` を参照する**こと。直接登録も同様に `$.request_body.*` のみ
 
 #### verified_claims_mapping_rules
 
