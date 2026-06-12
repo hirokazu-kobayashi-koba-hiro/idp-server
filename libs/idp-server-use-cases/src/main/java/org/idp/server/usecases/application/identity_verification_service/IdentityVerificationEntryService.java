@@ -131,8 +131,8 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
     resultCommandRepository.register(tenant, identityVerificationResult);
 
     User verifiedUser =
-        IdentityVerificationUserUpdater.update(user, context, verificationConfiguration.result())
-            .setVerifiedClaims(verifiedClaims.toMap());
+        IdentityVerificationUserUpdater.update(
+            user, context, verifiedClaims.toMap(), verificationConfiguration.result());
 
     userCommandRepository.update(tenant, verifiedUser);
 

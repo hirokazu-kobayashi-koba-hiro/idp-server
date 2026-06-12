@@ -19,6 +19,7 @@ package org.idp.server.core.extension.identity.verification.result;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
 import org.idp.server.core.extension.identity.verification.configuration.verified_claims.IdentityVerificationResultConfig;
 import org.idp.server.core.openid.identity.User;
@@ -34,6 +35,7 @@ public class IdentityVerificationUserUpdater {
   public static User update(
       User user,
       IdentityVerificationContext context,
+      Map<String, Object> verifiedClaims,
       IdentityVerificationResultConfig resultConfig) {
 
     User updated = user;
@@ -49,10 +51,8 @@ public class IdentityVerificationUserUpdater {
       updated = updated.updateWith(patchUser);
     }
 
-    if (resultConfig.hasCustomPropertiesMappingRules()) {
-      Map<String, Object> mapped = execute(context, resultConfig.customPropertiesMappingRules());
-      updated = updated.addCustomProperties(new HashMap<>(mapped));
-    }
+    updated = applyVerifiedClaims(updated, verifiedClaims, resultConfig);
+    updated = applyCustomProperties(updated, context, resultConfig);
 
     if (resultConfig.requiresUserStatusTransition()) {
       UserStatus newStatus = resultConfig.userStatus();
@@ -62,6 +62,74 @@ public class IdentityVerificationUserUpdater {
     }
 
     return updated;
+  }
+
+  static User applyVerifiedClaims(
+      User user,
+      Map<String, Object> verifiedClaims,
+      IdentityVerificationResultConfig resultConfig) {
+
+    if (resultConfig.isVerifiedClaimsReplace()) {
+      return user.setVerifiedClaims(verifiedClaims != null ? verifiedClaims : Map.of());
+    }
+
+    if (verifiedClaims == null || verifiedClaims.isEmpty()) {
+      return user;
+    }
+
+    if (resultConfig.isVerifiedClaimsDeepMerge()) {
+      Map<String, Object> merged =
+          user.hasVerifiedClaims() ? new HashMap<>(user.verifiedClaims()) : new HashMap<>();
+      for (Map.Entry<String, Object> entry : verifiedClaims.entrySet()) {
+        Object newValue = entry.getValue();
+        Object existingValue = merged.get(entry.getKey());
+        if (newValue instanceof Map<?, ?> newChild && existingValue instanceof Map<?, ?> current) {
+          Map<String, Object> mergedChild = new HashMap<>();
+          current.forEach((k, v) -> mergedChild.put(String.valueOf(k), v));
+          newChild.forEach(
+              (k, v) -> {
+                if (v != null) mergedChild.put(String.valueOf(k), v);
+              });
+          merged.put(entry.getKey(), mergedChild);
+        } else if (newValue != null) {
+          merged.put(entry.getKey(), newValue);
+        }
+      }
+      return user.setVerifiedClaims(merged);
+    }
+
+    return user.mergeVerifiedClaims(verifiedClaims);
+  }
+
+  static User applyCustomProperties(
+      User user,
+      IdentityVerificationContext context,
+      IdentityVerificationResultConfig resultConfig) {
+
+    if (!resultConfig.hasCustomPropertiesMappingRules()) {
+      return user;
+    }
+
+    Map<String, Object> mapped = execute(context, resultConfig.customPropertiesMappingRules());
+
+    if (resultConfig.isCustomPropertiesReplaceManaged()) {
+      Set<String> managedKeys = resultConfig.customPropertiesManagedKeys();
+      HashMap<String, Object> next = new HashMap<>(user.customPropertiesValue());
+      managedKeys.forEach(next::remove);
+      mapped.forEach(
+          (key, value) -> {
+            if (value != null) next.put(key, value);
+          });
+      return user.setCustomProperties(next);
+    }
+
+    // merge: keys without a produced value keep their existing value
+    HashMap<String, Object> nonNullValues = new HashMap<>();
+    mapped.forEach(
+        (key, value) -> {
+          if (value != null) nonNullValues.put(key, value);
+        });
+    return user.addCustomProperties(nonNullValues);
   }
 
   static Map<String, Object> execute(

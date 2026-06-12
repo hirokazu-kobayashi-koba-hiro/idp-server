@@ -204,8 +204,11 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
       resultCommandRepository.register(tenant, identityVerificationResult);
 
       User verifiedUser =
-          IdentityVerificationUserUpdater.update(user, context, verificationConfiguration.result())
-              .mergeVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
+          IdentityVerificationUserUpdater.update(
+              user,
+              context,
+              identityVerificationResult.verifiedClaims().toMap(),
+              verificationConfiguration.result());
 
       userCommandRepository.update(tenant, verifiedUser);
 
