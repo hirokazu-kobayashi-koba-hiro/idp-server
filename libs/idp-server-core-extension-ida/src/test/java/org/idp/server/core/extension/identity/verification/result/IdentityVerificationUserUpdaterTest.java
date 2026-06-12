@@ -27,11 +27,42 @@ import org.idp.server.core.extension.identity.verification.configuration.verifie
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.*;
+import org.idp.server.platform.multi_tenancy.tenant.config.CorsConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
+import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
+import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 import org.junit.jupiter.api.Test;
 
 class IdentityVerificationUserUpdaterTest {
+
+  private Tenant tenant() {
+    return tenant(TenantIdentityPolicy.defaultPolicy());
+  }
+
+  private Tenant tenant(TenantIdentityPolicy identityPolicy) {
+    return new Tenant(
+        new TenantIdentifier("test-tenant"),
+        new TenantName("Test Tenant"),
+        TenantType.PUBLIC,
+        new TenantDomain("test.example.com"),
+        new AuthorizationProvider("idp-server"),
+        new TenantAttributes(),
+        new UIConfiguration(),
+        new CorsConfiguration(),
+        new SessionConfiguration(),
+        new SecurityEventLogConfiguration(),
+        new SecurityEventUserAttributeConfiguration(),
+        identityPolicy,
+        new OrganizationIdentifier("test-org"),
+        true);
+  }
 
   private User registeredUser() {
     HashMap<String, Object> customProperties = new HashMap<>();
@@ -59,7 +90,8 @@ class IdentityVerificationUserUpdaterTest {
     IdentityVerificationResultConfig resultConfig = config(Map.of());
 
     User updated =
-        IdentityVerificationUserUpdater.update(user, context(Map.of()), Map.of(), resultConfig);
+        IdentityVerificationUserUpdater.update(
+            tenant(), user, context(Map.of()), Map.of(), resultConfig);
 
     assertEquals(UserStatus.IDENTITY_VERIFIED, updated.status());
   }
@@ -71,7 +103,8 @@ class IdentityVerificationUserUpdaterTest {
         config(Map.of("user_status", "IDENTITY_VERIFICATION_REQUIRED"));
 
     User updated =
-        IdentityVerificationUserUpdater.update(user, context(Map.of()), Map.of(), resultConfig);
+        IdentityVerificationUserUpdater.update(
+            tenant(), user, context(Map.of()), Map.of(), resultConfig);
 
     assertEquals(UserStatus.IDENTITY_VERIFICATION_REQUIRED, updated.status());
   }
@@ -82,7 +115,8 @@ class IdentityVerificationUserUpdaterTest {
     IdentityVerificationResultConfig resultConfig = config(Map.of("user_status", "KEEP"));
 
     User updated =
-        IdentityVerificationUserUpdater.update(user, context(Map.of()), Map.of(), resultConfig);
+        IdentityVerificationUserUpdater.update(
+            tenant(), user, context(Map.of()), Map.of(), resultConfig);
 
     assertEquals(UserStatus.REGISTERED, updated.status());
   }
@@ -93,7 +127,8 @@ class IdentityVerificationUserUpdaterTest {
     IdentityVerificationResultConfig resultConfig = config(Map.of("user_status", "REGISTERED"));
 
     User updated =
-        IdentityVerificationUserUpdater.update(user, context(Map.of()), Map.of(), resultConfig);
+        IdentityVerificationUserUpdater.update(
+            tenant(), user, context(Map.of()), Map.of(), resultConfig);
 
     assertEquals(UserStatus.REGISTERED, updated.status());
   }
@@ -111,6 +146,7 @@ class IdentityVerificationUserUpdaterTest {
 
     User updated =
         IdentityVerificationUserUpdater.update(
+            tenant(),
             user,
             context(Map.of("last_name", "Yamada", "first_name", "Hanako")),
             Map.of(),
@@ -135,7 +171,7 @@ class IdentityVerificationUserUpdaterTest {
 
     User updated =
         IdentityVerificationUserUpdater.update(
-            user, context(Map.of("kyc_level", "gold")), Map.of(), resultConfig);
+            tenant(), user, context(Map.of("kyc_level", "gold")), Map.of(), resultConfig);
 
     assertEquals("gold", updated.customPropertiesValue().get("kyc_level"));
     assertEquals("existing_value", updated.customPropertiesValue().get("existing_key"));
@@ -156,6 +192,7 @@ class IdentityVerificationUserUpdaterTest {
 
     User updated =
         IdentityVerificationUserUpdater.update(
+            tenant(),
             user,
             context(Map.of("status", "DELETED", "props", Map.of("injected", true))),
             Map.of(),
@@ -164,6 +201,106 @@ class IdentityVerificationUserUpdaterTest {
     assertEquals(UserStatus.REGISTERED, updated.status());
     assertFalse(updated.customPropertiesValue().containsKey("injected"));
     assertEquals("existing_value", updated.customPropertiesValue().get("existing_key"));
+  }
+
+  @Test
+  void testUserClaimsMappingAllowlistBlocksPrivilegedFields() {
+    User user = registeredUser();
+    IdentityVerificationResultConfig resultConfig =
+        config(
+            Map.of(
+                "user_claims_mapping_rules",
+                List.of(
+                    Map.of("from", "$.request_body.roles", "to", "roles"),
+                    Map.of("from", "$.request_body.tenants", "to", "assigned_tenants"),
+                    Map.of("from", "$.request_body.devices", "to", "authentication_devices"),
+                    Map.of("from", "$.request_body.username", "to", "preferred_username"),
+                    Map.of("from", "$.request_body.last_name", "to", "family_name")),
+                "user_status",
+                "KEEP"));
+
+    User updated =
+        IdentityVerificationUserUpdater.update(
+            tenant(),
+            user,
+            context(
+                Map.of(
+                    "roles", List.of(Map.of("role_name", "admin")),
+                    "tenants", List.of("tenant-x"),
+                    "devices", List.of(Map.of("id", "device-x")),
+                    "username", "victim@example.com",
+                    "last_name", "Yamada")),
+            Map.of(),
+            resultConfig);
+
+    // 権限系フィールドは allowlist 外のため設定に書いても無視される
+    assertFalse(updated.hasRoles());
+    assertFalse(updated.hasAssignedTenants());
+    assertFalse(updated.hasAuthenticationDevices());
+    // preferred_username はテナントの一意キー（TenantIdentityPolicy 導出）のため更新不可
+    assertFalse(updated.hasPreferredUsername());
+    // allowlist 内の標準クレームだけが反映される
+    assertEquals("Yamada", updated.familyName());
+  }
+
+  @Test
+  void testEmailUpdateRecalculatesPreferredUsernameByIdentityPolicy() {
+    // テナントの一意キーが EMAIL のポリシー
+    Tenant emailPolicyTenant =
+        tenant(new TenantIdentityPolicy(TenantIdentityPolicy.UniqueKeyType.EMAIL));
+    User user =
+        registeredUser().setEmail("old@example.com").setPreferredUsername("old@example.com");
+
+    IdentityVerificationResultConfig resultConfig =
+        config(
+            Map.of(
+                "user_claims_mapping_rules",
+                List.of(Map.of("from", "$.request_body.email_address", "to", "email")),
+                "user_status",
+                "KEEP"));
+
+    User updated =
+        IdentityVerificationUserUpdater.update(
+            emailPolicyTenant,
+            user,
+            context(Map.of("email_address", "new@example.com")),
+            Map.of(),
+            resultConfig);
+
+    // email 更新に追従して preferred_username が IDポリシーで再計算される
+    assertEquals("new@example.com", updated.email());
+    assertEquals("new@example.com", updated.preferredUsername());
+  }
+
+  @Test
+  void testInputUserIsNotMutated() {
+    User user = registeredUser().setFamilyName("Original");
+    IdentityVerificationResultConfig resultConfig =
+        config(
+            Map.of(
+                "user_claims_mapping_rules",
+                List.of(Map.of("from", "$.request_body.last_name", "to", "family_name")),
+                "custom_properties_mapping_rules",
+                List.of(Map.of("from", "$.request_body.kyc_level", "to", "kyc_level"))));
+
+    User updated =
+        IdentityVerificationUserUpdater.update(
+            tenant(),
+            user,
+            context(Map.of("last_name", "Yamada", "kyc_level", "gold")),
+            Map.of("claims", Map.of("family_name", "Yamada")),
+            resultConfig);
+
+    // 戻り値には反映される
+    assertEquals("Yamada", updated.familyName());
+    assertEquals("gold", updated.customPropertiesValue().get("kyc_level"));
+    assertEquals(UserStatus.IDENTITY_VERIFIED, updated.status());
+
+    // 引数に渡した user は破壊されない（防御的コピー）
+    assertEquals("Original", user.familyName());
+    assertFalse(user.customPropertiesValue().containsKey("kyc_level"));
+    assertFalse(user.hasVerifiedClaims());
+    assertEquals(UserStatus.REGISTERED, user.status());
   }
 
   @Test
@@ -176,7 +313,7 @@ class IdentityVerificationUserUpdaterTest {
         UnSupportedException.class,
         () ->
             IdentityVerificationUserUpdater.update(
-                user, context(Map.of()), Map.of(), resultConfig));
+                tenant(), user, context(Map.of()), Map.of(), resultConfig));
   }
 
   @Test
@@ -189,7 +326,7 @@ class IdentityVerificationUserUpdaterTest {
         UnSupportedException.class,
         () ->
             IdentityVerificationUserUpdater.update(
-                user, context(Map.of()), Map.of(), resultConfig));
+                tenant(), user, context(Map.of()), Map.of(), resultConfig));
   }
 
   @Test
@@ -207,7 +344,7 @@ class IdentityVerificationUserUpdaterTest {
 
     User updated =
         IdentityVerificationUserUpdater.update(
-            user, context(Map.of("first_name", "Hanako")), Map.of(), resultConfig);
+            tenant(), user, context(Map.of("first_name", "Hanako")), Map.of(), resultConfig);
 
     // マッピング元が存在しない項目は既存値を保持し、存在する項目だけ更新される
     assertEquals("Original", updated.familyName());
@@ -225,6 +362,7 @@ class IdentityVerificationUserUpdaterTest {
 
     User updated =
         IdentityVerificationUserUpdater.update(
+            tenant(),
             user,
             context(Map.of()),
             Map.of("claims", Map.of("annual_income", 8000000)),
@@ -255,7 +393,8 @@ class IdentityVerificationUserUpdaterTest {
     produced.put("claims", producedClaims);
 
     User updated =
-        IdentityVerificationUserUpdater.update(user, context(Map.of()), produced, resultConfig);
+        IdentityVerificationUserUpdater.update(
+            tenant(), user, context(Map.of()), produced, resultConfig);
 
     Map<String, Object> claims = (Map<String, Object>) updated.verifiedClaims().get("claims");
     // 既存クレームを保持しつつ新クレームが追加される
@@ -280,6 +419,7 @@ class IdentityVerificationUserUpdaterTest {
 
     User updated =
         IdentityVerificationUserUpdater.update(
+            tenant(),
             user,
             context(Map.of()),
             Map.of("claims", Map.of("annual_income", 8000000)),
@@ -306,7 +446,8 @@ class IdentityVerificationUserUpdaterTest {
                 "KEEP"));
 
     User updated =
-        IdentityVerificationUserUpdater.update(user, context(Map.of()), Map.of(), resultConfig);
+        IdentityVerificationUserUpdater.update(
+            tenant(), user, context(Map.of()), Map.of(), resultConfig);
 
     // merge: ソース欠落キーは null 上書きせず既存値を保持する
     assertEquals("gold", updated.customPropertiesValue().get("kyc_level"));
@@ -333,7 +474,7 @@ class IdentityVerificationUserUpdaterTest {
     // 今回の審査では risk_flag に該当なし（リクエストに含まれない）
     User updated =
         IdentityVerificationUserUpdater.update(
-            user, context(Map.of("kyc_level", "platinum")), Map.of(), resultConfig);
+            tenant(), user, context(Map.of("kyc_level", "platinum")), Map.of(), resultConfig);
 
     // 宣言キーは審査結果と同期: 値が出たキーは更新、出なかったキーは削除
     assertEquals("platinum", updated.customPropertiesValue().get("kyc_level"));
@@ -355,6 +496,7 @@ class IdentityVerificationUserUpdaterTest {
 
     User updated =
         IdentityVerificationUserUpdater.update(
+            tenant(),
             user,
             context(Map.of("last_name", "Yamada", "kyc_level", "gold")),
             Map.of(),

@@ -172,6 +172,7 @@ public class IdentityVerificationApplicationEntryService
 
       User verifiedUser =
           IdentityVerificationUserUpdater.update(
+              tenant,
               user,
               applyingResult.applicationContext(),
               identityVerificationResult.verifiedClaims().toMap(),
@@ -340,6 +341,7 @@ public class IdentityVerificationApplicationEntryService
 
       User verifiedUser =
           IdentityVerificationUserUpdater.update(
+              tenant,
               user,
               applyingResult.applicationContext(),
               identityVerificationResult.verifiedClaims().toMap(),

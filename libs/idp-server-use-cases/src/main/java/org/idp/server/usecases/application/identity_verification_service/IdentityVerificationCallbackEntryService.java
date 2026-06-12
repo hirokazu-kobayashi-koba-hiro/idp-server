@@ -205,6 +205,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
 
       User verifiedUser =
           IdentityVerificationUserUpdater.update(
+              tenant,
               user,
               context,
               identityVerificationResult.verifiedClaims().toMap(),
