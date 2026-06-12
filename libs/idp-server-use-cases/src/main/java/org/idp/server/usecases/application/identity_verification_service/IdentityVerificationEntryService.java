@@ -133,7 +133,7 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
 
     User verifiedUser =
         IdentityVerificationUserUpdater.update(
-            user, context, verifiedClaims.toMap(), verificationConfiguration.result());
+            tenant, user, context, verifiedClaims.toMap(), verificationConfiguration.result());
 
     userCommandRepository.update(tenant, verifiedUser);
 

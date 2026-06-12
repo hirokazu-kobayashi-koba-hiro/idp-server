@@ -29,26 +29,58 @@ import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationUserUpdater {
 
+  /**
+   * user_claims_mapping_rules can patch standard OIDC profile claims only. Privilege-related fields
+   * (roles, permissions, assigned tenants, authentication devices), identifiers and lifecycle state
+   * must never be patchable from verification results, even by tenant configuration.
+   * preferred_username is excluded as well: it is the tenant's unique key derived by
+   * TenantIdentityPolicy and its uniqueness is enforced only on the registration path.
+   */
+  static final Set<String> PATCHABLE_STANDARD_CLAIMS =
+      Set.of(
+          "name",
+          "given_name",
+          "family_name",
+          "middle_name",
+          "nickname",
+          "profile",
+          "picture",
+          "website",
+          "email",
+          "email_verified",
+          "gender",
+          "birthdate",
+          "zoneinfo",
+          "locale",
+          "phone_number",
+          "phone_number_verified",
+          "address");
+
   public static User update(
+      Tenant tenant,
       User user,
       IdentityVerificationContext context,
       Map<String, Object> verifiedClaims,
       IdentityVerificationResultConfig resultConfig) {
 
-    User updated = user;
+    // defensive copy: the caller's instance is never mutated regardless of configuration
+    User updated = user.updateWith(new User());
 
     if (resultConfig.hasUserClaimsMappingRules()) {
       Map<String, Object> mapped = execute(context, resultConfig.userClaimsMappingRules());
-      // status and custom_properties have dedicated configurations
-      // (user_status, custom_properties_mapping_rules); status must go through
-      // UserLifecycleManager and custom properties are merged, not replaced
-      mapped.remove("status");
-      mapped.remove("custom_properties");
+      mapped.keySet().retainAll(PATCHABLE_STANDARD_CLAIMS);
       User patchUser = JsonConverter.snakeCaseInstance().read(mapped, User.class);
       updated = updated.updateWith(patchUser);
+
+      // name/email/phone_number can be sources of the tenant unique key; recalculate
+      // preferred_username so it stays consistent with the identity policy (#729 convention)
+      if (tenant.identityPolicyConfig() != null) {
+        updated = updated.applyIdentityPolicy(tenant.identityPolicyConfig());
+      }
     }
 
     updated = applyVerifiedClaims(updated, verifiedClaims, resultConfig);
@@ -77,9 +109,10 @@ public class IdentityVerificationUserUpdater {
       return user;
     }
 
+    Map<String, Object> merged =
+        user.hasVerifiedClaims() ? new HashMap<>(user.verifiedClaims()) : new HashMap<>();
+
     if (resultConfig.isVerifiedClaimsDeepMerge()) {
-      Map<String, Object> merged =
-          user.hasVerifiedClaims() ? new HashMap<>(user.verifiedClaims()) : new HashMap<>();
       for (Map.Entry<String, Object> entry : verifiedClaims.entrySet()) {
         Object newValue = entry.getValue();
         Object existingValue = merged.get(entry.getKey());
@@ -98,7 +131,9 @@ public class IdentityVerificationUserUpdater {
       return user.setVerifiedClaims(merged);
     }
 
-    return user.mergeVerifiedClaims(verifiedClaims);
+    // merge (default): top-level putAll on a copied map
+    merged.putAll(verifiedClaims);
+    return user.setVerifiedClaims(merged);
   }
 
   static User applyCustomProperties(
@@ -112,24 +147,18 @@ public class IdentityVerificationUserUpdater {
 
     Map<String, Object> mapped = execute(context, resultConfig.customPropertiesMappingRules());
 
+    HashMap<String, Object> next = new HashMap<>(user.customPropertiesValue());
+
     if (resultConfig.isCustomPropertiesReplaceManaged()) {
-      Set<String> managedKeys = resultConfig.customPropertiesManagedKeys();
-      HashMap<String, Object> next = new HashMap<>(user.customPropertiesValue());
-      managedKeys.forEach(next::remove);
-      mapped.forEach(
-          (key, value) -> {
-            if (value != null) next.put(key, value);
-          });
-      return user.setCustomProperties(next);
+      resultConfig.customPropertiesManagedKeys().forEach(next::remove);
     }
 
-    // merge: keys without a produced value keep their existing value
-    HashMap<String, Object> nonNullValues = new HashMap<>();
+    // keys without a produced value keep their existing value (no null overwrite)
     mapped.forEach(
         (key, value) -> {
-          if (value != null) nonNullValues.put(key, value);
+          if (value != null) next.put(key, value);
         });
-    return user.addCustomProperties(nonNullValues);
+    return user.setCustomProperties(next);
   }
 
   static Map<String, Object> execute(

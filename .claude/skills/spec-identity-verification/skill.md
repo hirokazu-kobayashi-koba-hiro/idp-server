@@ -289,7 +289,7 @@ Phase 7: Response → IdentityVerificationApplyingResult を返却
 
 | 設定 | 更新先 | セマンティクス |
 |------|-------|--------------|
-| `user_claims_mapping_rules` | 標準クレーム（family_name等） | `User.updateWith()` による部分パッチ。`status`/`custom_properties` キーは無視（専用設定を使う） |
+| `user_claims_mapping_rules` | 標準クレーム（family_name等） | 標準プロフィールクレームの **allowlist** のみ部分パッチ可（`PATCHABLE_STANDARD_CLAIMS`）。権限系（roles等）・識別子（`preferred_username` はIDポリシー導出の一意キーのため不可）・`status`・`custom_properties` は宛先に書いても無視。name/email/phone 更新時は `applyIdentityPolicy` で preferred_username を自動再計算 |
 | `custom_properties_mapping_rules` | custom_properties | キー単位マージ（ポリシーで変更可） |
 | `user_status` | ユーザーステータス | 省略時 `IDENTITY_VERIFIED`（後方互換）、`KEEP` で現状維持、その他 `UserStatus` 名で指定遷移。`UserLifecycleManager` の遷移ルール適用、同一ステータスは no-op |
 | `verified_claims_update_policy` | verified_claims 反映戦略 | `merge`（既定・トップレベルputAll）/ `deep_merge`（claims.*/verification.* をキー単位マージ、段階的KYC向け）/ `replace`（完全置換）。全経路共通デフォルト merge |

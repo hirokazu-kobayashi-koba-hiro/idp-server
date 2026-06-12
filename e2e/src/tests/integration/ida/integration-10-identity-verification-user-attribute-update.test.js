@@ -71,6 +71,8 @@ describe("Identity Verification User Attribute Update", () => {
               "first_name": { "type": "string" },
               "kyc_level": { "type": "string" },
               "risk_flag": { "type": "string" },
+              "email_address": { "type": "string" },
+              "extra": { "type": "object" },
               "address": {
                 "type": "object",
                 "properties": {
@@ -702,6 +704,368 @@ describe("Identity Verification User Attribute Update", () => {
     expect(secondUser.custom_properties).not.toHaveProperty("risk_flag");
     // 宣言外のキー（Federation 由来の role 等）は影響を受けない
     expect(secondUser.custom_properties).toHaveProperty("role");
+  });
+
+  // --- エッジケース1: email 更新時の email_verified 陳腐化（既知の注意点を仕様として固定） ---
+  it("email_verified remains unchanged when only email is updated (stale flag caveat)", async () => {
+    const { user, accessToken } = await createTestUser();
+
+    // type A: 推奨パターン（email と email_verified を両方明示的にマッピング）
+    const verifiedConfigId = uuidv4();
+    const verifiedType = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId: verifiedConfigId,
+        type: verifiedType,
+        result: {
+          "user_claims_mapping_rules": [
+            { "from": "$.application.application_details.email_address", "to": "email" },
+            { "static_value": true, "to": "email_verified" }
+          ],
+          "user_status": "KEEP"
+        }
+      })
+    );
+
+    const firstEmail = `verified-${uuidv4()}@example.com`;
+    await applyAndApprove({
+      type: verifiedType,
+      accessToken,
+      applyBody: { "last_name": "Yamada", "first_name": "Hanako", "email_address": firstEmail }
+    });
+
+    const afterFirst = await getUser(user.sub);
+    expect(afterFirst).toHaveProperty("email", firstEmail);
+    expect(afterFirst).toHaveProperty("email_verified", true);
+
+    // type B: email のみマッピング（email_verified を更新しない設定）
+    const staleConfigId = uuidv4();
+    const staleType = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId: staleConfigId,
+        type: staleType,
+        result: {
+          "user_claims_mapping_rules": [
+            { "from": "$.application.application_details.email_address", "to": "email" }
+          ],
+          "user_status": "KEEP"
+        }
+      })
+    );
+
+    const secondEmail = `unverified-${uuidv4()}@example.com`;
+    await applyAndApprove({
+      type: staleType,
+      accessToken,
+      applyBody: { "last_name": "Yamada", "first_name": "Hanako", "email_address": secondEmail }
+    });
+
+    const afterSecond = await getUser(user.sub);
+    console.log("Stale flag check:", afterSecond.email, afterSecond.email_verified);
+
+    // email は更新されるが、email_verified は旧メールの検証結果のまま残る（陳腐化）
+    // → email を更新する設定では email_verified も明示的にマッピングすること（推奨パターン）
+    expect(afterSecond).toHaveProperty("email", secondEmail);
+    expect(afterSecond).toHaveProperty("email_verified", true);
+  });
+
+  // --- エッジケース2: address はオブジェクト単位の置換（部分マッピングで他フィールドが消える） ---
+  it("address is replaced wholesale when mapped partially", async () => {
+    const { user, accessToken } = await createTestUser();
+
+    const configId = uuidv4();
+    const type = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId,
+        type,
+        result: {
+          "user_claims_mapping_rules": [
+            { "from": "$.application.application_details.address", "to": "address" }
+          ],
+          "user_status": "KEEP"
+        }
+      })
+    );
+
+    // 1回目: フル住所を設定
+    await applyAndApprove({
+      type,
+      accessToken,
+      applyBody: {
+        "last_name": "Yamada",
+        "first_name": "Hanako",
+        "address": {
+          "street_address": "1-2-3 Chiyoda",
+          "locality": "Chiyoda-ku",
+          "region": "Tokyo",
+          "postal_code": "1000001",
+          "country": "JP"
+        }
+      }
+    });
+
+    const afterFull = await getUser(user.sub);
+    expect(afterFull.address).toHaveProperty("locality", "Chiyoda-ku");
+    expect(afterFull.address).toHaveProperty("country", "JP");
+
+    // 2回目: locality だけの部分オブジェクト → address は丸ごと置換され他フィールドは消える
+    await applyAndApprove({
+      type,
+      accessToken,
+      applyBody: {
+        "last_name": "Yamada",
+        "first_name": "Hanako",
+        "address": { "locality": "Osaka-shi" }
+      }
+    });
+
+    const afterPartial = await getUser(user.sub);
+    console.log("Address after partial mapping:", JSON.stringify(afterPartial.address));
+
+    // 部分更新ではなく全体置換（完全なオブジェクトをマッピングすべき、という仕様の固定）
+    expect(afterPartial.address).toHaveProperty("locality", "Osaka-shi");
+    expect(afterPartial.address).not.toHaveProperty("country");
+    expect(afterPartial.address).not.toHaveProperty("region");
+  });
+
+  // --- エッジケース3: 型不一致のマッピングは fail-closed（承認エラー・ユーザー未更新） ---
+  it("fails closed when mapped value type does not match the claim type", async () => {
+    const { user, accessToken } = await createTestUser();
+
+    const beforeUser = await getUser(user.sub);
+
+    const configId = uuidv4();
+    const type = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId,
+        type,
+        result: {
+          "user_claims_mapping_rules": [
+            // boolean フィールドに文字列をマッピング（型不一致）
+            { "from": "$.application.application_details.kyc_level", "to": "email_verified" }
+          ]
+        }
+      })
+    );
+
+    await applyAndApprove({
+      type,
+      accessToken,
+      applyBody: {
+        "last_name": "Yamada",
+        "first_name": "Hanako",
+        "kyc_level": "definitely-not-boolean"
+      },
+      expectedEvaluateStatus: 500
+    });
+
+    const afterUser = await getUser(user.sub);
+    expect(afterUser.status).toBe(beforeUser.status);
+    expect(afterUser.email_verified).toBe(beforeUser.email_verified);
+  });
+
+  // --- エッジケース4: replace_managed と "*" の組み合わせは同期削除が効かない ---
+  it("replace_managed with wildcard rule cannot delete previously expanded keys", async () => {
+    const { user, accessToken } = await createTestUser();
+
+    const configId = uuidv4();
+    const type = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId,
+        type,
+        result: {
+          "custom_properties_mapping_rules": [
+            { "from": "$.application.application_details.extra", "to": "*" }
+          ],
+          "custom_properties_update_policy": "replace_managed",
+          "user_status": "KEEP"
+        }
+      })
+    );
+
+    // 1回目: a, b を展開して設定
+    await applyAndApprove({
+      type,
+      accessToken,
+      applyBody: {
+        "last_name": "Yamada",
+        "first_name": "Hanako",
+        "extra": { "loyalty_tier": "gold", "campaign_code": "SPRING" }
+      }
+    });
+
+    const afterFirst = await getUser(user.sub);
+    expect(afterFirst.custom_properties).toHaveProperty("loyalty_tier", "gold");
+    expect(afterFirst.custom_properties).toHaveProperty("campaign_code", "SPRING");
+
+    // 2回目: loyalty_tier のみ → "*" は管理対象キーを宣言できないため campaign_code は残る
+    await applyAndApprove({
+      type,
+      accessToken,
+      applyBody: {
+        "last_name": "Yamada",
+        "first_name": "Hanako",
+        "extra": { "loyalty_tier": "platinum" }
+      }
+    });
+
+    const afterSecond = await getUser(user.sub);
+    console.log("Wildcard replace_managed:", JSON.stringify(afterSecond.custom_properties));
+
+    expect(afterSecond.custom_properties).toHaveProperty("loyalty_tier", "platinum");
+    // 同期削除されない（"*" の制限。削除したいキーは to を明示宣言する）
+    expect(afterSecond.custom_properties).toHaveProperty("campaign_code", "SPRING");
+    expect(afterSecond.custom_properties).toHaveProperty("role");
+  });
+
+  // --- エッジケース5: デフォルト merge はトップレベル丸ごと置換（差分キーは失われる） ---
+  it("default merge replaces verified_claims top-level objects wholesale across types", async () => {
+    const { user, accessToken } = await createTestUser();
+
+    // type A: 氏名を検証
+    const ekycConfigId = uuidv4();
+    const ekycType = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId: ekycConfigId,
+        type: ekycType,
+        result: {
+          "verified_claims_mapping_rules": [
+            { "static_value": "eidas", "to": "verification.trust_framework" },
+            { "from": "$.application.application_details.last_name", "to": "claims.family_name" }
+          ]
+        }
+      })
+    );
+    await applyAndApprove({
+      type: ekycType,
+      accessToken,
+      applyBody: { "last_name": "Yamada", "first_name": "Hanako" }
+    });
+
+    // type B: デフォルト merge のまま claims を出力（income のみ）
+    const incomeConfigId = uuidv4();
+    const incomeType = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId: incomeConfigId,
+        type: incomeType,
+        result: {
+          "verified_claims_mapping_rules": [
+            { "from": "$.application.application_details.kyc_level", "to": "claims.income_class" }
+          ],
+          "user_status": "KEEP"
+        }
+      })
+    );
+    await applyAndApprove({
+      type: incomeType,
+      accessToken,
+      applyBody: { "last_name": "Yamada", "first_name": "Hanako", "kyc_level": "tier2" }
+    });
+
+    const updatedUser = await getUser(user.sub);
+    console.log("Verified claims after default merge:", JSON.stringify(updatedUser.verified_claims));
+
+    // デフォルト merge は claims オブジェクトを丸ごと差し替える（type A の氏名は失われる）
+    // → 段階的KYCで共存させたい場合は deep_merge を使う
+    expect(updatedUser.verified_claims.claims).toHaveProperty("income_class", "tier2");
+    expect(updatedUser.verified_claims.claims).not.toHaveProperty("family_name");
+    // 出力していないトップレベルキー（verification）は保持される
+    expect(updatedUser.verified_claims.verification).toHaveProperty("trust_framework", "eidas");
+  });
+
+  it("recalculates preferred_username by identity policy when email is updated", async () => {
+    // テストテナントのIDポリシーは EMAIL_OR_EXTERNAL_USER_ID（email から preferred_username を導出）
+    const { user, accessToken } = await createTestUser();
+
+    const beforeUser = await getUser(user.sub);
+    console.log("Before:", beforeUser.email, beforeUser.preferred_username);
+
+    const configId = uuidv4();
+    const type = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId,
+        type,
+        result: {
+          "user_claims_mapping_rules": [
+            { "from": "$.application.application_details.email_address", "to": "email" }
+          ],
+          "user_status": "KEEP"
+        }
+      })
+    );
+
+    const newEmail = `verified-${uuidv4()}@example.com`;
+    await applyAndApprove({
+      type,
+      accessToken,
+      applyBody: {
+        "last_name": "Yamada",
+        "first_name": "Hanako",
+        "email_address": newEmail
+      }
+    });
+
+    const updatedUser = await getUser(user.sub);
+    console.log("After:", updatedUser.email, updatedUser.preferred_username);
+
+    // email 更新に追従して preferred_username がIDポリシーで再計算される
+    expect(updatedUser).toHaveProperty("email", newEmail);
+    expect(updatedUser).toHaveProperty("preferred_username", newEmail);
+  });
+
+  it("fails closed when recalculated preferred_username collides with another user", async () => {
+    // ユーザーA・Bを作成（同一テナント・同一プロバイダー）
+    const { user: userA } = await createTestUser();
+    const { user: userB, accessToken: accessTokenB } = await createTestUser();
+
+    const userABefore = await getUser(userA.sub);
+    const userBBefore = await getUser(userB.sub);
+
+    const configId = uuidv4();
+    const type = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId,
+        type,
+        result: {
+          "user_claims_mapping_rules": [
+            { "from": "$.application.application_details.email_address", "to": "email" }
+          ],
+          "user_status": "KEEP"
+        }
+      })
+    );
+
+    // ユーザーB が ユーザーA のメールアドレスへ更新を試みる
+    // → preferred_username 再計算で一意制約（uk_preferred_username）に衝突し 409 Conflict
+    await applyAndApprove({
+      type,
+      accessToken: accessTokenB,
+      applyBody: {
+        "last_name": "Suzuki",
+        "first_name": "Taro",
+        "email_address": userABefore.email
+      },
+      expectedEvaluateStatus: 409
+    });
+
+    // 全ロールバック: ユーザーB の email / preferred_username は変わらない
+    const userBAfter = await getUser(userB.sub);
+    console.log("User B after collision attempt:", userBAfter.email, userBAfter.preferred_username);
+    expect(userBAfter.email).toBe(userBBefore.email);
+    expect(userBAfter.preferred_username).toBe(userBBefore.preferred_username);
+
+    // ユーザーA も無傷
+    const userAAfter = await getUser(userA.sub);
+    expect(userAAfter.email).toBe(userABefore.email);
+    expect(userAAfter.preferred_username).toBe(userABefore.preferred_username);
   });
 
   it("fails closed and does not update user when user_status is invalid", async () => {
