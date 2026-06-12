@@ -60,6 +60,14 @@ public class IdentityVerificationUserUpdater {
           "phone_number_verified",
           "address");
 
+  /**
+   * Applies the result configuration to the user and returns the updated instance.
+   *
+   * <p>The caller's {@code user} instance is never mutated. Note that the defensive copy below is
+   * shallow: collection fields may still be shared with the input until they are re-assigned, so
+   * any future modification in this class must build a new map/list and call the corresponding
+   * setter — never mutate a collection obtained from the user in place.
+   */
   public static User update(
       Tenant tenant,
       User user,
