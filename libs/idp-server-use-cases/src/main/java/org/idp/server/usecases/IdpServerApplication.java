@@ -685,7 +685,8 @@ public class IdpServerApplication {
                 authenticationDependencyContainer.resolve(
                     AuthenticationConfigurationQueryRepository.class),
                 authenticationExecutors,
-                tenantQueryRepository),
+                tenantQueryRepository,
+                authenticationDependencyContainer.resolve(CacheStore.class)),
             AuthenticationMetaDataApi.class,
             databaseTypeProvider);
 
