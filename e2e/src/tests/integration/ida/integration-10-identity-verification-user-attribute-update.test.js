@@ -70,6 +70,7 @@ describe("Identity Verification User Attribute Update", () => {
               "last_name": { "type": "string" },
               "first_name": { "type": "string" },
               "kyc_level": { "type": "string" },
+              "risk_flag": { "type": "string" },
               "address": {
                 "type": "object",
                 "properties": {
@@ -588,6 +589,119 @@ describe("Identity Verification User Attribute Update", () => {
     expect(updatedUser).toHaveProperty("address");
     expect(updatedUser.address).toHaveProperty("locality", "Chiyoda-ku");
     expect(updatedUser.address).toHaveProperty("country", "JP");
+  });
+
+  it("deep_merge preserves verified_claims from previous verification types", async () => {
+    const { user, accessToken } = await createTestUser();
+
+    // type A: eKYC（氏名を検証、デフォルトポリシー）
+    const ekycConfigId = uuidv4();
+    const ekycType = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId: ekycConfigId,
+        type: ekycType,
+        result: {
+          "verified_claims_mapping_rules": [
+            { "static_value": "eidas", "to": "verification.trust_framework" },
+            { "from": "$.application.application_details.last_name", "to": "claims.family_name" }
+          ]
+        }
+      })
+    );
+    await applyAndApprove({
+      type: ekycType,
+      accessToken,
+      applyBody: { "last_name": "Yamada", "first_name": "Hanako", "kyc_level": "gold" }
+    });
+
+    // type B: 収入確認（claims を deep_merge で追加）
+    const incomeConfigId = uuidv4();
+    const incomeType = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId: incomeConfigId,
+        type: incomeType,
+        result: {
+          "verified_claims_mapping_rules": [
+            { "from": "$.application.application_details.kyc_level", "to": "claims.income_class" }
+          ],
+          "verified_claims_update_policy": "deep_merge",
+          "user_status": "KEEP"
+        }
+      })
+    );
+    await applyAndApprove({
+      type: incomeType,
+      accessToken,
+      applyBody: { "last_name": "Yamada", "first_name": "Hanako", "kyc_level": "tier3" }
+    });
+
+    const updatedUser = await getUser(user.sub);
+    console.log("User after deep_merge approval:", JSON.stringify(updatedUser, null, 2));
+
+    // deep_merge: type A の検証済みクレームを保持したまま type B のクレームが追加される
+    expect(updatedUser.verified_claims.claims).toHaveProperty("family_name", "Yamada");
+    expect(updatedUser.verified_claims.claims).toHaveProperty("income_class", "tier3");
+    // type B が出力していない verification も保持される
+    expect(updatedUser.verified_claims.verification).toHaveProperty("trust_framework", "eidas");
+  });
+
+  it("replace_managed synchronizes declared custom properties on re-approval", async () => {
+    const { user, accessToken } = await createTestUser();
+
+    const configId = uuidv4();
+    const type = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId,
+        type,
+        result: {
+          "custom_properties_mapping_rules": [
+            { "from": "$.application.application_details.kyc_level", "to": "kyc_level" },
+            { "from": "$.application.application_details.risk_flag", "to": "risk_flag" }
+          ],
+          "custom_properties_update_policy": "replace_managed",
+          "user_status": "KEEP"
+        }
+      })
+    );
+
+    // 1回目: リスクフラグ付きで承認
+    await applyAndApprove({
+      type,
+      accessToken,
+      applyBody: {
+        "last_name": "Yamada",
+        "first_name": "Hanako",
+        "kyc_level": "gold",
+        "risk_flag": "high"
+      }
+    });
+
+    const firstUser = await getUser(user.sub);
+    expect(firstUser.custom_properties).toHaveProperty("kyc_level", "gold");
+    expect(firstUser.custom_properties).toHaveProperty("risk_flag", "high");
+
+    // 2回目: 今回の審査では risk_flag に該当なし
+    await applyAndApprove({
+      type,
+      accessToken,
+      applyBody: {
+        "last_name": "Yamada",
+        "first_name": "Hanako",
+        "kyc_level": "platinum"
+      }
+    });
+
+    const secondUser = await getUser(user.sub);
+    console.log("User after replace_managed re-approval:", JSON.stringify(secondUser, null, 2));
+
+    // 宣言キーは審査結果と同期: 値が出たキーは更新、出なかったキーは削除
+    expect(secondUser.custom_properties).toHaveProperty("kyc_level", "platinum");
+    expect(secondUser.custom_properties).not.toHaveProperty("risk_flag");
+    // 宣言外のキー（Federation 由来の role 等）は影響を受けない
+    expect(secondUser.custom_properties).toHaveProperty("role");
   });
 
   it("fails closed and does not update user when user_status is invalid", async () => {

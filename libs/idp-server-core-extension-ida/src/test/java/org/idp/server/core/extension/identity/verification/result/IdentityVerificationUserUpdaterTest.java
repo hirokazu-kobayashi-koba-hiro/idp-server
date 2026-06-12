@@ -58,7 +58,8 @@ class IdentityVerificationUserUpdaterTest {
     User user = registeredUser();
     IdentityVerificationResultConfig resultConfig = config(Map.of());
 
-    User updated = IdentityVerificationUserUpdater.update(user, context(Map.of()), resultConfig);
+    User updated =
+        IdentityVerificationUserUpdater.update(user, context(Map.of()), Map.of(), resultConfig);
 
     assertEquals(UserStatus.IDENTITY_VERIFIED, updated.status());
   }
@@ -69,7 +70,8 @@ class IdentityVerificationUserUpdaterTest {
     IdentityVerificationResultConfig resultConfig =
         config(Map.of("user_status", "IDENTITY_VERIFICATION_REQUIRED"));
 
-    User updated = IdentityVerificationUserUpdater.update(user, context(Map.of()), resultConfig);
+    User updated =
+        IdentityVerificationUserUpdater.update(user, context(Map.of()), Map.of(), resultConfig);
 
     assertEquals(UserStatus.IDENTITY_VERIFICATION_REQUIRED, updated.status());
   }
@@ -79,7 +81,8 @@ class IdentityVerificationUserUpdaterTest {
     User user = registeredUser();
     IdentityVerificationResultConfig resultConfig = config(Map.of("user_status", "KEEP"));
 
-    User updated = IdentityVerificationUserUpdater.update(user, context(Map.of()), resultConfig);
+    User updated =
+        IdentityVerificationUserUpdater.update(user, context(Map.of()), Map.of(), resultConfig);
 
     assertEquals(UserStatus.REGISTERED, updated.status());
   }
@@ -89,7 +92,8 @@ class IdentityVerificationUserUpdaterTest {
     User user = registeredUser();
     IdentityVerificationResultConfig resultConfig = config(Map.of("user_status", "REGISTERED"));
 
-    User updated = IdentityVerificationUserUpdater.update(user, context(Map.of()), resultConfig);
+    User updated =
+        IdentityVerificationUserUpdater.update(user, context(Map.of()), Map.of(), resultConfig);
 
     assertEquals(UserStatus.REGISTERED, updated.status());
   }
@@ -107,7 +111,10 @@ class IdentityVerificationUserUpdaterTest {
 
     User updated =
         IdentityVerificationUserUpdater.update(
-            user, context(Map.of("last_name", "Yamada", "first_name", "Hanako")), resultConfig);
+            user,
+            context(Map.of("last_name", "Yamada", "first_name", "Hanako")),
+            Map.of(),
+            resultConfig);
 
     assertEquals("Yamada", updated.familyName());
     assertEquals("Hanako", updated.givenName());
@@ -128,7 +135,7 @@ class IdentityVerificationUserUpdaterTest {
 
     User updated =
         IdentityVerificationUserUpdater.update(
-            user, context(Map.of("kyc_level", "gold")), resultConfig);
+            user, context(Map.of("kyc_level", "gold")), Map.of(), resultConfig);
 
     assertEquals("gold", updated.customPropertiesValue().get("kyc_level"));
     assertEquals("existing_value", updated.customPropertiesValue().get("existing_key"));
@@ -151,6 +158,7 @@ class IdentityVerificationUserUpdaterTest {
         IdentityVerificationUserUpdater.update(
             user,
             context(Map.of("status", "DELETED", "props", Map.of("injected", true))),
+            Map.of(),
             resultConfig);
 
     assertEquals(UserStatus.REGISTERED, updated.status());
@@ -166,7 +174,9 @@ class IdentityVerificationUserUpdaterTest {
     // 不正な設定値は UNKNOWN になり、ライフサイクル遷移で拒否される（fail-closed）
     assertThrows(
         UnSupportedException.class,
-        () -> IdentityVerificationUserUpdater.update(user, context(Map.of()), resultConfig));
+        () ->
+            IdentityVerificationUserUpdater.update(
+                user, context(Map.of()), Map.of(), resultConfig));
   }
 
   @Test
@@ -177,7 +187,9 @@ class IdentityVerificationUserUpdaterTest {
 
     assertThrows(
         UnSupportedException.class,
-        () -> IdentityVerificationUserUpdater.update(user, context(Map.of()), resultConfig));
+        () ->
+            IdentityVerificationUserUpdater.update(
+                user, context(Map.of()), Map.of(), resultConfig));
   }
 
   @Test
@@ -195,11 +207,139 @@ class IdentityVerificationUserUpdaterTest {
 
     User updated =
         IdentityVerificationUserUpdater.update(
-            user, context(Map.of("first_name", "Hanako")), resultConfig);
+            user, context(Map.of("first_name", "Hanako")), Map.of(), resultConfig);
 
     // マッピング元が存在しない項目は既存値を保持し、存在する項目だけ更新される
     assertEquals("Original", updated.familyName());
     assertEquals("Hanako", updated.givenName());
+  }
+
+  @Test
+  void testVerifiedClaimsDefaultMergeReplacesTopLevelObjects() {
+    HashMap<String, Object> existing = new HashMap<>();
+    existing.put("claims", Map.of("family_name", "Yamada", "address", Map.of("country", "JP")));
+    existing.put("verification", Map.of("trust_framework", "eidas"));
+    User user = registeredUser().setVerifiedClaims(existing);
+
+    IdentityVerificationResultConfig resultConfig = config(Map.of("user_status", "KEEP"));
+
+    User updated =
+        IdentityVerificationUserUpdater.update(
+            user,
+            context(Map.of()),
+            Map.of("claims", Map.of("annual_income", 8000000)),
+            resultConfig);
+
+    // デフォルト merge はトップレベル putAll のため claims オブジェクトは丸ごと差し替わる
+    Map<String, Object> claims = (Map<String, Object>) updated.verifiedClaims().get("claims");
+    assertEquals(8000000, claims.get("annual_income"));
+    assertFalse(claims.containsKey("family_name"));
+    // 出力されなかったトップレベルキーは保持される
+    assertTrue(updated.verifiedClaims().containsKey("verification"));
+  }
+
+  @Test
+  void testVerifiedClaimsDeepMergePreservesExistingClaims() {
+    HashMap<String, Object> existing = new HashMap<>();
+    existing.put("claims", Map.of("family_name", "Yamada", "address", Map.of("country", "JP")));
+    existing.put("verification", Map.of("trust_framework", "eidas"));
+    User user = registeredUser().setVerifiedClaims(existing);
+
+    IdentityVerificationResultConfig resultConfig =
+        config(Map.of("verified_claims_update_policy", "deep_merge", "user_status", "KEEP"));
+
+    Map<String, Object> produced = new HashMap<>();
+    Map<String, Object> producedClaims = new HashMap<>();
+    producedClaims.put("annual_income", 8000000);
+    producedClaims.put("occupation", null);
+    produced.put("claims", producedClaims);
+
+    User updated =
+        IdentityVerificationUserUpdater.update(user, context(Map.of()), produced, resultConfig);
+
+    Map<String, Object> claims = (Map<String, Object>) updated.verifiedClaims().get("claims");
+    // 既存クレームを保持しつつ新クレームが追加される
+    assertEquals("Yamada", claims.get("family_name"));
+    assertEquals(Map.of("country", "JP"), claims.get("address"));
+    assertEquals(8000000, claims.get("annual_income"));
+    // null 値のキーは無視される
+    assertFalse(claims.containsKey("occupation"));
+    // verification は出力されていないので保持
+    assertEquals(Map.of("trust_framework", "eidas"), updated.verifiedClaims().get("verification"));
+  }
+
+  @Test
+  void testVerifiedClaimsReplacePolicy() {
+    HashMap<String, Object> existing = new HashMap<>();
+    existing.put("claims", Map.of("family_name", "Yamada"));
+    existing.put("verification", Map.of("trust_framework", "eidas"));
+    User user = registeredUser().setVerifiedClaims(existing);
+
+    IdentityVerificationResultConfig resultConfig =
+        config(Map.of("verified_claims_update_policy", "replace", "user_status", "KEEP"));
+
+    User updated =
+        IdentityVerificationUserUpdater.update(
+            user,
+            context(Map.of()),
+            Map.of("claims", Map.of("annual_income", 8000000)),
+            resultConfig);
+
+    // 完全置換: 出力されなかった verification も消える
+    assertFalse(updated.verifiedClaims().containsKey("verification"));
+    Map<String, Object> claims = (Map<String, Object>) updated.verifiedClaims().get("claims");
+    assertEquals(8000000, claims.get("annual_income"));
+    assertFalse(claims.containsKey("family_name"));
+  }
+
+  @Test
+  void testCustomPropertiesMergeKeepsExistingValueWhenSourceMissing() {
+    User user = registeredUser();
+    user.customPropertiesValue().put("kyc_level", "gold");
+
+    IdentityVerificationResultConfig resultConfig =
+        config(
+            Map.of(
+                "custom_properties_mapping_rules",
+                List.of(Map.of("from", "$.request_body.nonexistent", "to", "kyc_level")),
+                "user_status",
+                "KEEP"));
+
+    User updated =
+        IdentityVerificationUserUpdater.update(user, context(Map.of()), Map.of(), resultConfig);
+
+    // merge: ソース欠落キーは null 上書きせず既存値を保持する
+    assertEquals("gold", updated.customPropertiesValue().get("kyc_level"));
+  }
+
+  @Test
+  void testCustomPropertiesReplaceManagedSynchronizesDeclaredKeys() {
+    User user = registeredUser();
+    user.customPropertiesValue().put("kyc_level", "gold");
+    user.customPropertiesValue().put("risk_flag", "high");
+
+    IdentityVerificationResultConfig resultConfig =
+        config(
+            Map.of(
+                "custom_properties_mapping_rules",
+                List.of(
+                    Map.of("from", "$.request_body.kyc_level", "to", "kyc_level"),
+                    Map.of("from", "$.request_body.risk_flag", "to", "risk_flag")),
+                "custom_properties_update_policy",
+                "replace_managed",
+                "user_status",
+                "KEEP"));
+
+    // 今回の審査では risk_flag に該当なし（リクエストに含まれない）
+    User updated =
+        IdentityVerificationUserUpdater.update(
+            user, context(Map.of("kyc_level", "platinum")), Map.of(), resultConfig);
+
+    // 宣言キーは審査結果と同期: 値が出たキーは更新、出なかったキーは削除
+    assertEquals("platinum", updated.customPropertiesValue().get("kyc_level"));
+    assertFalse(updated.customPropertiesValue().containsKey("risk_flag"));
+    // 宣言外のキー（他type・Federation由来）は不可侵
+    assertEquals("existing_value", updated.customPropertiesValue().get("existing_key"));
   }
 
   @Test
@@ -215,7 +355,10 @@ class IdentityVerificationUserUpdaterTest {
 
     User updated =
         IdentityVerificationUserUpdater.update(
-            user, context(Map.of("last_name", "Yamada", "kyc_level", "gold")), resultConfig);
+            user,
+            context(Map.of("last_name", "Yamada", "kyc_level", "gold")),
+            Map.of(),
+            resultConfig);
 
     assertEquals("Yamada", updated.familyName());
     assertEquals("gold", updated.customPropertiesValue().get("kyc_level"));

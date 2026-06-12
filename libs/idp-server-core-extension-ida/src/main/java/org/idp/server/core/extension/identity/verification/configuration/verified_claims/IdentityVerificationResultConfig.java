@@ -18,8 +18,10 @@ package org.idp.server.core.extension.identity.verification.configuration.verifi
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.platform.json.JsonReadable;
@@ -28,12 +30,17 @@ import org.idp.server.platform.mapper.MappingRule;
 public class IdentityVerificationResultConfig implements JsonReadable {
 
   static final String USER_STATUS_KEEP = "KEEP";
+  static final String VERIFIED_CLAIMS_POLICY_DEEP_MERGE = "deep_merge";
+  static final String VERIFIED_CLAIMS_POLICY_REPLACE = "replace";
+  static final String CUSTOM_PROPERTIES_POLICY_REPLACE_MANAGED = "replace_managed";
 
   List<MappingRule> verifiedClaimsMappingRules = new ArrayList<>();
   List<MappingRule> sourceDetailsMappingRules = new ArrayList<>();
   List<MappingRule> userClaimsMappingRules = new ArrayList<>();
   List<MappingRule> customPropertiesMappingRules = new ArrayList<>();
   String userStatus;
+  String verifiedClaimsUpdatePolicy;
+  String customPropertiesUpdatePolicy;
 
   public IdentityVerificationResultConfig() {}
 
@@ -118,6 +125,42 @@ public class IdentityVerificationResultConfig implements JsonReadable {
     return UserStatus.of(userStatus);
   }
 
+  public boolean hasVerifiedClaimsUpdatePolicy() {
+    return verifiedClaimsUpdatePolicy != null && !verifiedClaimsUpdatePolicy.isEmpty();
+  }
+
+  public boolean isVerifiedClaimsDeepMerge() {
+    return VERIFIED_CLAIMS_POLICY_DEEP_MERGE.equalsIgnoreCase(verifiedClaimsUpdatePolicy);
+  }
+
+  public boolean isVerifiedClaimsReplace() {
+    return VERIFIED_CLAIMS_POLICY_REPLACE.equalsIgnoreCase(verifiedClaimsUpdatePolicy);
+  }
+
+  public boolean hasCustomPropertiesUpdatePolicy() {
+    return customPropertiesUpdatePolicy != null && !customPropertiesUpdatePolicy.isEmpty();
+  }
+
+  public boolean isCustomPropertiesReplaceManaged() {
+    return CUSTOM_PROPERTIES_POLICY_REPLACE_MANAGED.equalsIgnoreCase(customPropertiesUpdatePolicy);
+  }
+
+  /**
+   * Top-level keys declared as "to" targets of custom_properties_mapping_rules. Used by
+   * replace_managed to synchronize only the keys this configuration owns.
+   */
+  public Set<String> customPropertiesManagedKeys() {
+    Set<String> keys = new LinkedHashSet<>();
+    for (MappingRule rule : customPropertiesMappingRules()) {
+      String to = rule.to();
+      if (to == null || to.isEmpty() || "*".equals(to)) {
+        continue;
+      }
+      keys.add(to.split("\\.")[0]);
+    }
+    return keys;
+  }
+
   public boolean exists() {
     return verifiedClaimsMappingRules != null && !verifiedClaimsMappingRules.isEmpty();
   }
@@ -129,6 +172,10 @@ public class IdentityVerificationResultConfig implements JsonReadable {
     map.put("user_claims_mapping_rules", userClaimsMappingRulesAsMap());
     map.put("custom_properties_mapping_rules", customPropertiesMappingRulesAsMap());
     if (hasUserStatus()) map.put("user_status", userStatus);
+    if (hasVerifiedClaimsUpdatePolicy())
+      map.put("verified_claims_update_policy", verifiedClaimsUpdatePolicy);
+    if (hasCustomPropertiesUpdatePolicy())
+      map.put("custom_properties_update_policy", customPropertiesUpdatePolicy);
     return map;
   }
 }

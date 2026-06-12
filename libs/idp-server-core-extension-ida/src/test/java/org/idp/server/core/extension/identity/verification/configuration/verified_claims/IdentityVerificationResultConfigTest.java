@@ -130,4 +130,49 @@ class IdentityVerificationResultConfigTest {
 
     assertFalse(result.containsKey("user_status"));
   }
+
+  @Test
+  void testUpdatePolicyDefaultsToMerge() {
+    IdentityVerificationResultConfig config = new IdentityVerificationResultConfig();
+
+    assertFalse(config.isVerifiedClaimsDeepMerge());
+    assertFalse(config.isVerifiedClaimsReplace());
+    assertFalse(config.isCustomPropertiesReplaceManaged());
+    assertFalse(config.toMap().containsKey("verified_claims_update_policy"));
+    assertFalse(config.toMap().containsKey("custom_properties_update_policy"));
+  }
+
+  @Test
+  void testUpdatePolicyDeserialization() {
+    Map<String, Object> map =
+        Map.of(
+            "verified_claims_update_policy", "deep_merge",
+            "custom_properties_update_policy", "replace_managed");
+
+    IdentityVerificationResultConfig config =
+        JsonConverter.snakeCaseInstance().read(map, IdentityVerificationResultConfig.class);
+
+    assertTrue(config.isVerifiedClaimsDeepMerge());
+    assertFalse(config.isVerifiedClaimsReplace());
+    assertTrue(config.isCustomPropertiesReplaceManaged());
+    assertEquals("deep_merge", config.toMap().get("verified_claims_update_policy"));
+    assertEquals("replace_managed", config.toMap().get("custom_properties_update_policy"));
+  }
+
+  @Test
+  void testCustomPropertiesManagedKeys() {
+    Map<String, Object> map =
+        Map.of(
+            "custom_properties_mapping_rules",
+            List.of(
+                Map.of("from", "$.request_body.kyc_level", "to", "kyc_level"),
+                Map.of("from", "$.request_body.risk", "to", "risk.flag"),
+                Map.of("from", "$.request_body", "to", "*")));
+
+    IdentityVerificationResultConfig config =
+        JsonConverter.snakeCaseInstance().read(map, IdentityVerificationResultConfig.class);
+
+    // ネストの to はトップレベルキー、"*" は対象外
+    assertEquals(java.util.Set.of("kyc_level", "risk"), config.customPropertiesManagedKeys());
+  }
 }

@@ -69,8 +69,10 @@ libs/
   "result": {
     "verified_claims_mapping_rules": [],
     "source_details_mapping_rules": [],
+    "verified_claims_update_policy": "merge | deep_merge | replace",
     "user_claims_mapping_rules": [],
     "custom_properties_mapping_rules": [],
+    "custom_properties_update_policy": "merge | replace_managed",
     "user_status": "IDENTITY_VERIFIED | KEEP | <UserStatus名>"
   }
 }
@@ -288,8 +290,12 @@ Phase 7: Response → IdentityVerificationApplyingResult を返却
 | 設定 | 更新先 | セマンティクス |
 |------|-------|--------------|
 | `user_claims_mapping_rules` | 標準クレーム（family_name等） | `User.updateWith()` による部分パッチ。`status`/`custom_properties` キーは無視（専用設定を使う） |
-| `custom_properties_mapping_rules` | custom_properties | `User.addCustomProperties()` によるキー単位マージ |
+| `custom_properties_mapping_rules` | custom_properties | キー単位マージ（ポリシーで変更可） |
 | `user_status` | ユーザーステータス | 省略時 `IDENTITY_VERIFIED`（後方互換）、`KEEP` で現状維持、その他 `UserStatus` 名で指定遷移。`UserLifecycleManager` の遷移ルール適用、同一ステータスは no-op |
+| `verified_claims_update_policy` | verified_claims 反映戦略 | `merge`（既定・トップレベルputAll）/ `deep_merge`（claims.*/verification.* をキー単位マージ、段階的KYC向け）/ `replace`（完全置換）。全経路共通デフォルト merge |
+| `custom_properties_update_policy` | custom_properties 反映戦略 | `merge`（既定・欠落キーは既存値保持、null上書きしない）/ `replace_managed`（宣言キーのみ審査結果と同期＝値が出なかったキーは削除。宣言外キーは不可侵） |
+
+2つのポリシーの選択肢が異なるのは意図的: verified_claims は IDA 専有の2層構造（深度選択 + 全置換が成立）、custom_properties は他機能も書き込む共有のフラットなキー集合（merge は最初からキー単位、全置換は他機能のキーを壊すため提供せず replace_managed で代替）。
 
 **実装**: `IdentityVerificationUserUpdater`（result パッケージ）。申込み承認・コールバック承認・直接登録の3経路全てに適用される。
 

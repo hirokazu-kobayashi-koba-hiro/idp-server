@@ -171,8 +171,10 @@ public class IdentityVerificationApplicationEntryService
 
       User verifiedUser =
           IdentityVerificationUserUpdater.update(
-                  user, applyingResult.applicationContext(), verificationConfiguration.result())
-              .mergeVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
+              user,
+              applyingResult.applicationContext(),
+              identityVerificationResult.verifiedClaims().toMap(),
+              verificationConfiguration.result());
       userCommandRepository.update(tenant, verifiedUser);
       eventPublisher.publishSync(
           tenant,
@@ -338,8 +340,10 @@ public class IdentityVerificationApplicationEntryService
 
       User verifiedUser =
           IdentityVerificationUserUpdater.update(
-                  user, applyingResult.applicationContext(), verificationConfiguration.result())
-              .mergeVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
+              user,
+              applyingResult.applicationContext(),
+              identityVerificationResult.verifiedClaims().toMap(),
+              verificationConfiguration.result());
       userCommandRepository.update(tenant, verifiedUser);
       eventPublisher.publishSync(
           tenant,
