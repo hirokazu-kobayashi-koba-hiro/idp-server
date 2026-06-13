@@ -42,13 +42,19 @@ public final class JsonNestingBuilder {
    * Build a JSON object string where the dotted {@code key} is expanded into nested objects and the
    * leaf carries {@code value}.
    *
-   * @throws IllegalArgumentException if {@code key} is null or empty (after split)
+   * @throws IllegalArgumentException if {@code key} is null, empty, or contains an empty segment
+   *     (e.g. {@code "."}, {@code "a..b"}, {@code ".a"}, {@code "a."})
    */
   public static String buildNestedObjectJson(String key, String value) {
     if (key == null || key.isEmpty()) {
       throw new IllegalArgumentException("key must not be null or empty");
     }
-    String[] parts = key.split("\\.");
+    String[] parts = key.split("\\.", -1);
+    for (String part : parts) {
+      if (part.isEmpty()) {
+        throw new IllegalArgumentException("key must not contain empty segments: " + key);
+      }
+    }
     Map<String, Object> root = new LinkedHashMap<>();
     Map<String, Object> current = root;
     for (int i = 0; i < parts.length - 1; i++) {

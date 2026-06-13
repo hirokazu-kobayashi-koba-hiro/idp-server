@@ -148,7 +148,7 @@ public class SecurityEventQueries implements UuidConvertable {
       String key = entry.getKey();
       if (key.startsWith("details.")) {
         String value = entry.getValue();
-        details.put(key.replace("details.", ""), value);
+        details.put(key.substring("details.".length()), value);
       }
     }
     return details;

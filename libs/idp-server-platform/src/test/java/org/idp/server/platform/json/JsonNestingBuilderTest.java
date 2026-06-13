@@ -73,4 +73,29 @@ class JsonNestingBuilderTest {
     assertThrows(
         IllegalArgumentException.class, () -> JsonNestingBuilder.buildNestedObjectJson("", "v"));
   }
+
+  @Test
+  void dotOnlyKeyThrows() {
+    assertThrows(
+        IllegalArgumentException.class, () -> JsonNestingBuilder.buildNestedObjectJson(".", "v"));
+  }
+
+  @Test
+  void keyWithConsecutiveDotsThrows() {
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> JsonNestingBuilder.buildNestedObjectJson("a..b", "v"));
+  }
+
+  @Test
+  void keyWithLeadingDotThrows() {
+    assertThrows(
+        IllegalArgumentException.class, () -> JsonNestingBuilder.buildNestedObjectJson(".a", "v"));
+  }
+
+  @Test
+  void keyWithTrailingDotThrows() {
+    assertThrows(
+        IllegalArgumentException.class, () -> JsonNestingBuilder.buildNestedObjectJson("a.", "v"));
+  }
 }

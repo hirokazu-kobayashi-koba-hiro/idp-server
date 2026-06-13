@@ -345,6 +345,52 @@ describe("organization security event management api", () => {
       expect(response.status).toBe(400);
     });
 
+    it("details key validation - empty segment (details..) returns 400", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?details..=POST&limit=20`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("details.. response:", response.status, response.data);
+      expect(response.status).toBe(400);
+    });
+
+    it("details key validation - empty key (details.) returns 400", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?details.=POST&limit=20`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("details. response:", response.status, response.data);
+      expect(response.status).toBe(400);
+    });
+
     it("from/to parameter - without time range retrieves all events", async () => {
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,

@@ -104,9 +104,9 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
       for (Map.Entry<String, String> entry : queries.details().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        // Use JSON_CONTAINS so a multi-valued index on detail can be considered.
-        // Dotted keys (e.g. `user.sub`) are expanded into a nested JSON object
-        // so containment matches values stored at the corresponding path.
+        // Use JSON_CONTAINS to align with the PostgreSQL @> form and support
+        // dotted keys (e.g. `user.sub`) expanded into a nested JSON object.
+        // Note: detail has no index on MySQL, so this remains a scan as before.
         sql.append(" AND JSON_CONTAINS(detail, ?)");
         params.add(JsonNestingBuilder.buildNestedObjectJson(key, value));
       }
@@ -190,9 +190,9 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
       for (Map.Entry<String, String> entry : queries.details().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        // Use JSON_CONTAINS so a multi-valued index on detail can be considered.
-        // Dotted keys (e.g. `user.sub`) are expanded into a nested JSON object
-        // so containment matches values stored at the corresponding path.
+        // Use JSON_CONTAINS to align with the PostgreSQL @> form and support
+        // dotted keys (e.g. `user.sub`) expanded into a nested JSON object.
+        // Note: detail has no index on MySQL, so this remains a scan as before.
         sql.append(" AND JSON_CONTAINS(detail, ?)");
         params.add(JsonNestingBuilder.buildNestedObjectJson(key, value));
       }
