@@ -445,7 +445,20 @@ paths:
     - $ref: '#/components/parameters/TenantId'
     get:
       summary: List organization security events
-      description: 組織テナント内のセキュリティイベント一覧を取得します
+      description: '組織テナント内のセキュリティイベント一覧を取得します。
+
+
+        **動的詳細フィルタ**: `details.*` パラメータを使用して `detail` JSONB の値による絞り込みが可能です（完全一致）。
+
+        例：`details.action=POST`
+
+        ドット区切りでネストしたキーも指定できます。例：`details.user.sub=xxx`（`{"user":{"sub":"xxx"}}` にマッチ）
+
+        値は型を含めて完全一致で評価されます（文字列として保存された値のみマッチ）。
+
+        空のキーセグメント（`details.` や `details..` 等）を指定した場合は 400 を返します。
+
+        '
       tags:
       - organization-security-event
       parameters:
