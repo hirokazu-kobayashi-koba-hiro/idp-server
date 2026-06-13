@@ -39,6 +39,18 @@ public class HistoryFilter implements JsonReadable {
 
   public HistoryFilter() {}
 
+  /**
+   * Build a filter that observes the running-state applications of a single type. Used as the
+   * backward-compatible default when a {@code duplicate_application} verifier is configured without
+   * an explicit {@code history} section.
+   */
+  public static HistoryFilter running(String type) {
+    HistoryFilter filter = new HistoryFilter();
+    filter.types = new ArrayList<>(List.of(type));
+    filter.statuses = STATUSES_RUNNING;
+    return filter;
+  }
+
   public List<String> types() {
     return types != null ? types : new ArrayList<>();
   }

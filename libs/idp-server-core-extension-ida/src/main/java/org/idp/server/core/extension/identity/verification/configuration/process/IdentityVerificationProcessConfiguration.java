@@ -17,7 +17,10 @@
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.history.HistoryFilter;
 import org.idp.server.core.extension.identity.verification.application.history.HistoryQueryPlan;
 import org.idp.server.core.extension.identity.verification.application.history.IdentityVerificationHistoryConfig;
 import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationBasicAuthConfig;
@@ -68,8 +71,32 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
     return history;
   }
 
-  public HistoryQueryPlan historyPlan() {
-    return history().plan();
+  /**
+   * Build the history fetch plan for the given request type.
+   *
+   * <p>When an explicit {@code history} section is declared it is used as-is. Otherwise, if this
+   * process runs a {@code duplicate_application} verifier, fall back to observing the running-state
+   * applications of the requested type — this preserves the pre-{@code history}
+   * duplicate-prevention behavior for existing configs instead of silently disabling it. When
+   * neither applies, the plan is empty (no history fetch).
+   */
+  public HistoryQueryPlan historyPlan(IdentityVerificationType type) {
+    HistoryQueryPlan plan = history().plan();
+    if (!plan.isEmpty()) {
+      return plan;
+    }
+    if (requiresDuplicateApplicationCheck()) {
+      return HistoryQueryPlan.from(List.of(HistoryFilter.running(type.name())));
+    }
+    return plan;
+  }
+
+  private boolean requiresDuplicateApplicationCheck() {
+    // "duplicate_application" is the type() of
+    // DenyDuplicateIdentityVerificationApplicationVerifier,
+    // the only verifier that consumes the past-application read model.
+    return preHook().verifications().stream()
+        .anyMatch(verification -> "duplicate_application".equals(verification.type()));
   }
 
   public IdentityVerificationPreHookConfig preHook() {
