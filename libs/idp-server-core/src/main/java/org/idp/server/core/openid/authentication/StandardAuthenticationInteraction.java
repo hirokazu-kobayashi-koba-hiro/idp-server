@@ -38,6 +38,7 @@ public enum StandardAuthenticationInteraction {
   AUTHENTICATION_DEVICE_NOTIFICATION("authentication-device-notification"),
   AUTHENTICATION_DEVICE_DENY("authentication-device-deny"),
   AUTHENTICATION_DEVICE_BINDING_MESSAGE("authentication-device-binding-message"),
+  EXTERNAL_API_AUTHENTICATION("external-api-authentication"),
   ;
 
   String type;

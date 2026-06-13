@@ -141,7 +141,7 @@
       "responses": [
         {
           "uuid": "response-password-auth-success",
-          "body": "{\n  \"user_id\": \"{{ body 'username' }}\",\n  \"email\": \"{{ body 'username' }}\",\n  \"name\": \"Test User\",\n  \"authenticated\": true\n}",
+          "body": "{\n  \"user_id\": \"{{ body 'username' }}\",\n  \"email\": \"{{ body 'username' }}\",\n  \"name\": \"Test User\",\n  \"phone_number\": \"+819012345678\",\n  \"member_id\": \"MEM-12345\",\n  \"authenticated\": true\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "Success - valid password",
@@ -160,6 +160,38 @@
           "disableTemplating": false,
           "fallbackTo404": false,
           "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "response-password-auth-locked",
+          "body": "{\n  \"error\": \"account_locked\",\n  \"error_description\": \"Account is temporarily locked due to too many failed attempts\",\n  \"locked_until\": \"2026-12-31T23:59:59Z\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Success HTTP but error body - password is 'locked'",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "",
+              "value": "\"password\"\\s*:\\s*\"locked\"",
+              "invert": false,
+              "operator": "regex"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
           "crudKey": "id",
           "callbacks": []
         },
