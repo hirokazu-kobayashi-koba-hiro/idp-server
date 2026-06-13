@@ -45,7 +45,7 @@ describe("Security: Multi-Tenant API Isolation (Issue #734)", () => {
 
     const authResult = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
-      scope: clientSecretPostClient.scope,
+      scope: clientSecretPostClient.scope + " openid",
       responseType: "code",
       clientId: clientSecretPostClient.clientId,
       redirectUri: clientSecretPostClient.redirectUri,
