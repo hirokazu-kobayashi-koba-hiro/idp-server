@@ -150,6 +150,7 @@ POST /{tenant-id}/v1/me/identity-verification/applications/{type}/cancel
 | フェーズ | 説明 | 必須 |
 |---------|------|------|
 | `request` | リクエストスキーマ定義 | ❌ |
+| `history` | pre_hook フェーズ（verifications / additional_parameters）に渡す過去申込み read model の取得条件（[詳細](#history過去申込みの取得条件)） | ❌ |
 | `pre_hook` | 実行前処理 | ❌ |
 | `execution` | メイン処理（外部API呼び出し等） | ✅ |
 | `post_hook` | 実行後処理 | ❌ |
@@ -353,6 +354,65 @@ POST /{tenant-id}/v1/me/identity-verification/applications/account-opening/abc-1
 
 ---
 
+### history（過去申込みの取得条件） {#history過去申込みの取得条件}
+
+**用途**: pre_hook フェーズに渡す「過去申込みの read model」を、宣言した条件で絞り込んで取得する
+
+execution（メイン処理）の前に、`history.filters` で宣言した条件に一致する**過去の申込み**を1回の SQL で取得し、pre_hook フェーズ（`verifications` / `additional_parameters`）に渡します。これにより verifier 等は過去申込みを参照したドメイン判定ができます。
+
+> **現状の利用範囲**: read model を実際に読むのは `duplicate_application` 検証のみ（Phase 1）。他の verifier・`additional_parameters` リゾルバは受け取り口を持つが未使用。execution / response / store の mapping からは**まだ参照できません**（[#1592](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1592) で対応予定）。
+
+#### 設定構造
+
+```json
+{
+  "processes": {
+    "apply": {
+      "history": {
+        "filters": [
+          { "types": ["investment-account-opening"], "statuses": "running" }
+        ]
+      },
+      "pre_hook": {
+        "verifications": [
+          { "type": "duplicate_application" }
+        ]
+      },
+      "execution": { "type": "no_action" }
+    }
+  }
+}
+```
+
+| フィールド | 型 | 説明 | 必須 |
+|-----------|----|------|------|
+| `filters` | object[] | 取得条件の配列。複数指定すると **OR 結合**で union を取得 | ✅ |
+| `filters[].types` | string[] | 対象の `verification_type`（少なくとも1件必須。空のフィルタは無視される） | ✅ |
+| `filters[].statuses` | string \| string[] | `"running"` キーワード、または明示的なステータス値の配列 | ✅ |
+
+- **`"running"` キーワード** は進行中ステータス `requested` / `applying` / `applied` / `examination_processing` に展開されます。
+- `types` か `statuses` が空のフィルタは取得対象から除外されます。
+
+#### duplicate_application との連携（マージ挙動）
+
+`duplicate_application` 検証は「同一 type に進行中（running）の申込みがあれば拒否」します。この検証が動くには「当該 type の running」を観測している必要があるため、`history` の宣言有無に関わらず **`{ types:[当該type], statuses:"running" }` が常にマージ**されます（置換ではなく追加。同一フィルタは重複排除）。
+
+| explicit `history` | `duplicate_application` | 取得される履歴 |
+|---|---|---|
+| なし | なし | 取得しない |
+| なし | あり | `running(当該type)` のみ |
+| あり | なし | explicit filters のみ |
+| あり | あり | explicit filters ＋ `running(当該type)`（マージ） |
+
+これにより、`history` 未宣言でも、また explicit `history` が当該 type をカバーしていなくても、**重複防止が無効化されません**（後方互換）。
+
+#### 注意事項
+
+- `history` を宣言しない場合、`duplicate_application` 以外の用途では過去申込みは取得されません（無駄なクエリを避ける設計）。
+- `types` 必須・`"running"` キーワード展開はコード上の仕様です（`IdentityVerificationApplicationStatus.isRunning()`）。
+
+---
+
 ### Pre Hook（実行前処理）
 
 **用途**: メイン処理（execution）の前にビジネスロジック検証や追加データ取得を実行
@@ -376,7 +436,7 @@ Pre Hookは2つのコンポーネントで構成されます：
 | `process_sequence` | プロセス依存関係とリトライ制御の検証 | なし |
 | `user_claim` | リクエスト内容とユーザークレームの一致確認 | `details.verification_parameters` |
 | `application_limitation` | 申込み可能数チェック（予定） | - |
-| `duplicate_application` | 重複申請チェック（予定） | - |
+| `duplicate_application` | 重複申請チェック（同一 type の進行中申込みがあれば拒否）。[history](#history過去申込みの取得条件) と連携 | なし |
 
 ##### process_sequence 検証
 
