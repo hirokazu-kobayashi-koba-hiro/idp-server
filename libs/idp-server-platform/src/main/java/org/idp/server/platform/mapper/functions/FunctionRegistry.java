@@ -84,6 +84,21 @@ public class FunctionRegistry {
     SplitFunction splitFunction = new SplitFunction();
     temp.put(splitFunction.name(), splitFunction);
 
+    AppendFunction appendFunction = new AppendFunction();
+    temp.put(appendFunction.name(), appendFunction);
+
+    MergeFunction mergeFunction = new MergeFunction();
+    temp.put(mergeFunction.name(), mergeFunction);
+
+    PluckFunction pluckFunction = new PluckFunction();
+    temp.put(pluckFunction.name(), pluckFunction);
+
+    ConcatFunction concatFunction = new ConcatFunction();
+    temp.put(concatFunction.name(), concatFunction);
+
+    ReshapeFunction reshapeFunction = new ReshapeFunction();
+    temp.put(reshapeFunction.name(), reshapeFunction);
+
     MimeEncodedWordFunction mimeEncodedWordFunction = new MimeEncodedWordFunction();
     temp.put(mimeEncodedWordFunction.name(), mimeEncodedWordFunction);
 
@@ -93,6 +108,7 @@ public class FunctionRegistry {
 
     // Set registry reference after map initialization to ensure thread-safety
     mapFunction.setFunctionRegistry(this);
+    reshapeFunction.setFunctionRegistry(this);
   }
 
   public ValueFunction get(String name) {
