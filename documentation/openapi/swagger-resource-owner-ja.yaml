@@ -754,8 +754,12 @@ paths:
         - $ref: '#/components/parameters/VerificationType'
         - $ref: '#/components/parameters/ApplicationId'
       responses:
-        '204':
-          description: No Content
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                type: object
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -951,6 +955,14 @@ components:
               error:
                 type: string
                 example: "invalid_request"
+                description: |
+                  エラーコード。以下の値を取りうる:
+
+                  | error 値 | 説明 |
+                  |---------|------|
+                  | `invalid_request` | リクエストパラメータの不正、JSON Schema 検証エラー、プロセスシーケンスエラー |
+                  | `pre_hook_validation_failed` | Pre-hook バリデーション失敗（ユーザークレーム検証、重複申込み検知等） |
+                  | `execution_failed` | 外部サービス実行エラー（`error_details` に詳細が含まれる） |
               error_description:
                 type: string
                 example: "Request validation failed"
@@ -963,7 +975,7 @@ components:
               error_details:
                 type: object
                 description: |
-                  外部サービス実行時のエラー詳細情報（execution_failed の場合のみ）。オプショナル。
+                  外部サービス実行時のエラー詳細情報（`execution_failed` の場合のみ）。オプショナル。
                 required:
                   - execution_type
                   - status_category
@@ -1006,6 +1018,12 @@ components:
                 error_description: "Process sequence violation"
                 error_messages:
                   - "process 'complete-verification' is not available at current state"
+            pre_hook_validation_failed:
+              value:
+                error: "pre_hook_validation_failed"
+                error_description: "Pre-hook validation failed for identity verification request"
+                error_messages:
+                  - "User claim verification failed. unmatched: $.request_body.email_address, user:email"
             external_service_400:
               value:
                 error: "execution_failed"
