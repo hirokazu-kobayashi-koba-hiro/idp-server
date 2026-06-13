@@ -118,6 +118,16 @@ public class IdentityVerificationApplication {
     IdentityVerificationApplicationAttributes attributes =
         IdentityVerificationApplicationAttributes.fromMap(verificationConfiguration.attributes());
 
+    // single-process configurations can transition (e.g. approve) on the initial request;
+    // when no transition condition matches, keep the conventional initial status REQUESTED
+    IdentityVerificationApplicationStatus evaluatedStatus =
+        IdentityVerificationApplicationStatusEvaluator.evaluateOnProcess(
+            processConfig, applicationContext);
+    IdentityVerificationApplicationStatus status =
+        evaluatedStatus == IdentityVerificationApplicationStatus.APPLYING
+            ? IdentityVerificationApplicationStatus.REQUESTED
+            : evaluatedStatus;
+
     return new IdentityVerificationApplication(
         identifier,
         verificationType,
@@ -128,7 +138,7 @@ public class IdentityVerificationApplication {
         details,
         processes,
         attributes,
-        IdentityVerificationApplicationStatus.REQUESTED,
+        status,
         requestedAt);
   }
 

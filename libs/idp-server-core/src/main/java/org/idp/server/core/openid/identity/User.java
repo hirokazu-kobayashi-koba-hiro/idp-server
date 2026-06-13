@@ -494,7 +494,8 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return this;
   }
 
-  // TODO add verified claims merge strategy to tenant ID policy (#1269)
+  // merge strategy is selectable per verification type via
+  // IdentityVerificationResultConfig.verified_claims_update_policy (#1269, #1584)
   public User mergeVerifiedClaims(Map<String, Object> verifiedClaims) {
     this.verifiedClaims.putAll(verifiedClaims);
     return this;
