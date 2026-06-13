@@ -26,6 +26,7 @@ import org.idp.server.core.extension.identity.verification.application.model.Ide
 import org.idp.server.core.extension.identity.verification.application.pre_hook.UserClaimPreHook;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.UserClaimVerificationRule;
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfig;
+import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.json.JsonConverter;
@@ -55,7 +56,8 @@ public class UserClaimVerifier implements IdentityVerificationApplicationRequest
       IdentityVerificationProcess processes,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
-      IdentityVerificationConfig verificationConfig) {
+      IdentityVerificationConfig verificationConfig,
+      IdentityVerificationConfiguration verificationConfiguration) {
 
     String requestJson = request.toJson();
     String userJson = jsonConverter.write(user);
