@@ -35,7 +35,9 @@ public class HistoryQueryPlan {
     List<HistoryFilter> effective = new ArrayList<>();
     if (source != null) {
       for (HistoryFilter filter : source) {
-        if (filter != null && !filter.isEmpty()) {
+        // Drop empty filters, and de-duplicate equal ones so a fallback filter merged on top of an
+        // explicit history section does not produce a redundant OR clause.
+        if (filter != null && !filter.isEmpty() && !effective.contains(filter)) {
           effective.add(filter);
         }
       }

@@ -16,6 +16,7 @@
 
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,13 @@ import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class IdentityVerificationProcessConfiguration implements JsonReadable {
+
+  // Must match DenyDuplicateIdentityVerificationApplicationVerifier.type(); it is the only verifier
+  // that consumes the past-application read model. When a new verifier starts consuming it, update
+  // this detection (or generalize it from the consuming-verifier declaration — see #1268 / Phase
+  // 2).
+  private static final String DUPLICATE_APPLICATION_VERIFIER = "duplicate_application";
+
   IdentityVerificationRequestConfig request = new IdentityVerificationRequestConfig();
   IdentityVerificationHistoryConfig history = new IdentityVerificationHistoryConfig();
   IdentityVerificationPreHookConfig preHook = new IdentityVerificationPreHookConfig();
@@ -74,29 +82,24 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
   /**
    * Build the history fetch plan for the given request type.
    *
-   * <p>When an explicit {@code history} section is declared it is used as-is. Otherwise, if this
-   * process runs a {@code duplicate_application} verifier, fall back to observing the running-state
-   * applications of the requested type — this preserves the pre-{@code history}
-   * duplicate-prevention behavior for existing configs instead of silently disabling it. When
-   * neither applies, the plan is empty (no history fetch).
+   * <p>The explicit {@code history} filters (if any) are always honored. Additionally, when this
+   * process runs a {@code duplicate_application} verifier, a "running-of-request-type" filter is
+   * <b>merged in</b> (not used only as an empty-config fallback). This guarantees the duplicate
+   * check always observes the running state of the requested type — it cannot be silently disabled
+   * by an absent {@code history} section, nor by an explicit {@code history} section that happens
+   * not to cover this type. Duplicate filters are de-duplicated by {@link HistoryQueryPlan#from}.
    */
   public HistoryQueryPlan historyPlan(IdentityVerificationType type) {
-    HistoryQueryPlan plan = history().plan();
-    if (!plan.isEmpty()) {
-      return plan;
-    }
+    List<HistoryFilter> filters = new ArrayList<>(history().filters());
     if (requiresDuplicateApplicationCheck()) {
-      return HistoryQueryPlan.from(List.of(HistoryFilter.running(type.name())));
+      filters.add(HistoryFilter.running(type.name()));
     }
-    return plan;
+    return HistoryQueryPlan.from(filters);
   }
 
   private boolean requiresDuplicateApplicationCheck() {
-    // "duplicate_application" is the type() of
-    // DenyDuplicateIdentityVerificationApplicationVerifier,
-    // the only verifier that consumes the past-application read model.
     return preHook().verifications().stream()
-        .anyMatch(verification -> "duplicate_application".equals(verification.type()));
+        .anyMatch(verification -> DUPLICATE_APPLICATION_VERIFIER.equals(verification.type()));
   }
 
   public IdentityVerificationPreHookConfig preHook() {

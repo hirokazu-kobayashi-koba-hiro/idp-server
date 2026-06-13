@@ -85,6 +85,26 @@ public class HistoryFilter implements JsonReadable {
     return types().isEmpty() || resolvedStatuses().isEmpty();
   }
 
+  /** Equality by the effective observation set (types + resolved statuses), order-independent. */
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof HistoryFilter other)) {
+      return false;
+    }
+    return new java.util.HashSet<>(types()).equals(new java.util.HashSet<>(other.types()))
+        && new java.util.HashSet<>(resolvedStatuses())
+            .equals(new java.util.HashSet<>(other.resolvedStatuses()));
+  }
+
+  @Override
+  public int hashCode() {
+    return java.util.Objects.hash(
+        new java.util.HashSet<>(types()), new java.util.HashSet<>(resolvedStatuses()));
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("types", types());

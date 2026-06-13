@@ -219,4 +219,86 @@ describe("Identity Verification: history-driven duplicate prevention", () => {
     const body = JSON.stringify(secondResponse.data || {});
     expect(body.toLowerCase()).toContain("duplicate");
   });
+
+  it("still blocks duplicates when an explicit history section does NOT cover the request type (merge, not replace)", async () => {
+    // Guards the "explicit history replaces the duplicate fallback" hole: a process declares
+    // duplicate_application AND an explicit history section that observes an UNRELATED type only.
+    // historyPlan(type) must MERGE the running-of-request-type filter (not be replaced by the
+    // explicit one), otherwise the duplicate check silently no-ops for this type.
+    const mergeConfigId = uuidv4();
+    const mergeType = uuidv4();
+    const unrelatedType = uuidv4();
+    createdConfigIds.push(mergeConfigId);
+
+    const configurationData = {
+      id: mergeConfigId,
+      type: mergeType,
+      attributes: { enabled: true },
+      common: { auth_type: "none" },
+      processes: {
+        apply: {
+          request: {
+            schema: {
+              type: "object",
+              properties: {
+                trust_framework: { type: "string" }
+              },
+              required: ["trust_framework"]
+            }
+          },
+          // Explicit history observes an UNRELATED type — it does NOT cover mergeType's running.
+          history: {
+            filters: [
+              { types: [unrelatedType], statuses: "running" }
+            ]
+          },
+          pre_hook: {
+            verifications: [
+              { type: "duplicate_application" }
+            ]
+          },
+          execution: {
+            type: "no_action"
+          }
+        }
+      }
+    };
+
+    const createResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: configurationData
+    });
+    expect(createResponse.status).toBe(201);
+
+    const applyUrl = serverConfig.identityVerificationApplyEndpoint
+      .replace("{type}", mergeType)
+      .replace("{process}", "apply");
+
+    const firstResponse = await postWithJson({
+      url: applyUrl,
+      body: { trust_framework: "eidas" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${userAccessToken}`
+      }
+    });
+    expect(firstResponse.status).toBe(200);
+
+    const secondResponse = await postWithJson({
+      url: applyUrl,
+      body: { trust_framework: "eidas" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${userAccessToken}`
+      }
+    });
+    // With "replace" semantics this would be 200 (explicit history hides the duplicate filter).
+    expect(secondResponse.status).toBe(400);
+    const body = JSON.stringify(secondResponse.data || {});
+    expect(body.toLowerCase()).toContain("duplicate");
+  });
 });
