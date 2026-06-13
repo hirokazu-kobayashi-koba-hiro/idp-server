@@ -1,0 +1,369 @@
+openapi: 3.0.3
+info:
+  title: idp-server コントロールプレーン 身元確認申請管理 API
+  description: 身元確認申請（Identity Verification Application）の管理API仕様書
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+servers:
+- url: http://localhost:8080
+tags:
+- name: organization-identity-verification-application
+  description: 組織レベル身元確認申請管理
+paths:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/identity-verification-applications:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: 組織内身元確認申請一覧取得
+      description: 指定した組織・テナント内の身元確認申請一覧を取得します。各種フィルタリングおよびページネーションに対応しています。
+      tags:
+      - organization-identity-verification-application
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      - name: id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: 申請IDでフィルタリング
+      - name: type
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 検証タイプでフィルタリング
+      - name: client_id
+        in: query
+        required: false
+        schema:
+          type: string
+        description: クライアントIDでフィルタリング
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - requested
+          - applying
+          - applied
+          - examination_processing
+          - approved
+          - rejected
+          - expired
+          - cancelled
+        description: 申請ステータスでフィルタリング
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 作成日時の開始（ISO 8601形式）
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: 作成日時の終了（ISO 8601形式）
+      responses:
+        '200':
+          description: 身元確認申請一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityVerificationApplicationListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/identity-verification-applications/{application-id}:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - $ref: '#/components/parameters/ApplicationId'
+    get:
+      summary: 組織内身元確認申請詳細取得
+      description: 指定した組織・テナント内の特定の身元確認申請の詳細を取得します
+      tags:
+      - organization-identity-verification-application
+      responses:
+        '200':
+          description: 身元確認申請詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityVerificationApplication'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、または身元確認申請が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: 組織内身元確認申請削除
+      description: 指定した組織・テナント内の特定の身元確認申請を削除します
+      tags:
+      - organization-identity-verification-application
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: 身元確認申請削除成功
+        '200':
+          description: dry_run=trueの場合の応答
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: 組織、テナント、または身元確認申請が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: テナントの識別子
+    OrganizationId:
+      name: organization-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 組織の識別子
+    ApplicationId:
+      name: application-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 身元確認申請の識別子
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
+      description: trueの場合、リクエストの検証のみで実行はされません
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 20
+      description: 返すアイテムの最大数
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: アイテムを返す開始インデックス
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        error_description:
+          type: string
+          description: Human-readable error description
+      required:
+      - error
+      - error_description
+    IdentityVerificationApplication:
+      type: object
+      description: 身元確認申請
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 申請ID
+          example: 8a3f2b1c-4d5e-6f7a-8b9c-0d1e2f3a4b5c
+        type:
+          type: string
+          description: 検証タイプ（身元確認設定のタイプに対応）
+          example: document_verification
+        tenant_id:
+          type: string
+          description: テナントID
+          example: 952f6906-3e95-4ed3-86b2-981f90f785f9
+        client_id:
+          type: string
+          description: リクエスト元クライアントID
+          example: my-client
+        user_id:
+          type: string
+          description: ユーザーID
+          example: 3ec055a8-8000-44a2-8677-e70ebff414e2
+        status:
+          type: string
+          description: 申請ステータス
+          enum:
+          - requested
+          - applying
+          - applied
+          - examination_processing
+          - approved
+          - rejected
+          - expired
+          - cancelled
+          example: approved
+        application_details:
+          type: object
+          description: 申請詳細データ（マッピングルールで生成された動的なキー・バリュー）
+          additionalProperties: true
+        processes:
+          type: object
+          description: プロセス別の実行結果
+          additionalProperties:
+            $ref: '#/components/schemas/ProcessResult'
+        attributes:
+          type: object
+          description: 申請属性（オプション、存在する場合のみ）
+          additionalProperties: true
+        requested_at:
+          type: string
+          format: date-time
+          description: 申請日時
+          example: "2026-03-18T10:30:00"
+      required:
+      - id
+      - type
+      - tenant_id
+      - client_id
+      - user_id
+      - status
+      - requested_at
+    ProcessResult:
+      type: object
+      description: プロセスの実行結果
+      properties:
+        call_count:
+          type: integer
+          description: 呼び出し回数
+          example: 3
+        success_count:
+          type: integer
+          description: 成功回数
+          example: 2
+        failure_count:
+          type: integer
+          description: 失敗回数
+          example: 1
+    IdentityVerificationApplicationListResponse:
+      type: object
+      description: 身元確認申請一覧レスポンス
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/IdentityVerificationApplication'
+        total_count:
+          type: integer
+          description: フィルタ条件に一致する総件数
+          example: 42
+        limit:
+          type: integer
+          description: リクエストされたlimit値
+          example: 20
+        offset:
+          type: integer
+          description: リクエストされたoffset値
+          example: 0
+      required:
+      - list
+      - total_count
+      - limit
+      - offset
+    DryRunResponse:
+      type: object
+      description: dry_run=trueの場合のレスポンス
+      properties:
+        dry_run:
+          type: boolean
+          example: true
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: invalid_request
+              error_description:
+                type: string
+                example: The request is missing required parameters
+            required:
+            - error
+            - error_description
+    Unauthorized:
+      description: Unauthorized - Authentication required or invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: unauthorized
+              error_description:
+                type: string
+                example: Authentication required
+            required:
+            - error
+            - error_description
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: access_denied
+              error_description:
+                type: string
+                example: Insufficient permissions to access this resource
+            required:
+            - error
+            - error_description

@@ -47,4 +47,9 @@ public class IdentityVerificationApplicationCommandDataSource
       Tenant tenant, User user, IdentityVerificationApplicationIdentifier identifier) {
     executor.delete(tenant, user, identifier);
   }
+
+  @Override
+  public void delete(Tenant tenant, IdentityVerificationApplicationIdentifier identifier) {
+    executor.delete(tenant, identifier);
+  }
 }

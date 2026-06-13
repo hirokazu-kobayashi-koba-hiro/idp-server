@@ -32,4 +32,11 @@ public interface IdentityVerificationResultQueryRepository {
 
   IdentityVerificationResult get(
       Tenant tenant, User user, IdentityVerificationResultIdentifier identifier);
+
+  IdentityVerificationResult get(Tenant tenant, IdentityVerificationResultIdentifier identifier);
+
+  List<IdentityVerificationResult> findList(
+      Tenant tenant, IdentityVerificationResultQueries queries);
+
+  long findTotalCount(Tenant tenant, IdentityVerificationResultQueries queries);
 }

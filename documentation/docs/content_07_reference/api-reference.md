@@ -22,5 +22,7 @@
 - [ロール・権限管理API](cp-role-permission-api-ja)
 - [認証設定管理API](cp-authentication-api-ja)
 - [身元確認設定管理API](cp-identity-verification-api-ja)
+- [身元確認申請管理API](cp-identity-verification-application-api-ja)
+- [身元確認結果管理API](cp-identity-verification-result-api-ja)
 - [フェデレーション設定管理API](cp-federation-api-ja)
 - [セキュリティイベント管理API](cp-security-event-api-ja)

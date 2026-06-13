@@ -32,4 +32,10 @@ public interface IdentityVerificationResultSqlExecutor {
 
   Map<String, String> selectCount(
       Tenant tenant, User user, IdentityVerificationResultQueries queries);
+
+  Map<String, String> selectOne(Tenant tenant, IdentityVerificationResultIdentifier identifier);
+
+  List<Map<String, String>> selectList(Tenant tenant, IdentityVerificationResultQueries queries);
+
+  Map<String, String> selectCount(Tenant tenant, IdentityVerificationResultQueries queries);
 }
