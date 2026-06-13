@@ -265,6 +265,7 @@ services:
     depends_on:
       postgres-primary:
         condition: service_healthy
+    command: [ "postgres", "-c", "shared_preload_libraries=pg_stat_statements" ]
     volumes:
       - postgres_replica_data:/var/lib/postgresql/data
     healthcheck:

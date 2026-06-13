@@ -16,6 +16,9 @@
 
 package org.idp.server.control_plane.management.security.event.validator;
 
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
 import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -24,6 +27,9 @@ import org.idp.server.platform.json.schema.JsonSchemaValidator;
 import org.idp.server.platform.security.SecurityEventQueries;
 
 public class SecurityEventQueryValidator {
+
+  // dot-separated, non-empty segments (rejects "details." / "details.." / "details.a..b")
+  private static final Pattern DETAILS_KEY_PATTERN = Pattern.compile("^[^.]+(\\.[^.]+)*$");
 
   SecurityEventQueries queries;
   JsonSchemaValidator schemaValidator;
@@ -39,11 +45,28 @@ public class SecurityEventQueryValidator {
     JsonSchemaValidationResult result = schemaValidator.validate(jsonNodeWrapper);
 
     throwExceptionIfInvalid(result);
+    throwExceptionIfInvalidDetailsKey();
   }
 
   void throwExceptionIfInvalid(JsonSchemaValidationResult result) {
     if (!result.isValid()) {
       throw new InvalidRequestException("Security event query validation failed", result.errors());
+    }
+  }
+
+  void throwExceptionIfInvalidDetailsKey() {
+    validateKeys(queries.details().keySet(), "details.");
+    validateKeys(queries.looseDetails().keySet(), "details_any.");
+  }
+
+  private void validateKeys(Set<String> keys, String prefix) {
+    for (String key : keys) {
+      if (!DETAILS_KEY_PATTERN.matcher(key).matches()) {
+        throw new InvalidRequestException(
+            "Security event query validation failed",
+            List.of(
+                "details filter key must be non-empty dot-separated segments: " + prefix + key));
+      }
     }
   }
 }

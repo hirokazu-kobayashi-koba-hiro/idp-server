@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.json.JsonNestingBuilder;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEventQueries;
 import org.idp.server.platform.security.event.SecurityEventIdentifier;
@@ -103,9 +105,31 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
       for (Map.Entry<String, String> entry : queries.details().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        sql.append(" AND detail ->> ? = ?");
-        params.add(key);
-        params.add(value);
+        // Use @> so the GIN index on detail can be used. Dotted keys (e.g.
+        // `user.sub`) are expanded into a nested JSON object so containment
+        // matches values stored at the corresponding path.
+        sql.append(" AND detail @> ?::jsonb");
+        params.add(JsonNestingBuilder.buildNestedObjectJson(key, value));
+      }
+    }
+
+    if (queries.hasLooseDetails()) {
+      for (Map.Entry<String, String> entry : queries.looseDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        // Opt-in (details_any.*) type-flexible match: string leaf OR, when the
+        // value parses as a JSON scalar, the typed leaf. Both sides use @> so the
+        // GIN index still applies (BitmapOr of the two index scans).
+        String stringJson = JsonNestingBuilder.buildNestedObjectJson(key, value);
+        Optional<String> typedJson = JsonNestingBuilder.buildTypedNestedObjectJson(key, value);
+        if (typedJson.isPresent()) {
+          sql.append(" AND (detail @> ?::jsonb OR detail @> ?::jsonb)");
+          params.add(stringJson);
+          params.add(typedJson.get());
+        } else {
+          sql.append(" AND detail @> ?::jsonb");
+          params.add(stringJson);
+        }
       }
     }
 
@@ -187,9 +211,31 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
       for (Map.Entry<String, String> entry : queries.details().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        sql.append(" AND detail ->> ? = ?");
-        params.add(key);
-        params.add(value);
+        // Use @> so the GIN index on detail can be used. Dotted keys (e.g.
+        // `user.sub`) are expanded into a nested JSON object so containment
+        // matches values stored at the corresponding path.
+        sql.append(" AND detail @> ?::jsonb");
+        params.add(JsonNestingBuilder.buildNestedObjectJson(key, value));
+      }
+    }
+
+    if (queries.hasLooseDetails()) {
+      for (Map.Entry<String, String> entry : queries.looseDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        // Opt-in (details_any.*) type-flexible match: string leaf OR, when the
+        // value parses as a JSON scalar, the typed leaf. Both sides use @> so the
+        // GIN index still applies (BitmapOr of the two index scans).
+        String stringJson = JsonNestingBuilder.buildNestedObjectJson(key, value);
+        Optional<String> typedJson = JsonNestingBuilder.buildTypedNestedObjectJson(key, value);
+        if (typedJson.isPresent()) {
+          sql.append(" AND (detail @> ?::jsonb OR detail @> ?::jsonb)");
+          params.add(stringJson);
+          params.add(typedJson.get());
+        } else {
+          sql.append(" AND detail @> ?::jsonb");
+          params.add(stringJson);
+        }
       }
     }
 

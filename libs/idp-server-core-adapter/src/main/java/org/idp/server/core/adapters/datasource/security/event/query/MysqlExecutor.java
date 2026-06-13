@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.json.JsonNestingBuilder;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEventQueries;
 import org.idp.server.platform.security.event.SecurityEventIdentifier;
@@ -103,9 +105,31 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
       for (Map.Entry<String, String> entry : queries.details().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        sql.append(" AND detail ->> ? = ?");
-        params.add(key);
-        params.add(value);
+        // Use JSON_CONTAINS to align with the PostgreSQL @> form and support
+        // dotted keys (e.g. `user.sub`) expanded into a nested JSON object.
+        // Note: detail has no index on MySQL, so this remains a scan as before.
+        sql.append(" AND JSON_CONTAINS(detail, ?)");
+        params.add(JsonNestingBuilder.buildNestedObjectJson(key, value));
+      }
+    }
+
+    if (queries.hasLooseDetails()) {
+      for (Map.Entry<String, String> entry : queries.looseDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        // Opt-in (details_any.*) type-flexible match: string leaf OR, when the
+        // value parses as a JSON scalar, the typed leaf. Symmetric with the
+        // PostgreSQL @> OR form.
+        String stringJson = JsonNestingBuilder.buildNestedObjectJson(key, value);
+        Optional<String> typedJson = JsonNestingBuilder.buildTypedNestedObjectJson(key, value);
+        if (typedJson.isPresent()) {
+          sql.append(" AND (JSON_CONTAINS(detail, ?) OR JSON_CONTAINS(detail, ?))");
+          params.add(stringJson);
+          params.add(typedJson.get());
+        } else {
+          sql.append(" AND JSON_CONTAINS(detail, ?)");
+          params.add(stringJson);
+        }
       }
     }
 
@@ -187,9 +211,31 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
       for (Map.Entry<String, String> entry : queries.details().entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue();
-        sql.append(" AND detail ->> ? = ?");
-        params.add(key);
-        params.add(value);
+        // Use JSON_CONTAINS to align with the PostgreSQL @> form and support
+        // dotted keys (e.g. `user.sub`) expanded into a nested JSON object.
+        // Note: detail has no index on MySQL, so this remains a scan as before.
+        sql.append(" AND JSON_CONTAINS(detail, ?)");
+        params.add(JsonNestingBuilder.buildNestedObjectJson(key, value));
+      }
+    }
+
+    if (queries.hasLooseDetails()) {
+      for (Map.Entry<String, String> entry : queries.looseDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        // Opt-in (details_any.*) type-flexible match: string leaf OR, when the
+        // value parses as a JSON scalar, the typed leaf. Symmetric with the
+        // PostgreSQL @> OR form.
+        String stringJson = JsonNestingBuilder.buildNestedObjectJson(key, value);
+        Optional<String> typedJson = JsonNestingBuilder.buildTypedNestedObjectJson(key, value);
+        if (typedJson.isPresent()) {
+          sql.append(" AND (JSON_CONTAINS(detail, ?) OR JSON_CONTAINS(detail, ?))");
+          params.add(stringJson);
+          params.add(typedJson.get());
+        } else {
+          sql.append(" AND JSON_CONTAINS(detail, ?)");
+          params.add(stringJson);
+        }
       }
     }
 
