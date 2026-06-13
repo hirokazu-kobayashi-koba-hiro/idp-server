@@ -448,15 +448,7 @@ paths:
       description: '組織テナント内のセキュリティイベント一覧を取得します。
 
 
-        **動的詳細フィルタ**: `details.*` パラメータを使用して `detail` JSONB の値による絞り込みが可能です（完全一致）。
-
-        例：`details.action=POST`
-
-        ドット区切りでネストしたキーも指定できます。例：`details.user.sub=xxx`（`{"user":{"sub":"xxx"}}` にマッチ）
-
-        値は型を含めて完全一致で評価されます（文字列として保存された値のみマッチ）。
-
-        空のキーセグメント（`details.` や `details..` 等）を指定した場合は 400 を返します。
+        `detail` JSONB の動的フィルタは `details.*`（型厳密）/ `details_any.*`（型ゆるい）パラメータを参照。
 
         '
       tags:
@@ -538,6 +530,43 @@ paths:
         schema:
           type: string
         example: Mozilla
+      - name: details.*
+        in: query
+        required: false
+        description: 'detail JSONB の動的フィルタ（型厳密・完全一致）。`*` は任意の detail パス。
+
+
+          ドット区切りでネストしたキーを指定可能（例: `details.user.sub=xxx` →
+          `{"user":{"sub":"xxx"}}` にマッチ）。
+
+
+          値は文字列として型を含めて完全一致で評価されます（`@>` containment）。
+
+          空セグメント（`details.` / `details..`）は 400。
+
+          '
+        schema:
+          type: string
+        example: POST
+      - name: details_any.*
+        in: query
+        required: false
+        description: 'detail JSONB の型ゆるい動的フィルタ（任意）。`*` は任意の detail パス。
+
+
+          値が数値/真偽値としてもパースできる場合、「文字列としての一致」と「その型としての一致」の
+          両方にマッチします（例: `details_any.attempts=3` は保存型が文字列 `"3"` でも数値 `3`
+          でもマッチ）。
+
+
+          数値/真偽値を保存している detail を絞り込む場合のみ有用（`details.*` は型厳密）。
+
+          空セグメント（`details_any..`）は 400。
+
+          '
+        schema:
+          type: string
+        example: '3'
       responses:
         '200':
           description: 組織セキュリティイベントの一覧

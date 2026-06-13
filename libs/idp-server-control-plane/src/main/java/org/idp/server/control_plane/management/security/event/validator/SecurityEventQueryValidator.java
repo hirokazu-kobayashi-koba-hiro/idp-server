@@ -17,6 +17,7 @@
 package org.idp.server.control_plane.management.security.event.validator;
 
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import org.idp.server.control_plane.base.schema.ControlPlaneV1SchemaReader;
 import org.idp.server.control_plane.management.exception.InvalidRequestException;
@@ -54,11 +55,17 @@ public class SecurityEventQueryValidator {
   }
 
   void throwExceptionIfInvalidDetailsKey() {
-    for (String key : queries.details().keySet()) {
+    validateKeys(queries.details().keySet(), "details.");
+    validateKeys(queries.looseDetails().keySet(), "details_any.");
+  }
+
+  private void validateKeys(Set<String> keys, String prefix) {
+    for (String key : keys) {
       if (!DETAILS_KEY_PATTERN.matcher(key).matches()) {
         throw new InvalidRequestException(
             "Security event query validation failed",
-            List.of("details filter key must be non-empty dot-separated segments: details." + key));
+            List.of(
+                "details filter key must be non-empty dot-separated segments: " + prefix + key));
       }
     }
   }

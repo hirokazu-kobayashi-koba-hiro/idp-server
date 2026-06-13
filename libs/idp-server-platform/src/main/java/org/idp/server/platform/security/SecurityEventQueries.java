@@ -154,6 +154,29 @@ public class SecurityEventQueries implements UuidConvertable {
     return details;
   }
 
+  public boolean hasLooseDetails() {
+    return !looseDetails().isEmpty();
+  }
+
+  /**
+   * Type-flexible detail filters specified via the {@code details_any.*} prefix.
+   *
+   * <p>Unlike {@link #details()} (type-strict containment), these keys ask the executor to match
+   * the value as either a string or its parsed scalar form (string leaf OR typed leaf). This is
+   * opt-in because it adds a second containment scan when the value looks numeric / boolean.
+   */
+  public Map<String, String> looseDetails() {
+    Map<String, String> looseDetails = new HashMap<>();
+    for (Map.Entry<String, String> entry : values.entrySet()) {
+      String key = entry.getKey();
+      if (key.startsWith("details_any.")) {
+        String value = entry.getValue();
+        looseDetails.put(key.substring("details_any.".length()), value);
+      }
+    }
+    return looseDetails;
+  }
+
   public int limit() {
     if (!values.containsKey("limit")) {
       return 20;

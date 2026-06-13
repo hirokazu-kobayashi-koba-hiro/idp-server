@@ -202,6 +202,62 @@ describe("organization security event management api", () => {
       expect(response.data.total_count).toBe(0);
       expect(response.data.list).toHaveLength(0);
     });
+
+    it("loose filter (details_any.action=POST) matches the same as strict for string values", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+      const headers = { Authorization: `Bearer ${accessToken}` };
+
+      const strict = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?details.action=POST&limit=20`,
+        headers
+      });
+      const loose = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?details_any.action=POST&limit=20`,
+        headers
+      });
+      expect(strict.status).toBe(200);
+      expect(loose.status).toBe(200);
+      // "POST" は数値/真偽値ではないので typed leaf は付かず、loose は strict と同一結果
+      expect(loose.data.total_count).toBe(strict.data.total_count);
+      expect(loose.data.total_count).toBeGreaterThan(0);
+      for (const event of loose.data.list) {
+        expect(event.detail?.action).toBe("POST");
+      }
+    });
+
+    it("loose filter (details_any.user.status=REGISTERED) works on nested string value", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?details_any.user.status=REGISTERED&limit=20`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      expect(response.status).toBe(200);
+      expect(response.data.total_count).toBeGreaterThan(0);
+      for (const event of response.data.list) {
+        expect(event.detail?.user?.status).toBe("REGISTERED");
+      }
+    });
   });
 
   describe("query parameter validation", () => {
@@ -388,6 +444,29 @@ describe("organization security event management api", () => {
         }
       });
       console.log("details. response:", response.status, response.data);
+      expect(response.status).toBe(400);
+    });
+
+    it("details key validation - empty segment loose key (details_any..) returns 400", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const response = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/security-events?details_any..=POST&limit=20`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      console.log("details_any.. response:", response.status, response.data);
       expect(response.status).toBe(400);
     });
 

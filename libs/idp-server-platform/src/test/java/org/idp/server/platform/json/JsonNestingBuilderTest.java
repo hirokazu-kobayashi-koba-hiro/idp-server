@@ -16,8 +16,11 @@
 package org.idp.server.platform.json;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class JsonNestingBuilderTest {
@@ -97,5 +100,53 @@ class JsonNestingBuilderTest {
   void keyWithTrailingDotThrows() {
     assertThrows(
         IllegalArgumentException.class, () -> JsonNestingBuilder.buildNestedObjectJson("a.", "v"));
+  }
+
+  @Test
+  void typedIntegerValueProducesNumberLeaf() {
+    assertEquals(
+        Optional.of("{\"attempts\":3}"),
+        JsonNestingBuilder.buildTypedNestedObjectJson("attempts", "3"));
+  }
+
+  @Test
+  void typedDecimalValueProducesNumberLeaf() {
+    assertEquals(
+        Optional.of("{\"score\":1.5}"),
+        JsonNestingBuilder.buildTypedNestedObjectJson("score", "1.5"));
+  }
+
+  @Test
+  void typedBooleanValueProducesBooleanLeaf() {
+    assertEquals(
+        Optional.of("{\"flag\":true}"),
+        JsonNestingBuilder.buildTypedNestedObjectJson("flag", "true"));
+    assertEquals(
+        Optional.of("{\"flag\":false}"),
+        JsonNestingBuilder.buildTypedNestedObjectJson("flag", "false"));
+  }
+
+  @Test
+  void typedNestedKeyProducesNestedNumberLeaf() {
+    assertEquals(
+        Optional.of("{\"user\":{\"age\":42}}"),
+        JsonNestingBuilder.buildTypedNestedObjectJson("user.age", "42"));
+  }
+
+  @Test
+  void nonScalarValueProducesEmpty() {
+    assertTrue(JsonNestingBuilder.buildTypedNestedObjectJson("method", "POST").isEmpty());
+  }
+
+  @Test
+  void leadingZeroValueStaysString() {
+    // "007" must NOT be treated as numeric 7 (surprise), so the typed branch is empty
+    // and only the string leaf (built separately) applies.
+    assertTrue(JsonNestingBuilder.buildTypedNestedObjectJson("zip", "007").isEmpty());
+  }
+
+  @Test
+  void emptyValueProducesEmptyOptional() {
+    assertFalse(JsonNestingBuilder.buildTypedNestedObjectJson("k", "").isPresent());
   }
 }

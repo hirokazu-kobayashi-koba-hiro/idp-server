@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonNestingBuilder;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -112,6 +113,26 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
       }
     }
 
+    if (queries.hasLooseDetails()) {
+      for (Map.Entry<String, String> entry : queries.looseDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        // Opt-in (details_any.*) type-flexible match: string leaf OR, when the
+        // value parses as a JSON scalar, the typed leaf. Symmetric with the
+        // PostgreSQL @> OR form.
+        String stringJson = JsonNestingBuilder.buildNestedObjectJson(key, value);
+        Optional<String> typedJson = JsonNestingBuilder.buildTypedNestedObjectJson(key, value);
+        if (typedJson.isPresent()) {
+          sql.append(" AND (JSON_CONTAINS(detail, ?) OR JSON_CONTAINS(detail, ?))");
+          params.add(stringJson);
+          params.add(typedJson.get());
+        } else {
+          sql.append(" AND JSON_CONTAINS(detail, ?)");
+          params.add(stringJson);
+        }
+      }
+    }
+
     String countSql = "SELECT COUNT(*) as count FROM (" + sql.toString() + " LIMIT 1000001) t";
     return sqlExecutor.selectOne(countSql, params);
   }
@@ -195,6 +216,26 @@ public class MysqlExecutor implements SecurityEventSqlExecutor {
         // Note: detail has no index on MySQL, so this remains a scan as before.
         sql.append(" AND JSON_CONTAINS(detail, ?)");
         params.add(JsonNestingBuilder.buildNestedObjectJson(key, value));
+      }
+    }
+
+    if (queries.hasLooseDetails()) {
+      for (Map.Entry<String, String> entry : queries.looseDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        // Opt-in (details_any.*) type-flexible match: string leaf OR, when the
+        // value parses as a JSON scalar, the typed leaf. Symmetric with the
+        // PostgreSQL @> OR form.
+        String stringJson = JsonNestingBuilder.buildNestedObjectJson(key, value);
+        Optional<String> typedJson = JsonNestingBuilder.buildTypedNestedObjectJson(key, value);
+        if (typedJson.isPresent()) {
+          sql.append(" AND (JSON_CONTAINS(detail, ?) OR JSON_CONTAINS(detail, ?))");
+          params.add(stringJson);
+          params.add(typedJson.get());
+        } else {
+          sql.append(" AND JSON_CONTAINS(detail, ?)");
+          params.add(stringJson);
+        }
       }
     }
 

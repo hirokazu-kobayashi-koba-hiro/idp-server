@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonNestingBuilder;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -112,6 +113,26 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
       }
     }
 
+    if (queries.hasLooseDetails()) {
+      for (Map.Entry<String, String> entry : queries.looseDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        // Opt-in (details_any.*) type-flexible match: string leaf OR, when the
+        // value parses as a JSON scalar, the typed leaf. Both sides use @> so the
+        // GIN index still applies (BitmapOr of the two index scans).
+        String stringJson = JsonNestingBuilder.buildNestedObjectJson(key, value);
+        Optional<String> typedJson = JsonNestingBuilder.buildTypedNestedObjectJson(key, value);
+        if (typedJson.isPresent()) {
+          sql.append(" AND (detail @> ?::jsonb OR detail @> ?::jsonb)");
+          params.add(stringJson);
+          params.add(typedJson.get());
+        } else {
+          sql.append(" AND detail @> ?::jsonb");
+          params.add(stringJson);
+        }
+      }
+    }
+
     String countSql = "SELECT COUNT(*) FROM (" + sql.toString() + " LIMIT 1000001) t";
     return sqlExecutor.selectOne(countSql, params);
   }
@@ -195,6 +216,26 @@ public class PostgresqlExecutor implements SecurityEventSqlExecutor {
         // matches values stored at the corresponding path.
         sql.append(" AND detail @> ?::jsonb");
         params.add(JsonNestingBuilder.buildNestedObjectJson(key, value));
+      }
+    }
+
+    if (queries.hasLooseDetails()) {
+      for (Map.Entry<String, String> entry : queries.looseDetails().entrySet()) {
+        String key = entry.getKey();
+        String value = entry.getValue();
+        // Opt-in (details_any.*) type-flexible match: string leaf OR, when the
+        // value parses as a JSON scalar, the typed leaf. Both sides use @> so the
+        // GIN index still applies (BitmapOr of the two index scans).
+        String stringJson = JsonNestingBuilder.buildNestedObjectJson(key, value);
+        Optional<String> typedJson = JsonNestingBuilder.buildTypedNestedObjectJson(key, value);
+        if (typedJson.isPresent()) {
+          sql.append(" AND (detail @> ?::jsonb OR detail @> ?::jsonb)");
+          params.add(stringJson);
+          params.add(typedJson.get());
+        } else {
+          sql.append(" AND detail @> ?::jsonb");
+          params.add(stringJson);
+        }
       }
     }
 
