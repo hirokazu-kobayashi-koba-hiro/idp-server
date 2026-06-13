@@ -213,4 +213,15 @@ describe("identity verification result management api", () => {
       expect(typeof response.data.error_description).toBe("string");
     });
   });
+
+  describe("authorization", () => {
+
+    it("should return 401 for unauthenticated request", async () => {
+      const response = await get({
+        url: baseUrl,
+        headers: {},
+      });
+      expect(response.status).toBe(401);
+    });
+  });
 });

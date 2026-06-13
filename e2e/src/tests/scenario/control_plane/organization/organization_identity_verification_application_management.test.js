@@ -196,4 +196,28 @@ describe("Organization Identity Verification Application Management API Test", (
       expect(verifyResponse.data.id).toBe(applicationId);
     }
   });
+
+  test("should return 401 for unauthenticated request", async () => {
+    const response = await get({
+      url: baseUrl,
+      headers: {},
+    });
+    expect(response.status).toBe(401);
+  });
+
+  test("should not allow access to a tenant outside the organization (cross-org isolation)", async () => {
+    // A tenant that does NOT belong to this organization
+    const foreignTenantId = "67e7eae6-62b0-4500-9eff-87459f63fc66";
+    const foreignUrl = `${backendUrl}/v1/management/organizations/${orgId}/tenants/${foreignTenantId}/identity-verification-applications`;
+
+    const response = await get({
+      url: foreignUrl,
+      headers: {
+        Authorization: authHeader,
+      },
+    });
+    console.log("Cross-org Access Response:", response.status, JSON.stringify(response.data));
+    // org-tenant binding is verified before scoping, so a foreign tenant must be rejected
+    expect([403, 404]).toContain(response.status);
+  });
 });

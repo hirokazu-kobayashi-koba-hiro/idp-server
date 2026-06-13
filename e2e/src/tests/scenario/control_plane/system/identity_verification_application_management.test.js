@@ -1,7 +1,14 @@
 import { describe, expect, it } from "@jest/globals";
-import { get, deletion } from "../../../../lib/http";
+import { get, deletion, post } from "../../../../lib/http";
 import { requestToken } from "../../../../api/oauthClient";
-import { adminServerConfig, backendUrl } from "../../../testConfig";
+import {
+  adminServerConfig,
+  backendUrl,
+  serverConfig,
+  federationServerConfig,
+  clientSecretPostClient,
+} from "../../../testConfig";
+import { createFederatedUser, registerFidoUaf } from "../../../../user";
 
 describe("identity verification application management api", () => {
 
@@ -213,6 +220,82 @@ describe("identity verification application management api", () => {
         expect(verifyResponse.status).toBe(200);
         expect(verifyResponse.data.id).toBe(applicationId);
       }
+    });
+
+    it("should actually delete an application when dry_run=false", async () => {
+      // Create a real application via the end-user apply flow so the delete is non-vacuous.
+      const { user, accessToken: userToken } = await createFederatedUser({
+        serverConfig: serverConfig,
+        federationServerConfig: federationServerConfig,
+        client: clientSecretPostClient,
+        adminClient: clientSecretPostClient,
+      });
+      await registerFidoUaf({ accessToken: userToken });
+
+      const type = "investment-account-opening";
+      const applyUrl = serverConfig.identityVerificationApplyEndpoint
+        .replace("{type}", type)
+        .replace("{process}", "apply");
+      const applyResponse = await post({
+        url: applyUrl,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userToken}`,
+        },
+        body: {
+          last_name: "john",
+          first_name: "mac",
+          last_name_kana: "jon",
+          first_name_kana: "mac",
+          birthdate: "1992-02-12",
+          nationality: "JP",
+          email_address: "ito.ichiro@gmail.com",
+          mobile_phone_number: user.phone_number,
+          address: {
+            street_address: "test",
+            locality: "test",
+            region: "test",
+            postal_code: "1000001",
+            country: "JP",
+          },
+        },
+      });
+      console.log("Apply Response:", applyResponse.status, JSON.stringify(applyResponse.data));
+      expect(applyResponse.status).toBe(200);
+      const applicationId = applyResponse.data.id;
+
+      // The application was created on serverConfig.tenantId; delete it via the system management API.
+      const adminToken = await getAccessToken();
+      const mgmtUrl = `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/identity-verification-applications/${applicationId}`;
+
+      const deleteResponse = await deletion({
+        url: `${mgmtUrl}?dry_run=false`,
+        headers: {
+          Authorization: `Bearer ${adminToken}`
+        }
+      });
+      console.log("Actual Delete Response:", deleteResponse.status, deleteResponse.data);
+      expect([200, 204]).toContain(deleteResponse.status);
+
+      // Verify the application no longer exists
+      const verifyResponse = await get({
+        url: mgmtUrl,
+        headers: {
+          Authorization: `Bearer ${adminToken}`
+        }
+      });
+      expect(verifyResponse.status).toBe(404);
+    });
+  });
+
+  describe("authorization", () => {
+
+    it("should return 401 for unauthenticated request", async () => {
+      const response = await get({
+        url: baseUrl,
+        headers: {}
+      });
+      expect(response.status).toBe(401);
     });
   });
 });

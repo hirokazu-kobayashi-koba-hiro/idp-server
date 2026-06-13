@@ -116,4 +116,25 @@ describe("Organization Identity Verification Result Management API Test", () => 
       expect(detailResponse.data.id).toBe(resultId);
     }
   });
+
+  test("should return 401 for unauthenticated request", async () => {
+    const response = await get({
+      url: baseUrl,
+      headers: {},
+    });
+    expect(response.status).toBe(401);
+  });
+
+  test("should not allow access to a tenant outside the organization (cross-org isolation)", async () => {
+    // A tenant that does NOT belong to this organization
+    const foreignTenantId = "67e7eae6-62b0-4500-9eff-87459f63fc66";
+    const foreignUrl = `${backendUrl}/v1/management/organizations/${orgId}/tenants/${foreignTenantId}/identity-verification-results`;
+
+    const response = await get({
+      url: foreignUrl,
+      headers: { Authorization: authHeader },
+    });
+    console.log("Cross-org Access Response:", response.status, JSON.stringify(response.data));
+    expect([403, 404]).toContain(response.status);
+  });
 });
