@@ -23,20 +23,29 @@ import java.util.Map;
  * {@code ConcatFunction} concatenates multiple values into a single string.
  *
  * <p>The {@code values} argument is a list of elements to concatenate. Each element is converted to
- * a string via {@code toString()}. When used with dynamic args resolution ({@code
- * MappingRuleObjectMapper.resolveArgs} or reshape's per-field resolveArgs), elements starting with
- * "$." are resolved from the context before this function is called.
+ * a string via {@code toString()}.
+ *
+ * <p><b>Dynamic ({@code "$."}) elements inside {@code values}:</b> JSONPath resolution of List
+ * elements is performed ONLY by {@code ReshapeFunction}'s per-field resolveArgs. The top-level
+ * {@code MappingRuleObjectMapper.resolveArgs} resolves only args whose <em>entire</em> value is a
+ * {@code "$."} string, NOT elements inside a List. Therefore {@code "$."} references inside {@code
+ * values} are resolved only when concat is used as a per-field function inside {@code reshape}; at
+ * the top level they are passed through as literal strings.
  *
  * <p>Example usage:
  *
  * <pre>{@code
- * // Basic concatenation
+ * // Basic concatenation (top-level or anywhere)
  * {"name": "concat", "args": {"values": ["Hello", " ", "World"]}}
  * // → "Hello World"
  *
- * // With dynamic args (resolved before concat is called)
- * {"name": "concat", "args": {"values": ["$.first_name", " ", "$.last_name"]}}
- * // → "Taro Tanaka"
+ * // Dynamic elements: ONLY works inside reshape's per-field functions
+ * {"name": "reshape", "args": {"fields": {
+ *   "full_name": {"functions": [
+ *     {"name": "concat", "args": {"values": ["$.first_name", " ", "$.last_name"]}}
+ *   ]}
+ * }}}
+ * // → {"full_name": "Taro Tanaka"}
  * }</pre>
  *
  * <p>Arguments:
