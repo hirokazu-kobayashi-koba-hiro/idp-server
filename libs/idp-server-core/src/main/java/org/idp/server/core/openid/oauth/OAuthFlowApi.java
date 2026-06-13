@@ -51,6 +51,11 @@ public interface OAuthFlowApi {
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
       RequestAttributes requestAttributes);
 
+  OAuthAuthenticationStatusResponse getAuthenticationStatus(
+      TenantIdentifier tenantIdentifier,
+      AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      RequestAttributes requestAttributes);
+
   AuthenticationInteractionRequestResult interact(
       TenantIdentifier tenantIdentifier,
       AuthorizationRequestIdentifier authorizationRequestIdentifier,

@@ -57,14 +57,16 @@ public class OAuthAuthenticationTransactionCreator {
       Tenant tenant,
       OAuthRequestResponse requestResponse,
       AuthenticationPolicyConfiguration policyConfiguration,
-      AuthSessionId authSessionId) {
+      AuthSessionId authSessionId,
+      User resolvedUser) {
 
     AuthenticationTransactionIdentifier identifier =
         new AuthenticationTransactionIdentifier(UUID.randomUUID().toString());
     AuthorizationIdentifier authorizationIdentifier =
         new AuthorizationIdentifier(requestResponse.authorizationRequestIdentifier().value());
 
-    AuthenticationRequest authenticationRequest = toAuthenticationRequest(tenant, requestResponse);
+    AuthenticationRequest authenticationRequest =
+        toAuthenticationRequest(tenant, requestResponse, resolvedUser);
     AuthenticationPolicy authenticationPolicy =
         policyConfiguration.findSatisfiedAuthenticationPolicy(
             authenticationRequest.requestedClientId(),
@@ -82,7 +84,7 @@ public class OAuthAuthenticationTransactionCreator {
   }
 
   private static AuthenticationRequest toAuthenticationRequest(
-      Tenant tenant, OAuthRequestResponse requestResponse) {
+      Tenant tenant, OAuthRequestResponse requestResponse, User resolvedUser) {
 
     AuthorizationRequest authorizationRequest = requestResponse.authorizationRequest();
     StandardAuthFlow standardAuthFlow = StandardAuthFlow.OAUTH;
@@ -91,8 +93,11 @@ public class OAuthAuthenticationTransactionCreator {
 
     RequestedClientId requestedClientId = authorizationRequest.requestedClientId();
     ClientAttributes clientAttributes = authorizationRequest.clientAttributes();
-    User user = User.notFound();
-    AuthenticationDevice authenticationDevice = new AuthenticationDevice();
+    User user = resolvedUser;
+    AuthenticationDevice authenticationDevice =
+        resolvedUser.exists()
+            ? resolvedUser.findPrimaryAuthenticationDevice()
+            : new AuthenticationDevice();
     AuthorizationDetails authorizationDetails =
         requestResponse.authorizationRequest().authorizationDetails();
     AuthenticationContext context =

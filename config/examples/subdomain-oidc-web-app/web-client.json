@@ -6,7 +6,8 @@
     "https://sample.local.test/api/auth/callback/idp-server",
     "https://sample.local.test/api/security-test/callback",
     "https://sample.local.test/api/passkey-registration/callback/",
-    "https://sample.local.test/api/fido-uaf-device-test/callback"
+    "https://sample.local.test/api/fido-uaf-device-test/callback",
+    "https://sample.local.test/api/fido-uaf-auth-test/callback"
   ],
   "response_types": [
     "code"
