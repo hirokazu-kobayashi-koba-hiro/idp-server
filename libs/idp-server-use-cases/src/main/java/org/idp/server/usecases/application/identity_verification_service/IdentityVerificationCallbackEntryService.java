@@ -184,18 +184,19 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
       IdentityVerificationConfiguration verificationConfiguration,
       Tenant tenant,
       IdentityVerificationProcessConfiguration processConfiguration) {
+    User user = userQueryRepository.get(tenant, application.userIdentifier());
+
     IdentityVerificationContext context =
         new IdentityVerificationContextBuilder()
             .request(request)
             .requestAttributes(requestAttributes)
             .application(application)
+            .user(user)
             .build();
 
     IdentityVerificationApplication updatedApplication =
         application.updateCallbackWith(process, context, verificationConfiguration);
     applicationCommandRepository.update(tenant, updatedApplication);
-
-    User user = userQueryRepository.get(tenant, application.userIdentifier());
 
     if (updatedApplication.isApproved()) {
       IdentityVerificationResult identityVerificationResult =
