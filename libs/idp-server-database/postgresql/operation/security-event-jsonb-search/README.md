@@ -150,8 +150,11 @@ Bitmap Heap Scan on security_event_p20260608
 
 - **値の型一致が厳密になる**: `->>` (テキスト比較) は数値 `5` に `"5"` がヒットしたが、
   `@>` / `JSON_CONTAINS` は JSON 型まで一致が必要 (`{"a":1} @> {"a":"1"}` → false)。
-  本番 `detail` の値は現状 string / object のみだが、**イベント発行側は detail の値を
-  string か object に揃えること** (数値・boolean を入れると検索が静かに効かなくなる)。
+  大半の `detail` 値は string だが、`authentication-device` の `/logs` API は
+  リクエストボディをそのまま `detail.execution_result.*` に格納するため、**数値 / boolean が
+  混在しうる**。型厳密な `details.*` ではこれらを `=3` 等で絞れない (静かに 0 件)。
+  → 数値 / boolean を絞りたい場合は型ゆるい **`details_any.*`** を使う
+  (string leaf OR typed leaf。`SecurityEventQueries.looseDetails()`)。
 - **配列値の扱いが DB 間で異なる**: 例 `detail = {"scopes": ["openid"]}` に対する
   `?details.scopes=openid` は PostgreSQL (`@>`) では false、MySQL (`JSON_CONTAINS`)
   では true (candidate scalar は target array の要素マッチで contained 扱い)。
