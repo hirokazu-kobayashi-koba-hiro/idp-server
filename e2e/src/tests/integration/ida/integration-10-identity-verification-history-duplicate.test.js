@@ -28,6 +28,7 @@ describe("Identity Verification: history-driven duplicate prevention", () => {
   let userAccessToken;
   let configId;
   let configurationType;
+  const createdConfigIds = [];
 
   beforeAll(async () => {
     const orgAuthResponse = await requestToken({
@@ -54,9 +55,9 @@ describe("Identity Verification: history-driven duplicate prevention", () => {
   });
 
   afterAll(async () => {
-    if (configId) {
+    for (const id of createdConfigIds) {
       await deletion({
-        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${id}`,
         headers: { Authorization: `Bearer ${orgAccessToken}` }
       });
     }
@@ -65,6 +66,7 @@ describe("Identity Verification: history-driven duplicate prevention", () => {
   it("blocks a second apply when a running application already exists for the same type", async () => {
     configId = uuidv4();
     configurationType = uuidv4();
+    createdConfigIds.push(configId);
 
     const configurationData = {
       id: configId,
@@ -135,7 +137,85 @@ describe("Identity Verification: history-driven duplicate prevention", () => {
         Authorization: `Bearer ${userAccessToken}`
       }
     });
-    expect(secondResponse.status).not.toBe(200);
+    // Pre-hook validation failure (duplicate) maps to CLIENT_ERROR = 400.
+    expect(secondResponse.status).toBe(400);
+    const body = JSON.stringify(secondResponse.data || {});
+    expect(body.toLowerCase()).toContain("duplicate");
+  });
+
+  it("falls back to running-of-type when duplicate_application is configured WITHOUT a history section (backward compatibility)", async () => {
+    // Regression guard for the findAll -> findHistory change: a config that enables the
+    // duplicate_application verifier but declares NO `history` section must still block
+    // duplicates. historyPlan(type) falls back to observing running applications of the
+    // requested type, preserving the pre-`history` behavior instead of silently no-op'ing.
+    const fallbackConfigId = uuidv4();
+    const fallbackType = uuidv4();
+    createdConfigIds.push(fallbackConfigId);
+
+    const configurationData = {
+      id: fallbackConfigId,
+      type: fallbackType,
+      attributes: { enabled: true },
+      common: { auth_type: "none" },
+      processes: {
+        apply: {
+          request: {
+            schema: {
+              type: "object",
+              properties: {
+                trust_framework: { type: "string" }
+              },
+              required: ["trust_framework"]
+            }
+          },
+          // NOTE: intentionally no `history` section — exercises the fallback path.
+          pre_hook: {
+            verifications: [
+              { type: "duplicate_application" }
+            ]
+          },
+          execution: {
+            type: "no_action"
+          }
+        }
+      }
+    };
+
+    const createResponse = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
+      headers: {
+        Authorization: `Bearer ${orgAccessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: configurationData
+    });
+    expect(createResponse.status).toBe(201);
+
+    const applyUrl = serverConfig.identityVerificationApplyEndpoint
+      .replace("{type}", fallbackType)
+      .replace("{process}", "apply");
+
+    const firstResponse = await postWithJson({
+      url: applyUrl,
+      body: { trust_framework: "eidas" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${userAccessToken}`
+      }
+    });
+    expect(firstResponse.status).toBe(200);
+
+    const secondResponse = await postWithJson({
+      url: applyUrl,
+      body: { trust_framework: "eidas" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${userAccessToken}`
+      }
+    });
+    // Without the fallback this would be 200 (duplicate silently allowed).
+    // Pre-hook validation failure (duplicate) maps to CLIENT_ERROR = 400.
+    expect(secondResponse.status).toBe(400);
     const body = JSON.stringify(secondResponse.data || {});
     expect(body.toLowerCase()).toContain("duplicate");
   });
