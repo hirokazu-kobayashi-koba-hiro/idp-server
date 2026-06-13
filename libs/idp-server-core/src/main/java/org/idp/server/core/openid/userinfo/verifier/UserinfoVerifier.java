@@ -25,6 +25,7 @@ import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.Subject;
 import org.idp.server.core.openid.token.AccessToken;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInsufficientScopeException;
 import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.x509.X509CertInvalidException;
@@ -58,10 +59,14 @@ public class UserinfoVerifier {
     this.clientCert = clientCert;
   }
 
-  /** Verify token validity: existence, expiration, subject presence, and client certificate. */
+  /**
+   * Verify token validity: existence, expiration, subject presence, openid scope, and client
+   * certificate.
+   */
   public void verifyToken() {
     throwExceptionIfNotFoundToken();
     throwExceptionIfNoSubject();
+    throwExceptionIfMissingOpenidScope();
     throwExceptionIfUnMatchClientCert();
   }
 
@@ -102,6 +107,27 @@ public class UserinfoVerifier {
     if (subject == null || !subject.exists()) {
       throw new TokenInvalidException(
           "token has no subject; UserInfo endpoint requires a token issued for an end-user");
+    }
+  }
+
+  /**
+   * Reject tokens that were not issued for OpenID Connect.
+   *
+   * <p>OIDC Core 1.0 Section 5.3: The UserInfo Endpoint returns Claims about the authenticated
+   * End-User. Per Section 5.3.1 the Access Token used here MUST be one obtained from an OpenID
+   * Connect Authentication Request, i.e. a request that included the {@code openid} scope. Tokens
+   * granted without the {@code openid} scope (e.g. plain OAuth 2.0 API tokens) are not OpenID
+   * Connect tokens and must not be accepted.
+   *
+   * <p>RFC 6750 Section 3.1: When the request requires higher privileges than provided by the
+   * access token, the resource server responds with the {@code insufficient_scope} error.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6750#section-3.1">RFC 6750 Section 3.1</a>
+   */
+  void throwExceptionIfMissingOpenidScope() {
+    if (!oAuthToken.scopes().hasOpenidScope()) {
+      throw new TokenInsufficientScopeException(
+          "token lacks the 'openid' scope; UserInfo endpoint requires an OpenID Connect token");
     }
   }
 

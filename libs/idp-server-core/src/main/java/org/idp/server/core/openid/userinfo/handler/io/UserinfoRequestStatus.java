@@ -20,6 +20,7 @@ public enum UserinfoRequestStatus {
   OK(200),
   BAD_REQUEST(400),
   UNAUTHORIZE(401),
+  FORBIDDEN(403),
   SERVER_ERROR(500);
 
   int statusCode;

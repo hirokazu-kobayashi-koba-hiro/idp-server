@@ -22,6 +22,7 @@ import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurat
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.type.oauth.Error;
 import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
+import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInsufficientScopeException;
 import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInvalidException;
 import org.idp.server.core.openid.userinfo.UserinfoErrorResponse;
 import org.idp.server.core.openid.userinfo.handler.io.UserinfoRequestResponse;
@@ -41,6 +42,16 @@ public class UserinfoErrorHandler {
           UserinfoRequestStatus.UNAUTHORIZE,
           new UserinfoErrorResponse(
               new Error("invalid_token"), new ErrorDescription(exception.getMessage())));
+    }
+
+    if (exception instanceof TokenInsufficientScopeException) {
+      log.warn(
+          "Userinfo request failed: status=forbidden, error=insufficient_scope, description={}",
+          exception.getMessage());
+      return new UserinfoRequestResponse(
+          UserinfoRequestStatus.FORBIDDEN,
+          new UserinfoErrorResponse(
+              new Error("insufficient_scope"), new ErrorDescription(exception.getMessage())));
     }
 
     if (exception instanceof UserNotFoundException) {
