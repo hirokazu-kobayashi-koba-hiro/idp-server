@@ -21,6 +21,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.extension.CreatedAt;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
+import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.RefreshTokenEntity;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.random.RandomStringGenerator;
@@ -65,6 +66,23 @@ public interface RefreshTokenCreatable {
     ExpiresAt expiresAt = new ExpiresAt(localDateTime.plusSeconds(refreshTokenDuration));
 
     return new RefreshToken(refreshTokenEntity, createdAt, expiresAt);
+  }
+
+  /**
+   * Creates a refresh token only when both the authorization server and the client are authorized
+   * for the {@code refresh_token} grant. Otherwise returns an empty refresh token so that no
+   * unusable refresh token is issued — such a token would be rejected on use by the refresh_token
+   * grant's server/client checks anyway.
+   */
+  default RefreshToken createRefreshTokenIfGranted(
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration) {
+    boolean supported =
+        authorizationServerConfiguration.isSupportedGrantType(GrantType.refresh_token)
+            && clientConfiguration.isSupportedGrantType(GrantType.refresh_token);
+    return supported
+        ? createRefreshToken(authorizationServerConfiguration, clientConfiguration)
+        : RefreshToken.empty();
   }
 
   /**
