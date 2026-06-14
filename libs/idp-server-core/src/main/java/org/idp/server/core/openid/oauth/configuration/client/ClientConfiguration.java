@@ -241,6 +241,11 @@ public class ClientConfiguration implements JsonReadable, Configurable {
   }
 
   public boolean matchClientSecret(String that) {
+    // A client without a configured secret can never match a presented secret.
+    // Returning false (instead of throwing NPE) lets the authenticator respond with invalid_client.
+    if (!hasSecret()) {
+      return false;
+    }
     return clientSecret.equals(that);
   }
 
