@@ -18,15 +18,20 @@ package org.idp.server.core.openid.token.service;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrantBuilder;
+import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
+import org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.device.authentication.DeviceAuthenticationVerifier;
+import org.idp.server.core.openid.identity.id_token.RequestedIdTokenClaims;
+import org.idp.server.core.openid.identity.id_token.RequestedUserinfoClaims;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.AvailableFederation;
@@ -34,6 +39,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.JwtBearerAssertion;
+import org.idp.server.core.openid.oauth.type.oauth.ResponseType;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.token.*;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
@@ -123,6 +129,19 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
       Scopes scopes = new Scopes(filteredScopes);
 
       CustomProperties customProperties = context.customProperties();
+
+      List<String> supportedClaims = serverConfiguration.claimsSupported();
+      boolean idTokenStrictMode = serverConfiguration.isIdTokenStrictMode();
+      GrantIdTokenClaims grantIdTokenClaims =
+          GrantIdTokenClaims.create(
+              scopes,
+              ResponseType.undefined,
+              supportedClaims,
+              new RequestedIdTokenClaims(),
+              idTokenStrictMode);
+      GrantUserinfoClaims grantUserinfoClaims =
+          GrantUserinfoClaims.create(scopes, supportedClaims, new RequestedUserinfoClaims());
+
       AuthorizationGrant authorizationGrant =
           new AuthorizationGrantBuilder(
                   context.tenantIdentifier(),
@@ -132,6 +151,8 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
               .add(customProperties)
               .add(clientConfiguration.clientAttributes())
               .add(user)
+              .add(grantIdTokenClaims)
+              .add(grantUserinfoClaims)
               .build();
 
       AccessToken accessToken =
