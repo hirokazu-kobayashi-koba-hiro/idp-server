@@ -19,6 +19,7 @@ package org.idp.server.core.adapters.datasource.identity.verification.applicatio
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.exception.IdentityVerificationApplicationNotFoundException;
+import org.idp.server.core.extension.identity.verification.application.history.HistoryQueryPlan;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
@@ -167,5 +168,23 @@ public class IdentityVerificationApplicationQueryDataSource
     }
 
     return Long.parseLong(result.get("count"));
+  }
+
+  @Override
+  public IdentityVerificationApplications findHistory(
+      Tenant tenant, User user, HistoryQueryPlan plan) {
+    if (plan.isEmpty()) {
+      return new IdentityVerificationApplications();
+    }
+
+    List<Map<String, String>> result = executor.selectHistory(tenant, user, plan);
+
+    if (result == null || result.isEmpty()) {
+      return new IdentityVerificationApplications();
+    }
+
+    List<IdentityVerificationApplication> applicationList =
+        result.stream().map(ModelConverter::convert).toList();
+    return new IdentityVerificationApplications(applicationList);
   }
 }

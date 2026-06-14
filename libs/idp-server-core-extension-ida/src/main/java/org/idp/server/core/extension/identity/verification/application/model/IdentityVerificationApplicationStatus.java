@@ -16,6 +16,9 @@
 
 package org.idp.server.core.extension.identity.verification.application.model;
 
+import java.util.Arrays;
+import java.util.List;
+
 public enum IdentityVerificationApplicationStatus {
   REQUESTED("requested"),
   APPLYING("applying"),
@@ -53,6 +56,13 @@ public enum IdentityVerificationApplicationStatus {
         || this == APPLYING
         || this == APPLIED
         || this == EXAMINATION_PROCESSING;
+  }
+
+  public static List<String> runningValues() {
+    return Arrays.stream(values())
+        .filter(IdentityVerificationApplicationStatus::isRunning)
+        .map(IdentityVerificationApplicationStatus::value)
+        .toList();
   }
 
   public boolean isApproved() {

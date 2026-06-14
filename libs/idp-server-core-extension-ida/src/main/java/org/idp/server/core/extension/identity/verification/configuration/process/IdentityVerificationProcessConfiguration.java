@@ -16,8 +16,14 @@
 
 package org.idp.server.core.extension.identity.verification.configuration.process;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
+import org.idp.server.core.extension.identity.verification.application.history.HistoryFilter;
+import org.idp.server.core.extension.identity.verification.application.history.HistoryQueryPlan;
+import org.idp.server.core.extension.identity.verification.application.history.IdentityVerificationHistoryConfig;
 import org.idp.server.core.extension.identity.verification.configuration.common.IdentityVerificationBasicAuthConfig;
 import org.idp.server.platform.http.HmacAuthenticationConfig;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -26,7 +32,15 @@ import org.idp.server.platform.json.schema.JsonSchemaDefinition;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class IdentityVerificationProcessConfiguration implements JsonReadable {
+
+  // Must match DenyDuplicateIdentityVerificationApplicationVerifier.type(); it is the only verifier
+  // that consumes the past-application read model. When a new verifier starts consuming it, update
+  // this detection (or generalize it from the consuming-verifier declaration — see #1268 / Phase
+  // 2).
+  private static final String DUPLICATE_APPLICATION_VERIFIER = "duplicate_application";
+
   IdentityVerificationRequestConfig request = new IdentityVerificationRequestConfig();
+  IdentityVerificationHistoryConfig history = new IdentityVerificationHistoryConfig();
   IdentityVerificationPreHookConfig preHook = new IdentityVerificationPreHookConfig();
   IdentityVerificationExecutionConfig execution = new IdentityVerificationExecutionConfig();
   IdentityVerificationPostHookConfig postHook = new IdentityVerificationPostHookConfig();
@@ -56,6 +70,36 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
       return new JsonSchemaDefinition(JsonNodeWrapper.empty());
     }
     return request.requestSchemaAsDefinition();
+  }
+
+  public IdentityVerificationHistoryConfig history() {
+    if (history == null) {
+      return new IdentityVerificationHistoryConfig();
+    }
+    return history;
+  }
+
+  /**
+   * Build the history fetch plan for the given request type.
+   *
+   * <p>The explicit {@code history} filters (if any) are always honored. Additionally, when this
+   * process runs a {@code duplicate_application} verifier, a "running-of-request-type" filter is
+   * <b>merged in</b> (not used only as an empty-config fallback). This guarantees the duplicate
+   * check always observes the running state of the requested type — it cannot be silently disabled
+   * by an absent {@code history} section, nor by an explicit {@code history} section that happens
+   * not to cover this type. Duplicate filters are de-duplicated by {@link HistoryQueryPlan#from}.
+   */
+  public HistoryQueryPlan historyPlan(IdentityVerificationType type) {
+    List<HistoryFilter> filters = new ArrayList<>(history().filters());
+    if (requiresDuplicateApplicationCheck()) {
+      filters.add(HistoryFilter.running(type.name()));
+    }
+    return HistoryQueryPlan.from(filters);
+  }
+
+  private boolean requiresDuplicateApplicationCheck() {
+    return preHook().verifications().stream()
+        .anyMatch(verification -> DUPLICATE_APPLICATION_VERIFIER.equals(verification.type()));
   }
 
   public IdentityVerificationPreHookConfig preHook() {
@@ -161,6 +205,7 @@ public class IdentityVerificationProcessConfiguration implements JsonReadable {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (request != null) map.put("request", request.toMap());
+    if (history != null) map.put("history", history.toMap());
     if (preHook != null) map.put("pre_hook", preHook.toMap());
     if (execution != null) map.put("execution", execution.toMap());
     if (postHook != null) map.put("post_hook", postHook.toMap());

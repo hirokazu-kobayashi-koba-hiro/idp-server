@@ -238,6 +238,7 @@ POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}
 | フェーズ名             | 役割・目的                      | 主な設定項目                                                    | 必須 |
 |-------------------|----------------------------|-----------------------------------------------------------|----|
 | **1. request**    | リクエストの構造・形式を検証             | `schema`（JSON Schema）                                     | -  |
+| **history**       | pre_hook に渡す過去申込み read model の取得条件（[詳細](../../../content_06_developer-guide/05-configuration/identity-verification.md#history過去申込みの取得条件)） | `filters`                                                 | -  |
 | **2. pre_hook**   | 実行前の事前検証・外部パラメータ取得・外部API実行 | `verifications`, `additional_parameters`                  | -  |
 | **3. execution**  | メイン業務処理（外部連携 or 内部処理）      | `type`, `http_request`, `mock`, `no_action` など（処理タイプに応じて） | ✅  |
 | **4. post_hook**  | 実行後の検証・外部API実行             | `verifications` `additional_parameters`                   | -  |
@@ -700,7 +701,7 @@ flowchart TD
 | `process_sequence`            | プロセス依存関係とリトライ制御の検証。詳細は「プロセス依存関係とシーケンス制御」セクション参照。 |
 | `user_claim`                  | リクエスト内容とユーザークレームの一致確認。                        |
 | `application_limitation` （予定） | 申込み可能数チェック。                                   |
-| `duplicate_application` （予定）  | 過去の申請と重複がないかをチェック。                            |
+| `duplicate_application`        | 同一 type に進行中（running）の申請があれば拒否。`history` と連携（[詳細](../../../content_06_developer-guide/05-configuration/identity-verification.md#history過去申込みの取得条件)）。 |
 | `http_request`（予定）            | 外部APIと連携して検証を行う。                              |
 
 **user_claim の詳細構造**

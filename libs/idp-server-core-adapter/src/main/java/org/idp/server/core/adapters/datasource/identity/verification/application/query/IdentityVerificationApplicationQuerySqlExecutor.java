@@ -18,6 +18,7 @@ package org.idp.server.core.adapters.datasource.identity.verification.applicatio
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.extension.identity.verification.application.history.HistoryQueryPlan;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationExternalApplicationIdentifier;
@@ -58,4 +59,11 @@ public interface IdentityVerificationApplicationQuerySqlExecutor {
       Tenant tenant, IdentityVerificationApplicationQueries queries);
 
   Map<String, String> selectCount(Tenant tenant, IdentityVerificationApplicationQueries queries);
+
+  /**
+   * Materialize the rows matching observations declared by {@code plan} as a single SQL statement.
+   * Callers must check {@link HistoryQueryPlan#isEmpty()} before invoking — implementations may
+   * assume the plan declares at least one observation.
+   */
+  List<Map<String, String>> selectHistory(Tenant tenant, User user, HistoryQueryPlan plan);
 }
