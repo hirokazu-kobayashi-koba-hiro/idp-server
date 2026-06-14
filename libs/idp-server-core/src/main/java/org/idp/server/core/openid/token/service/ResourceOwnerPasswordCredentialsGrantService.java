@@ -136,7 +136,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
             clientConfiguration,
             clientCredentials);
     RefreshToken refreshToken =
-        createRefreshToken(authorizationServerConfiguration, clientConfiguration);
+        createRefreshTokenIfGranted(authorizationServerConfiguration, clientConfiguration);
     OAuthTokenBuilder oAuthTokenBuilder =
         new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))
             .add(accessToken)

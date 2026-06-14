@@ -159,7 +159,8 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
           accessTokenCreator.create(
               authorizationGrant, serverConfiguration, clientConfiguration, clientCredentials);
 
-      RefreshToken refreshToken = createRefreshToken(serverConfiguration, clientConfiguration);
+      RefreshToken refreshToken =
+          createRefreshTokenIfGranted(serverConfiguration, clientConfiguration);
 
       OAuthTokenBuilder tokenBuilder =
           new OAuthTokenBuilder(new OAuthTokenIdentifier(UUID.randomUUID().toString()))

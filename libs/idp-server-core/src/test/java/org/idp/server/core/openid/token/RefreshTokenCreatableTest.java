@@ -257,4 +257,75 @@ class RefreshTokenCreatableTest {
       assertEquals(tenantDuration, actualDuration);
     }
   }
+
+  @Nested
+  @DisplayName("createRefreshTokenIfGranted: grant_types によるRT発行ゲート (#1355)")
+  class CreateRefreshTokenIfGranted {
+
+    private AuthorizationServerConfiguration serverWith(boolean supportsRefreshToken) {
+      String grants =
+          supportsRefreshToken
+              ? "[\"authorization_code\", \"refresh_token\"]"
+              : "[\"authorization_code\"]";
+      String json =
+          String.format(
+              """
+          {
+            "grantTypesSupported": %s,
+            "extension": { "refreshTokenDuration": 3600 }
+          }
+          """,
+              grants);
+      return JsonConverter.defaultInstance().read(json, AuthorizationServerConfiguration.class);
+    }
+
+    private ClientConfiguration clientWith(boolean supportsRefreshToken) {
+      String grants =
+          supportsRefreshToken
+              ? "[\"authorization_code\", \"refresh_token\"]"
+              : "[\"authorization_code\"]";
+      String json =
+          String.format(
+              """
+          {
+            "clientId": "test-client",
+            "grantTypes": %s,
+            "extension": {}
+          }
+          """,
+              grants);
+      return JsonConverter.defaultInstance().read(json, ClientConfiguration.class);
+    }
+
+    @Test
+    @DisplayName("server+client 両方が refresh_token 対応: RTを発行する")
+    void issuesWhenBothSupport() {
+      RefreshToken result = creator.createRefreshTokenIfGranted(serverWith(true), clientWith(true));
+      assertTrue(result.exists());
+    }
+
+    @Test
+    @DisplayName("client が refresh_token 非対応: RTを発行しない")
+    void noTokenWhenClientUnsupported() {
+      RefreshToken result =
+          creator.createRefreshTokenIfGranted(serverWith(true), clientWith(false));
+      assertFalse(result.exists());
+    }
+
+    @Test
+    @DisplayName("認可サーバーが refresh_token 非対応: RTを発行しない")
+    void noTokenWhenServerUnsupported() {
+      RefreshToken result =
+          creator.createRefreshTokenIfGranted(serverWith(false), clientWith(true));
+      assertFalse(result.exists());
+    }
+
+    @Test
+    @DisplayName("両方が refresh_token 非対応: RTを発行しない")
+    void noTokenWhenNeitherSupports() {
+      RefreshToken result =
+          creator.createRefreshTokenIfGranted(serverWith(false), clientWith(false));
+      assertFalse(result.exists());
+    }
+  }
 }
