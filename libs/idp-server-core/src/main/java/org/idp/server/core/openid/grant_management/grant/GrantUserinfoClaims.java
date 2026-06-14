@@ -191,7 +191,7 @@ public class GrantUserinfoClaims implements Iterable<String> {
     if (!supportedClaims.contains("family_name")) {
       return false;
     }
-    return scopes.contains("profile") || userinfoClaims.hasMiddleName();
+    return scopes.contains("profile") || userinfoClaims.hasFamilyName();
   }
 
   private static boolean shouldAddMiddleName(

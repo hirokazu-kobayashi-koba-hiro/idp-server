@@ -27,6 +27,7 @@ public class RequestedIdTokenClaims implements JsonReadable {
   ClaimsObject sub;
   ClaimsObject name;
   ClaimsObject givenName;
+  ClaimsObject familyName;
   ClaimsObject middleName;
   ClaimsObject nickname;
   ClaimsObject preferredUsername;
@@ -73,6 +74,10 @@ public class RequestedIdTokenClaims implements JsonReadable {
 
   public ClaimsObject givenName() {
     return givenName;
+  }
+
+  public ClaimsObject familyName() {
+    return familyName;
   }
 
   public ClaimsObject middleName() {
@@ -169,6 +174,10 @@ public class RequestedIdTokenClaims implements JsonReadable {
 
   public boolean hasGivenName() {
     return Objects.nonNull(givenName);
+  }
+
+  public boolean hasFamilyName() {
+    return Objects.nonNull(familyName);
   }
 
   public boolean hasMiddleName() {
