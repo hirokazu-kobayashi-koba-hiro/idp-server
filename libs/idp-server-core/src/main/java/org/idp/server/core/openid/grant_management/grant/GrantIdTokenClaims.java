@@ -252,7 +252,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
       return scopes.contains("profile");
     }
     if (idTokenStrictMode) {
-      return idTokenClaims.hasGivenName();
+      return idTokenClaims.hasFamilyName();
     }
     return scopes.contains("profile");
   }
@@ -360,7 +360,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
       return scopes.contains("profile");
     }
     if (idTokenStrictMode) {
-      return idTokenClaims.hasProfile();
+      return idTokenClaims.hasWebsite();
     }
     return scopes.contains("profile");
   }
@@ -486,7 +486,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
       return scopes.contains("phone");
     }
     if (idTokenStrictMode) {
-      return idTokenClaims.hasName();
+      return idTokenClaims.hasPhoneNumber();
     }
     return scopes.contains("phone");
   }
