@@ -29,6 +29,14 @@ public class RefreshToken {
 
   public RefreshToken() {}
 
+  /**
+   * An empty refresh token. Used when the client is not authorized for the {@code refresh_token}
+   * grant, so no usable refresh token should be issued.
+   */
+  public static RefreshToken empty() {
+    return new RefreshToken();
+  }
+
   public RefreshToken(
       RefreshTokenEntity refreshTokenEntity, CreatedAt createdAt, ExpiresAt expiresAt) {
     this.refreshTokenEntity = refreshTokenEntity;

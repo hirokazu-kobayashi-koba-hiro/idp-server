@@ -86,7 +86,7 @@ public class ClientNotificationService implements RefreshTokenCreatable {
               clientConfiguration,
               new ClientCredentials());
       RefreshToken refreshToken =
-          createRefreshToken(authorizationServerConfiguration, clientConfiguration);
+          createRefreshTokenIfGranted(authorizationServerConfiguration, clientConfiguration);
 
       IdTokenCustomClaims idTokenCustomClaims = new IdTokenCustomClaimsBuilder().build();
       IdToken idToken =
