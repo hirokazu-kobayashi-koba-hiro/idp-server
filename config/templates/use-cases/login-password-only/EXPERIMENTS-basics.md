@@ -405,6 +405,89 @@ get_userinfo | jq .
 
 ---
 
+## Experiment 7: password grant でも UserInfo が scope ベースのクレームを返すことを確認する (#1440)
+
+> **やりたいこと**: password grant (ROPC) で取得したトークンでも、Authorization Code Grant と同じく
+> scope に応じた UserInfo クレームが返ることを確認したい
+>
+> **変わる設定**: `authorization_server.grant_types_supported` と client の `grant_types` に `password` を追加
+>
+> **背景**: 以前は password grant / JWT Bearer grant で取得したトークンの UserInfo が `sub` しか
+> 返らなかった（#1440）。grant に `GrantUserinfoClaims` を設定するよう修正され、Experiment 3 と同じ
+> 「UserInfo = scope ∩ `claims_supported`」の契約が grant type を問わず成立するようになった。
+>
+> **注意**: ROPC（Resource Owner Password Credentials）は OAuth 2.0 Security BCP で非推奨です。
+> ここでは挙動確認のため一時的に有効化し、確認後に必ず restore します。本番では使わないでください。
+
+### 1. password grant を一時的に有効化
+
+```bash
+update_auth_server '.grant_types_supported += ["password"]' \
+  | jq '.result.grant_types_supported // .'
+update_client '.grant_types += ["password"]' \
+  | jq '.result.grant_types // .'
+```
+
+### 2. ROPC 用のユーザーを用意
+
+```bash
+ROPC_EMAIL="ropc-$(date +%s)@example.com"
+ROPC_PASSWORD="TestPass123"
+
+# initial-registration だけではユーザーは確定しない。authorize まで通して永続化する
+start_auth_flow
+register_user "${ROPC_EMAIL}" "${ROPC_PASSWORD}" "ROPC User" > /dev/null
+complete_auth_flow > /dev/null
+echo "Created user: ${ROPC_EMAIL}"
+```
+
+### 3. password grant でトークンを取得
+
+```bash
+ROPC_TOKEN_RESPONSE=$(curl -s -X POST "${TENANT_BASE}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=password" \
+  --data-urlencode "username=${ROPC_EMAIL}" \
+  --data-urlencode "password=${ROPC_PASSWORD}" \
+  --data-urlencode "scope=openid profile email" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "client_secret=${CLIENT_SECRET}")
+
+echo "${ROPC_TOKEN_RESPONSE}" | jq '{token_type, scope, expires_in}'
+ROPC_ACCESS_TOKEN=$(echo "${ROPC_TOKEN_RESPONSE}" | jq -r '.access_token')
+```
+
+### 4. 取得したトークンで UserInfo を確認
+
+```bash
+echo "--- password grant の UserInfo ---"
+get_userinfo "${ROPC_ACCESS_TOKEN}" | jq .
+```
+
+### 5. 期待結果
+
+| grant_type | UserInfo の内容 |
+|-----------|----------------|
+| password（#1440 修正前） | `sub` のみ（email, name が欠落）|
+| password（#1440 修正後） | `sub`, `email`, `name` 等（scope に応じる）|
+
+> Experiment 3 / 6 と同じ結果になれば OK。scope を `openid` だけにすれば `sub` のみ、
+> `claims_supported` を絞れば対応するクレームが消える挙動も grant type を問わず一致します。
+
+### 6. 元に戻す
+
+```bash
+restore_client
+restore_auth_server
+```
+
+> **うまくいかない場合**:
+> - `unsupported_grant_type` → 手順1の `update_auth_server` が未反映（数秒待って再実行）
+> - `unauthorized_client` → 手順1の `update_client` が未反映
+> - `invalid_grant`（"does not found user ... or invalid password"）→ 手順2のユーザー作成が未完了、またはメール/パスワード不一致
+
+---
+
 ## 実験一覧
 
 | # | やりたいこと | 変わる設定 | 確認できること |
@@ -415,3 +498,4 @@ get_userinfo | jq .
 | 4 | AT 有効期限を短くしたい | `access_token_duration` | 期限切れで 401 → RT で復活 |
 | 5 | セッションを短くしたい | `session_config.timeout_seconds` | 期限切れで再認証を要求 |
 | 6 | スコープで出し分けたい | 認可リクエストの `scope` | scope による UserInfo の違い |
+| 7 | password grant でも UserInfo を返したい | `grant_types` に `password` | grant type を問わず scope ベースで返る (#1440) |

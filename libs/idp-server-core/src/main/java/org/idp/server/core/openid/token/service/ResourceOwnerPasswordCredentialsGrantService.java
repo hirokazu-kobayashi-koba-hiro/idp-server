@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.token.service;
 
+import java.util.List;
 import java.util.UUID;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.grant_management.AuthorizationGranted;
@@ -23,16 +24,21 @@ import org.idp.server.core.openid.grant_management.AuthorizationGrantedIdentifie
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrantBuilder;
+import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
+import org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.id_token.IdTokenCreator;
 import org.idp.server.core.openid.identity.id_token.IdTokenCustomClaims;
 import org.idp.server.core.openid.identity.id_token.IdTokenCustomClaimsBuilder;
 import org.idp.server.core.openid.identity.id_token.RequestedClaimsPayload;
+import org.idp.server.core.openid.identity.id_token.RequestedIdTokenClaims;
+import org.idp.server.core.openid.identity.id_token.RequestedUserinfoClaims;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
+import org.idp.server.core.openid.oauth.type.oauth.ResponseType;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.oauth.type.oidc.IdToken;
 import org.idp.server.core.openid.token.*;
@@ -100,12 +106,27 @@ public class ResourceOwnerPasswordCredentialsGrantService
     verifier.verify();
 
     CustomProperties customProperties = context.customProperties();
+
+    List<String> supportedClaims = authorizationServerConfiguration.claimsSupported();
+    boolean idTokenStrictMode = authorizationServerConfiguration.isIdTokenStrictMode();
+    GrantIdTokenClaims grantIdTokenClaims =
+        GrantIdTokenClaims.create(
+            scopes,
+            ResponseType.undefined,
+            supportedClaims,
+            new RequestedIdTokenClaims(),
+            idTokenStrictMode);
+    GrantUserinfoClaims grantUserinfoClaims =
+        GrantUserinfoClaims.create(scopes, supportedClaims, new RequestedUserinfoClaims());
+
     AuthorizationGrant authorizationGrant =
         new AuthorizationGrantBuilder(
                 context.tenantIdentifier(), context.requestedClientId(), GrantType.password, scopes)
             .add(user)
             .add(clientConfiguration.clientAttributes())
             .add(customProperties)
+            .add(grantIdTokenClaims)
+            .add(grantUserinfoClaims)
             .build();
 
     AccessToken accessToken =

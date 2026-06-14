@@ -101,6 +101,16 @@ describe("Device Credential Use Case: JWT Bearer Grant with Device Credentials",
         token_signed_key_id: "signing_key_1",
         id_token_signed_key_id: "signing_key_1",
         scopes_supported: ["openid", "profile", "email", "management"],
+        claims_supported: [
+          "sub",
+          "name",
+          "given_name",
+          "family_name",
+          "preferred_username",
+          "email",
+          "email_verified",
+          "updated_at",
+        ],
         response_types_supported: ["code"],
         subject_types_supported: ["public"],
         id_token_signing_alg_values_supported: ["RS256", "ES256"],
@@ -281,6 +291,10 @@ describe("Device Credential Use Case: JWT Bearer Grant with Device Credentials",
     expect(userinfoResponse.status).toBe(200);
     expect(userinfoResponse.data).toHaveProperty("sub");
     expect(userinfoResponse.data.sub).toBe(userId);
+    // #1440: JWT Bearer grant must set GrantUserinfoClaims so userinfo returns scope-based
+    // claims (the grant requested "openid profile email"), not just sub.
+    expect(userinfoResponse.data).toHaveProperty("email");
+    expect(Object.keys(userinfoResponse.data).length).toBeGreaterThan(1);
     console.log("Userinfo response:", JSON.stringify(userinfoResponse.data, null, 2));
     console.log("Userinfo request successful - access token is valid");
 
@@ -376,6 +390,16 @@ describe("Device Credential Use Case: JWT Bearer Grant with Device Credentials",
         token_signed_key_id: "signing_key_1",
         id_token_signed_key_id: "signing_key_1",
         scopes_supported: ["openid", "profile", "email", "management"],
+        claims_supported: [
+          "sub",
+          "name",
+          "given_name",
+          "family_name",
+          "preferred_username",
+          "email",
+          "email_verified",
+          "updated_at",
+        ],
         response_types_supported: ["code"],
         subject_types_supported: ["public"],
         id_token_signing_alg_values_supported: ["RS256", "ES256"],

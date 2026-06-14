@@ -47,6 +47,33 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 userinfo", () => {
     expect(postUserinfoResponse.data).toHaveProperty("sub");
   });
 
+  it("5.3.2. password grant token returns scope-based claims from userinfo (#1440)", async () => {
+    // Regression for #1440: GrantUserinfoClaims was empty for password grant, so userinfo
+    // returned only sub. Claims must be returned based on the access token scope regardless
+    // of grant type (OIDC Core 5.3.2).
+    const tokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "password",
+      username: serverConfig.oauth.username,
+      password: serverConfig.oauth.password,
+      scope: "openid profile email",
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    expect(tokenResponse.status).toBe(200);
+
+    const userinfoResponse = await getUserinfo({
+      endpoint: serverConfig.userinfoEndpoint,
+      authorizationHeader: createBearerHeader(tokenResponse.data.access_token),
+    });
+    console.log("Password grant userinfo:", JSON.stringify(userinfoResponse.data));
+    expect(userinfoResponse.status).toBe(200);
+    expect(userinfoResponse.data).toHaveProperty("sub");
+    // Before the fix this was {"sub": "..."} only.
+    expect(userinfoResponse.data).toHaveProperty("email");
+    expect(Object.keys(userinfoResponse.data).length).toBeGreaterThan(1);
+  });
+
   it("5.3.1. token without openid scope is rejected with insufficient_scope", async () => {
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
