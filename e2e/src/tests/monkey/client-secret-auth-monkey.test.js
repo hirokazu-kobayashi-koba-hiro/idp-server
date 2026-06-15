@@ -4,6 +4,7 @@ import { deletion } from "../../lib/http";
 import { requestToken } from "../../api/oauthClient";
 import { generateECP256JWKS, createJwt } from "../../lib/jose";
 import { adminServerConfig, backendUrl } from "../testConfig";
+import { createBasicAuthHeader } from "../../lib/util";
 import { v4 as uuidv4 } from "uuid";
 
 /**
@@ -145,6 +146,26 @@ describe("Monkey test: client authentication without configured client_secret (#
     });
     console.log("[post] status:", tokenResponse.status, "body:", JSON.stringify(tokenResponse.data));
     // 修正前は matchClientSecret の NPE で 500 になっていた
+    expect(tokenResponse.status).not.toBe(500);
+    expect(tokenResponse.status).toBe(401);
+    expect(tokenResponse.data.error).toBe("invalid_client");
+  });
+
+  it("client_secret_basic: returns invalid_client (not 500) when config has no client_secret (#1480)", async () => {
+    const { tenantId, clientId } = await onboardSecretlessClient("client_secret_basic");
+
+    const tokenResponse = await requestToken({
+      endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+      grantType: "authorization_code",
+      code: "dummy-code-1480",
+      redirectUri,
+      basicAuth: createBasicAuthHeader({
+        username: clientId,
+        password: "presented-but-config-has-none",
+      }),
+    });
+    console.log("[basic] status:", tokenResponse.status, "body:", JSON.stringify(tokenResponse.data));
+    // client_secret_post と同じ matchClientSecret 経路。null secret で 500 にならないこと
     expect(tokenResponse.status).not.toBe(500);
     expect(tokenResponse.status).toBe(401);
     expect(tokenResponse.data.error).toBe("invalid_client");
