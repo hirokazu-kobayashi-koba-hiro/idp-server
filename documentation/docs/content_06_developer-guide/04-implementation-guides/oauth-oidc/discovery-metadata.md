@@ -269,10 +269,26 @@ public class ServerConfigurationResponseCreator {
           authorizationServerConfiguration.trustFrameworksSupported());
       map.put("evidence_supported",
           authorizationServerConfiguration.evidenceSupported());
-      map.put("id_documents_supported",
-          authorizationServerConfiguration.idDocumentsSupported());
-      map.put("id_documents_verification_methods_supported",
-          authorizationServerConfiguration.idDocumentsVerificationMethodsSupported());
+      // OIDC4IDA Section 8: documents_supported is REQUIRED when evidence_supported contains
+      // "document"; electronic_records_supported when it contains "electronic_record".
+      // documents_methods_supported / documents_check_methods_supported are OPTIONAL.
+      // Each is advertised only when configured (non-empty).
+      if (authorizationServerConfiguration.hasDocumentsSupported()) {
+        map.put("documents_supported",
+            authorizationServerConfiguration.documentsSupported());
+      }
+      if (authorizationServerConfiguration.hasDocumentsMethodsSupported()) {
+        map.put("documents_methods_supported",
+            authorizationServerConfiguration.documentsMethodsSupported());
+      }
+      if (authorizationServerConfiguration.hasDocumentsCheckMethodsSupported()) {
+        map.put("documents_check_methods_supported",
+            authorizationServerConfiguration.documentsCheckMethodsSupported());
+      }
+      if (authorizationServerConfiguration.hasElectronicRecordsSupported()) {
+        map.put("electronic_records_supported",
+            authorizationServerConfiguration.electronicRecordsSupported());
+      }
       map.put("claims_in_verified_claims_supported",
           authorizationServerConfiguration.claimsInVerifiedClaimsSupported());
     }
@@ -319,8 +335,10 @@ public class ServerConfigurationResponseCreator {
   "backchannel_authentication_endpoint": "https://idp.example.com/bc-authorize",
   "verified_claims_supported": true,
   "trust_frameworks_supported": ["eidas", "jp_moj"],
-  "evidence_supported": ["id_document", "qes"],
-  "id_documents_supported": ["idcard", "passport", "driving_permit"],
+  "evidence_supported": ["document", "electronic_record"],
+  "documents_supported": ["idcard", "passport", "driving_permit"],
+  "documents_methods_supported": ["pipp", "sripp", "eid"],
+  "electronic_records_supported": ["secure_messaging"],
   "claims_in_verified_claims_supported": ["given_name", "family_name", "birthdate"]
 }
 ```

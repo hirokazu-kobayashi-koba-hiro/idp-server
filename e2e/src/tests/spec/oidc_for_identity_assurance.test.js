@@ -1,6 +1,6 @@
-import { describe, expect, it, xit } from "@jest/globals";
+import { beforeAll, describe, expect, it, xit } from "@jest/globals";
 
-import { getJwks, requestToken } from "../../api/oauthClient";
+import { getConfiguration, getJwks, requestToken } from "../../api/oauthClient";
 import {
   backendUrl,
   clientSecretPostClient,
@@ -125,6 +125,39 @@ describe("OpenID Connect for Identity Assurance 1.0 ", () => {
     console.log(JSON.stringify(userinfoResponse.data, null, 2));
     // expect(userinfoResponse.data.verified_claims.claims).not.toBeNull();
 
+  });
+
+  // OpenID Connect for Identity Assurance 1.0, Section 8 (OpenID Provider Metadata).
+  // Test names quote the spec verbatim. See issue #1513.
+  describe("Section 8 OpenID Provider Metadata", () => {
+    let metadata;
+
+    beforeAll(async () => {
+      const response = await getConfiguration({
+        endpoint: serverConfig.discoveryEndpoint,
+      });
+      expect(response.status).toBe(200);
+      metadata = response.data;
+      console.log(JSON.stringify(metadata, null, 2));
+    });
+
+    it("verified_claims_supported: Boolean value indicating support for verified_claims. If omitted, the default value is false.", () => {
+      expect(metadata.verified_claims_supported).toBe(true);
+    });
+
+    it('documents_supported: Required when evidence_supported contains "document". JSON array containing all identity document types utilized by the OP for identity verification.', () => {
+      expect(Array.isArray(metadata.documents_supported)).toBe(true);
+      expect(metadata.documents_supported).toContain("passport");
+    });
+
+    it('documents_methods_supported: Optional. JSON array containing the verification methods the OP supports for evidences of type "document".', () => {
+      expect(metadata.documents_methods_supported).toContain("pipp");
+    });
+
+    it("legacy pre-1.0 draft names id_documents_supported / id_documents_verification_methods_supported are no longer advertised", () => {
+      expect(metadata).not.toHaveProperty("id_documents_supported");
+      expect(metadata).not.toHaveProperty("id_documents_verification_methods_supported");
+    });
   });
 
 });

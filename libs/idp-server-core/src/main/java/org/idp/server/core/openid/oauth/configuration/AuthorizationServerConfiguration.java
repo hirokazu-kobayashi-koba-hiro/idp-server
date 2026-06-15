@@ -86,8 +86,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   boolean verifiedClaimsSupported = false;
   List<String> trustFrameworksSupported = new ArrayList<>();
   List<String> evidenceSupported = new ArrayList<>();
-  List<String> idDocumentsSupported = new ArrayList<>();
-  List<String> idDocumentsVerificationMethodsSupported = new ArrayList<>();
+  List<String> documentsSupported = new ArrayList<>();
+  List<String> documentsMethodsSupported = new ArrayList<>();
+  List<String> documentsCheckMethodsSupported = new ArrayList<>();
+  List<String> electronicRecordsSupported = new ArrayList<>();
   List<String> claimsInVerifiedClaimsSupported = new ArrayList<>();
 
   // enable/disable
@@ -652,21 +654,36 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return evidenceSupported != null && !evidenceSupported.isEmpty();
   }
 
-  public List<String> idDocumentsSupported() {
-    return idDocumentsSupported;
+  public List<String> documentsSupported() {
+    return documentsSupported;
   }
 
-  public boolean hasIdDocumentsSupported() {
-    return idDocumentsSupported != null && !idDocumentsSupported.isEmpty();
+  public boolean hasDocumentsSupported() {
+    return documentsSupported != null && !documentsSupported.isEmpty();
   }
 
-  public List<String> idDocumentsVerificationMethodsSupported() {
-    return idDocumentsVerificationMethodsSupported;
+  public List<String> documentsMethodsSupported() {
+    return documentsMethodsSupported;
   }
 
-  public boolean hasIdDocumentsVerificationMethodsSupported() {
-    return idDocumentsVerificationMethodsSupported != null
-        && !idDocumentsVerificationMethodsSupported.isEmpty();
+  public boolean hasDocumentsMethodsSupported() {
+    return documentsMethodsSupported != null && !documentsMethodsSupported.isEmpty();
+  }
+
+  public List<String> documentsCheckMethodsSupported() {
+    return documentsCheckMethodsSupported;
+  }
+
+  public boolean hasDocumentsCheckMethodsSupported() {
+    return documentsCheckMethodsSupported != null && !documentsCheckMethodsSupported.isEmpty();
+  }
+
+  public List<String> electronicRecordsSupported() {
+    return electronicRecordsSupported;
+  }
+
+  public boolean hasElectronicRecordsSupported() {
+    return electronicRecordsSupported != null && !electronicRecordsSupported.isEmpty();
   }
 
   public List<String> claimsInVerifiedClaimsSupported() {
@@ -793,8 +810,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     map.put("verified_claims_supported", verifiedClaimsSupported);
     map.put("trust_frameworks_supported", trustFrameworksSupported);
     map.put("evidence_supported", evidenceSupported);
-    map.put("id_documents_supported", idDocumentsSupported);
-    map.put("id_documents_verification_methods_supported", idDocumentsVerificationMethodsSupported);
+    map.put("documents_supported", documentsSupported);
+    map.put("documents_methods_supported", documentsMethodsSupported);
+    map.put("documents_check_methods_supported", documentsCheckMethodsSupported);
+    map.put("electronic_records_supported", electronicRecordsSupported);
     map.put("claims_in_verified_claims_supported", claimsInVerifiedClaimsSupported);
     map.put("enabled", enabled);
     map.put("extension", extension.toMap());
