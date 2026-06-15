@@ -324,11 +324,12 @@ describe("Identity Verification Token Reflection", () => {
     }).payload;
     console.log("New authorization access token payload:", JSON.stringify(newPayload, null, 2));
 
-    // verified_claims:family_name スコープにより、承認由来の検証済みクレームが新規認可のトークンに載る
-    // 注: 現状はフラット形式（OIDC4IDA 仕様の {verification, claims} 構造ではない）。
-    //     Issue #1435 で仕様不一致として把握済み。修正時はこの assert を構造形式に更新すること
+    // verified_claims:family_name スコープにより、承認由来の検証済みクレームが新規認可のトークンに載る。
+    // #1435/#1514 で AT/UserInfo の verified_claims は OIDC4IDA 準拠のネスト構造（verification + claims）。
+    // trust_framework は verification の必須要素なので、scope 未要求でも常に含まれる。
     expect(newPayload).toHaveProperty("verified_claims");
-    expect(newPayload.verified_claims).toHaveProperty("family_name", "Tanaka");
+    expect(newPayload.verified_claims.claims).toHaveProperty("family_name", "Tanaka");
+    expect(newPayload.verified_claims.verification).toHaveProperty("trust_framework", "eidas");
 
     // ex_sub は予約クレーム（ScopeMappingCustomClaimsCreator が User.externalUserId を優先）のため、
     // custom_properties に ex_sub を書いてもトークンには反映されない（DBには反映済み = 上で確認済み）
