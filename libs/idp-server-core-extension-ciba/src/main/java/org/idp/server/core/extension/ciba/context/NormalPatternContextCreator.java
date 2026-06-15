@@ -44,7 +44,12 @@ public class NormalPatternContextCreator implements CibaRequestContextCreator {
     JoseContext joseContext = new JoseContext();
     CibaRequestPattern pattern = CibaRequestPattern.NORMAL;
     Set<String> filteredScopes =
-        filterScopes(pattern, parameters, joseContext, clientConfiguration);
+        filterScopes(
+            pattern,
+            parameters,
+            joseContext,
+            authorizationServerConfiguration,
+            clientConfiguration);
     CibaProfile profile = analyze(filteredScopes, authorizationServerConfiguration);
 
     BackchannelAuthenticationRequest backchannelAuthenticationRequest =

@@ -29,6 +29,7 @@ import {
  * - B-05: access_token_duration 短縮 → 期限切れ 401 → RT で復活
  * - B-10: id_token_strict_mode → ID Token からクレーム除外
  * - B-14: クライアント scope 制限 → UserInfo からクレーム消滅
+ * - B-15: scopes_supported 制限 → 付与スコープから除外（server レベル, #1353）
  */
 describe("Standard Use Case: Claims & Token Configuration Effects", () => {
   let systemAccessToken;
@@ -510,5 +511,97 @@ describe("Standard Use Case: Claims & Token Configuration Effects", () => {
     console.log("id_token_strict_mode=true: UserInfo still has standard claims (name, email)");
 
     await deletion({ url: `${backendUrl}/v1/management/organizations/${strictOrganizationId}/tenants/${strictTenantId}`, headers: { Authorization: `Bearer ${strictMgmtToken}` } }).catch(() => {});
+  });
+
+  it("B-15: scopes_supported filters granted scope even when client allows it (#1353)", async () => {
+    console.log("\n=== scopes_supported filtering (server-level) ===");
+
+    // email を scopes_supported に含めない（profile は含む）。client は email を許可。
+    const scTenantId = uuidv4();
+    const scClientId = uuidv4();
+    const scClientSecret = `cs-${crypto.randomBytes(16).toString("hex")}`;
+    const scJwks = await generateECP256JWKS();
+    const tsc = Date.now();
+    const scAdminEmail = `scopefilter-admin-${tsc}@claims-test.example.com`;
+    const scAdminPassword = `ScopeFilter_${tsc}!`;
+
+    const onboardSc = await onboarding({
+      body: {
+        organization: { id: uuidv4(), name: `Scope Filter Org ${tsc}`, description: "scopes_supported filtering test" },
+        tenant: {
+          id: scTenantId, name: `Scope Filter Tenant ${tsc}`, domain: backendUrl,
+          authorization_provider: "idp-server",
+          identity_policy_config: { identity_unique_key_type: "EMAIL" },
+          session_config: { cookie_name: `SCF_${scTenantId.substring(0, 8)}`, use_secure_cookie: false },
+          cors_config: { allow_origins: [backendUrl] },
+        },
+        authorization_server: {
+          issuer: `${backendUrl}/${scTenantId}`,
+          authorization_endpoint: `${backendUrl}/${scTenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${scTenantId}/v1/tokens`,
+          token_endpoint_auth_methods_supported: ["client_secret_post"],
+          userinfo_endpoint: `${backendUrl}/${scTenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${scTenantId}/v1/jwks`,
+          jwks: scJwks,
+          grant_types_supported: ["authorization_code", "password"],
+          token_signed_key_id: "signing_key_1",
+          id_token_signed_key_id: "signing_key_1",
+          // KEY: email を scopes_supported に含めない
+          scopes_supported: ["openid", "profile", "management"],
+          // claims_supported には email を含める（落ちるのは scope 側の制御であることを示す）
+          claims_supported: ["sub", "iss", "auth_time", "acr", "name", "email", "email_verified"],
+          response_types_supported: ["code"],
+          response_modes_supported: ["query"],
+          subject_types_supported: ["public"],
+          id_token_signing_alg_values_supported: ["ES256"],
+          extension: { access_token_type: "JWT" },
+        },
+        user: { sub: uuidv4(), provider_id: "idp-server", name: "Admin", email: scAdminEmail, email_verified: true, raw_password: scAdminPassword },
+        client: {
+          client_id: scClientId, client_secret: scClientSecret, redirect_uris: [redirectUri],
+          response_types: ["code"], grant_types: ["authorization_code", "password"],
+          // client は email を許可している（落とすのは server の scopes_supported）
+          scope: "openid profile email management", client_name: "Scope Filter Client",
+          token_endpoint_auth_method: "client_secret_post", application_type: "web",
+        },
+      },
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
+    });
+    if (onboardSc.status !== 201) {
+      console.error("B-15 onboarding failed:", JSON.stringify(onboardSc.data, null, 2));
+    }
+    expect(onboardSc.status).toBe(201);
+
+    const scMgmt = await requestToken({ endpoint: `${backendUrl}/${scTenantId}/v1/tokens`, grantType: "password", username: scAdminEmail, password: scAdminPassword, scope: "management", clientId: scClientId, clientSecret: scClientSecret });
+    const scMgmtToken = scMgmt.data.access_token;
+
+    await postWithJson({ url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${scTenantId}/authentication-configurations`, headers: { Authorization: `Bearer ${scMgmtToken}` }, body: { id: uuidv4(), type: "password", attributes: {}, metadata: { type: "password" }, interactions: { "password-authentication": { request: { schema: { type: "object", properties: { username: { type: "string" }, password: { type: "string" } }, required: ["username", "password"] } }, pre_hook: {}, execution: { function: "password_verification" }, post_hook: {}, response: { body_mapping_rules: [{ from: "$.user_id", to: "user_id" }, { from: "$.error", to: "error" }] } } } } });
+    await postWithJson({ url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${scTenantId}/authentication-configurations`, headers: { Authorization: `Bearer ${scMgmtToken}` }, body: { id: uuidv4(), type: "initial-registration", attributes: {}, metadata: {}, interactions: { "initial-registration": { request: { schema: { type: "object", required: ["email", "password", "name"], properties: { name: { type: "string" }, email: { type: "string", format: "email" }, password: { type: "string", minLength: 8 } } } } } } } });
+
+    // openid profile email を要求（client 許可、server 未サポート email）
+    const scEmail = `scopefilter-${tsc}@claims-test.example.com`;
+    const scAuth = await getAuthorizations({ endpoint: `${backendUrl}/${scTenantId}/v1/authorizations`, clientId: scClientId, responseType: "code", state: `scf-${tsc}`, scope: "openid profile email", redirectUri });
+    const { params: scp } = convertNextAction(scAuth.headers.location);
+    await postWithJson({ url: `${backendUrl}/${scTenantId}/v1/authorizations/${scp.get("id")}/initial-registration`, body: { email: scEmail, password: "ScopeUser_1!", name: "Scope Filter User" } });
+    const scAuthorize = await authorize({ endpoint: `${backendUrl}/${scTenantId}/v1/authorizations/{id}/authorize`, id: scp.get("id"), body: {} });
+    const scResult = convertToAuthorizationResponse(scAuthorize.data.redirect_uri);
+    const scTokens = await requestToken({ endpoint: `${backendUrl}/${scTenantId}/v1/tokens`, grantType: "authorization_code", code: scResult.code, redirectUri, clientId: scClientId, clientSecret: scClientSecret });
+    expect(scTokens.status).toBe(200);
+
+    console.log("B-15 granted scope:", JSON.stringify(scTokens.data.scope));
+    const grantedScopes = (scTokens.data.scope || "").split(" ").filter(Boolean);
+    expect(grantedScopes).toContain("openid");
+    expect(grantedScopes).toContain("profile");
+    // scopes_supported に email が無いので、client が許可していても付与されない
+    expect(grantedScopes).not.toContain("email");
+
+    // email スコープ未付与なので UserInfo にも email は出ない（claims_supported に email はあるのに）
+    const scUserinfo = await getUserinfo({ endpoint: `${backendUrl}/${scTenantId}/v1/userinfo`, authorizationHeader: createBearerHeader(scTokens.data.access_token) });
+    expect(scUserinfo.status).toBe(200);
+    expect(scUserinfo.data).not.toHaveProperty("email");
+    expect(scUserinfo.data.name).toBe("Scope Filter User");
+    console.log("B-15: email dropped from granted scope & UserInfo (scopes_supported filter works)");
+
+    await deletion({ url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${scTenantId}`, headers: { Authorization: `Bearer ${scMgmtToken}` } }).catch(() => {});
   });
 });

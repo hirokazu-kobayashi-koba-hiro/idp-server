@@ -56,7 +56,9 @@ public class ClientCredentialsGrantService implements OAuthTokenCreationService 
     ClientConfiguration clientConfiguration = context.clientConfiguration();
 
     Scopes scopes =
-        new Scopes(clientConfiguration.filteredScope(context.scopes().toStringValues()));
+        new Scopes(
+            authorizationServerConfiguration.filteredScope(
+                clientConfiguration.filteredScope(context.scopes().toStringValues())));
     ClientCredentialsGrantVerifier verifier = new ClientCredentialsGrantVerifier(scopes);
     verifier.verify();
 

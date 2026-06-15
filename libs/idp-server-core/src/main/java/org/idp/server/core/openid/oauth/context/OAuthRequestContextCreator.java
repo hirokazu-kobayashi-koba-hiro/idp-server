@@ -59,6 +59,7 @@ public interface OAuthRequestContextCreator {
       OAuthRequestPattern pattern,
       OAuthRequestParameters parameters,
       JoseContext joseContext,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
 
     String scope = parameters.getValueOrEmpty(OAuthRequestKey.scope);
@@ -67,7 +68,10 @@ public interface OAuthRequestContextCreator {
     String targetScope =
         (pattern.isRequestParameter() || clientConfiguration.isSupportedJar()) ? joseScope : scope;
 
-    return clientConfiguration.filteredScope(targetScope);
+    // Filter by client-allowed scopes (client.scope), then by server-supported scopes
+    // (authorization_server.scopes_supported). A scope must be permitted by both.
+    return authorizationServerConfiguration.filteredScope(
+        clientConfiguration.filteredScope(targetScope));
   }
 
   default RequestObjectFactoryType selectRequestObjectType(

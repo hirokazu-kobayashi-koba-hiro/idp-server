@@ -125,7 +125,8 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
       }
 
       Set<String> filteredScopes =
-          clientConfiguration.filteredScope(context.scopes().toStringValues());
+          serverConfiguration.filteredScope(
+              clientConfiguration.filteredScope(context.scopes().toStringValues()));
       Scopes scopes = new Scopes(filteredScopes);
 
       CustomProperties customProperties = context.customProperties();

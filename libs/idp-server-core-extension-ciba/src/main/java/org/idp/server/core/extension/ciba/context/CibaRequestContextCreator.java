@@ -57,6 +57,7 @@ public interface CibaRequestContextCreator {
       CibaRequestPattern pattern,
       CibaRequestParameters parameters,
       JoseContext joseContext,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
 
     String scope = parameters.getValueOrEmpty(OAuthRequestKey.scope);
@@ -65,6 +66,8 @@ public interface CibaRequestContextCreator {
     String targetScope =
         (pattern.isRequestParameter() || clientConfiguration.isSupportedJar()) ? joseScope : scope;
 
-    return clientConfiguration.filteredScope(targetScope);
+    // client.scope then server scopes_supported (both must permit the scope).
+    return authorizationServerConfiguration.filteredScope(
+        clientConfiguration.filteredScope(targetScope));
   }
 }

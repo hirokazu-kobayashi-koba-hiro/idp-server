@@ -67,7 +67,12 @@ public class RequestObjectPatternContextCreator implements OAuthRequestContextCr
 
       OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_OBJECT;
       Set<String> filteredScopes =
-          filterScopes(pattern, parameters, joseContext, clientConfiguration);
+          filterScopes(
+              pattern,
+              parameters,
+              joseContext,
+              authorizationServerConfiguration,
+              clientConfiguration);
       AuthorizationProfile profile = analyze(filteredScopes, authorizationServerConfiguration);
 
       RequestObjectFactoryType requestObjectFactoryType =

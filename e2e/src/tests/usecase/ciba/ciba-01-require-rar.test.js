@@ -351,7 +351,7 @@ describe("CIBA Use Case: Client-Level RAR Requirement", () => {
         grant_types_supported: ["urn:openid:params:grant-type:ciba", "password"],
         token_signed_key_id: "signing_key_1",
         id_token_signed_key_id: "signing_key_1",
-        scopes_supported: ["openid", "profile", "email"],
+        scopes_supported: ["openid", "profile", "email", "management"],
         response_types_supported: ["code"],
         subject_types_supported: ["public"],
         backchannel_authentication_endpoint: `${backendUrl}/${tenantId}/v1/backchannel/authentications`,

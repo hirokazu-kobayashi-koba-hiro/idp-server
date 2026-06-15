@@ -303,6 +303,16 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return scopes.stream().filter(scope -> scopesSupported.contains(scope)).toList();
   }
 
+  public Set<String> filteredScope(Set<String> scopes) {
+    Set<String> filtered = new LinkedHashSet<>();
+    for (String scope : scopes) {
+      if (scopesSupported.contains(scope)) {
+        filtered.add(scope);
+      }
+    }
+    return filtered;
+  }
+
   public boolean hasFapiBaselineScope(Set<String> scopes) {
     return extension.hasFapiBaselineScope(scopes);
   }

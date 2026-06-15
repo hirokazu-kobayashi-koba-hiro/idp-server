@@ -75,7 +75,12 @@ public class RequestUriPatternContextCreator implements OAuthRequestContextCreat
 
       OAuthRequestPattern pattern = OAuthRequestPattern.REQUEST_URI;
       Set<String> filteredScopes =
-          filterScopes(pattern, parameters, joseContext, clientConfiguration);
+          filterScopes(
+              pattern,
+              parameters,
+              joseContext,
+              authorizationServerConfiguration,
+              clientConfiguration);
 
       AuthorizationProfile profile = analyze(filteredScopes, authorizationServerConfiguration);
 

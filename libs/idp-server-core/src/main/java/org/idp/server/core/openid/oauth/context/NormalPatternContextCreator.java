@@ -44,7 +44,12 @@ public class NormalPatternContextCreator implements OAuthRequestContextCreator {
     JoseContext joseContext = new JoseContext();
     OAuthRequestPattern pattern = OAuthRequestPattern.NORMAL;
     Set<String> filteredScopes =
-        filterScopes(pattern, parameters, joseContext, clientConfiguration);
+        filterScopes(
+            pattern,
+            parameters,
+            joseContext,
+            authorizationServerConfiguration,
+            clientConfiguration);
     AuthorizationProfile profile = analyze(filteredScopes, authorizationServerConfiguration);
 
     AuthorizationRequest authorizationRequest =
