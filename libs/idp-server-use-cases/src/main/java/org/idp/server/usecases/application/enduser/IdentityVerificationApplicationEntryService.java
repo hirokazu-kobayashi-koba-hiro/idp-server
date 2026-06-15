@@ -163,51 +163,15 @@ public class IdentityVerificationApplicationEntryService
         new SecurityEventType(type.name() + "_application_success");
     eventPublisher.publish(tenant, oAuthToken, typeSpecificApplyEvent, requestAttributes);
 
-    if (application.isApproved()) {
-      IdentityVerificationResult identityVerificationResult =
-          IdentityVerificationResult.create(
-              application, applyingResult.applicationContext(), verificationConfiguration);
-      resultCommandRepository.register(tenant, identityVerificationResult);
-
-      User verifiedUser =
-          IdentityVerificationUserUpdater.update(
-              tenant,
-              user,
-              applyingResult.applicationContext(),
-              identityVerificationResult.verifiedClaims().toMap(),
-              verificationConfiguration.result());
-      userCommandRepository.update(tenant, verifiedUser);
-      eventPublisher.publishSync(
-          tenant,
-          oAuthToken,
-          DefaultSecurityEventType.identity_verification_application_approved,
-          requestAttributes);
-      SecurityEventType typeSpecificApprovedEvent =
-          new SecurityEventType(type.name() + "_approved");
-      eventPublisher.publish(tenant, oAuthToken, typeSpecificApprovedEvent, requestAttributes);
-    }
-
-    if (application.isRejected()) {
-      eventPublisher.publishSync(
-          tenant,
-          oAuthToken,
-          DefaultSecurityEventType.identity_verification_application_rejected,
-          requestAttributes);
-      SecurityEventType typeSpecificRejectedEvent =
-          new SecurityEventType(type.name() + "_rejected");
-      eventPublisher.publish(tenant, oAuthToken, typeSpecificRejectedEvent, requestAttributes);
-    }
-
-    if (application.isCancelled()) {
-      eventPublisher.publishSync(
-          tenant,
-          oAuthToken,
-          DefaultSecurityEventType.identity_verification_application_cancelled,
-          requestAttributes);
-      SecurityEventType typeSpecificCancelledEvent =
-          new SecurityEventType(type.name() + "_cancelled");
-      eventPublisher.publish(tenant, oAuthToken, typeSpecificCancelledEvent, requestAttributes);
-    }
+    handleTerminalTransition(
+        tenant,
+        user,
+        oAuthToken,
+        type,
+        application,
+        applyingResult,
+        verificationConfiguration,
+        requestAttributes);
 
     IdentityVerificationContext updatedContext =
         new IdentityVerificationContextBuilder()
@@ -333,10 +297,51 @@ public class IdentityVerificationApplicationEntryService
 
     eventPublisher.publish(tenant, oAuthToken, securityEventType, requestAttributes);
 
-    if (updated.isApproved()) {
+    handleTerminalTransition(
+        tenant,
+        user,
+        oAuthToken,
+        type,
+        updated,
+        applyingResult,
+        verificationConfiguration,
+        requestAttributes);
+
+    IdentityVerificationContext updatedContext =
+        new IdentityVerificationContextBuilder()
+            .previousContext(applyingResult.applicationContext())
+            .application(application)
+            .user(user)
+            .build();
+
+    Map<String, Object> response =
+        IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
+            updatedContext, processConfig.response());
+
+    return IdentityVerificationApplicationResponse.OK(response);
+  }
+
+  /**
+   * Applies the terminal transition (approved / rejected / cancelled) reached by an application.
+   * Shared by the single-process immediate-approval path ({@link #apply}) and the multi-step path
+   * ({@link #process}) so the on-approval side effects — registering the verification result,
+   * patching user attributes via {@link IdentityVerificationUserUpdater}, and publishing lifecycle
+   * security events — stay in one place.
+   */
+  private void handleTerminalTransition(
+      Tenant tenant,
+      User user,
+      OAuthToken oAuthToken,
+      IdentityVerificationType type,
+      IdentityVerificationApplication application,
+      IdentityVerificationApplyingResult applyingResult,
+      IdentityVerificationConfiguration verificationConfiguration,
+      RequestAttributes requestAttributes) {
+
+    if (application.isApproved()) {
       IdentityVerificationResult identityVerificationResult =
           IdentityVerificationResult.create(
-              updated, applyingResult.applicationContext(), verificationConfiguration);
+              application, applyingResult.applicationContext(), verificationConfiguration);
       resultCommandRepository.register(tenant, identityVerificationResult);
 
       User verifiedUser =
@@ -352,45 +357,29 @@ public class IdentityVerificationApplicationEntryService
           oAuthToken,
           DefaultSecurityEventType.identity_verification_application_approved,
           requestAttributes);
-      SecurityEventType typeSpecificApprovedEvent =
-          new SecurityEventType(type.name() + "_approved");
-      eventPublisher.publish(tenant, oAuthToken, typeSpecificApprovedEvent, requestAttributes);
+      eventPublisher.publish(
+          tenant, oAuthToken, new SecurityEventType(type.name() + "_approved"), requestAttributes);
     }
 
-    if (updated.isRejected()) {
+    if (application.isRejected()) {
       eventPublisher.publishSync(
           tenant,
           oAuthToken,
           DefaultSecurityEventType.identity_verification_application_rejected,
           requestAttributes);
-      SecurityEventType typeSpecificRejectedEvent =
-          new SecurityEventType(type.name() + "_rejected");
-      eventPublisher.publish(tenant, oAuthToken, typeSpecificRejectedEvent, requestAttributes);
+      eventPublisher.publish(
+          tenant, oAuthToken, new SecurityEventType(type.name() + "_rejected"), requestAttributes);
     }
 
-    if (updated.isCancelled()) {
+    if (application.isCancelled()) {
       eventPublisher.publishSync(
           tenant,
           oAuthToken,
           DefaultSecurityEventType.identity_verification_application_cancelled,
           requestAttributes);
-      SecurityEventType typeSpecificCancelledEvent =
-          new SecurityEventType(type.name() + "_cancelled");
-      eventPublisher.publish(tenant, oAuthToken, typeSpecificCancelledEvent, requestAttributes);
+      eventPublisher.publish(
+          tenant, oAuthToken, new SecurityEventType(type.name() + "_cancelled"), requestAttributes);
     }
-
-    IdentityVerificationContext updatedContext =
-        new IdentityVerificationContextBuilder()
-            .previousContext(applyingResult.applicationContext())
-            .application(application)
-            .user(user)
-            .build();
-
-    Map<String, Object> response =
-        IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
-            updatedContext, processConfig.response());
-
-    return IdentityVerificationApplicationResponse.OK(response);
   }
 
   @Override
