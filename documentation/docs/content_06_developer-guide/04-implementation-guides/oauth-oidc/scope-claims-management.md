@@ -263,6 +263,8 @@ public class AccessTokenCustomClaimsCreators {
 - **JWT形式の場合**: カスタムクレームを追加可能
 - **Opaque形式の場合**: クレームは含まれず、Introspectionで取得
 
+> **`verified_claims` の出力構造**: 身元確認済みクレームは OIDC4IDA 準拠のネスト構造（`verification` + `claims`）で出力される。Access Token / UserInfo の構造仕様と、過去のフラット構造からの移行手順は [verified_claims 出力構造の変更（利用者対応）](../../../content_09_project/verified-claims-structure-change.md) を参照。
+
 ### 3. Userinfo エンドポイント
 
 **用途**: ユーザー情報の詳細取得

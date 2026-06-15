@@ -282,6 +282,25 @@ UserInfoレスポンス:
 }
 ```
 
+### verified_claims（身元確認済みクレーム）
+
+身元確認（eKYC）済みユーザーでは、UserInfo は `verified_claims:<claim>` 形式のスコープに基づいて `verified_claims` を返却する。返却には認可サーバー設定 `extension.access_token_selective_verified_claims: true` が必要。
+
+```
+Access Token scope: openid verified_claims:given_name
+
+UserInfoレスポンス:
+{
+  "sub": "user-12345",
+  "verified_claims": {
+    "verification": { "trust_framework": "eidas" },
+    "claims": { "given_name": "Taro" }
+  }
+}
+```
+
+構造仕様・設定追従・過去構造からの移行は [verified_claims 出力構造の変更（利用者対応）](../../content_09_project/verified-claims-structure-change.md) を参照。
+
 ---
 
 ## Access Token検証
