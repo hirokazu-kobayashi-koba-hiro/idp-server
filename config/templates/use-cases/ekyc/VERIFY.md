@@ -64,6 +64,16 @@ curl -s "${TENANT_BASE}/.well-known/openid-configuration" | jq '{verified_claims
 
 > 両方 `true` が返れば OK です。
 
+### OIDC4IDA Section 8 メタデータの確認
+
+```bash
+curl -s "${TENANT_BASE}/.well-known/openid-configuration" | jq '{evidence_supported, documents_supported, documents_methods_supported, electronic_records_supported, trust_frameworks_supported}'
+```
+
+> - `documents_supported` は `evidence_supported` に `document` を含む時に返る（OIDC4IDA §8 で REQUIRED）。
+> - `electronic_records_supported` は `evidence_supported` に `electronic_record` を含む時に返る（同 REQUIRED）。
+> - 旧ドラフトのフィールド名 `id_documents_supported` / `id_documents_verification_methods_supported` は**返らない**（1.0 で `documents_supported` / `documents_methods_supported` にリネーム済み）。
+
 ---
 
 ## Step 2: Authorization Request

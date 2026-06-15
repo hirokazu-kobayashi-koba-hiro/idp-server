@@ -260,10 +260,28 @@ public class ServerConfigurationResponseCreator {
           "trust_frameworks_supported",
           authorizationServerConfiguration.trustFrameworksSupported());
       map.put("evidence_supported", authorizationServerConfiguration.evidenceSupported());
-      map.put("id_documents_supported", authorizationServerConfiguration.idDocumentsSupported());
-      map.put(
-          "id_documents_verification_methods_supported",
-          authorizationServerConfiguration.idDocumentsVerificationMethodsSupported());
+      // OIDC4IDA Section 8: documents_supported is REQUIRED when evidence_supported contains
+      // "document"; electronic_records_supported is REQUIRED when it contains "electronic_record".
+      // documents_methods_supported / documents_check_methods_supported are OPTIONAL. Each is
+      // advertised only when configured (non-empty), so the discovery document stays minimal.
+      if (authorizationServerConfiguration.hasDocumentsSupported()) {
+        map.put("documents_supported", authorizationServerConfiguration.documentsSupported());
+      }
+      if (authorizationServerConfiguration.hasDocumentsMethodsSupported()) {
+        map.put(
+            "documents_methods_supported",
+            authorizationServerConfiguration.documentsMethodsSupported());
+      }
+      if (authorizationServerConfiguration.hasDocumentsCheckMethodsSupported()) {
+        map.put(
+            "documents_check_methods_supported",
+            authorizationServerConfiguration.documentsCheckMethodsSupported());
+      }
+      if (authorizationServerConfiguration.hasElectronicRecordsSupported()) {
+        map.put(
+            "electronic_records_supported",
+            authorizationServerConfiguration.electronicRecordsSupported());
+      }
       map.put(
           "claims_in_verified_claims_supported",
           authorizationServerConfiguration.claimsInVerifiedClaimsSupported());

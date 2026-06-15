@@ -209,10 +209,10 @@ Map<String, Object> create(User user, AuthorizationGrant grant, ...);
 | `trust_frameworks_supported` | REQUIRED | ✅ 実装済み | - |
 | `claims_in_verified_claims_supported` | REQUIRED | ✅ 実装済み | - |
 | `evidence_supported` | REQUIRED | ✅ 実装済み | - |
-| `documents_supported` | REQUIRED (evidence に document 含む時) | ⚠️ フィールド名不一致 | `id_documents_supported` として実装 |
-| `documents_methods_supported` | SHOULD (evidence に document 含む時) | ⚠️ フィールド名不一致 | `id_documents_verification_methods_supported` として実装 |
-| `electronic_records_supported` | REQUIRED (evidence に electronic_record 含む時) | ❌ 未実装 | フィールド自体が存在しない |
-| `documents_check_methods_supported` | SHOULD (evidence に document 含む時) | ❌ 未実装 | - |
+| `documents_supported` | REQUIRED (evidence に document 含む時) | ✅ 実装済み (#1513) | `id_documents_supported` → `documents_supported` にリネーム。非空時のみ emit |
+| `documents_methods_supported` | OPTIONAL | ✅ 実装済み (#1513) | `id_documents_verification_methods_supported` → `documents_methods_supported` にリネーム |
+| `electronic_records_supported` | REQUIRED (evidence に electronic_record 含む時) | ✅ 実装済み (#1513) | フィールド新規追加。非空時のみ emit |
+| `documents_check_methods_supported` | OPTIONAL | ✅ 実装済み (#1513) | フィールド新規追加 |
 | `claims_parameter_supported` | SHALL 公開 | ✅ 実装済み | - |
 
 ### データ最小化ルール
@@ -233,7 +233,7 @@ Map<String, Object> create(User user, AuthorizationGrant grant, ...);
 |---|------|------------|---------|
 | 1 | 5.7.4: verification 空時に verified_claims を省略しない | `VerifiedClaimsCreator.java` | verification/claims が空なら空 Map を返す |
 | 2 | UserInfo で verified_claims 未対応 | 新規 `UserinfoVerifiedClaimsCreator.java` | Creator 実装 + ServiceLoader 登録 |
-| 3 | Discovery: `electronic_records_supported` 未実装 | `AuthorizationServerConfiguration` + `ServerConfigurationResponseCreator` | フィールド追加 |
+| 3 | Discovery: `electronic_records_supported` 未実装 | `AuthorizationServerConfiguration` + `ServerConfigurationResponseCreator` | フィールド追加（✅ #1513 で対応・P3 と統合） |
 
 ### P2: 構造一貫性（独自拡張の改善）
 
@@ -242,13 +242,16 @@ Map<String, Object> create(User user, AuthorizationGrant grant, ...);
 | 4 | AT の verified_claims が verification なしでフラット展開 | `AccessTokenVerifiedClaimsCreator.java` | verification + claims ネスト化 |
 | 5 | AT selective も同上 | `AccessTokenSelectiveVerifiedClaimsCreator.java` | 同上 |
 
-### P3: Discovery フィールド名修正
+### P3: Discovery フィールド名修正 — ✅ 完了 (#1513)
 
-| # | 問題 | 対象ファイル | 修正内容 |
-|---|------|------------|---------|
-| 6 | `id_documents_supported` → `documents_supported` | `ServerConfigurationResponseCreator` | フィールド名変更（後方互換注意） |
-| 7 | `id_documents_verification_methods_supported` → `documents_methods_supported` | 同上 | 同上 |
-| 8 | `documents_check_methods_supported` 追加 | 同上 | 新規フィールド |
+| # | 問題 | 対象ファイル | 修正内容 | 状態 |
+|---|------|------------|---------|------|
+| 6 | `id_documents_supported` → `documents_supported` | `ServerConfigurationResponseCreator` / `AuthorizationServerConfiguration` | フィールド名変更 | ✅ |
+| 7 | `id_documents_verification_methods_supported` → `documents_methods_supported` | 同上 | 同上 | ✅ |
+| 8 | `documents_check_methods_supported` / `electronic_records_supported` 追加 | 同上 | 新規フィールド | ✅ |
+
+> **破壊的変更**: 旧 Discovery フィールド名 `id_documents_supported` / `id_documents_verification_methods_supported` は出力されなくなる。後方互換 alias は設けない（core を jackson-free に保つため）。旧キーを持つ保存済みテナント設定は読み込み時に黙殺され、再保存または手動更新で新名へ移行する。自環境に旧キー保持テナントが無いことを確認済み。
+> なお `evidence_supported` の値が旧ドラフト値（`id_document` / `utility_bill` / `qes`）のままになっている点は本対応の範囲外（evidence 値リネームは verified_claims 検証ロジックに波及するため別途対応）。
 
 ---
 

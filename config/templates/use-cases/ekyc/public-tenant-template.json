@@ -127,8 +127,22 @@
       "eidas"
     ],
     "evidence_supported": [
-      "id_document",
+      "document",
       "electronic_record"
+    ],
+    "documents_supported": [
+      "idcard",
+      "passport",
+      "driving_permit"
+    ],
+    "documents_methods_supported": [
+      "pipp",
+      "sripp",
+      "eid"
+    ],
+    "electronic_records_supported": [
+      "bank_account",
+      "utility_statement"
     ],
     "claims_in_verified_claims_supported": [
       "given_name",
