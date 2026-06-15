@@ -45,6 +45,8 @@
 
 `verification`（検証プロセスのメタデータ）と `claims`（検証済みクレーム値）が分離される。これは [OpenID Connect for Identity Assurance 1.0](https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html) の `verified_claims` 構造に準拠する。
 
+> **Access Token でも正規構造を使う根拠**: OIDC4IDA §4.7 は Access Token での `verified_claims` 利用を「可能」と述べるのみで構造を規定しない。この穴を [RFC 9068](https://www.rfc-editor.org/rfc/rfc9068.html) §2.2.2（IANA 登録済みクレームは登録名・定義に従って encode すべき(SHOULD)）が補完する。`verified_claims` は IANA JWT Claims Registry 登録済みで、参照先が OpenID Identity Assurance Schema Definition 1.0 §5。その §5.2 / §5.4.2 が `verification`（必須）+ `claims`（必須）のネスト構造と `verification.trust_framework` 必須を定める。したがって Access Token・ID Token・UserInfo の全配信先で同一の正規構造を用い、AT だけフラット／独自形にはしない。
+
 ### RP / リソースサーバー側の対応
 
 クレーム値の参照パスを変更する。
@@ -92,7 +94,7 @@
 }
 ```
 
-返却される `claims` は、Access Token が持つ `verified_claims:<claim>` スコープに対応するものに限られる（例: `verified_claims:given_name` があれば `given_name` のみ）。`verification` 要素も同様に `verified_claims:verification:<element>` スコープで選択される（[3.1](#31-スコープの列挙)）。
+返却される `claims` は、Access Token が持つ `verified_claims:<claim>` スコープに対応するものに限られる（例: `verified_claims:given_name` があれば `given_name` のみ）。`verification` は必須要素 `trust_framework` が常に含まれ、`evidence` 等の任意要素は `verified_claims:verification:<element>` スコープで選択する（[3.1](#31-スコープの列挙)）。
 
 ---
 
@@ -127,9 +129,10 @@
 ]
 ```
 
-> **データ最小化（要求した要素だけ返る）**: `claims`・`verification` のどちらも、**スコープで明示的に要求した要素だけ**が返る（OIDC4IDA §5.4 / §7）。要求しなかった要素は出力されない。
+> **データ最小化**: `claims` と `verification` の**任意要素**は、**スコープで明示的に要求した要素だけ**が返る（OIDC4IDA §5.4 / §7）。
+> - ただし `verification.trust_framework` は IDA スキーマ上 `verification` の**必須要素**なので、スコープ要求の有無に関わらず**常に含まれる**（`verification: {}` は非準拠のため出さない）。`verified_claims:verification:trust_framework` スコープは Discovery 広告・明示要求用で、付与しなくても `trust_framework` は返る。
 > - 特に `verification.evidence` は書類番号・確認トランザクションID 等の**生PII**を含むため、`verified_claims:verification:evidence` を明示要求しない限り返さない（**オプトイン**）。
-> - `verified_claims:verification:*` を1つも要求しなければ `verification` は空（`{}`）になる。
+> - ユーザーが `trust_framework` を持たない場合（マッピング設定不備等）は、`verification` 要件を満たせないため §5.7.4 に従い `verified_claims` 全体を返さない。
 > - 選択できる要素名はテナントの verified_claims マッピング設定に追従する（コード側で固定リストを持たない）。
 
 ### 3.2 フラグの有効化
@@ -157,7 +160,7 @@
 
 ## 4. 動作確認
 
-`verified_claims:given_name verified_claims:verification:trust_framework` スコープで Access Token を取得し、AT のデコードと UserInfo の双方でネスト構造を確認する。要求した `trust_framework` のみ `verification` に含まれ、未要求の `evidence` が含まれないこと（オプトイン）もあわせて確認する。回帰確認は E2E テスト `e2e/src/tests/integration/ida/integration-10-verified-claims-at-userinfo-structure.test.js` を参照。
+`verified_claims:given_name verified_claims:family_name` スコープで Access Token を取得し、AT のデコードと UserInfo の双方でネスト構造を確認する。`verification.trust_framework` が（スコープ未要求でも）常に含まれ、未要求の `evidence` が含まれないこと（オプトイン）、ユーザーが保持するが未要求の `birthdate` 等が含まれないこと（データ最小化）もあわせて確認する。回帰確認は E2E テスト `e2e/src/tests/usecase/ekyc/ekyc-01-verified-claims-at-userinfo-structure.test.js` を参照。
 
 ---
 

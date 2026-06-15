@@ -37,10 +37,11 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
   const TRUST_FRAMEWORK = "eidas";
   const EVIDENCE_TYPE = "driver_license";
 
-  // claims(given_name/family_name) と verification(trust_framework) のみ要求。
-  // birthdate・evidence は「ユーザーは保持するが要求しない」→ 返らないこと（データ最小化）を検証する。
+  // claims(given_name/family_name) のみ要求。verification は scope で要求しない。
+  // trust_framework は verification の必須要素なので scope 未要求でも常時返る（High #1: verification:{} 非準拠の回避）。
+  // 一方 birthdate・evidence は「ユーザーは保持するが要求しない」→ 返らないこと（データ最小化）を検証する。
   const positiveScope =
-    "openid verified_claims:given_name verified_claims:family_name verified_claims:verification:trust_framework";
+    "openid verified_claims:given_name verified_claims:family_name";
   // ユーザーが保持しない claim のみ要求 → OIDC4IDA §5.7.4: verified_claims 自体を返さない。
   const nonMatchingScope = "openid verified_claims:nonexistent_claim";
   // 身元確認フロー実行用（apply に必要なスコープ）
@@ -357,7 +358,7 @@ describe("eKYC Use Case: verified_claims structure in AT and UserInfo", () => {
       expect(claims).not.toHaveProperty("birthdate");
       Object.keys(claims).forEach((key) => expect(["given_name", "family_name"]).toContain(key));
 
-      // verified_claims:verification:trust_framework を要求 → trust_framework が返る
+      // trust_framework は scope 未要求でも常時返る（verification の必須の床）
       expect(verifiedClaims.verification.trust_framework).toBe(TRUST_FRAMEWORK);
       // evidence は未要求なので返らない（オプトイン: 生PII の漏洩防止）
       expect(verifiedClaims.verification).not.toHaveProperty("evidence");

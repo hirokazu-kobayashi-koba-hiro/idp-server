@@ -284,10 +284,10 @@ UserInfoレスポンス:
 
 ### verified_claims（身元確認済みクレーム）
 
-身元確認（eKYC）済みユーザーでは、UserInfo は `verified_claims:<claim>` / `verified_claims:verification:<element>` 形式のスコープに基づいて `verified_claims` を返却する。返却には認可サーバー設定 `extension.access_token_selective_verified_claims: true` が必要。`verification` 要素はスコープで明示要求したものだけが返り、`evidence`（生PII）は `verified_claims:verification:evidence` を要求した時のみ返る（オプトイン）。
+身元確認（eKYC）済みユーザーでは、UserInfo は `verified_claims:<claim>` / `verified_claims:verification:<element>` 形式のスコープに基づいて `verified_claims` を返却する。返却には認可サーバー設定 `extension.access_token_selective_verified_claims: true` が必要。`verification` の必須要素 `trust_framework` はスコープ要求の有無に関わらず常に含まれ（`verification: {}` は非準拠のため出さない）、`evidence`（生PII）等の任意要素は `verified_claims:verification:evidence` のように明示要求した時のみ返る（オプトイン）。
 
 ```
-Access Token scope: openid verified_claims:given_name verified_claims:verification:trust_framework
+Access Token scope: openid verified_claims:given_name
 
 UserInfoレスポンス:
 {
@@ -298,6 +298,8 @@ UserInfoレスポンス:
   }
 }
 ```
+
+> 上の例では `verified_claims:verification:trust_framework` を要求していないが、`trust_framework` は必須要素なので返る。`evidence` は要求していないので返らない。
 
 構造仕様・設定追従・過去構造からの移行は [verified_claims 出力構造の変更（利用者対応）](../../content_09_project/verified-claims-structure-change.md) を参照。
 

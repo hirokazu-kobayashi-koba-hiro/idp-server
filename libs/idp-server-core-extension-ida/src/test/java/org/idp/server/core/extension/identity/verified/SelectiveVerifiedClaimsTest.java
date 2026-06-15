@@ -152,24 +152,41 @@ class SelectiveVerifiedClaimsTest {
   }
 
   @Test
-  void buildOmitsVerificationContentWhenNotRequested() {
-    // claims requested but no verification scope: verified_claims is emitted, verification is
-    // empty.
+  void buildAlwaysIncludesTrustFrameworkEvenWithoutItsScope() {
+    // trust_framework is the REQUIRED floor of verification: returned even when only a claim scope
+    // is requested, so verification is never an invalid empty object.
     Map<String, Object> result =
         SelectiveVerifiedClaims.build(scopes("verified_claims:given_name"), userVerifiedClaims());
 
     assertTrue(result.containsKey("verified_claims"));
-    assertTrue(verificationOf(result).isEmpty(), "verification must not leak without its scope");
+    Map<String, Object> verification = verificationOf(result);
+    assertEquals("eidas", verification.get("trust_framework"));
+    assertFalse(verification.containsKey("evidence"), "evidence must be opt-in via its own scope");
   }
 
   @Test
   void buildIgnoresUnmatchedVerificationElement() {
+    // unmatched optional element is dropped, but trust_framework (the required floor) remains.
     Map<String, Object> result =
         SelectiveVerifiedClaims.build(
             scopes("verified_claims:given_name", "verified_claims:verification:nonexistent"),
             userVerifiedClaims());
 
-    assertTrue(verificationOf(result).isEmpty());
+    assertEquals(Set.of("trust_framework"), verificationOf(result).keySet());
+  }
+
+  @Test
+  void buildOmitsWhenUserHasNoTrustFramework() {
+    // IDA schema §5.2 / §5.7.4: verification.trust_framework is REQUIRED; without it the
+    // verification requirement cannot be met, so omit verified_claims entirely.
+    JsonNodeWrapper noTrustFramework =
+        JsonNodeWrapper.fromString(
+            "{\"verification\":{\"evidence\":[{\"type\":\"x\"}]},\"claims\":{\"given_name\":\"Taro\"}}");
+
+    Map<String, Object> result =
+        SelectiveVerifiedClaims.build(scopes("verified_claims:given_name"), noTrustFramework);
+
+    assertTrue(result.isEmpty(), "no trust_framework must emit no verified_claims at all");
   }
 
   @Test
@@ -184,7 +201,8 @@ class SelectiveVerifiedClaimsTest {
 
   @Test
   void buildHandlesNullVerification() {
-    // "verification": null must not blow up; it is treated as empty.
+    // "verification": null must not blow up. It yields no trust_framework, so per §5.7.4 the whole
+    // verified_claims is omitted rather than emitting an invalid empty verification.
     JsonNodeWrapper nullVerification =
         JsonNodeWrapper.fromString("{\"verification\":null,\"claims\":{\"given_name\":\"Taro\"}}");
 
@@ -193,8 +211,8 @@ class SelectiveVerifiedClaimsTest {
             scopes("verified_claims:given_name", "verified_claims:verification:trust_framework"),
             nullVerification);
 
-    assertTrue(result.containsKey("verified_claims"));
-    assertTrue(verificationOf(result).isEmpty());
+    assertTrue(
+        result.isEmpty(), "null verification has no trust_framework, so omit verified_claims");
   }
 
   // --- hasSelectableClaims ---

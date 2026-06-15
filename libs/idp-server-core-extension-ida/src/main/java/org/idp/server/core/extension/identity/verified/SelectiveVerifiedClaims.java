@@ -22,21 +22,31 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 
 /**
  * Shared logic for scope-based selective {@code verified_claims} output, used by both the access
  * token and UserInfo creators.
  *
- * <p>Builds the OIDC4IDA {@code verified_claims} structure ({@code verification} + {@code claims}).
- * Both blocks are selected per scope, mirroring the {@code verified_claims} structure:
+ * <p>Builds the OIDC4IDA {@code verified_claims} structure ({@code verification} + {@code claims}):
  *
  * <ul>
  *   <li>{@code verified_claims:<name>} selects a verified claim (e.g. {@code
  *       verified_claims:given_name}).
- *   <li>{@code verified_claims:verification:<element>} selects a verification element (e.g. {@code
- *       verified_claims:verification:trust_framework}, {@code
- *       verified_claims:verification:evidence}).
+ *   <li>{@code verified_claims:verification:<element>} selects an <em>optional</em> verification
+ *       element such as {@code evidence}. Note {@code trust_framework} is the REQUIRED floor of the
+ *       verification block (IDA schema §5.2): it is always included when present and never gated
+ *       behind a scope, so {@code verification} is never emitted as an invalid empty object.
  * </ul>
+ *
+ * <p><b>Why the access token also uses the canonical IDA structure.</b> OIDC4IDA §4.7 only notes
+ * that {@code verified_claims} "can be utilized" in an OAuth access token, without specifying its
+ * structure. RFC 9068 §2.2.2 fills that gap: a registered claim SHOULD be encoded using its IANA
+ * registered name and definition. {@code verified_claims} is IANA-registered (JWT claims registry →
+ * OpenID Identity Assurance Schema Definition 1.0 §5), whose §5.2 / §5.4.2 mandate the nested
+ * {@code {verification, claims}} object with a REQUIRED {@code verification.trust_framework} (an
+ * empty {@code verification: {}} is invalid). So the access token, ID token and UserInfo all emit
+ * the same canonical structure — the access token is not a place to invent a flat/ad-hoc shape.
  *
  * <p>Note the asymmetry: a verified claim lives under the {@code claims} block, so its scope would
  * canonically be {@code verified_claims:claims:<name>}. The redundant {@code claims:} segment is
@@ -50,14 +60,17 @@ import org.idp.server.platform.json.JsonNodeWrapper;
  * claim/element list is hard-coded. Sensitive verification data (e.g. {@code evidence}, which can
  * carry document numbers) is therefore returned only when explicitly requested via its scope.
  *
- * <p>If no requested claim matches a user claim, nothing is emitted. This follows OIDC4IDA §5.7.4
- * (omit {@code verified_claims} when no verified claim can be returned) and avoids leaking {@code
- * verification} metadata without any actual verified claim.
+ * <p>{@code verified_claims} is omitted entirely (OIDC4IDA §5.7.4) when no requested claim matches
+ * a user claim, or when the user has no {@code verification.trust_framework} (the verification
+ * requirement cannot be met) — rather than leaking verification metadata without a verified claim,
+ * or emitting an invalid empty {@code verification}.
  */
 final class SelectiveVerifiedClaims {
 
   static final String PREFIX = "verified_claims:";
   static final String VERIFICATION_PREFIX = "verified_claims:verification:";
+
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(SelectiveVerifiedClaims.class);
 
   private SelectiveVerifiedClaims() {}
 
@@ -102,8 +115,20 @@ final class SelectiveVerifiedClaims {
       return new HashMap<>();
     }
 
+    Map<String, Object> verification = selectVerification(scopes, userVerifiedClaims);
+
+    // IDA schema §5.2 / OIDC4IDA §5.7.4: verification.trust_framework is REQUIRED. Without it the
+    // verification requirement cannot be met, so omit verified_claims entirely rather than emit a
+    // schema-invalid verification block.
+    if (!verification.containsKey("trust_framework")) {
+      log.warn(
+          "verified_claims omitted: stored verification has no required trust_framework"
+              + " (check the tenant's verified_claims mapping configuration)");
+      return new HashMap<>();
+    }
+
     Map<String, Object> verifiedClaimsStructure = new HashMap<>();
-    verifiedClaimsStructure.put("verification", selectVerification(scopes, userVerifiedClaims));
+    verifiedClaimsStructure.put("verification", verification);
     verifiedClaimsStructure.put("claims", selectedClaims);
 
     Map<String, Object> result = new HashMap<>();
@@ -130,9 +155,12 @@ final class SelectiveVerifiedClaims {
   }
 
   /**
-   * Verification elements requested via {@code verified_claims:verification:<element>}, looked up
-   * dynamically against the user's stored {@code verification} object. Returns an empty map when no
-   * verification element is requested or present.
+   * Builds the {@code verification} block: {@code trust_framework} is always included when present
+   * (the REQUIRED floor of the verification object — non-PII and structurally inseparable from any
+   * returned verified claim, so it is not subject to the §7 "only what is requested" rule), while
+   * other elements requested via {@code verified_claims:verification:<element>} (e.g. {@code
+   * evidence}, which can carry raw PII such as document numbers) are opt-in. Names are looked up
+   * dynamically against the user's stored {@code verification} object.
    */
   private static Map<String, Object> selectVerification(
       Scopes scopes, JsonNodeWrapper userVerifiedClaims) {
@@ -142,8 +170,18 @@ final class SelectiveVerifiedClaims {
     }
     Map<String, Object> userVerification =
         userVerifiedClaims.getValueAsJsonNode("verification").toMap();
+
+    // trust_framework: always included (REQUIRED floor; never gated behind a scope).
+    if (userVerification.containsKey("trust_framework")) {
+      selected.put("trust_framework", userVerification.get("trust_framework"));
+    }
+
+    // Other verification elements: opt-in via their own scope (data minimization for PII).
     for (String scope : scopes.filterMatchedPrefix(VERIFICATION_PREFIX)) {
       String element = scope.substring(VERIFICATION_PREFIX.length());
+      if (element.equals("trust_framework")) {
+        continue;
+      }
       if (userVerification.containsKey(element)) {
         selected.put(element, userVerification.get(element));
       }

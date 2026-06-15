@@ -640,8 +640,7 @@ print(json.dumps(json.loads(base64.urlsafe_b64decode(p)), indent=2, ensure_ascii
 
 UserInfo エンドポイントで基本クレームが返ることを確認します。
 
-> **注意**: 現時点では UserInfo エンドポイントは `verified_claims` に未対応です。
-> `verified_claims` は ID Token でのみ返されます。
+> **注意**: UserInfo の `verified_claims` は **scope ベース selective**（`verified_claims:*` スコープ + `access_token_selective_verified_claims`）で返る（[Phase 4](#phase-4-scope-ベース-selective-verified_claims-1514) 参照）。本 Step の `claims` パラメータは `id_token` 向けの要求なので、ここでの UserInfo には `verified_claims` は含まれない。
 
 ```bash
 curl -s \
@@ -654,6 +653,90 @@ curl -s \
 - HTTP 200 が返ること
 - `sub` が含まれていること
 - `email`, `name` が含まれていること
+
+---
+
+## Phase 4: scope ベース selective verified_claims (#1514)
+
+`claims` パラメータを使わず、`verified_claims:*` スコープで Access Token / UserInfo に verified_claims を**選択的**に含める方式を確認します。`access_token_selective_verified_claims: true` が前提。Phase 1 で登録し Phase 2 で身元確認を完了したユーザー（`${TEST_EMAIL}`）で確認します。
+
+---
+
+## Step 18: scope ベースで認可 〜 トークン取得
+
+`verified_claims:given_name verified_claims:family_name` のみ要求します（`verified_claims:verification:*` は要求しない）。
+
+```bash
+STATE3="verify-scope-vc-$(date +%s)"
+SCOPE3="openid verified_claims:given_name verified_claims:family_name"
+COOKIE_JAR3=$(mktemp)
+
+AUTH_REDIRECT3=$(curl -s -c "${COOKIE_JAR3}" -o /dev/null -w "%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=$(echo "${SCOPE3}" | tr ' ' '+')&state=${STATE3}")
+AUTHORIZATION_ID3=$(echo "${AUTH_REDIRECT3}" | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
+
+curl -s -b "${COOKIE_JAR3}" -c "${COOKIE_JAR3}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${AUTHORIZATION_ID3}/password-authentication" \
+  -H "Content-Type: application/json" \
+  -d "{\"username\": \"${TEST_EMAIL}\", \"password\": \"${TEST_PASSWORD}\"}" > /dev/null
+
+AUTHORIZE_RESPONSE3=$(curl -s -b "${COOKIE_JAR3}" -c "${COOKIE_JAR3}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${AUTHORIZATION_ID3}/authorize" \
+  -H "Content-Type: application/json" -d '{}')
+AUTHORIZATION_CODE3=$(echo "${AUTHORIZE_RESPONSE3}" | jq -r '.redirect_uri' | sed -n 's/.*[?&]code=\([^&#]*\).*/\1/p')
+
+TOKEN_RESPONSE3=$(curl -s -X POST "${TENANT_BASE}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=authorization_code" \
+  --data-urlencode "code=${AUTHORIZATION_CODE3}" \
+  --data-urlencode "redirect_uri=${REDIRECT_URI}" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "client_secret=${CLIENT_SECRET}")
+
+ACCESS_TOKEN3=$(echo "${TOKEN_RESPONSE3}" | jq -r '.access_token')
+echo "${TOKEN_RESPONSE3}" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 200 が返ること
+- `access_token` が取得できること
+
+---
+
+## Step 19: Access Token デコード (selective verified_claims)
+
+```bash
+echo "${ACCESS_TOKEN3}" | cut -d'.' -f2 | python3 -c "
+import sys, base64, json
+p = sys.stdin.read().strip()
+p += '=' * (4 - len(p) % 4)
+print(json.dumps(json.loads(base64.urlsafe_b64decode(p)), indent=2, ensure_ascii=False))
+"
+```
+
+### 確認ポイント
+
+- `verified_claims` がネスト構造（`verification` + `claims`）で含まれること
+- `verified_claims.claims.given_name` / `family_name` が含まれること
+- `verified_claims.claims.birthdate` は**含まれない**こと（要求していない＝データ最小化）
+- `verified_claims.verification.trust_framework` が**含まれる**こと（`verified_claims:verification:trust_framework` を要求していなくても、`verification` の必須要素なので常時返る。`verification: {}` は非準拠のため出さない）
+- `verified_claims.verification.evidence` は**含まれない**こと（要求していない＝オプトイン）
+
+---
+
+## Step 20: UserInfo (selective verified_claims)
+
+```bash
+curl -s -X GET "${TENANT_BASE}/v1/userinfo" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN3}" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 200 が返ること
+- `verified_claims` が Access Token と同じネスト構造で返ること（UserInfo も #1514 で対応）
+- `verification.trust_framework` が常時含まれ、未要求の `claims.birthdate` / `verification.evidence` は含まれないこと
 
 ---
 
@@ -708,6 +791,17 @@ curl -s \
 | 16 | verified_claims.verification.trust_framework が jp_aml | |
 | 16 | verified_claims.claims に given_name, family_name, birthdate が含まれる | |
 | 17 | UserInfo で sub, email, name が返る | |
+
+### Phase 4: scope ベース selective verified_claims (#1514)
+
+| Step | 確認項目 | 結果 |
+|------|---------|------|
+| 18 | verified_claims:* スコープで access_token が取得できる | |
+| 19 | Access Token に verified_claims がネスト構造で含まれる | |
+| 19 | claims に要求した given_name, family_name のみ含まれる（birthdate は含まれない） | |
+| 19 | verification.trust_framework が常時含まれる（未要求でも） | |
+| 19 | verification.evidence が含まれない（未要求＝オプトイン） | |
+| 20 | UserInfo でも同じネスト構造の verified_claims が返る | |
 
 ---
 
