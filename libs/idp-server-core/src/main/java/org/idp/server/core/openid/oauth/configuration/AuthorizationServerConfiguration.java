@@ -134,6 +134,18 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return registrationEndpoint;
   }
 
+  /**
+   * The {@code scopes_supported} OpenID Provider / Authorization Server metadata.
+   *
+   * <p>Per OpenID Connect Discovery 1.0 and RFC 8414 this is RECOMMENDED, <em>informational</em>
+   * metadata advertised at the discovery endpoint: "Servers MAY choose not to advertise some
+   * supported scope values even when this parameter is used." It is therefore <strong>not</strong>
+   * an enforcement allowlist — a server may grant scopes that are not listed here.
+   *
+   * <p>Per-client scope filtering (the actual control point) is performed against the client's
+   * registered scope via {@link
+   * org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration#filteredScope}.
+   */
   public List<String> scopesSupported() {
     return scopesSupported;
   }
@@ -292,15 +304,6 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
 
   public boolean authorizationResponseIssParameterSupported() {
     return authorizationResponseIssParameterSupported;
-  }
-
-  public List<String> filteredScope(String spacedScopes) {
-    List<String> scopes = Arrays.stream(spacedScopes.split(" ")).toList();
-    return scopes.stream().filter(scope -> scopesSupported.contains(scope)).toList();
-  }
-
-  public List<String> filteredScope(List<String> scopes) {
-    return scopes.stream().filter(scope -> scopesSupported.contains(scope)).toList();
   }
 
   public boolean hasFapiBaselineScope(Set<String> scopes) {

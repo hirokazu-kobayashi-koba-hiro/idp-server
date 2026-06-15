@@ -545,11 +545,11 @@ curl -X PUT "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/te
 }
 ```
 
-**原因**: Authorization Requestで要求したスコープがクライアントの`scope`またはテナントの`scopes_supported`に含まれていない
+**原因**: Authorization Requestで要求したスコープがクライアントの`scope`（登録スコープ）に含まれていない。スコープの付与はクライアント登録スコープで制御される（`scopes_supported` は Discovery 広告用メタデータで、付与スコープの制御には影響しない）
 
 **解決策**:
-1. クライアントのスコープを更新
-2. テナントの`scopes_supported`に追加
+1. クライアントの`scope`に必要なスコープを追加する（スコープ付与の制御点）
+2. （任意）Discoveryで正しく広告するため、テナントの`scopes_supported`にも追加する（広告用であり付与可否には影響しない）
 
 ```bash
 # クライアントのスコープを更新
