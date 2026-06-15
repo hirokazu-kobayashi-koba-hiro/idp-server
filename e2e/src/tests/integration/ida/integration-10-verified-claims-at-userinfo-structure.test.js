@@ -128,7 +128,7 @@ describe("Identity Verification - verified_claims structure in AT and UserInfo",
         password: "successUserCode001",
         clientId: clientSecretPostClient.clientId,
         clientSecret: clientSecretPostClient.clientSecret,
-        scope: "openid profile verified_claims:given_name verified_claims:family_name"
+        scope: "openid profile verified_claims:given_name verified_claims:family_name verified_claims:verification:trust_framework"
       });
 
       expect(tokenResponse.status).toBe(200);
@@ -155,6 +155,11 @@ describe("Identity Verification - verified_claims structure in AT and UserInfo",
       const claims = verifiedClaims.claims;
       console.log("AT verified_claims.claims:", claims);
       console.log("AT verified_claims.verification:", verifiedClaims.verification);
+
+      // verified_claims:verification:trust_framework を要求したので trust_framework が返る
+      expect(verifiedClaims.verification).toHaveProperty("trust_framework");
+      // evidence は scope 未要求なので含まれない（オプトイン: 生PII の漏洩防止）
+      expect(verifiedClaims.verification).not.toHaveProperty("evidence");
     });
 
   });
@@ -170,7 +175,7 @@ describe("Identity Verification - verified_claims structure in AT and UserInfo",
         password: "successUserCode001",
         clientId: clientSecretPostClient.clientId,
         clientSecret: clientSecretPostClient.clientSecret,
-        scope: "openid profile verified_claims:given_name verified_claims:family_name"
+        scope: "openid profile verified_claims:given_name verified_claims:family_name verified_claims:verification:trust_framework"
       });
 
       expect(tokenResponse.status).toBe(200);
@@ -199,6 +204,11 @@ describe("Identity Verification - verified_claims structure in AT and UserInfo",
       const claims = verifiedClaims.claims;
       console.log("UserInfo verified_claims.claims:", claims);
       console.log("UserInfo verified_claims.verification:", verifiedClaims.verification);
+
+      // verified_claims:verification:trust_framework を要求したので trust_framework が返る
+      expect(verifiedClaims.verification).toHaveProperty("trust_framework");
+      // evidence は scope 未要求なので含まれない（オプトイン: 生PII の漏洩防止）
+      expect(verifiedClaims.verification).not.toHaveProperty("evidence");
     });
 
   });

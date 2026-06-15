@@ -284,10 +284,10 @@ UserInfoレスポンス:
 
 ### verified_claims（身元確認済みクレーム）
 
-身元確認（eKYC）済みユーザーでは、UserInfo は `verified_claims:<claim>` 形式のスコープに基づいて `verified_claims` を返却する。返却には認可サーバー設定 `extension.access_token_selective_verified_claims: true` が必要。
+身元確認（eKYC）済みユーザーでは、UserInfo は `verified_claims:<claim>` / `verified_claims:verification:<element>` 形式のスコープに基づいて `verified_claims` を返却する。返却には認可サーバー設定 `extension.access_token_selective_verified_claims: true` が必要。`verification` 要素はスコープで明示要求したものだけが返り、`evidence`（生PII）は `verified_claims:verification:evidence` を要求した時のみ返る（オプトイン）。
 
 ```
-Access Token scope: openid verified_claims:given_name
+Access Token scope: openid verified_claims:given_name verified_claims:verification:trust_framework
 
 UserInfoレスポンス:
 {

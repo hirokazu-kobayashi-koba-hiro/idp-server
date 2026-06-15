@@ -92,7 +92,7 @@
 }
 ```
 
-返却される `claims` は、Access Token が持つ `verified_claims:*` スコープに対応するものに限られる（例: `verified_claims:given_name` があれば `given_name` のみ）。
+返却される `claims` は、Access Token が持つ `verified_claims:<claim>` スコープに対応するものに限られる（例: `verified_claims:given_name` があれば `given_name` のみ）。`verification` 要素も同様に `verified_claims:verification:<element>` スコープで選択される（[3.1](#31-スコープの列挙)）。
 
 ---
 
@@ -100,11 +100,18 @@
 
 ### 3.1 スコープの列挙
 
-`verified_claims:<claim>` 形式のスコープは、**クライアントの `scope` に列挙する（必須・スコープ付与の制御点）**。テナントの `scopes_supported` にも列挙することを推奨するが、これは OpenID Connect Discovery / RFC 8414 上の広告用メタデータであり、付与可否の制御には影響しない（実際のスコープ付与は `client.scope` で決まる）。
+`verified_claims` の出力は **2種類のスコープ**で要素単位に制御する。いずれも **クライアントの `scope` に列挙する（必須・スコープ付与の制御点）**。テナントの `scopes_supported` にも列挙することを推奨するが、これは OpenID Connect Discovery / RFC 8414 上の広告用メタデータであり、付与可否の制御には影響しない（実際のスコープ付与は `client.scope` で決まる）。
+
+| スコープ | 選択対象 | 例 |
+|---------|---------|----|
+| `verified_claims:<claim>` | `claims` 内の検証済みクレーム | `verified_claims:given_name` |
+| `verified_claims:verification:<element>` | `verification` 内の検証メタデータ | `verified_claims:verification:trust_framework` / `verified_claims:verification:evidence` |
+
+> 本来 `claims` 内の要素は `verified_claims:claims:<claim>` だが、冗長なため **`claims:` を省略**し `verified_claims:<claim>` とする。`verification:` セグメントは検証済みクレームとの区別のため残す（`verified_claims:verification:` 名前空間は常に `verification` 要素として扱われる）。
 
 ```json
 // client.scope（クライアント登録）★ スコープ付与の制御点（必須）
-"openid profile email transfers verified_claims:given_name verified_claims:family_name verified_claims:birthdate verified_claims:address"
+"openid profile email transfers verified_claims:given_name verified_claims:family_name verified_claims:birthdate verified_claims:address verified_claims:verification:trust_framework"
 ```
 
 ```json
@@ -114,9 +121,16 @@
   "verified_claims:given_name",
   "verified_claims:family_name",
   "verified_claims:birthdate",
-  "verified_claims:address"
+  "verified_claims:address",
+  "verified_claims:verification:trust_framework",
+  "verified_claims:verification:evidence"
 ]
 ```
+
+> **データ最小化（要求した要素だけ返る）**: `claims`・`verification` のどちらも、**スコープで明示的に要求した要素だけ**が返る（OIDC4IDA §5.4 / §7）。要求しなかった要素は出力されない。
+> - 特に `verification.evidence` は書類番号・確認トランザクションID 等の**生PII**を含むため、`verified_claims:verification:evidence` を明示要求しない限り返さない（**オプトイン**）。
+> - `verified_claims:verification:*` を1つも要求しなければ `verification` は空（`{}`）になる。
+> - 選択できる要素名はテナントの verified_claims マッピング設定に追従する（コード側で固定リストを持たない）。
 
 ### 3.2 フラグの有効化
 
@@ -143,7 +157,7 @@
 
 ## 4. 動作確認
 
-`verified_claims:given_name` スコープで Access Token を取得し、AT のデコードと UserInfo の双方でネスト構造を確認する。回帰確認は E2E テスト `e2e/src/tests/integration/ida/integration-10-verified-claims-at-userinfo-structure.test.js` を参照。
+`verified_claims:given_name verified_claims:verification:trust_framework` スコープで Access Token を取得し、AT のデコードと UserInfo の双方でネスト構造を確認する。要求した `trust_framework` のみ `verification` に含まれ、未要求の `evidence` が含まれないこと（オプトイン）もあわせて確認する。回帰確認は E2E テスト `e2e/src/tests/integration/ida/integration-10-verified-claims-at-userinfo-structure.test.js` を参照。
 
 ---
 
