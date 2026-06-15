@@ -34,7 +34,7 @@
       "model": "iPhone15",
       "notification_channel": "fcm",
       "notification_token": "test token",
-      "preferred_for_notification": true
+      "priority": 1
     }
   ],
   "custom_properties": {
