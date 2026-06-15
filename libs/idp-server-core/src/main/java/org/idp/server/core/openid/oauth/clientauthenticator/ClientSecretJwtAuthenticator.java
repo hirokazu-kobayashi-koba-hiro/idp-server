@@ -47,6 +47,7 @@ class ClientSecretJwtAuthenticator
     RequestedClientId requestedClientId = context.requestedClientId();
 
     throwExceptionIfNotContainsClientAssertion(context);
+    throwExceptionIfNoConfiguredSecret(context);
     JoseContext joseContext = parseOrThrowExceptionIfUnMatchClientAssertion(context);
 
     ClientSecret clientSecret = new ClientSecret(context.clientConfiguration().clientSecretValue());
@@ -64,6 +65,20 @@ class ClientSecretJwtAuthenticator
         new ClientAuthenticationPublicKey(),
         clientAssertionJwt,
         new ClientCertification());
+  }
+
+  void throwExceptionIfNoConfiguredSecret(BackchannelRequestContext context) {
+    ClientConfiguration clientConfiguration = context.clientConfiguration();
+    RequestedClientId clientId = context.requestedClientId();
+    // A client configured for client_secret_jwt but without a secret has no HMAC key, so the
+    // client_assertion can never be verified. Reject with invalid_client instead of letting a null
+    // secret reach the HMAC verifier and surface as a NullPointerException (HTTP 500).
+    if (!clientConfiguration.hasSecret()) {
+      throw new ClientUnAuthorizedException(
+          ClientAuthenticationType.client_secret_jwt.name(),
+          clientId,
+          "client_secret is not configured for client_secret_jwt");
+    }
   }
 
   void throwExceptionIfNotContainsClientAssertion(BackchannelRequestContext context) {
