@@ -19,13 +19,7 @@ package org.idp.server;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-// idp-server has its own authentication; exclude Spring Security's default in-memory
-// UserDetailsService so it does not auto-generate a dev user / random password at startup (#1348).
-// excludeName (by FQCN) is used because the auto-configuration class lives in the runtime-only
-// spring-boot-security module (Spring Boot 4.x) and is not on the compile classpath.
-@SpringBootApplication(
-    excludeName =
-        "org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration")
+@SpringBootApplication
 public class IdPApplication {
 
   public static void main(String[] args) {

@@ -25,6 +25,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
@@ -84,5 +86,22 @@ public class SecurityConfig {
     http.addFilterBefore(dynamicCorsFilter, ProtectedResourceApiFilter.class);
 
     return http.build();
+  }
+
+  /**
+   * idp-server authenticates through the custom filters above (token / scope based), not through
+   * Spring Security's {@code UserDetailsService}. Declaring an empty one makes {@code
+   * UserDetailsServiceAutoConfiguration} back off ({@code @ConditionalOnMissingBean
+   * UserDetailsService}), so Spring Boot does not auto-generate a default in-memory user / random
+   * password — nor its {@code "Using generated security password"} startup warning. (#1348)
+   *
+   * <p><b>Load-bearing</b>: do not remove. Without this bean the auto-configuration re-activates
+   * and the default user and startup warning come back.
+   */
+  @Bean
+  public UserDetailsService userDetailsService() {
+    return username -> {
+      throw new UsernameNotFoundException("idp-server does not use UserDetailsService-based login");
+    };
   }
 }
