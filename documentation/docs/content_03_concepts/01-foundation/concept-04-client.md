@@ -204,10 +204,10 @@ flowchart LR
 ### Scopeとの関係
 
 **役割分担**:
-- **Client**: 利用可能なスコープを定義（`scope`フィールド）
-- **Tenant**: テナント全体で利用可能なスコープを定義（`scopes_supported`）
+- **Client**: 利用可能なスコープを定義（`scope`フィールド）＝ スコープ制御の主体
+- **Tenant**: `scopes_supported` は Discovery 広告用メタデータ（OpenID Connect Discovery / RFC 8414）。サーバーは未広告のスコープもサポート可能で、付与スコープの enforcement allowlist ではない
 
-**検証ルール**: 認証リクエストのスコープは、ClientとTenantの両方の設定範囲内である必要がある
+**検証ルール**: 認証リクエストのスコープは、クライアントの登録スコープ（`scope`）の範囲に絞られる（`scopes_supported` は広告用であり、付与可否の検証には用いない）
 
 ---
 
