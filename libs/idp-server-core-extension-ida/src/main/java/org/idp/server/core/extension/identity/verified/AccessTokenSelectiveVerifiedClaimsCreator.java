@@ -16,7 +16,6 @@
 
 package org.idp.server.core.extension.identity.verified;
 
-import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.User;
@@ -28,8 +27,6 @@ import org.idp.server.core.openid.token.plugin.AccessTokenCustomClaimsCreator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 public class AccessTokenSelectiveVerifiedClaimsCreator implements AccessTokenCustomClaimsCreator {
-
-  private static final String prefix = "verified_claims:";
 
   @Override
   public boolean shouldCreate(
@@ -43,13 +40,15 @@ public class AccessTokenSelectiveVerifiedClaimsCreator implements AccessTokenCus
     }
 
     Scopes scopes = authorizationGrant.scopes();
-    if (!scopes.hasScopeMatchedPrefix(prefix)) {
+    if (!scopes.hasScopeMatchedPrefix(SelectiveVerifiedClaims.PREFIX)) {
       return false;
     }
 
     User user = authorizationGrant.user();
-    JsonNodeWrapper userVerifiedClaims = user.verifiedClaimsNodeWrapper();
-    return user.hasVerifiedClaims() && userVerifiedClaims.contains("claims");
+    if (!user.hasVerifiedClaims()) {
+      return false;
+    }
+    return SelectiveVerifiedClaims.hasSelectableClaims(scopes, user.verifiedClaimsNodeWrapper());
   }
 
   @Override
@@ -59,32 +58,8 @@ public class AccessTokenSelectiveVerifiedClaimsCreator implements AccessTokenCus
       ClientConfiguration clientConfiguration,
       ClientCredentials clientCredentials) {
 
-    Scopes scopes = authorizationGrant.scopes();
-    Scopes filteredScopes = scopes.filterMatchedPrefix(prefix);
     User user = authorizationGrant.user();
     JsonNodeWrapper userVerifiedClaims = user.verifiedClaimsNodeWrapper();
-
-    Map<String, Object> verification =
-        userVerifiedClaims.contains("verification")
-            ? userVerifiedClaims.getValueAsJsonNode("verification").toMap()
-            : new HashMap<>();
-    Map<String, Object> userClaims = userVerifiedClaims.getValueAsJsonNode("claims").toMap();
-
-    Map<String, Object> selectedClaims = new HashMap<>();
-    for (String scope : filteredScopes) {
-      String claimName = scope.substring(prefix.length());
-
-      if (userClaims.containsKey(claimName)) {
-        selectedClaims.put(claimName, userClaims.get(claimName));
-      }
-    }
-
-    Map<String, Object> verified = new HashMap<>();
-    Map<String, Object> verifiedClaimsStructure = new HashMap<>();
-    verifiedClaimsStructure.put("verification", verification);
-    verifiedClaimsStructure.put("claims", selectedClaims);
-    verified.put("verified_claims", verifiedClaimsStructure);
-
-    return verified;
+    return SelectiveVerifiedClaims.build(authorizationGrant.scopes(), userVerifiedClaims);
   }
 }

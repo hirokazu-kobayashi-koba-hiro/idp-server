@@ -203,4 +203,61 @@ describe("Identity Verification - verified_claims structure in AT and UserInfo",
 
   });
 
+  describe("verified_claims omitted when no requested claim matches (#1514)", () => {
+
+    // #1514: ユーザーが持っていない verified_claims:* のみを要求した場合、
+    // claims が空のまま verification（trust_framework / evidence）だけ漏れてはならない。
+    // verified_claims 自体を返さないことを AT / UserInfo 両方で確認する。
+    const nonMatchingScope = "openid profile verified_claims:nonexistent_claim";
+
+    it("AT must not contain verified_claims when no requested claim matches", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        scope: nonMatchingScope
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+      const decodedAt = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.access_token,
+        jwks: jwksResponse.data,
+      });
+      console.log("Decoded AT (no-match):", JSON.stringify(decodedAt.payload, null, 2));
+
+      // verification だけが漏れていないこと（verified_claims キー自体が無い）
+      expect(decodedAt.payload).not.toHaveProperty("verified_claims");
+    });
+
+    it("UserInfo must not contain verified_claims when no requested claim matches", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        scope: nonMatchingScope
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const userinfoResponse = await get({
+        url: serverConfig.userinfoEndpoint,
+        headers: {
+          "Authorization": `Bearer ${tokenResponse.data.access_token}`
+        }
+      });
+      console.log("UserInfo response (no-match):", JSON.stringify(userinfoResponse.data, null, 2));
+      expect(userinfoResponse.status).toBe(200);
+      expect(userinfoResponse.data.sub).toBeDefined();
+
+      expect(userinfoResponse.data).not.toHaveProperty("verified_claims");
+    });
+
+  });
+
 });

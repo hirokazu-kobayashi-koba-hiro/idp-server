@@ -16,7 +16,6 @@
 
 package org.idp.server.core.extension.identity.verified;
 
-import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.User;
@@ -30,14 +29,13 @@ import org.idp.server.platform.json.JsonNodeWrapper;
  * Returns verified_claims in UserInfo response based on scope-based filtering.
  *
  * <p>Uses the same {@code verified_claims:*} scope prefix pattern as {@link
- * AccessTokenSelectiveVerifiedClaimsCreator}. When scopes like {@code verified_claims:given_name}
- * are present, the corresponding claims are included in the response with proper OIDC4IDA structure
- * ({@code verification} + {@code claims}).
+ * AccessTokenSelectiveVerifiedClaimsCreator} (shared via {@link SelectiveVerifiedClaims}). When
+ * scopes like {@code verified_claims:given_name} are present and match a user claim, the
+ * corresponding claims are included with proper OIDC4IDA structure ({@code verification} + {@code
+ * claims}).
  */
 public class UserinfoSelectiveVerifiedClaimsCreator
     implements UserinfoCustomIndividualClaimsCreator {
-
-  private static final String prefix = "verified_claims:";
 
   @Override
   public boolean shouldCreate(
@@ -51,12 +49,14 @@ public class UserinfoSelectiveVerifiedClaimsCreator
     }
 
     Scopes scopes = authorizationGrant.scopes();
-    if (!scopes.hasScopeMatchedPrefix(prefix)) {
+    if (!scopes.hasScopeMatchedPrefix(SelectiveVerifiedClaims.PREFIX)) {
       return false;
     }
 
-    JsonNodeWrapper userVerifiedClaims = user.verifiedClaimsNodeWrapper();
-    return user.hasVerifiedClaims() && userVerifiedClaims.contains("claims");
+    if (!user.hasVerifiedClaims()) {
+      return false;
+    }
+    return SelectiveVerifiedClaims.hasSelectableClaims(scopes, user.verifiedClaimsNodeWrapper());
   }
 
   @Override
@@ -66,31 +66,7 @@ public class UserinfoSelectiveVerifiedClaimsCreator
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
 
-    Scopes scopes = authorizationGrant.scopes();
-    Scopes filteredScopes = scopes.filterMatchedPrefix(prefix);
     JsonNodeWrapper userVerifiedClaims = user.verifiedClaimsNodeWrapper();
-
-    Map<String, Object> verification =
-        userVerifiedClaims.contains("verification")
-            ? userVerifiedClaims.getValueAsJsonNode("verification").toMap()
-            : new HashMap<>();
-    Map<String, Object> userClaims = userVerifiedClaims.getValueAsJsonNode("claims").toMap();
-
-    Map<String, Object> selectedClaims = new HashMap<>();
-    for (String scope : filteredScopes) {
-      String claimName = scope.substring(prefix.length());
-
-      if (userClaims.containsKey(claimName)) {
-        selectedClaims.put(claimName, userClaims.get(claimName));
-      }
-    }
-
-    Map<String, Object> result = new HashMap<>();
-    Map<String, Object> verifiedClaimsStructure = new HashMap<>();
-    verifiedClaimsStructure.put("verification", verification);
-    verifiedClaimsStructure.put("claims", selectedClaims);
-    result.put("verified_claims", verifiedClaimsStructure);
-
-    return result;
+    return SelectiveVerifiedClaims.build(authorizationGrant.scopes(), userVerifiedClaims);
   }
 }
