@@ -37,6 +37,7 @@ ekyc/
 
 - **verified_claims_supported**: 認可サーバーが OpenID Connect for Identity Assurance (eKYC) をサポート
 - **required_identity_verification_scopes**: `transfers` スコープを要求すると身元確認プロセスが発動
+- **access_token_selective_verified_claims**: `verified_claims:*` スコープで AT / UserInfo に verified_claims を選択的に含める
 - **no_action / mock モード**: ローカル開発環境では外部 eKYC サービスへの接続なしで動作確認可能
 - **eKYC フロー**: apply（申請） → evaluate-result（審査結果評価） → approved/rejected
 

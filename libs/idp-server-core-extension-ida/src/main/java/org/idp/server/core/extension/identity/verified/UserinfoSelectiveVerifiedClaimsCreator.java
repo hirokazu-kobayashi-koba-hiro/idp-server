@@ -19,21 +19,30 @@ package org.idp.server.core.extension.identity.verified;
 import java.util.Map;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
-import org.idp.server.core.openid.token.plugin.AccessTokenCustomClaimsCreator;
+import org.idp.server.core.openid.userinfo.plugin.UserinfoCustomIndividualClaimsCreator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
-public class AccessTokenSelectiveVerifiedClaimsCreator implements AccessTokenCustomClaimsCreator {
+/**
+ * Returns verified_claims in UserInfo response based on scope-based filtering.
+ *
+ * <p>Uses the same {@code verified_claims:*} scope prefix pattern as {@link
+ * AccessTokenSelectiveVerifiedClaimsCreator} (shared via {@link SelectiveVerifiedClaims}). When
+ * scopes like {@code verified_claims:given_name} are present and match a user claim, the
+ * corresponding claims are included with proper OIDC4IDA structure ({@code verification} + {@code
+ * claims}).
+ */
+public class UserinfoSelectiveVerifiedClaimsCreator
+    implements UserinfoCustomIndividualClaimsCreator {
 
   @Override
   public boolean shouldCreate(
+      User user,
       AuthorizationGrant authorizationGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
-      ClientConfiguration clientConfiguration,
-      ClientCredentials clientCredentials) {
+      ClientConfiguration clientConfiguration) {
 
     if (!authorizationServerConfiguration.enabledAccessTokenSelectiveVerifiedClaims()) {
       return false;
@@ -44,7 +53,6 @@ public class AccessTokenSelectiveVerifiedClaimsCreator implements AccessTokenCus
       return false;
     }
 
-    User user = authorizationGrant.user();
     if (!user.hasVerifiedClaims()) {
       return false;
     }
@@ -53,12 +61,11 @@ public class AccessTokenSelectiveVerifiedClaimsCreator implements AccessTokenCus
 
   @Override
   public Map<String, Object> create(
+      User user,
       AuthorizationGrant authorizationGrant,
       AuthorizationServerConfiguration authorizationServerConfiguration,
-      ClientConfiguration clientConfiguration,
-      ClientCredentials clientCredentials) {
+      ClientConfiguration clientConfiguration) {
 
-    User user = authorizationGrant.user();
     JsonNodeWrapper userVerifiedClaims = user.verifiedClaimsNodeWrapper();
     return SelectiveVerifiedClaims.build(authorizationGrant.scopes(), userVerifiedClaims);
   }
