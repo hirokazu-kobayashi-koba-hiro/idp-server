@@ -193,8 +193,7 @@ export const registerFidoUaf = async ({
           "os": "Android15",
           "model": "galaxy z fold 6",
           "notification_channel": "fcm",
-          "notification_token": "test token",
-          "preferred_for_notification": true
+          "notification_token": "test token"
         },
         headers: {
           "Authorization": `Bearer ${accessToken}`

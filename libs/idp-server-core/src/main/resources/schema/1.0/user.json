@@ -50,7 +50,7 @@
           "model": { "type": "string" },
           "notification_channel": { "type": "string", "enum": ["fcm", "apns"] },
           "notification_token": { "type": "string" },
-          "preferred_for_notification": { "type": "boolean" }
+          "priority": { "type": "integer", "minimum": 1 }
         }
       }
     },

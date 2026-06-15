@@ -139,8 +139,7 @@ def generate_users(tenants: list, users_per_tenant: int, first_tenant_users: int
                     "platform": "iOS",
                     "priority": 1,
                     "notification_token": "test token",
-                    "notification_channel": "fcm",
-                    "preferred_for_notification": True
+                    "notification_channel": "fcm"
                 }]
                 devices_str = json.dumps(devices, ensure_ascii=False)
                 devices_escaped = '"' + devices_str.replace('"', '""') + '"'
