@@ -275,8 +275,16 @@ public class IdentityVerificationApplicationEntryService
             request,
             requestAttributes,
             verificationConfiguration);
-    if (applyingResult.isError()) {
+    // Record the process attempt for both success and hard error. updateProcessWith advances
+    // success_count or failure_count from applyingResult; on a hard error the merge is a no-op on
+    // the empty error context and the status falls back to APPLYING (same as a non-transitioning
+    // success), so failure_count-based conditions (lock_conditions / retry limits) work for hard
+    // errors too. (#1608)
+    IdentityVerificationApplication updated =
+        application.updateProcessWith(process, applyingResult, verificationConfiguration);
+    applicationCommandRepository.update(tenant, updated);
 
+    if (applyingResult.isError()) {
       SecurityEventType securityEventType =
           new SecurityEventType(type.name() + "_" + process.name() + "_" + "failure");
       eventPublisher.publish(
@@ -289,12 +297,8 @@ public class IdentityVerificationApplicationEntryService
       return applyingResult.errorResponse();
     }
 
-    IdentityVerificationApplication updated =
-        application.updateProcessWith(process, applyingResult, verificationConfiguration);
-    applicationCommandRepository.update(tenant, updated);
     SecurityEventType securityEventType =
         new SecurityEventType(type.name() + "_" + process.name() + "_" + "success");
-
     eventPublisher.publish(tenant, oAuthToken, securityEventType, requestAttributes);
 
     handleTerminalTransition(
