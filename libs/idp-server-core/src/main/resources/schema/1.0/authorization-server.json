@@ -679,10 +679,6 @@
           "type": "boolean",
           "description": "Enables selective inclusion of user custom properties in access token."
         },
-        "access_token_verified_claims": {
-          "type": "boolean",
-          "description": "Enables inclusion of verified claims in access token."
-        },
         "access_token_selective_verified_claims": {
           "type": "boolean",
           "description": "Enables selective inclusion of verified claims in access token."

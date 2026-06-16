@@ -129,7 +129,7 @@ requirements_by_category:
 key_findings:
   critical_for_issue_1435:
     - finding: "verified_claims は必ず {verification: {...}, claims: {...}} のネスト構造"
-      implication: "AT の AccessTokenVerifiedClaimsCreator がフラット展開しているのは仕様違反"
+      implication: "AT の verified_claims がフラット展開だったのは仕様違反（#1514 でネスト化、全件版 Creator は #1603 で廃止し selective へ一本化）"
     - finding: "verified_claims は ID Token と UserInfo の両方で返却可能 (CAN)"
       implication: "UserInfo 用の Creator が未実装なのは機能不足"
     - finding: "AT での利用は 'can be utilized' であり必須ではないが、使う場合は同じ構造"

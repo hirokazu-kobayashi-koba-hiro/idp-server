@@ -8,7 +8,7 @@
 
 | 変更 | 種別 | 対象 |
 |------|------|------|
-| Access Token の `verified_claims` がフラット → ネスト構造（`verification` + `claims`）になる | 🔴 破壊的 | `access_token_verified_claims` / `access_token_selective_verified_claims` を有効にしているテナントと、その Access Token を消費する RP / リソースサーバー |
+| Access Token の `verified_claims` がフラット → ネスト構造（`verification` + `claims`）になる | 🔴 破壊的 | `access_token_selective_verified_claims` を有効にしているテナントと、その Access Token を消費する RP / リソースサーバー |
 | UserInfo が `verified_claims` を返すようになる | 🟢 追加 | `access_token_selective_verified_claims` + `verified_claims:*` スコープを使うテナント |
 | `verified_claims:*` スコープ・`access_token_selective_verified_claims` フラグの設定追従 | 🟡 設定 | eKYC / 身元確認を提供するテナント |
 
@@ -56,7 +56,7 @@
 | `verified_claims.given_name` | `verified_claims.claims.given_name` |
 | （`verification` は存在しなかった） | `verified_claims.verification.trust_framework` 等が参照可能に |
 
-> この変更は全量モード（`access_token_verified_claims`）・選択モード（`access_token_selective_verified_claims`）の**両方**に適用される。
+> Access Token の `verified_claims` 出力は選択モード（`access_token_selective_verified_claims`）に一本化されている（旧・全量モード `access_token_verified_claims` は #1603 で廃止）。
 
 ### 移行手順（破壊的変更の安全なロールアウト）
 
@@ -147,14 +147,14 @@
 }
 ```
 
-### 3.3 出力モードの違い
+### 3.3 出力モード
 
 | フラグ | 出力先 | クレーム選択 | 構造 |
 |--------|--------|-------------|------|
-| `access_token_verified_claims: true` | Access Token | **全 verified claims**（スコープ不問） | `verification` + `claims` |
 | `access_token_selective_verified_claims: true` | Access Token **および** UserInfo | `verified_claims:*` スコープに対応するクレームのみ | `verification` + `claims` |
 
 > `access_token_selective_verified_claims` は Access Token と UserInfo の**両方**の選択的返却を制御する。UserInfo に `verified_claims` を返したい場合はこのフラグを有効にする。
+> 旧 `access_token_verified_claims`（スコープ不問で全量を Access Token に焼き込むモード）は #1603 で廃止し、選択モードに一本化した。データ最小化（§3.1）の観点でも全量配信は非推奨だったため。
 
 ---
 

@@ -350,7 +350,6 @@ describe("organization authorization server management api", () => {
           "required_identity_verification_scopes": ["identity_verification"],
           "custom_claims_scope_mapping": true,
           "access_token_selective_user_custom_properties": true,
-          "access_token_verified_claims": true,
           "access_token_selective_verified_claims": true
         }
       };
@@ -452,7 +451,7 @@ describe("organization authorization server management api", () => {
           "default_ciba_authentication_interaction_type", "oauth_authorization_request_expires_in",
           "fapi_baseline_scopes", "fapi_advance_scopes", "required_identity_verification_scopes",
           "custom_claims_scope_mapping", "access_token_selective_user_custom_properties",
-          "access_token_verified_claims", "access_token_selective_verified_claims"
+          "access_token_selective_verified_claims"
         ];
 
         extensionFields.forEach(field => {
