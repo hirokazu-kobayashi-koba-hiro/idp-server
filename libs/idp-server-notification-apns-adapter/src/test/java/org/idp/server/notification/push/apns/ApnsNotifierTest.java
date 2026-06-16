@@ -19,8 +19,19 @@ package org.idp.server.notification.push.apns;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.http.HttpRequestResult;
+import org.idp.server.platform.http.HttpRetryConfiguration;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.*;
@@ -29,11 +40,14 @@ import org.idp.server.platform.multi_tenancy.tenant.config.SessionConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.notification.NotificationChannel;
+import org.idp.server.platform.notification.NotificationResult;
 import org.idp.server.platform.notification.NotificationTemplate;
 import org.idp.server.platform.security.event.SecurityEventUserAttributeConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.stubbing.OngoingStubbing;
 
 class ApnsNotifierTest {
 
@@ -155,54 +169,127 @@ class ApnsNotifierTest {
 
   @Test
   void testHandleApnsErrorWithBadDeviceToken() {
-    Tenant tenant =
-        new Tenant(
-            new TenantIdentifier("test-tenant"),
-            new TenantName("Test Tenant"),
-            TenantType.PUBLIC,
-            new TenantDomain("test.example.com"),
-            new AuthorizationProvider("idp-server"),
-            new TenantAttributes(),
-            new UIConfiguration(),
-            new CorsConfiguration(),
-            new SessionConfiguration(),
-            new SecurityEventLogConfiguration(),
-            new SecurityEventUserAttributeConfiguration(),
-            TenantIdentityPolicy.defaultPolicy(),
-            new OrganizationIdentifier("test-org"),
-            true);
-
-    HttpResponse<String> response = mock(HttpResponse.class);
-    when(response.statusCode()).thenReturn(400);
-    when(response.body()).thenReturn("{\"reason\": \"BadDeviceToken\"}");
+    HttpRequestResult result =
+        new HttpRequestResult(
+            400, Map.of(), JsonNodeWrapper.fromString("{\"reason\": \"BadDeviceToken\"}"));
 
     // Should not throw exception
-    assertDoesNotThrow(() -> apnsNotifier.handleApnsError(response, "test-apns-id", tenant));
+    assertDoesNotThrow(() -> apnsNotifier.handleApnsError(result, "test-apns-id", tenant()));
   }
 
   @Test
   void testHandleApnsErrorWithExpiredToken() {
-    Tenant tenant =
-        new Tenant(
-            new TenantIdentifier("test-tenant"),
-            new TenantName("Test Tenant"),
-            TenantType.PUBLIC,
-            new TenantDomain("test.example.com"),
-            new AuthorizationProvider("idp-server"),
-            new TenantAttributes(),
-            new UIConfiguration(),
-            new CorsConfiguration(),
-            new SessionConfiguration(),
-            new SecurityEventLogConfiguration(),
-            new SecurityEventUserAttributeConfiguration(),
-            TenantIdentityPolicy.defaultPolicy(),
-            new OrganizationIdentifier("test-org"),
-            true);
+    HttpRequestResult result =
+        new HttpRequestResult(
+            403, Map.of(), JsonNodeWrapper.fromString("{\"reason\": \"ExpiredProviderToken\"}"));
 
-    HttpResponse<String> response = mock(HttpResponse.class);
-    when(response.statusCode()).thenReturn(403);
-    when(response.body()).thenReturn("{\"reason\": \"ExpiredProviderToken\"}");
+    assertDoesNotThrow(() -> apnsNotifier.handleApnsError(result, "test-apns-id", tenant()));
+  }
 
-    assertDoesNotThrow(() -> apnsNotifier.handleApnsError(response, "test-apns-id", tenant));
+  // ----- retry (#1539): delegated to HttpRetryStrategy -----
+
+  @Test
+  void sendWithRetry_retriesOnTransientIOException_thenSucceeds() throws Exception {
+    HttpClient mockClient = mock(HttpClient.class);
+    HttpResponse<String> ok = httpResponse(200, "", "apns-1");
+    whenSend(mockClient).thenThrow(new IOException("too many concurrent streams")).thenReturn(ok);
+    apnsNotifier.httpClient = mockClient;
+
+    NotificationResult result = apnsNotifier.sendWithRetry(tenant(), dummyRequest(), oneRetry());
+
+    assertTrue(result.isSuccess());
+    verify(mockClient, times(2)).send(any(), any());
+  }
+
+  @Test
+  void sendWithRetry_retriesOnTransient503_thenSucceeds() throws Exception {
+    HttpClient mockClient = mock(HttpClient.class);
+    HttpResponse<String> r503 = httpResponse(503, "{\"reason\":\"ServiceUnavailable\"}", "apns-1");
+    HttpResponse<String> ok = httpResponse(200, "", "apns-2");
+    whenSend(mockClient).thenReturn(r503, ok);
+    apnsNotifier.httpClient = mockClient;
+
+    NotificationResult result = apnsNotifier.sendWithRetry(tenant(), dummyRequest(), oneRetry());
+
+    assertTrue(result.isSuccess());
+    verify(mockClient, times(2)).send(any(), any());
+  }
+
+  @Test
+  void sendWithRetry_fails_whenRetryExhausted() throws Exception {
+    HttpClient mockClient = mock(HttpClient.class);
+    whenSend(mockClient).thenThrow(new IOException("too many concurrent streams"));
+    apnsNotifier.httpClient = mockClient;
+
+    NotificationResult result = apnsNotifier.sendWithRetry(tenant(), dummyRequest(), oneRetry());
+
+    assertTrue(result.isFailure());
+    verify(mockClient, times(2)).send(any(), any());
+  }
+
+  @Test
+  void sendWithRetry_doesNotRetry_onPermanent4xx() throws Exception {
+    HttpClient mockClient = mock(HttpClient.class);
+    HttpResponse<String> r400 = httpResponse(400, "{\"reason\":\"BadDeviceToken\"}", "apns-1");
+    HttpResponse<String> ok = httpResponse(200, "", "apns-2");
+    whenSend(mockClient).thenReturn(r400, ok);
+    apnsNotifier.httpClient = mockClient;
+
+    NotificationResult result = apnsNotifier.sendWithRetry(tenant(), dummyRequest(), oneRetry());
+
+    assertTrue(result.isFailure());
+    verify(mockClient, times(1)).send(any(), any());
+  }
+
+  // ----- helpers -----
+
+  private static OngoingStubbing<HttpResponse<String>> whenSend(HttpClient client)
+      throws Exception {
+    return when(
+        client.send(
+            ArgumentMatchers.any(HttpRequest.class),
+            ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static HttpResponse<String> httpResponse(int status, String body, String apnsId) {
+    HttpResponse<String> resp = mock(HttpResponse.class);
+    when(resp.statusCode()).thenReturn(status);
+    when(resp.body()).thenReturn(body);
+    when(resp.headers())
+        .thenReturn(HttpHeaders.of(Map.of("apns-id", List.of(apnsId)), (a, b) -> true));
+    return resp;
+  }
+
+  private static HttpRequest dummyRequest() {
+    return HttpRequest.newBuilder(URI.create("https://api.push.apple.com/3/device/x"))
+        .POST(HttpRequest.BodyPublishers.ofString("{}"))
+        .build();
+  }
+
+  private static HttpRetryConfiguration oneRetry() {
+    return HttpRetryConfiguration.builder()
+        .maxRetries(1)
+        .backoffDelays(Duration.ofMillis(0))
+        .retryableStatusCodes(Set.of(429, 500, 502, 503, 504))
+        .build();
+  }
+
+  private static Tenant tenant() {
+    return new Tenant(
+        new TenantIdentifier("test-tenant"),
+        new TenantName("Test Tenant"),
+        TenantType.PUBLIC,
+        new TenantDomain("test.example.com"),
+        new AuthorizationProvider("idp-server"),
+        new TenantAttributes(),
+        new UIConfiguration(),
+        new CorsConfiguration(),
+        new SessionConfiguration(),
+        new SecurityEventLogConfiguration(),
+        new SecurityEventUserAttributeConfiguration(),
+        TenantIdentityPolicy.defaultPolicy(),
+        new OrganizationIdentifier("test-org"),
+        true);
   }
 }
