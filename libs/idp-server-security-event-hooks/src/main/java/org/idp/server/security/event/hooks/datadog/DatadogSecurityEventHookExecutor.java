@@ -16,26 +16,25 @@
 
 package org.idp.server.security.event.hooks.datadog;
 
-import java.net.URI;
-import java.net.http.HttpRequest;
 import java.util.Map;
-import org.idp.server.platform.http.*;
-import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.http.HttpRequestBaseParams;
+import org.idp.server.platform.http.HttpRequestExecutionConfig;
+import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.hook.*;
 import org.idp.server.platform.security.hook.SecurityEventHook;
+import org.idp.server.platform.security.hook.configuration.SecurityEventConfig;
+import org.idp.server.platform.security.hook.configuration.SecurityEventExecutionConfig;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
-import org.idp.server.security.event.hooks.webhook.WebHookConfiguration;
 
 public class DatadogSecurityEventHookExecutor implements SecurityEventHook {
 
   HttpRequestExecutor httpRequestExecutor;
-  JsonConverter jsonConverter;
 
   public DatadogSecurityEventHookExecutor(HttpRequestExecutor httpRequestExecutor) {
     this.httpRequestExecutor = httpRequestExecutor;
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
@@ -52,37 +51,17 @@ public class DatadogSecurityEventHookExecutor implements SecurityEventHook {
     long startTime = System.currentTimeMillis();
 
     try {
-      WebHookConfiguration configuration =
-          jsonConverter.read(hookConfiguration, WebHookConfiguration.class);
-      HttpRequestUrl httpRequestUrl = configuration.httpRequestUrl(securityEvent.type());
-      HttpRequestStaticHeaders httpRequestStaticHeaders =
-          configuration.httpRequestHeaders(securityEvent.type());
-      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys =
-          configuration.httpRequestDynamicBodyKeys(securityEvent.type());
-      HttpRequestStaticBody httpRequestStaticBody =
-          configuration.httpRequestStaticBody(securityEvent.type());
+      SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
+      SecurityEventExecutionConfig executionConfig = securityEventConfig.execution();
+      HttpRequestExecutionConfig httpRequestConfig = executionConfig.httpRequest();
 
-      validate(httpRequestStaticHeaders);
-      validate(httpRequestStaticBody);
+      if (!httpRequestConfig.exists()) {
+        throw new DatadogConfigurationInvalidException(
+            "http_request url is not configured for event type: " + securityEvent.type().value());
+      }
 
-      HttpRequestBodyCreator requestBodyCreator =
-          new HttpRequestBodyCreator(
-              new HttpRequestBaseParams(securityEvent.toMap()),
-              httpRequestDynamicBodyKeys,
-              httpRequestStaticBody);
-      Map<String, Object> requestBodyMap = requestBodyCreator.create();
-
-      String body = jsonConverter.write(requestBodyMap);
-
-      HttpRequest httpRequest =
-          HttpRequest.newBuilder()
-              .uri(URI.create(httpRequestUrl.value()))
-              .header("Content-Type", "application/json")
-              .header("DD-API-KEY", httpRequestStaticHeaders.getValueAsString("DD-API-KEY"))
-              .POST(HttpRequest.BodyPublishers.ofString(body))
-              .build();
-
-      HttpRequestResult httpResult = httpRequestExecutor.execute(httpRequest);
+      HttpRequestBaseParams params = new HttpRequestBaseParams(securityEvent.toMap());
+      HttpRequestResult httpResult = httpRequestExecutor.execute(httpRequestConfig, params);
       long executionDurationMs = System.currentTimeMillis() - startTime;
 
       Map<String, Object> responseBody = httpResult.toMap();
@@ -118,28 +97,6 @@ public class DatadogSecurityEventHookExecutor implements SecurityEventHook {
           executionDurationMs,
           e.getClass().getSimpleName(),
           "Datadog log stream failed: " + e.getMessage());
-    }
-  }
-
-  private void validate(HttpRequestStaticHeaders httpRequestStaticHeaders) {
-    if (!httpRequestStaticHeaders.containsKey("DD-API-KEY")) {
-      throw new DatadogConfigurationInvalidException("DD-API-KEY header is required.");
-    }
-  }
-
-  private void validate(HttpRequestStaticBody httpRequestStaticBody) {
-
-    if (!httpRequestStaticBody.containsKey("ddsource")) {
-      throw new DatadogConfigurationInvalidException("static body ddsource is required.");
-    }
-    if (!httpRequestStaticBody.containsKey("ddtags")) {
-      throw new DatadogConfigurationInvalidException("static body ddtags is required.");
-    }
-    if (!httpRequestStaticBody.containsKey("ddsource")) {
-      throw new DatadogConfigurationInvalidException("static body ddsource is required.");
-    }
-    if (!httpRequestStaticBody.containsKey("service")) {
-      throw new DatadogConfigurationInvalidException("static body service is required.");
     }
   }
 }
