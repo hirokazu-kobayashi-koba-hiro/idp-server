@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.platform.http.HttpRetryConfiguration;
 import org.idp.server.platform.notification.NotificationTemplate;
 import org.junit.jupiter.api.Test;
 
@@ -55,5 +56,32 @@ class ApnsConfigurationTest {
     NotificationTemplate template = config.findTemplate("nonexistent");
 
     assertNotNull(template);
+  }
+
+  @Test
+  void retryConfiguration_defaultsToSingleRetry() {
+    // No retry config in JSON → default: 1 retry, transient codes (incl. 502 for the IOException).
+    // (#1539)
+    HttpRetryConfiguration retry = new ApnsConfiguration().retryConfiguration();
+
+    assertEquals(1, retry.maxRetries());
+    assertTrue(retry.retryableStatusCodes().contains(502));
+    assertFalse(retry.retryableStatusCodes().contains(400));
+  }
+
+  @Test
+  void retryConfiguration_disabledWhenMaxRetriesNotPositive() {
+    ApnsConfiguration config = new ApnsConfiguration();
+    config.retryMaxRetries = 0;
+
+    assertEquals(0, config.retryConfiguration().maxRetries());
+  }
+
+  @Test
+  void retryConfiguration_honorsOverride() {
+    ApnsConfiguration config = new ApnsConfiguration();
+    config.retryMaxRetries = 3;
+
+    assertEquals(3, config.retryConfiguration().maxRetries());
   }
 }
