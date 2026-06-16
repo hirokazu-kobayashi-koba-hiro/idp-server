@@ -76,6 +76,15 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
               ? clientConfiguration.idTokenDuration()
               : authorizationServerConfiguration.idTokenDuration();
 
+      // Resolve the ID Token signing key once. Its algorithm drives the at_hash/c_hash/s_hash hash
+      // algorithm (OIDC Core 3.3.2.11: "the hash algorithm used in the alg Header Parameter of the
+      // ID Token's JOSE Header"), and the same key signs the JWS below — so the JWKS is parsed only
+      // once and the hash algorithm is guaranteed to match the signature algorithm.
+      JsonWebKeys jsonWebKeys = JwkParser.parseKeys(authorizationServerConfiguration.jwks());
+      JsonWebKey idTokenSigningKey =
+          jsonWebKeys.findBy(authorizationServerConfiguration.idTokenSignedKeyId());
+      String idTokenSigningAlgorithm = idTokenSigningKey.algorithm();
+
       Map<String, Object> standardClaims =
           createIndividualClaims(
               user,
@@ -85,7 +94,8 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
               requestedClaimsPayload,
               authorizationServerConfiguration.tokenIssuer(),
               idTokenDuration,
-              authorizationServerConfiguration.isIdTokenStrictMode());
+              authorizationServerConfiguration.isIdTokenStrictMode(),
+              idTokenSigningAlgorithm);
 
       Map<String, Object> customIndividualClaims =
           customIndividualClaimsCreators.createCustomIndividualClaims(
@@ -105,11 +115,7 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
 
       JsonWebSignatureFactory jsonWebSignatureFactory = new JsonWebSignatureFactory();
       JsonWebSignature jsonWebSignature =
-          jsonWebSignatureFactory.createWithAsymmetricKey(
-              claims,
-              Map.of(),
-              authorizationServerConfiguration.jwks(),
-              authorizationServerConfiguration.idTokenSignedKeyId());
+          jsonWebSignatureFactory.createWithAsymmetricKey(claims, Map.of(), idTokenSigningKey);
 
       if (clientConfiguration.hasEncryptedIdTokenMeta()) {
 
@@ -138,7 +144,8 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
       RequestedClaimsPayload requestedClaimsPayload,
       TokenIssuer tokenIssuer,
       long idTokenDuration,
-      boolean idTokenStrictMode) {
+      boolean idTokenStrictMode,
+      String signingAlgorithm) {
 
     LocalDateTime now = SystemDateTime.now();
     ExpiresAt expiresAt = new ExpiresAt(now.plusSeconds(idTokenDuration));
@@ -153,13 +160,13 @@ public class IdTokenCreator implements IndividualClaimsCreatable, ClaimHashable 
     }
     if (idTokenCustomClaims.hasState()) {
       State state = idTokenCustomClaims.state();
-      claims.put("s_hash", hash(state.value(), "ES256"));
+      claims.put("s_hash", hash(state.value(), signingAlgorithm));
     }
     if (idTokenCustomClaims.hasAuthorizationCode()) {
-      claims.put("c_hash", hash(idTokenCustomClaims.authorizationCode().value(), "ES256"));
+      claims.put("c_hash", hash(idTokenCustomClaims.authorizationCode().value(), signingAlgorithm));
     }
     if (idTokenCustomClaims.hasAccessTokenValue()) {
-      claims.put("at_hash", hash(idTokenCustomClaims.accessTokenValue().value(), "ES256"));
+      claims.put("at_hash", hash(idTokenCustomClaims.accessTokenValue().value(), signingAlgorithm));
     }
     if (authentication.hasAuthenticationTime()) {
       claims.put("auth_time", SystemDateTime.toEpochSecond(authentication.time()));
