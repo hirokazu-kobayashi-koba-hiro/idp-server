@@ -87,6 +87,9 @@ public class FunctionRegistry {
     AppendFunction appendFunction = new AppendFunction();
     temp.put(appendFunction.name(), appendFunction);
 
+    RemoveFunction removeFunction = new RemoveFunction();
+    temp.put(removeFunction.name(), removeFunction);
+
     MergeFunction mergeFunction = new MergeFunction();
     temp.put(mergeFunction.name(), mergeFunction);
 

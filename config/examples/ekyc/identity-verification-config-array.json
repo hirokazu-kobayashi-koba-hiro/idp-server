@@ -1,0 +1,86 @@
+{
+  "id": "55555555-8888-4444-4444-555555555555",
+  "type": "linked-accounts-management",
+  "external_service": "mock",
+  "external_application_id_param": "application_id",
+  "processes": {
+    "apply": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "add_accounts": {
+              "type": "array",
+              "store": true,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "account_no": { "type": "string", "maxLength": 64 },
+                  "type": { "type": "string", "maxLength": 32 }
+                }
+              }
+            },
+            "remove_account_no": { "type": "string", "maxLength": 64, "store": true }
+          }
+        }
+      },
+      "execution": {
+        "type": "no_action"
+      },
+      "store": {
+        "application_details_mapping_rules": [
+          { "from": "$.request_body", "to": "*" }
+        ]
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
+      }
+    },
+    "evaluate-result": {
+      "execution": {
+        "type": "no_action"
+      },
+      "transition": {
+        "approved": {
+          "any_of": [
+            [
+              {
+                "path": "$.request_body.approved",
+                "type": "boolean",
+                "operation": "eq",
+                "value": true
+              }
+            ]
+          ]
+        },
+        "rejected": {
+          "any_of": [
+            [
+              {
+                "path": "$.request_body.rejected",
+                "type": "boolean",
+                "operation": "eq",
+                "value": true
+              }
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "result": {
+    "verified_claims_mapping_rules": [
+      { "static_value": "jp_aml", "to": "verification.trust_framework" },
+      {
+        "from": "$.user.verified_claims.claims.linked_accounts",
+        "to": "claims.linked_accounts",
+        "functions": [
+          { "name": "merge", "args": { "source": "$.application.application_details.add_accounts", "key": "account_no" } },
+          { "name": "remove", "args": { "field": "account_no", "value": "$.application.application_details.remove_account_no" } }
+        ]
+      }
+    ]
+  }
+}
