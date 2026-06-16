@@ -119,7 +119,7 @@ public class JsonWebSignatureFactory {
     return createJwsFromPem(claims, customHeaders, pemPrivateKey);
   }
 
-  JsonWebSignature createWithAsymmetricKey(
+  public JsonWebSignature createWithAsymmetricKey(
       Map<String, Object> claims, Map<String, Object> customHeaders, JsonWebKey jsonWebKey)
       throws JoseInvalidException {
     try {
