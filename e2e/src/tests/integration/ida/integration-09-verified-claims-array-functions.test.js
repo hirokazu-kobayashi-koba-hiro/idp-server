@@ -986,4 +986,206 @@ describe("Identity Verification - Array Functions in verified_claims", () => {
 
   });
 
+  describe("remove existing verified_claims elements using dynamic args (deregistration)", () => {
+
+    it("should remove a scalar element and an object element by field from existing verified_claims", async () => {
+      // Step 1: 初回設定 - tags(スカラー配列) と accounts(オブジェクト配列) を verified_claims に登録
+      const config1Id = uuidv4();
+      const config1Type = uuidv4();
+      configIds.push(config1Id);
+
+      const accountSchema = {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "account_no": { "type": "string" },
+            "type": { "type": "string" }
+          }
+        }
+      };
+
+      const commonProcesses = (schemaProps, requiredFields) => ({
+        "apply": {
+          "request": {
+            "schema": { "type": "object", "properties": schemaProps, "required": requiredFields }
+          },
+          "execution": {
+            "type": "http_request",
+            "http_request": {
+              "url": `${mockApiBaseUrl}/crm-registration`,
+              "method": "POST",
+              "auth_type": "none",
+              "header_mapping_rules": [
+                { "static_value": "application/json", "to": "Content-Type" }
+              ],
+              "body_mapping_rules": [
+                { "from": "$.request_body", "to": "*" },
+                { "from": "$.user.sub", "to": "user_id" }
+              ]
+            }
+          },
+          "store": {
+            "application_details_mapping_rules": [{ "from": "$.request_body", "to": "*" }]
+          },
+          "response": {
+            "body_mapping_rules": [{ "from": "$.response_body", "to": "*" }]
+          }
+        },
+        "verify": {
+          "request": {
+            "schema": {
+              "type": "object",
+              "properties": { "trust_framework": { "type": "string" } },
+              "required": ["trust_framework"]
+            }
+          },
+          "execution": {
+            "type": "http_request",
+            "http_request": {
+              "url": `${mockApiBaseUrl}/crm-registration`,
+              "method": "POST",
+              "auth_type": "none",
+              "header_mapping_rules": [
+                { "static_value": "application/json", "to": "Content-Type" }
+              ],
+              "body_mapping_rules": [
+                { "from": "$.application.application_details", "to": "*" },
+                { "from": "$.user.sub", "to": "user_id" }
+              ]
+            }
+          },
+          "store": {
+            "application_details_mapping_rules": [{ "from": "$.response_body", "to": "external_response" }]
+          },
+          "response": {
+            "body_mapping_rules": [{ "from": "$.response_body", "to": "*" }]
+          }
+        }
+      });
+
+      await createIdaConfig(config1Id, config1Type,
+        commonProcesses(
+          {
+            "accounts": accountSchema,
+            "tags": { "type": "array", "items": { "type": "string" } },
+            "given_name": { "type": "string" },
+            "family_name": { "type": "string" },
+            "birthdate": { "type": "string" }
+          },
+          ["accounts", "tags", "given_name", "family_name", "birthdate"]
+        ),
+        [
+          { "from": "$.application.application_details.accounts", "to": "claims.accounts" },
+          { "from": "$.application.application_details.tags", "to": "claims.tags" },
+          { "from": "$.application.application_details.given_name", "to": "claims.given_name" },
+          { "from": "$.application.application_details.family_name", "to": "claims.family_name" }
+        ]
+      );
+
+      // 初回: tags=[finance, personal, verified], accounts=[111, 222, 333] を登録
+      await applyAndApprove(
+        config1Type, "apply", "verify",
+        {
+          "accounts": [
+            { "account_no": "111", "type": "savings" },
+            { "account_no": "222", "type": "checking" },
+            { "account_no": "333", "type": "investment" }
+          ],
+          "tags": ["finance", "personal", "verified"],
+          "given_name": "RemoveTest",
+          "family_name": "User",
+          "birthdate": "1990-01-01"
+        },
+        { "trust_framework": "eidas" }
+      );
+
+      // Step 2: 2回目の設定 - 動的argsで既存配列から指定要素を解除(remove)
+      const config2Id = uuidv4();
+      const config2Type = uuidv4();
+      configIds.push(config2Id);
+
+      await createIdaConfig(config2Id, config2Type,
+        commonProcesses(
+          {
+            "remove_tag": { "type": "string" },
+            "remove_account_no": { "type": "string" },
+            "given_name": { "type": "string" },
+            "family_name": { "type": "string" },
+            "birthdate": { "type": "string" }
+          },
+          ["remove_tag", "remove_account_no", "given_name", "family_name", "birthdate"]
+        ),
+        [
+          // スカラー配列の解除: 既存 tags からリクエスト指定値(動的args)を削除
+          {
+            "from": "$.user.verified_claims.claims.tags",
+            "to": "claims.tags",
+            "functions": [
+              { "name": "remove", "args": { "value": "$.application.application_details.remove_tag" } }
+            ]
+          },
+          // オブジェクト配列の解除: account_no キーで既存 accounts から削除(動的args)
+          {
+            "from": "$.user.verified_claims.claims.accounts",
+            "to": "claims.accounts",
+            "functions": [
+              { "name": "remove", "args": { "field": "account_no", "value": "$.application.application_details.remove_account_no" } }
+            ]
+          },
+          { "from": "$.application.application_details.given_name", "to": "claims.given_name" },
+          { "from": "$.application.application_details.family_name", "to": "claims.family_name" }
+        ]
+      );
+
+      // 2回目: tags から "personal"、accounts から account_no "222" を解除
+      const application2Id = await applyAndApprove(
+        config2Type, "apply", "verify",
+        {
+          "remove_tag": "personal",
+          "remove_account_no": "222",
+          "given_name": "RemoveTest",
+          "family_name": "User",
+          "birthdate": "1990-01-01"
+        },
+        { "trust_framework": "eidas" }
+      );
+
+      // 結果検証
+      const resultsResponse = await get({
+        url: serverConfig.identityVerificationResultResourceOwnerEndpoint + `?application_id=${application2Id}&type=${config2Type}`,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userAccessToken}`
+        }
+      });
+
+      console.log("Remove results:", JSON.stringify(resultsResponse.data, null, 2));
+      expect(resultsResponse.status).toBe(200);
+      expect(resultsResponse.data.list.length).toBe(1);
+
+      const verifiedClaims = resultsResponse.data.list[0].verified_claims;
+
+      // スカラー解除: "personal" が消え、他は残る(順序保持)
+      expect(verifiedClaims.claims).toHaveProperty("tags");
+      expect(verifiedClaims.claims.tags).toEqual(["finance", "verified"]);
+      expect(verifiedClaims.claims.tags).not.toContain("personal");
+
+      // フィールド解除: account_no "222" が消え、111/333 は残る
+      expect(verifiedClaims.claims).toHaveProperty("accounts");
+      expect(verifiedClaims.claims.accounts).toHaveLength(2);
+      const accountNos = verifiedClaims.claims.accounts.map(a => a.account_no);
+      expect(accountNos).toContain("111");
+      expect(accountNos).toContain("333");
+      expect(accountNos).not.toContain("222");
+
+      // 基本claims引き継ぎ
+      expect(verifiedClaims.claims.given_name).toBe("RemoveTest");
+      expect(verifiedClaims.claims.family_name).toBe("User");
+
+      console.log("remove (scalar value + object field) works correctly for deregistration");
+    });
+
+  });
+
 });
