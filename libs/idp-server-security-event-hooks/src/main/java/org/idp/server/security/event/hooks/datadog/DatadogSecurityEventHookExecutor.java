@@ -29,6 +29,43 @@ import org.idp.server.platform.security.hook.configuration.SecurityEventConfig;
 import org.idp.server.platform.security.hook.configuration.SecurityEventExecutionConfig;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
+/**
+ * Streams security events to <a
+ * href="https://docs.datadoghq.com/api/latest/logs/#send-logs">Datadog Logs Intake</a> using the
+ * unified hook schema ({@code events.<type>.execution.http_request}) — the same shape used by the
+ * {@code WEBHOOK} hook ({@link
+ * org.idp.server.security.event.hooks.webhook.WebHookSecurityEventExecutor}).
+ *
+ * <p>There are no Datadog-specific configuration fields. Everything is expressed through the
+ * generic {@link HttpRequestExecutionConfig}:
+ *
+ * <ul>
+ *   <li>{@code DD-API-KEY} — set via {@code http_request.header_mapping_rules} (with {@code to:
+ *       "DD-API-KEY"})
+ *   <li>{@code ddsource} / {@code ddtags} / {@code service} / {@code message} — set via {@code
+ *       http_request.body_mapping_rules}
+ * </ul>
+ *
+ * The security event is exposed to the mapping rules as the request source ({@link
+ * org.idp.server.platform.security.SecurityEvent#toMap()}), and {@code Content-Type:
+ * application/json} is applied automatically by {@link
+ * org.idp.server.platform.http.HttpRequestBuilder} unless overridden.
+ *
+ * <p>Behavior:
+ *
+ * <ul>
+ *   <li>{@code http_request.url} missing → failure result with error type {@code
+ *       DATADOG_CONFIGURATION_ERROR}; no HTTP call is performed.
+ *   <li>non-2xx responses and network/runtime errors → failure result; never propagated to the
+ *       caller.
+ * </ul>
+ *
+ * <p>Prior to the unified-schema migration this executor read a bespoke {@code base}/{@code
+ * overlays} structure and validated {@code DD-API-KEY}/{@code ddsource}/{@code ddtags}/{@code
+ * service} presence; that validation was removed because those values are now operator-supplied
+ * mapping rules. A misconfigured key surfaces as a Datadog 4xx ({@code HTTP_ERROR} failure), not a
+ * silent drop.
+ */
 public class DatadogSecurityEventHookExecutor implements SecurityEventHook {
 
   HttpRequestExecutor httpRequestExecutor;
