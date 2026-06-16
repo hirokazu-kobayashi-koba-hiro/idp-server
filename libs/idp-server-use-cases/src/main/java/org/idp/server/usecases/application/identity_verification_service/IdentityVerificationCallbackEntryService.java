@@ -183,7 +183,8 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
 
     // Run the same pipeline as the application path: pre_hook (verifications +
     // additional_parameters) → execute. For callback processes (no execution block) execute is
-    // no_action, so the inbound result carried in the request is incorporated by updateCallbackWith.
+    // no_action, so the inbound result carried in the request is incorporated by
+    // updateCallbackWith.
     // This makes callback processes honor the same config as the application path. (#1522)
     IdentityVerificationApplications previousApplications =
         applicationQueryRepository.findHistory(
