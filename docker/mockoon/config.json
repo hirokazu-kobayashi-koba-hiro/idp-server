@@ -9,6 +9,37 @@
   "folders": [],
   "routes": [
     {
+      "uuid": "slack-hook-receiver",
+      "type": "http",
+      "documentation": "Slack incoming webhook receiver (e2e). Acknowledges with 200 like a real Slack Incoming Webhook. Used by SLACK security event hook tests.",
+      "method": "post",
+      "endpoint": "slack-hook",
+      "responses": [
+        {
+          "uuid": "slack-hook-receiver-ok",
+          "body": "ok",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Success - Slack acknowledges",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
       "uuid": "7f811db2-3288-4435-94a7-ea960b4bfee0",
       "type": "http",
       "documentation": "",
@@ -1922,6 +1953,10 @@
     }
   ],
   "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "slack-hook-receiver"
+    },
     {
       "type": "route",
       "uuid": "2214f08a-3b3a-461b-919a-8d8257f9bd15"

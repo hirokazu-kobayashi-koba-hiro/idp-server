@@ -28,6 +28,7 @@ import org.idp.server.platform.notification.NotificationTemplateInterpolator;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.hook.*;
 import org.idp.server.platform.security.hook.SecurityEventHook;
+import org.idp.server.platform.security.hook.configuration.SecurityEventConfig;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
 
 public class SlackSecurityEventHookExecutor implements SecurityEventHook {
@@ -53,33 +54,35 @@ public class SlackSecurityEventHookExecutor implements SecurityEventHook {
 
     long startTime = System.currentTimeMillis();
 
-    SlackSecurityEventHookConfiguration configuration =
-        jsonConverter.read(hookConfiguration.events(), SlackSecurityEventHookConfiguration.class);
-    String incomingWebhookUrl = configuration.incomingWebhookUrl(securityEvent.type());
-    if (incomingWebhookUrl == null) {
-      long executionDurationMs = System.currentTimeMillis() - startTime;
-      return SecurityEventHookResult.failureWithContext(
-          hookConfiguration,
-          securityEvent,
-          null,
-          executionDurationMs,
-          "CONFIGURATION_ERROR",
-          "Slack incoming webhook URL not configured for event type: "
-              + securityEvent.type().value());
-    }
-
-    String template = configuration.messageTemplate(securityEvent.type());
-
-    Map<String, Object> context = new HashMap<>(securityEvent.toMap());
-    context.put("trigger", securityEvent.type().value());
-
-    NotificationTemplateInterpolator notificationTemplateInterpolator =
-        new NotificationTemplateInterpolator(template, context);
-    String message = notificationTemplateInterpolator.interpolate();
-
-    String jsonBody = "{\"text\": \"" + escapeJson(message) + "\"}";
-
     try {
+      SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
+      SlackHookConfig configuration =
+          jsonConverter.read(securityEventConfig.execution().details(), SlackHookConfig.class);
+
+      String incomingWebhookUrl = configuration.incomingWebhookUrl();
+      if (incomingWebhookUrl == null) {
+        long executionDurationMs = System.currentTimeMillis() - startTime;
+        return SecurityEventHookResult.failureWithContext(
+            hookConfiguration,
+            securityEvent,
+            null,
+            executionDurationMs,
+            "CONFIGURATION_ERROR",
+            "Slack incoming webhook URL not configured for event type: "
+                + securityEvent.type().value());
+      }
+
+      String template = configuration.messageTemplate();
+
+      Map<String, Object> context = new HashMap<>(securityEvent.toMap());
+      context.put("trigger", securityEvent.type().value());
+
+      NotificationTemplateInterpolator notificationTemplateInterpolator =
+          new NotificationTemplateInterpolator(template, context);
+      String message = notificationTemplateInterpolator.interpolate();
+
+      String jsonBody = "{\"text\": \"" + escapeJson(message) + "\"}";
+
       HttpRequest httpRequest =
           HttpRequest.newBuilder()
               .uri(URI.create(incomingWebhookUrl))
