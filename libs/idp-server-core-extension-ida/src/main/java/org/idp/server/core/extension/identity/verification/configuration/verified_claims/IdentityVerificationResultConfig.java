@@ -125,6 +125,11 @@ public class IdentityVerificationResultConfig implements JsonReadable {
     return UserStatus.of(userStatus);
   }
 
+  /** Raw configured user_status string (for diagnostics/logging); may be null or invalid. */
+  public String userStatusValue() {
+    return userStatus;
+  }
+
   public boolean hasVerifiedClaimsUpdatePolicy() {
     return verifiedClaimsUpdatePolicy != null && !verifiedClaimsUpdatePolicy.isEmpty();
   }

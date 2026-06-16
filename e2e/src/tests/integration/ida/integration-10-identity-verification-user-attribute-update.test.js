@@ -1068,7 +1068,7 @@ describe("Identity Verification User Attribute Update", () => {
     expect(userAAfter.preferred_username).toBe(userABefore.preferred_username);
   });
 
-  it("fails closed and does not update user when user_status is invalid", async () => {
+  it("keeps current status (KEEP fallback) and still applies attributes when user_status is invalid", async () => {
     const { user, accessToken } = await createTestUser();
 
     const beforeUser = await getUser(user.sub);
@@ -1091,25 +1091,25 @@ describe("Identity Verification User Attribute Update", () => {
       })
     );
 
-    // 不正な user_status は承認時に fail-closed（500）となりユーザーは更新されない
+    // 不正な user_status（未知の値）は KEEP 扱い: 承認は成功し、ステータスは現状維持。
+    // 他の属性更新（custom_properties 等）は通常どおり適用される（誤設定は error ログで表面化）。
     await applyAndApprove({
       type,
       accessToken,
       applyBody: {
-        "last_name": "ShouldNotApply",
-        "first_name": "InvalidStatus",
+        "last_name": "Yamada",
+        "first_name": "Hanako",
         "kyc_level": "gold"
-      },
-      expectedEvaluateStatus: 500
+      }
     });
 
     const afterUser = await getUser(user.sub);
     console.log("User after invalid user_status approval:", JSON.stringify(afterUser, null, 2));
 
+    // ステータスは変わらない（KEEP fallback。throw で承認全体を止めない）
     expect(afterUser.status).toBe(beforeUser.status);
-    if (afterUser.custom_properties) {
-      expect(afterUser.custom_properties).not.toHaveProperty("kyc_level");
-    }
+    // 不正ステータスでも承認は通り、その他の属性は更新される
+    expect(afterUser.custom_properties).toHaveProperty("kyc_level", "gold");
   });
 
   it("fails closed when configured user_status transition is not allowed by lifecycle", async () => {

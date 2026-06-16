@@ -27,11 +27,15 @@ import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class IdentityVerificationUserUpdater {
+
+  private static final LoggerWrapper log =
+      LoggerWrapper.getLogger(IdentityVerificationUserUpdater.class);
 
   /**
    * user_claims_mapping_rules can patch standard OIDC profile claims only. Privilege-related fields
@@ -96,7 +100,18 @@ public class IdentityVerificationUserUpdater {
 
     if (resultConfig.requiresUserStatusTransition()) {
       UserStatus newStatus = resultConfig.userStatus();
-      if (updated.status() != newStatus) {
+      if (newStatus == UserStatus.UNKNOWN) {
+        // KEEP fallback: an invalid (typo) user_status is not a known UserStatus and must not fail
+        // the entire approval. Keep the current status and surface the misconfiguration in the
+        // logs.
+        // (A valid-but-disallowed lifecycle transition still fails closed below.)
+        log.error(
+            "identity verification result: user_status '"
+                + resultConfig.userStatusValue()
+                + "' is not a known UserStatus. Keeping current status '"
+                + updated.status().name()
+                + "' (KEEP fallback). Fix the verification result config.");
+      } else if (updated.status() != newStatus) {
         updated = updated.transitStatus(newStatus);
       }
     }

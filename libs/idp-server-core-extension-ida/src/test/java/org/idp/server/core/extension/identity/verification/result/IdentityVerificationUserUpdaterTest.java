@@ -304,16 +304,17 @@ class IdentityVerificationUserUpdaterTest {
   }
 
   @Test
-  void testInvalidUserStatusFailsClosed() {
+  void testInvalidUserStatusKeepsCurrentStatus() {
     User user = registeredUser();
     IdentityVerificationResultConfig resultConfig = config(Map.of("user_status", "TYPO_STATUS"));
 
-    // 不正な設定値は UNKNOWN になり、ライフサイクル遷移で拒否される（fail-closed）
-    assertThrows(
-        UnSupportedException.class,
-        () ->
-            IdentityVerificationUserUpdater.update(
-                tenant(), user, context(Map.of()), Map.of(), resultConfig));
+    // 不正な設定値（typo）は UNKNOWN になるが、承認は失敗させず現状ステータスを維持する
+    // （KEEP fallback。誤設定は error ログで表面化させる）
+    User updated =
+        IdentityVerificationUserUpdater.update(
+            tenant(), user, context(Map.of()), Map.of(), resultConfig);
+
+    assertEquals(UserStatus.REGISTERED, updated.status());
   }
 
   @Test
