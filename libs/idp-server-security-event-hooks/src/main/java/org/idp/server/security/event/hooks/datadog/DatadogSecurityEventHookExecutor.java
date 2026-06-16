@@ -16,26 +16,62 @@
 
 package org.idp.server.security.event.hooks.datadog;
 
-import java.net.URI;
-import java.net.http.HttpRequest;
 import java.util.Map;
-import org.idp.server.platform.http.*;
-import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.http.HttpRequestBaseParams;
+import org.idp.server.platform.http.HttpRequestExecutionConfig;
+import org.idp.server.platform.http.HttpRequestExecutor;
+import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.hook.*;
 import org.idp.server.platform.security.hook.SecurityEventHook;
+import org.idp.server.platform.security.hook.configuration.SecurityEventConfig;
+import org.idp.server.platform.security.hook.configuration.SecurityEventExecutionConfig;
 import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
-import org.idp.server.security.event.hooks.webhook.WebHookConfiguration;
 
+/**
+ * Streams security events to <a
+ * href="https://docs.datadoghq.com/api/latest/logs/#send-logs">Datadog Logs Intake</a> using the
+ * unified hook schema ({@code events.<type>.execution.http_request}) — the same shape used by the
+ * {@code WEBHOOK} hook ({@link
+ * org.idp.server.security.event.hooks.webhook.WebHookSecurityEventExecutor}).
+ *
+ * <p>There are no Datadog-specific configuration fields. Everything is expressed through the
+ * generic {@link HttpRequestExecutionConfig}:
+ *
+ * <ul>
+ *   <li>{@code DD-API-KEY} — set via {@code http_request.header_mapping_rules} (with {@code to:
+ *       "DD-API-KEY"})
+ *   <li>{@code ddsource} / {@code ddtags} / {@code service} / {@code message} — set via {@code
+ *       http_request.body_mapping_rules}
+ * </ul>
+ *
+ * The security event is exposed to the mapping rules as the request source ({@link
+ * org.idp.server.platform.security.SecurityEvent#toMap()}), and {@code Content-Type:
+ * application/json} is applied automatically by {@link
+ * org.idp.server.platform.http.HttpRequestBuilder} unless overridden.
+ *
+ * <p>Behavior:
+ *
+ * <ul>
+ *   <li>{@code http_request.url} missing → failure result with error type {@code
+ *       DATADOG_CONFIGURATION_ERROR}; no HTTP call is performed.
+ *   <li>non-2xx responses and network/runtime errors → failure result; never propagated to the
+ *       caller.
+ * </ul>
+ *
+ * <p>Prior to the unified-schema migration this executor read a bespoke {@code base}/{@code
+ * overlays} structure and validated {@code DD-API-KEY}/{@code ddsource}/{@code ddtags}/{@code
+ * service} presence; that validation was removed because those values are now operator-supplied
+ * mapping rules. A misconfigured key surfaces as a Datadog 4xx ({@code HTTP_ERROR} failure), not a
+ * silent drop.
+ */
 public class DatadogSecurityEventHookExecutor implements SecurityEventHook {
 
   HttpRequestExecutor httpRequestExecutor;
-  JsonConverter jsonConverter;
 
   public DatadogSecurityEventHookExecutor(HttpRequestExecutor httpRequestExecutor) {
     this.httpRequestExecutor = httpRequestExecutor;
-    this.jsonConverter = JsonConverter.snakeCaseInstance();
   }
 
   @Override
@@ -52,37 +88,17 @@ public class DatadogSecurityEventHookExecutor implements SecurityEventHook {
     long startTime = System.currentTimeMillis();
 
     try {
-      WebHookConfiguration configuration =
-          jsonConverter.read(hookConfiguration, WebHookConfiguration.class);
-      HttpRequestUrl httpRequestUrl = configuration.httpRequestUrl(securityEvent.type());
-      HttpRequestStaticHeaders httpRequestStaticHeaders =
-          configuration.httpRequestHeaders(securityEvent.type());
-      HttpRequestDynamicBodyKeys httpRequestDynamicBodyKeys =
-          configuration.httpRequestDynamicBodyKeys(securityEvent.type());
-      HttpRequestStaticBody httpRequestStaticBody =
-          configuration.httpRequestStaticBody(securityEvent.type());
+      SecurityEventConfig securityEventConfig = hookConfiguration.getEvent(securityEvent.type());
+      SecurityEventExecutionConfig executionConfig = securityEventConfig.execution();
+      HttpRequestExecutionConfig httpRequestConfig = executionConfig.httpRequest();
 
-      validate(httpRequestStaticHeaders);
-      validate(httpRequestStaticBody);
+      if (!httpRequestConfig.exists()) {
+        throw new DatadogConfigurationInvalidException(
+            "http_request url is not configured for event type: " + securityEvent.type().value());
+      }
 
-      HttpRequestBodyCreator requestBodyCreator =
-          new HttpRequestBodyCreator(
-              new HttpRequestBaseParams(securityEvent.toMap()),
-              httpRequestDynamicBodyKeys,
-              httpRequestStaticBody);
-      Map<String, Object> requestBodyMap = requestBodyCreator.create();
-
-      String body = jsonConverter.write(requestBodyMap);
-
-      HttpRequest httpRequest =
-          HttpRequest.newBuilder()
-              .uri(URI.create(httpRequestUrl.value()))
-              .header("Content-Type", "application/json")
-              .header("DD-API-KEY", httpRequestStaticHeaders.getValueAsString("DD-API-KEY"))
-              .POST(HttpRequest.BodyPublishers.ofString(body))
-              .build();
-
-      HttpRequestResult httpResult = httpRequestExecutor.execute(httpRequest);
+      HttpRequestBaseParams params = new HttpRequestBaseParams(securityEvent.toMap());
+      HttpRequestResult httpResult = httpRequestExecutor.execute(httpRequestConfig, params);
       long executionDurationMs = System.currentTimeMillis() - startTime;
 
       Map<String, Object> responseBody = httpResult.toMap();
@@ -118,28 +134,6 @@ public class DatadogSecurityEventHookExecutor implements SecurityEventHook {
           executionDurationMs,
           e.getClass().getSimpleName(),
           "Datadog log stream failed: " + e.getMessage());
-    }
-  }
-
-  private void validate(HttpRequestStaticHeaders httpRequestStaticHeaders) {
-    if (!httpRequestStaticHeaders.containsKey("DD-API-KEY")) {
-      throw new DatadogConfigurationInvalidException("DD-API-KEY header is required.");
-    }
-  }
-
-  private void validate(HttpRequestStaticBody httpRequestStaticBody) {
-
-    if (!httpRequestStaticBody.containsKey("ddsource")) {
-      throw new DatadogConfigurationInvalidException("static body ddsource is required.");
-    }
-    if (!httpRequestStaticBody.containsKey("ddtags")) {
-      throw new DatadogConfigurationInvalidException("static body ddtags is required.");
-    }
-    if (!httpRequestStaticBody.containsKey("ddsource")) {
-      throw new DatadogConfigurationInvalidException("static body ddsource is required.");
-    }
-    if (!httpRequestStaticBody.containsKey("service")) {
-      throw new DatadogConfigurationInvalidException("static body service is required.");
     }
   }
 }

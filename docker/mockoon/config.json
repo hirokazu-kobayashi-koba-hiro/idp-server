@@ -9,6 +9,37 @@
   "folders": [],
   "routes": [
     {
+      "uuid": "datadog-log-receiver",
+      "type": "http",
+      "documentation": "Datadog Logs Intake receiver (e2e). Acknowledges with 202 like the real Datadog HTTP log intake API. Used by DATADOG_LOG security event hook tests.",
+      "method": "post",
+      "endpoint": "datadog-log",
+      "responses": [
+        {
+          "uuid": "datadog-log-receiver-ok",
+          "body": "{}",
+          "latency": 0,
+          "statusCode": 202,
+          "label": "Accepted - Datadog acknowledges",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
       "uuid": "slack-hook-receiver",
       "type": "http",
       "documentation": "Slack incoming webhook receiver (e2e). Acknowledges with 200 like a real Slack Incoming Webhook. Used by SLACK security event hook tests.",
@@ -1953,6 +1984,10 @@
     }
   ],
   "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "datadog-log-receiver"
+    },
     {
       "type": "route",
       "uuid": "slack-hook-receiver"
