@@ -256,6 +256,9 @@ public class AuthenticationTransaction {
   }
 
   public boolean isSuccess() {
+    if (isLocked() || isFailure()) {
+      return false;
+    }
     if (hasAuthenticationPolicy()) {
       AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.successConditions();

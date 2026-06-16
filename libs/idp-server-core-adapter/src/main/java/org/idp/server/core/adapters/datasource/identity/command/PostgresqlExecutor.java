@@ -202,6 +202,25 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
     syncAuthenticationDevices(tenant, user);
   }
 
+  public void updateStatus(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                     UPDATE idp_user
+                     SET status = ?,
+                     updated_at = now()
+                     WHERE id = ?::uuid
+                     AND tenant_id = ?::uuid;
+                     """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(user.statusName());
+    params.add(user.subAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
   public void updatePassword(Tenant tenant, User user) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =

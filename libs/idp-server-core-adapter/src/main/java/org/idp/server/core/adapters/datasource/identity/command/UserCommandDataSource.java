@@ -71,6 +71,11 @@ public class UserCommandDataSource implements UserCommandRepository {
   // cached value remains valid and intentionally is not invalidated here.
 
   @Override
+  public void updateStatus(Tenant tenant, User user) {
+    executor.updateStatus(tenant, user);
+  }
+
+  @Override
   public void updateRoles(Tenant tenant, User user) {
     executor.deleteRoles(tenant, user);
     if (user.hasRoles()) {
