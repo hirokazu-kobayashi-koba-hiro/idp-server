@@ -1,5 +1,9 @@
 # OIDC4IDA verified_claims Gap分析
 
+> **ステータス: 本分析は #1514 以前のスナップショット（解消済み）。**
+> - Gap 1（AT のフラット構造）・UserInfo 未実装 → #1514 で `verification` + `claims` ネスト構造化 + UserInfo 対応（利用者向けは [verified-claims-structure-change](../docs/content_09_project/verified-claims-structure-change.md) を参照）。
+> - 全件版 `AccessTokenVerifiedClaimsCreator` 自体は #1603 で廃止し、`AccessTokenSelectiveVerifiedClaimsCreator`（selective）へ一本化。以降、本文中の同クラスへの言及は歴史的記録。
+
 ## 仕様要件
 
 OIDC4IDA Section 5.1 で規定される verified_claims の構造:

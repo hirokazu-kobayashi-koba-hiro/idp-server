@@ -626,10 +626,6 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return extension.enabledAccessTokenSelectiveUserCustomProperties();
   }
 
-  public boolean enabledAccessTokenVerifiedClaims() {
-    return extension.enabledAccessTokenVerifiedClaims();
-  }
-
   public boolean enabledAccessTokenSelectiveVerifiedClaims() {
     return extension.enabledAccessTokenSelectiveVerifiedClaims();
   }

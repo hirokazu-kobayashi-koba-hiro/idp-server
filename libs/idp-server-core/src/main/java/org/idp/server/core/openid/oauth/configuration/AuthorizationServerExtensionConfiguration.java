@@ -49,7 +49,6 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   int pushedAuthorizationRequestExpiresIn = 90;
   boolean customClaimsScopeMapping = false;
   boolean accessTokenSelectiveUserCustomProperties = false;
-  boolean accessTokenVerifiedClaims = false;
   boolean accessTokenSelectiveVerifiedClaims = false;
 
   public AuthorizationServerExtensionConfiguration() {}
@@ -174,10 +173,6 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return accessTokenSelectiveUserCustomProperties;
   }
 
-  public boolean enabledAccessTokenVerifiedClaims() {
-    return accessTokenVerifiedClaims;
-  }
-
   public boolean enabledAccessTokenSelectiveVerifiedClaims() {
     return accessTokenSelectiveVerifiedClaims;
   }
@@ -216,7 +211,6 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     map.put("custom_claims_scope_mapping", customClaimsScopeMapping);
     map.put(
         "access_token_selective_user_custom_properties", accessTokenSelectiveUserCustomProperties);
-    map.put("access_token_verified_claims", accessTokenVerifiedClaims);
     map.put("access_token_selective_verified_claims", accessTokenSelectiveVerifiedClaims);
     return map;
   }

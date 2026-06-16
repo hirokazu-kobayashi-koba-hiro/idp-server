@@ -164,8 +164,7 @@ Tenant
 |---------|-----|---------|------|
 | `custom_claims_scope_mapping` | boolean | false | カスタムクレームスコープマッピング |
 | `access_token_selective_user_custom_properties` | boolean | false | ATでユーザーカスタムプロパティ選択可能化 |
-| `access_token_verified_claims` | boolean | false | ATに身元確認済みクレーム含有 |
-| `access_token_selective_verified_claims` | boolean | false | ATで身元確認済みクレーム選択可能化 |
+| `access_token_selective_verified_claims` | boolean | false | ATで身元確認済みクレーム選択可能化（UserInfo にも適用） |
 
 ---
 
