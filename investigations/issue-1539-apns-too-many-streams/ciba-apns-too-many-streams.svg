@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1220 720" width="1220" height="720" font-family="'Hiragino Sans','Yu Gothic UI','Noto Sans JP',sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-end">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+    <marker id="arrowR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-end">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/>
+    </marker>
+    <marker id="arrowG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-end">
+      <path d="M0,0 L10,5 L0,10 z" fill="#27ae60"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1220" height="720" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="610" y="40" text-anchor="middle" font-size="25" font-weight="700" fill="#1f2937">CIBA × APNs：「too many concurrent streams」が起きる仕組み (#1539)</text>
+  <text x="610" y="66" text-anchor="middle" font-size="14" fill="#6b7280">多数の CIBA リクエストが共有 HttpClient に集約 → APNs 接続の同時ストリーム上限を超えると通知が落ちる</text>
+
+  <!-- ===== ① burst ===== -->
+  <text x="120" y="110" text-anchor="middle" font-size="15" font-weight="700" fill="#374151">① 同時 CIBA バースト</text>
+  <g font-size="13" fill="#1f3a8a">
+    <rect x="40" y="135" width="160" height="34" rx="8" fill="#e8f0fe" stroke="#4285f4"/>
+    <text x="120" y="157" text-anchor="middle">CIBA req #1</text>
+    <rect x="40" y="178" width="160" height="34" rx="8" fill="#e8f0fe" stroke="#4285f4"/>
+    <text x="120" y="200" text-anchor="middle">CIBA req #2</text>
+    <rect x="40" y="221" width="160" height="34" rx="8" fill="#e8f0fe" stroke="#4285f4"/>
+    <text x="120" y="243" text-anchor="middle">CIBA req #3</text>
+    <rect x="40" y="264" width="160" height="34" rx="8" fill="#e8f0fe" stroke="#4285f4"/>
+    <text x="120" y="286" text-anchor="middle">CIBA req #4</text>
+    <rect x="40" y="307" width="160" height="34" rx="8" fill="#e8f0fe" stroke="#4285f4"/>
+    <text x="120" y="329" text-anchor="middle">… ×N（同時）</text>
+  </g>
+
+  <!-- converging arrows into funnel -->
+  <g stroke="#6b7280" stroke-width="1.6" fill="none" marker-end="url(#arrow)">
+    <line x1="202" y1="152" x2="300" y2="240"/>
+    <line x1="202" y1="195" x2="300" y2="245"/>
+    <line x1="202" y1="238" x2="300" y2="250"/>
+    <line x1="202" y1="281" x2="300" y2="255"/>
+    <line x1="202" y1="324" x2="300" y2="262"/>
+  </g>
+
+  <!-- ===== ② funnel + shared client ===== -->
+  <text x="430" y="110" text-anchor="middle" font-size="15" font-weight="700" fill="#374151">② 共有 HttpClient に集約（競合が起きる場所）</text>
+  <!-- funnel -->
+  <polygon points="300,150 430,232 430,268 300,360" fill="#fff3cd" stroke="#e0a800" stroke-width="2"/>
+  <!-- shared pipe -->
+  <rect x="430" y="232" width="140" height="36" fill="#fde9a8" stroke="#e0a800" stroke-width="2"/>
+  <text x="500" y="222" text-anchor="middle" font-size="12.5" fill="#92400e" font-weight="700">ApnsNotifier ×1 / HttpClient ×1</text>
+  <text x="500" y="255" text-anchor="middle" font-size="12" fill="#92400e">共有接続（1本）を多重化</text>
+
+  <!-- clarification: ×1 is correct -->
+  <rect x="296" y="372" width="290" height="92" rx="9" fill="#ecfdf5" stroke="#27ae60"/>
+  <text x="312" y="394" font-size="12.5" font-weight="700" fill="#15803d">✓「×1（共有1本）」は APNs 推奨の正しい設計</text>
+  <text x="312" y="414" font-size="12" fill="#14532d">　接続を作り捨てず長寿命1本を多重化するのが正</text>
+  <text x="312" y="436" font-size="12.5" font-weight="700" fill="#b45309">直すのは “非シングルトン化” ではない</text>
+  <text x="312" y="455" font-size="12" fill="#92400e">　→ リトライ ＋ 流量制御（下段）で捌く</text>
+
+  <!-- pipe into gate -->
+  <line x1="570" y1="250" x2="612" y2="250" stroke="#e0a800" stroke-width="6" marker-end="url(#arrow)"/>
+
+  <!-- ===== ③ APNs connection gate ===== -->
+  <text x="760" y="110" text-anchor="middle" font-size="15" font-weight="700" fill="#374151">③ APNs 接続（HTTP/2・1本）の同時ストリーム枠</text>
+  <rect x="615" y="125" width="300" height="340" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="765" y="148" text-anchor="middle" font-size="12.5" fill="#475569">枠の数 = APNs が広告する MAX_CONCURRENT_STREAMS</text>
+
+  <!-- occupied streams (within limit) -->
+  <g font-size="12.5" fill="#14532d">
+    <rect x="635" y="162" width="260" height="26" rx="5" fill="#d6ffd6" stroke="#27ae60"/>
+    <text x="648" y="180" >stream #1　送信中 ✅</text>
+    <rect x="635" y="194" width="260" height="26" rx="5" fill="#d6ffd6" stroke="#27ae60"/>
+    <text x="648" y="212" >stream #2　送信中 ✅</text>
+    <rect x="635" y="226" width="260" height="26" rx="5" fill="#d6ffd6" stroke="#27ae60"/>
+    <text x="648" y="244" >stream #3　送信中 ✅</text>
+    <rect x="635" y="258" width="260" height="26" rx="5" fill="#d6ffd6" stroke="#27ae60"/>
+    <text x="648" y="276" >stream #4　送信中 ✅</text>
+  </g>
+
+  <!-- limit line -->
+  <line x1="620" y1="296" x2="910" y2="296" stroke="#c0392b" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="765" y="311" text-anchor="middle" font-size="12" fill="#c0392b" font-weight="700">── 上限（ここまで）──</text>
+
+  <!-- overflow streams (rejected) -->
+  <g font-size="12.5" fill="#7f1d1d">
+    <rect x="635" y="320" width="260" height="26" rx="5" fill="#ffd6d6" stroke="#c0392b"/>
+    <text x="648" y="338" >stream #5　枠が無い ✗</text>
+    <rect x="635" y="352" width="260" height="26" rx="5" fill="#ffd6d6" stroke="#c0392b"/>
+    <text x="648" y="370" >stream #6　枠が無い ✗</text>
+  </g>
+  <text x="765" y="404" text-anchor="middle" font-size="12.5" fill="#7f1d1d">↑ バースト時、再利用接続でこの枠を奪い合う（予約レース）</text>
+  <text x="765" y="424" text-anchor="middle" font-size="12.5" fill="#7f1d1d" font-weight="700">→ あふれた送信が IOException</text>
+
+  <!-- ===== outcomes ===== -->
+  <!-- success -->
+  <line x1="895" y1="200" x2="955" y2="200" stroke="#27ae60" stroke-width="2" fill="none" marker-end="url(#arrowG)"/>
+  <rect x="955" y="172" width="230" height="56" rx="8" fill="#d6ffd6" stroke="#27ae60" stroke-width="1.6"/>
+  <text x="1070" y="196" text-anchor="middle" font-size="14" font-weight="700" fill="#14532d">✅ APNs 送信成功</text>
+  <text x="1070" y="216" text-anchor="middle" font-size="12" fill="#14532d">プッシュ到達 → 認証続行</text>
+
+  <!-- error -->
+  <line x1="895" y1="352" x2="955" y2="352" stroke="#c0392b" stroke-width="2" fill="none" marker-end="url(#arrowR)"/>
+  <rect x="955" y="312" width="230" height="56" rx="8" fill="#ffd6d6" stroke="#c0392b" stroke-width="2"/>
+  <text x="1070" y="335" text-anchor="middle" font-size="13.5" font-weight="700" fill="#7f1d1d">❌ too many concurrent</text>
+  <text x="1070" y="353" text-anchor="middle" font-size="13.5" font-weight="700" fill="#7f1d1d">streams</text>
+  <!-- lost -->
+  <line x1="1070" y1="368" x2="1070" y2="392" stroke="#c0392b" stroke-width="2" fill="none" marker-end="url(#arrowR)"/>
+  <rect x="930" y="392" width="280" height="58" rx="8" fill="#fee2e2" stroke="#c0392b" stroke-width="1.6"/>
+  <text x="1070" y="415" text-anchor="middle" font-size="12.5" fill="#7f1d1d">catch→failure（リトライ無し）</text>
+  <text x="1070" y="435" text-anchor="middle" font-size="12.5" font-weight="700" fill="#7f1d1d">📵 プッシュ欠損 → CIBA 認証が停止</text>
+
+  <!-- ===== condition band ===== -->
+  <text x="40" y="510" font-size="15" font-weight="700" fill="#374151">発生条件：次の2つが「両方」そろった時だけ（＝まれな一過性）</text>
+
+  <rect x="40" y="525" width="370" height="120" rx="10" fill="#ecfdf5" stroke="#27ae60"/>
+  <text x="60" y="552" font-size="14" font-weight="700" fill="#14532d">A. 並列 ≤ 上限</text>
+  <text x="60" y="576" font-size="13" fill="#14532d">→ 枠に収まる</text>
+  <text x="60" y="600" font-size="14" font-weight="700" fill="#14532d">B. 超過 × 応答が遅い</text>
+  <text x="60" y="624" font-size="13" fill="#14532d">→ JDK が新接続を増設して逃がす</text>
+  <text x="225" y="640" font-size="12.5" font-weight="700" fill="#15803d" text-anchor="middle">どちらも ✅ エラー出ない</text>
+
+  <rect x="430" y="525" width="430" height="120" rx="10" fill="#fef2f2" stroke="#c0392b" stroke-width="2"/>
+  <text x="450" y="552" font-size="14" font-weight="700" fill="#7f1d1d">★ 超過 ×「接続が再利用される（応答が速い）」</text>
+  <text x="450" y="578" font-size="13" fill="#7f1d1d">バーストが同じ接続に殺到し、限られた枠を奪い合う</text>
+  <text x="450" y="600" font-size="13" fill="#7f1d1d">→ あふれが too many concurrent streams</text>
+  <text x="450" y="626" font-size="13" font-weight="700" fill="#b91c1c">→ ❌ 通知欠損（本番 CIBA/FIDO-UAF バーストで発生）</text>
+
+  <!-- measured -->
+  <rect x="880" y="525" width="305" height="120" rx="10" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="900" y="550" font-size="13" font-weight="700" fill="#374151">ローカル再現の実測</text>
+  <text x="900" y="573" font-size="12" fill="#475569">上限16・並列3200（中度超過）:</text>
+  <text x="900" y="594" font-size="12.5" fill="#7f1d1d">　リトライ無し → エラー 2906</text>
+  <text x="900" y="615" font-size="12.5" fill="#14532d">　1回リトライ → エラー 292（90%減）</text>
+  <text x="900" y="636" font-size="11.5" fill="#6b7280">/tmp/h2repro（Go h2 + Java repro）</text>
+</svg>
