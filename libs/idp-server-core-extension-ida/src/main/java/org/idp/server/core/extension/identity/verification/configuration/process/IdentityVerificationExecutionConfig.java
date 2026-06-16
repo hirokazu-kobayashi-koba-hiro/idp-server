@@ -22,6 +22,8 @@ import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonReadable;
 
 public class IdentityVerificationExecutionConfig implements JsonReadable {
+  static final String DEFAULT_EXECUTOR_TYPE = "no_action";
+
   String type;
   IdentityVerificationHttpRequestConfig httpRequest = new IdentityVerificationHttpRequestConfig();
   IdentityVerificationMockConfig mock = new IdentityVerificationMockConfig();
@@ -30,6 +32,16 @@ public class IdentityVerificationExecutionConfig implements JsonReadable {
 
   public String type() {
     return type;
+  }
+
+  /**
+   * Executor type to dispatch to. When no execution is configured ({@link #exists()} is false),
+   * defaults to {@code no_action} — "nothing to execute server-side" — so processes whose result is
+   * produced externally and pushed in (e.g. callbacks) share the same execution pipeline. A
+   * non-empty but unknown type is returned as-is and fails loud at the executor registry. (#1522)
+   */
+  public String executorType() {
+    return exists() ? type : DEFAULT_EXECUTOR_TYPE;
   }
 
   public IdentityVerificationHttpRequestConfig httpRequest() {
