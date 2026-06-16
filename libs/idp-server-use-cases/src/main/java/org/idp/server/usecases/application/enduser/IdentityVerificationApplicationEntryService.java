@@ -37,8 +37,8 @@ import org.idp.server.core.extension.identity.verification.repository.IdentityVe
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
+import org.idp.server.core.extension.identity.verification.result.IdentityVerificationUserUpdater;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.token.OAuthToken;
@@ -162,6 +162,16 @@ public class IdentityVerificationApplicationEntryService
     SecurityEventType typeSpecificApplyEvent =
         new SecurityEventType(type.name() + "_application_success");
     eventPublisher.publish(tenant, oAuthToken, typeSpecificApplyEvent, requestAttributes);
+
+    handleTerminalTransition(
+        tenant,
+        user,
+        oAuthToken,
+        type,
+        application,
+        applyingResult,
+        verificationConfiguration,
+        requestAttributes);
 
     IdentityVerificationContext updatedContext =
         new IdentityVerificationContextBuilder()
@@ -287,48 +297,15 @@ public class IdentityVerificationApplicationEntryService
 
     eventPublisher.publish(tenant, oAuthToken, securityEventType, requestAttributes);
 
-    if (updated.isApproved()) {
-      IdentityVerificationResult identityVerificationResult =
-          IdentityVerificationResult.create(
-              updated, applyingResult.applicationContext(), verificationConfiguration);
-      resultCommandRepository.register(tenant, identityVerificationResult);
-
-      // TODO dynamic lifecycle management (#1268)
-      User verifiedUser =
-          user.transitStatus(UserStatus.IDENTITY_VERIFIED)
-              .mergeVerifiedClaims(identityVerificationResult.verifiedClaims().toMap());
-      userCommandRepository.update(tenant, verifiedUser);
-      eventPublisher.publishSync(
-          tenant,
-          oAuthToken,
-          DefaultSecurityEventType.identity_verification_application_approved,
-          requestAttributes);
-      SecurityEventType typeSpecificApprovedEvent =
-          new SecurityEventType(type.name() + "_approved");
-      eventPublisher.publish(tenant, oAuthToken, typeSpecificApprovedEvent, requestAttributes);
-    }
-
-    if (updated.isRejected()) {
-      eventPublisher.publishSync(
-          tenant,
-          oAuthToken,
-          DefaultSecurityEventType.identity_verification_application_rejected,
-          requestAttributes);
-      SecurityEventType typeSpecificRejectedEvent =
-          new SecurityEventType(type.name() + "_rejected");
-      eventPublisher.publish(tenant, oAuthToken, typeSpecificRejectedEvent, requestAttributes);
-    }
-
-    if (updated.isCancelled()) {
-      eventPublisher.publishSync(
-          tenant,
-          oAuthToken,
-          DefaultSecurityEventType.identity_verification_application_cancelled,
-          requestAttributes);
-      SecurityEventType typeSpecificCancelledEvent =
-          new SecurityEventType(type.name() + "_cancelled");
-      eventPublisher.publish(tenant, oAuthToken, typeSpecificCancelledEvent, requestAttributes);
-    }
+    handleTerminalTransition(
+        tenant,
+        user,
+        oAuthToken,
+        type,
+        updated,
+        applyingResult,
+        verificationConfiguration,
+        requestAttributes);
 
     IdentityVerificationContext updatedContext =
         new IdentityVerificationContextBuilder()
@@ -342,6 +319,67 @@ public class IdentityVerificationApplicationEntryService
             updatedContext, processConfig.response());
 
     return IdentityVerificationApplicationResponse.OK(response);
+  }
+
+  /**
+   * Applies the terminal transition (approved / rejected / cancelled) reached by an application.
+   * Shared by the single-process immediate-approval path ({@link #apply}) and the multi-step path
+   * ({@link #process}) so the on-approval side effects — registering the verification result,
+   * patching user attributes via {@link IdentityVerificationUserUpdater}, and publishing lifecycle
+   * security events — stay in one place.
+   */
+  private void handleTerminalTransition(
+      Tenant tenant,
+      User user,
+      OAuthToken oAuthToken,
+      IdentityVerificationType type,
+      IdentityVerificationApplication application,
+      IdentityVerificationApplyingResult applyingResult,
+      IdentityVerificationConfiguration verificationConfiguration,
+      RequestAttributes requestAttributes) {
+
+    if (application.isApproved()) {
+      IdentityVerificationResult identityVerificationResult =
+          IdentityVerificationResult.create(
+              application, applyingResult.applicationContext(), verificationConfiguration);
+      resultCommandRepository.register(tenant, identityVerificationResult);
+
+      User verifiedUser =
+          IdentityVerificationUserUpdater.update(
+              tenant,
+              user,
+              applyingResult.applicationContext(),
+              identityVerificationResult.verifiedClaims().toMap(),
+              verificationConfiguration.result());
+      userCommandRepository.update(tenant, verifiedUser);
+      eventPublisher.publishSync(
+          tenant,
+          oAuthToken,
+          DefaultSecurityEventType.identity_verification_application_approved,
+          requestAttributes);
+      eventPublisher.publish(
+          tenant, oAuthToken, new SecurityEventType(type.name() + "_approved"), requestAttributes);
+    }
+
+    if (application.isRejected()) {
+      eventPublisher.publishSync(
+          tenant,
+          oAuthToken,
+          DefaultSecurityEventType.identity_verification_application_rejected,
+          requestAttributes);
+      eventPublisher.publish(
+          tenant, oAuthToken, new SecurityEventType(type.name() + "_rejected"), requestAttributes);
+    }
+
+    if (application.isCancelled()) {
+      eventPublisher.publishSync(
+          tenant,
+          oAuthToken,
+          DefaultSecurityEventType.identity_verification_application_cancelled,
+          requestAttributes);
+      eventPublisher.publish(
+          tenant, oAuthToken, new SecurityEventType(type.name() + "_cancelled"), requestAttributes);
+    }
   }
 
   @Override

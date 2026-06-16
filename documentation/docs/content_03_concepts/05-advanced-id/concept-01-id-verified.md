@@ -107,6 +107,19 @@ sequenceDiagram
 
 ```
 
+## 承認時のユーザー属性更新
+
+どちらのパターンでも、身元確認が承認されると設定（`result` セクション）に基づいてユーザーの属性が更新されます。
+申込みステータスの遷移から User への反映までの全体像は以下の通りです。
+
+![身元確認とユーザー属性のライフサイクル](identity-verification-user-attribute-lifecycle.svg)
+
+- **verified_claims**（OIDC4IDA 標準の検証済みクレーム）に加えて、**標準クレーム**（氏名・住所等のOCR確定値）と **custom_properties**（KYCレベル・会員ランク等の業務属性）を更新できる
+- **ユーザーステータス**の遷移は設定で制御できる（省略時は `IDENTITY_VERIFIED` / `KEEP` で現状維持 / 任意のステータスを指定）
+- 承認以外（rejected / cancelled）ではユーザー属性は更新されない
+
+設定方法の詳細は[身元確認 設定リファレンス](../../content_06_developer-guide/05-configuration/identity-verification.md)を参照してください。
+
 ## 検証済みクレームの取得
 
 `idp-server` は検証済みクレームを取得する方法を2つ用意しています。

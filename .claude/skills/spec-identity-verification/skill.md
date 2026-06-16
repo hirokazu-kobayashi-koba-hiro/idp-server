@@ -67,7 +67,13 @@ libs/
     }
   },
   "result": {
-    "verified_claims_mapping_rules": []
+    "verified_claims_mapping_rules": [],
+    "source_details_mapping_rules": [],
+    "verified_claims_update_policy": "merge | deep_merge | replace",
+    "user_claims_mapping_rules": [],
+    "custom_properties_mapping_rules": [],
+    "custom_properties_update_policy": "merge | replace_managed",
+    "user_status": "IDENTITY_VERIFIED | KEEP | <UserStatus名>"
   }
 }
 ```
@@ -264,6 +270,36 @@ Phase 7: Response → IdentityVerificationApplyingResult を返却
 
 `to` のパスは `verification.*`（信頼フレームワーク等）と `claims.*`（クレーム値）の2系統。
 値の指定方法は `static_value`（固定値）と `from`（JSONPath）の2種。
+
+### ユーザー属性更新（result セクション拡張）
+
+承認時に verified_claims 以外のユーザー属性も更新できる。
+
+```json
+"result": {
+  "user_claims_mapping_rules": [
+    { "from": "$.application.application_details.last_name", "to": "family_name" }
+  ],
+  "custom_properties_mapping_rules": [
+    { "from": "$.application.application_details.kyc_level", "to": "kyc_level" }
+  ],
+  "user_status": "KEEP"
+}
+```
+
+| 設定 | 更新先 | セマンティクス |
+|------|-------|--------------|
+| `user_claims_mapping_rules` | 標準クレーム（family_name等） | 標準プロフィールクレームの **allowlist** のみ部分パッチ可（`PATCHABLE_STANDARD_CLAIMS`）。権限系（roles等）・識別子（`preferred_username` はIDポリシー導出の一意キーのため不可）・`status`・`custom_properties` は宛先に書いても無視。name/email/phone 更新時は `applyIdentityPolicy` で preferred_username を自動再計算 |
+| `custom_properties_mapping_rules` | custom_properties | キー単位マージ（ポリシーで変更可） |
+| `user_status` | ユーザーステータス | 省略時 `IDENTITY_VERIFIED`（後方互換）、`KEEP` で現状維持、その他 `UserStatus` 名で指定遷移。`UserLifecycleManager` の遷移ルール適用、同一ステータスは no-op。**未知のステータス名（typo）は KEEP 扱い＋`error` ログ**（承認は失敗させない） |
+| `verified_claims_update_policy` | verified_claims 反映戦略 | `merge`（既定・トップレベルputAll）/ `deep_merge`（claims.*/verification.* をキー単位マージ、段階的KYC向け）/ `replace`（完全置換）。全経路共通デフォルト merge |
+| `custom_properties_update_policy` | custom_properties 反映戦略 | `merge`（既定・欠落キーは既存値保持、null上書きしない）/ `replace_managed`（宣言キーのみ審査結果と同期＝値が出なかったキーは削除。宣言外キーは不可侵） |
+
+2つのポリシーの選択肢が異なるのは意図的: verified_claims は IDA 専有の2層構造（深度選択 + 全置換が成立）、custom_properties は他機能も書き込む共有のフラットなキー集合（merge は最初からキー単位、全置換は他機能のキーを壊すため提供せず replace_managed で代替）。
+
+**実装**: `IdentityVerificationUserUpdater`（result パッケージ）。申込み承認・コールバック承認・直接登録の3経路全てに適用される。
+
+**E2E**: `integration-10-identity-verification-user-attribute-update.test.js`
 
 ### SSOクレデンシャル連携（pre_hook: sso_credentials）
 
