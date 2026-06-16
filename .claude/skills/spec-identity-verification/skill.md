@@ -228,13 +228,15 @@ e2e/src/tests/
 
 ```
 Phase 1: Request  → JSON Schema バリデーション
-Phase 2: Pre Hook → AdditionalRequestParameterResolvers（外部パラメータ解決）
-Phase 3: Execute  → IdentityVerificationApplicationExecutors（外部 eKYC API 呼び出し）
-Phase 4: Post Hook → 後処理
+Phase 2: Pre Hook → verifications（process_sequence 等）＋ AdditionalRequestParameterResolvers（外部パラメータ解決）
+Phase 3: Execute  → IdentityVerificationApplicationExecutors（外部 eKYC API 呼び出し）。execution 省略時は no_action
+Phase 4: Post Hook → 後処理（未実装 / #1611）
 Phase 5: Transition → ステータス遷移（12 種の条件演算子で判定）
 Phase 6: Store    → IdentityVerificationApplicationRepository に永続化
 Phase 7: Response → IdentityVerificationApplyingResult を返却
 ```
+
+> **callback 経路も同一パイプライン (#1522)**: `IdentityVerificationCallbackEntryService` も `executeRequest` を通るため、callback プロセスでも Phase 2（pre_hook: verifications / additional_parameters）が honor される。execution 無しは `no_action`（結果は inbound）。merge のみ `updateCallbackWith`（fallback が `EXAMINATION_PROCESSING`、application 経路は `APPLYING`）。
 
 ### Conditional Execution（Phase 5）
 

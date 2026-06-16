@@ -233,6 +233,13 @@ POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}
 
 これらのフェーズにより、柔軟で拡張可能な申込み処理を実現しています。
 
+:::info コールバック経路も同一フェーズで処理されます
+`callback` プロセスも application 経路（apply/process）と**同じパイプライン**を通ります。そのため `pre_hook`（`verifications` の `process_sequence`・`additional_parameters`）はコールバックでも同じように適用され、`dependencies` / `allow_retry` による順序・再実行制御が効きます。
+
+- コールバックは結果が外部から push されるため `execution` を省略でき、その場合は `no_action`（受信したリクエストボディがそのまま結果として取り込まれる）。
+- `execution` を設定すれば、コールバック受信時に外部API実行を行い、その応答 `$.response_body` で `transition` を駆動することもできます。
+:::
+
 ### フェーズ一覧
 
 | フェーズ名             | 役割・目的                      | 主な設定項目                                                    | 必須 |
@@ -240,7 +247,7 @@ POST /{tenant-id}/internal/v1/identity-verification/callback/{verification-type}
 | **1. request**    | リクエストの構造・形式を検証             | `schema`（JSON Schema）                                     | -  |
 | **history**       | pre_hook に渡す過去申込み read model の取得条件（[詳細](../../../content_06_developer-guide/05-configuration/identity-verification.md#history過去申込みの取得条件)） | `filters`                                                 | -  |
 | **2. pre_hook**   | 実行前の事前検証・外部パラメータ取得・外部API実行 | `verifications`, `additional_parameters`                  | -  |
-| **3. execution**  | メイン業務処理（外部連携 or 内部処理）      | `type`, `http_request`, `mock`, `no_action` など（処理タイプに応じて） | ✅  |
+| **3. execution**  | メイン業務処理（外部連携 or 内部処理）。**省略時は `no_action`** | `type`, `http_request`, `mock`, `no_action` など（処理タイプに応じて） | -  |
 | **4. post_hook**  | 実行後の検証・外部API実行             | `verifications` `additional_parameters`                   | -  |
 | **5. transition** | ステータス遷移                    | `approved` `rejected` `canceled`                          | -  |
 | **6. store**      | 処理結果や申請内容の永続化              | `application_details_mapping_rules`                       | -  |

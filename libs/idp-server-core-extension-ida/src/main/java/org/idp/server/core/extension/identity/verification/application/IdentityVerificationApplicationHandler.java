@@ -128,7 +128,8 @@ public class IdentityVerificationApplicationHandler {
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(processes);
     IdentityVerificationExecutionConfig executionConfig = processConfig.execution();
-    IdentityVerificationApplicationExecutor executor = executors.get(executionConfig.type());
+    IdentityVerificationApplicationExecutor executor =
+        executors.get(executionConfig.executorType());
 
     IdentityVerificationContext context = contextBuilder.build();
     IdentityVerificationExecutionResult executionResult =

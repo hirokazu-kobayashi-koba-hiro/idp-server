@@ -151,8 +151,8 @@ POST /{tenant-id}/v1/me/identity-verification/applications/{type}/cancel
 |---------|------|------|
 | `request` | リクエストスキーマ定義 | ❌ |
 | `history` | pre_hook フェーズ（verifications / additional_parameters）に渡す過去申込み read model の取得条件（[詳細](#history過去申込みの取得条件)） | ❌ |
-| `pre_hook` | 実行前処理 | ❌ |
-| `execution` | メイン処理（外部API呼び出し等） | ✅ |
+| `pre_hook` | 実行前処理（`verifications` / `additional_parameters`）。**application 経路（apply/process）・callback 経路の両方で実行される** | ❌ |
+| `execution` | メイン処理（外部API呼び出し等）。**省略時は `no_action`**（サーバ側で実行する処理なし）。結果が外部から push されるコールバックプロセス等は省略可 | ❌ |
 | `post_hook` | 実行後処理 | ❌ |
 | `transition` | ステータス遷移条件 | ❌ |
 | `store` | 結果保存 | ❌ |

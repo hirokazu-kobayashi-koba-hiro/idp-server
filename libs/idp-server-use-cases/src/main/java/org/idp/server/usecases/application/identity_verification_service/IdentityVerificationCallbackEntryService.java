@@ -19,8 +19,10 @@ package org.idp.server.usecases.application.identity_verification_service;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.*;
 import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplicationHandler;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplyingResult;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolver;
 import org.idp.server.core.extension.identity.verification.callback.validation.IdentityVerificationCallbackRequestValidator;
 import org.idp.server.core.extension.identity.verification.callback.validation.IdentityVerificationCallbackValidationResult;
@@ -116,18 +118,15 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, applicationIdParams, applicationId);
 
-    Map<String, Object> response =
-        updateApplicationAndCreateResponse(
-            type,
-            process,
-            request,
-            requestAttributes,
-            application,
-            verificationConfiguration,
-            tenant,
-            processConfiguration);
-
-    return IdentityVerificationCallbackResponse.OK(response);
+    return updateApplicationAndCreateResponse(
+        type,
+        process,
+        request,
+        requestAttributes,
+        application,
+        verificationConfiguration,
+        tenant,
+        processConfiguration);
   }
 
   @Override
@@ -160,21 +159,18 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
     IdentityVerificationApplication application =
         applicationQueryRepository.get(tenant, identifier);
 
-    Map<String, Object> response =
-        updateApplicationAndCreateResponse(
-            type,
-            process,
-            request,
-            requestAttributes,
-            application,
-            verificationConfiguration,
-            tenant,
-            processConfiguration);
-
-    return IdentityVerificationCallbackResponse.OK(response);
+    return updateApplicationAndCreateResponse(
+        type,
+        process,
+        request,
+        requestAttributes,
+        application,
+        verificationConfiguration,
+        tenant,
+        processConfiguration);
   }
 
-  private Map<String, Object> updateApplicationAndCreateResponse(
+  private IdentityVerificationCallbackResponse updateApplicationAndCreateResponse(
       IdentityVerificationType type,
       IdentityVerificationProcess process,
       IdentityVerificationRequest request,
@@ -185,14 +181,35 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
       IdentityVerificationProcessConfiguration processConfiguration) {
     User user = userQueryRepository.get(tenant, application.userIdentifier());
 
-    IdentityVerificationContext context =
-        new IdentityVerificationContextBuilder()
-            .request(request)
-            .requestAttributes(requestAttributes)
-            .application(application)
-            .user(user)
-            .build();
+    // Run the same pipeline as the application path: pre_hook (verifications +
+    // additional_parameters) → execute. For callback processes (no execution block) execute is
+    // no_action, so the inbound result carried in the request is incorporated by updateProcessWith.
+    // This makes callback processes honor the same config as the application path. (#1522)
+    IdentityVerificationApplications previousApplications =
+        applicationQueryRepository.findHistory(
+            tenant, user, processConfiguration.historyPlan(type));
+    IdentityVerificationApplyingResult applyingResult =
+        identityVerificationApplicationHandler.executeRequest(
+            tenant,
+            user,
+            application,
+            previousApplications,
+            type,
+            process,
+            request,
+            requestAttributes,
+            verificationConfiguration);
+    if (applyingResult.isError()) {
+      return IdentityVerificationCallbackResponse.CLIENT_ERROR(
+          applyingResult.errorResponse().response());
+    }
 
+    IdentityVerificationContext context = applyingResult.applicationContext();
+
+    // Merge uses updateCallbackWith (not updateProcessWith): the two are identical except the
+    // fallback status when no transition condition matches — callback → EXAMINATION_PROCESSING
+    // (awaiting async review), process → APPLYING. That difference is intentional, so the callback
+    // keeps its own merge. The shared part (pre_hook + execute) is unified above. (#1522)
     IdentityVerificationApplication updatedApplication =
         application.updateCallbackWith(process, context, verificationConfiguration);
     applicationCommandRepository.update(tenant, updatedApplication);
@@ -263,7 +280,9 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
           requestAttributes);
     }
 
-    return IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
-        context, processConfiguration.response());
+    Map<String, Object> response =
+        IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
+            context, processConfiguration.response());
+    return IdentityVerificationCallbackResponse.OK(response);
   }
 }
