@@ -225,7 +225,11 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
         notificationChannel,
         notificationToken,
         newAvailableMethods,
-        priority);
+        priority,
+        credentialType,
+        credentialId,
+        credentialPayload,
+        credentialMetadata);
   }
 
   public AuthenticationDevice withCredential(
@@ -273,7 +277,11 @@ public class AuthenticationDevice implements Serializable, JsonReadable, UuidCon
         newNotificationChannel,
         newNotificationToken,
         availableMethods,
-        newPriority);
+        newPriority,
+        credentialType,
+        credentialId,
+        credentialPayload,
+        credentialMetadata);
   }
 
   public boolean exists() {
