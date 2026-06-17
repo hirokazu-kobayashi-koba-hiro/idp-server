@@ -30,8 +30,47 @@ import org.idp.server.core.openid.identity.id_token.plugin.CustomIndividualClaim
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.platform.json.JsonNodeWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 
+/**
+ * Builds the OIDC4IDA {@code verified_claims} element returned in the ID Token, from the {@code
+ * claims} request parameter (its {@code id_token.verified_claims} member).
+ *
+ * <p>The output follows the OpenID Connect for Identity Assurance 1.0 structure (§5.1): a {@code
+ * verification} object — whose {@code trust_framework} is REQUIRED — plus a {@code claims} object
+ * carrying the verified end-user claims.
+ *
+ * <h3>Returning less data than requested (§5.7)</h3>
+ *
+ * <p>Only data the user actually has is returned, and the element is omitted entirely when it
+ * cannot be formed validly — never returned as a partial/empty shell such as {@code
+ * {"verification": {}, "claims": {...}}} or {@code {"verification": {...}, "claims": {}}}:
+ *
+ * <ul>
+ *   <li><b>§5.7.2 Unavailable data</b>: "If the OP does not have data about a certain claim, does
+ *       not understand/support the respective claim, OPs shall omit the respective claim from any
+ *       corresponding ID Token or UserInfo response." Each requested claim is included only when
+ *       present on the user.
+ *   <li><b>§5.7.4 Data not matching requirements</b>: "the OP shall omit the whole verified_claims
+ *       element" / "the OP shall not return an error to the RP." When the verification requirement
+ *       cannot be met (no {@code trust_framework}), the whole element is omitted rather than
+ *       emitting a schema-invalid {@code verification}.
+ *   <li><b>§5.7.5 Omitting elements</b>: "If an element is to be omitted according to the rules
+ *       above, but is a requirement for a valid response, the OP shall omit its parent element as
+ *       well." When no requested claim is available the {@code claims} object would be empty; since
+ *       {@code claims} is required for a valid {@code verified_claims}, the whole element is
+ *       omitted.
+ * </ul>
+ *
+ * <p>The scope-based selective path (access token / UserInfo) is handled by {@link
+ * SelectiveVerifiedClaims}, which applies the same §5.7 omission rules.
+ *
+ * @see <a href="https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html">OpenID
+ *     Connect for Identity Assurance 1.0</a>
+ */
 public class VerifiedClaimsCreator implements CustomIndividualClaimsCreator {
+
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(VerifiedClaimsCreator.class);
 
   @Override
   public boolean shouldCreate(
@@ -118,6 +157,22 @@ public class VerifiedClaimsCreator implements CustomIndividualClaimsCreator {
     if (claimsNodeWrapper.contains("email_verified") && userClaims.contains("email_verified")) {
       verifiedClaims.put("email_verified", userVerifiedClaims.getValueAsBoolean("email_verified"));
     }
+    // OIDC4IDA §5.7.4 / §5.7.5: when no requested claim matched a user claim, omit verified_claims
+    // entirely rather than emit an empty claims object (and leak verification metadata).
+    if (verifiedClaims.isEmpty()) {
+      return claims;
+    }
+
+    // IDA schema §5.1 / OIDC4IDA §5.7.4: verification.trust_framework is REQUIRED. Without it the
+    // verification requirement cannot be met, so omit verified_claims entirely rather than emit a
+    // schema-invalid verification block (e.g. an empty {} or one carrying only evidence).
+    if (!verification.containsKey("trust_framework")) {
+      log.warn(
+          "verified_claims omitted: stored verification has no required trust_framework"
+              + " (check the tenant's verified_claims mapping configuration)");
+      return claims;
+    }
+
     verified.put("verification", verification);
     verified.put("claims", verifiedClaims);
     claims.put("verified_claims", verified);
