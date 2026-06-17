@@ -68,7 +68,6 @@ public class IdentityVerificationApplicationQueryDataSource
     return ModelConverter.convert(result);
   }
 
-  // TODO improve query implementation (#1268)
   @Override
   public IdentityVerificationApplication get(Tenant tenant, String key, String identifier) {
     try {

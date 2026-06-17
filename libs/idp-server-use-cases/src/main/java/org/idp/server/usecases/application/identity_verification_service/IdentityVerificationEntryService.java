@@ -106,7 +106,8 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
       return validationResult.errorResponse();
     }
 
-    // TODO improve type-safe request parameter access (#1268)
+    // user_id is a body field of the direct-registration request (already schema-validated above),
+    // resolved into the typed UserIdentifier here.
     UserIdentifier userIdentifier = new UserIdentifier(request.getValueAsString("user_id"));
     User user = userQueryRepository.get(tenant, userIdentifier);
 
