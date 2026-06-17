@@ -50,6 +50,8 @@ public class IdentityVerificationApplicationRequestVerifiers {
     this.verifiers.put(userClaimVerifier.type(), userClaimVerifier);
     ProcessSequenceVerifier processSequenceVerifier = new ProcessSequenceVerifier();
     this.verifiers.put(processSequenceVerifier.type(), processSequenceVerifier);
+    AssertionVerifier assertionVerifier = new AssertionVerifier();
+    this.verifiers.put(assertionVerifier.type(), assertionVerifier);
     Map<String, IdentityVerificationApplicationRequestVerifier> loaded =
         IdentityVerificationApplicationRequestVerifierPluginLoader.load();
     this.verifiers.putAll(loaded);
