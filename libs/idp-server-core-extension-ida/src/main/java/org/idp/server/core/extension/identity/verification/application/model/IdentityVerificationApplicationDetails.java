@@ -54,15 +54,55 @@ public class IdentityVerificationApplicationDetails {
 
   public IdentityVerificationApplicationDetails merge(
       IdentityVerificationContext applicationContext, List<MappingRule> mappingRules) {
+    return merge(applicationContext, mappingRules, false);
+  }
+
+  /**
+   * Merges this process's mapping result into the current {@code application_details}.
+   *
+   * <p>With {@code deepMerge=false} (default policy {@code "merge"}) this is a top-level {@code
+   * putAll}: a colliding parent key is replaced wholesale, so two processes writing different
+   * subkeys under the same parent lose each other's data. With {@code deepMerge=true} (policy
+   * {@code "deep_merge"}) nested {@link Map} values are merged recursively (scalars and arrays
+   * still overwrite), so sibling subkeys under a shared parent are preserved — e.g. accumulating
+   * {@code progress.<sub>} across processes. (#1637)
+   */
+  public IdentityVerificationApplicationDetails merge(
+      IdentityVerificationContext applicationContext,
+      List<MappingRule> mappingRules,
+      boolean deepMerge) {
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(applicationContext.toMap());
     JsonPathWrapper jsonPathWrapper = new JsonPathWrapper(jsonNodeWrapper.toJson());
     Map<String, Object> mappingResult =
         MappingRuleObjectMapper.execute(mappingRules, jsonPathWrapper);
     Map<String, Object> mergedResult = new HashMap<>(json.toMap());
-    ;
-    mergedResult.putAll(mappingResult);
+    if (deepMerge) {
+      deepMerge(mergedResult, mappingResult);
+    } else {
+      mergedResult.putAll(mappingResult);
+    }
 
     return new IdentityVerificationApplicationDetails(JsonNodeWrapper.fromMap(mergedResult));
+  }
+
+  /**
+   * Recursively merges {@code source} into {@code target}: when both sides hold a {@link Map} for
+   * the same key the children are merged recursively; otherwise (scalar, array, or type change) the
+   * source value overwrites. Package-private for direct unit testing. (#1637)
+   */
+  @SuppressWarnings("unchecked")
+  static void deepMerge(Map<String, Object> target, Map<String, Object> source) {
+    source.forEach(
+        (key, newValue) -> {
+          Object existingValue = target.get(key);
+          if (existingValue instanceof Map && newValue instanceof Map) {
+            Map<String, Object> mergedChild = new HashMap<>((Map<String, Object>) existingValue);
+            deepMerge(mergedChild, (Map<String, Object>) newValue);
+            target.put(key, mergedChild);
+          } else {
+            target.put(key, newValue);
+          }
+        });
   }
 
   public String getValueOrEmptyAsString(String fieldName) {
