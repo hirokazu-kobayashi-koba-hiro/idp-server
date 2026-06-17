@@ -20,22 +20,14 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.security.event.SecurityEventUser;
 import org.idp.server.platform.security.event.SecurityEventUserIdentifier;
-import org.idp.server.platform.security.hook.*;
-import org.idp.server.platform.security.hook.SecurityEventHook;
-import org.idp.server.platform.security.hook.SecurityEventHooks;
-import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfiguration;
-import org.idp.server.platform.security.hook.configuration.SecurityEventHookConfigurations;
 import org.idp.server.platform.security.log.SecurityEventLogConfiguration;
 import org.idp.server.platform.security.log.SecurityEventLogService;
-import org.idp.server.platform.security.repository.SecurityEventHookConfigurationQueryRepository;
-import org.idp.server.platform.security.repository.SecurityEventHookResultCommandRepository;
 import org.idp.server.platform.statistics.FiscalYearCalculator;
 import org.idp.server.platform.statistics.StatisticsEventRecord;
 import org.idp.server.platform.statistics.repository.DailyActiveUserCommandRepository;
@@ -45,9 +37,7 @@ import org.idp.server.platform.statistics.repository.YearlyActiveUserCommandRepo
 
 public class SecurityEventHandler {
 
-  SecurityEventHookResultCommandRepository resultsCommandRepository;
-  SecurityEventHooks securityEventHooks;
-  SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository;
+  SecurityEventHookDispatcher hookDispatcher;
   SecurityEventLogService logService;
   StatisticsEventsCommandRepository statisticsEventsRepository;
   DailyActiveUserCommandRepository dailyActiveUserRepository;
@@ -57,18 +47,13 @@ public class SecurityEventHandler {
   LoggerWrapper log = LoggerWrapper.getLogger(SecurityEventHandler.class);
 
   public SecurityEventHandler(
-      SecurityEventHooks securityEventHooks,
-      SecurityEventHookResultCommandRepository resultsCommandRepository,
-      SecurityEventHookConfigurationQueryRepository securityEventHookConfigurationQueryRepository,
+      SecurityEventHookDispatcher hookDispatcher,
       SecurityEventLogService logService,
       StatisticsEventsCommandRepository statisticsEventsRepository,
       DailyActiveUserCommandRepository dailyActiveUserRepository,
       MonthlyActiveUserCommandRepository monthlyActiveUserRepository,
       YearlyActiveUserCommandRepository yearlyActiveUserRepository) {
-    this.securityEventHooks = securityEventHooks;
-    this.resultsCommandRepository = resultsCommandRepository;
-    this.securityEventHookConfigurationQueryRepository =
-        securityEventHookConfigurationQueryRepository;
+    this.hookDispatcher = hookDispatcher;
     this.logService = logService;
     this.statisticsEventsRepository = statisticsEventsRepository;
     this.dailyActiveUserRepository = dailyActiveUserRepository;
@@ -83,45 +68,8 @@ public class SecurityEventHandler {
     // Execute hooks first (before statistics) to minimize lock hold time.
     // Hook execution involves blocking I/O (email, Slack, webhook: 450-500ms).
     // If statistics rows are locked before hooks, the lock is held during I/O,
-    // causing cascading lock contention on statistics_events under high load.
-    SecurityEventHookConfigurations securityEventHookConfigurations =
-        securityEventHookConfigurationQueryRepository.find(tenant);
-
-    List<SecurityEventHookResult> results = new ArrayList<>();
-    for (SecurityEventHookConfiguration hookConfiguration : securityEventHookConfigurations) {
-
-      Optional<SecurityEventHook> optionalExecutor =
-          securityEventHooks.find(hookConfiguration.hookType());
-
-      if (optionalExecutor.isEmpty()) {
-        log.warn(
-            "Skipping unsupported security event hook type: {} for tenant: {}",
-            hookConfiguration.hookType().name(),
-            tenant.identifierValue());
-        continue;
-      }
-
-      SecurityEventHook securityEventHookExecutor = optionalExecutor.get();
-
-      if (securityEventHookExecutor.shouldExecute(tenant, securityEvent, hookConfiguration)) {
-        log.info(
-            String.format(
-                "security event hook execution trigger: %s, type: %s tenant: %s client: %s user: %s, ",
-                securityEvent.type().value(),
-                hookConfiguration.hookType().name(),
-                securityEvent.tenantIdentifierValue(),
-                securityEvent.clientIdentifierValue(),
-                securityEvent.userSub()));
-
-        SecurityEventHookResult hookResult =
-            securityEventHookExecutor.execute(tenant, securityEvent, hookConfiguration);
-        results.add(hookResult);
-      }
-    }
-
-    if (!results.isEmpty()) {
-      resultsCommandRepository.bulkRegister(tenant, results);
-    }
+    // causing cascading lock contention on statistics_events under high load (#1442).
+    hookDispatcher.dispatch(tenant, securityEvent);
 
     // Update statistics after hooks to keep lock hold time minimal (few ms).
     SecurityEventLogConfiguration config = tenant.securityEventLogConfiguration();

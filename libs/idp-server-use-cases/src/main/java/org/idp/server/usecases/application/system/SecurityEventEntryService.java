@@ -23,6 +23,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.security.SecurityEvent;
 import org.idp.server.platform.security.SecurityEventApi;
 import org.idp.server.platform.security.handler.SecurityEventHandler;
+import org.idp.server.platform.security.handler.SecurityEventHookDispatcher;
 import org.idp.server.platform.security.hook.SecurityEventHooks;
 import org.idp.server.platform.security.log.SecurityEventLogService;
 import org.idp.server.platform.security.repository.SecurityEventCommandRepository;
@@ -49,11 +50,12 @@ public class SecurityEventEntryService implements SecurityEventApi {
       DailyActiveUserCommandRepository dailyActiveUserRepository,
       MonthlyActiveUserCommandRepository monthlyActiveUserRepository,
       YearlyActiveUserCommandRepository yearlyActiveUserRepository) {
+    SecurityEventHookDispatcher hookDispatcher =
+        new SecurityEventHookDispatcher(
+            securityEventHooks, hookQueryRepository, securityEventHookResultCommandRepository);
     this.securityEventHandler =
         new SecurityEventHandler(
-            securityEventHooks,
-            securityEventHookResultCommandRepository,
-            hookQueryRepository,
+            hookDispatcher,
             new SecurityEventLogService(securityEventCommandRepository),
             statisticsEventsRepository,
             dailyActiveUserRepository,
