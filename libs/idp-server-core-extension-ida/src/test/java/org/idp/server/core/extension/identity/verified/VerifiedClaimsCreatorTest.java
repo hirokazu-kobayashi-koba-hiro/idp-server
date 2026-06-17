@@ -140,4 +140,93 @@ class VerifiedClaimsCreatorTest {
         result.containsKey("verified_claims"),
         "verification without the required trust_framework must emit no verified_claims");
   }
+
+  // ----- value/values constraint enforcement, dynamic claims, trust_framework user-gate (#1624) --
+
+  @Test
+  void emitsWhenValueAndValuesConstraintsMatch() {
+    User user = userWith(Map.of("trust_framework", "eidas"), Map.of("given_name", "Taro"));
+    // verification value + claims values both satisfied by the stored data.
+    RequestedClaimsPayload payload =
+        request(
+            "{\"verification\":{\"trust_framework\":{\"value\":\"eidas\"}},"
+                + "\"claims\":{\"given_name\":{\"values\":[\"Hanako\",\"Taro\"]}}}");
+
+    Map<String, Object> result = create(user, payload);
+
+    assertTrue(result.containsKey("verified_claims"));
+    assertEquals("eidas", verificationOf(result).get("trust_framework"));
+    assertEquals("Taro", claimsOf(result).get("given_name"));
+  }
+
+  @Test
+  void omitsVerifiedClaimsWhenVerificationValueDoesNotMatch() {
+    // §5.7.4 (verification branch): requested trust_framework value "gold" but the user has "eidas"
+    // → the verification requirement is unmet, so the whole verified_claims is omitted.
+    User user = userWith(Map.of("trust_framework", "eidas"), Map.of("given_name", "Taro"));
+    RequestedClaimsPayload payload =
+        request(
+            "{\"verification\":{\"trust_framework\":{\"value\":\"gold\"}},"
+                + "\"claims\":{\"given_name\":null}}");
+
+    Map<String, Object> result = create(user, payload);
+
+    assertFalse(
+        result.containsKey("verified_claims"),
+        "verification value mismatch must omit the whole verified_claims");
+  }
+
+  @Test
+  void dropsOnlyTheClaimWhoseValueDoesNotMatch() {
+    // §5.7.4 (claims branch): given_name value mismatch drops just given_name; family_name (no
+    // constraint) is still returned, so verified_claims itself is kept.
+    User user =
+        userWith(
+            Map.of("trust_framework", "eidas"),
+            Map.of("given_name", "Sarah", "family_name", "Yamada"));
+    RequestedClaimsPayload payload =
+        request(
+            "{\"verification\":{\"trust_framework\":null},"
+                + "\"claims\":{\"given_name\":{\"value\":\"Bob\"},\"family_name\":null}}");
+
+    Map<String, Object> result = create(user, payload);
+
+    assertTrue(result.containsKey("verified_claims"));
+    assertEquals("Yamada", claimsOf(result).get("family_name"));
+    assertFalse(
+        claimsOf(result).containsKey("given_name"),
+        "claim failing its value constraint must be dropped individually");
+  }
+
+  @Test
+  void returnsDynamicallyResolvedClaimBeyondLegacyFixedList() {
+    // place_of_birth is not in the old hard-coded list; the dynamic resolver returns it when the
+    // user holds it.
+    User user =
+        userWith(
+            Map.of("trust_framework", "eidas"), Map.of("place_of_birth", Map.of("country", "UK")));
+    RequestedClaimsPayload payload =
+        request(
+            "{\"verification\":{\"trust_framework\":null},\"claims\":{\"place_of_birth\":null}}");
+
+    Map<String, Object> result = create(user, payload);
+
+    assertTrue(result.containsKey("verified_claims"));
+    assertEquals(Map.of("country", "UK"), claimsOf(result).get("place_of_birth"));
+  }
+
+  @Test
+  void alwaysReturnsTrustFrameworkEvenWhenRequestOmitsIt() {
+    // trust_framework is the REQUIRED floor: returned whenever the user holds it, even if the RP
+    // did
+    // not list it (no verification block in the request).
+    User user = userWith(Map.of("trust_framework", "eidas"), Map.of("given_name", "Taro"));
+    RequestedClaimsPayload payload = request("{\"claims\":{\"given_name\":null}}");
+
+    Map<String, Object> result = create(user, payload);
+
+    assertTrue(result.containsKey("verified_claims"));
+    assertEquals("eidas", verificationOf(result).get("trust_framework"));
+    assertEquals("Taro", claimsOf(result).get("given_name"));
+  }
 }
