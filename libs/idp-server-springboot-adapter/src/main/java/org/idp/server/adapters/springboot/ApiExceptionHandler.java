@@ -24,6 +24,7 @@ import org.idp.server.platform.datasource.SqlForeignKeyViolationException;
 import org.idp.server.platform.datasource.SqlTransactionConflictException;
 import org.idp.server.platform.exception.*;
 import org.idp.server.platform.log.LoggerWrapper;
+import org.idp.server.platform.oauth.OAuthAuthorizationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConversionException;
@@ -219,6 +220,27 @@ public class ApiExceptionHandler {
             "error_description",
             "The server has a configuration error. Please contact the administrator.");
     return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  @ExceptionHandler(OAuthAuthorizationException.class)
+  public ResponseEntity<?> handleException(OAuthAuthorizationException exception) {
+    // Failure to obtain an OAuth token from an external service's token endpoint is an upstream /
+    // configuration problem, not an internal server error. Log the upstream status and body for
+    // diagnosis, but return only a generic message — the upstream body is the external service's
+    // internal error representation and must not be echoed to the client. See #1384.
+    log.error(
+        "External service OAuth authorization failed: status={}, body={}",
+        exception.statusCode(),
+        exception.responseBody(),
+        exception);
+    return new ResponseEntity<>(
+        Map.of(
+            "error",
+            "external_service_error",
+            "error_description",
+            "Failed to authenticate with the external service."
+                + " Please check the oauth_authorization settings."),
+        HttpStatus.BAD_GATEWAY);
   }
 
   @ExceptionHandler

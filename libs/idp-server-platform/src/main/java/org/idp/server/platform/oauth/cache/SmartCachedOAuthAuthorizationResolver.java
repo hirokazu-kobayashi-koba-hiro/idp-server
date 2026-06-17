@@ -21,13 +21,13 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Optional;
 import org.idp.server.platform.datasource.cache.CacheStore;
-import org.idp.server.platform.http.HttpNetworkErrorException;
 import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.http.SsrfProtectedHttpClient;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
+import org.idp.server.platform.oauth.OAuthAuthorizationException;
 import org.idp.server.platform.oauth.OAuthAuthorizationResolver;
 
 public class SmartCachedOAuthAuthorizationResolver implements OAuthAuthorizationResolver {
@@ -137,9 +137,7 @@ public class SmartCachedOAuthAuthorizationResolver implements OAuthAuthorization
     log.debug("Token response status: {}", response.statusCode());
 
     if (response.statusCode() >= 400) {
-      throw new HttpNetworkErrorException(
-          "Token endpoint returned non-200 status: " + response.statusCode(),
-          new RuntimeException("HTTP status: " + response.statusCode()));
+      throw new OAuthAuthorizationException(response.statusCode(), response.body());
     }
 
     JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(response.body());
