@@ -92,4 +92,34 @@ class IdentityVerificationApplicationDetailsTest {
     assertEquals(1, merged.get("a"));
     assertEquals(2, merged.get("b"));
   }
+
+  @Test
+  void skipsNullSourceValuesPreservingExisting() {
+    // An unmatched `from` JSONPath maps to null; deep_merge must not clobber existing data with it.
+    Map<String, Object> target = new HashMap<>(Map.of("progress", new HashMap<>(Map.of("a", 1))));
+    Map<String, Object> source = new HashMap<>();
+    source.put("progress", null);
+
+    Map<String, Object> merged = deepMerge(target, source);
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> progress = (Map<String, Object>) merged.get("progress");
+    assertEquals(1, progress.get("a"));
+  }
+
+  @Test
+  void skipsNullSubkeyValuesPreservingExistingSibling() {
+    Map<String, Object> target =
+        new HashMap<>(Map.of("progress", new HashMap<>(Map.of("opening", "approved"))));
+    Map<String, Object> investment = new HashMap<>();
+    investment.put("investment", null);
+    Map<String, Object> source = Map.of("progress", investment);
+
+    Map<String, Object> merged = deepMerge(target, source);
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> progress = (Map<String, Object>) merged.get("progress");
+    assertEquals("approved", progress.get("opening"));
+    assertFalse(progress.containsKey("investment"));
+  }
 }

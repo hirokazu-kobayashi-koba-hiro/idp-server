@@ -64,8 +64,8 @@ public class IdentityVerificationApplicationDetails {
    * putAll}: a colliding parent key is replaced wholesale, so two processes writing different
    * subkeys under the same parent lose each other's data. With {@code deepMerge=true} (policy
    * {@code "deep_merge"}) nested {@link Map} values are merged recursively (scalars and arrays
-   * still overwrite), so sibling subkeys under a shared parent are preserved — e.g. accumulating
-   * {@code progress.<sub>} across processes. (#1637)
+   * still overwrite, null source values are skipped), so sibling subkeys under a shared parent are
+   * preserved — e.g. accumulating {@code progress.<sub>} across processes. (#1637)
    */
   public IdentityVerificationApplicationDetails merge(
       IdentityVerificationContext applicationContext,
@@ -88,12 +88,18 @@ public class IdentityVerificationApplicationDetails {
   /**
    * Recursively merges {@code source} into {@code target}: when both sides hold a {@link Map} for
    * the same key the children are merged recursively; otherwise (scalar, array, or type change) the
-   * source value overwrites. Package-private for direct unit testing. (#1637)
+   * source value overwrites. A null source value is skipped so it never clobbers existing data — an
+   * unmatched {@code from} JSONPath maps to null, and the intent of deep_merge is to accumulate.
+   * Mirrors the null-skip semantics of {@code verified_claims} deep_merge. Package-private for
+   * direct unit testing. (#1637)
    */
   @SuppressWarnings("unchecked")
   static void deepMerge(Map<String, Object> target, Map<String, Object> source) {
     source.forEach(
         (key, newValue) -> {
+          if (newValue == null) {
+            return;
+          }
           Object existingValue = target.get(key);
           if (existingValue instanceof Map && newValue instanceof Map) {
             Map<String, Object> mergedChild = new HashMap<>((Map<String, Object>) existingValue);

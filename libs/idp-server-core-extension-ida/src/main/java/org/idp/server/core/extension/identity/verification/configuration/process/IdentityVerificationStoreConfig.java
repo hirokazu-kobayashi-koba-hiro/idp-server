@@ -46,6 +46,10 @@ public class IdentityVerificationStoreConfig implements JsonReadable {
         : applicationDetailsUpdatePolicy;
   }
 
+  public boolean hasApplicationDetailsUpdatePolicy() {
+    return applicationDetailsUpdatePolicy != null && !applicationDetailsUpdatePolicy.isEmpty();
+  }
+
   public boolean isApplicationDetailsDeepMerge() {
     return "deep_merge".equals(applicationDetailsUpdatePolicy());
   }
@@ -65,7 +69,8 @@ public class IdentityVerificationStoreConfig implements JsonReadable {
     Map<String, Object> map = new HashMap<>();
     if (hasApplicationDetailsMappingRules())
       map.put("application_details_mapping_rules", applicationDetailsMappingRulesMap());
-    map.put("application_details_update_policy", applicationDetailsUpdatePolicy());
+    if (hasApplicationDetailsUpdatePolicy())
+      map.put("application_details_update_policy", applicationDetailsUpdatePolicy);
     return map;
   }
 }
