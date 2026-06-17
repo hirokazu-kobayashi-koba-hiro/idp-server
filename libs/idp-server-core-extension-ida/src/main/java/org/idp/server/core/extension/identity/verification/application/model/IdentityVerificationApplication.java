@@ -154,13 +154,15 @@ public class IdentityVerificationApplication {
             applyingResult.applicationContext(),
             processConfig.store().applicationDetailsMappingRules());
 
-    Map<String, IdentityVerificationApplicationProcessResult> resultMap = processes.toMap();
+    // Defensive copy: processes.toMap() exposes the internal map, so mutate a copy rather than this
+    // application's state. A put on an existing key replaces the value, so no remove is needed.
+    Map<String, IdentityVerificationApplicationProcessResult> resultMap =
+        new HashMap<>(processes.toMap());
     if (processes.contains(process.name())) {
 
       IdentityVerificationApplicationProcessResult foundResult = processes.get(process.name());
       IdentityVerificationApplicationProcessResult updatedResult =
           foundResult.updateWith(applyingResult);
-      resultMap.remove(process.name());
       resultMap.put(process.name(), updatedResult);
 
     } else {
@@ -204,13 +206,14 @@ public class IdentityVerificationApplication {
     IdentityVerificationApplicationDetails mergedApplicationDetails =
         applicationDetails.merge(context, processConfig.store().applicationDetailsMappingRules());
 
-    // TODO improve process result merge strategy (#1268)
-    Map<String, IdentityVerificationApplicationProcessResult> resultMap = processes.toMap();
+    // Defensive copy: processes.toMap() exposes the internal map, so mutate a copy rather than this
+    // application's state. A put on an existing key replaces the value, so no remove is needed.
+    Map<String, IdentityVerificationApplicationProcessResult> resultMap =
+        new HashMap<>(processes.toMap());
     if (processes.contains(process.name())) {
 
       IdentityVerificationApplicationProcessResult foundResult = processes.get(process.name());
       IdentityVerificationApplicationProcessResult updatedResult = foundResult.updateSuccess();
-      resultMap.remove(process.name());
       resultMap.put(process.name(), updatedResult);
 
     } else {
