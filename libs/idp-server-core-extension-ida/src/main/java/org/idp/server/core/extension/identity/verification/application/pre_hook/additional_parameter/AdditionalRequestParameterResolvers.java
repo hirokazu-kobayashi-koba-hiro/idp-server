@@ -46,9 +46,6 @@ public class AdditionalRequestParameterResolvers {
       Map<String, AdditionalRequestParameterResolver> additional,
       HttpRequestExecutor httpRequestExecutor) {
     this.resolvers = new ConcurrentHashMap<>();
-    ContinuousCustomerDueDiligenceParameterResolver customerDueDiligence =
-        new ContinuousCustomerDueDiligenceParameterResolver();
-    this.resolvers.put(customerDueDiligence.type(), customerDueDiligence);
     HttpRequestParameterResolver httpRequest =
         new HttpRequestParameterResolver(httpRequestExecutor);
     this.resolvers.put(httpRequest.type(), httpRequest);
@@ -77,7 +74,8 @@ public class AdditionalRequestParameterResolvers {
       // Check if condition is specified and evaluate it
       if (additionalParameterConfig.hasCondition()) {
         JsonPathWrapper jsonPath =
-            createJsonPathContext(tenant, user, currentApplication, request, requestAttributes);
+            createJsonPathContext(
+                tenant, user, currentApplication, previousApplications, request, requestAttributes);
         if (!additionalParameterConfig.condition().evaluate(jsonPath)) {
           log.debug(
               "Skipping additional parameter due to condition evaluation: type={}",
@@ -131,6 +129,7 @@ public class AdditionalRequestParameterResolvers {
       Tenant tenant,
       User user,
       IdentityVerificationApplication application,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
 
@@ -142,6 +141,12 @@ public class AdditionalRequestParameterResolvers {
     // Add application information (consistent with execution context)
     if (application != null && application.exists()) {
       context.put("application", application.toMap());
+    }
+
+    // Add past applications so conditions can branch on history (consistent with execution
+    // context: $.previous_applications). See #1592.
+    if (previousApplications != null) {
+      context.put("previous_applications", previousApplications.toList());
     }
 
     // Add request information (consistent with execution context)

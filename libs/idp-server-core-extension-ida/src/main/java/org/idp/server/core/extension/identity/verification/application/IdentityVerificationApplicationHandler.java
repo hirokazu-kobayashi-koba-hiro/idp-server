@@ -123,7 +123,12 @@ public class IdentityVerificationApplicationHandler {
 
     IdentityVerificationContextBuilder contextBuilder =
         buildContext(
-            user, currentApplication, request, requestAttributes, resolverResult.getData());
+            user,
+            currentApplication,
+            previousApplications,
+            request,
+            requestAttributes,
+            resolverResult.getData());
 
     IdentityVerificationProcessConfiguration processConfig =
         verificationConfiguration.getProcessConfig(processes);
@@ -163,6 +168,7 @@ public class IdentityVerificationApplicationHandler {
   private IdentityVerificationContextBuilder buildContext(
       User user,
       IdentityVerificationApplication currentApplication,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes,
       Map<String, Object> additionalParams) {
@@ -176,6 +182,7 @@ public class IdentityVerificationApplicationHandler {
       builder.application(currentApplication);
     }
 
+    builder.previousApplications(previousApplications);
     builder.additionalParams(additionalParams);
 
     return builder;

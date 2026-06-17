@@ -349,6 +349,20 @@ Phase 7: Response → IdentityVerificationApplyingResult を返却
 - `IdentityVerificationCallbackEntryService:209` → `mergeVerifiedClaims`
 - `IdentityVerificationEntryService:135` → `setVerifiedClaims`
 
+### 過去の申込みを後続フローで参照（previous_applications）
+
+`history.filters` に一致する過去申込みは `$.previous_applications`（配列）として、pre_hook の `verifications` / `additional_parameters` の `condition`、および execution / store / response の mapping_rules から参照可能（#1592）。各要素は `application` と同形。配列射影で値を取り出す:
+
+```json
+{ "from": "$.previous_applications[*].application_details.external_application_id", "to": "past_external_ids" }
+```
+
+露出範囲は `history.filters` の宣言で決まる（mapping で使う分だけ宣言）。
+
+**実装箇所**:
+- `IdentityVerificationContextBuilder.build()` → context に `previous_applications` を put（execution / store / response 共通）
+- pre_hook condition: `AdditionalRequestParameterResolvers` / `IdentityVerificationApplicationRequestVerifiers` の `createJsonPathContext`
+
 ### 外部 eKYC サービス連携
 
 `IdentityVerificationApplicationHttpRequestExecutor` が `HttpRequestExecutor` を使って外部 API を呼び出す:
