@@ -127,6 +127,81 @@ describe("OpenID Connect for Identity Assurance 1.0 ", () => {
 
   });
 
+  // OpenID Connect for Identity Assurance 1.0, Section 5.7 (Returning less data than requested).
+  // Test names quote the spec verbatim, as in the Section 8 block. verified_claims is requested via
+  // the `claims` parameter and returned in the ID Token (handled by VerifiedClaimsCreator).
+  //
+  // Regression for #1512. §5.7.4 (Data not matching requirements) states:
+  //   "If the respective requirement was expressed for a claim within verified_claims/verification,
+  //    the OP shall omit the whole verified_claims element."
+  //   "Otherwise, the OP shall omit the respective claim from the response."
+  //   "In both cases, the OP shall not return an error to the RP."
+  describe("Section 5.7 Returning less data than requested", () => {
+    // The default end-user (ito.ichiro@gmail.com) has stored verified_claims with
+    // verification.trust_framework = "eidas" and claims given_name/family_name/birthdate/address.
+    // middle_name and gender are intentionally NOT stored, so requests for them are "unavailable".
+    const idTokenVerifiedClaims = async (verifiedClaimsRequest) => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "verified_claims_5_7",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        claims: JSON.stringify({ id_token: { verified_claims: verifiedClaimsRequest } }),
+      });
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      // §5.7.4: "In both cases, the OP shall not return an error to the RP."
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("id_token");
+
+      const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.id_token,
+        jwks: jwksResponse.data,
+      });
+      expect(decodedIdToken.verifyResult).toBe(true);
+      return decodedIdToken.payload;
+    };
+
+    it("If the OP does not have data about a certain claim, does not understand/support the respective claim, OPs shall omit the respective claim from any corresponding ID Token or UserInfo response.", async () => {
+      // given_name is available; middle_name is not. The unavailable claim is dropped, but
+      // verified_claims is still returned because at least one requested claim is available.
+      const payload = await idTokenVerifiedClaims({
+        verification: { trust_framework: null },
+        claims: { given_name: null, middle_name: null },
+      });
+      console.log(JSON.stringify(payload.verified_claims, null, 2));
+
+      expect(payload.verified_claims).toBeDefined();
+      expect(payload.verified_claims.verification.trust_framework).toEqual("eidas");
+      expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
+      expect(payload.verified_claims.claims).not.toHaveProperty("middle_name");
+    });
+
+    it("If an element is to be omitted according to the rules above, but is a requirement for a valid response, the OP shall omit its parent element as well.", async () => {
+      // #1512: every requested verified claim is unavailable, so the claims element would be empty.
+      // claims is a requirement for a valid verified_claims, so the whole verified_claims element is
+      // omitted — it must NOT be returned as {"verification": {...}, "claims": {}}.
+      const payload = await idTokenVerifiedClaims({
+        verification: { trust_framework: null },
+        claims: { middle_name: null, gender: null },
+      });
+      console.log(JSON.stringify(payload, null, 2));
+
+      expect(payload.verified_claims).toBeUndefined();
+    });
+  });
+
   // OpenID Connect for Identity Assurance 1.0, Section 8 (OpenID Provider Metadata).
   // Test names quote the spec verbatim. See issue #1513.
   describe("Section 8 OpenID Provider Metadata", () => {
