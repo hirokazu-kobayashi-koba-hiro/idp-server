@@ -47,8 +47,4 @@ public class IdentityVerificationType {
   public boolean exists() {
     return name != null && !name.isEmpty();
   }
-
-  public boolean isContinuousCustomerDueDiligence() {
-    return "continuous-customer-due-diligence".equals(name);
-  }
 }

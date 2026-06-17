@@ -363,6 +363,18 @@ Phase 7: Response → IdentityVerificationApplyingResult を返却
 - `IdentityVerificationContextBuilder.build()` → context に `previous_applications` を put（execution / store / response 共通）
 - pre_hook condition: `AdditionalRequestParameterResolvers` / `IdentityVerificationApplicationRequestVerifiers` の `createJsonPathContext`
 
+### assert verifier（汎用 deny / #1636）
+
+pre_hook の `verifications` に `type: "assert"` を置くと、`details.assertions[]`（各 `ConditionSpec` + `message`）が**成立必須**として評価され、不成立なら拒否（400 `pre_hook_validation_failed`）。context は gate `condition` と同じ（`$.previous_applications` 含む）。既存 `ConditionSpec` を再利用＝新オペレータなし。CDD（`continuous_customer_due_diligence`）はこの汎用 verifier に supersede され削除済み。
+
+```json
+{ "type": "assert", "details": { "assertions": [
+  { "condition": {"operation": "missing", "path": "$.previous_applications[0]"}, "message": "既存の申込みが存在するため実行できません" }
+]}}
+```
+
+**実装**: `AssertionVerifier` / `AssertionPreHook` / `AssertionRule`（pre_hook 配下）。
+
 ### 外部 eKYC サービス連携
 
 `IdentityVerificationApplicationHttpRequestExecutor` が `HttpRequestExecutor` を使って外部 API を呼び出す:

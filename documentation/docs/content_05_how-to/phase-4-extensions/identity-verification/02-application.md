@@ -709,6 +709,7 @@ flowchart TD
 | `user_claim`                  | リクエスト内容とユーザークレームの一致確認。                        |
 | `application_limitation` （予定） | 申込み可能数チェック。                                   |
 | `duplicate_application`        | 同一 type に進行中（running）の申請があれば拒否。`history` と連携（[詳細](../../../content_06_developer-guide/05-configuration/identity-verification.md#history過去申込みの取得条件)）。 |
+| `assert`                       | 宣言した条件式（`ConditionSpec`）が成立しなければ拒否。`$.previous_applications` 等を含む context に対する任意の deny ルールを宣言的に書ける。 |
 | `http_request`（予定）            | 外部APIと連携して検証を行う。                              |
 
 **user_claim の詳細構造**

@@ -437,6 +437,27 @@ Pre Hookは2つのコンポーネントで構成されます：
 | `user_claim` | リクエスト内容とユーザークレームの一致確認 | `details.verification_parameters` |
 | `application_limitation` | 申込み可能数チェック（予定） | - |
 | `duplicate_application` | 重複申請チェック（同一 type の進行中申込みがあれば拒否）。[history](#history過去申込みの取得条件) と連携 | なし |
+| `assert` | 宣言した条件式が成立しなければ拒否。`$.previous_applications` 等の context に対する汎用 deny ルール | `details.assertions`（`condition` + `message`） |
+
+##### assert 検証
+
+**用途**: 任意の条件式で deny する汎用 verifier。CDD（継続的顧客デューデリジェンス）のような「過去申込みベースの判定」を、`$.previous_applications` に対する条件式として宣言的に表現できる。
+
+各アサーションの `condition`（[ConditionSpec](#history過去申込みの取得条件) と同じ条件言語）が**成立必須**で、不成立なら `message` を理由に拒否（400 `pre_hook_validation_failed`）。評価 context は gate `condition` と同じ（`$.user` / `$.application` / `$.previous_applications` / `$.request_body` / `$.request_attributes`）。
+
+```json
+{
+  "type": "assert",
+  "details": {
+    "assertions": [
+      {
+        "condition": { "operation": "missing", "path": "$.previous_applications[0]" },
+        "message": "既存の申込みが存在するため実行できません"
+      }
+    ]
+  }
+}
+```
 
 ##### process_sequence 検証
 

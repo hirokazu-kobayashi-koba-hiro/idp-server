@@ -33,10 +33,11 @@ import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
 public class IdentityVerificationProcessConfiguration implements JsonReadable {
 
-  // Must match DenyDuplicateIdentityVerificationApplicationVerifier.type(); it is the only verifier
-  // that consumes the past-application read model. When a new verifier starts consuming it, update
-  // this detection (or generalize it from the consuming-verifier declaration — see #1268 / Phase
-  // 2).
+  // duplicate_application is the only verifier whose past-application check is implicit, so when it
+  // is configured without an explicit history section we auto-add the running-of-type filter for
+  // backward compatibility. Other verifiers that consume $.previous_applications (e.g. assert)
+  // declare what they observe via history.filters explicitly, so no per-verifier detection is
+  // needed.
   private static final String DUPLICATE_APPLICATION_VERIFIER = "duplicate_application";
 
   IdentityVerificationRequestConfig request = new IdentityVerificationRequestConfig();
