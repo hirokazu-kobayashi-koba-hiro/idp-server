@@ -19,6 +19,7 @@ package org.idp.server.core.extension.identity.verification;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.type.RequestAttributes;
@@ -30,6 +31,7 @@ public class IdentityVerificationContextBuilder {
   private RequestAttributes requestAttributes;
   private User user;
   private IdentityVerificationApplication application;
+  private IdentityVerificationApplications previousApplications;
   private Map<String, Object> additionalParams;
   private Map<String, Object> executionResult;
 
@@ -60,6 +62,12 @@ public class IdentityVerificationContextBuilder {
     return this;
   }
 
+  public IdentityVerificationContextBuilder previousApplications(
+      IdentityVerificationApplications previousApplications) {
+    this.previousApplications = previousApplications;
+    return this;
+  }
+
   public IdentityVerificationContextBuilder additionalParams(Map<String, Object> params) {
     this.additionalParams = params;
     return this;
@@ -86,6 +94,13 @@ public class IdentityVerificationContextBuilder {
     }
     if (application != null && application.exists()) {
       context.put("application", application.toMap());
+    }
+    if (previousApplications != null) {
+      // Past applications fetched via the history plan, exposed so execution / store / response
+      // mapping rules can reference them as $.previous_applications (#1592). The shape matches what
+      // pre_hook verifiers already receive; what is actually fetched is governed by
+      // history.filters.
+      context.put("previous_applications", previousApplications.toList());
     }
     if (additionalParams != null) {
       context.putAll(additionalParams);

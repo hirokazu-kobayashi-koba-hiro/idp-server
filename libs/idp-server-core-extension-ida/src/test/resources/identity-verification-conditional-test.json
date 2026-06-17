@@ -48,25 +48,6 @@
           "path": "$.request_body.document_type",
           "value": "passport"
         }
-      },
-      {
-        "type": "continuous_customer_due_diligence",
-        "details": {},
-        "condition": {
-          "operation": "allOf",
-          "value": [
-            {
-              "operation": "eq",
-              "path": "$.user.role",
-              "value": "premium"
-            },
-            {
-              "operation": "gte",
-              "path": "$.user.age",
-              "value": 18
-            }
-          ]
-        }
       }
     ]
   },

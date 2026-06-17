@@ -74,7 +74,8 @@ public class IdentityVerificationApplicationRequestVerifiers {
       // Check if condition is specified and evaluate it
       if (verificationConfig.hasCondition()) {
         JsonPathWrapper jsonPath =
-            createJsonPathContext(tenant, user, currentApplication, request, requestAttributes);
+            createJsonPathContext(
+                tenant, user, currentApplication, previousApplications, request, requestAttributes);
         if (!verificationConfig.condition().evaluate(jsonPath)) {
           log.debug(
               "Skipping verification due to condition evaluation: type={}",
@@ -117,6 +118,7 @@ public class IdentityVerificationApplicationRequestVerifiers {
       Tenant tenant,
       User user,
       IdentityVerificationApplication application,
+      IdentityVerificationApplications previousApplications,
       IdentityVerificationRequest request,
       RequestAttributes requestAttributes) {
 
@@ -128,6 +130,12 @@ public class IdentityVerificationApplicationRequestVerifiers {
     // Add application information (consistent with execution context)
     if (application != null && application.exists()) {
       context.put("application", application.toMap());
+    }
+
+    // Add past applications so conditions can branch on history (consistent with execution
+    // context: $.previous_applications). See #1592.
+    if (previousApplications != null) {
+      context.put("previous_applications", previousApplications.toList());
     }
 
     // Add request information (consistent with execution context)
