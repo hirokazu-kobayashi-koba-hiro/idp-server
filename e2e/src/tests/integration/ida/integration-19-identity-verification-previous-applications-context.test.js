@@ -13,17 +13,17 @@ import { v4 as uuidv4 } from "uuid";
 /**
  * #1592: the past-application read model fetched via `history.filters` must be exposed in the
  * IdentityVerificationContext as `$.previous_applications`, so execution / store / response mapping
- * rules can reference it. This test references the external application id that lives inside each
- * past application's `application_details` and projects it across all past applications with the
- * JSONPath wildcard `$.previous_applications[*].application_details.external_application_id`.
+ * rules can reference it.
  *
- * Flow (single `apply` process, no duplicate verifier so the second apply is allowed):
- *   1. First apply stores external_application_id "EXT-AAA" into application_details; status becomes
- *      REQUESTED (counts as "running").
- *   2. Second apply: findHistory returns the first (running) application, so the shared mapping
- *      context now carries it. The response mapping projects the past external ids as a LIST.
- *      Asserting on the response proves the same context value the execution http_request body would
- *      receive resolves correctly.
+ * Two capabilities are verified independently:
+ *   1. a SCALAR list  — $.previous_applications[*].application_details.external_application_id
+ *   2. an OBJECT list — $.previous_applications[*].application_details (each element is an object)
+ *
+ * Each test uses its own configuration type so the per-user/type history is independent. The flow
+ * is: first apply stores the external id (status becomes REQUESTED = "running"); second apply finds
+ * the first application in the history and projects it. Asserting on both the response and the
+ * stored application_details (via the applications API) proves the same context the execution
+ * http_request body would draw from resolves correctly.
  */
 describe("Identity Verification: previous_applications exposed to mapping context (#1592)", () => {
   const orgId = serverConfig.organizationId;
@@ -31,8 +31,7 @@ describe("Identity Verification: previous_applications exposed to mapping contex
 
   let orgAccessToken;
   let userAccessToken;
-  const configId = uuidv4();
-  const configurationType = uuidv4();
+  const createdConfigIds = [];
 
   beforeAll(async () => {
     const orgAuthResponse = await requestToken({
@@ -58,123 +57,129 @@ describe("Identity Verification: previous_applications exposed to mapping contex
     });
     userAccessToken = userResult.accessToken;
     await registerFidoUaf({ accessToken: userAccessToken });
-
-    const configurationData = {
-      id: configId,
-      type: configurationType,
-      attributes: { enabled: true },
-      common: { auth_type: "none" },
-      processes: {
-        apply: {
-          request: {
-            schema: {
-              type: "object",
-              properties: {
-                external_application_id: { type: "string" }
-              },
-              required: ["external_application_id"]
-            }
-          },
-          // Expose past running applications of this type as $.previous_applications.
-          history: {
-            filters: [{ types: [configurationType], statuses: "running" }]
-          },
-          execution: {
-            type: "no_action"
-          },
-          // Persist the external application id into application_details so it becomes part of the
-          // past-application read model fetched on the next request. Also persist the projected
-          // list of past external ids so it can be inspected through the applications API.
-          store: {
-            application_details_mapping_rules: [
-              {
-                from: "$.request_body.external_application_id",
-                to: "external_application_id"
-              },
-              {
-                from: "$.previous_applications[*].application_details.external_application_id",
-                to: "seen_past_external_application_ids"
-              }
-            ]
-          },
-          // Project the external application id of every past application as a list. This is the
-          // same context the execution http_request body would draw from.
-          response: {
-            body_mapping_rules: [
-              {
-                from: "$.previous_applications[*].application_details.external_application_id",
-                to: "seen_past_external_application_ids"
-              }
-            ]
-          }
-        }
-      }
-    };
-
-    const createResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
-      headers: {
-        Authorization: `Bearer ${orgAccessToken}`,
-        "Content-Type": "application/json"
-      },
-      body: configurationData
-    });
-    expect(createResponse.status).toBe(201);
   });
 
   afterAll(async () => {
-    await deletion({
-      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-      headers: { Authorization: `Bearer ${orgAccessToken}` }
-    });
+    for (const id of createdConfigIds) {
+      await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${id}`,
+        headers: { Authorization: `Bearer ${orgAccessToken}` }
+      });
+    }
   });
 
-  it("projects past applications' external_application_id as a list via $.previous_applications[*]", async () => {
+  // Registers a config whose `apply` process projects past applications into application_details and
+  // the response using the given mapping rule (reused for store + response).
+  const registerConfig = async ({ configId, type, projectionRule }) => {
+    createdConfigIds.push(configId);
+    const res = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
+      headers: { Authorization: `Bearer ${orgAccessToken}`, "Content-Type": "application/json" },
+      body: {
+        id: configId,
+        type,
+        attributes: { enabled: true },
+        common: { auth_type: "none" },
+        processes: {
+          apply: {
+            request: {
+              schema: {
+                type: "object",
+                properties: { external_application_id: { type: "string" } },
+                required: ["external_application_id"]
+              }
+            },
+            history: { filters: [{ types: [type], statuses: "running" }] },
+            execution: { type: "no_action" },
+            store: {
+              application_details_mapping_rules: [
+                { from: "$.request_body.external_application_id", to: "external_application_id" },
+                projectionRule
+              ]
+            },
+            response: { body_mapping_rules: [projectionRule] }
+          }
+        }
+      }
+    });
+    expect(res.status).toBe(201);
+  };
+
+  const apply = async ({ type, externalApplicationId }) => {
     const applyUrl = serverConfig.identityVerificationApplyEndpoint
-      .replace("{type}", configurationType)
+      .replace("{type}", type)
       .replace("{process}", "apply");
-
-    // First apply: no history yet, so the projected list is empty.
-    const firstResponse = await postWithJson({
+    return postWithJson({
       url: applyUrl,
-      body: { external_application_id: "EXT-AAA" },
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${userAccessToken}`
-      }
+      body: { external_application_id: externalApplicationId },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${userAccessToken}` }
     });
-    console.log("first apply:", firstResponse.status, JSON.stringify(firstResponse.data));
-    expect(firstResponse.status).toBe(200);
-    expect(firstResponse.data.seen_past_external_application_ids ?? []).toEqual([]);
+  };
 
-    // Second apply: the first (running) application is now in the history, so its
-    // application_details.external_application_id is projected into the list.
-    const secondResponse = await postWithJson({
-      url: applyUrl,
-      body: { external_application_id: "EXT-BBB" },
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${userAccessToken}`
-      }
-    });
-    console.log("second apply:", secondResponse.status, JSON.stringify(secondResponse.data));
-    expect(secondResponse.status).toBe(200);
-    expect(secondResponse.data.seen_past_external_application_ids).toEqual(["EXT-AAA"]);
-
-    // The projected list was stored into application_details, so it is observable through the
-    // applications API.
-    const secondApplicationId = secondResponse.data.id;
-    const getResponse = await get({
+  const getApplication = async ({ type, applicationId }) => {
+    return get({
       url:
         serverConfig.identityVerificationApplicationsEndpoint +
-        `?id=${secondApplicationId}&type=${configurationType}`,
+        `?id=${applicationId}&type=${type}`,
       headers: { Authorization: `Bearer ${userAccessToken}` }
     });
-    console.log("get application:", getResponse.status, JSON.stringify(getResponse.data));
-    expect(getResponse.status).toBe(200);
-    expect(getResponse.data.list.length).toBe(1);
-    expect(
-      getResponse.data.list[0].application_details.seen_past_external_application_ids
-    ).toEqual(["EXT-AAA"]);
+  };
+
+  it("projects past applications as a SCALAR list ($.previous_applications[*]...external_application_id)", async () => {
+    const type = uuidv4();
+    await registerConfig({
+      configId: uuidv4(),
+      type,
+      projectionRule: {
+        from: "$.previous_applications[*].application_details.external_application_id",
+        to: "seen_past_external_application_ids"
+      }
+    });
+
+    const first = await apply({ type, externalApplicationId: "EXT-AAA" });
+    expect(first.status).toBe(200);
+    expect(first.data.seen_past_external_application_ids ?? []).toEqual([]);
+
+    const second = await apply({ type, externalApplicationId: "EXT-BBB" });
+    console.log("scalar second apply:", second.status, JSON.stringify(second.data));
+    expect(second.status).toBe(200);
+    expect(second.data.seen_past_external_application_ids).toEqual(["EXT-AAA"]);
+
+    const getRes = await getApplication({ type, applicationId: second.data.id });
+    expect(getRes.status).toBe(200);
+    expect(getRes.data.list[0].application_details.seen_past_external_application_ids).toEqual([
+      "EXT-AAA"
+    ]);
+  });
+
+  it("projects past applications as an OBJECT list ($.previous_applications[*].application_details)", async () => {
+    const type = uuidv4();
+    await registerConfig({
+      configId: uuidv4(),
+      type,
+      projectionRule: {
+        from: "$.previous_applications[*].application_details",
+        to: "seen_past_details"
+      }
+    });
+
+    const first = await apply({ type, externalApplicationId: "EXT-AAA" });
+    expect(first.status).toBe(200);
+    expect(first.data.seen_past_details ?? []).toEqual([]);
+
+    const second = await apply({ type, externalApplicationId: "EXT-BBB" });
+    console.log("object second apply:", second.status, JSON.stringify(second.data));
+    expect(second.status).toBe(200);
+    // Each element is a full application_details object, not a scalar.
+    expect(Array.isArray(second.data.seen_past_details)).toBe(true);
+    expect(second.data.seen_past_details.length).toBe(1);
+    expect(second.data.seen_past_details[0]).toMatchObject({ external_application_id: "EXT-AAA" });
+
+    const getRes = await getApplication({ type, applicationId: second.data.id });
+    expect(getRes.status).toBe(200);
+    const stored = getRes.data.list[0].application_details.seen_past_details;
+    expect(Array.isArray(stored)).toBe(true);
+    expect(stored.length).toBe(1);
+    expect(stored[0]).toMatchObject({ external_application_id: "EXT-AAA" });
   });
 });
