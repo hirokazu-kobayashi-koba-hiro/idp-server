@@ -152,7 +152,8 @@ public class IdentityVerificationApplication {
     IdentityVerificationApplicationDetails mergedApplicationDetails =
         applicationDetails.merge(
             applyingResult.applicationContext(),
-            processConfig.store().applicationDetailsMappingRules());
+            processConfig.store().applicationDetailsMappingRules(),
+            processConfig.store().isApplicationDetailsDeepMerge());
 
     // Defensive copy: processes.toMap() exposes the internal map, so mutate a copy rather than this
     // application's state. A put on an existing key replaces the value, so no remove is needed.
@@ -204,7 +205,10 @@ public class IdentityVerificationApplication {
         verificationConfiguration.getProcessConfig(process);
 
     IdentityVerificationApplicationDetails mergedApplicationDetails =
-        applicationDetails.merge(context, processConfig.store().applicationDetailsMappingRules());
+        applicationDetails.merge(
+            context,
+            processConfig.store().applicationDetailsMappingRules(),
+            processConfig.store().isApplicationDetailsDeepMerge());
 
     // Defensive copy: processes.toMap() exposes the internal map, so mutate a copy rather than this
     // application's state. A put on an existing key replaces the value, so no remove is needed.

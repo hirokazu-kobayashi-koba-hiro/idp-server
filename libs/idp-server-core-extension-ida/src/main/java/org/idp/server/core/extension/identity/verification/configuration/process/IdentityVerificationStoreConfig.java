@@ -26,6 +26,10 @@ import org.idp.server.platform.mapper.MappingRule;
 public class IdentityVerificationStoreConfig implements JsonReadable {
 
   List<MappingRule> applicationDetailsMappingRules = new ArrayList<>();
+  // How this process's mapping result is merged into application_details. Mirrors
+  // result.verified_claims_update_policy: "merge" (default, top-level putAll) or "deep_merge"
+  // (recursive merge so sibling subkeys under a shared parent are preserved). (#1637)
+  String applicationDetailsUpdatePolicy;
 
   public IdentityVerificationStoreConfig() {}
 
@@ -34,6 +38,20 @@ public class IdentityVerificationStoreConfig implements JsonReadable {
       return new ArrayList<>();
     }
     return applicationDetailsMappingRules;
+  }
+
+  public String applicationDetailsUpdatePolicy() {
+    return applicationDetailsUpdatePolicy == null || applicationDetailsUpdatePolicy.isEmpty()
+        ? "merge"
+        : applicationDetailsUpdatePolicy;
+  }
+
+  public boolean hasApplicationDetailsUpdatePolicy() {
+    return applicationDetailsUpdatePolicy != null && !applicationDetailsUpdatePolicy.isEmpty();
+  }
+
+  public boolean isApplicationDetailsDeepMerge() {
+    return "deep_merge".equals(applicationDetailsUpdatePolicy());
   }
 
   public List<Map<String, Object>> applicationDetailsMappingRulesMap() {
@@ -51,6 +69,8 @@ public class IdentityVerificationStoreConfig implements JsonReadable {
     Map<String, Object> map = new HashMap<>();
     if (hasApplicationDetailsMappingRules())
       map.put("application_details_mapping_rules", applicationDetailsMappingRulesMap());
+    if (hasApplicationDetailsUpdatePolicy())
+      map.put("application_details_update_policy", applicationDetailsUpdatePolicy);
     return map;
   }
 }
