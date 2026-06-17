@@ -17,8 +17,8 @@
 package org.idp.server.core.extension.identity.verification.application.pre_hook.verification;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationProcess;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationType;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
@@ -29,6 +29,8 @@ import org.idp.server.core.extension.identity.verification.configuration.Identit
 import org.idp.server.core.extension.identity.verification.configuration.IdentityVerificationConfiguration;
 import org.idp.server.core.extension.identity.verification.io.IdentityVerificationRequest;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.condition.ConditionOperation;
+import org.idp.server.platform.condition.ConditionOperationEvaluator;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -72,9 +74,38 @@ public class UserClaimVerifier implements IdentityVerificationApplicationRequest
     for (UserClaimVerificationRule userClaimVerificationRule : userClaimVerificationRules) {
       Object requestValue = requestJsonPath.readRaw(userClaimVerificationRule.requestJsonPath());
       Object userValue = userJsonPath.readRaw(userClaimVerificationRule.userClaimJsonPath());
-      if (!Objects.equals(requestValue, userValue)) {
+
+      // operation defaults to eq -> ConditionOperationEvaluator.EQ delegates to Objects.equals,
+      // preserving the original exact-match behavior for rules without an operation.
+      String operationValue =
+          userClaimVerificationRule.hasOperation() ? userClaimVerificationRule.operation() : "eq";
+      ConditionOperation operation = ConditionOperation.from(operationValue);
+
+      // An unknown operation is a tenant misconfiguration, not a request problem. Fail loudly with
+      // a
+      // distinct error and error-level log rather than silently always-failing every request.
+      if (operation == ConditionOperation.UNKNOWN) {
+        log.error(
+            "User claim verification misconfigured: unknown operation={}, request_path={}, user_path={}",
+            operationValue,
+            userClaimVerificationRule.requestJsonPath(),
+            userClaimVerificationRule.userClaimJsonPath());
+        errors.add(
+            String.format(
+                "User claim verification failed. unknown operation: %s, request:%s, user:%s",
+                operationValue,
+                userClaimVerificationRule.requestJsonPath(),
+                userClaimVerificationRule.userClaimJsonPath()));
+        continue;
+      }
+
+      // The rule asserts the comparison must hold (e.g. in -> requestValue is a member of the user
+      // collection). A null/absent requestValue does not satisfy in/nin/contains, so an unheld key
+      // is rejected as 400 pre_hook_validation_failed rather than silently passing.
+      if (!ConditionOperationEvaluator.evaluate(requestValue, operation, userValue)) {
         log.warn(
-            "User claim mismatch: request_path={}, user_path={}, request_value={}, user_value={}",
+            "User claim mismatch: operation={}, request_path={}, user_path={}, request_value={}, user_value={}",
+            operationValue,
             userClaimVerificationRule.requestJsonPath(),
             userClaimVerificationRule.userClaimJsonPath(),
             maskSensitiveValue(requestValue),
@@ -104,6 +135,11 @@ public class UserClaimVerifier implements IdentityVerificationApplicationRequest
       if (str.length() > 50) {
         return "***";
       }
+    }
+    // membership operators compare against a user collection (e.g. an array of ids that may carry
+    // PII); summarize it by size rather than dumping the elements into logs.
+    if (value instanceof Collection<?> collection) {
+      return "[collection size=" + collection.size() + "]";
     }
     return value;
   }

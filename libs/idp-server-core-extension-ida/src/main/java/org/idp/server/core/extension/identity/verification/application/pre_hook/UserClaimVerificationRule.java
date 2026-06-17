@@ -19,6 +19,7 @@ package org.idp.server.core.extension.identity.verification.application.pre_hook
 import org.idp.server.platform.json.JsonReadable;
 
 public class UserClaimVerificationRule implements JsonReadable {
+  String operation;
   String requestJsonPath;
   String userClaimJsonPath;
 
@@ -27,6 +28,26 @@ public class UserClaimVerificationRule implements JsonReadable {
   public UserClaimVerificationRule(String requestJsonPath, String userClaimJsonPath) {
     this.requestJsonPath = requestJsonPath;
     this.userClaimJsonPath = userClaimJsonPath;
+  }
+
+  public UserClaimVerificationRule(
+      String operation, String requestJsonPath, String userClaimJsonPath) {
+    this.operation = operation;
+    this.requestJsonPath = requestJsonPath;
+    this.userClaimJsonPath = userClaimJsonPath;
+  }
+
+  /**
+   * Comparison operator applied to {@code requestValue} (target) against {@code userValue}
+   * (expected). Defaults to {@code eq} when omitted, preserving the original exact-match behavior.
+   * See {@link org.idp.server.platform.condition.ConditionOperation}.
+   */
+  public String operation() {
+    return operation;
+  }
+
+  public boolean hasOperation() {
+    return operation != null && !operation.isEmpty();
   }
 
   public String requestJsonPath() {
