@@ -19,7 +19,6 @@ package org.idp.server.platform.oauth;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import org.idp.server.platform.http.HttpNetworkErrorException;
 import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.http.SsrfProtectedHttpClient;
 import org.idp.server.platform.json.JsonConverter;
@@ -65,14 +64,11 @@ public class ResourceOwnerPasswordCredentialsAuthorizationResolver
     log.debug("Response status: {}", response.statusCode());
     log.debug("Response body: {}", response.body());
 
-    if (response.statusCode() >= 400 && response.statusCode() < 500) {
-      throw new HttpNetworkErrorException(
-          "Token request failed: " + response.statusCode(), new RuntimeException(response.body()));
-    }
-
-    if (response.statusCode() >= 500) {
-      throw new HttpNetworkErrorException(
-          "Token request failed: " + response.statusCode(), new RuntimeException(response.body()));
+    // The token endpoint responded but rejected the request (e.g. invalid client_id) or failed
+    // upstream. Surface a dedicated exception so the boundary returns a meaningful external-service
+    // error instead of a generic 500. See #1384.
+    if (response.statusCode() >= 400) {
+      throw new OAuthAuthorizationException(response.statusCode(), response.body());
     }
 
     JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(response.body());
