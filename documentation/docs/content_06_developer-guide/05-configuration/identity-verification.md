@@ -508,12 +508,55 @@ Pre Hookは2つのコンポーネントで構成されます：
 
 | フィールド | 説明 |
 |----------|------|
+| `operation` | 比較演算子（省略時 `eq`）。`request_json_path` の値（target）を `user_claim_json_path` の値（expected）と比較する。詳細は下記 |
 | `request_json_path` | リクエストから値を取得するJSONPath（例: `$.mobile_phone_number`） |
 | `user_claim_json_path` | ユーザークレームから値を取得するキー（例: `phone_number`） |
 
 **動作**:
 - リクエストの`mobile_phone_number`とユーザーの`phone_number`を比較
 - 一致しない場合はエラー
+
+**`operation`（比較演算子）**:
+
+`operation` を省略すると `eq`（完全一致）となり、従来どおりの挙動です（後方互換）。配列メンバーシップ等を表現したい場合は演算子を指定します。
+
+| operation | 意味 | 成立条件（成立しなければ `400`） |
+|-----------|------|------|
+| `eq`（既定） | 完全一致 | request値 = user値 |
+| `ne` | 不一致 | request値 ≠ user値 |
+| `in` | メンバーシップ | request値が user配列（`[*]`）に**含まれる** |
+| `nin` | 非メンバーシップ | request値が user配列に**含まれない** |
+| `contains` | 包含 | request集合（配列）が user値を含む |
+| `gt` / `gte` / `lt` / `lte` | 数値比較 | request値 と user値 の大小 |
+| `exists` / `missing` | 存在 | request値が 非null / null |
+| `regex` | 正規表現 | request値（文字列）が user値のパターンに一致 |
+
+> 演算子の実体は `ConditionOperation`（mapping rules / transition と共通）。
+
+**配列メンバーシップ例**（リクエストで指定したキーがユーザーの保有配列に含まれることを担保）:
+
+```json
+{
+  "type": "user_claim",
+  "details": {
+    "verification_parameters": [
+      {
+        "operation": "in",
+        "request_json_path": "$.id",
+        "user_claim_json_path": "$.custom_properties.authentication_devices[*].id"
+      }
+    ]
+  }
+}
+```
+
+- `user_claim_json_path` は `[*]` を含む JSONPath で**配列を取得**する（Jayway の indefinite path は配列を返す）。
+- ユーザーが保有しないキーを指定したリクエストは `400 pre_hook_validation_failed` で弾かれる（`remove` 等のマッチ0件 no-op によるサイレント成功を防ぐ）。
+
+**注意**:
+- **null / 欠落**: `in`/`nin`/`contains` は request値が null / 欠落のとき成立せず**失敗**（=未指定キーを弾く意図）。`eq` の挙動は不変（`Objects.equals`）。
+- **型**: `in`/`eq` は型強制を行わない（`Objects.equals` / `Collection.contains`）。数値キーは request と user で型を揃えること。文字列キー（id 等）は問題なし。
+- **未知の operation**: タイポ等で未知の演算子を指定すると設定不正として失敗し、`unknown operation` を含むエラー＋ error ログを出す（全リクエストをサイレントに弾かない）。
 
 **エラー例**:
 ```json
@@ -528,6 +571,7 @@ Pre Hookは2つのコンポーネントで構成されます：
 **ユースケース**:
 - 口座開設時に登録済みメールアドレスとの一致を確認
 - 電話番号認証済みユーザーのみ申込み可能にする
+- 申込みで指定した配列要素（デバイス等）のキーがユーザーの保有要素に含まれることを担保（`in`）
 
 ---
 
