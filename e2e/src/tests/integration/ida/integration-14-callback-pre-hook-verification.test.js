@@ -299,4 +299,42 @@ describe("Identity Verification - callback pre_hook verification (#1522)", () =>
     const status = await getApplicationStatus({ type, accessToken, applicationId });
     expect(status).toBe("approved");
   });
+
+  // The callback endpoint is public; its only gate is the configured Basic auth. A callback with
+  // wrong credentials must be rejected (not silently processed). (#1186)
+  it("rejects a callback presenting invalid Basic credentials", async () => {
+    const { accessToken } = await createTestUser();
+    const type = uuidv4();
+    const basicAuth = { username: "cb_authz_user", password: "cb_authz_password001" };
+    await registerConfiguration(
+      buildConfig({
+        configId: uuidv4(),
+        type,
+        basicAuth,
+        dependencies: { required_processes: [], allow_retry: true }
+      })
+    );
+
+    const externalRef = uuidv4();
+    await apply({ type, accessToken, externalRef });
+
+    const callbackUrl = serverConfig.identityVerificationApplicationsPublicCallbackEndpoint
+      .replace("{type}", type)
+      .replace("{callbackName}", "callback-result");
+    const response = await callProcess({
+      url: callbackUrl,
+      headers: {
+        "Content-Type": "application/json",
+        ...createBasicAuthHeader({ username: basicAuth.username, password: "wrong-password" })
+      },
+      body: { application_id: externalRef, result: "ok" }
+    });
+
+    // The server enforces the configured Basic auth and rejects the callback as an invalid request
+    // (400 invalid_request) rather than processing it. (Note: rejection is modeled as request
+    // validation, not a 401 challenge.)
+    expect(response.status).toBe(400);
+    expect(response.data).toHaveProperty("error", "invalid_request");
+    expect(JSON.stringify(response.data)).toContain("basic authentication");
+  });
 });
