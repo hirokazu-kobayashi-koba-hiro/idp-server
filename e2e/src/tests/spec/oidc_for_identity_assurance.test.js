@@ -200,6 +200,46 @@ describe("OpenID Connect for Identity Assurance 1.0 ", () => {
 
       expect(payload.verified_claims).toBeUndefined();
     });
+
+    // §5.7.4 value/values constraint enforcement (#1624). The user holds trust_framework "eidas"
+    // and given_name "Sarah" / family_name "Meredyth".
+    it("If the respective requirement was expressed for a claim within verified_claims/verification, the OP shall omit the whole verified_claims element.", async () => {
+      // RP constrains verification.trust_framework to "gold", but the user has "eidas" → the
+      // verification requirement is unmet, so the whole verified_claims is omitted.
+      const payload = await idTokenVerifiedClaims({
+        verification: { trust_framework: { value: "gold" } },
+        claims: { given_name: null },
+      });
+      console.log(JSON.stringify(payload, null, 2));
+
+      expect(payload.verified_claims).toBeUndefined();
+    });
+
+    it("Otherwise, the OP shall omit the respective claim from the response.", async () => {
+      // RP constrains given_name to "Bob" (mismatch → dropped), family_name is unconstrained (kept).
+      // The mismatch is on a claims element, so only that claim is omitted; verified_claims remains.
+      const payload = await idTokenVerifiedClaims({
+        verification: { trust_framework: null },
+        claims: { given_name: { value: "Bob" }, family_name: null },
+      });
+      console.log(JSON.stringify(payload.verified_claims, null, 2));
+
+      expect(payload.verified_claims).toBeDefined();
+      expect(payload.verified_claims.claims.family_name).toEqual("Meredyth");
+      expect(payload.verified_claims.claims).not.toHaveProperty("given_name");
+    });
+
+    it("returns the claim when its value/values constraint is satisfied", async () => {
+      const payload = await idTokenVerifiedClaims({
+        verification: { trust_framework: { value: "eidas" } },
+        claims: { given_name: { values: ["Hanako", "Sarah"] } },
+      });
+      console.log(JSON.stringify(payload.verified_claims, null, 2));
+
+      expect(payload.verified_claims).toBeDefined();
+      expect(payload.verified_claims.verification.trust_framework).toEqual("eidas");
+      expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
+    });
   });
 
   // OpenID Connect for Identity Assurance 1.0, Section 8 (OpenID Provider Metadata).
