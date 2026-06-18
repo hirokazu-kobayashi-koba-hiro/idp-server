@@ -116,6 +116,8 @@ public enum DefaultSecurityEventType {
   legacy_authentication_failure("Legacy authentication failed"),
   external_token_authentication_success("External token authentication succeeded"),
   external_token_authentication_failure("External token authentication failed"),
+  external_api_authentication_success("External API authentication succeeded"),
+  external_api_authentication_failure("External API authentication failed"),
 
   // Federation (social login)
   federation_request("Redirect to external IdP was initiated"),
