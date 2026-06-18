@@ -33,8 +33,9 @@ import org.idp.server.platform.log.LoggerWrapper;
  *
  * <h3>Returning less data than requested (§5.7)</h3>
  *
- * <p>Only data the user actually has is returned, and the element is omitted entirely when it
- * cannot be formed validly — never returned as a partial/empty shell:
+ * <p>Only data the user actually has is returned. The whole element is omitted only when {@code
+ * verification} cannot be formed validly; a missing/empty {@code claims} object is a valid
+ * response:
  *
  * <ul>
  *   <li><b>§5.7.2 Unavailable data</b>: each requested claim is included only when present on the
@@ -44,8 +45,12 @@ import org.idp.server.platform.log.LoggerWrapper;
  *       element (or a missing required {@code trust_framework}) omits the whole {@code
  *       verified_claims}; a mismatch on a {@code claims} element omits just that claim. The OP does
  *       not return an error.
- *   <li><b>§5.7.5 Omitting elements</b>: when no requested claim is available the {@code claims}
- *       object would be empty; since {@code claims} is required, the whole element is omitted.
+ *   <li><b>§5.7.5 Omitting elements</b>: omission cascades to the parent only when the omitted
+ *       element is required for a <i>valid</i> response. An empty {@code claims} object is valid
+ *       per the IDA schema ([IDA-verified-claims] §5.3, "the claims element may be empty"), so
+ *       dropping all requested claims yields {@code verification} + an empty {@code claims} object
+ *       — NOT a whole omission. Both delivery channels (ID Token and UserInfo) are treated
+ *       identically; the spec draws no distinction (§5.2).
  * </ul>
  *
  * <p>{@code trust_framework} is the REQUIRED floor of {@code verification}: returned whenever the
@@ -78,11 +83,15 @@ public class VerifiedClaimsAssembler {
     Map<String, Object> claims =
         selectClaims(requested.claimsNodeWrapper(), userBlock(userVerifiedClaims, "claims"));
 
-    // §5.7.4 / §5.7.5: when no requested claim is available, omit the whole verified_claims rather
-    // than emit an empty claims object (and leak verification metadata).
-    if (claims.isEmpty()) {
-      return result;
-    }
+    // An empty claims object is NOT a reason to omit verified_claims. The IDA schema
+    // ([IDA-verified-claims] §5.3 "Claims element") states the claims element may be empty, so when
+    // every requested claim is dropped (§5.7.2 unavailable / §5.7.4 claims-branch mismatch) the
+    // valid response is verification + an empty claims object. §5.7.5 cascades omission to the
+    // parent only when the omitted element is *required* for a valid response, which an empty
+    // claims
+    // object is not. Whole-omission therefore happens only below, when verification itself cannot
+    // be
+    // formed validly. (#1628)
 
     Map<String, Object> verification =
         selectVerification(

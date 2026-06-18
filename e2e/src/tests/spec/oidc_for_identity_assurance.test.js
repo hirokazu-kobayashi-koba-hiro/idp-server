@@ -188,15 +188,19 @@ describe("OpenID Connect for Identity Assurance 1.0 ", () => {
       expect(idTokenPayload.verified_claims).toBeUndefined();
     });
 
-    it("applies the §5.7 value constraint on the UserInfo path (claim dropped → whole element omitted)", async () => {
-      // given_name is "Sarah"; a value:"Bob" constraint fails, and with no other matching claim the
-      // whole verified_claims is omitted (§5.7.4/§5.7.5) — same engine as the ID Token path.
+    it("returns verified_claims with an empty claims object when the only requested claim fails its value constraint (UserInfo)", async () => {
+      // given_name is "Sarah"; a value:"Bob" constraint fails (§5.7.4 claims branch → the claim is
+      // dropped). The IDA verified_claims schema permits an empty claims object ([IDA-verified-claims]
+      // §5.3), so verification is still returned with an empty claims — NOT a whole omission. Same
+      // engine as the ID Token path.
       const { userinfo } = await userinfoVerifiedClaims({
         verification: { trust_framework: null },
         claims: { given_name: { value: "Bob" } },
       });
 
-      expect(userinfo.verified_claims).toBeUndefined();
+      expect(userinfo.verified_claims).toBeDefined();
+      expect(userinfo.verified_claims.verification.trust_framework).toEqual("eidas");
+      expect(userinfo.verified_claims.claims).toEqual({});
     });
   });
 
@@ -261,17 +265,21 @@ describe("OpenID Connect for Identity Assurance 1.0 ", () => {
       expect(payload.verified_claims.claims).not.toHaveProperty("middle_name");
     });
 
-    it("If an element is to be omitted according to the rules above, but is a requirement for a valid response, the OP shall omit its parent element as well.", async () => {
-      // #1512: every requested verified claim is unavailable, so the claims element would be empty.
-      // claims is a requirement for a valid verified_claims, so the whole verified_claims element is
-      // omitted — it must NOT be returned as {"verification": {...}, "claims": {}}.
+    it("returns verified_claims with an empty claims object when all requested claims are unavailable ([IDA-verified-claims] §5.3: the claims element may be empty)", async () => {
+      // middle_name and gender are not stored, so both are dropped individually (§5.7.2). The claims
+      // object is then empty, which the IDA verified_claims schema explicitly permits (§5.3: "the
+      // claims element may be empty"), so verified_claims is still returned with verification — NOT
+      // omitted as a whole. §5.7.5 cascades omission to the parent only when the omitted element is
+      // required for a valid response, which an empty claims object is not.
       const payload = await idTokenVerifiedClaims({
         verification: { trust_framework: null },
         claims: { middle_name: null, gender: null },
       });
       console.log(JSON.stringify(payload, null, 2));
 
-      expect(payload.verified_claims).toBeUndefined();
+      expect(payload.verified_claims).toBeDefined();
+      expect(payload.verified_claims.verification.trust_framework).toEqual("eidas");
+      expect(payload.verified_claims.claims).toEqual({});
     });
 
     // §5.7.4 value/values constraint enforcement (#1624). The user holds trust_framework "eidas"

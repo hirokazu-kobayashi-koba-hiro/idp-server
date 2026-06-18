@@ -79,6 +79,12 @@ class UserinfoVerifiedClaimsCreatorTest {
     return (Map<String, Object>) structure.get("claims");
   }
 
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> verificationOf(Map<String, Object> result) {
+    Map<String, Object> structure = (Map<String, Object>) result.get("verified_claims");
+    return (Map<String, Object>) structure.get("verification");
+  }
+
   @Test
   void emitsVerifiedClaimsReadFromTheGrant() {
     User user = userWith(Map.of("trust_framework", "eidas"), Map.of("given_name", "Taro"));
@@ -96,8 +102,9 @@ class UserinfoVerifiedClaimsCreatorTest {
 
   @Test
   void enforcesValueConstraintThroughTheSharedAssembler() {
-    // Proves the assembler is wired: a values constraint not satisfied by the user drops the claim,
-    // and with no other claim the whole verified_claims is omitted (§5.7.4/§5.7.5).
+    // Proves the assembler is wired: a value constraint not satisfied by the user drops the claim
+    // (§5.7.4 claims branch). The IDA schema permits an empty claims object ([IDA-verified-claims]
+    // §5.3), so verification + an empty claims object is returned — not a whole omission.
     User user = userWith(Map.of("trust_framework", "eidas"), Map.of("given_name", "Taro"));
     GrantUserinfoClaims userinfoClaims =
         grantUserinfoClaimsRequesting(
@@ -107,7 +114,10 @@ class UserinfoVerifiedClaimsCreatorTest {
 
     Map<String, Object> result = creator.create(user, grant, null, null);
 
-    assertFalse(result.containsKey("verified_claims"));
+    assertTrue(result.containsKey("verified_claims"));
+    assertEquals("eidas", verificationOf(result).get("trust_framework"));
+    assertTrue(
+        claimsOf(result).isEmpty(), "claim failing its value constraint dropped; claims empty");
   }
 
   @Test
