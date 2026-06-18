@@ -140,6 +140,9 @@
       "sripp",
       "eid"
     ],
+    "documents_check_methods_supported": [
+      "vpip"
+    ],
     "electronic_records_supported": [
       "bank_account",
       "utility_statement"
