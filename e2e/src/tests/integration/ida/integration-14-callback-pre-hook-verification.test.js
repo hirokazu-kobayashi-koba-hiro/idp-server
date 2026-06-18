@@ -366,9 +366,8 @@ describe("Identity Verification - callback pre_hook verification (#1522)", () =>
       body: { application_id: externalRef }
     });
 
-    // the callback surfaces the downstream 502, not a flattened 400 (#1613)
+    // the callback surfaces the downstream 502 instead of a flattened 400 (#1613)
     expect(response.status).toBe(502);
-    expect(response.status).not.toBe(400);
   });
 
   // The callback endpoint is public; its only gate is the configured Basic auth. A callback with

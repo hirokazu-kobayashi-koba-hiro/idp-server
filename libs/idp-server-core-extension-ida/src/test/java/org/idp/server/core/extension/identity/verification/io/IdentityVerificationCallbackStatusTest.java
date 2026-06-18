@@ -17,6 +17,7 @@
 package org.idp.server.core.extension.identity.verification.io;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +68,6 @@ class IdentityVerificationCallbackStatusTest {
     IdentityVerificationCallbackStatus resolved =
         IdentityVerificationCallbackStatus.fromStatusCode(502);
     assertEquals(502, resolved.statusCode());
-    org.junit.jupiter.api.Assertions.assertNotEquals(
-        IdentityVerificationCallbackStatus.CLIENT_ERROR, resolved);
+    assertNotEquals(IdentityVerificationCallbackStatus.CLIENT_ERROR, resolved);
   }
 }
