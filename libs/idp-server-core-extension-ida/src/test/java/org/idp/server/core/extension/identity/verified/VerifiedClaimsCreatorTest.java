@@ -21,9 +21,18 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
+import org.idp.server.core.openid.grant_management.grant.AuthorizationGrantBuilder;
+import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
+import org.idp.server.core.openid.grant_management.grant.RequestedVerifiedClaims;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.id_token.RequestedClaimsPayload;
+import org.idp.server.core.openid.oauth.type.oauth.GrantType;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -55,7 +64,21 @@ class VerifiedClaimsCreatorTest {
   }
 
   private Map<String, Object> create(User user, RequestedClaimsPayload payload) {
-    return creator.create(user, null, null, null, payload, null, null);
+    // Production persists the id_token.verified_claims request in the grant (the consent record),
+    // and the creator reads it from there. Build a grant carrying that request.
+    GrantIdTokenClaims idTokenClaims =
+        new GrantIdTokenClaims(
+            Set.of(), RequestedVerifiedClaims.of(payload.idToken().verifiedClaims()));
+    AuthorizationGrant grant =
+        new AuthorizationGrantBuilder(
+                new TenantIdentifier("11111111-1111-1111-1111-111111111111"),
+                new RequestedClientId("client"),
+                GrantType.authorization_code,
+                new Scopes(Set.of("openid")))
+            .add(user)
+            .add(idTokenClaims)
+            .build();
+    return creator.create(user, null, grant, null, payload, null, null);
   }
 
   @SuppressWarnings("unchecked")

@@ -312,7 +312,7 @@ UserInfoレスポンス:
 
 両経路はどちらもトップレベルの `verified_claims` キーを生成するため、1リクエストで両方が指定された場合は **`claims` パラメータ（標準）を優先**し、`verified_claims:*` スコープ（独自拡張）側は出力しない。`claims` パラメータはリクエスト単位で明示的かつ粒度の細かい要求方式であり、こちらを正とする（両方を同時指定する RP は実運用では想定していない）。
 
-構造仕様・設定追従・過去構造からの移行は [verified_claims 出力構造の変更（利用者対応）](../../content_09_project/verified-claims-structure-change.md) を参照。
+構造仕様・設定追従・過去構造からの移行は [verified_claims 出力構造の変更（利用者対応）](../../content_09_project/v0.11.0-verified-claims-impact.md) を参照。
 
 ---
 
