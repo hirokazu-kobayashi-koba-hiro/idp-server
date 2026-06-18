@@ -300,6 +300,77 @@ describe("Identity Verification - callback pre_hook verification (#1522)", () =>
     expect(status).toBe("approved");
   });
 
+  // #1613: when a callback `execution` (http_request) hits a downstream failure, the callback must
+  // report that real status (e.g. 502) instead of collapsing every error to 400. Before the fix the
+  // status code was discarded and CLIENT_ERROR (400) was returned unconditionally, masking IdP-side
+  // downstream outages as "your request is invalid" to the calling eKYC service.
+  it("returns the downstream status (502) when the callback execution fails, not a blanket 400", async () => {
+    const { accessToken } = await createTestUser();
+    const type = uuidv4();
+    const basicAuth = { username: "cb_5xx_user", password: "cb_5xx_password001" };
+    await registerConfiguration({
+      "id": uuidv4(),
+      "type": type,
+      "attributes": { "enabled": true },
+      "common": { "auth_type": "none", "callback_application_id_param": "application_id" },
+      "processes": {
+        "apply": {
+          "request": {
+            "schema": {
+              "type": "object",
+              "required": ["external_ref"],
+              "properties": { "external_ref": { "type": "string" } }
+            }
+          },
+          "execution": { "type": "no_action" },
+          "store": {
+            "application_details_mapping_rules": [
+              { "from": "$.request_body", "to": "*" },
+              { "from": "$.request_body.external_ref", "to": "application_id" }
+            ]
+          }
+        },
+        "callback-result": {
+          "request": {
+            "basic_auth": basicAuth,
+            "schema": {
+              "type": "object",
+              "required": ["application_id"],
+              "properties": { "application_id": { "type": "string" } }
+            }
+          },
+          // execution targets the mock's error endpoint, which returns 502 for body.status="502"
+          "execution": {
+            "type": "http_request",
+            "http_request": {
+              "url": `${mockApiBaseUrl}/e2e/error-responses`,
+              "method": "POST",
+              "auth_type": "none",
+              "header_mapping_rules": [{ "static_value": "application/json", "to": "Content-Type" }],
+              "body_mapping_rules": [{ "static_value": "502", "to": "status" }]
+            }
+          }
+        }
+      }
+    });
+
+    const externalRef = uuidv4();
+    await apply({ type, accessToken, externalRef });
+
+    const callbackUrl = serverConfig.identityVerificationApplicationsPublicCallbackEndpoint
+      .replace("{type}", type)
+      .replace("{callbackName}", "callback-result");
+    const response = await callProcess({
+      url: callbackUrl,
+      headers: { "Content-Type": "application/json", ...createBasicAuthHeader(basicAuth) },
+      body: { application_id: externalRef }
+    });
+
+    // the callback surfaces the downstream 502, not a flattened 400 (#1613)
+    expect(response.status).toBe(502);
+    expect(response.status).not.toBe(400);
+  });
+
   // The callback endpoint is public; its only gate is the configured Basic auth. A callback with
   // wrong credentials must be rejected (not silently processed). (#1186)
   it("rejects a callback presenting invalid Basic credentials", async () => {

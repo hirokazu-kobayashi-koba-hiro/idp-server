@@ -38,6 +38,19 @@ public class IdentityVerificationCallbackResponse {
         IdentityVerificationCallbackStatus.SERVER_ERROR, response);
   }
 
+  /**
+   * Builds a callback response whose status is resolved from a downstream/error status code, so a
+   * failed callback execution reports the real cause (e.g. an external API 502) instead of a
+   * blanket 400. pre_hook validation errors carry 400 and stay {@code CLIENT_ERROR}; execution
+   * failures carry their own 4xx/5xx. Mirrors {@link
+   * IdentityVerificationApplicationResponse#ERROR(int, Map)}. (#1613)
+   */
+  public static IdentityVerificationCallbackResponse fromStatusCode(
+      int statusCode, Map<String, Object> response) {
+    return new IdentityVerificationCallbackResponse(
+        IdentityVerificationCallbackStatus.fromStatusCode(statusCode), response);
+  }
+
   private IdentityVerificationCallbackResponse(
       IdentityVerificationCallbackStatus status, Map<String, Object> response) {
     this.status = status;
