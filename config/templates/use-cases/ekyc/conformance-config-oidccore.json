@@ -1,0 +1,81 @@
+{
+  "alias": "${CONFORMANCE_ALIAS}",
+  "description": "OpenID for Identity Assurance (eKYC) certification config for the local idp-server eKYC use-case tenant. Use with the 'OpenID for IDA using OpenID Connect Core' test plan (ekyc-test-plan-oidccore) and ClientAuthType=client_secret_post. The client matches the use-case client registered by setup.sh. Generated from config/templates/use-cases/ekyc/conformance-config-oidccore.json by setup.sh.",
+  "server": {
+    "discoveryUrl": "${BASE_URL}/${PUBLIC_TENANT_ID}/.well-known/openid-configuration"
+  },
+  "client": {
+    "client_id": "${CLIENT_ID}",
+    "client_secret": "${CLIENT_SECRET}",
+    "scope": "openid"
+  },
+  "ekyc": {
+    "verified_claims_request_list": {
+      "id_token": {
+        "verified_claims": {
+          "verification": {
+            "trust_framework": {
+              "value": "eidas"
+            }
+          },
+          "claims": {
+            "given_name": null,
+            "family_name": null
+          }
+        }
+      },
+      "userinfo": {
+        "verified_claims": {
+          "verification": {
+            "trust_framework": {
+              "value": "eidas"
+            }
+          },
+          "claims": {
+            "given_name": null,
+            "family_name": null,
+            "birthdate": null
+          }
+        }
+      }
+    },
+    "userinfo": {
+      "sub": "f647f683-e46d-43bd-bc76-526d93429b86",
+      "verified_claims": {
+        "verification": {
+          "trust_framework": "eidas",
+          "evidence": [
+            {
+              "type": "document",
+              "check_details": [
+                {
+                  "check_method": "vpip"
+                }
+              ],
+              "document_details": {
+                "type": "idcard"
+              }
+            }
+          ]
+        },
+        "claims": {
+          "given_name": "Given001",
+          "family_name": "Family001",
+          "birthdate": "1950-01-01"
+        }
+      }
+    },
+    "expected_verified_claims": {
+      "f647f683-e46d-43bd-bc76-526d93429b86": {
+        "verification": {
+          "trust_framework": "eidas"
+        },
+        "claims": {
+          "given_name": "Given001",
+          "family_name": "Family001",
+          "birthdate": "1950-01-01"
+        }
+      }
+    }
+  }
+}

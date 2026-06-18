@@ -128,6 +128,12 @@ ID_TOKEN_DURATION="${ID_TOKEN_DURATION:-3600}"
 REFRESH_TOKEN_DURATION="${REFRESH_TOKEN_DURATION:-86400}"
 REGISTRATION_REQUIRED_FIELDS="${REGISTRATION_REQUIRED_FIELDS:-email,password,name}"
 
+# OIDF conformance test settings
+# CONFORMANCE_ALIAS must match the "alias" used by the generated conformance config,
+# because the OpenID conformance suite callback URL is /test/a/<alias>/callback.
+CONFORMANCE_ALIAS="${CONFORMANCE_ALIAS:-idp-server-ekyc-usecase-oidccore-local}"
+CONFORMANCE_REDIRECT_URI="${CONFORMANCE_REDIRECT_URI:-https://localhost.emobix.co.uk:8443/test/a/${CONFORMANCE_ALIAS}/callback}"
+
 # Create output directory for generated JSON files
 OUTPUT_DIR="${PROJECT_ROOT}/config/generated/${ORGANIZATION_NAME}"
 mkdir -p "${OUTPUT_DIR}"
@@ -351,7 +357,8 @@ CLIENT_JSON=$(substitute_template "${SCRIPT_DIR}/public-client-template.json" \
   "CLIENT_ALIAS" "${CLIENT_ALIAS}" \
   "CLIENT_SECRET" "${CLIENT_SECRET}" \
   "CLIENT_NAME" "${CLIENT_NAME}" \
-  "REDIRECT_URI" "${REDIRECT_URI}")
+  "REDIRECT_URI" "${REDIRECT_URI}" \
+  "CONFORMANCE_REDIRECT_URI" "${CONFORMANCE_REDIRECT_URI}")
 
 echo "${CLIENT_JSON}" | jq '.' > "${OUTPUT_DIR}/public-client.json"
 echo "  Saved: ${OUTPUT_DIR}/public-client.json"
@@ -432,6 +439,71 @@ else
 fi
 echo ""
 
+# --- Step 10: Register conformance test user (verified_claims seed) ---
+echo "Step 10: Registering conformance test user (verified_claims seed)..."
+
+CONFORMANCE_TEST_SUB="${CONFORMANCE_TEST_SUB:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+CONFORMANCE_TEST_EMAIL="${CONFORMANCE_TEST_EMAIL:-oidcc-ekyc-test@example.com}"
+CONFORMANCE_TEST_PASSWORD="${CONFORMANCE_TEST_PASSWORD:-OidccTestPassword123!}"
+
+USER_TEMPLATE="${SCRIPT_DIR}/conformance-test-user-template.json"
+if [ -f "${USER_TEMPLATE}" ]; then
+  TEST_USER_JSON=$(substitute_template "${USER_TEMPLATE}" \
+    "CONFORMANCE_TEST_SUB" "${CONFORMANCE_TEST_SUB}" \
+    "CONFORMANCE_TEST_EMAIL" "${CONFORMANCE_TEST_EMAIL}" \
+    "CONFORMANCE_TEST_PASSWORD" "${CONFORMANCE_TEST_PASSWORD}")
+
+  echo "${TEST_USER_JSON}" | jq '.' > "${OUTPUT_DIR}/conformance-test-user.json"
+  echo "  Saved: ${OUTPUT_DIR}/conformance-test-user.json"
+
+  USER_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+    "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/users" \
+    -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d @"${OUTPUT_DIR}/conformance-test-user.json")
+
+  HTTP_CODE=$(echo "${USER_RESPONSE}" | tail -n1)
+  RESPONSE_BODY=$(echo "${USER_RESPONSE}" | sed '$d')
+
+  if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+    echo "  Conformance test user registered: sub=${CONFORMANCE_TEST_SUB}"
+  else
+    echo "  Failed (HTTP ${HTTP_CODE})"
+    echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+    exit 1
+  fi
+else
+  echo "  Warning: conformance-test-user-template.json not found, skipping"
+fi
+echo ""
+
+# --- Step 11: Generate OIDF conformance test config (IDA using OpenID Connect Core) ---
+echo "Step 11: Generating OIDF conformance test config (IDA using OpenID Connect Core)..."
+
+CONFORMANCE_TEMPLATE="${SCRIPT_DIR}/conformance-config-oidccore.json"
+if [ -f "${CONFORMANCE_TEMPLATE}" ]; then
+  CONFORMANCE_JSON=$(substitute_template "${CONFORMANCE_TEMPLATE}" \
+    "BASE_URL" "${AUTHORIZATION_SERVER_URL}" \
+    "PUBLIC_TENANT_ID" "${PUBLIC_TENANT_ID}" \
+    "CLIENT_ID" "${CLIENT_ID}" \
+    "CLIENT_SECRET" "${CLIENT_SECRET}" \
+    "CONFORMANCE_ALIAS" "${CONFORMANCE_ALIAS}")
+
+  # Align the expected verified_claims subject with the registered test user's sub
+  # (substitute_template only replaces string values, not the expected_verified_claims object key)
+  CONFORMANCE_JSON=$(echo "${CONFORMANCE_JSON}" | jq --arg sub "${CONFORMANCE_TEST_SUB}" '
+    .ekyc.userinfo.sub = $sub
+    | .ekyc.expected_verified_claims = { ($sub): (.ekyc.expected_verified_claims | to_entries[0].value) }
+  ')
+
+  echo "${CONFORMANCE_JSON}" | jq '.' > "${OUTPUT_DIR}/conformance-config-oidccore.json"
+  echo "  Saved: ${OUTPUT_DIR}/conformance-config-oidccore.json"
+  echo "  (Load this in the OpenID conformance suite for plan: ekyc-test-plan-oidccore)"
+else
+  echo "  Warning: conformance-config-oidccore.json template not found, skipping"
+fi
+echo ""
+
 # --- Summary ---
 echo "=========================================="
 echo "Setup Complete!"
@@ -478,6 +550,8 @@ echo "  ${OUTPUT_DIR}/authentication-policy.json"
 echo "  ${OUTPUT_DIR}/public-client.json"
 echo "  ${OUTPUT_DIR}/identity-verification-config.json"
 echo "  ${OUTPUT_DIR}/identity-verification-config-ongoing.json"
+echo "  ${OUTPUT_DIR}/conformance-test-user.json"
+echo "  ${OUTPUT_DIR}/conformance-config-oidccore.json"
 echo ""
 echo "Test Authorization Code Flow:"
 echo "  1. Open browser:"

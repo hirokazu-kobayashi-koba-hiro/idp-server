@@ -98,6 +98,27 @@ else
 fi
 echo ""
 
+# Step 2.5: Delete conformance test user (must run before public tenant deletion,
+# otherwise the user is orphaned in idp_user and re-runs hit a duplicate-key conflict)
+if [ -f "${OUTPUT_DIR}/conformance-test-user.json" ]; then
+  CONFORMANCE_TEST_SUB=$(jq -r '.sub' "${OUTPUT_DIR}/conformance-test-user.json")
+  echo "Step 2.5: Deleting conformance test user (${CONFORMANCE_TEST_SUB})..."
+  CONFORMANCE_USER_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
+    "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}/users/${CONFORMANCE_TEST_SUB}" \
+    -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}")
+
+  CONFORMANCE_USER_DELETE_HTTP_CODE=$(echo "${CONFORMANCE_USER_DELETE_RESPONSE}" | tail -n1)
+
+  if [ "${CONFORMANCE_USER_DELETE_HTTP_CODE}" = "204" ]; then
+    echo "Conformance test user deleted successfully"
+  elif [ "${CONFORMANCE_USER_DELETE_HTTP_CODE}" = "404" ]; then
+    echo "Warning: Conformance test user not found (may already be deleted)"
+  else
+    echo "Warning: Conformance test user deletion failed (HTTP ${CONFORMANCE_USER_DELETE_HTTP_CODE})"
+  fi
+  echo ""
+fi
+
 # Step 3: Delete public tenant
 echo "Step 3: Deleting public tenant..."
 PUBLIC_TENANT_DELETE_RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \

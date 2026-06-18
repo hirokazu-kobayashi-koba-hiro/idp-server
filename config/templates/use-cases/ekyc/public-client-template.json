@@ -3,7 +3,8 @@
   "client_id_alias": "${CLIENT_ALIAS}",
   "client_secret": "${CLIENT_SECRET}",
   "redirect_uris": [
-    "${REDIRECT_URI}"
+    "${REDIRECT_URI}",
+    "${CONFORMANCE_REDIRECT_URI}"
   ],
   "response_types": [
     "code"

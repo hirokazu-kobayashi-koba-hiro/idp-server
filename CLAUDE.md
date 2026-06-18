@@ -53,16 +53,21 @@ cd e2e && npm test
    - 管理API → `content_06_developer-guide/02-control-plane/`
    - OAuth/OIDC → `content_06_developer-guide/03-application-plane/`
 
-2. **既存コードを探す**
+2. **API仕様を先に確認**（ソース深掘りの前に）
+   - 管理API/エンドポイントの入出力スキーマは `documentation/openapi/*.yaml` を最初に参照する
+   - 仕様で足りる場合はソースの深掘り不要。仕様に無い／実装と食い違う場合のみコード確認に進む
+   - 仕様と実装が食い違ったら、それ自体を記載漏れ等として別途修正する
+
+3. **既存コードを探す**
    ```
    Grep "関連キーワード" libs/idp-server-core/
    ```
 
-3. **関連ファイルを読む**
+4. **関連ファイルを読む**
    - Handler → Service → Repository の処理フロー確認
    - 既存の類似実装をパターン参考
 
-4. **変更箇所を特定**
+5. **変更箇所を特定**
    - 新規作成: 値オブジェクト、Gateway、Validator等
    - 修正: Handler、Verifier、設定クラス等
 

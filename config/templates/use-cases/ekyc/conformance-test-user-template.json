@@ -1,0 +1,34 @@
+{
+  "sub": "${CONFORMANCE_TEST_SUB}",
+  "provider_id": "idp-server",
+  "name": "Given001 Family001",
+  "given_name": "Given001",
+  "family_name": "Family001",
+  "birthdate": "1950-01-01",
+  "email": "${CONFORMANCE_TEST_EMAIL}",
+  "email_verified": true,
+  "raw_password": "${CONFORMANCE_TEST_PASSWORD}",
+  "verified_claims": {
+    "verification": {
+      "trust_framework": "eidas",
+      "evidence": [
+        {
+          "type": "document",
+          "check_details": [
+            {
+              "check_method": "vpip"
+            }
+          ],
+          "document_details": {
+            "type": "idcard"
+          }
+        }
+      ]
+    },
+    "claims": {
+      "given_name": "Given001",
+      "family_name": "Family001",
+      "birthdate": "1950-01-01"
+    }
+  }
+}
