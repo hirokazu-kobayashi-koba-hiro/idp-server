@@ -201,8 +201,12 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
             requestAttributes,
             verificationConfiguration);
     if (applyingResult.isError()) {
-      return IdentityVerificationCallbackResponse.CLIENT_ERROR(
-          applyingResult.errorResponse().response());
+      // Preserve the real failure status instead of collapsing every error to 400: errorResponse()
+      // already branches pre_hook validation failures to 400 and execution failures (e.g. an
+      // external API 502) to their own status code. (#1613)
+      IdentityVerificationApplicationResponse errorResponse = applyingResult.errorResponse();
+      return IdentityVerificationCallbackResponse.fromStatusCode(
+          errorResponse.statusCode(), errorResponse.response());
     }
 
     IdentityVerificationContext context = applyingResult.applicationContext();

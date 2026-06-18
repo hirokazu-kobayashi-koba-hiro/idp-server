@@ -22,7 +22,16 @@ public enum IdentityVerificationCallbackStatus {
   UNAUTHORIZED(401),
   FORBIDDEN(403),
   NOT_FOUND(404),
-  SERVER_ERROR(500);
+  REQUEST_TIMEOUT(408),
+  CONFLICT(409),
+  PAYLOAD_TOO_LARGE(413),
+  UNSUPPORTED_MEDIA_TYPE(415),
+  UNPROCESSABLE_ENTITY(422),
+  TOO_MANY_REQUESTS(429),
+  SERVER_ERROR(500),
+  BAD_GATEWAY(502),
+  SERVICE_UNAVAILABLE(503),
+  GATEWAY_TIMEOUT(504);
 
   int statusCode;
 
@@ -36,5 +45,18 @@ public enum IdentityVerificationCallbackStatus {
 
   public boolean isOK() {
     return this == OK;
+  }
+
+  public static IdentityVerificationCallbackStatus fromStatusCode(int statusCode) {
+    for (IdentityVerificationCallbackStatus status : values()) {
+      if (status.statusCode == statusCode) {
+        return status;
+      }
+    }
+    if (statusCode >= 400 && statusCode < 500) {
+      return CLIENT_ERROR;
+    }
+
+    return SERVER_ERROR;
   }
 }
