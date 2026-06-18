@@ -1,1 +1,2 @@
 org.idp.server.core.extension.identity.verified.UserinfoSelectiveVerifiedClaimsCreator
+org.idp.server.core.extension.identity.verified.UserinfoVerifiedClaimsCreator

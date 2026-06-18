@@ -295,6 +295,12 @@ payload
 }
 ```
 
+### 2方式が競合した場合の優先順位
+
+`claims` パラメータ（OIDC4IDA 標準）と `verified_claims:*` スコープ（idp-server 独自仕様）の両方で `verified_claims` を要求し、**同一の配信先（UserInfo レスポンス）に出力される**場合は、**`claims` パラメータ（標準）を優先**する。両者は同じトップレベル `verified_claims` キーを生成するため、独自仕様のスコープ側は出力しない。`claims` パラメータはリクエスト単位で明示的かつ粒度の細かい標準の要求方式であり、これを正とする（両方を同時指定するクライアントは実運用では想定していない）。
+
+> UserInfo での要求方式・優先順位の詳細は [UserInfo エンドポイント](../../content_06_developer-guide/03-application-plane/05-userinfo.md#verified_claims身元確認済みクレーム) を参照。
+
 ## 身元確認チェック：`required_identity_verification_scopes`
 
 `required_identity_verification_scopes` は、**身元確認（verified_claims）を済ませたユーザーだけが取得できるスコープ**を定義する設定です。  

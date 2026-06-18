@@ -17,17 +17,21 @@
 package org.idp.server.core.openid.grant_management.grant;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import org.idp.server.core.openid.identity.id_token.RequestedUserinfoClaims;
+import org.idp.server.core.openid.identity.id_token.VerifiedClaimsObject;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 
 public class GrantUserinfoClaims implements Iterable<String> {
 
   Set<String> values;
+  // The OIDC4IDA verified_claims request persisted with the grant, so UserInfo can honor the
+  // claims parameter at issuance time (when the original request is gone). (#1628)
+  RequestedVerifiedClaims requestedVerifiedClaims;
   private static final String delimiter = " ";
 
   public GrantUserinfoClaims() {
     this.values = new HashSet<>();
+    this.requestedVerifiedClaims = RequestedVerifiedClaims.empty();
   }
 
   public static GrantUserinfoClaims create(
@@ -56,25 +60,48 @@ public class GrantUserinfoClaims implements Iterable<String> {
     if (shouldAddAddress(scopes, supportedClaims, userinfoClaims)) claims.add("address");
     if (shouldAddUpdatedAt(scopes, supportedClaims, userinfoClaims)) claims.add("updated_at");
 
-    return new GrantUserinfoClaims(claims);
+    return new GrantUserinfoClaims(
+        claims, RequestedVerifiedClaims.of(userinfoClaims.verifiedClaims()));
   }
 
   public GrantUserinfoClaims(String value) {
     if (Objects.isNull(value) || value.isEmpty()) {
       this.values = new HashSet<>();
+      this.requestedVerifiedClaims = RequestedVerifiedClaims.empty();
       return;
     }
-    this.values = Arrays.stream(value.split(delimiter)).collect(Collectors.toSet());
+    Set<String> names = new HashSet<>();
+    RequestedVerifiedClaims parsed = RequestedVerifiedClaims.empty();
+    for (String token : value.split(delimiter)) {
+      if (RequestedVerifiedClaims.isSentinel(token)) {
+        parsed = RequestedVerifiedClaims.fromSentinel(token);
+      } else {
+        names.add(token);
+      }
+    }
+    this.values = names;
+    this.requestedVerifiedClaims = parsed;
   }
 
   public GrantUserinfoClaims(Set<String> values) {
     this.values = values;
+    this.requestedVerifiedClaims = RequestedVerifiedClaims.empty();
+  }
+
+  public GrantUserinfoClaims(Set<String> values, RequestedVerifiedClaims requestedVerifiedClaims) {
+    this.values = values;
+    this.requestedVerifiedClaims = requestedVerifiedClaims;
   }
 
   public GrantUserinfoClaims merge(GrantUserinfoClaims other) {
     Set<String> newValues = new HashSet<>(this.values);
     newValues.addAll(other.values);
-    return new GrantUserinfoClaims(newValues);
+    // The latest request's verified_claims supersedes; fall back to the existing one.
+    RequestedVerifiedClaims mergedVerifiedClaims =
+        other.requestedVerifiedClaims.exists()
+            ? other.requestedVerifiedClaims
+            : this.requestedVerifiedClaims;
+    return new GrantUserinfoClaims(newValues, mergedVerifiedClaims);
   }
 
   @Override
@@ -83,7 +110,10 @@ public class GrantUserinfoClaims implements Iterable<String> {
   }
 
   public boolean exists() {
-    return values != null && !values.isEmpty();
+    // Also true when only a verified_claims request is present (no plain claim names): otherwise
+    // the
+    // persistence write path skips userinfo_claims and the sentinel is lost. (#1628)
+    return (values != null && !values.isEmpty()) || requestedVerifiedClaims.exists();
   }
 
   public Set<String> toStringSet() {
@@ -91,7 +121,20 @@ public class GrantUserinfoClaims implements Iterable<String> {
   }
 
   public String toStringValues() {
-    return String.join(delimiter, values);
+    String names = String.join(delimiter, values);
+    if (!requestedVerifiedClaims.exists()) {
+      return names;
+    }
+    String sentinel = requestedVerifiedClaims.toSentinelToken();
+    return names.isEmpty() ? sentinel : names + delimiter + sentinel;
+  }
+
+  public boolean hasVerifiedClaims() {
+    return requestedVerifiedClaims.exists();
+  }
+
+  public VerifiedClaimsObject verifiedClaims() {
+    return requestedVerifiedClaims.toObject();
   }
 
   public boolean hasName() {

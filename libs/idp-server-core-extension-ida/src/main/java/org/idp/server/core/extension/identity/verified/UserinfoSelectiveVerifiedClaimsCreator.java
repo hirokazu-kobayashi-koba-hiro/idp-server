@@ -48,6 +48,17 @@ public class UserinfoSelectiveVerifiedClaimsCreator
       return false;
     }
 
+    // The scope path and the claims-parameter path (UserinfoVerifiedClaimsCreator) both emit the
+    // same top-level verified_claims key, and the invoker composes creators via putAll — running
+    // both would let SPI/ServiceLoader order decide the winner non-deterministically. The claims
+    // parameter is the more explicit, per-request mechanism, so it takes precedence: when an RP
+    // requested verified_claims via the claims parameter, defer to that path and skip scope-based
+    // selection here. (An RP mixing both in one request is not an expected real-world case.)
+    // (#1628)
+    if (authorizationGrant.userinfoClaims().hasVerifiedClaims()) {
+      return false;
+    }
+
     Scopes scopes = authorizationGrant.scopes();
     if (!scopes.hasScopeMatchedPrefix(SelectiveVerifiedClaims.PREFIX)) {
       return false;

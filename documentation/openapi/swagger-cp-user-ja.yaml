@@ -1046,6 +1046,10 @@ components:
           minLength: 8
           maxLength: 255
           description: Plain text password (will be hashed on server)
+        verified_claims:
+          type: object
+          additionalProperties: true
+          description: Verified identity claims (OpenID for Identity Assurance)
         custom_properties:
           type: object
           additionalProperties: true
@@ -1198,6 +1202,10 @@ components:
               maxLength: 255
               description: Country
           description: Physical address of the user
+        verified_claims:
+          type: object
+          additionalProperties: true
+          description: Verified identity claims (OpenID for Identity Assurance)
         custom_properties:
           type: object
           additionalProperties: true

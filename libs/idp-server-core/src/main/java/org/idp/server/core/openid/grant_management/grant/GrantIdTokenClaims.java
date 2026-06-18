@@ -17,18 +17,23 @@
 package org.idp.server.core.openid.grant_management.grant;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import org.idp.server.core.openid.identity.id_token.RequestedIdTokenClaims;
+import org.idp.server.core.openid.identity.id_token.VerifiedClaimsObject;
 import org.idp.server.core.openid.oauth.type.oauth.ResponseType;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 
 public class GrantIdTokenClaims implements Iterable<String> {
 
   Set<String> values;
+  // The OIDC4IDA verified_claims request persisted with the grant, so the ID Token can be built
+  // from the consent record at issuance time without the original claims parameter. Mirrors
+  // GrantUserinfoClaims. (#1628 follow-up)
+  RequestedVerifiedClaims requestedVerifiedClaims;
   private static final String delimiter = " ";
 
   public GrantIdTokenClaims() {
     this.values = new HashSet<>();
+    this.requestedVerifiedClaims = RequestedVerifiedClaims.empty();
   }
 
   public static GrantIdTokenClaims create(
@@ -83,27 +88,51 @@ public class GrantIdTokenClaims implements Iterable<String> {
     if (shouldAddUpdatedAt(scopes, responseType, supportedClaims, idTokenClaims, idTokenStrictMode))
       claims.add("updated_at");
 
-    if (shouldAddVerifiedClaims(idTokenClaims)) claims.add("verified_claims");
-
-    return new GrantIdTokenClaims(claims);
+    // verified_claims is carried as a sentinel (vc:<base64url(JSON)>) holding the full requested
+    // structure, not as a bare "verified_claims" name token — so the consent record is
+    // self-contained and the ID Token can be rebuilt from the grant alone. (#1628 follow-up)
+    return new GrantIdTokenClaims(
+        claims, RequestedVerifiedClaims.of(idTokenClaims.verifiedClaims()));
   }
 
   public GrantIdTokenClaims(String value) {
     if (Objects.isNull(value) || value.isEmpty()) {
       this.values = new HashSet<>();
+      this.requestedVerifiedClaims = RequestedVerifiedClaims.empty();
       return;
     }
-    this.values = Arrays.stream(value.split(delimiter)).collect(Collectors.toSet());
+    Set<String> names = new HashSet<>();
+    RequestedVerifiedClaims parsed = RequestedVerifiedClaims.empty();
+    for (String token : value.split(delimiter)) {
+      if (RequestedVerifiedClaims.isSentinel(token)) {
+        parsed = RequestedVerifiedClaims.fromSentinel(token);
+      } else {
+        names.add(token);
+      }
+    }
+    this.values = names;
+    this.requestedVerifiedClaims = parsed;
   }
 
   public GrantIdTokenClaims(Set<String> values) {
     this.values = values;
+    this.requestedVerifiedClaims = RequestedVerifiedClaims.empty();
+  }
+
+  public GrantIdTokenClaims(Set<String> values, RequestedVerifiedClaims requestedVerifiedClaims) {
+    this.values = values;
+    this.requestedVerifiedClaims = requestedVerifiedClaims;
   }
 
   public GrantIdTokenClaims merge(GrantIdTokenClaims other) {
     Set<String> newValues = new HashSet<>(this.values);
     newValues.addAll(other.values);
-    return new GrantIdTokenClaims(newValues);
+    // The latest request's verified_claims supersedes; fall back to the existing one.
+    RequestedVerifiedClaims mergedVerifiedClaims =
+        other.requestedVerifiedClaims.exists()
+            ? other.requestedVerifiedClaims
+            : this.requestedVerifiedClaims;
+    return new GrantIdTokenClaims(newValues, mergedVerifiedClaims);
   }
 
   @Override
@@ -112,7 +141,7 @@ public class GrantIdTokenClaims implements Iterable<String> {
   }
 
   public boolean exists() {
-    return values != null && !values.isEmpty();
+    return (values != null && !values.isEmpty()) || requestedVerifiedClaims.exists();
   }
 
   public Set<String> toStringSet() {
@@ -120,7 +149,12 @@ public class GrantIdTokenClaims implements Iterable<String> {
   }
 
   public String toStringValues() {
-    return String.join(delimiter, values);
+    String names = String.join(delimiter, values);
+    if (!requestedVerifiedClaims.exists()) {
+      return names;
+    }
+    String sentinel = requestedVerifiedClaims.toSentinelToken();
+    return names.isEmpty() ? sentinel : names + delimiter + sentinel;
   }
 
   public boolean hasName() {
@@ -200,7 +234,19 @@ public class GrantIdTokenClaims implements Iterable<String> {
   }
 
   public boolean hasVerifiedClaims() {
-    return Objects.nonNull(values) && values.contains("verified_claims");
+    // New rows carry the request as a sentinel; legacy rows carry the bare "verified_claims" name
+    // token (pre-sentinel). Recognize both so existing grants keep working.
+    return requestedVerifiedClaims.exists()
+        || (Objects.nonNull(values) && values.contains("verified_claims"));
+  }
+
+  /**
+   * The requested verified_claims structure persisted with the grant, or {@code null} for legacy
+   * grants that recorded only the bare name token — in which case the caller falls back to the live
+   * request. (#1628 follow-up)
+   */
+  public VerifiedClaimsObject verifiedClaims() {
+    return requestedVerifiedClaims.exists() ? requestedVerifiedClaims.toObject() : null;
   }
 
   private static boolean shouldAddName(
@@ -543,10 +589,6 @@ public class GrantIdTokenClaims implements Iterable<String> {
       return idTokenClaims.hasUpdatedAt();
     }
     return scopes.contains("profile");
-  }
-
-  public static boolean shouldAddVerifiedClaims(RequestedIdTokenClaims idTokenClaims) {
-    return idTokenClaims.hasVerifiedClaims();
   }
 
   public boolean contains(String claims) {

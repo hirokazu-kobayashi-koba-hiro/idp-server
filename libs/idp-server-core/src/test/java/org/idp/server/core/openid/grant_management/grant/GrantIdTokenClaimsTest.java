@@ -19,9 +19,12 @@ package org.idp.server.core.openid.grant_management.grant;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
+import org.idp.server.core.openid.identity.id_token.RequestedClaimsPayload;
 import org.idp.server.core.openid.identity.id_token.RequestedIdTokenClaims;
+import org.idp.server.core.openid.identity.id_token.VerifiedClaimsObject;
 import org.idp.server.core.openid.oauth.type.oauth.ResponseType;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.platform.json.JsonConverter;
@@ -130,5 +133,112 @@ class GrantIdTokenClaimsTest {
             true);
 
     assertFalse(result.contains("family_name"));
+  }
+
+  // ---- #1628 follow-up: verified_claims request persisted with the grant (sentinel round-trip) --
+
+  private static VerifiedClaimsObject sampleVerifiedClaimsRequest() {
+    return new VerifiedClaimsObject(
+        Map.of("trust_framework", Map.of("value", "eidas")), Map.of("given_name", Map.of()));
+  }
+
+  @Test
+  void roundTripsVerifiedClaimsThroughStringForm() {
+    GrantIdTokenClaims original =
+        new GrantIdTokenClaims(
+            Set.of("name"), RequestedVerifiedClaims.of(sampleVerifiedClaimsRequest()));
+
+    GrantIdTokenClaims restored = new GrantIdTokenClaims(original.toStringValues());
+
+    assertTrue(restored.hasVerifiedClaims());
+    assertTrue(restored.hasName());
+    assertTrue(restored.verifiedClaims().verificationNodeWrapper().contains("trust_framework"));
+    assertTrue(restored.verifiedClaims().claimsNodeWrapper().contains("given_name"));
+  }
+
+  @Test
+  void recognizesLegacyVerifiedClaimsNameToken() {
+    // A row written before this change carries the bare "verified_claims" name token, not a
+    // sentinel. hasVerifiedClaims() must still return true; verifiedClaims() returns null so the
+    // creator falls back to the live request.
+    GrantIdTokenClaims legacy = new GrantIdTokenClaims("given_name verified_claims");
+
+    assertTrue(legacy.hasVerifiedClaims());
+    assertNull(legacy.verifiedClaims());
+    assertTrue(legacy.hasGivenName());
+  }
+
+  @Test
+  void backwardCompatibleWithLegacyNameOnlyString() {
+    GrantIdTokenClaims legacy = new GrantIdTokenClaims("name email");
+
+    assertFalse(legacy.hasVerifiedClaims());
+    assertTrue(legacy.hasName());
+    assertTrue(legacy.hasEmail());
+  }
+
+  @Test
+  void sentinelDoesNotLeakIntoPlainClaimNameView() {
+    GrantIdTokenClaims claims =
+        new GrantIdTokenClaims(
+            Set.of("name"), RequestedVerifiedClaims.of(sampleVerifiedClaimsRequest()));
+
+    // toStringSet()/iterator() expose claim names only — never the vc: sentinel.
+    assertEquals(Set.of("name"), claims.toStringSet());
+    for (String name : claims) {
+      assertFalse(name.startsWith(RequestedVerifiedClaims.SENTINEL_PREFIX));
+    }
+  }
+
+  @Test
+  void existsWhenOnlyVerifiedClaimsRequested() {
+    GrantIdTokenClaims claims =
+        new GrantIdTokenClaims(Set.of(), RequestedVerifiedClaims.of(sampleVerifiedClaimsRequest()));
+
+    assertTrue(claims.exists());
+    assertTrue(claims.toStringValues().startsWith(RequestedVerifiedClaims.SENTINEL_PREFIX));
+  }
+
+  @Test
+  void absentVerifiedClaimsSerializesNamesOnly() {
+    GrantIdTokenClaims claims = new GrantIdTokenClaims(Set.of("name"));
+
+    assertEquals("name", claims.toStringValues());
+    assertFalse(claims.hasVerifiedClaims());
+  }
+
+  @Test
+  void createPersistsVerifiedClaimsAsSentinelNotNameToken() {
+    String claimsValue =
+        "{\"id_token\":{\"verified_claims\":{\"verification\":{\"trust_framework\":null},"
+            + "\"claims\":{\"given_name\":null}}}}";
+    RequestedIdTokenClaims idToken = JSON.read(claimsValue, RequestedClaimsPayload.class).idToken();
+
+    GrantIdTokenClaims result =
+        GrantIdTokenClaims.create(
+            new Scopes(Set.of("openid")), ResponseType.code, List.of(), idToken, false);
+
+    assertTrue(result.hasVerifiedClaims(), "create() must persist the requested verified_claims");
+    assertTrue(
+        result.toStringValues().contains(RequestedVerifiedClaims.SENTINEL_PREFIX),
+        "verified_claims must be persisted as a sentinel");
+    assertFalse(
+        result.toStringSet().contains("verified_claims"),
+        "the bare verified_claims name token must no longer be written");
+  }
+
+  @Test
+  void mergeCarriesVerifiedClaimsFromEitherSide() {
+    GrantIdTokenClaims withVc =
+        new GrantIdTokenClaims(
+            Set.of("email"), RequestedVerifiedClaims.of(sampleVerifiedClaimsRequest()));
+    GrantIdTokenClaims namesOnly = new GrantIdTokenClaims(Set.of("name"));
+
+    // existing has it, incoming does not -> preserved
+    assertTrue(namesOnly.merge(withVc).hasVerifiedClaims());
+    // incoming has it, existing does not -> preserved
+    assertTrue(withVc.merge(namesOnly).hasVerifiedClaims());
+    // names are unioned regardless
+    assertEquals(Set.of("email", "name"), withVc.merge(namesOnly).toStringSet());
   }
 }

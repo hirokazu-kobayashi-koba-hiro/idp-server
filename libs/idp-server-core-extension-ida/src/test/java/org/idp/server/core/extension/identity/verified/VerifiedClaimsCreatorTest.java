@@ -21,19 +21,30 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
+import org.idp.server.core.openid.grant_management.grant.AuthorizationGrantBuilder;
+import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
+import org.idp.server.core.openid.grant_management.grant.RequestedVerifiedClaims;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.id_token.RequestedClaimsPayload;
+import org.idp.server.core.openid.oauth.type.oauth.GrantType;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.junit.jupiter.api.Test;
 
 /**
  * Regression for the OIDC4IDA verified_claims output in the ID Token ({@code claims} parameter)
  * path.
  *
- * <p>OIDC4IDA §5.7.4 / §5.7.5: when the {@code verification} requirement cannot be met (no required
- * {@code trust_framework}) or no requested claim matches a user claim, the OP SHALL omit the whole
- * {@code verified_claims} element rather than emit a schema-invalid {@code verification: {}} or an
- * empty {@code claims} object. This mirrors {@link SelectiveVerifiedClaims} (scope-based path).
+ * <p>OIDC4IDA §5.7.4 / §5.7.5: the whole {@code verified_claims} element is omitted only when the
+ * {@code verification} requirement cannot be met — a failed {@code verification} {@code value} /
+ * {@code values} constraint, or a missing required {@code trust_framework} — never emitting a
+ * schema-invalid {@code verification: {}}. When every requested claim drops but {@code
+ * verification} is valid, the element is kept with an empty {@code claims} object, which the IDA
+ * schema permits ([IDA-verified-claims] §5.3, "the claims element may be empty").
  */
 class VerifiedClaimsCreatorTest {
 
@@ -53,7 +64,21 @@ class VerifiedClaimsCreatorTest {
   }
 
   private Map<String, Object> create(User user, RequestedClaimsPayload payload) {
-    return creator.create(user, null, null, null, payload, null, null);
+    // Production persists the id_token.verified_claims request in the grant (the consent record),
+    // and the creator reads it from there. Build a grant carrying that request.
+    GrantIdTokenClaims idTokenClaims =
+        new GrantIdTokenClaims(
+            Set.of(), RequestedVerifiedClaims.of(payload.idToken().verifiedClaims()));
+    AuthorizationGrant grant =
+        new AuthorizationGrantBuilder(
+                new TenantIdentifier("11111111-1111-1111-1111-111111111111"),
+                new RequestedClientId("client"),
+                GrantType.authorization_code,
+                new Scopes(Set.of("openid")))
+            .add(user)
+            .add(idTokenClaims)
+            .build();
+    return creator.create(user, null, grant, null, payload, null, null);
   }
 
   @SuppressWarnings("unchecked")
@@ -107,18 +132,23 @@ class VerifiedClaimsCreatorTest {
   }
 
   @Test
-  void omitsVerifiedClaimsWhenNoRequestedClaimMatches() {
-    // §5.7.5: parent (verified_claims) requires claims; with no matching claim, omit the parent
-    // rather than emit verification with an empty claims object.
+  void keepsVerifiedClaimsWithEmptyClaimsWhenNoRequestedClaimMatches() {
+    // §5.7.2 drops the unavailable claim individually. The IDA schema ([IDA-verified-claims] §5.3)
+    // permits an empty claims object, so verification + an empty claims object is a valid response
+    // —
+    // NOT a whole omission. §5.7.5 cascades only when the omitted element is required for validity,
+    // which an empty claims object is not.
     User user = userWith(Map.of("trust_framework", "eidas"), Map.of("family_name", "Yamada"));
     RequestedClaimsPayload payload =
         request("{\"verification\":{\"trust_framework\":null},\"claims\":{\"given_name\":null}}");
 
     Map<String, Object> result = create(user, payload);
 
-    assertFalse(
-        result.containsKey("verified_claims"),
-        "no matching claim must emit no verified_claims at all");
+    assertTrue(result.containsKey("verified_claims"));
+    assertEquals("eidas", verificationOf(result).get("trust_framework"));
+    assertTrue(
+        claimsOf(result).isEmpty(),
+        "unavailable claim dropped; claims object left empty, not omitted");
   }
 
   @Test

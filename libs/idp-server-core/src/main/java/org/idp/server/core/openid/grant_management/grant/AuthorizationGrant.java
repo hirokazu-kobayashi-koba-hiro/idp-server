@@ -215,13 +215,11 @@ public class AuthorizationGrant {
     newAuthorizationGrant.scopes().forEach(newScopeValues::add);
     Scopes newScopes = new Scopes(newScopeValues);
 
-    Set<String> newIdTokenClaims = new HashSet<>(idTokenClaims.toStringSet());
-    newAuthorizationGrant.idTokenClaims().forEach(newIdTokenClaims::add);
-    GrantIdTokenClaims newGrantIdToken = new GrantIdTokenClaims(newIdTokenClaims);
-
-    Set<String> newClaims = new HashSet<>(userinfoClaims.toStringSet());
-    newAuthorizationGrant.userinfoClaims().forEach(newClaims::add);
-    GrantUserinfoClaims newGrantUserinfo = new GrantUserinfoClaims(newClaims);
+    // Route through the typed merge so the persisted verified_claims request (carried as a separate
+    // field, not a plain claim-name token) survives an incremental-consent merge. (#1628)
+    GrantIdTokenClaims newGrantIdToken = idTokenClaims.merge(newAuthorizationGrant.idTokenClaims());
+    GrantUserinfoClaims newGrantUserinfo =
+        userinfoClaims.merge(newAuthorizationGrant.userinfoClaims());
 
     CustomProperties newCustomProperties = newAuthorizationGrant.customProperties();
     AuthorizationDetails newAuthorizationDetails = newAuthorizationGrant.authorizationDetails();
