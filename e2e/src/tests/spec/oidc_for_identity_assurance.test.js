@@ -127,6 +127,79 @@ describe("OpenID Connect for Identity Assurance 1.0 ", () => {
 
   });
 
+  // OpenID Connect for Identity Assurance 1.0 §5.3 / §5.7, eKYC conformance module #9
+  // (ekyc-server-request-only-in-userinfo). verified_claims requested via the `claims` parameter's
+  // `userinfo` member must be returned in the UserInfo response and NOT in the ID Token. Before
+  // #1628 the claims-parameter request was dropped at the grant boundary, so UserInfo only honored
+  // the verified_claims:* scope. (#1628)
+  describe("verified_claims via the claims parameter (UserInfo)", () => {
+    const userinfoVerifiedClaims = async (verifiedClaimsRequest) => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "userinfo_verified_claims_1628",
+        // no verified_claims:* scope: this exercises the claims-parameter path, not the scope path.
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+        claims: JSON.stringify({ userinfo: { verified_claims: verifiedClaimsRequest } }),
+      });
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.id_token,
+        jwks: jwksResponse.data,
+      });
+      expect(decodedIdToken.verifyResult).toBe(true);
+
+      const userinfoResponse = await get({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/userinfo`,
+        headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` },
+      });
+      expect(userinfoResponse.status).toBe(200);
+      console.log(JSON.stringify(userinfoResponse.data, null, 2));
+      return { userinfo: userinfoResponse.data, idTokenPayload: decodedIdToken.payload };
+    };
+
+    it("returns verified_claims in the UserInfo response and omits it from the ID Token (module #9)", async () => {
+      const { userinfo, idTokenPayload } = await userinfoVerifiedClaims({
+        verification: { trust_framework: null },
+        claims: { given_name: null, family_name: null },
+      });
+
+      // §5.3: the UserInfo response carries the requested verified_claims.
+      expect(userinfo.verified_claims).toBeDefined();
+      expect(userinfo.verified_claims.verification.trust_framework).toEqual("eidas");
+      expect(userinfo.verified_claims.claims.given_name).toEqual("Sarah");
+
+      // EnsureIdTokenDoesNotContainVerifiedClaims: requested userinfo-only, so the ID Token must not
+      // carry verified_claims.
+      expect(idTokenPayload.verified_claims).toBeUndefined();
+    });
+
+    it("applies the §5.7 value constraint on the UserInfo path (claim dropped → whole element omitted)", async () => {
+      // given_name is "Sarah"; a value:"Bob" constraint fails, and with no other matching claim the
+      // whole verified_claims is omitted (§5.7.4/§5.7.5) — same engine as the ID Token path.
+      const { userinfo } = await userinfoVerifiedClaims({
+        verification: { trust_framework: null },
+        claims: { given_name: { value: "Bob" } },
+      });
+
+      expect(userinfo.verified_claims).toBeUndefined();
+    });
+  });
+
   // OpenID Connect for Identity Assurance 1.0, Section 5.7 (Returning less data than requested).
   // Test names quote the spec verbatim, as in the Section 8 block. verified_claims is requested via
   // the `claims` parameter and returned in the ID Token (handled by VerifiedClaimsCreator).

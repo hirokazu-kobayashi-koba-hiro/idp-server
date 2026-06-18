@@ -17,59 +17,46 @@
 package org.idp.server.core.extension.identity.verified;
 
 import java.util.Map;
-import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
-import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.identity.id_token.IdTokenCustomClaims;
-import org.idp.server.core.openid.identity.id_token.RequestedClaimsPayload;
-import org.idp.server.core.openid.identity.id_token.RequestedIdTokenClaims;
 import org.idp.server.core.openid.identity.id_token.VerifiedClaimsObject;
-import org.idp.server.core.openid.identity.id_token.plugin.CustomIndividualClaimsCreator;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.userinfo.plugin.UserinfoCustomIndividualClaimsCreator;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 /**
- * Builds the ID Token {@code verified_claims} element from the {@code claims} request parameter's
- * {@code id_token.verified_claims} member. The OIDC4IDA §5.1 / §5.7 assembly (including the
- * value/values constraint and omission rules) lives in {@link VerifiedClaimsAssembler}, shared with
- * the UserInfo path; this creator just supplies the requested structure and the user's stored
- * verified claims. (#1628)
+ * Adds the OIDC4IDA {@code verified_claims} element to the UserInfo response when it was requested
+ * via the {@code claims} parameter's {@code userinfo.verified_claims} member (OIDC4IDA §5.3 / §5.7,
+ * eKYC conformance module #9).
  *
- * @see <a href="https://openid.net/specs/openid-connect-4-identity-assurance-1_0.html">OpenID
- *     Connect for Identity Assurance 1.0</a>
+ * <p>UserInfo runs from an access token with no live request, so the requested structure is read
+ * from the grant — where it was persisted as the consent record at authorization time ({@link
+ * org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims}). The assembly
+ * (value/values constraints, §5.7 omission, required trust_framework) is shared with the ID Token
+ * path via {@link VerifiedClaimsAssembler}. The scope-driven counterpart ({@code
+ * verified_claims:*}) is {@link UserinfoSelectiveVerifiedClaimsCreator}; the two are independent
+ * and may both contribute. (#1628)
  */
-public class VerifiedClaimsCreator implements CustomIndividualClaimsCreator {
+public class UserinfoVerifiedClaimsCreator implements UserinfoCustomIndividualClaimsCreator {
 
   @Override
   public boolean shouldCreate(
       User user,
-      Authentication authentication,
       AuthorizationGrant authorizationGrant,
-      IdTokenCustomClaims customClaims,
-      RequestedClaimsPayload requestedClaimsPayload,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
-
-    GrantIdTokenClaims idTokenClaims = authorizationGrant.idTokenClaims();
-    return idTokenClaims.hasVerifiedClaims() && user.hasVerifiedClaims();
+    return authorizationGrant.userinfoClaims().hasVerifiedClaims() && user.hasVerifiedClaims();
   }
 
   @Override
   public Map<String, Object> create(
       User user,
-      Authentication authentication,
       AuthorizationGrant authorizationGrant,
-      IdTokenCustomClaims customClaims,
-      RequestedClaimsPayload requestedClaimsPayload,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
-
-    RequestedIdTokenClaims requestedIdTokenClaims = requestedClaimsPayload.idToken();
-    VerifiedClaimsObject requested = requestedIdTokenClaims.verifiedClaims();
+    VerifiedClaimsObject requested = authorizationGrant.userinfoClaims().verifiedClaims();
     JsonNodeWrapper userVerifiedClaims = user.verifiedClaimsNodeWrapper();
-
     return VerifiedClaimsAssembler.assemble(requested, userVerifiedClaims);
   }
 }
