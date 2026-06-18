@@ -301,6 +301,17 @@ UserInfoレスポンス:
 
 > 上の例では `verified_claims:verification:trust_framework` を要求していないが、`trust_framework` は必須要素なので返る。`evidence` は要求していないので返らない。
 
+#### 要求方式と優先順位
+
+`verified_claims` の要求方式は2つある。
+
+| 方式 | 要求方法 | 位置づけ |
+|------|---------|---------|
+| `claims` パラメータ | `claims` の `userinfo.verified_claims` メンバ | OIDC4IDA 標準。`value`/`values` 制約や §5.7 の選択的省略が適用される |
+| `verified_claims:*` スコープ | `verified_claims:<claim>` 等のスコープ | idp-server 独自拡張。`extension.access_token_selective_verified_claims: true` が必要 |
+
+両経路はどちらもトップレベルの `verified_claims` キーを生成するため、1リクエストで両方が指定された場合は **`claims` パラメータ（標準）を優先**し、`verified_claims:*` スコープ（独自拡張）側は出力しない。`claims` パラメータはリクエスト単位で明示的かつ粒度の細かい要求方式であり、こちらを正とする（両方を同時指定する RP は実運用では想定していない）。
+
 構造仕様・設定追従・過去構造からの移行は [verified_claims 出力構造の変更（利用者対応）](../../content_09_project/verified-claims-structure-change.md) を参照。
 
 ---

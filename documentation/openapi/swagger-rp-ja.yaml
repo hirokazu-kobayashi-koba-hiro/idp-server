@@ -1670,6 +1670,31 @@ components:
 
         仕様：OpenID Connect Core 1.0 Section 5.5 を参照。
 
+        ## verified_claims（身元確認済みクレーム / OIDC4IDA）
+
+        `userinfo` / `id_token` 配下に `verified_claims` を指定すると、OpenID Connect for
+        Identity Assurance 1.0 に従って身元確認済みクレームを要求できる。`verification`
+        （必須要素 `trust_framework`）と `claims` のネスト構造で指定し、`value` / `values`
+        制約や §5.7 の選択的省略（不一致・未保持クレームの省略）が適用される。
+
+        例:
+        {
+          "userinfo": {
+            "verified_claims": {
+              "verification": { "trust_framework": { "value": "eidas" } },
+              "claims": { "given_name": null, "family_name": null }
+            }
+          }
+        }
+
+        ◆優先順位
+        idp-server には `verified_claims:<claim>` プレフィックスのスコープによる独自拡張もあり、
+        UserInfo ではどちらも同一のトップレベル `verified_claims` キーを生成する。1リクエストで
+        両方を指定した場合は **`claims` パラメータ（標準）を優先**し、`verified_claims:*` スコープ
+        （独自拡張）側は出力しない。
+
+        仕様：OpenID Connect for Identity Assurance 1.0 を参照。
+
       schema:
         type: string
 

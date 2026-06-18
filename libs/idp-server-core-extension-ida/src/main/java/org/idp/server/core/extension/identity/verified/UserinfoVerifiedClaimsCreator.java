@@ -35,8 +35,9 @@ import org.idp.server.platform.json.JsonNodeWrapper;
  * org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims}). The assembly
  * (value/values constraints, §5.7 omission, required trust_framework) is shared with the ID Token
  * path via {@link VerifiedClaimsAssembler}. The scope-driven counterpart ({@code
- * verified_claims:*}) is {@link UserinfoSelectiveVerifiedClaimsCreator}; the two are independent
- * and may both contribute. (#1628)
+ * verified_claims:*}) is {@link UserinfoSelectiveVerifiedClaimsCreator}; since both emit the same
+ * top-level {@code verified_claims} key, this claims-parameter path takes precedence and the
+ * scope-driven creator stands down when a claims-parameter request is present. (#1628)
  */
 public class UserinfoVerifiedClaimsCreator implements UserinfoCustomIndividualClaimsCreator {
 
