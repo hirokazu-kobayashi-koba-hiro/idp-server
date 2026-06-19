@@ -219,7 +219,13 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
         application.updateCallbackWith(process, context, verificationConfiguration);
     applicationCommandRepository.update(tenant, updatedApplication);
 
-    if (updatedApplication.isApproved()) {
+    // Terminal states are absorbing (#1617): fire terminal side-effects only when this callback
+    // newly reaches a terminal state. A successful re-run on an already-terminal application keeps
+    // the same status; without this guard it would re-publish events, re-register the result, and
+    // re-patch the user.
+    boolean wasNotTerminalBefore = !application.status().isTerminal();
+
+    if (wasNotTerminalBefore && updatedApplication.isApproved()) {
       IdentityVerificationResult identityVerificationResult =
           IdentityVerificationResult.createOnCallback(
               updatedApplication, context, verificationConfiguration);
@@ -251,7 +257,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
           requestAttributes);
     }
 
-    if (updatedApplication.isRejected()) {
+    if (wasNotTerminalBefore && updatedApplication.isRejected()) {
       eventPublisher.publishSync(
           tenant,
           application.requestedClientId(),
@@ -268,7 +274,7 @@ public class IdentityVerificationCallbackEntryService implements IdentityVerific
           requestAttributes);
     }
 
-    if (updatedApplication.isCancelled()) {
+    if (wasNotTerminalBefore && updatedApplication.isCancelled()) {
       eventPublisher.publishSync(
           tenant,
           application.requestedClientId(),

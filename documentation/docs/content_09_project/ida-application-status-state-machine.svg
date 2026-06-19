@@ -1,0 +1,49 @@
+<svg viewBox="0 0 780 340" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="vc-ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#5f6368"/>
+    </marker>
+    <marker id="vc-ahr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#ea4335"/>
+    </marker>
+  </defs>
+
+  <text x="390" y="15" font-family="sans-serif" font-size="12" text-anchor="middle" fill="#ea4335">✕ 後退禁止 — running は前進のみ（no-match fallback でも巻き戻らない）</text>
+  <path d="M495,52 C460,24 330,24 295,52" fill="none" stroke="#ea4335" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#vc-ahr)"/>
+
+  <rect x="15" y="52" width="160" height="46" rx="8" fill="#e8f0fe" stroke="#1a73e8" stroke-width="1.5"/>
+  <text x="95" y="80" font-family="sans-serif" font-size="13" text-anchor="middle" fill="#174ea6">REQUESTED</text>
+  <rect x="215" y="52" width="160" height="46" rx="8" fill="#e8f0fe" stroke="#1a73e8" stroke-width="1.5"/>
+  <text x="295" y="80" font-family="sans-serif" font-size="13" text-anchor="middle" fill="#174ea6">APPLYING</text>
+  <rect x="415" y="52" width="160" height="46" rx="8" fill="#e8f0fe" stroke="#1a73e8" stroke-width="1.5"/>
+  <text x="495" y="80" font-family="sans-serif" font-size="13" text-anchor="middle" fill="#174ea6">APPLIED</text>
+  <rect x="615" y="52" width="160" height="46" rx="8" fill="#e8f0fe" stroke="#1a73e8" stroke-width="1.5"/>
+  <text x="695" y="76" font-family="sans-serif" font-size="11" text-anchor="middle" fill="#174ea6">EXAMINATION_</text>
+  <text x="695" y="90" font-family="sans-serif" font-size="11" text-anchor="middle" fill="#174ea6">PROCESSING</text>
+
+  <line x1="175" y1="75" x2="213" y2="75" stroke="#5f6368" stroke-width="1.5" marker-end="url(#vc-ah)"/>
+  <line x1="375" y1="75" x2="413" y2="75" stroke="#5f6368" stroke-width="1.5" marker-end="url(#vc-ah)"/>
+  <line x1="575" y1="75" x2="613" y2="75" stroke="#5f6368" stroke-width="1.5" marker-end="url(#vc-ah)"/>
+
+  <rect x="15" y="120" width="362" height="50" rx="6" fill="#fef7e0" stroke="#f9ab00" stroke-width="1.2"/>
+  <text x="28" y="141" font-family="sans-serif" font-size="12" fill="#b06000">失敗試行（検証・pre-hook・実行エラー）→ 据え置き</text>
+  <text x="28" y="159" font-family="sans-serif" font-size="12" fill="#b06000">（4xx/5xx・timeout 等。failure_count のみ記録）</text>
+
+  <line x1="500" y1="100" x2="500" y2="238" stroke="#5f6368" stroke-width="2" marker-end="url(#vc-ah)"/>
+  <text x="520" y="150" font-family="sans-serif" font-size="12" fill="#3c4043">条件成立で終端へ</text>
+  <text x="520" y="167" font-family="sans-serif" font-size="11" fill="#5f6368">approved / rejected / canceled</text>
+  <text x="520" y="183" font-family="sans-serif" font-size="11" fill="#5f6368">EXPIRED は時間経過</text>
+
+  <text x="15" y="232" font-family="sans-serif" font-size="12" font-weight="bold" fill="#137333">terminal（終端）— 吸収（以降の遷移を無視）</text>
+
+  <rect x="15" y="244" width="170" height="46" rx="8" fill="#e6f4ea" stroke="#137333" stroke-width="1.5"/>
+  <text x="100" y="272" font-family="sans-serif" font-size="13" text-anchor="middle" fill="#0b6b2f">APPROVED</text>
+  <rect x="205" y="244" width="170" height="46" rx="8" fill="#fce8e6" stroke="#c5221f" stroke-width="1.5"/>
+  <text x="290" y="272" font-family="sans-serif" font-size="13" text-anchor="middle" fill="#a50e0e">REJECTED</text>
+  <rect x="395" y="244" width="170" height="46" rx="8" fill="#f1f3f4" stroke="#5f6368" stroke-width="1.5"/>
+  <text x="480" y="272" font-family="sans-serif" font-size="13" text-anchor="middle" fill="#3c4043">CANCELLED</text>
+  <rect x="585" y="244" width="170" height="46" rx="8" fill="#f1f3f4" stroke="#5f6368" stroke-width="1.5"/>
+  <text x="670" y="272" font-family="sans-serif" font-size="13" text-anchor="middle" fill="#3c4043">EXPIRED</text>
+
+  <text x="100" y="312" font-family="sans-serif" font-size="11" text-anchor="middle" fill="#0b6b2f">→ verified_claims 付与</text>
+</svg>

@@ -25,6 +25,7 @@ import org.idp.server.core.extension.identity.verification.application.IdentityV
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplication;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationIdentifier;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationQueries;
+import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplicationStatus;
 import org.idp.server.core.extension.identity.verification.application.model.IdentityVerificationApplications;
 import org.idp.server.core.extension.identity.verification.application.pre_hook.additional_parameter.AdditionalRequestParameterResolver;
 import org.idp.server.core.extension.identity.verification.application.validation.IdentityVerificationApplicationRequestValidator;
@@ -168,6 +169,7 @@ public class IdentityVerificationApplicationEntryService
         user,
         oAuthToken,
         type,
+        IdentityVerificationApplicationStatus.REQUESTED,
         application,
         applyingResult,
         verificationConfiguration,
@@ -309,6 +311,7 @@ public class IdentityVerificationApplicationEntryService
         user,
         oAuthToken,
         type,
+        application.status(),
         updated,
         applyingResult,
         verificationConfiguration,
@@ -334,16 +337,30 @@ public class IdentityVerificationApplicationEntryService
    * ({@link #process}) so the on-approval side effects — registering the verification result,
    * patching user attributes via {@link IdentityVerificationUserUpdater}, and publishing lifecycle
    * security events — stay in one place.
+   *
+   * <p>Fires only when the application <em>newly</em> reaches a terminal state this step. Terminal
+   * states are absorbing (#1617), so a successful re-run on an already-terminal application keeps
+   * the same terminal status; without this guard it would re-publish events, re-register the
+   * result, and re-patch the user. {@code previousStatus} is the status before this step (the
+   * REQUESTED baseline for a freshly created application, which never has a prior terminal state).
    */
   private void handleTerminalTransition(
       Tenant tenant,
       User user,
       OAuthToken oAuthToken,
       IdentityVerificationType type,
+      IdentityVerificationApplicationStatus previousStatus,
       IdentityVerificationApplication application,
       IdentityVerificationApplyingResult applyingResult,
       IdentityVerificationConfiguration verificationConfiguration,
       RequestAttributes requestAttributes) {
+
+    // Already terminal before this step → no new transition. Terminal states are absorbing (#1617),
+    // so skip to avoid duplicate events / result registration / user patching on a successful
+    // re-run.
+    if (previousStatus.isTerminal()) {
+      return;
+    }
 
     if (application.isApproved()) {
       IdentityVerificationResult identityVerificationResult =
