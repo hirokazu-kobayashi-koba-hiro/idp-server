@@ -58,6 +58,29 @@ public enum IdentityVerificationApplicationStatus {
         || this == EXAMINATION_PROCESSING;
   }
 
+  /**
+   * Terminal (absorbing) states. Once an application reaches a terminal state, subsequent process /
+   * callback evaluations must not move it.
+   */
+  public boolean isTerminal() {
+    return this == APPROVED || this == REJECTED || this == EXPIRED || this == CANCELLED;
+  }
+
+  /**
+   * Forward progress order within the running phases (REQUESTED → APPLYING → APPLIED →
+   * EXAMINATION_PROCESSING). Used to forbid backward transitions. Returns -1 for non-running
+   * states.
+   */
+  public int runningRank() {
+    return switch (this) {
+      case REQUESTED -> 0;
+      case APPLYING -> 1;
+      case APPLIED -> 2;
+      case EXAMINATION_PROCESSING -> 3;
+      default -> -1;
+    };
+  }
+
   public static List<String> runningValues() {
     return Arrays.stream(values())
         .filter(IdentityVerificationApplicationStatus::isRunning)

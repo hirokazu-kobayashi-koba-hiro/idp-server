@@ -19,6 +19,7 @@ package org.idp.server.core.extension.identity.verification.application.model;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
+import org.idp.server.core.extension.identity.verification.application.IdentityVerificationApplyingResult;
 import org.idp.server.core.extension.identity.verification.configuration.process.*;
 import org.idp.server.platform.condition.ConditionOperationEvaluator;
 import org.idp.server.platform.condition.ConditionTransitionResult;
@@ -31,10 +32,76 @@ public class IdentityVerificationApplicationStatusEvaluator {
   private static final LoggerWrapper log =
       LoggerWrapper.getLogger(IdentityVerificationApplicationStatusEvaluator.class);
 
+  /**
+   * Evaluates the initial status when an application is created. The initial request may itself
+   * transition (e.g. approve-on-apply); otherwise the application starts at the conventional
+   * REQUESTED (the no-match candidate APPLYING is normalized down to it).
+   */
+  public static IdentityVerificationApplicationStatus evaluateInitial(
+      IdentityVerificationProcessConfiguration config, IdentityVerificationContext context) {
+    IdentityVerificationApplicationStatus candidate = candidateOnProcess(config, context);
+    return candidate == IdentityVerificationApplicationStatus.APPLYING
+        ? IdentityVerificationApplicationStatus.REQUESTED
+        : candidate;
+  }
+
+  /**
+   * Evaluates the next status of a process attempt. An unsuccessful attempt (verification,
+   * pre-hook, or execution error) records the attempt (failure_count) but does not move the
+   * lifecycle. On success the candidate is computed statelessly from the transition config and
+   * context, then reconciled against {@code currentStatus} so the result is stateful: terminal
+   * states are absorbing and backward movement within the running phases is forbidden (#1617).
+   */
   public static IdentityVerificationApplicationStatus evaluateOnProcess(
+      IdentityVerificationApplicationStatus currentStatus,
+      IdentityVerificationApplyingResult applyingResult,
+      IdentityVerificationProcessConfiguration config) {
+    if (!applyingResult.isSuccess()) {
+      return currentStatus;
+    }
+    return reconcile(
+        currentStatus, candidateOnProcess(config, applyingResult.applicationContext()));
+  }
+
+  /**
+   * Evaluates the next status of a callback. See {@link #evaluateOnProcess} — same reconciliation,
+   * with the callback no-match fallback (EXAMINATION_PROCESSING) as the candidate. Callbacks reach
+   * this only on success (the caller short-circuits on error), so there is no error branch.
+   */
+  public static IdentityVerificationApplicationStatus evaluateOnCallback(
+      IdentityVerificationApplicationStatus currentStatus,
+      IdentityVerificationContext context,
+      IdentityVerificationProcessConfiguration config) {
+    return reconcile(currentStatus, candidateOnCallback(config, context));
+  }
+
+  /**
+   * Reconciles a freshly computed candidate against the current status (#1617):
+   *
+   * <ul>
+   *   <li>terminal states are absorbing — once terminal, ignore further transitions
+   *   <li>no backward movement within the running phases — the candidate falls back to a fixed
+   *       running status when no transition condition matches, which must not rewind progress
+   * </ul>
+   */
+  static IdentityVerificationApplicationStatus reconcile(
+      IdentityVerificationApplicationStatus current,
+      IdentityVerificationApplicationStatus candidate) {
+    if (current.isTerminal()) {
+      return current;
+    }
+    if (candidate.isRunning()
+        && current.isRunning()
+        && candidate.runningRank() < current.runningRank()) {
+      return current;
+    }
+    return candidate;
+  }
+
+  private static IdentityVerificationApplicationStatus candidateOnProcess(
       IdentityVerificationProcessConfiguration config, IdentityVerificationContext context) {
 
-    log.debug("Status evaluation started (on process)");
+    log.debug("Status candidate evaluation (on process)");
 
     IdentityVerificationConditionConfig approvedConfig = config.approved();
     ConditionTransitionResult approvedRequestResult =
@@ -81,10 +148,10 @@ public class IdentityVerificationApplicationStatusEvaluator {
     return IdentityVerificationApplicationStatus.APPLYING;
   }
 
-  public static IdentityVerificationApplicationStatus evaluateOnCallback(
+  private static IdentityVerificationApplicationStatus candidateOnCallback(
       IdentityVerificationProcessConfiguration config, IdentityVerificationContext context) {
 
-    log.debug("Status evaluation started (on callback)");
+    log.debug("Status candidate evaluation (on callback)");
 
     IdentityVerificationConditionConfig approvedConfig = config.approved();
     ConditionTransitionResult approvedRequestResult =

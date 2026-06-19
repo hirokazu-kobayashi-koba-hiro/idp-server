@@ -275,11 +275,14 @@ public class IdentityVerificationApplicationEntryService
             request,
             requestAttributes,
             verificationConfiguration);
-    // Record the process attempt for both success and hard error. updateProcessWith advances
-    // success_count or failure_count from applyingResult; on a hard error the merge is a no-op on
-    // the empty error context and the status falls back to APPLYING (same as a non-transitioning
-    // success), so failure_count-based conditions (lock_conditions / retry limits) work for hard
-    // errors too. (#1608)
+    // Record the process attempt for both success and failure. updateProcessWith advances
+    // success_count or failure_count from applyingResult, so failure_count-based conditions
+    // (lock_conditions / retry limits) work for failed attempts too (#1608). An unsuccessful
+    // attempt
+    // (verification / pre-hook / execution error) holds the status in place; only successful
+    // attempts
+    // re-evaluate it, and the result is reconciled to forbid backward / terminal-overwriting
+    // transitions. (#1617)
     IdentityVerificationApplication updated =
         application.updateProcessWith(process, applyingResult, verificationConfiguration);
     applicationCommandRepository.update(tenant, updated);

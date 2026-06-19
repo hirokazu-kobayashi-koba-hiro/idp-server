@@ -189,7 +189,7 @@ describe("multi client", () => {
 
 
       let applicationsResponse = await get({
-        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=applying&trust_framework=eidas&external_workflow_delegation=mocky`,
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=applied&trust_framework=eidas&external_workflow_delegation=mocky`,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${accessToken}`

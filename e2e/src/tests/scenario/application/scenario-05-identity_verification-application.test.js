@@ -869,7 +869,7 @@ describe("identity-verification application", () => {
 
 
       let applicationsResponse = await get({
-        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}&status=applying`,
+        url: serverConfig.identityVerificationApplicationsEndpoint + `?id=${applicationId}&type=${type}`,
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${accessToken}`
@@ -885,7 +885,7 @@ describe("identity-verification application", () => {
       expect(applicationsResponse.data.list[0].client_id).toEqual(clientSecretPostClient.clientId);
       expect(applicationsResponse.data.list[0].user_id).toEqual(user.sub);
       expect(applicationsResponse.data.list[0]).toHaveProperty("application_details");
-      expect(applicationsResponse.data.list[0].status).toEqual("applying");
+      expect(applicationsResponse.data.list[0].status).toEqual("applied");
       expect(applicationsResponse.data.list[0]).toHaveProperty("requested_at");
 
 
