@@ -88,6 +88,18 @@ class IdentityVerificationApplicationStatusReconcileTest {
   }
 
   @Test
+  void neutralCurrentAcceptsCandidate() {
+    // current=UNKNOWN / UNDEFINED is neither terminal nor running, so neither guard applies and the
+    // candidate is accepted as-is (recovery from a persisted-data anomaly). #1617 review follow-up.
+    assertEquals(
+        APPLYING, IdentityVerificationApplicationStatusEvaluator.reconcile(UNKNOWN, APPLYING));
+    assertEquals(
+        APPROVED, IdentityVerificationApplicationStatusEvaluator.reconcile(UNKNOWN, APPROVED));
+    assertEquals(
+        APPLIED, IdentityVerificationApplicationStatusEvaluator.reconcile(UNDEFINED, APPLIED));
+  }
+
+  @Test
   void enumTerminalSet() {
     assertTrue(APPROVED.isTerminal());
     assertTrue(REJECTED.isTerminal());

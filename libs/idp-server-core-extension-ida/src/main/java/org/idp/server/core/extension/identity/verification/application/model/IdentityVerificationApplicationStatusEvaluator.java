@@ -65,8 +65,13 @@ public class IdentityVerificationApplicationStatusEvaluator {
 
   /**
    * Evaluates the next status of a callback. See {@link #evaluateOnProcess} — same reconciliation,
-   * with the callback no-match fallback (EXAMINATION_PROCESSING) as the candidate. Callbacks reach
-   * this only on success (the caller short-circuits on error), so there is no error branch.
+   * with the callback no-match fallback (EXAMINATION_PROCESSING) as the candidate.
+   *
+   * <p><b>Contract</b>: unlike {@link #evaluateOnProcess} this has no failure branch — callers MUST
+   * short-circuit on error before reaching here (e.g. {@code
+   * IdentityVerificationCallbackEntryService} returns early on {@code applyingResult.isError()});
+   * otherwise a failed callback could move the lifecycle. The asymmetry is intentional: only the
+   * process path records failed attempts (failure_count) and therefore must run on failure.
    */
   public static IdentityVerificationApplicationStatus evaluateOnCallback(
       IdentityVerificationApplicationStatus currentStatus,
@@ -83,6 +88,10 @@ public class IdentityVerificationApplicationStatusEvaluator {
    *   <li>no backward movement within the running phases — the candidate falls back to a fixed
    *       running status when no transition condition matches, which must not rewind progress
    * </ul>
+   *
+   * <p>The invariants assume {@code current} is a running or terminal state. A neutral {@code
+   * current} (UNDEFINED / UNKNOWN — only from persisted-data anomalies) matches neither guard, so
+   * the candidate is accepted as-is (recovery).
    */
   static IdentityVerificationApplicationStatus reconcile(
       IdentityVerificationApplicationStatus current,
@@ -95,6 +104,8 @@ public class IdentityVerificationApplicationStatusEvaluator {
         && candidate.runningRank() < current.runningRank()) {
       return current;
     }
+    // current is a running/terminal state in normal flow; a neutral current (UNDEFINED / UNKNOWN)
+    // matches neither guard above and is recovered by accepting the candidate as-is (see javadoc).
     return candidate;
   }
 
