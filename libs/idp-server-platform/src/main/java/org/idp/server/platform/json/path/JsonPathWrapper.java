@@ -40,9 +40,7 @@ public class JsonPathWrapper {
     try {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
-
-      log.info(e.getMessage());
-      return null;
+      return logMissingPath(e);
     }
   }
 
@@ -50,9 +48,7 @@ public class JsonPathWrapper {
     try {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
-
-      log.info(e.getMessage());
-      return null;
+      return logMissingPath(e);
     }
   }
 
@@ -60,9 +56,7 @@ public class JsonPathWrapper {
     try {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
-
-      log.info(e.getMessage());
-      return null;
+      return logMissingPath(e);
     }
   }
 
@@ -70,9 +64,7 @@ public class JsonPathWrapper {
     try {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
-
-      log.info(e.getMessage());
-      return null;
+      return logMissingPath(e);
     }
   }
 
@@ -80,9 +72,7 @@ public class JsonPathWrapper {
     try {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
-
-      log.info(e.getMessage());
-      return null;
+      return logMissingPath(e);
     }
   }
 
@@ -90,9 +80,7 @@ public class JsonPathWrapper {
     try {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
-
-      log.info(e.getMessage());
-      return null;
+      return logMissingPath(e);
     }
   }
 
@@ -100,9 +88,7 @@ public class JsonPathWrapper {
     try {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
-
-      log.info(e.getMessage());
-      return null;
+      return logMissingPath(e);
     }
   }
 
@@ -110,9 +96,20 @@ public class JsonPathWrapper {
     try {
       return JsonPath.read(document, path);
     } catch (PathNotFoundException e) {
-
-      log.info(e.getMessage());
-      return null;
+      return logMissingPath(e);
     }
+  }
+
+  /**
+   * Logs a path-not-found and returns {@code null} for the read methods.
+   *
+   * <p>Path-not-found is a normal branch for callers: condition evaluation ({@code missing} /
+   * {@code exists} / {@code ne} / {@code nin}) and mapping {@code from} resolution treat a missing
+   * path as a valid {@code null}. It is logged at {@code debug} so it can be enabled on demand
+   * without polluting {@code INFO} in production. (#1646)
+   */
+  private <T> T logMissingPath(PathNotFoundException e) {
+    log.debug(e.getMessage());
+    return null;
   }
 }
