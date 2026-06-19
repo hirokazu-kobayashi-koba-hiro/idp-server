@@ -1,0 +1,43 @@
+<svg viewBox="0 0 730 285" xmlns="http://www.w3.org/2000/svg" font-family="'Hiragino Sans','Noto Sans JP',sans-serif">
+  <defs>
+    <marker id="tl-ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#9aa0a6"/>
+    </marker>
+  </defs>
+
+  <text x="20" y="22" font-size="13" font-weight="bold" fill="#202124">終端到達後に成功する process / callback を再投入したときのイベント発火（時系列 →）</text>
+
+  <line x1="378" y1="40" x2="378" y2="252" stroke="#dadce0" stroke-width="1" stroke-dasharray="4,4"/>
+  <text x="378" y="44" font-size="10" text-anchor="middle" fill="#80868b">再投入はここから</text>
+
+  <text x="20" y="94" font-size="12" font-weight="bold" fill="#c5221f">変更前</text>
+  <line x1="68" y1="100" x2="700" y2="100" stroke="#9aa0a6" stroke-width="1.2" marker-end="url(#tl-ah)"/>
+  <rect x="74" y="78" width="58" height="22" rx="11" fill="#f1f3f4" stroke="#9aa0a6"/>
+  <text x="103" y="93" font-size="11" text-anchor="middle" fill="#3c4043">apply</text>
+  <rect x="148" y="78" width="92" height="22" rx="11" fill="#f1f3f4" stroke="#9aa0a6"/>
+  <text x="194" y="93" font-size="11" text-anchor="middle" fill="#3c4043">登録 success</text>
+  <rect x="256" y="78" width="92" height="22" rx="11" fill="#e6f4ea" stroke="#137333"/>
+  <text x="302" y="93" font-size="11" text-anchor="middle" fill="#0b6b2f">approved ★</text>
+  <rect x="402" y="78" width="100" height="22" rx="11" fill="#f1f3f4" stroke="#9aa0a6"/>
+  <text x="452" y="93" font-size="11" text-anchor="middle" fill="#3c4043">再投入 success</text>
+  <rect x="516" y="78" width="160" height="22" rx="11" fill="#fce8e6" stroke="#c5221f"/>
+  <text x="596" y="93" font-size="11" text-anchor="middle" fill="#a50e0e">approved（2回目！）</text>
+  <text x="596" y="120" font-size="10" text-anchor="middle" fill="#a50e0e">→ 検証結果 二重登録 / user verified_claims 再更新</text>
+  <text x="452" y="135" font-size="10" text-anchor="middle" fill="#80868b">（no-match の場合は status が APPROVED → APPLYING へ巻き戻り）</text>
+
+  <text x="20" y="200" font-size="12" font-weight="bold" fill="#137333">変更後</text>
+  <line x1="68" y1="206" x2="700" y2="206" stroke="#9aa0a6" stroke-width="1.2" marker-end="url(#tl-ah)"/>
+  <rect x="74" y="184" width="58" height="22" rx="11" fill="#f1f3f4" stroke="#9aa0a6"/>
+  <text x="103" y="199" font-size="11" text-anchor="middle" fill="#3c4043">apply</text>
+  <rect x="148" y="184" width="92" height="22" rx="11" fill="#f1f3f4" stroke="#9aa0a6"/>
+  <text x="194" y="199" font-size="11" text-anchor="middle" fill="#3c4043">登録 success</text>
+  <rect x="256" y="184" width="92" height="22" rx="11" fill="#e6f4ea" stroke="#137333"/>
+  <text x="302" y="199" font-size="11" text-anchor="middle" fill="#0b6b2f">approved ★</text>
+  <rect x="402" y="184" width="100" height="22" rx="11" fill="#f1f3f4" stroke="#9aa0a6"/>
+  <text x="452" y="199" font-size="11" text-anchor="middle" fill="#3c4043">再投入 success</text>
+  <rect x="516" y="184" width="160" height="22" rx="11" fill="#f1f3f4" stroke="#9aa0a6" stroke-dasharray="4,3"/>
+  <text x="596" y="199" font-size="11" text-anchor="middle" fill="#80868b">approved 発火なし</text>
+  <text x="596" y="226" font-size="10" text-anchor="middle" fill="#137333">→ 終端ガードでスキップ（status は APPROVED 維持・重複なし）</text>
+
+  <text x="20" y="272" font-size="11" fill="#3c4043">差分: 終端到達後の成功再投入で <tspan fill="#c5221f" font-weight="bold">approved が再発火していた</tspan> → <tspan fill="#137333" font-weight="bold">新規の終端遷移時のみ 1 回</tspan></text>
+</svg>

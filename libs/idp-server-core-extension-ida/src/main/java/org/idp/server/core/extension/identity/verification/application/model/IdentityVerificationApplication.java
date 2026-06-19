@@ -118,15 +118,9 @@ public class IdentityVerificationApplication {
     IdentityVerificationApplicationAttributes attributes =
         IdentityVerificationApplicationAttributes.fromMap(verificationConfiguration.attributes());
 
-    // single-process configurations can transition (e.g. approve) on the initial request;
-    // when no transition condition matches, keep the conventional initial status REQUESTED
-    IdentityVerificationApplicationStatus evaluatedStatus =
-        IdentityVerificationApplicationStatusEvaluator.evaluateOnProcess(
-            processConfig, applicationContext);
     IdentityVerificationApplicationStatus status =
-        evaluatedStatus == IdentityVerificationApplicationStatus.APPLYING
-            ? IdentityVerificationApplicationStatus.REQUESTED
-            : evaluatedStatus;
+        IdentityVerificationApplicationStatusEvaluator.evaluateInitial(
+            processConfig, applicationContext);
 
     return new IdentityVerificationApplication(
         identifier,
@@ -178,9 +172,13 @@ public class IdentityVerificationApplication {
     IdentityVerificationApplicationProcessResults processResults =
         new IdentityVerificationApplicationProcessResults(resultMap);
 
+    // The process attempt is recorded above (success_count / failure_count). The evaluator then
+    // decides the next status: an unsuccessful attempt holds it in place, while a successful one
+    // reconciles the candidate against the current status (no backward / terminal-overwriting
+    // moves). (#1617)
     IdentityVerificationApplicationStatus status =
         IdentityVerificationApplicationStatusEvaluator.evaluateOnProcess(
-            processConfig, applyingResult.applicationContext());
+            this.status, applyingResult, processConfig);
 
     return new IdentityVerificationApplication(
         identifier,
@@ -231,8 +229,12 @@ public class IdentityVerificationApplication {
     IdentityVerificationApplicationProcessResults processResults =
         new IdentityVerificationApplicationProcessResults(resultMap);
 
+    // The evaluator reconciles against the current status to forbid backward / terminal-overwriting
+    // transitions (the callback candidate falls back to EXAMINATION_PROCESSING on no-match).
+    // (#1617)
     IdentityVerificationApplicationStatus status =
-        IdentityVerificationApplicationStatusEvaluator.evaluateOnCallback(processConfig, context);
+        IdentityVerificationApplicationStatusEvaluator.evaluateOnCallback(
+            this.status, context, processConfig);
 
     return new IdentityVerificationApplication(
         identifier,
