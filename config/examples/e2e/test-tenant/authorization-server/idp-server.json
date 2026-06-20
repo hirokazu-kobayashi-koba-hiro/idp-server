@@ -219,12 +219,14 @@
   "verified_claims_supported": true,
   "trust_frameworks_supported":[
     "nist_800_63A_ial_2",
-    "nist_800_63A_ial_3"
+    "nist_800_63A_ial_3",
+    "eidas"
   ],
   "evidence_supported":[
     "id_document",
     "utility_bill",
-    "qes"
+    "qes",
+    "electronic_record"
   ],
   "documents_supported":[
     "idcard",
@@ -235,6 +237,10 @@
     "pipp",
     "sripp",
     "eid"
+  ],
+  "electronic_records_supported":[
+    "bank_account",
+    "mortgage_account"
   ],
   "claims_in_verified_claims_supported":[
     "given_name",
