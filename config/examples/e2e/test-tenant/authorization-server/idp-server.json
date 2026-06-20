@@ -223,9 +223,7 @@
     "eidas"
   ],
   "evidence_supported":[
-    "id_document",
-    "utility_bill",
-    "qes",
+    "document",
     "electronic_record"
   ],
   "documents_supported":[
@@ -237,6 +235,9 @@
     "pipp",
     "sripp",
     "eid"
+  ],
+  "documents_check_methods_supported":[
+    "vpip"
   ],
   "electronic_records_supported":[
     "bank_account",

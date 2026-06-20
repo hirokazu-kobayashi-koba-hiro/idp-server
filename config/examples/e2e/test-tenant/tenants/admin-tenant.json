@@ -267,9 +267,7 @@
       "nist_800_63A_ial_3"
     ],
     "evidence_supported":[
-      "id_document",
-      "utility_bill",
-      "qes"
+      "document"
     ],
     "documents_supported":[
       "idcard",

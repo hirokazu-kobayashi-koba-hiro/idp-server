@@ -461,10 +461,12 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
     });
 
     it("evidence_supported: Required when one or more type of evidence is supported. JSON array containing all types of identity evidence the OP uses. This array shall have at least one member.", () => {
-      // NOTE: values are still pre-1.0 draft (id_document/utility_bill/qes); the rename to
-      // document/electronic_record/... is tracked as a separate gap. Here we assert presence + non-empty.
       expect(Array.isArray(metadata.evidence_supported)).toBe(true);
       expect(metadata.evidence_supported.length).toBeGreaterThan(0);
+      // OIDC4IDA 1.0 evidence types only; pre-1.0 draft values (id_document/utility_bill/qes) removed.
+      expect(metadata.evidence_supported).toContain("document");
+      expect(metadata.evidence_supported).toContain("electronic_record");
+      expect(metadata.evidence_supported).not.toContain("id_document");
     });
 
     it('documents_supported: Required when evidence_supported contains "document". JSON array containing all identity document types utilized by the OP for identity verification.', () => {
@@ -476,7 +478,9 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
       expect(metadata.documents_methods_supported).toContain("pipp");
     });
 
-    xit('documents_check_methods_supported: Optional. JSON array containing the check methods the OP supports for evidences of type "document". (pending: no document-evidence test data; advertising it needs a value set verified against the spec — see #1649-C)', () => {});
+    it('documents_check_methods_supported: Optional. JSON array containing the check methods the OP supports for evidences of type "document".', () => {
+      expect(metadata.documents_check_methods_supported).toContain("vpip");
+    });
 
     it('electronic_records_supported: Required when evidence_supported contains "electronic_record". JSON array containing all electronic record types the OP supports. When present this array shall have at least one member.', () => {
       expect(Array.isArray(metadata.electronic_records_supported)).toBe(true);

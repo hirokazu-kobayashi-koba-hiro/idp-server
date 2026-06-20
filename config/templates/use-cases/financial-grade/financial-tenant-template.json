@@ -142,7 +142,7 @@
       "jp_aml"
     ],
     "evidence_supported": [
-      "id_document",
+      "document",
       "electronic_record"
     ],
     "claims_in_verified_claims_supported": [
