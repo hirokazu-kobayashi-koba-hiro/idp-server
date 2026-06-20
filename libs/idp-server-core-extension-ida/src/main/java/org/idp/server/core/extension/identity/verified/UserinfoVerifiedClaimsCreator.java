@@ -23,6 +23,7 @@ import org.idp.server.core.openid.identity.id_token.VerifiedClaimsObject;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.userinfo.plugin.UserinfoCustomIndividualClaimsCreator;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonNodeWrapper;
 
 /**
@@ -58,6 +59,6 @@ public class UserinfoVerifiedClaimsCreator implements UserinfoCustomIndividualCl
       ClientConfiguration clientConfiguration) {
     VerifiedClaimsObject requested = authorizationGrant.userinfoClaims().verifiedClaims();
     JsonNodeWrapper userVerifiedClaims = user.verifiedClaimsNodeWrapper();
-    return VerifiedClaimsAssembler.assemble(requested, userVerifiedClaims);
+    return VerifiedClaimsAssembler.assemble(requested, userVerifiedClaims, SystemDateTime.now());
   }
 }

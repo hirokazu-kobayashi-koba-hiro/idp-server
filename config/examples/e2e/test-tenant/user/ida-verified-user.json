@@ -1,0 +1,49 @@
+{
+  "sub": "0a1da001-0000-4000-8000-000000000001",
+  "provider_id": "idp-server",
+  "external_user_id": "0a1da001-0000-4000-8000-000000000001",
+  "name": "Sarah Meredyth",
+  "given_name": "Sarah",
+  "family_name": "Meredyth",
+  "preferred_username": "ida-verified-user",
+  "email": "ida.verified.user@gmail.com",
+  "email_verified": true,
+  "birthdate": "1976-03-11",
+  "raw_password": "successUserCode001",
+  "verified_claims": {
+    "claims": {
+      "address": {
+        "country": "UK",
+        "locality": "Edinburgh",
+        "postal_code": "EH1 9GP",
+        "street_address": "122 Burns Crescent"
+      },
+      "birthdate": "1976-03-11",
+      "given_name": "Sarah",
+      "family_name": "Meredyth",
+      "place_of_birth": { "country": "UK" }
+    },
+    "verification": {
+      "time": "2021-04-09T14:12Z",
+      "evidence": [
+        {
+          "time": "2021-04-09T14:12Z",
+          "type": "electronic_record",
+          "record": { "type": "mortgage_account", "source": { "name": "TheCreditBureau" } },
+          "check_details": [
+            { "txn": "kbv1-hf934hn09234ng03jj3", "check_method": "kbv", "organization": "TheCreditBureau" }
+          ]
+        },
+        {
+          "time": "2021-04-09T14:12Z",
+          "type": "electronic_record",
+          "record": { "type": "bank_account", "source": { "name": "TheBank" } },
+          "check_details": [
+            { "txn": "kbv2-nm0f23u9459fj38u5j6", "check_method": "kbv", "organization": "OpenBankingTPP" }
+          ]
+        }
+      ],
+      "trust_framework": "eidas"
+    }
+  }
+}

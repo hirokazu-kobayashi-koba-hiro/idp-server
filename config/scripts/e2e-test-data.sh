@@ -91,6 +91,23 @@ echo "tenant-a"
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
 
+## user (dedicated, non-privileged IDA verified-claims test user)
+# Kept separate from the shared ito.ichiro super-user so its verified_claims (incl. the top-level
+# verification.time that drives the §5.5.2 max_age tests) can be refreshed by re-running this seed
+# without disturbing other tests. Consumed by e2e/.../spec/oidc_for_identity_assurance.test.js.
+
+echo "-------------------------------------------------"
+echo ""
+echo "user (ida-verified-user)"
+
+./config/scripts/upsert-user.sh \
+  -t "${TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/test-tenant/user/ida-verified-user.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
 ## authorization-server
 
 echo "-------------------------------------------------"

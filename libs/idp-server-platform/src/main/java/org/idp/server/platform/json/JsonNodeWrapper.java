@@ -194,6 +194,10 @@ public class JsonNodeWrapper {
     return jsonNode.get(fieldName).asInt();
   }
 
+  public long getValueAsLong(String fieldName) {
+    return jsonNode.get(fieldName).asLong();
+  }
+
   public boolean getValueAsBoolean(String fieldName) {
     return jsonNode.get(fieldName).asBoolean();
   }
