@@ -229,9 +229,23 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
       expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
     });
 
-    xit("For each claim, the value is either `null` (default), or an object. (requested with an empty JSON object {} — eKYC module #2 ekyc-server-happypath-emptyobject)", async () => {});
+    it("For each claim, the value is either `null` (default), or an object. (requested with an empty JSON object {} — eKYC module #2 ekyc-server-happypath-emptyobject)", async () => {
+      const payload = await idTokenVerifiedClaims({
+        verification: { trust_framework: null },
+        claims: { given_name: {} },
+      });
+      expect(payload.verified_claims).toBeDefined();
+      expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
+    });
 
-    xit('For each claim, the value is either `null` (default), or an object. (requested with {"essential": false}, an OIDC Core §5.5.1 member — eKYC module #3 ekyc-server-happypath-essentialfalse)', async () => {});
+    it('For each claim, the value is either `null` (default), or an object. (requested with {"essential": false}, an OIDC Core §5.5.1 member — eKYC module #3 ekyc-server-happypath-essentialfalse)', async () => {
+      const payload = await idTokenVerifiedClaims({
+        verification: { trust_framework: null },
+        claims: { given_name: { essential: false } },
+      });
+      expect(payload.verified_claims).toBeDefined();
+      expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
+    });
   });
 
   describe("5.5 Defining further constraints on verification data", () => {
@@ -281,15 +295,39 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
       });
 
       // "does not understand/support the respective claim" — the unknown/unsupported-claim cases.
-      xit("If the OP does not have data about a certain claim, does not understand/support the respective claim, OPs shall omit the respective claim ... (unknown random-named claim — eKYC module #4 ekyc-server-unknown-claim-omitted)", async () => {});
+      it("If the OP does not have data about a certain claim, does not understand/support the respective claim, OPs shall omit the respective claim ... (unknown random-named claim — eKYC module #4 ekyc-server-unknown-claim-omitted)", async () => {
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: null },
+          claims: { given_name: null, unknown_random_claim_xyz: null },
+        });
+        expect(payload.verified_claims).toBeDefined();
+        expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
+        expect(payload.verified_claims.claims).not.toHaveProperty("unknown_random_claim_xyz");
+      });
 
-      xit("If the OP does not have data about a certain claim, does not understand/support the respective claim, OPs shall omit the respective claim ... (unknown claim requested with essential:true — eKYC module #5 ekyc-server-unknown-essential-claim-omitted)", async () => {});
+      it("If the OP does not have data about a certain claim, does not understand/support the respective claim, OPs shall omit the respective claim ... (unknown claim requested with essential:true — eKYC module #5 ekyc-server-unknown-essential-claim-omitted)", async () => {
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: null },
+          claims: { given_name: null, unknown_essential_claim: { essential: true } },
+        });
+        expect(payload.verified_claims).toBeDefined();
+        expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
+        expect(payload.verified_claims.claims).not.toHaveProperty("unknown_essential_claim");
+      });
 
-      xit("If the OP does not have data about a certain claim, does not understand/support the respective claim, OPs shall omit the respective claim ... (unknown claim whose name contains special characters — eKYC module #6 ekyc-server-unknown-claim-specialchars-omitted)", async () => {});
+      it("If the OP does not have data about a certain claim, does not understand/support the respective claim, OPs shall omit the respective claim ... (unknown claim whose name contains special characters — eKYC module #6 ekyc-server-unknown-claim-specialchars-omitted)", async () => {
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: null },
+          claims: { given_name: null, "claim%1/a&,.b": null },
+        });
+        expect(payload.verified_claims).toBeDefined();
+        expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
+        expect(payload.verified_claims.claims).not.toHaveProperty("claim%1/a&,.b");
+      });
     });
 
     describe("5.7.3 Non-consented data", () => {
-      xit("the OP shall omit from any corresponding ID Token or UserInfo response data that has not had end-user consent for sharing. (negative test not yet implemented)", async () => {});
+      xit("the OP shall omit from any corresponding ID Token or UserInfo response data that has not had end-user consent for sharing. (pending: requires driving a non-consented state through the consent flow — see #1649-B)", async () => {});
     });
 
     describe("5.7.4 Data not matching requirements", () => {
@@ -337,7 +375,15 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
   });
 
   describe("7 Requesting verified claims", () => {
-    xit("The OP shall not provide the RP with any data it did not request. (IA-7 data minimization; negative test not yet implemented)", async () => {});
+    it("The OP shall not provide the RP with any data it did not request. (IA-7 data minimization — only the requested claim appears in the response)", async () => {
+      // Only given_name is requested; nothing else (family_name, birthdate, address, ...) may leak.
+      const payload = await idTokenVerifiedClaims({
+        verification: { trust_framework: null },
+        claims: { given_name: null },
+      });
+      expect(payload.verified_claims).toBeDefined();
+      expect(Object.keys(payload.verified_claims.claims)).toEqual(["given_name"]);
+    });
   });
 
   describe("8 OP metadata", () => {
@@ -381,13 +427,42 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
       expect(metadata.documents_methods_supported).toContain("pipp");
     });
 
-    xit('documents_check_methods_supported: Optional. JSON array containing the check methods the OP supports for evidences of type "document". (not advertised by this OP)', () => {});
+    xit('documents_check_methods_supported: Optional. JSON array containing the check methods the OP supports for evidences of type "document". (pending: no document-evidence test data; advertising it needs a value set verified against the spec — see #1649-C)', () => {});
 
-    xit('electronic_records_supported: Required when evidence_supported contains "electronic_record". JSON array containing all electronic record types the OP supports. (no electronic_record evidence advertised by this OP)', () => {});
+    it('electronic_records_supported: Required when evidence_supported contains "electronic_record". JSON array containing all electronic record types the OP supports. When present this array shall have at least one member.', () => {
+      expect(Array.isArray(metadata.electronic_records_supported)).toBe(true);
+      expect(metadata.electronic_records_supported.length).toBeGreaterThan(0);
+    });
 
     it("legacy pre-1.0 draft names id_documents_supported / id_documents_verification_methods_supported are no longer advertised", () => {
       expect(metadata).not.toHaveProperty("id_documents_supported");
       expect(metadata).not.toHaveProperty("id_documents_verification_methods_supported");
+    });
+  });
+
+  // conformance E group (IA-8): every value returned inside verified_claims must be advertised in the
+  // OP's *_supported metadata (ValidateVerifiedClaimsInIdTokenAgainstOPMetadata / ...InUserinfo...).
+  describe("IA-8 returned verified_claims must be within the OP metadata", () => {
+    it("the trust_framework returned in verified_claims/verification is advertised in trust_frameworks_supported.", async () => {
+      const metaResponse = await getConfiguration({ endpoint: serverConfig.discoveryEndpoint });
+      const payload = await idTokenVerifiedClaims({
+        verification: { trust_framework: null },
+        claims: { given_name: null },
+      });
+      expect(metaResponse.data.trust_frameworks_supported).toContain(
+        payload.verified_claims.verification.trust_framework
+      );
+    });
+
+    it("every claim name returned in verified_claims/claims is advertised in claims_in_verified_claims_supported.", async () => {
+      const metaResponse = await getConfiguration({ endpoint: serverConfig.discoveryEndpoint });
+      const payload = await idTokenVerifiedClaims({
+        verification: { trust_framework: null },
+        claims: { given_name: null, family_name: null },
+      });
+      Object.keys(payload.verified_claims.claims).forEach((name) => {
+        expect(metaResponse.data.claims_in_verified_claims_supported).toContain(name);
+      });
     });
   });
 
