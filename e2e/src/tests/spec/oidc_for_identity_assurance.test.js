@@ -517,11 +517,12 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
 
   // The `purpose` claims-request member is defined in OIDC4IDA Implementer's Draft §5.1. It was
   // DROPPED from the OIDC4IDA 1.0 final spec (1 Oct 2024) and is not in OpenID Connect Core §5.5.1
-  // (essential / value / values only) — but the eKYC OP conformance suite still exercises it (§10,
-  // tag IA-9), which is the driver here. Length validation (3–300 → invalid_request) is enforced by
-  // RequestedClaimsPurposeVerifier for both standard and verified_claims-nested purposes; purpose
-  // applies to any requested claim, so a plain standard claim (given_name) is used. The consent
-  // screen reads the (HTML-escaped) purpose from the authorization view-data's requested_claims.
+  // (essential / value / values only); the OIDF eKYC test plan only documents it as an unimplemented
+  // TODO (§10, tag IA-9), not a runnable test module. This is a reference implementation: length
+  // validation (3–300 → invalid_request) is enforced by RequestedClaimsPurposeVerifier for both
+  // standard and verified_claims-nested purposes; purpose applies to any requested claim, so a plain
+  // standard claim (given_name) is used. The consent screen reads the (HTML-escaped) purpose from
+  // the authorization view-data's requested_claims.
   describe("'purpose' claims-request member (OIDC4IDA-ID1 §5.1; eKYC catalog §10 / IA-9)", () => {
     it("eKYC IA-9 (OIDC4IDA-ID1 §5.1) purpose member: a purpose shorter than 3 characters MUST be rejected with invalid_request.", async () => {
       const { authorizationResponse } = await requestAuthorizations({

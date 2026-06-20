@@ -31,9 +31,9 @@ import org.idp.server.platform.json.JsonNodeWrapper;
  * rejected with {@code invalid_request}.
  *
  * <p>Source: {@code purpose} is defined in OIDC4IDA Implementer's Draft §5.1; it was dropped in the
- * OIDC4IDA 1.0 final spec but is still exercised by the eKYC OP conformance suite (tag IA-9), which
- * is the driver for this check. It is NOT defined in OpenID Connect Core §5.5.1 (essential / value
- * / values only).
+ * OIDC4IDA 1.0 final spec and is only documented as an unimplemented TODO in the OIDF eKYC test
+ * plan (tag IA-9), not a runnable test module — so this is a reference implementation. It is NOT
+ * defined in OpenID Connect Core §5.5.1 (essential / value / values only).
  *
  * <p>{@code purpose} is a generic claims-request member, so this covers <b>all</b> requested claims
  * — the standard {@code id_token} / {@code userinfo} claims as well as the claims nested inside a

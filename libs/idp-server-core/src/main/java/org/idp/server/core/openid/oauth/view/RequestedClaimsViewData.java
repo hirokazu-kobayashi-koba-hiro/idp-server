@@ -24,9 +24,9 @@ import org.idp.server.platform.text.HtmlEscaper;
 /**
  * Builds the {@code requested_claims} entry of the authorization view-data: for each requested
  * claim that carries a {@code purpose} (OIDC4IDA Implementer's Draft §5.1; dropped in OIDC4IDA 1.0
- * final, still exercised by the eKYC OP conformance suite IA-9), the claim name maps to its {@code
- * essential} flag and its {@code purpose}. The purpose is HTML-escaped because it is RP-supplied
- * text shown on the consent screen (XSS prevention).
+ * final, only an unimplemented TODO in the OIDF eKYC test plan, IA-9), the claim name maps to its
+ * {@code essential} flag and its {@code purpose}. The purpose is HTML-escaped because it is
+ * RP-supplied text shown on the consent screen (XSS prevention).
  *
  * <p>Covers the standard {@code id_token} / {@code userinfo} claims. Purposes nested inside a
  * {@code verified_claims} request are not yet surfaced here.

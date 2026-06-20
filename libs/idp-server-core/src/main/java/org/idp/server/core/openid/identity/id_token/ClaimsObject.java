@@ -41,8 +41,8 @@ public class ClaimsObject implements JsonReadable {
 
   /**
    * The {@code purpose} claims-request member (OIDC4IDA Implementer's Draft §5.1; dropped in
-   * OIDC4IDA 1.0 final, but still exercised by the eKYC OP conformance suite, tag IA-9): the reason
-   * the RP requests this claim, shown to the end-user. {@code null} when not requested.
+   * OIDC4IDA 1.0 final, only an unimplemented TODO in the OIDF eKYC test plan, tag IA-9): the
+   * reason the RP requests this claim, shown to the end-user. {@code null} when not requested.
    */
   public String purpose() {
     return purpose;
