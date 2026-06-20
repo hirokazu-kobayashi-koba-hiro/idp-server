@@ -16,9 +16,15 @@
 
 package org.idp.server.core.extension.identity.verified;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.identity.id_token.VerifiedClaimsObject;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 
@@ -69,19 +75,23 @@ public class VerifiedClaimsAssembler {
   /**
    * Assembles the {@code verified_claims} element, or an empty map when it must be omitted. Returns
    * a map with at most one entry, {@code "verified_claims"}.
+   *
+   * @param now the reference point for {@code max_age} freshness (§5.5.2), normally {@link
+   *     SystemDateTime#now()}
    */
   public static Map<String, Object> assemble(
-      VerifiedClaimsObject requested, JsonNodeWrapper userVerifiedClaims) {
+      VerifiedClaimsObject requested, JsonNodeWrapper userVerifiedClaims, LocalDateTime now) {
     HashMap<String, Object> result = new HashMap<>();
     if (requested == null) {
       return result;
     }
 
     // claims: resolve the requested claim names dynamically against the user's stored claims,
-    // honoring any value/values constraint. A claim that is unavailable (§5.7.2) or fails its
-    // constraint (§5.7.4, claims branch) is dropped individually.
+    // honoring any value/values constraint. A claim that is unavailable (§5.7.2), fails its
+    // constraint (§5.7.4, claims branch), or is staler than a requested max_age (§5.5.2) is dropped
+    // individually.
     Map<String, Object> claims =
-        selectClaims(requested.claimsNodeWrapper(), userBlock(userVerifiedClaims, "claims"));
+        selectClaims(requested.claimsNodeWrapper(), userBlock(userVerifiedClaims, "claims"), now);
 
     // An empty claims object is NOT a reason to omit verified_claims. The IDA schema
     // ([IDA-verified-claims] §5.3 "Claims element") states the claims element may be empty, so when
@@ -95,7 +105,9 @@ public class VerifiedClaimsAssembler {
 
     Map<String, Object> verification =
         selectVerification(
-            requested.verificationNodeWrapper(), userBlock(userVerifiedClaims, "verification"));
+            requested.verificationNodeWrapper(),
+            userBlock(userVerifiedClaims, "verification"),
+            now);
 
     // §5.7.4 (verification branch): a requested verification element failed its value/values
     // constraint, so the verification requirement is unmet — omit the whole verified_claims.
@@ -134,18 +146,23 @@ public class VerifiedClaimsAssembler {
 
   /**
    * Selects each requested claim that the user holds and whose stored value satisfies the requested
-   * {@code value} / {@code values} constraint. Unavailable or non-matching claims are dropped
-   * individually (§5.7.2 / §5.7.4 claims branch).
+   * {@code value} / {@code values} constraint and {@code max_age} freshness. Unavailable, stale, or
+   * non-matching claims are dropped individually (§5.7.2 / §5.5.2 / §5.7.4 claims branch).
    */
   private static Map<String, Object> selectClaims(
-      JsonNodeWrapper requestedClaims, Map<String, Object> userClaims) {
+      JsonNodeWrapper requestedClaims, Map<String, Object> userClaims, LocalDateTime now) {
     Map<String, Object> selected = new HashMap<>();
     for (String name : requestedClaims.fieldNamesAsList()) {
       if (!userClaims.containsKey(name)) {
         continue;
       }
       Object userValue = userClaims.get(name);
-      if (matchesConstraint(requestedClaims.getValueAsJsonNode(name), userValue)) {
+      JsonNodeWrapper constraint = requestedClaims.getValueAsJsonNode(name);
+      // §5.5.2: a date/timestamp claim staler than the requested max_age is dropped individually.
+      if (isStale(constraint, userValue, now)) {
+        continue;
+      }
+      if (matchesConstraint(constraint, userValue)) {
         selected.put(name, userValue);
       }
     }
@@ -158,9 +175,17 @@ public class VerifiedClaimsAssembler {
    * {@code evidence}) are opt-in via explicit request. Returns {@code null} when a requested
    * verification element fails its {@code value} / {@code values} constraint, signaling the whole
    * verified_claims must be omitted (§5.7.4).
+   *
+   * <p>A {@code max_age} miss (§5.5.2) is treated differently from a {@code value}/{@code values}
+   * miss: it is a SHOULD/best-effort freshness hint, so a stale date/timestamp element (e.g. {@code
+   * verification.time}) is dropped individually — like §5.7.2 unavailable data — rather than
+   * cascading to a whole-element omission. {@code trust_framework}, the REQUIRED floor, is never a
+   * date and so is never subject to freshness.
    */
   private static Map<String, Object> selectVerification(
-      JsonNodeWrapper requestedVerification, Map<String, Object> userVerification) {
+      JsonNodeWrapper requestedVerification,
+      Map<String, Object> userVerification,
+      LocalDateTime now) {
     Map<String, Object> selected = new HashMap<>();
 
     if (userVerification.containsKey("trust_framework")) {
@@ -177,7 +202,13 @@ public class VerifiedClaimsAssembler {
         continue;
       }
       Object userValue = userVerification.get(element);
-      if (!matchesConstraint(requestedVerification.getValueAsJsonNode(element), userValue)) {
+      JsonNodeWrapper constraint = requestedVerification.getValueAsJsonNode(element);
+      // §5.5.2: a stale date/timestamp element is dropped individually, NOT whole-omitted — its
+      // freshness is a best-effort SHOULD, unlike the value/values MUST below.
+      if (isStale(constraint, userValue, now)) {
+        continue;
+      }
+      if (!matchesConstraint(constraint, userValue)) {
         return null;
       }
       selected.put(element, userValue);
@@ -189,7 +220,7 @@ public class VerifiedClaimsAssembler {
    * Matches a stored value against a requested claim's {@code value} / {@code values} constraint
    * (OpenID Connect §5.5.1). A {@code null} request (no constraint object) or one carrying neither
    * {@code value} nor {@code values} always matches — the claim was requested, not constrained.
-   * {@code max_age} is out of scope.
+   * {@code max_age} freshness is handled separately by {@link #isStale}.
    */
   private static boolean matchesConstraint(JsonNodeWrapper constraint, Object userValue) {
     if (constraint == null || !constraint.exists() || !constraint.isObject()) {
@@ -211,5 +242,69 @@ public class VerifiedClaimsAssembler {
 
   private static boolean stringEquals(String requested, Object userValue) {
     return userValue != null && requested.equals(String.valueOf(userValue));
+  }
+
+  /**
+   * Evaluates the OIDC4IDA §5.5.2 {@code max_age} freshness hint: {@code true} when the requested
+   * element carries a {@code max_age} (seconds) AND the stored value is a date/timestamp older than
+   * that, so the element should be dropped.
+   *
+   * <p>{@code max_age} is "only applicable to claims that contain dates or timestamps", so a value
+   * that does not parse as a date is never stale (the hint does not apply). Elapsed time is
+   * measured, per the spec, "from the last valid second of the date value": a date-only value
+   * resolves to 23:59:59 of that day, a full timestamp to its own second. The OP "should try to
+   * fulfill" the hint (SHOULD), which this honors by omission rather than by attempting a
+   * re-verification.
+   *
+   * <p>Freshness is evaluated before the {@code value}/{@code values} constraint (see {@link
+   * #selectClaims} / {@link #selectVerification}), so an element that carries both is dropped on
+   * staleness regardless of whether its value would have matched.
+   */
+  private static boolean isStale(JsonNodeWrapper constraint, Object userValue, LocalDateTime now) {
+    if (constraint == null
+        || !constraint.exists()
+        || !constraint.isObject()
+        || !constraint.contains("max_age")) {
+      return false;
+    }
+    Long valueEpochSecond = lastValidSecondEpoch(userValue);
+    if (valueEpochSecond == null) {
+      return false;
+    }
+    long maxAge = constraint.getValueAsLong("max_age");
+    return SystemDateTime.toEpochSecond(now) - valueEpochSecond > maxAge;
+  }
+
+  /**
+   * Resolves a stored claim value to the epoch second of its "last valid second" for §5.5.2 max_age
+   * comparison, or {@code null} when the value is not a date/timestamp. Accepts an offset/Z-bearing
+   * instant (used as-is), a timezone-less local date-time (interpreted in the system zone), a
+   * date-only value (resolved to 23:59:59 of that day in the system zone), or a JSON number
+   * (treated as epoch seconds).
+   */
+  private static Long lastValidSecondEpoch(Object userValue) {
+    if (userValue instanceof Number number) {
+      return number.longValue();
+    }
+    if (!(userValue instanceof String text) || text.isBlank()) {
+      return null;
+    }
+    String value = text.trim();
+    try {
+      return OffsetDateTime.parse(value).toEpochSecond();
+    } catch (DateTimeParseException ignored) {
+      // not an offset/Z-bearing instant
+    }
+    try {
+      return SystemDateTime.toEpochSecond(LocalDateTime.parse(value));
+    } catch (DateTimeParseException ignored) {
+      // not a timezone-less local date-time
+    }
+    try {
+      return SystemDateTime.toEpochSecond(LocalDate.parse(value).atTime(LocalTime.MAX.withNano(0)));
+    } catch (DateTimeParseException ignored) {
+      // not a date-only value → max_age does not apply
+    }
+    return null;
   }
 }

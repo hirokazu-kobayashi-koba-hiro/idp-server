@@ -21,10 +21,16 @@ import { get } from "../../lib/http";
 // conformance-suite repo (github.com/openid/conformance-suite, eKYC-IDA test plan) — not a file in
 // this repo.
 //
-// The default end-user (ito.ichiro@gmail.com, signed in via the clientSecretPostClient flow) has
-// stored verified_claims with verification.trust_framework = "eidas" and claims given_name "Sarah" /
-// family_name "Meredyth" / birthdate / address. middle_name and gender are intentionally NOT stored
-// (treated as unavailable).
+// The end-user is a dedicated, non-privileged IDA fixture (ida.verified.user@gmail.com), provisioned
+// by config/scripts/e2e-test-data.sh from config/examples/e2e/test-tenant/user/ida-verified-user.json
+// — kept separate from the shared ito.ichiro super-user so its verified_claims can be tuned for these
+// tests without side effects elsewhere. It holds verification.trust_framework = "eidas",
+// verification.time (drives §5.5.2 max_age), and claims given_name "Sarah" / family_name "Meredyth" /
+// birthdate / address. middle_name and gender are intentionally NOT stored (treated as unavailable).
+const idaVerifiedUser = {
+  username: "ida.verified.user@gmail.com",
+  password: "successUserCode001",
+};
 describe("OpenID Connect for Identity Assurance 1.0", () => {
 
   // Drives verified_claims via the `claims` parameter's id_token member; returns the ID Token payload.
@@ -38,6 +44,7 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
       scope: "openid " + clientSecretPostClient.scope,
       redirectUri: clientSecretPostClient.redirectUri,
       claims: JSON.stringify({ id_token: { verified_claims: verifiedClaimsRequest } }),
+      user: idaVerifiedUser,
     });
     expect(authorizationResponse.code).not.toBeNull();
 
@@ -74,6 +81,7 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
       scope: "openid " + clientSecretPostClient.scope,
       redirectUri: clientSecretPostClient.redirectUri,
       claims: JSON.stringify({ userinfo: { verified_claims: verifiedClaimsRequest } }),
+      user: idaVerifiedUser,
     });
     expect(authorizationResponse.code).not.toBeNull();
 
@@ -176,6 +184,7 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
             verified_claims: verifiedClaims,
           }
         }),
+        user: idaVerifiedUser,
       });
       expect(authorizationResponse.code).not.toBeNull();
 
@@ -262,7 +271,47 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
     });
 
     describe("5.5.2 Max_age", () => {
-      xit("max_age: Optional. JSON number value only applicable to claims that contain dates or timestamps. The OP should try to fulfill this requirement. (verified_claims freshness is not enforced; out of scope in VerifiedClaimsAssembler)", async () => {});
+      it("max_age: Optional. JSON number value only applicable to claims that contain dates or timestamps. The OP should try to fulfill this requirement. (verification.time staler than max_age is dropped; trust_framework and the requested claim are still returned — a max_age miss is not whole-omitted, unlike a value/values miss)", async () => {
+        // verification.time is fixed at 2021-04-09; with max_age 3600s it is always far too old, so
+        // the OP drops just that element. trust_framework (REQUIRED floor) + claims remain.
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: null, time: { max_age: 3600 } },
+          claims: { given_name: null },
+        });
+        expect(payload.verified_claims).toBeDefined();
+        expect(payload.verified_claims.verification.trust_framework).toEqual("eidas");
+        expect(payload.verified_claims.verification).not.toHaveProperty("time");
+        expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
+      });
+
+      it("max_age: Optional. JSON number value only applicable to claims that contain dates or timestamps. The OP should try to fulfill this requirement. (verification.time within max_age is returned)", async () => {
+        // max_age effectively unbounded (~31700 years), so the 2021 timestamp is fresh enough.
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: null, time: { max_age: 1000000000000 } },
+          claims: { given_name: null },
+        });
+        expect(payload.verified_claims.verification.time).toEqual("2021-04-09T14:12Z");
+      });
+
+      it("max_age: Optional. JSON number value only applicable to claims that contain dates or timestamps. The OP should try to fulfill this requirement. (a date claim staler than max_age is dropped individually; other claims are unaffected)", async () => {
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: null },
+          claims: { birthdate: { max_age: 3600 }, given_name: null },
+        });
+        expect(payload.verified_claims).toBeDefined();
+        expect(payload.verified_claims.claims).not.toHaveProperty("birthdate");
+        expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
+      });
+
+      it("max_age: Optional. JSON number value only applicable to claims that contain dates or timestamps. The OP should try to fulfill this requirement. (max_age on a non-date claim does not apply; the claim is returned)", async () => {
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: null },
+          claims: { given_name: { max_age: 1 } },
+        });
+        expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
+      });
+
+      xit("max_age: Optional. JSON number value only applicable to claims that contain dates or timestamps. The OP should try to fulfill this requirement. (nested evidence freshness — verification.evidence[].time / evidence[].check_details[].time — is NOT enforced: VerifiedClaimsAssembler applies max_age only to top-level verification elements and top-level claims, it does not recurse into the evidence array)", async () => {});
     });
   });
 
