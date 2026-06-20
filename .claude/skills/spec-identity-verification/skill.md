@@ -301,6 +301,8 @@ Phase 7: Response → IdentityVerificationApplyingResult を返却
 
 **実装**: `IdentityVerificationUserUpdater`（result パッケージ）。申込み承認・コールバック承認・直接登録の3経路全てに適用される。
 
+**適用値の記録（#1607）**: 承認時に実際適用した `user_claims` / `custom_properties` / `user_status` を `identity_verification_result.applied_user_claims`（JSONB、値オブジェクト `AppliedUserClaims`）に記録。適用が無かったパートは省略。設定不要の自動出力で、結果取得API・管理APIのレスポンスに含まれる（監査・トレーサビリティ用）。
+
 **E2E**: `integration-10-identity-verification-user-attribute-update.test.js`
 
 ### SSOクレデンシャル連携（pre_hook: sso_credentials）

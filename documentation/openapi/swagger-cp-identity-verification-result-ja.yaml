@@ -241,6 +241,25 @@ components:
           type: object
           description: 属性（オプション）
           additionalProperties: true
+        applied_user_claims:
+          type: object
+          description: |
+            承認時にこの結果が実際にユーザーへ適用した値の記録。
+            設定の result で user_claims_mapping_rules / custom_properties_mapping_rules / user_status を
+            使った場合に記録される。適用が無かったパートは省略される（オプション）。
+          nullable: true
+          properties:
+            user_claims:
+              type: object
+              description: 適用した標準クレーム（family_name 等のパッチ可能なOIDCプロファイルクレームのみ）
+              additionalProperties: true
+            custom_properties:
+              type: object
+              description: 適用した業務属性
+              additionalProperties: true
+            user_status:
+              type: string
+              description: 実際に遷移したユーザーステータス（遷移が起きた場合のみ記録。現状維持の場合は省略）
       required:
       - id
       - type

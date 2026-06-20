@@ -44,11 +44,16 @@ public class IdentityVerificationResult {
   IdentityVerificationSourceType source;
   IdentityVerificationSourceDetails sourceDetails;
   IdentityVerificationAttributes attributes;
+  // #1607: the user attributes this result applied at approval (user_claims / custom_properties /
+  // user_status). Resolved by IdentityVerificationUserUpdater and passed into create(), so the
+  // result is self-describing for audit.
+  AppliedUserClaims appliedUserClaims;
 
   public static IdentityVerificationResult create(
       IdentityVerificationApplication application,
       IdentityVerificationContext context,
-      IdentityVerificationConfiguration verificationConfiguration) {
+      IdentityVerificationConfiguration verificationConfiguration,
+      AppliedUserClaims appliedUserClaims) {
 
     IdentityVerificationResultIdentifier identifier =
         new IdentityVerificationResultIdentifier(UUID.randomUUID().toString());
@@ -80,13 +85,15 @@ public class IdentityVerificationResult {
         null,
         source,
         sourceDetails,
-        attributes);
+        attributes,
+        appliedUserClaims);
   }
 
   public static IdentityVerificationResult createOnCallback(
       IdentityVerificationApplication application,
       IdentityVerificationContext context,
-      IdentityVerificationConfiguration verificationConfiguration) {
+      IdentityVerificationConfiguration verificationConfiguration,
+      AppliedUserClaims appliedUserClaims) {
 
     IdentityVerificationResultIdentifier identifier =
         new IdentityVerificationResultIdentifier(UUID.randomUUID().toString());
@@ -118,7 +125,8 @@ public class IdentityVerificationResult {
         null,
         source,
         sourceDetails,
-        attributes);
+        attributes,
+        appliedUserClaims);
   }
 
   public static IdentityVerificationResult createOnDirect(
@@ -126,7 +134,8 @@ public class IdentityVerificationResult {
       User user,
       IdentityVerificationType identityVerificationType,
       IdentityVerificationContext context,
-      IdentityVerificationConfiguration verificationConfiguration) {
+      IdentityVerificationConfiguration verificationConfiguration,
+      AppliedUserClaims appliedUserClaims) {
 
     IdentityVerificationResultIdentifier identifier =
         new IdentityVerificationResultIdentifier(UUID.randomUUID().toString());
@@ -156,7 +165,8 @@ public class IdentityVerificationResult {
         null,
         source,
         sourceDetails,
-        attributes);
+        attributes,
+        appliedUserClaims);
   }
 
   public IdentityVerificationResult() {}
@@ -172,7 +182,8 @@ public class IdentityVerificationResult {
       LocalDateTime verifiedUntil,
       IdentityVerificationSourceType source,
       IdentityVerificationSourceDetails sourceDetails,
-      IdentityVerificationAttributes attributes) {
+      IdentityVerificationAttributes attributes,
+      AppliedUserClaims appliedUserClaims) {
     this.identifier = identifier;
     this.tenantId = tenantId;
     this.userId = userId;
@@ -184,6 +195,7 @@ public class IdentityVerificationResult {
     this.source = source;
     this.sourceDetails = sourceDetails;
     this.attributes = attributes;
+    this.appliedUserClaims = appliedUserClaims;
   }
 
   public IdentityVerificationResultIdentifier identifier() {
@@ -250,6 +262,14 @@ public class IdentityVerificationResult {
     return attributes != null && attributes.exists();
   }
 
+  public AppliedUserClaims appliedUserClaims() {
+    return appliedUserClaims;
+  }
+
+  public boolean hasAppliedUserClaims() {
+    return appliedUserClaims != null && appliedUserClaims.exists();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("id", identifier.value());
@@ -263,6 +283,7 @@ public class IdentityVerificationResult {
     map.put("source", source.value());
     if (hasSourceDetails()) map.put("source_details", sourceDetails.toMap());
     if (hasAttributes()) map.put("attributes", attributes.toMap());
+    if (hasAppliedUserClaims()) map.put("applied_user_claims", appliedUserClaims.toMap());
     return map;
   }
 }

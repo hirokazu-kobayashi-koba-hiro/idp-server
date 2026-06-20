@@ -351,6 +351,7 @@ public class PostgresqlExecutor implements IdentityVerificationResultSqlExecutor
                  source,
                  source_details,
                  attributes,
+                 applied_user_claims,
                  created_at
                  FROM identity_verification_result
           """;

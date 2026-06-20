@@ -63,6 +63,7 @@ public class ModelConverter {
         verifiedUntil,
         source,
         sourceDetails,
-        attributes);
+        attributes,
+        AppliedUserClaims.fromJson(map.get("applied_user_claims")));
   }
 }

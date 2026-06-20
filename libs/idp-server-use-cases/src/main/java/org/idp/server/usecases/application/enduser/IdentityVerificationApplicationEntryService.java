@@ -38,6 +38,7 @@ import org.idp.server.core.extension.identity.verification.repository.IdentityVe
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
+import org.idp.server.core.extension.identity.verification.result.IdentityVerificationUserUpdateResult;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationUserUpdater;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
@@ -363,19 +364,23 @@ public class IdentityVerificationApplicationEntryService
     }
 
     if (application.isApproved()) {
-      IdentityVerificationResult identityVerificationResult =
-          IdentityVerificationResult.create(
-              application, applyingResult.applicationContext(), verificationConfiguration);
-      resultCommandRepository.register(tenant, identityVerificationResult);
-
-      User verifiedUser =
+      // #1607: the updater is self-contained (resolves verified_claims itself); run it first, then
+      // build the result with the applied values and persist both.
+      IdentityVerificationUserUpdateResult userUpdateResult =
           IdentityVerificationUserUpdater.update(
               tenant,
               user,
               applyingResult.applicationContext(),
-              identityVerificationResult.verifiedClaims().toMap(),
               verificationConfiguration.result());
-      userCommandRepository.update(tenant, verifiedUser);
+      IdentityVerificationResult identityVerificationResult =
+          IdentityVerificationResult.create(
+              application,
+              applyingResult.applicationContext(),
+              verificationConfiguration,
+              userUpdateResult.applied());
+
+      resultCommandRepository.register(tenant, identityVerificationResult);
+      userCommandRepository.update(tenant, userUpdateResult.updated());
       eventPublisher.publishSync(
           tenant,
           oAuthToken,
