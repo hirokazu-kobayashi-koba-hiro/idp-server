@@ -63,6 +63,14 @@ public class OAuthViewDataCreator {
       additionalViewData.put("client_custom_properties", clientConfiguration.customProperties());
     }
 
+    if (authorizationRequest.hasClaims()) {
+      Map<String, Object> requestedClaims =
+          RequestedClaimsViewData.from(authorizationRequest.claims().value());
+      if (!requestedClaims.isEmpty()) {
+        additionalViewData.put("requested_claims", requestedClaims);
+      }
+    }
+
     return new OAuthViewData(
         clientId,
         clientName,

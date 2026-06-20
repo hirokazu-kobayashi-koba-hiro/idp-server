@@ -23,6 +23,7 @@ import org.idp.server.core.openid.oauth.verifier.extension.JarmVerifier;
 import org.idp.server.core.openid.oauth.verifier.extension.OAuthAuthorizationDetailsVerifier;
 import org.idp.server.core.openid.oauth.verifier.extension.PushedAuthorizationRequestVerifier;
 import org.idp.server.core.openid.oauth.verifier.extension.RequestObjectVerifier;
+import org.idp.server.core.openid.oauth.verifier.extension.RequestedClaimsPurposeVerifier;
 import org.idp.server.core.openid.plugin.request.AuthorizationRequestExtensionVerifierPluginLoader;
 import org.idp.server.core.openid.plugin.request.AuthorizationRequestVerifierPluginLoader;
 import org.idp.server.platform.exception.UnSupportedException;
@@ -47,6 +48,7 @@ public class OAuthRequestVerifier {
     extensionVerifiers.addAll(loadedExtensionVerifiers);
     extensionVerifiers.add(new PushedAuthorizationRequestVerifier());
     extensionVerifiers.add(new RequestObjectVerifier());
+    extensionVerifiers.add(new RequestedClaimsPurposeVerifier());
     extensionVerifiers.add(new OAuthAuthorizationDetailsVerifier());
     extensionVerifiers.add(new JarmVerifier());
   }

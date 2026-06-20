@@ -23,6 +23,7 @@ public class ClaimsObject implements JsonReadable {
   boolean essential;
   String value;
   List<String> values;
+  String purpose;
 
   public ClaimsObject() {}
 
@@ -36,5 +37,18 @@ public class ClaimsObject implements JsonReadable {
 
   public List<String> values() {
     return values;
+  }
+
+  /**
+   * The {@code purpose} claims-request member (OIDC4IDA Implementer's Draft §5.1; dropped in
+   * OIDC4IDA 1.0 final, but still exercised by the eKYC OP conformance suite, tag IA-9): the reason
+   * the RP requests this claim, shown to the end-user. {@code null} when not requested.
+   */
+  public String purpose() {
+    return purpose;
+  }
+
+  public boolean hasPurpose() {
+    return purpose != null && !purpose.isEmpty();
   }
 }

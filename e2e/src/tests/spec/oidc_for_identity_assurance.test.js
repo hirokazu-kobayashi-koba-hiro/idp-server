@@ -515,15 +515,63 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
     });
   });
 
-  // The `purpose` claims-request member is defined by OpenID Connect Core §5.5.1, not by IDA itself,
-  // so the titles below cite OIDC Core rather than quoting IDA. The eKYC conformance catalog (§10,
-  // tag IA-9) lists purpose validation as a TODO. idp-server does not yet validate it.
-  describe("'purpose' claims-request member (OIDC Core §5.5.1; eKYC catalog §10 / IA-9 — not implemented)", () => {
-    xit("OIDC Core §5.5.1 purpose member: a purpose shorter than 3 characters MUST be rejected with invalid_request.", async () => {});
+  // The `purpose` claims-request member is defined in OIDC4IDA Implementer's Draft §5.1. It was
+  // DROPPED from the OIDC4IDA 1.0 final spec (1 Oct 2024) and is not in OpenID Connect Core §5.5.1
+  // (essential / value / values only) — but the eKYC OP conformance suite still exercises it (§10,
+  // tag IA-9), which is the driver here. Length validation (3–300 → invalid_request) is enforced by
+  // RequestedClaimsPurposeVerifier for both standard and verified_claims-nested purposes; purpose
+  // applies to any requested claim, so a plain standard claim (given_name) is used. The consent
+  // screen reads the (HTML-escaped) purpose from the authorization view-data's requested_claims.
+  describe("'purpose' claims-request member (OIDC4IDA-ID1 §5.1; eKYC catalog §10 / IA-9)", () => {
+    it("eKYC IA-9 (OIDC4IDA-ID1 §5.1) purpose member: a purpose shorter than 3 characters MUST be rejected with invalid_request.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "purpose_too_short",
+        claims: JSON.stringify({ id_token: { given_name: { purpose: "ab" } } }),
+      });
+      expect(authorizationResponse.error).toEqual("invalid_request");
+    });
 
-    xit("OIDC Core §5.5.1 purpose member: a purpose longer than 300 characters MUST be rejected with invalid_request.", async () => {});
+    it("eKYC IA-9 (OIDC4IDA-ID1 §5.1) purpose member: a purpose longer than 300 characters MUST be rejected with invalid_request.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "purpose_too_long",
+        claims: JSON.stringify({ id_token: { given_name: { purpose: "a".repeat(301) } } }),
+      });
+      expect(authorizationResponse.error).toEqual("invalid_request");
+    });
 
-    xit("OIDC Core §5.5.1 purpose member: a purpose containing HTML special characters is escaped in the consent UI (XSS prevention).", async () => {});
+    it("eKYC IA-9 (OIDC4IDA-ID1 §5.1) purpose member: a purpose containing HTML special characters is escaped in the consent UI (XSS prevention).", async () => {
+      let viewData;
+      await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "purpose_escape",
+        claims: JSON.stringify({ id_token: { given_name: { purpose: "<script>alert(1)</script>" } } }),
+        user: idaVerifiedUser,
+        interaction: async (authId) => {
+          viewData = (
+            await get({
+              url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/view-data`,
+            })
+          ).data;
+        },
+      });
+      expect(viewData.requested_claims.given_name.purpose).toEqual(
+        "&lt;script&gt;alert(1)&lt;/script&gt;"
+      );
+    });
   });
 
 });

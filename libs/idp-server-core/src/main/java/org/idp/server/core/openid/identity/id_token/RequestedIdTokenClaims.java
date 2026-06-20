@@ -16,7 +16,9 @@
 
 package org.idp.server.core.openid.identity.id_token;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 import org.idp.server.platform.json.JsonReadable;
 
 public class RequestedIdTokenClaims implements JsonReadable {
@@ -246,5 +248,36 @@ public class RequestedIdTokenClaims implements JsonReadable {
 
   public boolean hasVerifiedClaims() {
     return Objects.nonNull(verifiedClaims);
+  }
+
+  /** All requested standard (non-verified) individual claim requests that were present. */
+  public List<ClaimsObject> claimsObjects() {
+    return Stream.of(
+            authTime,
+            acr,
+            amr,
+            azp,
+            sub,
+            name,
+            givenName,
+            familyName,
+            middleName,
+            nickname,
+            preferredUsername,
+            profile,
+            picture,
+            website,
+            email,
+            emailVerified,
+            gender,
+            birthdate,
+            zoneinfo,
+            locale,
+            phoneNumber,
+            phoneNumberVerified,
+            address,
+            updatedAt)
+        .filter(Objects::nonNull)
+        .toList();
   }
 }
