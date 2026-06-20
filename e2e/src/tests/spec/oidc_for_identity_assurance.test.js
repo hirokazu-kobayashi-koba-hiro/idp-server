@@ -310,6 +310,8 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
         });
         expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
       });
+
+      xit("max_age: Optional. JSON number value only applicable to claims that contain dates or timestamps. The OP should try to fulfill this requirement. (nested evidence freshness — verification.evidence[].time / evidence[].check_details[].time — is NOT enforced: VerifiedClaimsAssembler applies max_age only to top-level verification elements and top-level claims, it does not recurse into the evidence array)", async () => {});
     });
   });
 

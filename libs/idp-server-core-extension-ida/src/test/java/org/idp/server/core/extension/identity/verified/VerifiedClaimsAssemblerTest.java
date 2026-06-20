@@ -151,6 +151,29 @@ class VerifiedClaimsAssemblerTest {
   }
 
   @Test
+  void freshnessTakesPrecedenceOverAMatchingValueConstraint() {
+    // The same claim carries both max_age (stale) and a value that DOES match the stored data.
+    // Freshness is checked first, so the claim is dropped on staleness regardless of the match.
+    JsonNodeWrapper user =
+        userVerifiedClaims(
+            Map.of("trust_framework", "eidas"),
+            Map.of("birthdate", "1976-03-11", "given_name", "Sarah"));
+    VerifiedClaimsObject request =
+        requested(
+            "{\"verification\":{\"trust_framework\":null},"
+                + "\"claims\":{\"birthdate\":{\"max_age\":3600,\"value\":\"1976-03-11\"},"
+                + "\"given_name\":null}}");
+
+    Map<String, Object> result =
+        VerifiedClaimsAssembler.assemble(request, user, LocalDateTime.of(2026, 6, 20, 0, 0, 0));
+
+    assertFalse(
+        claimsOf(result).containsKey("birthdate"),
+        "stale element dropped even though its value matches");
+    assertEquals("Sarah", claimsOf(result).get("given_name"));
+  }
+
+  @Test
   void measuresElapsedFromTheLastValidSecondOfADateOnlyValue() {
     // Stored date-only 2025-01-01 → last valid second 2025-01-01T23:59:59. now =
     // 2025-01-02T20:00:00

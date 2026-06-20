@@ -255,6 +255,10 @@ public class VerifiedClaimsAssembler {
    * resolves to 23:59:59 of that day, a full timestamp to its own second. The OP "should try to
    * fulfill" the hint (SHOULD), which this honors by omission rather than by attempting a
    * re-verification.
+   *
+   * <p>Freshness is evaluated before the {@code value}/{@code values} constraint (see {@link
+   * #selectClaims} / {@link #selectVerification}), so an element that carries both is dropped on
+   * staleness regardless of whether its value would have matched.
    */
   private static boolean isStale(JsonNodeWrapper constraint, Object userValue, LocalDateTime now) {
     if (constraint == null
