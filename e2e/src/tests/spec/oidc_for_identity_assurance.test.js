@@ -16,7 +16,7 @@ import { get } from "../../lib/http";
 //   - unimplemented / untested requirements are listed as `xit` so the coverage ledger
 //     (covered = it / known-pending = xit / missing = absent) is readable at a glance.
 // Verbatim quotes are from OIDC for Identity Assurance 1.0 unless marked otherwise. Where a case
-// derives from OIDC Core §5.5.1 (empty object / essential / purpose) the source is named explicitly,
+// derives from OIDC Core §5.5.1 (empty object / essential) the source is named explicitly,
 // because IDA itself does not define those sentences. eKYC module #N references the external OIDF
 // conformance-suite repo (github.com/openid/conformance-suite, eKYC-IDA test plan) — not a file in
 // this repo.
@@ -515,15 +515,13 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
     });
   });
 
-  // The `purpose` claims-request member is defined by OpenID Connect Core §5.5.1, not by IDA itself,
-  // so the titles below cite OIDC Core rather than quoting IDA. The eKYC conformance catalog (§10,
-  // tag IA-9) lists purpose validation as a TODO. idp-server does not yet validate it.
-  describe("'purpose' claims-request member (OIDC Core §5.5.1; eKYC catalog §10 / IA-9 — not implemented)", () => {
-    xit("OIDC Core §5.5.1 purpose member: a purpose shorter than 3 characters MUST be rejected with invalid_request.", async () => {});
-
-    xit("OIDC Core §5.5.1 purpose member: a purpose longer than 300 characters MUST be rejected with invalid_request.", async () => {});
-
-    xit("OIDC Core §5.5.1 purpose member: a purpose containing HTML special characters is escaped in the consent UI (XSS prevention).", async () => {});
-  });
+  // `purpose` claims-request member: intentionally NOT tracked in this ledger. It was defined in
+  // OIDC4IDA Implementer's Draft §5.1 but was REMOVED from the OIDC4IDA 1.0 final spec (1 Oct 2024),
+  // and it is not in OpenID Connect Core §5.5.1 (essential / value / values only) — so it is not a
+  // requirement of any spec this conformance ledger tracks. The OIDF eKYC test plan
+  // (EKYCWithOIDCCoreTestPlan) only documents it as an unimplemented TODO (tag IA-9), not a runnable
+  // test module. A reference implementation (3–300 length validation → invalid_request, plus
+  // HTML-escaped exposure in the authorization view-data) lives on branch feat/ida-purpose-1651
+  // (see #1651), to be revisited if/when purpose returns to the spec.
 
 });
