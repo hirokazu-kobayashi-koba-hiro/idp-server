@@ -17,12 +17,14 @@ import { get } from "../../lib/http";
 //     (covered = it / known-pending = xit / missing = absent) is readable at a glance.
 // Verbatim quotes are from OIDC for Identity Assurance 1.0 unless marked otherwise. Where a case
 // derives from OIDC Core §5.5.1 (empty object / essential / purpose) the source is named explicitly,
-// because IDA itself does not define those sentences. eKYC module #N references the OIDF conformance
-// suite catalog (conformance-suite/docs/eKYC-IDA-authorization-server-test-catalog.md).
+// because IDA itself does not define those sentences. eKYC module #N references the external OIDF
+// conformance-suite repo (github.com/openid/conformance-suite, eKYC-IDA test plan) — not a file in
+// this repo.
 //
-// The default end-user (clientSecretPostClient) has stored verified_claims with
-// verification.trust_framework = "eidas" and claims given_name "Sarah" / family_name "Meredyth" /
-// birthdate / address. middle_name and gender are intentionally NOT stored (treated as unavailable).
+// The default end-user (ito.ichiro@gmail.com, signed in via the clientSecretPostClient flow) has
+// stored verified_claims with verification.trust_framework = "eidas" and claims given_name "Sarah" /
+// family_name "Meredyth" / birthdate / address. middle_name and gender are intentionally NOT stored
+// (treated as unavailable).
 describe("OpenID Connect for Identity Assurance 1.0", () => {
 
   // Drives verified_claims via the `claims` parameter's id_token member; returns the ID Token payload.
