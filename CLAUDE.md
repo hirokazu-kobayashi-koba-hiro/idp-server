@@ -37,6 +37,7 @@ cd e2e && npm test
 | `adapter-repository.md` | `idp-server-core-adapter/` | Tenant第一引数、両DB実装 |
 | `control-plane.md` | `idp-server-control-plane/` | ContextCreator、snake_case |
 | `e2e-testing.md` | `e2e/` | `npm test`必須、`npx jest`禁止 |
+| `e2e-spec-conformance.md` | `e2e/src/tests/spec/` | 仕様番号でdescribe階層化、規範用語明示、未対応はxit |
 | `database-migration.md` | `idp-server-database/*.sql` | PostgreSQL+MySQL両方 |
 | `config-json.md` | `config/templates/`, `config/examples/` | claims_supported必須 |
 | `docker-local.md` | `docker-compose*`, `Dockerfile*` | `--build`フラグ必須 |

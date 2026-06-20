@@ -10,82 +10,35 @@ import { requestAuthorizations } from "../../oauth/request";
 import { verifyAndDecodeJwt } from "../../lib/jose";
 import { get } from "../../lib/http";
 
-describe("OpenID Connect for Identity Assurance 1.0 ", () => {
-  it("success pattern", async () => {
-    const verifiedClaims = {
-      "claims": {
-        "address": {
-          "country": "UK",
-          "locality": "Edinburgh",
-          "postal_code": "EH1 9GP",
-          "street_address": "122 Burns Crescent"
-        },
-        "birthdate": "1976-03-11",
-        "given_name": "Sarah",
-        "family_name": "Meredyth",
-        "place_of_birth": {
-          "country": "UK"
-        }
-      },
-      "verification": {
-        "evidence": [
-          {
-            "time": "2021-04-09T14:12Z",
-            "type": "electronic_record",
-            "record": {
-              "type": "mortgage_account",
-              "source": {
-                "name": "TheCreditBureau"
-              }
-            },
-            "check_details": [
-              {
-                "txn": "kbv1-hf934hn09234ng03jj3",
-                "check_method": "kbv",
-                "organization": "TheCreditBureau"
-              }
-            ]
-          },
-          {
-            "time": "2021-04-09T14:12Z",
-            "type": "electronic_record",
-            "record": {
-              "type": "bank_account",
-              "source": {
-                "name": "TheBank"
-              }
-            },
-            "check_details": [
-              {
-                "txn": "kbv2-nm0f23u9459fj38u5j6",
-                "check_method": "kbv",
-                "organization": "OpenBankingTPP"
-              }
-            ]
-          }
-        ],
-        "trust_framework": "eidas"
-      }
-    };
+// Structured per .claude/rules/e2e-spec-conformance.md:
+//   - describe = spec section number + title, verbatim (OpenID Connect for Identity Assurance 1.0 §5–§8)
+//   - it = spec sentence verbatim, keeping the normative keywords (MUST / SHALL / SHOULD / REQUIRED / OPTIONAL)
+//   - unimplemented / untested requirements are listed as `xit` so the coverage ledger
+//     (covered = it / known-pending = xit / missing = absent) is readable at a glance.
+// Verbatim quotes are from OIDC for Identity Assurance 1.0 unless marked otherwise. Where a case
+// derives from OIDC Core §5.5.1 (empty object / essential / purpose) the source is named explicitly,
+// because IDA itself does not define those sentences. eKYC module #N references the external OIDF
+// conformance-suite repo (github.com/openid/conformance-suite, eKYC-IDA test plan) — not a file in
+// this repo.
+//
+// The default end-user (ito.ichiro@gmail.com, signed in via the clientSecretPostClient flow) has
+// stored verified_claims with verification.trust_framework = "eidas" and claims given_name "Sarah" /
+// family_name "Meredyth" / birthdate / address. middle_name and gender are intentionally NOT stored
+// (treated as unavailable).
+describe("OpenID Connect for Identity Assurance 1.0", () => {
 
+  // Drives verified_claims via the `claims` parameter's id_token member; returns the ID Token payload.
+  // §5.7.4 ("the OP shall not return an error to the RP") is asserted here via the 200 status.
+  const idTokenVerifiedClaims = async (verifiedClaimsRequest) => {
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: serverConfig.authorizationEndpoint,
       clientId: clientSecretPostClient.clientId,
       responseType: "code",
-      state: "aiueo",
-      scope: "openid profile phone email verified_claims:family_name " + clientSecretPostClient.scope,
+      state: "verified_claims_id_token",
+      scope: "openid " + clientSecretPostClient.scope,
       redirectUri: clientSecretPostClient.redirectUri,
-      customParams: {
-        organizationId: "123",
-        organizationName: "test",
-      },
-      claims: JSON.stringify({
-        id_token: {
-          verified_claims: verifiedClaims,
-        }
-      }),
+      claims: JSON.stringify({ id_token: { verified_claims: verifiedClaimsRequest } }),
     });
-    console.log(authorizationResponse);
     expect(authorizationResponse.code).not.toBeNull();
 
     const tokenResponse = await requestToken({
@@ -96,53 +49,133 @@ describe("OpenID Connect for Identity Assurance 1.0 ", () => {
       clientId: clientSecretPostClient.clientId,
       clientSecret: clientSecretPostClient.clientSecret,
     });
-    console.log(tokenResponse.data);
+    // §5.7.4: "In both cases, the OP shall not return an error to the RP."
+    expect(tokenResponse.status).toBe(200);
     expect(tokenResponse.data).toHaveProperty("id_token");
 
     const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
-    console.log(jwksResponse.data);
-    expect(jwksResponse.status).toBe(200);
-
     const decodedIdToken = verifyAndDecodeJwt({
       jwt: tokenResponse.data.id_token,
       jwks: jwksResponse.data,
     });
-    console.log(JSON.stringify(decodedIdToken, null, 2));
-    const payload = decodedIdToken.payload;
     expect(decodedIdToken.verifyResult).toBe(true);
-    expect(payload.iss).not.toBeNull();
-    expect(payload.iss).toEqual(serverConfig.issuer);
-    expect(payload.verified_claims.claims).not.toBeNull();
-    expect(payload.verified_claims.verification).not.toBeNull();
+    return decodedIdToken.payload;
+  };
+
+  // Drives verified_claims via the `claims` parameter's userinfo member (no verified_claims:* scope,
+  // so this exercises the claims-parameter path, not the scope path); returns the UserInfo body and
+  // the ID Token payload. (#1628)
+  const userinfoVerifiedClaims = async (verifiedClaimsRequest) => {
+    const { authorizationResponse } = await requestAuthorizations({
+      endpoint: serverConfig.authorizationEndpoint,
+      clientId: clientSecretPostClient.clientId,
+      responseType: "code",
+      state: "verified_claims_userinfo",
+      scope: "openid " + clientSecretPostClient.scope,
+      redirectUri: clientSecretPostClient.redirectUri,
+      claims: JSON.stringify({ userinfo: { verified_claims: verifiedClaimsRequest } }),
+    });
+    expect(authorizationResponse.code).not.toBeNull();
+
+    const tokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      code: authorizationResponse.code,
+      grantType: "authorization_code",
+      redirectUri: clientSecretPostClient.redirectUri,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    expect(tokenResponse.status).toBe(200);
+
+    const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+    const decodedIdToken = verifyAndDecodeJwt({
+      jwt: tokenResponse.data.id_token,
+      jwks: jwksResponse.data,
+    });
+    expect(decodedIdToken.verifyResult).toBe(true);
 
     const userinfoResponse = await get({
       url: `${backendUrl}/${serverConfig.tenantId}/v1/userinfo`,
-      headers: {
-        "Authorization": `Bearer ${tokenResponse.data.access_token}`
-      }
+      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` },
     });
+    expect(userinfoResponse.status).toBe(200);
+    return { userinfo: userinfoResponse.data, idTokenPayload: decodedIdToken.payload };
+  };
 
-    console.log(JSON.stringify(userinfoResponse.data, null, 2));
-    // expect(userinfoResponse.data.verified_claims.claims).not.toBeNull();
+  describe("5.2 Verified claims delivery", () => {
+    it("A `verified_claims` element can be added to an OpenID Connect UserInfo response and/or an ID Token. (delivered in the ID Token; success pattern)", async () => {
+      const verifiedClaims = {
+        "claims": {
+          "address": {
+            "country": "UK",
+            "locality": "Edinburgh",
+            "postal_code": "EH1 9GP",
+            "street_address": "122 Burns Crescent"
+          },
+          "birthdate": "1976-03-11",
+          "given_name": "Sarah",
+          "family_name": "Meredyth",
+          "place_of_birth": {
+            "country": "UK"
+          }
+        },
+        "verification": {
+          "evidence": [
+            {
+              "time": "2021-04-09T14:12Z",
+              "type": "electronic_record",
+              "record": {
+                "type": "mortgage_account",
+                "source": {
+                  "name": "TheCreditBureau"
+                }
+              },
+              "check_details": [
+                {
+                  "txn": "kbv1-hf934hn09234ng03jj3",
+                  "check_method": "kbv",
+                  "organization": "TheCreditBureau"
+                }
+              ]
+            },
+            {
+              "time": "2021-04-09T14:12Z",
+              "type": "electronic_record",
+              "record": {
+                "type": "bank_account",
+                "source": {
+                  "name": "TheBank"
+                }
+              },
+              "check_details": [
+                {
+                  "txn": "kbv2-nm0f23u9459fj38u5j6",
+                  "check_method": "kbv",
+                  "organization": "OpenBankingTPP"
+                }
+              ]
+            }
+          ],
+          "trust_framework": "eidas"
+        }
+      };
 
-  });
-
-  // OpenID Connect for Identity Assurance 1.0 §5.3 / §5.7, eKYC conformance module #9
-  // (ekyc-server-request-only-in-userinfo). verified_claims requested via the `claims` parameter's
-  // `userinfo` member must be returned in the UserInfo response and NOT in the ID Token. Before
-  // #1628 the claims-parameter request was dropped at the grant boundary, so UserInfo only honored
-  // the verified_claims:* scope. (#1628)
-  describe("verified_claims via the claims parameter (UserInfo)", () => {
-    const userinfoVerifiedClaims = async (verifiedClaimsRequest) => {
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
         responseType: "code",
-        state: "userinfo_verified_claims_1628",
-        // no verified_claims:* scope: this exercises the claims-parameter path, not the scope path.
-        scope: "openid " + clientSecretPostClient.scope,
+        state: "aiueo",
+        scope: "openid profile phone email verified_claims:family_name " + clientSecretPostClient.scope,
         redirectUri: clientSecretPostClient.redirectUri,
-        claims: JSON.stringify({ userinfo: { verified_claims: verifiedClaimsRequest } }),
+        customParams: {
+          organizationId: "123",
+          organizationName: "test",
+        },
+        claims: JSON.stringify({
+          id_token: {
+            verified_claims: verifiedClaims,
+          }
+        }),
       });
       expect(authorizationResponse.code).not.toBeNull();
 
@@ -154,178 +187,160 @@ describe("OpenID Connect for Identity Assurance 1.0 ", () => {
         clientId: clientSecretPostClient.clientId,
         clientSecret: clientSecretPostClient.clientSecret,
       });
-      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("id_token");
 
       const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+      expect(jwksResponse.status).toBe(200);
+
       const decodedIdToken = verifyAndDecodeJwt({
         jwt: tokenResponse.data.id_token,
         jwks: jwksResponse.data,
       });
+      const payload = decodedIdToken.payload;
       expect(decodedIdToken.verifyResult).toBe(true);
+      expect(payload.iss).not.toBeNull();
+      expect(payload.iss).toEqual(serverConfig.issuer);
+      expect(payload.verified_claims.claims).not.toBeNull();
+      expect(payload.verified_claims.verification).not.toBeNull();
+    });
 
-      const userinfoResponse = await get({
-        url: `${backendUrl}/${serverConfig.tenantId}/v1/userinfo`,
-        headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` },
-      });
-      expect(userinfoResponse.status).toBe(200);
-      console.log(JSON.stringify(userinfoResponse.data, null, 2));
-      return { userinfo: userinfoResponse.data, idTokenPayload: decodedIdToken.payload };
-    };
-
-    it("returns verified_claims in the UserInfo response and omits it from the ID Token (module #9)", async () => {
+    it("A `verified_claims` element can be added to an OpenID Connect UserInfo response and/or an ID Token. (delivered in the UserInfo response; requested userinfo-only and omitted from the ID Token — eKYC module #9 ekyc-server-request-only-in-userinfo)", async () => {
       const { userinfo, idTokenPayload } = await userinfoVerifiedClaims({
         verification: { trust_framework: null },
         claims: { given_name: null, family_name: null },
       });
 
-      // §5.3: the UserInfo response carries the requested verified_claims.
       expect(userinfo.verified_claims).toBeDefined();
       expect(userinfo.verified_claims.verification.trust_framework).toEqual("eidas");
       expect(userinfo.verified_claims.claims.given_name).toEqual("Sarah");
-
-      // EnsureIdTokenDoesNotContainVerifiedClaims: requested userinfo-only, so the ID Token must not
-      // carry verified_claims.
+      // EnsureIdTokenDoesNotContainVerifiedClaims: requested userinfo-only, so the ID Token must not carry it.
       expect(idTokenPayload.verified_claims).toBeUndefined();
     });
-
-    it("returns verified_claims with an empty claims object when the only requested claim fails its value constraint (UserInfo)", async () => {
-      // given_name is "Sarah"; a value:"Bob" constraint fails (§5.7.4 claims branch → the claim is
-      // dropped). The IDA verified_claims schema permits an empty claims object ([IDA-verified-claims]
-      // §5.3), so verification is still returned with an empty claims — NOT a whole omission. Same
-      // engine as the ID Token path.
-      const { userinfo } = await userinfoVerifiedClaims({
-        verification: { trust_framework: null },
-        claims: { given_name: { value: "Bob" } },
-      });
-
-      expect(userinfo.verified_claims).toBeDefined();
-      expect(userinfo.verified_claims.verification.trust_framework).toEqual("eidas");
-      expect(userinfo.verified_claims.claims).toEqual({});
-    });
   });
 
-  // OpenID Connect for Identity Assurance 1.0, Section 5.7 (Returning less data than requested).
-  // Test names quote the spec verbatim, as in the Section 8 block. verified_claims is requested via
-  // the `claims` parameter and returned in the ID Token (handled by VerifiedClaimsCreator).
-  //
-  // Regression for #1512. §5.7.4 (Data not matching requirements) states:
-  //   "If the respective requirement was expressed for a claim within verified_claims/verification,
-  //    the OP shall omit the whole verified_claims element."
-  //   "Otherwise, the OP shall omit the respective claim from the response."
-  //   "In both cases, the OP shall not return an error to the RP."
-  describe("Section 5.7 Returning less data than requested", () => {
-    // The default end-user (ito.ichiro@gmail.com) has stored verified_claims with
-    // verification.trust_framework = "eidas" and claims given_name/family_name/birthdate/address.
-    // middle_name and gender are intentionally NOT stored, so requests for them are "unavailable".
-    const idTokenVerifiedClaims = async (verifiedClaimsRequest) => {
-      const { authorizationResponse } = await requestAuthorizations({
-        endpoint: serverConfig.authorizationEndpoint,
-        clientId: clientSecretPostClient.clientId,
-        responseType: "code",
-        state: "verified_claims_5_7",
-        scope: "openid " + clientSecretPostClient.scope,
-        redirectUri: clientSecretPostClient.redirectUri,
-        claims: JSON.stringify({ id_token: { verified_claims: verifiedClaimsRequest } }),
-      });
-      expect(authorizationResponse.code).not.toBeNull();
-
-      const tokenResponse = await requestToken({
-        endpoint: serverConfig.tokenEndpoint,
-        code: authorizationResponse.code,
-        grantType: "authorization_code",
-        redirectUri: clientSecretPostClient.redirectUri,
-        clientId: clientSecretPostClient.clientId,
-        clientSecret: clientSecretPostClient.clientSecret,
-      });
-      // §5.7.4: "In both cases, the OP shall not return an error to the RP."
-      expect(tokenResponse.status).toBe(200);
-      expect(tokenResponse.data).toHaveProperty("id_token");
-
-      const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
-      const decodedIdToken = verifyAndDecodeJwt({
-        jwt: tokenResponse.data.id_token,
-        jwks: jwksResponse.data,
-      });
-      expect(decodedIdToken.verifyResult).toBe(true);
-      return decodedIdToken.payload;
-    };
-
-    it("If the OP does not have data about a certain claim, does not understand/support the respective claim, OPs shall omit the respective claim from any corresponding ID Token or UserInfo response.", async () => {
-      // given_name is available; middle_name is not. The unavailable claim is dropped, but
-      // verified_claims is still returned because at least one requested claim is available.
+  describe("5.3 Requesting end-user claims", () => {
+    it("For each claim, the value is either `null` (default), or an object. (requested with `null` → the claim is returned)", async () => {
       const payload = await idTokenVerifiedClaims({
         verification: { trust_framework: null },
-        claims: { given_name: null, middle_name: null },
-      });
-      console.log(JSON.stringify(payload.verified_claims, null, 2));
-
-      expect(payload.verified_claims).toBeDefined();
-      expect(payload.verified_claims.verification.trust_framework).toEqual("eidas");
-      expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
-      expect(payload.verified_claims.claims).not.toHaveProperty("middle_name");
-    });
-
-    it("returns verified_claims with an empty claims object when all requested claims are unavailable ([IDA-verified-claims] §5.3: the claims element may be empty)", async () => {
-      // middle_name and gender are not stored, so both are dropped individually (§5.7.2). The claims
-      // object is then empty, which the IDA verified_claims schema explicitly permits (§5.3: "the
-      // claims element may be empty"), so verified_claims is still returned with verification — NOT
-      // omitted as a whole. §5.7.5 cascades omission to the parent only when the omitted element is
-      // required for a valid response, which an empty claims object is not.
-      const payload = await idTokenVerifiedClaims({
-        verification: { trust_framework: null },
-        claims: { middle_name: null, gender: null },
-      });
-      console.log(JSON.stringify(payload, null, 2));
-
-      expect(payload.verified_claims).toBeDefined();
-      expect(payload.verified_claims.verification.trust_framework).toEqual("eidas");
-      expect(payload.verified_claims.claims).toEqual({});
-    });
-
-    // §5.7.4 value/values constraint enforcement (#1624). The user holds trust_framework "eidas"
-    // and given_name "Sarah" / family_name "Meredyth".
-    it("If the respective requirement was expressed for a claim within verified_claims/verification, the OP shall omit the whole verified_claims element.", async () => {
-      // RP constrains verification.trust_framework to "gold", but the user has "eidas" → the
-      // verification requirement is unmet, so the whole verified_claims is omitted.
-      const payload = await idTokenVerifiedClaims({
-        verification: { trust_framework: { value: "gold" } },
         claims: { given_name: null },
       });
-      console.log(JSON.stringify(payload, null, 2));
-
-      expect(payload.verified_claims).toBeUndefined();
-    });
-
-    it("Otherwise, the OP shall omit the respective claim from the response.", async () => {
-      // RP constrains given_name to "Bob" (mismatch → dropped), family_name is unconstrained (kept).
-      // The mismatch is on a claims element, so only that claim is omitted; verified_claims remains.
-      const payload = await idTokenVerifiedClaims({
-        verification: { trust_framework: null },
-        claims: { given_name: { value: "Bob" }, family_name: null },
-      });
-      console.log(JSON.stringify(payload.verified_claims, null, 2));
-
-      expect(payload.verified_claims).toBeDefined();
-      expect(payload.verified_claims.claims.family_name).toEqual("Meredyth");
-      expect(payload.verified_claims.claims).not.toHaveProperty("given_name");
-    });
-
-    it("returns the claim when its value/values constraint is satisfied", async () => {
-      const payload = await idTokenVerifiedClaims({
-        verification: { trust_framework: { value: "eidas" } },
-        claims: { given_name: { values: ["Hanako", "Sarah"] } },
-      });
-      console.log(JSON.stringify(payload.verified_claims, null, 2));
-
       expect(payload.verified_claims).toBeDefined();
       expect(payload.verified_claims.verification.trust_framework).toEqual("eidas");
       expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
     });
+
+    xit("For each claim, the value is either `null` (default), or an object. (requested with an empty JSON object {} — eKYC module #2 ekyc-server-happypath-emptyobject)", async () => {});
+
+    xit('For each claim, the value is either `null` (default), or an object. (requested with {"essential": false}, an OIDC Core §5.5.1 member — eKYC module #3 ekyc-server-happypath-essentialfalse)', async () => {});
   });
 
-  // OpenID Connect for Identity Assurance 1.0, Section 8 (OpenID Provider Metadata).
-  // Test names quote the spec verbatim. See issue #1513.
-  describe("Section 8 OpenID Provider Metadata", () => {
+  describe("5.5 Defining further constraints on verification data", () => {
+    describe("5.5.1 Value/values", () => {
+      it("The OP shall not ignore some or all of the query restrictions on possible values and shall not deliver available verified/verification data that does not match these constraints. (returns the claim when its value/values constraint is satisfied)", async () => {
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: { value: "eidas" } },
+          claims: { given_name: { values: ["Hanako", "Sarah"] } },
+        });
+        expect(payload.verified_claims).toBeDefined();
+        expect(payload.verified_claims.verification.trust_framework).toEqual("eidas");
+        expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
+      });
+    });
+
+    describe("5.5.2 Max_age", () => {
+      xit("max_age: Optional. JSON number value only applicable to claims that contain dates or timestamps. The OP should try to fulfill this requirement. (verified_claims freshness is not enforced; out of scope in VerifiedClaimsAssembler)", async () => {});
+    });
+  });
+
+  describe("5.7 Returning less data than requested", () => {
+    describe("5.7.2 Unavailable data", () => {
+      it("If the OP does not have data about a certain claim, does not understand/support the respective claim, OPs shall omit the respective claim from any corresponding ID Token or UserInfo response.", async () => {
+        // given_name is available; middle_name is not. The unavailable claim is dropped, but
+        // verified_claims is still returned because at least one requested claim is available.
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: null },
+          claims: { given_name: null, middle_name: null },
+        });
+        expect(payload.verified_claims).toBeDefined();
+        expect(payload.verified_claims.verification.trust_framework).toEqual("eidas");
+        expect(payload.verified_claims.claims.given_name).toEqual("Sarah");
+        expect(payload.verified_claims.claims).not.toHaveProperty("middle_name");
+      });
+
+      it("returns verified_claims with an empty claims object when all requested claims are unavailable ([IDA-verified-claims] §5.3: the claims element may be empty).", async () => {
+        // middle_name and gender are not stored, so both are dropped individually. The claims object
+        // is then empty, which the IDA verified_claims schema explicitly permits, so verified_claims
+        // is still returned with verification — NOT omitted as a whole.
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: null },
+          claims: { middle_name: null, gender: null },
+        });
+        expect(payload.verified_claims).toBeDefined();
+        expect(payload.verified_claims.verification.trust_framework).toEqual("eidas");
+        expect(payload.verified_claims.claims).toEqual({});
+      });
+
+      // "does not understand/support the respective claim" — the unknown/unsupported-claim cases.
+      xit("If the OP does not have data about a certain claim, does not understand/support the respective claim, OPs shall omit the respective claim ... (unknown random-named claim — eKYC module #4 ekyc-server-unknown-claim-omitted)", async () => {});
+
+      xit("If the OP does not have data about a certain claim, does not understand/support the respective claim, OPs shall omit the respective claim ... (unknown claim requested with essential:true — eKYC module #5 ekyc-server-unknown-essential-claim-omitted)", async () => {});
+
+      xit("If the OP does not have data about a certain claim, does not understand/support the respective claim, OPs shall omit the respective claim ... (unknown claim whose name contains special characters — eKYC module #6 ekyc-server-unknown-claim-specialchars-omitted)", async () => {});
+    });
+
+    describe("5.7.3 Non-consented data", () => {
+      xit("the OP shall omit from any corresponding ID Token or UserInfo response data that has not had end-user consent for sharing. (negative test not yet implemented)", async () => {});
+    });
+
+    describe("5.7.4 Data not matching requirements", () => {
+      it("If the respective requirement was expressed for a claim within verified_claims/verification, the OP shall omit the whole verified_claims element.", async () => {
+        // RP constrains verification.trust_framework to "gold", but the user has "eidas" → the
+        // verification requirement is unmet, so the whole verified_claims is omitted.
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: { value: "gold" } },
+          claims: { given_name: null },
+        });
+        expect(payload.verified_claims).toBeUndefined();
+      });
+
+      it("Otherwise, the OP shall omit the respective claim from the response.", async () => {
+        // RP constrains given_name to "Bob" (mismatch → dropped), family_name is unconstrained (kept).
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: null },
+          claims: { given_name: { value: "Bob" }, family_name: null },
+        });
+        expect(payload.verified_claims).toBeDefined();
+        expect(payload.verified_claims.claims.family_name).toEqual("Meredyth");
+        expect(payload.verified_claims.claims).not.toHaveProperty("given_name");
+      });
+
+      it("In both cases, the OP shall not return an error to the RP.", async () => {
+        // verification mismatch → whole verified_claims omitted, yet the token response is still 200
+        // (asserted inside idTokenVerifiedClaims). No error is returned to the RP.
+        const payload = await idTokenVerifiedClaims({
+          verification: { trust_framework: { value: "gold" } },
+          claims: { given_name: { value: "Bob" } },
+        });
+        expect(payload.verified_claims).toBeUndefined();
+      });
+
+      it("UserInfo: returns an empty claims object when the only requested claim fails its value constraint (eKYC module #7 ekyc-server-one-claim-with-random-value-omitted).", async () => {
+        const { userinfo } = await userinfoVerifiedClaims({
+          verification: { trust_framework: null },
+          claims: { given_name: { value: "Bob" } },
+        });
+        expect(userinfo.verified_claims).toBeDefined();
+        expect(userinfo.verified_claims.verification.trust_framework).toEqual("eidas");
+        expect(userinfo.verified_claims.claims).toEqual({});
+      });
+    });
+  });
+
+  describe("7 Requesting verified claims", () => {
+    xit("The OP shall not provide the RP with any data it did not request. (IA-7 data minimization; negative test not yet implemented)", async () => {});
+  });
+
+  describe("8 OP metadata", () => {
     let metadata;
 
     beforeAll(async () => {
@@ -334,11 +349,27 @@ describe("OpenID Connect for Identity Assurance 1.0 ", () => {
       });
       expect(response.status).toBe(200);
       metadata = response.data;
-      console.log(JSON.stringify(metadata, null, 2));
     });
 
     it("verified_claims_supported: Boolean value indicating support for verified_claims. If omitted, the default value is false.", () => {
       expect(metadata.verified_claims_supported).toBe(true);
+    });
+
+    it("trust_frameworks_supported: REQUIRED. JSON array containing all supported trust frameworks. This array shall have at least one member.", () => {
+      expect(Array.isArray(metadata.trust_frameworks_supported)).toBe(true);
+      expect(metadata.trust_frameworks_supported.length).toBeGreaterThan(0);
+    });
+
+    it("claims_in_verified_claims_supported: REQUIRED. JSON array containing all claims supported within verified_claims. This array shall have at least one member.", () => {
+      expect(Array.isArray(metadata.claims_in_verified_claims_supported)).toBe(true);
+      expect(metadata.claims_in_verified_claims_supported.length).toBeGreaterThan(0);
+    });
+
+    it("evidence_supported: Required when one or more type of evidence is supported. JSON array containing all types of identity evidence the OP uses. This array shall have at least one member.", () => {
+      // NOTE: values are still pre-1.0 draft (id_document/utility_bill/qes); the rename to
+      // document/electronic_record/... is tracked as a separate gap. Here we assert presence + non-empty.
+      expect(Array.isArray(metadata.evidence_supported)).toBe(true);
+      expect(metadata.evidence_supported.length).toBeGreaterThan(0);
     });
 
     it('documents_supported: Required when evidence_supported contains "document". JSON array containing all identity document types utilized by the OP for identity verification.', () => {
@@ -350,56 +381,25 @@ describe("OpenID Connect for Identity Assurance 1.0 ", () => {
       expect(metadata.documents_methods_supported).toContain("pipp");
     });
 
+    xit('documents_check_methods_supported: Optional. JSON array containing the check methods the OP supports for evidences of type "document". (not advertised by this OP)', () => {});
+
+    xit('electronic_records_supported: Required when evidence_supported contains "electronic_record". JSON array containing all electronic record types the OP supports. (no electronic_record evidence advertised by this OP)', () => {});
+
     it("legacy pre-1.0 draft names id_documents_supported / id_documents_verification_methods_supported are no longer advertised", () => {
       expect(metadata).not.toHaveProperty("id_documents_supported");
       expect(metadata).not.toHaveProperty("id_documents_verification_methods_supported");
     });
   });
 
+  // The `purpose` claims-request member is defined by OpenID Connect Core §5.5.1, not by IDA itself,
+  // so the titles below cite OIDC Core rather than quoting IDA. The eKYC conformance catalog (§10,
+  // tag IA-9) lists purpose validation as a TODO. idp-server does not yet validate it.
+  describe("'purpose' claims-request member (OIDC Core §5.5.1; eKYC catalog §10 / IA-9 — not implemented)", () => {
+    xit("OIDC Core §5.5.1 purpose member: a purpose shorter than 3 characters MUST be rejected with invalid_request.", async () => {});
+
+    xit("OIDC Core §5.5.1 purpose member: a purpose longer than 300 characters MUST be rejected with invalid_request.", async () => {});
+
+    xit("OIDC Core §5.5.1 purpose member: a purpose containing HTML special characters is escaped in the consent UI (XSS prevention).", async () => {});
+  });
+
 });
-
-const getIdToken = async ({ client, nonce, acrValues, maxAge }) => {
-  const { authorizationResponse } = await requestAuthorizations({
-    endpoint: serverConfig.authorizationEndpoint,
-    clientId: client.clientId,
-    redirectUri: client.redirectUri,
-    responseType: "code",
-    scope: "openid " + client.scope,
-    state: "state",
-    responseMode: "query",
-    nonce,
-    display: "page",
-    prompt: "login",
-    acrValues,
-    maxAge,
-  });
-  console.log(authorizationResponse);
-  expect(authorizationResponse.code).not.toBeNull();
-
-  const tokenResponse = await requestToken({
-    endpoint: serverConfig.tokenEndpoint,
-    code: authorizationResponse.code,
-    grantType: "authorization_code",
-    redirectUri: client.redirectUri,
-    clientId: client.clientId,
-    clientSecret: client.clientSecret,
-  });
-  console.log(tokenResponse.data);
-  expect(tokenResponse.status).toBe(200);
-  expect(tokenResponse.status).toBe(200);
-  expect(tokenResponse.data).toHaveProperty("access_token");
-  expect(tokenResponse.data.token_type).toEqual("Bearer");
-  expect(tokenResponse.data).toHaveProperty("expires_in");
-  expect(tokenResponse.data).toHaveProperty("scope");
-  expect(tokenResponse.data).toHaveProperty("id_token");
-
-  const jwkResponse = await getJwks({
-    endpoint: serverConfig.jwksEndpoint,
-  });
-  const decodedIdToken = verifyAndDecodeJwt({
-    jwt: tokenResponse.data.id_token,
-    jwks: jwkResponse.data,
-  });
-  console.log(decodedIdToken);
-  return decodedIdToken;
-};
