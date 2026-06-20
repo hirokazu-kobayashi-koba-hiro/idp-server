@@ -333,6 +333,34 @@ OIDC for IDA:
 ```
 
 
+### レスポンスの配信先と省略ルール（§5.2 / §5.7）
+
+#### id_token / userinfo の使い分け（§5.2）
+
+verified_claims は `claims` パラメータの `id_token` メンバ・`userinfo` メンバのどちらでも要求でき、**要求した側のレスポンスにのみ**返される。
+
+```json
+{
+  "id_token": { "verified_claims": { "claims": { "given_name": null } } },
+  "userinfo": { "verified_claims": { "claims": { "address": null } } }
+}
+```
+
+- `id_token` で要求 → ID Token に含まれ、UserInfo には含まれない
+- `userinfo` で要求 → UserInfo に含まれ、ID Token には含まれない
+
+#### 要求どおり返るとは限らない（データ最小化・§5.7）
+
+RP が要求した verified_claims が、そのままレスポンスに返るとは限らない。OP は §5.7 のルールに従って一部を省略する。
+
+| ルール | § | OP の挙動 |
+|--------|---|----------|
+| 保持していない／非対応のクレーム | 5.7.2 | 当該クレームを省略 |
+| 同意されていないデータ | 5.7.3 | 共有同意が無いデータを省略 |
+| 制約に合致しないデータ | 5.7.4 | `value`/`values` 不一致が **claims 内**なら当該クレームを省略、**verification 内**なら verified_claims 全体を省略 |
+
+いずれの場合も **OP はエラーを返さず**、返せる範囲のみ返す（§5.7.4）。要求クレームがすべて落ちて `claims` が空になっても、`verification` が有効なら verified_claims は返る（空の `claims` を許容）。
+
 ### ディスカバリーメタデータ
 
 ```json
