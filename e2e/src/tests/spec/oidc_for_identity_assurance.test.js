@@ -518,9 +518,10 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
   // `purpose` claims-request member: intentionally NOT tracked in this ledger. It was defined in
   // OIDC4IDA Implementer's Draft §5.1 but was REMOVED from the OIDC4IDA 1.0 final spec (1 Oct 2024),
   // and it is not in OpenID Connect Core §5.5.1 (essential / value / values only) — so it is not a
-  // requirement of any spec this conformance ledger tracks. The eKYC OP conformance suite still
-  // exercises it (tag IA-9); a reference implementation (3–300 length validation → invalid_request,
-  // plus HTML-escaped exposure in the authorization view-data) lives on branch
-  // feat/ida-purpose-1651 (see #1651), to be revisited if/when purpose returns to the spec.
+  // requirement of any spec this conformance ledger tracks. The OIDF eKYC test plan
+  // (EKYCWithOIDCCoreTestPlan) only documents it as an unimplemented TODO (tag IA-9), not a runnable
+  // test module. A reference implementation (3–300 length validation → invalid_request, plus
+  // HTML-escaped exposure in the authorization view-data) lives on branch feat/ida-purpose-1651
+  // (see #1651), to be revisited if/when purpose returns to the spec.
 
 });

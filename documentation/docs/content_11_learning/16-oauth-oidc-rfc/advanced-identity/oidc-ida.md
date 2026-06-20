@@ -258,6 +258,10 @@ OIDC for IDA:
 
 #### purpose（目的の指定）
 
+:::warning 仕様ステータス
+`purpose` は OIDC4IDA Implementer's Draft §5.1 で定義されていたが、**OIDC4IDA 1.0 final（2024-10-01）で仕様から削除**された（OpenID Connect Core §5.5.1 にも無く、essential / value / values のみ）。OIDF eKYC conformance test plan（`EKYCWithOIDCCoreTestPlan`）には要件が **TODO コメント（タグ `IA-9`）として残るのみで、実行可能なテストモジュールは未実装**。下記は歴史的な参考例。
+:::
+
 ```json
 {
   "userinfo": {
