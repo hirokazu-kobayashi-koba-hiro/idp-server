@@ -826,6 +826,51 @@ restore_tenant
 
 ---
 
+## Experiment 13: 事前登録済みユーザー限定にする（allow_registration: false）
+
+> **やりたいこと**: 外部認証は通すが、idp-server に未登録のユーザーは自動作成せず拒否したい（事前登録必須）
+>
+> **変わる設定**: `authentication-policy` の `policies[].step_definitions[].allow_registration`
+>
+> **外部パスワード認証固有**: 外部サービスで認証成功したユーザーを idp-server に JIT（Just-In-Time）作成するかを制御する。`true`（テンプレート既定）= 自動作成、`false` = 事前登録必須。
+
+### 1. 設定変更：allow_registration を false に
+
+```bash
+update_auth_policy "$(jq '.policies[0].step_definitions[0].allow_registration = false' "${CONFIG_DIR}/authentication-policy.json")" \
+  | jq '.policies[0].step_definitions[0].allow_registration'
+```
+
+### 2. 挙動確認：未登録ユーザーでログイン → 外部認証は成功するが拒否される
+
+```bash
+start_auth_flow
+
+echo "--- 未登録メールでログイン（外部mockは200を返すが idp-server には未登録）---"
+password_login "newcomer@example.com" "correct-password" | jq .
+```
+
+### 3. 期待結果
+
+| ユーザー | 外部認証 (mock) | idp-server | 結果 |
+|---------|----------------|-----------|------|
+| 未登録（`newcomer@example.com`）| 200 成功 | 未登録 | **`400 user_not_found`**（JIT しない）|
+| 事前登録済み（例: 既出の `test@example.com`）| 200 成功 | 登録済み | 認証成功 |
+
+> `allow_registration: true`（既定）なら未登録ユーザーも外部認証成功時に JIT 自動作成される。`false` にすると事前登録済みユーザーだけが認証を通る（レガシーID移行を終えて新規プロビジョニングを止めたい場合などに使う）。
+
+### 4. 元に戻す
+
+```bash
+restore_auth_policy > /dev/null
+
+echo "--- 既定（allow_registration: true）に戻して未登録ユーザーでログイン → JIT 作成され成功するはず ---"
+start_auth_flow
+password_login "newcomer-back@example.com" "correct-password" | jq '.user.status // .'
+```
+
+---
+
 ## 実験一覧
 
 | # | やりたいこと | 変わる設定 | 確認できること |
@@ -842,3 +887,4 @@ restore_tenant
 | 10 | カスタムヘッダーを送りたい | `header_mapping_rules` | API キー、トレーサビリティヘッダー |
 | 11 | レスポンスの条件マッピングを確認 | `response.body_mapping_rules.condition` | 成功/失敗の返却値を分離 |
 | 12 | ユーザー識別方式を変えたい | `identity_unique_key_type` | EMAIL vs EXTERNAL_USER_ID の違い |
+| 13 | 未登録ユーザーの自動作成を止めたい | `step_definitions[].allow_registration` | 事前登録必須（未登録は `user_not_found`） |

@@ -7,6 +7,15 @@
       "priority": 1,
       "conditions": {},
       "available_methods": ["password"],
+      "step_definitions": [
+        {
+          "method": "password",
+          "order": 1,
+          "requires_user": false,
+          "allow_registration": true,
+          "user_identity_source": "email"
+        }
+      ],
       "success_conditions": {
         "any_of": [
           [

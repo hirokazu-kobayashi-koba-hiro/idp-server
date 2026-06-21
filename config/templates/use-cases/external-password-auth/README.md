@@ -14,10 +14,12 @@ idp-server 内蔵のパスワード検証を使わず、`authentication-configur
 |------|--------|
 | 認証方式 | パスワード（外部サービス委譲） |
 | パスワードポリシー | なし（外部サービスが管理） |
-| ユーザー登録 | なし（外部サービスが管理） |
+| ユーザー登録 | 外部認証成功時に JIT 自動プロビジョニング（`allow_registration: true`、`false` で事前登録必須） |
 | アカウントロック | 5回失敗でロック |
 | セッション有効期限 | 24時間 |
 | ユーザー識別キー | `EMAIL_OR_EXTERNAL_USER_ID` |
+
+> **JIT 登録の制御（`allow_registration`）**: 認証ポリシーの password ステップで、外部認証に成功した未登録ユーザーを idp-server に自動作成するかを制御する。テンプレート既定は `true`（自動作成）。レガシーID移行を終えて新規作成を止めたい等、**事前登録済みユーザー限定**にしたい場合は `false` にする（未登録ユーザーは `400 user_not_found`）。動作確認は [EXPERIMENTS.md の Experiment 13](./EXPERIMENTS.md)。
 
 ## ファイル構成
 
@@ -26,7 +28,7 @@ idp-server 内蔵のパスワード検証を使わず、`authentication-configur
 | `onboarding-template.json` | Organization + Organizer Tenant + Admin User + Client | `POST /v1/management/onboarding` |
 | `public-tenant-template.json` | Public Tenant（パスワードポリシーなし） | `POST /v1/management/tenants` |
 | `authentication-config-password-template.json` | 外部サービスパスワード認証（http_request） | `POST /v1/management/tenants/{id}/authentication-configurations` |
-| `authentication-policy.json` | パスワードのみ認証ポリシー（登録なし） | `POST /v1/management/tenants/{id}/authentication-policies` |
+| `authentication-policy.json` | パスワード1段の認証ポリシー（`allow_registration: true` = JIT 登録あり） | `POST /v1/management/tenants/{id}/authentication-policies` |
 | `public-client-template.json` | アプリケーションクライアント | `POST /v1/management/tenants/{id}/clients` |
 | `mock-server.js` | ローカル検証用モックサーバー | `node mock-server.js` |
 | `setup.sh` | 上記を順番に実行するスクリプト | - |

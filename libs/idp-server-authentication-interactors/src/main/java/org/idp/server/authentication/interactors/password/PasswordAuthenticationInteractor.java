@@ -326,6 +326,9 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
     String providerId = request.optValueAsString("provider_id", "idp-server");
 
     AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
+    // New user creation decision (Issue #1538: align with Email/SMS allowRegistration)
+    boolean allowRegistration =
+        stepDefinition != null && stepDefinition.allowRegistration(); // default: disabled
 
     // SECURITY: 2nd factor requires authenticated user (prevent authentication bypass)
     if (stepDefinition != null && stepDefinition.requiresUser()) {
@@ -358,6 +361,7 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
             request,
             executionResult,
             interactionConfig.userResolve().userMappingRules(),
+            allowRegistration,
             userQueryRepository);
       }
     }
@@ -382,7 +386,9 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
    *   <li>Map external response to User object using userMappingRules
    *   <li>Search existing user by provider + externalUserId
    *   <li>If found: reuse sub and status
-   *   <li>If not found: assign new sub (UUID)
+   *   <li>If not found and allowRegistration: assign new sub (UUID)
+   *   <li>If not found and !allowRegistration (Issue #1538): return User.notFound() so the caller
+   *       rejects authentication instead of JIT-creating an orphan user
    * </ol>
    *
    * @param tenant tenant
@@ -390,6 +396,7 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
    * @param request authentication interaction request
    * @param executionResult authentication execution result
    * @param userMappingRules user mapping rules from configuration
+   * @param allowRegistration whether the current policy step permits new user creation
    * @param userQueryRepository user query repository
    * @return resolved user
    * @see
@@ -401,6 +408,7 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
       AuthenticationInteractionRequest request,
       AuthenticationExecutionResult executionResult,
       List<MappingRule> userMappingRules,
+      boolean allowRegistration,
       UserQueryRepository userQueryRepository) {
 
     // Prepare mapping source (same as ExternalTokenAuthenticationInteractor)
@@ -424,6 +432,15 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
       user.setSub(existingUser.sub());
       user.setStatus(existingUser.status());
     } else {
+      // Issue #1538: enforce allow_registration. Do not JIT-create a user when the policy step
+      // disallows registration, even if the external auth API returned success.
+      if (!allowRegistration) {
+        log.warn(
+            "User not found and registration disabled. providerId={}, externalUserId={}, allowRegistration=false",
+            user.providerId(),
+            user.externalUserId());
+        return User.notFound();
+      }
       log.debug(
           "New user from external auth. providerId={}, externalUserId={}",
           user.providerId(),
