@@ -183,14 +183,14 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     }
 
     // Handle reset action: remove existing FIDO2 devices before adding new one
-    if (isRestAction(transaction)) {
+    if (isResetAction(transaction)) {
       baseUser = baseUser.removeAllAuthenticationDevicesOfType("fido2");
     }
 
     // Verify device count limit (skip for reset action as it replaces devices)
     // IMPORTANT: Fetch latest user state from DB to prevent TOCTOU race condition
     // (transaction.user() may have stale device count if another registration completed)
-    if (!isRestAction(transaction)) {
+    if (!isResetAction(transaction)) {
       User latestUser =
           userQueryRepository.findById(
               tenant, new org.idp.server.core.openid.identity.UserIdentifier(baseUser.sub()));
@@ -216,7 +216,7 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     }
 
     DefaultSecurityEventType eventType =
-        isRestAction(transaction)
+        isResetAction(transaction)
             ? DefaultSecurityEventType.fido2_reset_success
             : DefaultSecurityEventType.fido2_registration_success;
 
@@ -355,7 +355,7 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     return "";
   }
 
-  private boolean isRestAction(AuthenticationTransaction transaction) {
+  private boolean isResetAction(AuthenticationTransaction transaction) {
     return "reset".equals(transaction.attributes().getValueOrEmpty("action"));
   }
 

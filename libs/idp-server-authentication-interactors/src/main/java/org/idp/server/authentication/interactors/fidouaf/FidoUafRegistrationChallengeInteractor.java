@@ -112,28 +112,6 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
           DefaultSecurityEventType.fido_uaf_registration_challenge_failure);
     }
 
-    // Verify max_devices limit before generating challenge (skip for reset action)
-    User authenticatedUser = transaction.user();
-    boolean isResetAction = isResetAction(transaction);
-    int authenticationDeviceCount = authenticatedUser.authenticationDeviceCount();
-    int maxDevices = tenant.maxDevicesForAuthentication();
-
-    if (!isResetAction && authenticationDeviceCount >= maxDevices) {
-      log.warn(
-          "FIDO-UAF registration challenge rejected: device limit reached. user={}, current={}, max={}",
-          authenticatedUser.sub(),
-          authenticationDeviceCount,
-          maxDevices);
-
-      return AuthenticationInteractionRequestResult.clientError(
-          DeviceLimitExceededResponse.create(maxDevices, authenticationDeviceCount),
-          type,
-          operationType(),
-          method(),
-          authenticatedUser,
-          DefaultSecurityEventType.fido_uaf_registration_challenge_failure);
-    }
-
     // Verify device registration ACR/MFA requirements
     if (!isDeviceRegistrationPolicyMet(tenant, transaction)) {
       log.warn(
@@ -154,6 +132,28 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
           operationType(),
           method(),
           transaction.user(),
+          DefaultSecurityEventType.fido_uaf_registration_challenge_failure);
+    }
+
+    // Verify max_devices limit before generating challenge (skip for reset action)
+    User authenticatedUser = transaction.user();
+    boolean isResetAction = isResetAction(transaction);
+    int authenticationDeviceCount = authenticatedUser.authenticationDeviceCount();
+    int maxDevices = tenant.maxDevicesForAuthentication();
+
+    if (!isResetAction && authenticationDeviceCount >= maxDevices) {
+      log.warn(
+          "FIDO-UAF registration challenge rejected: device limit reached. user={}, current={}, max={}",
+          authenticatedUser.sub(),
+          authenticationDeviceCount,
+          maxDevices);
+
+      return AuthenticationInteractionRequestResult.clientError(
+          DeviceLimitExceededResponse.create(maxDevices, authenticationDeviceCount),
+          type,
+          operationType(),
+          method(),
+          authenticatedUser,
           DefaultSecurityEventType.fido_uaf_registration_challenge_failure);
     }
 
