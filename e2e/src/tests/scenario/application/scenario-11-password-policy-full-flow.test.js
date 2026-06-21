@@ -433,6 +433,51 @@ describe("Issue #741: Password Policy Full Flow", () => {
       expect(createAuthConfigResponse.status).toBe(201);
       console.log(`✓ Authentication configuration created: ${authConfigId}\n`);
 
+      // Issue #1538: external password auth requires an explicit policy step with
+      // allow_registration:true to JIT-create users (secure by default otherwise).
+      const createPolicyResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}/authentication-policies`,
+        headers: {
+          Authorization: `Bearer ${adminAccessToken}`,
+        },
+        body: {
+          id: uuidv4(),
+          flow: "oauth",
+          enabled: true,
+          policies: [
+            {
+              description: "external_password_allow_registration",
+              priority: 1,
+              conditions: {},
+              available_methods: ["password"],
+              step_definitions: [
+                {
+                  method: "password",
+                  order: 1,
+                  requires_user: false,
+                  allow_registration: true,
+                  user_identity_source: "email",
+                },
+              ],
+              success_conditions: {
+                any_of: [
+                  [
+                    {
+                      path: "$.password-authentication.success_count",
+                      type: "integer",
+                      operation: "gte",
+                      value: 1,
+                    },
+                  ],
+                ],
+              },
+            },
+          ],
+        },
+      });
+      expect(createPolicyResponse.status).toBe(201);
+      console.log("✓ Authentication policy created\n");
+
       // Step 5: Password authentication via external service (Authorization Flow)
       console.log("Step 5: Password authentication via external service...");
       const userEmail = faker.internet.email();
