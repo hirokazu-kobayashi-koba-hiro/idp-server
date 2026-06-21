@@ -29,6 +29,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.mfa.DeviceLimitExceededResponse;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
@@ -189,14 +190,14 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
 
     User baseUser = transaction.user();
     // Handle reset action: remove existing FIDO-UAF devices before adding new one
-    if (isRestAction(transaction)) {
+    if (isResetAction(transaction)) {
       baseUser = baseUser.removeAllAuthenticationDevicesOfType("fido-uaf");
     }
 
     // Verify device count limit (skip for reset action as it replaces devices)
     // IMPORTANT: Fetch latest user state from DB to prevent TOCTOU race condition
     // (transaction.user() may have stale device count if another registration completed)
-    if (!isRestAction(transaction)) {
+    if (!isResetAction(transaction)) {
       User latestUser =
           userQueryRepository.findById(
               tenant, new org.idp.server.core.openid.identity.UserIdentifier(baseUser.sub()));
@@ -211,16 +212,8 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
             authenticationDeviceCount,
             maxDevices);
 
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("error", "invalid_request");
-        errorResponse.put(
-            "error_description",
-            String.format(
-                "Maximum number of devices reached %d, user has already %d devices.",
-                maxDevices, authenticationDeviceCount));
-
         return AuthenticationInteractionRequestResult.clientError(
-            errorResponse,
+            DeviceLimitExceededResponse.create(maxDevices, authenticationDeviceCount),
             type,
             operationType(),
             method(),
@@ -230,7 +223,7 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
     }
 
     DefaultSecurityEventType eventType =
-        isRestAction(transaction)
+        isResetAction(transaction)
             ? DefaultSecurityEventType.fido_uaf_reset_success
             : DefaultSecurityEventType.fido_uaf_registration_success;
 
@@ -281,7 +274,7 @@ public class FidoUafRegistrationInteractor implements AuthenticationInteractor {
         eventType);
   }
 
-  private boolean isRestAction(AuthenticationTransaction transaction) {
+  private boolean isResetAction(AuthenticationTransaction transaction) {
     return "reset".equals(transaction.attributes().getValueOrEmpty("action"));
   }
 

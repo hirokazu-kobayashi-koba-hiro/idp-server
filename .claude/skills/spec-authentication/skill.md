@@ -159,6 +159,13 @@ cd e2e && npm test -- scenario/application/scenario-03-mfa-registration.test.js
 - Pre-authentication: ユーザーが認証済みか確認
 - ACR Policy: 現在のACRが要求レベルを満たすか確認
 
+### MFA登録で「Authentication policy configuration not found」
+- MFAエンドポイント（`/v1/me/mfa/{type}`）は **`flow` 別の認証ポリシー**が必要
+- `flow: "oauth"` のポリシーだけでは不足
+- FIDO2の場合: `flow: "fido2-registration"` のポリシーを作成
+- FIDO-UAFの場合: `flow: "fido-uaf-registration"` のポリシーを作成
+- StandardAuthFlow一覧: `oauth`, `ciba`, `fido2-registration`, `fido-uaf-registration`, `fido2-deregistration`, `fido-uaf-deregistration`, `mfa-sms-registration`, `mfa-email-registration`
+
 ### 認証トランザクションが期限切れ
 - `AuthenticationTransaction` の有効期限（デフォルト: 5分）を確認
 - Redis等のセッションストレージが正常か確認
