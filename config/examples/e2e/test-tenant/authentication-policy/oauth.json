@@ -17,7 +17,8 @@
         "sms",
         "fido2",
         "fido-uaf",
-        "external-token"
+        "external-token",
+        "initial-registration"
       ],
       "step_definitions": [
         {
@@ -139,6 +140,14 @@
           [
             {
               "path": "$.oidc-b7481833-c95a-4c7a-9481-94b30008c8ef.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1

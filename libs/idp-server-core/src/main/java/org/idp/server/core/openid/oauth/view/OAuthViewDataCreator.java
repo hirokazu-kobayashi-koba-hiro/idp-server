@@ -63,6 +63,10 @@ public class OAuthViewDataCreator {
       additionalViewData.put("client_custom_properties", clientConfiguration.customProperties());
     }
 
+    if (authorizationRequest.hasLoginHint()) {
+      additionalViewData.put("login_hint", authorizationRequest.loginHint().value());
+    }
+
     return new OAuthViewData(
         clientId,
         clientName,

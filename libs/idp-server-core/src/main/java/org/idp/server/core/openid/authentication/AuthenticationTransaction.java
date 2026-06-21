@@ -289,6 +289,13 @@ public class AuthenticationTransaction {
     return isSuccess() || isFailure() || isLocked();
   }
 
+  public String authenticationStatus() {
+    if (isLocked()) return "locked";
+    if (isFailure()) return "failure";
+    if (isSuccess()) return "success";
+    return "in_progress";
+  }
+
   public boolean exists() {
     return identifier != null && identifier.exists();
   }

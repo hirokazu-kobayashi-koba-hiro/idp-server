@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.extension.ciba.user;
+package org.idp.server.core.openid.identity.hint;
 
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.identity.repository.UserQueryRepository;
-import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.type.Pairs;
 
-public interface UserHintResolver {
+public interface LoginHintMatcher {
+  boolean matches(String hint);
 
-  User resolve(
-      Tenant tenant,
-      UserHint userHint,
-      UserHintRelatedParams userHintRelatedParams,
-      UserQueryRepository userQueryRepository);
+  Pairs<String, String> extractHints(String hint);
+
+  User resolve(Pairs<String, String> hints);
 }

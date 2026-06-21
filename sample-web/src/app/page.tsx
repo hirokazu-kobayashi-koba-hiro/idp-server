@@ -114,6 +114,16 @@ const Login = () => {
               >
                 Device Credential
               </Button>
+              <Button
+                component={Link}
+                href="/fido-uaf-auth-demo"
+                variant="outlined"
+                size="small"
+                color="primary"
+                startIcon={<FingerprintIcon />}
+              >
+                FIDO-UAF Auth Flow
+              </Button>
             </Stack>
 
             {/* フッター */}

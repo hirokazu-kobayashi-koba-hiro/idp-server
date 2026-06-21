@@ -1,0 +1,33 @@
+{
+  "id": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
+  "type": "authentication-device-notification",
+  "interactions": {
+    "authentication-device-notification": {
+      "execution": {
+        "function": "multi_channel_notification",
+        "details": {
+          "fcm": {
+            "templates": {
+              "transaction": {
+                "sender": "https://api.local.test/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+                "title": "Authentication Request",
+                "body": "Please authenticate on your device"
+              },
+              "authentication": {
+                "sender": "https://api.local.test/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+                "title": "Authentication Request",
+                "body": "Please authenticate on your device"
+              },
+              "default": {
+                "sender": "https://api.local.test/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+                "title": "Authentication Request",
+                "body": "Please authenticate on your device"
+              }
+            },
+            "credential": "{}"
+          }
+        }
+      }
+    }
+  }
+}

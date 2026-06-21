@@ -203,6 +203,32 @@ if [ "${HTTP_CODE}" = "201" ]; then
     echo "   Skipping FIDO-UAF config (file not found)"
   fi
 
+  # Authentication Device Notification config (for FIDO-UAF auth demo)
+  DEVICE_NOTIFICATION_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/authentication-device/push-notification.json"
+  if [ -f "${DEVICE_NOTIFICATION_CONFIG_FILE}" ]; then
+    echo "   Registering Authentication Device Notification config..."
+    DEVICE_NOTIFICATION_CONFIG_JSON=$(cat "${DEVICE_NOTIFICATION_CONFIG_FILE}")
+
+    DEVICE_NOTIFICATION_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-configurations" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${DEVICE_NOTIFICATION_CONFIG_JSON}")
+
+    DEVICE_NOTIFICATION_HTTP_CODE=$(echo "${DEVICE_NOTIFICATION_RESPONSE}" | tail -n1)
+    DEVICE_NOTIFICATION_RESPONSE_BODY=$(echo "${DEVICE_NOTIFICATION_RESPONSE}" | sed '$d')
+
+    if [ "${DEVICE_NOTIFICATION_HTTP_CODE}" = "200" ] || [ "${DEVICE_NOTIFICATION_HTTP_CODE}" = "201" ]; then
+      DEVICE_NOTIFICATION_CONFIG_ID=$(echo "${DEVICE_NOTIFICATION_RESPONSE_BODY}" | jq -r '.result.id')
+      echo "   Authentication Device Notification config created: ${DEVICE_NOTIFICATION_CONFIG_ID}"
+    else
+      echo "   Warning: Authentication Device Notification config creation failed (HTTP ${DEVICE_NOTIFICATION_HTTP_CODE})"
+      echo "   Response: ${DEVICE_NOTIFICATION_RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "   ${DEVICE_NOTIFICATION_RESPONSE_BODY}"
+    fi
+  else
+    echo "   Skipping Authentication Device Notification config (file not found)"
+  fi
+
   # Email authentication config
   EMAIL_CONFIG_FILE="${SCRIPT_DIR}/authentication-config/email/no-action.json"
   if [ -f "${EMAIL_CONFIG_FILE}" ]; then
