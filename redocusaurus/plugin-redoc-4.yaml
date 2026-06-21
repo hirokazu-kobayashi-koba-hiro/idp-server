@@ -813,12 +813,9 @@ components:
             access_token_selective_user_custom_properties:
               type: boolean
               description: アクセストークンでのユーザーカスタムプロパティの選択的包含を有効にする。
-            access_token_verified_claims:
-              type: boolean
-              description: アクセストークンでの検証済みクレームの包含を有効にする。
             access_token_selective_verified_claims:
               type: boolean
-              description: アクセストークンでの検証済みクレームの選択的包含を有効にする。
+              description: アクセストークンおよび UserInfo での検証済みクレームの選択的包含を有効にする。
     ErrorResponse:
       type: object
       properties:

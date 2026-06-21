@@ -850,8 +850,12 @@ paths:
         - $ref: '#/components/parameters/VerificationType'
         - $ref: '#/components/parameters/ApplicationId'
       responses:
-        '204':
-          description: No Content
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                type: object
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1013,6 +1017,31 @@ paths:
                               type: object
                             verification:
                               type: object
+                        applied_user_claims:
+                          type: object
+                          nullable: true
+                          description: >
+                            承認時にこの結果が実際にユーザーへ適用した値の記録。
+
+                            設定の `result` で `user_claims_mapping_rules` /
+                            `custom_properties_mapping_rules` / `user_status`
+                            を使った場合に、
+
+                            実際に適用された値が記録される。適用が無かったパートは省略される。
+                          properties:
+                            user_claims:
+                              type: object
+                              description: >
+                                適用した標準クレーム（family_name
+                                等のパッチ可能なOIDCプロファイルクレームのみ）。
+                            custom_properties:
+                              type: object
+                              description: |
+                                適用した業務属性（custom_properties）。
+                            user_status:
+                              type: string
+                              description: |
+                                実際に遷移したユーザーステータス（遷移が起きた場合のみ記録。現状維持の場合は省略）。
                   total_count:
                     type: integer
                     description: 身元確認結果の総数
@@ -1044,6 +1073,21 @@ components:
               error:
                 type: string
                 example: invalid_request
+                description: >
+                  エラーコード。以下の値を取りうる:
+
+
+                  | error 値 | 説明 |
+
+                  |---------|------|
+
+                  | `invalid_request` | リクエストパラメータの不正、JSON Schema
+                  検証エラー、プロセスシーケンスエラー |
+
+                  | `pre_hook_validation_failed` | Pre-hook
+                  バリデーション失敗（ユーザークレーム検証、重複申込み検知等） |
+
+                  | `execution_failed` | 外部サービス実行エラー（`error_details` に詳細が含まれる） |
               error_description:
                 type: string
                 example: Request validation failed
@@ -1056,7 +1100,7 @@ components:
               error_details:
                 type: object
                 description: |
-                  外部サービス実行時のエラー詳細情報（execution_failed の場合のみ）。オプショナル。
+                  外部サービス実行時のエラー詳細情報（`execution_failed` の場合のみ）。オプショナル。
                 required:
                   - execution_type
                   - status_category
@@ -1107,6 +1151,14 @@ components:
                   - >-
                     process 'complete-verification' is not available at current
                     state
+            pre_hook_validation_failed:
+              value:
+                error: pre_hook_validation_failed
+                error_description: Pre-hook validation failed for identity verification request
+                error_messages:
+                  - >-
+                    User claim verification failed. unmatched:
+                    $.request_body.email_address, user:email
             external_service_400:
               value:
                 error: execution_failed
