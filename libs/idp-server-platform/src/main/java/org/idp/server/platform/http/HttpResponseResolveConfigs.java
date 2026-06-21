@@ -29,25 +29,27 @@ import org.idp.server.platform.json.JsonReadable;
  *
  * <p>Configuration example:
  *
+ * <p>Each condition path is evaluated against the resolve context built by {@link
+ * HttpResponseResolver}: {@code $.status_code}, {@code $.response_headers.*} and {@code
+ * $.response_body.*}.
+ *
  * <pre>{@code
  * {
  *   "configs": [
  *     {
  *       "conditions": [
- *         {"path": "$.httpStatusCode", "operation": "in", "value": [200, 201]},
- *         {"path": "$.status", "operation": "eq", "value": "approved"}
+ *         {"path": "$.status_code", "operation": "in", "value": [200, 201]},
+ *         {"path": "$.response_body.status", "operation": "eq", "value": "approved"}
  *       ],
- *       "match_mode": "all",
- *       "mapped_status_code": 200,
- *       "data_json_path": "$.result"
+ *       "match_mode": "ALL",
+ *       "mapped_status_code": 200
  *     },
  *     {
  *       "conditions": [
- *         {"path": "$.httpStatusCode", "operation": "eq", "value": 503}
+ *         {"path": "$.status_code", "operation": "eq", "value": 503}
  *       ],
- *       "match_mode": "all",
- *       "mapped_status_code": 503,
- *       "error_message_json_path": "$.message"
+ *       "match_mode": "ALL",
+ *       "mapped_status_code": 503
  *     }
  *   ]
  * }

@@ -161,6 +161,23 @@ public class HttpRequestExecutionConfig
     return requestTimeoutSeconds != null ? requestTimeoutSeconds : 30;
   }
 
+  @Override
+  public boolean hasResponseConfigs() {
+    return responseResolveConfigs != null && !responseResolveConfigs.isEmpty();
+  }
+
+  @Override
+  public HttpResponseResolveConfigs responseResolveConfigs() {
+    if (responseResolveConfigs == null) {
+      return new HttpResponseResolveConfigs();
+    }
+    return responseResolveConfigs;
+  }
+
+  public List<Map<String, Object>> responseResolveConfigsMap() {
+    return responseResolveConfigs.configs().stream().map(HttpResponseResolveConfig::toMap).toList();
+  }
+
   public boolean exists() {
     return url != null && !url.isEmpty();
   }
@@ -178,6 +195,7 @@ public class HttpRequestExecutionConfig
     if (hasQueryMappingRules()) map.put("query_mapping_rules", queryMappingRulesMap());
     if (hasRetryConfiguration()) map.put("retry_configuration", retryConfiguration.toMap());
     if (hasRequestTimeout()) map.put("request_timeout_seconds", requestTimeoutSeconds);
+    if (hasResponseConfigs()) map.put("response_resolve_configs", responseResolveConfigsMap());
     return map;
   }
 }

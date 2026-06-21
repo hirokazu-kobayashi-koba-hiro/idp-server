@@ -31,25 +31,30 @@ import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
  * <p>Supports response success criteria with customizable error status codes for fine-grained error
  * handling based on external API responses.
  *
- * <p>Example configuration with custom error status code:
+ * <p>{@code response_resolve_configs} is a list of resolve rules evaluated in order; the first
+ * matching rule maps the response to its {@code mapped_status_code}.
+ *
+ * <p>Example configuration with custom mapped status code:
  *
  * <pre>{@code
  * {
  *   "url": "https://api.example.com/verify",
  *   "method": "POST",
  *   "auth_type": "oauth2",
- *   "response_resolve_configs": {
- *     "conditions": [
- *       {"path": "$.status", "operation": "eq", "value": "approved"},
- *       {"path": "$.error", "operation": "missing"}
- *     ],
- *     "match_mode": "ALL",
- *     "error_status_code": 422
- *   }
+ *   "response_resolve_configs": [
+ *     {
+ *       "conditions": [
+ *         {"path": "$.status", "operation": "eq", "value": "approved"},
+ *         {"path": "$.error", "operation": "missing"}
+ *       ],
+ *       "match_mode": "ALL",
+ *       "mapped_status_code": 422
+ *     }
+ *   ]
  * }
  * }</pre>
  *
- * <p>Common {@code error_status_code} patterns:
+ * <p>Common {@code mapped_status_code} patterns:
  *
  * <ul>
  *   <li>400/422: External API validation errors (input data issues)
