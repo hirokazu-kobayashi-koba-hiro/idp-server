@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import org.idp.server.core.extension.identity.verification.IdentityVerificationContext;
 import org.idp.server.core.extension.identity.verification.configuration.verified_claims.IdentityVerificationResultConfig;
+import org.idp.server.core.extension.identity.verified.VerifiedClaims;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.platform.json.JsonConverter;
@@ -72,19 +73,24 @@ public class IdentityVerificationUserUpdater {
    * any future modification in this class must build a new map/list and call the corresponding
    * setter — never mutate a collection obtained from the user in place.
    */
-  public static User update(
+  public static IdentityVerificationUserUpdateResult update(
       Tenant tenant,
       User user,
       IdentityVerificationContext context,
-      Map<String, Object> verifiedClaims,
       IdentityVerificationResultConfig resultConfig) {
 
     // defensive copy: the caller's instance is never mutated regardless of configuration
     User updated = user.updateWith(new User());
 
+    // capture what was actually applied so the caller can record it on the result (#1607)
+    Map<String, Object> appliedUserClaims = null;
+    Map<String, Object> appliedCustomProperties = null;
+    String appliedUserStatus = null;
+
     if (resultConfig.hasUserClaimsMappingRules()) {
       Map<String, Object> mapped = execute(context, resultConfig.userClaimsMappingRules());
       mapped.keySet().retainAll(PATCHABLE_STANDARD_CLAIMS);
+      appliedUserClaims = mapped;
       User patchUser = JsonConverter.snakeCaseInstance().read(mapped, User.class);
       updated = updated.updateWith(patchUser);
 
@@ -95,8 +101,17 @@ public class IdentityVerificationUserUpdater {
       }
     }
 
+    // verified_claims is resolved here so the updater is self-contained and does not depend on the
+    // result, mirroring how IdentityVerificationResult.create resolves it for the stored record.
+    // (#1607)
+    Map<String, Object> verifiedClaims =
+        VerifiedClaims.create(context.toMap(), resultConfig.verifiedClaimsMappingRules()).toMap();
     updated = applyVerifiedClaims(updated, verifiedClaims, resultConfig);
-    updated = applyCustomProperties(updated, context, resultConfig);
+
+    if (resultConfig.hasCustomPropertiesMappingRules()) {
+      appliedCustomProperties = execute(context, resultConfig.customPropertiesMappingRules());
+      updated = applyCustomProperties(updated, appliedCustomProperties, resultConfig);
+    }
 
     if (resultConfig.requiresUserStatusTransition()) {
       UserStatus newStatus = resultConfig.userStatus();
@@ -113,10 +128,13 @@ public class IdentityVerificationUserUpdater {
                 + "' (KEEP fallback). Fix the verification result config.");
       } else if (updated.status() != newStatus) {
         updated = updated.transitStatus(newStatus);
+        appliedUserStatus = newStatus.name();
       }
     }
 
-    return updated;
+    AppliedUserClaims applied =
+        AppliedUserClaims.create(appliedUserClaims, appliedCustomProperties, appliedUserStatus);
+    return new IdentityVerificationUserUpdateResult(updated, applied);
   }
 
   static User applyVerifiedClaims(
@@ -160,15 +178,7 @@ public class IdentityVerificationUserUpdater {
   }
 
   static User applyCustomProperties(
-      User user,
-      IdentityVerificationContext context,
-      IdentityVerificationResultConfig resultConfig) {
-
-    if (!resultConfig.hasCustomPropertiesMappingRules()) {
-      return user;
-    }
-
-    Map<String, Object> mapped = execute(context, resultConfig.customPropertiesMappingRules());
+      User user, Map<String, Object> mapped, IdentityVerificationResultConfig resultConfig) {
 
     HashMap<String, Object> next = new HashMap<>(user.customPropertiesValue());
 

@@ -456,53 +456,88 @@ GET /{tenant-id}/v1/me/identity-verification/results
 
 #### 成功レスポンス（200 OK）
 
+身元確認結果の一覧を `list` で返します。各要素が 1 件の結果です。
+
 ```json
 {
-  "verified_claims": [
+  "list": [
     {
-      "verification": {
-        "trust_framework": "jp_aml",
-        "time": "2024-01-16T10:30:00Z",
-        "verification_process": "investment-account-opening",
-        "evidence": [
-          {
-            "type": "id_document",
-            "method": "pipp",
-            "document": {
-              "type": "drivers_license",
-              "issuer": {
-                "name": "Tokyo Metropolitan Police",
-                "country": "JP"
-              },
-              "number": "XXXX-XXXX-XXXX",
-              "date_of_issuance": "2020-01-15",
-              "date_of_expiry": "2030-01-15"
+      "id": "3ec055a8-8000-44a2-8677-e70ebff414e2",
+      "tenant_id": "67e7eae6-62b0-4500-9eff-87459f63fc66",
+      "user_id": "bd3b53e7-bcf2-490e-b1b7-416b086c9cee",
+      "application_id": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+      "type": "investment-account-opening",
+      "verified_claims": {
+        "verification": {
+          "trust_framework": "jp_aml",
+          "time": "2024-01-16T10:30:00Z",
+          "verification_process": "investment-account-opening",
+          "evidence": [
+            {
+              "type": "id_document",
+              "method": "pipp",
+              "document": {
+                "type": "drivers_license",
+                "issuer": {
+                  "name": "Tokyo Metropolitan Police",
+                  "country": "JP"
+                },
+                "number": "XXXX-XXXX-XXXX",
+                "date_of_issuance": "2020-01-15",
+                "date_of_expiry": "2030-01-15"
+              }
             }
+          ]
+        },
+        "claims": {
+          "family_name": "山田",
+          "given_name": "太郎",
+          "birthdate": "1990-01-01",
+          "address": {
+            "country": "JP",
+            "postal_code": "100-0001",
+            "region": "東京都",
+            "locality": "千代田区"
           }
-        ]
-      },
-      "claims": {
-        "family_name": "山田",
-        "given_name": "太郎",
-        "birthdate": "1990-01-01",
-        "address": {
-          "country": "JP",
-          "postal_code": "100-0001",
-          "region": "東京都",
-          "locality": "千代田区"
         }
+      },
+      "verified_at": "2024-01-16T10:30:00",
+      "verified_until": "2027-01-16T10:30:00",
+      "source": "application",
+      "applied_user_claims": {
+        "user_claims": {
+          "family_name": "山田",
+          "given_name": "太郎"
+        },
+        "custom_properties": {
+          "kyc_level": "gold"
+        },
+        "user_status": "IDENTITY_VERIFIED"
       }
     }
-  ]
+  ],
+  "total_count": 1,
+  "limit": 20,
+  "offset": 0
 }
 ```
 
-#### エラーレスポンス（404 Not Found）
+主なフィールド:
+
+| フィールド | 説明 |
+|-----------|------|
+| `verified_claims` | OIDC4IDA 準拠の検証済みクレーム（`verification` / `claims`） |
+| `applied_user_claims` | 承認時に実際へ適用した `user_claims` / `custom_properties` / `user_status` の記録（適用が無かったパートは省略）。設定で `user_claims_mapping_rules` 等を使った場合のみ含まれる |
+| `verified_until` | 検証の有効期限（設定が無ければ `null`） |
+
+結果が 0 件の場合も 200 で空リストを返します（404 ではありません）。
 
 ```json
 {
-  "error": "not_found",
-  "error_description": "No verified claims found for this user"
+  "list": [],
+  "total_count": 0,
+  "limit": 20,
+  "offset": 0
 }
 ```
 

@@ -922,6 +922,26 @@ paths:
                               type: object
                             verification:
                               type: object
+                        applied_user_claims:
+                          type: object
+                          nullable: true
+                          description: |
+                            承認時にこの結果が実際にユーザーへ適用した値の記録。
+                            設定の `result` で `user_claims_mapping_rules` / `custom_properties_mapping_rules` / `user_status` を使った場合に、
+                            実際に適用された値が記録される。適用が無かったパートは省略される。
+                          properties:
+                            user_claims:
+                              type: object
+                              description: |
+                                適用した標準クレーム（family_name 等のパッチ可能なOIDCプロファイルクレームのみ）。
+                            custom_properties:
+                              type: object
+                              description: |
+                                適用した業務属性（custom_properties）。
+                            user_status:
+                              type: string
+                              description: |
+                                実際に遷移したユーザーステータス（遷移が起きた場合のみ記録。現状維持の場合は省略）。
                   total_count:
                     type: integer
                     description: 身元確認結果の総数

@@ -153,7 +153,7 @@ describe("Identity Verification User Attribute Update", () => {
       federationServerConfig: federationServerConfig,
       client: clientSecretPostClient,
       adminClient: clientSecretPostClient,
-      scope: "openid profile phone email identity_verification_application " + clientSecretPostClient.identityVerificationScope
+      scope: "openid profile phone email identity_verification_application identity_verification_result " + clientSecretPostClient.identityVerificationScope
     });
     await registerFidoUaf({ accessToken: accessToken });
     return { user, accessToken };
@@ -205,6 +205,16 @@ describe("Identity Verification User Attribute Update", () => {
     });
     expect(response.status).toBe(200);
     return response.data;
+  };
+
+  const getResult = async ({ type, accessToken, applicationId }) => {
+    const response = await get({
+      url: serverConfig.identityVerificationResultResourceOwnerEndpoint + `?application_id=${applicationId}&type=${type}`,
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    expect(response.status).toBe(200);
+    expect(response.data.list.length).toBe(1);
+    return response.data.list[0];
   };
 
   it("updates standard claims and custom_properties, transits to IDENTITY_VERIFIED by default", async () => {
@@ -275,6 +285,113 @@ describe("Identity Verification User Attribute Update", () => {
     expect(updatedUser).toHaveProperty("verified_claims");
     expect(updatedUser.verified_claims.claims).toHaveProperty("family_name", "Yamada");
     expect(updatedUser.verified_claims.verification).toHaveProperty("trust_framework", "eidas");
+  });
+
+  // #1607: 承認時に実際に適用した user_claims / custom_properties / user_status を
+  // result レコードに記録し、result 取得 API から取り出せることを検証する。
+  // verified_claims しか残らなかった従来に対し、ユーザー属性変更の痕跡を result 自身で説明できる。
+  it("records the applied user_claims, custom_properties and user_status on the verification result", async () => {
+    const { user, accessToken } = await createTestUser();
+
+    const configId = uuidv4();
+    const type = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId,
+        type,
+        result: {
+          "user_claims_mapping_rules": [
+            { "from": "$.application.application_details.last_name", "to": "family_name" },
+            { "from": "$.application.application_details.first_name", "to": "given_name" }
+          ],
+          "custom_properties_mapping_rules": [
+            { "from": "$.application.application_details.kyc_level", "to": "kyc_level" }
+          ]
+          // user_status 省略 → デフォルトで IDENTITY_VERIFIED へ遷移する（新規ユーザーは未検証なので必ず遷移する）
+        }
+      })
+    );
+
+    const applicationId = await applyAndApprove({
+      type,
+      accessToken,
+      applyBody: {
+        "last_name": "Yamada",
+        "first_name": "Hanako",
+        "kyc_level": "gold"
+      }
+    });
+
+    // 前提: 適用結果がユーザーに反映されている
+    const updatedUser = await getUser(user.sub);
+    expect(updatedUser).toHaveProperty("family_name", "Yamada");
+    expect(updatedUser).toHaveProperty("given_name", "Hanako");
+    expect(updatedUser.custom_properties).toHaveProperty("kyc_level", "gold");
+    expect(updatedUser).toHaveProperty("status", "IDENTITY_VERIFIED");
+
+    // result レコードに「実際に適用した値」が記録され、取得 API から取り出せる（#1607）
+    const result = await getResult({ type, accessToken, applicationId });
+    console.log("Result applied_user_claims:", JSON.stringify(result.applied_user_claims, null, 2));
+
+    expect(result).toHaveProperty("applied_user_claims");
+    const applied = result.applied_user_claims;
+
+    // user_claims: 実際にユーザーへ適用した標準クレーム（PATCHABLE のみ）が記録される
+    expect(applied.user_claims).toEqual({
+      "family_name": "Yamada",
+      "given_name": "Hanako"
+    });
+
+    // custom_properties: 適用した業務属性が記録される
+    expect(applied.custom_properties).toEqual({
+      "kyc_level": "gold"
+    });
+
+    // user_status: 実際に遷移したステータス（デフォルト遷移先の IDENTITY_VERIFIED）が記録される
+    expect(applied.user_status).toBe("IDENTITY_VERIFIED");
+  });
+
+  // #1607: 適用が無かった部分は記録に含めない（空パートは省略）。
+  // user_status: KEEP（遷移なし）かつ custom_properties のみ適用 → user_status は記録されない。
+  it("omits parts of applied_user_claims that were not applied", async () => {
+    const { accessToken } = await createTestUser();
+
+    const configId = uuidv4();
+    const type = uuidv4();
+    await registerConfiguration(
+      buildConfiguration({
+        configId,
+        type,
+        result: {
+          "custom_properties_mapping_rules": [
+            { "from": "$.application.application_details.kyc_level", "to": "kyc_level" }
+          ],
+          "user_status": "KEEP"
+        }
+      })
+    );
+
+    const applicationId = await applyAndApprove({
+      type,
+      accessToken,
+      applyBody: {
+        "last_name": "Suzuki",
+        "first_name": "Taro",
+        "kyc_level": "bronze"
+      }
+    });
+
+    const result = await getResult({ type, accessToken, applicationId });
+    console.log("Result applied_user_claims (partial):", JSON.stringify(result.applied_user_claims, null, 2));
+
+    const applied = result.applied_user_claims;
+
+    // 適用した custom_properties は記録される
+    expect(applied.custom_properties).toEqual({ "kyc_level": "bronze" });
+
+    // user_claims_mapping_rules なし・user_status KEEP（遷移なし）→ 両者は記録に含めない
+    expect(applied).not.toHaveProperty("user_claims");
+    expect(applied).not.toHaveProperty("user_status");
   });
 
   it("keeps current user status when user_status is KEEP", async () => {

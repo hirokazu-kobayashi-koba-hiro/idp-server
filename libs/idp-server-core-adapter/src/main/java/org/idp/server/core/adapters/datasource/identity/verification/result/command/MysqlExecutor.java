@@ -44,9 +44,11 @@ public class MysqlExecutor implements IdentityVerificationResultCommandSqlExecut
                     valid_until,
                     source,
                     source_details,
-                    attributes
+                    attributes,
+                    applied_user_claims
                     )
                     VALUES (
+                    ?,
                     ?,
                     ?,
                     ?,
@@ -86,6 +88,11 @@ public class MysqlExecutor implements IdentityVerificationResultCommandSqlExecut
     }
     if (result.hasAttributes()) {
       params.add(result.attributes().toJson());
+    } else {
+      params.add(null);
+    }
+    if (result.hasAppliedUserClaims()) {
+      params.add(result.appliedUserClaims().toJson());
     } else {
       params.add(null);
     }

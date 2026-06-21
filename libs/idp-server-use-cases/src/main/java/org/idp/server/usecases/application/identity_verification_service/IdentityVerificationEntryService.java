@@ -37,8 +37,8 @@ import org.idp.server.core.extension.identity.verification.repository.IdentityVe
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultQueryRepository;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResult;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationResultQueries;
+import org.idp.server.core.extension.identity.verification.result.IdentityVerificationUserUpdateResult;
 import org.idp.server.core.extension.identity.verification.result.IdentityVerificationUserUpdater;
-import org.idp.server.core.extension.identity.verified.VerifiedClaims;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
@@ -125,18 +125,22 @@ public class IdentityVerificationEntryService implements IdentityVerificationApi
             .user(user)
             .build();
 
+    // #1607: the updater is self-contained (resolves verified_claims itself); run it first, then
+    // build the result with the applied values and persist both.
+    IdentityVerificationUserUpdateResult userUpdateResult =
+        IdentityVerificationUserUpdater.update(
+            tenant, user, context, verificationConfiguration.result());
     IdentityVerificationResult identityVerificationResult =
         IdentityVerificationResult.createOnDirect(
-            tenantIdentifier, user, type, context, verificationConfiguration);
-    VerifiedClaims verifiedClaims = identityVerificationResult.verifiedClaims();
+            tenantIdentifier,
+            user,
+            type,
+            context,
+            verificationConfiguration,
+            userUpdateResult.applied());
 
     resultCommandRepository.register(tenant, identityVerificationResult);
-
-    User verifiedUser =
-        IdentityVerificationUserUpdater.update(
-            tenant, user, context, verifiedClaims.toMap(), verificationConfiguration.result());
-
-    userCommandRepository.update(tenant, verifiedUser);
+    userCommandRepository.update(tenant, userUpdateResult.updated());
 
     Map<String, Object> response =
         IdentityVerificationDynamicResponseMapper.buildDynamicResponse(
