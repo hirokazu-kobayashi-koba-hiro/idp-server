@@ -179,7 +179,8 @@ idp-server内部でワンタイムパスワードを生成・検証し、外部S
 | 項目                             | 説明                                      |
 |--------------------------------|-----------------------------------------|
 | `execution.function`           | `sms_authentication_challenge` 固定       |
-| `execution.details.sender_type` | SMSサービスタイプ（`twilio`, `no_action`など）    |
+| `execution.details.sender_type` | SMSサービスタイプ（`http_request`, `twilio`, `no_action`など） |
+| `execution.details.settings`   | 送信プロバイダ固有の設定。`sender_type` が `http_request` の場合は `http_request` キーに外部API設定を記述（後述） |
 | `execution.details.templates`  | テンプレート定義（`{VERIFICATION_CODE}`プレースホルダー使用） |
 | `execution.details.retry_count_limitation` | 検証リトライ上限回数（デフォルト: 5）                    |
 | `execution.details.expire_seconds` | OTP有効期限（秒）（デフォルト: 300）                  |
@@ -214,6 +215,108 @@ idp-server内部でワンタイムパスワードを生成・検証し、外部S
         "function": "sms_authentication_challenge",
         "details": {
           "sender_type": "no_action",
+          "templates": {
+            "registration": {
+              "subject": "[ID Verification] Your signup SMS confirmation code",
+              "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\n– IDP Support"
+            },
+            "authentication": {
+              "subject": "[ID Verification] Your login SMS confirmation code",
+              "body": "Hello,\n\nPlease enter the following verification code:\n\n【{VERIFICATION_CODE}】\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\n– IDP Support"
+            }
+          },
+          "retry_count_limitation": 5,
+          "expire_seconds": 300
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          { "from": "$.response_body", "to": "*" }
+        ]
+      }
+    },
+    "sms-authentication": {
+      "execution": {
+        "function": "sms_authentication",
+        "details": {
+          "retry_count_limitation": 5,
+          "expire_seconds": 300
+        }
+      }
+    }
+  }
+}
+```
+
+#### sender_type `http_request`: 任意の外部HTTP APIへ送信を委譲
+
+OTPの生成・検証は idp-server 内部で行いつつ、SMS送信のみを任意の外部HTTP API（Twilio等のSMS配信API）へ委譲する場合は、`sender_type` に `http_request` を指定します。送信先APIの設定は `execution.details.settings.http_request` に `HttpRequestExecutionConfig` 形式で記述します（外部サービス連携の HTTP Request Executor と同じ設定構造）。
+
+##### `settings.http_request` 設定項目
+
+| 項目                     | 説明                              |
+|------------------------|---------------------------------|
+| `url`                  | SMS送信APIのエンドポイントURL             |
+| `method`               | HTTPメソッド（通常 `POST`）             |
+| `oauth_authorization`  | OAuth認証設定（外部APIがOAuthを要求する場合）   |
+| `header_mapping_rules` | リクエストヘッダーのマッピングルール              |
+| `body_mapping_rules`   | リクエストボディのマッピングルール               |
+
+`body_mapping_rules` の `from` で参照できる送信データは以下の2つです（idp-serverが組み立てた送信内容）：
+
+| パス                   | 内容                                                   |
+|----------------------|------------------------------------------------------|
+| `$.request_body.to`  | 送信先電話番号                                              |
+| `$.request_body.body` | 送信本文（テンプレートに `{VERIFICATION_CODE}` 等を埋め込んだ後の文字列） |
+
+送信先APIが2xxを返せば送信成功（challenge成功）、4xx/5xxを返すと送信失敗として扱われます。OTPはレスポンスに含まれず idp-server 内部に保持され、`sms-authentication` で検証されます。
+
+##### 設定例
+
+```json
+{
+  "id": "0f12803e-37b6-437e-8ca9-5822bd852b74",
+  "type": "sms",
+  "metadata": {
+    "type": "internal",
+    "verification_code_param": "verification_code"
+  },
+  "interactions": {
+    "sms-authentication-challenge": {
+      "execution": {
+        "function": "sms_authentication_challenge",
+        "details": {
+          "sender_type": "http_request",
+          "settings": {
+            "http_request": {
+              "url": "https://external-sms-service.com/send",
+              "method": "POST",
+              "oauth_authorization": {
+                "type": "password",
+                "token_endpoint": "https://external-sms-service.com/token",
+                "client_id": "your-client-id",
+                "username": "username",
+                "password": "password",
+                "scope": "application"
+              },
+              "header_mapping_rules": [
+                {
+                  "static_value": "application/json",
+                  "to": "Content-Type"
+                }
+              ],
+              "body_mapping_rules": [
+                {
+                  "from": "$.request_body.to",
+                  "to": "phone_number"
+                },
+                {
+                  "from": "$.request_body.body",
+                  "to": "message"
+                }
+              ]
+            }
+          },
           "templates": {
             "registration": {
               "subject": "[ID Verification] Your signup SMS confirmation code",
