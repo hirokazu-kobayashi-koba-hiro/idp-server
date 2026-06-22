@@ -300,6 +300,72 @@ OAuthFlowEntryService.interact()
 
 ---
 
+### Authentication Status API（認証状態確認）
+
+**目的**: SPAが認証フロー全体の状態（進行中／成功／失敗／ロック）を確認する
+
+認証インタラクションAPI（`/password`等）はハンドラ固有のレスポンスしか返さないため、「フローのどの段階にいるか」を知るには本APIを使用します。読み取り専用で副作用はありません（DBは更新しません）。
+
+```
+GET /{tenant-id}/v1/authorizations/{authReqId}/authentication-status
+    ↓
+OAuthFlowEntryService.getAuthenticationStatus()
+    ├─ AuthenticationTransaction取得
+    ├─ validateAuthSession()（AUTH_SESSION cookie検証）
+    └─ AuthenticationTransaction.authenticationStatus() で判定
+        ├─ isLocked()  → "locked"
+        ├─ isFailure() → "failure"
+        ├─ isSuccess() → "success"
+        └─ それ以外    → "in_progress"
+
+→ レスポンス: status + interaction_results + authentication_methods
+```
+
+**レスポンス例（パスワード認証成功後）**:
+```json
+{
+  "status": "success",
+  "interaction_results": {
+    "password-authentication": {
+      "operation_type": "AUTHENTICATION",
+      "method": "password",
+      "call_count": 1,
+      "success_count": 1,
+      "failure_count": 0,
+      "interaction_time": "2025-01-15T10:30:00"
+    }
+  },
+  "authentication_methods": ["password"]
+}
+```
+
+認証前は `status: "in_progress"`、`interaction_results` は空オブジェクト `{}` です。
+
+**status値**:
+
+| status | 意味 |
+|--------|------|
+| `in_progress` | 認証フロー進行中（未完了） |
+| `success` | 認証成功（認証ポリシーの success_conditions 充足） |
+| `failure` | 認証失敗（failure_conditions 充足） |
+| `locked` | ロック状態（lock_conditions 充足） |
+
+`success` / `failure` / `locked` の判定はいずれも[認証ポリシー](../05-configuration/authentication-policy.md)の条件設定に基づきます。認証不要なのはview-data APIと同様で、認可リクエストIDが推測困難なトークンとして機能し、加えてAUTH_SESSION cookieを検証します。
+
+**主要フィールド**:
+
+| フィールド | 説明 |
+|-----------|------|
+| `status` | 認証トランザクションの全体ステータス（上表） |
+| `interaction_results` | 実行済み各インタラクションの結果（キー=インタラクションタイプ、未実行時は空） |
+| `authentication_methods` | 成功した認証インタラクションの認証方式一覧（ID Tokenの`amr`の元データ） |
+
+**実装**:
+- [OAuthFlowEntryService.java:237](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/application/enduser/OAuthFlowEntryService.java#L237)
+- 状態判定: [AuthenticationTransaction.java:292](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/AuthenticationTransaction.java#L292)
+
+---
+
 ### Phase 3: Authorization Approve（認可承認）
 
 **目的**: Authorization Code発行とユーザー登録
