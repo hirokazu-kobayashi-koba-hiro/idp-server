@@ -19,6 +19,11 @@
       "type": "string",
       "description": "OPTIONAL. Client Secret. The same Client Secret value MUST NOT be assigned to multiple Clients. This value is used by Confidential Clients to authenticate to the Token Endpoint, as described in Section 2.3.1 of OAuth 2.0, and for the derivation of symmetric encryption key values, as described in Section 10.2 of OpenID Connect Core 1.0 [OpenID.Core]. It is not needed for Clients selecting a token_endpoint_auth_method of private_key_jwt unless symmetric encryption will be used."
     },
+    "require_pkce": {
+      "type": "boolean",
+      "default": false,
+      "description": "OPTIONAL. If true, this client MUST use PKCE: the authorization request MUST include code_challenge with code_challenge_method=S256, and the token request MUST include code_verifier. Default false (backward compatible)."
+    },
     "redirect_uris": {
       "type": "array",
       "items": {

@@ -63,6 +63,7 @@ public class ClientConfiguration implements JsonReadable, Configurable {
   String tlsClientAuthSanIp;
   String tlsClientAuthSanEmail;
   boolean tlsClientCertificateBoundAccessTokens = false;
+  boolean requirePkce = false;
   String authorizationSignedResponseAlg;
   String authorizationEncryptedResponseAlg;
   String authorizationEncryptedResponseEnc;
@@ -347,6 +348,10 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return tlsClientCertificateBoundAccessTokens;
   }
 
+  public boolean isRequirePkce() {
+    return requirePkce;
+  }
+
   public String authorizationSignedResponseAlg() {
     return authorizationSignedResponseAlg;
   }
@@ -594,6 +599,7 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     if (tlsClientAuthSanIp != null) map.put("tls_client_auth_san_ip", tlsClientAuthSanIp);
     if (tlsClientAuthSanEmail != null) map.put("tls_client_auth_san_email", tlsClientAuthSanEmail);
     map.put("tls_client_certificate_bound_access_tokens", tlsClientCertificateBoundAccessTokens);
+    map.put("require_pkce", requirePkce);
     if (authorizationSignedResponseAlg != null)
       map.put("authorization_signed_response_alg", authorizationSignedResponseAlg);
     if (authorizationEncryptedResponseAlg != null)

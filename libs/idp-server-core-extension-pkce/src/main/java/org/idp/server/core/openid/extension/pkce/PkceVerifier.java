@@ -17,6 +17,8 @@
 package org.idp.server.core.openid.extension.pkce;
 
 import org.idp.server.core.openid.oauth.OAuthRequestContext;
+import org.idp.server.core.openid.oauth.exception.OAuthRedirectableBadRequestException;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.verifier.AuthorizationRequestExtensionVerifier;
 import org.idp.server.platform.log.LoggerWrapper;
 
@@ -26,13 +28,35 @@ public class PkceVerifier implements AuthorizationRequestExtensionVerifier {
 
   @Override
   public boolean shouldVerify(OAuthRequestContext context) {
-    return context.isPckeRequest();
+    // Issue #1523: also run when the client mandates PKCE, so a missing code_challenge is rejected.
+    return context.isPckeRequest() || context.clientConfiguration().isRequirePkce();
   }
 
   @Override
   public void verify(OAuthRequestContext context) {
     log.debug("PKCE verification start");
-
+    throwExceptionIfRequirePkceButMissing(context);
     log.debug("PKCE verification end");
+  }
+
+  /**
+   * Issue #1523: when the client has {@code require_pkce} enabled, the authorization request MUST
+   * contain a {@code code_challenge} with {@code code_challenge_method=S256}.
+   */
+  void throwExceptionIfRequirePkceButMissing(OAuthRequestContext context) {
+    if (!context.clientConfiguration().isRequirePkce()) {
+      return;
+    }
+    AuthorizationRequest authorizationRequest = context.authorizationRequest();
+    if (!authorizationRequest.hasCodeChallenge()) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request", "PKCE is required for this client", context);
+    }
+    if (!authorizationRequest.codeChallengeMethod().isS256()) {
+      throw new OAuthRedirectableBadRequestException(
+          "invalid_request",
+          "PKCE is required for this client and code_challenge_method must be S256",
+          context);
+    }
   }
 }
