@@ -342,6 +342,28 @@ paths:
                   value:
                     error: "invalid_request"
                     error_description: "Invalid authorization request ID"
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: "invalid_request"
+                    error_description: "auth_session_mismatch: Missing AUTH_SESSION cookie. Please restart the authorization flow."
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: "invalid_request"
+                    error_description: "auth_session_mismatch: AUTH_SESSION cookie does not match. This authorization request may have been initiated by a different browser session."
         '404':
           description: 認可リクエストが見つからない
           content:
@@ -501,6 +523,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: "invalid_request"
+                    error_description: "auth_session_mismatch: Missing AUTH_SESSION cookie. Please restart the authorization flow."
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: "invalid_request"
+                    error_description: "auth_session_mismatch: AUTH_SESSION cookie does not match. This authorization request may have been initiated by a different browser session."
         '500':
           description: サーバーエラー
           content:
@@ -540,6 +584,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: "invalid_request"
+                    error_description: "auth_session_mismatch: Missing AUTH_SESSION cookie. Please restart the authorization flow."
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: "invalid_request"
+                    error_description: "auth_session_mismatch: AUTH_SESSION cookie does not match. This authorization request may have been initiated by a different browser session."
         '500':
           description: サーバーエラー
           content:
@@ -602,6 +668,28 @@ paths:
                   value:
                     error: "invalid_request"
                     error_description: "Unsupported SSO provider"
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: "invalid_request"
+                    error_description: "auth_session_mismatch: Missing AUTH_SESSION cookie. Please restart the authorization flow."
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: "invalid_request"
+                    error_description: "auth_session_mismatch: AUTH_SESSION cookie does not match. This authorization request may have been initiated by a different browser session."
         '500':
           description: サーバーエラー
           content:
@@ -679,6 +767,28 @@ paths:
                   value:
                     error: "invalid_grant"
                     error_description: "Invalid authorization code"
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: "invalid_request"
+                    error_description: "auth_session_mismatch: Missing AUTH_SESSION cookie. Please restart the authorization flow."
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: "invalid_request"
+                    error_description: "auth_session_mismatch: AUTH_SESSION cookie does not match. This authorization request may have been initiated by a different browser session."
         '500':
           description: サーバーエラー
           content:
