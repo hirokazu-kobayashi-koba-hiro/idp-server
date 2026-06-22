@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 720" font-family="'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#555555"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2e7d32"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c62828"/>
+    </marker>
+  </defs>
+
+  <rect width="1040" height="720" fill="#ffffff"/>
+  <text x="40" y="38" font-size="20" font-weight="bold" fill="#212121">認証ポリシーの全体像 — 3つの問い</text>
+
+  <!-- ===== Lane 1: applicability ===== -->
+  <rect x="20" y="60" width="1000" height="150" rx="10" fill="#f8f9fa" stroke="#e0e0e0"/>
+  <text x="40" y="88" font-size="15" font-weight="bold" fill="#37474f">① いつ適用するか（適用条件）</text>
+  <text x="246" y="88" font-size="12.5" fill="#616161">— リクエストの性質に応じて、どのポリシーを使うか選ぶ</text>
+
+  <rect x="40" y="110" width="190" height="70" rx="8" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="135" y="138" font-size="13.5" text-anchor="middle" fill="#0d47a1">要求スコープ</text>
+  <text x="135" y="160" font-size="11.5" text-anchor="middle" fill="#1565c0">例: transfers</text>
+
+  <rect x="250" y="110" width="190" height="70" rx="8" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="345" y="138" font-size="13.5" text-anchor="middle" fill="#0d47a1">ACR値</text>
+  <text x="345" y="160" font-size="11.5" text-anchor="middle" fill="#1565c0">例: iap:gold</text>
+
+  <rect x="460" y="110" width="190" height="70" rx="8" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="555" y="138" font-size="13.5" text-anchor="middle" fill="#0d47a1">クライアント種別</text>
+  <text x="555" y="160" font-size="11.5" text-anchor="middle" fill="#1565c0">Web / モバイル</text>
+
+  <line x1="650" y1="145" x2="746" y2="145" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="752" y="110" width="248" height="70" rx="8" fill="#1565c0" stroke="#0d47a1"/>
+  <text x="876" y="143" font-size="14" font-weight="bold" text-anchor="middle" fill="#ffffff">適用するポリシーを決定</text>
+  <text x="876" y="164" font-size="11.5" text-anchor="middle" fill="#bbdefb">以降②③をこのポリシーで評価</text>
+
+  <path d="M 520 210 L 520 232" fill="none" stroke="#9e9e9e" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ===== Lane 2: methods ===== -->
+  <rect x="20" y="234" width="1000" height="150" rx="10" fill="#f8f9fa" stroke="#e0e0e0"/>
+  <text x="40" y="262" font-size="15" font-weight="bold" fill="#37474f">② 何を要求するか（認証方式）</text>
+  <text x="246" y="262" font-size="12.5" fill="#616161">— 選んだポリシーが利用可能にする認証手段（強度を段階で）</text>
+
+  <rect x="40" y="284" width="270" height="56" rx="8" fill="#ede7f6" stroke="#5e35b1"/>
+  <text x="175" y="309" font-size="13.5" text-anchor="middle" fill="#4527a0">パスワード</text>
+  <text x="175" y="328" font-size="11.5" text-anchor="middle" fill="#5e35b1">強度: 低</text>
+
+  <rect x="370" y="284" width="270" height="56" rx="8" fill="#ede7f6" stroke="#5e35b1"/>
+  <text x="505" y="309" font-size="13.5" text-anchor="middle" fill="#4527a0">＋ Email / SMS</text>
+  <text x="505" y="328" font-size="11.5" text-anchor="middle" fill="#5e35b1">強度: 中（多要素）</text>
+
+  <rect x="700" y="284" width="270" height="56" rx="8" fill="#ede7f6" stroke="#5e35b1" stroke-width="1.5"/>
+  <text x="835" y="309" font-size="13.5" text-anchor="middle" fill="#4527a0">FIDO2 / 生体認証</text>
+  <text x="835" y="328" font-size="11.5" text-anchor="middle" fill="#5e35b1">強度: 高</text>
+
+  <line x1="310" y1="312" x2="366" y2="312" stroke="#9e9e9e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="640" y1="312" x2="696" y2="312" stroke="#9e9e9e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="40" y="366" font-size="11.5" fill="#757575">認証強度  低 ──────────────▶ 高</text>
+
+  <path d="M 520 384 L 520 406" fill="none" stroke="#9e9e9e" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ===== Lane 3: evaluation ===== -->
+  <rect x="20" y="408" width="1000" height="288" rx="10" fill="#f8f9fa" stroke="#e0e0e0"/>
+  <text x="40" y="436" font-size="15" font-weight="bold" fill="#37474f">③ いつ成功・失敗とするか（評価条件）</text>
+  <text x="312" y="436" font-size="12.5" fill="#616161">— 2種類の入力から、成功 / 失敗 / ロックを判定</text>
+
+  <!-- input 1: interaction results -->
+  <rect x="40" y="456" width="340" height="76" rx="8" fill="#eceff1" stroke="#607d8b"/>
+  <text x="58" y="482" font-size="13.5" font-weight="bold" fill="#37474f">インタラクション結果</text>
+  <text x="58" y="504" font-size="11.5" fill="#546e7a">各認証方式の成功回数 / 連続失敗回数 /</text>
+  <text x="58" y="521" font-size="11.5" fill="#546e7a">経過時間 など「何が起きたか」</text>
+
+  <!-- input 2: user attributes (new) -->
+  <rect x="40" y="544" width="340" height="120" rx="8" fill="#f3e5f5" stroke="#8e24aa" stroke-width="2"/>
+  <text x="58" y="570" font-size="13.5" font-weight="bold" fill="#6a1b9a">ユーザー属性（$.user.*）</text>
+  <text x="58" y="592" font-size="11.5" fill="#7b1fa2">ロール / 登録ステータス / 検証済みフラグ /</text>
+  <text x="58" y="609" font-size="11.5" fill="#7b1fa2">カスタム属性 など「誰か」</text>
+  <text x="58" y="634" font-size="11" fill="#9c27b0">例: 管理者ロールのみ追加認証、</text>
+  <text x="58" y="650" font-size="11" fill="#9c27b0">　　登録済みユーザーのみ成功とみなす</text>
+
+  <!-- arrows to verdicts -->
+  <line x1="380" y1="494" x2="470" y2="494" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="380" y1="604" x2="470" y2="604" stroke="#8e24aa" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="476" y="470" width="160" height="160" rx="8" fill="#ffffff" stroke="#90a4ae" stroke-dasharray="5 4"/>
+  <text x="556" y="556" font-size="13" font-weight="bold" text-anchor="middle" fill="#455a64">条件評価</text>
+  <text x="556" y="576" font-size="11" text-anchor="middle" fill="#78909c">AND / OR</text>
+
+  <line x1="636" y1="510" x2="724" y2="510" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+  <line x1="636" y1="556" x2="724" y2="568" stroke="#c62828" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+  <line x1="636" y1="600" x2="724" y2="626" stroke="#c62828" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+
+  <!-- verdicts -->
+  <rect x="730" y="486" width="270" height="48" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="865" y="515" font-size="13.5" font-weight="bold" text-anchor="middle" fill="#1b5e20">認証成功</text>
+
+  <rect x="730" y="544" width="270" height="48" rx="8" fill="#ffebee" stroke="#c62828"/>
+  <text x="865" y="573" font-size="13.5" font-weight="bold" text-anchor="middle" fill="#b71c1c">失敗（警告を発する）</text>
+
+  <rect x="730" y="602" width="270" height="48" rx="8" fill="#ffcdd2" stroke="#b71c1c" stroke-width="2"/>
+  <text x="865" y="631" font-size="13.5" font-weight="bold" text-anchor="middle" fill="#7f0000">アカウントロック</text>
+</svg>
