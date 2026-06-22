@@ -31,7 +31,7 @@ public class NoActionSmsSender implements SmsSender {
   @Override
   public SmsSendResult send(SmsSendingRequest request, Map<String, Object> setting) {
 
-    log.info("EmailSender: NoActionEmailSender sending request");
+    log.info("SmsSender: NoActionSmsSender sending request");
 
     return new SmsSendResult(true, Map.of());
   }
