@@ -24,6 +24,7 @@ import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurat
 import org.idp.server.core.openid.oauth.type.oauth.Error;
 import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 import org.idp.server.core.openid.token.TokenErrorResponse;
+import org.idp.server.core.openid.token.exception.TokenAuthorizationPendingException;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.core.openid.token.exception.TokenUnSupportedGrantException;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequestResponse;
@@ -37,6 +38,18 @@ public class TokenRequestErrorHandler {
     log.trace(
         "Token request error handling started: exception_type={}",
         exception.getClass().getSimpleName());
+
+    if (exception instanceof TokenAuthorizationPendingException pending) {
+      // CIBA authorization_pending is a normal intermediate polling response (CIBA Core §11), not a
+      // fault. Logged at INFO to avoid warn-level noise. Must precede the TokenBadRequestException
+      // branch below so this subclass matches first.
+      log.info(
+          "CIBA token request pending (normal polling response): error={}, description={}",
+          pending.error().value(),
+          pending.errorDescription().value());
+      return new TokenRequestResponse(
+          BAD_REQUEST, new TokenErrorResponse(pending.error(), pending.errorDescription()));
+    }
 
     if (exception instanceof TokenBadRequestException badRequest) {
       log.warn(

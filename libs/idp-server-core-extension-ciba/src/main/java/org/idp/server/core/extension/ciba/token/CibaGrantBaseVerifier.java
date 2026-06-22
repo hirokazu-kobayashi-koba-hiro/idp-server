@@ -24,6 +24,7 @@ import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.Cl
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.token.TokenRequestContext;
+import org.idp.server.core.openid.token.exception.TokenAuthorizationPendingException;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.platform.date.SystemDateTime;
 
@@ -120,8 +121,7 @@ public class CibaGrantBaseVerifier implements CibaGrantVerifierInterface {
    */
   void throwExceptionIfAuthorizedPending(CibaGrant cibaGrant) {
     if (cibaGrant.isAuthorizationPending()) {
-      throw new TokenBadRequestException(
-          "authorization_pending",
+      throw new TokenAuthorizationPendingException(
           "The authorization request is still pending as the end-user hasn't yet been authenticated.");
     }
   }
