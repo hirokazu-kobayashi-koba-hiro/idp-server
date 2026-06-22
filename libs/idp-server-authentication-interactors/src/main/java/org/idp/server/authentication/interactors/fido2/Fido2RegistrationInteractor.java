@@ -329,7 +329,7 @@ public class Fido2RegistrationInteractor implements AuthenticationInteractor {
     // Evaluate using MfaConditionEvaluator
     boolean satisfied =
         org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator
-            .isSuccessSatisfied(conditions, interactionResults);
+            .isSuccessSatisfied(conditions, interactionResults, transaction.user());
 
     if (satisfied) {
       log.info(

@@ -283,7 +283,7 @@ authentication/interactors/
 
 ## 認証ポリシー条件式の参照コンテキスト
 
-`success_conditions` / `failure_conditions` / `lock_conditions` の `path` は2つの名前空間を参照できる:
+`success_conditions` / `failure_conditions` / `lock_conditions` / `device_registration_conditions` の `path` は2つの名前空間を参照できる:
 
 - `$.<interaction-type>.*` — 各認証方式の結果（例: `$.password-authentication.success_count`）
 - `$.user.*` — 認証済みユーザー属性（`status`, `registered`, `email_verified`, `phone_number_verified`, `has_password`, `provider_id`, `roles`, `permissions`, `custom_properties.*`）

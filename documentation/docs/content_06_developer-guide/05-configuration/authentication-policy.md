@@ -193,7 +193,7 @@ ACR値と認証方式のマッピング：
 
 ### 参照可能なコンテキスト
 
-条件の `path` は2つの名前空間を参照できます（`success_conditions` / `failure_conditions` / `lock_conditions` 共通）。
+条件の `path` は2つの名前空間を参照できます（`success_conditions` / `failure_conditions` / `lock_conditions` / `device_registration_conditions` 共通）。
 
 | 名前空間 | 内容 | 例 |
 |---------|------|---|
