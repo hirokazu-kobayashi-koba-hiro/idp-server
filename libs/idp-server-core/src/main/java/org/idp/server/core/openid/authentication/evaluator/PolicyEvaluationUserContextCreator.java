@@ -52,11 +52,15 @@ import org.idp.server.core.openid.identity.UserRole;
 public class PolicyEvaluationUserContextCreator {
 
   /**
-   * @return allow-listed user attributes, or an empty map when the user does not exist
+   * @return allow-listed user attributes, or an empty map when the user is null or does not exist
    */
   public static Map<String, Object> create(User user) {
     Map<String, Object> map = new HashMap<>();
-    if (!user.exists()) {
+    // OPSession#user() returns a raw nullable field (OIDCSessionVerifier passes it directly),
+    // unlike
+    // the other call sites that use the User.notFound() sentinel. Guard null here so every path is
+    // covered without depending on each caller to normalize.
+    if (user == null || !user.exists()) {
       return map;
     }
     map.put("sub", user.sub());
