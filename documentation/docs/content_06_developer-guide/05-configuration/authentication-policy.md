@@ -235,6 +235,18 @@ ACR値と認証方式のマッピング：
 
 未登録（`INITIALIZED`）ユーザーはパスワードが通っても成功になりません。複数ステータスを許可する場合は `in` で列挙します（`eq` を複数並べるとステータスは同時に1値しか取らないため AND が常に false になります）。ロール／パーミッションは AND グループ内の必須条件として参照できます（例: `{ "path": "$.user.roles", "operation": "contains", "value": "admin" }`）。
 
+#### `$.user.*` の評価タイミング
+
+`$.user.*` は**トランザクションにユーザーが bind された後**でないと空になります。bind されるタイミングは認証フローの段階で決まります。
+
+| 段階 | `$.user.*` | 補足 |
+|------|-----------|------|
+| 1st factor の **challenge** | 空（参照不可） | ユーザー未確定。`AuthenticationTransaction#updateWithUser` が challenge 段での bind をスキップする |
+| **verify（認証成功）以降** | 参照可能 | 新規ユーザーは `INITIALIZED`、既存ユーザーは `REGISTERED` 等 |
+
+- **新規登録フローの同一トランザクションでは `$.user.status` は `INITIALIZED`** です（`REGISTERED` への遷移は authorize 成立時で、`success_conditions` の評価はそれより前に走るため）。「新規 = `INITIALIZED` / 既存 = `REGISTERED`」で分岐できます。
+- challenge 段や user 未解決の段で `$.user.*` を参照する条件は**常に空 = 不成立（fail-closed）**になります。path の typo も同様に静かに不成立になるため、参照キーは上表の allowリストと突き合わせて確認してください（登録時の自動検証は [#1664](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1664) で検討中）。
+
 ---
 
 ## Step Definitions（多段階認証）
