@@ -17,40 +17,39 @@
 package org.idp.server.platform.http;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
 
 /**
- * Container for multiple HttpResponseResolveConfig instances.
+ * Internal container for an ordered list of {@link HttpResponseResolveConfig}.
  *
- * <p>Configurations are evaluated in order, and the first matching configuration is used.
+ * <p>Configs are evaluated in order; the first matching config is used.
  *
- * <p>Configuration example:
+ * <p>The JSON representation is a bare array (see {@link HttpResponseResolveConfigsSerializer} and
+ * {@link HttpResponseResolveConfigsDeserializer}, registered centrally in {@code JsonConverter}).
+ * The legacy object-wrapper form {@code {"configs": [...]}} is still accepted on input for backward
+ * compatibility but is normalized to the array form on output. Each condition path is evaluated
+ * against the resolve context built by {@link HttpResponseResolver}: {@code $.status_code}, {@code
+ * $.response_headers.*} and {@code $.response_body.*}.
  *
  * <pre>{@code
- * {
- *   "configs": [
- *     {
- *       "conditions": [
- *         {"path": "$.httpStatusCode", "operation": "in", "value": [200, 201]},
- *         {"path": "$.status", "operation": "eq", "value": "approved"}
- *       ],
- *       "match_mode": "all",
- *       "mapped_status_code": 200,
- *       "data_json_path": "$.result"
- *     },
- *     {
- *       "conditions": [
- *         {"path": "$.httpStatusCode", "operation": "eq", "value": 503}
- *       ],
- *       "match_mode": "all",
- *       "mapped_status_code": 503,
- *       "error_message_json_path": "$.message"
- *     }
- *   ]
- * }
+ * [
+ *   {
+ *     "conditions": [
+ *       {"path": "$.status_code", "operation": "in", "value": [200, 201]},
+ *       {"path": "$.response_body.status", "operation": "eq", "value": "approved"}
+ *     ],
+ *     "match_mode": "ALL",
+ *     "mapped_status_code": 200
+ *   },
+ *   {
+ *     "conditions": [
+ *       {"path": "$.status_code", "operation": "eq", "value": 503}
+ *     ],
+ *     "match_mode": "ALL",
+ *     "mapped_status_code": 503
+ *   }
+ * ]
  * }</pre>
  */
 public class HttpResponseResolveConfigs implements JsonReadable {
@@ -66,16 +65,6 @@ public class HttpResponseResolveConfigs implements JsonReadable {
 
   public List<HttpResponseResolveConfig> configs() {
     return configs;
-  }
-
-  public Map<String, Object> toMap() {
-    Map<String, Object> map = new HashMap<>();
-    List<Map<String, Object>> configMaps = new ArrayList<>();
-    for (HttpResponseResolveConfig config : configs) {
-      configMaps.add(config.toMap());
-    }
-    map.put("configs", configMaps);
-    return map;
   }
 
   public boolean isEmpty() {

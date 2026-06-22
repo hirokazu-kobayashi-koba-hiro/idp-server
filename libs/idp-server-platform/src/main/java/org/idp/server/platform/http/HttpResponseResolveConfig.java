@@ -37,21 +37,25 @@ import org.idp.server.platform.json.JsonReadable;
  *
  * <p>Configuration example:
  *
+ * <p>Condition paths are evaluated against the resolve context built by {@link
+ * HttpResponseResolver}: {@code $.status_code}, {@code $.response_headers.*} and {@code
+ * $.response_body.*}.
+ *
  * <pre>{@code
  * {
  *   "conditions": [
  *     {
- *       "path": "$.httpStatusCode",
+ *       "path": "$.status_code",
  *       "operation": "in",
  *       "value": [200, 201]
  *     },
  *     {
- *       "path": "$.status",
+ *       "path": "$.response_body.status",
  *       "operation": "eq",
  *       "value": "approved"
  *     }
  *   ],
- *   "match_mode": "all",
+ *   "match_mode": "ALL",
  *   "mapped_status_code": 200
  * }
  * }</pre>

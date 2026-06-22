@@ -21,6 +21,9 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import org.idp.server.platform.http.HttpResponseResolveConfigs;
+import org.idp.server.platform.http.HttpResponseResolveConfigsDeserializer;
+import org.idp.server.platform.http.HttpResponseResolveConfigsSerializer;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.cfg.CoercionAction;
@@ -63,6 +66,10 @@ public class JsonConverter {
     customDateTimeModule.addDeserializer(
         LocalDateTime.class,
         new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
+    customDateTimeModule.addDeserializer(
+        HttpResponseResolveConfigs.class, new HttpResponseResolveConfigsDeserializer());
+    customDateTimeModule.addSerializer(
+        HttpResponseResolveConfigs.class, new HttpResponseResolveConfigsSerializer());
     JsonMapper jsonMapper =
         JsonMapper.builder()
             .addModule(customDateTimeModule)
@@ -87,6 +94,10 @@ public class JsonConverter {
     customDateTimeModule.addDeserializer(
         LocalDateTime.class,
         new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
+    customDateTimeModule.addDeserializer(
+        HttpResponseResolveConfigs.class, new HttpResponseResolveConfigsDeserializer());
+    customDateTimeModule.addSerializer(
+        HttpResponseResolveConfigs.class, new HttpResponseResolveConfigsSerializer());
     JsonMapper jsonMapper =
         JsonMapper.builder()
             .addModule(customDateTimeModule)
