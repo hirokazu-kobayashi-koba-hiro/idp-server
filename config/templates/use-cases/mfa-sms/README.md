@@ -18,6 +18,8 @@
 
 > **外部API委譲（http_request）モード**: SMS送信機能はidp-serverに内蔵されていないため、デフォルトで外部APIに委譲する設定になっています。ローカル開発では付属のモックサーバー（`mock-server.js`、ポート4004）を使用します。本番環境では `SMS_SERVICE_CHALLENGE_URL` / `SMS_SERVICE_VERIFY_URL` を実際のSMS送信サービス（Twilio等）のURLに変更してください。
 
+> **代替モード（OTPは内部生成・送信のみ委譲）**: このテンプレートは OTP の生成・検証も外部サービスに委譲します。OTP を idp-server 内部で生成・検証しつつ SMS 送信だけを任意の HTTP API に委譲したい場合は `sender_type: "http_request"` を使います。設定方法は SMS認証ドキュメント（`documentation/docs/content_06_developer-guide/05-configuration/authn/sms.md` の「sender_type `http_request`」）を参照してください。
+
 ## ファイル構成
 
 | ファイル | 用途 | API |

@@ -16,6 +16,9 @@
 
 package org.idp.server.platform.notification.sms;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class SmsSendingRequest {
   String to;
   String body;
@@ -31,5 +34,12 @@ public class SmsSendingRequest {
 
   public String body() {
     return body;
+  }
+
+  public Map<String, Object> toMap() {
+    HashMap<String, Object> result = new HashMap<>();
+    result.put("to", to);
+    result.put("body", body);
+    return result;
   }
 }
