@@ -24,6 +24,8 @@ import {
  * - /v1/authorizations with code_challenge_method!=S256 -> redirect error invalid_request
  * - /v1/authorizations with code_challenge(S256) + /v1/tokens with code_verifier -> success
  * - /v1/tokens without code_verifier                 -> invalid_grant
+ * - /v1/authorizations with an implicit (non-code) response_type -> require_pkce NOT enforced
+ *   (PKCE protects the code exchange, so it has no meaning for flows that issue no code)
  *
  * Backward compatibility (require_pkce defaults to false => PKCE optional) is covered by
  * standard-26-pkce.test.js.
@@ -77,13 +79,13 @@ describe("Standard Use Case: require_pkce (per-client PKCE enforcement, Issue #1
           userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
           jwks_uri: `${backendUrl}/${tenantId}/v1/jwks`,
           jwks: jwksContent,
-          grant_types_supported: ["authorization_code", "password"],
+          grant_types_supported: ["authorization_code", "password", "implicit"],
           token_signed_key_id: "signing_key_1",
           id_token_signed_key_id: "signing_key_1",
           scopes_supported: ["openid", "profile", "email", "management", "org-management"],
           code_challenge_methods_supported: ["S256"],
-          response_types_supported: ["code"],
-          response_modes_supported: ["query"],
+          response_types_supported: ["code", "token id_token"],
+          response_modes_supported: ["query", "fragment"],
           subject_types_supported: ["public"],
           id_token_signing_alg_values_supported: ["ES256"],
           extension: { access_token_type: "JWT" },
@@ -91,7 +93,7 @@ describe("Standard Use Case: require_pkce (per-client PKCE enforcement, Issue #1
         user: { sub: uuidv4(), provider_id: "idp-server", name: "Admin", email: adminEmail, email_verified: true, raw_password: adminPassword },
         client: {
           client_id: clientId, client_secret: clientSecret, redirect_uris: [redirectUri],
-          response_types: ["code"], grant_types: ["authorization_code", "password"],
+          response_types: ["code", "token id_token"], grant_types: ["authorization_code", "password", "implicit"],
           scope: "openid profile email management org-management",
           client_name: "Require PKCE Client", token_endpoint_auth_method: "client_secret_post", application_type: "web",
           require_pkce: true,
@@ -196,5 +198,22 @@ describe("Standard Use Case: require_pkce (per-client PKCE enforcement, Issue #1
     });
     expect(tokenResp.status).toBe(400);
     expect(tokenResp.data.error).toBe("invalid_grant");
+  });
+
+  it("does not enforce PKCE for non-code (implicit) flows even without code_challenge", async () => {
+    // require_pkce is scoped to code-issuing flows (code/hybrid); an implicit request without
+    // code_challenge must pass PKCE verification and advance to authentication, not be rejected
+    // with invalid_request "PKCE is required for this client".
+    const authResp = await getAuthorizations({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+      clientId, responseType: "token id_token", state: `reqpkce-implicit-${Date.now()}`,
+      scope: "openid profile email", redirectUri,
+      responseMode: "fragment", nonce: `nonce-${Date.now()}`,
+    });
+    expect(authResp.status).toBe(302);
+    const authorizationResponse = convertToAuthorizationResponse(authResp.headers.location);
+    expect(authorizationResponse.error).toBeNull();
+    const { params } = convertNextAction(authResp.headers.location);
+    expect(params.get("id")).toBeTruthy();
   });
 });

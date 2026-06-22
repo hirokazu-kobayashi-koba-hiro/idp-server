@@ -29,7 +29,7 @@ import org.idp.server.platform.log.LoggerWrapper;
 public class AuthorizationCodeGrantPkceVerifier
     implements AuthorizationCodeGrantExtensionVerifierInterface {
 
-  LoggerWrapper log = LoggerWrapper.getLogger(PkceVerifier.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(AuthorizationCodeGrantPkceVerifier.class);
 
   @Override
   public boolean shouldVerify(

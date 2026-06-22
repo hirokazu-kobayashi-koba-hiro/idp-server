@@ -28,8 +28,15 @@ public class PkceVerifier implements AuthorizationRequestExtensionVerifier {
 
   @Override
   public boolean shouldVerify(OAuthRequestContext context) {
-    // Issue #1523: also run when the client mandates PKCE, so a missing code_challenge is rejected.
-    return context.isPckeRequest() || context.clientConfiguration().isRequirePkce();
+    if (context.isPckeRequest()) {
+      return true;
+    }
+    // Issue #1523: require_pkce applies only to code-issuing flows (code/hybrid).
+    // PKCE has no meaning for implicit flows, so they are out of scope.
+    if (!context.isAuthorizationCodeFlowOrHybridFlow()) {
+      return false;
+    }
+    return context.clientConfiguration().isRequirePkce();
   }
 
   @Override
@@ -40,8 +47,10 @@ public class PkceVerifier implements AuthorizationRequestExtensionVerifier {
   }
 
   /**
-   * Issue #1523: when the client has {@code require_pkce} enabled, the authorization request MUST
-   * contain a {@code code_challenge} with {@code code_challenge_method=S256}.
+   * Issue #1523: when the client has {@code require_pkce} enabled, an authorization request that
+   * issues a code (code/hybrid flow) MUST contain a {@code code_challenge} with {@code
+   * code_challenge_method=S256}. Implicit flows are out of scope since PKCE protects the code
+   * exchange at the token endpoint.
    */
   void throwExceptionIfRequirePkceButMissing(OAuthRequestContext context) {
     if (!context.clientConfiguration().isRequirePkce()) {
