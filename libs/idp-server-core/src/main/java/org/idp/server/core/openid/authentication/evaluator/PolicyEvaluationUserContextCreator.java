@@ -61,7 +61,6 @@ public class PolicyEvaluationUserContextCreator {
     }
     map.put("sub", user.sub());
     map.put("status", user.status().name());
-    map.put("registered", !user.status().isInitialized());
     map.put("provider_id", user.providerId());
     map.put("has_password", user.hasPassword());
     if (user.hasEmailVerified()) map.put("email_verified", user.emailVerified());

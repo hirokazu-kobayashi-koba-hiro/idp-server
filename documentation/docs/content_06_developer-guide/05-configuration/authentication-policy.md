@@ -207,8 +207,7 @@ ACR値と認証方式のマッピング：
 | path | 型 | 説明 |
 |------|----|----|
 | `$.user.sub` | string | ユーザー識別子 |
-| `$.user.status` | string | ステータス（`REGISTERED` / `IDENTITY_VERIFIED` / `LOCKED` 等） |
-| `$.user.registered` | boolean | 登録済みか（`status != INITIALIZED`） |
+| `$.user.status` | string | ステータス（`REGISTERED` / `IDENTITY_VERIFIED` / `LOCKED` 等。複数許可は `in` で列挙） |
 | `$.user.email_verified` | boolean | メール検証済みか |
 | `$.user.phone_number_verified` | boolean | 電話番号検証済みか |
 | `$.user.has_password` | boolean | パスワード設定済みか |
@@ -226,7 +225,7 @@ ACR値と認証方式のマッピング：
   "success_conditions": {
     "any_of": [
       [
-        { "path": "$.user.registered", "type": "boolean", "operation": "eq", "value": true },
+        { "path": "$.user.status", "operation": "in", "value": ["REGISTERED", "IDENTITY_VERIFIED"] },
         { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
       ]
     ]
@@ -234,7 +233,7 @@ ACR値と認証方式のマッピング：
 }
 ```
 
-未登録（`INITIALIZED`）ユーザーはパスワードが通っても成功になりません。ロール／パーミッションは AND グループ内の必須条件として参照できます（例: `{ "path": "$.user.roles", "operation": "contains", "value": "admin" }`）。
+未登録（`INITIALIZED`）ユーザーはパスワードが通っても成功になりません。複数ステータスを許可する場合は `in` で列挙します（`eq` を複数並べるとステータスは同時に1値しか取らないため AND が常に false になります）。ロール／パーミッションは AND グループ内の必須条件として参照できます（例: `{ "path": "$.user.roles", "operation": "contains", "value": "admin" }`）。
 
 ---
 

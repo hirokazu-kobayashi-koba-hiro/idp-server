@@ -286,7 +286,7 @@ authentication/interactors/
 `success_conditions` / `failure_conditions` / `lock_conditions` / `device_registration_conditions` の `path` は2つの名前空間を参照できる:
 
 - `$.<interaction-type>.*` — 各認証方式の結果（例: `$.password-authentication.success_count`）
-- `$.user.*` — 認証済みユーザー属性（`status`, `registered`, `email_verified`, `phone_number_verified`, `has_password`, `provider_id`, `roles`, `permissions`, `custom_properties.*`）
+- `$.user.*` — 認証済みユーザー属性（`status`, `email_verified`, `phone_number_verified`, `has_password`, `provider_id`, `roles`, `permissions`, `custom_properties.*`）。複数ステータスの許可は `$.user.status` を `in` で列挙する
 
 ロール分岐は `{ "path": "$.user.roles", "operation": "contains", "value": "admin" }` のように書く。
 

@@ -92,14 +92,20 @@ class MfaConditionEvaluatorTest {
 
     @Test
     @DisplayName(
-        "$.user.registered is true for a registered user and false for an initialized user")
-    void registeredDerivedFlag() {
+        "$.user.status in [REGISTERED, IDENTITY_VERIFIED] matches either, but not INITIALIZED")
+    void statusInList() {
       AuthenticationResultConditionConfig config =
-          config("[[{\"path\":\"$.user.registered\",\"operation\":\"eq\",\"value\":true}]]");
+          config(
+              "[[{\"path\":\"$.user.status\",\"operation\":\"in\",\"value\":[\"REGISTERED\",\"IDENTITY_VERIFIED\"]}]]");
 
       assertTrue(
           MfaConditionEvaluator.isSuccessSatisfied(
               config, passwordResults(1, 0), registeredUser()));
+      assertTrue(
+          MfaConditionEvaluator.isSuccessSatisfied(
+              config,
+              passwordResults(1, 0),
+              new User().setSub("user-iv").setStatus(UserStatus.IDENTITY_VERIFIED)));
       assertFalse(
           MfaConditionEvaluator.isSuccessSatisfied(
               config,
