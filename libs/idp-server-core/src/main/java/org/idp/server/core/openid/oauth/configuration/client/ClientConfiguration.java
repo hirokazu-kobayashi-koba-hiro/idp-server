@@ -495,6 +495,18 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return extension.idTokenDuration();
   }
 
+  /** Returns {@code true} if a client-level access_token_type override is configured. */
+  public boolean hasAccessTokenType() {
+    return extension.hasAccessTokenType();
+  }
+
+  /**
+   * Returns {@code true} if the client-level access token type is the opaque (identifier) format.
+   */
+  public boolean isIdentifierAccessTokenType() {
+    return extension.isIdentifierAccessTokenType();
+  }
+
   public boolean hasAvailableFederations() {
     return extension.hasAvailableFederations();
   }

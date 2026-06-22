@@ -168,7 +168,8 @@ public class AccessTokenCreator {
 
     Map<String, Object> accessTokenPayload = payloadBuilder.build();
     AccessTokenEntity accessTokenEntity =
-        createAccessTokenEntity(authorizationServerConfiguration, accessTokenPayload);
+        createAccessTokenEntity(
+            authorizationServerConfiguration, clientConfiguration, accessTokenPayload);
     AccessTokenCustomClaims accessTokenCustomClaims = new AccessTokenCustomClaims(customClaims);
 
     return new AccessToken(
@@ -186,9 +187,16 @@ public class AccessTokenCreator {
 
   private AccessTokenEntity createAccessTokenEntity(
       AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
       Map<String, Object> accessTokenPayload)
       throws JsonWebKeyInvalidException, JoseInvalidException {
-    if (authorizationServerConfiguration.isIdentifierAccessTokenType()) {
+    // Client-level access_token_type overrides the authorization-server default when configured,
+    // mirroring the access_token_duration / id_token_duration override pattern.
+    boolean identifierAccessTokenType =
+        clientConfiguration.hasAccessTokenType()
+            ? clientConfiguration.isIdentifierAccessTokenType()
+            : authorizationServerConfiguration.isIdentifierAccessTokenType();
+    if (identifierAccessTokenType) {
       RandomStringGenerator randomStringGenerator = new RandomStringGenerator(32);
       String token = randomStringGenerator.generate();
       return new AccessTokenEntity(token);
