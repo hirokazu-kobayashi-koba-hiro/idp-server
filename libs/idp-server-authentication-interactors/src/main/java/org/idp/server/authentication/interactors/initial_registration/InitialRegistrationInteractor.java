@@ -100,24 +100,6 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
           DefaultSecurityEventType.user_initial_registration_failure);
     }
 
-    String email = request.optValueAsString("email", "");
-    String providerId = request.optValueAsString("provider_id", "idp-server");
-    User existingUser = userQueryRepository.findByEmail(tenant, email, providerId);
-
-    if (existingUser.exists()) {
-
-      Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_request");
-      response.put("error_description", "user is conflict with username and password");
-
-      return AuthenticationInteractionRequestResult.clientError(
-          response,
-          type,
-          operationType(),
-          method(),
-          DefaultSecurityEventType.user_initial_registration_conflict);
-    }
-
     // Validate password against tenant password policy
     if (request.containsKey("password")) {
       try {
@@ -165,6 +147,28 @@ public class InitialRegistrationInteractor implements AuthenticationInteractor {
         new IdPUserCreator(jsonSchemaDefinition, request, passwordEncodeDelegation);
     User user = idPUserCreator.create();
     user.applyIdentityPolicy(tenant.identityPolicyConfig());
+
+    // Issue #1669: dedupe by the tenant's unique key (preferred_username, derived from
+    // identity_unique_key_type by applyIdentityPolicy) instead of a hardcoded email. This respects
+    // the tenant identity policy (e.g. PHONE / USERNAME tenants may legitimately share an email)
+    // and
+    // avoids the findByEmail too-many -> 500 risk when email is not the unique key. Mirrors
+    // UserVerifier#throwExceptionIfDuplicatePreferredUsername used in the persistence path.
+    String providerId = request.optValueAsString("provider_id", "idp-server");
+    User existingUser =
+        userQueryRepository.findByPreferredUsername(tenant, providerId, user.preferredUsername());
+    if (existingUser.exists()) {
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "invalid_request");
+      response.put("error_description", "user is conflict with username and password");
+
+      return AuthenticationInteractionRequestResult.clientError(
+          response,
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.user_initial_registration_conflict);
+    }
 
     Map<String, Object> response = new HashMap<>();
     response.put("user", user.toMinimalizedMap());
