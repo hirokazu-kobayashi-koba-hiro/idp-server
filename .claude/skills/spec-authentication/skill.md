@@ -281,6 +281,19 @@ authentication/interactors/
 
 ロック中は正しいパスワードでも認証が拒否される。`lockout_duration_seconds` 経過後に自動解除。
 
+## 認証ポリシー条件式の参照コンテキスト
+
+`success_conditions` / `failure_conditions` / `lock_conditions` の `path` は2つの名前空間を参照できる:
+
+- `$.<interaction-type>.*` — 各認証方式の結果（例: `$.password-authentication.success_count`）
+- `$.user.*` — 認証済みユーザー属性（`status`, `registered`, `email_verified`, `phone_number_verified`, `has_password`, `provider_id`, `roles`, `permissions`, `custom_properties.*`）
+
+ロール分岐は `{ "path": "$.user.roles", "operation": "contains", "value": "admin" }` のように書く。
+
+**セキュリティ（Issue #1501）**: `$.user.*` は **allowリスト方式**。`hashed_password` / `credentials` / `verified_claims` は意図的に除外（条件評価の成否が値抽出オラクルになりうるため）。ポリシー評価専用で外部APIリクエストには使われない。属性一覧は `documentation/docs/content_06_developer-guide/05-configuration/authentication-policy.md` の「参照可能なコンテキスト」を参照。
+
+**実装**: `PolicyEvaluationUserContextCreator#create(User)`（allowリスト投影。User クラスには持たせず evaluator 側が所有）→ `MfaConditionEvaluator`（評価コンテキストに `user` ノードを追加、2引数シグネチャは後方互換 delegate）→ `AuthenticationTransaction#isSuccess/isFailure/isLocked` と `OIDCSessionVerifier`（セッション再利用時も同一ユーザーで評価）。
+
 ## SMS/Email OTP認証フロー
 
 2ステップのChallenge-Response型:

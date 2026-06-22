@@ -183,10 +183,58 @@ ACR値と認証方式のマッピング：
 
 | 演算子 | 説明 | 例 |
 |-------|------|---|
-| `gte` | 以上 | `success_count >= 1` |
-| `lte` | 以下 | `failure_count <= 3` |
-| `eq` | 等しい | `status == "verified"` |
-| `ne` | 等しくない | `status != "locked"` |
+| `eq` / `ne` | 等しい / 等しくない | `status == "REGISTERED"` |
+| `gt` / `gte` | より大きい / 以上 | `success_count >= 1` |
+| `lt` / `lte` | より小さい / 以下 | `failure_count <= 3` |
+| `in` / `nin` | リストに含まれる / 含まれない | `status in ["REGISTERED","IDENTITY_VERIFIED"]` |
+| `contains` | 配列・文字列が値を含む | `roles contains "admin"` |
+| `exists` / `missing` | 値が存在する / しない | `email_verified exists` |
+| `regex` | 正規表現マッチ | — |
+
+### 参照可能なコンテキスト
+
+条件の `path` は2つの名前空間を参照できます（`success_conditions` / `failure_conditions` / `lock_conditions` 共通）。
+
+| 名前空間 | 内容 | 例 |
+|---------|------|---|
+| `$.<interaction-type>.*` | 各認証方式のインタラクション結果 | `$.password-authentication.success_count` |
+| `$.user.*` | 認証対象ユーザーの属性 | `$.user.status`, `$.user.roles` |
+
+#### `$.user.*`（ユーザー属性）
+
+認証トランザクションで識別済みのユーザー属性を参照できます（1st factor 完了後に有効）。
+
+| path | 型 | 説明 |
+|------|----|----|
+| `$.user.sub` | string | ユーザー識別子 |
+| `$.user.status` | string | ステータス（`REGISTERED` / `IDENTITY_VERIFIED` / `LOCKED` 等） |
+| `$.user.registered` | boolean | 登録済みか（`status != INITIALIZED`） |
+| `$.user.email_verified` | boolean | メール検証済みか |
+| `$.user.phone_number_verified` | boolean | 電話番号検証済みか |
+| `$.user.has_password` | boolean | パスワード設定済みか |
+| `$.user.provider_id` | string | プロバイダID |
+| `$.user.roles` | string[] | ロール名の配列（`contains` で判定） |
+| `$.user.permissions` | string[] | パーミッションの配列（`contains` で判定） |
+| `$.user.custom_properties.*` | any | テナント定義のカスタム属性 |
+
+> **セキュリティ**: `$.user.*` は **allowリスト方式**で上記のみ参照可能です。`hashed_password` / `credentials` / `verified_claims` などの機微情報は意図的に除外しています（条件評価は値の有無が成否として観測できるため、機微情報を参照可能にすると値抽出のオラクルになりうる）。この投影はポリシー評価専用で、外部APIリクエストには使用されません。
+
+**設定例: 登録済みユーザーのみ成功とみなす**
+
+```json
+{
+  "success_conditions": {
+    "any_of": [
+      [
+        { "path": "$.user.registered", "type": "boolean", "operation": "eq", "value": true },
+        { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+      ]
+    ]
+  }
+}
+```
+
+未登録（`INITIALIZED`）ユーザーはパスワードが通っても成功になりません。ロール／パーミッションは AND グループ内の必須条件として参照できます（例: `{ "path": "$.user.roles", "operation": "contains", "value": "admin" }`）。
 
 ---
 

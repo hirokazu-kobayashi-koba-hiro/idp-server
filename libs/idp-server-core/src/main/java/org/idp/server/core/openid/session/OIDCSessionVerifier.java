@@ -103,8 +103,11 @@ public class OIDCSessionVerifier {
     if (authenticationPolicy != null && authenticationPolicy.hasSuccessConditions()) {
       AuthenticationInteractionResults sessionResults =
           opSession.toAuthenticationInteractionResults();
+      // Issue #1501: pass the session user so $.user.* conditions evaluate consistently with the
+      // live authentication transaction (AuthenticationTransaction#isSuccess); otherwise session
+      // reuse would evaluate user attributes against an empty user and could mismatch.
       if (!MfaConditionEvaluator.isSuccessSatisfied(
-          authenticationPolicy.successConditions(), sessionResults)) {
+          authenticationPolicy.successConditions(), sessionResults, opSession.user())) {
         return SessionValidationResult.policyMismatch();
       }
     }
