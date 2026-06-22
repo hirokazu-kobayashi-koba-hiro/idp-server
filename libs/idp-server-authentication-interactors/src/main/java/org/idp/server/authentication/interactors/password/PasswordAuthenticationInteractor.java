@@ -118,8 +118,11 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
             validationResult.errors());
 
         // Issue #1021: Try to resolve user for security event logging
+        // Issue #1396: prefer the authenticated session user (2nd factor) for accurate attribution
         User attemptedUser =
-            tryResolveUserForLogging(tenant, username, providerId, userQueryRepository);
+            transaction.hasUser()
+                ? transaction.user()
+                : tryResolveUserForLogging(tenant, username, providerId, userQueryRepository);
 
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("error", "invalid_request");
@@ -140,8 +143,45 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
     AuthenticationExecutionConfig execution = authenticationInteractionConfig.execution();
     AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
+    // Issue #1396: For 2nd factor (requires_user), the password must be verified against the
+    // authenticated session user, not the request-supplied username (prevents identifier
+    // switching). Mirrors EmailAuthenticationChallengeInteractor#resolveEmail, which ignores
+    // request input on 2nd factor (cf. Issue #801).
+    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
+    boolean secondFactor = stepDefinition != null && stepDefinition.requiresUser();
+
+    // Reject 2nd factor without an authenticated user before running verification, so the executor
+    // does not needlessly verify a request-supplied account (cf. resolveEmail empty-email path).
+    if (secondFactor && !transaction.hasUser()) {
+      log.warn(
+          "2nd factor requires authenticated user but transaction has no user. method={}",
+          method());
+
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "user_not_found");
+      errorResponse.put("error_description", "User not found.");
+
+      return AuthenticationInteractionRequestResult.clientError(
+          errorResponse,
+          type,
+          operationType(),
+          method(),
+          DefaultSecurityEventType.password_failure);
+    }
+
+    Map<String, Object> executionRequestValues = new HashMap<>(request.toMap());
+    if (secondFactor) {
+      // hasUser() is guaranteed true here (rejected above otherwise).
+      User authenticatedUser = transaction.user();
+      executionRequestValues.put("username", authenticatedUser.preferredUsername());
+      executionRequestValues.put("provider_id", authenticatedUser.providerId());
+      log.debug(
+          "2nd factor: binding password verification to authenticated user. sub={}",
+          authenticatedUser.sub());
+    }
+
     AuthenticationExecutionRequest executionRequest =
-        new AuthenticationExecutionRequest(request.toMap());
+        new AuthenticationExecutionRequest(executionRequestValues);
     AuthenticationExecutionResult executionResult =
         executor.execute(
             tenant, transaction.identifier(), executionRequest, requestAttributes, execution);
@@ -163,8 +203,11 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
           executionResult.statusCode(),
           executionResult.contents());
       // Issue #1021: Try to resolve user for security event logging
+      // Issue #1396: prefer the authenticated session user (2nd factor) for accurate attribution
       User attemptedUser =
-          tryResolveUserForLogging(tenant, username, providerId, userQueryRepository);
+          transaction.hasUser()
+              ? transaction.user()
+              : tryResolveUserForLogging(tenant, username, providerId, userQueryRepository);
       return AuthenticationInteractionRequestResult.error(
           executionResult.statusCode(),
           contents,
