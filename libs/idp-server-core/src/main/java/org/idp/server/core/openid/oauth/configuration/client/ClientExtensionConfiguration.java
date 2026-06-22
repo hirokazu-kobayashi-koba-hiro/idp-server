@@ -30,6 +30,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   String refreshTokenStrategy;
   Boolean rotateRefreshToken;
   Long idTokenDuration;
+  String accessTokenType;
   boolean supportedJar = false;
   List<AvailableFederation> availableFederations;
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification-no-action";
@@ -92,6 +93,21 @@ public class ClientExtensionConfiguration implements JsonReadable {
     return idTokenDuration;
   }
 
+  /** Returns {@code true} if a client-level access_token_type override is configured. */
+  public boolean hasAccessTokenType() {
+    return accessTokenType != null && !accessTokenType.isEmpty();
+  }
+
+  /** Returns the client-level access token type (opaque or JWT). */
+  public String accessTokenType() {
+    return accessTokenType;
+  }
+
+  /** Returns whether the client-level access token type is the opaque (identifier) format. */
+  public boolean isIdentifierAccessTokenType() {
+    return "opaque".equals(accessTokenType);
+  }
+
   public boolean isSupportedJar() {
     return supportedJar;
   }
@@ -131,6 +147,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
     if (hasRefreshTokenStrategy()) map.put("refresh_token_strategy", refreshTokenStrategy);
     if (hasRotateRefreshToken()) map.put("rotate_refresh_token", rotateRefreshToken);
     if (hasIdTokenDuration()) map.put("id_token_duration", idTokenDuration);
+    if (hasAccessTokenType()) map.put("access_token_type", accessTokenType);
     map.put("supported_jar", supportedJar);
     if (hasAvailableFederations())
       map.put("available_federations", availableFederationsAsMapList());

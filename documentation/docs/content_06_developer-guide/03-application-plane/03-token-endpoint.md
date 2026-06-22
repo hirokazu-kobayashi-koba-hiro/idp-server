@@ -767,6 +767,8 @@ HTTP/1.1 200 OK
 }
 ```
 
+> クライアント単位で上書きする場合は、クライアント設定の `extension.access_token_type` を指定します（未設定時は認可サーバー設定にフォールバック）。
+
 ---
 
 ### 4.2 id_token_strict_mode
