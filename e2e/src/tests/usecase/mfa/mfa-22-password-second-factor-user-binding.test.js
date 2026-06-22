@@ -430,7 +430,11 @@ describe("Security: Password 2nd factor user binding (Issue #1396)", () => {
     const result = await resp;
     console.log("identifier-switching 2nd factor:", result.status, JSON.stringify(result.data));
 
-    expect(result.status).not.toBe(200);
+    // Must fail with a credential mismatch: the submitted password is verified against the
+    // SESSION user's (Alice's) hash, not the submitted username's (Bob's). Asserting the exact
+    // status + error code (not merely !=200) proves the binding, not an unrelated 4xx/5xx.
+    expect(result.status).toBe(400);
+    expect(result.data.error).toBe("invalid_credentials");
   });
 
   it("should ALLOW password 2nd factor with the authenticated user's own credentials", async () => {
@@ -461,6 +465,7 @@ describe("Security: Password 2nd factor user binding (Issue #1396)", () => {
     const result = await passwordSecondFactor(authId, aliceEmail, alicePassword);
     console.log("2nd factor without 1st factor:", result.status, JSON.stringify(result.data));
 
-    expect(result.status).not.toBe(200);
+    expect(result.status).toBe(400);
+    expect(result.data.error).toBe("user_not_found");
   });
 });
