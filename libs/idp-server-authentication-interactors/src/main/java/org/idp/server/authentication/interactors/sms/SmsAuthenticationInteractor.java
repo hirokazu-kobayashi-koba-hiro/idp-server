@@ -31,6 +31,7 @@ import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefini
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.exception.UserTooManyFoundResultException;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
@@ -41,6 +42,7 @@ import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.type.Pairs;
 import org.idp.server.platform.type.RequestAttributes;
 
 public class SmsAuthenticationInteractor implements AuthenticationInteractor {
@@ -170,8 +172,12 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
     }
 
     // phoneNumber and providerId already retrieved from challenge request earlier (Issue #1021)
-    User verifiedUser =
-        resolveUser(tenant, transaction, phoneNumber, providerId, userQueryRepository);
+    Pairs<User, AuthenticationInteractionRequestResult> resolved =
+        resolveUserOrError(tenant, transaction, type, phoneNumber, providerId, userQueryRepository);
+    if (resolved.getRight() != null) {
+      return resolved.getRight();
+    }
+    User verifiedUser = resolved.getLeft();
 
     // Check if user was not found (registration disabled or 2nd factor without authenticated
     // user)
@@ -193,7 +199,7 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
           type,
           operationType(),
           method(),
-          DefaultSecurityEventType.sms_verification_challenge_failure);
+          DefaultSecurityEventType.sms_verification_failure);
     }
 
     verifiedUser.setPhoneNumberVerified(true);
@@ -211,6 +217,50 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
         verifiedUser,
         responseContents,
         DefaultSecurityEventType.sms_verification_success);
+  }
+
+  /**
+   * Resolves the verification user, converting {@link UserTooManyFoundResultException} into a 400
+   * {@code invalid_request} result instead of letting it escape as a 500 (Issue #1395).
+   *
+   * <p>{@link SmsAuthenticationChallengeInteractor} already maps this exception to a client error
+   * in the challenge phase; the verification phase is aligned here.
+   *
+   * @return left = resolved user (right null) on success, right = client-error result (left null)
+   *     when the phone number maps to multiple users
+   */
+  private Pairs<User, AuthenticationInteractionRequestResult> resolveUserOrError(
+      Tenant tenant,
+      AuthenticationTransaction transaction,
+      AuthenticationInteractionType type,
+      String phoneNumber,
+      String providerId,
+      UserQueryRepository userQueryRepository) {
+    try {
+      User user = resolveUser(tenant, transaction, phoneNumber, providerId, userQueryRepository);
+      return Pairs.of(user, null);
+    } catch (UserTooManyFoundResultException tooManyFoundResultException) {
+      log.error(
+          "Too many users found for phone number. phoneNumber={}, method={}",
+          phoneNumber,
+          method(),
+          tooManyFoundResultException);
+
+      Map<String, Object> response =
+          Map.of(
+              "error",
+              "invalid_request",
+              "error_description",
+              "too many users found for phone number: " + phoneNumber);
+      return Pairs.of(
+          null,
+          AuthenticationInteractionRequestResult.clientError(
+              response,
+              type,
+              operationType(),
+              method(),
+              DefaultSecurityEventType.sms_verification_failure));
+    }
   }
 
   /**
