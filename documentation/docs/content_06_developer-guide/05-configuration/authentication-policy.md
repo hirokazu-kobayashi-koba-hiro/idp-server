@@ -183,10 +183,69 @@ ACR値と認証方式のマッピング：
 
 | 演算子 | 説明 | 例 |
 |-------|------|---|
-| `gte` | 以上 | `success_count >= 1` |
-| `lte` | 以下 | `failure_count <= 3` |
-| `eq` | 等しい | `status == "verified"` |
-| `ne` | 等しくない | `status != "locked"` |
+| `eq` / `ne` | 等しい / 等しくない | `status == "REGISTERED"` |
+| `gt` / `gte` | より大きい / 以上 | `success_count >= 1` |
+| `lt` / `lte` | より小さい / 以下 | `failure_count <= 3` |
+| `in` / `nin` | リストに含まれる / 含まれない | `status in ["REGISTERED","IDENTITY_VERIFIED"]` |
+| `contains` | 配列・文字列が値を含む | `roles contains "admin"` |
+| `exists` / `missing` | 値が存在する / しない | `email_verified exists` |
+| `regex` | 正規表現マッチ | — |
+
+### 参照可能なコンテキスト
+
+条件の `path` は2つの名前空間を参照できます（`success_conditions` / `failure_conditions` / `lock_conditions` / `device_registration_conditions` 共通）。
+
+| 名前空間 | 内容 | 例 |
+|---------|------|---|
+| `$.<interaction-type>.*` | 各認証方式のインタラクション結果 | `$.password-authentication.success_count` |
+| `$.user.*` | 認証対象ユーザーの属性 | `$.user.status`, `$.user.roles` |
+
+#### `$.user.*`（ユーザー属性）
+
+認証トランザクションで識別済みのユーザー属性を参照できます（1st factor 完了後に有効）。
+
+| path | 型 | 説明 |
+|------|----|----|
+| `$.user.sub` | string | ユーザー識別子 |
+| `$.user.status` | string | ステータス（`REGISTERED` / `IDENTITY_VERIFIED` / `LOCKED` 等。複数許可は `in` で列挙） |
+| `$.user.email_verified` | boolean | メール検証済みか |
+| `$.user.phone_number_verified` | boolean | 電話番号検証済みか |
+| `$.user.has_password` | boolean | パスワード設定済みか |
+| `$.user.provider_id` | string | プロバイダID |
+| `$.user.roles` | string[] | ロール名の配列（`contains` で判定） |
+| `$.user.permissions` | string[] | パーミッションの配列（`contains` で判定） |
+| `$.user.custom_properties.*` | any | テナント定義のカスタム属性 |
+
+> **セキュリティ**: `$.user.*` は **allowリスト方式**で上記のみ参照可能です。`hashed_password` / `credentials` / `verified_claims` などの機微情報は意図的に除外しています（条件評価は値の有無が成否として観測できるため、機微情報を参照可能にすると値抽出のオラクルになりうる）。この投影はポリシー評価専用で、外部APIリクエストには使用されません。
+
+**設定例: 登録済みユーザーのみ成功とみなす**
+
+```json
+{
+  "success_conditions": {
+    "any_of": [
+      [
+        { "path": "$.user.status", "operation": "in", "value": ["REGISTERED", "IDENTITY_VERIFIED"] },
+        { "path": "$.password-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+      ]
+    ]
+  }
+}
+```
+
+未登録（`INITIALIZED`）ユーザーはパスワードが通っても成功になりません。複数ステータスを許可する場合は `in` で列挙します（`eq` を複数並べるとステータスは同時に1値しか取らないため AND が常に false になります）。ロール／パーミッションは AND グループ内の必須条件として参照できます（例: `{ "path": "$.user.roles", "operation": "contains", "value": "admin" }`）。
+
+#### `$.user.*` の評価タイミング
+
+`$.user.*` は**トランザクションにユーザーが bind された後**でないと空になります。bind されるタイミングは認証フローの段階で決まります。
+
+| 段階 | `$.user.*` | 補足 |
+|------|-----------|------|
+| 1st factor の **challenge** | 空（参照不可） | ユーザー未確定。`AuthenticationTransaction#updateWithUser` が challenge 段での bind をスキップする |
+| **verify（認証成功）以降** | 参照可能 | 新規ユーザーは `INITIALIZED`、既存ユーザーは `REGISTERED` 等 |
+
+- **新規登録フローの同一トランザクションでは `$.user.status` は `INITIALIZED`** です（`REGISTERED` への遷移は authorize 成立時で、`success_conditions` の評価はそれより前に走るため）。「新規 = `INITIALIZED` / 既存 = `REGISTERED`」で分岐できます。
+- challenge 段や user 未解決の段で `$.user.*` を参照する条件は**常に空 = 不成立（fail-closed）**になります。path の typo も同様に静かに不成立になるため、参照キーは上表の allowリストと突き合わせて確認してください（登録時の自動検証は [#1664](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1664) で検討中）。
 
 ---
 

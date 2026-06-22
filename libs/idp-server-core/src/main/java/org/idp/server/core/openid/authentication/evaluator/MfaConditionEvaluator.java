@@ -16,11 +16,13 @@
 
 package org.idp.server.core.openid.authentication.evaluator;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionResults;
 import org.idp.server.core.openid.authentication.policy.AuthenticationResultCondition;
 import org.idp.server.core.openid.authentication.policy.AuthenticationResultConditionConfig;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.condition.ConditionOperationEvaluator;
 import org.idp.server.platform.condition.ConditionTransitionResult;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -30,17 +32,40 @@ public class MfaConditionEvaluator {
 
   public static boolean isSuccessSatisfied(
       AuthenticationResultConditionConfig config, AuthenticationInteractionResults results) {
+    return isSuccessSatisfied(config, results, User.notFound());
+  }
+
+  /**
+   * Issue #1501: evaluates success conditions with the transaction user exposed as {@code
+   * $.user.*}. The {@code user} projection is allow-listed (see {@link
+   * PolicyEvaluationUserContextCreator}).
+   */
+  public static boolean isSuccessSatisfied(
+      AuthenticationResultConditionConfig config,
+      AuthenticationInteractionResults results,
+      User user) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
 
-    ConditionTransitionResult result = isAnySatisfied(config, results.toMapAsObject());
+    ConditionTransitionResult result = isAnySatisfied(config, buildContext(results, user));
 
     return result.isSuccess();
   }
 
   public static boolean isFailureSatisfied(
       AuthenticationResultConditionConfig config, AuthenticationInteractionResults results) {
+    return isFailureSatisfied(config, results, User.notFound());
+  }
+
+  /**
+   * Issue #1501: evaluates failure conditions with the transaction user exposed as {@code
+   * $.user.*}.
+   */
+  public static boolean isFailureSatisfied(
+      AuthenticationResultConditionConfig config,
+      AuthenticationInteractionResults results,
+      User user) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
@@ -49,20 +74,42 @@ public class MfaConditionEvaluator {
       return true;
     }
 
-    ConditionTransitionResult result = isAnySatisfied(config, results.toMapAsObject());
+    ConditionTransitionResult result = isAnySatisfied(config, buildContext(results, user));
 
     return result.isSuccess();
   }
 
   public static boolean isLockedSatisfied(
       AuthenticationResultConditionConfig config, AuthenticationInteractionResults results) {
+    return isLockedSatisfied(config, results, User.notFound());
+  }
+
+  /**
+   * Issue #1501: evaluates lock conditions with the transaction user exposed as {@code $.user.*}.
+   */
+  public static boolean isLockedSatisfied(
+      AuthenticationResultConditionConfig config,
+      AuthenticationInteractionResults results,
+      User user) {
     if (!config.exists() || !results.exists()) {
       return false;
     }
 
-    ConditionTransitionResult result = isAnySatisfied(config, results.toMapAsObject());
+    ConditionTransitionResult result = isAnySatisfied(config, buildContext(results, user));
 
     return result.isSuccess();
+  }
+
+  /**
+   * Builds the JsonPath evaluation context. Existing interaction-result paths (e.g. {@code
+   * $.password-authentication.success_count}) are preserved as-is; the allow-listed user projection
+   * is added under the {@code user} key so conditions can reference {@code $.user.*} (Issue #1501).
+   */
+  private static Map<String, Object> buildContext(
+      AuthenticationInteractionResults results, User user) {
+    Map<String, Object> context = new HashMap<>(results.toMapAsObject());
+    context.put("user", PolicyEvaluationUserContextCreator.create(user));
+    return context;
   }
 
   static ConditionTransitionResult isAnySatisfied(

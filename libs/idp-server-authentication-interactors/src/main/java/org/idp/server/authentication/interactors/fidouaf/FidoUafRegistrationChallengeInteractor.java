@@ -255,7 +255,7 @@ public class FidoUafRegistrationChallengeInteractor implements AuthenticationInt
     // Evaluate conditions using existing MfaConditionEvaluator
     boolean satisfied =
         org.idp.server.core.openid.authentication.evaluator.MfaConditionEvaluator
-            .isSuccessSatisfied(conditions, interactionResults);
+            .isSuccessSatisfied(conditions, interactionResults, transaction.user());
 
     if (satisfied) {
       log.info(

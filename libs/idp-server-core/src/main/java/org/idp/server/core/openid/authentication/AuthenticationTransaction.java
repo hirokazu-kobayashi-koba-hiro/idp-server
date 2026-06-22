@@ -260,7 +260,7 @@ public class AuthenticationTransaction {
       AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.successConditions();
       return MfaConditionEvaluator.isSuccessSatisfied(
-          authenticationResultConditionConfig, interactionResults);
+          authenticationResultConditionConfig, interactionResults, user());
     }
     return interactionResults.containsAnySuccess();
   }
@@ -270,7 +270,7 @@ public class AuthenticationTransaction {
       AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.failureConditions();
       return MfaConditionEvaluator.isFailureSatisfied(
-          authenticationResultConditionConfig, interactionResults);
+          authenticationResultConditionConfig, interactionResults, user());
     }
     return interactionResults.containsDenyInteraction();
   }
@@ -280,7 +280,7 @@ public class AuthenticationTransaction {
       AuthenticationResultConditionConfig authenticationResultConditionConfig =
           authenticationPolicy.lockConditions();
       return MfaConditionEvaluator.isLockedSatisfied(
-          authenticationResultConditionConfig, interactionResults);
+          authenticationResultConditionConfig, interactionResults, user());
     }
     return false;
   }
