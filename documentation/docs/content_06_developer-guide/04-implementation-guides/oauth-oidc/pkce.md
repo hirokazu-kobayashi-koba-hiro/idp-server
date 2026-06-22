@@ -291,6 +291,32 @@ void throwExceptionIfInvalidCodeVerifierFormat(TokenRequestContext tokenRequestC
 
 ---
 
+## 🔒 クライアント単位でのPKCE必須化（require_pkce）
+
+PKCE はデフォルトでは任意です（送れば検証し、送らなければ素通し）。public client（SPA / native）では PKCE を**必須**にしたいケースが多いため、クライアント設定 `require_pkce: true` でサーバー側強制を有効化できます（デフォルト `false`＝後方互換）。
+
+```json
+{
+  "client_id": "spa-client",
+  "token_endpoint_auth_method": "none",
+  "require_pkce": true
+}
+```
+
+`require_pkce: true` の場合の挙動:
+
+| エンドポイント | 条件 | エラー |
+|---|---|---|
+| `/v1/authorizations` | `code_challenge` 欠落 | `invalid_request`（"PKCE is required for this client"）|
+| `/v1/authorizations` | `code_challenge_method` が S256 以外 | `invalid_request` |
+| `/v1/tokens` | `code_verifier` 欠落 | `invalid_grant` |
+
+- `false`（デフォルト）では従来どおり PKCE は任意。既存クライアントへの影響はなし。
+- 認可エンドポイントのエラーは、登録済み `redirect_uri` が有効な場合 OAuth 2.0 §4.1.2.1 に従いリダイレクトで返却される。
+- FAPI プロファイルはプロファイル側で PKCE(S256) を必須化するため、`require_pkce` の有無に関わらず必須。
+
+---
+
 ## 📱 実装パターン
 
 ### パターン1: モバイルアプリ（Native App）
