@@ -29,7 +29,7 @@ import org.idp.server.platform.log.LoggerWrapper;
 public class AuthorizationCodeGrantPkceVerifier
     implements AuthorizationCodeGrantExtensionVerifierInterface {
 
-  LoggerWrapper log = LoggerWrapper.getLogger(PkceVerifier.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(AuthorizationCodeGrantPkceVerifier.class);
 
   @Override
   public boolean shouldVerify(
@@ -37,7 +37,10 @@ public class AuthorizationCodeGrantPkceVerifier
       AuthorizationRequest authorizationRequest,
       AuthorizationCodeGrant authorizationCodeGrant,
       ClientCredentials clientCredentials) {
-    return authorizationRequest.isPkceRequest();
+    // Issue #1523: also enforce when the client mandates PKCE, so a missing code_verifier is
+    // rejected with invalid_grant even if the (defensively) stored request lacked a code_challenge.
+    return authorizationRequest.isPkceRequest()
+        || tokenRequestContext.clientConfiguration().isRequirePkce();
   }
 
   @Override
