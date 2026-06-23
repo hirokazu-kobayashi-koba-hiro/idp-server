@@ -1,29 +1,44 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Box, Paper, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Paper, Stack, Typography } from "@mui/material";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
 
-const BrandMark = () => (
-  <Box
-    sx={{
-      width: 48,
-      height: 48,
-      borderRadius: 2.5,
-      bgcolor: "primary.main",
-      color: "primary.contrastText",
-      display: "grid",
-      placeItems: "center",
-      boxShadow: "0 4px 12px rgba(99,91,255,0.35)",
-    }}
-  >
-    <ShieldOutlinedIcon />
-  </Box>
-);
+const BrandMark = ({ logoUri }: { logoUri?: string }) => {
+  // Prefer the client's own logo (view-data logo_uri); fall back to a neutral brand mark.
+  if (logoUri) {
+    return (
+      <Avatar
+        src={logoUri}
+        variant="rounded"
+        sx={{ width: 56, height: 56, bgcolor: "background.default", color: "text.secondary" }}
+      >
+        <ShieldOutlinedIcon />
+      </Avatar>
+    );
+  }
+  return (
+    <Box
+      sx={{
+        width: 48,
+        height: 48,
+        borderRadius: 2.5,
+        bgcolor: "primary.main",
+        color: "primary.contrastText",
+        display: "grid",
+        placeItems: "center",
+        boxShadow: "0 4px 12px rgba(99,91,255,0.35)",
+      }}
+    >
+      <ShieldOutlinedIcon />
+    </Box>
+  );
+};
 
 type Props = {
   title?: string;
   subtitle?: string;
+  logoUri?: string;
   children: ReactNode;
 };
 
@@ -32,7 +47,7 @@ type Props = {
  * header. Every auth screen renders through this so spacing, elevation and the header stay
  * consistent in one place.
  */
-export const AuthCard = ({ title, subtitle, children }: Props) => (
+export const AuthCard = ({ title, subtitle, logoUri, children }: Props) => (
   <Box
     sx={{
       minHeight: "100vh",
@@ -59,7 +74,7 @@ export const AuthCard = ({ title, subtitle, children }: Props) => (
     >
       <Stack spacing={3.5}>
         <Stack spacing={1.5} alignItems="center" textAlign="center">
-          <BrandMark />
+          <BrandMark logoUri={logoUri} />
           {title && (
             <Typography variant="h5" component="h1">
               {title}

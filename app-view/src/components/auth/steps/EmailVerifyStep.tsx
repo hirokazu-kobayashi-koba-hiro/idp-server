@@ -84,9 +84,14 @@ export const EmailVerifyStep = ({ tenantId, id, onCompleted }: StepProps) => {
       </Typography>
       <TextField
         label="Verification code"
+        autoFocus
         value={code}
         onChange={(e) => setCode(e.target.value)}
-        inputProps={{ inputMode: "numeric" }}
+        inputProps={{
+          inputMode: "numeric",
+          autoComplete: "one-time-code",
+          maxLength: 6,
+        }}
       />
       {message && (
         <Typography color="error" variant="body2">

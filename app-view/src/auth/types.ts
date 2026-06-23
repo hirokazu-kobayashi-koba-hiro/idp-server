@@ -27,9 +27,20 @@ export type AuthenticationPolicy = {
   [key: string]: unknown;
 };
 
+/** One entry of view-data `available_federations` (mirrors AvailableFederation.toMap). */
+export type Federation = {
+  id?: string;
+  type: string; // e.g. "oidc"
+  sso_provider: string; // e.g. "google"
+  auto_selected?: boolean;
+};
+
 export type ViewData = {
   client_name?: string;
+  logo_uri?: string;
+  scopes?: string[];
   authentication_policy?: AuthenticationPolicy;
+  available_federations?: Federation[];
   custom_params?: Record<string, string>;
   tos_uri?: string;
   policy_uri?: string;

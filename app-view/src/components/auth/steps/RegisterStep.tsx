@@ -5,12 +5,13 @@ import {
   Box,
   Button,
   CircularProgress,
+  IconButton,
   InputAdornment,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { Email, Lock } from "@mui/icons-material";
+import { Email, Lock, Visibility, VisibilityOff } from "@mui/icons-material";
 import { useAtom } from "jotai";
 import { backendUrl } from "@/pages/_app";
 import { authIdentifierAtom } from "@/state/AuthState";
@@ -26,6 +27,7 @@ export const RegisterStep = ({ tenantId, id, onCompleted }: StepProps) => {
   const [identifier, setIdentifier] = useAtom(authIdentifierAtom);
   const [email, setEmail] = useState(identifier);
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -64,6 +66,9 @@ export const RegisterStep = ({ tenantId, id, onCompleted }: StepProps) => {
       </Typography>
       <TextField
         label="Email"
+        type="email"
+        autoComplete="email"
+        autoFocus
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         InputProps={{
@@ -76,13 +81,25 @@ export const RegisterStep = ({ tenantId, id, onCompleted }: StepProps) => {
       />
       <TextField
         label="Password"
-        type="password"
+        type={showPassword ? "text" : "password"}
+        autoComplete="new-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
               <Lock />
+            </InputAdornment>
+          ),
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={() => setShowPassword((prev) => !prev)}
+                edge="end"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
             </InputAdornment>
           ),
         }}

@@ -89,16 +89,22 @@ export const SmsStep = ({ tenantId, id, step, onCompleted }: StepProps) => {
       {needsPhoneInput && (
         <TextField
           label="Phone number"
+          autoFocus
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          inputProps={{ inputMode: "tel" }}
+          inputProps={{ inputMode: "tel", autoComplete: "tel" }}
         />
       )}
       <TextField
         label="Verification code"
+        autoFocus={!needsPhoneInput}
         value={code}
         onChange={(e) => setCode(e.target.value)}
-        inputProps={{ inputMode: "numeric" }}
+        inputProps={{
+          inputMode: "numeric",
+          autoComplete: "one-time-code",
+          maxLength: 6,
+        }}
       />
       {message && (
         <Typography color="error" variant="body2">

@@ -1,11 +1,12 @@
 "use client";
 
-import { Link, Stack, Typography } from "@mui/material";
+import { Divider, Link, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { useAuthFlow } from "@/auth/useAuthFlow";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { ConfigDrivenStepper } from "@/components/auth/ConfigDrivenStepper";
+import { SsoButtons } from "@/components/auth/SsoButtons";
 import { StepRenderer } from "@/components/auth/StepRenderer";
 import { ConsentStep } from "@/components/auth/steps/ConsentStep";
 import { Loading } from "@/components/Loading";
@@ -42,6 +43,13 @@ export default function AuthPage() {
   // default; it is hidden only when the step explicitly disables registration.
   const canRegister = currentStep?.registration_mode !== "disabled";
   const isPasswordStep = currentStep?.method === "password";
+
+  // Federated sign-in belongs on the initial identification step (1st factor).
+  const federations = viewData?.available_federations ?? [];
+  const showSso =
+    !isComplete &&
+    currentStep?.requires_user === false &&
+    federations.length > 0;
 
   if (!router.isReady || isLoading) return <Loading />;
 
@@ -82,6 +90,16 @@ export default function AuthPage() {
     }
     return (
       <Stack spacing={2.5}>
+        {showSso && (
+          <>
+            <SsoButtons tenantId={tenantId} id={id} federations={federations} />
+            <Divider>
+              <Typography variant="caption" color="text.secondary">
+                or
+              </Typography>
+            </Divider>
+          </>
+        )}
         <StepRenderer
           tenantId={tenantId}
           id={id}
@@ -108,7 +126,7 @@ export default function AuthPage() {
   };
 
   return (
-    <AuthCard title={title} subtitle={subtitle}>
+    <AuthCard title={title} subtitle={subtitle} logoUri={viewData?.logo_uri}>
       {steps.length > 1 && (
         <ConfigDrivenStepper steps={steps} isComplete={isComplete} />
       )}

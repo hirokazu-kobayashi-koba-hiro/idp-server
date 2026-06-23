@@ -164,6 +164,9 @@ export const Fido2AuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
       {!identifier && (
         <TextField
           label="Email"
+          type="email"
+          autoComplete="email"
+          autoFocus
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
