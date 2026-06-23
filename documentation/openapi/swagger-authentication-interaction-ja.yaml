@@ -263,6 +263,7 @@ paths:
         ## レスポンスデータ
         - **クライアント情報**: クライアント名、ロゴURI、利用規約URIなど
         - **スコープ情報**: 要求されているスコープの一覧
+        - **クレーム情報**: 要求されているクレームの一覧（id_token / userinfo / verified_claims）。クレーム単位の同意表示に使用します
         - **セッション情報**: セッション有効化フラグ
         - **フェデレーション情報**: 利用可能な外部IdP連携情報
         - **カスタムパラメータ**: クライアント固有のカスタムパラメータ
@@ -293,6 +294,10 @@ paths:
                     tos_uri: "https://client.example.com/terms"
                     policy_uri: "https://client.example.com/privacy"
                     scopes: ["openid", "profile", "email"]
+                    claims:
+                      id_token: ["given_name", "family_name", "email"]
+                      userinfo: ["given_name", "family_name", "email"]
+                      verified_claims: []
                     session_enabled: true
                     custom_params:
                       organization_id: "org123"
@@ -1181,6 +1186,38 @@ components:
             type: string
           description: 要求されているスコープ一覧
           example: ["openid", "profile", "email"]
+        claims:
+          type: object
+          description: |
+            このリクエストで要求されているクレーム一覧。consent画面でクレーム単位の表示・同意に使用します。
+            id_token / userinfo はスコープおよびclaimsパラメータから解決されたクレーム名、
+            verified_claims はclaimsパラメータ経由で要求された本人確認済みクレーム名です。
+
+            注: `verified_claims:*` スコープ経由で要求された本人確認済みクレームは
+            `claims.verified_claims` には含まれず、`scopes` 側に残ります。
+          properties:
+            id_token:
+              type: array
+              items:
+                type: string
+              description: IDトークンで要求されているクレーム名
+              example: ["given_name", "family_name", "email"]
+            userinfo:
+              type: array
+              items:
+                type: string
+              description: UserInfoで要求されているクレーム名
+              example: ["given_name", "family_name", "email"]
+            verified_claims:
+              type: array
+              items:
+                type: string
+              description: claimsパラメータ経由で要求された本人確認済みクレーム名
+              example: ["given_name", "family_name"]
+          example:
+            id_token: ["given_name", "family_name", "email"]
+            userinfo: ["given_name", "family_name", "email"]
+            verified_claims: ["given_name", "family_name"]
         session_enabled:
           type: boolean
           description: セッション有効化フラグ
