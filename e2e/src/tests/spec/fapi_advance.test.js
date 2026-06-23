@@ -261,6 +261,40 @@ describe("Financial-grade API Security Profile 1.0 - Part 2: Advanced", () => {
       expect(authorizationResponse.errorDescription).toContain("When FAPI Advance profile, shall require the response_type value code id_token, or the response_type value code in conjunction with the response_mode value jwt");
     });
 
+    it ("The endpoint URI MUST NOT include a fragment component. (RFC 6749 Section 3.1.2, inherited by FAPI Advanced)", async () => {
+      const codeVerifier = generateCodeVerifier(64);
+      const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
+      const request = createJwtWithPrivateKey({
+        payload: {
+          response_type: "code id_token",
+          state: "aiueo",
+          scope: "openid profile phone email " + selfSignedTlsAuthClient.fapiAdvanceScope,
+          redirect_uri: selfSignedTlsAuthClient.redirectUri + "#fragment",
+          client_id: selfSignedTlsAuthClient.clientId,
+          nonce: "nonce",
+          aud: serverConfig.issuer,
+          iss: selfSignedTlsAuthClient.clientId,
+          sub: selfSignedTlsAuthClient.clientId,
+          code_challenge: codeChallenge,
+          code_challenge_method: "S256",
+          exp: toEpocTime({ adjusted: 3000 }),
+          iat: toEpocTime({}),
+          nbf: toEpocTime({}),
+          jti: generateJti(),
+        },
+        privateKey: selfSignedTlsAuthClient.requestKey,
+      });
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        request,
+        clientId: selfSignedTlsAuthClient.clientId,
+      });
+      console.log(authorizationResponse);
+
+      expect(authorizationResponse.error).toEqual("invalid_request");
+      expect(authorizationResponse.errorDescription).toContain("redirect_uri must not fragment");
+    });
+
     it ("5. shall only issue sender-constrained access tokens;", async () => {
       const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);

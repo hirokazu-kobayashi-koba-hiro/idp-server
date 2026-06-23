@@ -255,6 +255,25 @@ describe("Financial-grade API Security Profile 1.0 - Part 1: Baseline", () => {
       expect(error.error_description).toContain("When FAPI Baseline profile, shall require the value of redirect_uri to exactly match one of the pre-registered redirect URIs");
     });
 
+    it("The endpoint URI MUST NOT include a fragment component. (RFC 6749 Section 3.1.2, inherited by FAPI Baseline)", async () => {
+      const codeVerifier = generateCodeVerifier(64);
+      const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);
+      const { error } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        responseType: "code",
+        state: "aiueo",
+        scope: "profile phone email " + privateKeyJwtClient.fapiBaselineScope,
+        clientId: privateKeyJwtClient.clientId,
+        redirectUri: privateKeyJwtClient.redirectUri + "#fragment",
+        nonce: "nonce",
+        codeChallenge,
+        codeChallengeMethod: "S256",
+      });
+      console.log(error);
+      expect(error.error).toEqual("invalid_request");
+      expect(error.error_description).toContain("redirect_uri must not fragment");
+    });
+
     it("19. shall return an invalid_client error as defined in 5.2 of RFC6749 when mis-matched client identifiers were provided through the client authentication methods that permits sending the client identifier in more than one way;", async () => {
       const codeVerifier = generateCodeVerifier(64);
       const codeChallenge = calculateCodeChallengeWithS256(codeVerifier);

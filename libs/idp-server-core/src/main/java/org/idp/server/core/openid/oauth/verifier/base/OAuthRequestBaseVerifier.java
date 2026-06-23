@@ -18,11 +18,14 @@ package org.idp.server.core.openid.oauth.verifier.base;
 
 import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.OAuthRequestContext;
+import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.openid.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
 import org.idp.server.core.openid.oauth.type.oauth.ResponseType;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.oauth.verifier.AuthorizationRequestVerifier;
+import org.idp.server.platform.http.InvalidUriException;
+import org.idp.server.platform.http.UriWrapper;
 
 /**
  * oauth2.0 base verifier
@@ -151,6 +154,44 @@ public class OAuthRequestBaseVerifier implements AuthorizationRequestVerifier {
               "authorization request does not contains valid scope (%s)",
               context.getParams(OAuthRequestKey.scope)),
           context);
+    }
+  }
+
+  /**
+   * The redirection endpoint URI MUST be an absolute URI as defined by [RFC3986] Section 4.3. The
+   * endpoint URI MAY include an "application/x-www-form-urlencoded" formatted (per Appendix B)
+   * query component ([RFC3986] Section 3.4), which MUST be retained when adding additional query
+   * parameters. The endpoint URI MUST NOT include a fragment component.
+   *
+   * <p>RFC 6749 Section 3.1.2 is a core OAuth 2.0 requirement inherited by the OIDC and FAPI
+   * profiles, so this check is exposed here and invoked explicitly by every profile verifier (right
+   * before the registered redirect_uri match) instead of being duplicated per profile. A fragment
+   * in the redirect_uri causes response parameters to leak into the fragment component, so an
+   * invalid redirect_uri must not be redirected to (Section 3.1.2.4); hence this throws the
+   * non-redirectable {@link OAuthBadRequestException}.
+   *
+   * @param context authorization request context
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2">3.1.2. Redirection
+   *     Endpoint</a>
+   */
+  public void throwExceptionIfRedirectUriContainsFragment(OAuthRequestContext context) {
+    if (!context.hasRedirectUriInRequest()) {
+      return;
+    }
+    try {
+      UriWrapper uri = new UriWrapper(context.redirectUri().value());
+      if (uri.hasFragment()) {
+        throw new OAuthBadRequestException(
+            "invalid_request",
+            String.format("redirect_uri must not fragment (%s)", context.redirectUri().value()),
+            context.tenant());
+      }
+    } catch (InvalidUriException exception) {
+      throw new OAuthBadRequestException(
+          "invalid_request",
+          String.format(
+              "authorization request redirect_uri is invalid (%s)", context.redirectUri().value()),
+          context.tenant());
     }
   }
 }

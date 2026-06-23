@@ -78,6 +78,7 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
   public void verify(OAuthRequestContext context) {
     throwExceptionIfUnregisteredRedirectUri(context);
     throwExceptionIfNotContainsRedirectUri(context);
+    oAuthRequestBaseVerifier.throwExceptionIfRedirectUriContainsFragment(context);
     throwExceptionUnMatchRedirectUri(context);
     throwExceptionIfNotHttpsRedirectUri(context);
     if (context.isOidcRequest()) {

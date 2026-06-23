@@ -128,6 +128,11 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
   public void verify(OAuthRequestContext context) {
     throwIfExceptionInvalidConfig(context);
 
+    // RFC 6749 3.1.2: redirect_uri MUST NOT include a fragment component. Checked before the base
+    // delegation so it is enforced ahead of any redirectable error (Section 3.1.2.4), covering both
+    // the OIDC and non-OIDC (JARM) request paths.
+    oAuthRequestBaseVerifier.throwExceptionIfRedirectUriContainsFragment(context);
+
     // --- OAuth 2.0 / OIDC base requirements ---
     if (context.isOidcRequest()) {
       oidcRequestBaseVerifier.verify(context);
