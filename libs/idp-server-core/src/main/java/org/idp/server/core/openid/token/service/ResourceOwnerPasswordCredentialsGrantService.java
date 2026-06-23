@@ -19,6 +19,7 @@ package org.idp.server.core.openid.token.service;
 import java.util.List;
 import java.util.UUID;
 import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.authentication.StandardAuthenticationMethod;
 import org.idp.server.core.openid.grant_management.AuthorizationGranted;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedIdentifier;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
@@ -45,6 +46,7 @@ import org.idp.server.core.openid.token.*;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.validator.ResourceOwnerPasswordGrantValidator;
 import org.idp.server.core.openid.token.verifier.ResourceOwnerPasswordGrantVerifier;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -107,6 +109,11 @@ public class ResourceOwnerPasswordCredentialsGrantService
 
     CustomProperties customProperties = context.customProperties();
 
+    Authentication authentication =
+        new Authentication()
+            .setTime(SystemDateTime.now())
+            .addMethods(List.of(StandardAuthenticationMethod.PASSWORD.type()));
+
     List<String> supportedClaims = authorizationServerConfiguration.claimsSupported();
     boolean idTokenStrictMode = authorizationServerConfiguration.isIdTokenStrictMode();
     GrantIdTokenClaims grantIdTokenClaims =
@@ -123,6 +130,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
         new AuthorizationGrantBuilder(
                 context.tenantIdentifier(), context.requestedClientId(), GrantType.password, scopes)
             .add(user)
+            .add(authentication)
             .add(clientConfiguration.clientAttributes())
             .add(customProperties)
             .add(grantIdTokenClaims)
@@ -147,7 +155,7 @@ public class ResourceOwnerPasswordCredentialsGrantService
       IdToken idToken =
           idTokenCreator.createIdToken(
               authorizationGrant.user(),
-              new Authentication(),
+              authentication,
               authorizationGrant,
               idTokenCustomClaims,
               new RequestedClaimsPayload(),

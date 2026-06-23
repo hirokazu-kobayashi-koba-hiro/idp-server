@@ -1,7 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { requestToken } from "../../api/oauthClient";
+import { getJwks, inspectToken, requestToken } from "../../api/oauthClient";
 import { clientSecretPostClient, serverConfig, unsupportedServerConfig, unsupportedClient } from "../testConfig";
+import { verifyAndDecodeJwt } from "../../lib/jose";
 
 describe("The OAuth 2.0 Authorization Framework resource owner password credentials", () => {
   const oauth = serverConfig.oauth;
@@ -133,6 +134,74 @@ describe("The OAuth 2.0 Authorization Framework resource owner password credenti
       expect(tokenResponse.data.error_description).toEqual(
         "this request grant_type is password, but client does not support"
       );
+    });
+  });
+
+  // The password grant authenticates the resource owner with a username/password at the token
+  // endpoint. Per RFC 9068 the issued JWT access token MAY carry authentication information claims,
+  // and per RFC 8176 the password authentication method is recorded in amr. idp-server records the
+  // method as "password" (StandardAuthenticationMethod.PASSWORD) consistently across all flows.
+  describe("RFC 9068 2.2.1. Authentication Information Claims / RFC 8176 amr", () => {
+    it("amr OPTIONAL. JSON array of strings ... identifiers for authentication methods used. The password grant MUST record the password method, so the issued access token amr MUST contain \"password\" and auth_time MUST be present.", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        scope: "openid " + clientSecretPostClient.scope,
+        username: oauth.username,
+        password: oauth.password,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.access_token).toBeDefined();
+
+      const introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(JSON.stringify(introspectionResponse.data, null, 2));
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(true);
+
+      expect(introspectionResponse.data.amr).toBeDefined();
+      expect(Array.isArray(introspectionResponse.data.amr)).toBe(true);
+      expect(introspectionResponse.data.amr).toContain("password");
+
+      expect(introspectionResponse.data).toHaveProperty("auth_time");
+      expect(typeof introspectionResponse.data.auth_time).toBe("number");
+      expect(introspectionResponse.data.auth_time).toBeGreaterThan(0);
+    });
+
+    it("amr OPTIONAL. When the openid scope is granted, the issued ID Token amr MUST contain \"password\" and auth_time MUST be present.", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        scope: "openid " + clientSecretPostClient.scope,
+        username: oauth.username,
+        password: oauth.password,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.id_token).toBeDefined();
+
+      const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+      const decodedIdToken = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.id_token,
+        jwks: jwksResponse.data,
+      });
+      console.log("ID Token payload:", decodedIdToken.payload);
+
+      expect(decodedIdToken.payload).toHaveProperty("amr");
+      expect(Array.isArray(decodedIdToken.payload.amr)).toBe(true);
+      expect(decodedIdToken.payload.amr).toContain("password");
+
+      expect(decodedIdToken.payload).toHaveProperty("auth_time");
+      expect(typeof decodedIdToken.payload.auth_time).toBe("number");
     });
   });
 });
