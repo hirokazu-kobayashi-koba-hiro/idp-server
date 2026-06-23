@@ -65,6 +65,7 @@ public class OidcRequestBaseVerifier implements AuthorizationRequestVerifier {
   public void verify(OAuthRequestContext context) {
     throwExceptionIfNotContainsRedirectUri(context);
     throwExceptionIfNotAbsoluteRedirectUri(context);
+    baseVerifier.throwExceptionIfRedirectUriContainsFragment(context);
     throwExceptionIfUnRegisteredRedirectUri(context);
     throwExceptionIfHttpRedirectUriAndImplicitFlow(context);
     throwExceptionIfNotContainsNonceAndImplicitFlowOrHybridFlow(context);

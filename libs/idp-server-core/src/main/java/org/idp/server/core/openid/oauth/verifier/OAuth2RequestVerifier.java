@@ -21,9 +21,7 @@ import org.idp.server.core.openid.oauth.OAuthRequestContext;
 import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.openid.oauth.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.openid.oauth.verifier.base.OAuthRequestBaseVerifier;
-import org.idp.server.platform.http.InvalidUriException;
 import org.idp.server.platform.http.UriMatcher;
-import org.idp.server.platform.http.UriWrapper;
 
 public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
 
@@ -53,7 +51,7 @@ public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
   void throwExceptionIfInvalidRedirectUri(OAuthRequestContext context) {
     if (context.hasRedirectUriInRequest()) {
       throwExceptionIfNotAbsoluteRedirectUri(context);
-      throwExceptionIfRedirectUriContainsFragment(context);
+      baseVerifier.throwExceptionIfRedirectUriContainsFragment(context);
       throwExceptionIfUnMatchRedirectUri(context);
     } else {
       throwExceptionIfMultiRegisteredRedirectUri(context);
@@ -74,34 +72,6 @@ public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
       throw new OAuthBadRequestException(
           "invalid_request",
           String.format("redirect_uri must be an absolute URI (%s)", context.redirectUri().value()),
-          context.tenant());
-    }
-  }
-
-  /**
-   * The redirection endpoint URI MUST be an absolute URI as defined by [RFC3986] Section 4.3. The
-   * endpoint URI MAY include an "application/x-www-form-urlencoded" formatted (per Appendix B)
-   * query component ([RFC3986] Section 3.4), which MUST be retained when adding additional query
-   * parameters. The endpoint URI MUST NOT include a fragment component.
-   *
-   * @param context
-   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2">3.1.2. Redirection
-   *     Endpoint</a>
-   */
-  void throwExceptionIfRedirectUriContainsFragment(OAuthRequestContext context) {
-    try {
-      UriWrapper uri = new UriWrapper(context.redirectUri().value());
-      if (uri.hasFragment()) {
-        throw new OAuthBadRequestException(
-            "invalid_request",
-            String.format("redirect_uri must not fragment (%s)", context.redirectUri().value()),
-            context.tenant());
-      }
-    } catch (InvalidUriException exception) {
-      throw new OAuthBadRequestException(
-          "invalid_request",
-          String.format(
-              "authorization request redirect_uri is invalid (%s)", context.redirectUri().value()),
           context.tenant());
     }
   }

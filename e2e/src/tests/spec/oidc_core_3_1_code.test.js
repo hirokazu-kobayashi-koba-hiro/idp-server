@@ -90,6 +90,24 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
     expect(tokenResponse.data).toHaveProperty("id_token");
   });
 
+  describe("3.1.2.  Authorization Endpoint (RFC 6749 Section 3.1.2)", () => {
+    it("The endpoint URI MUST NOT include a fragment component. (inherited by OIDC from RFC 6749 Section 3.1.2)", async () => {
+      const { error } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        redirectUri: clientSecretPostClient.redirectUri + "#fragment",
+        scope: "openid " + clientSecretPostClient.scope,
+        state: "fragment-test-state",
+        nonce: "fragment-test-nonce",
+      });
+      console.log(error);
+
+      expect(error.error).toEqual("invalid_request");
+      expect(error.error_description).toContain("redirect_uri must not fragment");
+    });
+  });
+
   describe("3.1.2.1.  Authentication Request", () => {
     it("scope REQUIRED. OpenID Connect requests MUST contain the openid scope value. If the openid scope value is not present, the behavior is entirely unspecified. Other scope values MAY be present. Scope values used that are not understood by an implementation SHOULD be ignored. See Sections 5.4 and 11 for additional scope values defined by this specification.", async () => {
       const { status, authorizationResponse } = await requestAuthorizations({
