@@ -67,7 +67,7 @@ export const EmailVerifyStep = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!response.ok) {
-        setMessage("Invalid verification code. Please check and try again.");
+        setMessage("That code is incorrect or has expired. Please try again.");
         return;
       }
       await onCompleted();
@@ -79,7 +79,8 @@ export const EmailVerifyStep = ({ tenantId, id, onCompleted }: StepProps) => {
   return (
     <Stack spacing={3}>
       <Typography variant="body2" color="text.secondary">
-        Enter the 6-digit code we sent to {identifier || "your email"}.
+        We sent a 6-digit code to {identifier || "your email"}. Enter it below to
+        continue.
       </Typography>
       <TextField
         label="Verification code"

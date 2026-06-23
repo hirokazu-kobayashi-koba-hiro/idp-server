@@ -40,14 +40,16 @@ export const Fido2Step = ({ tenantId, id, onCompleted }: StepProps) => {
 
   const handleRegister = async () => {
     if (!identifier) {
-      setMessage("Please enter your email to continue.");
+      setMessage("Enter your email to continue.");
       return;
     }
     setLoading(true);
     setMessage("");
     try {
       if (!window.PublicKeyCredential) {
-        setMessage("Your browser does not support passkeys.");
+        setMessage(
+          "This browser doesn't support passkeys. Try a different browser or device.",
+        );
         return;
       }
 
@@ -70,7 +72,7 @@ export const Fido2Step = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!challengeRes.ok) {
-        setMessage("Failed to get registration challenge. Please try again.");
+        setMessage("We couldn't start passkey setup. Please try again.");
         return;
       }
 
@@ -109,7 +111,7 @@ export const Fido2Step = ({ tenantId, id, onCompleted }: StepProps) => {
         publicKey: publicKeyOptions,
       })) as PublicKeyCredential | null;
       if (!credential) {
-        setMessage("No credential received from authenticator.");
+        setMessage("No passkey was created. Please try again.");
         return;
       }
 
@@ -141,15 +143,15 @@ export const Fido2Step = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!registerRes.ok) {
-        setMessage("Passkey registration failed.");
+        setMessage("We couldn't register your passkey. Please try again.");
         return;
       }
       await onCompleted();
     } catch (error) {
       if (error instanceof Error && error.name === "NotAllowedError") {
-        setMessage("Registration was not allowed. Please try again.");
+        setMessage("Passkey setup was cancelled or not allowed. Please try again.");
       } else {
-        setMessage("An error occurred during registration.");
+        setMessage("Something went wrong setting up your passkey. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -159,7 +161,7 @@ export const Fido2Step = ({ tenantId, id, onCompleted }: StepProps) => {
   return (
     <Stack spacing={3}>
       <Typography variant="body2" color="text.secondary">
-        Secure your account with a passkey for fast, passwordless sign-in.
+        Set up a passkey to sign in securely next time — no password needed.
       </Typography>
       {!identifier && (
         <TextField
@@ -183,7 +185,7 @@ export const Fido2Step = ({ tenantId, id, onCompleted }: StepProps) => {
         fullWidth
         sx={{ textTransform: "none" }}
       >
-        {loading ? <CircularProgress size={24} /> : "Register Passkey"}
+        {loading ? <CircularProgress size={24} /> : "Set up passkey"}
       </Button>
     </Stack>
   );

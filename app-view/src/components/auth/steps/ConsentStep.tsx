@@ -45,7 +45,8 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
   return (
     <Stack spacing={3}>
       <Typography variant="body2" color="text.secondary">
-        Continue to {viewData?.client_name ?? "the application"}.
+        Continue to {viewData?.client_name ?? "the application"} to finish signing
+        in.
       </Typography>
       <Box display="flex" justifyContent="space-between" gap={2}>
         <Button

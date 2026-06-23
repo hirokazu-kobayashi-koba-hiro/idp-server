@@ -44,7 +44,7 @@ export const PasswordAuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!response.ok) {
-        setMessage("Incorrect email or password. Please try again.");
+        setMessage("The email or password is incorrect. Please try again.");
         return;
       }
       setIdentifier(email);
@@ -57,7 +57,7 @@ export const PasswordAuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
   return (
     <Stack spacing={3}>
       <Typography variant="body2" color="text.secondary">
-        Enter your email and password to continue.
+        Welcome back. Enter your email and password to continue.
       </Typography>
       <TextField
         label="Email"
@@ -96,7 +96,7 @@ export const PasswordAuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
           onClick={handleSubmit}
           sx={{ textTransform: "none" }}
         >
-          {loading ? <CircularProgress size={24} /> : "Sign in"}
+          {loading ? <CircularProgress size={24} /> : "Continue"}
         </Button>
       </Box>
     </Stack>

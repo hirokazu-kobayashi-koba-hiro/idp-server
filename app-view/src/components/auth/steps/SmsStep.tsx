@@ -70,7 +70,7 @@ export const SmsStep = ({ tenantId, id, step, onCompleted }: StepProps) => {
         },
       );
       if (!response.ok) {
-        setMessage("Invalid code. Please check and try again.");
+        setMessage("That code is incorrect or has expired. Please try again.");
         return;
       }
       await onCompleted();
@@ -82,7 +82,9 @@ export const SmsStep = ({ tenantId, id, step, onCompleted }: StepProps) => {
   return (
     <Stack spacing={3}>
       <Typography variant="body2" color="text.secondary">
-        Enter the code we sent by SMS.
+        {needsPhoneInput
+          ? "Enter your phone number and we'll text you a verification code."
+          : "We sent a verification code to your phone. Enter it below to continue."}
       </Typography>
       {needsPhoneInput && (
         <TextField

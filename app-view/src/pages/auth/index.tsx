@@ -1,17 +1,10 @@
 "use client";
 
-import {
-  Container,
-  Link,
-  Paper,
-  Stack,
-  Typography,
-  alpha,
-  useTheme,
-} from "@mui/material";
+import { Link, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { useAuthFlow } from "@/auth/useAuthFlow";
+import { AuthCard } from "@/components/auth/AuthCard";
 import { ConfigDrivenStepper } from "@/components/auth/ConfigDrivenStepper";
 import { StepRenderer } from "@/components/auth/StepRenderer";
 import { ConsentStep } from "@/components/auth/steps/ConsentStep";
@@ -29,7 +22,6 @@ const asString = (value: string | string[] | undefined): string =>
  */
 export default function AuthPage() {
   const router = useRouter();
-  const theme = useTheme();
   const tenantId = asString(router.query.tenant_id);
   const id = asString(router.query.id);
 
@@ -49,19 +41,34 @@ export default function AuthPage() {
   // initial-registration works without any configuration, so account creation is available by
   // default; it is hidden only when the step explicitly disables registration.
   const canRegister = currentStep?.registration_mode !== "disabled";
+  const isPasswordStep = currentStep?.method === "password";
 
   if (!router.isReady || isLoading) return <Loading />;
 
+  const title = isComplete
+    ? "You're all set"
+    : registerMode && isPasswordStep
+      ? "Create your account"
+      : "Sign in";
+  const subtitle =
+    !isComplete && viewData?.client_name
+      ? `Continue to ${viewData.client_name}`
+      : undefined;
+
   const renderBody = () => {
     if (isError) {
-      return <Typography color="error">Failed to load the authentication flow.</Typography>;
+      return (
+        <Typography color="error" align="center">
+          {"We couldn't load this sign-in. Please return to the app and try again."}
+        </Typography>
+      );
     }
     if (status === "failure" || status === "locked") {
       return (
-        <Typography color="error">
+        <Typography color="error" align="center">
           {status === "locked"
-            ? "Your account is temporarily locked. Please try again later."
-            : "Authentication failed. Please start over."}
+            ? "Too many attempts. Your account is temporarily locked — please try again later."
+            : "We couldn't sign you in. Please return to the app and start over."}
         </Typography>
       );
     }
@@ -73,19 +80,16 @@ export default function AuthPage() {
       // interaction and the status refetch).
       return <Loading />;
     }
-    const showAccountToggle = currentStep.method === "password" && canRegister;
     return (
-      <Stack spacing={2}>
+      <Stack spacing={2.5}>
         <StepRenderer
           tenantId={tenantId}
           id={id}
           step={currentStep}
           onCompleted={refetch}
-          passwordRegister={
-            currentStep.method === "password" ? registerMode : undefined
-          }
+          passwordRegister={isPasswordStep ? registerMode : undefined}
         />
-        {showAccountToggle && (
+        {isPasswordStep && canRegister && (
           <Link
             component="button"
             type="button"
@@ -104,31 +108,11 @@ export default function AuthPage() {
   };
 
   return (
-    <Container maxWidth="xs">
-      <Paper
-        elevation={0}
-        sx={{
-          borderRadius: 4,
-          px: 5,
-          py: 6,
-          mt: 8,
-          backgroundColor:
-            theme.palette.mode === "light"
-              ? "#fcfcfd"
-              : alpha(theme.palette.common.white, 0.035),
-          border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-        }}
-      >
-        <Typography variant="h5" fontWeight={600} gutterBottom>
-          {viewData?.client_name ?? "Sign in"}
-        </Typography>
-        <Stack spacing={4} mt={2}>
-          {steps.length > 0 && (
-            <ConfigDrivenStepper steps={steps} isComplete={isComplete} />
-          )}
-          {renderBody()}
-        </Stack>
-      </Paper>
-    </Container>
+    <AuthCard title={title} subtitle={subtitle}>
+      {steps.length > 1 && (
+        <ConfigDrivenStepper steps={steps} isComplete={isComplete} />
+      )}
+      {renderBody()}
+    </AuthCard>
   );
 }

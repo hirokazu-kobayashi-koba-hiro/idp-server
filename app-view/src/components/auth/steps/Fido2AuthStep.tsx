@@ -49,7 +49,9 @@ export const Fido2AuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
     setMessage("");
     try {
       if (!window.PublicKeyCredential) {
-        setMessage("Your browser does not support passkeys.");
+        setMessage(
+          "This browser doesn't support passkeys. Try a different browser or device.",
+        );
         return;
       }
 
@@ -67,7 +69,7 @@ export const Fido2AuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!challengeRes.ok) {
-        setMessage("Failed to get authentication challenge. Please try again.");
+        setMessage("We couldn't start passkey sign-in. Please try again.");
         return;
       }
 
@@ -103,7 +105,7 @@ export const Fido2AuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
         mediation: "optional",
       })) as PublicKeyCredential | null;
       if (!credential) {
-        setMessage("No credential received from authenticator.");
+        setMessage("No passkey was used. Please try again.");
         return;
       }
 
@@ -136,7 +138,7 @@ export const Fido2AuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!authRes.ok) {
-        setMessage("Passkey authentication failed.");
+        setMessage("We couldn't verify your passkey. Please try again.");
         return;
       }
       await onCompleted();
@@ -145,9 +147,9 @@ export const Fido2AuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
         error instanceof Error &&
         (error.name === "NotAllowedError" || error.name === "AbortError")
       ) {
-        setMessage("Authentication was cancelled. Please try again.");
+        setMessage("Passkey sign-in was cancelled. Please try again.");
       } else {
-        setMessage("An error occurred during authentication.");
+        setMessage("Something went wrong verifying your passkey. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -157,7 +159,7 @@ export const Fido2AuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
   return (
     <Stack spacing={3}>
       <Typography variant="body2" color="text.secondary">
-        Verify with your passkey to continue.
+        Use your passkey to continue.
       </Typography>
       {!identifier && (
         <TextField
@@ -181,7 +183,7 @@ export const Fido2AuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
         fullWidth
         sx={{ textTransform: "none" }}
       >
-        {loading ? <CircularProgress size={24} /> : "Verify Passkey"}
+        {loading ? <CircularProgress size={24} /> : "Use passkey"}
       </Button>
     </Stack>
   );

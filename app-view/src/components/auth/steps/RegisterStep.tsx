@@ -31,7 +31,7 @@ export const RegisterStep = ({ tenantId, id, onCompleted }: StepProps) => {
 
   const handleSubmit = async () => {
     if (!email.includes("@") || password.length < 8) {
-      setMessage("Enter a valid email and a password of at least 8 characters.");
+      setMessage("Enter a valid email and a password with at least 8 characters.");
       return;
     }
     setLoading(true);
@@ -47,7 +47,7 @@ export const RegisterStep = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!response.ok) {
-        setMessage("Sign up failed. Please try again.");
+        setMessage("We couldn't create your account. Please try again.");
         return;
       }
       setIdentifier(email);
@@ -60,7 +60,7 @@ export const RegisterStep = ({ tenantId, id, onCompleted }: StepProps) => {
   return (
     <Stack spacing={3}>
       <Typography variant="body2" color="text.secondary">
-        Create your account to continue.
+        Enter your email and choose a password to get started.
       </Typography>
       <TextField
         label="Email"
@@ -99,7 +99,7 @@ export const RegisterStep = ({ tenantId, id, onCompleted }: StepProps) => {
           onClick={handleSubmit}
           sx={{ textTransform: "none" }}
         >
-          {loading ? <CircularProgress size={24} /> : "Next"}
+          {loading ? <CircularProgress size={24} /> : "Continue"}
         </Button>
       </Box>
     </Stack>
