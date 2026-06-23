@@ -17,11 +17,18 @@
 package org.idp.server.core.openid.oauth.view;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
+import org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims;
+import org.idp.server.core.openid.identity.id_token.VerifiedClaimsObject;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
+import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.session.OPSession;
 
 public class OAuthViewDataCreator {
@@ -55,6 +62,7 @@ public class OAuthViewDataCreator {
     String policyUri = clientConfiguration.policyUri();
     Map<String, String> customParams = authorizationRequest.customParams().values();
     List<String> scopes = authorizationRequest.scopes().toStringList();
+    Map<String, Object> requestedClaims = createRequestedClaims();
     boolean sessionEnabled = isSessionEnabled();
     List<Map<String, Object>> availableFederationsAsMapList =
         clientConfiguration.availableFederationsAsMapList();
@@ -76,10 +84,58 @@ public class OAuthViewDataCreator {
         tosUri,
         policyUri,
         scopes,
+        requestedClaims,
         sessionEnabled,
         availableFederationsAsMapList,
         customParams,
         additionalViewData);
+  }
+
+  /**
+   * Resolves the claims that would be released for this request so the consent view can present
+   * them per-claim (foundation for claim-level consent, OIDC4IDA Section 5.7.3). Reuses the same
+   * scope/claims resolution as token and userinfo issuance ({@link GrantIdTokenClaims} / {@link
+   * GrantUserinfoClaims}). verified_claims requested via the {@code claims} parameter are surfaced
+   * by name; verified_claims requested via {@code verified_claims:*} scopes remain visible in
+   * {@code scopes}.
+   */
+  private Map<String, Object> createRequestedClaims() {
+    Scopes scopes = authorizationRequest.scopes();
+    List<String> supportedClaims = authorizationServerConfiguration.claimsSupported();
+
+    GrantIdTokenClaims idTokenClaims =
+        GrantIdTokenClaims.create(
+            scopes,
+            authorizationRequest.responseType(),
+            supportedClaims,
+            authorizationRequest.requestedIdTokenClaims(),
+            authorizationServerConfiguration.isIdTokenStrictMode());
+    GrantUserinfoClaims userinfoClaims =
+        GrantUserinfoClaims.create(
+            scopes, supportedClaims, authorizationRequest.requestedUserinfoClaims());
+
+    Map<String, Object> requestedClaims = new HashMap<>();
+    requestedClaims.put("id_token", sorted(idTokenClaims.toStringSet()));
+    requestedClaims.put("userinfo", sorted(userinfoClaims.toStringSet()));
+    requestedClaims.put("verified_claims", requestedVerifiedClaimNames());
+    return requestedClaims;
+  }
+
+  private List<String> requestedVerifiedClaimNames() {
+    Set<String> names = new LinkedHashSet<>();
+    VerifiedClaimsObject idToken = authorizationRequest.requestedIdTokenClaims().verifiedClaims();
+    VerifiedClaimsObject userinfo = authorizationRequest.requestedUserinfoClaims().verifiedClaims();
+    if (idToken != null) {
+      names.addAll(idToken.requestedClaimNames());
+    }
+    if (userinfo != null) {
+      names.addAll(userinfo.requestedClaimNames());
+    }
+    return sorted(names);
+  }
+
+  private List<String> sorted(Set<String> values) {
+    return values.stream().sorted().toList();
   }
 
   /**

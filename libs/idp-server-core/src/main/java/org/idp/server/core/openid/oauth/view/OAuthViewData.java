@@ -29,6 +29,7 @@ public class OAuthViewData {
   String tosUri;
   String policyUri;
   List<String> scopes;
+  Map<String, Object> requestedClaims;
   boolean sessionEnabled;
   List<Map<String, Object>> availableFederations;
   Map<String, String> customParams;
@@ -43,6 +44,7 @@ public class OAuthViewData {
       String tosUri,
       String policyUri,
       List<String> scopes,
+      Map<String, Object> requestedClaims,
       boolean sessionEnabled,
       List<Map<String, Object>> availableFederations,
       Map<String, String> customParams,
@@ -55,6 +57,7 @@ public class OAuthViewData {
     this.tosUri = tosUri;
     this.policyUri = policyUri;
     this.scopes = scopes;
+    this.requestedClaims = requestedClaims;
     this.sessionEnabled = sessionEnabled;
     this.availableFederations = availableFederations;
     this.customParams = customParams;
@@ -93,6 +96,10 @@ public class OAuthViewData {
     return scopes;
   }
 
+  public Map<String, Object> requestedClaims() {
+    return requestedClaims;
+  }
+
   public Map<String, String> customParams() {
     return customParams;
   }
@@ -107,6 +114,7 @@ public class OAuthViewData {
     contents.put("tos_uri", tosUri);
     contents.put("policy_uri", policyUri);
     contents.put("scopes", scopes);
+    contents.put("claims", requestedClaims);
     contents.put("session_enabled", sessionEnabled);
 
     if (availableFederations != null && !availableFederations.isEmpty()) {

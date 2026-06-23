@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.identity.id_token;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.JsonReadable;
@@ -37,5 +39,17 @@ public class VerifiedClaimsObject implements JsonReadable {
 
   public JsonNodeWrapper claimsNodeWrapper() {
     return JsonNodeWrapper.fromMap(claims);
+  }
+
+  /**
+   * Requested verified claim names (the keys of the OIDC4IDA {@code claims} member), e.g. {@code
+   * given_name}, {@code family_name}. Used to surface which verified claims are being requested
+   * (consent view data); returns an empty list when no verified claims are requested.
+   */
+  public List<String> requestedClaimNames() {
+    if (claims == null || claims.isEmpty()) {
+      return new ArrayList<>();
+    }
+    return new ArrayList<>(claims.keySet());
   }
 }
