@@ -1,0 +1,69 @@
+name: Scan dependencies
+
+# Trivy で依存ライブラリ（fat jar に同梱される runtime 依存）の脆弱性を fs スキャンし、
+# 結果を GitHub Security タブ（Code scanning）に SARIF でアップロードする。
+# Keycloak の scan-dependencies.yml を Gradle 向けに調整したもの。
+#   - スキャン対象: ./gradlew :app:bootJar の生成物（同梱依存を持つ fat jar）
+#   - スキャナ: vuln のみ（依存の CVE 検出）
+#   - 方針: report-only（CVE 検出でも CI は落とさず、Security タブで可視化する）
+on:
+  schedule:
+    # 毎日 03:00 JST (18:00 UTC)。codeql.yml と同じ運用時刻。
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan-dependencies:
+    name: Scan dependencies
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+          cache: "gradle"
+
+      # 同梱依存をスキャン対象にするため fat jar をビルドする（テストはスキップ）。
+      - name: Build application jar
+        run: ./gradlew :app:bootJar -x test --no-daemon
+
+      # 第三者製のセキュリティスキャナ用 Action はサプライチェーン対策として SHA で固定する。
+      - name: Setup Trivy
+        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+        with:
+          cache: true
+          version: v0.70.0
+
+      - name: Trivy scan (jar dependencies)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: "fs"
+          scan-ref: "app/build/libs"
+          format: "json"
+          output: "trivy-report.json"
+          scanners: "vuln"
+          skip-setup-trivy: true
+
+      - name: Display report
+        run: |
+          cat trivy-report.json | jq -r '"| ID | PKG | INSTALLED | FIXED | SEVERITY |", "| -- | -- | -- | -- | -- |", ([.Results[]? | select(.Vulnerabilities != null) | .Vulnerabilities[]] | unique_by(.VulnerabilityID) | .[] | "| \(.VulnerabilityID) | \(.PkgName) | \(.InstalledVersion) | \(.FixedVersion // "-") | \(.Severity) |")' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Convert to SARIF
+        run: |
+          trivy convert --format sarif -o trivy-report.sarif --scanners vuln trivy-report.json
+
+      - name: Upload report
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-report.sarif"
+          category: "dependencies"
