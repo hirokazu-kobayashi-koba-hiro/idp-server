@@ -12,8 +12,10 @@ import {
 import KeyIcon from "@mui/icons-material/Key";
 import { useAtom } from "jotai";
 import { backendUrl } from "@/pages/_app";
+import { readErrorMessage } from "@/auth/http";
 import { authIdentifierAtom } from "@/state/AuthState";
 import { base64UrlToBuffer, bufferToBase64Url } from "@/auth/webauthn";
+import { AuthAlert } from "@/components/auth/AuthAlert";
 import { StepProps } from "./StepProps";
 
 type ChallengeResponse = {
@@ -72,7 +74,12 @@ export const Fido2Step = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!challengeRes.ok) {
-        setMessage("We couldn't start passkey setup. Please try again.");
+        setMessage(
+          await readErrorMessage(
+            challengeRes,
+            "We couldn't start passkey setup. Please try again.",
+          ),
+        );
         return;
       }
 
@@ -143,7 +150,12 @@ export const Fido2Step = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!registerRes.ok) {
-        setMessage("We couldn't register your passkey. Please try again.");
+        setMessage(
+          await readErrorMessage(
+            registerRes,
+            "We couldn't register your passkey. Please try again.",
+          ),
+        );
         return;
       }
       await onCompleted();
@@ -176,11 +188,7 @@ export const Fido2Step = ({ tenantId, id, onCompleted }: StepProps) => {
       <Box display="flex" justifyContent="center">
         <KeyIcon sx={{ fontSize: 40, color: "primary.main" }} />
       </Box>
-      {message && (
-        <Typography color="error" variant="body2" align="center">
-          {message}
-        </Typography>
-      )}
+      <AuthAlert message={message} />
       <Button
         variant="contained"
         disabled={loading}

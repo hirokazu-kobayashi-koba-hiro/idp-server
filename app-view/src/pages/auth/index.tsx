@@ -4,11 +4,14 @@ import { Divider, Link, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { useAuthFlow } from "@/auth/useAuthFlow";
+import { StepView } from "@/auth/types";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { ConfigDrivenStepper } from "@/components/auth/ConfigDrivenStepper";
+import { MethodPicker } from "@/components/auth/MethodPicker";
 import { SsoButtons } from "@/components/auth/SsoButtons";
 import { StepRenderer } from "@/components/auth/StepRenderer";
 import { ConsentStep } from "@/components/auth/steps/ConsentStep";
+import { AuthAlert } from "@/components/auth/AuthAlert";
 import { Loading } from "@/components/Loading";
 
 const asString = (value: string | string[] | undefined): string =>
@@ -30,6 +33,7 @@ export default function AuthPage() {
     viewData,
     steps,
     currentStep,
+    availableMethods,
     status,
     isComplete,
     isLoading,
@@ -38,17 +42,39 @@ export default function AuthPage() {
   } = useAuthFlow(tenantId, id);
 
   const [registerMode, setRegisterMode] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+
+  // When a policy offers several methods with no fixed order, the user picks one and we render it
+  // as a single step.
+  const showPicker =
+    !isComplete &&
+    steps.length === 0 &&
+    availableMethods.length >= 2 &&
+    !selectedMethod;
+  const pickedStep: StepView | null = selectedMethod
+    ? {
+        method: selectedMethod,
+        order: 1,
+        requires_user: false,
+        allow_registration: false,
+        completed: false,
+        current: true,
+      }
+    : null;
+  const effectiveStep = currentStep ?? pickedStep;
 
   // initial-registration works without any configuration, so account creation is available by
   // default; it is hidden only when the step explicitly disables registration.
-  const canRegister = currentStep?.registration_mode !== "disabled";
-  const isPasswordStep = currentStep?.method === "password";
+  const canRegister = effectiveStep?.registration_mode !== "disabled";
+  const isPasswordStep = effectiveStep?.method === "password";
+  const canPickAnother = availableMethods.length >= 2 && selectedMethod !== null;
 
   // Federated sign-in belongs on the initial identification step (1st factor).
   const federations = viewData?.available_federations ?? [];
   const showSso =
     !isComplete &&
-    currentStep?.requires_user === false &&
+    !showPicker &&
+    effectiveStep?.requires_user === false &&
     federations.length > 0;
 
   if (!router.isReady || isLoading) return <Loading />;
@@ -66,24 +92,29 @@ export default function AuthPage() {
   const renderBody = () => {
     if (isError) {
       return (
-        <Typography color="error" align="center">
-          {"We couldn't load this sign-in. Please return to the app and try again."}
-        </Typography>
+        <AuthAlert message="We couldn't load this sign-in. Please return to the app and try again." />
       );
     }
     if (status === "failure" || status === "locked") {
       return (
-        <Typography color="error" align="center">
-          {status === "locked"
-            ? "Too many attempts. Your account is temporarily locked — please try again later."
-            : "We couldn't sign you in. Please return to the app and start over."}
-        </Typography>
+        <AuthAlert
+          message={
+            status === "locked"
+              ? "Too many attempts. Your account is temporarily locked — please try again later."
+              : "We couldn't sign you in. Please return to the app and start over."
+          }
+        />
       );
     }
     if (isComplete) {
       return <ConsentStep tenantId={tenantId} id={id} viewData={viewData} />;
     }
-    if (!currentStep) {
+    if (showPicker) {
+      return (
+        <MethodPicker methods={availableMethods} onSelect={setSelectedMethod} />
+      );
+    }
+    if (!effectiveStep) {
       // All known steps are done but the server has not reported success yet (transient between an
       // interaction and the status refetch).
       return <Loading />;
@@ -103,7 +134,7 @@ export default function AuthPage() {
         <StepRenderer
           tenantId={tenantId}
           id={id}
-          step={currentStep}
+          step={effectiveStep}
           onCompleted={refetch}
           passwordRegister={isPasswordStep ? registerMode : undefined}
         />
@@ -121,12 +152,30 @@ export default function AuthPage() {
               : "Don't have an account? Sign up"}
           </Link>
         )}
+        {canPickAnother && (
+          <Link
+            component="button"
+            type="button"
+            variant="body2"
+            underline="hover"
+            onClick={() => setSelectedMethod(null)}
+            sx={{ alignSelf: "center" }}
+          >
+            Use a different method
+          </Link>
+        )}
       </Stack>
     );
   };
 
   return (
-    <AuthCard title={title} subtitle={subtitle} logoUri={viewData?.logo_uri}>
+    <AuthCard
+      title={title}
+      subtitle={subtitle}
+      logoUri={viewData?.logo_uri}
+      tosUri={viewData?.tos_uri}
+      policyUri={viewData?.policy_uri}
+    >
       {steps.length > 1 && (
         <ConfigDrivenStepper steps={steps} isComplete={isComplete} />
       )}

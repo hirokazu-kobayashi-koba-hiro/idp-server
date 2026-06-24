@@ -21,13 +21,21 @@ const TERMINAL_OPERATIONS = new Set(["authentication", "registration"]);
 /** Interaction method that bootstraps account creation for a 1st-factor identify step. */
 const INITIAL_REGISTRATION = "initial-registration";
 
+/** Methods the UI can render; others in available_methods are ignored for step derivation. */
+const KNOWN_METHODS = new Set(["password", "email", "sms", "fido2", "fido-uaf"]);
+
+const singleStep = (method: string): StepDefinition => ({
+  method,
+  order: 1,
+  requires_user: false,
+  allow_registration: false,
+});
+
 /**
- * Fallback flow used when a policy defines no `step_definitions`: a single password authentication
- * step (`allow_registration: false` so it renders as login, not registration).
+ * Fallback flow used when a policy defines neither `step_definitions` nor usable
+ * `available_methods`: a single password authentication step.
  */
-const DEFAULT_STEPS: StepDefinition[] = [
-  { method: "password", order: 1, requires_user: false, allow_registration: false },
-];
+const DEFAULT_STEPS: StepDefinition[] = [singleStep("password")];
 
 const computeCompletedMethods = (status?: AuthStatus): Set<string> => {
   const completed = new Set<string>();
@@ -103,8 +111,22 @@ export const useAuthFlow = (tenantId?: string, id?: string) => {
   const configured: StepDefinition[] = [
     ...(viewData?.authentication_policy?.step_definitions ?? []),
   ].sort((a, b) => a.order - b.order);
-  // No step_definitions configured -> default to password authentication.
-  const definitions = configured.length > 0 ? configured : DEFAULT_STEPS;
+
+  const availableMethods = (
+    viewData?.authentication_policy?.available_methods ?? []
+  ).filter((method) => method !== "initial-registration" && KNOWN_METHODS.has(method));
+
+  // Step source: explicit step_definitions win. Otherwise derive from available_methods — exactly
+  // one method becomes a single step, several methods are offered via a picker (steps stay empty),
+  // and none falls back to password.
+  const definitions =
+    configured.length > 0
+      ? configured
+      : availableMethods.length === 1
+        ? [singleStep(availableMethods[0])]
+        : availableMethods.length === 0
+          ? DEFAULT_STEPS
+          : [];
 
   const completedMethods = computeCompletedMethods(status);
   const flowStatus: FlowStatus | string = status?.status ?? "in_progress";
@@ -131,6 +153,7 @@ export const useAuthFlow = (tenantId?: string, id?: string) => {
     viewData,
     steps,
     currentStep,
+    availableMethods,
     status: flowStatus,
     isComplete,
     isLoading: enabled && (viewDataQuery.isPending || statusQuery.isPending),

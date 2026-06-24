@@ -1,18 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
 import { useAtom } from "jotai";
 import { backendUrl } from "@/pages/_app";
+import { readErrorMessage } from "@/auth/http";
 import { authIdentifierAtom } from "@/state/AuthState";
+import { AuthAlert } from "@/components/auth/AuthAlert";
+import { OtpInput } from "@/components/auth/OtpInput";
 import { StepProps } from "./StepProps";
+
+const CODE_LENGTH = 6;
 
 /**
  * Email verification step (method "email").
@@ -67,7 +65,12 @@ export const EmailVerifyStep = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!response.ok) {
-        setMessage("That code is incorrect or has expired. Please try again.");
+        setMessage(
+          await readErrorMessage(
+            response,
+            "That code is incorrect or has expired. Please try again.",
+          ),
+        );
         return;
       }
       await onCompleted();
@@ -82,22 +85,8 @@ export const EmailVerifyStep = ({ tenantId, id, onCompleted }: StepProps) => {
         We sent a 6-digit code to {identifier || "your email"}. Enter it below to
         continue.
       </Typography>
-      <TextField
-        label="Verification code"
-        autoFocus
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        inputProps={{
-          inputMode: "numeric",
-          autoComplete: "one-time-code",
-          maxLength: 6,
-        }}
-      />
-      {message && (
-        <Typography color="error" variant="body2">
-          {message}
-        </Typography>
-      )}
+      <OtpInput value={code} onChange={setCode} length={CODE_LENGTH} autoFocus />
+      <AuthAlert message={message} />
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Button
           variant="text"
@@ -109,7 +98,7 @@ export const EmailVerifyStep = ({ tenantId, id, onCompleted }: StepProps) => {
         </Button>
         <Button
           variant="contained"
-          disabled={loading || !code}
+          disabled={loading || code.length < CODE_LENGTH}
           onClick={handleVerify}
           sx={{ textTransform: "none" }}
         >

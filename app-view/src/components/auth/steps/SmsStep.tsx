@@ -10,7 +10,12 @@ import {
   Typography,
 } from "@mui/material";
 import { backendUrl } from "@/pages/_app";
+import { readErrorMessage } from "@/auth/http";
+import { AuthAlert } from "@/components/auth/AuthAlert";
+import { OtpInput } from "@/components/auth/OtpInput";
 import { StepProps } from "./StepProps";
+
+const CODE_LENGTH = 6;
 
 /**
  * SMS one-time-code step (method "sms").
@@ -70,7 +75,12 @@ export const SmsStep = ({ tenantId, id, step, onCompleted }: StepProps) => {
         },
       );
       if (!response.ok) {
-        setMessage("That code is incorrect or has expired. Please try again.");
+        setMessage(
+          await readErrorMessage(
+            response,
+            "That code is incorrect or has expired. Please try again.",
+          ),
+        );
         return;
       }
       await onCompleted();
@@ -95,22 +105,13 @@ export const SmsStep = ({ tenantId, id, step, onCompleted }: StepProps) => {
           inputProps={{ inputMode: "tel", autoComplete: "tel" }}
         />
       )}
-      <TextField
-        label="Verification code"
-        autoFocus={!needsPhoneInput}
+      <OtpInput
         value={code}
-        onChange={(e) => setCode(e.target.value)}
-        inputProps={{
-          inputMode: "numeric",
-          autoComplete: "one-time-code",
-          maxLength: 6,
-        }}
+        onChange={setCode}
+        length={CODE_LENGTH}
+        autoFocus={!needsPhoneInput}
       />
-      {message && (
-        <Typography color="error" variant="body2">
-          {message}
-        </Typography>
-      )}
+      <AuthAlert message={message} />
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Button
           variant="text"
@@ -122,7 +123,7 @@ export const SmsStep = ({ tenantId, id, step, onCompleted }: StepProps) => {
         </Button>
         <Button
           variant="contained"
-          disabled={loading || !code}
+          disabled={loading || code.length < CODE_LENGTH}
           onClick={handleVerify}
           sx={{ textTransform: "none" }}
         >

@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Avatar, Box, Paper, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Link, Paper, Stack, Typography } from "@mui/material";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
 
 const BrandMark = ({ logoUri }: { logoUri?: string }) => {
@@ -39,7 +39,38 @@ type Props = {
   title?: string;
   subtitle?: string;
   logoUri?: string;
+  tosUri?: string;
+  policyUri?: string;
+  /** Replaces the default brand mark in the header (e.g. an error badge). */
+  icon?: ReactNode;
   children: ReactNode;
+};
+
+const LegalFooter = ({
+  tosUri,
+  policyUri,
+}: {
+  tosUri?: string;
+  policyUri?: string;
+}) => {
+  if (!tosUri && !policyUri) return null;
+  return (
+    <Typography variant="caption" color="text.secondary" textAlign="center">
+      By continuing you agree to our{" "}
+      {tosUri && (
+        <Link href={tosUri} target="_blank" rel="noopener" underline="hover">
+          Terms
+        </Link>
+      )}
+      {tosUri && policyUri && " and "}
+      {policyUri && (
+        <Link href={policyUri} target="_blank" rel="noopener" underline="hover">
+          Privacy Policy
+        </Link>
+      )}
+      .
+    </Typography>
+  );
 };
 
 /**
@@ -47,7 +78,15 @@ type Props = {
  * header. Every auth screen renders through this so spacing, elevation and the header stay
  * consistent in one place.
  */
-export const AuthCard = ({ title, subtitle, logoUri, children }: Props) => (
+export const AuthCard = ({
+  title,
+  subtitle,
+  logoUri,
+  tosUri,
+  policyUri,
+  icon,
+  children,
+}: Props) => (
   <Box
     sx={{
       minHeight: "100vh",
@@ -74,7 +113,7 @@ export const AuthCard = ({ title, subtitle, logoUri, children }: Props) => (
     >
       <Stack spacing={3.5}>
         <Stack spacing={1.5} alignItems="center" textAlign="center">
-          <BrandMark logoUri={logoUri} />
+          {icon ?? <BrandMark logoUri={logoUri} />}
           {title && (
             <Typography variant="h5" component="h1">
               {title}
@@ -87,6 +126,7 @@ export const AuthCard = ({ title, subtitle, logoUri, children }: Props) => (
           )}
         </Stack>
         {children}
+        <LegalFooter tosUri={tosUri} policyUri={policyUri} />
       </Stack>
     </Paper>
   </Box>

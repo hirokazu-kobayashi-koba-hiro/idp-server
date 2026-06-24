@@ -14,7 +14,9 @@ import {
 import { Email, Lock, Visibility, VisibilityOff } from "@mui/icons-material";
 import { useAtom } from "jotai";
 import { backendUrl } from "@/pages/_app";
+import { readErrorMessage } from "@/auth/http";
 import { authIdentifierAtom } from "@/state/AuthState";
+import { AuthAlert } from "@/components/auth/AuthAlert";
 import { StepProps } from "./StepProps";
 
 /**
@@ -49,7 +51,12 @@ export const RegisterStep = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!response.ok) {
-        setMessage("We couldn't create your account. Please try again.");
+        setMessage(
+          await readErrorMessage(
+            response,
+            "We couldn't create your account. Please try again.",
+          ),
+        );
         return;
       }
       setIdentifier(email);
@@ -104,11 +111,7 @@ export const RegisterStep = ({ tenantId, id, onCompleted }: StepProps) => {
           ),
         }}
       />
-      {message && (
-        <Typography color="error" variant="body2">
-          {message}
-        </Typography>
-      )}
+      <AuthAlert message={message} />
       <Box display="flex" justifyContent="flex-end">
         <Button
           variant="contained"

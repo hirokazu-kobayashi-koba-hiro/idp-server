@@ -10,6 +10,7 @@ import { EmailVerifyStep } from "./steps/EmailVerifyStep";
 import { SmsStep } from "./steps/SmsStep";
 import { Fido2Step } from "./steps/Fido2Step";
 import { Fido2AuthStep } from "./steps/Fido2AuthStep";
+import { FidoUafStep } from "./steps/FidoUafStep";
 
 /**
  * Whether a step verifies an existing credential rather than registering a new one.
@@ -45,6 +46,8 @@ const resolveStepComponent = (
       return SmsStep;
     case "fido2":
       return isAuthenticateOnly(step) ? Fido2AuthStep : Fido2Step;
+    case "fido-uaf":
+      return FidoUafStep;
     default:
       return undefined;
   }

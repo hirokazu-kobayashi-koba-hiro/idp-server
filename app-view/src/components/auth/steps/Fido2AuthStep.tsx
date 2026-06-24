@@ -12,8 +12,10 @@ import {
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
 import { useAtom } from "jotai";
 import { backendUrl } from "@/pages/_app";
+import { readErrorMessage } from "@/auth/http";
 import { authIdentifierAtom } from "@/state/AuthState";
 import { base64UrlToBuffer, bufferToBase64Url } from "@/auth/webauthn";
+import { AuthAlert } from "@/components/auth/AuthAlert";
 import { StepProps } from "./StepProps";
 
 type Credential = {
@@ -69,7 +71,12 @@ export const Fido2AuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!challengeRes.ok) {
-        setMessage("We couldn't start passkey sign-in. Please try again.");
+        setMessage(
+          await readErrorMessage(
+            challengeRes,
+            "We couldn't start passkey sign-in. Please try again.",
+          ),
+        );
         return;
       }
 
@@ -138,7 +145,12 @@ export const Fido2AuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
         },
       );
       if (!authRes.ok) {
-        setMessage("We couldn't verify your passkey. Please try again.");
+        setMessage(
+          await readErrorMessage(
+            authRes,
+            "We couldn't verify your passkey. Please try again.",
+          ),
+        );
         return;
       }
       await onCompleted();
@@ -174,11 +186,7 @@ export const Fido2AuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
       <Box display="flex" justifyContent="center">
         <FingerprintIcon sx={{ fontSize: 40, color: "primary.main" }} />
       </Box>
-      {message && (
-        <Typography color="error" variant="body2" align="center">
-          {message}
-        </Typography>
-      )}
+      <AuthAlert message={message} />
       <Button
         variant="contained"
         disabled={loading}
