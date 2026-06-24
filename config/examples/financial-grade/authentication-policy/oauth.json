@@ -5,7 +5,7 @@
   "policies": [
     {
       "description": "financial_high_security_policy_for_transfers",
-      "priority": 1,
+      "priority": 100,
       "conditions": {
         "scopes": [
           "transfers",
@@ -29,7 +29,7 @@
           "method": "fido2",
           "order": 2,
           "requires_user": true,
-          "allow_registration": false,
+          "allow_registration": true,
           "user_identity_source": "sub"
         }
       ],
@@ -66,18 +66,22 @@
           ],
           [
             {
-              "path": "$.fido-uaf-authentication.success_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 1
-            }
-          ],
-          [
-            {
               "path": "$.email-authentication.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1
+            },
+            {
+              "path": "$.fido2-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.user.status",
+              "type": "string",
+              "operation": "eq",
+              "value": "IDENTITY_VERIFICATION_REQUIRED"
             }
           ]
         ]

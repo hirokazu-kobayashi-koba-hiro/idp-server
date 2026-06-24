@@ -474,204 +474,82 @@ curl --cert ./config/examples/financial-grade/certs/client-cert.pem \
 
 ## 認証フロー動作確認
 
-### パターン1: 初回ユーザー登録フロー（initial-registration）
+`require_pkce` / FAPI のため、認可コードフローには PKCE（`code_challenge` / `code_verifier`）が必要です。PKCE 生成とトランザクションID・認可コードの受け渡しは [`helpers.sh`](./helpers.sh) の関数に閉じ込めているので、関数を順番に呼ぶだけで各フローを実行できます。
 
-新規ユーザーを登録してトークンを取得するフローです。
+`fapi_authorize` は API 続行用の `AUTH_TX_ID` に加えて、ブラウザで開いて画面操作（ログイン/同意）で続行できる **`AUTHZ_URL`** も出力します（PKCE は `CODE_VERIFIER` と同一なので、画面で同意 → `redirect_uri` の `code` を `AUTH_CODE` に入れて `fapi_token` まで繋がります）。
 
 ```bash
-TENANT_ID="c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8"
-CLIENT_ID="d4e5f6a7-b8c9-d0e1-f2a3-b4c5d6e7f8a9"
-REDIRECT_URI="http://localhost:3000/callback/"
-CERT_FILE="./certs/client-cert.pem"
-
-# Step 1: 認可リクエストを開始
-curl -v -X GET "https://localhost:8443/${TENANT_ID}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email%20account&state=test-state"
-
-# URLから認証トランザクションIDを取得
-export AUTH_TX_ID="取得したID"
-
-# Step 2: 証明書エンコード（x-ssl-certヘッダー用）
-ENCODED_CERT=$(cat ${CERT_FILE} | awk '{printf "%s%%0A", $0}' | sed 's/%0A$//')
-
-# Step 3: 新規ユーザー登録（initial-registration API）
-curl -X POST "https://localhost:8443/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/initial-registration" \
-  -H "Content-Type: application/json" \
-  -H "x-ssl-cert: ${ENCODED_CERT}" \
-  -d '{
-    "email": "user@financial-institution.example.com",
-    "name": "金融ユーザー",
-    "phone_number": "090-1234-5678",
-    "password": "SecureFinancialPass123!"
-  }' | jq
-
-# Step 4: 認可許諾
-curl -X POST "https://localhost:8443/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/authorize" \
-  -H "Content-Type: application/json" \
-  -H "x-ssl-cert: ${ENCODED_CERT}" | jq
-
-# レスポンス例
-# {
-#   "redirect_uri": "http://localhost:3000/callback/?code=AUTHORIZATION_CODE&state=test-state"
-# }
-
-# Step 5: 認可コードをトークンに交換（MTLS認証）
-AUTH_CODE="取得した認可コード"
-
-curl -X POST "https://localhost:8443/${TENANT_ID}/v1/tokens" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -H "x-ssl-cert: ${ENCODED_CERT}" \
-  --data-urlencode "grant_type=authorization_code" \
-  --data-urlencode "code=${AUTH_CODE}" \
-  --data-urlencode "redirect_uri=${REDIRECT_URI}" \
-  --data-urlencode "client_id=${CLIENT_ID}" | jq
-
-# レスポンス例（証明書バインドされたトークン）
-# {
-#   "access_token": "eyJhbGc...",
-#   "token_type": "Bearer",
-#   "expires_in": 900,
-#   "refresh_token": "...",
-#   "id_token": "eyJraWQ...",
-#   "scope": "openid profile email account"
-# }
+cd config/examples/financial-grade
+source helpers.sh
 ```
+
+> **前提**: クライアント証明書を生成済みであること（`self_signed_tls_client_auth` の x-ssl-cert に使用）。
+> `./config/scripts/generate-client-certificate.sh -c financial-web-app -o ./config/examples/financial-grade/certs`
+
+> **Note**: テナントは `require_signed_request_object: true` のため、`fapi_authorize` は認可リクエストを**署名付き JWT リクエストオブジェクト（JAR, RFC 9101）**にして `request=` で値渡しします（PAR は不要）。署名は `financial-client.json` の EC 秘密鍵で ES256、生成は [`sign-request-object.js`](./sign-request-object.js)（Node 組み込み crypto のみ、`node` が必要）。これにより `transfers` / `write`（FAPI Advance）も含めて全スコープが通ります。
+
+### パターン1: 初回ユーザー登録フロー（initial-registration）
+
+新規ユーザーを登録してトークンを取得します。`fapi_register` の引数（email / password / name / phone）は省略するとデフォルト値を使います。
+
+```bash
+fapi_authorize "openid profile email account"
+fapi_register
+fapi_consent
+fapi_token
+fapi_userinfo
+```
+
+#### 確認ポイント
+
+- `fapi_token` で `access_token` / `id_token` / `refresh_token` が取得できること
+- `client_secret` を使わず証明書のみで認証していること（`self_signed_tls_client_auth`）
 
 ### パターン2: 既存ユーザーログインフロー（password-authentication）
 
-既に登録済みのユーザーでログインしてトークンを取得するフローです。
+登録済みユーザーでログインしてトークンを取得します。
 
 ```bash
-TENANT_ID="c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8"
-CLIENT_ID="d4e5f6a7-b8c9-d0e1-f2a3-b4c5d6e7f8a9"
-REDIRECT_URI="http://localhost:3000/callback/"
-CERT_FILE="./certs/client-cert.pem"
-
-# Step 1: 認可リクエストを開始
-curl -v -X GET "https://localhost:8443/${TENANT_ID}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email%20account%20transfers&state=test-state"
-
-# 認証トランザクションIDを取得
-export AUTH_TX_ID="取得したID"
-
-# 証明書エンコード
-ENCODED_CERT=$(cat ${CERT_FILE} | awk '{printf "%s%%0A", $0}' | sed 's/%0A$//')
-
-# Step 2: パスワード認証
-curl -X POST "https://localhost:8443/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/password-authentication" \
-  -H "Content-Type: application/json" \
-  -H "x-ssl-cert: ${ENCODED_CERT}" \
-  -d '{
-    "username": "user@financial-institution.example.com",
-    "password": "SecureFinancialPass123!"
-  }' | jq
-
-# Step 3: 認可許諾
-curl -X POST "https://localhost:8443/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/authorize" \
-  -H "Content-Type: application/json" \
-  -H "x-ssl-cert: ${ENCODED_CERT}" | jq
-
-# Step 4: トークン取得（MTLS認証）
-AUTH_CODE="取得した認可コード"
-
-curl -X POST "https://localhost:8443/${TENANT_ID}/v1/tokens" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -H "x-ssl-cert: ${ENCODED_CERT}" \
-  --data-urlencode "grant_type=authorization_code" \
-  --data-urlencode "code=${AUTH_CODE}" \
-  --data-urlencode "redirect_uri=${REDIRECT_URI}" \
-  --data-urlencode "client_id=${CLIENT_ID}" | jq
+fapi_authorize "openid profile email account"
+fapi_password user@financial-institution.example.com SecureFinancialPass123!
+fapi_consent
+fapi_token
 ```
 
 ### パターン3: 高セキュリティ操作（送金・決済）- WebAuthn必須
 
-`transfers`スコープを要求する場合、WebAuthn/FIDO-UAF認証が必須です（認証ポリシーにより強制）。
+`transfers` スコープは認証ポリシーにより WebAuthn/FIDO-UAF が必須です。FIDO2 の assertion はブラウザの WebAuthn API（認証器）から取得し、その JSON を `fapi_fido2` に渡します。
 
 ```bash
-TENANT_ID="c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8"
-CLIENT_ID="d4e5f6a7-b8c9-d0e1-f2a3-b4c5d6e7f8a9"
-REDIRECT_URI="http://localhost:3000/callback/"
-CERT_FILE="./certs/client-cert.pem"
-
-# Step 1: 認可リクエスト（transfersスコープ含む）
-curl -v -X GET "https://localhost:8443/${TENANT_ID}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20transfers&state=test-state"
-
-# 認証トランザクションIDを取得
-export AUTH_TX_ID="取得したID"
-
-# 証明書エンコード
-ENCODED_CERT=$(cat ${CERT_FILE} | awk '{printf "%s%%0A", $0}' | sed 's/%0A$//')
-
-# Step 2: WebAuthn認証が要求される
-# 認証ポリシー "financial_high_security_policy_for_transfers" により
-# password-authenticationは拒否され、WebAuthn/FIDO-UAFのみ許可
-
-# WebAuthn登録（事前準備）
-# curl -X POST "https://localhost:8443/${TENANT_ID}/v1/me/authentication-devices/webauthn/register/start" ...
-
-# WebAuthn認証
-curl -X POST "https://localhost:8443/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/fido2-authentication" \
-  -H "Content-Type: application/json" \
-  -H "x-ssl-cert: ${ENCODED_CERT}" \
-  -d '{
-    "credential": {
-      "id": "credential-id",
-      "rawId": "...",
-      "response": {
-        "authenticatorData": "...",
-        "clientDataJSON": "...",
-        "signature": "..."
-      },
-      "type": "public-key"
-    }
-  }' | jq
-
-# Step 3: 認可許諾
-curl -X POST "https://localhost:8443/${TENANT_ID}/v1/authorizations/${AUTH_TX_ID}/authorize" \
-  -H "Content-Type: application/json" \
-  -H "x-ssl-cert: ${ENCODED_CERT}" | jq
-
-# Step 4: トークン取得
-AUTH_CODE="取得した認可コード"
-
-curl -X POST "https://localhost:8443/${TENANT_ID}/v1/tokens" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -H "x-ssl-cert: ${ENCODED_CERT}" \
-  --data-urlencode "grant_type=authorization_code" \
-  --data-urlencode "code=${AUTH_CODE}" \
-  --data-urlencode "redirect_uri=${REDIRECT_URI}" \
-  --data-urlencode "client_id=${CLIENT_ID}" | jq
+fapi_authorize "openid transfers"
+# assertion JSON は認証器から取得して渡す
+fapi_fido2 '{
+  "credential": {
+    "id": "credential-id",
+    "rawId": "...",
+    "response": {
+      "authenticatorData": "...",
+      "clientDataJSON": "...",
+      "signature": "..."
+    },
+    "type": "public-key"
+  }
+}'
+fapi_consent
+fapi_token
 ```
+
+> `transfers` は FAPI Advance スコープ（署名付きリクエストオブジェクト必須）ですが、`fapi_authorize` が JAR を自動署名するため上記 Note の通りそのまま通ります。
 
 ### パターン4: Refresh Tokenの使用
 
+直前の `fapi_token` で取得した `REFRESH_TOKEN` を使ってアクセストークンを更新します。
+
 ```bash
-TENANT_ID="c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8"
-CLIENT_ID="d4e5f6a7-b8c9-d0e1-f2a3-b4c5d6e7f8a9"
-CERT_FILE="./certs/client-cert.pem"
-
-# 証明書エンコード
-ENCODED_CERT=$(cat ${CERT_FILE} | awk '{printf "%s%%0A", $0}' | sed 's/%0A$//')
-
-# Refresh Tokenでアクセストークンを更新（MTLS認証）
-REFRESH_TOKEN="前回取得したリフレッシュトークン"
-
-curl -X POST "https://localhost:8443/${TENANT_ID}/v1/tokens" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -H "x-ssl-cert: ${ENCODED_CERT}" \
-  --data-urlencode "grant_type=refresh_token" \
-  --data-urlencode "refresh_token=${REFRESH_TOKEN}" \
-  --data-urlencode "client_id=${CLIENT_ID}" | jq
-
-# レスポンス例（新しいaccess_tokenとrefresh_token）
-# {
-#   "access_token": "eyJhbGc...",
-#   "token_type": "Bearer",
-#   "expires_in": 900,
-#   "refresh_token": "...",
-#   "scope": "openid profile email account transfers"
-# }
+fapi_refresh
 ```
 
-**重要**: Refresh Token使用時も、**同じクライアント証明書**が必要です（`tls_client_certificate_bound_access_tokens: true`のため）。
+**重要**: Refresh Token 使用時も同じクライアント証明書が必要です（`tls_client_certificate_bound_access_tokens: true`）。`helpers.sh` の各関数は x-ssl-cert を自動付与します。
 
 ## リファレンス
 

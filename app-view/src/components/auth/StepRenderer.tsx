@@ -2,7 +2,10 @@
 
 import { ComponentType } from "react";
 import { Typography } from "@mui/material";
+import { useAtom } from "jotai";
 import { StepView } from "@/auth/types";
+import { shouldFido2Authenticate } from "@/auth/stepHelpers";
+import { authUserStatusAtom } from "@/state/AuthState";
 import { StepProps } from "./steps/StepProps";
 import { RegisterStep } from "./steps/RegisterStep";
 import { PasswordAuthStep } from "./steps/PasswordAuthStep";
@@ -13,23 +16,22 @@ import { Fido2AuthStep } from "./steps/Fido2AuthStep";
 import { FidoUafStep } from "./steps/FidoUafStep";
 
 /**
- * Whether a step verifies an existing credential rather than registering a new one.
- *
- * `allow_registration: false` (or `registration_mode: "disabled"`) marks a pure 2nd-factor
- * verification — e.g. the financial-grade `fido2` step that uses `fido2-authentication`. Otherwise
- * the step may register a new credential.
+ * Whether a step verifies an existing credential rather than registering a new one, based on the
+ * step's flags alone (used for the password method, where the page also offers an explicit toggle).
  */
 const isAuthenticateOnly = (step: StepView): boolean =>
   step.allow_registration === false || step.registration_mode === "disabled";
 
 /**
- * Resolves a step to its component from `method` plus the register/authenticate distinction.
+ * Resolves a step to its component from `method`, the register/authenticate distinction, and the
+ * current `user.status`.
  *
  * Adding a new method (or a new register/authenticate variant) means editing only this resolver —
  * no new page or route. Steps with no mapping fall back to a notice.
  */
 const resolveStepComponent = (
   step: StepView,
+  userStatus: string,
   passwordRegister?: boolean,
 ): ComponentType<StepProps> | undefined => {
   switch (step.method) {
@@ -45,7 +47,9 @@ const resolveStepComponent = (
     case "sms":
       return SmsStep;
     case "fido2":
-      return isAuthenticateOnly(step) ? Fido2AuthStep : Fido2Step;
+      // Established user → authenticate an existing passkey; new / initial user → register one
+      // (unless the policy forces a mode). See shouldFido2Authenticate.
+      return shouldFido2Authenticate(step, userStatus) ? Fido2AuthStep : Fido2Step;
     case "fido-uaf":
       return FidoUafStep;
     default:
@@ -58,8 +62,12 @@ type StepRendererProps = StepProps & {
   passwordRegister?: boolean;
 };
 
-export const StepRenderer = ({ passwordRegister, ...props }: StepRendererProps) => {
-  const Component = resolveStepComponent(props.step, passwordRegister);
+export const StepRenderer = ({
+  passwordRegister,
+  ...props
+}: StepRendererProps) => {
+  const [userStatus] = useAtom(authUserStatusAtom);
+  const Component = resolveStepComponent(props.step, userStatus, passwordRegister);
   if (!Component) {
     return (
       <Typography color="text.secondary" variant="body2">
