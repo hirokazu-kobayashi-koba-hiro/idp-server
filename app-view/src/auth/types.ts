@@ -35,10 +35,21 @@ export type Federation = {
   auto_selected?: boolean;
 };
 
+/**
+ * Requested claims surfaced for claim-level consent (view-data `claims`, OIDC4IDA §5.7.3). Each
+ * entry is a list of claim names; denying a name removes it from all three at grant build time.
+ */
+export type RequestedClaims = {
+  id_token?: string[];
+  userinfo?: string[];
+  verified_claims?: string[];
+};
+
 export type ViewData = {
   client_name?: string;
   logo_uri?: string;
   scopes?: string[];
+  claims?: RequestedClaims;
   authentication_policy?: AuthenticationPolicy;
   available_federations?: Federation[];
   custom_params?: Record<string, string>;

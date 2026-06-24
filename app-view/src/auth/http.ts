@@ -1,4 +1,18 @@
 /**
+ * Reads `user.status` (e.g. "INITIALIZED" / "REGISTERED") from a successful authentication
+ * response. Returns "" when absent or the body is not JSON. Consumes the response body.
+ */
+export const readUserStatus = async (response: Response): Promise<string> => {
+  try {
+    const body = await response.json();
+    const status = body?.user?.status;
+    return typeof status === "string" ? status : "";
+  } catch {
+    return "";
+  }
+};
+
+/**
  * Extracts a user-facing message from a failed interaction response.
  *
  * idp-server returns structured errors ({@code { error, error_description }}); prefer the

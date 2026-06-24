@@ -130,24 +130,30 @@ export const useAuthFlow = (tenantId?: string, id?: string) => {
 
   const completedMethods = computeCompletedMethods(status);
   const flowStatus: FlowStatus | string = status?.status ?? "in_progress";
-  const isComplete = flowStatus === "success";
 
   const firstIncompleteOrder = definitions.find(
     (step) => !acceptingMethods(step).some((m) => completedMethods.has(m)),
   )?.order;
 
-  const steps: StepView[] = definitions.map((step) => {
-    const completed =
-      isComplete ||
-      acceptingMethods(step).some((m) => completedMethods.has(m));
-    return {
-      ...step,
-      completed,
-      current: !isComplete && step.order === firstIncompleteOrder,
-    };
-  });
+  const steps: StepView[] = definitions.map((step) => ({
+    ...step,
+    completed: acceptingMethods(step).some((m) => completedMethods.has(m)),
+    current: step.order === firstIncompleteOrder,
+  }));
 
-  const currentStep = steps.find((step) => step.current) ?? null;
+  // step_definitions takes priority over the policy's success_conditions: when steps are defined,
+  // the flow finishes only once every step is done — it is NOT short-circuited by an early
+  // condition-tree "success" (e.g. an any_of that a single factor already satisfies). Without
+  // step_definitions, fall back to the server status. failure/locked are surfaced from status by
+  // the page regardless.
+  const hasStepDefinitions = configured.length > 0;
+  const isComplete = hasStepDefinitions
+    ? steps.length > 0 && steps.every((step) => step.completed)
+    : flowStatus === "success";
+
+  const currentStep = isComplete
+    ? null
+    : (steps.find((step) => step.current) ?? null);
 
   return {
     viewData,

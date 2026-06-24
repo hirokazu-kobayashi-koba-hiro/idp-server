@@ -14,8 +14,8 @@ import {
 import { Email, Lock, Visibility, VisibilityOff } from "@mui/icons-material";
 import { useAtom } from "jotai";
 import { backendUrl } from "@/pages/_app";
-import { readErrorMessage } from "@/auth/http";
-import { authIdentifierAtom } from "@/state/AuthState";
+import { readErrorMessage, readUserStatus } from "@/auth/http";
+import { authIdentifierAtom, authUserStatusAtom } from "@/state/AuthState";
 import { AuthAlert } from "@/components/auth/AuthAlert";
 import { StepProps } from "./StepProps";
 
@@ -28,6 +28,7 @@ import { StepProps } from "./StepProps";
  */
 export const PasswordAuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
   const [identifier, setIdentifier] = useAtom(authIdentifierAtom);
+  const [, setUserStatus] = useAtom(authUserStatusAtom);
   const [email, setEmail] = useState(identifier);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -57,6 +58,7 @@ export const PasswordAuthStep = ({ tenantId, id, onCompleted }: StepProps) => {
         return;
       }
       setIdentifier(email);
+      setUserStatus(await readUserStatus(response));
       await onCompleted();
     } finally {
       setLoading(false);

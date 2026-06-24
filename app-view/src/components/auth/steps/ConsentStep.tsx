@@ -1,8 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import {
+  Box,
+  Button,
+  Checkbox,
+  CircularProgress,
+  FormControlLabel,
+  FormGroup,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { backendUrl } from "@/pages/_app";
 import { ViewData } from "@/auth/types";
 
@@ -17,6 +25,53 @@ const SCOPE_LABELS: Record<string, string> = {
 
 const describeScope = (scope: string): string => SCOPE_LABELS[scope] ?? scope;
 
+const humanizeClaim = (name: string): string =>
+  name.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+
+type ConsentItem = { value: string; label: string };
+
+const ConsentSection = ({
+  title,
+  items,
+  denied,
+  onToggle,
+}: {
+  title: string;
+  items: ConsentItem[];
+  denied: Set<string>;
+  onToggle: (value: string) => void;
+}) => {
+  if (items.length === 0) return null;
+  return (
+    <Box>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        fontWeight={600}
+        display="block"
+      >
+        {title}
+      </Typography>
+      <FormGroup>
+        {items.map((item) => (
+          <FormControlLabel
+            key={item.value}
+            sx={{ my: -0.25 }}
+            control={
+              <Checkbox
+                size="small"
+                checked={!denied.has(item.value)}
+                onChange={() => onToggle(item.value)}
+              />
+            }
+            label={<Typography variant="body2">{item.label}</Typography>}
+          />
+        ))}
+      </FormGroup>
+    </Box>
+  );
+};
+
 type Props = {
   tenantId: string;
   id: string;
@@ -26,17 +81,54 @@ type Props = {
 /**
  * Terminal consent step, shown once the authentication flow status is "success".
  *
- * Allow → `authorize`, Deny → `deny`; both redirect back to the client via the returned
- * `redirect_uri`.
+ * Allow → `authorize`, Cancel → `deny`; both redirect back via the returned `redirect_uri`.
+ * Per-scope and per-claim checkboxes let the user decline individual items; declined names are
+ * sent as `denied_scopes` / `denied_claims` and removed from the grant (OIDC4IDA §5.7.3 for
+ * claims; scope removal merges with policy-enforced denials server-side).
  */
 export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
   const [loading, setLoading] = useState(false);
+  const [deniedScopes, setDeniedScopes] = useState<Set<string>>(new Set());
+  const [deniedClaims, setDeniedClaims] = useState<Set<string>>(new Set());
 
   const clientName = viewData?.client_name ?? "the application";
-  // "openid" is a protocol marker, not a user-facing permission.
-  const permissions = (viewData?.scopes ?? []).filter(
-    (scope) => scope !== "openid",
+  // "openid" is a protocol marker, not a user-facing/declinable permission.
+  const scopeItems: ConsentItem[] = (viewData?.scopes ?? [])
+    .filter((scope) => scope !== "openid")
+    .map((scope) => ({ value: scope, label: describeScope(scope) }));
+
+  const claims = viewData?.claims;
+  // "sub" is the essential subject identifier and is never deniable.
+  const verifiedNames = (claims?.verified_claims ?? []).filter(
+    (name) => name !== "sub",
   );
+  const verifiedSet = new Set(verifiedNames);
+  const standardNames = Array.from(
+    new Set([...(claims?.id_token ?? []), ...(claims?.userinfo ?? [])]),
+  ).filter((name) => name !== "sub" && !verifiedSet.has(name));
+
+  const standardItems = standardNames.map((name) => ({
+    value: name,
+    label: humanizeClaim(name),
+  }));
+  const verifiedItems = verifiedNames.map((name) => ({
+    value: name,
+    label: humanizeClaim(name),
+  }));
+
+  const hasConsentItems =
+    scopeItems.length > 0 ||
+    standardItems.length > 0 ||
+    verifiedItems.length > 0;
+
+  const toggle =
+    (setter: typeof setDeniedScopes) => (value: string) =>
+      setter((prev) => {
+        const next = new Set(prev);
+        if (next.has(value)) next.delete(value);
+        else next.add(value);
+        return next;
+      });
 
   const submit = async (action: "authorize" | "deny") => {
     setLoading(true);
@@ -49,7 +141,11 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
           headers: { "Content-Type": "application/json" },
           body:
             action === "authorize"
-              ? JSON.stringify({ action: "signup" })
+              ? JSON.stringify({
+                  action: "signup",
+                  denied_scopes: Array.from(deniedScopes),
+                  denied_claims: Array.from(deniedClaims),
+                })
               : undefined,
         },
       );
@@ -65,7 +161,8 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
       <Typography variant="body2" color="text.secondary">
         Continue to {clientName} to finish signing in.
       </Typography>
-      {permissions.length > 0 && (
+
+      {hasConsentItems && (
         <Box
           sx={{
             borderRadius: 2,
@@ -75,28 +172,31 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
           }}
         >
           <Typography variant="caption" color="text.secondary">
-            {clientName} will be able to access
+            Choose what to share with {clientName}
           </Typography>
-          <Stack
-            component="ul"
-            spacing={1}
-            sx={{ listStyle: "none", pl: 0, m: 0, mt: 1 }}
-          >
-            {permissions.map((scope) => (
-              <Stack
-                key={scope}
-                component="li"
-                direction="row"
-                spacing={1}
-                alignItems="center"
-              >
-                <CheckCircleOutlineIcon fontSize="small" color="success" />
-                <Typography variant="body2">{describeScope(scope)}</Typography>
-              </Stack>
-            ))}
+          <Stack spacing={1.5} mt={1}>
+            <ConsentSection
+              title="Permissions"
+              items={scopeItems}
+              denied={deniedScopes}
+              onToggle={toggle(setDeniedScopes)}
+            />
+            <ConsentSection
+              title="Profile information"
+              items={standardItems}
+              denied={deniedClaims}
+              onToggle={toggle(setDeniedClaims)}
+            />
+            <ConsentSection
+              title="Verified information"
+              items={verifiedItems}
+              denied={deniedClaims}
+              onToggle={toggle(setDeniedClaims)}
+            />
           </Stack>
         </Box>
       )}
+
       <Box display="flex" justifyContent="space-between" gap={2}>
         <Button
           variant="outlined"

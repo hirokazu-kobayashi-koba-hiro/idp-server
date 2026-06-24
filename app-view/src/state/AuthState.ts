@@ -38,3 +38,19 @@ export const authIdentifierAtom = atomWithStorage(
     getOnInit: true,
   },
 );
+
+/**
+ * User status from the last successful authentication response (`user.status`, e.g.
+ * "INITIALIZED" / "REGISTERED").
+ *
+ * Persisted so later steps can adapt — e.g. a just-initialized user has no phone number on file
+ * yet, so the SMS step must let them enter one even as a 2nd factor.
+ */
+export const authUserStatusAtom = atomWithStorage(
+  "authUserStatus",
+  "",
+  sessionStorage,
+  {
+    getOnInit: true,
+  },
+);
