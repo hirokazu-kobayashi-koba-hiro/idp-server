@@ -36,6 +36,7 @@ import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.response.ResponseModeDecidable;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
+import org.idp.server.core.openid.oauth.type.extension.DeniedClaims;
 import org.idp.server.core.openid.oauth.type.extension.DeniedScopes;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
 import org.idp.server.core.openid.oauth.type.oauth.*;
@@ -50,6 +51,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
   Authentication authentication;
   CustomProperties customProperties;
   DeniedScopes deniedScopes;
+  DeniedClaims deniedClaims;
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
 
@@ -61,6 +63,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
       Authentication authentication,
       CustomProperties customProperties,
       DeniedScopes deniedScopes,
+      DeniedClaims deniedClaims,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.authorizationRequest = authorizationRequest;
@@ -68,6 +71,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     this.authentication = authentication;
     this.customProperties = customProperties;
     this.deniedScopes = deniedScopes;
+    this.deniedClaims = deniedClaims;
     this.clientConfiguration = clientConfiguration;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
   }
@@ -103,14 +107,15 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
 
     GrantIdTokenClaims grantIdTokenClaims =
         GrantIdTokenClaims.create(
-            removeScopes,
-            responseType,
-            supportedClaims,
-            requestedClaimsPayload.idToken(),
-            idTokenStrictMode);
+                removeScopes,
+                responseType,
+                supportedClaims,
+                requestedClaimsPayload.idToken(),
+                idTokenStrictMode)
+            .removeClaims(deniedClaims);
     GrantUserinfoClaims grantUserinfoClaims =
-        GrantUserinfoClaims.create(
-            removeScopes, supportedClaims, requestedClaimsPayload.userinfo());
+        GrantUserinfoClaims.create(removeScopes, supportedClaims, requestedClaimsPayload.userinfo())
+            .removeClaims(deniedClaims);
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
     ConsentClaims consentClaims = createConsentClaims();
     GrantType grantType = GrantType.authorization_code;

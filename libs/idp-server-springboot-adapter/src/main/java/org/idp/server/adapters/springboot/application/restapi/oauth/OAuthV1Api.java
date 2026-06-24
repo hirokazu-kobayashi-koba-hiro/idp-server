@@ -296,11 +296,13 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
   public ResponseEntity<?> authorize(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      @RequestBody(required = false) Map<String, Object> body,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
     OAuthAuthorizeResponse authAuthorizeResponse =
-        oAuthFlowApi.authorize(tenantIdentifier, authorizationRequestIdentifier, requestAttributes);
+        oAuthFlowApi.authorize(
+            tenantIdentifier, authorizationRequestIdentifier, body, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");

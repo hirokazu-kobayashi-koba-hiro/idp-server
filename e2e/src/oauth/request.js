@@ -34,6 +34,7 @@ export const requestAuthorizations = async ({
   codeChallengeMethod,
   authorizationDetails,
   customParams,
+  deniedClaims,
   action = "authorize",
   authorizeEndpoint,
   denyEndpoint,
@@ -115,7 +116,7 @@ export const requestAuthorizations = async ({
       const authorizeResponse = await authorize({
         endpoint: authorizeEndpoint || serverConfig.authorizeEndpoint,
         id,
-        body: {}
+        body: deniedClaims ? { denied_claims: deniedClaims } : {}
       });
 
       // console.log(authorizeResponse.headers);

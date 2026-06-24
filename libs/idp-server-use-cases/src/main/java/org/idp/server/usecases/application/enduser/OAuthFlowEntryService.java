@@ -438,6 +438,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
   public OAuthAuthorizeResponse authorize(
       TenantIdentifier tenantIdentifier,
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      Map<String, Object> params,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
@@ -463,6 +464,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
                 ? authenticationTransaction.authentication()
                 : null);
     oAuthAuthorizeRequest.setDeniedScopes(deniedScopes);
+    oAuthAuthorizeRequest.setDeniedClaims(extractDeniedClaims(params));
 
     // Create ClientSession for OIDC Session Management
     oidcSessionHandler
@@ -508,6 +510,23 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     }
 
     return authorize;
+  }
+
+  /**
+   * Claim names the end-user declined to share on the consent screen, taken from the authorize
+   * request body ({@code denied_claims}). Empty when no body / no denial. The names are removed
+   * from the granted id_token / userinfo / verified_claims at grant build time (OIDC4IDA Section
+   * 5.7.3).
+   */
+  private List<String> extractDeniedClaims(Map<String, Object> params) {
+    if (params == null) {
+      return List.of();
+    }
+    Object value = params.get("denied_claims");
+    if (value instanceof List<?> list) {
+      return list.stream().map(String::valueOf).toList();
+    }
+    return List.of();
   }
 
   public OAuthAuthorizeResponse authorizeWithSession(
