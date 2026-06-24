@@ -1,9 +1,9 @@
 name: Scan dependencies
 
-# Trivy で依存ライブラリ（fat jar に同梱される runtime 依存）の脆弱性を fs スキャンし、
+# Trivy で依存ライブラリ（fat jar に同梱される runtime 依存）の脆弱性をスキャンし、
 # 結果を GitHub Security タブ（Code scanning）に SARIF でアップロードする。
-# Keycloak の scan-dependencies.yml を Gradle 向けに調整したもの。
-#   - スキャン対象: ./gradlew :app:bootJar の生成物（同梱依存を持つ fat jar）
+#   - スキャン対象: ./gradlew :app:bootJar の fat jar（同梱依存を含む）
+#   - スキャンモード: rootfs（fs と異なり jar アナライザが有効になり、fat jar 内の依存まで検出できる）
 #   - スキャナ: vuln のみ（依存の CVE 検出）
 #   - 方針: report-only（CVE 検出でも CI は落とさず、Security タブで可視化する）
 on:
@@ -37,6 +37,16 @@ jobs:
       - name: Build application jar
         run: ./gradlew :app:bootJar -x test --no-daemon
 
+      # Trivy の脆弱性 DB / Java DB（数百 MB）の再取得を避けるためキャッシュする。
+      # 実行ごとに新しいキーで保存しつつ、restore-keys で前回分を復元する。
+      - name: Cache Trivy databases
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ github.run_id }}
+          restore-keys: |
+            trivy-db-
+
       # 第三者製のセキュリティスキャナ用 Action はサプライチェーン対策として SHA で固定する。
       - name: Setup Trivy
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
@@ -47,7 +57,7 @@ jobs:
       - name: Trivy scan (jar dependencies)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          scan-type: "fs"
+          scan-type: "rootfs"
           scan-ref: "app/build/libs"
           format: "json"
           output: "trivy-report.json"
