@@ -396,7 +396,7 @@ describe("Financial Grade: Multi-Device Priority - Later Registration Wins (Issu
         response_type: "code",
         client_id: testClientId,
         redirect_uri: testClientConfig.redirect_uris[0],
-        scope: "openid profile transfers",
+        scope: "openid profile account",
         state: state,
         nonce: nonce,
         code_challenge: codeChallenge,
