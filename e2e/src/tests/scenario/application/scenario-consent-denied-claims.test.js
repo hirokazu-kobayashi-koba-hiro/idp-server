@@ -62,4 +62,42 @@ describe("Consent: denied claims are omitted from issued tokens (#1653 step②)"
     expect(userinfo.preferred_username).toBeDefined();
     expect(userinfo.email).toBeDefined();
   });
+
+  it("removes an end-user-denied scope (and its claims) from the grant and UserInfo", async () => {
+    const { authorizationResponse } = await requestAuthorizations({
+      endpoint: serverConfig.authorizationEndpoint,
+      clientId: clientSecretPostClient.clientId,
+      responseType: "code",
+      state: `denied-scope-${Date.now()}`,
+      scope: "openid profile email " + clientSecretPostClient.scope,
+      redirectUri: clientSecretPostClient.redirectUri,
+      deniedScopes: ["email"],
+    });
+    expect(authorizationResponse.code).not.toBeNull();
+
+    const tokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      code: authorizationResponse.code,
+      grantType: "authorization_code",
+      redirectUri: clientSecretPostClient.redirectUri,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    expect(tokenResponse.status).toBe(200);
+    // denied scope is dropped from the granted scopes
+    expect(tokenResponse.data.scope.split(" ")).not.toContain("email");
+    expect(tokenResponse.data.scope.split(" ")).toContain("profile");
+
+    const userinfoResponse = await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/userinfo`,
+      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` },
+    });
+    expect(userinfoResponse.status).toBe(200);
+    console.log(JSON.stringify(userinfoResponse.data, null, 2));
+
+    // email scope denied -> email claims omitted; profile claims retained
+    expect(userinfoResponse.data.email).toBeUndefined();
+    expect(userinfoResponse.data.email_verified).toBeUndefined();
+    expect(userinfoResponse.data.name).toBeDefined();
+  });
 });
