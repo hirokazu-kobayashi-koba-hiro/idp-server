@@ -17,7 +17,9 @@
 package org.idp.server.adapters.springboot.application.restapi.oauth;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
@@ -32,6 +34,7 @@ import org.idp.server.core.openid.oauth.OAuthFlowApi;
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusResponse;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;
@@ -296,10 +299,14 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
   public ResponseEntity<?> authorize(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthorizationRequestIdentifier authorizationRequestIdentifier,
-      @RequestBody(required = false) Map<String, Object> body,
       HttpServletRequest httpServletRequest) {
 
+    // The consent body (optional denied_scopes / denied_claims) is read and parsed here regardless
+    // of
+    // Content-Type, so the endpoint stays backward compatible with callers that POST without a body
+    // (e.g. custom RP authorization screens).
     RequestAttributes requestAttributes = transform(httpServletRequest);
+    Map<String, Object> body = bodyToMap(httpServletRequest);
     OAuthAuthorizeResponse authAuthorizeResponse =
         oAuthFlowApi.authorize(
             tenantIdentifier, authorizationRequestIdentifier, body, requestAttributes);
@@ -320,6 +327,28 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
         return new ResponseEntity<>(
             authAuthorizeResponse.contents(), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
       }
+    }
+  }
+
+  /**
+   * Reads and parses the optional consent payload as a JSON object, regardless of Content-Type (or
+   * its absence), so the endpoint does not force a Content-Type requirement on callers. Returns an
+   * empty map when there is no body or it is not valid JSON.
+   */
+  private Map<String, Object> bodyToMap(HttpServletRequest request) {
+    String body;
+    try {
+      body = request.getReader().lines().collect(Collectors.joining("\n"));
+    } catch (IOException | IllegalStateException exception) {
+      return Map.of();
+    }
+    if (body.isBlank()) {
+      return Map.of();
+    }
+    try {
+      return JsonNodeWrapper.fromString(body).toMap();
+    } catch (RuntimeException exception) {
+      return Map.of();
     }
   }
 
