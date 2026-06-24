@@ -1,9 +1,19 @@
 import { AppProps } from "next/app";
 import { CssBaseline } from "@mui/material";
+import { ThemeProvider } from "@mui/material/styles";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Inter } from "next/font/google";
 import { createContext, useContext, useState } from "react";
+import { createAppTheme } from "@/theme/theme";
 
 const queryClient = new QueryClient();
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+const theme = createAppTheme(inter.style.fontFamily);
 
 // Use empty string for same-origin deployment (via nginx proxy at /auth-views/)
 // This ensures AUTH_SESSION cookies are sent with SameSite=Lax
@@ -37,15 +47,17 @@ export default function App({ Component, pageProps }: AppProps) {
   const [email, setEmail] = useState<string>("");
 
   return (
-    <>
-      <AppContext.Provider
-        value={{ id, setId, tenantId, setTenantId, userId, setUserId,  email, setEmail }}
-      >
+    <AppContext.Provider
+      value={{ id, setId, tenantId, setTenantId, userId, setUserId, email, setEmail }}
+    >
+      <ThemeProvider theme={theme}>
         <CssBaseline />
         <QueryClientProvider client={queryClient}>
-          <Component {...pageProps} />
+          <main className={inter.className}>
+            <Component {...pageProps} />
+          </main>
         </QueryClientProvider>
-      </AppContext.Provider>
-    </>
+      </ThemeProvider>
+    </AppContext.Provider>
   );
 }
