@@ -7,8 +7,8 @@
     "authorization_provider": "idp-server",
     "ui_config": {
       "base_url": "https://auth.local.test",
-      "signin_page": "/signin/",
-      "signup_page": "/signup/"
+      "signin_page": "/auth/",
+      "signup_page": "/auth/"
     },
     "session_config": {
       "cookie_name": "PUBLIC_WEB_SESSION",

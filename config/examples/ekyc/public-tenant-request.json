@@ -7,7 +7,7 @@
     "authorization_provider": "idp-server",
     "ui_config": {
       "base_url": "https://auth.idp.local",
-      "signin_page": "/signin/",
+      "signin_page": "/auth/",
       "signup_page": "/signup/"
     },
     "session_config": {

@@ -8,8 +8,8 @@
     "database_type": "postgresql",
     "ui_config": {
       "base_url": "https://auth.local.test",
-      "signin_page": "/signin/fido2/",
-      "signup_page": "/signup/"
+      "signin_page": "/auth/",
+      "signup_page": "/auth/"
     },
     "session_config": {
       "cookie_name": "FAPI_CIBA_SESSION",
