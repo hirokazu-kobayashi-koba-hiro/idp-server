@@ -16,6 +16,7 @@
 
 package org.idp.server.usecases.application.enduser;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -438,6 +439,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
   public OAuthAuthorizeResponse authorize(
       TenantIdentifier tenantIdentifier,
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      Map<String, Object> params,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
@@ -453,7 +455,11 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     validateAuthSession(authenticationTransaction);
 
     User user = authenticationTransaction.user();
-    List<String> deniedScopes = authenticationTransaction.deniedScopes();
+    // Policy-enforced (level-of-authentication) denied scopes, plus any the end-user declined on
+    // the
+    // consent screen (authorize request body).
+    List<String> deniedScopes = new ArrayList<>(authenticationTransaction.deniedScopes());
+    deniedScopes.addAll(extractDeniedScopes(params));
     OAuthAuthorizeRequest oAuthAuthorizeRequest =
         new OAuthAuthorizeRequest(
             tenant,
@@ -463,6 +469,7 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
                 ? authenticationTransaction.authentication()
                 : null);
     oAuthAuthorizeRequest.setDeniedScopes(deniedScopes);
+    oAuthAuthorizeRequest.setDeniedClaims(extractDeniedClaims(params));
 
     // Create ClientSession for OIDC Session Management
     oidcSessionHandler
@@ -508,6 +515,37 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
     }
 
     return authorize;
+  }
+
+  /**
+   * Scope names the end-user declined on the consent screen, taken from the authorize request body
+   * ({@code denied_scopes}). Empty when no body / no denial. These are merged with the
+   * policy-enforced (level-of-authentication) denied scopes and removed from the granted scopes at
+   * grant build time, so the scope and its derived claims are not issued.
+   */
+  private List<String> extractDeniedScopes(Map<String, Object> params) {
+    return extractStringList(params, "denied_scopes");
+  }
+
+  /**
+   * Claim names the end-user declined to share on the consent screen, taken from the authorize
+   * request body ({@code denied_claims}). Empty when no body / no denial. The names are removed
+   * from the granted id_token / userinfo / verified_claims at grant build time (OIDC4IDA Section
+   * 5.7.3).
+   */
+  private List<String> extractDeniedClaims(Map<String, Object> params) {
+    return extractStringList(params, "denied_claims");
+  }
+
+  private List<String> extractStringList(Map<String, Object> params, String key) {
+    if (params == null) {
+      return List.of();
+    }
+    Object value = params.get(key);
+    if (value instanceof List<?> list) {
+      return list.stream().map(String::valueOf).toList();
+    }
+    return List.of();
   }
 
   public OAuthAuthorizeResponse authorizeWithSession(

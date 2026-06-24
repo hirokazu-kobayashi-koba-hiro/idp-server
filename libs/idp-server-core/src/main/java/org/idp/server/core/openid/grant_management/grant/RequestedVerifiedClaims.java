@@ -18,6 +18,7 @@ package org.idp.server.core.openid.grant_management.grant;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collection;
 import org.idp.server.core.openid.identity.id_token.VerifiedClaimsObject;
 import org.idp.server.platform.json.JsonConverter;
 
@@ -94,5 +95,22 @@ public class RequestedVerifiedClaims {
   /** The serialized sentinel token, or an empty string when absent (callers skip it). */
   public String toSentinelToken() {
     return exists() ? sentinelToken : "";
+  }
+
+  /**
+   * A copy with the given claim names removed from the requested verified claims (end-user denial
+   * at the consent screen, OIDC4IDA Section 5.7.3). Returns this when there is nothing requested or
+   * nothing to remove, and {@link #empty()} when every requested verified claim was denied so the
+   * {@code verified_claims} element is omitted entirely.
+   */
+  public RequestedVerifiedClaims removeClaims(Collection<String> deniedClaimNames) {
+    if (!exists() || deniedClaimNames == null || deniedClaimNames.isEmpty()) {
+      return this;
+    }
+    VerifiedClaimsObject filtered = toObject().removeClaims(deniedClaimNames);
+    if (filtered.requestedClaimNames().isEmpty()) {
+      return empty();
+    }
+    return of(filtered);
   }
 }

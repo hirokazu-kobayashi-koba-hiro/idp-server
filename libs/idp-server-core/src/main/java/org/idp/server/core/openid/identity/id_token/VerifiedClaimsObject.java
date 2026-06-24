@@ -17,6 +17,8 @@
 package org.idp.server.core.openid.identity.id_token;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -51,5 +53,22 @@ public class VerifiedClaimsObject implements JsonReadable {
       return new ArrayList<>();
     }
     return new ArrayList<>(claims.keySet());
+  }
+
+  /**
+   * A copy with the given claim names removed from the {@code claims} member (verification is
+   * preserved), used to drop end-user-denied verified claims at grant build time (OIDC4IDA Section
+   * 5.7.3). Returns this object unchanged when there is nothing to remove.
+   */
+  public VerifiedClaimsObject removeClaims(Collection<String> deniedClaimNames) {
+    if (claims == null
+        || claims.isEmpty()
+        || deniedClaimNames == null
+        || deniedClaimNames.isEmpty()) {
+      return this;
+    }
+    Map<String, Object> filtered = new LinkedHashMap<>(claims);
+    filtered.keySet().removeAll(deniedClaimNames);
+    return new VerifiedClaimsObject(verification, filtered);
   }
 }

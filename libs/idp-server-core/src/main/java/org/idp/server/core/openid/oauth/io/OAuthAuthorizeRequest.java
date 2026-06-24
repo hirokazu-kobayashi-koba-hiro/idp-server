@@ -24,6 +24,7 @@ import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
+import org.idp.server.core.openid.oauth.type.extension.DeniedClaims;
 import org.idp.server.core.openid.oauth.type.extension.DeniedScopes;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -35,6 +36,7 @@ public class OAuthAuthorizeRequest {
   User user;
   Authentication authentication;
   List<String> deniedScopes = new ArrayList<>();
+  List<String> deniedClaims = new ArrayList<>();
   Map<String, Object> customProperties = new HashMap<>();
 
   public OAuthAuthorizeRequest(Tenant tenant, String id, User user, Authentication authentication) {
@@ -46,6 +48,11 @@ public class OAuthAuthorizeRequest {
 
   public OAuthAuthorizeRequest setDeniedScopes(List<String> deniedScopes) {
     this.deniedScopes = deniedScopes;
+    return this;
+  }
+
+  public OAuthAuthorizeRequest setDeniedClaims(List<String> deniedClaims) {
+    this.deniedClaims = deniedClaims;
     return this;
   }
 
@@ -80,5 +87,9 @@ public class OAuthAuthorizeRequest {
 
   public DeniedScopes toDeniedScopes() {
     return new DeniedScopes(deniedScopes);
+  }
+
+  public DeniedClaims toDeniedClaims() {
+    return new DeniedClaims(deniedClaims);
   }
 }

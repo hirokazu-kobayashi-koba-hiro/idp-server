@@ -376,7 +376,52 @@ describe("OpenID Connect for Identity Assurance 1.0", () => {
     });
 
     describe("5.7.3 Non-consented data", () => {
-      xit("the OP shall omit from any corresponding ID Token or UserInfo response data that has not had end-user consent for sharing. (pending: requires driving a non-consented state through the consent flow — see #1649-B)", async () => {});
+      it("the OP shall omit from any corresponding ID Token or UserInfo response data that has not had end-user consent for sharing.", async () => {
+        // The RP requests verified given_name + family_name, but the end-user denies family_name on
+        // the consent screen (denied_claims). The granted verified_claims must keep given_name and
+        // omit family_name. (#1653 step②: denied claims are removed from the grant at authorize time.)
+        const verifiedClaimsRequest = {
+          verification: { trust_framework: null },
+          claims: { given_name: null, family_name: null },
+        };
+        const { authorizationResponse } = await requestAuthorizations({
+          endpoint: serverConfig.authorizationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          responseType: "code",
+          state: "non_consented_verified_claims",
+          scope: "openid " + clientSecretPostClient.scope,
+          redirectUri: clientSecretPostClient.redirectUri,
+          claims: JSON.stringify({ id_token: { verified_claims: verifiedClaimsRequest } }),
+          user: idaVerifiedUser,
+          deniedClaims: ["family_name"],
+        });
+        expect(authorizationResponse.code).not.toBeNull();
+
+        const tokenResponse = await requestToken({
+          endpoint: serverConfig.tokenEndpoint,
+          code: authorizationResponse.code,
+          grantType: "authorization_code",
+          redirectUri: clientSecretPostClient.redirectUri,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+        expect(tokenResponse.status).toBe(200);
+
+        const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+        const decodedIdToken = verifyAndDecodeJwt({
+          jwt: tokenResponse.data.id_token,
+          jwks: jwksResponse.data,
+        });
+        expect(decodedIdToken.verifyResult).toBe(true);
+        const verifiedClaims = decodedIdToken.payload.verified_claims;
+        console.log(JSON.stringify(verifiedClaims, null, 2));
+
+        expect(verifiedClaims).toBeDefined();
+        // consented verified claim is retained
+        expect(verifiedClaims.claims.given_name).toBeDefined();
+        // denied verified claim is omitted (§5.7.3)
+        expect(verifiedClaims.claims.family_name).toBeUndefined();
+      });
     });
 
     describe("5.7.4 Data not matching requirements", () => {

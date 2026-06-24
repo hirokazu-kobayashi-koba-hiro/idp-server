@@ -39,6 +39,7 @@ import org.idp.server.core.openid.oauth.response.AuthorizationResponse;
 import org.idp.server.core.openid.oauth.response.AuthorizationResponseCreator;
 import org.idp.server.core.openid.oauth.response.AuthorizationResponseCreators;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
+import org.idp.server.core.openid.oauth.type.extension.DeniedClaims;
 import org.idp.server.core.openid.oauth.type.extension.DeniedScopes;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.validator.OAuthAuthorizeRequestValidator;
@@ -86,6 +87,7 @@ public class OAuthAuthorizeHandler {
     Authentication authentication = request.authentication();
     CustomProperties customProperties = request.toCustomProperties();
     DeniedScopes deniedScopes = request.toDeniedScopes();
+    DeniedClaims deniedClaims = request.toDeniedClaims();
 
     OAuthAuthorizeRequestValidator validator =
         new OAuthAuthorizeRequestValidator(
@@ -107,6 +109,7 @@ public class OAuthAuthorizeHandler {
             authentication,
             customProperties,
             deniedScopes,
+            deniedClaims,
             authorizationServerConfiguration,
             clientConfiguration);
 

@@ -19,6 +19,7 @@ package org.idp.server.core.openid.grant_management.grant;
 import java.util.*;
 import org.idp.server.core.openid.identity.id_token.RequestedUserinfoClaims;
 import org.idp.server.core.openid.identity.id_token.VerifiedClaimsObject;
+import org.idp.server.core.openid.oauth.type.extension.DeniedClaims;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 
 public class GrantUserinfoClaims implements Iterable<String> {
@@ -102,6 +103,22 @@ public class GrantUserinfoClaims implements Iterable<String> {
             ? other.requestedVerifiedClaims
             : this.requestedVerifiedClaims;
     return new GrantUserinfoClaims(newValues, mergedVerifiedClaims);
+  }
+
+  /**
+   * A copy with the end-user-denied claims removed from both the standard claim names and the
+   * verified_claims request, so UserInfo omits non-consented data (OIDC4IDA Section 5.7.3). Mirrors
+   * {@link Scopes#removeScopes} for claims.
+   */
+  public GrantUserinfoClaims removeClaims(DeniedClaims deniedClaims) {
+    if (deniedClaims == null || deniedClaims.isEmpty()) {
+      return this;
+    }
+    Set<String> newValues = new HashSet<>(values);
+    newValues.removeIf(deniedClaims::contains);
+    RequestedVerifiedClaims newVerifiedClaims =
+        requestedVerifiedClaims.removeClaims(deniedClaims.toList());
+    return new GrantUserinfoClaims(newValues, newVerifiedClaims);
   }
 
   @Override

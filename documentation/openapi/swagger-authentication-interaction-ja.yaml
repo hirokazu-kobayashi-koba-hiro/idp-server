@@ -58,13 +58,13 @@ tags:
       フェデレーション認証を行うためのAPI群。
 
 paths:
-  /{tenant-id}/v1/authentications/{id}/{interaction-type}:
+  /{tenant-id}/v1/authorizations/{id}/{interaction-type}:
     post:
       tags:
         - 認証インタラクション
       summary: 認証インタラクション実行
       description: |
-        指定された認証トランザクションIDと認証インタラクションタイプに基づいて認証処理を実行します。
+        指定された認可リクエストIDと認証インタラクションタイプに基づいて認証処理を実行します。
 
         ## サポートされている認証インタラクションタイプ
 
@@ -115,7 +115,7 @@ paths:
 
       parameters:
         - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/AuthenticationTransactionId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
         - $ref: '#/components/parameters/InteractionType'
       requestBody:
         description: |
@@ -509,6 +509,44 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/AuthorizationRequestId'
+      requestBody:
+        required: false
+        description: |
+          任意。consent画面でユーザーが共有を拒否した scope / クレーム（view-data の `scopes` /
+          `claims` から選択）。
+
+          - `denied_scopes`: 拒否された scope。付与スコープから除外され、その scope 由来のクレームも
+            発行されません（認証ポリシー(LoA)由来の拒否スコープにマージされます）。
+          - `denied_claims`: 拒否されたクレーム名。付与時に id_token / userinfo / verified_claims から
+            除外されます（OIDC4IDA §5.7.3、claim単位の同意）。
+
+          ボディ無し（従来どおり）の場合は全要求 scope / クレームを許可します。
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                denied_scopes:
+                  type: array
+                  items:
+                    type: string
+                  description: 共有を拒否した scope の一覧
+                  example: ["email"]
+                denied_claims:
+                  type: array
+                  items:
+                    type: string
+                  description: 共有を拒否したクレーム名の一覧
+                  example: ["family_name"]
+            examples:
+              deny-scope:
+                summary: email スコープの共有を拒否
+                value:
+                  denied_scopes: ["email"]
+              deny-family-name:
+                summary: family_name クレームの共有を拒否
+                value:
+                  denied_claims: ["family_name"]
       responses:
         '200':
           description: 認可承認成功

@@ -95,6 +95,7 @@ public interface OAuthFlowApi {
   OAuthAuthorizeResponse authorize(
       TenantIdentifier tenantIdentifier,
       AuthorizationRequestIdentifier authorizationRequestIdentifier,
+      Map<String, Object> params,
       RequestAttributes requestAttributes);
 
   OAuthAuthorizeResponse authorizeWithSession(
