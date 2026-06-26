@@ -125,8 +125,9 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
     // for security events (Issue #1131)
     user.applyIdentityPolicy(tenant.identityPolicyConfig());
 
-    Map<String, Object> result = new HashMap<>();
-    result.put("user", user.toMinimalizedMap());
+    Map<String, Object> result =
+        toResponseContents(
+            authenticationInteractionConfig.response().bodyMappingRules(), mappingSource, user);
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -144,5 +145,25 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
     Map<String, Object> executed = MappingRuleObjectMapper.execute(mappingRules, jsonPath);
 
     return jsonConverter.read(executed, User.class);
+  }
+
+  /**
+   * Builds the interaction response contents.
+   *
+   * <p>Applies the configured {@code response.body_mapping_rules} against the mapping source
+   * (request body + execution results such as {@code execution_http_requests[...]}), so that fields
+   * derived from the external IdP response can be surfaced to the client. The minimalized {@code
+   * user} envelope is always retained afterward for backward compatibility (Issue #1696).
+   */
+  private Map<String, Object> toResponseContents(
+      List<MappingRule> bodyMappingRules, Map<String, Object> mappingSource, User user) {
+    Map<String, Object> result = new HashMap<>();
+    if (!bodyMappingRules.isEmpty()) {
+      JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(mappingSource);
+      JsonPathWrapper jsonPath = new JsonPathWrapper(jsonNodeWrapper.toJson());
+      result.putAll(MappingRuleObjectMapper.execute(bodyMappingRules, jsonPath));
+    }
+    result.put("user", user.toMinimalizedMap());
+    return result;
   }
 }
