@@ -154,8 +154,10 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
    * (request body + execution results such as {@code execution_http_requests[...]}), so that fields
    * derived from the external IdP response can be surfaced to the client. The minimalized {@code
    * user} envelope is always retained afterward for backward compatibility (Issue #1696).
+   *
+   * <p>Package-private for unit testing.
    */
-  private Map<String, Object> toResponseContents(
+  Map<String, Object> toResponseContents(
       List<MappingRule> bodyMappingRules, Map<String, Object> mappingSource, User user) {
     Map<String, Object> result = new HashMap<>();
     if (!bodyMappingRules.isEmpty()) {
