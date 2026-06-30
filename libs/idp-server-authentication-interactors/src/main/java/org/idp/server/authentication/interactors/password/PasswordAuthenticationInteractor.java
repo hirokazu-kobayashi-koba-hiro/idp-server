@@ -402,6 +402,7 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
                   request,
                   executionResult,
                   interactionConfig.userResolve().userMappingRules(),
+                  allowRegistration,
                   userQueryRepository);
           return transaction.user().updateWith(resolved);
         }
