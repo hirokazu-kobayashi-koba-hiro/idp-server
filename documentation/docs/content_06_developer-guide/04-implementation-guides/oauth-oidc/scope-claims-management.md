@@ -421,6 +421,18 @@ public class ScopeMappingCustomClaimsCreator implements AccessTokenCustomClaimsC
 - `claims:authentication_devices` - 認証デバイス一覧
 - `claims:{任意のカスタムプロパティ}` - ユーザーのカスタムプロパティ
 
+#### `standard_claims:` プレフィックス（標準クレームのアクセストークン付与）
+
+標準 OIDC クレーム（`email` / `name` / `phone_number` 等）は通常 ID トークン / UserInfo でのみ取得できるが、`standard_claims:<クレーム名>` スコープを付与すると **アクセストークンにも** 選択的に含められる。リソースサーバが UserInfo を呼ばずに標準属性を読みたい場合に使う。
+
+- **有効化（opt-in）**: `authorization_server.extension.access_token_selective_standard_claims` を `true` に設定（デフォルト `false`）。`claims:` の `custom_claims_scope_mapping` とは別の専用フラグ
+- **参考実装**: `AccessTokenSelectiveStandardClaimsCreator`（`AccessTokenSelectiveVerifiedClaimsCreator` と同じアクセストークン選択付与ファミリー）。プレフィックスは `startsWith` マッチのため `standard_claims:*` と `claims:*` は相互に干渉しない
+- **プライバシー注意**: アクセストークンの audience はリソースサーバでログ/キャッシュされやすい。PII（`email` 等）を載せる場合は必要なときのみ opt-in すること
+
+**対応している標準クレーム（19種）**: `name` / `given_name` / `family_name` / `middle_name` / `nickname` / `preferred_username` / `profile` / `picture` / `website` / `email` / `email_verified` / `gender` / `birthdate` / `zoneinfo` / `locale` / `phone_number` / `phone_number_verified` / `address` / `updated_at`
+
+例: `scope: "openid standard_claims:email"` → アクセストークンに `"email": "..."` が含まれる。値が無いクレームは省略される（`null` は emit しない）。
+
 ### 2. IDトークン用プラグイン
 
 `CustomIndividualClaimsCreator`インターフェースを実装します。
