@@ -159,6 +159,7 @@ describe("ID Token - JOSE Header & Custom Claims Verification", () => {
               "email",
               "management",
               "claims:ex_sub",
+              "claims:provider_id",
               "claims:status",
               "claims:roles",
               "claims:permissions",
@@ -190,7 +191,7 @@ describe("ID Token - JOSE Header & Custom Claims Verification", () => {
             grant_types: ["authorization_code", "password"],
             response_types: ["code"],
             scope:
-              "openid profile email management claims:ex_sub claims:status claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations",
+              "openid profile email management claims:ex_sub claims:provider_id claims:status claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations",
             token_endpoint_auth_method: "client_secret_post",
           },
         },
@@ -224,6 +225,34 @@ describe("ID Token - JOSE Header & Custom Claims Verification", () => {
       expect(decoded.verifyResult).toBe(true);
       expect(decoded.payload.status).toBeDefined();
       expect(decoded.payload.status).toBe("REGISTERED");
+    });
+
+    it("claims:provider_id scope should include provider_id claim in ID token", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "password",
+        username: userEmail,
+        password: userPassword,
+        scope: "openid claims:provider_id",
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.id_token).toBeDefined();
+
+      const jwksResponse = await getJwks({
+        endpoint: `${backendUrl}/${tenantId}/v1/jwks`,
+      });
+      expect(jwksResponse.status).toBe(200);
+
+      const decoded = verifyAndDecodeJwt({
+        jwt: tokenResponse.data.id_token,
+        jwks: jwksResponse.data,
+      });
+
+      expect(decoded.verifyResult).toBe(true);
+      expect(decoded.payload.provider_id).toBeDefined();
+      expect(decoded.payload.provider_id).toBe("idp-server");
     });
 
     it("claims:roles and claims:permissions should include RBAC claims in ID token", async () => {
