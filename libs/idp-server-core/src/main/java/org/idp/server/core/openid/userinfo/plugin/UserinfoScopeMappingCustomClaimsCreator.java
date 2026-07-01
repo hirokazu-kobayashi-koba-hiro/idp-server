@@ -72,6 +72,10 @@ public class UserinfoScopeMappingCustomClaimsCreator
         claims.put("ex_sub", user.externalUserId());
       }
 
+      if (claimName.equals("provider_id") && user.hasProviderId()) {
+        claims.put("provider_id", user.providerId());
+      }
+
       if (claimName.equals("roles") && user.hasRoles()) {
         claims.put("roles", user.roleNameAsListString());
       }

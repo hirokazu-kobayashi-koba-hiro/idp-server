@@ -611,6 +611,10 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     return externalUserId != null && !externalUserId.isEmpty();
   }
 
+  public boolean hasProviderId() {
+    return providerId != null && !providerId.isEmpty();
+  }
+
   public boolean hasName() {
     return Objects.nonNull(name) && !name.isEmpty();
   }
