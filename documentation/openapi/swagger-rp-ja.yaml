@@ -2494,7 +2494,10 @@ components:
             `claims:ex_sub` スコープが要求され、かつユーザーに外部ユーザーIDが設定されている場合のみ返却されます。
             `authorization_server.extension.custom_claims_scope_mapping` が `true` である必要があります。
       additionalProperties:
-        description: 任意の拡張プロパティ。テナントの設定などによりトークンに付与される。
+        description: |
+          任意の拡張プロパティ。テナントの設定などによりトークンに付与される。
+          標準 OIDC クレーム（`email`/`name`/`phone_number` 等）は、`standard_claims:<クレーム名>` スコープが要求され、
+          かつ `authorization_server.extension.access_token_selective_standard_claims` が `true` の場合にアクセストークンへ選択的に含まれる。
 
     TokenIntrospectionBadRequestResponse:
       type: object

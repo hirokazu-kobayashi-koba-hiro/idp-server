@@ -56,6 +56,30 @@ scope=openid verified_claims:given_name verified_claims:family_name
 
 検証された`given_name`と`family_name`のみが取得されます。
 
+## 標準クレームのアクセストークン付与
+
+標準 OIDC クレーム（`email` / `name` / `phone_number` 等）は通常 ID トークンと Userinfo でのみ提供されます。idp-server では `standard_claims:` プレフィックスを使うことで、これらを**アクセストークンにも選択的に含める**ことができます。リソースサーバが Userinfo エンドポイントを呼ばずに標準属性を参照したい場合に有用です。
+
+### 使用例
+
+```
+scope=openid standard_claims:email standard_claims:name
+```
+
+→ アクセストークン（JWT形式）に `email` と `name` が含まれます。値が無いクレームは省略されます（`null` では返しません）。
+
+### 有効化設定
+
+`claims:` の `custom_claims_scope_mapping` とは独立した専用フラグで opt-in します（デフォルト無効）。
+
+```
+access_token_selective_standard_claims=true
+```
+
+### プライバシー上の注意
+
+アクセストークンの受け手（audience）はリソースサーバであり、ログやキャッシュに残りやすい経路です。`email` などの PII をアクセストークンに載せる場合は、リソースサーバが本当に必要とするクレームのみに絞ってください。専用フラグに分離しているのは、PII をアクセストークンへ載せる能力を `claims:`（カスタムプロパティ）とは別の明示的な opt-in にするためです。
+
 ## 認証方式と組み合わせた動的スコープフィルタリング
 
 認証ポリシーと組み合わせることで、認証方式に応じて取得できるクレームを動的に制御できます。
