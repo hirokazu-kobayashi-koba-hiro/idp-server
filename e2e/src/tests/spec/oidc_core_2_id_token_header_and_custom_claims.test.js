@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
 
-import { getJwks, requestToken } from "../../api/oauthClient";
+import { getJwks, requestToken, getUserinfo } from "../../api/oauthClient";
 import { onboarding } from "../../api/managementClient";
 import {
   clientSecretPostClient,
@@ -253,6 +253,29 @@ describe("ID Token - JOSE Header & Custom Claims Verification", () => {
       expect(decoded.verifyResult).toBe(true);
       expect(decoded.payload.provider_id).toBeDefined();
       expect(decoded.payload.provider_id).toBe("idp-server");
+    });
+
+    it("claims:provider_id scope should include provider_id claim in the UserInfo response", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "password",
+        username: userEmail,
+        password: userPassword,
+        scope: "openid claims:provider_id",
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.access_token).toBeDefined();
+
+      const userinfoResponse = await getUserinfo({
+        endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+        authorizationHeader: {
+          Authorization: `Bearer ${tokenResponse.data.access_token}`
+        },
+      });
+      expect(userinfoResponse.status).toBe(200);
+      expect(userinfoResponse.data.provider_id).toBe("idp-server");
     });
 
     it("claims:roles and claims:permissions should include RBAC claims in ID token", async () => {

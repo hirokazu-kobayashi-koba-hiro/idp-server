@@ -413,6 +413,7 @@ public class ScopeMappingCustomClaimsCreator implements AccessTokenCustomClaimsC
 **対応しているクレーム**:
 - `claims:status` - ユーザーステータス
 - `claims:ex_sub` - 外部ユーザーID
+- `claims:provider_id` - アイデンティティプロバイダID
 - `claims:roles` - ロール一覧
 - `claims:permissions` - 権限一覧
 - `claims:assigned_tenants` - 割り当てテナント一覧
