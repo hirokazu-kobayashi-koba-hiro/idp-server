@@ -16,9 +16,11 @@
 
 package org.idp.server.authentication.interactors.password;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.config.AuthenticationConfiguration;
@@ -66,6 +68,36 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
   LoggerWrapper log = LoggerWrapper.getLogger(PasswordAuthenticationInteractor.class);
+
+  /**
+   * Standard OIDC claims that a 2nd-factor {@code user_resolve} may merge into the already
+   * authenticated session user (plus {@code custom_properties}, handled separately).
+   *
+   * <p><b>SECURITY (CWE-287, Issue #1497):</b> the identity established by the 1st factor is
+   * authoritative on the 2nd factor. Identifiers ({@code sub} / {@code preferred_username} / {@code
+   * email} / {@code phone_number} — any of which is a tenant unique key / {@code
+   * user_identity_source}), lifecycle ({@code status}) and privileges ({@code roles} / {@code
+   * permissions} / {@code authentication_devices}) must NEVER be patchable from the 2nd factor,
+   * otherwise the 2nd factor becomes an identity-swap vector. Only descriptive profile claims are
+   * allowed here. This mirrors {@code IdentityVerificationUserUpdater}'s allowlist, but is stricter
+   * (email / phone_number excluded) because the 2nd-factor source is influenced by the submitted
+   * credentials.
+   */
+  private static final Set<String> SECOND_FACTOR_ENRICHABLE_CLAIMS =
+      Set.of(
+          "name",
+          "given_name",
+          "family_name",
+          "middle_name",
+          "nickname",
+          "profile",
+          "picture",
+          "website",
+          "gender",
+          "birthdate",
+          "zoneinfo",
+          "locale",
+          "address");
 
   public PasswordAuthenticationInteractor(
       AuthenticationExecutors authenticationExecutors,
@@ -383,6 +415,25 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
         return User.notFound();
       }
 
+      // 2nd factor with user_resolve: enrich the authenticated user with non-identifying
+      // attributes only. SECURITY (CWE-287): we do NOT re-resolve identity from the submitted
+      // credentials here; the session user established by the 1st factor is authoritative.
+      if (configuration.exists() && executionResult.isSuccess()) {
+        AuthenticationInteractionConfig interactionConfig =
+            configuration.getAuthenticationConfig("password-authentication");
+        List<MappingRule> userMappingRules = interactionConfig.userResolve().userMappingRules();
+
+        if (!userMappingRules.isEmpty()) {
+          log.debug(
+              "2nd factor: enriching authenticated user with user_resolve attributes. method={}, sub={}",
+              method(),
+              transaction.user().sub());
+          User enrichmentPatch =
+              buildSecondFactorEnrichmentPatch(request, executionResult, userMappingRules);
+          return transaction.user().updateWith(enrichmentPatch);
+        }
+      }
+
       log.debug(
           "2nd factor: returning authenticated user. method={}, sub={}",
           method(),
@@ -418,6 +469,54 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
 
     log.warn("User not found in database. username={}", username);
     return User.notFound();
+  }
+
+  /**
+   * Builds an enrichment patch for a 2nd-factor authenticated user.
+   *
+   * <p>The configured {@code user_mapping_rules} are applied to the mapping source (request body +
+   * execution results), then filtered so that only {@link #SECOND_FACTOR_ENRICHABLE_CLAIMS} and
+   * {@code custom_properties} survive. Any rule output targeting an identifier, lifecycle or
+   * privilege field is dropped and logged at WARN — on the 2nd factor these are inviolable and the
+   * identity-resolution rules (e.g. {@code external_user_id} / {@code provider_id} / {@code email})
+   * are intentionally not honored (SECURITY, CWE-287). The returned patch never carries {@code
+   * sub}, so {@link User#updateWith(User)} keeps the 1st-factor identity intact.
+   *
+   * <p>Package-private for unit testing.
+   */
+  User buildSecondFactorEnrichmentPatch(
+      AuthenticationInteractionRequest request,
+      AuthenticationExecutionResult executionResult,
+      List<MappingRule> userMappingRules) {
+
+    Map<String, Object> mappingSource = new HashMap<>();
+    mappingSource.put("request_body", request.toMap());
+    mappingSource.putAll(executionResult.contents());
+
+    JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(mappingSource);
+    JsonPathWrapper jsonPath = new JsonPathWrapper(jsonNodeWrapper.toJson());
+    Map<String, Object> mapped = MappingRuleObjectMapper.execute(userMappingRules, jsonPath);
+
+    Map<String, Object> enrichable = new HashMap<>();
+    List<String> ignored = new ArrayList<>();
+    for (Map.Entry<String, Object> entry : mapped.entrySet()) {
+      String key = entry.getKey();
+      if (SECOND_FACTOR_ENRICHABLE_CLAIMS.contains(key) || key.equals("custom_properties")) {
+        enrichable.put(key, entry.getValue());
+      } else {
+        ignored.add(key);
+      }
+    }
+
+    if (!ignored.isEmpty()) {
+      log.warn(
+          "2nd factor user_resolve ignored non-enrichable mapping targets (identifiers, lifecycle "
+              + "and privileges are inviolable on the 2nd factor): {}. Use the 1st factor to resolve "
+              + "identity, or custom_properties for auxiliary data.",
+          ignored);
+    }
+
+    return jsonConverter.read(enrichable, User.class);
   }
 
   /**
