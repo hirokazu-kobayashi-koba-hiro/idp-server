@@ -166,6 +166,8 @@ describe("ID Token - JOSE Header & Custom Claims Verification", () => {
               "claims:assigned_tenants",
               "claims:assigned_organizations",
               "standard_claims:email",
+              "claims:nullprop",
+              "claims:realprop",
             ],
             response_types_supported: ["code"],
             response_modes_supported: ["query"],
@@ -185,6 +187,8 @@ describe("ID Token - JOSE Header & Custom Claims Verification", () => {
             provider_id: "idp-server",
             email: userEmail,
             raw_password: userPassword,
+            // #1699: a null-valued custom property must be omitted (not "key": null) in UserInfo
+            custom_properties: { nullprop: null, realprop: "real-value" },
           },
           client: {
             client_id: clientId,
@@ -193,7 +197,7 @@ describe("ID Token - JOSE Header & Custom Claims Verification", () => {
             grant_types: ["authorization_code", "password"],
             response_types: ["code"],
             scope:
-              "openid profile email management claims:ex_sub claims:provider_id claims:status claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations standard_claims:email",
+              "openid profile email management claims:ex_sub claims:provider_id claims:status claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations standard_claims:email claims:nullprop claims:realprop",
             token_endpoint_auth_method: "client_secret_post",
           },
         },
@@ -278,6 +282,32 @@ describe("ID Token - JOSE Header & Custom Claims Verification", () => {
       });
       expect(userinfoResponse.status).toBe(200);
       expect(userinfoResponse.data.provider_id).toBe("idp-server");
+    });
+
+    it("null custom property is omitted (not \"key\": null) from UserInfo, non-null is kept (#1699)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "password",
+        username: userEmail,
+        password: userPassword,
+        scope: "openid claims:nullprop claims:realprop",
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const userinfoResponse = await getUserinfo({
+        endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+        authorizationHeader: {
+          Authorization: `Bearer ${tokenResponse.data.access_token}`,
+        },
+      });
+      expect(userinfoResponse.status).toBe(200);
+
+      // OIDC Core §5.3.2: the null-valued claim must be omitted entirely, not present as null.
+      expect(userinfoResponse.data).not.toHaveProperty("nullprop");
+      // The non-null custom property is still returned.
+      expect(userinfoResponse.data.realprop).toBe("real-value");
     });
 
     it("claims:roles and claims:permissions should include RBAC claims in ID token", async () => {

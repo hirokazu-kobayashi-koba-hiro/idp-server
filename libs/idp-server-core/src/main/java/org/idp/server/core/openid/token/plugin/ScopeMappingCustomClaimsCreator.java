@@ -61,8 +61,11 @@ public class ScopeMappingCustomClaimsCreator implements AccessTokenCustomClaimsC
     for (String scope : filteredClaimsScope) {
       String claimName = scope.substring(prefix.length());
 
-      if (customProperties.contains(claimName)) {
-        claims.put(claimName, customProperties.getValue(claimName));
+      // A null custom property value must be omitted, not returned as "key": null
+      // (OIDC Core §5.3.2). Issue #1699.
+      Object customValue = customProperties.getValue(claimName);
+      if (customValue != null) {
+        claims.put(claimName, customValue);
       }
 
       if (claimName.equals("status")) {
