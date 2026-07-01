@@ -165,6 +165,7 @@ describe("ID Token - JOSE Header & Custom Claims Verification", () => {
               "claims:permissions",
               "claims:assigned_tenants",
               "claims:assigned_organizations",
+              "standard_claims:email",
             ],
             response_types_supported: ["code"],
             response_modes_supported: ["query"],
@@ -176,6 +177,7 @@ describe("ID Token - JOSE Header & Custom Claims Verification", () => {
               token_signed_key_id: "signing_key_1",
               id_token_signed_key_id: "signing_key_1",
               custom_claims_scope_mapping: true,
+              access_token_selective_standard_claims: true,
             },
           },
           user: {
@@ -191,7 +193,7 @@ describe("ID Token - JOSE Header & Custom Claims Verification", () => {
             grant_types: ["authorization_code", "password"],
             response_types: ["code"],
             scope:
-              "openid profile email management claims:ex_sub claims:provider_id claims:status claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations",
+              "openid profile email management claims:ex_sub claims:provider_id claims:status claims:roles claims:permissions claims:assigned_tenants claims:assigned_organizations standard_claims:email",
             token_endpoint_auth_method: "client_secret_post",
           },
         },
@@ -432,6 +434,50 @@ describe("ID Token - JOSE Header & Custom Claims Verification", () => {
       expect(decoded.payload.iss).toBeDefined();
       expect(decoded.payload.sub).toBeDefined();
       expect(decoded.payload.aud).toBeDefined();
+    });
+
+    it("standard_claims:email scope should include email claim in the access token (#standard-claims)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "password",
+        username: userEmail,
+        password: userPassword,
+        scope: "openid standard_claims:email",
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.access_token).toBeDefined();
+
+      // Access token is a JWT; decode its payload directly.
+      const payload = JSON.parse(
+        Buffer.from(
+          tokenResponse.data.access_token.split(".")[1],
+          "base64url"
+        ).toString()
+      );
+      expect(payload.email).toBe(userEmail);
+    });
+
+    it("email scope alone must NOT put email in the access token (opt-in via standard_claims: only)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "password",
+        username: userEmail,
+        password: userPassword,
+        scope: "openid email",
+        clientId: clientId,
+        clientSecret: clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const payload = JSON.parse(
+        Buffer.from(
+          tokenResponse.data.access_token.split(".")[1],
+          "base64url"
+        ).toString()
+      );
+      expect(payload.email).toBeUndefined();
     });
   });
 });
