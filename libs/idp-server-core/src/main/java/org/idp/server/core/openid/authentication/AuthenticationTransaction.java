@@ -246,7 +246,21 @@ public class AuthenticationTransaction {
     Map<String, Object> map = new HashMap<>();
     map.put("id", identifier.value());
     map.putAll(request.toMapForPublic(isDeviceAuthenticated));
+    // #1505: signal (without the value) that a number-matching step is pending, so the device
+    // prompts the user to enter the code shown on the sign-in screen (SPA). The code itself is
+    // intentionally never exposed to the device on this path (that is what breaks push fatigue).
+    map.put("number_matching_required", isNumberMatchingRequired());
     return map;
+  }
+
+  private boolean isNumberMatchingRequired() {
+    if (authenticationPolicy == null || interactionResults == null) {
+      return false;
+    }
+    String numberMatchingType =
+        StandardAuthenticationInteraction.AUTHENTICATION_DEVICE_NUMBER_MATCHING.toType().name();
+    return authenticationPolicy.availableMethods().contains(numberMatchingType)
+        && !interactionResults.containsSuccessful(numberMatchingType);
   }
 
   public boolean hasAuthenticationPolicy() {

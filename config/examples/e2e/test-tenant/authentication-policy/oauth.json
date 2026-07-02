@@ -67,7 +67,7 @@
           ],
           [
             {
-              "path": "$.authentication-device-binding-message.success_count",
+              "path": "$.authentication-device-number-matching.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1
@@ -167,7 +167,7 @@
           ],
           [
             {
-              "path": "$.authentication-device-binding-message.failure_count",
+              "path": "$.authentication-device-number-matching.failure_count",
               "type": "integer",
               "operation": "gte",
               "value": 5
@@ -211,7 +211,7 @@
           ],
           [
             {
-              "path": "$.authentication-device-binding-message.failure_count",
+              "path": "$.authentication-device-number-matching.failure_count",
               "type": "integer",
               "operation": "gte",
               "value": 5
@@ -429,7 +429,7 @@
           ],
           [
             {
-              "path": "$.authentication-device-binding-message.success_count",
+              "path": "$.authentication-device-number-matching.success_count",
               "type": "integer",
               "operation": "gte",
               "value": 1
@@ -521,7 +521,7 @@
           ],
           [
             {
-              "path": "$.authentication-device-binding-message.failure_count",
+              "path": "$.authentication-device-number-matching.failure_count",
               "type": "integer",
               "operation": "gte",
               "value": 5
@@ -565,7 +565,7 @@
           ],
           [
             {
-              "path": "$.authentication-device-binding-message.failure_count",
+              "path": "$.authentication-device-number-matching.failure_count",
               "type": "integer",
               "operation": "gte",
               "value": 5
