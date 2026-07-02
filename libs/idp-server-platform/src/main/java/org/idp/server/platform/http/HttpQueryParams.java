@@ -36,7 +36,16 @@ public class HttpQueryParams {
     return params;
   }
 
+  /**
+   * Adds a query parameter, skipping null or empty values instead of encoding them. {@link
+   * UrlParameterSanitizer#encodeQueryValue} would throw NPE on null ({@code URLEncoder.encode(null,
+   * ...)}), and {@link #params()} already omits empty values — so an omitted optional field (e.g.
+   * {@code scope} in {@code client_credentials}) must not break request assembly. (#1630)
+   */
   public void add(String key, String value) {
+    if (value == null || value.isEmpty()) {
+      return;
+    }
     String urlEncodedKey = UrlParameterSanitizer.encodeQueryKey(key);
     String urlEncodedValue = UrlParameterSanitizer.encodeQueryValue(value);
     values.put(urlEncodedKey, urlEncodedValue);
