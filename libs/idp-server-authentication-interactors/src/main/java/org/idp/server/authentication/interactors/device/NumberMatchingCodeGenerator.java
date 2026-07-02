@@ -32,6 +32,10 @@ public final class NumberMatchingCodeGenerator {
   private NumberMatchingCodeGenerator() {}
 
   public static String generate(int length) {
+    if (length < 1) {
+      throw new IllegalArgumentException(
+          "number-matching code length must be >= 1 but was " + length);
+    }
     StringBuilder builder = new StringBuilder(length);
     for (int i = 0; i < length; i++) {
       builder.append(DIGITS[SECURE_RANDOM.nextInt(DIGITS.length)]);

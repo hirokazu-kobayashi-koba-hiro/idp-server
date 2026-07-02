@@ -52,16 +52,19 @@ sequenceDiagram
     SPA ->> idp: view-data取得
     idp -->> SPA: 認証ポリシー + login_hint情報
 
-    SPA ->> idp: デバイス通知要求（interact: authentication-device-notification）
-    idp ->> fcm: Push通知リクエスト（binding_message は載せない）
-    idp -->> SPA: 通知送信結果 + binding_message
-    Note over SPA: binding_message を画面に表示
+    SPA ->> idp: number-matching コード発行要求（interact: authentication-device-number-matching-challenge）
+    idp -->> SPA: number_matching_code
+    Note over SPA: number_matching_code を画面に表示
+
+    SPA ->> idp: デバイス通知要求（任意, interact: authentication-device-notification）
+    idp ->> fcm: Push通知リクエスト（number_matching_code は載せない）
+    idp -->> SPA: 通知送信結果
 
     SPA ->> idp: 認証ステータス確認（ポーリング）
     idp -->> SPA: status: in_progress
 
     fcm -->> Device: Push通知（「画面の番号を入力」）
-    Device ->> idp: binding-message 検証（ユーザーが転記した値）
+    Device ->> idp: number-matching 検証（interact: authentication-device-number-matching, ユーザーが転記した値）
     idp -->> Device: 一致OK
     Device ->> idp: FIDO-UAF 認証チャレンジ要求
     idp -->> Device: FIDO-UAF 認証チャレンジ

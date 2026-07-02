@@ -34,6 +34,11 @@ class NumberMatchingCodeGeneratorTest {
   @Test
   void honorsLength() {
     assertEquals(6, NumberMatchingCodeGenerator.generate(6).length());
-    assertEquals(0, NumberMatchingCodeGenerator.generate(0).length());
+  }
+
+  @Test
+  void rejectsNonPositiveLength() {
+    assertThrows(IllegalArgumentException.class, () -> NumberMatchingCodeGenerator.generate(0));
+    assertThrows(IllegalArgumentException.class, () -> NumberMatchingCodeGenerator.generate(-1));
   }
 }

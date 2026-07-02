@@ -138,7 +138,7 @@ public class AuthenticationDeviceNumberMatchingInteractor implements Authenticat
           interactionQueryRepository.get(
               tenant,
               transaction.identifier(),
-              "authentication-device-number-matching-challenge",
+              AuthenticationDeviceNumberMatchingChallengeInteractor.CHALLENGE_INTERACTION_KEY,
               NumberMatchingChallenge.class);
       return stored != null ? stored.code() : null;
     } catch (MfaTransactionNotFoundException notFound) {

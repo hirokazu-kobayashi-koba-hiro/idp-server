@@ -46,6 +46,14 @@ public class AuthenticationDeviceNumberMatchingChallengeInteractor
     implements AuthenticationInteractor {
 
   static final String CONFIG_KEY = "authentication-device-number-matching";
+
+  /**
+   * Storage key under which the issued code is persisted for this transaction. {@link
+   * AuthenticationDeviceNumberMatchingInteractor} reads it back with the same key, so both sides
+   * share this constant instead of duplicating the literal.
+   */
+  static final String CHALLENGE_INTERACTION_KEY = "authentication-device-number-matching-challenge";
+
   static final int DEFAULT_LENGTH = 4;
 
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
@@ -77,7 +85,7 @@ public class AuthenticationDeviceNumberMatchingChallengeInteractor
 
   @Override
   public String method() {
-    return "authentication-device-number-matching-challenge";
+    return CHALLENGE_INTERACTION_KEY;
   }
 
   @Override
@@ -93,8 +101,12 @@ public class AuthenticationDeviceNumberMatchingChallengeInteractor
       log.debug("AuthenticationDeviceNumberMatchingChallengeInteractor called");
 
       Map<String, Object> details = resolveDetails(tenant);
-      int length =
+      int configuredLength =
           (details.get("length") instanceof Number number) ? number.intValue() : DEFAULT_LENGTH;
+      // Guard against a misconfigured non-positive length: a zero-length code would be an empty
+      // string that any empty submission matches, so fall back to the default rather than issue a
+      // degenerate code.
+      int length = configuredLength < 1 ? DEFAULT_LENGTH : configuredLength;
 
       String code = NumberMatchingCodeGenerator.generate(length);
       interactionCommandRepository.register(
@@ -111,10 +123,11 @@ public class AuthenticationDeviceNumberMatchingChallengeInteractor
           Map.of("number_matching_code", code),
           DefaultSecurityEventType.authentication_device_number_matching_challenge_success);
     } catch (Exception e) {
+      log.error("Failed to issue number-matching code", e);
       Map<String, Object> response = new HashMap<>();
       response.put("error", "server_error");
-      response.put("error_description", e.getMessage());
-      return AuthenticationInteractionRequestResult.clientError(
+      response.put("error_description", "Failed to issue number-matching code");
+      return AuthenticationInteractionRequestResult.serverError(
           response,
           type,
           operationType(),

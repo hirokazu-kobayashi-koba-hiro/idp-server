@@ -62,6 +62,26 @@
               "operation": "gte",
               "value": 1
             }
+          ],
+          [
+            {
+              "path": "$.authentication-device-number-matching.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.authentication-device-number-matching.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
           ]
         ]
       },
