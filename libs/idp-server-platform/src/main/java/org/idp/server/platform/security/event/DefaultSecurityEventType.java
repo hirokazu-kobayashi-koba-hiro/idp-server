@@ -164,6 +164,13 @@ public enum DefaultSecurityEventType {
   authentication_device_allow_failure("User approval on device failed to process"),
   authentication_device_binding_message_success("Binding message was verified on device"),
   authentication_device_binding_message_failure("Binding message verification failed on device"),
+  authentication_device_number_matching_challenge_success(
+      "Number-matching code was issued on device"),
+  authentication_device_number_matching_challenge_failure(
+      "Number-matching code issuance failed on device"),
+  authentication_device_number_matching_success("Number-matching code was verified on device"),
+  authentication_device_number_matching_failure(
+      "Number-matching code verification failed on device"),
 
   // Authentication device registration
   authentication_device_registration_success("Authentication device was registered"),

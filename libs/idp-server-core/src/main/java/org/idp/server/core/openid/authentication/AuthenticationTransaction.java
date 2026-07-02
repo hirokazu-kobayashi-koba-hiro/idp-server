@@ -246,7 +246,31 @@ public class AuthenticationTransaction {
     Map<String, Object> map = new HashMap<>();
     map.put("id", identifier.value());
     map.putAll(request.toMapForPublic(isDeviceAuthenticated));
+    // #1505: once a challenge has issued a code, tell the device to prompt for it (the value itself
+    // is never exposed to the device — that is what breaks push fatigue). See
+    // isNumberMatchingRequired() for why this stays true even after the code is verified.
+    map.put("number_matching_required", isNumberMatchingRequired());
     return map;
+  }
+
+  /**
+   * Whether to tell the device to prompt for the number-matching code. Keyed on a successful
+   * challenge (the code has been issued to the sign-in screen), NOT on whether the verify step
+   * succeeded: clearing it on verify success would let an attacker who started the flow satisfy the
+   * verify himself and thereby signal the victim's device that the prompt is no longer needed,
+   * reopening the blind-approval (push fatigue) path this is meant to close. It therefore stays
+   * true for the rest of the flow; whether the code was actually verified is tracked separately in
+   * the interaction results. (#1505)
+   */
+  private boolean isNumberMatchingRequired() {
+    if (interactionResults == null) {
+      return false;
+    }
+    String challengeType =
+        StandardAuthenticationInteraction.AUTHENTICATION_DEVICE_NUMBER_MATCHING_CHALLENGE
+            .toType()
+            .name();
+    return interactionResults.containsSuccessful(challengeType);
   }
 
   public boolean hasAuthenticationPolicy() {
