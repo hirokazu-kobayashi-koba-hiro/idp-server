@@ -10,7 +10,8 @@
       },
       "available_methods": [
         "authentication-device-notification",
-        "authentication-device-binding-message",
+        "authentication-device-number-matching-challenge",
+        "authentication-device-number-matching",
         "authentication-device-deny",
         "fido-uaf"
       ],
@@ -19,19 +20,30 @@
       },
       "step_definitions": [
         {
-          "method": "authentication-device-notification",
+          "method": "authentication-device-number-matching-challenge",
           "order": 1,
           "requires_user": false
         },
         {
-          "method": "fido-uaf",
+          "method": "authentication-device-number-matching",
           "order": 2,
+          "requires_user": false
+        },
+        {
+          "method": "fido-uaf",
+          "order": 3,
           "requires_user": true
         }
       ],
       "success_conditions": {
         "any_of": [
           [
+            {
+              "path": "$.authentication-device-number-matching.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
             {
               "path": "$.fido-uaf-authentication.success_count",
               "type": "integer",
@@ -49,6 +61,26 @@
               "type": "integer",
               "operation": "gte",
               "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.authentication-device-number-matching.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.authentication-device-number-matching.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
             }
           ]
         ]

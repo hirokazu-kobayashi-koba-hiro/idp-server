@@ -269,6 +269,152 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     console.log("  10. ID token contains amr claim\n");
   });
 
+  it("should issue a number-matching code, verify it, then complete FIDO-UAF to issue tokens (push fatigue mitigation, #1505)", async () => {
+    // Setup: user + FIDO-UAF device
+    const { user, accessToken } = await createFederatedUser({
+      serverConfig: serverConfig,
+      federationServerConfig: federationServerConfig,
+      client: clientSecretPostClient,
+      adminClient: clientSecretPostClient,
+    });
+    await registerFidoUaf({ accessToken });
+
+    // Start authorization code flow with login_hint
+    const state = `state_${Date.now()}`;
+    const loginHint = `sub:${user.sub},idp:idp-server`;
+    const authorizeResponse = await get({
+      url:
+        `${backendUrl}/${serverConfig.tenantId}/v1/authorizations?` +
+        new URLSearchParams({
+          response_type: "code",
+          client_id: clientSecretPostClient.clientId,
+          redirect_uri: clientSecretPostClient.redirectUri,
+          scope: "openid profile email",
+          state: state,
+          login_hint: loginHint,
+        }).toString(),
+      headers: {},
+    });
+    expect(authorizeResponse.status).toBe(302);
+    const authId = new URL(authorizeResponse.headers.location, backendUrl).searchParams.get("id");
+
+    // Admin token + device-facing transaction view, used to assert the number_matching_required flag.
+    const adminTokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "password",
+      username: serverConfig.oauth.username,
+      password: serverConfig.oauth.password,
+      scope: clientSecretPostClient.scope,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    expect(adminTokenResponse.status).toBe(200);
+
+    const txUrl = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${authId}`;
+    const txHeaders = { Authorization: `Bearer ${adminTokenResponse.data.access_token}` };
+
+    // Before any challenge no code has been issued, so the device must NOT be prompted.
+    const txBeforeChallenge = await get({ url: txUrl, headers: txHeaders });
+    expect(txBeforeChallenge.status).toBe(200);
+    expect(txBeforeChallenge.data.list[0].number_matching_required).toBe(false);
+
+    // Issue the number-matching code. Generation is separate from push (FCM): this call only
+    // generates + stores the code and returns it for the sign-in screen (SPA) to display. The code
+    // is never sent to the device; the user transcribes it. (Push is optional and lives in the
+    // shared authentication-device-notification interactor, so it is not exercised here.)
+    const challengeResponse = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-device-number-matching-challenge`,
+      body: {},
+    });
+    expect(challengeResponse.status).toBe(200);
+    const numberMatchingCode = challengeResponse.data.number_matching_code;
+    expect(numberMatchingCode).toBeDefined();
+    expect(numberMatchingCode).toMatch(/^[0-9]{4}$/);
+
+    // A value that differs from the issued code must not match.
+    const wrongCode = numberMatchingCode === "0000" ? "1111" : "0000";
+    const wrongResponse = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-device-number-matching`,
+      body: { number_matching_code: wrongCode },
+    });
+    expect(wrongResponse.status).toBe(400);
+
+    // The value the user transcribed from the sign-in screen matches the stored one.
+    const okResponse = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-device-number-matching`,
+      body: { number_matching_code: numberMatchingCode },
+    });
+    expect(okResponse.status).toBe(200);
+
+    // Number-matching is an anti-push-fatigue binding, NOT an authentication factor: on its own it
+    // must not complete authentication. The flow stays in_progress until the actual FIDO-UAF step
+    // runs (the shipped mfa-fido-uaf template requires number-matching AND fido-uaf).
+    const statusAfterNumberMatching = await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-status`,
+      headers: {},
+    });
+    expect(statusAfterNumberMatching.status).toBe(200);
+    expect(statusAfterNumberMatching.data.status).toBe("in_progress");
+
+    // After the code is verified the flag deliberately STAYS true: it is keyed on the challenge, not
+    // on verify success, so an attacker who satisfied the verify himself cannot make the victim's
+    // device skip the prompt (#1505). Whether the code was verified is tracked separately.
+    const txAfterVerify = await get({ url: txUrl, headers: txHeaders });
+    expect(txAfterVerify.status).toBe(200);
+    expect(txAfterVerify.data.list.length).toBeGreaterThanOrEqual(1);
+    expect(txAfterVerify.data.list[0].number_matching_required).toBe(true);
+
+    // FIDO-UAF is the authentication factor. Resolve the transaction id and run the device-side
+    // challenge + authentication (same path as the FIDO-UAF-only scenario).
+    const transactionId = txAfterVerify.data.list[0].id;
+
+    let fidoResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: "oauth",
+      id: transactionId,
+      interactionType: "fido-uaf-authentication-challenge",
+      body: {},
+    });
+    expect(fidoResponse.status).toBe(200);
+
+    fidoResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: "oauth",
+      id: transactionId,
+      interactionType: "fido-uaf-authentication",
+      body: {},
+    });
+    expect(fidoResponse.status).toBe(200);
+
+    // With FIDO-UAF done, authentication succeeds and the authorization code flow can issue tokens.
+    const statusAfter = await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-status`,
+      headers: {},
+    });
+    expect(statusAfter.status).toBe(200);
+    expect(statusAfter.data.status).toBe("success");
+    expect(statusAfter.data.authentication_methods).toContain("fido-uaf");
+
+    const authorizeResp = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authorize`,
+    });
+    expect(authorizeResp.status).toBe(200);
+    const code = new URL(authorizeResp.data.redirect_uri).searchParams.get("code");
+    expect(code).toBeDefined();
+
+    const tokenResponse = await requestToken({
+      endpoint: serverConfig.tokenEndpoint,
+      grantType: "authorization_code",
+      code: code,
+      redirectUri: clientSecretPostClient.redirectUri,
+      clientId: clientSecretPostClient.clientId,
+      clientSecret: clientSecretPostClient.clientSecret,
+    });
+    expect(tokenResponse.status).toBe(200);
+    expect(tokenResponse.data.access_token).toBeDefined();
+    expect(tokenResponse.data.id_token).toBeDefined();
+  });
+
   it("should filter scopes based on level_of_authentication_scopes", async () => {
     // Setup: Create user and register FIDO-UAF device
     console.log("\n=== Setup: Create user and register FIDO-UAF device ===");
