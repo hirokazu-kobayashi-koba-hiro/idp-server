@@ -32,7 +32,10 @@ public class HttpQueryParams {
 
   public static HttpQueryParams fromMapObject(Map<String, Object> values) {
     HttpQueryParams params = new HttpQueryParams();
-    values.forEach((k, v) -> params.add(k, v.toString()));
+    // Objects.toString(v, null) passes a null value through to add(), which skips it, rather than
+    // calling v.toString() and throwing NPE. A null value in a form-encoded body must not break
+    // assembly, mirroring the add() null guard. (#1630)
+    values.forEach((k, v) -> params.add(k, Objects.toString(v, null)));
     return params;
   }
 

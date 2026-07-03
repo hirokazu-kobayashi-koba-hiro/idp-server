@@ -94,6 +94,17 @@ class HttpQueryParamsTest {
   }
 
   @Test
+  void fromMapObject_skipsNullValueWithoutNpe() {
+    // #1630: a null value in a form-encoded body (fromMapObject is used by HttpRequestBuilder) must
+    // not NPE via v.toString(). It is passed through as null and skipped, like the add() guard.
+    Map<String, Object> values = new HashMap<>();
+    values.put("grant_type", "client_credentials");
+    values.put("scope", null);
+    HttpQueryParams params = assertDoesNotThrow(() -> HttpQueryParams.fromMapObject(values));
+    assertEquals("grant_type=client_credentials", params.params());
+  }
+
+  @Test
   void params_handlesMultipleParameters() {
     HttpQueryParams params = new HttpQueryParams();
     params.add("key1", "value1");
