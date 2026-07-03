@@ -18,6 +18,7 @@ package org.idp.server.platform.http;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -71,6 +72,36 @@ class HttpQueryParamsTest {
     params.add("key", "");
     // Empty values should be skipped
     assertEquals("", params.params());
+  }
+
+  @Test
+  void add_skipsNullValueWithoutNpe() {
+    HttpQueryParams params = new HttpQueryParams();
+    // #1630: a null value must be skipped, not passed to URLEncoder.encode (which NPEs on null).
+    assertDoesNotThrow(() -> params.add("scope", null));
+    assertEquals("", params.params());
+  }
+
+  @Test
+  void constructor_skipsNullValueWithoutNpe() {
+    // #1630: an optional field omitted from oauth_authorization (e.g. scope in client_credentials)
+    // reaches assembly as a null map value. The request must still build, minus that parameter.
+    Map<String, String> values = new HashMap<>();
+    values.put("grant_type", "client_credentials");
+    values.put("scope", null);
+    HttpQueryParams params = assertDoesNotThrow(() -> new HttpQueryParams(values));
+    assertEquals("grant_type=client_credentials", params.params());
+  }
+
+  @Test
+  void fromMapObject_skipsNullValueWithoutNpe() {
+    // #1630: a null value in a form-encoded body (fromMapObject is used by HttpRequestBuilder) must
+    // not NPE via v.toString(). It is passed through as null and skipped, like the add() guard.
+    Map<String, Object> values = new HashMap<>();
+    values.put("grant_type", "client_credentials");
+    values.put("scope", null);
+    HttpQueryParams params = assertDoesNotThrow(() -> HttpQueryParams.fromMapObject(values));
+    assertEquals("grant_type=client_credentials", params.params());
   }
 
   @Test
