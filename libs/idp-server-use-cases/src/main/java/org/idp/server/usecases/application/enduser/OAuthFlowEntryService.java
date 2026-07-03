@@ -30,6 +30,7 @@ import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.authentication.AuthenticationInteractor;
 import org.idp.server.core.openid.authentication.AuthenticationInteractors;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
+import org.idp.server.core.openid.authentication.AuthenticationUserStatusGuard;
 import org.idp.server.core.openid.authentication.AuthorizationIdentifier;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration;
@@ -302,9 +303,13 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
       validateAuthSession(lockedTransaction);
     }
 
+    // #1377: reject a non-active user before onAuthenticationSuccess() creates an OP session /
+    // SSO cookie. /authorize re-checks status and blocks the code, but only after the session
+    // already exists.
     AuthenticationInteractionRequestResult result =
-        authenticationInteractor.interact(
-            tenant, lockedTransaction, type, request, requestAttributes, userQueryRepository);
+        AuthenticationUserStatusGuard.denyIfInactive(
+            authenticationInteractor.interact(
+                tenant, lockedTransaction, type, request, requestAttributes, userQueryRepository));
 
     AuthenticationTransaction updatedTransaction = lockedTransaction.updateWith(result);
     authenticationTransactionCommandRepository.update(tenant, updatedTransaction);

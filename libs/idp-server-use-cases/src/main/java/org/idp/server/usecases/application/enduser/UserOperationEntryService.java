@@ -160,9 +160,11 @@ public class UserOperationEntryService implements UserOperationApi {
 
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
 
+    // #1377: a non-active user must not complete a user operation (the only status gate here).
     AuthenticationInteractionRequestResult result =
-        authenticationInteractor.interact(
-            tenant, lockedTransaction, type, request, requestAttributes, userQueryRepository);
+        AuthenticationUserStatusGuard.denyIfInactive(
+            authenticationInteractor.interact(
+                tenant, lockedTransaction, type, request, requestAttributes, userQueryRepository));
 
     AuthenticationTransaction updatedTransaction = lockedTransaction.updateWith(result);
 

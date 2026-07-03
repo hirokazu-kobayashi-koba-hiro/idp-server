@@ -236,7 +236,10 @@ describe("User Status verification. Can not authorize when user status is not ac
           });
 
           console.log(JSON.stringify(passwordAuthenticationResponse.data, null, 2));
-          expect(passwordAuthenticationResponse.status).toBe(200);
+          // #1377: a non-active user must be rejected at the authentication interaction itself,
+          // before any session/grant is established (not merely blocked later at token issuance).
+          expect(passwordAuthenticationResponse.status).toBe(403);
+          expect(passwordAuthenticationResponse.data).toHaveProperty("error", "access_denied");
         };
 
         console.log(`Attempting OAuth authorization with ${status} user...`);

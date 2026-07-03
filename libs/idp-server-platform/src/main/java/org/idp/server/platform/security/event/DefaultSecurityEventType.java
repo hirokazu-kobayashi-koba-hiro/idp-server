@@ -59,6 +59,10 @@ public enum DefaultSecurityEventType {
   user_initial_registration_conflict("Initial registration rejected due to duplicate account"),
   user_self_delete("User deleted their own account (irreversible)", true),
 
+  // Account status enforcement
+  user_status_inactive(
+      "Authentication was denied because the user account is not active (locked/disabled/etc.)"),
+
   // Password authentication
   password_success("Password authentication succeeded at login"),
   password_failure("Password authentication failed at login"),
