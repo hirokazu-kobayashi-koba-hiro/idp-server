@@ -120,6 +120,10 @@ public class CibaFlowEntryService implements CibaFlowApi {
         issueResponse.defaultCibaAuthenticationInteractionType();
     AuthenticationInteractor authenticationInteractor =
         authenticationInteractors.get(authenticationInteractionType);
+    // #1377: no denyIfInactive guard here — the request-time UserStatusVerifier (above) already
+    // rejected a non-active user synchronously, and this initial interaction is a
+    // notification/challenge that establishes no user. The mid-flow-lock window is in
+    // interactInternal(), where the guard lives.
     AuthenticationInteractionRequestResult interactionRequestResult =
         authenticationInteractor.interact(
             tenant,
