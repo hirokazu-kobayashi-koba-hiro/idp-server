@@ -38,8 +38,6 @@ import org.idp.server.platform.security.event.DefaultSecurityEventType;
  *   <li><b>CIBA:</b> only the backchannel <i>request</i> checks status; the grant/token path does
  *       not. A user locked during the pending window would otherwise still be issued tokens, so
  *       this is the only post-request gate.
- *   <li><b>User operation:</b> there is no other status gate, so this is the sole enforcement
- *       point.
  * </ul>
  *
  * <p>This mirrors the token-layer {@code ResourceOwnerPasswordGrantVerifier} / {@code
