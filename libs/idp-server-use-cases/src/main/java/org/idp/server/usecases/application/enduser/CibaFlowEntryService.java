@@ -120,6 +120,10 @@ public class CibaFlowEntryService implements CibaFlowApi {
         issueResponse.defaultCibaAuthenticationInteractionType();
     AuthenticationInteractor authenticationInteractor =
         authenticationInteractors.get(authenticationInteractionType);
+    // #1377: no denyIfInactive guard here — the request-time UserStatusVerifier (above) already
+    // rejected a non-active user synchronously, and this initial interaction is a
+    // notification/challenge that establishes no user. The mid-flow-lock window is in
+    // interactInternal(), where the guard lives.
     AuthenticationInteractionRequestResult interactionRequestResult =
         authenticationInteractor.interact(
             tenant,
@@ -186,9 +190,13 @@ public class CibaFlowEntryService implements CibaFlowApi {
 
     AuthenticationInteractor authenticationInteractor = authenticationInteractors.get(type);
 
+    // #1377: reject a non-active user before the grant is authorized. Unlike OAuth's /authorize,
+    // the CIBA token path does not re-check status, so a user locked during the pending window
+    // would otherwise still be issued tokens.
     AuthenticationInteractionRequestResult result =
-        authenticationInteractor.interact(
-            tenant, lockedTransaction, type, request, requestAttributes, userQueryRepository);
+        AuthenticationUserStatusGuard.denyIfInactive(
+            authenticationInteractor.interact(
+                tenant, lockedTransaction, type, request, requestAttributes, userQueryRepository));
 
     AuthenticationTransaction updatedTransaction = lockedTransaction.updateWith(result);
 
