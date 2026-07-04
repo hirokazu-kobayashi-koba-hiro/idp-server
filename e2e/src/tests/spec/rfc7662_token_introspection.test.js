@@ -6,6 +6,7 @@ import {
   clientSecretJwtClient,
   clientSecretPostClient,
   privateKeyJwtClient,
+  publicClient,
   serverConfig
 } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
@@ -51,6 +52,13 @@ describe("OAuth 2.0 Token Introspection", () => {
       console.log(JSON.stringify(introspectionResponse.data, null, 2));
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(true);
+
+      // #1707 RFC 7662 Section 2.2: token_type (Bearer) and username (when the resource owner has a
+      // preferred_username). token_type is always present for an active access token.
+      expect(introspectionResponse.data.token_type).toBe("Bearer");
+      if (introspectionResponse.data.username !== undefined) {
+        expect(typeof introspectionResponse.data.username).toBe("string");
+      }
 
       // RFC 9068: Verify authentication information claims in JWT access token
       expect(introspectionResponse.data).toHaveProperty("auth_time");
@@ -262,6 +270,68 @@ describe("OAuth 2.0 Token Introspection", () => {
       expect(response.data.error_description).toBe(
         "Bad request. Content-Type header does not match supported values"
       );
+    });
+
+    it("To prevent token scanning attacks, the endpoint MUST require authorization — a public client (token_endpoint_auth_method=none) is rejected with invalid_client - RFC 7662 Section 2.1 (#1707)", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      // A public client (no secret) is rejected at client authentication, before any token lookup.
+      const introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: publicClient.clientId,
+      });
+      console.log(JSON.stringify(introspectionResponse.data, null, 2));
+      expect(introspectionResponse.status).toBe(400);
+      expect(introspectionResponse.data).toHaveProperty("error", "invalid_client");
+    });
+
+    it("does not fall back to a refresh-token lookup — a refresh token introspects as active:false, avoiding token type confusion (#1707)", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data.refresh_token).toBeDefined();
+
+      // The refresh token value must NOT be returned as an active access token.
+      const introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.refresh_token,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(JSON.stringify(introspectionResponse.data, null, 2));
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(false);
     });
   });
 
