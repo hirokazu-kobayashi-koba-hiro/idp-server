@@ -19,6 +19,7 @@ package org.idp.server.core.openid.token.tokenintrospection;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.AccessToken;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.date.SystemDateTime;
@@ -35,6 +36,16 @@ public class TokenIntrospectionContentsCreator {
     }
     contents.put("client_id", accessToken.requestedClientId().value());
     contents.put("scope", accessToken.scopes().toStringValues());
+    // RFC 7662 §2.2: token_type (e.g. Bearer / DPoP) and username (human-readable resource owner
+    // identifier). token_type is omitted when undefined; username is omitted for client_credentials
+    // tokens, which carry no user.
+    if (accessToken.tokenType().isDefined()) {
+      contents.put("token_type", accessToken.tokenType().name());
+    }
+    User user = accessToken.user();
+    if (user.exists() && user.hasPreferredUsername()) {
+      contents.put("username", user.preferredUsername());
+    }
     if (accessToken.hasCustomClaims()) {
       contents.putAll(accessToken.customClaims().toMap());
     }

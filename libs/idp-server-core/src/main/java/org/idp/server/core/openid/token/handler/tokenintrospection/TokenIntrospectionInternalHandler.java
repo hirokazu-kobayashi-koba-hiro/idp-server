@@ -30,6 +30,20 @@ import org.idp.server.core.openid.token.tokenintrospection.verifier.TokenIntrosp
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
+/**
+ * Internal (server-side) token introspection for trusted in-process callers only, e.g. {@code
+ * UserAuthenticationEntryService} validating an access token already in hand.
+ *
+ * <p>Unlike {@link TokenIntrospectionHandler} / {@link TokenIntrospectionExtensionHandler}, this
+ * handler performs NO client authentication — there is no client credential on this path — so the
+ * confidential-client guard (Issue #1707, RFC 7662 §2.1) does not apply here. It looks up access
+ * tokens only (no refresh-token fallback), matching the public handlers, to avoid token type
+ * confusion.
+ *
+ * <p><b>Must never be exposed on a public endpoint.</b> It is intentionally unreachable from any
+ * Controller; wiring it to an external route would permit unauthenticated introspection and defeat
+ * the confidential-client requirement enforced on the public endpoints.
+ */
 public class TokenIntrospectionInternalHandler {
 
   OAuthTokenQueryRepository oAuthTokenQueryRepository;

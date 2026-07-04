@@ -25,7 +25,6 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
-import org.idp.server.core.openid.oauth.type.oauth.RefreshTokenEntity;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenUserFindingDelegate;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
@@ -36,6 +35,7 @@ import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionCon
 import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionRequestContext;
 import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionRequestParameters;
 import org.idp.server.core.openid.token.tokenintrospection.validator.TokenIntrospectionValidator;
+import org.idp.server.core.openid.token.tokenintrospection.verifier.TokenIntrospectionClientAuthenticationVerifier;
 import org.idp.server.core.openid.token.tokenintrospection.verifier.TokenIntrospectionUserVerifier;
 import org.idp.server.core.openid.token.tokenintrospection.verifier.TokenIntrospectionVerifier;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -77,6 +77,11 @@ public class TokenIntrospectionHandler {
             request.toParameters(),
             authorizationServerConfiguration,
             clientConfiguration);
+    // #1707 (RFC 7662 §2.1): introspection requires client authentication; reject public clients
+    // (token_endpoint_auth_method=none) before the shared handler lets `none` through unchecked.
+    new TokenIntrospectionClientAuthenticationVerifier(
+            clientConfiguration.clientAuthenticationType())
+        .verify();
     clientAuthenticationHandler.authenticate(introspectionRequestContext);
 
     OAuthToken oAuthToken = find(request);
@@ -109,12 +114,9 @@ public class TokenIntrospectionHandler {
     TokenIntrospectionRequestParameters parameters = request.toParameters();
     AccessTokenEntity accessTokenEntity = parameters.accessToken();
     Tenant tenant = request.tenant();
-    OAuthToken oAuthToken = oAuthTokenQueryRepository.find(tenant, accessTokenEntity);
-    if (oAuthToken.exists()) {
-      return oAuthToken;
-    } else {
-      RefreshTokenEntity refreshTokenEntity = parameters.refreshToken();
-      return oAuthTokenQueryRepository.find(tenant, refreshTokenEntity);
-    }
+    // #1707: introspect access tokens only. A refresh-token fallback would let a refresh token
+    // presented as a Bearer token be returned active with the access token's claims (token type
+    // confusion); introspecting a refresh token now yields active:false.
+    return oAuthTokenQueryRepository.find(tenant, accessTokenEntity);
   }
 }
