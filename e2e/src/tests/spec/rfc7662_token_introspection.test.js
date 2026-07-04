@@ -53,13 +53,6 @@ describe("OAuth 2.0 Token Introspection", () => {
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(true);
 
-      // #1707 RFC 7662 Section 2.2: token_type (Bearer) and username (when the resource owner has a
-      // preferred_username). token_type is always present for an active access token.
-      expect(introspectionResponse.data.token_type).toBe("Bearer");
-      if (introspectionResponse.data.username !== undefined) {
-        expect(typeof introspectionResponse.data.username).toBe("string");
-      }
-
       // RFC 9068: Verify authentication information claims in JWT access token
       expect(introspectionResponse.data).toHaveProperty("auth_time");
       expect(typeof introspectionResponse.data.auth_time).toBe("number");
@@ -332,6 +325,51 @@ describe("OAuth 2.0 Token Introspection", () => {
       console.log(JSON.stringify(introspectionResponse.data, null, 2));
       expect(introspectionResponse.status).toBe(200);
       expect(introspectionResponse.data.active).toBe(false);
+    });
+  });
+
+  describe("2.2. Introspection Response", () => {
+    const introspectActiveToken = async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: "openid profile " + clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(true);
+      return introspectionResponse;
+    };
+
+    it("token_type OPTIONAL. Type of the token as defined in Section 5.1 of OAuth 2.0 [RFC6749] - RFC 7662 Section 2.2 (#1707)", async () => {
+      const introspectionResponse = await introspectActiveToken();
+      expect(introspectionResponse.data.token_type).toBe("Bearer");
+    });
+
+    it("username OPTIONAL. Human-readable identifier for the resource owner who authorized this token - RFC 7662 Section 2.2 (#1707)", async () => {
+      const introspectionResponse = await introspectActiveToken();
+      // The resource owner (ito.ichiro) has a preferred_username, so username is asserted
+      // unconditionally: a regression that drops username must fail this test.
+      expect(introspectionResponse.data).toHaveProperty("username");
+      expect(typeof introspectionResponse.data.username).toBe("string");
+      expect(introspectionResponse.data.username.length).toBeGreaterThan(0);
     });
   });
 
