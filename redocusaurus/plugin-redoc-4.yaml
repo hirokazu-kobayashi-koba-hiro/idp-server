@@ -816,6 +816,12 @@ components:
             access_token_selective_verified_claims:
               type: boolean
               description: アクセストークンおよび UserInfo での検証済みクレームの選択的包含を有効にする。
+            access_token_selective_standard_claims:
+              type: boolean
+              description: >-
+                `standard_claims:` プレフィックス付きスコープによる、アクセストークンでの標準 OIDC
+                クレーム（email/name/phone_number 等）の選択的包含を有効にする。 デフォルト false。PII
+                をアクセストークンに載せる能力のため、`custom_claims_scope_mapping` とは別の専用 opt-in。
     ErrorResponse:
       type: object
       properties:

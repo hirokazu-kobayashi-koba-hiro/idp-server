@@ -55,13 +55,13 @@ tags:
       OIDC、SAMLなどの外部アイデンティティプロバイダーとの
       フェデレーション認証を行うためのAPI群。
 paths:
-  /{tenant-id}/v1/authentications/{id}/{interaction-type}:
+  /{tenant-id}/v1/authorizations/{id}/{interaction-type}:
     post:
       tags:
         - 認証インタラクション
       summary: 認証インタラクション実行
       description: >
-        指定された認証トランザクションIDと認証インタラクションタイプに基づいて認証処理を実行します。
+        指定された認可リクエストIDと認証インタラクションタイプに基づいて認証処理を実行します。
 
 
         ## サポートされている認証インタラクションタイプ
@@ -148,7 +148,7 @@ paths:
         7.1](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1)
       parameters:
         - $ref: '#/components/parameters/TenantId'
-        - $ref: '#/components/parameters/AuthenticationTransactionId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
         - $ref: '#/components/parameters/InteractionType'
       requestBody:
         description: |
@@ -290,15 +290,25 @@ paths:
       tags:
         - 認可画面データ
       summary: 認可画面データ取得
-      description: |
+      description: >
         指定された認可リクエストIDに基づいて、認可画面で表示するためのデータを取得します。
 
+
         ## レスポンスデータ
+
         - **クライアント情報**: クライアント名、ロゴURI、利用規約URIなど
+
         - **スコープ情報**: 要求されているスコープの一覧
+
+        - **クレーム情報**: 要求されているクレームの一覧（id_token / userinfo /
+        verified_claims）。クレーム単位の同意表示に使用します
+
         - **セッション情報**: セッション有効化フラグ
+
         - **フェデレーション情報**: 利用可能な外部IdP連携情報
+
         - **カスタムパラメータ**: クライアント固有のカスタムパラメータ
+
 
         このAPIは認可画面のレンダリング時に使用され、ユーザーに表示する情報を提供します。
       parameters:
@@ -328,6 +338,16 @@ paths:
                       - openid
                       - profile
                       - email
+                    claims:
+                      id_token:
+                        - given_name
+                        - family_name
+                        - email
+                      userinfo:
+                        - given_name
+                        - family_name
+                        - email
+                      verified_claims: []
                     session_enabled: true
                     custom_params:
                       organization_id: org123
@@ -385,6 +405,33 @@ paths:
                   value:
                     error: invalid_request
                     error_description: Invalid authorization request ID
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: Missing AUTH_SESSION cookie. Please
+                      restart the authorization flow.
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: AUTH_SESSION cookie does not match.
+                      This authorization request may have been initiated by a
+                      different browser session.
         '404':
           description: 認可リクエストが見つからない
           content:
@@ -409,6 +456,110 @@ paths:
                   value:
                     error: server_error
                     error_description: Internal server error occurred
+  /{tenant-id}/v1/authorizations/{id}/authentication-status:
+    get:
+      tags:
+        - 認証インタラクション
+      summary: 認証状態確認
+      description: |
+        指定された認可リクエストIDに紐づく認証トランザクションの全体状態を取得します。
+
+        SPAが「認証フローのどの段階にいるか」（進行中 / 成功 / 失敗 / ロック）を知るための
+        **読み取り専用**エンドポイントです。認証インタラクションAPI（`/password` 等）は
+        ハンドラ固有のレスポンスしか返さないため、フロー全体の状態確認にはこのAPIを使用します。
+
+        - **認証不要**: view-data APIと同様、認可リクエストIDが推測困難なトークンとして機能し、
+          加えて `AUTH_SESSION` cookie を検証します。
+        - **副作用なし**: 読み取り専用でDBは更新しません。
+
+        ## ステータス値
+
+        | status | 意味 |
+        |--------|------|
+        | `in_progress` | 認証フロー進行中（未完了） |
+        | `success` | 認証成功（認証ポリシーの success_conditions 充足） |
+        | `failure` | 認証失敗（failure_conditions 充足） |
+        | `locked` | ロック状態（lock_conditions 充足） |
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/AuthorizationRequestId'
+      responses:
+        '200':
+          description: |
+            認証状態の取得成功。
+            現在のステータス、各インタラクションの実行結果、成功した認証方式の一覧が含まれます。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationStatusResponse'
+              examples:
+                in-progress:
+                  summary: 認証前（フロー開始直後）
+                  value:
+                    status: in_progress
+                    interaction_results: {}
+                    authentication_methods: []
+                success:
+                  summary: パスワード認証成功後
+                  value:
+                    status: success
+                    interaction_results:
+                      password-authentication:
+                        operation_type: AUTHENTICATION
+                        method: password
+                        call_count: 1
+                        success_count: 1
+                        failure_count: 0
+                        interaction_time: '2025-01-15T10:30:00'
+                    authentication_methods:
+                      - password
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に取得できますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: Missing AUTH_SESSION cookie. Please
+                      restart the authorization flow.
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: AUTH_SESSION cookie does not match.
+                      This authorization request may have been initiated by a
+                      different browser session.
+        '404':
+          description: 認可リクエスト（認証トランザクション）が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not-found:
+                  summary: 認証トランザクションが見つからない
+                  value:
+                    error: invalid_request
+                    error_description: Authentication transaction not found
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
   /{tenant-id}/v1/authorizations/{id}/authorize:
     post:
       tags:
@@ -422,6 +573,51 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/AuthorizationRequestId'
+      requestBody:
+        required: false
+        description: >
+          任意。consent画面でユーザーが共有を拒否した scope / クレーム（view-data の `scopes` /
+
+          `claims` から選択）。
+
+
+          - `denied_scopes`: 拒否された scope。付与スコープから除外され、その scope 由来のクレームも
+            発行されません（認証ポリシー(LoA)由来の拒否スコープにマージされます）。
+          - `denied_claims`: 拒否されたクレーム名。付与時に id_token / userinfo /
+          verified_claims から
+            除外されます（OIDC4IDA §5.7.3、claim単位の同意）。
+
+          ボディ無し（従来どおり）の場合は全要求 scope / クレームを許可します。
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                denied_scopes:
+                  type: array
+                  items:
+                    type: string
+                  description: 共有を拒否した scope の一覧
+                  example:
+                    - email
+                denied_claims:
+                  type: array
+                  items:
+                    type: string
+                  description: 共有を拒否したクレーム名の一覧
+                  example:
+                    - family_name
+            examples:
+              deny-scope:
+                summary: email スコープの共有を拒否
+                value:
+                  denied_scopes:
+                    - email
+              deny-family-name:
+                summary: family_name クレームの共有を拒否
+                value:
+                  denied_claims:
+                    - family_name
       responses:
         '200':
           description: 認可承認成功
@@ -441,6 +637,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: Missing AUTH_SESSION cookie. Please
+                      restart the authorization flow.
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: AUTH_SESSION cookie does not match.
+                      This authorization request may have been initiated by a
+                      different browser session.
         '500':
           description: サーバーエラー
           content:
@@ -480,6 +703,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: Missing AUTH_SESSION cookie. Please
+                      restart the authorization flow.
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: AUTH_SESSION cookie does not match.
+                      This authorization request may have been initiated by a
+                      different browser session.
         '500':
           description: サーバーエラー
           content:
@@ -542,6 +792,33 @@ paths:
                   value:
                     error: invalid_request
                     error_description: Unsupported SSO provider
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: Missing AUTH_SESSION cookie. Please
+                      restart the authorization flow.
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: AUTH_SESSION cookie does not match.
+                      This authorization request may have been initiated by a
+                      different browser session.
         '500':
           description: サーバーエラー
           content:
@@ -619,6 +896,33 @@ paths:
                   value:
                     error: invalid_grant
                     error_description: Invalid authorization code
+        '401':
+          description: |
+            AUTH_SESSION cookie の欠落または不一致（フロー乗っ取り対策）。
+
+            このエンドポイントは `AUTH_SESSION` cookie を検証します。ブラウザ/SPAの通常フローでは
+            cookie が存在するため正常に処理されますが、cookie 消失時や別ブラウザ・別セッションからの
+            アクセス時には 401 を返却します。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing-cookie:
+                  summary: AUTH_SESSION cookie が存在しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: Missing AUTH_SESSION cookie. Please
+                      restart the authorization flow.
+                session-mismatch:
+                  summary: AUTH_SESSION cookie が一致しない
+                  value:
+                    error: invalid_request
+                    error_description: >-
+                      auth_session_mismatch: AUTH_SESSION cookie does not match.
+                      This authorization request may have been initiated by a
+                      different browser session.
         '500':
           description: サーバーエラー
           content:
@@ -1000,6 +1304,54 @@ components:
             - openid
             - profile
             - email
+        claims:
+          type: object
+          description: |
+            このリクエストで要求されているクレーム一覧。consent画面でクレーム単位の表示・同意に使用します。
+            id_token / userinfo はスコープおよびclaimsパラメータから解決されたクレーム名、
+            verified_claims はclaimsパラメータ経由で要求された本人確認済みクレーム名です。
+
+            注: `verified_claims:*` スコープ経由で要求された本人確認済みクレームは
+            `claims.verified_claims` には含まれず、`scopes` 側に残ります。
+          properties:
+            id_token:
+              type: array
+              items:
+                type: string
+              description: IDトークンで要求されているクレーム名
+              example:
+                - given_name
+                - family_name
+                - email
+            userinfo:
+              type: array
+              items:
+                type: string
+              description: UserInfoで要求されているクレーム名
+              example:
+                - given_name
+                - family_name
+                - email
+            verified_claims:
+              type: array
+              items:
+                type: string
+              description: claimsパラメータ経由で要求された本人確認済みクレーム名
+              example:
+                - given_name
+                - family_name
+          example:
+            id_token:
+              - given_name
+              - family_name
+              - email
+            userinfo:
+              - given_name
+              - family_name
+              - email
+            verified_claims:
+              - given_name
+              - family_name
         session_enabled:
           type: boolean
           description: セッション有効化フラグ
@@ -1056,6 +1408,82 @@ components:
           format: uri
           description: プロバイダーのロゴURI
           example: https://google.com/logo.png
+    AuthenticationStatusResponse:
+      type: object
+      required:
+        - status
+        - interaction_results
+        - authentication_methods
+      properties:
+        status:
+          type: string
+          enum:
+            - in_progress
+            - success
+            - failure
+            - locked
+          description: >
+            認証トランザクションの全体ステータス。
+
+            認証ポリシーの条件（success_conditions / failure_conditions /
+            lock_conditions）に基づいて判定されます。
+          example: in_progress
+        interaction_results:
+          type: object
+          description: |
+            実行済みの各認証インタラクションの結果。
+            キーはインタラクションタイプ（例: `password-authentication`）。
+            まだ何も実行していない場合は空オブジェクト。
+          additionalProperties:
+            $ref: '#/components/schemas/AuthenticationInteractionResult'
+          example:
+            password-authentication:
+              operation_type: AUTHENTICATION
+              method: password
+              call_count: 1
+              success_count: 1
+              failure_count: 0
+              interaction_time: '2025-01-15T10:30:00'
+        authentication_methods:
+          type: array
+          items:
+            type: string
+          description: |
+            成功した認証インタラクションの認証方式（method）一覧。
+            ID Tokenの `amr` の元データに相当します。
+          example:
+            - password
+    AuthenticationInteractionResult:
+      type: object
+      properties:
+        operation_type:
+          type: string
+          enum:
+            - AUTHENTICATION
+            - DENY
+          description: オペレーション種別
+          example: AUTHENTICATION
+        method:
+          type: string
+          description: 認証方式
+          example: password
+        call_count:
+          type: integer
+          description: 呼び出し回数（成功・失敗の合計）
+          example: 1
+        success_count:
+          type: integer
+          description: 成功回数
+          example: 1
+        failure_count:
+          type: integer
+          description: 失敗回数
+          example: 0
+        interaction_time:
+          type: string
+          format: date-time
+          description: 最終インタラクション日時
+          example: '2025-01-15T10:30:00'
     AuthorizationResponse:
       type: object
       required:
@@ -1147,6 +1575,111 @@ components:
             name:
               type: string
               description: 表示名
+  responses:
+    TooManyRequests:
+      description: |
+        レート制限超過。
+
+        クライアントが短時間に過剰なリクエストを送信した場合に返却されます。
+        このレスポンスは API Gateway がリクエストをアプリケーションに到達させる前に返却します。
+
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: リトライまでの推奨待機時間（秒）
+          required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            throttled:
+              summary: スロットリング（秒間リクエスト制限）
+              value:
+                message: Too Many Requests
+            quota_exceeded:
+              summary: クォータ超過（日次/月次リクエスト制限）
+              value:
+                message: Limit Exceeded
+    InternalServerError:
+      description: |
+        サーバー内部エラー。
+
+        アプリケーションで予期しないエラーが発生した場合、または API Gateway が
+        バックエンドから正常なレスポンスを受信できなかった場合に返却されます。
+
+        アプリケーション起因の場合は OAuth 2.0 ErrorResponse 形式
+        （`{"error": "server_error", "error_description": "..."}`）で
+        返却される場合があります。
+
+        問題が継続する場合は、サーバー管理者にお問い合わせください。
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            default:
+              summary: サーバー内部エラー
+              value:
+                message: Internal server error
+    ServiceUnavailable:
+      description: |
+        サービス一時利用不可。
+
+        バックエンドサーバーが利用できない状態です。
+        このレスポンスは API Gateway がバックエンドへの接続に失敗した場合に返却します。
+
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: サービス復旧までの推定時間（秒）
+          required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            default:
+              summary: サービス利用不可
+              value:
+                message: Service Unavailable
+    GatewayTimeout:
+      description: |
+        ゲートウェイタイムアウト。
+
+        バックエンドサーバーからの応答が制限時間内に返却されませんでした。
+        このレスポンスは API Gateway がバックエンドの応答を待機してタイムアウトした場合に返却します。
+
+        ネットワークの一時的な問題の可能性があります。時間をおいてリトライしてください。
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            default:
+              summary: タイムアウト
+              value:
+                message: Endpoint request timed out
   securitySchemes:
     BearerAuth:
       type: http

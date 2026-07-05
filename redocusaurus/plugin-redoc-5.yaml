@@ -694,6 +694,14 @@ components:
             authenticated longer ago than the specified number of seconds. The
             max_age request parameter overrides this default value. If omitted,
             no default Maximum Authentication Age is specified.
+        require_pkce:
+          type: boolean
+          default: false
+          description: >-
+            OPTIONAL. If true, this client MUST use PKCE. The authorization
+            request MUST include code_challenge with code_challenge_method=S256,
+            and the token request MUST include code_verifier. Default false
+            (backward compatible).
         require_auth_time:
           type: boolean
           default: false
@@ -1049,6 +1057,14 @@ components:
         default_max_age:
           type: integer
           description: OPTIONAL. Default Maximum Authentication Age.
+        require_pkce:
+          type: boolean
+          default: false
+          description: >-
+            OPTIONAL. If true, this client MUST use PKCE. The authorization
+            request MUST include code_challenge with code_challenge_method=S256,
+            and the token request MUST include code_verifier. Default false
+            (backward compatible).
         require_auth_time:
           type: boolean
           default: false
@@ -1338,6 +1354,14 @@ components:
         default_max_age:
           type: integer
           description: OPTIONAL. Default Maximum Authentication Age.
+        require_pkce:
+          type: boolean
+          default: false
+          description: >-
+            OPTIONAL. If true, this client MUST use PKCE. The authorization
+            request MUST include code_challenge with code_challenge_method=S256,
+            and the token request MUST include code_verifier. Default false
+            (backward compatible).
         require_auth_time:
           type: boolean
           default: false
