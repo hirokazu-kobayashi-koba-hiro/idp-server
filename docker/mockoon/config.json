@@ -2013,6 +2013,41 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-echo-user-context",
+      "type": "http",
+      "documentation": "Issue #1439: echoes back the authenticated-user fields ($.user.*) forwarded in the request body, so E2E can assert egress.",
+      "method": "post",
+      "endpoint": "e2e/echo-user-context",
+      "responses": [
+        {
+          "uuid": "e2e-echo-user-context-200",
+          "body": "{\n  \"received_email\": \"{{ body 'email' }}\",\n  \"received_sub\": \"{{ body 'user_id' }}\",\n  \"received_name\": \"{{ body 'name' }}\",\n  \"ok\": true\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "echo received user fields",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -2151,6 +2186,10 @@
     {
       "type": "route",
       "uuid": "sms-send-only"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-echo-user-context"
     }
   ],
   "proxyMode": false,

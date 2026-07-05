@@ -393,6 +393,42 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
               ],
             },
           },
+          // Issue #1439: 2nd factor that forwards the authenticated user ($.user.*) to the
+          // external API. The echo mock reflects the received fields back so the test can assert
+          // that $.user.email / $.user.sub actually reached the external request body.
+          risk_check_user_context: {
+            execution: {
+              function: "http_request",
+              http_request: {
+                url: `${mockApiBaseUrl}/e2e/echo-user-context`,
+                method: "POST",
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" },
+                ],
+                body_mapping_rules: [
+                  { from: "$.user.email", to: "email" },
+                  { from: "$.user.sub", to: "user_id" },
+                  { from: "$.user.name", to: "name" },
+                ],
+              },
+            },
+            response: {
+              body_mapping_rules: [
+                {
+                  from: "$.execution_http_request.response_body.received_email",
+                  to: "echoed_email",
+                },
+                {
+                  from: "$.execution_http_request.response_body.received_sub",
+                  to: "echoed_sub",
+                },
+                {
+                  from: "$.execution_http_request.response_body.received_name",
+                  to: "echoed_name",
+                },
+              ],
+            },
+          },
         },
       },
     });
@@ -588,6 +624,41 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
     });
     expect(userinfoResp.status).toBe(200);
     expect(userinfoResp.data.sub).toBe(testUserASub);
+  });
+
+  it("should forward the authenticated user ($.user.*) to the external API on a 2nd factor (Issue #1439)", async () => {
+    // Step 1: Start authorization
+    const authResp = await getAuthorizations({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+      clientId,
+      responseType: "code",
+      state: `user-ctx-${Date.now()}`,
+      scope: "openid profile email",
+      redirectUri,
+      prompt: "login",
+    });
+    expect(authResp.status).toBe(302);
+    const { params } = convertNextAction(authResp.headers.location);
+    const authId = params.get("id");
+
+    // Step 2: Password authentication (1st factor) establishes the authenticated user
+    const passwordResp = await postAuthentication({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/password-authentication`,
+      id: authId,
+      body: { username: testUserAEmail, password: testUserAPassword },
+    });
+    expect(passwordResp.status).toBe(200);
+
+    // Step 3: 2nd factor forwards $.user.* to the external API; the echo mock reflects the
+    // received fields back, proving the authenticated user reached the external request body.
+    const riskResp = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: { interaction: "risk_check_user_context" },
+    });
+    expect(riskResp.status).toBe(200);
+    expect(riskResp.data.echoed_email).toBe(testUserAEmail);
+    expect(riskResp.data.echoed_sub).toBe(testUserASub);
+    expect(riskResp.data.echoed_name).toBe("User A");
   });
 
   it("should NOT swap user when 2nd factor external API returns different user info (bypass attempt)", async () => {

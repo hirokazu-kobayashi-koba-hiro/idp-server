@@ -26,6 +26,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.interaction.execution.ExternalRequestUserContextCreator;
 import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -198,6 +199,10 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     AuthenticationExecutor executor = authenticationExecutors.get(executionConfig.function());
     AuthenticationExecutionRequest executionRequest =
         new AuthenticationExecutionRequest(request.toMap());
+    // #1439: forward the allow-listed authenticated user (if any) to the external API as $.user.*.
+    // Empty on a 1st factor with no user yet; populated on a 2nd factor.
+    executionRequest.setTransactionUser(
+        ExternalRequestUserContextCreator.create(transaction.user()));
     AuthenticationExecutionResult executionResult =
         executor.execute(
             tenant, transaction.identifier(), executionRequest, requestAttributes, executionConfig);

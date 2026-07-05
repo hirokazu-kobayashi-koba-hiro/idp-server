@@ -69,6 +69,14 @@ public class HttpRequestAuthenticationExecutor implements AuthenticationExecutor
     param.put("request_body", request.toMap());
     param.put("request_attributes", requestAttributes);
 
+    // Issue #1439: expose the allow-listed authenticated-user projection as $.user.* (same prefix
+    // as the policy-condition context, #1501). Set as a top-level key (not under request_body) so a
+    // request body cannot spoof it, and only when the caller injected it — other interactors are
+    // unaffected.
+    if (request.hasTransactionUser()) {
+      param.put("user", request.transactionUser());
+    }
+
     if (configuration.hasPreviousInteraction()) {
       AuthenticationPreviousInteractionResolveConfig previousInteraction =
           configuration.previousInteraction();
