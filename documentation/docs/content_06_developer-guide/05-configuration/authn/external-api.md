@@ -69,6 +69,66 @@ External API認証を使用するには、テナントに `type = "external-api-
 
 ---
 
+## マッピングソースで参照できるパス
+
+`http_request.body_mapping_rules` / `header_mapping_rules` および `response.body_mapping_rules` の `from` で参照できるトップレベルパス:
+
+| パス | 内容 | 利用可能なタイミング |
+|------|------|------------------|
+| `$.request_body.*` | interaction リクエストボディ | 常時 |
+| `$.request_attributes.*` | リクエスト属性（IP, User-Agent 等） | 常時 |
+| `$.interaction.*` | `previous_interaction` で保存した前段データ | `previous_interaction` 設定時 |
+| `$.user.*` | 認証済みユーザー属性（下記） | ユーザー確立後（後述） |
+| `$.execution_http_request.response_body.*` | 外部APIのレスポンス | `response` マッピングと `user_resolve` のみ |
+
+### `$.user.*` — 認証済みユーザー属性
+
+外部APIのリクエストに、認証済みユーザーの属性を送れます（例: リスク判定APIに「誰のリスクか」を渡す）。RP が再送する必要はありません。
+
+```json
+"http_request": {
+  "url": "https://risk.example.com/assess",
+  "method": "POST",
+  "body_mapping_rules": [
+    { "from": "$.user.sub", "to": "user_id" },
+    { "from": "$.user.email", "to": "email" },
+    { "from": "$.user.custom_properties.member_rank", "to": "rank" }
+  ]
+}
+```
+
+**利用可能なタイミング（重要）**: `$.user.*` は「トランザクションに認証済みユーザーが既に確立している」場合のみ値を持ちます。
+
+- **対話フロー（OAuth）**: 2段階目以降（1段階目がユーザーを確立した後）
+- **CIBA / login_hint フロー**: 1回目の interaction から（`login_hint` でユーザーが事前解決されるため）
+- **真の1段階目**（そのinteractionが初めてユーザーを解決する場合）: `$.user.*` は空になります。この段ではまだ認証済みユーザーが存在しないため、マッピングしても何も送信されません（エラーにはなりません）。
+
+**公開される属性（allow-list）**: セキュリティのため、外部送信できる属性は以下に限定されます。新しいユーザー属性は明示的に追加するまで露出しません（fail-safe）。
+
+| パス | 内容 |
+|------|------|
+| `$.user.sub` | 内部ユーザーID |
+| `$.user.provider_id` | プロバイダーID |
+| `$.user.email` | メールアドレス |
+| `$.user.phone_number` | 電話番号 |
+| `$.user.name` | 氏名（フルネーム） |
+| `$.user.given_name` | 名 |
+| `$.user.family_name` | 姓 |
+| `$.user.middle_name` | ミドルネーム |
+| `$.user.roles` | ロール名の配列 |
+| `$.user.custom_properties.*` | テナント管理のカスタム属性 |
+
+`hashed_password` / `credentials` / `verified_claims`（身元確認データ）等の機微情報は外部送信されません。各属性は `body_mapping_rules` で明示的にマッピングした場合のみ送信されます（opt-in）。`$.user.custom_properties` はネスト全体を1ルールで渡すこともできる（`{ "from": "$.user.custom_properties", "to": "props" }`）ため、機微なカスタム属性を含む場合は必要なキーだけを個別にマッピングしてください。
+
+:::warning PII の外部送信とログ
+`$.user.email` / `$.user.phone_number` / `$.user.name` 等の PII が外部APIに送信されます。外部APIがエラー（4xx/5xx）を返すと、そのレスポンスボディがログに記録される場合があります。リスク判定APIが応答に PII を含める構成では、ログ集約基盤への PII 混入に注意してください。
+
+:::warning ロール・カスタム属性の完全性
+`$.user.roles` / `$.user.custom_properties` は、ユーザーを確立した段の認証方式に依存します。通常のログイン（password 等）や CIBA login_hint で確立されたユーザーは DB からロードされるためこれらを保持しますが、external-api 認証自体を1段階目としてユーザー解決した場合は保持されません。ロール依存の分岐が必要な場合は、認証ポリシー条件（`$.user.*`）側での判定を検討してください。
+:::
+
+---
+
 ## Interaction の種類
 
 ### 1. ユーザー認証型（user_resolve あり）

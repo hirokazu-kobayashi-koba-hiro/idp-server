@@ -393,6 +393,78 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
               ],
             },
           },
+          // Issue #1439: 2nd factor that forwards the authenticated user ($.user.*) to the
+          // external API. The echo mock reflects the received fields back so the test can assert
+          // that $.user.email / $.user.sub actually reached the external request body.
+          risk_check_user_context: {
+            execution: {
+              function: "http_request",
+              http_request: {
+                url: `${mockApiBaseUrl}/e2e/echo-user-context`,
+                method: "POST",
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" },
+                ],
+                body_mapping_rules: [
+                  { from: "$.user.email", to: "email" },
+                  { from: "$.user.sub", to: "user_id" },
+                  { from: "$.user.name", to: "name" },
+                ],
+              },
+            },
+            response: {
+              body_mapping_rules: [
+                {
+                  from: "$.execution_http_request.response_body.received_email",
+                  to: "echoed_email",
+                },
+                {
+                  from: "$.execution_http_request.response_body.received_sub",
+                  to: "echoed_sub",
+                },
+                {
+                  from: "$.execution_http_request.response_body.received_name",
+                  to: "echoed_name",
+                },
+              ],
+            },
+          },
+          // Issue #1439: probes that map allow-list-EXCLUDED user fields. The projection never
+          // exposes these, so the external API must receive nothing for them (fail-safe regression
+          // guard). `email` is included as a control that egress itself is working.
+          user_context_excluded_probe: {
+            execution: {
+              function: "http_request",
+              http_request: {
+                url: `${mockApiBaseUrl}/e2e/echo-user-context`,
+                method: "POST",
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" },
+                ],
+                body_mapping_rules: [
+                  { from: "$.user.email", to: "email" },
+                  { from: "$.user.hashed_password", to: "hashed_password" },
+                  { from: "$.user.verified_claims", to: "verified_claims" },
+                ],
+              },
+            },
+            response: {
+              body_mapping_rules: [
+                {
+                  from: "$.execution_http_request.response_body.received_email",
+                  to: "echoed_email",
+                },
+                {
+                  from: "$.execution_http_request.response_body.received_hashed_password",
+                  to: "echoed_hashed_password",
+                },
+                {
+                  from: "$.execution_http_request.response_body.received_verified_claims",
+                  to: "echoed_verified_claims",
+                },
+              ],
+            },
+          },
         },
       },
     });
@@ -588,6 +660,114 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
     });
     expect(userinfoResp.status).toBe(200);
     expect(userinfoResp.data.sub).toBe(testUserASub);
+  });
+
+  it("should forward the authenticated user ($.user.*) to the external API on a 2nd factor (Issue #1439)", async () => {
+    // Step 1: Start authorization
+    const authResp = await getAuthorizations({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+      clientId,
+      responseType: "code",
+      state: `user-ctx-${Date.now()}`,
+      scope: "openid profile email",
+      redirectUri,
+      prompt: "login",
+    });
+    expect(authResp.status).toBe(302);
+    const { params } = convertNextAction(authResp.headers.location);
+    const authId = params.get("id");
+
+    // Step 2: Password authentication (1st factor) establishes the authenticated user
+    const passwordResp = await postAuthentication({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/password-authentication`,
+      id: authId,
+      body: { username: testUserAEmail, password: testUserAPassword },
+    });
+    expect(passwordResp.status).toBe(200);
+
+    // Step 3: 2nd factor forwards $.user.* to the external API; the echo mock reflects the
+    // received fields back, proving the authenticated user reached the external request body.
+    const riskResp = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: { interaction: "risk_check_user_context" },
+    });
+    expect(riskResp.status).toBe(200);
+    expect(riskResp.data.echoed_email).toBe(testUserAEmail);
+    expect(riskResp.data.echoed_sub).toBe(testUserASub);
+    expect(riskResp.data.echoed_name).toBe("User A");
+  });
+
+  it("should NOT egress allow-list-excluded user fields ($.user.hashed_password / $.user.verified_claims) (Issue #1439)", async () => {
+    // Establish the authenticated user via password (1st factor)
+    const authResp = await getAuthorizations({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+      clientId,
+      responseType: "code",
+      state: `excluded-${Date.now()}`,
+      scope: "openid profile email",
+      redirectUri,
+      prompt: "login",
+    });
+    const { params } = convertNextAction(authResp.headers.location);
+    const authId = params.get("id");
+    const passwordResp = await postAuthentication({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/password-authentication`,
+      id: authId,
+      body: { username: testUserAEmail, password: testUserAPassword },
+    });
+    expect(passwordResp.status).toBe(200);
+
+    // Map excluded fields; the allow-list projection never exposes them, so the external API
+    // receives nothing for them. `email` is the control proving egress itself works.
+    const probeResp = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: { interaction: "user_context_excluded_probe" },
+    });
+    expect(probeResp.status).toBe(200);
+    expect(probeResp.data.echoed_email).toBe(testUserAEmail); // control: egress works
+    // Excluded fields resolve to nothing in the projection, so no real value is egressed. The
+    // mapping writes a null for the missing source path (echoed back as "" or "null"); either way
+    // the actual secret never leaves.
+    expect(["", "null", null, undefined]).toContain(
+      probeResp.data.echoed_hashed_password
+    );
+    expect(["", "null", null, undefined]).toContain(
+      probeResp.data.echoed_verified_claims
+    );
+  });
+
+  it("should NOT let the caller request body spoof $.user (top-level, server-injected) (Issue #1439)", async () => {
+    // Establish the authenticated user (user A) via password (1st factor)
+    const authResp = await getAuthorizations({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+      clientId,
+      responseType: "code",
+      state: `spoof-user-${Date.now()}`,
+      scope: "openid profile email",
+      redirectUri,
+      prompt: "login",
+    });
+    const { params } = convertNextAction(authResp.headers.location);
+    const authId = params.get("id");
+    const passwordResp = await postAuthentication({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/password-authentication`,
+      id: authId,
+      body: { username: testUserAEmail, password: testUserAPassword },
+    });
+    expect(passwordResp.status).toBe(200);
+
+    // Attacker injects a "user" object in the request body. It lands under $.request_body.user,
+    // never overwriting the top-level server-injected $.user, so the egressed email stays user A.
+    const spoofResp = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: {
+        interaction: "risk_check_user_context",
+        user: { email: "attacker@evil.example.com", sub: "attacker-sub" },
+      },
+    });
+    expect(spoofResp.status).toBe(200);
+    expect(spoofResp.data.echoed_email).toBe(testUserAEmail); // NOT attacker@evil.example.com
+    expect(spoofResp.data.echoed_sub).toBe(testUserASub); // NOT attacker-sub
   });
 
   it("should NOT swap user when 2nd factor external API returns different user info (bypass attempt)", async () => {

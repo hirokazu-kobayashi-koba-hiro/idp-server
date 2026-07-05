@@ -29,6 +29,12 @@ public class AuthenticationExecutionRequest {
 
   Map<String, Object> values;
 
+  // Issue #1439: server-injected, allow-listed authenticated-user projection exposed to the
+  // execution mapping source as top-level $.user.*. Kept out of #values (the caller's request body)
+  // so a request body cannot spoof the trusted projection: the executor reads this field, not a
+  // request_body key.
+  Map<String, Object> transactionUser;
+
   public static AuthenticationExecutionRequest empty() {
     return new AuthenticationExecutionRequest(Map.of());
   }
@@ -41,6 +47,18 @@ public class AuthenticationExecutionRequest {
 
   public Map<String, Object> toMap() {
     return values;
+  }
+
+  public void setTransactionUser(Map<String, Object> transactionUser) {
+    this.transactionUser = transactionUser;
+  }
+
+  public Map<String, Object> transactionUser() {
+    return transactionUser;
+  }
+
+  public boolean hasTransactionUser() {
+    return transactionUser != null && !transactionUser.isEmpty();
   }
 
   /**
