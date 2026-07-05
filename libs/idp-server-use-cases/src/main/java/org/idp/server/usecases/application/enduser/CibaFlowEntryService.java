@@ -36,6 +36,7 @@ import org.idp.server.core.openid.identity.hint.UserHintResolvers;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -44,6 +45,8 @@ import org.idp.server.platform.type.RequestAttributes;
 
 @Transaction
 public class CibaFlowEntryService implements CibaFlowApi {
+
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(CibaFlowEntryService.class);
 
   CibaProtocols cibaProtocols;
   UserHintResolvers userHintResolvers;
@@ -241,10 +244,22 @@ public class CibaFlowEntryService implements CibaFlowApi {
           lockedTransaction.request().clientAttributes());
     }
 
-    if (updatedTransaction.isLocked()) {
+    if (updatedTransaction.isLocked() && result.hasUser()) {
+      log.warn(
+          "Account lock conditions met, publishing LOCK lifecycle event: sub={}, user_name={}",
+          result.user().sub(),
+          result.user().preferredUsername());
       UserLifecycleEvent userLifecycleEvent =
           new UserLifecycleEvent(tenant, result.user(), UserLifecycleType.LOCK);
       userLifecycleEventPublisher.publish(userLifecycleEvent);
+
+      eventPublisher.publish(
+          tenant,
+          backchannelAuthenticationRequest,
+          result.user(),
+          DefaultSecurityEventType.user_lock.toEventType(),
+          requestAttributes,
+          lockedTransaction.request().clientAttributes());
     }
 
     if (updatedTransaction.isComplete()) {

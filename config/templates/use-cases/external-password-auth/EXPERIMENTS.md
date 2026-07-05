@@ -116,6 +116,10 @@ password_login "user1@example.com" "invalid" | jq .
 >
 > **login-password-only との違い**: このテンプレートはデフォルトで failure/lock_conditions が有効（5回）。この実験では閾値を3回に変更してロックを素早く体験する。
 
+> **前提**: `password_login` 関数はリクエストボディに `provider_id` を含めて送信します。
+> これにより認証失敗時でも `tryResolveUserForLogging` が正しい `provider_id` で
+> ユーザーを検索し、ロックイベントが発火します。
+
 ### 1. 設定変更：ロック閾値を 3回に
 
 ```bash
@@ -148,10 +152,25 @@ update_auth_policy '{
 }' | jq '{id, flow, enabled} // .'
 ```
 
-### 2. 挙動確認：わざと3回間違える
+### 2. ユーザーを事前作成する（成功ログイン）
+
+> **重要**: 外部パスワード認証では、ユーザーは初回の認証成功＋認可コード発行時に DB に登録されます。
+> ユーザーが DB に存在しない状態で失敗を繰り返しても、ロック対象のユーザーがいないため
+> ロックが意味をなしません。先にユーザーを作成しておく必要があります。
 
 ```bash
 LOCK_EMAIL="locktest-$(date +%s)@example.com"
+
+echo "--- ユーザー事前作成: 正しいパスワードでログイン＋認可コード取得 ---"
+start_auth_flow
+password_login "${LOCK_EMAIL}" "correct-password" > /dev/null
+complete_auth_flow > /dev/null
+echo "ユーザー作成完了: ${LOCK_EMAIL}"
+```
+
+### 3. 挙動確認：新しい認可フローで3回間違える
+
+```bash
 start_auth_flow
 
 echo "--- 1回目: 間違ったパスワード ---"
@@ -162,21 +181,42 @@ password_login "${LOCK_EMAIL}" "invalid" | jq .
 
 echo "--- 3回目: 間違ったパスワード → ここでロック ---"
 password_login "${LOCK_EMAIL}" "invalid" | jq .
-
-echo "--- 4回目: 正しいパスワード → ロック中なので拒否されるはず ---"
-password_login "${LOCK_EMAIL}" "correct-password" | jq .
 ```
 
-### 3. 期待結果
+### 4. ロック確認：正しいパスワードでも認可コードが発行されない
 
-| 回数 | パスワード | 結果 | 理由 |
-|------|-----------|------|------|
+```bash
+echo "--- 2秒待機（非同期ロック処理の完了を待つ） ---"
+sleep 2
+
+echo "--- 4回目: 正しいパスワード → ロック中 ---"
+start_auth_flow
+password_login "${LOCK_EMAIL}" "correct-password" | jq .
+
+echo "--- 認可コード取得 → isSuccess()=false のため失敗するはず ---"
+complete_auth_flow | jq .
+```
+
+### 5. 期待結果
+
+| ステップ | パスワード | 結果 | 理由 |
+|---------|-----------|------|------|
+| 事前作成 | `correct-password` | 成功 | ユーザーを DB に登録 |
 | 1回目 | `invalid` | 認証失敗 | モックサーバーが 401 |
 | 2回目 | `invalid` | 認証失敗 | モックサーバーが 401 |
-| 3回目 | `invalid` | ロック発動 | `failure_count >= 3` で `lock_conditions` に該当 |
-| 4回目 | `correct-password` | 拒否 | 正しいパスワードでもロック中 |
+| 3回目 | `invalid` | ロック発動 | `failure_count >= 3` で `lock_conditions` に該当、ユーザーステータスが LOCKED に変更 |
+| 4回目 | `correct-password` | 外部サービスは成功 | モックサーバーが 200 を返すが `isSuccess()` = false |
+| 認可コード取得 | — | **失敗** | `isLocked()` = true → 認可コード発行されない |
 
-### 4. 元に戻す
+> **確認ポイント**:
+> - 3回目の失敗時点で `user_lock` イベントが発火し、ユーザーステータスが LOCKED に変更される
+> - 4回目のレスポンスに `"status": "LOCKED"` が含まれることで、ロック状態を確認できる
+> - 認可コード取得は二重に防御される:
+>   - `AuthenticationTransaction.isSuccess()` が `isLocked()` をガードし false を返す
+>   - `OAuthAuthorizeHandler` がユーザーステータスをチェックし `User status is not active, cannot authorize. (LOCKED)` で拒否
+> - セキュリティイベントには `password_failure` × 3 + `user_lock` × 1 が記録される
+
+### 6. 元に戻す
 
 ```bash
 restore_auth_policy
