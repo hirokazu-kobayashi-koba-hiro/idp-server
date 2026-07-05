@@ -118,7 +118,10 @@ External API認証を使用するには、テナントに `type = "external-api-
 | `$.user.roles` | ロール名の配列 |
 | `$.user.custom_properties.*` | テナント管理のカスタム属性 |
 
-`hashed_password` / `credentials` / `verified_claims`（身元確認データ）等の機微情報は外部送信されません。各属性は `body_mapping_rules` で明示的にマッピングした場合のみ送信されます（opt-in）。
+`hashed_password` / `credentials` / `verified_claims`（身元確認データ）等の機微情報は外部送信されません。各属性は `body_mapping_rules` で明示的にマッピングした場合のみ送信されます（opt-in）。`$.user.custom_properties` はネスト全体を1ルールで渡すこともできる（`{ "from": "$.user.custom_properties", "to": "props" }`）ため、機微なカスタム属性を含む場合は必要なキーだけを個別にマッピングしてください。
+
+:::warning PII の外部送信とログ
+`$.user.email` / `$.user.phone_number` / `$.user.name` 等の PII が外部APIに送信されます。外部APIがエラー（4xx/5xx）を返すと、そのレスポンスボディがログに記録される場合があります。リスク判定APIが応答に PII を含める構成では、ログ集約基盤への PII 混入に注意してください。
 
 :::warning ロール・カスタム属性の完全性
 `$.user.roles` / `$.user.custom_properties` は、ユーザーを確立した段の認証方式に依存します。通常のログイン（password 等）や CIBA login_hint で確立されたユーザーは DB からロードされるためこれらを保持しますが、external-api 認証自体を1段階目としてユーザー解決した場合は保持されません。ロール依存の分岐が必要な場合は、認証ポリシー条件（`$.user.*`）側での判定を検討してください。

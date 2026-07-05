@@ -2023,7 +2023,7 @@
       "responses": [
         {
           "uuid": "e2e-echo-user-context-200",
-          "body": "{\n  \"received_email\": \"{{ body 'email' }}\",\n  \"received_sub\": \"{{ body 'user_id' }}\",\n  \"received_name\": \"{{ body 'name' }}\",\n  \"ok\": true\n}",
+          "body": "{\n  \"received_email\": \"{{ body 'email' }}\",\n  \"received_sub\": \"{{ body 'user_id' }}\",\n  \"received_name\": \"{{ body 'name' }}\",\n  \"received_hashed_password\": \"{{ body 'hashed_password' }}\",\n  \"received_verified_claims\": \"{{ body 'verified_claims' }}\",\n  \"ok\": true\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "echo received user fields",
