@@ -25,6 +25,7 @@ import org.idp.server.platform.mapper.MappingRule;
 
 public class AuthenticationResultConfig implements JsonReadable {
   List<MappingRule> userMappingRules = new ArrayList<>();
+  String identityMatchField;
 
   public AuthenticationResultConfig() {}
 
@@ -33,6 +34,10 @@ public class AuthenticationResultConfig implements JsonReadable {
       return new ArrayList<>();
     }
     return userMappingRules;
+  }
+
+  public String identityMatchField() {
+    return identityMatchField;
   }
 
   public List<Map<String, Object>> userMappingRulesAsMap() {
@@ -45,6 +50,9 @@ public class AuthenticationResultConfig implements JsonReadable {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("user_mapping_rules", userMappingRulesAsMap());
+    if (identityMatchField != null) {
+      map.put("identity_match_field", identityMatchField);
+    }
     return map;
   }
 }
