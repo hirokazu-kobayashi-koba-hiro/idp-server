@@ -55,6 +55,17 @@ public class CibaGrantDataSource implements CibaGrantRepository {
   }
 
   @Override
+  public CibaGrant findForUpdate(Tenant tenant, AuthReqId authReqId) {
+    Map<String, String> stringMap = executor.selectOneForUpdate(tenant, authReqId);
+
+    if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
+      return new CibaGrant();
+    }
+
+    return ModelConverter.convert(stringMap);
+  }
+
+  @Override
   public CibaGrant get(
       Tenant tenant,
       BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier) {

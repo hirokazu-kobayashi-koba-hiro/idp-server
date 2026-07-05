@@ -155,6 +155,41 @@ public class PostgresqlExecutor implements AuthorizationCodeGrantExecutor {
     return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
+  public Map<String, String> selectOneForUpdate(
+      Tenant tenant, AuthorizationCode authorizationCode) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                SELECT
+                authorization_request_id,
+                tenant_id,
+                authorization_code,
+                user_id,
+                user_payload,
+                authentication,
+                client_id,
+                client_payload,
+                grant_type,
+                scopes,
+                id_token_claims,
+                userinfo_claims,
+                custom_properties,
+                authorization_details,
+                expires_at,
+                consent_claims
+                FROM authorization_code_grant
+                WHERE authorization_code = ?
+                AND tenant_id = ?::uuid
+                FOR UPDATE;
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(authorizationCode.value());
+    params.add(tenant.identifier().valueAsUuid());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
   public void delete(Tenant tenant, AuthorizationCodeGrant authorizationCodeGrant) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =

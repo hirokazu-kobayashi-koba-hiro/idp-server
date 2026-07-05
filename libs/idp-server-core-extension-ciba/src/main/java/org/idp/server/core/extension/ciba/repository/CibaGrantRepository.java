@@ -29,6 +29,16 @@ public interface CibaGrantRepository {
 
   CibaGrant find(Tenant tenant, AuthReqId authReqId);
 
+  /**
+   * Locks the CIBA grant row for the current transaction (SELECT ... FOR UPDATE) and scopes the
+   * lookup by tenant.
+   *
+   * <p>Used by the CIBA token issuance to enforce single-use: a concurrent poll of the same
+   * auth_req_id blocks until this transaction commits (which deletes the grant), then finds no row
+   * and is rejected. The tenant predicate is the sole tenant boundary on MySQL (no RLS there).
+   */
+  CibaGrant findForUpdate(Tenant tenant, AuthReqId authReqId);
+
   CibaGrant get(
       Tenant tenant,
       BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier);

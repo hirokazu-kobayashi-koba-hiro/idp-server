@@ -25,6 +25,7 @@ import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements CibaGrantSqlExecutor {
 
@@ -156,6 +157,25 @@ public class PostgresqlExecutor implements CibaGrantSqlExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(authReqId.value());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
+  public Map<String, String> selectOneForUpdate(Tenant tenant, AuthReqId authReqId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        selectSql
+            + " "
+            + """
+                WHERE auth_req_id = ?
+                AND tenant_id = ?::uuid
+                FOR UPDATE;
+                """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(authReqId.value());
+    params.add(tenant.identifier().valueAsUuid());
 
     return sqlExecutor.selectOne(sqlTemplate, params);
   }

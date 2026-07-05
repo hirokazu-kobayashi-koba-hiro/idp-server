@@ -25,5 +25,16 @@ public interface AuthorizationCodeGrantRepository {
 
   AuthorizationCodeGrant find(Tenant tenant, AuthorizationCode authorizationCode);
 
+  /**
+   * Locks the authorization code grant row for the duration of the current transaction (SELECT ...
+   * FOR UPDATE).
+   *
+   * <p>Used by the authorization_code token exchange to enforce single-use: a concurrent exchange
+   * of the same code blocks until this transaction commits (which deletes the row), then finds no
+   * row and is rejected. Prevents the find-verify-delete race that would otherwise issue two token
+   * sets from one code.
+   */
+  AuthorizationCodeGrant findForUpdate(Tenant tenant, AuthorizationCode authorizationCode);
+
   void delete(Tenant tenant, AuthorizationCodeGrant authorizationCodeGrant);
 }

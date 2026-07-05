@@ -73,7 +73,7 @@ public class CibaGrantService implements OAuthTokenCreationService, RefreshToken
 
     Tenant tenant = tokenRequestContext.tenant();
     AuthReqId authReqId = tokenRequestContext.authReqId();
-    CibaGrant cibaGrant = cibaGrantRepository.find(tenant, authReqId);
+    CibaGrant cibaGrant = cibaGrantRepository.findForUpdate(tenant, authReqId);
 
     if (!cibaGrant.exists()) {
       throw new TokenBadRequestException(
