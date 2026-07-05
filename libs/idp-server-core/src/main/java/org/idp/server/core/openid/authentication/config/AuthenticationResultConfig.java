@@ -40,10 +40,6 @@ public class AuthenticationResultConfig implements JsonReadable {
     return identityMatchField;
   }
 
-  public boolean hasIdentityMatchField() {
-    return identityMatchField != null && !identityMatchField.isEmpty();
-  }
-
   public List<Map<String, Object>> userMappingRulesAsMap() {
     if (userMappingRules == null) {
       return new ArrayList<>();
