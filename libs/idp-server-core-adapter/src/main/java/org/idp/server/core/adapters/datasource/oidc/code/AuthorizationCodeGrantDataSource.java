@@ -47,6 +47,16 @@ public class AuthorizationCodeGrantDataSource implements AuthorizationCodeGrantR
   }
 
   @Override
+  public AuthorizationCodeGrant findForUpdate(Tenant tenant, AuthorizationCode authorizationCode) {
+    Map<String, String> stringMap = executor.selectOneForUpdate(tenant, authorizationCode);
+
+    if (Objects.isNull(stringMap) || stringMap.isEmpty()) {
+      return new AuthorizationCodeGrant();
+    }
+    return ModelConverter.convert(stringMap);
+  }
+
+  @Override
   public void delete(Tenant tenant, AuthorizationCodeGrant authorizationCodeGrant) {
     executor.delete(tenant, authorizationCodeGrant);
   }

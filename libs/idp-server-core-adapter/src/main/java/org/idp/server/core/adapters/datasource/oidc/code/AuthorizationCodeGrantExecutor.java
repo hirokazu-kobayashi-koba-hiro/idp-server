@@ -27,5 +27,7 @@ public interface AuthorizationCodeGrantExecutor {
 
   Map<String, String> selectOne(Tenant tenant, AuthorizationCode authorizationCode);
 
+  Map<String, String> selectOneForUpdate(Tenant tenant, AuthorizationCode authorizationCode);
+
   void delete(Tenant tenant, AuthorizationCodeGrant authorizationCodeGrant);
 }

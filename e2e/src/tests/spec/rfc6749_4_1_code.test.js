@@ -141,6 +141,80 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
       expect(reAuthorizationResponse.code).not.toBeNull();
       expect(reAuthorizationResponse.state).toBeNull();
     });
+
+    it("The client MUST NOT use the authorization code more than once.  If an authorization code is used more than once, the authorization server MUST deny the request.", async () => {
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const firstResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(firstResponse.status).toBe(200);
+
+      const secondResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        code: authorizationResponse.code,
+        grantType: "authorization_code",
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(secondResponse.data);
+      expect(secondResponse.status).toBe(400);
+      expect(secondResponse.data.error).toEqual("invalid_grant");
+
+      // The same "MUST deny" requirement must hold under a race, not only on
+      // sequential reuse: exchanging one code concurrently issues at most one token
+      // set (the token exchange locks the code row with SELECT ... FOR UPDATE).
+      const { authorizationResponse: concurrentAuthorizationResponse } =
+        await requestAuthorizations({
+          endpoint: serverConfig.authorizationEndpoint,
+          clientId: clientSecretPostClient.clientId,
+          responseType: "code",
+          state: "aiueo",
+          scope: clientSecretPostClient.scope,
+          redirectUri: clientSecretPostClient.redirectUri,
+        });
+      expect(concurrentAuthorizationResponse.code).not.toBeNull();
+
+      const exchange = () =>
+        requestToken({
+          endpoint: serverConfig.tokenEndpoint,
+          code: concurrentAuthorizationResponse.code,
+          grantType: "authorization_code",
+          redirectUri: clientSecretPostClient.redirectUri,
+          clientId: clientSecretPostClient.clientId,
+          clientSecret: clientSecretPostClient.clientSecret,
+        });
+
+      const concurrentResponses = await Promise.all([exchange(), exchange(), exchange()]);
+      const succeeded = concurrentResponses.filter((response) => response.status === 200);
+      const denied = concurrentResponses.filter((response) => response.status !== 200);
+
+      expect(succeeded).toHaveLength(1);
+      denied.forEach((response) => {
+        expect(response.status).toBe(400);
+        expect(response.data.error).toEqual("invalid_grant");
+      });
+    });
+
+    xit("If an authorization code is used more than once, the authorization server ... SHOULD revoke (when possible) all tokens previously issued based on that authorization code.", async () => {
+      // Not yet implemented. Phase 1 enforces single-use (deny on reuse) only.
+      // Revocation of tokens previously issued from a reused code (reuse-detection,
+      // OAuth 2.0 Security BCP 4.5.3) is planned as a follow-up.
+    });
   });
 
   describe("4.1.2.1.  Error Response", () => {

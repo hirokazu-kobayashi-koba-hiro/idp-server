@@ -128,7 +128,7 @@ public class AuthorizationCodeGrantService
     Tenant tenant = tokenRequestContext.tenant();
     AuthorizationCode code = tokenRequestContext.code();
     AuthorizationCodeGrant authorizationCodeGrant =
-        authorizationCodeGrantRepository.find(tenant, code);
+        authorizationCodeGrantRepository.findForUpdate(tenant, code);
 
     if (!authorizationCodeGrant.exists()) {
       throw new TokenBadRequestException("invalid_grant", "not found authorization code.");

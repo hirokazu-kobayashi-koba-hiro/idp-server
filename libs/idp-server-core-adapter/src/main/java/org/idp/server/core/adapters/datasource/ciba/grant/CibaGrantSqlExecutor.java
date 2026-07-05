@@ -20,6 +20,7 @@ import java.util.Map;
 import org.idp.server.core.extension.ciba.grant.CibaGrant;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.openid.oauth.type.ciba.AuthReqId;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface CibaGrantSqlExecutor {
 
@@ -28,6 +29,8 @@ public interface CibaGrantSqlExecutor {
   void update(CibaGrant cibaGrant);
 
   Map<String, String> selectOne(AuthReqId authReqId);
+
+  Map<String, String> selectOneForUpdate(Tenant tenant, AuthReqId authReqId);
 
   Map<String, String> selectOne(
       BackchannelAuthenticationRequestIdentifier backchannelAuthenticationRequestIdentifier);
