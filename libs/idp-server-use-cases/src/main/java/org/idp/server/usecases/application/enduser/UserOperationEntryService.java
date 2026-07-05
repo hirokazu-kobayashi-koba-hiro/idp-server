@@ -195,7 +195,7 @@ public class UserOperationEntryService implements UserOperationApi {
 
       eventPublisher.publish(
           tenant,
-          authenticationTransaction.request().requestedClientId(),
+          lockedTransaction.request().requestedClientId(),
           result.user(),
           DefaultSecurityEventType.user_lock.toEventType(),
           requestAttributes);

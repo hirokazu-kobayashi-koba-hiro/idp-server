@@ -327,9 +327,26 @@ describe("Standard Use Case: Account Lock User Status", () => {
     console.log(`  User status after lock: ${lockedStatus}`);
     expect(lockedStatus).toBe("LOCKED");
 
-    // TODO: Step 5 - Verify locked user cannot authenticate with correct password
-    // This requires implementing user status check during authentication interaction.
-    // See: https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1377
+    // Step 5: Verify locked user cannot authenticate even with correct password
+    // AuthenticationUserStatusGuard (#1377) converts the successful interaction into
+    // a 403 because the user status is LOCKED.
+    // Use a fresh authorization flow so the denial is driven by user status alone,
+    // not by the accumulated failure_count of the locked transaction.
+    console.log("\nStep 5: Verify locked user is denied even with correct password");
+    const postLockAuthId = await startAuthorizationFlow();
+    const correctPasswordResult = await attemptPasswordAuth(
+      postLockAuthId,
+      userEmail,
+      userPassword
+    );
+    console.log(
+      `  Attempt with correct password: status=${correctPasswordResult.status}, error=${correctPasswordResult.data?.error || "N/A"}`
+    );
+    expect(correctPasswordResult.status).toBe(403);
+    expect(correctPasswordResult.data.error).toBe("access_denied");
+    expect(correctPasswordResult.data.error_description).toBe(
+      "The user is not active."
+    );
 
     console.log("\n=== Account Lock User Status Test Completed ===");
   }, 30000);

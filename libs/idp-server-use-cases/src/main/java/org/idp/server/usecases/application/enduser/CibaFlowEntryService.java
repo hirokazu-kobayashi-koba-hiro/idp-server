@@ -259,7 +259,7 @@ public class CibaFlowEntryService implements CibaFlowApi {
           result.user(),
           DefaultSecurityEventType.user_lock.toEventType(),
           requestAttributes,
-          authenticationTransaction.request().clientAttributes());
+          lockedTransaction.request().clientAttributes());
     }
 
     if (updatedTransaction.isComplete()) {
