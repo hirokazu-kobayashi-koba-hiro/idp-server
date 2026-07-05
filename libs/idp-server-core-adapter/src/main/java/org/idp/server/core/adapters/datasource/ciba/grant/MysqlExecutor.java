@@ -150,12 +150,9 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
   @Override
   public Map<String, String> selectOne(AuthReqId authReqId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
-            SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expires_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
-            FROM ciba_grant
-            WHERE auth_req_id = ?;
-            """;
+    String sqlTemplate = selectSql + """
+             WHERE auth_req_id = ?;
+         """;
 
     List<Object> params = new ArrayList<>();
     params.add(authReqId.value());
@@ -167,13 +164,12 @@ public class MysqlExecutor implements CibaGrantSqlExecutor {
   public Map<String, String> selectOneForUpdate(Tenant tenant, AuthReqId authReqId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
-        """
-            SELECT backchannel_authentication_request_id, tenant_id, auth_req_id, expires_at, polling_interval, status, user_id, user_payload, authentication, client_id, client_payload, scopes, id_token_claims, userinfo_claims, custom_properties, authorization_details, consent_claims
-            FROM ciba_grant
-            WHERE auth_req_id = ?
-            AND tenant_id = ?
-            FOR UPDATE;
-            """;
+        selectSql
+            + """
+             WHERE auth_req_id = ?
+             AND tenant_id = ?
+             FOR UPDATE;
+         """;
 
     List<Object> params = new ArrayList<>();
     params.add(authReqId.value());
