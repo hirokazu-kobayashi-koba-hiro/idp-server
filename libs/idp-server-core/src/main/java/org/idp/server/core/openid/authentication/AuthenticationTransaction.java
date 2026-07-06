@@ -161,9 +161,47 @@ public class AuthenticationTransaction {
     return request.updateWithUser(interactionRequestResult);
   }
 
+  /**
+   * Merges the federated user into the transaction with the same identifier-switching guard as the
+   * standard interaction path.
+   *
+   * <p>A federation step that runs after a user is already established (e.g. CIBA {@code
+   * login_hint} pre-resolves the user, or federation is configured as a later factor) MUST bind to
+   * that established user, never silently replace it. Without this gate, a flow that establishes
+   * user A and then runs a federation step returning user B would rebind the whole transaction to B
+   * — the federation counterpart of the 2nd-factor user binding.
+   *
+   * @param result the federation interaction result
+   * @return the updated authentication request
+   */
+  private AuthenticationRequest updateWithUser(FederationInteractionResult result) {
+    // No user in result - keep request unchanged (also covers federation error / notFound)
+    if (!result.hasUser()) {
+      return request;
+    }
+
+    // Don't bind user on failure (prevents transaction pollution, mirrors the standard path)
+    if (!result.isSuccess()) {
+      return request;
+    }
+
+    // First authenticated user in the transaction - establish it
+    if (!request.hasUser()) {
+      return request.updateWithUser(result);
+    }
+
+    // Established user must match the federated identity (same sub)
+    if (!request.isSameUser(result.user())) {
+      throw new BadRequestException("User is not the same as the request");
+    }
+
+    // Same user: refresh with the latest federated user data
+    return request.updateWithUser(result);
+  }
+
   public AuthenticationTransaction updateWith(FederationInteractionResult result) {
     Map<String, AuthenticationInteractionResult> resultMap = interactionResults.toMap();
-    AuthenticationRequest updatedRequest = request.updateWithUser(result);
+    AuthenticationRequest updatedRequest = updateWithUser(result);
 
     if (interactionResults.contains(result.interactionTypeName())) {
 
