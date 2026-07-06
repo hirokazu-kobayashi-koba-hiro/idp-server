@@ -127,6 +127,10 @@ describe("Security: Federation identifier switching", () => {
     console.log("federation callback status:", callbackStatus);
     console.log("federation callback data:", JSON.stringify(callbackData));
 
+    // Assert the exact guard response, not just any 400 — an unrelated validation failure would
+    // otherwise pass and mask a regression of the same-user guard.
     expect(callbackStatus).toBe(400);
+    expect(callbackData.error).toBe("invalid_request");
+    expect(callbackData.error_description).toBe("User is not the same as the request");
   });
 });

@@ -18,6 +18,7 @@ package org.idp.server.core.openid.authentication;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.HashMap;
 import java.util.UUID;
 import org.idp.server.core.openid.authentication.policy.AuthenticationPolicy;
 import org.idp.server.core.openid.federation.FederationInteractionResult;
@@ -51,21 +52,28 @@ class AuthenticationTransactionFederationGuardTest {
         new AuthenticationTransactionAttributes());
   }
 
+  private OidcSsoSession session() {
+    return new OidcSsoSession(
+        UUID.randomUUID().toString(),
+        UUID.randomUUID().toString(),
+        UUID.randomUUID().toString(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null);
+  }
+
   private FederationInteractionResult federationSuccess(User user) {
-    OidcSsoSession session =
-        new OidcSsoSession(
-            UUID.randomUUID().toString(),
-            UUID.randomUUID().toString(),
-            UUID.randomUUID().toString(),
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null);
     return FederationInteractionResult.success(
-        new FederationType("oidc"), new SsoProvider("google"), session, user);
+        new FederationType("oidc"), new SsoProvider("google"), session(), user);
+  }
+
+  private FederationInteractionResult federationFailure() {
+    return FederationInteractionResult.error(
+        new FederationType("oidc"), new SsoProvider("google"), session(), 400, new HashMap<>());
   }
 
   @Test
@@ -97,5 +105,14 @@ class AuthenticationTransactionFederationGuardTest {
         transaction.updateWith(federationSuccess(userWithSub("user-b")));
 
     assertEquals("user-b", updated.user().sub());
+  }
+
+  @Test
+  void preservesEstablishedUserOnFederationFailure() {
+    AuthenticationTransaction transaction = transactionWith(userWithSub("user-a"));
+
+    AuthenticationTransaction updated = transaction.updateWith(federationFailure());
+
+    assertEquals("user-a", updated.user().sub());
   }
 }
