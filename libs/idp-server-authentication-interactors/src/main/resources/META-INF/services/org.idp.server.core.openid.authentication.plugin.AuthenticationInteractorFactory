@@ -2,6 +2,8 @@ org.idp.server.authentication.interactors.password.PasswordAuthenticationInterac
 org.idp.server.authentication.interactors.initial_registration.InitialRegistrationFactory
 org.idp.server.authentication.interactors.email.EmailAuthenticationInteractorFactory
 org.idp.server.authentication.interactors.email.EmailAuthenticationChallengeInteractorFactory
+org.idp.server.authentication.interactors.email.EmailChangeChallengeInteractorFactory
+org.idp.server.authentication.interactors.email.EmailChangeInteractorFactory
 org.idp.server.authentication.interactors.fido2.Fido2RegistrationIChallengeInteractorFactory
 org.idp.server.authentication.interactors.fido2.Fido2RegistrationInteractorFactory
 org.idp.server.authentication.interactors.fido2.Fido2AuthenticationChallengeInteractorFactory

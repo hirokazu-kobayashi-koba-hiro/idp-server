@@ -258,6 +258,140 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /{tenant-id}/v1/me/email/change:
+    post:
+      tags:
+        - ユーザー
+      summary: メールアドレス変更（開始）
+      description: |
+        認証済みユーザーのメールアドレス変更を開始します。新しいアドレス宛に確認コードを送信し、
+        変更用トランザクションの `id` を返します。コードは `/{id}/verify` で検証します。
+
+        設定（`email-change` フローの認証ポリシー、Email 認証設定の流用、identity policy による
+        一意性の挙動）は開発者ガイド「Email認証 > セルフサービス: メールアドレス変更」を参照。
+
+        ## セキュリティイベント
+        - `email_change_request_success`: 確認コード送信成功
+        - `email_change_request_failure`: 送信失敗 / 現アドレスと同一 / 未認証
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      security:
+        - OAuth2:
+            - openid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - new_email
+              properties:
+                new_email:
+                  type: string
+                  description: 新しいメールアドレス
+            example:
+              new_email: "new@example.com"
+      responses:
+        '200':
+          description: 確認コード送信成功。返却された id を verify に渡す
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    description: 変更トランザクションID
+              example:
+                id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        '400':
+          description: |
+            リクエストエラー（`new_email` 未指定 / 現在のメールと同一 / 送信失敗）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "invalid_request"
+                  error_description:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{tenant-id}/v1/me/email/change/{id}/verify:
+    post:
+      tags:
+        - ユーザー
+      summary: メールアドレス変更（コード検証・確定）
+      description: |
+        開始時に送られた確認コードを検証し、新しいメールアドレスを確定します。トランザクションは
+        呼び出しユーザー本人のものである必要があります（他人のトランザクションは 404）。
+
+        identity policy が `EMAIL` の場合、確定後は新メールがログイン識別子になります。
+
+        ## セキュリティイベント
+        - `email_change_success`: 変更確定
+        - `email_change_failure`: コード不正 / 期限切れ / 試行上限 / 一意性違反
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 変更トランザクションID（開始レスポンスの id）
+      security:
+        - OAuth2:
+            - openid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - verification_code
+              properties:
+                verification_code:
+                  type: string
+            example:
+              verification_code: "123456"
+      responses:
+        '200':
+          description: メールアドレス変更成功
+        '400':
+          description: |
+            検証エラー（`error_description` で区別）
+            - `Invalid verification code`: コード不正
+            - `email challenge is expired`: 期限切れ
+            - `email challenge is reached limited to N attempts`: 試行上限
+            - `new_email is already in use.`: 一意性違反（EMAIL policy）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "invalid_request"
+                  error_description:
+                    type: string
+        '404':
+          description: 変更トランザクションが見つからない（他ユーザーのトランザクション等）
+        '409':
+          description: 同一メールへの並行変更が競合（DB 一意制約）
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /{tenant-id}/v1/me/password/reset:
     post:
       tags:

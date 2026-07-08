@@ -384,6 +384,11 @@ public class AuthenticationTransaction {
     return request.hasUser();
   }
 
+  /** True when this transaction is owned by {@code user} (established and same sub). */
+  public boolean isSameUser(User user) {
+    return request.isSameUser(user);
+  }
+
   /**
    * Whether the user in this transaction may be forwarded to an external endpoint as the {@code
    * $.user} projection.

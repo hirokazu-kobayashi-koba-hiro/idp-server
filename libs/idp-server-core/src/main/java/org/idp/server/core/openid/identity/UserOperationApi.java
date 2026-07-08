@@ -44,6 +44,34 @@ public interface UserOperationApi {
       MfaRegistrationRequest request,
       RequestAttributes requestAttributes);
 
+  /**
+   * Creates a self-service email-change transaction (Issue #1416).
+   *
+   * <p>Shares the transaction model with {@link #requestMfaOperation} (a {@code $.user}-bound
+   * transaction driven via the standard interaction endpoint), but is exposed under its own {@code
+   * /v1/me/email/change} entry so the API surface reflects the domain operation rather than the
+   * internal reuse.
+   */
+  UserOperationResponse requestEmailChange(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken token,
+      MfaRegistrationRequest request,
+      RequestAttributes requestAttributes);
+
+  /**
+   * Verifies the emailed code and commits the new email for the {@link #requestEmailChange} flow.
+   *
+   * <p>The transaction must belong to {@code user}; otherwise it is treated as not found so one
+   * authenticated user cannot drive another's change transaction by id.
+   */
+  UserOperationResponse verifyEmailChange(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes);
+
   AuthenticationInteractionRequestResult interact(
       TenantIdentifier tenantIdentifier,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
