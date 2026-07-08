@@ -139,7 +139,7 @@ public class UserOperationEntryService implements UserOperationApi {
   }
 
   @Override
-  public UserOperationResponse requestEmailChange(
+  public UserOperationResponse requestEmailConfirm(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken token,
@@ -179,7 +179,7 @@ public class UserOperationEntryService implements UserOperationApi {
   }
 
   @Override
-  public UserOperationResponse verifyEmailChange(
+  public UserOperationResponse verifyEmailConfirm(
       TenantIdentifier tenantIdentifier,
       User user,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,

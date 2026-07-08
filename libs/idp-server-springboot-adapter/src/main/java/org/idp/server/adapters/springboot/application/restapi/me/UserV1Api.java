@@ -79,8 +79,8 @@ public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfi
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
-  @PostMapping("/email/change")
-  public ResponseEntity<?> requestEmailChange(
+  @PostMapping("/email/confirm")
+  public ResponseEntity<?> requestEmailConfirm(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
@@ -93,7 +93,7 @@ public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfi
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserOperationResponse response =
-        userOperationApi.requestEmailChange(
+        userOperationApi.requestEmailConfirm(
             tenantIdentifier, user, oAuthToken, request, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
@@ -103,8 +103,8 @@ public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfi
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
-  @PostMapping("/email/change/{id}/verify")
-  public ResponseEntity<?> verifyEmailChange(
+  @PostMapping("/email/confirm/{id}/verify")
+  public ResponseEntity<?> verifyEmailConfirm(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       @PathVariable("id") AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
@@ -117,7 +117,7 @@ public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfi
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     UserOperationResponse response =
-        userOperationApi.verifyEmailChange(
+        userOperationApi.verifyEmailConfirm(
             tenantIdentifier,
             user,
             authenticationTransactionIdentifier,
