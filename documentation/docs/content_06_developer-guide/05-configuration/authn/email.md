@@ -614,6 +614,66 @@ Content-Type: application/json
 
 ---
 
+## セルフサービス: メールアドレス変更 (`/v1/me/email/change`)
+
+認証済みエンドユーザーが自分のメールアドレスを変更するフロー。上記の Email 認証設定
+(`email-authentication-challenge` / `email-authentication`)を**そのまま流用**し、新アドレスへ
+確認コードを送って本人到達性を検証してから確定する。
+
+### エンドポイント
+
+| メソッド・パス | ボディ | 説明 |
+|---|---|---|
+| `POST /{tenant-id}/v1/me/email/change` | `{ "new_email": "..." }` | 変更開始。新アドレスへコード送信し `{ "id": "<tx>" }` を返す |
+| `POST /{tenant-id}/v1/me/email/change/{id}/verify` | `{ "verification_code": "..." }` | コード検証 + 確定 |
+
+- アクセストークン(`/v1/me`)で認証。verify は**呼び出しユーザーと transaction の所有者が一致**しないと `404`(他人の変更フローを駆動できない)
+- コードは**新アドレス宛**(現アドレスではない)。送信・検証・有効期限・試行上限は Email 認証設定の executor をそのまま使う。誤コード/期限切れ/試行上限超過は `400`、確定済み transaction の再利用は `404`
+
+### 必要な設定
+
+1. **Email 認証設定**(本ページの `email` config)。変更専用の文面にするため `templates` に `email_change` を追加推奨(challenge が `template: "email_change"` を強制する)。
+2. **`flow: "email-change"` の認証ポリシー**（必須。無いと transaction 作成に失敗）:
+
+```json
+{
+  "flow": "email-change",
+  "enabled": true,
+  "policies": [{
+    "conditions": {},
+    "available_methods": ["email"],
+    "step_definitions": [{ "method": "email", "order": 1, "requires_user": true }],
+    "success_conditions": { "any_of": [[
+      { "path": "$.email-change.success_count", "type": "integer", "operation": "gte", "value": 1 }
+    ]] }
+  }]
+}
+```
+
+3. **エラー文言をレスポンスに返す**には、`email-authentication` の response に条件付きマッピングを追加する。組み込み executor のエラーはフラットな `{error, error_description}` で入るため、`$.response_body` 前提のマッピングだと本文が空になる:
+
+```json
+"body_mapping_rules": [
+  { "from": "$.error", "to": "error", "condition": { "operation": "exists", "path": "$.error" } },
+  { "from": "$.error_description", "to": "error_description", "condition": { "operation": "exists", "path": "$.error_description" } }
+]
+```
+
+### identity policy による一意性の挙動
+
+一意性は identity policy 由来の `preferred_username` に対して働く:
+
+| `identity_unique_key_type` | 挙動 |
+|---|---|
+| `EMAIL` | メール = ログイン識別子。**既存ユーザーと同じメールへの変更は拒否**(`400`)。変更後は新メールでログイン(旧メールは不可)、並行変更は DB 制約により片方が `409` |
+| `USERNAME` 等 | メールは属性のみ。**重複メールへの変更も許可** |
+
+### 監査
+
+変更時に **`email_change_request_success` / `email_change_request_failure` / `email_change_success` / `email_change_failure`** を発行する(ログイン時の `email_verification_*` とは別種別で、識別子変更を区別可能)。永続化して照会するにはテナントに `security_event_log_config.persistence_enabled: true` が必要。
+
+---
+
 ## 実装詳細
 
 ### 主要クラス
@@ -624,6 +684,8 @@ Content-Type: application/json
 | `EmailAuthenticationExecutor` | ワンタイムコード検証処理 |
 | `EmailVerificationChallenge` | チャレンジ情報の管理（コード、有効期限、試行回数） |
 | `EmailAuthenticationConfiguration` | Email認証設定の管理 |
+| `EmailChangeChallengeInteractor` | セルフサービス メール変更の challenge（新アドレスへ送信） |
+| `EmailChangeInteractor` | セルフサービス メール変更の verify（一意性チェック + 確定） |
 
 ### 処理の流れ
 

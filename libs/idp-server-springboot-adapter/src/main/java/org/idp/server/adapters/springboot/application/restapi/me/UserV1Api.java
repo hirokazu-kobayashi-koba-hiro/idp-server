@@ -21,6 +21,8 @@ import java.util.Map;
 import org.idp.server.adapters.springboot.application.restapi.FapiInteractionIdConfigurable;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserOperationApi;
 import org.idp.server.core.openid.identity.authentication.PasswordChangeRequest;
@@ -69,6 +71,58 @@ public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfi
     UserOperationResponse response =
         userOperationApi.requestMfaOperation(
             tenantIdentifier, user, oAuthToken, authFlow, request, requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/email/change")
+  public ResponseEntity<?> requestEmailChange(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    User user = resourceOwnerPrincipal.getUser();
+    OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
+    MfaRegistrationRequest request = new MfaRegistrationRequest(requestBody);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserOperationResponse response =
+        userOperationApi.requestEmailChange(
+            tenantIdentifier, user, oAuthToken, request, requestAttributes);
+
+    HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/email/change/{id}/verify")
+  public ResponseEntity<?> verifyEmailChange(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    User user = resourceOwnerPrincipal.getUser();
+    AuthenticationInteractionRequest request = new AuthenticationInteractionRequest(requestBody);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserOperationResponse response =
+        userOperationApi.verifyEmailChange(
+            tenantIdentifier,
+            user,
+            authenticationTransactionIdentifier,
+            request,
+            requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     addFapiInteractionId(httpHeaders, fapiInteractionId);
