@@ -614,26 +614,32 @@ Content-Type: application/json
 
 ---
 
-## セルフサービス: メールアドレス変更 (`/v1/me/email/change`)
+## セルフサービス: メールアドレスの確認・変更 (`/v1/me/email/confirm`)
 
-認証済みエンドユーザーが自分のメールアドレスを変更するフロー。上記の Email 認証設定
-(`email-authentication-challenge` / `email-authentication`)を**そのまま流用**し、新アドレスへ
-確認コードを送って本人到達性を検証してから確定する。
+認証済みエンドユーザーが自分のメールアドレスを**確認(検証)または変更**するフロー。対象アドレスへ
+確認コードを送り、本人到達性を検証してから確定する。上記の Email 認証設定
+(`email-authentication-challenge` / `email-authentication`)の executor をそのまま流用する。
+
+**確認と変更は同一フロー**で、サーバが送信先と現アドレスを比較して判定する(クライアントは意図を宣言しない):
+
+- 送信先が**現アドレスと同じ** → 検証(`email_verified: true` にするだけ、メールは変わらない)
+- 送信先が**別** → 変更(新メールに差し替え + 検証済み)
+- 比較は **case-sensitive**(メールは正規化せず保存され、`preferred_username` の一意性も case-sensitive のため。大文字小文字違いは「変更」扱い)
 
 ### エンドポイント
 
 | メソッド・パス | ボディ | 説明 |
 |---|---|---|
-| `POST /{tenant-id}/v1/me/email/change` | `{ "new_email": "..." }` | 変更開始。新アドレスへコード送信し `{ "id": "<tx>" }` を返す |
-| `POST /{tenant-id}/v1/me/email/change/{id}/verify` | `{ "verification_code": "..." }` | コード検証 + 確定 |
+| `POST /{tenant-id}/v1/me/email/confirm` | `{ "new_email": "..." }` | 開始。対象アドレスへコード送信し `{ "id": "<tx>" }` を返す |
+| `POST /{tenant-id}/v1/me/email/confirm/{id}/verify` | `{ "verification_code": "..." }` | コード検証 + 確定 |
 
-- アクセストークン(`/v1/me`)で認証。verify は**呼び出しユーザーと transaction の所有者が一致**しないと `404`(他人の変更フローを駆動できない)
-- コードは**新アドレス宛**(現アドレスではない)。送信・検証・有効期限・試行上限は Email 認証設定の executor をそのまま使う。誤コード/期限切れ/試行上限超過は `400`、確定済み transaction の再利用は `404`
+- アクセストークン(`/v1/me`)で認証。verify は**呼び出しユーザーと transaction の所有者が一致**しないと `404`
+- 送信・検証・有効期限・試行上限は Email 認証設定の executor をそのまま使う。誤コード/期限切れ/試行上限超過は `400`、確定済み transaction の再利用は `404`
 
 ### 必要な設定
 
-1. **Email 認証設定**(本ページの `email` config)。変更専用の文面にするため `templates` に `email_change` を追加推奨(challenge が `template: "email_change"` を強制する)。
-2. **`flow: "email-change"` の認証ポリシー**（必須。無いと transaction 作成に失敗）:
+1. **Email 認証設定**(本ページの `email` config)。専用文面のため `templates` に `email_change`(変更用)と `email_verify`(検証用)を追加推奨(challenge が用途に応じて `template` を強制。未定義ならデフォルト文面にフォールバック)。
+2. **`flow: "email-change"` の認証ポリシー**(必須。無いと transaction 作成に失敗。フロー名は内部識別子で、確認・変更の両方に使う):
 
 ```json
 {
@@ -659,9 +665,9 @@ Content-Type: application/json
 ]
 ```
 
-### identity policy による一意性の挙動
+### identity policy による一意性の挙動(変更時のみ)
 
-一意性は identity policy 由来の `preferred_username` に対して働く:
+一意性は identity policy 由来の `preferred_username` に対して働く。別アドレスへの**変更**時のみ関係する(自分の現アドレスの検証は常に許可):
 
 | `identity_unique_key_type` | 挙動 |
 |---|---|
@@ -670,7 +676,12 @@ Content-Type: application/json
 
 ### 監査
 
-変更時に **`email_change_request_success` / `email_change_request_failure` / `email_change_success` / `email_change_failure`** を発行する(ログイン時の `email_verification_*` とは別種別で、識別子変更を区別可能)。永続化して照会するにはテナントに `security_event_log_config.persistence_enabled: true` が必要。
+サーバが「確認 or 変更」を判定して別種別のイベントを発行する(いずれもログイン時の `email_verification_*` とは別):
+
+- **変更時**: `email_change_request_success` / `email_change_request_failure` / `email_change_success` / `email_change_failure`
+- **確認時(同一アドレス)**: `email_verify_request_success` / `email_verify_request_failure` / `email_verify_success` / `email_verify_failure`
+
+永続化して照会するにはテナントに `security_event_log_config.persistence_enabled: true` が必要。
 
 ---
 
@@ -684,8 +695,8 @@ Content-Type: application/json
 | `EmailAuthenticationExecutor` | ワンタイムコード検証処理 |
 | `EmailVerificationChallenge` | チャレンジ情報の管理（コード、有効期限、試行回数） |
 | `EmailAuthenticationConfiguration` | Email認証設定の管理 |
-| `EmailChangeChallengeInteractor` | セルフサービス メール変更の challenge（新アドレスへ送信） |
-| `EmailChangeInteractor` | セルフサービス メール変更の verify（一意性チェック + 確定） |
+| `EmailChangeChallengeInteractor` | セルフサービス メール確認・変更の challenge（対象アドレスへ送信） |
+| `EmailChangeInteractor` | セルフサービス メール確認・変更の verify（一意性チェック + 確定、確認/変更でイベント出し分け） |
 
 ### 処理の流れ
 

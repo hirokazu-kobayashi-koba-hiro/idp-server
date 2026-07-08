@@ -52,7 +52,7 @@ public interface UserOperationApi {
    * /v1/me/email/change} entry so the API surface reflects the domain operation rather than the
    * internal reuse.
    */
-  UserOperationResponse requestEmailChange(
+  UserOperationResponse requestEmailConfirm(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken token,
@@ -60,12 +60,12 @@ public interface UserOperationApi {
       RequestAttributes requestAttributes);
 
   /**
-   * Verifies the emailed code and commits the new email for the {@link #requestEmailChange} flow.
+   * Verifies the emailed code and commits the new email for the {@link #requestEmailConfirm} flow.
    *
    * <p>The transaction must belong to {@code user}; otherwise it is treated as not found so one
    * authenticated user cannot drive another's change transaction by id.
    */
-  UserOperationResponse verifyEmailChange(
+  UserOperationResponse verifyEmailConfirm(
       TenantIdentifier tenantIdentifier,
       User user,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,

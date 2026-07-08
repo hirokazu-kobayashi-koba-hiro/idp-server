@@ -105,10 +105,12 @@ public class EmailChangeChallengeInteractor implements AuthenticationInteractor 
     }
 
     User user = transaction.user();
-    if (newEmail.equalsIgnoreCase(user.email())) {
-      return clientError(type, "new_email is the same as the current email.");
-    }
-
+    // Same address = re-verify the current email; different = change. The commit logic is
+    // identical;
+    // only the template and audit event differ (see isChange). Case-sensitive on purpose: email is
+    // stored as-is and preferred_username uniqueness is case-sensitive, so a case change is a
+    // change.
+    boolean isChange = !newEmail.equals(user.email());
     String providerId = user.providerId();
 
     AuthenticationConfiguration configuration = configurationQueryRepository.get(tenant, "email");
@@ -119,9 +121,10 @@ public class EmailChangeChallengeInteractor implements AuthenticationInteractor 
 
     Map<String, Object> executionRequestValues = new HashMap<>(request.toMap());
     executionRequestValues.put("email", newEmail);
-    // Force the change-specific template so the code email reads as an email-change (not a login
-    // OTP), regardless of what the caller passed.
-    executionRequestValues.put("template", "email_change");
+    // Force the operation-specific template so the code email reads as an email change /
+    // verification
+    // (not a login OTP), regardless of what the caller passed.
+    executionRequestValues.put("template", isChange ? "email_change" : "email_verify");
     AuthenticationExecutionRequest executionRequest =
         new AuthenticationExecutionRequest(executionRequestValues);
     AuthenticationExecutionResult executionResult =
@@ -146,7 +149,9 @@ public class EmailChangeChallengeInteractor implements AuthenticationInteractor 
           operationType(),
           method(),
           user,
-          DefaultSecurityEventType.email_change_request_failure);
+          isChange
+              ? DefaultSecurityEventType.email_change_request_failure
+              : DefaultSecurityEventType.email_verify_request_failure);
     }
 
     EmailVerificationChallengeRequest challengeRequest =
@@ -161,7 +166,9 @@ public class EmailChangeChallengeInteractor implements AuthenticationInteractor 
         method(),
         user,
         contents,
-        DefaultSecurityEventType.email_change_request_success);
+        isChange
+            ? DefaultSecurityEventType.email_change_request_success
+            : DefaultSecurityEventType.email_verify_request_success);
   }
 
   private AuthenticationInteractionRequestResult clientError(

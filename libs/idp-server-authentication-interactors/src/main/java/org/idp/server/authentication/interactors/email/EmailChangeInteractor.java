@@ -102,6 +102,10 @@ public class EmailChangeInteractor implements AuthenticationInteractor {
             EmailVerificationChallengeRequest.class);
     String newEmail = challengeRequest.email();
     String providerId = challengeRequest.providerId();
+    // Same address = verify the current email; different = change. Affects the audit event only;
+    // the commit below is identical either way. Case-sensitive to match the case-sensitive email /
+    // preferred_username identity model (email is stored as-is, no normalization).
+    boolean isChange = !newEmail.equals(transaction.user().email());
 
     AuthenticationConfiguration configuration = configurationQueryRepository.get(tenant, "email");
     AuthenticationInteractionConfig authenticationConfig =
@@ -130,7 +134,9 @@ public class EmailChangeInteractor implements AuthenticationInteractor {
           operationType(),
           method(),
           transaction.user(),
-          DefaultSecurityEventType.email_change_failure);
+          isChange
+              ? DefaultSecurityEventType.email_change_failure
+              : DefaultSecurityEventType.email_verify_failure);
     }
 
     User user = transaction.user();
@@ -163,7 +169,9 @@ public class EmailChangeInteractor implements AuthenticationInteractor {
         method(),
         user,
         responseContents,
-        DefaultSecurityEventType.email_change_success);
+        isChange
+            ? DefaultSecurityEventType.email_change_success
+            : DefaultSecurityEventType.email_verify_success);
   }
 
   private AuthenticationInteractionRequestResult clientError(

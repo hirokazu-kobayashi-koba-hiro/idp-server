@@ -105,7 +105,7 @@ sequenceDiagram
 
 #### 属性変更時の再計算
 
-`preferred_username` は元となる属性を追従し、**その属性が更新されると再計算されます**（作成時に固定されるわけではありません）。特に EMAIL 系ポリシーでセルフサービスのメールアドレス変更（`/v1/me/email/change`）を行うと `preferred_username`（＝ログイン識別子）が新しいメールに移り、以降の Password Grant / ログインは新メールで行います。設定は開発者ガイド「Email認証 > セルフサービス: メールアドレス変更」を参照。
+`preferred_username` は元となる属性を追従し、**その属性が更新されると再計算されます**（作成時に固定されるわけではありません）。特に EMAIL 系ポリシーでセルフサービスのメールアドレス変更（`/v1/me/email/confirm`）を行うと `preferred_username`（＝ログイン識別子）が新しいメールに移り、以降の Password Grant / ログインは新メールで行います。設定は開発者ガイド「Email認証 > セルフサービス: メールアドレスの確認・変更」を参照。
 
 ### Password Grant との関係
 

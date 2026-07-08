@@ -258,21 +258,21 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /{tenant-id}/v1/me/email/change:
+  /{tenant-id}/v1/me/email/confirm:
     post:
       tags:
         - ユーザー
-      summary: メールアドレス変更（開始）
+      summary: メールアドレスの確認・変更（開始）
       description: |
-        認証済みユーザーのメールアドレス変更を開始します。新しいアドレス宛に確認コードを送信し、
-        変更用トランザクションの `id` を返します。コードは `/{id}/verify` で検証します。
+        認証済みユーザーのメールアドレスを確認（検証）または変更するフローを開始します。対象アドレス宛に
+        確認コードを送信し、トランザクションの `id` を返します。コードは `/{id}/verify` で検証します。
 
-        設定（`email-change` フローの認証ポリシー、Email 認証設定の流用、identity policy による
-        一意性の挙動）は開発者ガイド「Email認証 > セルフサービス: メールアドレス変更」を参照。
+        `new_email` が**現アドレスと同じ**なら検証（`email_verified: true`）、**別**なら変更として扱われます
+        （サーバが判定）。設定は開発者ガイド「Email認証 > セルフサービス: メールアドレスの確認・変更」を参照。
 
         ## セキュリティイベント
-        - `email_change_request_success`: 確認コード送信成功
-        - `email_change_request_failure`: 送信失敗 / 現アドレスと同一 / 未認証
+        - 検証時（同一アドレス）: `email_verify_request_success` / `email_verify_request_failure`
+        - 変更時（別アドレス）: `email_change_request_success` / `email_change_request_failure`
       parameters:
         - $ref: '#/components/parameters/TenantId'
       security:
@@ -325,20 +325,21 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /{tenant-id}/v1/me/email/change/{id}/verify:
+  /{tenant-id}/v1/me/email/confirm/{id}/verify:
     post:
       tags:
         - ユーザー
-      summary: メールアドレス変更（コード検証・確定）
+      summary: メールアドレスの確認・変更（コード検証・確定）
       description: |
-        開始時に送られた確認コードを検証し、新しいメールアドレスを確定します。トランザクションは
+        開始時に送られた確認コードを検証し、メールアドレスを確定します。同一アドレスなら検証
+        （`email_verified: true`、メールは不変）、別アドレスなら変更（差し替え）。トランザクションは
         呼び出しユーザー本人のものである必要があります（他人のトランザクションは 404）。
 
-        identity policy が `EMAIL` の場合、確定後は新メールがログイン識別子になります。
+        identity policy が `EMAIL` かつ変更の場合、確定後は新メールがログイン識別子になります。
 
         ## セキュリティイベント
-        - `email_change_success`: 変更確定
-        - `email_change_failure`: コード不正 / 期限切れ / 試行上限 / 一意性違反
+        - 検証時: `email_verify_success` / `email_verify_failure`
+        - 変更時: `email_change_success` / `email_change_failure`（コード不正 / 期限切れ / 試行上限 / 一意性違反）
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - name: id
