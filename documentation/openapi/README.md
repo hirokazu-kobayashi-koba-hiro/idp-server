@@ -19,6 +19,10 @@ node config/scripts/generate-identity-verification-openapi.js \
 # JSON形式・サーバーURL指定
 node config/scripts/generate-identity-verification-openapi.js <config.json> \
   --format json --server https://idp.example.com
+
+# 実テナントIDを埋め込んだ「そのまま叩ける」仕様書を生成
+node config/scripts/generate-identity-verification-openapi.js <config.json> \
+  --tenant-id 67e7eae6-62b0-4500-9eff-87459f63fc66
 ```
 
 設定の `processes` の各プロセスを実際のエンドポイントに展開する:
@@ -34,6 +38,8 @@ node config/scripts/generate-identity-verification-openapi.js <config.json> \
 - レスポンスは `response.body_mapping_rules` から導出（初回申込みのみ `id` がサーバー付与）
 - pre_hook 検証・transition 条件・store 保存項目は description に自動記載
 - 認証情報（basic_auth / oauth の資格情報）は仕様書に出力されない
+- `--tenant-id` 指定時はパス・OAuth URL の `{tenant-id}` を実IDに置換（パラメータ定義も除去）
+- `request.schema` が宣言されているのに `properties` が空のプロセスは、宣言漏れの可能性として stderr に警告（生成は継続）
 
 # control plane schema
 

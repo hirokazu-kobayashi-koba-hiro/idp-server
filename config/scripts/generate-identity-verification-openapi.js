@@ -38,9 +38,13 @@
  *   -o, --output <file>   出力先ファイル（省略時は標準出力）
  *   --format <yaml|json>  出力形式（デフォルト: yaml）
  *   --server <url>        servers[0].url（デフォルト: http://localhost:8080）
+ *   --tenant-id <id>      パスの {tenant-id} を実テナントIDに置換（そのまま叩ける仕様書になる）
  *   --title <title>       info.title の上書き
  *   --no-crud             一覧取得（GET）・削除（DELETE）エンドポイントを含めない
  *   -h, --help            ヘルプ表示
+ *
+ * request.schema が宣言されているのに properties が空のプロセスは、設定の宣言漏れの
+ * 可能性があるため stderr に警告を出す（生成は継続する）。
  *
  * 例:
  *   node config/scripts/generate-identity-verification-openapi.js \
@@ -53,9 +57,15 @@
 const fs = require('fs');
 const path = require('path');
 
-const ME_BASE = '/{tenant-id}/v1/me/identity-verification/applications';
-const CALLBACK_BASE = '/{tenant-id}/internal/v1/identity-verification/callback';
-const REGISTRATION_BASE = '/{tenant-id}/internal/v1/identity-verification/results';
+/** パスのプレフィックス。--tenant-id 指定時は実テナントIDを埋め込む */
+function pathBases(tenantId) {
+  const prefix = tenantId ? `/${tenantId}` : '/{tenant-id}';
+  return {
+    me: `${prefix}/v1/me/identity-verification/applications`,
+    callback: `${prefix}/internal/v1/identity-verification/callback`,
+    registration: `${prefix}/internal/v1/identity-verification/results`,
+  };
+}
 
 /** この repo の JSON Schema 実装の独自キーワード（OpenAPI 非互換） */
 const CUSTOM_SCHEMA_KEYWORDS = new Set(['store', 'respond']);
@@ -70,6 +80,7 @@ function usage() {
     '  -o, --output <file>   出力先ファイル（省略時は標準出力）',
     '  --format <yaml|json>  出力形式（デフォルト: yaml）',
     '  --server <url>        サーバーURL（デフォルト: http://localhost:8080）',
+    '  --tenant-id <id>      パスの {tenant-id} を実テナントIDに置換',
     '  --title <title>       info.title の上書き',
     '  --no-crud             一覧取得・削除エンドポイントを含めない',
     '  -h, --help            このヘルプを表示',
@@ -83,6 +94,7 @@ function parseArgs(argv) {
     output: null,
     format: 'yaml',
     server: 'http://localhost:8080',
+    tenantId: null,
     title: null,
     crud: true,
   };
@@ -103,6 +115,9 @@ function parseArgs(argv) {
         break;
       case '--server':
         options.server = argv[++i];
+        break;
+      case '--tenant-id':
+        options.tenantId = argv[++i];
         break;
       case '--title':
         options.title = argv[++i];
@@ -431,7 +446,30 @@ function buildTagDescription(config, source) {
   return lines.join('\n');
 }
 
-function buildOperation(config, name, proc, kind, tag) {
+/** --tenant-id 指定時はパスに実IDが埋まるため {tenant-id} パラメータ自体が不要になる */
+function tenantPathParameters(options) {
+  return options.tenantId ? [] : [{ $ref: '#/components/parameters/TenantId' }];
+}
+
+/**
+ * request.schema が宣言されているのに実質空（properties なし・他の制約もなし）なら
+ * 設定の宣言漏れの可能性があるため stderr に警告する。
+ */
+function warnIfEmptySchema(configType, processName, schema) {
+  if (!schema) {
+    return;
+  }
+  const hasProperties = schema.properties && Object.keys(schema.properties).length > 0;
+  const hasOtherConstraints =
+    schema.$ref || schema.allOf || schema.anyOf || schema.oneOf || schema.items || schema.additionalProperties;
+  if (!hasProperties && !hasOtherConstraints) {
+    console.error(
+      `警告: ${configType} のプロセス '${processName}' の request.schema に properties が定義されていません（宣言漏れの可能性）`
+    );
+  }
+}
+
+function buildOperation(config, name, proc, kind, tag, options) {
   const summaryLabels = {
     initial: `身元確認申込み（${name}）`,
     continuation: `継続プロセス実行（${name}）`,
@@ -450,13 +488,16 @@ function buildOperation(config, name, proc, kind, tag) {
     operation.security = [{ OAuth2: ['identity_verification_application'] }];
   }
 
-  const parameters = [{ $ref: '#/components/parameters/TenantId' }];
+  const parameters = tenantPathParameters(options);
   if (kind === 'continuation') {
     parameters.push({ $ref: '#/components/parameters/ApplicationId' });
   }
-  operation.parameters = parameters;
+  if (parameters.length > 0) {
+    operation.parameters = parameters;
+  }
 
   const rawSchema = proc.request && proc.request.schema;
+  warnIfEmptySchema(config.type, name, rawSchema);
   if (rawSchema) {
     const schema = sanitizeSchema(rawSchema);
     const hasRequiredFields = Array.isArray(schema.required) && schema.required.length > 0;
@@ -490,7 +531,7 @@ function sanitizeOperationId(value) {
   return value.replace(/[^A-Za-z0-9_-]/g, '-');
 }
 
-function buildListOperation() {
+function buildListOperation(options) {
   return {
     tags: ['共通'],
     summary: '身元確認申込み一覧取得',
@@ -498,7 +539,7 @@ function buildListOperation() {
     operationId: 'list-identity-verification-applications',
     security: [{ OAuth2: ['identity_verification_application'] }],
     parameters: [
-      { $ref: '#/components/parameters/TenantId' },
+      ...tenantPathParameters(options),
       { name: 'id', in: 'query', required: false, schema: { type: 'string', format: 'uuid' }, description: '申込みIDでの絞り込み' },
       { name: 'type', in: 'query', required: false, schema: { type: 'string' }, description: '身元確認タイプでの絞り込み' },
       { name: 'status', in: 'query', required: false, schema: { type: 'string' }, description: 'ステータスでの絞り込み' },
@@ -533,7 +574,7 @@ function buildListOperation() {
  * registration 型設定（processes を持たず、外部サービスが確認済み結果を直接登録する形式）の
  * オペレーションを生成する。verified_claims は完全上書き（setVerifiedClaims）で保存される。
  */
-function buildRegistrationOperation(config, tag) {
+function buildRegistrationOperation(config, tag, options) {
   const registration = config.registration;
   const operation = {
     tags: [tag],
@@ -546,10 +587,14 @@ function buildRegistrationOperation(config, tag) {
     ].join('\n'),
     operationId: sanitizeOperationId(`register-${config.type}-result`),
     security: [{ BasicAuth: [] }],
-    parameters: [{ $ref: '#/components/parameters/TenantId' }],
   };
+  const parameters = tenantPathParameters(options);
+  if (parameters.length > 0) {
+    operation.parameters = parameters;
+  }
 
   const rawSchema = registration.request_validation_schema;
+  warnIfEmptySchema(config.type, 'registration', rawSchema);
   if (rawSchema) {
     const schema = sanitizeSchema(rawSchema);
     operation.requestBody = {
@@ -577,7 +622,7 @@ function buildRegistrationOperation(config, tag) {
   return operation;
 }
 
-function buildDeleteOperation(config, tag) {
+function buildDeleteOperation(config, tag, options) {
   return {
     tags: [tag],
     summary: `身元確認申込み削除（${config.type}）`,
@@ -585,7 +630,7 @@ function buildDeleteOperation(config, tag) {
     operationId: sanitizeOperationId(`delete-${config.type}-application`),
     security: [{ OAuth2: ['identity_verification_application_delete'] }],
     parameters: [
-      { $ref: '#/components/parameters/TenantId' },
+      ...tenantPathParameters(options),
       { $ref: '#/components/parameters/ApplicationId' },
     ],
     responses: {
@@ -1145,15 +1190,34 @@ function buildErrorResponseComponents() {
   };
 }
 
-function buildComponents(serverUrl) {
+function buildComponents(options) {
+  const tenantSegment = options.tenantId ? options.tenantId : '{tenant-id}';
+  const parameters = {
+    ApplicationId: {
+      name: 'id',
+      in: 'path',
+      required: true,
+      schema: { type: 'string', format: 'uuid' },
+      description: '身元確認申込みID（初回申込みレスポンスの id）',
+    },
+  };
+  if (!options.tenantId) {
+    parameters.TenantId = {
+      name: 'tenant-id',
+      in: 'path',
+      required: true,
+      schema: { type: 'string', format: 'uuid' },
+      description: 'テナントID',
+    };
+  }
   return {
     securitySchemes: {
       OAuth2: {
         type: 'oauth2',
         flows: {
           authorizationCode: {
-            authorizationUrl: `${serverUrl}/{tenant-id}/v1/authorizations`,
-            tokenUrl: `${serverUrl}/{tenant-id}/v1/tokens`,
+            authorizationUrl: `${options.server}/${tenantSegment}/v1/authorizations`,
+            tokenUrl: `${options.server}/${tenantSegment}/v1/tokens`,
             scopes: {
               identity_verification_application: '身元確認の申込みAPIに必要なスコープ',
               identity_verification_application_delete: '身元確認の申込み削除に必要なスコープ',
@@ -1167,22 +1231,7 @@ function buildComponents(serverUrl) {
         description: 'コールバック用。設定の request.basic_auth に定義した資格情報。',
       },
     },
-    parameters: {
-      TenantId: {
-        name: 'tenant-id',
-        in: 'path',
-        required: true,
-        schema: { type: 'string', format: 'uuid' },
-        description: 'テナントID',
-      },
-      ApplicationId: {
-        name: 'id',
-        in: 'path',
-        required: true,
-        schema: { type: 'string', format: 'uuid' },
-        description: '身元確認申込みID（初回申込みレスポンスの id）',
-      },
-    },
+    parameters,
     responses: buildErrorResponseComponents(),
   };
 }
@@ -1199,6 +1248,7 @@ function generateOpenApi(configEntries, options) {
         '身元確認設定JSONから自動生成されたAPI仕様書。',
         '',
         `生成元: ${sources.join(', ')}`,
+        ...(options.tenantId ? ['', `テナントID: ${options.tenantId}`] : []),
         '',
         '再生成するには: `node config/scripts/generate-identity-verification-openapi.js`（手動編集しないこと）',
       ].join('\n'),
@@ -1207,16 +1257,18 @@ function generateOpenApi(configEntries, options) {
     servers: [{ url: options.server }],
     tags: [],
     paths: {},
-    components: buildComponents(options.server),
+    components: buildComponents(options),
   };
+
+  const bases = pathBases(options.tenantId);
 
   for (const { source, config } of configEntries) {
     const tag = config.type;
     doc.tags.push({ name: tag, description: buildTagDescription(config, source) });
 
     if (config.registration) {
-      doc.paths[`${REGISTRATION_BASE}/${config.type}/registration`] = {
-        post: buildRegistrationOperation(config, tag),
+      doc.paths[`${bases.registration}/${config.type}/registration`] = {
+        post: buildRegistrationOperation(config, tag, options),
       };
     }
     if (!config.processes) {
@@ -1226,29 +1278,29 @@ function generateOpenApi(configEntries, options) {
     for (const { name, proc, kind } of classifyProcesses(config)) {
       let pathKey;
       if (kind === 'callback') {
-        pathKey = `${CALLBACK_BASE}/${config.type}/${name}`;
+        pathKey = `${bases.callback}/${config.type}/${name}`;
       } else if (kind === 'initial') {
-        pathKey = `${ME_BASE}/${config.type}/${name}`;
+        pathKey = `${bases.me}/${config.type}/${name}`;
       } else {
-        pathKey = `${ME_BASE}/${config.type}/{id}/${name}`;
+        pathKey = `${bases.me}/${config.type}/{id}/${name}`;
       }
       if (doc.paths[pathKey]) {
         console.error(`警告: パスが重複しています（スキップ）: ${pathKey}`);
         continue;
       }
-      doc.paths[pathKey] = { post: buildOperation(config, name, proc, kind, tag) };
+      doc.paths[pathKey] = { post: buildOperation(config, name, proc, kind, tag, options) };
     }
 
     if (options.crud) {
-      doc.paths[`${ME_BASE}/${config.type}/{id}`] = {
-        delete: buildDeleteOperation(config, tag),
+      doc.paths[`${bases.me}/${config.type}/{id}`] = {
+        delete: buildDeleteOperation(config, tag, options),
       };
     }
   }
 
   if (options.crud) {
     doc.tags.push({ name: '共通', description: '身元確認タイプに依存しない共通API' });
-    doc.paths[ME_BASE] = { get: buildListOperation() };
+    doc.paths[bases.me] = { get: buildListOperation(options) };
   }
 
   return doc;
