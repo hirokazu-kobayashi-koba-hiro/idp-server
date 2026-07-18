@@ -101,7 +101,8 @@ public class RequestUriPatternContextCreator implements OAuthRequestContextCreat
           joseContext,
           authorizationRequest,
           authorizationServerConfiguration,
-          clientConfiguration);
+          clientConfiguration,
+          isPushed);
     } catch (JoseInvalidException exception) {
       // JAR (RFC 9101) Section 6.2:
       // "the authorization server MUST return an error response with error set to

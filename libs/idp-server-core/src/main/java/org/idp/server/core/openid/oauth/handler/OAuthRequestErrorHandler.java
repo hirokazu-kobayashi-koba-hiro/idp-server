@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.oauth.configuration.exception.ServerConfigurationNotFoundException;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofInvalidException;
 import org.idp.server.core.openid.oauth.exception.OAuthBadRequestException;
 import org.idp.server.core.openid.oauth.exception.OAuthRedirectableBadRequestException;
 import org.idp.server.core.openid.oauth.io.OAuthPushedRequestResponse;
@@ -77,6 +78,18 @@ public class OAuthRequestErrorHandler {
           "OAuth pushed request server configuration not found: error={}", exception.getMessage());
       Map<String, Object> response = new HashMap<>();
       response.put("error", "invalid_request");
+      response.put("error_description", exception.getMessage());
+      return new OAuthPushedRequestResponse(OAuthPushedRequestStatus.BAD_REQUEST, response);
+    }
+
+    // RFC 9449 §10.1: a DPoP proof presented to the PAR endpoint (to bind the request_uri to a
+    // key) that fails verification is a client error, mirroring the token endpoint mapping in
+    // TokenRequestErrorHandler. Without this branch it falls through to 500 server_error.
+    if (exception instanceof DPoPProofInvalidException) {
+      log.warn(
+          "OAuth pushed request DPoP proof validation failed: error={}", exception.getMessage());
+      Map<String, Object> response = new HashMap<>();
+      response.put("error", "invalid_dpop_proof");
       response.put("error_description", exception.getMessage());
       return new OAuthPushedRequestResponse(OAuthPushedRequestStatus.BAD_REQUEST, response);
     }

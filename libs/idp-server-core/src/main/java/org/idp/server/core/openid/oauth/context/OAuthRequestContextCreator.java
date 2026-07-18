@@ -43,6 +43,9 @@ public interface OAuthRequestContextCreator {
       Set<String> filteredScopes,
       AuthorizationServerConfiguration authorizationServerConfiguration) {
 
+    if (authorizationServerConfiguration.hasFapi20Scope(filteredScopes)) {
+      return AuthorizationProfile.FAPI_2_0;
+    }
     if (authorizationServerConfiguration.hasFapiAdvanceScope(filteredScopes)) {
       return AuthorizationProfile.FAPI_ADVANCE;
     }

@@ -33,6 +33,7 @@ import org.idp.server.core.openid.grant_management.grant.consent.ConsentClaims;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprint;
 import org.idp.server.core.openid.oauth.configuration.client.ClientAttributes;
+import org.idp.server.core.openid.oauth.dpop.JwkThumbprint;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.extension.CreatedAt;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
@@ -118,6 +119,7 @@ class OAuthTokenInsertRowParityTest {
             new AccessTokenEntity("access-token-value"),
             authorizationGrant,
             new ClientCertificationThumbprint(""),
+            new JwkThumbprint(),
             new AccessTokenCustomClaims(),
             new CreatedAt(now),
             new ExpiresIn(3600),

@@ -112,6 +112,11 @@ public class OAuthToken {
     return authorizationGrant().subject();
   }
 
+  public boolean hasSubject() {
+    Subject subject = subject();
+    return subject != null && subject.exists();
+  }
+
   public boolean hasOpenidScope() {
     return authorizationGrant().hasOpenidScope();
   }

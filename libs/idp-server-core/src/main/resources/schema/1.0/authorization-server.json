@@ -664,6 +664,13 @@
           },
           "description": "List of scopes indicating FAPI Advanced conformance."
         },
+        "fapi20_scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of scopes indicating FAPI 2.0 Security Profile Final conformance. When any of these scopes is requested, the server enforces FAPI 2.0 SP requirements (PAR mandatory, response_type=code only, public client prohibited, sender-constrained tokens via mTLS or DPoP)."
+        },
         "required_identity_verification_scopes": {
           "type": "array",
           "items": {

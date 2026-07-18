@@ -1,2 +1,3 @@
 org.idp.server.core.openid.extension.fapi.FapiAdvanceVerifier
 org.idp.server.core.openid.extension.fapi.FapiBaselineVerifier
+org.idp.server.core.openid.extension.fapi.FapiSecurity20Verifier

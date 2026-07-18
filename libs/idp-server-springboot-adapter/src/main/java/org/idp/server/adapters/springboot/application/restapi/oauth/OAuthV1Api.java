@@ -18,6 +18,7 @@ package org.idp.server.adapters.springboot.application.restapi.oauth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
@@ -63,12 +64,18 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
       @RequestParam(required = false) MultiValueMap<String, String> request,
       HttpServletRequest httpServletRequest) {
 
+    List<String> dpopProofHeaders = extractDPoPProofHeaders(httpServletRequest);
     Map<String, String[]> params = transform(request);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     OAuthPushedRequestResponse response =
         oAuthFlowApi.push(
-            tenantIdentifier, params, authorizationHeader, clientCert, requestAttributes);
+            tenantIdentifier,
+            params,
+            authorizationHeader,
+            clientCert,
+            dpopProofHeaders,
+            requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");

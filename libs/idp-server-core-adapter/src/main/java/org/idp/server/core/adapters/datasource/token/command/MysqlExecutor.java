@@ -66,11 +66,13 @@ public class MysqlExecutor implements OAuthTokenSqlExecutor {
                                 refresh_token_expires_at,
                                 id_token,
                                 client_certification_thumbprint,
+                                jwk_thumbprint,
                                 c_nonce,
                                 c_nonce_expires_in,
                                 expires_at
                                 )
                                 VALUES (
+                                ?,
                                 ?,
                                 ?,
                                 ?,
@@ -246,6 +248,12 @@ public class MysqlExecutor implements OAuthTokenSqlExecutor {
           oAuthToken.accessToken().clientCertificationThumbprint().value());
     } else {
       OAuthTokenRowBuilder.add(params, row, "client_certification_thumbprint", "");
+    }
+    if (oAuthToken.accessToken().hasDPoPBinding()) {
+      OAuthTokenRowBuilder.add(
+          params, row, "jwk_thumbprint", oAuthToken.accessToken().jwkThumbprint().value());
+    } else {
+      OAuthTokenRowBuilder.add(params, row, "jwk_thumbprint", null);
     }
 
     if (oAuthToken.hasCNonce()) {
