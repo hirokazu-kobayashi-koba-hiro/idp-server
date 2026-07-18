@@ -115,7 +115,8 @@ describe("CIBA + RFC 9449 (DPoP)", () => {
    *
    * "The authorization server MUST validate the DPoP proof JWT presented by the client."
    *
-   * Section 5.1: token_type=DPoP indicates a DPoP-bound access token.
+   * Section 5: token_type=DPoP indicates a DPoP-bound access token (§5.1 is
+   * "Authorization Server Metadata"; the token_type requirement is in the §5 body).
    */
   describe("Section 5: Token Request with CIBA grant", () => {
 
@@ -141,7 +142,7 @@ describe("CIBA + RFC 9449 (DPoP)", () => {
       expect(tokenResponse.data.token_type).toBe("Bearer");
     });
 
-    it("MUST reject token request with malformed DPoP proof (RFC 9449 §5.10 invalid_dpop_proof)", async () => {
+    it("MUST reject token request with malformed DPoP proof (RFC 9449 §5 invalid_dpop_proof)", async () => {
       const authReqId = await completeBackchannelAuthentication();
 
       const tokenResponse = await requestToken({
@@ -295,14 +296,14 @@ describe("CIBA + RFC 9449 (DPoP)", () => {
   });
 
   /**
-   * RFC 9449 Section 5.8: Refresh Token Binding
+   * RFC 9449 Section 5: Refresh Token Binding (DPoP Access Token Request)
    *
    * "Refresh tokens issued to public clients in the token response MUST be bound to
    *  the public key associated with the DPoP proof JWT presented at the token endpoint."
    *
    * "The client MUST present a DPoP proof signed by the same key when refreshing the token."
    */
-  describe("Section 5.8: Refresh Token DPoP Key Continuity", () => {
+  describe("Section 5: Refresh Token DPoP Key Continuity", () => {
 
     it("MUST accept refresh request with the same DPoP key", async () => {
       const tokens = await obtainCibaDPoPBoundTokens(dpopKeyPair);

@@ -132,7 +132,7 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
      * <ul>
      *   <li>Check 10 (server-provided nonce) is intentionally omitted — the server does not
      *       currently issue DPoP nonces.
-     *   <li>Check 12 (RS-side ath / jwk binding) is covered in the Section 7 / 8 describe blocks
+     *   <li>Check 12 (RS-side ath / jwk binding) is covered in the Section 6.2 / 7 describe blocks
      *       (UserInfo, introspection, /me) where DPoP proofs are presented to a protected resource.
      * </ul>
      *
@@ -621,12 +621,15 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
     });
 
     /**
-     * RFC 9449 Section 5: DPoP-bound token response
+     * RFC 9449 Section 5: DPoP Access Token Request (DPoP-bound token response)
      *
      * "If the authorization server decides to issue a DPoP-bound access token,
      *  the value of the token_type parameter MUST be DPoP."
+     *
+     * Note: §5.1 is "Authorization Server Metadata"; the token_type=DPoP requirement
+     * lives in the body of §5, so this block is numbered 5 (not 5.1).
      */
-    describe("5.1 Token Response - 'the value of the token_type parameter MUST be DPoP'", () => {
+    describe("5. DPoP Access Token Request - 'the value of the token_type parameter MUST be DPoP'", () => {
 
       it("MUST return token_type 'DPoP' for DPoP-bound access tokens", async () => {
         const dpopProof = await createDPoPProof({
@@ -867,15 +870,15 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
   });
 
   /**
-   * RFC 9449 Section 7: Token Introspection with DPoP-bound Tokens
+   * RFC 9449 Section 6.2: JWK Thumbprint Confirmation Method in Token Introspection
    *
    * When a DPoP-bound access token is introspected, the response MUST include:
    * - "token_type": "DPoP"
    * - "cnf" claim containing "jkt" (JWK Thumbprint) of the bound public key
    *
-   * @see https://www.rfc-editor.org/rfc/rfc9449.html#section-7
+   * @see https://www.rfc-editor.org/rfc/rfc9449.html#section-6.2
    */
-  describe("Section 7: Token Introspection with DPoP-bound Tokens", () => {
+  describe("Section 6.2: Token Introspection with DPoP-bound Tokens", () => {
 
     it("MUST return token_type DPoP and cnf.jkt for DPoP-bound token", async () => {
       // 1. Get a DPoP-bound access token via client_credentials
@@ -950,15 +953,15 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
   });
 
   /**
-   * RFC 9449 Section 7: Token Introspection Extensions with DPoP Binding Verification
+   * RFC 9449 Section 6.2: JWK Thumbprint Confirmation Method in Token Introspection
    *
    * The introspection-extensions endpoint verifies sender-constrained tokens.
    * For DPoP-bound tokens, the resource server sends a DPoP proof and the
    * authorization server verifies the JWK Thumbprint matches the token binding.
    *
-   * @see https://www.rfc-editor.org/rfc/rfc9449.html#section-7
+   * @see https://www.rfc-editor.org/rfc/rfc9449.html#section-6.2
    */
-  describe("Section 7: Token Introspection Extensions - DPoP Binding Verification", () => {
+  describe("Section 6.2: Token Introspection Extensions - DPoP Binding Verification", () => {
 
     it("MUST return active when valid DPoP proof matches token binding", async () => {
       // 1. Get a DPoP-bound access token
@@ -1123,14 +1126,14 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
   });
 
   /**
-   * Section 8: Protected Resource Access with DPoP-bound Tokens
+   * RFC 9449 Section 7: Protected Resource Access with DPoP-bound Tokens
    *
-   * RFC 9449 Section 7.1: Resource servers MUST verify that the DPoP proof
-   * is valid and that the public key matches the token's cnf.jkt binding.
+   * RFC 9449 Section 7.1 (The DPoP Authentication Scheme): Resource servers MUST verify
+   * that the DPoP proof is valid and that the public key matches the token's cnf.jkt binding.
    *
    * This tests the ProtectedResourceApiFilter which guards /me APIs.
    */
-  describe("Section 8: Protected Resource API (/me) - DPoP Binding Verification", () => {
+  describe("Section 7: Protected Resource API (/me) - DPoP Binding Verification", () => {
 
     const meEndpoint = `${backendUrl}/${serverConfig.tenantId}/v1/me`;
 

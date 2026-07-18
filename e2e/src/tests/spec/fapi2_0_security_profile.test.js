@@ -180,9 +180,11 @@ describe("FAPI 2.0 Security Profile Final", () => {
   });
 
   /**
-   * Section 5.3.2.1.7: PKCE S256 mandatory
+   * Section 5.3.2.2: Authorization endpoint flows — the AS "shall require PKCE [RFC7636]
+   * with S256 as the code challenge method". (§5.3.2.1 item 7 is the open-redirector rule,
+   * not PKCE.)
    */
-  describe("Section 5.3.2.1.7: PKCE S256 mandatory", () => {
+  describe("Section 5.3.2.2: PKCE S256 mandatory", () => {
     it("MUST reject PAR without code_challenge", async () => {
       const clientAssertion = createClientAssertion({
         client: privateKeyJwtClient,
