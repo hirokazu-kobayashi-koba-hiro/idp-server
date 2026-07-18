@@ -31,6 +31,17 @@ export FLYWAY_LOCATIONS="${LOCATIONS}"
 export FLYWAY_ENCODING="UTF-8"
 export FLYWAY_CLEAN_DISABLED="false"
 
+# Fail fast on lock contention. DDL such as ADD COLUMN on hot production tables
+# (oauth_token / authorization_request) takes a brief exclusive lock; give up after 5s
+# rather than queue behind a long transaction and stall the request path. A migration
+# that times out fails and can be retried in a calmer window. Runs on every connection
+# Flyway opens, so it covers all migrations uniformly.
+if [ "$DB_TYPE" = "postgresql" ]; then
+  export FLYWAY_INIT_SQL="SET lock_timeout = '5s'"
+else
+  export FLYWAY_INIT_SQL="SET SESSION lock_wait_timeout = 5"
+fi
+
 # Default action is migrate
 if [ "$#" -eq 0 ]; then
   set -- migrate

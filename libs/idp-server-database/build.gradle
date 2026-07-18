@@ -24,17 +24,24 @@ flyway {
     def env = System.env
     def dbType = env.DB_TYPE ?: "postgresql"
 
+    // Fail fast on lock contention: DDL (e.g. ADD COLUMN) on hot production tables
+    // (oauth_token / authorization_request) takes a brief exclusive lock. Rather than
+    // queue behind a long transaction and stall the request path, give up after 5s and
+    // let the migration fail so it can be retried in a calmer window. Applied to every
+    // connection Flyway opens for the run, so it covers all migrations uniformly.
     if (dbType == "postgresql") {
         url = env.DB_URL ?: "jdbc:postgresql://localhost:5432/idpserver"
         user = env.DB_USER_NAME ?: "idpserver"
         password = env.DB_PASSWORD ?: "idpserver"
         locations = ["filesystem:./postgresql"]
         schemas = ["public"]
+        initSql = "SET lock_timeout = '5s'"
     } else if (dbType == "mysql") {
         url = env.DB_URL ?: "jdbc:mariadb://localhost:3306/idpserver"
         user = env.DB_USER_NAME ?: "idpserver"
         password = env.DB_PASSWORD ?: "idpserver"
         locations = ["filesystem:./mysql"]
+        initSql = "SET SESSION lock_wait_timeout = 5"
     } else {
         throw new GradleException("Unknown DB_TYPE: ${dbType}")
     }
