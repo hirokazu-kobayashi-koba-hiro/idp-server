@@ -39,6 +39,7 @@
         "http_request": {
           "url": "http://host.docker.internal:4000/sms-authentication-challenge",
           "method": "POST",
+          "auth_type": "oauth2",
           "oauth_authorization": {
             "type": "password",
             "token_endpoint": "http://host.docker.internal:4000/token",
@@ -100,6 +101,7 @@
         "http_request": {
           "url": "http://host.docker.internal:4000/sms-authentication",
           "method": "POST",
+          "auth_type": "oauth2",
           "oauth_authorization": {
             "type": "password",
             "token_endpoint": "http://host.docker.internal:4000/token",

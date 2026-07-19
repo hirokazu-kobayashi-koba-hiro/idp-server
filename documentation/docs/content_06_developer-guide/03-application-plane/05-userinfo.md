@@ -142,7 +142,7 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
       TenantIdentifier tenantIdentifier,
       String authorizationHeader,
       String clientCert,
-      String dpopProof,                  // ✅ DPoP対応（RFC 9449）
+      List<String> dpopProofHeaders,     // ✅ DPoP対応（RFC 9449）
       RequestAttributes requestAttributes) {
 
     // 1. Tenant取得
@@ -151,7 +151,7 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
     // 2. UserinfoRequest作成
     UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
     userinfoRequest.setClientCert(clientCert);  // MTLS対応
-    userinfoRequest.setDPoPProof(dpopProof);    // DPoP対応
+    userinfoRequest.setDPoPProofHeaders(dpopProofHeaders);  // DPoP対応（DPoPヘッダのリスト）
     userinfoRequest.setHttpMethod(requestAttributes.optValueAsString("action", "GET"));
     userinfoRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
 

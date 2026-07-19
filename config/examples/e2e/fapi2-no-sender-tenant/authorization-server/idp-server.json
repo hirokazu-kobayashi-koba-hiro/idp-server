@@ -65,10 +65,6 @@
   "code_challenge_methods_supported": [
     "S256"
   ],
-  "dpop_signing_alg_values_supported": [
-    "ES256",
-    "PS256"
-  ],
   "acr_values_supported": [
     "urn:mace:incommon:iap:gold",
     "urn:mace:incommon:iap:silver",

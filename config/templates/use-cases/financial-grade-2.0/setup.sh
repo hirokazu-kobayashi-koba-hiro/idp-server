@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Financial-Grade (FAPI Advanced + CIBA) - Use Case Setup Script
+# Financial-Grade (FAPI 2.0 Security Profile + CIBA) - Use Case Setup Script
 #
 # Prerequisites:
 #   1. idp-server is running
@@ -28,7 +28,7 @@ DRY_RUN=false
 [ "$1" = "--dry-run" ] && DRY_RUN=true
 
 echo "=========================================="
-echo "Financial-Grade (FAPI Advanced + CIBA) Use Case Setup"
+echo "Financial-Grade (FAPI 2.0 Security Profile + CIBA) Use Case Setup"
 echo "=========================================="
 echo ""
 
@@ -377,7 +377,7 @@ fi
 echo ""
 
 # --- Step 4: Create financial tenant ---
-echo "Step 4: Creating financial tenant (FAPI Advanced + CIBA)..."
+echo "Step 4: Creating financial tenant (FAPI 2.0 Security Profile + CIBA)..."
 
 PUBLIC_TENANT_ID="${PUBLIC_TENANT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 
@@ -745,7 +745,7 @@ echo "=========================================="
 echo ""
 echo "FAPI Settings:"
 echo "  mTLS:                 Enabled (certificate-bound tokens)"
-echo "  Signed Request:       Required (${SIGNING_ALGORITHM})"
+echo "  Signed Request:       Not required (PAR で代替)"
 echo "  PAR:                  Enabled (expires in ${PAR_EXPIRES_IN}s)"
 echo "  JARM:                 Enabled (${SIGNING_ALGORITHM})"
 echo "  CIBA:                 Enabled (poll mode, FIDO-UAF auth, expires in ${CIBA_REQUEST_EXPIRES_IN}s)"
@@ -753,7 +753,7 @@ echo "  FIDO-UAF server:      ${FIDO_UAF_SERVER_URL}"
 echo "  eKYC:                 Enabled (jp_aml, no_action mode)"
 echo "  Token duration:       AT=${ACCESS_TOKEN_DURATION}s, IDT=${ID_TOKEN_DURATION}s, RT=${REFRESH_TOKEN_DURATION}s"
 echo "  FAPI Baseline scopes: read, account"
-echo "  FAPI Advance scopes:  write, transfers"
+echo "  FAPI 2.0 scopes:      write, transfers"
 echo ""
 echo "Created Resources:"
 echo "  Organization ID:      ${ORGANIZATION_ID}"

@@ -111,15 +111,8 @@
       "S256"
     ],
     "dpop_signing_alg_values_supported": [
-      "RS256",
-      "RS384",
-      "RS512",
       "ES256",
-      "ES384",
-      "ES512",
-      "PS256",
-      "PS384",
-      "PS512"
+      "PS256"
     ],
     "acr_values_supported": [
       "urn:mace:incommon:iap:gold",
