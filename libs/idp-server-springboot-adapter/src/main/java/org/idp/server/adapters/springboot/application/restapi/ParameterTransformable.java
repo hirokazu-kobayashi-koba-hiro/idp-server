@@ -77,10 +77,15 @@ public interface ParameterTransformable extends AuthorizationHeaderHandlerable {
    * used as received, so the integrity of the reconstructed htu relies on {@code idp-server} being
    * reachable <b>only</b> through the trusted ingress (reverse proxy / API Gateway + ALB), never
    * directly by clients. That network isolation (private subnet + security groups, or the proxy's
-   * upstream ACL) is the trust boundary for these headers — an application-level source-IP
-   * allowlist is intentionally not used here, because the immediate peer seen by the service in
-   * cloud deployments (e.g. an AWS VPC Link / internal load balancer) is a dynamic internal address
-   * that cannot be reliably allowlisted. Do not expose {@code idp-server} directly to untrusted
+   * upstream ACL) is the trust boundary for these headers. Note this is distinct from the {@code
+   * trusted_proxies} configuration, which gates {@code X-Forwarded-For} for client-IP resolution
+   * only and does not protect the htu reconstruction. An application-level source-IP allowlist is
+   * intentionally not applied to the htu headers: the immediate peer seen by the service in cloud
+   * deployments (e.g. an AWS VPC Link / internal load balancer) is a dynamic internal address, and
+   * gating on it would <b>silently break all DPoP verification</b> whenever that address falls
+   * outside the configured CIDR (e.g. a default-VPC {@code 172.31/16} peer against a {@code
+   * 10.0.0.0/8} allowlist) — an availability risk that outweighs the marginal gain over the network
+   * isolation that must already be in place. Do not expose {@code idp-server} directly to untrusted
    * networks.
    *
    * <p>When a chain of proxies is present, {@code X-Forwarded-Proto} / {@code X-Forwarded-Host}
