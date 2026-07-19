@@ -16,6 +16,7 @@
 
 package org.idp.server.adapters.springboot.application.restapi;
 
+import java.util.Map;
 import org.springframework.http.HttpHeaders;
 
 /**
@@ -111,5 +112,47 @@ public interface SecurityHeaderConfigurable {
     headers.set("X-Content-Type-Options", "nosniff");
     headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
     return headers;
+  }
+
+  /**
+   * Adds an RFC 9449 Section 7.1 / RFC 6750 {@code WWW-Authenticate} challenge to the response when
+   * the protected-resource outcome is 401 Unauthorized. The scheme is {@code DPoP} when the request
+   * presented a DPoP-scheme {@code Authorization} header, otherwise {@code Bearer}. The {@code
+   * error} / {@code error_description} are read from the error response body and escaped for the
+   * RFC 7235 quoted-string. Non-401 outcomes are left untouched.
+   */
+  default void applyWwwAuthenticateIfUnauthorized(
+      HttpHeaders headers,
+      int statusCode,
+      Map<String, Object> responseBody,
+      String authorizationHeader) {
+    if (statusCode != 401) {
+      return;
+    }
+    String scheme =
+        authorizationHeader != null && authorizationHeader.regionMatches(true, 0, "DPoP ", 0, 5)
+            ? "DPoP"
+            : "Bearer";
+    Object error = responseBody != null ? responseBody.get("error") : null;
+    Object description = responseBody != null ? responseBody.get("error_description") : null;
+    headers.set(
+        HttpHeaders.WWW_AUTHENTICATE,
+        String.format(
+            "%s error=\"%s\", error_description=\"%s\"",
+            scheme,
+            escapeHeaderQuotedString(error == null ? "invalid_token" : error.toString()),
+            escapeHeaderQuotedString(description == null ? "" : description.toString())));
+  }
+
+  /**
+   * Escapes a value for embedding in an HTTP header quoted-string (RFC 7235). Backslash and
+   * double-quote are backslash-escaped; control characters (CR, LF, etc.) are removed so the value
+   * cannot break out of the header or inject a new one.
+   */
+  static String escapeHeaderQuotedString(String value) {
+    if (value == null) {
+      return "";
+    }
+    return value.replaceAll("[\\x00-\\x1F\\x7F]", "").replace("\\", "\\\\").replace("\"", "\\\"");
   }
 }

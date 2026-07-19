@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
+import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.adapters.springboot.application.restapi.model.IdPApplicationScope;
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.openid.identity.User;
@@ -95,7 +96,10 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter
       writeErrorResponse(response, authScheme, "invalid_token", e.getMessage());
     } catch (DPoPProofInvalidException e) {
       logger.debug("DPoP proof validation failed: {}", e.getMessage());
-      writeErrorResponse(response, authScheme, "invalid_dpop_proof", e.getMessage());
+      // RFC 9449 Section 7.1: a resource server rejecting a DPoP-bound access token (invalid proof
+      // or binding mismatch) responds with the invalid_token error via the DPoP scheme, not the
+      // token-endpoint-only invalid_dpop_proof code.
+      writeErrorResponse(response, authScheme, "invalid_token", e.getMessage());
     } catch (UserNotFoundException e) {
       logger.warn("User not found for token authentication: {}", e.getMessage());
       writeErrorResponse(
@@ -116,10 +120,15 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter
   private void writeErrorResponse(
       HttpServletResponse response, String scheme, String error, String errorDescription) {
     try {
-      // Set WWW-Authenticate header per RFC 6750 / RFC 9449 Section 7.2
+      // Set WWW-Authenticate header per RFC 6750 / RFC 9449 Section 7.1.
+      // errorDescription can contain attacker-controlled input (e.g. the htu value echoed in a
+      // DPoP proof error), so it must be escaped for the RFC 7235 quoted-string: escape backslash
+      // and double-quote, and drop control characters (CR/LF) to prevent header injection.
+      String headerSafeDescription =
+          SecurityHeaderConfigurable.escapeHeaderQuotedString(errorDescription);
       String wwwAuthenticate =
           String.format(
-              "%s error=\"%s\", error_description=\"%s\"", scheme, error, errorDescription);
+              "%s error=\"%s\", error_description=\"%s\"", scheme, error, headerSafeDescription);
       response.setHeader(HttpHeaders.WWW_AUTHENTICATE, wwwAuthenticate);
 
       // Set status code
@@ -133,7 +142,7 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter
       String jsonErrorResponse =
           String.format(
               "{\"error\":\"%s\",\"error_description\":\"%s\"}",
-              error, errorDescription.replace("\"", "\\\""));
+              error, errorDescription.replace("\\", "\\\\").replace("\"", "\\\""));
 
       response.getWriter().write(jsonErrorResponse);
       response.getWriter().flush();

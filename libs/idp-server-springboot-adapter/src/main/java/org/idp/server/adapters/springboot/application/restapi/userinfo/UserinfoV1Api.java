@@ -58,6 +58,8 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+    applyWwwAuthenticateIfUnauthorized(
+        httpHeaders, response.statusCode(), response.response(), authorizationHeader);
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
@@ -79,6 +81,8 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+    applyWwwAuthenticateIfUnauthorized(
+        httpHeaders, response.statusCode(), response.response(), authorizationHeader);
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
