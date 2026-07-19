@@ -142,7 +142,7 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
       TenantIdentifier tenantIdentifier,
       String authorizationHeader,
       String clientCert,
-      String dpopProof,                  // ✅ DPoP対応（RFC 9449）
+      List<String> dpopProofHeaders,     // ✅ DPoP対応（RFC 9449）
       RequestAttributes requestAttributes) {
 
     // 1. Tenant取得
