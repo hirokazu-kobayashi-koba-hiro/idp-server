@@ -739,6 +739,14 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
 
 
       expect(userinfoResponse.status).toBe(401);
+      // RFC 9449 §7.1: the resource server challenges with the DPoP authentication scheme and the
+      // invalid_token error (not the token-endpoint-only invalid_dpop_proof), and returns a
+      // WWW-Authenticate header carrying that challenge.
+      const wwwAuthenticate = userinfoResponse.headers["www-authenticate"];
+      expect(wwwAuthenticate).toBeDefined();
+      expect(wwwAuthenticate).toContain("DPoP");
+      expect(wwwAuthenticate).toContain('error="invalid_token"');
+      expect(userinfoResponse.data.error).toBe("invalid_token");
     });
 
     /**
@@ -1197,6 +1205,13 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
       });
 
       expect(response.status).toBe(401);
+      // RFC 9449 §7.1: DPoP-scheme WWW-Authenticate challenge with invalid_token, consistent with
+      // the UserInfo endpoint.
+      const wwwAuthenticate = response.headers["www-authenticate"];
+      expect(wwwAuthenticate).toBeDefined();
+      expect(wwwAuthenticate).toContain("DPoP");
+      expect(wwwAuthenticate).toContain('error="invalid_token"');
+      expect(response.data.error).toBe("invalid_token");
     });
 
     it("MUST reject /me request when DPoP proof is signed with different key", async () => {

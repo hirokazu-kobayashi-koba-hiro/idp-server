@@ -138,11 +138,15 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter
       response.setContentType("application/json");
       response.setCharacterEncoding("UTF-8");
 
-      // Write JSON error response body
+      // Write JSON error response body. Reuse the shared escaper so the description is stripped of
+      // control chars (raw CR/LF would produce invalid JSON) and its backslash/quote are escaped —
+      // keeping the body and the WWW-Authenticate header consistent for the same
+      // attacker-controlled
+      // input (e.g. an htu value echoed in a DPoP error).
       String jsonErrorResponse =
           String.format(
               "{\"error\":\"%s\",\"error_description\":\"%s\"}",
-              error, errorDescription.replace("\\", "\\\\").replace("\"", "\\\""));
+              error, SecurityHeaderConfigurable.escapeHeaderQuotedString(errorDescription));
 
       response.getWriter().write(jsonErrorResponse);
       response.getWriter().flush();
