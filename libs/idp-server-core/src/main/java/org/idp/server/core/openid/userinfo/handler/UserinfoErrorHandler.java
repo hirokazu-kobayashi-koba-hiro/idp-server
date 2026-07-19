@@ -86,13 +86,18 @@ public class UserinfoErrorHandler {
     }
 
     if (exception instanceof DPoPProofInvalidException) {
+      // RFC 9449 Section 7.1: at the resource server (userinfo), a DPoP presentation failure
+      // (e.g. multiple DPoP headers rejected by DPoPHeaderValidator) is invalid_token / 401,
+      // consistent with the /me protected resource. The 400 invalid_dpop_proof code is
+      // token-endpoint-only (Section 5). Returning 401 also lets the controller attach the
+      // WWW-Authenticate: DPoP challenge.
       log.warn(
-          "Userinfo request failed: status=bad_request, error=invalid_dpop_proof, description={}",
+          "Userinfo request failed: status=unauthorized, error=invalid_token, description={}",
           exception.getMessage());
       return new UserinfoRequestResponse(
-          UserinfoRequestStatus.BAD_REQUEST,
+          UserinfoRequestStatus.UNAUTHORIZE,
           new UserinfoErrorResponse(
-              new Error("invalid_dpop_proof"), new ErrorDescription(exception.getMessage())));
+              new Error("invalid_token"), new ErrorDescription(exception.getMessage())));
     }
 
     if (exception instanceof ServerConfigurationNotFoundException) {

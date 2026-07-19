@@ -347,9 +347,13 @@ public class DPoPProofVerifier {
       log.error("Expected HTTP URI is not an absolute URI");
       throw new DPoPProofInvalidException("DPoP proof htu verification failed");
     }
-    // RFC 3986: scheme and host are case-insensitive, path is case-sensitive
+    // RFC 3986: scheme and host are case-insensitive, path is case-sensitive.
+    // The authority match includes the port: equalsPort normalizes the scheme's default
+    // port (https->443, http->80), so https://h/p matches https://h:443/p but not
+    // https://h:8443/p.
     if (!htuUri.equalsScheme(expectedUri)
         || !htuUri.equalsHost(expectedUri)
+        || !htuUri.equalsPort(expectedUri)
         || !htuUri.equalsPath(expectedUri)) {
       throw new DPoPProofInvalidException(
           String.format("DPoP proof htu claim '%s' does not match the expected HTTP URI.", htu));
