@@ -62,6 +62,13 @@ public class DPoPProofVerifier {
   static final String DPOP_JWT_TYPE = "dpop+jwt";
 
   /**
+   * FAPI 2.0 §5.4: signing algorithms permitted on DPoP proofs (the strong asymmetric set). Mirrors
+   * the client-assertion restriction enforced by {@code FapiSecurity20Verifier}.
+   */
+  static final List<String> FAPI2_DPOP_SIGNING_ALGORITHMS =
+      List.of("PS256", "PS384", "PS512", "ES256", "ES384", "ES512", "EdDSA");
+
+  /**
    * Verifies a DPoP proof if present, skipping verification when no proof is provided.
    *
    * <p>This method is intended for the token endpoint (RFC 9449 Section 4), where DPoP is optional.
@@ -87,6 +94,34 @@ public class DPoPProofVerifier {
       return new DPoPProofVerifiedResult();
     }
     return verify(dpopProof, httpMethod, httpUri, null, supportedAlgorithms);
+  }
+
+  /**
+   * Verifies the FAPI 2.0 §5.4 DPoP proof signing algorithm restriction in isolation.
+   *
+   * <p>Invoked from the profile-specific token verifier ({@code
+   * AuthorizationCodeGrantFapi20Verifier}) so the FAPI 2.0 policy stays with the FAPI 2.0 profile
+   * rather than leaking a profile flag into the generic grant services or being expressed as a
+   * config-list override. The restriction is enforced even when the tenant left {@code
+   * dpop_signing_alg_values_supported} empty.
+   *
+   * @param dpopProof the presented DPoP proof (callers should invoke only when a proof exists)
+   * @throws DPoPProofInvalidException if the proof is malformed or its {@code alg} is not in {@link
+   *     #FAPI2_DPOP_SIGNING_ALGORITHMS}
+   */
+  public void verifyFapiSigningAlgorithm(DPoPProof dpopProof) {
+    JsonWebSignature jws;
+    try {
+      jws = JsonWebSignature.parse(dpopProof.value());
+    } catch (JoseInvalidException e) {
+      throw new DPoPProofInvalidException("DPoP proof is not a well-formed JWT: " + e.getMessage());
+    }
+    if (!FAPI2_DPOP_SIGNING_ALGORITHMS.contains(jws.algorithm())) {
+      throw new DPoPProofInvalidException(
+          String.format(
+              "When FAPI 2.0 Security Profile (§5.4), DPoP proof alg must be one of %s, but was: %s.",
+              FAPI2_DPOP_SIGNING_ALGORITHMS, jws.algorithm()));
+    }
   }
 
   /**

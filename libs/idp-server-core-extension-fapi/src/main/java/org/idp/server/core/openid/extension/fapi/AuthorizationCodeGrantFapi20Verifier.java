@@ -22,6 +22,8 @@ import org.idp.server.core.openid.oauth.AuthorizationProfile;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAuthenticationPublicKey;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
+import org.idp.server.core.openid.oauth.dpop.DPoPProof;
+import org.idp.server.core.openid.oauth.dpop.DPoPProofVerifier;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.token.TokenRequestContext;
@@ -71,8 +73,24 @@ public class AuthorizationCodeGrantFapi20Verifier
     throwExceptionIfNotSenderConstrained(tokenRequestContext, clientCredentials);
     throwExceptionIfInvalidSigningAlgorithmForClientAssertion(
         tokenRequestContext, clientCredentials);
+    throwExceptionIfInvalidDPoPSigningAlgorithm(tokenRequestContext);
     throwExceptionIfClientAssertionAudIsArray(tokenRequestContext, clientCredentials);
     throwExceptionIfClientAssertionAudIsNotIssuer(tokenRequestContext, clientCredentials);
+  }
+
+  /**
+   * FAPI 2.0 §5.4: when the access token is DPoP-bound, the DPoP proof JWS signing algorithm is
+   * restricted to the same strong asymmetric set as client assertions. Keeping the check in the
+   * FAPI 2.0 profile verifier (rather than a scope flag in the generic grant service) mirrors how
+   * the client-assertion algorithm restriction above is applied. {@link DPoPProofVerifier} owns the
+   * actual algorithm check and rejects a weak {@code alg} (e.g. {@code RS256}) even when the tenant
+   * left {@code dpop_signing_alg_values_supported} empty.
+   */
+  void throwExceptionIfInvalidDPoPSigningAlgorithm(TokenRequestContext tokenRequestContext) {
+    DPoPProof dpopProof = tokenRequestContext.dpopProof();
+    if (dpopProof != null && dpopProof.exists()) {
+      new DPoPProofVerifier().verifyFapiSigningAlgorithm(dpopProof);
+    }
   }
 
   /**

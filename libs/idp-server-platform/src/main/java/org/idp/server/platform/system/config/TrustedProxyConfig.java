@@ -29,27 +29,28 @@ import org.idp.server.platform.json.JsonReadable;
 /**
  * Configuration for trusted proxy servers.
  *
- * <p>When the application runs behind a reverse proxy or load balancer, this configuration
- * specifies which proxy servers are trusted for forwarding client information via headers like
- * X-Forwarded-For, X-Forwarded-Proto, etc.
+ * <p>When the application runs behind a reverse proxy or load balancer, this configuration gates
+ * whether the {@code X-Forwarded-For} header is trusted for <b>client-IP resolution</b>.
  *
  * <ul>
  *   <li><b>enabled</b>: Whether trusted proxy handling is active
  *   <li><b>addresses</b>: IP addresses or CIDR ranges of trusted proxies (e.g., "10.0.0.0/8",
  *       "192.168.1.1")
- *   <li><b>trustedHeaders</b>: Which forwarding headers to trust (e.g., "X-Forwarded-For",
- *       "X-Forwarded-Proto")
+ *   <li><b>trustedHeaders</b>: Declares which forwarding headers are considered trusted. <b>Note:
+ *       currently informational only</b> — {@code TrustedProxyFilter} gates on {@code enabled} +
+ *       {@code addresses} and does not consult this list per header.
  * </ul>
  *
- * <h3>Usage</h3>
+ * <h3>Scope</h3>
  *
- * <p>When a request comes from a trusted proxy:
+ * <p>When a request comes from a trusted proxy (a peer in {@code addresses}), the real client IP is
+ * extracted from {@code X-Forwarded-For} (see {@code TrustedProxyFilter}).
  *
- * <ul>
- *   <li>The real client IP is extracted from X-Forwarded-For header
- *   <li>The original protocol (http/https) is extracted from X-Forwarded-Proto
- *   <li>The original host is extracted from X-Forwarded-Host
- * </ul>
+ * <p><b>This configuration does not govern DPoP htu reconstruction.</b> The {@code
+ * X-Forwarded-Proto} / {@code X-Forwarded-Host} values used to rebuild the client-facing URL for
+ * the DPoP {@code htu} claim (see {@code ParameterTransformable#resolveRequestUrl}) are used as
+ * received; their integrity relies on network isolation (idp-server reachable only via the trusted
+ * ingress), not on this allowlist.
  */
 public class TrustedProxyConfig implements JsonReadable {
 

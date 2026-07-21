@@ -65,19 +65,38 @@ public interface ParameterTransformable extends AuthorizationHeaderHandlerable {
   /**
    * Resolves the full request URL, considering reverse proxy headers.
    *
-   * <p>When the application runs behind a reverse proxy (e.g., nginx), {@code
-   * request.getRequestURL()} returns the internal URL (http://...) instead of the external URL
-   * (https://...). This method uses {@code X-Forwarded-Proto} and {@code X-Forwarded-Host} headers
-   * to reconstruct the original request URL as seen by the client.
+   * <p>When the application runs behind a reverse proxy (e.g., nginx, or an AWS API Gateway + ALB
+   * in front of the service), {@code request.getRequestURL()} returns the internal URL (http://...)
+   * instead of the external URL (https://...) the client actually used. This method uses {@code
+   * X-Forwarded-Proto} and {@code X-Forwarded-Host} to reconstruct the client-facing URL.
    *
    * <p>This is critical for DPoP (RFC 9449) htu claim verification, where the server must compare
-   * the htu claim against the actual request URI as perceived by the client.
+   * the htu claim against the request URI as perceived by the client.
+   *
+   * <p><b>Trust boundary.</b> The {@code X-Forwarded-Proto} / {@code X-Forwarded-Host} values are
+   * used as received, so the integrity of the reconstructed htu relies on {@code idp-server} being
+   * reachable <b>only</b> through the trusted ingress (reverse proxy / API Gateway + ALB), never
+   * directly by clients. That network isolation (private subnet + security groups, or the proxy's
+   * upstream ACL) is the trust boundary for these headers. Note this is distinct from the {@code
+   * trusted_proxies} configuration, which gates {@code X-Forwarded-For} for client-IP resolution
+   * only and does not protect the htu reconstruction. An application-level source-IP allowlist is
+   * intentionally not applied to the htu headers: the immediate peer seen by the service in cloud
+   * deployments (e.g. an AWS VPC Link / internal load balancer) is a dynamic internal address, and
+   * gating on it would <b>silently break all DPoP verification</b> whenever that address falls
+   * outside the configured CIDR (e.g. a default-VPC {@code 172.31/16} peer against a {@code
+   * 10.0.0.0/8} allowlist) — an availability risk that outweighs the marginal gain over the network
+   * isolation that must already be in place. Do not expose {@code idp-server} directly to untrusted
+   * networks.
+   *
+   * <p>When a chain of proxies is present, {@code X-Forwarded-Proto} / {@code X-Forwarded-Host}
+   * accumulate as {@code "original, next, ..."}; the leftmost (client-facing) value is used. Using
+   * the raw comma-joined value would corrupt the reconstructed URL and make htu never match.
    */
   default String resolveRequestUrl(HttpServletRequest request) {
-    String forwardedProto = request.getHeader("X-Forwarded-Proto");
-    String forwardedHost = request.getHeader("X-Forwarded-Host");
+    String forwardedProto = firstForwardedValue(request.getHeader("X-Forwarded-Proto"));
 
     if (forwardedProto != null && !forwardedProto.isEmpty()) {
+      String forwardedHost = firstForwardedValue(request.getHeader("X-Forwarded-Host"));
       String host =
           (forwardedHost != null && !forwardedHost.isEmpty())
               ? forwardedHost
@@ -86,6 +105,18 @@ public interface ParameterTransformable extends AuthorizationHeaderHandlerable {
     }
 
     return request.getRequestURL().toString();
+  }
+
+  /**
+   * Returns the first (client-facing) value of a possibly comma-separated {@code X-Forwarded-*}
+   * header. Returns {@code null} for a {@code null} input.
+   */
+  private static String firstForwardedValue(String headerValue) {
+    if (headerValue == null) {
+      return null;
+    }
+    int comma = headerValue.indexOf(',');
+    return (comma >= 0 ? headerValue.substring(0, comma) : headerValue).trim();
   }
 
   /**
