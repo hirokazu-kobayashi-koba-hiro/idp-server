@@ -198,6 +198,79 @@ curl -X PUT "https://idp.example.com/v1/management/system-configurations?dry_run
 
 ---
 
+## リバースプロキシ / API Gateway のヘッダー転送（DPoP 利用時）
+
+DPoP（RFC 9449）を使う場合、Step 1〜4 の System Configuration API とは**別に**、リバースプロキシ / API Gateway 側でのヘッダー転送設定が必要です（これはインフラ層の設定で、管理 API では行いません）。
+
+### なぜ必要か
+
+idp-server は DPoP proof の `htu` クレーム（トークンをバインドしたエンドポイント URL）が、**クライアントが実際にアクセスした URL** と一致するかを検証します。比較対象の URL は受信リクエストから次のように再構築されます（`ParameterTransformable#resolveRequestUrl`）:
+
+```
+再構築 URL = X-Forwarded-Proto :// X-Forwarded-Host + リクエストパス
+             ↑ 未設定時は request.getRequestURL() / getServerName() にフォールバック
+```
+
+TLS 終端やホスト書き換えを行うプロキシの背後では、フォールバック値（内部 `http://` や内部ホスト名）が**クライアント向け URL と食い違う**ため、`htu` 検証が必ず失敗します（`DPoP proof htu verification failed`）。`htu` は **scheme / host / port / path すべての一致**を要求します。
+
+DPoP 保護エンドポイント（トークン・PAR・UserInfo）で、次の不変条件を満たす必要があります:
+
+| ヘッダー | 転送すべき値 |
+|:---|:---|
+| `X-Forwarded-Proto` | クライアント〜エッジ間のスキーム（通常 `https`） |
+| `X-Forwarded-Host` | クライアントがアクセスしたホスト（例 `api.example.com`）。クライアント向け URL が非標準ポートを含む場合のみ `host:port` |
+
+> 複数プロキシを経由すると `X-Forwarded-*` は `"original, next, ..."` とカンマ連結されます。idp-server は**先頭（クライアント向け）値**を採用します。
+
+### nginx（リファレンス構成）
+
+`docker/nginx/nginx.conf` では全ロケーションで設定済みです:
+
+```nginx
+proxy_set_header Host              $host;
+proxy_set_header X-Forwarded-Proto $scheme;
+proxy_set_header X-Forwarded-Host  $host;
+```
+
+### AWS API Gateway
+
+API Gateway はエッジで **TLS を終端し、バックエンド統合へ渡す際に `Host` を統合先（VPC Link 先の ALB / `execute-api` ドメイン）へ書き換えます**（[Important notes: REST APIs](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-known-issues.html)）。放置すると再構築 URL がクライアント向けにならず htu が不一致になります。**対処は API 種別（REST / HTTP）で異なります。**
+
+#### 最も堅牢: idp-server 直前のリバースプロキシで確定させる（種別非依存・推奨）
+
+API Gateway の背後（VPC Link 先）に nginx / Envoy 等を置き、そこで上記 nginx 例と同様に `X-Forwarded-Proto https` / `X-Forwarded-Host <カスタムドメイン>` を確定的にセットするのが最も確実です。**API Gateway 側のヘッダー挙動の差異（後述）を一切気にせず済み**、HTTP API でも成立します。
+
+#### REST API（直接統合でも対処可）
+
+REST API は統合リクエストのヘッダーマッピングでクライアント向けの値を注入できます:
+
+| 統合リクエストヘッダー | マップ元 |
+|:---|:---|
+| `integration.request.header.X-Forwarded-Host` | `context.domainName`（API 呼び出しに使われたドメイン。受信 `Host` と同じ） |
+| `integration.request.header.X-Forwarded-Proto` | `'https'`（静的値。`$context.protocol` は `HTTP/1.1` でスキームではないため使わない） |
+
+> REST API のヘッダー remapping（`X-Amzn-Remapped-*` への改名）は [2023-06-14 に廃止](https://aws.amazon.com/blogs/security/removing-header-remapping-from-amazon-api-gateway-and-notes-about-our-work-with-security-researchers/)済みのため、明示設定した `X-Forwarded-*` はそのままバックエンドへ届きます。
+
+#### HTTP API（直接統合は非対応）
+
+HTTP API では次の 2 点により、idp-server への**直接統合で htu を成立させられません**:
+
+- `X-Forwarded-For` / `X-Forwarded-Host` / `X-Forwarded-Proto` / `Forwarded` は parameter mapping の**予約ヘッダー**で、設定・上書きできない（[Reserved headers](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-parameter-mapping.html)）。
+- HTTP API は受信 `X-Forwarded-*` を **RFC 7239 `Forwarded` ヘッダーに変換**して転送する（[Important notes: HTTP APIs](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-known-issues.html)）。idp-server は現状 `Forwarded` をパースしない（`X-Forwarded-*` のみ）。
+
+→ HTTP API を使う場合は、上記「**リバースプロキシで確定させる**」構成を採用してください。idp-server 側での `Forwarded` 対応は [#1740](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1740) で追跡しています。
+
+:::warning 設定するホップに注意
+
+`X-Forwarded-Proto` / `X-Forwarded-Host` は **idp-server が最終的に受信する値**が効きます。複数ホップ（API Gateway → ALB → idp-server 等）では、途中のホップが値を上書き／再設定しないことを確認してください（内部リスナーが HTTP の ALB は `X-Forwarded-Proto` を `http` に戻し得ます）。**idp-server に最も近いホップで確定させる**のが安全です。
+:::
+
+### 検証
+
+エッジ経由で DPoP バインドのトークンリクエストを 1 回実行し、成功すれば `htu` は一致しています。Discovery の `token_endpoint`（= クライアントが `htu` に入れる URL）と再構築 URL が scheme / host / port / path すべてで一致する必要があります。失敗時は `invalid_dpop_proof` / `DPoP proof htu verification failed` が返るため、上記ヘッダーを確認します。
+
+---
+
 ## トラブルシューティング
 
 ### 外部IdP連携が失敗する
@@ -226,6 +299,12 @@ curl -X PUT "https://idp.example.com/v1/management/system-configurations?dry_run
   }
 }
 ```
+
+### DPoPトークンリクエストが `DPoP proof htu verification failed` になる
+
+**原因**: リバースプロキシ / API Gateway が `X-Forwarded-Proto` / `X-Forwarded-Host` をクライアント向けの値で転送しておらず、再構築 URL が内部 `http://` / 内部ホスト名にフォールバックしている（`htu` と不一致）。
+
+**解決**: [リバースプロキシ / API Gateway のヘッダー転送](#リバースプロキシ--api-gateway-のヘッダー転送dpop-利用時)を参照し、`X-Forwarded-Proto: https` と `X-Forwarded-Host: <カスタムドメイン>` を注入する。
 
 ---
 
