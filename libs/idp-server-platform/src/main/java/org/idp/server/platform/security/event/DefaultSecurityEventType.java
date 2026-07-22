@@ -201,6 +201,16 @@ public enum DefaultSecurityEventType {
   password_change_success("User changed their own password"),
   password_change_failure("User password change failed"),
 
+  // End-user email management
+  email_change_request_success("User requested an email change"),
+  email_change_request_failure("User email change request failed"),
+  email_change_success("User changed their own email"),
+  email_change_failure("User email change failed"),
+  email_verify_request_success("User requested verification of their current email"),
+  email_verify_request_failure("User email verification request failed"),
+  email_verify_success("User verified their own email"),
+  email_verify_failure("User email verification failed"),
+
   // Identity verification (eKYC)
   identity_verification_application_apply("Identity verification application was submitted"),
   identity_verification_application_failure("Identity verification application processing failed"),
