@@ -242,6 +242,17 @@ export const fapi2ClientSecretJwtClient = {
  */
 const fapi2NoSenderTenantId = "d2a23128-043d-4ad7-8136-e7132663dfe3";
 export const fapi2NoSenderServerConfig = createServerConfig(fapi2NoSenderTenantId);
+
+// require-par-tenant: plain OIDC tenant with require_pushed_authorization_requests=true (M-6).
+const requireParTenantId = "018e12d0-ed2e-4b38-b045-493e96e9d400";
+export const requireParServerConfig = createServerConfig(requireParTenantId);
+export const requireParClientSecretPostClient = {
+  clientId: "requireParClientSecretPost",
+  clientSecret:
+    "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
+  redirectUri: "https://client.example.org/callback",
+  scope: "openid profile email",
+};
 export const fapi2NoSenderPrivateKeyJwtClient = {
   clientId: "fapi2NoSenderPrivateKeyJwt",
   clientIdUuid: "f441d38c-9ed3-4f9c-8418-efc8f31e49d0",
