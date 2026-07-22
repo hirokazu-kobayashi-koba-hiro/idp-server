@@ -468,3 +468,34 @@ FAPI2_NO_SENDER_TENANT_ID="d2a23128-043d-4ad7-8136-e7132663dfe3"
   -b "${AUTHORIZATION_SERVER_URL}" \
   -a "${ACCESS_TOKEN}" \
   -d "${DRY_RUN}"
+
+# require-par-tenant: M-6 (RFC 9126 §5) require_pushed_authorization_requests の
+# 汎用強制検証用 (プレーン OIDC + flag=true。fapi20_scopes は空にして FAPI2 経路を無効化)
+echo "-------------------------------------------------"
+echo ""
+echo "require-par-tenant"
+
+./config/scripts/upsert-tenant.sh \
+  -f "./config/examples/e2e/require-par-tenant/tenants/require-par-tenant.json" \
+  -o "${ORGANIZATION_ID}" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+REQUIRE_PAR_TENANT_ID="018e12d0-ed2e-4b38-b045-493e96e9d400"
+
+./config/scripts/upsert-authorization-server.sh \
+  -t "${REQUIRE_PAR_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/require-par-tenant/authorization-server/idp-server.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"
+
+./config/scripts/upsert-client.sh \
+  -t "${REQUIRE_PAR_TENANT_ID}" \
+  -o "${ORGANIZATION_ID}" \
+  -f "./config/examples/e2e/require-par-tenant/clients/clientSecretPost.json" \
+  -b "${AUTHORIZATION_SERVER_URL}" \
+  -a "${ACCESS_TOKEN}" \
+  -d "${DRY_RUN}"

@@ -671,6 +671,11 @@
           },
           "description": "List of scopes indicating FAPI 2.0 Security Profile Final conformance. When any of these scopes is requested, the server enforces FAPI 2.0 SP requirements (PAR mandatory, response_type=code only, public client prohibited, sender-constrained tokens via mTLS or DPoP)."
         },
+        "require_pushed_authorization_requests": {
+          "type": "boolean",
+          "default": false,
+          "description": "RFC 9126 Section 5. When true, the server accepts authorization request data only via Pushed Authorization Requests (PAR); direct authorization requests are rejected with invalid_request across all profiles. Advertised in discovery metadata. FAPI 2.0 tenants already require PAR via fapi20_scopes regardless of this flag."
+        },
         "required_identity_verification_scopes": {
           "type": "array",
           "items": {

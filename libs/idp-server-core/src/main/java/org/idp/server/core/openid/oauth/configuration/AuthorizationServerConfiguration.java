@@ -414,6 +414,13 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return pushedAuthorizationRequestEndpoint;
   }
 
+  /**
+   * RFC 9126 Section 5 {@code require_pushed_authorization_requests}. Advertised in discovery
+   * metadata and enforced across all profiles by {@code RequirePushedAuthorizationRequestVerifier}:
+   * when {@code true}, direct authorization requests are rejected and only PAR-originated requests
+   * are accepted. FAPI 2.0 tenants require PAR through {@code FapiSecurity20Verifier} regardless of
+   * this flag.
+   */
   public boolean requirePushedAuthorizationRequests() {
     return requirePushedAuthorizationRequests;
   }
