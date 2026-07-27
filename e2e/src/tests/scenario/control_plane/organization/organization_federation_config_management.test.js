@@ -322,6 +322,86 @@ describe("organization federation configuration management api", () => {
       });
     });
 
+    it("partial update that omits sso_provider preserves it (#1742)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+
+      const federationConfigId = uuidv4();
+      const ssoProvider = `sso-${federationConfigId}`;
+
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: {
+          "id": federationConfigId,
+          "type": "oidc",
+          "sso_provider": ssoProvider,
+          "payload": {
+            "client_id": "test-client-id-org",
+            "client_secret": "test-client-secret-org",
+            "issuer": "https://accounts.google.com",
+            "authorization_endpoint": "https://accounts.google.com/o/oauth2/auth",
+            "token_endpoint": "https://oauth2.googleapis.com/token",
+            "userinfo_endpoint": "https://openidconnect.googleapis.com/v1/userinfo"
+          },
+          "enabled": true
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      try {
+        // GET must return sso_provider (toMap fix).
+        const getAfterCreate = await get({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${federationConfigId}`,
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        expect(getAfterCreate.status).toBe(200);
+        expect(getAfterCreate.data.sso_provider).toBe(ssoProvider);
+
+        // Partial update WITHOUT sso_provider (only payload changes).
+        const updateResponse = await putWithJson({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${federationConfigId}`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: {
+            "id": federationConfigId,
+            "type": "oidc",
+            "payload": {
+              "client_id": "updated-client-id",
+              "client_secret": "test-client-secret-org",
+              "issuer": "https://accounts.google.com",
+              "authorization_endpoint": "https://accounts.google.com/o/oauth2/auth",
+              "token_endpoint": "https://oauth2.googleapis.com/token",
+              "userinfo_endpoint": "https://openidconnect.googleapis.com/v1/userinfo"
+            },
+            "enabled": true
+          }
+        });
+        expect(updateResponse.status).toBe(200);
+
+        // sso_provider must be preserved, not wiped to empty.
+        const getAfterUpdate = await get({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${federationConfigId}`,
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        expect(getAfterUpdate.status).toBe(200);
+        expect(getAfterUpdate.data.sso_provider).toBe(ssoProvider);
+      } finally {
+        await deletion({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${federationConfigId}`,
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+      }
+    });
+
     it("dry run delete functionality", async () => {
       // Get OAuth token
       const tokenResponse = await requestToken({

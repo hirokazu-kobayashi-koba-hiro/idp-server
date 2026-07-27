@@ -82,6 +82,7 @@ public class FederationConfiguration implements Configurable {
     Map<String, Object> result = new HashMap<>();
     result.put("id", id);
     result.put("type", type);
+    result.put("sso_provider", ssoProvider);
     result.put("payload", payload);
     result.put("enabled", enabled);
     return result;

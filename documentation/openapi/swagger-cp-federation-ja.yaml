@@ -420,7 +420,9 @@ components:
           description: Federation type
         sso_provider:
           type: string
-          description: SSO provider identifier
+          description: >-
+            SSO provider identifier. 省略した場合は既存の値を維持します（この項目を空にすると設定の引き当てが
+            破綻するため、部分更新で消去されないよう保全されます）。
         payload:
           type: object
           description: Federation-specific configuration payload

@@ -98,14 +98,24 @@ public class FederationConfigUpdateService
     return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, contents);
   }
 
-  private FederationConfiguration updateConfiguration(
+  FederationConfiguration updateConfiguration(
       FederationConfiguration before, FederationConfigRequest request) {
     JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
     JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
 
     String id = before.identifier().value();
     String type = configJson.getValueOrEmptyAsString("type");
-    String ssoProvider = configJson.getValueOrEmptyAsString("sso_provider");
+    // sso_provider is the per-(tenant, type) instance key this config is fetched by
+    // (FederationConfigurationQueryRepository#get -> WHERE sso_provider = ?; also part of the
+    // UNIQUE(tenant_id, type, sso_provider)). Wiping it to empty makes the row unfindable at
+    // federation request time (config not found) and can collide on the unique key. It was not part
+    // of the GET/toMap round-trip historically, so a partial update that omits it must not wipe it
+    // —
+    // fall back to the existing value when the request does not carry a non-empty sso_provider.
+    // (Executor selection itself keys off payload.provider via OidcSsoConfiguration#ssoProvider.)
+    String requestedSsoProvider = configJson.getValueOrEmptyAsString("sso_provider");
+    String ssoProvider =
+        !requestedSsoProvider.isEmpty() ? requestedSsoProvider : before.ssoProvider().name();
     JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
     Map<String, Object> payload = payloadJson.toMap();
 
