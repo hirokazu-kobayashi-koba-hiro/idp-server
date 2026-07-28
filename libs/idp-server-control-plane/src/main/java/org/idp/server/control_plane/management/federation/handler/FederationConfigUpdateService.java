@@ -98,17 +98,19 @@ public class FederationConfigUpdateService
     return new FederationConfigManagementResponse(FederationConfigManagementStatus.OK, contents);
   }
 
-  private FederationConfiguration updateConfiguration(
+  FederationConfiguration updateConfiguration(
       FederationConfiguration before, FederationConfigRequest request) {
-    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-    JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
-
-    String id = before.identifier().value();
-    String type = configJson.getValueOrEmptyAsString("type");
-    String ssoProvider = configJson.getValueOrEmptyAsString("sso_provider");
-    JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
-    Map<String, Object> payload = payloadJson.toMap();
-
-    return new FederationConfiguration(id, type, ssoProvider, payload);
+    // PUT is a full replacement: the request body is deserialized into the configuration, like the
+    // other management update services (Tenant / User / IDA). toMap() now carries every field,
+    // including the sso_provider lookup key that used to be missing from GET, so a GET -> modify ->
+    // PUT round-trip preserves them. id comes from the path (not the body); enabled keeps its
+    // current behavior and is fixed separately (#1743).
+    FederationConfiguration requested =
+        JsonConverter.snakeCaseInstance().read(request.toMap(), FederationConfiguration.class);
+    return new FederationConfiguration(
+        before.identifier().value(),
+        requested.typeName(),
+        requested.ssoProvider().name(),
+        requested.payload());
   }
 }

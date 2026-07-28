@@ -20,8 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.platform.configuration.Configurable;
+import org.idp.server.platform.json.JsonReadable;
 
-public class FederationConfiguration implements Configurable {
+public class FederationConfiguration implements Configurable, JsonReadable {
   String id;
   String type;
   String ssoProvider;
@@ -82,6 +83,7 @@ public class FederationConfiguration implements Configurable {
     Map<String, Object> result = new HashMap<>();
     result.put("id", id);
     result.put("type", type);
+    result.put("sso_provider", ssoProvider);
     result.put("payload", payload);
     result.put("enabled", enabled);
     return result;
