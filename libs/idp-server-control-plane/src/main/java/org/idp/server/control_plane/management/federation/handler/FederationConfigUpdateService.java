@@ -100,21 +100,17 @@ public class FederationConfigUpdateService
 
   FederationConfiguration updateConfiguration(
       FederationConfiguration before, FederationConfigRequest request) {
-    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-    JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
-
-    String id = before.identifier().value();
-    String type = configJson.getValueOrEmptyAsString("type");
-    // sso_provider is the per-(tenant, type) instance key this config is fetched by (query WHERE
-    // sso_provider = ?; also part of UNIQUE(tenant_id, type, sso_provider)), and it is not on the
-    // GET/toMap round-trip. So a partial update that omits it must fall back to the existing value
-    // rather than wipe the row's lookup key. (Executor selection keys off payload.provider.)
-    String requestedSsoProvider = configJson.getValueOrEmptyAsString("sso_provider");
-    String ssoProvider =
-        !requestedSsoProvider.isEmpty() ? requestedSsoProvider : before.ssoProvider().name();
-    JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
-    Map<String, Object> payload = payloadJson.toMap();
-
-    return new FederationConfiguration(id, type, ssoProvider, payload);
+    // PUT is a full replacement: the request body is deserialized into the configuration, like the
+    // other management update services (Tenant / User / IDA). toMap() now carries every field,
+    // including the sso_provider lookup key that used to be missing from GET, so a GET -> modify ->
+    // PUT round-trip preserves them. id comes from the path (not the body); enabled keeps its
+    // current behavior and is fixed separately (#1743).
+    FederationConfiguration requested =
+        JsonConverter.snakeCaseInstance().read(request.toMap(), FederationConfiguration.class);
+    return new FederationConfiguration(
+        before.identifier().value(),
+        requested.typeName(),
+        requested.ssoProvider().name(),
+        requested.payload());
   }
 }
