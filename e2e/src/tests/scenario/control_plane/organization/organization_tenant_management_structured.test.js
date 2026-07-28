@@ -425,8 +425,8 @@ describe("Organization Tenant Management API - Structured Tests", () => {
         });
 
         expect(response.status).toBe(200);
-        // Note: API currently doesn't update name field, this is expected behavior
-        expect(response.data).toHaveProperty("result");
+        // #1745: the request name is now reflected (previously ignored via before.name()).
+        expect(response.data.result.name).toBe(updatedName);
 
         // Cleanup
         await deleteTestTenant(tenant.id);
