@@ -16,6 +16,7 @@
 
 package org.idp.server.control_plane.management.federation.handler;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.control_plane.management.federation.FederationConfigManagementContextBuilder;
@@ -27,7 +28,6 @@ import org.idp.server.core.openid.federation.repository.FederationConfigurationC
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -77,19 +77,11 @@ public class FederationConfigCreationService
         FederationConfigManagementStatus.CREATED, contents);
   }
 
-  private FederationConfiguration createConfiguration(FederationConfigRequest request) {
-    JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
-    JsonNodeWrapper configJson = jsonConverter.readTree(request.toMap());
-
-    String id =
-        configJson.contains("id")
-            ? configJson.getValueOrEmptyAsString("id")
-            : UUID.randomUUID().toString();
-    String type = configJson.getValueOrEmptyAsString("type");
-    String ssoProvider = configJson.getValueOrEmptyAsString("sso_provider");
-    JsonNodeWrapper payloadJson = configJson.getValueAsJsonNode("payload");
-    Map<String, Object> payload = payloadJson.toMap();
-
-    return new FederationConfiguration(id, type, ssoProvider, payload);
+  FederationConfiguration createConfiguration(FederationConfigRequest request) {
+    // Full replacement, mirroring the update path / client management: deserialize the whole
+    // configuration from the request (honoring enabled), generating an id when the body omits one.
+    Map<String, Object> map = new HashMap<>(request.toMap());
+    map.putIfAbsent("id", UUID.randomUUID().toString());
+    return JsonConverter.snakeCaseInstance().read(map, FederationConfiguration.class);
   }
 }

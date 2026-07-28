@@ -43,7 +43,4 @@ public interface FederationConfigurationSqlExecutor {
   Map<String, String> selectCount(Tenant tenant, FederationQueries queries);
 
   List<Map<String, String>> selectList(Tenant tenant, FederationQueries queries);
-
-  List<Map<String, String>> selectList(
-      Tenant tenant, FederationQueries queries, boolean includeDisabled);
 }

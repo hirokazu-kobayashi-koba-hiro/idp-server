@@ -29,7 +29,16 @@ class ModelConverter {
     String payloadJson = result.get("payload");
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromString(payloadJson);
     Map<String, Object> payload = jsonNodeWrapper.toMap();
+    boolean enabled = parseDatabaseBoolean(result.get("enabled"), true);
 
-    return new FederationConfiguration(id, type, ssoProvider, payload);
+    return new FederationConfiguration(id, type, ssoProvider, payload, enabled);
+  }
+
+  static boolean parseDatabaseBoolean(String value, boolean defaultValue) {
+    if (value == null || value.isEmpty()) {
+      return defaultValue;
+    }
+    String normalized = value.toLowerCase().trim();
+    return "t".equals(normalized) || "true".equals(normalized) || "1".equals(normalized);
   }
 }

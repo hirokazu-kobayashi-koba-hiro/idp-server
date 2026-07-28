@@ -77,6 +77,14 @@ public class FederationQueries implements UuidConvertable {
     return values.containsKey("sso_provider");
   }
 
+  public boolean hasEnabled() {
+    return values.containsKey("enabled") && !values.get("enabled").isEmpty();
+  }
+
+  public Boolean enabled() {
+    return Boolean.valueOf(values.get("enabled"));
+  }
+
   public boolean hasDetails() {
     return !details().isEmpty();
   }

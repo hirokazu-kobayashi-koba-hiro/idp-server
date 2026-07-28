@@ -80,4 +80,24 @@ class FederationConfigUpdateServiceTest {
 
     assertEquals("id-1", after.identifier().value());
   }
+
+  @Test
+  void honorsEnabledFromRequest() {
+    // #1743: enabled is part of the full-replacement body and must not be forced back to true.
+    FederationConfigRequest request =
+        new FederationConfigRequest(
+            Map.of(
+                "type",
+                "oidc",
+                "sso_provider",
+                "google",
+                "payload",
+                Map.of("provider", "standard"),
+                "enabled",
+                false));
+
+    FederationConfiguration after = service.updateConfiguration(before, request);
+
+    assertFalse(after.isEnabled());
+  }
 }
