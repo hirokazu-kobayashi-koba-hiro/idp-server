@@ -297,13 +297,14 @@ describe("organization tenant management api", () => {
       expect(detailResponse.data).toHaveProperty("name");
 
       // Update tenant
+      const updatedTenantName = `Updated Organization Tenant ${timestamp}`;
       const updateResponse = await putWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}`,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
         body: {
-          "name": `Updated Organization Tenant ${timestamp}`,
+          "name": updatedTenantName,
           "description": "Updated description for organization tenant",
           "domain": "BUSINESS"
         }
@@ -311,6 +312,18 @@ describe("organization tenant management api", () => {
       console.log("Update tenant response:", updateResponse.data);
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.data).toHaveProperty("result");
+      // #1745: the request name must be reflected (previously before.name() was used, ignoring it).
+      expect(updateResponse.data.result.name).toBe(updatedTenantName);
+
+      // Confirm the new name is persisted.
+      const afterUpdateDetail = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+      expect(afterUpdateDetail.status).toBe(200);
+      expect(afterUpdateDetail.data.name).toBe(updatedTenantName);
 
       // Delete tenant
       const deleteResponse = await deletion({

@@ -148,7 +148,7 @@ public class TenantUpdateService implements TenantManagementService<TenantUpdate
 
     return new Tenant(
         before.identifier(),
-        before.name(),
+        tenantRequest.tenantName(),
         before.type(),
         tenantRequest.tenantDomain(),
         before.authorizationProvider(),
