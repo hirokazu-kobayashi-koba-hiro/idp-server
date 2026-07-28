@@ -174,9 +174,22 @@ describe("organization federation configuration management api", () => {
         console.log("List Response 2:", listResponse2.data);
         expect(listResponse2.status).toBe(200);
 
+        // #1743: the management list includes disabled configs (like client management), so admins
+        // can see and manage disabled data. The disabled config still appears in the default list.
         const federationConfigsAfterUpdate = listResponse2.data.list.filter(config => config.id === createdFederationConfigId);
         expect(federationConfigsAfterUpdate.length).toBe(1);
-        console.log("✅ Federation config still appears in list after update");
+        console.log("✅ Disabled federation config still appears in the management list");
+
+        // #1743: the enabled query filter narrows results (like client) - enabled=true excludes it.
+        const listEnabledOnly = await get({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations?enabled=true`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+        expect(listEnabledOnly.status).toBe(200);
+        expect(listEnabledOnly.data.list.filter(config => config.id === createdFederationConfigId).length).toBe(0);
+        console.log("✅ enabled=true filter excludes the disabled config");
 
         // Step 8: Verify individual federation config retrieval still works (enabled=false)
         const detailResponse2 = await get({
@@ -188,8 +201,9 @@ describe("organization federation configuration management api", () => {
         console.log("Detail Response 2:", detailResponse2.data);
         expect(detailResponse2.status).toBe(200);
         expect(detailResponse2.data.id).toBe(createdFederationConfigId);
-        // Note: enabled status may not be updated immediately or filtering may not be implemented
-        console.log("✅ Federation config detail still accessible after update");
+        // #1743: GET (findWithDisabled) returns the disabled config and enabled reflects the update.
+        expect(detailResponse2.data.enabled).toBe(false);
+        console.log("✅ Disabled federation config is retrievable by id with enabled=false");
 
         // Step 9: Delete the federation configuration
         // Note: Delete operation does not support dry-run in current implementation
@@ -388,6 +402,50 @@ describe("organization federation configuration management api", () => {
         expect(getAfterUpdate.status).toBe(200);
         expect(getAfterUpdate.data.sso_provider).toBe(ssoProvider);
         expect(getAfterUpdate.data.payload.client_id).toBe("updated-client-id");
+      } finally {
+        await deletion({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${federationConfigId}`,
+          headers
+        });
+      }
+    });
+
+    it("create with enabled=false is honored (#1743)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+      const headers = { Authorization: `Bearer ${accessToken}` };
+
+      const federationConfigId = uuidv4();
+      const createResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations`,
+        headers,
+        body: {
+          "id": federationConfigId,
+          "type": "oidc",
+          "sso_provider": `sso-${federationConfigId}`,
+          "payload": { "provider": "standard", "issuer": "https://accounts.google.com" },
+          "enabled": false
+        }
+      });
+      expect(createResponse.status).toBe(201);
+
+      try {
+        // #1743: enabled=false at create must be honored (not forced to true).
+        const getResponse = await get({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${federationConfigId}`,
+          headers
+        });
+        expect(getResponse.status).toBe(200);
+        expect(getResponse.data.enabled).toBe(false);
       } finally {
         await deletion({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/federation-configurations/${federationConfigId}`,

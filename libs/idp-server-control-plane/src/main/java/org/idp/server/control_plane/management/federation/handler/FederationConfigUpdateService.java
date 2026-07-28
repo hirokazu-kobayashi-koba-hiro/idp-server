@@ -100,17 +100,11 @@ public class FederationConfigUpdateService
 
   FederationConfiguration updateConfiguration(
       FederationConfiguration before, FederationConfigRequest request) {
-    // PUT is a full replacement: the request body is deserialized into the configuration, like the
-    // other management update services (Tenant / User / IDA). toMap() now carries every field,
-    // including the sso_provider lookup key that used to be missing from GET, so a GET -> modify ->
-    // PUT round-trip preserves them. id comes from the path (not the body); enabled keeps its
-    // current behavior and is fixed separately (#1743).
-    FederationConfiguration requested =
-        JsonConverter.snakeCaseInstance().read(request.toMap(), FederationConfiguration.class);
-    return new FederationConfiguration(
-        before.identifier().value(),
-        requested.typeName(),
-        requested.ssoProvider().name(),
-        requested.payload());
+    // Full replacement, mirroring ClientUpdateService: inject the path id into the body and
+    // deserialize the whole configuration. Every field (sso_provider, enabled, ...) round-trips via
+    // GET -> modify -> PUT, since toMap() carries them all and the read path loads enabled (#1743).
+    Map<String, Object> map = new HashMap<>(request.toMap());
+    map.put("id", before.identifier().value());
+    return JsonConverter.snakeCaseInstance().read(map, FederationConfiguration.class);
   }
 }

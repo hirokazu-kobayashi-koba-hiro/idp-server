@@ -30,7 +30,7 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
 
   String selectSql =
       """
-            SELECT id, type, sso_provider, payload
+            SELECT id, type, sso_provider, payload, enabled
              FROM federation_configurations \n
           """;
 
@@ -123,6 +123,11 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
       params.add(queries.ssoProvider());
     }
 
+    if (queries.hasEnabled()) {
+      sql.append(" AND enabled = ?");
+      params.add(queries.enabled());
+    }
+
     if (queries.hasDetails()) {
       for (Map.Entry<String, String> entry : queries.details().entrySet()) {
         String key = entry.getKey();
@@ -138,12 +143,6 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
 
   @Override
   public List<Map<String, String>> selectList(Tenant tenant, FederationQueries queries) {
-    return selectList(tenant, queries, false);
-  }
-
-  @Override
-  public List<Map<String, String>> selectList(
-      Tenant tenant, FederationQueries queries, boolean includeDisabled) {
 
     SqlExecutor sqlExecutor = new SqlExecutor();
 
@@ -151,10 +150,6 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
-
-    if (!includeDisabled) {
-      sql.append("\n  AND enabled = true");
-    }
 
     if (queries.hasFrom()) {
       sql.append("\n  AND created_at >= ?");
@@ -176,6 +171,10 @@ public class MysqlExecutor implements FederationConfigurationSqlExecutor {
     if (queries.hasSsoProvider()) {
       sql.append("\n  AND sso_provider = ?");
       params.add(queries.ssoProvider());
+    }
+    if (queries.hasEnabled()) {
+      sql.append("\n  AND enabled = ?");
+      params.add(queries.enabled());
     }
 
     if (queries.hasDetails()) {

@@ -309,7 +309,9 @@ describe("Organization Federation Config Management API - Structured Tests", () 
           }
         });
 
-        expect(response.status).toBe(500); // API currently returns 500 for validation errors
+        // #1743: the full-replace create rejects the invalid body with 400 invalid_request
+        // (previously an unhandled NPE surfaced as 500).
+        expect(response.status).toBe(400);
       });
     });
   });
