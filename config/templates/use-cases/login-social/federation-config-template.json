@@ -50,7 +50,7 @@
     ],
     "client_id": "${GOOGLE_CLIENT_ID}",
     "client_secret": "${GOOGLE_CLIENT_SECRET}",
-    "redirect_uri": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/authorizations/federations/oidc/callback",
+    "redirect_uri": "${UI_BASE_URL}/signin/sso-callback/",
     "userinfo_mapping_rules": [
       {"from": "$.http_request.response_body.sub", "to": "external_user_id"},
       {"from": "$.http_request.response_body.email", "to": "email"},

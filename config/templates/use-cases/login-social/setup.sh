@@ -392,6 +392,7 @@ FEDERATION_ID="${FEDERATION_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 FEDERATION_JSON=$(substitute_template "${SCRIPT_DIR}/federation-config-template.json" \
   "FEDERATION_ID" "${FEDERATION_ID}" \
   "BASE_URL" "${AUTHORIZATION_SERVER_URL}" \
+  "UI_BASE_URL" "${UI_BASE_URL}" \
   "PUBLIC_TENANT_ID" "${PUBLIC_TENANT_ID}" \
   "GOOGLE_CLIENT_ID" "${GOOGLE_CLIENT_ID}" \
   "GOOGLE_CLIENT_SECRET" "${GOOGLE_CLIENT_SECRET}")
