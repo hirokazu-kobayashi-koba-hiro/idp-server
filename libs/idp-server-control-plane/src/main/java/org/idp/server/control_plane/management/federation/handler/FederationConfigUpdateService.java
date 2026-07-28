@@ -105,14 +105,10 @@ public class FederationConfigUpdateService
 
     String id = before.identifier().value();
     String type = configJson.getValueOrEmptyAsString("type");
-    // sso_provider is the per-(tenant, type) instance key this config is fetched by
-    // (FederationConfigurationQueryRepository#get -> WHERE sso_provider = ?; also part of the
-    // UNIQUE(tenant_id, type, sso_provider)). Wiping it to empty makes the row unfindable at
-    // federation request time (config not found) and can collide on the unique key. It was not part
-    // of the GET/toMap round-trip historically, so a partial update that omits it must not wipe it
-    // —
-    // fall back to the existing value when the request does not carry a non-empty sso_provider.
-    // (Executor selection itself keys off payload.provider via OidcSsoConfiguration#ssoProvider.)
+    // sso_provider is the per-(tenant, type) instance key this config is fetched by (query WHERE
+    // sso_provider = ?; also part of UNIQUE(tenant_id, type, sso_provider)), and it is not on the
+    // GET/toMap round-trip. So a partial update that omits it must fall back to the existing value
+    // rather than wipe the row's lookup key. (Executor selection keys off payload.provider.)
     String requestedSsoProvider = configJson.getValueOrEmptyAsString("sso_provider");
     String ssoProvider =
         !requestedSsoProvider.isEmpty() ? requestedSsoProvider : before.ssoProvider().name();
