@@ -21,11 +21,11 @@
 | ファイル | 用途 | API |
 |---------|------|-----|
 | `onboarding-template.json` | Organization + Organizer Tenant + Admin User + Client | `POST /v1/management/onboarding` |
-| `public-tenant-template.json` | Public Tenant（パスワードポリシー + セッション設定） | `POST /v1/management/tenants` |
-| `authentication-config-initial-registration.json` | ユーザー登録スキーマ | `POST /v1/management/tenants/{id}/authentication-configurations` |
-| `authentication-policy.json` | パスワードのみ認証ポリシー | `POST /v1/management/tenants/{id}/authentication-policies` |
-| `federation-config-template.json` | Google OIDC フェデレーション設定 | `POST /v1/management/tenants/{id}/federation-configurations` |
-| `public-client-template.json` | アプリケーションクライアント | `POST /v1/management/tenants/{id}/clients` |
+| `public-tenant-template.json` | Public Tenant（パスワードポリシー + セッション設定） | `POST /v1/management/organizations/{org-id}/tenants` |
+| `authentication-config-initial-registration.json` | ユーザー登録スキーマ | `POST /v1/management/organizations/{org-id}/tenants/{id}/authentication-configurations` |
+| `authentication-policy.json` | パスワードのみ認証ポリシー | `POST /v1/management/organizations/{org-id}/tenants/{id}/authentication-policies` |
+| `federation-config-template.json` | Google OIDC フェデレーション設定 | `POST /v1/management/organizations/{org-id}/tenants/{id}/federation-configurations` |
+| `public-client-template.json` | アプリケーションクライアント | `POST /v1/management/organizations/{org-id}/tenants/{id}/clients` |
 | `setup.sh` | 上記を順番に実行するスクリプト | - |
 
 ## セットアップ手順
@@ -177,5 +177,6 @@ Google ソーシャルログインを使用するには、Google Cloud Console �
 4. 「認証情報を作成」→「OAuth クライアント ID」を選択
 5. アプリケーションの種類：「ウェブアプリケーション」
 6. 承認済みのリダイレクト URI に以下を追加：
-   - `{AUTHORIZATION_SERVER_URL}/{PUBLIC_TENANT_ID}/v1/authorizations/federations/oidc/callback`
+   - `{UI_BASE_URL}/signin/sso-callback/`（デフォルト `https://auth.local.test/signin/sso-callback/`）
+   - ここは app-view の SSO コールバック**画面**。Google はブラウザを GET でここへリダイレクトし、画面がバックエンドの callback API へ橋渡しする。バックエンド API パス（`/v1/authorizations/...`）は POST 専用のため直接登録しないこと。
 7. 作成後、クライアント ID とクライアントシークレットを `.env` に設定
