@@ -68,6 +68,9 @@ describe("organization grant management api", () => {
       if (listResponse.data.list.length > 0) {
         grantId = listResponse.data.list[0].id;
         console.log("Found grant ID:", grantId);
+        // #1729: grant_type must be present on list entries so client_credentials
+        // (no user consent) can be distinguished from authorization_code grants.
+        expect(listResponse.data.list[0]).toHaveProperty("grant_type");
       }
     });
 
@@ -87,6 +90,13 @@ describe("organization grant management api", () => {
       console.log("Grant detail response:", JSON.stringify(detailResponse.data, null, 2));
       expect(detailResponse.status).toBe(200);
       expect(detailResponse.data).toHaveProperty("id", grantId);
+      // #1729: grant_type (and scopes) must be exposed. list[0] is an arbitrary grant in a
+      // shared tenant, so assert the field is present and well-formed rather than a fixed value.
+      // The exact grant_type/optional-field serialization is pinned by AuthorizationGrantedTest.
+      expect(detailResponse.data).toHaveProperty("grant_type");
+      expect(typeof detailResponse.data.grant_type).toBe("string");
+      expect(detailResponse.data.grant_type.length).toBeGreaterThan(0);
+      expect(Array.isArray(detailResponse.data.scopes)).toBe(true);
     });
 
     it("filter grants by user_id", async () => {

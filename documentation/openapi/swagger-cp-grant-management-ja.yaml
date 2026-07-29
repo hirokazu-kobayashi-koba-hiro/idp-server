@@ -102,6 +102,7 @@ paths:
                     client:
                       client_id: "my-client-app"
                       client_name: "My Application"
+                    grant_type: "authorization_code"
                     scopes:
                       - "openid"
                       - "profile"
@@ -159,10 +160,22 @@ paths:
                 client:
                   client_id: "my-client-app"
                   client_name: "My Application"
+                grant_type: "authorization_code"
                 scopes:
                   - "openid"
                   - "profile"
                   - "email"
+                authorization_details:
+                  - type: "payment_initiation"
+                    actions:
+                      - "initiate"
+                id_token_claims:
+                  - "sub"
+                  - "email"
+                userinfo_claims:
+                  - "name"
+                custom_properties:
+                  department: "sales"
                 created_at: "2025-01-15T10:30:00Z"
                 updated_at: "2025-01-20T14:00:00Z"
         '401':
@@ -323,11 +336,37 @@ components:
           $ref: '#/components/schemas/GrantUser'
         client:
           $ref: '#/components/schemas/GrantClient'
+        grant_type:
+          type: string
+          description: |
+            グラントのフロー種別。
+            authorization_code / client_credentials / refresh_token 等。
+            client_credentials（ユーザー同意なし）と authorization_code の判別に使用します。
+          example: "authorization_code"
         scopes:
           type: array
           items:
             type: string
           description: 付与されたスコープの一覧
+        authorization_details:
+          type: array
+          items:
+            type: object
+          description: 付与された authorization_details（RFC 9396 RAR）。存在する場合のみ出力されます。
+        id_token_claims:
+          type: array
+          items:
+            type: string
+          description: ID Token に対して要求・許可されたクレーム名の一覧。存在する場合のみ出力されます。
+        userinfo_claims:
+          type: array
+          items:
+            type: string
+          description: UserInfo に対して要求・許可されたクレーム名の一覧。存在する場合のみ出力されます。
+        custom_properties:
+          type: object
+          additionalProperties: true
+          description: グラントに紐づくカスタムプロパティ。存在する場合のみ出力されます。
         created_at:
           type: string
           format: date-time
@@ -340,6 +379,7 @@ components:
         - id
         - user
         - client
+        - grant_type
         - scopes
 
     GrantUser:

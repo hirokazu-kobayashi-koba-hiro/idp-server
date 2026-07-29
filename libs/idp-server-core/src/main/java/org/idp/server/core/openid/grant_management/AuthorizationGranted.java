@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.grant_management;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
@@ -123,8 +124,34 @@ public class AuthorizationGranted {
       }
       map.put("client", clientMap);
 
+      if (authorizationGrant.grantType() != null) {
+        map.put("grant_type", authorizationGrant.grantType().value());
+      }
+
       if (authorizationGrant.scopes() != null) {
         map.put("scopes", authorizationGrant.scopes().toStringList());
+      }
+
+      if (authorizationGrant.authorizationDetails() != null
+          && authorizationGrant.authorizationDetails().exists()) {
+        map.put("authorization_details", authorizationGrant.authorizationDetails().toMapValues());
+      }
+
+      if (authorizationGrant.idTokenClaims() != null
+          && authorizationGrant.idTokenClaims().exists()) {
+        map.put(
+            "id_token_claims", new ArrayList<>(authorizationGrant.idTokenClaims().toStringSet()));
+      }
+
+      if (authorizationGrant.userinfoClaims() != null
+          && authorizationGrant.userinfoClaims().exists()) {
+        map.put(
+            "userinfo_claims", new ArrayList<>(authorizationGrant.userinfoClaims().toStringSet()));
+      }
+
+      if (authorizationGrant.customProperties() != null
+          && authorizationGrant.customProperties().exists()) {
+        map.put("custom_properties", authorizationGrant.customProperties().values());
       }
 
       if (authorizationGrant.consentClaims() != null
