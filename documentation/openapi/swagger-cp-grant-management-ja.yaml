@@ -339,9 +339,15 @@ components:
         grant_type:
           type: string
           description: |
-            グラントのフロー種別。
-            authorization_code / client_credentials / refresh_token 等。
-            client_credentials（ユーザー同意なし）と authorization_code の判別に使用します。
+            このグラントを最後に確立/更新した user-consent フローの種別（last-wins）。
+            値は `authorization_code` / `password` / `ciba` のいずれか。
+
+            - scopes は複数フローで累積マージされるが grant_type は最新フローで置換されるため、
+              同一 user+client が異なるフローで再確立されると grant_type は最後のフローを指し、
+              累積された scopes の由来とは一致しないことがある。
+            - `client_credentials` はユーザー同意が無くグラント（authorization_granted）を作らないため、
+              このAPIには現れない。
+            - `refresh_token` はグラントを更新しないため grant_type を変更しない。
           example: "authorization_code"
         scopes:
           type: array
