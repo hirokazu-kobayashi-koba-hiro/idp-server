@@ -14,8 +14,9 @@ if [ -z "$VERSION" ]; then
 fi
 
 # バージョン形式の検証
-if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
-  echo "エラー: 無効なバージョン形式。X.Y.Z または X.Y.Z-qualifier を使用してください"
+# 4桁目(任意)は特定リリースへの hotfix 用（例: 0.10.1.1 = v0.10.1 への hotfix 1）
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9]+)?$ ]]; then
+  echo "エラー: 無効なバージョン形式。X.Y.Z / X.Y.Z.W / X.Y.Z-qualifier を使用してください"
   exit 1
 fi
 
