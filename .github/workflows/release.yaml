@@ -103,6 +103,8 @@ jobs:
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          # 旧ライン(v0.10.1)への hotfix。リポジトリの Latest は v0.12.0 のまま維持する。
+          make_latest: false
 
       - name: Release summary
         run: |
