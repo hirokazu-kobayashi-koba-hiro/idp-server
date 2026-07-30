@@ -110,7 +110,10 @@ public class AuthorizationGranted {
     LocalDateTime updatedAt;
 
     public Map<String, Object> toMap() {
-        // id, user, client, scopes, created_at, updated_at を返す
+        // 常時: id, user, client, grant_type, scopes, created_at, updated_at
+        // 存在時のみ: authorization_details, id_token_claims, userinfo_claims,
+        //           custom_properties, consent_claims
+        // （#1729 で grant_type / authorization_details / *_claims / custom_properties を追加）
     }
 }
 ```
@@ -205,11 +208,38 @@ public class ConsentClaim {
 | `OAuthAuthorizeContext.java` | AuthorizationGrant生成時にConsentClaimsを含める |
 | `ClientConfiguration.java` | クライアントの tosUri / policyUri を保持 |
 
-## Grantが作成されるタイミング
+## Grant更新フローと grant_type
 
-- Authorization Code Flowでの同意時
-- Password Grantでのトークン発行時（スコープはマージされる）
-- その他のGrant Typeでのトークン発行時
+### 永続化トリガ（user+client 単位で register または merge-update）
+
+いずれも `registerOrUpdateAuthorizationGranted` パターン。既存 grant があれば
+`latest.merge(new)` → `update`、無ければ `register`。
+
+| フロー | grant_type | ハンドラ |
+|--------|-----------|---------|
+| 認可コード | `authorization_code` | `OAuthAuthorizeHandler`（`OAuthAuthorizeContext` が設定） |
+| Password | `password` | `ResourceOwnerPasswordCredentialsGrantService` |
+| CIBA | `ciba` | `CibaAuthorizeHandler` |
+
+### grant_type は last-wins（scopes は累積）
+
+`AuthorizationGrant.merge()` は **grant_type を `newAuthorizationGrant.grantType()` で置換**する一方、
+scopes は和集合でマージする。DB も `UPDATE authorization_granted SET ... grant_type = ?` で置換値を永続化。
+→ 同一 user+client が異なるフローで再確立されると、grant_type は**最後のフロー**を指し、
+scopes は累積値になる（両者の由来がズレうる）。
+
+### この API に現れない grant_type
+
+- **client_credentials**: ユーザー同意が無く `authorization_granted` 行を作らない（`oauth_token` のみ register）
+  → Grant 管理には出てこない。
+- **refresh_token**: `authorization_granted` を更新しない → grant_type を変えない。
+
+→ `authorization_granted.grant_type` は実質 **{authorization_code, password, ciba}** のみ。
+
+### 型
+
+grant_type は単一スカラー（`GrantType` enum / DB `VARCHAR(255) NOT NULL`）。複数値は保持できない。
+未知・不正値は `GrantType.of()` が `GrantType.unknown`（value `""`）に落とす（クラッシュしない）。
 
 ## E2Eテスト
 

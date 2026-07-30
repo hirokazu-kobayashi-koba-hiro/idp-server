@@ -102,6 +102,7 @@ paths:
                     client:
                       client_id: "my-client-app"
                       client_name: "My Application"
+                    grant_type: "authorization_code"
                     scopes:
                       - "openid"
                       - "profile"
@@ -159,10 +160,22 @@ paths:
                 client:
                   client_id: "my-client-app"
                   client_name: "My Application"
+                grant_type: "authorization_code"
                 scopes:
                   - "openid"
                   - "profile"
                   - "email"
+                authorization_details:
+                  - type: "payment_initiation"
+                    actions:
+                      - "initiate"
+                id_token_claims:
+                  - "sub"
+                  - "email"
+                userinfo_claims:
+                  - "name"
+                custom_properties:
+                  department: "sales"
                 created_at: "2025-01-15T10:30:00Z"
                 updated_at: "2025-01-20T14:00:00Z"
         '401':
@@ -323,11 +336,43 @@ components:
           $ref: '#/components/schemas/GrantUser'
         client:
           $ref: '#/components/schemas/GrantClient'
+        grant_type:
+          type: string
+          description: |
+            このグラントを最後に確立/更新した user-consent フローの種別（last-wins）。
+            値は `authorization_code` / `password` / `ciba` のいずれか。
+
+            - scopes は複数フローで累積マージされるが grant_type は最新フローで置換されるため、
+              同一 user+client が異なるフローで再確立されると grant_type は最後のフローを指し、
+              累積された scopes の由来とは一致しないことがある。
+            - `client_credentials` はユーザー同意が無くグラント（authorization_granted）を作らないため、
+              このAPIには現れない。
+            - `refresh_token` はグラントを更新しないため grant_type を変更しない。
+          example: "authorization_code"
         scopes:
           type: array
           items:
             type: string
           description: 付与されたスコープの一覧
+        authorization_details:
+          type: array
+          items:
+            type: object
+          description: 付与された authorization_details（RFC 9396 RAR）。存在する場合のみ出力されます。
+        id_token_claims:
+          type: array
+          items:
+            type: string
+          description: ID Token に対して要求・許可されたクレーム名の一覧。存在する場合のみ出力されます。
+        userinfo_claims:
+          type: array
+          items:
+            type: string
+          description: UserInfo に対して要求・許可されたクレーム名の一覧。存在する場合のみ出力されます。
+        custom_properties:
+          type: object
+          additionalProperties: true
+          description: グラントに紐づくカスタムプロパティ。存在する場合のみ出力されます。
         created_at:
           type: string
           format: date-time
@@ -340,6 +385,7 @@ components:
         - id
         - user
         - client
+        - grant_type
         - scopes
 
     GrantUser:
