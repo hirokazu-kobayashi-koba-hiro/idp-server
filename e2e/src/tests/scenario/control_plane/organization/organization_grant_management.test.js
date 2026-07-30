@@ -64,14 +64,17 @@ describe("organization grant management api", () => {
       expect(listResponse.data).toHaveProperty("limit", 10);
       expect(listResponse.data).toHaveProperty("offset", 0);
 
-      // Save grant ID for subsequent tests
-      if (listResponse.data.list.length > 0) {
-        grantId = listResponse.data.list[0].id;
-        console.log("Found grant ID:", grantId);
-        // #1729: grant_type must be present on list entries so client_credentials
-        // (no user consent) can be distinguished from authorization_code grants.
-        expect(listResponse.data.list[0]).toHaveProperty("grant_type");
-      }
+      // beforeAll issues a password grant (which creates an authorization_granted row) and
+      // this tenant persists across runs, so the list must be non-empty. Assert it instead of
+      // silently skipping, then verify grant_type is exposed on every entry.
+      expect(listResponse.data.list.length).toBeGreaterThan(0);
+      grantId = listResponse.data.list[0].id;
+      console.log("Found grant ID:", grantId);
+      // #1729: grant_type is exposed on list entries. In this API it is always one of
+      // authorization_code / password / ciba (client_credentials creates no grant row).
+      listResponse.data.list.forEach((grant) =>
+        expect(grant).toHaveProperty("grant_type")
+      );
     });
 
     it("get specific grant details", async () => {
