@@ -208,7 +208,7 @@ public class OAuthRequestHandler {
       OAuthRequestParameters requestParameters,
       Tenant tenant,
       AuthorizationServerConfiguration authorizationServerConfiguration) {
-    if (pushedRequest.dpopProofHeaders() == null || pushedRequest.dpopProofHeaders().isEmpty()) {
+    if (pushedRequest.dpopProofHeaders().isEmpty()) {
       return requestParameters;
     }
     DPoPProof dpopProof = new DPoPProof(pushedRequest.dpopProofHeaders().get(0));

@@ -80,4 +80,43 @@ class HttpRequestInputsTest {
 
     assertEquals(2, inputs.headerValues("dpop").size());
   }
+
+  @Test
+  @DisplayName("mixed-casing keys are merged, not silently overwritten")
+  void mixedCasingKeysAreMerged() {
+    HttpRequestInputs inputs =
+        new HttpRequestInputs(
+            null,
+            Map.of(),
+            Map.of("DPoP", List.of("proof-1"), "dpop", List.of("proof-2")),
+            null,
+            "POST",
+            "https://server.example.com/token");
+
+    assertEquals(2, inputs.headerValues("dpop").size());
+  }
+
+  @Test
+  @DisplayName("toString masks credential-bearing values, exposing only names")
+  void toStringMasksCredentials() {
+    HttpRequestInputs inputs =
+        new HttpRequestInputs(
+            "Bearer secret-access-token",
+            Map.of("client_secret", new String[] {"secret-client-secret"}),
+            Map.of("Cookie", List.of("SESSION=secret-session"), "DPoP", List.of("secret-proof")),
+            "-----BEGIN CERTIFICATE-----secret-cert",
+            "POST",
+            "https://server.example.com/token");
+
+    String value = inputs.toString();
+
+    assertFalse(value.contains("secret-access-token"));
+    assertFalse(value.contains("secret-client-secret"));
+    assertFalse(value.contains("secret-session"));
+    assertFalse(value.contains("secret-proof"));
+    assertFalse(value.contains("secret-cert"));
+    assertTrue(value.contains("client_secret"));
+    assertTrue(value.contains("cookie"));
+    assertTrue(value.contains("https://server.example.com/token"));
+  }
 }

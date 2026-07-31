@@ -16,6 +16,7 @@
 
 package org.idp.server.platform.http;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -89,16 +90,44 @@ public record HttpRequestInputs(
   }
 
   private static Map<String, List<String>> normalizeHeaders(Map<String, List<String>> raw) {
-    Map<String, List<String>> normalized = new LinkedHashMap<>(raw.size());
+    Map<String, List<String>> merged = new LinkedHashMap<>(raw.size());
     for (Map.Entry<String, List<String>> entry : raw.entrySet()) {
       if (entry.getKey() == null) {
         continue;
       }
-      List<String> values = entry.getValue();
-      normalized.put(
-          entry.getKey().toLowerCase(Locale.ROOT),
-          values == null ? List.of() : Collections.unmodifiableList(values));
+      String key = entry.getKey().toLowerCase(Locale.ROOT);
+      List<String> values = merged.computeIfAbsent(key, k -> new ArrayList<>());
+      if (entry.getValue() != null) {
+        values.addAll(entry.getValue());
+      }
+    }
+    Map<String, List<String>> normalized = new LinkedHashMap<>(merged.size());
+    for (Map.Entry<String, List<String>> entry : merged.entrySet()) {
+      normalized.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
     }
     return Collections.unmodifiableMap(normalized);
+  }
+
+  /**
+   * Masks credential-bearing values: the authorization header, all header values (cookies, DPoP
+   * proofs, ...) and the client certificate never appear in logs or exception messages. Only header
+   * / body parameter names are exposed.
+   */
+  @Override
+  public String toString() {
+    return "HttpRequestInputs{"
+        + "authorizationHeader="
+        + (authorizationHeader != null ? "[redacted]" : "null")
+        + ", bodyParameters="
+        + bodyParameters.keySet()
+        + ", headers="
+        + headers.keySet()
+        + ", tlsClientCertPem="
+        + (tlsClientCertPem != null ? "[redacted]" : "null")
+        + ", httpMethod="
+        + httpMethod
+        + ", httpUri="
+        + httpUri
+        + '}';
   }
 }
