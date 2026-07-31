@@ -16,13 +16,13 @@
 
 package org.idp.server.core.extension.ciba;
 
-import java.util.Map;
 import org.idp.server.core.extension.ciba.handler.io.CibaRequestResponse;
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequestIdentifier;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.authentication.AuthenticationTransaction;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -30,9 +30,7 @@ import org.idp.server.platform.type.RequestAttributes;
 public interface CibaFlowApi {
   CibaRequestResponse request(
       TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      String authorizationHeader,
-      String clientCert,
+      HttpRequestInputs inputs,
       RequestAttributes requestAttributes);
 
   AuthenticationInteractionRequestResult interact(

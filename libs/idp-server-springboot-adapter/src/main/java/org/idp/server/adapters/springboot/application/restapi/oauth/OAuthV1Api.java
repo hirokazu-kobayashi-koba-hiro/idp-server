@@ -18,7 +18,6 @@ package org.idp.server.adapters.springboot.application.restapi.oauth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
@@ -35,6 +34,7 @@ import org.idp.server.core.openid.oauth.OAuthFlowApi;
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.io.OAuthAuthenticationStatusResponse;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -59,23 +59,14 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
   @PostMapping(value = "/push", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   public ResponseEntity<?> push(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @RequestParam(required = false) MultiValueMap<String, String> request,
       HttpServletRequest httpServletRequest) {
 
-    List<String> dpopProofHeaders = extractDPoPProofHeaders(httpServletRequest);
-    Map<String, String[]> params = transform(request);
+    HttpRequestInputs inputs = transformInputs(request, httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     OAuthPushedRequestResponse response =
-        oAuthFlowApi.push(
-            tenantIdentifier,
-            params,
-            authorizationHeader,
-            clientCert,
-            dpopProofHeaders,
-            requestAttributes);
+        oAuthFlowApi.push(tenantIdentifier, inputs, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");

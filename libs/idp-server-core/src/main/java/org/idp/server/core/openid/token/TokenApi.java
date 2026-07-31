@@ -16,29 +16,21 @@
 
 package org.idp.server.core.openid.token;
 
-import java.util.List;
-import java.util.Map;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationResponse;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
 public interface TokenApi {
 
   TokenRequestResponse request(
-      TenantIdentifier tenantId,
-      Map<String, String[]> params,
-      String authorizationHeader,
-      String clientCert,
-      List<String> dpopProofHeaders,
-      RequestAttributes requestAttributes);
+      TenantIdentifier tenantId, HttpRequestInputs inputs, RequestAttributes requestAttributes);
 
   TokenIntrospectionResponse inspect(
       TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      String authorizationHeader,
-      String clientCert,
+      HttpRequestInputs inputs,
       RequestAttributes requestAttributes);
 
   /**
@@ -46,23 +38,17 @@ public interface TokenApi {
    *
    * <p>The Resource Server forwards the artifacts the Client presented at the resource endpoint via
    * the request body parameters: {@code client_cert} (mTLS, RFC 8705), {@code dpop_proof} (DPoP,
-   * RFC 9449) and the corresponding {@code dpop_htm} / {@code dpop_htu}. The {@code clientCert}
-   * parameter passed here is the RS's own TLS client certificate used to authenticate to the AS,
-   * which is independent from the token-binding cert.
+   * RFC 9449) and the corresponding {@code dpop_htm} / {@code dpop_htu}. The TLS client certificate
+   * carried in {@code inputs} is the RS's own certificate used to authenticate to the AS, which is
+   * independent from the token-binding cert.
    */
   TokenIntrospectionResponse inspectWithVerification(
       TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      String authorizationHeader,
-      String clientCert,
+      HttpRequestInputs inputs,
       RequestAttributes requestAttributes);
 
   TokenRevocationResponse revoke(
-      TenantIdentifier tenantId,
-      Map<String, String[]> request,
-      String authorizationHeader,
-      String clientCert,
-      RequestAttributes requestAttributes);
+      TenantIdentifier tenantId, HttpRequestInputs inputs, RequestAttributes requestAttributes);
 
   /**
    * Deletes the access token if it carries the RAR {@code oneshot_token} flag.

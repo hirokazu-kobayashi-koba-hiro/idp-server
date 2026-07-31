@@ -27,73 +27,49 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
 import org.idp.server.core.openid.token.TokenRequestParameters;
 import org.idp.server.platform.http.BasicAuth;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenRequest implements AuthorizationHeaderHandlerable {
   Tenant tenant;
-  String authorizationHeaders;
-  Map<String, String[]> params;
-  String clientCert;
-  List<String> dpopProofHeaders;
-  String httpMethod;
-  String httpUri;
+  HttpRequestInputs inputs;
   Map<String, Object> customProperties = new HashMap<>();
 
-  public TokenRequest(Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
+  public TokenRequest(Tenant tenant, HttpRequestInputs inputs) {
     this.tenant = tenant;
-    this.authorizationHeaders = authorizationHeaders;
-    this.params = params;
-  }
-
-  public TokenRequest setClientCert(String clientCert) {
-    this.clientCert = clientCert;
-    return this;
-  }
-
-  public TokenRequest setDPoPProofHeaders(List<String> dpopProofHeaders) {
-    this.dpopProofHeaders = dpopProofHeaders;
-    return this;
+    this.inputs = inputs;
   }
 
   public List<String> dpopProofHeaders() {
-    return dpopProofHeaders;
-  }
-
-  public TokenRequest setHttpMethod(String httpMethod) {
-    this.httpMethod = httpMethod;
-    return this;
-  }
-
-  public TokenRequest setHttpUri(String httpUri) {
-    this.httpUri = httpUri;
-    return this;
+    return inputs.headerValues("DPoP");
   }
 
   public DPoPProof toDPoPProof() {
-    if (dpopProofHeaders == null || dpopProofHeaders.isEmpty()) {
+    List<String> dpopProofHeaders = dpopProofHeaders();
+    if (dpopProofHeaders.isEmpty()) {
       return new DPoPProof();
     }
     return new DPoPProof(dpopProofHeaders.get(0));
   }
 
   public String httpMethod() {
-    return httpMethod != null ? httpMethod : "POST";
+    return inputs.httpMethod() != null ? inputs.httpMethod() : "POST";
   }
 
   public String httpUri() {
-    return httpUri != null ? httpUri : "";
+    return inputs.httpUri() != null ? inputs.httpUri() : "";
   }
 
   public String getAuthorizationHeaders() {
-    return authorizationHeaders;
+    return inputs.authorizationHeader();
   }
 
   public Map<String, String[]> getParams() {
-    return params;
+    return inputs.bodyParameters();
   }
 
   public String getClientCert() {
-    return clientCert;
+    return inputs.tlsClientCertPem();
   }
 
   public Map<String, Object> customProperties() {
@@ -130,6 +106,7 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
     if (parameters.hasClientId()) {
       return parameters.clientId();
     }
+    String authorizationHeaders = getAuthorizationHeaders();
     if (isBasicAuth(authorizationHeaders)) {
       BasicAuth basicAuth = convertBasicAuth(authorizationHeaders);
       return new RequestedClientId(basicAuth.username());
@@ -145,6 +122,7 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
   }
 
   public ClientSecretBasic clientSecretBasic() {
+    String authorizationHeaders = getAuthorizationHeaders();
     if (isBasicAuth(authorizationHeaders)) {
       return new ClientSecretBasic(convertBasicAuth(authorizationHeaders));
     }
@@ -156,7 +134,7 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
   }
 
   public TokenRequestParameters toParameters() {
-    return new TokenRequestParameters(params);
+    return new TokenRequestParameters(inputs.bodyParameters());
   }
 
   public CustomProperties toCustomProperties() {
@@ -164,7 +142,7 @@ public class TokenRequest implements AuthorizationHeaderHandlerable {
   }
 
   public ClientCert toClientCert() {
-    return new ClientCert(clientCert);
+    return new ClientCert(inputs.tlsClientCertPem());
   }
 
   public boolean isRefreshTokenGrant() {

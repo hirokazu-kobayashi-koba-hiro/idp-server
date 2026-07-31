@@ -16,18 +16,13 @@
 
 package org.idp.server.core.openid.identity;
 
-import java.util.List;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.Pairs;
 
 public interface UserAuthenticationApi {
 
   Pairs<User, OAuthToken> authenticate(
-      TenantIdentifier adminTenantIdentifier,
-      String authorizationHeader,
-      String clientCert,
-      List<String> dpopProofHeaders,
-      String httpMethod,
-      String httpUri);
+      TenantIdentifier adminTenantIdentifier, HttpRequestInputs inputs);
 }

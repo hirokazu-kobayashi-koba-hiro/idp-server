@@ -17,11 +17,11 @@
 package org.idp.server.adapters.springboot.application.restapi.userinfo;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.core.openid.userinfo.UserinfoApi;
 import org.idp.server.core.openid.userinfo.handler.io.UserinfoRequestResponse;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;
@@ -43,46 +43,36 @@ public class UserinfoV1Api implements ParameterTransformable, SecurityHeaderConf
 
   @GetMapping
   public ResponseEntity<?> get(
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
-      HttpServletRequest httpServletRequest) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId, HttpServletRequest httpServletRequest) {
 
-    List<String> dpopProofHeaders = extractDPoPProofHeaders(httpServletRequest);
+    HttpRequestInputs inputs = transformInputs(null, httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    UserinfoRequestResponse response =
-        userinfoApi.request(
-            tenantId, authorizationHeader, clientCert, dpopProofHeaders, requestAttributes);
+    UserinfoRequestResponse response = userinfoApi.request(tenantId, inputs, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
     applyWwwAuthenticateIfUnauthorized(
-        httpHeaders, response.statusCode(), response.response(), authorizationHeader);
+        httpHeaders, response.statusCode(), response.response(), inputs.authorizationHeader());
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
 
   @PostMapping
   public ResponseEntity<?> post(
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
-      @PathVariable("tenant-id") TenantIdentifier tenantId,
-      HttpServletRequest httpServletRequest) {
+      @PathVariable("tenant-id") TenantIdentifier tenantId, HttpServletRequest httpServletRequest) {
 
-    List<String> dpopProofHeaders = extractDPoPProofHeaders(httpServletRequest);
+    HttpRequestInputs inputs = transformInputs(null, httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    UserinfoRequestResponse response =
-        userinfoApi.request(
-            tenantId, authorizationHeader, clientCert, dpopProofHeaders, requestAttributes);
+    UserinfoRequestResponse response = userinfoApi.request(tenantId, inputs, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
     applyWwwAuthenticateIfUnauthorized(
-        httpHeaders, response.statusCode(), response.response(), authorizationHeader);
+        httpHeaders, response.statusCode(), response.response(), inputs.authorizationHeader());
     return new ResponseEntity<>(
         response.response(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }

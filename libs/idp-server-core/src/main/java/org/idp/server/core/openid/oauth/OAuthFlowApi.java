@@ -16,7 +16,6 @@
 
 package org.idp.server.core.openid.oauth;
 
-import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequestResult;
@@ -29,6 +28,7 @@ import org.idp.server.core.openid.federation.io.FederationRequestResponse;
 import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.core.openid.oauth.io.*;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -37,10 +37,7 @@ public interface OAuthFlowApi {
 
   OAuthPushedRequestResponse push(
       TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      String authorizationHeader,
-      String clientCert,
-      List<String> dpopProofHeaders,
+      HttpRequestInputs inputs,
       RequestAttributes requestAttributes);
 
   OAuthRequestResponse request(

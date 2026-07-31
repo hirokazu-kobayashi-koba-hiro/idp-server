@@ -17,10 +17,10 @@
 package org.idp.server.adapters.springboot.application.restapi.ciba;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Map;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.core.extension.ciba.CibaFlowApi;
 import org.idp.server.core.extension.ciba.handler.io.CibaRequestResponse;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;
@@ -44,17 +44,13 @@ public class CibaV1Api implements ParameterTransformable {
   @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   public ResponseEntity<?> request(
       @RequestBody(required = false) MultiValueMap<String, String> body,
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       HttpServletRequest httpServletRequest) {
 
-    Map<String, String[]> params = transform(body);
+    HttpRequestInputs inputs = transformInputs(body, httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    CibaRequestResponse response =
-        cibaFlowApi.request(
-            tenantIdentifier, params, authorizationHeader, clientCert, requestAttributes);
+    CibaRequestResponse response = cibaFlowApi.request(tenantIdentifier, inputs, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", response.contentTypeValue());

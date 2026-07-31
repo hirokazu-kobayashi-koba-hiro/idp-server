@@ -17,14 +17,13 @@
 package org.idp.server.adapters.springboot.application.restapi.token;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.Map;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.SecurityHeaderConfigurable;
 import org.idp.server.core.openid.token.TokenApi;
 import org.idp.server.core.openid.token.handler.token.io.TokenRequestResponse;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationResponse;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;
@@ -48,23 +47,13 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
   @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   public ResponseEntity<?> request(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
 
-    List<String> dpopProofHeaders = extractDPoPProofHeaders(httpServletRequest);
-    Map<String, String[]> request = transform(body);
+    HttpRequestInputs inputs = transformInputs(body, httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    TokenRequestResponse response =
-        tokenApi.request(
-            tenantIdentifier,
-            request,
-            authorizationHeader,
-            clientCert,
-            dpopProofHeaders,
-            requestAttributes);
+    TokenRequestResponse response = tokenApi.request(tenantIdentifier, inputs, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setAll(response.responseHeaders());
@@ -75,17 +64,14 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
   @PostMapping(value = "/introspection", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   public ResponseEntity<?> inspect(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
 
-    Map<String, String[]> request = transform(body);
+    HttpRequestInputs inputs = transformInputs(body, httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     TokenIntrospectionResponse response =
-        tokenApi.inspect(
-            tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
+        tokenApi.inspect(tenantIdentifier, inputs, requestAttributes);
 
     if (response.hasOAuthToken() && response.oAuthToken().isOneshotToken()) {
       tokenApi.deleteOneshotTokenIfNeeded(tenantIdentifier, response.oAuthToken());
@@ -102,12 +88,10 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
       consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   public ResponseEntity<?> inspectWithVerification(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
 
-    Map<String, String[]> request = transform(body);
+    HttpRequestInputs inputs = transformInputs(body, httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
     // RS forwarding pattern (RFC 8705 §3 + RFC 9449 §7): the Resource Server forwards the
@@ -116,8 +100,7 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
     // endpoint is intentionally not consumed — it would belong to the RS's own request to the AS,
     // not to the resource access being verified.
     TokenIntrospectionResponse response =
-        tokenApi.inspectWithVerification(
-            tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
+        tokenApi.inspectWithVerification(tenantIdentifier, inputs, requestAttributes);
 
     if (response.hasOAuthToken() && response.oAuthToken().isOneshotToken()) {
       tokenApi.deleteOneshotTokenIfNeeded(tenantIdentifier, response.oAuthToken());
@@ -132,17 +115,13 @@ public class TokenV1Api implements ParameterTransformable, SecurityHeaderConfigu
   @PostMapping(value = "/revocation", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   public ResponseEntity<?> revoke(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @RequestHeader(required = false, value = "Authorization") String authorizationHeader,
-      @RequestHeader(required = false, value = "x-ssl-cert") String clientCert,
       @RequestBody(required = false) MultiValueMap<String, String> body,
       HttpServletRequest httpServletRequest) {
 
-    Map<String, String[]> request = transform(body);
+    HttpRequestInputs inputs = transformInputs(body, httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    TokenRevocationResponse response =
-        tokenApi.revoke(
-            tenantIdentifier, request, authorizationHeader, clientCert, requestAttributes);
+    TokenRevocationResponse response = tokenApi.revoke(tenantIdentifier, inputs, requestAttributes);
 
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setAll(response.responseHeaders());
