@@ -21,6 +21,8 @@ import org.idp.server.core.extension.ciba.CibaProfile;
 import org.idp.server.core.extension.ciba.CibaRequestContext;
 import org.idp.server.core.extension.ciba.CibaRequestParameters;
 import org.idp.server.core.extension.ciba.CibaRequestPattern;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.OAuthRequestKey;
@@ -36,6 +38,8 @@ public interface CibaRequestContextCreator {
       Tenant tenant,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
+      ClientAttestationJwt clientAttestationJwt,
+      ClientAttestationPopJwt clientAttestationPopJwt,
       CibaRequestParameters parameters,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration);

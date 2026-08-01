@@ -118,6 +118,11 @@
       "format": "jwks",
       "description": "OPTIONAL. Client's JWK Set [JWK] document, passed by value. The semantics of the jwks parameter are the same as the jwks_uri parameter, other than that the JWK Set is passed by value, rather than by reference. This parameter is intended only to be used by Clients that, for some reason, are unable to use the jwks_uri parameter, for instance, by native applications that might not have a location to host the contents of the JWK Set. If a Client can use jwks_uri, it MUST NOT use jwks. One significant downside of jwks is that it does not enable key rotation (which jwks_uri does, as described in Section 10 of OpenID Connect Core 1.0 [OpenID.Core]). The jwks_uri and jwks parameters MUST NOT be used together. The JWK Set MUST NOT contain private or symmetric key values."
     },
+    "client_attestation_jwks": {
+      "type": "string",
+      "format": "jwks",
+      "description": "OPTIONAL. JWK Set [JWK] document holding the trusted Client Attester public keys, passed by value. Used to verify the signature of the Client Attestation JWT when the Client authenticates with attest_jwt_client_auth (OAuth 2.0 Attestation-Based Client Authentication). The JWK Set MUST NOT contain private or symmetric key values."
+    },
     "sector_identifier_uri": {
       "type": "string",
       "format": "uri",
@@ -251,6 +256,7 @@
         "private_key_jwt",
         "tls_client_auth",
         "self_signed_tls_client_auth",
+        "attest_jwt_client_auth",
         "none"
       ],
       "description": "OPTIONAL. Requested Client Authentication method for the Token Endpoint. The options are client_secret_post, client_secret_basic, client_secret_jwt, private_key_jwt, and none, as described in Section 9 of OpenID Connect Core 1.0 [OpenID.Core]. Other authentication methods MAY be defined by extensions. If omitted, the default is client_secret_basic -- the HTTP Basic Authentication Scheme specified in Section 2.3.1 of OAuth 2.0 [RFC6749]."
