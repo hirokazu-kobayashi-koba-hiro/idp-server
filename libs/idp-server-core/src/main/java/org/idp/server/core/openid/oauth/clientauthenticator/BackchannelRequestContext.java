@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.oauth.clientauthenticator;
 
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
@@ -32,6 +34,25 @@ public interface BackchannelRequestContext {
   ClientCert clientCert();
 
   boolean hasClientSecretBasic();
+
+  /**
+   * Returns the Client Attestation JWT conveyed by the {@code OAuth-Client-Attestation} header.
+   *
+   * <p>Defaults to an empty value: contexts of endpoints that do not support Attestation-Based
+   * Client Authentication simply leave this unimplemented, which makes {@code
+   * attest_jwt_client_auth} fail there with a missing-attestation error.
+   */
+  default ClientAttestationJwt clientAttestationJwt() {
+    return new ClientAttestationJwt();
+  }
+
+  /**
+   * Returns the Client Attestation PoP JWT conveyed by the {@code OAuth-Client-Attestation-PoP}
+   * header.
+   */
+  default ClientAttestationPopJwt clientAttestationPopJwt() {
+    return new ClientAttestationPopJwt();
+  }
 
   AuthorizationServerConfiguration serverConfiguration();
 

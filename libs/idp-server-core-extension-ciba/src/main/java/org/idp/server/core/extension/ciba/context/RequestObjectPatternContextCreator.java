@@ -22,6 +22,8 @@ import org.idp.server.core.extension.ciba.exception.BackchannelAuthenticationBad
 import org.idp.server.core.extension.ciba.request.BackchannelAuthenticationRequest;
 import org.idp.server.core.extension.ciba.request.RequestObjectPatternFactory;
 import org.idp.server.core.extension.ciba.validator.CibaRequestObjectValidator;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
@@ -44,6 +46,8 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
       Tenant tenant,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
+      ClientAttestationJwt clientAttestationJwt,
+      ClientAttestationPopJwt clientAttestationPopJwt,
       CibaRequestParameters parameters,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
@@ -82,6 +86,8 @@ public class RequestObjectPatternContextCreator implements CibaRequestContextCre
           pattern,
           clientSecretBasic,
           clientCert,
+          clientAttestationJwt,
+          clientAttestationPopJwt,
           parameters,
           new CibaRequestObjectParameters(joseContext.claims().payload()),
           joseContext,

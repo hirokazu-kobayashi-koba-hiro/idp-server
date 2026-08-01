@@ -24,6 +24,8 @@ import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
 import org.idp.server.core.openid.identity.hint.UserHint;
 import org.idp.server.core.openid.identity.hint.UserHintRelatedParams;
 import org.idp.server.core.openid.identity.hint.UserHintType;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestParameters;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
@@ -45,6 +47,8 @@ public class CibaRequestContext implements BackchannelRequestContext {
   CibaRequestPattern pattern;
   ClientSecretBasic clientSecretBasic;
   ClientCert clientCert;
+  ClientAttestationJwt clientAttestationJwt;
+  ClientAttestationPopJwt clientAttestationPopJwt;
   CibaRequestParameters parameters;
   CibaRequestObjectParameters requestObjectParameters;
   CibaRequestAssembleParameters assembleParameters;
@@ -60,6 +64,8 @@ public class CibaRequestContext implements BackchannelRequestContext {
       CibaRequestPattern pattern,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
+      ClientAttestationJwt clientAttestationJwt,
+      ClientAttestationPopJwt clientAttestationPopJwt,
       CibaRequestParameters parameters,
       CibaRequestObjectParameters requestObjectParameters,
       JoseContext joseContext,
@@ -70,6 +76,8 @@ public class CibaRequestContext implements BackchannelRequestContext {
     this.pattern = pattern;
     this.clientSecretBasic = clientSecretBasic;
     this.clientCert = clientCert;
+    this.clientAttestationJwt = clientAttestationJwt;
+    this.clientAttestationPopJwt = clientAttestationPopJwt;
     this.parameters = parameters;
     this.requestObjectParameters = requestObjectParameters;
     this.assembleParameters =
@@ -126,6 +134,18 @@ public class CibaRequestContext implements BackchannelRequestContext {
   @Override
   public boolean hasClientSecretBasic() {
     return clientSecretBasic.exists();
+  }
+
+  @Override
+  public ClientAttestationJwt clientAttestationJwt() {
+    return clientAttestationJwt != null ? clientAttestationJwt : new ClientAttestationJwt();
+  }
+
+  @Override
+  public ClientAttestationPopJwt clientAttestationPopJwt() {
+    return clientAttestationPopJwt != null
+        ? clientAttestationPopJwt
+        : new ClientAttestationPopJwt();
   }
 
   @Override

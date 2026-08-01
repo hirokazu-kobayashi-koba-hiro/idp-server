@@ -57,6 +57,7 @@ public class ClientConfiguration implements JsonReadable, Configurable {
   String idTokenEncryptedResponseAlg;
   String idTokenEncryptedResponseEnc;
   List<String> authorizationDetailsTypes = new ArrayList<>();
+  String clientAttestationJwks;
   String tlsClientAuthSubjectDn;
   String tlsClientAuthSanDns;
   String tlsClientAuthSanUri;
@@ -410,6 +411,18 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return jwks != null && !jwks.isEmpty();
   }
 
+  /**
+   * Returns the JWKS holding the trusted Client Attester public keys used to verify the Client
+   * Attestation JWT signature (draft-ietf-oauth-attestation-based-client-auth).
+   */
+  public String clientAttestationJwks() {
+    return clientAttestationJwks;
+  }
+
+  public boolean hasClientAttestationJwks() {
+    return clientAttestationJwks != null && !clientAttestationJwks.isEmpty();
+  }
+
   public boolean hasSecret() {
     return clientSecret != null && !clientSecret.isEmpty();
   }
@@ -577,6 +590,7 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     map.put("policy_uri", policyUri);
     if (jwksUri != null) map.put("jwks_uri", jwksUri);
     if (jwks != null) map.put("jwks", jwks);
+    if (clientAttestationJwks != null) map.put("client_attestation_jwks", clientAttestationJwks);
     if (softwareId != null && !softwareId.isEmpty()) map.put("software_id", softwareId);
     map.put("software_version", softwareVersion);
     map.put("request_uris", requestUris);

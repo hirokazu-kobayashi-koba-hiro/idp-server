@@ -226,6 +226,18 @@ public class ServerConfigurationResponseCreator {
           authorizationServerConfiguration.dpopSigningAlgValuesSupported());
     }
 
+    // draft-ietf-oauth-attestation-based-client-auth - Attestation-Based Client Authentication
+    if (authorizationServerConfiguration.hasClientAttestationSigningAlgValuesSupported()) {
+      map.put(
+          "client_attestation_signing_alg_values_supported",
+          authorizationServerConfiguration.clientAttestationSigningAlgValuesSupported());
+    }
+    if (authorizationServerConfiguration.hasClientAttestationPopSigningAlgValuesSupported()) {
+      map.put(
+          "client_attestation_pop_signing_alg_values_supported",
+          authorizationServerConfiguration.clientAttestationPopSigningAlgValuesSupported());
+    }
+
     // RFC 8414 - Introspection and Revocation endpoints
     if (authorizationServerConfiguration.hasIntrospectionEndpoint()) {
       map.put("introspection_endpoint", authorizationServerConfiguration.introspectionEndpoint());
