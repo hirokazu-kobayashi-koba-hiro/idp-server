@@ -23,37 +23,29 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
 import org.idp.server.core.openid.token.tokenrevocation.TokenRevocationRequestParameters;
 import org.idp.server.platform.http.BasicAuth;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
 
   Tenant tenant;
-  String authorizationHeaders;
-  Map<String, String[]> params;
-  String clientCert;
+  HttpRequestInputs inputs;
 
-  public TokenRevocationRequest(
-      Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
+  public TokenRevocationRequest(Tenant tenant, HttpRequestInputs inputs) {
     this.tenant = tenant;
-    this.authorizationHeaders = authorizationHeaders;
-    this.params = params;
-  }
-
-  public TokenRevocationRequest setClientCert(String clientCert) {
-    this.clientCert = clientCert;
-    return this;
+    this.inputs = inputs;
   }
 
   public String getAuthorizationHeaders() {
-    return authorizationHeaders;
+    return inputs.authorizationHeader();
   }
 
   public Map<String, String[]> getParams() {
-    return params;
+    return inputs.bodyParameters();
   }
 
   public String getClientCert() {
-    return clientCert;
+    return inputs.tlsClientCertPem();
   }
 
   public Tenant tenant() {
@@ -63,6 +55,7 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
   public RequestedClientId clientId() {
     TokenRevocationRequestParameters parameters = toParameters();
 
+    String authorizationHeaders = inputs.authorizationHeader();
     if (isBasicAuth(authorizationHeaders)) {
       BasicAuth basicAuth = convertBasicAuth(authorizationHeaders);
       return new RequestedClientId(basicAuth.username());
@@ -76,6 +69,7 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
   }
 
   public ClientSecretBasic clientSecretBasic() {
+    String authorizationHeaders = inputs.authorizationHeader();
     if (isBasicAuth(authorizationHeaders)) {
       return new ClientSecretBasic(convertBasicAuth(authorizationHeaders));
     }
@@ -83,10 +77,10 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
   }
 
   public TokenRevocationRequestParameters toParameters() {
-    return new TokenRevocationRequestParameters(params);
+    return new TokenRevocationRequestParameters(inputs.bodyParameters());
   }
 
   public ClientCert toClientCert() {
-    return new ClientCert(clientCert);
+    return new ClientCert(inputs.tlsClientCertPem());
   }
 }

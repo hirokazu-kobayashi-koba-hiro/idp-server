@@ -19,10 +19,48 @@ package org.idp.server.adapters.springboot.application.restapi;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
 import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.type.RequestAttributes;
 import org.springframework.util.MultiValueMap;
 
 public interface ParameterTransformable extends AuthorizationHeaderHandlerable {
+
+  /**
+   * Captures the full HTTP input surface of the current request as {@link HttpRequestInputs}.
+   *
+   * <p>All headers are captured (multi-valued, case-insensitive), so protocol layers can consume
+   * new header-based specs without additional Controller wiring. The {@code httpUri} is resolved
+   * via {@link #resolveRequestUrl(HttpServletRequest)} so DPoP {@code htu} verification sees the
+   * client-facing URL even behind a reverse proxy.
+   *
+   * @param body form-urlencoded body of the request, {@code null} for body-less requests (e.g. GET
+   *     userinfo)
+   * @param request current servlet request
+   */
+  default HttpRequestInputs transformInputs(
+      MultiValueMap<String, String> body, HttpServletRequest request) {
+    return new HttpRequestInputs(
+        request.getHeader("Authorization"),
+        transform(body),
+        extractHeaders(request),
+        request.getHeader("x-ssl-cert"),
+        request.getMethod(),
+        resolveRequestUrl(request));
+  }
+
+  /** Extracts all HTTP headers with their full value lists (repeated headers preserved). */
+  default Map<String, List<String>> extractHeaders(HttpServletRequest request) {
+    Map<String, List<String>> headers = new LinkedHashMap<>();
+    Enumeration<String> names = request.getHeaderNames();
+    if (names == null) {
+      return headers;
+    }
+    while (names.hasMoreElements()) {
+      String name = names.nextElement();
+      headers.put(name, Collections.list(request.getHeaders(name)));
+    }
+    return headers;
+  }
 
   default Map<String, String[]> transform(MultiValueMap<String, String> request) {
     HashMap<String, String[]> map = new HashMap<>();
@@ -117,20 +155,5 @@ public interface ParameterTransformable extends AuthorizationHeaderHandlerable {
     }
     int comma = headerValue.indexOf(',');
     return (comma >= 0 ? headerValue.substring(0, comma) : headerValue).trim();
-  }
-
-  /**
-   * Extracts all values of the {@code DPoP} HTTP header.
-   *
-   * <p>The single-header invariant (RFC 9449 Section 4.3 Check 1) is enforced in the core layer by
-   * {@code DPoPHeaderValidator}. This method only handles the HTTP transport concern of enumerating
-   * header values.
-   */
-  default List<String> extractDPoPProofHeaders(HttpServletRequest request) {
-    Enumeration<String> headers = request.getHeaders("DPoP");
-    if (headers == null) {
-      return List.of();
-    }
-    return Collections.list(headers);
   }
 }

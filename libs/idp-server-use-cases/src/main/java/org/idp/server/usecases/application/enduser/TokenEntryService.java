@@ -16,8 +16,6 @@
 
 package org.idp.server.usecases.application.enduser;
 
-import java.util.List;
-import java.util.Map;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.UserStatus;
@@ -37,6 +35,7 @@ import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntro
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationResponse;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -63,18 +62,11 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
 
   public TokenRequestResponse request(
       TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      String authorizationHeader,
-      String clientCert,
-      List<String> dpopProofHeaders,
+      HttpRequestInputs inputs,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    TokenRequest tokenRequest = new TokenRequest(tenant, authorizationHeader, params);
-    tokenRequest.setClientCert(clientCert);
-    tokenRequest.setDPoPProofHeaders(dpopProofHeaders);
-    tokenRequest.setHttpMethod(requestAttributes.optValueAsString("action", "POST"));
-    tokenRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
+    TokenRequest tokenRequest = new TokenRequest(tenant, inputs);
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 
@@ -94,15 +86,12 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
   @Transaction(readOnly = true)
   public TokenIntrospectionResponse inspect(
       TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      String authorizationHeader,
-      String clientCert,
+      HttpRequestInputs inputs,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     TokenIntrospectionRequest tokenIntrospectionRequest =
-        new TokenIntrospectionRequest(tenant, authorizationHeader, params);
-    tokenIntrospectionRequest.setClientCert(clientCert);
+        new TokenIntrospectionRequest(tenant, inputs);
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 
@@ -119,17 +108,14 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
   @Transaction(readOnly = true)
   public TokenIntrospectionResponse inspectWithVerification(
       TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      String authorizationHeader,
-      String clientCert,
+      HttpRequestInputs inputs,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    TokenIntrospectionExtensionRequest tokenIntrospectionRequest =
-        new TokenIntrospectionExtensionRequest(tenant, authorizationHeader, params);
     // RS forwarding pattern: dpop_proof / dpop_htm / dpop_htu / client_cert はすべて body 渡し
     // (TokenIntrospectionExtensionRequest 内で参照される)。x-ssl-cert は RS 自身の AS 認証用 mTLS。
-    tokenIntrospectionRequest.setClientCert(clientCert);
+    TokenIntrospectionExtensionRequest tokenIntrospectionRequest =
+        new TokenIntrospectionExtensionRequest(tenant, inputs);
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 
@@ -156,15 +142,11 @@ public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
 
   public TokenRevocationResponse revoke(
       TenantIdentifier tenantIdentifier,
-      Map<String, String[]> request,
-      String authorizationHeader,
-      String clientCert,
+      HttpRequestInputs inputs,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    TokenRevocationRequest revocationRequest =
-        new TokenRevocationRequest(tenant, authorizationHeader, request);
-    revocationRequest.setClientCert(clientCert);
+    TokenRevocationRequest revocationRequest = new TokenRevocationRequest(tenant, inputs);
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 

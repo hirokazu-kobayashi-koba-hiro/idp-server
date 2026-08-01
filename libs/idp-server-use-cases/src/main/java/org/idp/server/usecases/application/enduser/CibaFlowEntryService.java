@@ -36,6 +36,7 @@ import org.idp.server.core.openid.identity.hint.UserHintResolvers;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -88,14 +89,11 @@ public class CibaFlowEntryService implements CibaFlowApi {
 
   public CibaRequestResponse request(
       TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      String authorizationHeader,
-      String clientCert,
+      HttpRequestInputs inputs,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    CibaRequest cibaRequest = new CibaRequest(tenant, authorizationHeader, params);
-    cibaRequest.setClientCert(clientCert);
+    CibaRequest cibaRequest = new CibaRequest(tenant, inputs);
 
     CibaProtocol cibaProtocol = cibaProtocols.get(tenant.authorizationProvider());
     CibaIssueResponse issueResponse =

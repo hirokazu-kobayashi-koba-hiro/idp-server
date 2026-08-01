@@ -31,6 +31,7 @@ import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntro
 import org.idp.server.core.openid.token.tokenintrospection.verifier.DPoPBindingVerifier;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.exception.UnauthorizedException;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.organization.OrganizationRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -58,18 +59,15 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
 
   @Transaction(readOnly = true)
   public Pairs<User, OAuthToken> authenticate(
-      TenantIdentifier tenantIdentifier,
-      String authorizationHeader,
-      String clientCert,
-      List<String> dpopProofHeaders,
-      String httpMethod,
-      String httpUri) {
+      TenantIdentifier tenantIdentifier, HttpRequestInputs inputs) {
+    List<String> dpopProofHeaders = inputs.headerValues("DPoP");
     new DPoPHeaderValidator(dpopProofHeaders).validate();
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     TokenIntrospectionInternalRequest tokenIntrospectionInternalRequest =
-        new TokenIntrospectionInternalRequest(tenant, authorizationHeader, clientCert);
+        new TokenIntrospectionInternalRequest(
+            tenant, inputs.authorizationHeader(), inputs.tlsClientCertPem());
 
     TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
 
@@ -82,10 +80,10 @@ public class UserAuthenticationEntryService implements UserAuthenticationApi {
 
     OAuthToken oAuthToken = introspectionResponse.oAuthToken();
 
-    String dpopProof =
-        (dpopProofHeaders == null || dpopProofHeaders.isEmpty()) ? null : dpopProofHeaders.get(0);
+    String dpopProof = dpopProofHeaders.isEmpty() ? null : dpopProofHeaders.get(0);
     DPoPBindingVerifier dpopBindingVerifier = new DPoPBindingVerifier();
-    dpopBindingVerifier.verify(new DPoPProof(dpopProof), httpMethod, httpUri, oAuthToken);
+    dpopBindingVerifier.verify(
+        new DPoPProof(dpopProof), inputs.httpMethod(), inputs.httpUri(), oAuthToken);
 
     if (introspectionResponse.isClientCredentialsGrant()) {
       return Pairs.of(User.notFound(), oAuthToken);

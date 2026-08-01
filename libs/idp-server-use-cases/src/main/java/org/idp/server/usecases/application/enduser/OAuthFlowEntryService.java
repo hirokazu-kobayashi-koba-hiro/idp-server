@@ -68,6 +68,7 @@ import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.session.SessionValidationResult;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -137,17 +138,10 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
   @Override
   public OAuthPushedRequestResponse push(
       TenantIdentifier tenantIdentifier,
-      Map<String, String[]> params,
-      String authorizationHeader,
-      String clientCert,
-      List<String> dpopProofHeaders,
+      HttpRequestInputs inputs,
       RequestAttributes requestAttributes) {
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    OAuthPushedRequest pushedRequest = new OAuthPushedRequest(tenant, authorizationHeader, params);
-    pushedRequest.setClientCert(clientCert);
-    pushedRequest.setDPoPProofHeaders(dpopProofHeaders);
-    pushedRequest.setHttpMethod(requestAttributes.optValueAsString("action", "POST"));
-    pushedRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
+    OAuthPushedRequest pushedRequest = new OAuthPushedRequest(tenant, inputs);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 

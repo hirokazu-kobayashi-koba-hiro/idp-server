@@ -21,27 +21,24 @@ import org.idp.server.core.openid.oauth.dpop.DPoPProof;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class UserinfoRequest implements AuthorizationHeaderHandlerable {
   Tenant tenant;
-  String authorizationHeaders;
-  String clientCert;
-  List<String> dpopProofHeaders;
-  String httpMethod;
-  String httpUri;
+  HttpRequestInputs inputs;
 
-  public UserinfoRequest(Tenant tenant, String authorizationHeaders) {
+  public UserinfoRequest(Tenant tenant, HttpRequestInputs inputs) {
     this.tenant = tenant;
-    this.authorizationHeaders = authorizationHeaders;
+    this.inputs = inputs;
   }
 
   public String getAuthorizationHeaders() {
-    return authorizationHeaders;
+    return inputs.authorizationHeader();
   }
 
   public String getClientCert() {
-    return clientCert;
+    return inputs.tlsClientCertPem();
   }
 
   public Tenant tenant() {
@@ -49,50 +46,31 @@ public class UserinfoRequest implements AuthorizationHeaderHandlerable {
   }
 
   public AccessTokenEntity toAccessToken() {
-    return extractAccessToken(authorizationHeaders);
+    return extractAccessToken(inputs.authorizationHeader());
   }
 
   public ClientCert toClientCert() {
-    return new ClientCert(clientCert);
-  }
-
-  public UserinfoRequest setClientCert(String clientCert) {
-    this.clientCert = clientCert;
-    return this;
+    return new ClientCert(inputs.tlsClientCertPem());
   }
 
   public DPoPProof dpopProof() {
-    if (dpopProofHeaders == null || dpopProofHeaders.isEmpty()) {
+    List<String> dpopProofHeaders = dpopProofHeaders();
+    if (dpopProofHeaders.isEmpty()) {
       return new DPoPProof();
     }
     return new DPoPProof(dpopProofHeaders.get(0));
   }
 
   public List<String> dpopProofHeaders() {
-    return dpopProofHeaders;
-  }
-
-  public UserinfoRequest setDPoPProofHeaders(List<String> dpopProofHeaders) {
-    this.dpopProofHeaders = dpopProofHeaders;
-    return this;
+    return inputs.headerValues("DPoP");
   }
 
   public String httpMethod() {
-    return httpMethod != null ? httpMethod : "GET";
-  }
-
-  public UserinfoRequest setHttpMethod(String httpMethod) {
-    this.httpMethod = httpMethod;
-    return this;
+    return inputs.httpMethod() != null ? inputs.httpMethod() : "GET";
   }
 
   public String httpUri() {
-    return httpUri != null ? httpUri : "";
-  }
-
-  public UserinfoRequest setHttpUri(String httpUri) {
-    this.httpUri = httpUri;
-    return this;
+    return inputs.httpUri() != null ? inputs.httpUri() : "";
   }
 
   public boolean hasToken() {

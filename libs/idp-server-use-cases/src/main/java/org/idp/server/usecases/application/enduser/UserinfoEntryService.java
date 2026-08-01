@@ -16,7 +16,6 @@
 
 package org.idp.server.usecases.application.enduser;
 
-import java.util.List;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
@@ -29,6 +28,7 @@ import org.idp.server.core.openid.userinfo.handler.UserinfoDelegate;
 import org.idp.server.core.openid.userinfo.handler.io.UserinfoRequest;
 import org.idp.server.core.openid.userinfo.handler.io.UserinfoRequestResponse;
 import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
@@ -62,17 +62,11 @@ public class UserinfoEntryService implements UserinfoApi, UserinfoDelegate {
 
   public UserinfoRequestResponse request(
       TenantIdentifier tenantIdentifier,
-      String authorizationHeader,
-      String clientCert,
-      List<String> dpopProofHeaders,
+      HttpRequestInputs inputs,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, authorizationHeader);
-    userinfoRequest.setClientCert(clientCert);
-    userinfoRequest.setDPoPProofHeaders(dpopProofHeaders);
-    userinfoRequest.setHttpMethod(requestAttributes.optValueAsString("action", "GET"));
-    userinfoRequest.setHttpUri(requestAttributes.optValueAsString("request_url", ""));
+    UserinfoRequest userinfoRequest = new UserinfoRequest(tenant, inputs);
 
     UserinfoProtocol userinfoProtocol = userinfoProtocols.get(tenant.authorizationProvider());
 

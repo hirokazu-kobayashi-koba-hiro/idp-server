@@ -25,63 +25,37 @@ import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
 import org.idp.server.platform.http.BasicAuth;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
 
   Tenant tenant;
-  String authorizationHeaders;
-  Map<String, String[]> params;
-  String clientCert;
-  List<String> dpopProofHeaders;
-  String httpMethod;
-  String httpUri;
+  HttpRequestInputs inputs;
 
-  public OAuthPushedRequest(
-      Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
+  public OAuthPushedRequest(Tenant tenant, HttpRequestInputs inputs) {
     this.tenant = tenant;
-    this.authorizationHeaders = authorizationHeaders;
-    this.params = params;
-  }
-
-  public OAuthPushedRequest setClientCert(String clientCert) {
-    this.clientCert = clientCert;
-    return this;
-  }
-
-  public OAuthPushedRequest setDPoPProofHeaders(List<String> dpopProofHeaders) {
-    this.dpopProofHeaders = dpopProofHeaders;
-    return this;
+    this.inputs = inputs;
   }
 
   public List<String> dpopProofHeaders() {
-    return dpopProofHeaders;
-  }
-
-  public OAuthPushedRequest setHttpMethod(String httpMethod) {
-    this.httpMethod = httpMethod;
-    return this;
+    return inputs.headerValues("DPoP");
   }
 
   public String httpMethod() {
-    return httpMethod != null ? httpMethod : "POST";
-  }
-
-  public OAuthPushedRequest setHttpUri(String httpUri) {
-    this.httpUri = httpUri;
-    return this;
+    return inputs.httpMethod() != null ? inputs.httpMethod() : "POST";
   }
 
   public String httpUri() {
-    return httpUri != null ? httpUri : "";
+    return inputs.httpUri() != null ? inputs.httpUri() : "";
   }
 
   public Map<String, String[]> getParams() {
-    return params;
+    return inputs.bodyParameters();
   }
 
   public String clientCert() {
-    return clientCert;
+    return inputs.tlsClientCertPem();
   }
 
   public Tenant tenant() {
@@ -89,11 +63,11 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
   }
 
   public OAuthPushedRequestParameters toBackchannelParameters() {
-    return new OAuthPushedRequestParameters(params);
+    return new OAuthPushedRequestParameters(inputs.bodyParameters());
   }
 
   public OAuthRequestParameters toOAuthRequestParameters() {
-    return new OAuthRequestParameters(params);
+    return new OAuthRequestParameters(inputs.bodyParameters());
   }
 
   /**
@@ -116,6 +90,7 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
     if (parameters.hasClientId()) {
       return parameters.clientId();
     }
+    String authorizationHeaders = inputs.authorizationHeader();
     if (isBasicAuth(authorizationHeaders)) {
       BasicAuth basicAuth = convertBasicAuth(authorizationHeaders);
       return new RequestedClientId(basicAuth.username());
@@ -135,6 +110,7 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
   }
 
   public ClientSecretBasic clientSecretBasic() {
+    String authorizationHeaders = inputs.authorizationHeader();
     if (isBasicAuth(authorizationHeaders)) {
       return new ClientSecretBasic(convertBasicAuth(authorizationHeaders));
     }
@@ -142,6 +118,6 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
   }
 
   public ClientCert toClientCert() {
-    return new ClientCert(clientCert);
+    return new ClientCert(inputs.tlsClientCertPem());
   }
 }

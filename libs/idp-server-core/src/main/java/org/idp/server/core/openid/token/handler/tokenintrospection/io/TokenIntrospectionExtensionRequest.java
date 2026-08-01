@@ -25,6 +25,7 @@ import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.token.AuthorizationHeaderHandlerable;
 import org.idp.server.core.openid.token.tokenintrospection.TokenIntrospectionRequestParameters;
 import org.idp.server.platform.http.BasicAuth;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
@@ -50,36 +51,27 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  */
 public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHandlerable {
   Tenant tenant;
-  String authorizationHeaders;
-  Map<String, String[]> params;
-  String clientCert;
+  HttpRequestInputs inputs;
 
-  public TokenIntrospectionExtensionRequest(
-      Tenant tenant, String authorizationHeaders, Map<String, String[]> params) {
+  public TokenIntrospectionExtensionRequest(Tenant tenant, HttpRequestInputs inputs) {
     this.tenant = tenant;
-    this.authorizationHeaders = authorizationHeaders;
-    this.params = params;
-  }
-
-  public TokenIntrospectionExtensionRequest setClientCert(String clientCert) {
-    this.clientCert = clientCert;
-    return this;
+    this.inputs = inputs;
   }
 
   public String getAuthorizationHeaders() {
-    return authorizationHeaders;
+    return inputs.authorizationHeader();
   }
 
   public Map<String, String[]> getParams() {
-    return params;
+    return inputs.bodyParameters();
   }
 
   public String getClientCert() {
-    return clientCert;
+    return inputs.tlsClientCertPem();
   }
 
   public TokenIntrospectionRequestParameters toParameters() {
-    return new TokenIntrospectionRequestParameters(params);
+    return new TokenIntrospectionRequestParameters(inputs.bodyParameters());
   }
 
   public Tenant tenant() {
@@ -89,6 +81,7 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
   public RequestedClientId clientId() {
     TokenIntrospectionRequestParameters parameters = toParameters();
 
+    String authorizationHeaders = inputs.authorizationHeader();
     if (isBasicAuth(authorizationHeaders)) {
       BasicAuth basicAuth = convertBasicAuth(authorizationHeaders);
       return new RequestedClientId(basicAuth.username());
@@ -102,6 +95,7 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
   }
 
   public ClientSecretBasic clientSecretBasic() {
+    String authorizationHeaders = inputs.authorizationHeader();
     if (isBasicAuth(authorizationHeaders)) {
       return new ClientSecretBasic(convertBasicAuth(authorizationHeaders));
     }
@@ -110,19 +104,19 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
 
   public String token() {
     if (hasToken()) {
-      return params.get("token")[0];
+      return inputs.bodyParameters().get("token")[0];
     }
     return "";
   }
 
   public boolean hasToken() {
-    return params.containsKey("token");
+    return inputs.bodyParameters().containsKey("token");
   }
 
   public Scopes scopes() {
 
     if (hasScope()) {
-      String scopes = params.get("scope")[0];
+      String scopes = inputs.bodyParameters().get("scope")[0];
 
       return new Scopes(scopes);
     }
@@ -130,13 +124,13 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
   }
 
   public boolean hasScope() {
-    return params.containsKey("scope");
+    return inputs.bodyParameters().containsKey("scope");
   }
 
   public ClientCert clientCertForTokenBinding() {
 
     if (hasClientCertForTokenBinding()) {
-      String clientCert = params.get("client_cert")[0];
+      String clientCert = inputs.bodyParameters().get("client_cert")[0];
       return new ClientCert(clientCert);
     }
 
@@ -144,11 +138,11 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
   }
 
   public boolean hasClientCertForTokenBinding() {
-    return params.containsKey("client_cert");
+    return inputs.bodyParameters().containsKey("client_cert");
   }
 
   public ClientCert clientCertFormMtls() {
-    return new ClientCert(clientCert);
+    return new ClientCert(inputs.tlsClientCertPem());
   }
 
   /**
@@ -160,6 +154,7 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
    * introspection endpoint), which is not what we want to verify here.
    */
   public DPoPProof dpopProof() {
+    Map<String, String[]> params = inputs.bodyParameters();
     if (!params.containsKey("dpop_proof")) {
       return new DPoPProof();
     }
@@ -176,6 +171,7 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
    * to {@code POST} when not provided (typical for fresh proofs).
    */
   public String httpMethod() {
+    Map<String, String[]> params = inputs.bodyParameters();
     if (params.containsKey("dpop_htm")) {
       String value = params.get("dpop_htm")[0];
       if (value != null && !value.isEmpty()) {
@@ -191,6 +187,7 @@ public class TokenIntrospectionExtensionRequest implements AuthorizationHeaderHa
    * provided.
    */
   public String httpUri() {
+    Map<String, String[]> params = inputs.bodyParameters();
     if (params.containsKey("dpop_htu")) {
       String value = params.get("dpop_htu")[0];
       if (value != null && !value.isEmpty()) {

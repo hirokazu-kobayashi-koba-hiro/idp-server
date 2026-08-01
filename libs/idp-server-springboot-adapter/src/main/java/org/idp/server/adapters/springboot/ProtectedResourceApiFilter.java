@@ -35,6 +35,7 @@ import org.idp.server.core.openid.token.tokenintrospection.exception.TokenInvali
 import org.idp.server.platform.exception.NotFoundException;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.exception.UnauthorizedException;
+import org.idp.server.platform.http.HttpRequestInputs;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.Pairs;
@@ -59,23 +60,13 @@ public class ProtectedResourceApiFilter extends OncePerRequestFilter
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
 
-    String authorization = request.getHeader("Authorization");
-    String clientCert = request.getHeader("x-ssl-cert");
-    List<String> dpopProofHeaders = extractDPoPProofHeaders(request);
-    String httpMethod = request.getMethod();
-    String httpUri = resolveRequestUrl(request);
-    String authScheme = resolveAuthScheme(authorization);
+    HttpRequestInputs inputs = transformInputs(null, request);
+    String authScheme = resolveAuthScheme(inputs.authorizationHeader());
 
     try {
       TenantIdentifier adminTenantIdentifier = extractTenantIdentifier(request);
       Pairs<User, OAuthToken> result =
-          userAuthenticationApi.authenticate(
-              adminTenantIdentifier,
-              authorization,
-              clientCert,
-              dpopProofHeaders,
-              httpMethod,
-              httpUri);
+          userAuthenticationApi.authenticate(adminTenantIdentifier, inputs);
       User user = result.getLeft();
       OAuthToken oAuthToken = result.getRight();
 
