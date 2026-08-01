@@ -85,11 +85,12 @@ public class CibaRequestHandler {
       CibaGrantRepository cibaGrantRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      ClientAuthenticationHandler clientAuthenticationHandler) {
     this.backchannelAuthenticationRequestRepository = backchannelAuthenticationRequestRepository;
     this.cibaGrantRepository = cibaGrantRepository;
     this.contextCreators = new CibaContextCreators();
-    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
+    this.clientAuthenticationHandler = clientAuthenticationHandler;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.verifier = new CibaRequestVerifier();

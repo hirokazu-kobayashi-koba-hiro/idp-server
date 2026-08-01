@@ -47,13 +47,14 @@ public class TokenRevocationHandler {
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      ClientAuthenticationHandler clientAuthenticationHandler) {
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
-    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
+    this.clientAuthenticationHandler = clientAuthenticationHandler;
   }
 
   public TokenRevocationResponse handle(TokenRevocationRequest request) {
