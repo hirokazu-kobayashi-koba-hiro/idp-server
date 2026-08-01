@@ -18,6 +18,8 @@ package org.idp.server.core.openid.oauth.io;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.request.OAuthPushedRequestParameters;
 import org.idp.server.core.openid.oauth.request.OAuthRequestParameters;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
@@ -40,6 +42,30 @@ public class OAuthPushedRequest implements AuthorizationHeaderHandlerable {
 
   public List<String> dpopProofHeaders() {
     return inputs.headerValues("DPoP");
+  }
+
+  public List<String> clientAttestationHeaders() {
+    return inputs.headerValues(ClientAttestationJwt.HEADER_NAME);
+  }
+
+  public List<String> clientAttestationPopHeaders() {
+    return inputs.headerValues(ClientAttestationPopJwt.HEADER_NAME);
+  }
+
+  public ClientAttestationJwt toClientAttestationJwt() {
+    List<String> headers = clientAttestationHeaders();
+    if (headers.isEmpty()) {
+      return new ClientAttestationJwt();
+    }
+    return new ClientAttestationJwt(headers.get(0));
+  }
+
+  public ClientAttestationPopJwt toClientAttestationPopJwt() {
+    List<String> headers = clientAttestationPopHeaders();
+    if (headers.isEmpty()) {
+      return new ClientAttestationPopJwt();
+    }
+    return new ClientAttestationPopJwt(headers.get(0));
   }
 
   public String httpMethod() {

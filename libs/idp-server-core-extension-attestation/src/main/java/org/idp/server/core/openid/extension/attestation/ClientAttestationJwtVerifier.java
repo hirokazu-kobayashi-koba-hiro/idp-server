@@ -1,0 +1,197 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.core.openid.extension.attestation;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
+import org.idp.server.platform.date.SystemDateTime;
+import org.idp.server.platform.jose.JoseContext;
+import org.idp.server.platform.jose.JoseHandler;
+import org.idp.server.platform.jose.JoseInvalidException;
+import org.idp.server.platform.jose.JsonWebKey;
+import org.idp.server.platform.jose.JsonWebKeyInvalidException;
+import org.idp.server.platform.jose.JsonWebSignatureHeader;
+import org.idp.server.platform.jose.JsonWebTokenClaims;
+import org.idp.server.platform.jose.JwkParser;
+import org.idp.server.platform.jose.JwtClockSkewException;
+import org.idp.server.platform.jose.JwtClockSkewValidator;
+import org.idp.server.platform.json.JsonConverter;
+
+/**
+ * Client Attestation JWT Verifier (draft-ietf-oauth-attestation-based-client-auth-10 Section 7.1).
+ *
+ * <p>Verifies the JWT conveyed by the {@code OAuth-Client-Attestation} header:
+ *
+ * <ol>
+ *   <li>The value is a single well-formed JWT
+ *   <li>The signature verifies with a trusted Client Attester key ({@code client_attestation_jwks}
+ *       of the client configuration); {@code alg: none} and MAC-protected JWTs are rejected
+ *   <li>The {@code typ} JOSE header has the value {@code oauth-client-attestation+jwt}
+ *   <li>The {@code alg} is in {@code client_attestation_signing_alg_values_supported} (if
+ *       configured)
+ *   <li>The {@code sub} claim equals the client_id of the authenticating client
+ *   <li>The {@code exp} claim is present and the JWT is not expired; {@code iat}/{@code nbf} clock
+ *       skew is bounded
+ *   <li>The {@code cnf} claim carries the Client Instance Key in {@code jwk} representation without
+ *       private key material
+ * </ol>
+ */
+class ClientAttestationJwtVerifier {
+
+  static final String ATTESTATION_JWT_TYPE = "oauth-client-attestation+jwt";
+
+  BackchannelRequestContext context;
+  JoseHandler joseHandler = new JoseHandler();
+
+  ClientAttestationJwtVerifier(BackchannelRequestContext context) {
+    this.context = context;
+  }
+
+  /**
+   * Verifies the Client Attestation JWT and returns the Client Instance Key bound via {@code
+   * cnf.jwk}.
+   */
+  JsonWebKey verify() {
+    JoseContext joseContext = parseAndVerifySignature();
+    throwExceptionIfInvalidType(joseContext);
+    throwExceptionIfUnsupportedAlg(joseContext);
+    throwExceptionIfInvalidSub(joseContext);
+    throwExceptionIfInvalidExp(joseContext);
+    throwExceptionIfClockSkewTooLarge(joseContext);
+    return extractClientInstanceKey(joseContext);
+  }
+
+  private JoseContext parseAndVerifySignature() {
+    ClientConfiguration clientConfiguration = context.clientConfiguration();
+    if (!clientConfiguration.hasClientAttestationJwks()) {
+      throw exception("client_attestation_jwks is not configured for the client");
+    }
+    try {
+      JoseContext joseContext =
+          joseHandler.handle(
+              context.clientAttestationJwt().value(),
+              clientConfiguration.clientAttestationJwks(),
+              clientConfiguration.clientAttestationJwks(),
+              "");
+      if (!joseContext.hasJsonWebSignature()) {
+        throw exception("client attestation jwt must be signed, alg: none is not allowed");
+      }
+      if (joseContext.isSymmetricKey()) {
+        throw exception(
+            "client attestation jwt with MAC is not supported, use an asymmetric signature");
+      }
+      joseContext.verifySignature();
+      return joseContext;
+    } catch (JoseInvalidException e) {
+      throw exception("client attestation jwt validation failed: " + e.getMessage(), e);
+    }
+  }
+
+  private void throwExceptionIfInvalidType(JoseContext joseContext) {
+    JsonWebSignatureHeader header = joseContext.jsonWebSignature().header();
+    if (!header.hasType() || !ATTESTATION_JWT_TYPE.equals(header.type())) {
+      throw exception(
+          String.format(
+              "client attestation jwt typ header must be '%s', but was: %s",
+              ATTESTATION_JWT_TYPE, header.hasType() ? header.type() : "null"));
+    }
+  }
+
+  private void throwExceptionIfUnsupportedAlg(JoseContext joseContext) {
+    List<String> supportedAlgorithms =
+        context.serverConfiguration().clientAttestationSigningAlgValuesSupported();
+    String algorithm = joseContext.jsonWebSignature().algorithm();
+    if (!supportedAlgorithms.isEmpty() && !supportedAlgorithms.contains(algorithm)) {
+      throw exception(
+          String.format(
+              "client attestation jwt alg '%s' is not in client_attestation_signing_alg_values_supported: %s",
+              algorithm, supportedAlgorithms));
+    }
+  }
+
+  // hasXxx() only checks key presence; a JSON null value passes it, so the getter results are
+  // null-checked as well.
+  private void throwExceptionIfInvalidSub(JoseContext joseContext) {
+    JsonWebTokenClaims claims = joseContext.claims();
+    String sub = claims.getSub();
+    if (sub == null || sub.isEmpty()) {
+      throw exception("client attestation jwt must contain sub claim");
+    }
+    if (!sub.equals(context.requestedClientId().value())) {
+      throw exception("client attestation jwt sub claim must be the client_id of the client");
+    }
+  }
+
+  private void throwExceptionIfInvalidExp(JoseContext joseContext) {
+    JsonWebTokenClaims claims = joseContext.claims();
+    if (claims.getExp() == null) {
+      throw exception("client attestation jwt must contain exp claim");
+    }
+    if (claims.getExp().before(new Date(SystemDateTime.currentEpochMilliSecond()))) {
+      throw exception("client attestation jwt is expired");
+    }
+  }
+
+  private void throwExceptionIfClockSkewTooLarge(JoseContext joseContext) {
+    try {
+      JwtClockSkewValidator.validateIatNbf(joseContext.claims());
+    } catch (JwtClockSkewException e) {
+      throw exception("client attestation jwt " + e.getMessage());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private JsonWebKey extractClientInstanceKey(JoseContext joseContext) {
+    Object cnf = joseContext.claims().payload().get("cnf");
+    if (!(cnf instanceof Map)) {
+      throw exception("client attestation jwt must contain cnf claim");
+    }
+    Object jwk = ((Map<String, Object>) cnf).get("jwk");
+    if (!(jwk instanceof Map)) {
+      throw exception("client attestation jwt cnf claim must contain a jwk representation");
+    }
+    try {
+      JsonWebKey clientInstanceKey = JwkParser.parse(JsonConverter.snakeCaseInstance().write(jwk));
+      if (clientInstanceKey.isPrivate()) {
+        throw exception("client attestation jwt cnf.jwk must not contain a private key");
+      }
+      return clientInstanceKey;
+    } catch (JsonWebKeyInvalidException e) {
+      throw exception("client attestation jwt cnf.jwk is invalid: " + e.getMessage(), e);
+    }
+  }
+
+  private ClientUnAuthorizedException exception(String message) {
+    return new ClientUnAuthorizedException(
+        ClientAuthenticationType.attest_jwt_client_auth.name(),
+        context.requestedClientId(),
+        message);
+  }
+
+  private ClientUnAuthorizedException exception(String message, Throwable cause) {
+    return new ClientUnAuthorizedException(
+        ClientAuthenticationType.attest_jwt_client_auth.name(),
+        context.requestedClientId(),
+        message,
+        cause);
+  }
+}
