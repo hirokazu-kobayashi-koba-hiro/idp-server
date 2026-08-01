@@ -22,10 +22,11 @@ import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAu
 /**
  * Validates the Client Attestation HTTP request header presence rules.
  *
- * <p>Per draft-ietf-oauth-attestation-based-client-auth-10 Section 6, there is precisely one {@code
- * OAuth-Client-Attestation} HTTP request header field and precisely one {@code
- * OAuth-Client-Attestation-PoP} HTTP request header field in a request that uses Attestation-Based
- * Client Authentication. This validator rejects requests carrying more than one of either header.
+ * <p>Per draft-ietf-oauth-attestation-based-client-auth-10 Section 7.1 (rule 1) and Section 7.2
+ * (rule 1), there is precisely one {@code OAuth-Client-Attestation} HTTP request header field and
+ * precisely one {@code OAuth-Client-Attestation-PoP} HTTP request header field in a request that
+ * uses Attestation-Based Client Authentication. This validator rejects requests carrying more than
+ * one of either header.
  *
  * <p>Absence of the headers is accepted here: the headers are only required when the client
  * authenticates with {@code attest_jwt_client_auth}, which is enforced by the authenticator, not by
@@ -49,16 +50,19 @@ public class ClientAttestationHeaderValidator {
    *     header field
    */
   public void validate() {
-    throwExceptionIfMultipleHeaders(attestationHeaderValues, ClientAttestationJwt.HEADER_NAME);
-    throwExceptionIfMultipleHeaders(popHeaderValues, ClientAttestationPopJwt.HEADER_NAME);
+    throwExceptionIfMultipleHeaders(
+        attestationHeaderValues, ClientAttestationJwt.HEADER_NAME, "Section 7.1");
+    throwExceptionIfMultipleHeaders(
+        popHeaderValues, ClientAttestationPopJwt.HEADER_NAME, "Section 7.2");
   }
 
-  void throwExceptionIfMultipleHeaders(List<String> headerValues, String headerName) {
+  void throwExceptionIfMultipleHeaders(
+      List<String> headerValues, String headerName, String section) {
     if (headerValues != null && headerValues.size() > 1) {
       throw new ClientUnAuthorizedException(
           String.format(
-              "request contains multiple %s headers (draft-ietf-oauth-attestation-based-client-auth Section 6)",
-              headerName));
+              "request contains multiple %s headers (draft-ietf-oauth-attestation-based-client-auth %s)",
+              headerName, section));
     }
   }
 }
