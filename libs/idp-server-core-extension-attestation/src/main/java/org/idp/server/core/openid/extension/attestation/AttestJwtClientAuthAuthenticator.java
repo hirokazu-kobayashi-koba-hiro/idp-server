@@ -53,6 +53,7 @@ import org.idp.server.platform.log.LoggerWrapper;
 public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
 
   LoggerWrapper log = LoggerWrapper.getLogger(AttestJwtClientAuthAuthenticator.class);
+  ClientAttestationKeyResolver keyResolver = new StaticJwksClientAttestationKeyResolver();
 
   @Override
   public ClientAuthenticationType type() {
@@ -65,7 +66,7 @@ public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
 
     throwExceptionIfNotContainsAttestationHeaders(context);
 
-    JsonWebKey clientInstanceKey = new ClientAttestationJwtVerifier(context).verify();
+    JsonWebKey clientInstanceKey = new ClientAttestationJwtVerifier(context, keyResolver).verify();
     JsonWebSignature popJws =
         new ClientAttestationPopJwtVerifier(context, clientInstanceKey).verify();
 
