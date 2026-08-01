@@ -1,0 +1,174 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.usecases.application.enduser;
+
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.UserStatus;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.type.oauth.Subject;
+import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.core.openid.token.TokenApi;
+import org.idp.server.core.openid.token.TokenProtocol;
+import org.idp.server.core.openid.token.TokenProtocols;
+import org.idp.server.core.openid.token.TokenUserFindingDelegate;
+import org.idp.server.core.openid.token.UserEventPublisher;
+import org.idp.server.core.openid.token.handler.token.io.TokenRequest;
+import org.idp.server.core.openid.token.handler.token.io.TokenRequestResponse;
+import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionExtensionRequest;
+import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
+import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionResponse;
+import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationRequest;
+import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationResponse;
+import org.idp.server.platform.datasource.Transaction;
+import org.idp.server.platform.http.HttpRequestInputs;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
+import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.type.RequestAttributes;
+
+@Transaction
+public class TokenEntryService implements TokenApi, TokenUserFindingDelegate {
+
+  TokenProtocols tokenProtocols;
+  TenantQueryRepository tenantQueryRepository;
+  UserQueryRepository userQueryRepository;
+  UserEventPublisher eventPublisher;
+
+  public TokenEntryService(
+      TokenProtocols tokenProtocols,
+      UserQueryRepository userQueryRepository,
+      TenantQueryRepository tenantQueryRepository,
+      UserEventPublisher eventPublisher) {
+    this.tokenProtocols = tokenProtocols;
+    this.tenantQueryRepository = tenantQueryRepository;
+    this.userQueryRepository = userQueryRepository;
+    this.eventPublisher = eventPublisher;
+  }
+
+  public TokenRequestResponse request(
+      TenantIdentifier tenantIdentifier,
+      HttpRequestInputs inputs,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    TokenRequest tokenRequest = new TokenRequest(tenant, inputs);
+
+    TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
+
+    TokenRequestResponse requestResponse = tokenProtocol.request(tokenRequest, this);
+
+    if (requestResponse.isOK()) {
+      eventPublisher.publish(
+          tenant,
+          requestResponse.oAuthToken(),
+          requestResponse.securityEventType(tokenRequest),
+          requestAttributes);
+    }
+
+    return requestResponse;
+  }
+
+  @Transaction(readOnly = true)
+  public TokenIntrospectionResponse inspect(
+      TenantIdentifier tenantIdentifier,
+      HttpRequestInputs inputs,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    TokenIntrospectionRequest tokenIntrospectionRequest =
+        new TokenIntrospectionRequest(tenant, inputs);
+
+    TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
+
+    TokenIntrospectionResponse result = tokenProtocol.inspect(tokenIntrospectionRequest, this);
+
+    if (result.hasOAuthToken()) {
+      eventPublisher.publish(
+          tenant, result.oAuthToken(), result.securityEventType(), requestAttributes);
+    }
+
+    return result;
+  }
+
+  @Transaction(readOnly = true)
+  public TokenIntrospectionResponse inspectWithVerification(
+      TenantIdentifier tenantIdentifier,
+      HttpRequestInputs inputs,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    // RS forwarding pattern: dpop_proof / dpop_htm / dpop_htu / client_cert はすべて body 渡し
+    // (TokenIntrospectionExtensionRequest 内で参照される)。x-ssl-cert は RS 自身の AS 認証用 mTLS。
+    TokenIntrospectionExtensionRequest tokenIntrospectionRequest =
+        new TokenIntrospectionExtensionRequest(tenant, inputs);
+
+    TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
+
+    TokenIntrospectionResponse result =
+        tokenProtocol.inspectWithVerification(tokenIntrospectionRequest, this);
+
+    if (result.hasOAuthToken()) {
+      eventPublisher.publish(
+          tenant, result.oAuthToken(), result.securityEventType(), requestAttributes);
+    }
+
+    return result;
+  }
+
+  @Override
+  public void deleteOneshotTokenIfNeeded(TenantIdentifier tenantIdentifier, OAuthToken oAuthToken) {
+    if (oAuthToken == null || !oAuthToken.exists() || !oAuthToken.isOneshotToken()) {
+      return;
+    }
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
+    tokenProtocol.deleteOneshotTokenIfNeeded(tenant, oAuthToken);
+  }
+
+  public TokenRevocationResponse revoke(
+      TenantIdentifier tenantIdentifier,
+      HttpRequestInputs inputs,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    TokenRevocationRequest revocationRequest = new TokenRevocationRequest(tenant, inputs);
+
+    TokenProtocol tokenProtocol = tokenProtocols.get(tenant.authorizationProvider());
+
+    TokenRevocationResponse result = tokenProtocol.revoke(revocationRequest);
+
+    if (result.hasOAuthToken()) {
+      eventPublisher.publish(
+          tenant, result.oAuthToken(), result.securityEventType(), requestAttributes);
+    }
+
+    return result;
+  }
+
+  @Override
+  public User findUser(Tenant tenant, Subject subject) {
+    UserIdentifier userIdentifier = new UserIdentifier(subject.value());
+    return userQueryRepository.findById(tenant, userIdentifier);
+  }
+
+  @Override
+  public UserStatus findUserStatus(Tenant tenant, Subject subject) {
+    UserIdentifier userIdentifier = new UserIdentifier(subject.value());
+    return userQueryRepository.findStatusById(tenant, userIdentifier);
+  }
+}

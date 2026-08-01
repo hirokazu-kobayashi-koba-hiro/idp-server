@@ -410,6 +410,7 @@ components:
       additionalProperties: false
     OrganizationFederationConfigUpdateRequest:
       type: object
+      description: PUT は全置換です。GET で取得した完全な設定を送ってください（リクエストに含めなかったフィールドは リセットされます）。
       properties:
         type:
           type: string
@@ -420,7 +421,7 @@ components:
           description: Federation type
         sso_provider:
           type: string
-          description: SSO provider identifier
+          description: SSO provider identifier（設定の引き当てキー。全置換のため GET の値を必ず含めること）
         payload:
           type: object
           description: Federation-specific configuration payload
