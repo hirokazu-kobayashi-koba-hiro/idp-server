@@ -29,6 +29,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.hint.UserHintResolver;
 import org.idp.server.core.openid.identity.hint.UserHintResolvers;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
@@ -60,7 +61,8 @@ public class DefaultCibaProtocol implements CibaProtocol {
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
-      HttpRequestExecutor httpRequestExecutor) {
+      HttpRequestExecutor httpRequestExecutor,
+      ClientAuthenticationHandler clientAuthenticationHandler) {
 
     ClientNotificationService clientNotificationService =
         new ClientNotificationService(
@@ -73,7 +75,8 @@ public class DefaultCibaProtocol implements CibaProtocol {
             backchannelAuthenticationRequestRepository,
             cibaGrantRepository,
             authorizationServerConfigurationQueryRepository,
-            clientConfigurationQueryRepository);
+            clientConfigurationQueryRepository,
+            clientAuthenticationHandler);
     this.cibaAuthorizeHandler =
         new CibaAuthorizeHandler(
             backchannelAuthenticationRequestRepository,

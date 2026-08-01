@@ -70,6 +70,7 @@ public class TokenRequestHandler {
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      ClientAuthenticationHandler clientAuthenticationHandler,
       Map<GrantType, OAuthTokenCreationService> extensionOAuthTokenCreationServices) {
     this.oAuthTokenCreationServices =
         new OAuthTokenCreationServices(
@@ -79,7 +80,7 @@ public class TokenRequestHandler {
             oAuthTokenQueryRepository,
             authorizationGrantedRepository,
             extensionOAuthTokenCreationServices);
-    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
+    this.clientAuthenticationHandler = clientAuthenticationHandler;
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
