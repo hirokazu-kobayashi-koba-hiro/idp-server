@@ -64,6 +64,7 @@ import org.idp.server.control_plane.management.oidc.authorization.AuthorizationS
 import org.idp.server.control_plane.management.oidc.authorization.OrgAuthorizationServerManagementApi;
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.oidc.client.OrgClientManagementApi;
+import org.idp.server.control_plane.management.oidc.clientinstance.ClientInstanceManagementApi;
 import org.idp.server.control_plane.management.oidc.grant.OrgGrantManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.organization.OrganizationManagementApi;
@@ -108,6 +109,8 @@ import org.idp.server.core.openid.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.repository.*;
+import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
+import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.discovery.*;
 import org.idp.server.core.openid.federation.FederationInteractors;
 import org.idp.server.core.openid.federation.plugin.FederationDependencyContainer;
@@ -265,6 +268,7 @@ public class IdpServerApplication {
   TenantInvitationManagementApi tenantInvitationManagementApi;
   AuthorizationServerManagementApi authorizationServerManagementApi;
   ClientManagementApi clientManagementApi;
+  ClientInstanceManagementApi clientInstanceManagementApi;
   UserManagementApi userManagementApi;
   AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi;
   AuthenticationPolicyConfigurationManagementApi authenticationPolicyConfigurationManagementApi;
@@ -1056,6 +1060,16 @@ public class IdpServerApplication {
             ClientManagementApi.class,
             databaseTypeProvider);
 
+    this.clientInstanceManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new ClientInstanceManagementEntryService(
+                tenantQueryRepository,
+                applicationComponentContainer.resolve(ClientInstanceCommandRepository.class),
+                applicationComponentContainer.resolve(ClientInstanceQueryRepository.class),
+                auditLogPublisher),
+            ClientInstanceManagementApi.class,
+            databaseTypeProvider);
+
     this.userManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new UserManagementEntryService(
@@ -1570,6 +1584,10 @@ public class IdpServerApplication {
 
   public AuthorizationServerManagementApi authorizationServerManagementApi() {
     return authorizationServerManagementApi;
+  }
+
+  public ClientInstanceManagementApi clientInstanceManagementApi() {
+    return clientInstanceManagementApi;
   }
 
   public ClientManagementApi clientManagementApi() {
