@@ -365,6 +365,6 @@ class AttestJwtClientAuthAuthenticatorTest {
 
     ClientUnAuthorizedException exception =
         assertThrows(ClientUnAuthorizedException.class, () -> authenticator.authenticate(context));
-    assertTrue(exception.getReason().contains("client_attestation_jwks"));
+    assertTrue(exception.getReason().contains("no trusted client attestation key"));
   }
 }

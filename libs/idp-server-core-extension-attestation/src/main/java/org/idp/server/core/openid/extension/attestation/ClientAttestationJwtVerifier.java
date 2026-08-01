@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
-import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JoseContext;
@@ -29,6 +28,7 @@ import org.idp.server.platform.jose.JoseHandler;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebKey;
 import org.idp.server.platform.jose.JsonWebKeyInvalidException;
+import org.idp.server.platform.jose.JsonWebSignature;
 import org.idp.server.platform.jose.JsonWebSignatureHeader;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
 import org.idp.server.platform.jose.JwkParser;
@@ -43,9 +43,9 @@ import org.idp.server.platform.json.JsonConverter;
  *
  * <ol>
  *   <li>The value is a single well-formed JWT
- *   <li>The signature verifies with a trusted Client Attester key ({@code client_attestation_jwks}
- *       of the client configuration); {@code alg: none} and MAC-protected JWTs are rejected
  *   <li>The {@code typ} JOSE header has the value {@code oauth-client-attestation+jwt}
+ *   <li>The signature verifies with a trusted key supplied by the {@link
+ *       ClientAttestationKeyResolver}; {@code alg: none} and MAC-protected JWTs are rejected
  *   <li>The {@code alg} is in {@code client_attestation_signing_alg_values_supported} (if
  *       configured)
  *   <li>The {@code sub} claim equals the client_id of the authenticating client
@@ -60,10 +60,13 @@ class ClientAttestationJwtVerifier {
   static final String ATTESTATION_JWT_TYPE = "oauth-client-attestation+jwt";
 
   BackchannelRequestContext context;
+  ClientAttestationKeyResolver keyResolver;
   JoseHandler joseHandler = new JoseHandler();
 
-  ClientAttestationJwtVerifier(BackchannelRequestContext context) {
+  ClientAttestationJwtVerifier(
+      BackchannelRequestContext context, ClientAttestationKeyResolver keyResolver) {
     this.context = context;
+    this.keyResolver = keyResolver;
   }
 
   /**
@@ -71,8 +74,9 @@ class ClientAttestationJwtVerifier {
    * cnf.jwk}.
    */
   JsonWebKey verify() {
-    JoseContext joseContext = parseAndVerifySignature();
-    throwExceptionIfInvalidType(joseContext);
+    JsonWebSignatureHeader header = parseHeader();
+    throwExceptionIfInvalidType(header);
+    JoseContext joseContext = verifySignature(header);
     throwExceptionIfUnsupportedAlg(joseContext);
     throwExceptionIfInvalidSub(joseContext);
     throwExceptionIfInvalidExp(joseContext);
@@ -80,18 +84,22 @@ class ClientAttestationJwtVerifier {
     return extractClientInstanceKey(joseContext);
   }
 
-  private JoseContext parseAndVerifySignature() {
-    ClientConfiguration clientConfiguration = context.clientConfiguration();
-    if (!clientConfiguration.hasClientAttestationJwks()) {
-      throw exception("client_attestation_jwks is not configured for the client");
+  private JsonWebSignatureHeader parseHeader() {
+    try {
+      return JsonWebSignature.parse(context.clientAttestationJwt().value()).header();
+    } catch (JoseInvalidException e) {
+      throw exception("client attestation jwt is not a well-formed JWT: " + e.getMessage(), e);
+    }
+  }
+
+  private JoseContext verifySignature(JsonWebSignatureHeader header) {
+    String trustedJwks = keyResolver.resolveJwks(context, header);
+    if (trustedJwks == null || trustedJwks.isEmpty()) {
+      throw exception("no trusted client attestation key is available for the client");
     }
     try {
       JoseContext joseContext =
-          joseHandler.handle(
-              context.clientAttestationJwt().value(),
-              clientConfiguration.clientAttestationJwks(),
-              clientConfiguration.clientAttestationJwks(),
-              "");
+          joseHandler.handle(context.clientAttestationJwt().value(), trustedJwks, trustedJwks, "");
       if (!joseContext.hasJsonWebSignature()) {
         throw exception("client attestation jwt must be signed, alg: none is not allowed");
       }
@@ -106,8 +114,7 @@ class ClientAttestationJwtVerifier {
     }
   }
 
-  private void throwExceptionIfInvalidType(JoseContext joseContext) {
-    JsonWebSignatureHeader header = joseContext.jsonWebSignature().header();
+  private void throwExceptionIfInvalidType(JsonWebSignatureHeader header) {
     if (!header.hasType() || !ATTESTATION_JWT_TYPE.equals(header.type())) {
       throw exception(
           String.format(
