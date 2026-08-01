@@ -24,6 +24,7 @@ import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface BackchannelRequestContext {
 
@@ -52,6 +53,14 @@ public interface BackchannelRequestContext {
    */
   default ClientAttestationPopJwt clientAttestationPopJwt() {
     return new ClientAttestationPopJwt();
+  }
+
+  /**
+   * Returns the tenant of the request. Defaults to {@code null} for contexts of endpoints that do
+   * not need tenant-scoped lookups during client authentication.
+   */
+  default Tenant tenant() {
+    return null;
   }
 
   AuthorizationServerConfiguration serverConfiguration();

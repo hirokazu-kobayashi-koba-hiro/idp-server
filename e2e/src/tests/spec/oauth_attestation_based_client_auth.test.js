@@ -29,7 +29,8 @@
  *
  * Setup performed via Control Plane management APIs:
  * - clients: register a client with token_endpoint_auth_method
- *   attest_jwt_client_auth and the trusted attester JWKS (client_attestation_jwks)
+ *   attest_jwt_client_auth and the trusted attester JWKS
+ *   (extension.client_attestation_trust_source = attester_jwks)
  *
  * @see https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-10.html
  */
@@ -176,9 +177,12 @@ beforeAll(async () => {
       client_id: clientId,
       client_name: "Attestation Based Client Auth Test Client",
       token_endpoint_auth_method: "attest_jwt_client_auth",
-      client_attestation_jwks: JSON.stringify({
-        keys: [publicJwkOf(attesterEs256Jwk), publicJwkOf(attesterEs384Jwk)],
-      }),
+      extension: {
+        client_attestation_trust_source: "attester_jwks",
+        client_attestation_attester_jwks: JSON.stringify({
+          keys: [publicJwkOf(attesterEs256Jwk), publicJwkOf(attesterEs384Jwk)],
+        }),
+      },
       grant_types: ["client_credentials"],
       redirect_uris: ["http://localhost:3000/callback"],
       response_types: ["code"],
