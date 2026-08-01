@@ -68,12 +68,13 @@ public class OAuthRequestHandler {
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       RequestObjectGateway requestObjectGateway,
       RequestObjectFactories requestObjectFactories,
-      AuthorizationGrantedRepository grantedRepository) {
+      AuthorizationGrantedRepository grantedRepository,
+      ClientAuthenticationHandler clientAuthenticationHandler) {
     this.oAuthRequestContextCreators =
         new OAuthRequestContextCreators(
             requestObjectGateway, authorizationRequestRepository, requestObjectFactories);
     this.verifier = new OAuthRequestVerifier();
-    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
+    this.clientAuthenticationHandler = clientAuthenticationHandler;
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
