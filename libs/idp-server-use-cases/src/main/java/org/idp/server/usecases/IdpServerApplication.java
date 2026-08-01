@@ -122,6 +122,8 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.oauth.*;
+import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
+import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticators;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationCommandRepository;
@@ -512,6 +514,15 @@ public class IdpServerApplication {
         new OIDCSessionService(opSessionRepository, clientSessionRepository);
     OIDCSessionHandler oidcSessionHandler = new OIDCSessionHandler(sessionService);
     applicationComponentContainer.register(OIDCSessionHandler.class, oidcSessionHandler);
+
+    // Client authentication
+    // Must be registered before ProtocolContainerPluginLoader.load() as the token / OAuth / CIBA
+    // protocol providers resolve it. Assembled once so the authenticator SPI is scanned at startup
+    // only.
+    ClientAuthenticationHandler clientAuthenticationHandler =
+        new ClientAuthenticationHandler(new ClientAuthenticators(applicationComponentContainer));
+    applicationComponentContainer.register(
+        ClientAuthenticationHandler.class, clientAuthenticationHandler);
 
     ProtocolContainer protocolContainer =
         ProtocolContainerPluginLoader.load(applicationComponentContainer);

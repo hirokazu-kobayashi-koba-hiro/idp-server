@@ -51,12 +51,13 @@ public class TokenIntrospectionHandler {
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      ClientAuthenticationHandler clientAuthenticationHandler) {
     this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
-    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
+    this.clientAuthenticationHandler = clientAuthenticationHandler;
   }
 
   public TokenIntrospectionResponse handle(
