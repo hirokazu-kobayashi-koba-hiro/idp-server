@@ -87,6 +87,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
     this.clientConfiguration = clientConfiguration;
   }
 
+  @Override
   public Tenant tenant() {
     return tenant;
   }
