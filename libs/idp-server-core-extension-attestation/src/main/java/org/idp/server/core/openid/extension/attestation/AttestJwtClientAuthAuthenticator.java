@@ -39,9 +39,8 @@ import org.idp.server.platform.log.LoggerWrapper;
  * draft-ietf-oauth-attestation-based-client-auth-10:
  *
  * <ul>
- *   <li>{@code OAuth-Client-Attestation} header — Client Attestation JWT issued by a Client
- *       Attester, verified with the trusted attester keys configured as {@code
- *       client_attestation_jwks} of the client
+ *   <li>{@code OAuth-Client-Attestation} header — Client Attestation JWT, verified with the key
+ *       supplied by the resolver of the configured {@link ClientAttestationTrustSource}
  *   <li>{@code OAuth-Client-Attestation-PoP} header — proof of possession of the Client Instance
  *       Key ({@code cnf.jwk} of the Client Attestation JWT), signed by the client instance
  * </ul>
@@ -53,7 +52,11 @@ import org.idp.server.platform.log.LoggerWrapper;
 public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
 
   LoggerWrapper log = LoggerWrapper.getLogger(AttestJwtClientAuthAuthenticator.class);
-  ClientAttestationKeyResolver keyResolver = new StaticJwksClientAttestationKeyResolver();
+  ClientAttestationKeyResolvers keyResolvers;
+
+  public AttestJwtClientAuthAuthenticator(ClientAttestationKeyResolvers keyResolvers) {
+    this.keyResolvers = keyResolvers;
+  }
 
   @Override
   public ClientAuthenticationType type() {
@@ -66,7 +69,19 @@ public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
 
     throwExceptionIfNotContainsAttestationHeaders(context);
 
-    JsonWebKey clientInstanceKey = new ClientAttestationJwtVerifier(context, keyResolver).verify();
+    ClientAttestationTrustSource trustSource =
+        ClientAttestationTrustSource.of(
+            context.clientConfiguration().extensionConfiguration().clientAttestationTrustSource());
+    if (trustSource.isUndefined()) {
+      throw new ClientUnAuthorizedException(
+          ClientAuthenticationType.attest_jwt_client_auth.name(),
+          requestedClientId,
+          "client_attestation_trust_source is not configured or has an unknown value");
+    }
+    ClientAttestationKeyResolver keyResolver = keyResolvers.get(trustSource);
+
+    JsonWebKey clientInstanceKey =
+        new ClientAttestationJwtVerifier(context, keyResolver, trustSource).verify();
     JsonWebSignature popJws =
         new ClientAttestationPopJwtVerifier(context, clientInstanceKey).verify();
 

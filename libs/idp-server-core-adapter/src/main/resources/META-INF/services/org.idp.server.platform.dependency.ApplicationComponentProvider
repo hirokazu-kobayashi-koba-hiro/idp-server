@@ -66,3 +66,5 @@ org.idp.server.core.adapters.datasource.statistics.query.yearly.TenantYearlyStat
 org.idp.server.core.adapters.datasource.session.OPSessionRepositoryProvider
 org.idp.server.core.adapters.datasource.session.ClientSessionRepositoryProvider
 org.idp.server.core.adapters.datasource.system.SystemConfigurationDataSourceProvider
+org.idp.server.core.adapters.datasource.oidc.clientinstance.ClientInstanceQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.oidc.clientinstance.ClientInstanceCommandDataSourceProvider

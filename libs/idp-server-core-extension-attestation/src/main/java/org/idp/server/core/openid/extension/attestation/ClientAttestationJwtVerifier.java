@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.openid.oauth.dpop.JwkThumbprint;
+import org.idp.server.core.openid.oauth.dpop.JwkThumbprintCalculator;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JoseContext;
@@ -59,14 +61,24 @@ class ClientAttestationJwtVerifier {
 
   static final String ATTESTATION_JWT_TYPE = "oauth-client-attestation+jwt";
 
+  /**
+   * Upper bound of {@code exp - iat} accepted in the self-signed model, where the client decides
+   * the lifetime of its own Client Attestation JWT.
+   */
+  static final long SELF_SIGNED_MAX_LIFETIME_SECONDS = 24 * 60 * 60L;
+
   BackchannelRequestContext context;
   ClientAttestationKeyResolver keyResolver;
+  ClientAttestationTrustSource trustSource;
   JoseHandler joseHandler = new JoseHandler();
 
   ClientAttestationJwtVerifier(
-      BackchannelRequestContext context, ClientAttestationKeyResolver keyResolver) {
+      BackchannelRequestContext context,
+      ClientAttestationKeyResolver keyResolver,
+      ClientAttestationTrustSource trustSource) {
     this.context = context;
     this.keyResolver = keyResolver;
+    this.trustSource = trustSource;
   }
 
   /**
@@ -81,7 +93,14 @@ class ClientAttestationJwtVerifier {
     throwExceptionIfInvalidSub(joseContext);
     throwExceptionIfInvalidExp(joseContext);
     throwExceptionIfClockSkewTooLarge(joseContext);
-    return extractClientInstanceKey(joseContext);
+    JsonWebKey clientInstanceKey = extractClientInstanceKey(joseContext);
+
+    if (trustSource.isRegisteredInstanceKey()) {
+      throwExceptionIfLifetimeTooLong(joseContext);
+      throwExceptionIfCnfDoesNotMatchSigningKey(joseContext, clientInstanceKey);
+    }
+
+    return clientInstanceKey;
   }
 
   private JsonWebSignatureHeader parseHeader() {
@@ -184,6 +203,39 @@ class ClientAttestationJwtVerifier {
       return clientInstanceKey;
     } catch (JsonWebKeyInvalidException e) {
       throw exception("client attestation jwt cnf.jwk is invalid: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Self-signed model: the signing key is the Client Instance Key itself, so the {@code cnf.jwk}
+   * must be the very key the signature was verified with. Without this check a stolen Client
+   * Attestation JWT could be paired with a PoP signed by an attacker key.
+   */
+  private void throwExceptionIfCnfDoesNotMatchSigningKey(
+      JoseContext joseContext, JsonWebKey clientInstanceKey) {
+    JsonWebKey verificationKey = joseContext.jsonWebKey();
+    JwkThumbprint cnfThumbprint =
+        new JwkThumbprintCalculator(clientInstanceKey.toPublicJwk()).calculate();
+    JwkThumbprint signingThumbprint =
+        new JwkThumbprintCalculator(verificationKey.toPublicJwk()).calculate();
+    if (!cnfThumbprint.value().equals(signingThumbprint.value())) {
+      throw exception(
+          "client attestation jwt cnf.jwk must be the registered client instance key that signed it");
+    }
+  }
+
+  /** Self-signed model: the client controls exp, so the server bounds the lifetime. */
+  private void throwExceptionIfLifetimeTooLong(JoseContext joseContext) {
+    JsonWebTokenClaims claims = joseContext.claims();
+    if (claims.getIat() == null) {
+      throw exception("client attestation jwt must contain iat claim");
+    }
+    long lifetimeSeconds = (claims.getExp().getTime() - claims.getIat().getTime()) / 1000L;
+    if (lifetimeSeconds > SELF_SIGNED_MAX_LIFETIME_SECONDS) {
+      throw exception(
+          String.format(
+              "client attestation jwt lifetime (exp - iat) must not exceed %d seconds, but was: %d",
+              SELF_SIGNED_MAX_LIFETIME_SECONDS, lifetimeSeconds));
     }
   }
 

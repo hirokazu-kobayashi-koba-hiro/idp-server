@@ -35,9 +35,32 @@ public class ClientExtensionConfiguration implements JsonReadable {
   List<AvailableFederation> availableFederations;
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification-no-action";
   boolean cibaRequireRar = false;
+  String clientAttestationTrustSource;
+  String clientAttestationAttesterJwks;
   Map<String, Object> customProperties = new HashMap<>();
 
   public ClientExtensionConfiguration() {}
+
+  /**
+   * Where the Authorization Server takes its trust from when verifying a Client Attestation JWT
+   * ({@code attest_jwt_client_auth}). idp-server specific: the specification leaves trust
+   * management and key resolution out of scope.
+   */
+  public String clientAttestationTrustSource() {
+    return clientAttestationTrustSource;
+  }
+
+  /**
+   * JWKS of the trusted Client Attester, used when the trust source is {@code attester_jwks}.
+   * idp-server specific.
+   */
+  public String clientAttestationAttesterJwks() {
+    return clientAttestationAttesterJwks;
+  }
+
+  public boolean hasClientAttestationAttesterJwks() {
+    return clientAttestationAttesterJwks != null && !clientAttestationAttesterJwks.isEmpty();
+  }
 
   public Map<String, Object> customProperties() {
     return customProperties;
