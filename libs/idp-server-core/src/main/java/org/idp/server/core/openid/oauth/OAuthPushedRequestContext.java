@@ -29,6 +29,7 @@ import org.idp.server.core.openid.oauth.io.OAuthPushedRequestStatus;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.*;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class OAuthPushedRequestContext implements BackchannelRequestContext {
 
@@ -76,6 +77,11 @@ public class OAuthPushedRequestContext implements BackchannelRequestContext {
   @Override
   public boolean hasClientSecretBasic() {
     return clientSecretBasic.exists();
+  }
+
+  @Override
+  public Tenant tenant() {
+    return oAuthRequestContext.tenant();
   }
 
   @Override
