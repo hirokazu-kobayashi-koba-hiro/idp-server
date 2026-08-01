@@ -37,6 +37,7 @@ import org.idp.server.core.extension.ciba.validator.CibaNormalRequestValidator;
 import org.idp.server.core.extension.ciba.verifier.CibaRequestVerifier;
 import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationHeaderValidator;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
@@ -101,6 +102,9 @@ public class CibaRequestHandler {
 
     CibaNormalRequestValidator validator = new CibaNormalRequestValidator(request);
     validator.validate();
+    new ClientAttestationHeaderValidator(
+            request.clientAttestationHeaders(), request.clientAttestationPopHeaders())
+        .validate();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
@@ -114,6 +118,8 @@ public class CibaRequestHandler {
             tenant,
             request.clientSecretBasic(),
             request.toClientCert(),
+            request.toClientAttestationJwt(),
+            request.toClientAttestationPopJwt(),
             parameters,
             authorizationServerConfiguration,
             clientConfiguration);
