@@ -46,7 +46,9 @@
           "none"
         ]
       },
-      "default": ["code"],
+      "default": [
+        "code"
+      ],
       "description": "OPTIONAL. JSON [RFC8259] array containing a list of the OAuth 2.0 response_type values that the Client is declaring that it will restrict itself to using. If omitted, the default is that the Client will use only the code Response Type."
     },
     "grant_types": {
@@ -117,11 +119,6 @@
       "type": "string",
       "format": "jwks",
       "description": "OPTIONAL. Client's JWK Set [JWK] document, passed by value. The semantics of the jwks parameter are the same as the jwks_uri parameter, other than that the JWK Set is passed by value, rather than by reference. This parameter is intended only to be used by Clients that, for some reason, are unable to use the jwks_uri parameter, for instance, by native applications that might not have a location to host the contents of the JWK Set. If a Client can use jwks_uri, it MUST NOT use jwks. One significant downside of jwks is that it does not enable key rotation (which jwks_uri does, as described in Section 10 of OpenID Connect Core 1.0 [OpenID.Core]). The jwks_uri and jwks parameters MUST NOT be used together. The JWK Set MUST NOT contain private or symmetric key values."
-    },
-    "client_attestation_jwks": {
-      "type": "string",
-      "format": "jwks",
-      "description": "OPTIONAL. JWK Set [JWK] document holding the trusted Client Attester public keys, passed by value. Used to verify the signature of the Client Attestation JWT when the Client authenticates with attest_jwt_client_auth (OAuth 2.0 Attestation-Based Client Authentication). The JWK Set MUST NOT contain private or symmetric key values."
     },
     "sector_identifier_uri": {
       "type": "string",
@@ -271,7 +268,7 @@
       ],
       "description": "OPTIONAL. JWS [JWS] alg algorithm [JWA] that MUST be used for signing the JWT [JWT] used to authenticate the Client at the Token Endpoint for the private_key_jwt and client_secret_jwt authentication methods. All Token Requests using these authentication methods from this Client MUST be rejected, if the JWT is not signed with this algorithm. Servers SHOULD support RS256. The value none MUST NOT be used. The default, if omitted, is that any algorithm supported by the OP and the RP MAY be used."
     },
-    "default_max_age":{
+    "default_max_age": {
       "type": "integer",
       "description": "OPTIONAL. Default Maximum Authentication Age. Specifies that the End-User MUST be actively authenticated if the End-User was authenticated longer ago than the specified number of seconds. The max_age request parameter overrides this default value. If omitted, no default Maximum Authentication Age is specified."
     },
@@ -288,7 +285,7 @@
       "description": "OPTIONAL. Default requested Authentication Context Class Reference values. Array of strings that specifies the default acr values that the OP is being requested to use for processing requests from this Client, with the values appearing in order of preference. The Authentication Context Class satisfied by the authentication performed is returned as the acr Claim Value in the issued ID Token. The acr Claim is requested as a Voluntary Claim by this parameter. The acr_values_supported discovery element contains a list of the supported acr values supported by the OP. Values specified in the acr_values request parameter or an individual acr Claim request override these default values."
     },
     "initiate_login_uri": {
-     "type": "string",
+      "type": "string",
       "format": "uri",
       "description": "OPTIONAL. URI using the https scheme that a third party can use to initiate a login by the RP, as specified in Section 4 of OpenID Connect Core 1.0 [OpenID.Core]. The URI MUST accept requests via both GET and POST. The Client MUST understand the login_hint and iss parameters and SHOULD support the target_link_uri parameter."
     },
@@ -343,7 +340,12 @@
               },
               "type": {
                 "type": "string",
-                "enum": ["oauth2", "saml2", "oidc", "device"],
+                "enum": [
+                  "oauth2",
+                  "saml2",
+                  "oidc",
+                  "device"
+                ],
                 "description": "Federation type"
               },
               "sso_provider": {
@@ -380,7 +382,9 @@
                 "description": "Cache TTL in seconds for JWKS fetched from jwks_uri"
               }
             },
-            "required": ["type"]
+            "required": [
+              "type"
+            ]
           },
           "description": "OPTIONAL. List of available federation configurations"
         },
@@ -392,6 +396,19 @@
           ],
           "default": "authentication-device-notification",
           "description": "OPTIONAL. Default CIBA authentication interaction type"
+        },
+        "client_attestation_trust_source": {
+          "type": "string",
+          "enum": [
+            "registered_instance_key",
+            "attester_jwks"
+          ],
+          "description": "OPTIONAL. idp-server specific. Where the Authorization Server takes its trust from when verifying a Client Attestation JWT for attest_jwt_client_auth. OAuth 2.0 Attestation-Based Client Authentication leaves trust management and key resolution out of scope (Section 9.8), so this is a deployment choice. registered_instance_key: the Client Instance signs its own Client Attestation JWT and the server trusts the Client Instance Key registered via the client instance management API. attester_jwks: a Client Attester signs it and the server trusts client_attestation_attester_jwks. Required when the client uses attest_jwt_client_auth."
+        },
+        "client_attestation_attester_jwks": {
+          "type": "string",
+          "format": "jwks",
+          "description": "OPTIONAL. idp-server specific. JWK Set document holding the trusted Client Attester public keys, used when client_attestation_trust_source is attester_jwks. MUST NOT contain private or symmetric key values."
         }
       }
     }

@@ -22,7 +22,7 @@ import org.idp.server.platform.jose.JsonWebSignatureHeader;
 
 /**
  * Resolves the trusted Client Attester keys from the static client configuration ({@code
- * client_attestation_jwks}).
+ * client_attestation_attester_jwks}).
  *
  * <p>This is the Attester model: the client registers the JWKS of its trusted Client Attester(s)
  * beforehand, and every Client Attestation JWT of that client must be signed by one of those keys.
@@ -32,9 +32,9 @@ public class StaticJwksClientAttestationKeyResolver implements ClientAttestation
   @Override
   public String resolveJwks(BackchannelRequestContext context, JsonWebSignatureHeader header) {
     ClientConfiguration clientConfiguration = context.clientConfiguration();
-    if (!clientConfiguration.hasClientAttestationJwks()) {
+    if (!clientConfiguration.extensionConfiguration().hasClientAttestationAttesterJwks()) {
       return null;
     }
-    return clientConfiguration.clientAttestationJwks();
+    return clientConfiguration.extensionConfiguration().clientAttestationAttesterJwks();
   }
 }

@@ -62,7 +62,9 @@ class AttestJwtClientAuthAuthenticatorTest {
   static ClientConfiguration clientConfiguration;
   static AuthorizationServerConfiguration serverConfiguration;
 
-  AttestJwtClientAuthAuthenticator authenticator = new AttestJwtClientAuthAuthenticator();
+  AttestJwtClientAuthAuthenticator authenticator =
+      new AttestJwtClientAuthAuthenticator(
+          new ClientAttestationKeyResolvers(new StubClientInstanceQueryRepository()));
 
   @BeforeAll
   static void setup() throws Exception {
@@ -80,9 +82,16 @@ class AttestJwtClientAuthAuthenticatorTest {
     String attesterPublicJwks = new JWKSet(attesterKey.toPublicJWK()).toString();
     Map<String, Object> clientConfigMap =
         Map.of(
-            "client_id", CLIENT_ID,
-            "token_endpoint_auth_method", "attest_jwt_client_auth",
-            "client_attestation_jwks", attesterPublicJwks);
+            "client_id",
+            CLIENT_ID,
+            "token_endpoint_auth_method",
+            "attest_jwt_client_auth",
+            "extension",
+            Map.of(
+                "client_attestation_trust_source",
+                "attester_jwks",
+                "client_attestation_attester_jwks",
+                attesterPublicJwks));
     clientConfiguration = JSON.read(JSON.write(clientConfigMap), ClientConfiguration.class);
     serverConfiguration =
         JSON.read("{\"issuer\":\"" + ISSUER + "\"}", AuthorizationServerConfiguration.class);
@@ -339,9 +348,14 @@ class AttestJwtClientAuthAuthenticatorTest {
   void throwsWhenClientAttestationJwksIsNotConfigured() throws Exception {
     ClientConfiguration noJwksClient =
         JSON.read(
-            "{\"client_id\":\""
-                + CLIENT_ID
-                + "\",\"token_endpoint_auth_method\":\"attest_jwt_client_auth\"}",
+            JSON.write(
+                Map.of(
+                    "client_id",
+                    CLIENT_ID,
+                    "token_endpoint_auth_method",
+                    "attest_jwt_client_auth",
+                    "extension",
+                    Map.of("client_attestation_trust_source", "attester_jwks"))),
             ClientConfiguration.class);
     TokenRequestParameters parameters =
         new TokenRequestParameters(Map.of("client_id", new String[] {CLIENT_ID}));
