@@ -45,6 +45,8 @@ JSON Web Token と関連する署名・暗号化仕様です。
 | RFC 7521 | [rfc7521-assertion-framework](./client-auth/rfc7521-assertion-framework.md) | アサーションフレームワーク |
 | RFC 7522 | [rfc7522-saml-assertion](./client-auth/rfc7522-saml-assertion.md) | SAML 2.0 アサーションプロファイル |
 | RFC 7523 | [rfc7523-jwt-bearer](./client-auth/rfc7523-jwt-bearer.md) | JWT を使ったクライアント認証とグラント |
+| draft | [attestation-based-client-auth](./client-auth/attestation-based-client-auth.md) | Attestation によるクライアントインスタンス認証（策定中） |
+| draft | [attestation-based-client-auth-practice](./client-auth/attestation-based-client-auth-practice.md) | 同・実践編（モバイルアプリでの登録〜認証の実現） |
 
 ---
 
