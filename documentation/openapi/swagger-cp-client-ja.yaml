@@ -588,11 +588,6 @@ components:
             client_secret_basic, client_secret_jwt, private_key_jwt, and none, as described in Section 9 of OpenID Connect
             Core 1.0 [OpenID.Core]. Other authentication methods MAY be defined by extensions. If omitted, the default is
             client_secret_basic -- the HTTP Basic Authentication Scheme specified in Section 2.3.1 of OAuth 2.0 [RFC6749].
-        client_attestation_jwks:
-          type: string
-          description: オプション。attest_jwt_client_auth（OAuth 2.0 Attestation-Based Client Authentication）で
-            クライアント認証する際に、Client Attestation JWT の署名検証に使用する信頼済み Client Attester の公開鍵を
-            含む JWK Set [JWK] ドキュメント（値渡し）。秘密鍵や対称鍵を含めてはならない。
         token_endpoint_auth_signing_alg:
           type: string
           enum:
