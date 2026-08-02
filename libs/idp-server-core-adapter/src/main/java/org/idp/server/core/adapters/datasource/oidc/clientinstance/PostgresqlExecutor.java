@@ -162,4 +162,28 @@ public class PostgresqlExecutor implements ClientInstanceSqlExecutor {
 
     return sqlExecutor.selectList(sqlTemplate, params);
   }
+
+  @Override
+  public List<Map<String, String>> selectActiveListByDevice(
+      Tenant tenant, RequestedClientId requestedClientId, String deviceId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        selectColumns
+            + """
+            WHERE tenant_id = ?::uuid
+            AND client_id = ?
+            AND device_id = ?::uuid
+            AND status = 'active'
+            AND revoked_at IS NULL
+            AND (expires_at IS NULL OR expires_at > now())
+            """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(requestedClientId.value());
+    params.add(deviceId);
+
+    return sqlExecutor.selectList(sqlTemplate, params);
+  }
 }
