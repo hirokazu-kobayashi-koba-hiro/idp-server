@@ -23,8 +23,8 @@ public class ClientAuthenticationHandler {
 
   ClientAuthenticators authenticators;
 
-  public ClientAuthenticationHandler() {
-    this.authenticators = new ClientAuthenticators();
+  public ClientAuthenticationHandler(ClientAuthenticators authenticators) {
+    this.authenticators = authenticators;
   }
 
   public ClientCredentials authenticate(BackchannelRequestContext context) {
