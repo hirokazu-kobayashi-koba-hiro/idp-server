@@ -162,4 +162,28 @@ public class MysqlExecutor implements ClientInstanceSqlExecutor {
 
     return sqlExecutor.selectList(sqlTemplate, params);
   }
+
+  @Override
+  public List<Map<String, String>> selectActiveListByDevice(
+      Tenant tenant, RequestedClientId requestedClientId, String deviceId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        selectColumns
+            + """
+            WHERE tenant_id = ?
+            AND client_id = ?
+            AND device_id = ?
+            AND status = 'active'
+            AND revoked_at IS NULL
+            AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP(6))
+            """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierValue());
+    params.add(requestedClientId.value());
+    params.add(deviceId);
+
+    return sqlExecutor.selectList(sqlTemplate, params);
+  }
 }

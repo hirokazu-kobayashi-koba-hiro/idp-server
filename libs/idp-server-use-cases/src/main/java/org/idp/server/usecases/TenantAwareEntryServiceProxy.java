@@ -260,11 +260,11 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
     for (Object arg : args) {
       // Extract from Map<String, String[]> params
       if (arg instanceof java.util.Map<?, ?> params) {
-        @SuppressWarnings("unchecked")
-        java.util.Map<String, String[]> paramMap = (java.util.Map<String, String[]>) params;
-        String[] clientIds = paramMap.get("client_id");
-        if (clientIds != null && clientIds.length > 0 && !clientIds[0].isEmpty()) {
-          return clientIds[0];
+        // Only form parameter maps carry String[] values; a JSON body map would otherwise fail
+        // the cast at runtime.
+        Object clientIds = params.get("client_id");
+        if (clientIds instanceof String[] values && values.length > 0 && !values[0].isEmpty()) {
+          return values[0];
         }
       }
 
