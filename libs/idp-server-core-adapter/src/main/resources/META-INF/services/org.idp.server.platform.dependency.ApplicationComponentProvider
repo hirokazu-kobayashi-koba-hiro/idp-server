@@ -70,3 +70,4 @@ org.idp.server.core.adapters.datasource.identity.contact.ContactVerificationChal
 org.idp.server.core.adapters.datasource.identity.contact.operation.ContactVerificationChallengeOperationCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.clientinstance.ClientInstanceQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.clientinstance.ClientInstanceCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.oidc.clientinstance.registration.ClientInstanceRegistrationChallengeDataSourceProvider
