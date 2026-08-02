@@ -41,6 +41,9 @@ services:
           memory: 1g
     environment:
       SERVER_URL: "https://api.local.test"
+      # Development only: allows client instance registration to be exercised without a real
+      # device. Verifies the request hash binding, not the application or device attestation.
+      IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER: ${IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER:-false}
       IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY?IDP server API key is required. Set IDP_SERVER_API_KEY environment variable.}
       IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET?IDP server API secret is required. Set IDP_SERVER_API_SECRET environment variable.}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY?Encryption key is required. Set ENCRYPTION_KEY environment variable.}
@@ -157,6 +160,8 @@ services:
           memory: 1g
     environment:
       SERVER_URL: "https://api.local.test"
+      # Development only: see idp-server-1.
+      IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER: ${IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER:-false}
       IDP_SERVER_API_KEY: ${IDP_SERVER_API_KEY:-30113151-4ee1-4f6a-a1ac-cc1be9eaf695}
       IDP_SERVER_API_SECRET: ${IDP_SERVER_API_SECRET:-MTY5YjM3NmYtOTY0ZC00Nzg0LWIyOTMtOWQyNDhjMTkyNmIwCg==}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-JjN9c6N4STeA+g9d+TtBGp5MC3sbqOWs+S9qzJG42iY=}

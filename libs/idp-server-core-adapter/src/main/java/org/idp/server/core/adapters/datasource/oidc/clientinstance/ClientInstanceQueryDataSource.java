@@ -56,4 +56,17 @@ public class ClientInstanceQueryDataSource implements ClientInstanceQueryReposit
 
     return results.stream().map(ModelConverter::convert).toList();
   }
+
+  @Override
+  public List<ClientInstance> findActiveListByDevice(
+      Tenant tenant, RequestedClientId requestedClientId, String deviceId) {
+    List<Map<String, String>> results =
+        executor.selectActiveListByDevice(tenant, requestedClientId, deviceId);
+
+    if (results == null || results.isEmpty()) {
+      return List.of();
+    }
+
+    return results.stream().map(ModelConverter::convert).toList();
+  }
 }

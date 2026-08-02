@@ -46,4 +46,12 @@ class StubClientInstanceQueryRepository implements ClientInstanceQueryRepository
       Tenant tenant, RequestedClientId requestedClientId, int limit, int offset) {
     return List.copyOf(instances.values());
   }
+
+  @Override
+  public List<ClientInstance> findActiveListByDevice(
+      Tenant tenant, RequestedClientId requestedClientId, String deviceId) {
+    return instances.values().stream()
+        .filter(instance -> instance.isActive() && deviceId.equals(instance.deviceId()))
+        .toList();
+  }
 }

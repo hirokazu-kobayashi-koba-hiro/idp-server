@@ -37,4 +37,7 @@ public interface ClientInstanceSqlExecutor {
 
   List<Map<String, String>> selectList(
       Tenant tenant, RequestedClientId requestedClientId, int limit, int offset);
+
+  List<Map<String, String>> selectActiveListByDevice(
+      Tenant tenant, RequestedClientId requestedClientId, String deviceId);
 }
