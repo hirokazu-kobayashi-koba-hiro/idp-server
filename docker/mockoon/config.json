@@ -2048,6 +2048,41 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-email-send",
+      "type": "http",
+      "documentation": "Issue #1416: mock send-email API. Accepts the email payload and returns 200 so the built-in email executor's send step succeeds (the code itself is idp-generated and read via the management API).",
+      "method": "post",
+      "endpoint": "email-send",
+      "responses": [
+        {
+          "uuid": "e2e-email-send-200",
+          "body": "{\n  \"status\": \"accepted\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "email accepted",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -2190,6 +2225,10 @@
     {
       "type": "route",
       "uuid": "e2e-echo-user-context"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-email-send"
     }
   ],
   "proxyMode": false,

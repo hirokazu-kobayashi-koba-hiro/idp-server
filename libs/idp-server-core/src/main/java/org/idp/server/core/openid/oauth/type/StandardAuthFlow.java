@@ -26,7 +26,8 @@ public enum StandardAuthFlow {
   FIDO2_REGISTRATION("fido2-registration"),
   FIDO2_DEREGISTRATION("fido2-deregistration"),
   MFA_SMS_REGISTRATION("mfa-sms-registration"),
-  MFA_EMAIL_REGISTRATION("mfa-email-registration");
+  MFA_EMAIL_REGISTRATION("mfa-email-registration"),
+  EMAIL_CHANGE("email-change");
 
   String value;
 

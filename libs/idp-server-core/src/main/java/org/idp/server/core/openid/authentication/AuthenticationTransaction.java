@@ -375,6 +375,11 @@ public class AuthenticationTransaction {
     return request.hasUser();
   }
 
+  /** True when this transaction is owned by {@code user} (established and same sub). */
+  public boolean isSameUser(User user) {
+    return request.isSameUser(user);
+  }
+
   public boolean hasAuthenticationDevice() {
     return request.hasAuthenticationDevice();
   }

@@ -23,6 +23,8 @@ public enum StandardAuthenticationInteraction {
   SMS_AUTHENTICATION("sms-authentication"),
   EMAIL_AUTHENTICATION_CHALLENGE("email-authentication-challenge"),
   EMAIL_AUTHENTICATION("email-authentication"),
+  EMAIL_CHANGE_CHALLENGE("email-change-challenge"),
+  EMAIL_CHANGE("email-change"),
   FIDO_UAF_REGISTRATION_CHALLENGE("fido-uaf-registration-challenge"),
   FIDO_UAF_REGISTRATION("fido-uaf-registration"),
   FIDO_UAF_AUTHENTICATION_CHALLENGE("fido-uaf-authentication-challenge"),

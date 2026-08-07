@@ -44,6 +44,7 @@ import org.idp.server.core.openid.identity.io.UserOperationStatus;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -135,6 +136,96 @@ public class UserOperationEntryService implements UserOperationApi {
     contents.put("id", authenticationTransaction.identifier().value());
 
     return UserOperationResponse.success(contents);
+  }
+
+  @Override
+  public UserOperationResponse requestEmailConfirm(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken token,
+      MfaRegistrationRequest request,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    AuthFlow authFlow = StandardAuthFlow.EMAIL_CHANGE.toAuthFlow();
+
+    AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
+        authenticationPolicyConfigurationQueryRepository.get(tenant, authFlow);
+
+    AuthenticationTransaction authenticationTransaction =
+        MfaRegistrationTransactionCreator.create(
+            tenant, user, token, authFlow, request, authenticationPolicyConfiguration);
+
+    authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
+
+    // Send the verification code to the candidate address in the same call (self-contained flow).
+    AuthenticationInteractionRequest interactionRequest =
+        new AuthenticationInteractionRequest(request.toMap());
+    AuthenticationInteractionRequestResult challenge =
+        interactInternal(
+            tenant,
+            authenticationTransaction,
+            StandardAuthenticationInteraction.EMAIL_CHANGE_CHALLENGE.toType(),
+            interactionRequest,
+            requestAttributes);
+
+    Map<String, Object> contents = new HashMap<>(challenge.response());
+    contents.put("id", authenticationTransaction.identifier().value());
+
+    if (!challenge.isSuccess()) {
+      return new UserOperationResponse(UserOperationStatus.INVALID_REQUEST, contents);
+    }
+    return UserOperationResponse.success(contents);
+  }
+
+  @Override
+  public UserOperationResponse verifyEmailConfirm(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes) {
+
+    return verifyOwnedChange(
+        tenantIdentifier,
+        user,
+        authenticationTransactionIdentifier,
+        StandardAuthenticationInteraction.EMAIL_CHANGE.toType(),
+        request,
+        requestAttributes);
+  }
+
+  /**
+   * Drives a caller-owned self-service change interaction (email now, phone/SMS to follow). The
+   * transaction must belong to {@code user}; otherwise it is treated as not found so one
+   * authenticated user cannot drive another's change transaction by id.
+   */
+  private UserOperationResponse verifyOwnedChange(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    AuthenticationTransaction transaction =
+        authenticationTransactionQueryRepository.getForUpdate(
+            tenant, authenticationTransactionIdentifier);
+
+    if (!transaction.isSameUser(user)) {
+      Map<String, Object> body = new HashMap<>();
+      body.put("error", "invalid_request");
+      body.put("error_description", "change transaction not found.");
+      return new UserOperationResponse(UserOperationStatus.NOT_FOUND, body);
+    }
+
+    AuthenticationInteractionRequestResult result =
+        interactInternal(tenant, transaction, type, request, requestAttributes);
+
+    UserOperationStatus status =
+        result.isSuccess() ? UserOperationStatus.OK : UserOperationStatus.INVALID_REQUEST;
+    return new UserOperationResponse(status, result.response());
   }
 
   @Override
