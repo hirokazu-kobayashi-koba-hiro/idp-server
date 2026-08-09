@@ -609,5 +609,126 @@ describe("organization authorization server management api", () => {
       expect(deleteTenantResponse.status).toBe(204);
       console.log("✅ Roundtrip test tenant deleted");
     });
+
+    // #1762: the update is a full replacement, so the GET response has to carry every field for
+    // the roundtrip above to be lossless. jwks used to be missing from it, and because both GET
+    // responses were equally blind to the signing keys the test above passed while a roundtrip
+    // silently cleared them. The keys are observable through the tenant jwks endpoint.
+    it("GET→UPDATE roundtrip keeps the signing keys (#1762)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+      const headers = { Authorization: `Bearer ${accessToken}` };
+
+      const originalJwks = JSON.stringify({
+        keys: [{
+          kty: "EC",
+          d: "yIWDrlhnCy3yL9xLuqZGOBFFq4PWGsCeM7Sc_lfeaQQ",
+          use: "sig",
+          crv: "P-256",
+          kid: "jwks-roundtrip-original",
+          x: "iWJINqt0ySv3kVEvlHbvNkPKY2pPSf1cG1PSx3tRfw0",
+          y: "rW1FdfXK5AQcv-Go6Xho0CR5AbLai7Gp9IdLTIXTSIQ",
+          alg: "ES256"
+        }]
+      });
+      const rotatedJwks = JSON.stringify({
+        keys: [{
+          kty: "EC",
+          d: "HrgT4zqM2BvrlwUWagyeNnZ40nZ7rTY4gYG9k99oGJg",
+          use: "sig",
+          crv: "P-256",
+          kid: "jwks-roundtrip-rotated",
+          x: "PM6be42POiKdNzRKGeZ1Gia8908XfmSSbS4cwPasWTo",
+          y: "wksaan9a4h3L8R1UMmvc9w6rPB_F07IA-VHx7n7Add4",
+          alg: "ES256"
+        }]
+      });
+
+      const newTenantId = uuidv4();
+      const createTenantResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants`,
+        headers,
+        body: {
+          tenant: {
+            "id": newTenantId,
+            "name": `Jwks Roundtrip Tenant ${Date.now()}`,
+            "domain": "http://localhost:8080",
+            "description": "Test tenant for jwks preservation on roundtrip",
+            "authorization_provider": "idp-server"
+          },
+          authorization_server: {
+            "issuer": `http://localhost:8080/${newTenantId}`,
+            "authorization_endpoint": `http://localhost:8080/${newTenantId}/v1/authorizations`,
+            "token_endpoint": `http://localhost:8080/${newTenantId}/v1/tokens`,
+            "userinfo_endpoint": `http://localhost:8080/${newTenantId}/v1/userinfo`,
+            "jwks_uri": `http://localhost:8080/${newTenantId}/v1/jwks`,
+            "jwks": originalJwks,
+            "scopes_supported": ["openid", "profile", "email"],
+            "response_types_supported": ["code"],
+            "response_modes_supported": ["query", "fragment"],
+            "subject_types_supported": ["public"],
+            "grant_types_supported": ["authorization_code", "refresh_token"],
+            "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"]
+          }
+        }
+      });
+      expect(createTenantResponse.status).toBe(201);
+
+      const publishedKeyIds = async () => {
+        const response = await get({ url: `${backendUrl}/${newTenantId}/v1/jwks` });
+        expect(response.status).toBe(200);
+        return (response.data.keys ?? []).map((key) => key.kid);
+      };
+
+      expect(await publishedKeyIds()).toContain("jwks-roundtrip-original");
+
+      const getResponse = await get({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/authorization-server`,
+        headers
+      });
+      expect(getResponse.status).toBe(200);
+      // The update replaces the whole configuration, so the GET response has to carry the keys.
+      expect(getResponse.data.jwks).toBe(originalJwks);
+
+      const updateResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/authorization-server`,
+        headers,
+        body: { ...getResponse.data, service_documentation: "https://example.com/docs" }
+      });
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.data.diff).not.toHaveProperty("jwks");
+
+      expect(await publishedKeyIds()).toContain("jwks-roundtrip-original");
+      console.log("✅ signing keys survived the GET→UPDATE roundtrip");
+
+      // Rotation is an ordinary field change under full-replacement semantics.
+      const rotateResponse = await putWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/authorization-server`,
+        headers,
+        body: { ...getResponse.data, jwks: rotatedJwks }
+      });
+      expect(rotateResponse.status).toBe(200);
+      expect(rotateResponse.data.diff).toHaveProperty("jwks");
+
+      const afterRotation = await publishedKeyIds();
+      expect(afterRotation).toContain("jwks-roundtrip-rotated");
+      expect(afterRotation).not.toContain("jwks-roundtrip-original");
+      console.log("✅ explicit jwks still replaces the stored keys");
+
+      const deleteTenantResponse = await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}`,
+        headers
+      });
+      expect(deleteTenantResponse.status).toBe(204);
+    });
   });
 });
