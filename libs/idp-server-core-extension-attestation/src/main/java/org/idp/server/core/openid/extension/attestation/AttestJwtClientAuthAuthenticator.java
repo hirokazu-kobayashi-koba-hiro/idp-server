@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.extension.attestation;
 
+import org.idp.server.core.openid.clientinstance.ClientAttestationTrustSource;
 import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
 import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
@@ -70,8 +71,7 @@ public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
     throwExceptionIfNotContainsAttestationHeaders(context);
 
     ClientAttestationTrustSource trustSource =
-        ClientAttestationTrustSource.of(
-            context.clientConfiguration().extensionConfiguration().clientAttestationTrustSource());
+        context.clientConfiguration().extensionConfiguration().clientAttestationTrustSource();
     if (trustSource.isUndefined()) {
       throw new ClientUnAuthorizedException(
           ClientAuthenticationType.attest_jwt_client_auth.name(),

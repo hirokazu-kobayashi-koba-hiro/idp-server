@@ -19,6 +19,7 @@ package org.idp.server.core.openid.extension.attestation;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.openid.clientinstance.ClientAttestationTrustSource;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.dpop.JwkThumbprint;
