@@ -603,6 +603,11 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return authorizationDetailsTypesSupported;
   }
 
+  public boolean hasAuthorizationDetailsTypesSupported() {
+    return authorizationDetailsTypesSupported != null
+        && !authorizationDetailsTypesSupported.isEmpty();
+  }
+
   public boolean isSupportedAuthorizationDetailsType(String type) {
     return authorizationDetailsTypesSupported.contains(type);
   }
@@ -857,6 +862,50 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     map.put("documents_check_methods_supported", documentsCheckMethodsSupported);
     map.put("electronic_records_supported", electronicRecordsSupported);
     map.put("claims_in_verified_claims_supported", claimsInVerifiedClaimsSupported);
+    // #1762: the management update is a full replacement, so anything missing here is dropped by a
+    // GET -> modify -> PUT round trip. require_pushed_authorization_requests in particular used to
+    // fall back to false on such a save, silently lifting the PAR requirement of the tenant.
+    map.put("require_pushed_authorization_requests", requirePushedAuthorizationRequests);
+    if (hasAuthorizationEncryptionAlgValuesSupported()) {
+      map.put(
+          "authorization_encryption_alg_values_supported",
+          authorizationEncryptionAlgValuesSupported);
+    }
+    if (hasAuthorizationEncryptionEncValuesSupported()) {
+      map.put(
+          "authorization_encryption_enc_values_supported",
+          authorizationEncryptionEncValuesSupported);
+    }
+    if (hasRevocationEndpoint()) {
+      map.put("revocation_endpoint", revocationEndpoint);
+    }
+    if (hasRevocationEndpointAuthMethodsSupported()) {
+      map.put("revocation_endpoint_auth_methods_supported", revocationEndpointAuthMethodsSupported);
+    }
+    if (hasRevocationEndpointAuthSigningAlgValuesSupported()) {
+      map.put(
+          "revocation_endpoint_auth_signing_alg_values_supported",
+          revocationEndpointAuthSigningAlgValuesSupported);
+    }
+    if (hasIntrospectionEndpoint()) {
+      map.put("introspection_endpoint", introspectionEndpoint);
+    }
+    if (hasIntrospectionEndpointAuthMethodsSupported()) {
+      map.put(
+          "introspection_endpoint_auth_methods_supported",
+          introspectionEndpointAuthMethodsSupported);
+    }
+    if (hasIntrospectionEndpointAuthSigningAlgValuesSupported()) {
+      map.put(
+          "introspection_endpoint_auth_signing_alg_values_supported",
+          introspectionEndpointAuthSigningAlgValuesSupported);
+    }
+    if (hasAuthorizationDetailsTypesSupported()) {
+      map.put("authorization_details_types_supported", authorizationDetailsTypesSupported);
+    }
+    // credential_issuer_metadata is deliberately left out: the verifiable credential model is
+    // provisional and does not hold every member of the stored metadata, so emitting it here would
+    // advertise a round trip that silently drops the parts the model does not know about.
     map.put("enabled", enabled);
     map.put("extension", extension.toMap());
     return map;

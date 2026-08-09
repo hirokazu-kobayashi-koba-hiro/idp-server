@@ -655,6 +655,36 @@ components:
             - plain
             - S256
           description: オプション。サポートされるPKCEコードチャレンジ方法。
+        jwks:
+          type: string
+          description: |-
+            オプション。テナントの署名鍵を含むJWK Setドキュメント（JSON文字列）。
+            更新は全置換のため、GETで取得した内容をそのままPUTすること。
+            省略すると署名鍵が失われ、そのテナントのトークン発行が停止する。
+        pushed_authorization_request_endpoint:
+          type: string
+          format: uri
+          description: オプション。PAR（RFC 9126）エンドポイントのURL。
+        require_pushed_authorization_requests:
+          type: boolean
+          description: |-
+            オプション。認可リクエストにPARを必須とするか。デフォルトはfalse。
+            更新は全置換のため、省略するとfalseに戻りPAR必須が解除される。
+        authorization_details_types_supported:
+          type: array
+          items:
+            type: string
+          description: オプション。サポートされるRAR（RFC 9396）のauthorization_details型。
+        authorization_encryption_alg_values_supported:
+          type: array
+          items:
+            type: string
+          description: オプション。JARMレスポンスの暗号化でサポートされるalg。
+        authorization_encryption_enc_values_supported:
+          type: array
+          items:
+            type: string
+          description: オプション。JARMレスポンスの暗号化でサポートされるenc。
         extension:
           type: object
           description: 認証サーバー動作のための拡張設定パラメータ。
