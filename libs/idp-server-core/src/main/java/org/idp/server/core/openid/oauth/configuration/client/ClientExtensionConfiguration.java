@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
+import org.idp.server.core.openid.clientinstance.ClientAttestationTrustSource;
+import org.idp.server.core.openid.clientinstance.ClientInstanceRegistrationPolicy;
 import org.idp.server.core.openid.oauth.configuration.RefreshTokenStrategy;
 import org.idp.server.platform.json.JsonReadable;
 
@@ -36,6 +38,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification-no-action";
   boolean cibaRequireRar = false;
   String clientAttestationTrustSource;
+  String clientInstanceRegistrationPolicy;
   String clientAttestationAttesterJwks;
   Map<String, Object> customProperties = new HashMap<>();
 
@@ -45,9 +48,20 @@ public class ClientExtensionConfiguration implements JsonReadable {
    * Where the Authorization Server takes its trust from when verifying a Client Attestation JWT
    * ({@code attest_jwt_client_auth}). idp-server specific: the specification leaves trust
    * management and key resolution out of scope.
+   *
+   * <p>An unset or unknown value resolves to {@code undefined}, which callers reject rather than
+   * falling back to a trust source the operator did not choose.
    */
-  public String clientAttestationTrustSource() {
-    return clientAttestationTrustSource;
+  public ClientAttestationTrustSource clientAttestationTrustSource() {
+    return ClientAttestationTrustSource.of(clientAttestationTrustSource);
+  }
+
+  /**
+   * How much a client instance registration must be backed by an authentication device ({@code
+   * require_authentication_device} | {@code attestation_only}). idp-server specific.
+   */
+  public ClientInstanceRegistrationPolicy clientInstanceRegistrationPolicy() {
+    return ClientInstanceRegistrationPolicy.of(clientInstanceRegistrationPolicy);
   }
 
   /**

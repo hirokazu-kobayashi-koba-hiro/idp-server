@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.extension.attestation;
+package org.idp.server.core.openid.clientinstance;
 
 import java.util.Objects;
 

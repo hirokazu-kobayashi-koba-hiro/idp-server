@@ -409,6 +409,14 @@
           "type": "string",
           "format": "jwks",
           "description": "OPTIONAL. idp-server specific. JWK Set document holding the trusted Client Attester public keys, used when client_attestation_trust_source is attester_jwks. MUST NOT contain private or symmetric key values."
+        },
+        "client_instance_registration_policy": {
+          "type": "string",
+          "enum": [
+            "require_authentication_device",
+            "attestation_only"
+          ],
+          "description": "OPTIONAL. idp-server specific. How much a client instance registration must be backed by an authentication device. require_authentication_device: device_id must be an authentication device registered at this Authorization Server, which ties the registration to a device the user approved (FIDO UAF registration uses biometrics). attestation_only: no device is involved and the platform attestation is the only backing, as for wallet style clients. Required when the client instance registration endpoints are used."
         }
       }
     }

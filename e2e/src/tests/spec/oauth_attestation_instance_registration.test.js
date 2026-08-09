@@ -21,7 +21,7 @@ import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import * as jose from "jose";
 import crypto from "crypto";
-import { get, postWithJson } from "../../lib/http";
+import { deletion, get, postWithJson } from "../../lib/http";
 import { requestToken } from "../../api/oauthClient";
 import { adminServerConfig, backendUrl, serverConfig } from "../testConfig";
 import { createJwtWithPrivateKey, generateJti } from "../../lib/jose";
@@ -30,6 +30,10 @@ import { toEpocTime } from "../../lib/util";
 const DEV_PLATFORM = "request-hash-binding-development-only";
 const ATTESTATION_TYP = "oauth-client-attestation+jwt";
 const POP_TYP = "oauth-client-attestation-pop+jwt";
+
+// Authentication device of the seeded test user (config/examples/e2e/test-tenant/initial.json).
+// The policy require_authentication_device only accepts devices this server issued.
+const REGISTERED_DEVICE_ID = "7736a252-60b4-45f5-b817-65ea9a540860";
 
 let managementHeaders;
 let clientId;
@@ -57,7 +61,7 @@ const deriveRequestHash = (challenge, jwk) => {
   return base64url(digest.digest());
 };
 
-const requestChallenge = async ({ client = () => clientId, deviceId = uuidv4() } = {}) =>
+const requestChallenge = async ({ client = () => clientId, deviceId = REGISTERED_DEVICE_ID } = {}) =>
   await postWithJson({
     url: `${backendUrl}/${serverConfig.tenantId}/v1/client-instances/challenges`,
     body: { client_id: typeof client === "function" ? client() : client, device_id: deviceId },
@@ -76,8 +80,26 @@ const registerInstance = async ({ challenge, jwk, requestHash }) =>
     },
   });
 
+/** Removes active instances of a device so that tests do not depend on execution order. */
+const revokeExistingInstances = async (deviceId) => {
+  const listResponse = await get({
+    url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${clientId}/instances`,
+    headers: managementHeaders,
+  });
+  expect(listResponse.status).toBe(200);
+
+  for (const instance of listResponse.data.list.filter((i) => i.device_id === deviceId)) {
+    const deleteResponse = await deletion({
+      url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${clientId}/instances/${instance.id}`,
+      headers: managementHeaders,
+    });
+    expect(deleteResponse.status).toBe(204);
+  }
+};
+
 /** Full happy path: challenge -> register -> the instance can authenticate the client. */
-const enrollInstance = async (deviceId = uuidv4()) => {
+const enrollInstance = async (deviceId = REGISTERED_DEVICE_ID) => {
+  await revokeExistingInstances(deviceId);
   const jwk = await generateInstanceJwk();
   const challengeResponse = await requestChallenge({ deviceId });
   expect(challengeResponse.status).toBe(200);
@@ -136,7 +158,10 @@ beforeAll(async () => {
       client_id: clientId,
       client_name: "Client Instance Registration Test Client",
       token_endpoint_auth_method: "attest_jwt_client_auth",
-      extension: { client_attestation_trust_source: "registered_instance_key" },
+      extension: {
+        client_attestation_trust_source: "registered_instance_key",
+        client_instance_registration_policy: "require_authentication_device",
+      },
       grant_types: ["client_credentials"],
       redirect_uris: ["http://localhost:3000/callback"],
       response_types: ["code"],
@@ -165,6 +190,14 @@ describe("Client Instance registration (application plane)", () => {
 
     it("rejects a client that does not use attest_jwt_client_auth", async () => {
       const response = await requestChallenge({ client: "clientSecretPost" });
+      expect(response.status).toBe(400);
+      expect(response.data).toHaveProperty("error", "invalid_request");
+    });
+
+    it("rejects a device_id that is not an authentication device of this server", async () => {
+      // platform attestation carries no device identifier, so an arbitrary device_id must not be
+      // accepted into the ticket
+      const response = await requestChallenge({ deviceId: uuidv4() });
       expect(response.status).toBe(400);
       expect(response.data).toHaveProperty("error", "invalid_request");
     });
@@ -235,6 +268,8 @@ describe("Client Instance registration (application plane)", () => {
     });
 
     it("rejects a challenge that was already used", async () => {
+      // the first registration below has to succeed, so the device must not already hold one
+      await revokeExistingInstances(REGISTERED_DEVICE_ID);
       const jwk = await generateInstanceJwk();
       const challengeResponse = await requestChallenge();
       const challenge = challengeResponse.data.challenge;
@@ -247,7 +282,7 @@ describe("Client Instance registration (application plane)", () => {
     });
 
     it("rejects a second active instance for the same device", async () => {
-      const deviceId = uuidv4();
+      const deviceId = REGISTERED_DEVICE_ID;
       await enrollInstance(deviceId);
 
       const jwk = await generateInstanceJwk();
