@@ -68,7 +68,7 @@ class ManagementRepresentationCompletenessTest {
     Map<String, Object> populated = new HashMap<>();
     List<String> unsupported = new ArrayList<>();
 
-    for (Field field : type.getDeclaredFields()) {
+    for (Field field : declaredFields(type)) {
       if (Modifier.isStatic(field.getModifiers())) {
         continue;
       }
@@ -81,7 +81,8 @@ class ManagementRepresentationCompletenessTest {
     }
 
     T configuration = jsonConverter.read(populated, type);
-    Set<String> exposed = toMap(configuration).keySet();
+    Map<String, Object> representation = toMap(configuration);
+    Set<String> exposed = representation.keySet();
 
     List<String> dropped =
         populated.keySet().stream()
@@ -97,6 +98,28 @@ class ManagementRepresentationCompletenessTest {
             + " trip loses them: "
             + dropped);
 
+    // Presence alone is not enough: a masked or rewritten value round trips into a different
+    // configuration just as silently as a missing key does.
+    List<String> altered =
+        populated.entrySet().stream()
+            .filter(entry -> exposed.contains(entry.getKey()))
+            .filter(entry -> !Objects.equals(entry.getValue(), representation.get(entry.getKey())))
+            .map(
+                entry ->
+                    entry.getKey()
+                        + ": "
+                        + entry.getValue()
+                        + " -> "
+                        + representation.get(entry.getKey()))
+            .sorted()
+            .toList();
+
+    assertTrue(
+        altered.isEmpty(),
+        type.getSimpleName()
+            + ".toMap() returns values a PUT cannot write back unchanged: "
+            + altered);
+
     // Nested configurations carry their own representation; they are covered by their own tests.
     // Listing them here keeps the ones this test cannot populate visible.
     assertEquals(
@@ -107,6 +130,16 @@ class ManagementRepresentationCompletenessTest {
 
   private static java.util.stream.Collector<String, ?, Set<String>> toSet() {
     return java.util.stream.Collectors.toSet();
+  }
+
+  /** Walks the hierarchy so that a field pulled up into a base class stays covered. */
+  private List<Field> declaredFields(Class<?> type) {
+    List<Field> fields = new ArrayList<>();
+    for (Class<?> current = type; current != null && current != Object.class; ) {
+      fields.addAll(Arrays.asList(current.getDeclaredFields()));
+      current = current.getSuperclass();
+    }
+    return fields;
   }
 
   @SuppressWarnings("unchecked")
