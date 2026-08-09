@@ -20,7 +20,7 @@
     },
     "cors_config": {
       "allow_origins": [
-        "https://auth.local.test","https://api.local.test","http://localhost:3000","http://localhost:3100","http://localhost:5173","https://idp-auth-frontend-ecru.vercel.app","https://idp-auth-frontend-diqt.vercel.app"
+        "https://auth.local.test","http://localhost:3000","http://localhost:3100","http://localhost:5173","https://idp-auth-frontend-ecru.vercel.app","https://idp-auth-frontend-diqt.vercel.app"
       ]
     },
     "security_event_log_config": {

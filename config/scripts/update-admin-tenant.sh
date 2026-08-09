@@ -14,7 +14,10 @@
 set -e
 
 usage() {
-  echo "Usage: $0 [-b <base_url>] [-d <dry_run>]"
+  echo "Usage: $0 [-b <base_url>] [-d true|false]"
+  echo
+  echo "  -b  Base URL of the IDP server (default: \$AUTHORIZATION_SERVER_URL)"
+  echo "  -d  Dry run. true prints the diff without applying it (default: false)"
   exit 1
 }
 
@@ -41,14 +44,23 @@ echo "url: $BASE_URL"
 CONFIG_FILE="./config/generated/${ENV}/admin-tenant/initial.json"
 [ ! -f "$CONFIG_FILE" ] && echo "❌ Generated config not found: $CONFIG_FILE" && exit 1
 
-if [ "$DRY_RUN" == true ]; then
-  echo ""
-  echo "DRY_RUN.........."
-  echo ""
-  DRY_RUN_PARM="?dry_run=true"
-else
-  DRY_RUN_PARM="?dry_run=false"
-fi
+# Anything other than true/false is rejected rather than treated as false: a typo such as
+# "-d ture" must not silently apply changes to the tenant that fronts every management API.
+case "$DRY_RUN" in
+  true)
+    echo ""
+    echo "DRY_RUN.........."
+    echo ""
+    DRY_RUN_PARM="?dry_run=true"
+    ;;
+  false)
+    DRY_RUN_PARM="?dry_run=false"
+    ;;
+  *)
+    echo "❌ -d must be true or false (got: '${DRY_RUN}')"
+    usage
+    ;;
+esac
 
 echo "get access token"
 ACCESS_TOKEN=$(./config/scripts/get-access-token.sh \
@@ -74,10 +86,25 @@ put_resource() {
     "${BASE_URL}/v1/management/${RESOURCE_PATH}" \
     -H "Authorization: Bearer ${ACCESS_TOKEN}")
 
-  if [ "$HTTP_CODE" != "200" ]; then
-    echo "❌ $LABEL not found (HTTP $HTTP_CODE). Run setup.sh first to initialize the admin tenant."
-    exit 1
-  fi
+  case "$HTTP_CODE" in
+    200) ;;
+    401)
+      echo "❌ Unauthorized (HTTP 401). The access token was rejected for $LABEL."
+      exit 1
+      ;;
+    403)
+      echo "❌ Forbidden (HTTP 403). ${ADMIN_USER_EMAIL} lacks the permission to read $LABEL."
+      exit 1
+      ;;
+    404)
+      echo "❌ $LABEL not found (HTTP 404). Run setup.sh first to initialize the admin tenant."
+      exit 1
+      ;;
+    *)
+      echo "❌ Unexpected response from GET $LABEL: HTTP $HTTP_CODE"
+      exit 1
+      ;;
+  esac
 
   RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X PUT \
     "${BASE_URL}/v1/management/${RESOURCE_PATH}${DRY_RUN_PARM}" \
@@ -108,6 +135,10 @@ put_resource() {
 
 TENANT_ID=$(jq -r .tenant.id "$CONFIG_FILE")
 CLIENT_ID=$(jq -r .client.client_id "$CONFIG_FILE")
+
+# The template also carries "organization" and "user", which are deliberately left alone:
+# the organization is created once at initialization, and re-applying "user" would reset the
+# administrator password to the .env value. Drift in those two is therefore expected.
 
 put_resource "tenant" \
   "tenants/${TENANT_ID}" \

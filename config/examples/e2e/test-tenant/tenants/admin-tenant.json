@@ -16,7 +16,6 @@
     "cors_config": {
       "allow_origins": [
         "https://auth.local.test",
-        "https://api.local.test",
         "http://localhost:3000",
         "http://localhost:3100",
         "http://localhost:5173",
