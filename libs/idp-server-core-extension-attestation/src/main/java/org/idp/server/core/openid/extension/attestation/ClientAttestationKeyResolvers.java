@@ -18,6 +18,7 @@ package org.idp.server.core.openid.extension.attestation;
 
 import java.util.EnumMap;
 import java.util.Map;
+import org.idp.server.core.openid.clientinstance.ClientAttestationTrustSource;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.platform.exception.UnSupportedException;
 

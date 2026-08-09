@@ -995,6 +995,7 @@ public class IdpServerApplication {
             new ClientInstanceRegistrationEntryService(
                 tenantQueryRepository,
                 clientConfigurationQueryRepository,
+                userQueryRepository,
                 clientInstanceRegistrationChallengeRepository,
                 clientInstanceRegistrationService),
             ClientInstanceRegistrationApi.class,
