@@ -18,7 +18,11 @@ package org.idp.server.usecases.application.enduser;
 
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstance;
+import org.idp.server.core.openid.clientinstance.ClientInstanceRegistrationPolicy;
 import org.idp.server.core.openid.clientinstance.registration.*;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -44,6 +48,7 @@ public class ClientInstanceRegistrationEntryService implements ClientInstanceReg
 
   TenantQueryRepository tenantQueryRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  UserQueryRepository userQueryRepository;
   ClientInstanceRegistrationChallengeRepository challengeRepository;
   ClientInstanceRegistrationChallengeIssuer challengeIssuer;
   ClientInstanceRegistrationService registrationService;
@@ -51,10 +56,12 @@ public class ClientInstanceRegistrationEntryService implements ClientInstanceReg
   public ClientInstanceRegistrationEntryService(
       TenantQueryRepository tenantQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      UserQueryRepository userQueryRepository,
       ClientInstanceRegistrationChallengeRepository challengeRepository,
       ClientInstanceRegistrationService registrationService) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.userQueryRepository = userQueryRepository;
     this.challengeRepository = challengeRepository;
     this.challengeIssuer = new ClientInstanceRegistrationChallengeIssuer();
     this.registrationService = registrationService;
@@ -72,7 +79,12 @@ public class ClientInstanceRegistrationEntryService implements ClientInstanceReg
       RequestedClientId requestedClientId = request.requestedClientId();
       String deviceId = request.deviceId();
 
-      throwExceptionIfClientDoesNotUseAttestation(tenant, requestedClientId);
+      // All authorization decisions are made here, at ticket issuance: the registration endpoint
+      // then only has to check that the ticket is valid and that the evidence is bound to it.
+      ClientConfiguration clientConfiguration =
+          clientConfigurationQueryRepository.get(tenant, requestedClientId);
+      throwExceptionIfClientDoesNotUseAttestation(clientConfiguration, requestedClientId);
+      throwExceptionIfDeviceIsNotAcceptable(tenant, clientConfiguration, deviceId);
 
       ClientInstanceRegistrationChallenge challenge =
           challengeIssuer.issue(tenant, requestedClientId, deviceId, CHALLENGE_EXPIRES_IN_SECONDS);
@@ -111,13 +123,46 @@ public class ClientInstanceRegistrationEntryService implements ClientInstanceReg
   }
 
   private void throwExceptionIfClientDoesNotUseAttestation(
-      Tenant tenant, RequestedClientId requestedClientId) {
-    ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, requestedClientId);
-
+      ClientConfiguration clientConfiguration, RequestedClientId requestedClientId) {
     if (!clientConfiguration.clientAuthenticationType().isAttestJwtClientAuth()) {
       throw new ClientInstanceRegistrationException(
           "client does not use attest_jwt_client_auth: " + requestedClientId.value());
+    }
+  }
+
+  /**
+   * Platform attestation proves that a genuine application runs on a genuine device, but it carries
+   * no device identifier: nothing in the evidence ties it to the device_id of the request. When the
+   * client requires an authentication device, the device_id is therefore checked against the
+   * devices this server issued, so that an arbitrary value cannot be baked into the ticket.
+   */
+  private void throwExceptionIfDeviceIsNotAcceptable(
+      Tenant tenant, ClientConfiguration clientConfiguration, String deviceId) {
+
+    ClientInstanceRegistrationPolicy policy =
+        clientConfiguration.extensionConfiguration().clientInstanceRegistrationPolicy();
+
+    if (policy.isUndefined()) {
+      throw new ClientInstanceRegistrationException(
+          "client_instance_registration_policy is not configured or has an unknown value");
+    }
+
+    if (!policy.requiresAuthenticationDevice()) {
+      return;
+    }
+
+    if (deviceId == null) {
+      throw new ClientInstanceRegistrationException(
+          "device_id is required by client_instance_registration_policy");
+    }
+
+    User user =
+        userQueryRepository.findByDeviceId(
+            tenant, new AuthenticationDeviceIdentifier(deviceId), "idp-server");
+
+    if (!user.exists()) {
+      throw new ClientInstanceRegistrationException(
+          "device_id is not a registered authentication device: " + deviceId);
     }
   }
 }
