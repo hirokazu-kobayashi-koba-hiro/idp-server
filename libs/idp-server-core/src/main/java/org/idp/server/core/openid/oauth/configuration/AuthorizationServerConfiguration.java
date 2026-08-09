@@ -130,6 +130,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return jwks;
   }
 
+  public boolean hasJwks() {
+    return jwks != null && !jwks.isBlank();
+  }
+
   public String jwksUri() {
     return jwksUri;
   }
@@ -740,6 +744,12 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
       map.put("end_session_endpoint", endSessionEndpoint);
     }
     map.put("jwks_uri", jwksUri());
+    // #1762: the management update is a full replacement, so every field has to be round-trippable
+    // via GET -> modify -> PUT. Leaving jwks out made a caller drop the signing keys of the tenant
+    // with a single save, which stops all token issuance for it.
+    if (hasJwks()) {
+      map.put("jwks", jwks);
+    }
     if (hasScopesSupported()) {
       map.put("scopes_supported", scopesSupported);
     }

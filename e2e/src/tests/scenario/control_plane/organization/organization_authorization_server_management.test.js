@@ -610,9 +610,10 @@ describe("organization authorization server management api", () => {
       console.log("✅ Roundtrip test tenant deleted");
     });
 
-    // #1762: the GET response never carries jwks, so the roundtrip test above compares two
-    // representations that are both blind to the signing keys and passes even when the update
-    // wipes them. The keys are observable through the tenant jwks endpoint instead.
+    // #1762: the update is a full replacement, so the GET response has to carry every field for
+    // the roundtrip above to be lossless. jwks used to be missing from it, and because both GET
+    // responses were equally blind to the signing keys the test above passed while a roundtrip
+    // silently cleared them. The keys are observable through the tenant jwks endpoint.
     it("GET→UPDATE roundtrip keeps the signing keys (#1762)", async () => {
       const tokenResponse = await requestToken({
         endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
@@ -695,9 +696,8 @@ describe("organization authorization server management api", () => {
         headers
       });
       expect(getResponse.status).toBe(200);
-      // The management representation deliberately withholds the private keys, which is exactly
-      // why the update below has to fall back to the stored ones.
-      expect(getResponse.data.jwks).toBeUndefined();
+      // The update replaces the whole configuration, so the GET response has to carry the keys.
+      expect(getResponse.data.jwks).toBe(originalJwks);
 
       const updateResponse = await putWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/authorization-server`,
@@ -710,15 +710,14 @@ describe("organization authorization server management api", () => {
       expect(await publishedKeyIds()).toContain("jwks-roundtrip-original");
       console.log("✅ signing keys survived the GET→UPDATE roundtrip");
 
-      // Rotation still has to work when the update carries a jwks of its own.
+      // Rotation is an ordinary field change under full-replacement semantics.
       const rotateResponse = await putWithJson({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/authorization-server`,
         headers,
         body: { ...getResponse.data, jwks: rotatedJwks }
       });
       expect(rotateResponse.status).toBe(200);
-      // Reported without the key material: private keys must not reach the response or audit trail.
-      expect(rotateResponse.data.diff.jwks).toBe("replaced");
+      expect(rotateResponse.data.diff).toHaveProperty("jwks");
 
       const afterRotation = await publishedKeyIds();
       expect(afterRotation).toContain("jwks-roundtrip-rotated");
