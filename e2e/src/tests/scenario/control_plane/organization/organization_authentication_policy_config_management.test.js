@@ -84,6 +84,18 @@ describe("Organization Authentication Policy Config Management API Test", () => 
     const configIds = listResponse.data.list.map((config) => config.id);
     expect(configIds).toContain(configId);
 
+    // Issue #1755: the list used to deserialize the row (id, flow, payload) instead of the payload,
+    // so every entry came back with an empty policies array while the detail endpoint was correct.
+    // Checking the id alone does not notice that, because the id is a column of the row as well.
+    const listed = listResponse.data.list.find((config) => config.id === configId);
+    expect(listed).toHaveProperty("flow", createRequest.flow);
+    expect(listed).toHaveProperty("enabled", true);
+    expect(Array.isArray(listed.policies)).toBe(true);
+    expect(listed.policies.length).toBeGreaterThan(0);
+    expect(listed.policies[0]).toHaveProperty("priority", 1);
+    expect(listed.policies[0]).toHaveProperty("description", "test_password_policy");
+    expect(listed.policies[0]).toHaveProperty("available_methods");
+
     // Test GET by ID
     const getResponse = await get({
       url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-policies/${configId}`,
