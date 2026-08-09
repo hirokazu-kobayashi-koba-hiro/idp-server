@@ -34,4 +34,16 @@ public class AuthorizationServerUpdateRequest implements AuthorizationServerMana
   public Object get(String key) {
     return values.get(key);
   }
+
+  /**
+   * Whether this update carries a JWK Set of its own.
+   *
+   * <p>An absent, null or blank value means the caller is not touching the signing keys. That is
+   * the normal case: the management representation of the configuration never contains {@code
+   * jwks}, so a payload derived from a GET has no way to carry it.
+   */
+  public boolean hasJwks() {
+    Object value = values.get("jwks");
+    return value instanceof String jwks && !jwks.isBlank();
+  }
 }

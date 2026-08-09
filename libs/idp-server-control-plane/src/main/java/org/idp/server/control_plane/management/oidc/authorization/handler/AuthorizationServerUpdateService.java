@@ -16,6 +16,7 @@
 
 package org.idp.server.control_plane.management.oidc.authorization.handler;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.control_plane.management.oidc.authorization.AuthorizationServerManagementContextBuilder;
 import org.idp.server.control_plane.management.oidc.authorization.io.AuthorizationServerManagementResponse;
@@ -73,15 +74,15 @@ public class AuthorizationServerUpdateService
     AuthorizationServerConfiguration before = queryRepository.getWithDisabled(tenant, true);
 
     // Build updated configuration
-    AuthorizationServerConfiguration after =
-        jsonConverter.read(request.toMap(), AuthorizationServerConfiguration.class);
+    AuthorizationServerConfiguration after = updateConfiguration(before, request);
 
     // Update context builder with before and after states
     contextBuilder.withBefore(before).withAfter(after);
 
     JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
     JsonNodeWrapper afterJson = JsonNodeWrapper.fromMap(after.toMap());
-    Map<String, Object> diff = JsonDiffCalculator.deepDiff(beforeJson, afterJson);
+    Map<String, Object> diff = new HashMap<>(JsonDiffCalculator.deepDiff(beforeJson, afterJson));
+    reportJwksReplacement(request, diff);
     Map<String, Object> response = Map.of("result", after.toMap(), "diff", diff, "dry_run", dryRun);
 
     if (dryRun) {
@@ -94,5 +95,44 @@ public class AuthorizationServerUpdateService
 
     return new AuthorizationServerManagementResponse(
         AuthorizationServerManagementStatus.OK, response);
+  }
+
+  /**
+   * Builds the configuration to store, keeping the stored JWK Set when the update does not carry
+   * one of its own.
+   *
+   * <p>{@link AuthorizationServerConfiguration#toMap()} deliberately leaves {@code jwks} out, so
+   * the management representation of a configuration never contains the signing keys. Because the
+   * update replaces the whole configuration, a caller that reads the current configuration, edits a
+   * field and writes it back would otherwise clear the keys of the tenant in a single save, taking
+   * down every token and ID token issuance for it. Rotating the keys still works: an update that
+   * carries a {@code jwks} of its own replaces the stored one.
+   */
+  AuthorizationServerConfiguration updateConfiguration(
+      AuthorizationServerConfiguration before, AuthorizationServerUpdateRequest request) {
+
+    if (request.hasJwks()) {
+      return jsonConverter.read(request.toMap(), AuthorizationServerConfiguration.class);
+    }
+
+    Map<String, Object> merged = new HashMap<>(request.toMap());
+    merged.put("jwks", before.jwks());
+    return jsonConverter.read(merged, AuthorizationServerConfiguration.class);
+  }
+
+  /**
+   * Records a JWK Set replacement in the diff.
+   *
+   * <p>The diff is calculated over {@link AuthorizationServerConfiguration#toMap()}, which omits
+   * {@code jwks}, and would therefore stay silent about a key rotation. Only the fact is reported:
+   * putting the key material itself into the diff would carry private keys into the response and
+   * the audit trail.
+   */
+  private void reportJwksReplacement(
+      AuthorizationServerUpdateRequest request, Map<String, Object> diff) {
+
+    if (request.hasJwks()) {
+      diff.put("jwks", "replaced");
+    }
   }
 }
