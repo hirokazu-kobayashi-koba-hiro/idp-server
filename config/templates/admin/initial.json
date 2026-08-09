@@ -11,9 +11,14 @@
     "domain": "${AUTHORIZATION_SERVER_URL}",
     "description": "Admin tenant for system management",
     "authorization_provider": "idp-server",
+    "ui_config": {
+      "base_url": "${UI_BASE_URL}",
+      "signin_page": "/signin/",
+      "signup_page": "/signup/"
+    },
     "session_config": {
       "cookie_name": "ADMIN_TENANT_IDP_SERVER_SESSION",
-      "cookie_same_site": "None",
+      "cookie_same_site": "Lax",
       "use_secure_cookie": false,
       "use_http_only_cookie": true,
       "cookie_path": "/",

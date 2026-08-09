@@ -349,7 +349,14 @@ cat initial.json | jq .
 ```bash
 ./init-generate-env.sh      # .env生成
 ./init-admin-tenant-config.sh  # initial.json生成
-./setup.sh                   # 初期化API実行
+./setup.sh                   # 初期化API実行（初回のみ）
+```
+
+初期化済みの環境に admin テナントの設定変更を反映する場合は、`setup.sh` ではなく次を使います。`setup.sh` の初期化APIは冪等ではないため再実行できません。
+
+```bash
+./config/scripts/update-admin-tenant.sh          # tenant / authorization-server / client を反映
+./config/scripts/update-admin-tenant.sh -d true  # 差分だけ確認（dry run）
 ```
 
 **Note**: 本番環境では、これらのスクリプトを直接使用せず、設定管理システム（Terraform、Ansible等）や Secrets Manager を使用してください。

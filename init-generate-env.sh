@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 
 # Usage: ./init-generate-env.sh [postgresql|mysql]
 DATABASE_TYPE=${1:-postgresql}
