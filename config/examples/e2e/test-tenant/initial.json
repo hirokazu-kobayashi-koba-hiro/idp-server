@@ -10,9 +10,9 @@
     "domain": "https://api.local.test/67e7eae6-62b0-4500-9eff-87459f63fc66",
     "authorization_provider": "idp-server",
     "ui_config": {
-      "base_url": "http://localhost:3000",
+      "base_url": "https://auth.local.test",
       "signup_page": "/signup/",
-      "signin_page": "/signin/fido2/"
+      "signin_page": "/signin/"
     },
     "session_config": {
       "cookie_name": "TEST_TENANT_IDP_SERVER_SESSION",
@@ -20,7 +20,7 @@
     },
     "cors_config": {
       "allow_origins": [
-        "http://localhost:3000","http://localhost:3100","http://localhost:5173","https://idp-auth-frontend-ecru.vercel.app","https://idp-auth-frontend-diqt.vercel.app"
+        "https://auth.local.test","https://api.local.test","http://localhost:3000","http://localhost:3100","http://localhost:5173","https://idp-auth-frontend-ecru.vercel.app","https://idp-auth-frontend-diqt.vercel.app"
       ]
     },
     "security_event_log_config": {
