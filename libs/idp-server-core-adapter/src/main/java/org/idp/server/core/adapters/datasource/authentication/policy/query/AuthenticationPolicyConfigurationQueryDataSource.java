@@ -132,8 +132,12 @@ public class AuthenticationPolicyConfigurationQueryDataSource
       return List.of();
     }
 
+    // The select returns the row (id, flow, payload); the configuration itself lives in payload.
+    // Deserializing the row instead mapped id and flow but left policies empty. (#1755)
     return results.stream()
-        .map(result -> jsonConverter.read(result, AuthenticationPolicyConfiguration.class))
+        .map(
+            result ->
+                jsonConverter.read(result.get("payload"), AuthenticationPolicyConfiguration.class))
         .toList();
   }
 
