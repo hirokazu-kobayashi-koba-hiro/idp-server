@@ -102,6 +102,8 @@ Phase 4: エンタープライズ
 | **[サードパーティ連携](./quickstart-08-third-party-integration.md)** | `third-party` | 第三者アプリへのOAuth 2.0連携 |
 | **[外部パスワード認証委譲](./quickstart-10-external-password-auth.md)** | `external-password-auth` | 既存認証基盤（LDAP、社内API等）にOIDCを追加 |
 | **[CIBA](./quickstart-11-ciba.md)** | `ciba` | モバイル承認（PCでログイン開始、スマホで生体認証） |
+| **[CIBA 委譲](./quickstart-15-ciba-delegation.md)** | `ciba-delegation` | 認可コードフローの認証をCIBAへ委譲（PCでは入力させない） |
+| **[外部API認証](./quickstart-14-external-api-authentication.md)** | `external-api-auth` | 任意の外部APIへ認証・判定を委譲（汎用） |
 | **[既存IDサービスからの移行](./quickstart-13-id-service-migration.md)** | `id-service-migration` | 既存認証基盤の活用 + CIBA モバイル承認（binding_message / FIDO-UAF） |
 | **[金融グレード（FAPI）](./quickstart-12-financial-grade.md)** | `financial-grade` | 不正送金・なりすまし・改ざん防止、金融規制準拠 |
 
@@ -169,6 +171,8 @@ cat VERIFY.md
 | 外部アプリにAPI提供したい | `third-party` |
 | 既存認証基盤を活かしたい | `external-password-auth` |
 | モバイル承認が必要 | `ciba` |
+| PCでパスワードを入力させたくない | `ciba-delegation` |
+| 任意の外部APIに認証を委ねたい | `external-api-auth` |
 | 既存IDサービスから移行したい | `id-service-migration` |
 | 金融グレードが必要 | `financial-grade` |
 

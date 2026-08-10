@@ -1,0 +1,24 @@
+{
+  "flow": "ciba",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "ciba_fido_uaf_authentication",
+      "priority": 1,
+      "conditions": {},
+      "available_methods": ["fido-uaf"],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.fido-uaf-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

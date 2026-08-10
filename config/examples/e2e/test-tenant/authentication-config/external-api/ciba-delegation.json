@@ -1,0 +1,239 @@
+{
+  "id": "9f3c1d64-5b21-4a77-9c0e-2d8a6f4b31e5",
+  "type": "external-api-authentication",
+  "attributes": {},
+  "metadata": {
+    "description": "Delegates the authorization code flow authentication to a CIBA flow. The external authorization server is this same test tenant, so the whole delegation can be exercised without a third party."
+  },
+  "interactions": {
+    "ciba_start": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "required": [
+            "login_hint"
+          ],
+          "properties": {
+            "interaction": {
+              "type": "string"
+            },
+            "login_hint": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "execution": {
+        "function": "http_request",
+        "http_request": {
+          "url": "https://api.local.test/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/backchannel/authentications",
+          "method": "POST",
+          "auth_type": "none",
+          "header_mapping_rules": [
+            {
+              "static_value": "application/x-www-form-urlencoded",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "static_value": "clientSecretPost",
+              "to": "client_id"
+            },
+            {
+              "static_value": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
+              "to": "client_secret"
+            },
+            {
+              "static_value": "openid profile phone email",
+              "to": "scope"
+            },
+            {
+              "static_value": "success",
+              "to": "binding_message"
+            },
+            {
+              "static_value": "successUserCode001",
+              "to": "user_code"
+            },
+            {
+              "from": "$.request_body.login_hint",
+              "to": "login_hint"
+            }
+          ]
+        },
+        "http_request_store": {
+          "key": "ciba_delegation",
+          "interaction_mapping_rules": [
+            {
+              "from": "$.response_body.auth_req_id",
+              "to": "auth_req_id"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.status_code",
+            "to": "external_status_code"
+          },
+          {
+            "from": "$.execution_http_request.response_body.error",
+            "to": "error"
+          },
+          {
+            "from": "$.execution_http_request.response_body.error_description",
+            "to": "error_description"
+          }
+        ]
+      }
+    },
+    "ciba_poll": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "interaction": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "execution": {
+        "function": "http_request",
+        "previous_interaction": {
+          "key": "ciba_delegation"
+        },
+        "http_request": {
+          "url": "https://api.local.test/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/tokens",
+          "method": "POST",
+          "auth_type": "none",
+          "header_mapping_rules": [
+            {
+              "static_value": "application/x-www-form-urlencoded",
+              "to": "Content-Type"
+            }
+          ],
+          "body_mapping_rules": [
+            {
+              "static_value": "clientSecretPost",
+              "to": "client_id"
+            },
+            {
+              "static_value": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
+              "to": "client_secret"
+            },
+            {
+              "static_value": "urn:openid:params:grant-type:ciba",
+              "to": "grant_type"
+            },
+            {
+              "from": "$.interaction.auth_req_id",
+              "to": "auth_req_id"
+            }
+          ]
+        },
+        "http_request_store": {
+          "key": "ciba_delegation_token",
+          "interaction_mapping_rules": [
+            {
+              "from": "$.response_body.access_token",
+              "to": "access_token"
+            }
+          ]
+        }
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.status_code",
+            "to": "external_status_code"
+          },
+          {
+            "from": "$.execution_http_request.response_body.error",
+            "to": "error"
+          },
+          {
+            "from": "$.execution_http_request.response_body.error_description",
+            "to": "error_description"
+          }
+        ]
+      }
+    },
+    "userinfo": {
+      "request": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "interaction": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "execution": {
+        "function": "http_request",
+        "previous_interaction": {
+          "key": "ciba_delegation_token"
+        },
+        "http_request": {
+          "url": "https://api.local.test/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/userinfo",
+          "method": "GET",
+          "auth_type": "none",
+          "header_mapping_rules": [
+            {
+              "from": "$.interaction.access_token",
+              "to": "Authorization",
+              "functions": [
+                {
+                  "name": "format",
+                  "args": {
+                    "template": "Bearer {{value}}"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "user_resolve": {
+        "user_mapping_rules": [
+          {
+            "static_value": "ciba-delegation",
+            "to": "provider_id"
+          },
+          {
+            "from": "$.execution_http_request.response_body.sub",
+            "to": "external_user_id"
+          },
+          {
+            "from": "$.execution_http_request.response_body.email",
+            "to": "email"
+          },
+          {
+            "from": "$.execution_http_request.response_body.name",
+            "to": "name"
+          }
+        ],
+        "identity_match_field": "email"
+      },
+      "response": {
+        "body_mapping_rules": [
+          {
+            "from": "$.execution_http_request.status_code",
+            "to": "external_status_code"
+          },
+          {
+            "from": "$.execution_http_request.response_body.error",
+            "to": "error"
+          },
+          {
+            "from": "$.execution_http_request.response_body.error_description",
+            "to": "error_description"
+          }
+        ]
+      }
+    }
+  }
+}
