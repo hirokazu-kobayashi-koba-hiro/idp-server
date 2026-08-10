@@ -537,55 +537,12 @@ components:
               - private_key_jwt
               - tls_client_auth
               - self_signed_tls_client_auth
-              - attest_jwt_client_auth
               - none
           description: >-
             オプション。このトークンエンドポイントがサポートするクライアント認証方法のリストを含むJSON配列。オプションはclient_secret_post、client_secret_basic、client_secret_jwt、およびprivate_key_jwtで、OpenID
             Connect Core
             1.0のセクション9で説明されている。他の認証方法は拡張によって定義される場合がある。省略された場合、デフォルトはclient_secret_basic（OAuth
             2.0 [RFC6749]のセクション2.3.1で指定されているHTTP基本認証スキーム）である。
-        client_attestation_signing_alg_values_supported:
-          type: array
-          items:
-            type: string
-            enum:
-              - RS256
-              - RS384
-              - RS512
-              - ES256
-              - ES384
-              - ES512
-              - PS256
-              - PS384
-              - PS512
-              - EdDSA
-          description: >-
-            オプション。attest_jwt_client_auth（OAuth 2.0 Attestation-Based Client
-            Authentication）の Client Attestation JWT
-            に対してサポートするJWS署名アルゴリズム（alg値）のリストを含むJSON配列。
-            token_endpoint_auth_methods_supported に attest_jwt_client_auth
-            を含める場合は必須。
-        client_attestation_pop_signing_alg_values_supported:
-          type: array
-          items:
-            type: string
-            enum:
-              - RS256
-              - RS384
-              - RS512
-              - ES256
-              - ES384
-              - ES512
-              - PS256
-              - PS384
-              - PS512
-              - EdDSA
-          description: >-
-            オプション。attest_jwt_client_auth（OAuth 2.0 Attestation-Based Client
-            Authentication）の Client Attestation PoP JWT
-            に対してサポートするJWS署名アルゴリズム（alg値）のリストを含むJSON配列。
-            非対称アルゴリズムのみ許可される。token_endpoint_auth_methods_supported に
-            attest_jwt_client_auth を含める場合は必須。
         token_endpoint_auth_signing_alg_values_supported:
           type: array
           items:
@@ -756,6 +713,36 @@ components:
               - plain
               - S256
           description: オプション。サポートされるPKCEコードチャレンジ方法。
+        jwks:
+          type: string
+          description: |-
+            オプション。テナントの署名鍵を含むJWK Setドキュメント（JSON文字列）。
+            更新は全置換のため、GETで取得した内容をそのままPUTすること。
+            省略すると署名鍵が失われ、そのテナントのトークン発行が停止する。
+        pushed_authorization_request_endpoint:
+          type: string
+          format: uri
+          description: オプション。PAR（RFC 9126）エンドポイントのURL。
+        require_pushed_authorization_requests:
+          type: boolean
+          description: |-
+            オプション。認可リクエストにPARを必須とするか。デフォルトはfalse。
+            更新は全置換のため、省略するとfalseに戻りPAR必須が解除される。
+        authorization_details_types_supported:
+          type: array
+          items:
+            type: string
+          description: オプション。サポートされるRAR（RFC 9396）のauthorization_details型。
+        authorization_encryption_alg_values_supported:
+          type: array
+          items:
+            type: string
+          description: オプション。JARMレスポンスの暗号化でサポートされるalg。
+        authorization_encryption_enc_values_supported:
+          type: array
+          items:
+            type: string
+          description: オプション。JARMレスポンスの暗号化でサポートされるenc。
         extension:
           type: object
           description: 認証サーバー動作のための拡張設定パラメータ。

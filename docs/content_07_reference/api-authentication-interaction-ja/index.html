@@ -39,8 +39,8 @@
 各インタラクションタイプに応じたリクエストボディとレスポンス形式を提供します。
 "><link data-rh="true" rel="icon" href="/idp-server/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_07_reference/api-authentication-interaction-ja/"><link data-rh="true" rel="alternate" href="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_07_reference/api-authentication-interaction-ja/" hreflang="ja"><link data-rh="true" rel="alternate" href="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_07_reference/api-authentication-interaction-ja/" hreflang="x-default"><link rel="alternate" type="application/rss+xml" href="/idp-server/blog/rss.xml" title="IdP-Server Documentation RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/idp-server/blog/atom.xml" title="IdP-Server Documentation Atom Feed"><link rel="stylesheet" href="/idp-server/assets/css/styles.205b0e17.css">
-<script src="/idp-server/assets/js/runtime~main.d28ea94d.js" defer="defer"></script>
-<script src="/idp-server/assets/js/main.b85134af.js" defer="defer"></script>
+<script src="/idp-server/assets/js/runtime~main.bcc164cc.js" defer="defer"></script>
+<script src="/idp-server/assets/js/main.c4ed4e71.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();t(null!==e?e:"light")}(),function(){try{const n=new URLSearchParams(window.location.search).entries();for(var[t,e]of n)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="メインコンテンツまでスキップ"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">メインコンテンツまでスキップ</a></div><nav aria-label="ナビゲーション" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="ナビゲーションバーを開く" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/idp-server/"><div class="navbar__logo"><img src="/idp-server/img/logo.svg" alt="My Site Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/idp-server/img/logo.svg" alt="My Site Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">IdP-Server</b></a><a class="navbar__item navbar__link" href="/idp-server/docs/introduction">Docs</a><a class="navbar__item navbar__link" href="/idp-server/docs/content_07_reference/api-reference">Api Reference</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/hirokazu-kobayashi-koba-hiro/idp-server" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="ダークモードを切り替える(現在はライトモード)" aria-label="ダークモードを切り替える(現在はライトモード)" aria-live="polite" aria-pressed="false"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="dsla-search-wrapper"><div class="dsla-search-field" data-tags="default,docs-default-current"></div></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0"><div class="redocusaurus-styles"><style>html:not([data-theme='dark']) .elLqFx{width:calc(100% - 40%);padding:0 40px;}/*!sc*/
@@ -886,6 +886,11 @@ html([data-theme='dark']) data-styled.g138[id="sc-dYttxY"]{content:"cRkLnh,"}/*!
 &lt;li&gt;&lt;code&gt;authentication-device-deny&lt;/code&gt; - 認証デバイス拒否&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;authentication-device-binding-message&lt;/code&gt; - 認証デバイスバインディングメッセージ検証&lt;/li&gt;
 &lt;/ul&gt;
+&lt;h3 id=&quot;ナンバーマッチング（認可コードフロー--デバイス認証）&quot;&gt;ナンバーマッチング（認可コードフロー + デバイス認証）&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;authentication-device-number-matching-challenge&lt;/code&gt; - ナンバーマッチングコード発行&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;authentication-device-number-matching&lt;/code&gt; - ナンバーマッチングコード検証&lt;/li&gt;
+&lt;/ul&gt;
 &lt;h3 id=&quot;バインディングメッセージ検証について&quot;&gt;バインディングメッセージ検証について&lt;/h3&gt;
 &lt;p&gt;&lt;code&gt;authentication-device-binding-message&lt;/code&gt;は、CIBAフローにおいて消費デバイスと認証デバイス間の
 トランザクション一致を確認するための検証インタラクションです。&lt;/p&gt;
@@ -896,6 +901,56 @@ html([data-theme='dark']) data-styled.g138[id="sc-dYttxY"]{content:"cRkLnh,"}/*!
 &lt;li&gt;セッション連動: 複数デバイス間でのセッション一致確認&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;&lt;strong&gt;OIDC CIBA仕様&lt;/strong&gt;: &lt;a href=&quot;https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1&quot;&gt;Section 7.1&lt;/a&gt;&lt;/p&gt;
+&lt;h3 id=&quot;ナンバーマッチングについて&quot;&gt;ナンバーマッチングについて&lt;/h3&gt;
+&lt;p&gt;認可コードフローで認証デバイス（FIDO-UAF等）へステップアップする際の、プッシュ疲労（push fatigue）対策です。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;コードは認証デバイスに送信されません。&lt;/strong&gt; サインイン画面に表示されたコードを、ユーザーが認証デバイスへ転記します。
+承認者が元の画面を見ないと承認できないため、届いた通知を反射的に承認する攻撃が成立しなくなります。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;インタラクション&lt;/th&gt;
+&lt;th&gt;呼び出し元&lt;/th&gt;
+&lt;th&gt;動作&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;authentication-device-number-matching-challenge&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;サインイン画面&lt;/td&gt;
+&lt;td&gt;コードを生成してサーバー側に保存し、レスポンス &lt;code&gt;number_matching_code&lt;/code&gt; で画面に返す&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;authentication-device-number-matching&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;認証デバイス&lt;/td&gt;
+&lt;td&gt;転記されたコードをリクエストボディ &lt;code&gt;number_matching_code&lt;/code&gt; で送り、保存値と照合する&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;
+&lt;p&gt;コードは数字のみで、桁数は認証設定 &lt;code&gt;authentication-device-number-matching&lt;/code&gt; の
+&lt;code&gt;execution.details.length&lt;/code&gt; で指定します（既定 4 桁）。&lt;/p&gt;
+&lt;p&gt;コード発行はプッシュ配信とは分離されています。プッシュ（FCM）は CIBA と共通の
+&lt;code&gt;authentication-device-notification&lt;/code&gt; 側にあり、ナンバーマッチングの利用にプッシュは必須ではありません。&lt;/p&gt;
+&lt;p&gt;検証エラーは以下のとおりです。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;状況&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;error&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;error_description&lt;/code&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;&lt;tr&gt;
+&lt;td&gt;チャレンジ未実行&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;invalid_request&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;number_matching_code has not been issued&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;コード不一致&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;invalid_request&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;number_matching_code does not match&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;
+&lt;p&gt;認証デバイス側が番号入力画面の要否を判定するためのフラグは、認証トランザクション取得API
+（&lt;code&gt;GET /{tenant-id}/v1/authentication-devices/{device-id}/authentications&lt;/code&gt;）の
+&lt;code&gt;number_matching_required&lt;/code&gt; です。&lt;/p&gt;
 " class="sc-faJlkc sc-fdduAw JEUrA dtrLSf"><p>指定された認可リクエストIDと認証インタラクションタイプに基づいて認証処理を実行します。</p>
 <h2 id="サポートされている認証インタラクションタイプ">サポートされている認証インタラクションタイプ</h2>
 <h3 id="パスワード認証">パスワード認証</h3>
@@ -937,6 +992,11 @@ html([data-theme='dark']) data-styled.g138[id="sc-dYttxY"]{content:"cRkLnh,"}/*!
 <li><code>authentication-device-deny</code> - 認証デバイス拒否</li>
 <li><code>authentication-device-binding-message</code> - 認証デバイスバインディングメッセージ検証</li>
 </ul>
+<h3 id="ナンバーマッチング（認可コードフロー--デバイス認証）">ナンバーマッチング（認可コードフロー + デバイス認証）</h3>
+<ul>
+<li><code>authentication-device-number-matching-challenge</code> - ナンバーマッチングコード発行</li>
+<li><code>authentication-device-number-matching</code> - ナンバーマッチングコード検証</li>
+</ul>
 <h3 id="バインディングメッセージ検証について">バインディングメッセージ検証について</h3>
 <p><code>authentication-device-binding-message</code>は、CIBAフローにおいて消費デバイスと認証デバイス間の
 トランザクション一致を確認するための検証インタラクションです。</p>
@@ -947,11 +1007,61 @@ html([data-theme='dark']) data-styled.g138[id="sc-dYttxY"]{content:"cRkLnh,"}/*!
 <li>セッション連動: 複数デバイス間でのセッション一致確認</li>
 </ul>
 <p><strong>OIDC CIBA仕様</strong>: <a href="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1">Section 7.1</a></p>
+<h3 id="ナンバーマッチングについて">ナンバーマッチングについて</h3>
+<p>認可コードフローで認証デバイス（FIDO-UAF等）へステップアップする際の、プッシュ疲労（push fatigue）対策です。</p>
+<p><strong>コードは認証デバイスに送信されません。</strong> サインイン画面に表示されたコードを、ユーザーが認証デバイスへ転記します。
+承認者が元の画面を見ないと承認できないため、届いた通知を反射的に承認する攻撃が成立しなくなります。</p>
+<table>
+<thead>
+<tr>
+<th>インタラクション</th>
+<th>呼び出し元</th>
+<th>動作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>authentication-device-number-matching-challenge</code></td>
+<td>サインイン画面</td>
+<td>コードを生成してサーバー側に保存し、レスポンス <code>number_matching_code</code> で画面に返す</td>
+</tr>
+<tr>
+<td><code>authentication-device-number-matching</code></td>
+<td>認証デバイス</td>
+<td>転記されたコードをリクエストボディ <code>number_matching_code</code> で送り、保存値と照合する</td>
+</tr>
+</tbody></table>
+<p>コードは数字のみで、桁数は認証設定 <code>authentication-device-number-matching</code> の
+<code>execution.details.length</code> で指定します（既定 4 桁）。</p>
+<p>コード発行はプッシュ配信とは分離されています。プッシュ（FCM）は CIBA と共通の
+<code>authentication-device-notification</code> 側にあり、ナンバーマッチングの利用にプッシュは必須ではありません。</p>
+<p>検証エラーは以下のとおりです。</p>
+<table>
+<thead>
+<tr>
+<th>状況</th>
+<th><code>error</code></th>
+<th><code>error_description</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>チャレンジ未実行</td>
+<td><code>invalid_request</code></td>
+<td><code>number_matching_code has not been issued</code></td>
+</tr>
+<tr>
+<td>コード不一致</td>
+<td><code>invalid_request</code></td>
+<td><code>number_matching_code does not match</code></td>
+</tr>
+</tbody></table>
+<p>認証デバイス側が番号入力画面の要否を判定するためのフラグは、認証トランザクション取得API
+（<code>GET /{tenant-id}/v1/authentication-devices/{device-id}/authentications</code>）の
+<code>number_matching_required</code> です。</p>
 </div></div><div><h5 class="sc-elFkmj iiPSqe">path<!-- --> Parameters</h5><table class="sc-eGjrzz evWwTm"><tbody><tr class=""><td kind="field" title="tenant-id" class="sc-kHNKno sc-frmfij hrWbJi bEMUez"><span class="sc-hLyRwt hkIZpX"></span><span class="property-name">tenant-id</span><div class="sc-byRegH sc-isZTFa lfpluU gEfFlY">required</div></td><td class="sc-groBii kQrmNR"><div><div><span class="sc-byRegH sc-budtlk lfpluU kqsZlC"></span><span class="sc-byRegH sc-fJvEKN lfpluU kIPVZC">string</span><span class="sc-byRegH sc-fJvEKN lfpluU kIPVZC"> <!-- -->&lt;<!-- -->uuid<!-- -->&gt;<!-- --> </span></div> <div><span class="sc-byRegH lfpluU"> <!-- -->Example:<!-- --> </span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">67e7eae6-62b0-4500-9eff-87459f63fc66</span></div><div><div html="&lt;p&gt;テナントID&lt;/p&gt;
 " class="sc-faJlkc sc-fdduAw JEUrA jdkYst"><p>テナントID</p>
 </div></div></div></td></tr><tr class=""><td kind="field" title="id" class="sc-kHNKno sc-frmfij hrWbJi bEMUez"><span class="sc-hLyRwt hkIZpX"></span><span class="property-name">id</span><div class="sc-byRegH sc-isZTFa lfpluU gEfFlY">required</div></td><td class="sc-groBii kQrmNR"><div><div><span class="sc-byRegH sc-budtlk lfpluU kqsZlC"></span><span class="sc-byRegH sc-fJvEKN lfpluU kIPVZC">string</span></div> <div><span class="sc-byRegH lfpluU"> <!-- -->Example:<!-- --> </span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">authz_req_67890</span></div><div><div html="&lt;p&gt;認可リクエストID&lt;/p&gt;
 " class="sc-faJlkc sc-fdduAw JEUrA jdkYst"><p>認可リクエストID</p>
-</div></div></div></td></tr><tr class="last"><td kind="field" title="interaction-type" class="sc-kHNKno sc-frmfij hrWbJi bEMUez"><span class="sc-hLyRwt hkIZpX"></span><span class="property-name">interaction-type</span><div class="sc-byRegH sc-isZTFa lfpluU gEfFlY">required</div></td><td class="sc-groBii kQrmNR"><div><div><span class="sc-byRegH sc-budtlk lfpluU kqsZlC"></span><span class="sc-byRegH sc-fJvEKN lfpluU kIPVZC">string</span></div><div><span class="sc-byRegH lfpluU"> <!-- -->Enum<!-- -->:</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;password-authentication&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;sms-authentication-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;sms-authentication&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;email-authentication-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;email-authentication&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;fido-uaf-registration-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;fido-uaf-registration&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;fido-uaf-authentication-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;fido-uaf-authentication&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;fido-uaf-deregistration&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;fido-uaf-cancel&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;webauthn-registration-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;webauthn-registration&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;webauthn-authentication-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;webauthn-authentication&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;webauthn-deregistration&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;initial-registration&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;authentication-cancel&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;authentication-device-notification&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;authentication-device-deny&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;authentication-device-binding-message&quot;</span> </div> <div><span class="sc-byRegH lfpluU"> <!-- -->Example:<!-- --> </span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">password-authentication</span></div><div><div html="&lt;p&gt;認証インタラクションタイプ&lt;/p&gt;
+</div></div></div></td></tr><tr class="last"><td kind="field" title="interaction-type" class="sc-kHNKno sc-frmfij hrWbJi bEMUez"><span class="sc-hLyRwt hkIZpX"></span><span class="property-name">interaction-type</span><div class="sc-byRegH sc-isZTFa lfpluU gEfFlY">required</div></td><td class="sc-groBii kQrmNR"><div><div><span class="sc-byRegH sc-budtlk lfpluU kqsZlC"></span><span class="sc-byRegH sc-fJvEKN lfpluU kIPVZC">string</span></div><div><span class="sc-byRegH lfpluU"> <!-- -->Enum<!-- -->:</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;password-authentication&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;sms-authentication-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;sms-authentication&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;email-authentication-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;email-authentication&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;fido-uaf-registration-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;fido-uaf-registration&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;fido-uaf-authentication-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;fido-uaf-authentication&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;fido-uaf-deregistration&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;fido-uaf-cancel&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;webauthn-registration-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;webauthn-registration&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;webauthn-authentication-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;webauthn-authentication&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;webauthn-deregistration&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;initial-registration&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;authentication-cancel&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;authentication-device-notification&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;authentication-device-deny&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;authentication-device-binding-message&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;authentication-device-number-matching-challenge&quot;</span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">&quot;authentication-device-number-matching&quot;</span> </div> <div><span class="sc-byRegH lfpluU"> <!-- -->Example:<!-- --> </span> <span class="sc-byRegH sc-dEAvcG lfpluU IvJiA">password-authentication</span></div><div><div html="&lt;p&gt;認証インタラクションタイプ&lt;/p&gt;
 " class="sc-faJlkc sc-fdduAw JEUrA jdkYst"><p>認証インタラクションタイプ</p>
 </div></div></div></td></tr></tbody></table></div><h5 class="sc-elFkmj iiPSqe">Request Body schema: <span class="sc-edaYAx iFdOsg">application/json</span></h5><div html="&lt;p&gt;認証インタラクションタイプに応じたリクエストボディ。
 各インタラクションタイプで必要なパラメータが異なります。&lt;/p&gt;
@@ -963,7 +1073,7 @@ html([data-theme='dark']) data-styled.g138[id="sc-dYttxY"]{content:"cRkLnh,"}/*!
 " class="sc-faJlkc sc-fdduAw JEUrA jdkYst"><p>パスワード</p>
 </div></div></div></td></tr></tbody></table></div><div><h3 class="sc-gSVmdp bXMkoN">Responses</h3><div><button class="sc-jthNAk kevjzz"><svg class="sc-dibcMh lAqqh" version="1.1" viewBox="0 0 24 24" x="0" xmlns="http://www.w3.org/2000/svg" y="0" aria-hidden="true"><polygon points="17.3 8.3 12 13.6 6.7 8.3 5.3 9.7 12 16.4 18.7 9.7 "></polygon></svg><strong class="sc-eOObWA ecXPYN">200<!-- --> </strong><div html="&lt;p&gt;認証インタラクション成功。
 レスポンス内容はインタラクションタイプによって異なります。&lt;/p&gt;
-" class="sc-faJlkc sc-fdduAw sc-eINXvP JEUrA ffmyVV jtyxfw"><p>認証インタラクション成功。
+" class="sc-faJlkc sc-fdduAw sc-eINXvP JEUrA ffmyVV jtyxfw"><p>認証インタラクション成功 。
 レスポンス内容はインタラクションタイプによって異なります。</p>
 </div></button></div><div><button class="sc-jthNAk hYiSRd"><svg class="sc-dibcMh ldQHAt" version="1.1" viewBox="0 0 24 24" x="0" xmlns="http://www.w3.org/2000/svg" y="0" aria-hidden="true"><polygon points="17.3 8.3 12 13.6 6.7 8.3 5.3 9.7 12 16.4 18.7 9.7 "></polygon></svg><strong class="sc-eOObWA ecXPYN">400<!-- --> </strong><div html="&lt;p&gt;リクエストが不正&lt;/p&gt;
 " class="sc-faJlkc sc-fdduAw sc-eINXvP JEUrA ffmyVV jtyxfw"><p>リクエストが不正</p>

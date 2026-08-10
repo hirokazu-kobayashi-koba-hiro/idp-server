@@ -661,7 +661,6 @@ components:
             - private_key_jwt
             - tls_client_auth
             - self_signed_tls_client_auth
-            - attest_jwt_client_auth
             - none
           description: >-
             OPTIONAL. Requested Client Authentication method for the Token
@@ -952,9 +951,6 @@ components:
             - client_secret_basic
             - client_secret_jwt
             - private_key_jwt
-            - tls_client_auth
-            - self_signed_tls_client_auth
-            - attest_jwt_client_auth
             - none
           description: Authentication method for the token endpoint
         subject_type:
@@ -1252,9 +1248,6 @@ components:
             - client_secret_basic
             - client_secret_jwt
             - private_key_jwt
-            - tls_client_auth
-            - self_signed_tls_client_auth
-            - attest_jwt_client_auth
             - none
           description: Authentication method for the token endpoint
         subject_type:
