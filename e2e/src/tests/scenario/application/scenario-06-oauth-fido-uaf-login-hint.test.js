@@ -318,6 +318,16 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     expect(txBeforeChallenge.status).toBe(200);
     expect(txBeforeChallenge.data.list[0].number_matching_required).toBe(false);
 
+    // Verifying before any challenge is a distinct failure from a wrong code. The two are told
+    // apart by error_description, which is part of the documented contract (#1754).
+    const notIssuedResponse = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-device-number-matching`,
+      body: { number_matching_code: "0000" },
+    });
+    expect(notIssuedResponse.status).toBe(400);
+    expect(notIssuedResponse.data.error).toBe("invalid_request");
+    expect(notIssuedResponse.data.error_description).toBe("number_matching_code has not been issued");
+
     // Issue the number-matching code. Generation is separate from push (FCM): this call only
     // generates + stores the code and returns it for the sign-in screen (SPA) to display. The code
     // is never sent to the device; the user transcribes it. (Push is optional and lives in the
@@ -331,6 +341,17 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     expect(numberMatchingCode).toBeDefined();
     expect(numberMatchingCode).toMatch(/^[0-9]{4}$/);
 
+    // Issuing the code is what tells the device to prompt for it.
+    const txAfterChallenge = await get({ url: txUrl, headers: txHeaders });
+    expect(txAfterChallenge.status).toBe(200);
+    expect(txAfterChallenge.data.list[0].number_matching_required).toBe(true);
+
+    // The whole mechanism rests on the code never reaching the device: the device is told THAT a
+    // code is required, never WHICH one. If it leaked into the device-facing transaction the user
+    // would no longer have to read the sign-in screen, which is what number-matching is for.
+    expect(JSON.stringify(txAfterChallenge.data.list[0])).not.toContain(numberMatchingCode);
+    expect(txAfterChallenge.data.list[0]).not.toHaveProperty("number_matching_code");
+
     // A value that differs from the issued code must not match.
     const wrongCode = numberMatchingCode === "0000" ? "1111" : "0000";
     const wrongResponse = await postWithJson({
@@ -338,6 +359,8 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       body: { number_matching_code: wrongCode },
     });
     expect(wrongResponse.status).toBe(400);
+    expect(wrongResponse.data.error).toBe("invalid_request");
+    expect(wrongResponse.data.error_description).toBe("number_matching_code does not match");
 
     // The value the user transcribed from the sign-in screen matches the stored one.
     const okResponse = await postWithJson({
