@@ -681,6 +681,18 @@ components:
           type: string
           format: uuid
           description: クライアント識別子
+        number_matching_required:
+          type: boolean
+          description: |
+            認証デバイスがナンバーマッチングコードの入力画面を表示すべきかを示すフラグ。
+
+            サインイン画面が `authentication-device-number-matching-challenge` を実行して
+            コードが発行されると `true` になります。デバイスはこのフラグを見て入力画面の要否を判定します。
+
+            **コード検証に成功した後も `true` のままです。** 検証成功でクリアすると、フローを開始した
+            攻撃者が自分でコード検証を通すことで「もう入力は不要」という状態を被害者のデバイスへ
+            伝えられてしまい、ナンバーマッチングが塞いでいるプッシュ疲労の経路が再び開くためです。
+            実際にコードが検証済みかどうかは認証結果側で管理されます。
         client_attributes:
           type: object
           properties:
