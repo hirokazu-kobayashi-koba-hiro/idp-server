@@ -101,6 +101,10 @@ paths:
         - `authentication-device-deny` - 認証デバイス拒否
         - `authentication-device-binding-message` - 認証デバイスバインディングメッセージ検証
 
+        ### ナンバーマッチング（認可コードフロー + デバイス認証）
+        - `authentication-device-number-matching-challenge` - ナンバーマッチングコード発行
+        - `authentication-device-number-matching` - ナンバーマッチングコード検証
+
         ### バインディングメッセージ検証について
 
         `authentication-device-binding-message`は、CIBAフローにおいて消費デバイスと認証デバイス間の
@@ -112,6 +116,35 @@ paths:
         - セッション連動: 複数デバイス間でのセッション一致確認
 
         **OIDC CIBA仕様**: [Section 7.1](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.7.1)
+
+        ### ナンバーマッチングについて
+
+        認可コードフローで認証デバイス（FIDO-UAF等）へステップアップする際の、プッシュ疲労（push fatigue）対策です。
+
+        **コードは認証デバイスに送信されません。** サインイン画面に表示されたコードを、ユーザーが認証デバイスへ転記します。
+        承認者が元の画面を見ないと承認できないため、届いた通知を反射的に承認する攻撃が成立しなくなります。
+
+        | インタラクション | 呼び出し元 | 動作 |
+        |---|---|---|
+        | `authentication-device-number-matching-challenge` | サインイン画面 | コードを生成してサーバー側に保存し、レスポンス `number_matching_code` で画面に返す |
+        | `authentication-device-number-matching` | 認証デバイス | 転記されたコードをリクエストボディ `number_matching_code` で送り、保存値と照合する |
+
+        コードは数字のみで、桁数は認証設定 `authentication-device-number-matching` の
+        `execution.details.length` で指定します（既定 4 桁）。
+
+        コード発行はプッシュ配信とは分離されています。プッシュ（FCM）は CIBA と共通の
+        `authentication-device-notification` 側にあり、ナンバーマッチングの利用にプッシュは必須ではありません。
+
+        検証エラーは以下のとおりです。
+
+        | 状況 | `error` | `error_description` |
+        |---|---|---|
+        | チャレンジ未実行 | `invalid_request` | `number_matching_code has not been issued` |
+        | コード不一致 | `invalid_request` | `number_matching_code does not match` |
+
+        認証デバイス側が番号入力画面の要否を判定するためのフラグは、認証トランザクション取得API
+        （`GET /{tenant-id}/v1/authentication-devices/{device-id}/authentications`）の
+        `number_matching_required` です。
 
       parameters:
         - $ref: '#/components/parameters/TenantId'
@@ -898,6 +931,8 @@ components:
           - authentication-device-notification
           - authentication-device-deny
           - authentication-device-binding-message
+          - authentication-device-number-matching-challenge
+          - authentication-device-number-matching
         example: "password-authentication"
 
     FederationType:

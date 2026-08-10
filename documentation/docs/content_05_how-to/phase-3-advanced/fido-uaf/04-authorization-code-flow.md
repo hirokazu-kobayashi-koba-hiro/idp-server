@@ -220,6 +220,31 @@ Content-Type: application/json
 | 200 | 一致。次の FIDO-UAF 認証へ |
 | 400 | コード不一致 or 未発行 |
 
+400 の `error_description` で区別できます。
+
+| 状況 | `error_description` |
+|---|---|
+| チャレンジ未実行 | `number_matching_code has not been issued` |
+| コード不一致 | `number_matching_code does not match` |
+
+#### 入力画面の要否判定（device）
+
+デバイスアプリは、認証トランザクション取得APIのレスポンスに含まれる `number_matching_required` を見て、番号入力画面を出すかどうかを判定します。
+
+```
+GET {tenant-id}/v1/authentication-devices/{device-id}/authentications?flow=oauth
+```
+
+```json
+{
+  "list": [
+    { "id": "...", "flow": "oauth", "number_matching_required": true }
+  ]
+}
+```
+
+コードが発行されると `true` になります。**コード検証に成功した後も `true` のままです。** 検証成功でクリアすると、フローを開始した攻撃者が自分でコード検証を通すことで「もう入力は不要」という状態を被害者のデバイスへ伝えられてしまい、number-matching が塞いでいる push fatigue の経路が再び開くためです。実際にコードが検証済みかどうかは認証結果側で管理されます。
+
 ---
 
 #### Push通知なしのパターン
@@ -498,6 +523,8 @@ FIDO-UAFデバイス認証を利用する場合は、以下のいずれかのパ
 
 ## 関連ドキュメント
 
+- [認可コードフロー デバイス認証拡張](../../../content_04_protocols/protocol-07-authorization-code-device-authentication.md) - プロトコル定義（エンドポイント体系・number-matching のセキュリティモデル）
+- [ナンバーマッチング設定](../../../content_06_developer-guide/05-configuration/authn/number-matching.md) - 桁数等の設定リファレンス
 - [CIBA + FIDO-UAF](./01-ciba-flow.md) - CIBAフローでのFIDO-UAF認証
 - [FIDO-UAF登録](./02-registration.md) - デバイス登録手順
 - [FIDO-UAF解除](./03-deregistration.md) - デバイス解除手順

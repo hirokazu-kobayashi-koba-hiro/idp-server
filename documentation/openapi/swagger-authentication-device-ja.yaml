@@ -681,6 +681,16 @@ components:
           type: string
           format: uuid
           description: クライアント識別子
+        number_matching_required:
+          type: boolean
+          description: |
+            認証デバイスがナンバーマッチングコードの入力画面を表示すべきかを示すフラグ。
+
+            サインイン画面が `authentication-device-number-matching-challenge` を実行して
+            コードが発行されると `true` になります。
+
+            **コード検証に成功した後も `true` のままです**（意図的な挙動）。
+            コードが検証済みかどうかは認証結果側で管理されます。
         client_attributes:
           type: object
           properties:
