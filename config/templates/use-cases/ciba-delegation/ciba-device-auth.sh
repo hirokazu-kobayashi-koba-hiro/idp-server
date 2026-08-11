@@ -20,7 +20,7 @@ ENV_FILE="${PROJECT_ROOT}/.env"
 # Parse action argument
 ACTION="${1:-approve}"
 
-ORGANIZATION_NAME="${ORGANIZATION_NAME:-ciba}"
+ORGANIZATION_NAME="${ORGANIZATION_NAME:-ciba-delegation}"
 CONFIG_DIR="${PROJECT_ROOT}/config/generated/${ORGANIZATION_NAME}"
 
 if [ "${ACTION}" = "cancel" ]; then

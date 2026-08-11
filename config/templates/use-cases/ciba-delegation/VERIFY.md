@@ -520,11 +520,11 @@ curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
 
 ### Step 19: デバイスで承認
 
-Phase 2 の Step 11〜13 と同じ手順です。スクリプトでも実行できます。
+Phase 2 の Step 11〜13 と同じ手順を、**Phase 1 の Step 5 で登録したデバイス**（`DEVICE_ID` / `DEVICE_SECRET`）で実行します。
 
-```bash
-./ciba-device-auth.sh
-```
+`ciba_start` が作ったトランザクションは、`login_hint` で指したユーザーのデバイス宛に作られます。別のデバイスで承認しようとしても `list` が空になります。
+
+> `ciba-device-auth.sh` は `config/generated/${ORGANIZATION_NAME}/device-credentials.json` を読みます。このファイルを書くのは `verify.sh` だけなので、**この手順書の Phase 1 を手で実行した場合は使えません**（前回のデバイスを承認しようとして空振りします）。Phase 1 を `verify.sh` で済ませた場合のみ利用できます。
 
 ### Step 20: ポーリング（承認後）
 

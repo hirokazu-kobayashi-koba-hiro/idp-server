@@ -116,6 +116,15 @@ DRY_RUN=true ./config/templates/use-cases/ciba-delegation/setup.sh
 ./config/templates/use-cases/ciba-delegation/ciba-device-auth.sh
 ```
 
+`ciba-device-auth.sh` は `config/generated/${ORGANIZATION_NAME}/device-credentials.json` を読みます。このファイルを書くのは `verify.sh` だけなので、**VERIFY.md の Phase 1 を手で実行した場合は使えません**。手で登録したデバイスの `device_id` / `device_secret` を使ってください。
+
+別の名前で構築した場合は、どのスクリプトにも同じ `ORGANIZATION_NAME` を渡します。
+
+```bash
+ORGANIZATION_NAME=my-org ./setup.sh
+ORGANIZATION_NAME=my-org ./verify.sh
+```
+
 ---
 
 ## 実運用にあたって
