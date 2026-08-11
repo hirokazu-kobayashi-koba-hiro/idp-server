@@ -91,7 +91,7 @@ public class VerifiableCredentialJwtProofVerifier
   void throwExceptionIfMultiKeyClaims(JsonWebSignatureHeader header) {
     if (header.hasKid() && (header.hasJwk() || header.hasX5c())
         || header.hasJwk() && (header.hasKid() || header.hasX5c())
-        || header.hasJwk() && (header.hasKid() || header.hasJwk())) {
+        || header.hasX5c() && (header.hasKid() || header.hasJwk())) {
       throw new VerifiableCredentialBadRequestException(
           "invalid_request",
           "proof of jws header must not contains multi key claim  kid, jwk, x5c");
@@ -159,14 +159,14 @@ public class VerifiableCredentialJwtProofVerifier
    * defined in [RFC7519].
    */
   void throwExceptionIfInvalidIat(JsonWebTokenClaims claims) {
-    if (claims.hasIat()) {
+    if (!claims.hasIat()) {
       throw new VerifiableCredentialBadRequestException(
           "invalid_request", "iat claims does not contains, iat is required");
     }
   }
 
   void throwExceptionIfInvalidNonce(JsonWebTokenClaims claims) {
-    if (claims.contains("nonce")) {
+    if (!claims.contains("nonce")) {
       throw new VerifiableCredentialBadRequestException(
           "invalid_request", "nonce claims does not contains, nonce is required");
     }
