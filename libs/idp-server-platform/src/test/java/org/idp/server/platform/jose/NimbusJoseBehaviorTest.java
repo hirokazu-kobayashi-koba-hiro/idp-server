@@ -98,10 +98,11 @@ class NimbusJoseBehaviorTest {
     }
 
     @Test
-    void everyParsedAlgorithmMapsToOneOfTheThreeTypes() throws Exception {
-      // Header.parseAlgorithm returns a JWEAlgorithm when enc is present and a JWSAlgorithm
-      // otherwise, so JoseType.parse's trailing "Unexpected algorithm type" throw is unreachable.
-      // If a Nimbus upgrade introduces a third Algorithm subtype, this expectation breaks first.
+    void classificationDependsOnNoneThenOnEncPresenceOnly() throws Exception {
+      // Header.parseAlgorithm decides in that order: alg "none" wins regardless of enc, otherwise
+      // enc's presence alone picks JWEAlgorithm vs JWSAlgorithm. Both cases below invert the
+      // "encryption looks like a JWE" intuition, and together they show why JoseType.parse's
+      // trailing "Unexpected algorithm type" throw is unreachable — there is no third outcome.
       assertEquals(
           JoseType.plain, JoseType.parse(header("{\"alg\":\"none\",\"enc\":\"A256GCM\"}")));
       assertEquals(JoseType.signature, JoseType.parse(header("{\"alg\":\"RSA-OAEP-256\"}")));
