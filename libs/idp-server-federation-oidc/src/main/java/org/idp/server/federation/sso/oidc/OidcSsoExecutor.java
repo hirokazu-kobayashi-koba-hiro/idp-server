@@ -97,7 +97,16 @@ public interface OidcSsoExecutor {
       // (audience) Claim MAY contain an array with more than one element. The ID Token MUST be
       // rejected if the ID Token does not list the Client as a valid audience, or if it contains
       // additional audiences not trusted by the Client.
-      if (claims.hasAud() && !claims.getAud().contains(configuration.clientId())) {
+      //
+      // aud absent (or JSON null → hasAud() is false per #1776) must be rejected, not skipped:
+      // skipping would accept an id_token minted for a different client (fail-open).
+      if (!claims.hasAud()) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("error", "server_error");
+        data.put("error_description", "id_token does not contain aud.");
+        return new IdTokenVerificationResult(false, data);
+      }
+      if (!claims.getAud().contains(configuration.clientId())) {
         Map<String, Object> data = new HashMap<>();
         data.put("error", "server_error");
         data.put(
