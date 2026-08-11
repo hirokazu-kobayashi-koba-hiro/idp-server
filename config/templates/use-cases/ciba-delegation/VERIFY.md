@@ -96,14 +96,20 @@ TEST_EMAIL="verify-$(date +%s)@example.com"
 TEST_PASSWORD="VerifyPass123"
 TEST_NAME="Verify User"
 
-curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
+REGISTRATION=$(curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" \
   -X POST "${TENANT_BASE}/v1/authorizations/${AUTHORIZATION_ID}/initial-registration" \
   -H "Content-Type: application/json" \
   -d "{
     \"email\": \"${TEST_EMAIL}\",
     \"password\": \"${TEST_PASSWORD}\",
     \"name\": \"${TEST_NAME}\"
-  }" | jq .
+  }")
+
+echo "${REGISTRATION}" | jq .
+
+# Step 11 と Step 19 の device_secret_jwt で使います
+USER_SUB=$(echo "${REGISTRATION}" | jq -r '.user.sub')
+echo "User Sub: ${USER_SUB}"
 ```
 
 #### 確認ポイント
@@ -447,7 +453,9 @@ curl -s \
 
 ## Phase 3: 認可コードフローの認証を CIBA へ委譲
 
-Phase 1 でユーザーと FIDO-UAF デバイスが登録済みであることが前提です。承認する人が居ないと委譲は完了しません。
+**Phase 1 を Step 7 まで完了していることが前提です。** 承認する人が居ないと委譲は完了しません。
+
+ユーザーが永続化されるのは **Step 6 の authorize** の時点です。初期登録（Step 3）や FIDO-UAF 登録（Step 5）を終えただけでは、まだユーザーは保存されていません。Step 6 を飛ばすと `ciba_start` が `unknown_user_id` を返します。
 
 Phase 1 の Step 3 で設定した `TEST_EMAIL` / `TEST_PASSWORD` をそのまま使います。別のシェルから始める場合は、Phase 1 を先に通してください。
 
@@ -520,11 +528,68 @@ curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
 
 ### Step 19: デバイスで承認
 
-Phase 2 の Step 11〜13 と同じ手順を、**Phase 1 の Step 5 で登録したデバイス**（`DEVICE_ID` / `DEVICE_SECRET`）で実行します。
+**Phase 1 の Step 5 で登録したデバイス**（`DEVICE_ID` / `DEVICE_SECRET` / `DEVICE_SECRET_JWT_ISSUER`）で承認します。`ciba_start` が作ったトランザクションは `login_hint` で指したユーザーのデバイス宛なので、別のデバイスでは `list` が空になります。
 
-`ciba_start` が作ったトランザクションは、`login_hint` で指したユーザーのデバイス宛に作られます。別のデバイスで承認しようとしても `list` が空になります。
+#### 19-1. device_secret_jwt を作成
 
-> `ciba-device-auth.sh` は `config/generated/${ORGANIZATION_NAME}/device-credentials.json` を読みます。このファイルを書くのは `verify.sh` だけなので、**この手順書の Phase 1 を手で実行した場合は使えません**（前回のデバイスを承認しようとして空振りします）。Phase 1 を `verify.sh` で済ませた場合のみ利用できます。
+```bash
+base64url_encode() {
+  openssl base64 -e -A | tr '+/' '-_' | tr -d '='
+}
+
+NOW=$(date +%s)
+JWT_PAYLOAD=$(jq -n \
+  --arg iss "${DEVICE_SECRET_JWT_ISSUER}" \
+  --arg sub "${USER_SUB}" \
+  --arg aud "${TENANT_BASE}" \
+  --arg jti "jti-$(date +%s)-${RANDOM}" \
+  --argjson exp "$((NOW + 3600))" \
+  --argjson iat "${NOW}" \
+  '{iss: $iss, sub: $sub, aud: $aud, jti: $jti, exp: $exp, iat: $iat}')
+
+HEADER_B64=$(echo -n '{"alg":"HS256","typ":"JWT"}' | base64url_encode)
+PAYLOAD_B64=$(echo -n "${JWT_PAYLOAD}" | base64url_encode)
+UNSIGNED="${HEADER_B64}.${PAYLOAD_B64}"
+SIGNATURE=$(echo -n "${UNSIGNED}" | openssl dgst -sha256 -hmac "${DEVICE_SECRET}" -binary | base64url_encode)
+DEVICE_JWT="${UNSIGNED}.${SIGNATURE}"
+```
+
+#### 19-2. 認証トランザクションを取得
+
+Phase 2 では `attributes.auth_req_id` で絞りましたが、**委譲では `auth_req_id` がサーバー側に保持され手元に無い**ため、`flow=ciba` で絞ります。
+
+```bash
+TRANSACTION_RESPONSE=$(curl -s -X GET \
+  "${TENANT_BASE}/v1/authentication-devices/${DEVICE_ID}/authentications?flow=ciba" \
+  -H "Authorization: Bearer ${DEVICE_JWT}")
+
+echo "${TRANSACTION_RESPONSE}" | jq .
+TRANSACTION_ID=$(echo "${TRANSACTION_RESPONSE}" | jq -r '.list[0].id')
+echo "Transaction ID: ${TRANSACTION_ID}"
+```
+
+`list` が空の場合は、承認しようとしているデバイスが `login_hint` で指したユーザーのものか確認してください。
+
+#### 19-3. FIDO-UAF 認証
+
+```bash
+curl -s -X POST \
+  "${TENANT_BASE}/v1/authentications/${TRANSACTION_ID}/fido-uaf-authentication-challenge" \
+  -H "Content-Type: application/json" \
+  -d "{\"device_id\": \"${DEVICE_ID}\"}" | jq .
+
+curl -s -X POST \
+  "${TENANT_BASE}/v1/authentications/${TRANSACTION_ID}/fido-uaf-authentication" \
+  -H "Content-Type: application/json" \
+  -d "{\"device_id\": \"${DEVICE_ID}\", \"uafResponse\": [{\"assertionScheme\": \"UAFV1TLV\", \"assertion\": \"mock_assertion_data\"}]}" | jq .
+```
+
+#### 確認ポイント
+
+- 19-2 が HTTP 200 で、`list` に1件以上あること
+- 19-3 の2つのリクエストがどちらも HTTP 200 を返すこと
+
+> Phase 1 を `verify.sh` で済ませた場合に限り、`./ciba-device-auth.sh` で 19-1〜19-3 を代替できます。同スクリプトは `config/generated/${ORGANIZATION_NAME}/device-credentials.json` を読みますが、このファイルを書くのは `verify.sh` だけです。手順書どおり手で登録した場合は前回のデバイスを承認しようとして空振りします。
 
 ### Step 20: ポーリング（承認後）
 
@@ -570,12 +635,60 @@ curl -s -b "${COOKIE_JAR}" "${TENANT_BASE}/v1/authorizations/${AUTH_ID}/authenti
 ### Step 23: 認可コードの取得
 
 ```bash
-curl -s -b "${COOKIE_JAR}" -X POST \
+AUTHORIZE_RESPONSE=$(curl -s -b "${COOKIE_JAR}" -X POST \
   "${TENANT_BASE}/v1/authorizations/${AUTH_ID}/authorize" \
-  -H "Content-Type: application/json" -d '{}' | jq '.redirect_uri'
+  -H "Content-Type: application/json" -d '{}')
+
+echo "${AUTHORIZE_RESPONSE}" | jq '.redirect_uri'
+AUTHORIZATION_CODE=$(echo "${AUTHORIZE_RESPONSE}" | jq -r '.redirect_uri' | sed -n 's/.*[?&]code=\([^&]*\).*/\1/p')
+echo "Authorization Code: ${AUTHORIZATION_CODE}"
 ```
 
 `code=` を含む URL が返れば、委譲による認証で認可コードが発行できたことになります。
+
+---
+
+### Step 24: トークン交換
+
+委譲で得た認可コードが、実際にトークンとして使えることを確認します。
+
+```bash
+TOKEN_RESPONSE=$(curl -s -X POST "${TENANT_BASE}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=authorization_code" \
+  -d "code=${AUTHORIZATION_CODE}" \
+  -d "redirect_uri=${REDIRECT_URI}" \
+  -d "client_id=${CLIENT_ID}" \
+  -d "client_secret=${CLIENT_SECRET}")
+
+echo "${TOKEN_RESPONSE}" | jq .
+ACCESS_TOKEN=$(echo "${TOKEN_RESPONSE}" | jq -r '.access_token')
+```
+
+#### 確認ポイント
+
+- `access_token` と `id_token` が返ること
+- `token_type` が `Bearer`、`expires_in` が設定どおりであること
+
+### Step 25: UserInfo
+
+```bash
+curl -s "${TENANT_BASE}/v1/userinfo" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" | jq .
+```
+
+#### 確認ポイント
+
+- `email` が Phase 1 で登録した `TEST_EMAIL` と一致すること
+- **`sub` は Phase 1 の `USER_SUB` とは異なります**
+
+1要素版では、委譲先の userinfo から解決したユーザーが
+`provider_id: ciba-delegation` の別レコードとして作られます（`user_resolve` の
+既定動作）。同じ人物でも、委譲元から見ると別の subject になります。
+
+同一の subject を維持したい場合は Phase 4 の2要素版を使います。そちらは
+`identity_match_field` で既存ユーザーとの一致を検証し、新しいユーザーを
+作りません。
 
 ---
 
@@ -583,36 +696,49 @@ curl -s -b "${COOKIE_JAR}" -X POST \
 
 `acr_values` を付けると、パスワード認証を1要素目、CIBA 委譲を2要素目とするポリシーが適用されます。
 
-### Step 24: 認可リクエスト（acr_values 付き）
+### Step 26: 認可リクエスト（acr_values 付き）
+
+Phase 3 は完了しているので、`COOKIE_JAR` と `AUTH_ID` はそのまま上書きして構いません。
 
 ```bash
-COOKIE_JAR2=$(mktemp)
-
-AUTH_LOCATION2=$(curl -s -c "${COOKIE_JAR2}" -o /dev/null -w '%{redirect_url}' \
+AUTH_LOCATION=$(curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -o /dev/null -w '%{redirect_url}' \
   "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email&state=mfa&acr_values=urn:idp:acr:password-ciba")
 
-AUTH_ID2=$(echo "${AUTH_LOCATION2}" | sed -n 's/.*[?&]id=\([^&]*\).*/\1/p')
+AUTH_ID=$(echo "${AUTH_LOCATION}" | sed -n 's/.*[?&]id=\([^&]*\).*/\1/p')
 
-curl -s -b "${COOKIE_JAR2}" "${TENANT_BASE}/v1/authorizations/${AUTH_ID2}/view-data" \
+curl -s -b "${COOKIE_JAR}" "${TENANT_BASE}/v1/authorizations/${AUTH_ID}/view-data" \
   | jq '.authentication_policy.description'
 ```
 
 期待結果: `"password_and_ciba_delegation"`
 
-### Step 25: パスワード認証（1要素目）
+### Step 27: パスワード認証（1要素目）
 
 ```bash
-curl -s -b "${COOKIE_JAR2}" -c "${COOKIE_JAR2}" -X POST \
-  "${TENANT_BASE}/v1/authorizations/${AUTH_ID2}/password-authentication" \
+curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
+  "${TENANT_BASE}/v1/authorizations/${AUTH_ID}/password-authentication" \
   -H "Content-Type: application/json" \
   -d "{\"username\":\"${TEST_EMAIL}\",\"password\":\"${TEST_PASSWORD}\"}" | jq '.user.sub'
 ```
 
-### Step 26: CIBA 委譲（2要素目）
+### Step 28: CIBA 委譲（2要素目）
 
-Step 17〜21 と同じ手順を `AUTH_ID2` / `COOKIE_JAR2` で実行します。
+Step 17〜22 をそのまま実行します（`AUTH_ID` は Step 26 のものに変わっています）。
 
-2要素目では `identity_match_field` により、**デバイスで承認した人がパスワードを入力した人と同一か**が検証されます。Step 21 で返る `user.sub` が Step 25 と同じであることを確認してください。異なるユーザーで承認した場合は `user_identity_mismatch` で失敗します。
+2要素目では `identity_match_field` により、**デバイスで承認した人がパスワードを入力した人と同一か**が検証されます。Step 21 で返る `user.sub` が Step 27 と同じであることを確認してください。異なるユーザーで承認した場合は `user_identity_mismatch` で失敗します。
+
+### Step 29: トークン交換と UserInfo
+
+Step 23〜25 をそのまま実行します。
+
+#### 確認ポイント
+
+- `access_token` と `id_token` が取得できること
+- **UserInfo の `sub` が Phase 1 の `USER_SUB` と一致すること**
+
+1要素版（Step 25）では別ユーザーの subject になりましたが、2要素版では
+`identity_match_field` による照合を通るため、Phase 1 で登録したユーザーが
+そのまま subject になります。同一の subject を維持したい場合はこちらを使います。
 
 ---
 
@@ -641,7 +767,7 @@ Step 17〜21 と同じ手順を `AUTH_ID2` / `COOKIE_JAR2` で実行します。
 | 3 | User registration が成功する | |
 | 4 | FIDO-UAF registration challenge が成功する | |
 | 5 | FIDO-UAF registration で device_id, device_secret が取得できる | |
-| 6 | Authorize で認可コードが取得できる | |
+| 6 | Authorize で認可コードが取得できる（**この時点でユーザーが永続化される**） | |
 | 7 | Token exchange で access_token が取得できる | |
 | 8 | UserInfo に authentication_devices が含まれる | |
 | 8 | device_id が Step 5 と一致する | |
@@ -673,12 +799,17 @@ Step 17〜21 と同じ手順を `AUTH_ID2` / `COOKIE_JAR2` で実行します。
 | 22 | authentication-status が success になる | |
 | 22 | success_count が 3、failure_count が 1 以上 | |
 | 23 | authorize で認可コードが取得できる | |
+| 24 | トークン交換で access_token / id_token が取得できる | |
+| 25 | UserInfo の email が TEST_EMAIL と一致する | |
+| 25 | UserInfo の sub が Phase 1 の USER_SUB とは異なる（1要素版は別ユーザー） | |
 
 ### Phase 4: パスワード + CIBA 委譲
 
 | Step | 確認項目 | 結果 |
 |------|---------|------|
-| 24 | 適用ポリシーが `password_and_ciba_delegation` である | |
-| 25 | パスワード認証が成功する | |
-| 26 | userinfo の user.sub が Step 25 と一致する（同一ユーザー照合） | |
-| 26 | authentication-status が success になる | |
+| 26 | 適用ポリシーが `password_and_ciba_delegation` である | |
+| 27 | パスワード認証が成功する | |
+| 28 | userinfo の user.sub が Step 27 と一致する（同一ユーザー照合） | |
+| 28 | authentication-status が success になる | |
+| 29 | トークン交換で access_token / id_token が取得できる | |
+| 29 | UserInfo の sub が Phase 1 の USER_SUB と一致する | |
