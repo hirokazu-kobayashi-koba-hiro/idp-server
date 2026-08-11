@@ -1,6 +1,7 @@
 # Mapping Functions
 
 > **関連ドキュメント**
+> - [Mapping JSONPath](./mapping-jsonpath.md) - `from` で使えるJSONPath述語の表現力と罠
 > - [HTTP Request Executor](../integration/http-request-executor.md) - HTTP通信でのMapping Functions利用
 > - [外部サービス連携ガイド](../integration/external-integration.md) - 実際の統合例
 
@@ -171,6 +172,8 @@ Mapping Functionsは、**データマッピング処理において値の変換�
   $.user.verified_claims.claims.accounts → [{account_no: "111", ...}, ...]
   この配列が input として関数に渡される
 ```
+
+フィルタ述語 `[?(...)]` によるクロス要素比較など、`from` で使えるJSONPathの表現力は [Mapping JSONPath](./mapping-jsonpath.md) を参照。
 
 #### 2. `static_value` の解決 — 固定入力値
 
