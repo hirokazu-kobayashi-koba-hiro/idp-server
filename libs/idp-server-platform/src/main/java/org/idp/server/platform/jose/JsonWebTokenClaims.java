@@ -16,14 +16,25 @@
 
 package org.idp.server.platform.jose;
 
-import com.nimbusds.jwt.JWTClaimNames;
 import com.nimbusds.jwt.JWTClaimsSet;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/** JsonWebTokenClaims */
+/**
+ * JsonWebTokenClaims
+ *
+ * <p><b>{@code hasXxx()} semantics (#1776):</b> the typed presence checks report {@code true} only
+ * when the claim resolves to a non-null value, not merely when the key is present. Nimbus parses a
+ * claim whose JSON value is {@code null} without rejecting it — {@code
+ * getClaims().containsKey(key)} returns {@code true} while the typed getter returns {@code null}.
+ * Basing {@code hasXxx()} on key presence alone let callers pass the {@code if (!claims.hasXxx())
+ * throw ...} guard and then dereference a {@code null} getter (NPE → 500), reachable
+ * unauthenticated via a self-signed DPoP proof. Checking the typed value closes every {@code
+ * guard-then-get} site at once. The generic {@link #contains(String)} keeps key-presence semantics
+ * for non-typed claims (htm/htu/scope), whose callers are already null-safe.
+ */
 public class JsonWebTokenClaims {
   JWTClaimsSet value;
 
@@ -38,7 +49,7 @@ public class JsonWebTokenClaims {
   }
 
   public boolean hasIss() {
-    return contains(JWTClaimNames.ISSUER);
+    return value != null && value.getIssuer() != null;
   }
 
   public String getSub() {
@@ -46,7 +57,7 @@ public class JsonWebTokenClaims {
   }
 
   public boolean hasSub() {
-    return contains(JWTClaimNames.SUBJECT);
+    return value != null && value.getSubject() != null;
   }
 
   public List<String> getAud() {
@@ -54,7 +65,7 @@ public class JsonWebTokenClaims {
   }
 
   public boolean hasAud() {
-    return contains(JWTClaimNames.AUDIENCE);
+    return value != null && value.getAudience() != null && !value.getAudience().isEmpty();
   }
 
   public Date getNbf() {
@@ -62,7 +73,7 @@ public class JsonWebTokenClaims {
   }
 
   public boolean hasNbf() {
-    return contains(JWTClaimNames.NOT_BEFORE);
+    return value != null && value.getNotBeforeTime() != null;
   }
 
   public Date getIat() {
@@ -70,7 +81,7 @@ public class JsonWebTokenClaims {
   }
 
   public boolean hasIat() {
-    return contains(JWTClaimNames.ISSUED_AT);
+    return value != null && value.getIssueTime() != null;
   }
 
   public String getJti() {
@@ -78,7 +89,7 @@ public class JsonWebTokenClaims {
   }
 
   public boolean hasJti() {
-    return contains(JWTClaimNames.JWT_ID);
+    return value != null && value.getJWTID() != null;
   }
 
   public Date getExp() {
@@ -86,7 +97,7 @@ public class JsonWebTokenClaims {
   }
 
   public boolean hasExp() {
-    return contains(JWTClaimNames.EXPIRATION_TIME);
+    return value != null && value.getExpirationTime() != null;
   }
 
   public Map<String, Object> payload() {
