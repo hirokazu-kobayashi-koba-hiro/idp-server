@@ -6,9 +6,17 @@
       "description": "ciba_delegation",
       "priority": 200,
       "conditions": {
-        "client_ids": ["${CLIENT_ALIAS}", "${CLIENT_ID}"]
+        "client_ids": [
+          "${CLIENT_ALIAS}",
+          "${CLIENT_ID}"
+        ],
+        "acr_values": [
+          "urn:idp:acr:ciba-delegation"
+        ]
       },
-      "available_methods": ["external-api-authentication"],
+      "available_methods": [
+        "external-api-authentication"
+      ],
       "success_conditions": {
         "any_of": [
           [
@@ -26,13 +34,29 @@
       "description": "password_and_ciba_delegation",
       "priority": 210,
       "conditions": {
-        "client_ids": ["${CLIENT_ALIAS}", "${CLIENT_ID}"],
-        "acr_values": ["urn:idp:acr:password-ciba"]
+        "client_ids": [
+          "${CLIENT_ALIAS}",
+          "${CLIENT_ID}"
+        ],
+        "acr_values": [
+          "urn:idp:acr:password-ciba"
+        ]
       },
-      "available_methods": ["password-authentication", "external-api-authentication"],
+      "available_methods": [
+        "password-authentication",
+        "external-api-authentication"
+      ],
       "step_definitions": [
-        { "method": "password", "order": 1, "requires_user": false },
-        { "method": "external-api", "order": 2, "requires_user": true }
+        {
+          "method": "password",
+          "order": 1,
+          "requires_user": false
+        },
+        {
+          "method": "external-api",
+          "order": 2,
+          "requires_user": true
+        }
       ],
       "success_conditions": {
         "any_of": [
@@ -57,7 +81,10 @@
       "description": "default_password_and_registration",
       "priority": 1,
       "conditions": {},
-      "available_methods": ["password", "initial-registration"],
+      "available_methods": [
+        "password",
+        "initial-registration"
+      ],
       "success_conditions": {
         "any_of": [
           [

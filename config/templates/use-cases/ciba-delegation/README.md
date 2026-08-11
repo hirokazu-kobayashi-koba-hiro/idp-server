@@ -53,8 +53,9 @@
 
 | 指定 | 適用ポリシー | 認証 |
 |---|---|---|
-| なし | `ciba_delegation` | CIBA 委譲のみ |
+| `urn:idp:acr:ciba-delegation` | `ciba_delegation` | CIBA 委譲のみ |
 | `urn:idp:acr:password-ciba` | `password_and_ciba_delegation` | パスワード → CIBA 委譲の2要素 |
+| 指定なし | 既定 | パスワード / 初期登録（ユーザー登録用） |
 
 2要素版では `identity_match_field` により「デバイスで承認した人 == パスワードを入れた人」が検証され、新しいユーザーは作られません。
 

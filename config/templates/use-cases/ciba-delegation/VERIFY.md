@@ -457,11 +457,13 @@ Phase 1 の Step 3 で設定した `TEST_EMAIL` / `TEST_PASSWORD` をそのま�
 
 Cookie を保持する必要があるので `-c/-b` を付けます。
 
+委譲のポリシーは `acr_values` で選択します。**付けないと Phase 1 と同じ既定ポリシー（パスワード / 初期登録）が適用されます。**
+
 ```bash
 COOKIE_JAR=$(mktemp)
 
 AUTH_LOCATION=$(curl -s -c "${COOKIE_JAR}" -o /dev/null -w '%{redirect_url}' \
-  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email&state=delegation")
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email&state=delegation&acr_values=urn:idp:acr:ciba-delegation")
 
 AUTH_ID=$(echo "${AUTH_LOCATION}" | sed -n 's/.*[?&]id=\([^&]*\).*/\1/p')
 echo "Authorization ID: ${AUTH_ID}"
