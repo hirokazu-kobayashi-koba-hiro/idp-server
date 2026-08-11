@@ -131,4 +131,68 @@ class JsonWebTokenClaimsTest {
       assertFalse(claims.hasJti());
     }
   }
+
+  @Nested
+  class ContainsIsKeyBased {
+
+    // contains() keeps key-presence semantics (unchanged by #1776) — the deliberate contrast with
+    // the now value-aware hasXxx(). Non-typed claims (htm/htu/scope) rely on this key-based check.
+
+    @Test
+    void containsIsTrueForNullValueWhileHasXxxIsFalse() throws ParseException {
+      JsonWebTokenClaims claims = new JsonWebTokenClaims(parse("{\"jti\":null}"));
+
+      // The heart of the fix: same claim, two answers by design.
+      assertTrue(claims.contains("jti"));
+      assertFalse(claims.hasJti());
+    }
+
+    @Test
+    void containsIsFalseForAbsentKeyAndNullBacking() throws ParseException {
+      assertFalse(new JsonWebTokenClaims(parse("{\"sub\":\"c1\"}")).contains("jti"));
+      assertFalse(new JsonWebTokenClaims().contains("jti"));
+    }
+  }
+
+  @Nested
+  class GetValue {
+
+    // getValue() underpins the "htm/htu/scope are already null-safe" reasoning: "" for an absent
+    // key, null for a present-but-null value — both harmless at the call sites (equalsIgnoreCase /
+    // isEmpty).
+
+    @Test
+    void absentKeyReturnsEmptyString() throws ParseException {
+      assertEquals("", new JsonWebTokenClaims(parse("{\"sub\":\"c1\"}")).getValue("htm"));
+    }
+
+    @Test
+    void presentValueIsReturned() throws ParseException {
+      assertEquals("POST", new JsonWebTokenClaims(parse("{\"htm\":\"POST\"}")).getValue("htm"));
+    }
+
+    @Test
+    void presentButNullReturnsNull() throws ParseException {
+      assertNull(new JsonWebTokenClaims(parse("{\"htm\":null}")).getValue("htm"));
+    }
+  }
+
+  @Nested
+  class Exists {
+
+    @Test
+    void nonEmptyClaimsExist() throws ParseException {
+      assertTrue(new JsonWebTokenClaims(parse("{\"sub\":\"c1\"}")).exists());
+    }
+
+    @Test
+    void emptyClaimsDoNotExist() throws ParseException {
+      assertFalse(new JsonWebTokenClaims(parse("{}")).exists());
+    }
+
+    @Test
+    void nullBackingDoesNotExist() {
+      assertFalse(new JsonWebTokenClaims().exists());
+    }
+  }
 }
