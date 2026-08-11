@@ -451,35 +451,33 @@ curl -s \
 
 ---
 
-## Phase 3: 認可コードフローの認証を CIBA へ委譲
+## Phase 3: パスワード認証 + CIBA 委譲
 
 **Phase 1 を Step 7 まで完了していることが前提です。** 承認する人が居ないと委譲は完了しません。
 
 ユーザーが永続化されるのは **Step 6 の authorize** の時点です。初期登録（Step 3）や FIDO-UAF 登録（Step 5）を終えただけでは、まだユーザーは保存されていません。Step 6 を飛ばすと `ciba_start` が `unknown_user_id` を返します。
 
-Phase 1 の Step 3 で設定した `TEST_EMAIL` / `TEST_PASSWORD` をそのまま使います。別のシェルから始める場合は、Phase 1 を先に通してください。
+Phase 1 の Step 3 で設定した `TEST_EMAIL` / `TEST_PASSWORD` をそのまま使います。
 
-このフェーズでは、ブラウザ側は一度もパスワードを入力しません。認証はすべて CIBA 側（スマートフォン）で行われます。
+### この構成について
 
-### Step 16: 認可リクエスト（ブラウザ）
+**委譲は、ユーザーを特定してから使います。** このテンプレートはパスワード認証を1要素目に置き、CIBA 委譲を2要素目にしています。
 
-Cookie を保持する必要があるので `-c/-b` を付けます。
+委譲だけで認証を完結させる設定（`user_resolve` が1要素目としてユーザーを解決する形）は、このテンプレートでは提供しません。委譲先の userinfo から解決したユーザーが `provider_id` 違いの**別レコードとして新規作成される**ためです。委譲先が自分自身であるこのテンプレートでは、同一人物・同一メールアドレスのユーザーが2件できてしまいます。
 
-委譲のポリシーは `acr_values` で選択します。**付けないと Phase 1 と同じ既定ポリシー（パスワード / 初期登録）が適用されます。**
+2要素目として使う場合は `identity_match_field` による照合が働き、既存ユーザーとの一致を検証するだけで新規作成は行いません。
+
+### Step 16: 認可リクエスト
 
 ```bash
 COOKIE_JAR=$(mktemp)
 
 AUTH_LOCATION=$(curl -s -c "${COOKIE_JAR}" -o /dev/null -w '%{redirect_url}' \
-  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email&state=delegation&acr_values=urn:idp:acr:ciba-delegation")
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email&state=delegation&acr_values=urn:idp:acr:password-ciba")
 
 AUTH_ID=$(echo "${AUTH_LOCATION}" | sed -n 's/.*[?&]id=\([^&]*\).*/\1/p')
 echo "Authorization ID: ${AUTH_ID}"
-```
 
-適用されたポリシーを確認します。`ciba_delegation` でなければ、priority か `client_ids` の条件を見直してください。
-
-```bash
 curl -s -b "${COOKIE_JAR}" "${TENANT_BASE}/v1/authorizations/${AUTH_ID}/view-data" \
   | jq '.authentication_policy | {description, priority}'
 ```
@@ -487,12 +485,23 @@ curl -s -b "${COOKIE_JAR}" "${TENANT_BASE}/v1/authorizations/${AUTH_ID}/view-dat
 期待結果:
 
 ```json
-{ "description": "ciba_delegation", "priority": 200 }
+{ "description": "password_and_ciba_delegation", "priority": 210 }
 ```
 
-### Step 17: CIBA 開始（委譲）
+`acr_values` を付けないと既定ポリシー（パスワード / 初期登録）になり、委譲は行われません。
 
-`login_hint` は Phase 1 で登録したユーザーを指します。
+### Step 17: パスワード認証（1要素目・ユーザーの特定）
+
+```bash
+curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
+  "${TENANT_BASE}/v1/authorizations/${AUTH_ID}/password-authentication" \
+  -H "Content-Type: application/json" \
+  -d "{\"username\":\"${TEST_EMAIL}\",\"password\":\"${TEST_PASSWORD}\"}" | jq '.user.sub'
+```
+
+ここで返る `sub` が Phase 1 の `USER_SUB` と一致します。以降の委譲は、この人物であることの確認に使われます。
+
+### Step 18: CIBA 開始（委譲）
 
 ```bash
 curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
@@ -501,15 +510,9 @@ curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
   -d "{\"interaction\":\"ciba_start\",\"login_hint\":\"email:${TEST_EMAIL},idp:idp-server\"}" | jq '.'
 ```
 
-期待結果（`external_status_code` が 200）:
+期待結果（`external_status_code` が 200）。`auth_req_id` はレスポンスに含まれず、サーバー側に保持されます。
 
-```json
-{ "external_status_code": 200, "error": null, "error_description": null, "interaction": "ciba_start" }
-```
-
-`auth_req_id` はレスポンスに含まれません。サーバー側に保持されます。
-
-### Step 18: ポーリング（承認前）
+### Step 19: ポーリング（承認前）
 
 ```bash
 curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
@@ -526,11 +529,11 @@ curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
 
 サインイン画面はこの `error` を見て、承認待ちなのか本当の失敗なのかを判断します。
 
-### Step 19: デバイスで承認
+### Step 20: デバイスで承認
 
 **Phase 1 の Step 5 で登録したデバイス**（`DEVICE_ID` / `DEVICE_SECRET` / `DEVICE_SECRET_JWT_ISSUER`）で承認します。`ciba_start` が作ったトランザクションは `login_hint` で指したユーザーのデバイス宛なので、別のデバイスでは `list` が空になります。
 
-#### 19-1. device_secret_jwt を作成
+#### 20-1. device_secret_jwt を作成
 
 ```bash
 base64url_encode() {
@@ -554,7 +557,7 @@ SIGNATURE=$(echo -n "${UNSIGNED}" | openssl dgst -sha256 -hmac "${DEVICE_SECRET}
 DEVICE_JWT="${UNSIGNED}.${SIGNATURE}"
 ```
 
-#### 19-2. 認証トランザクションを取得
+#### 20-2. 認証トランザクションを取得
 
 Phase 2 では `attributes.auth_req_id` で絞りましたが、**委譲では `auth_req_id` がサーバー側に保持され手元に無い**ため、`flow=ciba` で絞ります。
 
@@ -570,7 +573,7 @@ echo "Transaction ID: ${TRANSACTION_ID}"
 
 `list` が空の場合は、承認しようとしているデバイスが `login_hint` で指したユーザーのものか確認してください。
 
-#### 19-3. FIDO-UAF 認証
+#### 20-3. FIDO-UAF 認証
 
 ```bash
 curl -s -X POST \
@@ -586,12 +589,12 @@ curl -s -X POST \
 
 #### 確認ポイント
 
-- 19-2 が HTTP 200 で、`list` に1件以上あること
-- 19-3 の2つのリクエストがどちらも HTTP 200 を返すこと
+- 20-2 が HTTP 200 で、`list` に1件以上あること
+- 20-3 の2つのリクエストがどちらも HTTP 200 を返すこと
 
-> Phase 1 を `verify.sh` で済ませた場合に限り、`./ciba-device-auth.sh` で 19-1〜19-3 を代替できます。同スクリプトは `config/generated/${ORGANIZATION_NAME}/device-credentials.json` を読みますが、このファイルを書くのは `verify.sh` だけです。手順書どおり手で登録した場合は前回のデバイスを承認しようとして空振りします。
+> Phase 1 を `verify.sh` で済ませた場合に限り、`./ciba-device-auth.sh` で 20-1〜20-3 を代替できます。同スクリプトは `config/generated/${ORGANIZATION_NAME}/device-credentials.json` を読みますが、このファイルを書くのは `verify.sh` だけです。手順書どおり手で登録した場合は前回のデバイスを承認しようとして空振りします。
 
-### Step 20: ポーリング（承認後）
+### Step 21: ポーリング（承認後）
 
 ```bash
 curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
@@ -602,7 +605,7 @@ curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
 
 期待結果（`external_status_code` が 200）。アクセストークンはサーバー側に保持され、レスポンスには含まれません。
 
-### Step 21: ユーザー確定
+### Step 22: ユーザー照合
 
 ```bash
 curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
@@ -611,9 +614,13 @@ curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
   -d '{"interaction":"userinfo"}' | jq '.'
 ```
 
-期待結果に `user.sub` が含まれます。
+#### 確認ポイント
 
-### Step 22: 認証状態の確認
+- `user.sub` が **Step 17 と一致すること**
+
+`identity_match_field` により、デバイスで承認した人がパスワードを入力した人と同一かが検証されます。異なるユーザーで承認した場合は `user_identity_mismatch` で失敗します。
+
+### Step 23: 認証状態の確認
 
 ```bash
 curl -s -b "${COOKIE_JAR}" "${TENANT_BASE}/v1/authorizations/${AUTH_ID}/authentication-status" | jq '.'
@@ -625,14 +632,15 @@ curl -s -b "${COOKIE_JAR}" "${TENANT_BASE}/v1/authorizations/${AUTH_ID}/authenti
 {
   "status": "success",
   "interaction_results": {
+    "password-authentication": { "success_count": 1 },
     "external-api-authentication": { "success_count": 3, "failure_count": 1 }
   }
 }
 ```
 
-`failure_count` が 1 なのは、Step 18 の承認前ポーリングが非2xx だったためです。**この用途のポリシーに `failure_conditions` を置くとここでロックします。**
+`failure_count` が 1 なのは、Step 19 の承認前ポーリングが非2xx だったためです。**この用途のポリシーに `failure_conditions` を置くとここでロックします。**
 
-### Step 23: 認可コードの取得
+### Step 24: 認可コードの取得
 
 ```bash
 AUTHORIZE_RESPONSE=$(curl -s -b "${COOKIE_JAR}" -X POST \
@@ -644,13 +652,7 @@ AUTHORIZATION_CODE=$(echo "${AUTHORIZE_RESPONSE}" | jq -r '.redirect_uri' | sed 
 echo "Authorization Code: ${AUTHORIZATION_CODE}"
 ```
 
-`code=` を含む URL が返れば、委譲による認証で認可コードが発行できたことになります。
-
----
-
-### Step 24: トークン交換
-
-委譲で得た認可コードが、実際にトークンとして使えることを確認します。
+### Step 25: トークン交換
 
 ```bash
 TOKEN_RESPONSE=$(curl -s -X POST "${TENANT_BASE}/v1/tokens" \
@@ -668,9 +670,8 @@ ACCESS_TOKEN=$(echo "${TOKEN_RESPONSE}" | jq -r '.access_token')
 #### 確認ポイント
 
 - `access_token` と `id_token` が返ること
-- `token_type` が `Bearer`、`expires_in` が設定どおりであること
 
-### Step 25: UserInfo
+### Step 26: UserInfo
 
 ```bash
 curl -s "${TENANT_BASE}/v1/userinfo" \
@@ -679,66 +680,10 @@ curl -s "${TENANT_BASE}/v1/userinfo" \
 
 #### 確認ポイント
 
-- `email` が Phase 1 で登録した `TEST_EMAIL` と一致すること
-- **`sub` は Phase 1 の `USER_SUB` とは異なります**
+- `email` が `TEST_EMAIL` と一致すること
+- **`sub` が Phase 1 の `USER_SUB` と一致すること**
 
-1要素版では、委譲先の userinfo から解決したユーザーが
-`provider_id: ciba-delegation` の別レコードとして作られます（`user_resolve` の
-既定動作）。同じ人物でも、委譲元から見ると別の subject になります。
-
-同一の subject を維持したい場合は Phase 4 の2要素版を使います。そちらは
-`identity_match_field` で既存ユーザーとの一致を検証し、新しいユーザーを
-作りません。
-
----
-
-## Phase 4: パスワード + CIBA 委譲（2要素）
-
-`acr_values` を付けると、パスワード認証を1要素目、CIBA 委譲を2要素目とするポリシーが適用されます。
-
-### Step 26: 認可リクエスト（acr_values 付き）
-
-Phase 3 は完了しているので、`COOKIE_JAR` と `AUTH_ID` はそのまま上書きして構いません。
-
-```bash
-AUTH_LOCATION=$(curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -o /dev/null -w '%{redirect_url}' \
-  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=openid%20profile%20email&state=mfa&acr_values=urn:idp:acr:password-ciba")
-
-AUTH_ID=$(echo "${AUTH_LOCATION}" | sed -n 's/.*[?&]id=\([^&]*\).*/\1/p')
-
-curl -s -b "${COOKIE_JAR}" "${TENANT_BASE}/v1/authorizations/${AUTH_ID}/view-data" \
-  | jq '.authentication_policy.description'
-```
-
-期待結果: `"password_and_ciba_delegation"`
-
-### Step 27: パスワード認証（1要素目）
-
-```bash
-curl -s -b "${COOKIE_JAR}" -c "${COOKIE_JAR}" -X POST \
-  "${TENANT_BASE}/v1/authorizations/${AUTH_ID}/password-authentication" \
-  -H "Content-Type: application/json" \
-  -d "{\"username\":\"${TEST_EMAIL}\",\"password\":\"${TEST_PASSWORD}\"}" | jq '.user.sub'
-```
-
-### Step 28: CIBA 委譲（2要素目）
-
-Step 17〜22 をそのまま実行します（`AUTH_ID` は Step 26 のものに変わっています）。
-
-2要素目では `identity_match_field` により、**デバイスで承認した人がパスワードを入力した人と同一か**が検証されます。Step 21 で返る `user.sub` が Step 27 と同じであることを確認してください。異なるユーザーで承認した場合は `user_identity_mismatch` で失敗します。
-
-### Step 29: トークン交換と UserInfo
-
-Step 23〜25 をそのまま実行します。
-
-#### 確認ポイント
-
-- `access_token` と `id_token` が取得できること
-- **UserInfo の `sub` が Phase 1 の `USER_SUB` と一致すること**
-
-1要素版（Step 25）では別ユーザーの subject になりましたが、2要素版では
-`identity_match_field` による照合を通るため、Phase 1 で登録したユーザーが
-そのまま subject になります。同一の subject を維持したい場合はこちらを使います。
+パスワード認証でユーザーを特定してから委譲しているため、委譲を通しても subject は変わりません。
 
 ---
 
@@ -785,31 +730,22 @@ Step 23〜25 をそのまま実行します。
 | 14 | CIBA token（認証後）で access_token が取得できる | |
 | 15 | UserInfo で sub, email が返る | |
 
-### Phase 3: CIBA 委譲
+### Phase 3: パスワード認証 + CIBA 委譲
 
 | Step | 確認項目 | 結果 |
 |------|---------|------|
-| 16 | 適用ポリシーが `ciba_delegation` である | |
-| 17 | ciba_start が external_status_code 200 を返す | |
-| 17 | レスポンスに auth_req_id が含まれていない | |
-| 18 | 承認前ポーリングで error=authorization_pending が透過される | |
-| 20 | 承認後ポーリングが external_status_code 200 を返す | |
-| 20 | レスポンスに access_token が含まれていない | |
-| 21 | userinfo で user.sub が確定する | |
-| 22 | authentication-status が success になる | |
-| 22 | success_count が 3、failure_count が 1 以上 | |
-| 23 | authorize で認可コードが取得できる | |
-| 24 | トークン交換で access_token / id_token が取得できる | |
-| 25 | UserInfo の email が TEST_EMAIL と一致する | |
-| 25 | UserInfo の sub が Phase 1 の USER_SUB とは異なる（1要素版は別ユーザー） | |
-
-### Phase 4: パスワード + CIBA 委譲
-
-| Step | 確認項目 | 結果 |
-|------|---------|------|
-| 26 | 適用ポリシーが `password_and_ciba_delegation` である | |
-| 27 | パスワード認証が成功する | |
-| 28 | userinfo の user.sub が Step 27 と一致する（同一ユーザー照合） | |
-| 28 | authentication-status が success になる | |
-| 29 | トークン交換で access_token / id_token が取得できる | |
-| 29 | UserInfo の sub が Phase 1 の USER_SUB と一致する | |
+| 16 | 適用ポリシーが `password_and_ciba_delegation` である | |
+| 17 | パスワード認証が成功し、sub が Phase 1 の USER_SUB と一致する | |
+| 18 | ciba_start が external_status_code 200 を返す | |
+| 18 | レスポンスに auth_req_id が含まれていない | |
+| 19 | 承認前ポーリングで error=authorization_pending が透過される | |
+| 20-2 | 認証トランザクションが取得できる（list が1件以上） | |
+| 20-3 | FIDO-UAF challenge / authentication がどちらも 200 | |
+| 21 | 承認後ポーリングが external_status_code 200 を返す | |
+| 21 | レスポンスに access_token が含まれていない | |
+| 22 | userinfo の user.sub が Step 17 と一致する（同一ユーザー照合） | |
+| 23 | authentication-status が success になる | |
+| 23 | external-api-authentication の success_count が 3、failure_count が 1 以上 | |
+| 24 | authorize で認可コードが取得できる | |
+| 25 | トークン交換で access_token / id_token が取得できる | |
+| 26 | UserInfo の sub が Phase 1 の USER_SUB と一致する | |

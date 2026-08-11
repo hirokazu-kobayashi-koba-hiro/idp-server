@@ -33,7 +33,7 @@
 |------|------|
 | テナント | パスワードポリシー、セッション設定、CIBA 設定、認証デバイスルール |
 | 認証設定 | `initial-registration` / `fido-uaf` / `external-api-authentication`（委譲） |
-| 認証ポリシー（oauth） | `ciba_delegation`（委譲のみ） / `password_and_ciba_delegation`（パスワード + 委譲） / 既定（パスワード・初期登録） |
+| 認証ポリシー（oauth） | `password_and_ciba_delegation`（パスワード + 委譲） / 既定（パスワード・初期登録） |
 | 認証ポリシー（ciba） | FIDO-UAF |
 | クライアント | 認可コードフロー + CIBA + JWT Bearer |
 
@@ -47,17 +47,22 @@
 
 `auth_req_id` と `access_token` は `http_request_store` でサーバー側に保持され、サインイン画面には返りません。
 
-### 2つの使い方
+### 使い方
 
-`acr_values` でポリシーを出し分けます。
+**委譲は、ユーザーを特定してから使います。** このテンプレートはパスワード認証を1要素目に置き、CIBA 委譲を2要素目にしています。
 
-| 指定 | 適用ポリシー | 認証 |
+| `acr_values` | 適用ポリシー | 認証 |
 |---|---|---|
-| `urn:idp:acr:ciba-delegation` | `ciba_delegation` | CIBA 委譲のみ |
-| `urn:idp:acr:password-ciba` | `password_and_ciba_delegation` | パスワード → CIBA 委譲の2要素 |
+| `urn:idp:acr:password-ciba` | `password_and_ciba_delegation` | パスワード → CIBA 委譲 |
 | 指定なし | 既定 | パスワード / 初期登録（ユーザー登録用） |
 
-2要素版では `identity_match_field` により「デバイスで承認した人 == パスワードを入れた人」が検証され、新しいユーザーは作られません。
+`identity_match_field` により「デバイスで承認した人 == パスワードを入れた人」が検証され、新しいユーザーは作られません。
+
+### 委譲だけで認証を完結させる設定は提供しません
+
+`user_resolve` を1要素目として使うと、委譲先の userinfo から解決したユーザーが `provider_id` 違いの**別レコードとして新規作成**されます。委譲先が自分自身であるこのテンプレートでは、同一人物・同一メールアドレスのユーザーが2件でき、委譲経由と直ログインで subject が変わります。
+
+外部の認可サーバーへ委譲する場合は federation として妥当な動作ですが、テンプレートの既定構成としては提供しません。
 
 ---
 
@@ -70,7 +75,7 @@
 | `ciba-device-auth.sh` | デバイス側の承認 |
 | `delete.sh` / `update.sh` | 削除 / 更新 |
 | `authentication-config-external-api.json` | **委譲の設定（このテンプレートの中心）** |
-| `authentication-policy-oauth.json` | 委譲ポリシー2種 + 既定 |
+| `authentication-policy-oauth.json` | 委譲ポリシー + 既定 |
 | `VERIFY.md` | 手順（curl 付き） |
 
 ---
@@ -103,8 +108,7 @@ DRY_RUN=true ./config/templates/use-cases/ciba-delegation/setup.sh
 |---|---|
 | Phase 1 | ユーザー登録 + FIDO-UAF デバイス登録（**委譲の前提**） |
 | Phase 2 | CIBA 単体の動作確認 |
-| Phase 3 | 認可コードフローの認証を CIBA へ委譲 |
-| Phase 4 | パスワード + CIBA 委譲（2要素） |
+| Phase 3 | パスワード認証 + CIBA 委譲 |
 
 スクリプトでまとめて実行する場合:
 

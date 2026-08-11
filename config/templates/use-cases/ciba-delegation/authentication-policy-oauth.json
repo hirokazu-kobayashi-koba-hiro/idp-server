@@ -3,34 +3,6 @@
   "enabled": true,
   "policies": [
     {
-      "description": "ciba_delegation",
-      "priority": 200,
-      "conditions": {
-        "client_ids": [
-          "${CLIENT_ALIAS}",
-          "${CLIENT_ID}"
-        ],
-        "acr_values": [
-          "urn:idp:acr:ciba-delegation"
-        ]
-      },
-      "available_methods": [
-        "external-api-authentication"
-      ],
-      "success_conditions": {
-        "any_of": [
-          [
-            {
-              "path": "$.external-api-authentication.success_count",
-              "type": "integer",
-              "operation": "gte",
-              "value": 3
-            }
-          ]
-        ]
-      }
-    },
-    {
       "description": "password_and_ciba_delegation",
       "priority": 210,
       "conditions": {

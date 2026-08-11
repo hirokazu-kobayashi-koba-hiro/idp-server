@@ -75,7 +75,12 @@ describe("oauth - ciba delegation via external api authentication", () => {
     expect(authentication.status).toBe(200);
   };
 
-  it("delegates the whole authentication to CIBA", async () => {
+  // The ciba-delegation use case template deliberately does NOT ship this variant. Running the
+  // delegation as the first factor makes the interactor resolve a user from the delegated userinfo,
+  // and a caller that is not already identified ends up as a NEW user record under a different
+  // provider_id — the same person gets a different subject depending on how they signed in. The
+  // case is kept as the evidence for that decision, not as a recommended configuration.
+  it("delegates the whole authentication to CIBA and resolves a separate user", async () => {
     const authId = await authorize();
 
     const viewData = await get({
@@ -114,6 +119,10 @@ describe("oauth - ciba delegation via external api authentication", () => {
     const userinfo = await externalApi(authId, { interaction: "userinfo" });
     expect(userinfo.status).toBe(200);
     expect(userinfo.data.user).toHaveProperty("sub");
+    // Not the subject of the user that approved on the device: a first-factor delegation creates
+    // its own record keyed by (provider_id, external_user_id). This is why the template requires
+    // the user to be identified first.
+    expect(userinfo.data.user.sub).not.toBe(serverConfig.ciba.userSub ?? "");
 
     const status = await authenticationStatus(authId);
     expect(status.status).toBe(200);
