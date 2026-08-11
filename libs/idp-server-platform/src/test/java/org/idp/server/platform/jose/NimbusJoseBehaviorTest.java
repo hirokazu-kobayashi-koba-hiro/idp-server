@@ -82,6 +82,30 @@ class NimbusJoseBehaviorTest {
       assertEquals(
           JoseType.encryption, JoseType.parse(header("{\"alg\":\"dir\",\"enc\":\"A256GCM\"}")));
     }
+
+    @Test
+    void unknownAlgorithmFallsIntoTheSignatureBranch() throws Exception {
+      // Nimbus JWSAlgorithm.parse() mints a JWSAlgorithm for any unregistered name, so an
+      // unrecognized alg is routed to the JWS path rather than rejected here. Rejecting an
+      // unsupported alg is the job of the downstream verifier, not of this classification.
+      assertEquals(JoseType.signature, JoseType.parse(header("{\"alg\":\"NOT_A_REAL_ALG\"}")));
+    }
+
+    @Test
+    void missingAlgIsRejected() {
+      // Header.parseAlgorithm throws when alg is absent — the one fail-closed branch here.
+      assertThrows(JoseInvalidException.class, () -> JoseType.parse(header("{\"typ\":\"JWT\"}")));
+    }
+
+    @Test
+    void everyParsedAlgorithmMapsToOneOfTheThreeTypes() throws Exception {
+      // Header.parseAlgorithm returns a JWEAlgorithm when enc is present and a JWSAlgorithm
+      // otherwise, so JoseType.parse's trailing "Unexpected algorithm type" throw is unreachable.
+      // If a Nimbus upgrade introduces a third Algorithm subtype, this expectation breaks first.
+      assertEquals(
+          JoseType.plain, JoseType.parse(header("{\"alg\":\"none\",\"enc\":\"A256GCM\"}")));
+      assertEquals(JoseType.signature, JoseType.parse(header("{\"alg\":\"RSA-OAEP-256\"}")));
+    }
   }
 
   @Nested
