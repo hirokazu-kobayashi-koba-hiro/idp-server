@@ -33,7 +33,8 @@ import java.util.Objects;
  * throw ...} guard and then dereference a {@code null} getter (NPE → 500), reachable
  * unauthenticated via a self-signed DPoP proof. Checking the typed value closes every {@code
  * guard-then-get} site at once. The generic {@link #contains(String)} keeps key-presence semantics
- * for non-typed claims (htm/htu/scope), whose callers are already null-safe.
+ * for non-typed claims (htm/htu/scope); their values are read through {@link #getValue(String)},
+ * which absorbs null and non-string values so those callers stay on the same safe path.
  */
 public class JsonWebTokenClaims {
   JWTClaimsSet value;
@@ -104,11 +105,28 @@ public class JsonWebTokenClaims {
     return value.getClaims();
   }
 
+  /**
+   * Returns the claim as a string, or {@code ""} when it is absent, null-valued, or not a string.
+   *
+   * <p>The claim value type is attacker-controlled: a JWT may carry {@code "htm": 123} or {@code
+   * "scope": ["a","b"]} just as easily as a string. Casting blindly raised a {@link
+   * ClassCastException} — an uncaught {@code RuntimeException} surfacing as 500 — through the same
+   * unauthenticated, self-signed DPoP proof path as the null-valued-claim NPE of #1776. Non-string
+   * values are therefore reported as absent, which every caller already handles (they test for
+   * {@code isEmpty()} or compare against an expected value).
+   *
+   * @param key the claim name
+   * @return the string claim value, or {@code ""} if absent, null, or not a string
+   */
   public String getValue(String key) {
     if (!contains(key)) {
       return "";
     }
-    return (String) payload().get(key);
+    Object claimValue = payload().get(key);
+    if (!(claimValue instanceof String)) {
+      return "";
+    }
+    return (String) claimValue;
   }
 
   public boolean contains(String key) {
