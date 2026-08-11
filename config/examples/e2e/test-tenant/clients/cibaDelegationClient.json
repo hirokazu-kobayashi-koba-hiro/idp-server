@@ -1,0 +1,21 @@
+{
+  "client_id": "c1d2e3f4-a5b6-7890-cdef-ab1234567890",
+  "client_id_alias": "cibaDelegationClient",
+  "client_secret": "cibaDelegationClientSecret1234567890123456789012345678901234567890123456789012345678901234567890",
+  "client_id_issued_at": 2893256800,
+  "client_secret_expires_at": 2893276800,
+  "redirect_uris": [
+    "https://www.certification.openid.net/test/a/idp_oidc_basic/callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "scope": "openid profile email",
+  "client_name": "CIBA Delegation Client",
+  "token_endpoint_auth_method": "client_secret_post",
+  "application_type": "web"
+}

@@ -1,0 +1,82 @@
+{
+  "flow": "oauth",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "password_and_ciba_delegation",
+      "priority": 210,
+      "conditions": {
+        "client_ids": [
+          "${CLIENT_ALIAS}",
+          "${CLIENT_ID}"
+        ],
+        "acr_values": [
+          "urn:idp:acr:password-ciba"
+        ]
+      },
+      "available_methods": [
+        "password-authentication",
+        "external-api-authentication"
+      ],
+      "step_definitions": [
+        {
+          "method": "password",
+          "order": 1,
+          "requires_user": false
+        },
+        {
+          "method": "external-api",
+          "order": 2,
+          "requires_user": true
+        }
+      ],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.external-api-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 3
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "description": "default_password_and_registration",
+      "priority": 1,
+      "conditions": {},
+      "available_methods": [
+        "password",
+        "initial-registration"
+      ],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ],
+          [
+            {
+              "path": "$.initial-registration.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

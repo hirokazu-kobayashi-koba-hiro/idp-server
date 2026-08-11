@@ -52,7 +52,8 @@
       },
       "level_of_authentication_scopes": {
         "transfers": [
-          "fido-uaf", "fido2"
+          "fido-uaf",
+          "fido2"
         ]
       },
       "success_conditions": {
@@ -406,7 +407,8 @@
       },
       "level_of_authentication_scopes": {
         "transfers": [
-          "fido-uaf", "fido2"
+          "fido-uaf",
+          "fido2"
         ]
       },
       "success_conditions": {
@@ -614,7 +616,8 @@
       },
       "level_of_authentication_scopes": {
         "transfers": [
-          "fido-uaf", "fido2"
+          "fido-uaf",
+          "fido2"
         ]
       },
       "success_conditions": {
@@ -649,6 +652,78 @@
               "type": "integer",
               "operation": "gte",
               "value": 1
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "description": "ciba_delegation_policy",
+      "priority": 200,
+      "conditions": {
+        "client_ids": [
+          "cibaDelegationClient",
+          "c1d2e3f4-a5b6-7890-cdef-ab1234567890"
+        ]
+      },
+      "available_methods": [
+        "external-api-authentication"
+      ],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.external-api-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 3
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "description": "ciba_delegation_mfa_policy",
+      "priority": 210,
+      "conditions": {
+        "client_ids": [
+          "cibaDelegationClient",
+          "c1d2e3f4-a5b6-7890-cdef-ab1234567890"
+        ],
+        "acr_values": [
+          "urn:idp:acr:password-ciba"
+        ]
+      },
+      "available_methods": [
+        "password-authentication",
+        "external-api-authentication"
+      ],
+      "step_definitions": [
+        {
+          "method": "password",
+          "order": 1,
+          "requires_user": false
+        },
+        {
+          "method": "external-api",
+          "order": 2,
+          "requires_user": true
+        }
+      ],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.external-api-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 3
             }
           ]
         ]

@@ -145,6 +145,7 @@ client_files=(
   nativeAppClient.json
   ssoPasswordOnlyClient.json
   ssoMfaRequiredClient.json
+  cibaDelegationClient.json
 )
 
 for client_file in "${client_files[@]}"; do
@@ -169,6 +170,7 @@ authentication_config_files=(
   authentication-device/multi-push-notification.json
   email/no-action.json
   external-token/mocky.json
+  external-api/ciba-delegation.json
   fido-uaf/external.json
   initial-registration/standard.json
   sms/external.json

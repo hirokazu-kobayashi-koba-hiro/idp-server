@@ -62,7 +62,9 @@ const sidebars = {
             "content_02_quickstart/quickstart-11-ciba",
             "content_02_quickstart/quickstart-12-financial-grade",
             "content_02_quickstart/quickstart-13-id-service-migration",
-            "content_02_quickstart/quickstart-14-mfa-fido-uaf"
+            "content_02_quickstart/quickstart-14-mfa-fido-uaf",
+            "content_02_quickstart/quickstart-14-external-api-authentication",
+            "content_02_quickstart/quickstart-15-ciba-delegation"
           ]
         }
       ]
