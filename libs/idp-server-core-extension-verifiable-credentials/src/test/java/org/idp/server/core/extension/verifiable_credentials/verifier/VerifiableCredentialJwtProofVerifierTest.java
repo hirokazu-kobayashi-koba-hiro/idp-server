@@ -40,11 +40,18 @@ import org.junit.jupiter.api.Test;
  * Covers the OID4VCI JWT proof payload/header checks of {@link
  * VerifiableCredentialJwtProofVerifier}.
  *
- * <p>Three guards were inverted and rejected every well-formed proof: {@code iat} and {@code nonce}
- * were missing a {@code !}, and the third disjunct of the multi-key check read {@code hasJwk() &&
- * (hasKid() || hasJwk())}, which collapses to {@code hasJwk()} and so rejected any jwk-only proof.
- * The existing e2e coverage only exercises malformed requests that fail before this verifier runs,
- * which is how all three survived (#1779).
+ * <p>Three guards were inverted so that they rejected well-formed proofs: {@code iat} and {@code
+ * nonce} were missing a {@code !}, and the third disjunct of the multi-key check read {@code
+ * hasJwk() && (hasKid() || hasJwk())}, which collapses to {@code hasJwk()} and so refused any
+ * jwk-only proof (#1779).
+ *
+ * <p>None of that was observable at runtime: nothing constructs this class outside these tests. The
+ * credential endpoint verifies key proofs only as far as {@code
+ * VerifiableCredentialRequestVerifier.throwExceptionIfInvalidProof}, which checks that {@code
+ * proof_type} is set and that a {@code jwt} claim exists — no signature, {@code c_nonce}, {@code
+ * iss}/{@code aud} or freshness verification runs. These tests pin the intended contract so the
+ * logic is correct if and when the verifier is wired in; the wiring gap itself is tracked
+ * separately.
  */
 class VerifiableCredentialJwtProofVerifierTest {
 
@@ -189,6 +196,21 @@ class VerifiableCredentialJwtProofVerifierTest {
               verifier()
                   .throwExceptionIfMultiKeyClaims(
                       header(builder().keyID("k1").x509CertChain(List.of(new Base64("cert"))))));
+    }
+
+    @Test
+    void noKeyClaimIsRejectedByTheCompanionCheck() {
+      // Both guards read the same count, so the zero case belongs here too.
+      assertThrows(
+          VerifiableCredentialBadRequestException.class,
+          () -> verifier().throwExceptionIfNotContainsAnyKeyClaim(header(builder())));
+      assertDoesNotThrow(() -> verifier().throwExceptionIfMultiKeyClaims(header(builder())));
+    }
+
+    @Test
+    void singleKeyClaimPassesTheCompanionCheck() {
+      assertDoesNotThrow(
+          () -> verifier().throwExceptionIfNotContainsAnyKeyClaim(header(builder().keyID("k1"))));
     }
 
     @Test

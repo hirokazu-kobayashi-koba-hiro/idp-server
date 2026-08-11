@@ -82,20 +82,23 @@ public class VerifiableCredentialJwtProofVerifier
   }
 
   void throwExceptionIfNotContainsAnyKeyClaim(JsonWebSignatureHeader header) {
-    if (!header.hasKid() && !header.hasJwk() && !header.hasX5c()) {
+    if (countKeyClaims(header) == 0) {
       throw new VerifiableCredentialBadRequestException(
           "invalid_request", "proof of jws header must contains kid or jwk or x5c claim");
     }
   }
 
   void throwExceptionIfMultiKeyClaims(JsonWebSignatureHeader header) {
-    if (header.hasKid() && (header.hasJwk() || header.hasX5c())
-        || header.hasJwk() && (header.hasKid() || header.hasX5c())
-        || header.hasX5c() && (header.hasKid() || header.hasJwk())) {
+    if (countKeyClaims(header) > 1) {
       throw new VerifiableCredentialBadRequestException(
           "invalid_request",
           "proof of jws header must not contains multi key claim  kid, jwk, x5c");
     }
+  }
+
+  /** Counts the mutually exclusive key claims (kid / jwk / x5c) carried by the proof header. */
+  private int countKeyClaims(JsonWebSignatureHeader header) {
+    return (header.hasKid() ? 1 : 0) + (header.hasJwk() ? 1 : 0) + (header.hasX5c() ? 1 : 0);
   }
 
   void throwExceptionIfInvalidType(JsonWebSignatureHeader header) {
