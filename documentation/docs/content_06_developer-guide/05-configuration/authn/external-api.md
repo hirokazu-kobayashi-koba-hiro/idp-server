@@ -451,6 +451,34 @@ interaction ごとに動的なセキュリティイベントが発行されま�
 | `hmac_sha256` | HMAC SHA-256 署名 |
 | `none` | 認証なし |
 
+### Basic 認証
+
+`auth_type` に `basic` はありません。Basic 認証はリクエストごとに変わる要素がないため、`header_mapping_rules` で組み立てます。
+
+```json
+"http_request": {
+  "auth_type": "none",
+  "header_mapping_rules": [
+    {
+      "static_value": "<client_id>:<client_secret>",
+      "to": "Authorization",
+      "functions": [
+        { "name": "base64" },
+        { "name": "format", "args": { "template": "Basic {{value}}" } }
+      ]
+    }
+  ]
+}
+```
+
+`base64` 関数があるため、設定には生の資格情報をそのまま置けます（base64 済みの派生値を別途管理する必要はありません）。
+
+:::warning auth_type は手組みの Authorization を上書きします
+`auth_type` が `none` 以外の場合、`header_mapping_rules` で組んだ `Authorization` ヘッダーは**上書きされます**。`HttpRequestBuilder` はマッピング由来のヘッダーを構築した後に、`oauth2` なら `Bearer <token>`、`hmac_sha256` なら署名値を `Authorization` に put するためです。
+
+Basic 認証を使う場合は `auth_type` を `none` にしてください。
+:::
+
 ---
 
 ## ID Token の amr クレーム
