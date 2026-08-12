@@ -2083,6 +2083,41 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-echo-request-context",
+      "type": "http",
+      "documentation": "Issue #1773: echoes back body fields mapped from $.request_attributes so E2E can assert that ip_address / user_agent actually reach the external API.",
+      "method": "post",
+      "endpoint": "e2e/echo-request-context",
+      "responses": [
+        {
+          "uuid": "e2e-echo-request-context-200",
+          "body": "{\n  \"received_ip\": \"{{{ body 'ip' }}}\",\n  \"received_user_agent\": \"{{{ body 'ua' }}}\",\n  \"received_action\": \"{{{ body 'action' }}}\",\n  \"received_resource\": \"{{{ body 'resource' }}}\",\n  \"received_header_user_agent\": \"{{{ body 'header_ua' }}}\",\n  \"ok\": true\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "echo request_attributes mapped into the body",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -2229,6 +2264,10 @@
     {
       "type": "route",
       "uuid": "e2e-echo-request-headers"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-echo-request-context"
     }
   ],
   "proxyMode": false,
