@@ -102,7 +102,7 @@ Mapping Functionsは、**データマッピング処理において値の変換�
 │     "functions": [                                   │
 │       {                                              │
 │         "name": "format",                            │
-│         "args": {"template": "user:{}"}              │
+│         "args": {"template": "user:{{value}}"}       │
 │       }                                              │
 │     ]                                                │
 │   }                                                  │
@@ -292,6 +292,7 @@ Step 5: 結果配置
 | | `join` | 配列結合 | `delimiter` |
 | | `concat` | 複数値の連結 | `values`, `separator` |
 | | `mimeEncodedWord` | MIME encoded-word エンコード | `charset`, `encoding` |
+| | `base64` | Base64 エンコード（RFC 4648） | `url_safe`, `padding`, `charset` |
 | **ID生成** | `random_string` | ランダム文字列生成 | `length`, `charset` |
 | | `uuid4` | UUID v4生成 | なし |
 | | `uuid5` | UUID v5生成（名前ベース） | `namespace`, `name` |
@@ -324,13 +325,15 @@ Step 5: 結果配置
   "functions": [
     {
       "name": "format",
-      "args": {"template": "user:{}"}
+      "args": {"template": "user:{{value}}"}
     }
   ]
 }
 ```
 
 **変換例**: `"12345"` → `"user:12345"`
+
+**プレースホルダは `{{value}}`**: `FormatFunction` は `{{value}}` のみを置換します。`args.template` を省略した場合の既定値も `{{value}}` です。
 
 **主な使用例**:
 - 外部サービス向けID形式変換
@@ -998,7 +1001,7 @@ Function の引数（args）に `$.` で始まる文字列を指定すると、�
       "functions": [
         {
           "name": "format",
-          "args": {"template": "USR-{}"}
+          "args": {"template": "USR-{{value}}"}
         }
       ]
     },

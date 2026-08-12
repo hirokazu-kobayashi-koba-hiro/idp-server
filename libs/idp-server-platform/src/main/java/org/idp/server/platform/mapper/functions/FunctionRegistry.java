@@ -105,6 +105,9 @@ public class FunctionRegistry {
     MimeEncodedWordFunction mimeEncodedWordFunction = new MimeEncodedWordFunction();
     temp.put(mimeEncodedWordFunction.name(), mimeEncodedWordFunction);
 
+    Base64Function base64Function = new Base64Function();
+    temp.put(base64Function.name(), base64Function);
+
     // Initialize map field before calling setFunctionRegistry to prevent partial construction
     // escape
     this.map = Collections.unmodifiableMap(temp);

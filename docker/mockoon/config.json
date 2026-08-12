@@ -2048,6 +2048,41 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-echo-request-headers",
+      "type": "http",
+      "documentation": "Issue #1774: echoes back the Authorization header so E2E can assert headers assembled by header_mapping_rules (base64 + format).",
+      "method": "post",
+      "endpoint": "e2e/echo-request-headers",
+      "responses": [
+        {
+          "uuid": "e2e-echo-request-headers-200",
+          "body": "{\n  \"received_authorization\": \"{{{ header 'Authorization' }}}\",\n  \"ok\": true\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "echo received Authorization header",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -2190,6 +2225,10 @@
     {
       "type": "route",
       "uuid": "e2e-echo-user-context"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-echo-request-headers"
     }
   ],
   "proxyMode": false,
