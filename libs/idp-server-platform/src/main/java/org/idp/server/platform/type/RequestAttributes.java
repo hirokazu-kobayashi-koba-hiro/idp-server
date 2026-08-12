@@ -31,7 +31,18 @@ public class RequestAttributes implements BasicAuthConvertable {
   private static final LoggerWrapper log = LoggerWrapper.getLogger(RequestAttributes.class);
   JsonNodeWrapper jsonNodeWrapper;
 
-  public RequestAttributes() {}
+  /**
+   * Builds a value-less instance, used where there is no inbound HTTP request to describe — {@code
+   * FidoUafUserDataDeletionExecutor} takes this path for user-lifecycle events.
+   *
+   * <p>Holding {@link JsonNodeWrapper#empty()} rather than null is what keeps every accessor below
+   * usable on such an instance; most of them dereference the wrapper directly. {@link
+   * JsonNodeWrapper#fromMap(Map)} already normalizes a null or empty map to the same {@code
+   * empty()}, so both constructors now yield equivalent objects for "no attributes" (#1773).
+   */
+  public RequestAttributes() {
+    this.jsonNodeWrapper = JsonNodeWrapper.empty();
+  }
 
   public RequestAttributes(Map<String, Object> values) {
     this.jsonNodeWrapper = JsonNodeWrapper.fromMap(values);
@@ -41,8 +52,15 @@ public class RequestAttributes implements BasicAuthConvertable {
     return jsonNodeWrapper.toMap();
   }
 
+  /**
+   * Reports whether any attribute is actually held.
+   *
+   * <p>Uses {@link JsonNodeWrapper#existsWithValue()} rather than {@code exists()}: the latter only
+   * checks for a non-null node, so the empty object node behind a value-less instance would answer
+   * true.
+   */
   public boolean exists() {
-    return jsonNodeWrapper != null && jsonNodeWrapper.exists();
+    return jsonNodeWrapper.existsWithValue();
   }
 
   public String optValueAsString(String key, String defaultValue) {
@@ -53,9 +71,6 @@ public class RequestAttributes implements BasicAuthConvertable {
   }
 
   public boolean containsKey(String key) {
-    if (jsonNodeWrapper == null) {
-      return false;
-    }
     return jsonNodeWrapper.contains(key);
   }
 

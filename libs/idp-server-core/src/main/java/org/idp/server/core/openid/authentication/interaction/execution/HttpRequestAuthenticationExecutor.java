@@ -67,7 +67,11 @@ public class HttpRequestAuthenticationExecutor implements AuthenticationExecutor
 
     Map<String, Object> param = new HashMap<>();
     param.put("request_body", request.toMap());
-    param.put("request_attributes", requestAttributes);
+    // Issue #1773: toMap() it, as every other context builder does. RequestAttributes holds a
+    // single JsonNodeWrapper, so putting the object itself serialized as
+    // {"json_node_wrapper":{"json_node":{...}}} and $.request_attributes.ip_address resolved to
+    // null — the documented path silently produced nothing.
+    param.put("request_attributes", requestAttributes.toMap());
 
     // Issue #1439: expose the allow-listed authenticated-user projection as $.user.* (same prefix
     // as the policy-condition context, #1501). Set as a top-level key (not under request_body) so a
