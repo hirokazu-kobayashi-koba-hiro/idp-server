@@ -31,31 +31,36 @@ public class RequestAttributes implements BasicAuthConvertable {
   private static final LoggerWrapper log = LoggerWrapper.getLogger(RequestAttributes.class);
   JsonNodeWrapper jsonNodeWrapper;
 
-  public RequestAttributes() {}
+  /**
+   * Builds a value-less instance, used where there is no inbound HTTP request to describe — {@code
+   * FidoUafUserDataDeletionExecutor} takes this path for user-lifecycle events.
+   *
+   * <p>Holding {@link JsonNodeWrapper#empty()} rather than null is what keeps every accessor below
+   * usable on such an instance; most of them dereference the wrapper directly. {@link
+   * JsonNodeWrapper#fromMap(Map)} already normalizes a null or empty map to the same {@code
+   * empty()}, so both constructors now yield equivalent objects for "no attributes" (#1773).
+   */
+  public RequestAttributes() {
+    this.jsonNodeWrapper = JsonNodeWrapper.empty();
+  }
 
   public RequestAttributes(Map<String, Object> values) {
     this.jsonNodeWrapper = JsonNodeWrapper.fromMap(values);
   }
 
-  /**
-   * Returns the attributes as a plain map, or an empty map when this instance carries no value.
-   *
-   * <p>The no-arg constructor leaves {@link #jsonNodeWrapper} null — {@code
-   * FidoUafUserDataDeletionExecutor} builds such an instance for the user-lifecycle path, where
-   * there is no inbound HTTP request to describe. Every caller here feeds the result straight into
-   * a map or a mapping context, so an absent value is naturally an empty map rather than an error.
-   *
-   * @return the attribute map, empty when no value is held
-   */
   public Map<String, Object> toMap() {
-    if (jsonNodeWrapper == null) {
-      return Map.of();
-    }
     return jsonNodeWrapper.toMap();
   }
 
+  /**
+   * Reports whether any attribute is actually held.
+   *
+   * <p>Uses {@link JsonNodeWrapper#existsWithValue()} rather than {@code exists()}: the latter only
+   * checks for a non-null node, so the empty object node behind a value-less instance would answer
+   * true.
+   */
   public boolean exists() {
-    return jsonNodeWrapper != null && jsonNodeWrapper.exists();
+    return jsonNodeWrapper.existsWithValue();
   }
 
   public String optValueAsString(String key, String defaultValue) {
@@ -66,9 +71,6 @@ public class RequestAttributes implements BasicAuthConvertable {
   }
 
   public boolean containsKey(String key) {
-    if (jsonNodeWrapper == null) {
-      return false;
-    }
     return jsonNodeWrapper.contains(key);
   }
 

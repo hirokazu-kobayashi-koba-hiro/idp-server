@@ -93,8 +93,64 @@ class RequestAttributesTest {
     }
 
     @Test
+    void emptyAttributesDoNotExist() {
+      // fromMap() normalizes an empty map to the same empty node the no-arg constructor holds, so
+      // the two spellings of "no attributes" have to agree.
+      assertFalse(new RequestAttributes(Map.of()).exists());
+      assertFalse(new RequestAttributes(null).exists());
+    }
+
+    @Test
     void populatedInstanceExists() {
       assertTrue(new RequestAttributes(inboundAttributes()).exists());
+    }
+  }
+
+  /**
+   * Most accessors dereference the wrapper without a null check, so a value-less instance used to
+   * blow up on all of them. The no-arg constructor now seeds an empty node instead (#1773).
+   */
+  @Nested
+  class ValuelessInstanceIsUsable {
+
+    @Test
+    void lookupsReportAbsenceRatherThanThrowing() {
+      RequestAttributes attributes = new RequestAttributes();
+
+      assertFalse(attributes.containsKey("ip_address"));
+      assertFalse(attributes.hasIpAddress());
+      assertFalse(attributes.hasUserAgent());
+      assertEquals("fallback", attributes.optValueAsString("ip_address", "fallback"));
+      assertEquals("", attributes.getValueOrEmptyAsString("ip_address"));
+    }
+
+    @Test
+    void typedAccessorsReturnEmptyValues() {
+      RequestAttributes attributes = new RequestAttributes();
+
+      assertEquals("", attributes.getIpAddress().value());
+      assertEquals("", attributes.getUserAgent().value());
+      assertEquals("", attributes.resource().value());
+      assertEquals("", attributes.action().value());
+    }
+
+    @Test
+    void basicAuthResolvesToAbsentInsteadOfThrowing() {
+      RequestAttributes attributes = new RequestAttributes();
+
+      assertFalse(attributes.hasBasicAuth());
+      assertFalse(attributes.basicAuth().exists());
+    }
+
+    @Test
+    void behavesTheSameAsAnEmptyAttributeMap() {
+      RequestAttributes noArg = new RequestAttributes();
+      RequestAttributes emptyMap = new RequestAttributes(Map.of());
+
+      assertEquals(emptyMap.toMap(), noArg.toMap());
+      assertEquals(emptyMap.exists(), noArg.exists());
+      assertEquals(emptyMap.hasBasicAuth(), noArg.hasBasicAuth());
+      assertEquals(emptyMap.resource().value(), noArg.resource().value());
     }
   }
 }
