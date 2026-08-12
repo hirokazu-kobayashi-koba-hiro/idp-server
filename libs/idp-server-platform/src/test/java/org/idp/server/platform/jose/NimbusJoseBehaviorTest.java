@@ -82,6 +82,31 @@ class NimbusJoseBehaviorTest {
       assertEquals(
           JoseType.encryption, JoseType.parse(header("{\"alg\":\"dir\",\"enc\":\"A256GCM\"}")));
     }
+
+    @Test
+    void unknownAlgorithmFallsIntoTheSignatureBranch() throws Exception {
+      // Nimbus JWSAlgorithm.parse() mints a JWSAlgorithm for any unregistered name, so an
+      // unrecognized alg is routed to the JWS path rather than rejected here. Rejecting an
+      // unsupported alg is the job of the downstream verifier, not of this classification.
+      assertEquals(JoseType.signature, JoseType.parse(header("{\"alg\":\"NOT_A_REAL_ALG\"}")));
+    }
+
+    @Test
+    void missingAlgIsRejected() {
+      // Header.parseAlgorithm throws when alg is absent — the one fail-closed branch here.
+      assertThrows(JoseInvalidException.class, () -> JoseType.parse(header("{\"typ\":\"JWT\"}")));
+    }
+
+    @Test
+    void classificationDependsOnNoneThenOnEncPresenceOnly() throws Exception {
+      // Header.parseAlgorithm decides in that order: alg "none" wins regardless of enc, otherwise
+      // enc's presence alone picks JWEAlgorithm vs JWSAlgorithm. Both cases below invert the
+      // "encryption looks like a JWE" intuition, and together they show why JoseType.parse's
+      // trailing "Unexpected algorithm type" throw is unreachable — there is no third outcome.
+      assertEquals(
+          JoseType.plain, JoseType.parse(header("{\"alg\":\"none\",\"enc\":\"A256GCM\"}")));
+      assertEquals(JoseType.signature, JoseType.parse(header("{\"alg\":\"RSA-OAEP-256\"}")));
+    }
   }
 
   @Nested

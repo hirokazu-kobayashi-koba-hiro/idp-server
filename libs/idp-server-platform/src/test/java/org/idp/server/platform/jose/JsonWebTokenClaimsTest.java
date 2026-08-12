@@ -157,9 +157,9 @@ class JsonWebTokenClaimsTest {
   @Nested
   class GetValue {
 
-    // getValue() underpins the "htm/htu/scope are already null-safe" reasoning: "" for an absent
-    // key, null for a present-but-null value — both harmless at the call sites (equalsIgnoreCase /
-    // isEmpty).
+    // getValue() returns "" for anything that is not a usable string — absent, null-valued, or of
+    // another JSON type. The claim value type is attacker-controlled, so the earlier blind (String)
+    // cast raised ClassCastException (500) on the same self-signed DPoP path as the #1776 NPE.
 
     @Test
     void absentKeyReturnsEmptyString() throws ParseException {
@@ -172,8 +172,33 @@ class JsonWebTokenClaimsTest {
     }
 
     @Test
-    void presentButNullReturnsNull() throws ParseException {
-      assertNull(new JsonWebTokenClaims(parse("{\"htm\":null}")).getValue("htm"));
+    void presentButNullReturnsEmptyString() throws ParseException {
+      assertEquals("", new JsonWebTokenClaims(parse("{\"htm\":null}")).getValue("htm"));
+    }
+
+    @Test
+    void numberValuedClaimReturnsEmptyStringInsteadOfThrowing() throws ParseException {
+      JsonWebTokenClaims claims = new JsonWebTokenClaims(parse("{\"htm\":123}"));
+
+      // contains() still reports the key — the guard-then-get sites pass through to getValue().
+      assertTrue(claims.contains("htm"));
+      assertEquals("", claims.getValue("htm"));
+    }
+
+    @Test
+    void arrayValuedClaimReturnsEmptyStringInsteadOfThrowing() throws ParseException {
+      assertEquals(
+          "", new JsonWebTokenClaims(parse("{\"scope\":[\"a\",\"b\"]}")).getValue("scope"));
+    }
+
+    @Test
+    void objectValuedClaimReturnsEmptyStringInsteadOfThrowing() throws ParseException {
+      assertEquals("", new JsonWebTokenClaims(parse("{\"htu\":{\"a\":1}}")).getValue("htu"));
+    }
+
+    @Test
+    void booleanValuedClaimReturnsEmptyStringInsteadOfThrowing() throws ParseException {
+      assertEquals("", new JsonWebTokenClaims(parse("{\"ath\":true}")).getValue("ath"));
     }
   }
 

@@ -521,6 +521,29 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
           expect(tokenResponse.status).toBe(400);
           expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
+
+        it("MUST reject DPoP proof whose htm claim is not a string, without returning a server error", async () => {
+          // クレーム値の型は攻撃者が選べる。htm を数値にすると必須クレーム検証（キー存在ベース）は
+          // 通過し、後段の文字列取得で ClassCastException → 500 になっていた（#1779）。
+          const dpopProof = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htu: serverConfig.tokenEndpoint,
+            overrides: { htm: 123 },
+          });
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: dpopProof },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
+        });
       });
 
       describe("Check 9: The htu claim matches the HTTP URI value for the HTTP request in which the JWT was received, ignoring any query and fragment parts", () => {
@@ -567,6 +590,29 @@ describe("RFC 9449: OAuth 2.0 Demonstrating Proof of Possession (DPoP)", () => {
 
           expect(tokenResponse.status).toBe(200);
           expect(tokenResponse.data.token_type).toBe("DPoP");
+        });
+
+        it("MUST reject DPoP proof whose htu claim is not a string, without returning a server error", async () => {
+          // htm と同じく、配列の htu も文字列取得で ClassCastException → 500 になっていた（#1779）。
+          const dpopProof = await createDPoPProof({
+            privateKey: dpopKeyPair.privateKey,
+            publicJwk: dpopKeyPair.publicJwk,
+            htm: "POST",
+            htu: serverConfig.tokenEndpoint,
+            overrides: { htu: [serverConfig.tokenEndpoint] },
+          });
+
+          const tokenResponse = await requestToken({
+            endpoint: serverConfig.tokenEndpoint,
+            grantType: "client_credentials",
+            scope: clientSecretPostClient.scope,
+            clientId: clientSecretPostClient.clientId,
+            clientSecret: clientSecretPostClient.clientSecret,
+            additionalHeaders: { DPoP: dpopProof },
+          });
+
+          expect(tokenResponse.status).toBe(400);
+          expect(tokenResponse.data.error).toBe("invalid_dpop_proof");
         });
       });
 

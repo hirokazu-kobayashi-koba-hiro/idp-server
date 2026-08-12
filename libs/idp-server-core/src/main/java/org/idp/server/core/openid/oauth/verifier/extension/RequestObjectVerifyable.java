@@ -62,11 +62,16 @@ public interface RequestObjectVerifyable {
   }
 
   /**
-   * JAR (RFC 9101) Section 6.2:
+   * JAR (RFC 9101) Section 4 (Request Object):
    *
    * <p>"request and request_uri parameters MUST NOT be included in Request Objects."
    *
    * <p>Including these parameters inside the Request Object JWT is circular and invalid.
+   *
+   * <p>The check is key-based: the spec forbids the parameter being present at all, so a non-string
+   * or null value counts as included just as a string one does. Reading the value first would let
+   * {@code "request": 123} through, since {@link JsonWebTokenClaims#getValue(String)} reports any
+   * non-string value as absent.
    */
   default void throwExceptionIfContainsRequestOrRequestUri(
       JoseContext joseContext,
@@ -74,15 +79,15 @@ public interface RequestObjectVerifyable {
       ClientConfiguration clientConfiguration)
       throws RequestObjectInvalidException {
     JsonWebTokenClaims claims = joseContext.claims();
-    if (claims.getValue("request") != null && !claims.getValue("request").isEmpty()) {
+    if (claims.contains("request")) {
       throw new RequestObjectInvalidException(
           "invalid_request_object",
-          "request object must not contain request parameter (JAR Section 6.2)");
+          "request object must not contain request parameter (JAR Section 4)");
     }
-    if (claims.getValue("request_uri") != null && !claims.getValue("request_uri").isEmpty()) {
+    if (claims.contains("request_uri")) {
       throw new RequestObjectInvalidException(
           "invalid_request_object",
-          "request object must not contain request_uri parameter (JAR Section 6.2)");
+          "request object must not contain request_uri parameter (JAR Section 4)");
     }
   }
 
