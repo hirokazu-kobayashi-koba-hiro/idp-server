@@ -1208,8 +1208,8 @@ from で参照できるトップレベルのオブジェクトは以下の通り
         "to": "process_status"
       },
       {
-        "from": "$.request_attributes.headers",
-        "to": "*"
+        "from": "$.request_attributes.ip_address",
+        "to": "applicant_ip"
       }
     ]
   },
@@ -1221,6 +1221,10 @@ from で参照できるトップレベルのオブジェクトは以下の通り
 
 1. リクエストデータの保存
 2. レスポンスデータの保存
+
+:::warning `request_attributes.headers` の一括マッピングは避けてください
+`{ "from": "$.request_attributes.headers", "to": "*" }` と書くと、`Authorization` や `Cookie` を含む受信ヘッダー全体が申込み詳細として**永続化**されます。必要なヘッダーだけを個別に指定してください（例: `$.request_attributes.headers.token`）。
+:::
 
 **mapping_rules fromの指定方法**
 

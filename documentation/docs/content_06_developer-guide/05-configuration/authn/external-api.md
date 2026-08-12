@@ -89,7 +89,8 @@ idp-server が受け取ったリクエスト自体から取れる値です。RP 
 |------|------|
 | `$.request_attributes.ip_address` | 送信元IP |
 | `$.request_attributes.user_agent` | User-Agent |
-| `$.request_attributes.resource` | リクエストパス |
+| `$.request_attributes.resource` | リクエストパス（例: `/{tenant-id}/v1/authorizations/{id}/...`） |
+| `$.request_attributes.request_url` | フルURL（リバースプロキシのヘッダーを考慮して解決） |
 | `$.request_attributes.action` | HTTPメソッド |
 | `$.request_attributes.headers.*` | 受信ヘッダー全体（キーにハイフンを含む場合は `$.request_attributes.headers['User-Agent']`） |
 
