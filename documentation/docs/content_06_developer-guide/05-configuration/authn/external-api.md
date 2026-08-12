@@ -81,6 +81,29 @@ External API認証を使用するには、テナントに `type = "external-api-
 | `$.user.*` | 認証済みユーザー属性（下記） | ユーザー確立後（後述） |
 | `$.execution_http_request.response_body.*` | 外部APIのレスポンス | `response` マッピングと `user_resolve` のみ |
 
+### `$.request_attributes.*` — リクエスト属性
+
+idp-server が受け取ったリクエスト自体から取れる値です。RP からの申告値ではないため、リスク判定・不正検知の判断材料として使えます。
+
+| パス | 内容 |
+|------|------|
+| `$.request_attributes.ip_address` | 送信元IP |
+| `$.request_attributes.user_agent` | User-Agent |
+| `$.request_attributes.resource` | リクエストパス |
+| `$.request_attributes.action` | HTTPメソッド |
+| `$.request_attributes.headers.*` | 受信ヘッダー全体（キーにハイフンを含む場合は `$.request_attributes.headers['User-Agent']`） |
+
+```json
+"body_mapping_rules": [
+  { "from": "$.request_attributes.ip_address", "to": "event.device.ip" },
+  { "from": "$.request_attributes.user_agent", "to": "event.device.user_agent" }
+]
+```
+
+:::warning headers には Authorization / Cookie も含まれます
+`$.request_attributes.headers.*` は受信ヘッダーをそのまま公開します。`{ "from": "$.request_attributes.headers", "to": "*" }` のような一括マッピングを書くと、認証情報を含むヘッダーが外部APIへ送信されます。必要なヘッダーだけを個別に指定してください。
+:::
+
 ### `$.user.*` — 認証済みユーザー属性
 
 外部APIのリクエストに、認証済みユーザーの属性を送れます（例: リスク判定APIに「誰のリスクか」を渡す）。RP が再送する必要はありません。
