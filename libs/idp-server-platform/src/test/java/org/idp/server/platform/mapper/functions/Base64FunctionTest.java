@@ -121,6 +121,26 @@ public class Base64FunctionTest {
     // Config JSON may carry "true"/"false" as strings depending on how it was authored.
     assertEquals("YQ", function.apply("a", args("padding", "false")));
     assertEquals("w7_Dvg==", function.apply("ÿþ", args("url_safe", "true")));
+    assertEquals("YQ", function.apply("a", args("padding", "FALSE")));
+  }
+
+  @Test
+  public void testNullBooleanArgFallsBackToDefault() {
+    assertEquals("YQ==", function.apply("a", args("padding", null)));
+  }
+
+  @Test
+  public void testUnusableBooleanArgIsRejected() {
+    // Boolean.parseBoolean would read "yes" as false, silently inverting the default. A charset
+    // typo already fails fast; a flag typo should not be treated more leniently.
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class, () -> function.apply("a", args("padding", "yes")));
+
+    assertTrue(exception.getMessage().contains("padding"));
+    assertTrue(exception.getMessage().contains("yes"));
+
+    assertThrows(IllegalArgumentException.class, () -> function.apply("a", args("url_safe", 1)));
   }
 
   @Test

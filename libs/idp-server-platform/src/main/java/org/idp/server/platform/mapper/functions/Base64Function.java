@@ -39,6 +39,9 @@ import java.util.Map;
  *     "url_safe": false,   // Optional, RFC 4648 §5 alphabet when true, default: false
  *     "padding": true,     // Optional, emit '=' padding, default: true
  *     "charset": "UTF-8"   // Optional, default: UTF-8
+ *     // Unusable values are rejected: an unknown charset, or a boolean that is
+ *     // neither true/false, raises IllegalArgumentException rather than silently
+ *     // falling back.
  *   }
  * }
  * }</pre>
@@ -46,9 +49,9 @@ import java.util.Map;
  * <h2>Examples</h2>
  *
  * <pre>{@code
- * Input: "id:secret"                     Output: "aWQ6c2VjcmV0"
- * Input: "" (empty string)               Output: ""
- * Input: "ÿþ" url_safe=true    Output: "w7_Dvg"   (with padding=false)
+ * Input: "id:secret"                             Output: "aWQ6c2VjcmV0"
+ * Input: "" (empty string)                       Output: ""
+ * Input: "ÿþ", url_safe=true, padding=false      Output: "w7_Dvg"
  * }</pre>
  *
  * <p>Combine with {@code format} to build a complete header value:
@@ -110,14 +113,34 @@ public class Base64Function implements ValueFunction {
     return value != null ? value.toString() : defaultValue;
   }
 
+  /**
+   * Reads a boolean argument, accepting only a JSON boolean or the strings {@code "true"} / {@code
+   * "false"}.
+   *
+   * <p>{@code Boolean.parseBoolean} maps everything that is not {@code "true"} to {@code false}, so
+   * {@code "padding": "yes"} would silently flip the flag away from its default. An unusable
+   * charset already fails fast, and a misconfigured flag is just as much a configuration error, so
+   * both are reported rather than guessed.
+   */
   private static boolean getBooleanArg(Map<String, Object> args, String key, boolean defaultValue) {
     if (args == null || !args.containsKey(key)) {
       return defaultValue;
     }
     Object value = args.get(key);
+    if (value == null) {
+      return defaultValue;
+    }
     if (value instanceof Boolean booleanValue) {
       return booleanValue;
     }
-    return value != null ? Boolean.parseBoolean(value.toString()) : defaultValue;
+    String text = value.toString();
+    if ("true".equalsIgnoreCase(text)) {
+      return true;
+    }
+    if ("false".equalsIgnoreCase(text)) {
+      return false;
+    }
+    throw new IllegalArgumentException(
+        "Invalid boolean value for " + key + ": " + text + " (use true or false)");
   }
 }
