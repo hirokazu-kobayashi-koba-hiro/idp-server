@@ -67,7 +67,9 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
 
     Map<String, Object> param = new HashMap<>();
     param.put("request_body", request.toMap());
-    param.put("request_attributes", requestAttributes);
+    // Issue #1773: see HttpRequestAuthenticationExecutor — the object was serialized as
+    // {"json_node_wrapper":{"json_node":{...}}} instead of the attribute map itself.
+    param.put("request_attributes", requestAttributes.toMap());
 
     if (configuration.hasPreviousInteraction()) {
       AuthenticationPreviousInteractionResolveConfig previousInteraction =

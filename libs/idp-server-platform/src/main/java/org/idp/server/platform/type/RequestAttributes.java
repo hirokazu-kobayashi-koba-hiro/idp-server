@@ -37,7 +37,20 @@ public class RequestAttributes implements BasicAuthConvertable {
     this.jsonNodeWrapper = JsonNodeWrapper.fromMap(values);
   }
 
+  /**
+   * Returns the attributes as a plain map, or an empty map when this instance carries no value.
+   *
+   * <p>The no-arg constructor leaves {@link #jsonNodeWrapper} null — {@code
+   * FidoUafUserDataDeletionExecutor} builds such an instance for the user-lifecycle path, where
+   * there is no inbound HTTP request to describe. Every caller here feeds the result straight into
+   * a map or a mapping context, so an absent value is naturally an empty map rather than an error.
+   *
+   * @return the attribute map, empty when no value is held
+   */
   public Map<String, Object> toMap() {
+    if (jsonNodeWrapper == null) {
+      return Map.of();
+    }
     return jsonNodeWrapper.toMap();
   }
 
