@@ -1007,4 +1007,34 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
         this.verifiedClaims, // verifiedClaims should not be updated via patch
         patchUser.hasStatus() ? patchUser.status() : this.status);
   }
+
+  /**
+   * Applies a patch the way an authentication flow should: like {@link #updateWith(User)}, except
+   * that {@code custom_properties} is merged key by key instead of replaced.
+   *
+   * <p>{@code custom_properties} is a flat key set that several writers contribute to — federation,
+   * external-api authentication, a 2nd factor, identity verification. Each writer only knows the
+   * keys it produces itself, so replacing the whole map means whichever authentication method ran
+   * last silently drops the keys the others had put there, with no error (#1772). Identity
+   * verification already reached this conclusion and merges via its {@code
+   * custom_properties_update_policy}; this is the same rule for {@code user_resolve}.
+   *
+   * <p>{@link #updateWith(User)} keeps replacing, because it also backs the management PATCH
+   * endpoint where the caller states the map it wants and can therefore drop keys deliberately.
+   *
+   * @param patchUser the attributes resolved by this authentication method
+   * @return a new user with the patch applied and custom properties merged
+   */
+  public User enrichWith(User patchUser) {
+    User enriched = updateWith(patchUser);
+
+    if (!patchUser.hasCustomProperties()) {
+      return enriched;
+    }
+
+    HashMap<String, Object> merged = new HashMap<>(this.customProperties);
+    merged.putAll(patchUser.customPropertiesValue());
+
+    return enriched.setCustomProperties(merged);
+  }
 }
