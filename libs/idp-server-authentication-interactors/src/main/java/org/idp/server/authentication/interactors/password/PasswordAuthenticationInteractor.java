@@ -430,7 +430,9 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
               transaction.user().sub());
           User enrichmentPatch =
               buildSecondFactorEnrichmentPatch(request, executionResult, userMappingRules);
-          return transaction.user().updateWith(enrichmentPatch);
+          // #1772: merge custom_properties instead of replacing, so the 2nd factor adds its keys
+          // to what the 1st factor resolved rather than overwriting them.
+          return transaction.user().enrichWith(enrichmentPatch);
         }
       }
 
@@ -480,7 +482,7 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
    * privilege field is dropped and logged at WARN — on the 2nd factor these are inviolable and the
    * identity-resolution rules (e.g. {@code external_user_id} / {@code provider_id} / {@code email})
    * are intentionally not honored (SECURITY, CWE-287). The returned patch never carries {@code
-   * sub}, so {@link User#updateWith(User)} keeps the 1st-factor identity intact.
+   * sub}, so {@link User#enrichWith(User)} keeps the 1st-factor identity intact.
    *
    * <p>Package-private for unit testing.
    */

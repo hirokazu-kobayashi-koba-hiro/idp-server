@@ -38,7 +38,10 @@ public class UserRegistrator {
     User existingUser = userQueryRepository.findById(tenant, user.userIdentifier());
 
     if (existingUser.exists()) {
-      User updatedUser = existingUser.updateWith(user);
+      // #1772: enrichWith, not updateWith — an authentication method only knows the
+      // custom_properties keys it produces itself, so replacing the whole map would drop whatever
+      // the other methods had put there.
+      User updatedUser = existingUser.enrichWith(user);
       applyIdentityPolicyIfNeeded(tenant, updatedUser);
       userCommandRepository.update(tenant, updatedUser);
       return new UserRegistrationResult(updatedUser, false);
