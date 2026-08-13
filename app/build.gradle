@@ -2,21 +2,24 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '4.0.7'
 	id 'io.spring.dependency-management' version '1.1.7'
-	id "com.diffplug.spotless" version "6.24.0"
+	id "com.diffplug.spotless" version "8.8.0"
 }
 
 group = 'org.idp.server'
 // Version is managed by Git tags in CI/CD, default to SNAPSHOT for local development
 version = project.hasProperty('releaseVersion') ? project.releaseVersion : '0.9.0-SNAPSHOT'
-sourceCompatibility = '21'
+
+java {
+	sourceCompatibility = '21'
+}
 
 repositories {
 	mavenCentral()
 	maven {
-		url 'https://repo.danubetech.com/repository/maven-public/'
+		url = 'https://repo.danubetech.com/repository/maven-public/'
 	}
 	maven {
-		url 'https://jitpack.io'
+		url = 'https://jitpack.io'
 	}
 }
 
@@ -48,7 +51,7 @@ spotless {
 		target 'src/*/java/**/*.java'
 		importOrder()
 		removeUnusedImports()
-		googleJavaFormat()
+		googleJavaFormat('1.19.2')
 		toggleOffOn()
 	}
 	groovyGradle {
