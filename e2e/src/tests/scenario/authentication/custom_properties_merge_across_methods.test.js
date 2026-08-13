@@ -96,6 +96,8 @@ describe("Authentication: custom_properties merge across methods (#1772)", () =>
     // precisely why it must not replace the whole map.
     const SEEDED_KEY = "attr_from_other_method";
     const RESOLVED_KEY = "attr_from_password_resolve";
+    // Declared by this method's rules but whose source is absent, so the rule produces null.
+    const UNPRODUCED_KEY = "attr_declared_but_unproduced";
 
     await postWithJson({
       url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/authentication-configurations`,
@@ -117,6 +119,9 @@ describe("Authentication: custom_properties merge across methods (#1772)", () =>
             user_resolve: {
               user_mapping_rules: [
                 { static_value: "resolved_by_password", to: `custom_properties.${RESOLVED_KEY}` },
+                // The source is never present, so this rule resolves to null. A null must not
+                // erase the value already on the user.
+                { from: "$.request_body.never_present", to: `custom_properties.${UNPRODUCED_KEY}` },
               ],
             },
             response: { body_mapping_rules: [] },
@@ -218,7 +223,10 @@ describe("Authentication: custom_properties merge across methods (#1772)", () =>
         email: userEmail,
         email_verified: true,
         raw_password: userPassword,
-        custom_properties: { [SEEDED_KEY]: "written_by_another_method" },
+        custom_properties: {
+          [SEEDED_KEY]: "written_by_another_method",
+          [UNPRODUCED_KEY]: "must_survive_a_null_producing_rule",
+        },
       },
     });
     expect(createUserResponse.status).toBe(201);
@@ -282,5 +290,10 @@ describe("Authentication: custom_properties merge across methods (#1772)", () =>
     expect(getUserResponse.data.custom_properties[RESOLVED_KEY]).toBe("resolved_by_password");
     // ...and the key it never declared is still there. Before #1772 this was dropped.
     expect(getUserResponse.data.custom_properties[SEEDED_KEY]).toBe("written_by_another_method");
+
+    // A rule that resolved to null must leave the existing value alone rather than nulling it.
+    expect(getUserResponse.data.custom_properties[UNPRODUCED_KEY]).toBe(
+      "must_survive_a_null_producing_rule"
+    );
   }, 90000);
 });

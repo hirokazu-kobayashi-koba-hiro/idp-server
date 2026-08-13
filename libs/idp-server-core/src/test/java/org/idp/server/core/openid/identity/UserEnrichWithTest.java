@@ -90,6 +90,32 @@ class UserEnrichWithTest {
     }
 
     @Test
+    void aKeyWithNoProducedValueKeepsItsExistingValue() {
+      // An unresolved `from` yields a null entry (MappingRuleObjectMapper writes null), so copying
+      // the patch wholesale would erase the attribute just because this method's source lacked it.
+      User existing = userWith(props("rank", "gold", "tier", "premium"));
+
+      HashMap<String, Object> patchProps = props("rank", "silver");
+      patchProps.put("tier", null);
+
+      User enriched = existing.enrichWith(patchWith(patchProps));
+
+      assertEquals(Map.of("rank", "silver", "tier", "premium"), enriched.customPropertiesValue());
+    }
+
+    @Test
+    void aPatchOfOnlyNullsLeavesEverythingAsItWas() {
+      User existing = userWith(props("rank", "gold"));
+
+      HashMap<String, Object> patchProps = new HashMap<>();
+      patchProps.put("rank", null);
+
+      User enriched = existing.enrichWith(patchWith(patchProps));
+
+      assertEquals(Map.of("rank", "gold"), enriched.customPropertiesValue());
+    }
+
+    @Test
     void enrichingAnEmptyUserYieldsThePatchProperties() {
       User existing = userWith(props());
 

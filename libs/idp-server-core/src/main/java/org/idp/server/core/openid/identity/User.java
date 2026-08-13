@@ -1022,6 +1022,12 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
    * <p>{@link #updateWith(User)} keeps replacing, because it also backs the management PATCH
    * endpoint where the caller states the map it wants and can therefore drop keys deliberately.
    *
+   * <p>A key whose mapping rule produced no value keeps its existing value rather than being
+   * overwritten with {@code null}: an unresolved {@code from} yields a null entry, so copying the
+   * patch wholesale would erase an attribute simply because this method's source did not carry it —
+   * the very loss the merge exists to prevent. Identity verification applies the same rule in
+   * {@code IdentityVerificationUserUpdater#applyCustomProperties}.
+   *
    * @param patchUser the attributes resolved by this authentication method
    * @return a new user with the patch applied and custom properties merged
    */
@@ -1033,7 +1039,14 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
     }
 
     HashMap<String, Object> merged = new HashMap<>(this.customProperties);
-    merged.putAll(patchUser.customPropertiesValue());
+    patchUser
+        .customPropertiesValue()
+        .forEach(
+            (key, value) -> {
+              if (value != null) {
+                merged.put(key, value);
+              }
+            });
 
     return enriched.setCustomProperties(merged);
   }
