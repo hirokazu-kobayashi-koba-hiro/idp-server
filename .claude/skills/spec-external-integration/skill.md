@@ -214,6 +214,23 @@ $.user                  → 認証済みユーザーの許可リスト投影（e
 
 2要素目の同一性照合に `$.user` が入らないのは意図的。`identity_match_field` の被検体を `$.user` から作れると照合が自己参照になり、外部APIが誰を返しても一致してしまう（CWE-287）。原則は「**同一性の判断材料は `$.user` から作らない / 属性の取り込みには使う**」。
 
+### 解決結果は既存ユーザーがベース（#1792）
+
+既存ユーザーが見つかった場合、1要素目の解決結果は `existingUser.enrichWith(mapped)`。マッピングの出力単体ではない。この結果が認可グラントに写し取られトークンのクレームになるため、出力単体にすると外部が返さなかった属性（`custom_properties` / `roles` / `verified_claims`）がそのセッションのトークンから欠落する（DB と UserInfo は正常なので気づきにくい）。
+
+`status` は既存値で明示的に固定する。`updateWith` が `patchUser.hasStatus() ? patch : this.status` なので、固定しないとマッピングが `status` を出せば `LOCKED` を復活させられてしまう。
+
+適用対象は外部ソースで1要素目を解決する4経路。
+
+| 経路 | 実装 |
+|------|------|
+| フェデレーション | `OidcFederationInteractor#resolveUser` |
+| 外部API認証 | `ExternalApiAuthenticationInteractor#resolveUser` |
+| 外部パスワード認証 | `PasswordAuthenticationInteractor#resolveUserFromExternalAuth` |
+| 外部トークン認証 | `ExternalTokenAuthenticationInteractor#interact` |
+
+既存ユーザーの読み取りは1要素目、DB保存は認可成立後（`OAuthFlowEntryService:499`）。その間に管理APIで同じユーザーを更新すると認証開始時点の値で巻き戻る窓がある。
+
 詳細: `documentation/docs/content_03_concepts/03-authentication-authorization/concept-11-user-resolution.md`
 
 ### http_request_store / previous_interaction パターン

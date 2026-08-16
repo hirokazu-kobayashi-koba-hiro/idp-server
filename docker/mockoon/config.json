@@ -582,7 +582,7 @@
       "responses": [
         {
           "uuid": "c6b47497-0160-4228-9afb-b6c1880c5a3a",
-          "body": "{\n  \"id\": \"{{ uuid }}\",\n  \"email\": \"{{ uuid }}@gmail.com\"\n}",
+          "body": "{{#if (header 'x-external-user-id')}}{\n  \"id\": \"{{ header 'x-external-user-id' }}\",\n  \"email\": \"{{ header 'x-external-user-id' }}@gmail.com\"\n}{{else}}{\n  \"id\": \"{{ uuid }}\",\n  \"email\": \"{{ uuid }}@gmail.com\"\n}{{/if}}",
           "latency": 0,
           "statusCode": 200,
           "label": "",

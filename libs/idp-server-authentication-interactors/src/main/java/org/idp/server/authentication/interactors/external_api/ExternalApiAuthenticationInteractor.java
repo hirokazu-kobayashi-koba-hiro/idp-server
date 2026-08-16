@@ -29,6 +29,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.ExternalRequestUserContextCreator;
 import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.openid.identity.ResolvedUserCreator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
@@ -481,20 +482,22 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     mappingSource.put("user", ExternalRequestUserContextCreator.create(existingUser));
     User mapped = toUser(userMappingRules, mappingSource);
 
-    // The user we bind must be the one we looked up: pin the lookup key from the first pass so a
-    // rule reading it from $.user cannot make "the key we searched by" and "the key we store"
-    // disagree, which would silently register a duplicate on the next login.
-    mapped.setProviderId(lookupKeyUser.providerId());
-    mapped.setExternalUserId(lookupKeyUser.externalUserId());
-
     if (existingUser.exists()) {
       log.debug(
           "Existing user found. providerId={}, externalUserId={}, sub={}",
           mapped.providerId(),
           mapped.externalUserId(),
           existingUser.sub());
-      return applyToExistingUser(existingUser, mapped);
+      return ResolvedUserCreator.create(existingUser, mapped);
     }
+
+    // Restore the lookup key from the first pass. Only this branch needs it: an existing user
+    // supplies the key from the stored row, but a new one is registered under whatever the mapping
+    // produced, and pass 2 may have derived that from $.user — which was empty here. Without this,
+    // "the key we searched by" and "the key we store" can disagree and the next login registers a
+    // duplicate instead of finding this user (#1767).
+    mapped.setProviderId(lookupKeyUser.providerId());
+    mapped.setExternalUserId(lookupKeyUser.externalUserId());
 
     log.debug(
         "New user from external API. providerId={}, externalUserId={}",
@@ -506,29 +509,6 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     }
 
     return mapped;
-  }
-
-  /**
-   * Lays the mapping output over the stored user rather than returning it on its own.
-   *
-   * <p><b>Issue #1792:</b> the resolved user is what the authorization grant snapshots, and the
-   * grant is what the tokens are built from. Returning only the mapping output means an attribute
-   * the external source does not restate — a {@code custom_properties} key another authentication
-   * method wrote, {@code roles}, {@code verified_claims} — is absent from that session's tokens
-   * even though the database and UserInfo still have it. The database was already merging this way
-   * in {@link org.idp.server.core.openid.identity.UserRegistrator}, but that runs after the grant
-   * is taken, so the merge came too late for the token.
-   *
-   * <p>{@code status} stays the stored one. It is a lifecycle decision for this server to make, not
-   * something an external API may hand back — otherwise a mapping rule writing {@code status} could
-   * revive a {@code LOCKED} account. The identifiers are equally out of reach: {@link
-   * User#updateWith(User)} treats {@code sub} / {@code provider_id} / {@code external_user_id} as
-   * immutable, so basing the result on the stored user is what keeps them stable here.
-   */
-  private User applyToExistingUser(User existingUser, User mapped) {
-    User user = existingUser.enrichWith(mapped);
-    user.setStatus(existingUser.status());
-    return user;
   }
 
   /**

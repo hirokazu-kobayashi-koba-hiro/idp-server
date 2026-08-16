@@ -26,6 +26,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.openid.identity.ResolvedUserCreator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
@@ -105,16 +106,17 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
     // Keep top-level access for existing mapping rules ($.execution_http_requests[0]...)
     mappingSource.putAll(executionResult.contents());
 
-    User user =
+    User mapped =
         toUser(authenticationInteractionConfig.userResolve().userMappingRules(), mappingSource);
 
     User exsitingUser =
-        userQueryRepository.findByProvider(tenant, user.providerId(), user.externalUserId());
+        userQueryRepository.findByProvider(tenant, mapped.providerId(), mapped.externalUserId());
 
+    User user;
     if (exsitingUser.exists()) {
-      user.setSub(exsitingUser.sub());
-      user.setStatus(exsitingUser.status());
+      user = ResolvedUserCreator.create(exsitingUser, mapped);
     } else {
+      user = mapped;
       user.setSub(UUID.randomUUID().toString());
       if (!user.hasStatus()) {
         user.setStatus(UserStatus.INITIALIZED);

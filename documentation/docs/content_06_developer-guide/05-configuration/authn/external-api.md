@@ -215,6 +215,24 @@ idp-server が受け取ったリクエスト自体から取れる値です。RP 
 
 > **MFA 2段階目で使う場合**: `identity_match_field` を設定して、1段階目のユーザーとの一致検証を有効にしてください。
 
+#### 解決結果は既存ユーザーがベース
+
+既存ユーザーが見つかった場合、`user_resolve` の結果は **既存ユーザー + `user_mapping_rules` の出力** です（`User#enrichWith`）。マッピングの出力だけを持つユーザーにはなりません。
+
+この結果がそのまま認可グラントに写し取られ、ID Token / アクセストークンのクレームがそこから作られます。マッピングの出力だけを結果にすると、外部APIが今回返さなかった属性（他方式が書いた `custom_properties`、`roles`、`verified_claims`）がそのセッションのトークンから欠落します（Issue #1792）。
+
+| フィールド | 挙動 |
+|------|------|
+| `sub` / `provider_id` / `external_user_id` | 既存値のまま（`updateWith` で immutable 扱い） |
+| `status` | 既存値のまま。`user_mapping_rules` から変更できません |
+| `verified_claims` / `hashedPassword` / `credentials` / `permissions` | 既存値のまま（patch 対象外） |
+| 標準クレーム（`name` / `email` 等） | ルールが値を生成すれば上書き、しなければ既存値を保持 |
+| `custom_properties` | キー単位でマージ（下記） |
+
+:::warning 認証中の管理API更新は巻き戻ることがあります
+既存ユーザーの読み取りは1要素目の時点で、データベースへの保存は認可成立後です。その間に管理APIで同じユーザーを更新すると、認証開始時点の値で上書きされる場合があります。
+:::
+
 #### custom_properties の適用ルール
 
 `user_mapping_rules` が `custom_properties.*` に書いた値は、**キー単位でマージ**されます。

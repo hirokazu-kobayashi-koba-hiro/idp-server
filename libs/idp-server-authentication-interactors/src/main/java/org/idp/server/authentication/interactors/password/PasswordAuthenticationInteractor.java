@@ -34,6 +34,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.ExternalRequestUserContextCreator;
 import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
+import org.idp.server.core.openid.identity.ResolvedUserCreator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
@@ -536,7 +537,8 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
    * <ol>
    *   <li>Map external response to User object using userMappingRules
    *   <li>Search existing user by provider + externalUserId
-   *   <li>If found: reuse sub and status
+   *   <li>If found: lay the mapping output over the stored user (#1792), keeping its identifiers
+   *       and status
    *   <li>If not found and allowRegistration: assign new sub (UUID)
    *   <li>If not found and !allowRegistration (Issue #1538): return User.notFound() so the caller
    *       rejects authentication instead of JIT-creating an orphan user
@@ -581,24 +583,13 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
     mappingSource.put("user", ExternalRequestUserContextCreator.create(existingUser));
     User mapped = toUser(userMappingRules, mappingSource);
 
-    // The user we bind must be the one we looked up: pin the lookup key from the first pass so a
-    // rule reading it from $.user cannot make "the key we searched by" and "the key we store"
-    // disagree, which would silently register a duplicate on the next login.
-    mapped.setProviderId(lookupKeyUser.providerId());
-    mapped.setExternalUserId(lookupKeyUser.externalUserId());
-
     if (existingUser.exists()) {
       log.debug(
           "Existing user found by externalUserId. providerId={}, externalUserId={}, sub={}",
           mapped.providerId(),
           mapped.externalUserId(),
           existingUser.sub());
-      // Issue #1792: lay the mapping output over the stored user so the authorization grant — and
-      // therefore that session's tokens — carries the attributes the external source did not
-      // restate. status stays the stored one; an external API must not revive a LOCKED account.
-      User user = existingUser.enrichWith(mapped);
-      user.setStatus(existingUser.status());
-      return user;
+      return ResolvedUserCreator.create(existingUser, mapped);
     }
 
     // Issue #1538: enforce allow_registration. Do not JIT-create a user when the policy step
@@ -606,10 +597,18 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
     if (!allowRegistration) {
       log.warn(
           "User not found and registration disabled. providerId={}, externalUserId={}, allowRegistration=false",
-          mapped.providerId(),
-          mapped.externalUserId());
+          lookupKeyUser.providerId(),
+          lookupKeyUser.externalUserId());
       return User.notFound();
     }
+
+    // Restore the lookup key from the first pass. Only this branch needs it: an existing user
+    // supplies the key from the stored row, but a new one is registered under whatever the mapping
+    // produced, and pass 2 may have derived that from $.user — which was empty here. Without this,
+    // "the key we searched by" and "the key we store" can disagree and the next login registers a
+    // duplicate instead of finding this user (#1767).
+    mapped.setProviderId(lookupKeyUser.providerId());
+    mapped.setExternalUserId(lookupKeyUser.externalUserId());
 
     log.debug(
         "New user from external auth. providerId={}, externalUserId={}",
