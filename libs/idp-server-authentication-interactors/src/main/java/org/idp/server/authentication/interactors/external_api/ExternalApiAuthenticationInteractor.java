@@ -396,6 +396,9 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     Map<String, Object> mappingSource = new HashMap<>();
     mappingSource.put("request_body", request.toMap());
     mappingSource.putAll(executionResult.contents());
+    // Issue #1767: same $.user.* projection the external request already receives (#1439), so the
+    // notation means one thing across body_mapping_rules and user_mapping_rules.
+    mappingSource.put("user", ExternalRequestUserContextCreator.create(transactionUser));
     User externalUser = toUser(userMappingRules, mappingSource);
 
     if (!matchesTransactionUser(transactionUser, externalUser, identityMatchField)) {
@@ -440,7 +443,20 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
         successEvent);
   }
 
-  /** Resolves user from external API response (1st factor only). */
+  /**
+   * Resolves user from external API response (1st factor only).
+   *
+   * <p><b>Issue #1767 (two passes):</b> the lookup key ({@code provider_id} / {@code
+   * external_user_id}) is itself produced by the mapping, so {@code $.user.*} cannot be in the
+   * source of the pass that produces it. The first pass therefore runs without {@code $.user} and
+   * is used only to find the existing user; the second pass re-runs the same rules with {@code
+   * $.user} populated and its result is the one that counts. Without this, {@code $.user.*} would
+   * work on a 2nd factor and silently resolve to null here — the very asymmetry #1767 is about.
+   *
+   * <p>Re-running is safe because mapping functions are pure value transforms; the
+   * non-deterministic ones ({@code now} / {@code uuid4} / {@code random_string}) have no side
+   * effects and only the second pass's values are kept.
+   */
   private User resolveUser(
       Tenant tenant,
       AuthenticationInteractionRequest request,
@@ -452,10 +468,14 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     mappingSource.put("request_body", request.toMap());
     mappingSource.putAll(executionResult.contents());
 
-    User user = toUser(userMappingRules, mappingSource);
+    User lookupKeyUser = toUser(userMappingRules, mappingSource);
 
     User existingUser =
-        userQueryRepository.findByProvider(tenant, user.providerId(), user.externalUserId());
+        userQueryRepository.findByProvider(
+            tenant, lookupKeyUser.providerId(), lookupKeyUser.externalUserId());
+
+    mappingSource.put("user", ExternalRequestUserContextCreator.create(existingUser));
+    User user = toUser(userMappingRules, mappingSource);
 
     if (existingUser.exists()) {
       log.debug(

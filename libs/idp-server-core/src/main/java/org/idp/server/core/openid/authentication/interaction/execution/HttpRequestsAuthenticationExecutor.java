@@ -71,6 +71,13 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
     // {"json_node_wrapper":{"json_node":{...}}} instead of the attribute map itself.
     param.put("request_attributes", requestAttributes.toMap());
 
+    // Issue #1767: the $.user.* projection of #1439 was wired only into the singular http_request
+    // executor, so the same mapping rule worked or silently resolved to null depending on which
+    // executor the interaction happened to use. Mirror it here.
+    if (request.hasTransactionUser()) {
+      param.put("user", request.transactionUser());
+    }
+
     if (configuration.hasPreviousInteraction()) {
       AuthenticationPreviousInteractionResolveConfig previousInteraction =
           configuration.previousInteraction();

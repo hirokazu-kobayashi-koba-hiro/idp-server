@@ -31,6 +31,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.interaction.execution.ExternalRequestUserContextCreator;
 import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.User;
@@ -429,7 +430,8 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
               method(),
               transaction.user().sub());
           User enrichmentPatch =
-              buildSecondFactorEnrichmentPatch(request, executionResult, userMappingRules);
+              buildSecondFactorEnrichmentPatch(
+                  request, executionResult, userMappingRules, transaction.user());
           // #1772: merge custom_properties instead of replacing, so the 2nd factor adds its keys
           // to what the 1st factor resolved rather than overwriting them.
           return transaction.user().enrichWith(enrichmentPatch);
@@ -489,11 +491,16 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
   User buildSecondFactorEnrichmentPatch(
       AuthenticationInteractionRequest request,
       AuthenticationExecutionResult executionResult,
-      List<MappingRule> userMappingRules) {
+      List<MappingRule> userMappingRules,
+      User authenticatedUser) {
 
     Map<String, Object> mappingSource = new HashMap<>();
     mappingSource.put("request_body", request.toMap());
     mappingSource.putAll(executionResult.contents());
+    // Issue #1767: same $.user.* projection the external request already receives (#1439), so the
+    // notation means one thing across body_mapping_rules and user_mapping_rules. Read-only — the
+    // allowlist below still governs what a 2nd factor may write.
+    mappingSource.put("user", ExternalRequestUserContextCreator.create(authenticatedUser));
 
     JsonNodeWrapper jsonNodeWrapper = JsonNodeWrapper.fromMap(mappingSource);
     JsonPathWrapper jsonPath = new JsonPathWrapper(jsonNodeWrapper.toJson());
@@ -560,12 +567,19 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
     mappingSource.put("request_body", request.toMap());
     mappingSource.putAll(executionResult.contents());
 
-    // Map to User object
-    User user = toUser(userMappingRules, mappingSource);
+    // Issue #1767: two passes. The lookup key is produced by the mapping itself, so $.user cannot
+    // be in the source of the pass that produces it. The first pass only yields that key; the
+    // second re-runs the same rules with $.user populated and is the result that counts. Mapping
+    // functions are pure value transforms, so re-running is safe.
+    User lookupKeyUser = toUser(userMappingRules, mappingSource);
 
     // Search existing user by provider + externalUserId
     User existingUser =
-        userQueryRepository.findByProvider(tenant, user.providerId(), user.externalUserId());
+        userQueryRepository.findByProvider(
+            tenant, lookupKeyUser.providerId(), lookupKeyUser.externalUserId());
+
+    mappingSource.put("user", ExternalRequestUserContextCreator.create(existingUser));
+    User user = toUser(userMappingRules, mappingSource);
 
     if (existingUser.exists()) {
       log.debug(
