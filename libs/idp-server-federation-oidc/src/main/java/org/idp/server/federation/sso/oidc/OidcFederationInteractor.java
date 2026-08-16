@@ -25,6 +25,7 @@ import org.idp.server.core.openid.federation.io.*;
 import org.idp.server.core.openid.federation.repository.FederationConfigurationQueryRepository;
 import org.idp.server.core.openid.federation.sso.*;
 import org.idp.server.core.openid.federation.sso.oidc.OidcSsoSession;
+import org.idp.server.core.openid.identity.ResolvedUserCreator;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
 import org.idp.server.core.openid.identity.mapper.UserInfoMapper;
@@ -258,15 +259,7 @@ public class OidcFederationInteractor implements FederationInteractor {
 
     User user;
     if (exsitingUser.exists()) {
-      // Issue #1792: lay the mapping output over the stored user rather than returning it alone.
-      // The authorization grant snapshots this user and the tokens are built from that snapshot,
-      // so anything the IdP's userinfo does not restate — a custom_properties key another
-      // authentication method wrote, roles, verified_claims — would otherwise be missing from this
-      // session's tokens while the database and UserInfo still have it.
-      user = exsitingUser.enrichWith(mapped);
-      // status stays the stored one: account lifecycle is this server's decision, not something an
-      // upstream IdP may hand back through a mapping rule.
-      user.setStatus(exsitingUser.status());
+      user = ResolvedUserCreator.create(exsitingUser, mapped);
     } else {
       user = mapped;
       user.setSub(UUID.randomUUID().toString());
