@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeAll } from "@jest/globals";
-import { deletion, get, postWithJson } from "../../../lib/http";
-import { requestToken, postAuthentication } from "../../../api/oauthClient";
+import { deletion, get, patchWithJson, postWithJson } from "../../../lib/http";
+import { requestToken, postAuthentication, getJwks } from "../../../api/oauthClient";
 import { onboarding } from "../../../api/managementClient";
-import { generateECP256JWKS } from "../../../lib/jose";
+import { generateECP256JWKS, verifyAndDecodeJwt } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
@@ -53,6 +53,12 @@ describe("Advance Use Case: Federation Security Event User Name (Issue #1131)", 
   let ssoProvider;
   let orgAdminEmail;
   let orgAdminPassword;
+  // Issue #1792: a key the provider's userinfo never returns, so it can only reach a Consumer
+  // token by way of the stored Consumer user.
+  const CARRIED_KEY = "carried_rank";
+  const CARRIED_VALUE = "gold";
+  const CARRIED_SCOPE = `claims:${CARRIED_KEY}`;
+  const consumerLoginScope = `openid profile email ${CARRIED_SCOPE}`;
 
   beforeAll(async () => {
     console.log("\n=== Setting up Federation Security Event Test ===\n");
@@ -139,13 +145,16 @@ describe("Advance Use Case: Federation Security Event User Name (Issue #1131)", 
         grant_types_supported: ["authorization_code", "refresh_token", "password"],
         token_signed_key_id: "signing_key_1",
         id_token_signed_key_id: "signing_key_1",
-        scopes_supported: ["openid", "profile", "email", "management"],
+        scopes_supported: ["openid", "profile", "email", CARRIED_SCOPE, "management"],
         response_types_supported: ["code"],
         subject_types_supported: ["public"],
         id_token_signing_alg_values_supported: ["RS256", "ES256"],
         response_modes_supported: ["query"],
         extension: {
           access_token_type: "JWT",
+          // Without this ScopeMappingCustomClaimsCreator never runs and the claims: scope is
+          // silently inert.
+          custom_claims_scope_mapping: true,
         },
       },
       user: {
@@ -163,7 +172,7 @@ describe("Advance Use Case: Federation Security Event User Name (Issue #1131)", 
         redirect_uris: ["http://localhost:3000/callback"],
         response_types: ["code"],
         grant_types: ["authorization_code", "refresh_token", "password"],
-        scope: "openid profile email management",
+        scope: `openid profile email ${CARRIED_SCOPE} management`,
         token_endpoint_auth_method: "client_secret_post",
         application_type: "web",
         extension: {
@@ -432,7 +441,7 @@ describe("Advance Use Case: Federation Security Event User Name (Issue #1131)", 
         clientId: consumerClientId,
         responseType: "code",
         state: `state-${Date.now()}`,
-        scope: "openid profile email",
+        scope: consumerLoginScope,
         redirectUri: "http://localhost:3000/callback",
         interaction: async (authId, user) => {
           console.log(`Consumer auth ID: ${authId}`);
@@ -500,7 +509,7 @@ describe("Advance Use Case: Federation Security Event User Name (Issue #1131)", 
 
     // Perform 1st federation login
     console.log("\nStep 1: Performing 1st federation login...");
-    await performFederationLogin(1);
+    const firstLoginAccessToken = await performFederationLogin(1);
     await sleep(1500);
 
     // Check security events after 1st login
@@ -523,10 +532,42 @@ describe("Advance Use Case: Federation Security Event User Name (Issue #1131)", 
       }
     });
 
+    // Issue #1792: store an attribute on the Consumer user that the Provider's userinfo never
+    // returns. Federation used to hand the authorization grant only the userinfo mapping output
+    // plus sub / status, so this attribute was absent from the 2nd login's tokens even though the
+    // database kept it — a silent thinning that mattered most for verified_claims.
+    const consumerJwksResponse = await getJwks({
+      endpoint: `${backendUrl}/${consumerTenantId}/v1/jwks`,
+    });
+    expect(consumerJwksResponse.status).toBe(200);
+    const consumerUserSub = verifyAndDecodeJwt({
+      jwt: firstLoginAccessToken,
+      jwks: consumerJwksResponse.data,
+    }).payload.sub;
+    expect(consumerUserSub).toBeDefined();
+
+    const patchConsumerUserResponse = await patchWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${consumerTenantId}/users/${consumerUserSub}`,
+      headers: { Authorization: `Bearer ${orgAccessToken}` },
+      body: { custom_properties: { [CARRIED_KEY]: CARRIED_VALUE } },
+    });
+    expect(patchConsumerUserResponse.status).toBe(200);
+
     // Perform 2nd federation login (same user)
     console.log("\nStep 2: Performing 2nd federation login (same user)...");
-    await performFederationLogin(2);
+    const secondLoginAccessToken = await performFederationLogin(2);
     await sleep(1500);
+
+    const decodedSecondLoginToken = verifyAndDecodeJwt({
+      jwt: secondLoginAccessToken,
+      jwks: consumerJwksResponse.data,
+    });
+    console.log(
+      "2nd login access_token payload:",
+      JSON.stringify(decodedSecondLoginToken.payload, null, 2)
+    );
+    expect(decodedSecondLoginToken.payload.sub).toBe(consumerUserSub);
+    expect(decodedSecondLoginToken.payload[CARRIED_KEY]).toBe(CARRIED_VALUE);
 
     // Check security events after 2nd login
     const securityEventsResponse2 = await get({

@@ -250,16 +250,25 @@ public class OidcFederationInteractor implements FederationInteractor {
             oidcSsoConfiguration.userinfoMappingRules(),
             userinfoResult.contents(),
             oidcSsoConfiguration.issuerName());
-    User user = userInfoMapper.toUser();
+    User mapped = userInfoMapper.toUser();
 
     User exsitingUser =
         userQueryRepository.findByExternalIdpSubject(
-            tenant, user.externalUserId(), oidcSsoConfiguration.issuerName());
+            tenant, mapped.externalUserId(), oidcSsoConfiguration.issuerName());
 
+    User user;
     if (exsitingUser.exists()) {
-      user.setSub(exsitingUser.sub());
+      // Issue #1792: lay the mapping output over the stored user rather than returning it alone.
+      // The authorization grant snapshots this user and the tokens are built from that snapshot,
+      // so anything the IdP's userinfo does not restate — a custom_properties key another
+      // authentication method wrote, roles, verified_claims — would otherwise be missing from this
+      // session's tokens while the database and UserInfo still have it.
+      user = exsitingUser.enrichWith(mapped);
+      // status stays the stored one: account lifecycle is this server's decision, not something an
+      // upstream IdP may hand back through a mapping rule.
       user.setStatus(exsitingUser.status());
     } else {
+      user = mapped;
       user.setSub(UUID.randomUUID().toString());
       user.setStatus(UserStatus.FEDERATED);
     }

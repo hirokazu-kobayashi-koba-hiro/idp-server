@@ -579,43 +579,48 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
             tenant, lookupKeyUser.providerId(), lookupKeyUser.externalUserId());
 
     mappingSource.put("user", ExternalRequestUserContextCreator.create(existingUser));
-    User user = toUser(userMappingRules, mappingSource);
+    User mapped = toUser(userMappingRules, mappingSource);
 
     // The user we bind must be the one we looked up: pin the lookup key from the first pass so a
     // rule reading it from $.user cannot make "the key we searched by" and "the key we store"
     // disagree, which would silently register a duplicate on the next login.
-    user.setProviderId(lookupKeyUser.providerId());
-    user.setExternalUserId(lookupKeyUser.externalUserId());
+    mapped.setProviderId(lookupKeyUser.providerId());
+    mapped.setExternalUserId(lookupKeyUser.externalUserId());
 
     if (existingUser.exists()) {
       log.debug(
           "Existing user found by externalUserId. providerId={}, externalUserId={}, sub={}",
-          user.providerId(),
-          user.externalUserId(),
+          mapped.providerId(),
+          mapped.externalUserId(),
           existingUser.sub());
-      user.setSub(existingUser.sub());
+      // Issue #1792: lay the mapping output over the stored user so the authorization grant — and
+      // therefore that session's tokens — carries the attributes the external source did not
+      // restate. status stays the stored one; an external API must not revive a LOCKED account.
+      User user = existingUser.enrichWith(mapped);
       user.setStatus(existingUser.status());
-    } else {
-      // Issue #1538: enforce allow_registration. Do not JIT-create a user when the policy step
-      // disallows registration, even if the external auth API returned success.
-      if (!allowRegistration) {
-        log.warn(
-            "User not found and registration disabled. providerId={}, externalUserId={}, allowRegistration=false",
-            user.providerId(),
-            user.externalUserId());
-        return User.notFound();
-      }
-      log.debug(
-          "New user from external auth. providerId={}, externalUserId={}",
-          user.providerId(),
-          user.externalUserId());
-      user.setSub(UUID.randomUUID().toString());
-      if (!user.hasStatus()) {
-        user.setStatus(UserStatus.INITIALIZED);
-      }
+      return user;
     }
 
-    return user;
+    // Issue #1538: enforce allow_registration. Do not JIT-create a user when the policy step
+    // disallows registration, even if the external auth API returned success.
+    if (!allowRegistration) {
+      log.warn(
+          "User not found and registration disabled. providerId={}, externalUserId={}, allowRegistration=false",
+          mapped.providerId(),
+          mapped.externalUserId());
+      return User.notFound();
+    }
+
+    log.debug(
+        "New user from external auth. providerId={}, externalUserId={}",
+        mapped.providerId(),
+        mapped.externalUserId());
+    mapped.setSub(UUID.randomUUID().toString());
+    if (!mapped.hasStatus()) {
+      mapped.setStatus(UserStatus.INITIALIZED);
+    }
+
+    return mapped;
   }
 
   /**
