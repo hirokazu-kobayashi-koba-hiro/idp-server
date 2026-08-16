@@ -1,14 +1,15 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { onboarding } from "../../../api/managementClient";
-import { deletion, postWithJson } from "../../../lib/http";
+import { deletion, patchWithJson, postWithJson } from "../../../lib/http";
 import {
   requestToken,
   getAuthorizations,
   postAuthentication,
   authorize,
   getUserinfo,
+  getJwks,
 } from "../../../api/oauthClient";
-import { generateECP256JWKS } from "../../../lib/jose";
+import { generateECP256JWKS, verifyAndDecodeJwt } from "../../../lib/jose";
 import { adminServerConfig, backendUrl, mockApiBaseUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
@@ -28,6 +29,7 @@ import {
  * - 認証成功 → UserInfo に外部サービスからマッピングされた値が反映
  * - 認証失敗 (不正パスワード → 400)
  * - 2回目ログインで同一ユーザー解決 (sub一致)
+ * - 2回目ログインのトークンに、外部サービスが返さない既存属性が載る (Issue #1792)
  *
  * Prerequisites:
  * - Mock server (Mockoon) running at host.docker.internal:4000
@@ -40,6 +42,12 @@ describe("Advance Use Case: External Password Authentication", () => {
   let clientId;
   let clientSecret;
   let mgmtAccessToken;
+  // Issue #1792: a key no user_mapping_rule below produces, so it can only reach a token by way of
+  // the stored user.
+  const CARRIED_KEY = "carried_rank";
+  const CARRIED_VALUE = "gold";
+  const CARRIED_SCOPE = `claims:${CARRIED_KEY}`;
+  const loginScope = `openid profile email ${CARRIED_SCOPE}`;
   const redirectUri =
     "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
 
@@ -108,6 +116,7 @@ describe("Advance Use Case: External Password Authentication", () => {
             "openid",
             "profile",
             "email",
+            CARRIED_SCOPE,
             "management",
             "org-management",
           ],
@@ -126,6 +135,9 @@ describe("Advance Use Case: External Password Authentication", () => {
           id_token_signing_alg_values_supported: ["ES256"],
           extension: {
             access_token_type: "JWT",
+            // Without this ScopeMappingCustomClaimsCreator never runs and the claims: scope is
+            // silently inert.
+            custom_claims_scope_mapping: true,
           },
         },
         user: {
@@ -142,7 +154,7 @@ describe("Advance Use Case: External Password Authentication", () => {
           redirect_uris: [redirectUri],
           response_types: ["code"],
           grant_types: ["authorization_code", "refresh_token", "password"],
-          scope: "openid profile email management org-management",
+          scope: `openid profile email ${CARRIED_SCOPE} management org-management`,
           client_name: "External Auth Test Client",
           token_endpoint_auth_method: "client_secret_post",
           application_type: "web",
@@ -311,7 +323,7 @@ describe("Advance Use Case: External Password Authentication", () => {
       clientId,
       responseType: "code",
       state,
-      scope: "openid profile email",
+      scope: loginScope,
       redirectUri,
     });
     expect(authResp.status).toBe(302);
@@ -381,8 +393,21 @@ describe("Advance Use Case: External Password Authentication", () => {
       `UserInfo: sub=${userinfoResp.data.sub}, email=${userinfoResp.data.email}, name=${userinfoResp.data.name}`
     );
 
-    // Step 4: 2nd login → same user (sub matches)
+    // Step 4: 2nd login → same user (sub matches), carrying an attribute the mapping never produces
+    //
+    // Issue #1792: the 1st factor used to hand the authorization grant only the mapping output plus
+    // sub / status, so an attribute stored on the user but not restated by the external service was
+    // absent from that session's tokens while UserInfo — which re-reads the database — still
+    // returned it. Storing such an attribute between the two logins pins the token side of that.
     console.log("\nStep 4: 2nd login → verify same user resolved");
+
+    const patchUserResp = await patchWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/users/${firstSub}`,
+      headers: { Authorization: `Bearer ${mgmtAccessToken}` },
+      body: { custom_properties: { [CARRIED_KEY]: CARRIED_VALUE } },
+    });
+    expect(patchUserResp.status).toBe(200);
+
     const { authId: authId2, loginStatus: loginStatus2 } = await startAuthAndLogin(
       testEmail,
       testPassword
@@ -399,6 +424,23 @@ describe("Advance Use Case: External Password Authentication", () => {
     console.log(
       `2nd login: sub=${userinfoResp2.data.sub} (matches 1st: ${firstSub})`
     );
+
+    // UserInfo is right either way, so it is the reference the token is compared against.
+    expect(userinfoResp2.data[CARRIED_KEY]).toBe(CARRIED_VALUE);
+
+    const jwksResp = await getJwks({
+      endpoint: `${backendUrl}/${tenantId}/v1/jwks`,
+    });
+    expect(jwksResp.status).toBe(200);
+    const decodedAccessToken2 = verifyAndDecodeJwt({
+      jwt: tokenData2.access_token,
+      jwks: jwksResp.data,
+    });
+    console.log(
+      "2nd login access_token payload:",
+      JSON.stringify(decodedAccessToken2.payload, null, 2)
+    );
+    expect(decodedAccessToken2.payload[CARRIED_KEY]).toBe(CARRIED_VALUE);
 
     // Step 5: Refresh Token
     console.log("\nStep 5: Refresh Token");
