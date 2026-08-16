@@ -54,6 +54,36 @@ class MappingRuleObjectMapperArgsResolutionTest {
     }
 
     @Test
+    void resolveArgs_keepsTheContextOverloadEquivalent() {
+      // The 2-arg form is the no-context delegate; both must resolve identically (#1767).
+      String json = "{\"request_body\": {\"new_item\": \"account_999\"}}";
+      JsonPathWrapper jsonPath = new JsonPathWrapper(json);
+      Map<String, Object> args = new HashMap<>();
+      args.put("value", "$.request_body.new_item");
+
+      assertEquals(
+          MappingRuleObjectMapper.resolveArgs(args, jsonPath),
+          MappingRuleObjectMapper.resolveArgs(args, jsonPath, "merge", "custom_properties.x"));
+    }
+
+    @Test
+    void resolveArgs_unresolvedPathBecomesNullSoTheFunctionRunsWithoutIt() {
+      // merge with a null source returns its input unchanged, which reads as "accumulate" in the
+      // config but behaves as "replace". The value is still null here; the point of #1767 is that
+      // it is now reported at warn instead of passing silently.
+      JsonPathWrapper jsonPath = new JsonPathWrapper("{\"user\": {}}");
+      Map<String, Object> args = new HashMap<>();
+      args.put("source", "$.user.custom_properties.accounts");
+
+      Map<String, Object> result =
+          MappingRuleObjectMapper.resolveArgs(
+              args, jsonPath, "merge", "custom_properties.accounts");
+
+      assertTrue(result.containsKey("source"));
+      assertNull(result.get("source"));
+    }
+
+    @Test
     void resolveArgs_resolvesJsonPathString() {
       String json = "{\"request_body\": {\"new_item\": \"account_999\"}}";
       JsonPathWrapper jsonPath = new JsonPathWrapper(json);

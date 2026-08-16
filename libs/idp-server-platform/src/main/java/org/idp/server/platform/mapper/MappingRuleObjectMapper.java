@@ -218,7 +218,7 @@ public class MappingRuleObjectMapper {
         log.error("Function not found: name={}, to={}", spec.name(), rule.to());
         continue;
       }
-      Map<String, Object> resolvedArgs = resolveArgs(spec.args(), jsonPath);
+      Map<String, Object> resolvedArgs = resolveArgs(spec.args(), jsonPath, spec.name(), rule.to());
       v = fn.apply(v, resolvedArgs);
     }
     return v;
@@ -260,13 +260,41 @@ public class MappingRuleObjectMapper {
    * @return a new map with JSONPath values resolved; null/empty args are returned as-is
    */
   static Map<String, Object> resolveArgs(Map<String, Object> args, JsonPathWrapper jsonPath) {
+    return resolveArgs(args, jsonPath, null, null);
+  }
+
+  /**
+   * Resolves JSONPath args, warning when one of them does not resolve.
+   *
+   * <p>An unresolved arg is reported at {@code warn} because functions absorb it silently and keep
+   * going: {@code merge} with a null {@code source} returns its input unchanged, so a rule that
+   * reads as "accumulate onto the existing value" quietly becomes "replace with the new value"
+   * (#1767). The rule's own {@code from} is deliberately not warned about — a missing path there is
+   * an ordinary branch (optional claims, and the {@code "$.unused"} idiom for functions that ignore
+   * their input), logged at {@code debug} by {@code JsonPathWrapper} instead (#1646).
+   *
+   * @param functionName function the args belong to, for the log line; may be null
+   * @param target the rule's {@code to}, for the log line; may be null
+   */
+  static Map<String, Object> resolveArgs(
+      Map<String, Object> args, JsonPathWrapper jsonPath, String functionName, String target) {
     if (args == null || args.isEmpty()) {
       return args;
     }
     Map<String, Object> resolved = new HashMap<>(args);
     for (Map.Entry<String, Object> entry : resolved.entrySet()) {
       if (entry.getValue() instanceof String str && str.startsWith("$.")) {
-        entry.setValue(jsonPath.readRaw(str));
+        Object value = jsonPath.readRaw(str);
+        if (value == null) {
+          log.warn(
+              "Function arg did not resolve, the function will run without it: "
+                  + "function={}, arg={}, path={}, to={}",
+              functionName,
+              entry.getKey(),
+              str,
+              target);
+        }
+        entry.setValue(value);
       }
     }
     return resolved;
