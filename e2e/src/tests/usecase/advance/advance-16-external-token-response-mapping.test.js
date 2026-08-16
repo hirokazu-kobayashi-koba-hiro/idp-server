@@ -1,14 +1,15 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { onboarding } from "../../../api/managementClient";
-import { deletion, postWithJson, putWithJson } from "../../../lib/http";
+import { deletion, patchWithJson, postWithJson, putWithJson } from "../../../lib/http";
 import {
   requestToken,
   getAuthorizations,
   postAuthentication,
   authorize,
   getUserinfo,
+  getJwks,
 } from "../../../api/oauthClient";
-import { generateECP256JWKS } from "../../../lib/jose";
+import { generateECP256JWKS, verifyAndDecodeJwt } from "../../../lib/jose";
 import { adminServerConfig, backendUrl, mockApiBaseUrl } from "../../testConfig";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
@@ -42,6 +43,11 @@ describe("Advance Use Case: external-token response.body_mapping_rules (#1696)",
   let clientSecret;
   let mgmtAccessToken;
   let externalTokenConfigId;
+  // Issue #1792: a key no user_mapping_rule produces, so it can only reach a token by way of the
+  // stored user.
+  const CARRIED_KEY = "carried_rank";
+  const CARRIED_VALUE = "gold";
+  const CARRIED_SCOPE = `claims:${CARRIED_KEY}`;
   const redirectUri =
     "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
 
@@ -111,6 +117,7 @@ describe("Advance Use Case: external-token response.body_mapping_rules (#1696)",
             "openid",
             "profile",
             "email",
+            CARRIED_SCOPE,
             "management",
             "org-management",
           ],
@@ -131,6 +138,9 @@ describe("Advance Use Case: external-token response.body_mapping_rules (#1696)",
           id_token_signing_alg_values_supported: ["ES256"],
           extension: {
             access_token_type: "JWT",
+            // Without this ScopeMappingCustomClaimsCreator never runs and the claims: scope is
+            // silently inert.
+            custom_claims_scope_mapping: true,
           },
         },
         user: {
@@ -147,7 +157,7 @@ describe("Advance Use Case: external-token response.body_mapping_rules (#1696)",
           redirect_uris: [redirectUri],
           response_types: ["code"],
           grant_types: ["authorization_code", "refresh_token", "password"],
-          scope: "openid profile email management org-management",
+          scope: `openid profile email ${CARRIED_SCOPE} management org-management`,
           client_name: "External Token Test Client",
           token_endpoint_auth_method: "client_secret_post",
           application_type: "web",
@@ -206,6 +216,14 @@ describe("Advance Use Case: external-token response.body_mapping_rules (#1696)",
                       functions: [
                         { name: "format", args: { template: "Bearer {{value}}" } },
                       ],
+                    },
+                    // The mock answers with a fresh uuid unless the caller says who the token
+                    // belongs to, which would make the same token resolve to a different person on
+                    // every login. Pinning it here is what makes a repeat login expressible.
+                    {
+                      from: "$.request_body.access_token",
+                      to: "x-external-user-id",
+                      convertType: "string",
                     },
                   ],
                   body_mapping_rules: [{ from: "$.request_body", to: "*" }],
@@ -397,6 +415,100 @@ describe("Advance Use Case: external-token response.body_mapping_rules (#1696)",
     });
     expect(userinfoResp.status).toBe(200);
     expect(userinfoResp.data.sub).toBeDefined();
+  });
+
+  /**
+   * Issue #1792: external-token resolves the 1st-factor user the same way federation and the other
+   * external interactors do, so it had the same defect — the authorization grant snapshotted only
+   * the mapping output plus sub / status, and an attribute the external service does not restate
+   * was missing from that session's tokens while UserInfo (which re-reads the database) still
+   * returned it.
+   */
+  it("carries an attribute the external token never produced into the next login's token", async () => {
+    const scope = `openid profile email ${CARRIED_SCOPE}`;
+    const externalUserId = `ext-token-user-${Date.now()}`;
+
+    const login = async () => {
+      const authResp = await getAuthorizations({
+        endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        clientId,
+        responseType: "code",
+        state: `ext-token-1792-${Date.now()}`,
+        scope,
+        redirectUri,
+      });
+      expect(authResp.status).toBe(302);
+      const authId = convertNextAction(authResp.headers.location).params.get("id");
+
+      const loginResp = await postAuthentication({
+        endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/external-token`,
+        id: authId,
+        body: { access_token: externalUserId },
+      });
+      expect(loginResp.status).toBe(200);
+
+      const authorizeResp = await authorize({
+        endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+        id: authId,
+        body: {},
+      });
+      expect(authorizeResp.status).toBe(200);
+      const result = convertToAuthorizationResponse(authorizeResp.data.redirect_uri);
+
+      const tokenResp = await requestToken({
+        endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+        grantType: "authorization_code",
+        code: result.code,
+        redirectUri,
+        clientId,
+        clientSecret,
+      });
+      expect(tokenResp.status).toBe(200);
+      return tokenResp.data;
+    };
+
+    // 1st login establishes the user.
+    const firstTokens = await login();
+    const firstUserinfo = await getUserinfo({
+      endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+      authorizationHeader: createBearerHeader(firstTokens.access_token),
+    });
+    expect(firstUserinfo.status).toBe(200);
+    const sub = firstUserinfo.data.sub;
+    expect(sub).toBeDefined();
+
+    // Store an attribute the external service never returns.
+    const patchUserResp = await patchWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/users/${sub}`,
+      headers: { Authorization: `Bearer ${mgmtAccessToken}` },
+      body: { custom_properties: { [CARRIED_KEY]: CARRIED_VALUE } },
+    });
+    expect(patchUserResp.status).toBe(200);
+
+    // 2nd login resolves the same user, and its token must carry that attribute.
+    const secondTokens = await login();
+    const secondUserinfo = await getUserinfo({
+      endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+      authorizationHeader: createBearerHeader(secondTokens.access_token),
+    });
+    expect(secondUserinfo.status).toBe(200);
+    expect(secondUserinfo.data.sub).toBe(sub);
+    // UserInfo is right either way, so it is the reference the token is compared against.
+    expect(secondUserinfo.data[CARRIED_KEY]).toBe(CARRIED_VALUE);
+
+    const jwksResp = await getJwks({
+      endpoint: `${backendUrl}/${tenantId}/v1/jwks`,
+    });
+    expect(jwksResp.status).toBe(200);
+    const decoded = verifyAndDecodeJwt({
+      jwt: secondTokens.access_token,
+      jwks: jwksResp.data,
+    });
+    console.log(
+      "2nd login access_token payload:",
+      JSON.stringify(decoded.payload, null, 2)
+    );
+    expect(decoded.payload[CARRIED_KEY]).toBe(CARRIED_VALUE);
   });
 
   it("returns only the user envelope when no response.body_mapping_rules are configured", async () => {

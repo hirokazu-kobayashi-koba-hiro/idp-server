@@ -105,16 +105,25 @@ public class ExternalTokenAuthenticationInteractor implements AuthenticationInte
     // Keep top-level access for existing mapping rules ($.execution_http_requests[0]...)
     mappingSource.putAll(executionResult.contents());
 
-    User user =
+    User mapped =
         toUser(authenticationInteractionConfig.userResolve().userMappingRules(), mappingSource);
 
     User exsitingUser =
-        userQueryRepository.findByProvider(tenant, user.providerId(), user.externalUserId());
+        userQueryRepository.findByProvider(tenant, mapped.providerId(), mapped.externalUserId());
 
+    User user;
     if (exsitingUser.exists()) {
-      user.setSub(exsitingUser.sub());
+      // Issue #1792: lay the mapping output over the stored user rather than returning it alone.
+      // The authorization grant snapshots this user and the tokens are built from that snapshot,
+      // so anything the external token's claims do not restate — a custom_properties key another
+      // authentication method wrote, roles, verified_claims — would otherwise be missing from this
+      // session's tokens while the database and UserInfo still have it.
+      user = exsitingUser.enrichWith(mapped);
+      // status stays the stored one: account lifecycle is this server's decision, not something an
+      // external token may hand back through a mapping rule.
       user.setStatus(exsitingUser.status());
     } else {
+      user = mapped;
       user.setSub(UUID.randomUUID().toString());
       if (!user.hasStatus()) {
         user.setStatus(UserStatus.INITIALIZED);
