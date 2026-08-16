@@ -177,7 +177,7 @@ $.interaction           → previous_interaction で取得した前のインタ�
 $.user                  → 認証済みユーザーの許可リスト投影（external-api-authentication のみ）
 ```
 
-`$.user` は `external-api-authentication` の interaction でのみ注入される（`ExternalApiAuthenticationInteractor` が唯一の設定元）。他の interactor（password 等）では**キー自体が存在しない**ため、書いても解決しない。
+**送信ボディでは** `$.user` は `external-api-authentication` の interaction でのみ注入される（`ExternalApiAuthenticationInteractor:204` の `setTransactionUser` が唯一の設定元）。他の interactor（password 等）では**キー自体が存在しない**ため、書いても解決しない。`user_mapping_rules` は注入条件が違う（後述）。
 
 公開されるのは `sub` / `provider_id` / `email` / `phone_number` / `name` / `given_name` / `family_name` / `middle_name` / `roles` / `custom_properties` のみ。パスワードハッシュ・認証情報・`verified_claims` は含まれない。1要素目ではユーザーが未確立のため空になる。
 
@@ -198,6 +198,23 @@ $.user                  → 認証済みユーザーの許可リスト投影（e
   ]
 }
 ```
+
+### `user_resolve.user_mapping_rules` の `$.user`
+
+解決するユーザーの組み立て（`user_resolve.user_mapping_rules`）でも同じ投影を参照できるが、**注入されるかどうかは要素の位置で決まる**。送信ボディと違い、`external-api-authentication` 限定ではない。
+
+| 位置 | `$.user` | 中身 | 実装 |
+|------|---------|------|------|
+| 1要素目 pass1（検索キーの生成） | なし | — | — |
+| 1要素目 pass2（属性の取り込み） | あり | 見つかった既存ユーザー | `ExternalApiAuthenticationInteractor:481` / `PasswordAuthenticationInteractor:581` |
+| 2要素目の enrichment | あり | 認証済みユーザー | `PasswordAuthenticationInteractor:503`（`password-authentication`） |
+| 2要素目の同一性照合 | **なし** | — | `ExternalApiAuthenticationInteractor#handleSecondFactor` |
+
+1要素目は同じルールが2回実行され、採用されるのは pass2 の結果。検索キー（`provider_id` / `external_user_id`）だけは pass1 の値で固定されるため、`$.user` から組み立てても「探したキー」と「保存するキー」は食い違わない。`uuid4` / `now` / `random_string` も2回実行され、採用されるのは2回目の値。
+
+2要素目の同一性照合に `$.user` が入らないのは意図的。`identity_match_field` の被検体を `$.user` から作れると照合が自己参照になり、外部APIが誰を返しても一致してしまう（CWE-287）。原則は「**同一性の判断材料は `$.user` から作らない / 属性の取り込みには使う**」。
+
+詳細: `documentation/docs/content_03_concepts/03-authentication-authorization/concept-11-user-resolution.md`
 
 ### http_request_store / previous_interaction パターン
 
