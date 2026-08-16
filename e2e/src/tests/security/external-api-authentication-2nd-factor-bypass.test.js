@@ -393,6 +393,43 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
               ],
             },
           },
+          // Issue #1767: same as verify_identity, but the mapping also tries to carry the email
+          // forward from $.user. If $.user were readable here, the comparison would read the
+          // authenticated user on both sides and match whatever the external API returned.
+          verify_identity_self_reference: {
+            execution: {
+              function: "http_request",
+              http_request: {
+                url: `${mockApiBaseUrl}/auth/password`,
+                method: "POST",
+                header_mapping_rules: [
+                  { static_value: "application/json", to: "Content-Type" },
+                ],
+                body_mapping_rules: [
+                  { from: "$.request_body.username", to: "username" },
+                  { from: "$.request_body.password", to: "password" },
+                ],
+              },
+            },
+            user_resolve: {
+              identity_match_field: "$.email",
+              user_mapping_rules: [
+                {
+                  from: "$.execution_http_request.response_body.user_id",
+                  to: "external_user_id",
+                },
+                {
+                  from: "$.execution_http_request.response_body.email",
+                  to: "email",
+                },
+                // The rule under test: a later rule for the same target wins, so if $.user
+                // resolved the API-derived email would be replaced by the authenticated user's.
+                { from: "$.user.email", to: "email" },
+                { static_value: "mock-external-api", to: "provider_id" },
+              ],
+            },
+            response: { body_mapping_rules: [] },
+          },
           // Issue #1439: 2nd factor that forwards the authenticated user ($.user.*) to the
           // external API. The echo mock reflects the received fields back so the test can assert
           // that $.user.email / $.user.sub actually reached the external request body.
@@ -807,6 +844,45 @@ describe("Security: External API Authentication 2nd Factor Bypass Prevention", (
     });
     // SECURITY ASSERTION: 2nd factor must fail because external API returned
     // a different user (attacker@evil.com) than the authenticated user (user A)
+    expect(extApiResp.status).toBe(400);
+    expect(extApiResp.data.error).toBe("user_identity_mismatch");
+  });
+
+  it("should NOT let a $.user-derived mapping rule neutralize the identity match (Issue #1767)", async () => {
+    // The 2nd factor's mapped user is the subject of the identity comparison, so the value being
+    // compared must not be derivable from the authenticated user itself. Otherwise the guard
+    // compares the authenticated user against the authenticated user and always passes.
+    const authResp = await getAuthorizations({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+      clientId,
+      responseType: "code",
+      state: `self-ref-${Date.now()}`,
+      scope: "openid profile email",
+      redirectUri,
+      prompt: "login",
+    });
+    expect(authResp.status).toBe(302);
+    const authId = convertNextAction(authResp.headers.location).params.get("id");
+
+    const passwordResp = await postAuthentication({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/password-authentication`,
+      id: authId,
+      body: { username: testUserAEmail, password: testUserAPassword },
+    });
+    expect(passwordResp.status).toBe(200);
+
+    // The external API is told about a different user, exactly as in the bypass test above.
+    const extApiResp = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: {
+        interaction: "verify_identity_self_reference",
+        username: "attacker@evil.com",
+        password: "ExternalPass123!",
+      },
+    });
+
+    // SECURITY ASSERTION: the guard still fires. If $.user were injected into this mapping the
+    // request would succeed with 200.
     expect(extApiResp.status).toBe(400);
     expect(extApiResp.data.error).toBe("user_identity_mismatch");
   });

@@ -18,6 +18,7 @@ package org.idp.server.authentication.interactors.password;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
@@ -68,7 +69,9 @@ class PasswordAuthenticationInteractorSecondFactorEnrichmentTest {
         new AuthenticationInteractionRequest(Map.of("username", "victim", "password", "secret"));
     AuthenticationExecutionResult executionResult = AuthenticationExecutionResult.success(Map.of());
 
-    User patch = interactor.buildSecondFactorEnrichmentPatch(request, executionResult, rules);
+    User patch =
+        interactor.buildSecondFactorEnrichmentPatch(
+            request, executionResult, rules, new User().setSub("victim-sub"));
 
     // Inviolable on the 2nd factor: identifiers, email, lifecycle, privileges are dropped.
     assertFalse(patch.hasEmail(), "email must not be patchable on 2nd factor");
@@ -109,7 +112,8 @@ class PasswordAuthenticationInteractorSecondFactorEnrichmentTest {
         new AuthenticationInteractionRequest(Map.of("username", "attacker"));
     AuthenticationExecutionResult executionResult = AuthenticationExecutionResult.success(Map.of());
 
-    User patch = interactor.buildSecondFactorEnrichmentPatch(request, executionResult, rules);
+    User patch =
+        interactor.buildSecondFactorEnrichmentPatch(request, executionResult, rules, sessionUser);
     User merged = sessionUser.updateWith(patch);
 
     // Identity stays the victim's; only custom_properties is enriched.
@@ -117,5 +121,58 @@ class PasswordAuthenticationInteractorSecondFactorEnrichmentTest {
     assertEquals("victim", merged.preferredUsername());
     assertEquals("victim@example.com", merged.email());
     assertEquals("external_authenticated", merged.customPropertiesValue().get("auth_source"));
+  }
+
+  @Test
+  void authenticatedUserIsReadableAsDollarUser() {
+    // Issue #1767: the mapping source now carries the same $.user.* projection the external
+    // request already receives, so a rule can derive from what is already on the user.
+    User sessionUser =
+        new User()
+            .setSub("victim-sub")
+            .setName("Victim")
+            .setCustomProperties(new HashMap<>(Map.of("rank", "gold")));
+
+    List<MappingRule> rules =
+        rules(
+            """
+            [
+              { "from": "$.user.custom_properties.rank", "to": "custom_properties.previous_rank" },
+              { "from": "$.user.sub", "to": "custom_properties.seen_sub" }
+            ]
+            """);
+
+    AuthenticationInteractionRequest request =
+        new AuthenticationInteractionRequest(Map.of("username", "victim"));
+    AuthenticationExecutionResult executionResult = AuthenticationExecutionResult.success(Map.of());
+
+    User patch =
+        interactor.buildSecondFactorEnrichmentPatch(request, executionResult, rules, sessionUser);
+
+    assertEquals("gold", patch.customPropertiesValue().get("previous_rank"));
+    assertEquals("victim-sub", patch.customPropertiesValue().get("seen_sub"));
+  }
+
+  @Test
+  void dollarUserIsEmptyRatherThanAbsentWhenNoUserIsEstablished() {
+    // The projection returns an empty map for a non-existent user, so $.user resolves to {} and
+    // the rule produces no value instead of blowing up.
+    List<MappingRule> rules =
+        rules(
+            """
+            [
+              { "from": "$.user.custom_properties.rank", "to": "custom_properties.previous_rank" }
+            ]
+            """);
+
+    AuthenticationInteractionRequest request =
+        new AuthenticationInteractionRequest(Map.of("username", "nobody"));
+    AuthenticationExecutionResult executionResult = AuthenticationExecutionResult.success(Map.of());
+
+    User patch =
+        interactor.buildSecondFactorEnrichmentPatch(
+            request, executionResult, rules, User.notFound());
+
+    assertNull(patch.customPropertiesValue().get("previous_rank"));
   }
 }

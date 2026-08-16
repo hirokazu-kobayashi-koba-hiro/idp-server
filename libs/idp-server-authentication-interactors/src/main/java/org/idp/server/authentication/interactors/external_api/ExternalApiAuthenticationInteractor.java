@@ -392,7 +392,14 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
 
     User transactionUser = transaction.user();
 
-    // Verify external API response matches the authenticated user
+    // Verify external API response matches the authenticated user.
+    //
+    // Issue #1767 deliberately does NOT inject $.user here. The mapped user is only ever the
+    // subject of the identity comparison below and is discarded afterwards, so exposing $.user
+    // would buy nothing — while a rule such as {"from": "$.user.email", "to": "email"} would make
+    // the comparison read the authenticated user on both sides and always match, silently
+    // disabling the CWE-287 guard. The same principle the 1st factor follows: the value an
+    // identity decision is made on must not be derived from $.user.
     Map<String, Object> mappingSource = new HashMap<>();
     mappingSource.put("request_body", request.toMap());
     mappingSource.putAll(executionResult.contents());
@@ -440,7 +447,20 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
         successEvent);
   }
 
-  /** Resolves user from external API response (1st factor only). */
+  /**
+   * Resolves user from external API response (1st factor only).
+   *
+   * <p><b>Issue #1767 (two passes):</b> the lookup key ({@code provider_id} / {@code
+   * external_user_id}) is itself produced by the mapping, so {@code $.user.*} cannot be in the
+   * source of the pass that produces it. The first pass therefore runs without {@code $.user} and
+   * is used only to find the existing user; the second pass re-runs the same rules with {@code
+   * $.user} populated and its result is the one that counts. Without this, {@code $.user.*} would
+   * work on a 2nd factor and silently resolve to null here — the very asymmetry #1767 is about.
+   *
+   * <p>Re-running is safe because mapping functions are pure value transforms; the
+   * non-deterministic ones ({@code now} / {@code uuid4} / {@code random_string}) have no side
+   * effects and only the second pass's values are kept.
+   */
   private User resolveUser(
       Tenant tenant,
       AuthenticationInteractionRequest request,
@@ -452,10 +472,20 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     mappingSource.put("request_body", request.toMap());
     mappingSource.putAll(executionResult.contents());
 
-    User user = toUser(userMappingRules, mappingSource);
+    User lookupKeyUser = toUser(userMappingRules, mappingSource);
 
     User existingUser =
-        userQueryRepository.findByProvider(tenant, user.providerId(), user.externalUserId());
+        userQueryRepository.findByProvider(
+            tenant, lookupKeyUser.providerId(), lookupKeyUser.externalUserId());
+
+    mappingSource.put("user", ExternalRequestUserContextCreator.create(existingUser));
+    User user = toUser(userMappingRules, mappingSource);
+
+    // The user we bind must be the one we looked up: pin the lookup key from the first pass so a
+    // rule reading it from $.user cannot make "the key we searched by" and "the key we store"
+    // disagree, which would silently register a duplicate on the next login.
+    user.setProviderId(lookupKeyUser.providerId());
+    user.setExternalUserId(lookupKeyUser.externalUserId());
 
     if (existingUser.exists()) {
       log.debug(

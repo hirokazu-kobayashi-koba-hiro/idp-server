@@ -65,6 +65,8 @@ MFAは認証ポリシーと連携して動作します。
 
 ## ユーザー解決ロジック（Email/SMS OTP）
 
+認証手段に共通する流れ（何を材料にするか、身元を決めるのはどの段階か、属性をどう反映するか）は [ユーザー解決](concept-11-user-resolution.md) を参照してください。ここでは Email/SMS OTP に固有の部分だけを扱います。
+
 Email OTPおよびSMS OTP認証では、以下のロジックでユーザーを解決します。
 
 ### 1要素目として使用する場合
@@ -149,6 +151,7 @@ FIDO2/WebAuthnは、フィッシング攻撃に対して耐性があります。
 ## 関連ドキュメント
 
 - [認証ポリシー](concept-01-authentication-policy.md) - MFA要求の制御
+- [ユーザー解決](concept-11-user-resolution.md) - 認証手段に共通するユーザー確定と属性反映の流れ
 - [トークン管理](../04-tokens-claims/concept-02-token-management.md) - MFA後のトークン発行
 - [FIDO/WebAuthnとパスワードレス認証](../basic/basic-16-fido2-webauthn-passwordless.md) - FIDO2/WebAuthnの基礎
 - [FIDO2 Passkeyと検出可能なクレデンシャル](../basic/basic-17-fido2-passkey-discoverable-credential.md) - Passkeyの仕組み

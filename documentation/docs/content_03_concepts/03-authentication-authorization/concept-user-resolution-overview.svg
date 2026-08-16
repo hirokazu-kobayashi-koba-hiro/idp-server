@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 830" font-family="'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#555555"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2e7d32"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c62828"/>
+    </marker>
+  </defs>
+
+  <rect width="1040" height="830" fill="#ffffff"/>
+  <text x="40" y="38" font-size="20" font-weight="bold" fill="#212121">ユーザー解決の全体像 — 3つの段階</text>
+
+  <!-- ===== Lane 1: mapping source ===== -->
+  <rect x="20" y="60" width="1000" height="150" rx="10" fill="#f8f9fa" stroke="#e0e0e0"/>
+  <text x="40" y="88" font-size="15" font-weight="bold" fill="#37474f">① 何を材料にするか（マッピングソース）</text>
+  <text x="330" y="88" font-size="12.5" fill="#616161">— user_mapping_rules の from / args が参照できる入力</text>
+
+  <rect x="40" y="110" width="225" height="70" rx="8" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="152" y="138" font-size="12" text-anchor="middle" fill="#0d47a1">$.request_body</text>
+  <text x="152" y="160" font-size="11.5" text-anchor="middle" fill="#1565c0">リクエストボディ</text>
+
+  <rect x="285" y="110" width="225" height="70" rx="8" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="397" y="138" font-size="12" text-anchor="middle" fill="#0d47a1">$.execution_http_request(s)</text>
+  <text x="397" y="160" font-size="11.5" text-anchor="middle" fill="#1565c0">外部APIのレスポンス</text>
+
+  <rect x="530" y="110" width="225" height="70" rx="8" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="642" y="138" font-size="12" text-anchor="middle" fill="#0d47a1">$.request_attributes</text>
+  <text x="642" y="160" font-size="11.5" text-anchor="middle" fill="#1565c0">送信元IP・UA・ヘッダー</text>
+
+  <rect x="775" y="110" width="225" height="70" rx="8" fill="#f3e5f5" stroke="#8e24aa" stroke-width="2"/>
+  <text x="887" y="138" font-size="12" text-anchor="middle" fill="#6a1b9a">$.user</text>
+  <text x="887" y="160" font-size="11.5" text-anchor="middle" fill="#7b1fa2">既存ユーザーの投影</text>
+
+  <path d="M 520 210 L 520 232" fill="none" stroke="#9e9e9e" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ===== Lane 2: identity ===== -->
+  <rect x="20" y="234" width="1000" height="300" rx="10" fill="#f8f9fa" stroke="#e0e0e0"/>
+  <text x="40" y="262" font-size="15" font-weight="bold" fill="#37474f">② 誰と確定するか（1要素目 / 2要素目）</text>
+  <text x="330" y="262" font-size="12.5" fill="#616161">— ユーザーを決めるのは1要素目だけ。2要素目は属性を足すだけ</text>
+
+  <!-- 1st factor -->
+  <rect x="40" y="284" width="560" height="230" rx="8" fill="#ffffff" stroke="#607d8b"/>
+  <text x="58" y="310" font-size="13.5" font-weight="bold" fill="#37474f">1要素目 — ユーザーを確定する</text>
+
+  <rect x="58" y="322" width="524" height="42" rx="6" fill="#eceff1" stroke="#90a4ae"/>
+  <text x="74" y="348" font-size="12" fill="#37474f">① マッピング（$.user なし）→ 検索キー provider_id / external_user_id</text>
+
+  <path d="M 320 364 L 320 378" fill="none" stroke="#9e9e9e" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="58" y="380" width="524" height="42" rx="6" fill="#eceff1" stroke="#90a4ae"/>
+  <text x="74" y="406" font-size="12" fill="#37474f">② 既存ユーザーを検索（無ければ登録可否の設定に従う）</text>
+
+  <path d="M 320 422 L 320 436" fill="none" stroke="#9e9e9e" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="58" y="438" width="524" height="42" rx="6" fill="#f3e5f5" stroke="#8e24aa" stroke-width="2"/>
+  <text x="74" y="464" font-size="12" fill="#6a1b9a">③ 再マッピング（$.user あり）← 採用されるのはこの結果</text>
+
+  <text x="58" y="500" font-size="11.5" fill="#757575">検索キー自体がマッピングの産物のため、$.user を入れるには二段が要る</text>
+
+  <!-- 2nd factor -->
+  <rect x="630" y="284" width="370" height="230" rx="8" fill="#ffffff" stroke="#607d8b"/>
+  <text x="648" y="310" font-size="13.5" font-weight="bold" fill="#37474f">2要素目 — ユーザーは確定済み</text>
+
+  <rect x="648" y="322" width="334" height="42" rx="6" fill="#eceff1" stroke="#90a4ae"/>
+  <text x="664" y="348" font-size="12" fill="#37474f">1要素目が確定したユーザーを使う</text>
+
+  <path d="M 815 364 L 815 378" fill="none" stroke="#9e9e9e" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="648" y="380" width="334" height="42" rx="6" fill="#f3e5f5" stroke="#8e24aa" stroke-width="2"/>
+  <text x="664" y="406" font-size="12" fill="#6a1b9a">マッピングは属性の付加のみ（1回）</text>
+
+  <path d="M 815 422 L 815 436" fill="none" stroke="#c62828" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+
+  <rect x="648" y="438" width="334" height="42" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="2"/>
+  <text x="664" y="457" font-size="11.5" font-weight="bold" fill="#b71c1c">識別子 / ステータス / 権限は書き換え不可</text>
+  <text x="664" y="473" font-size="11" fill="#c62828">なりすまし防止（CWE-287）。許可外は破棄しログに記録</text>
+
+  <text x="648" y="500" font-size="11.5" fill="#757575">ユーザーの再解決はしない。1要素目の結果が正</text>
+
+  <path d="M 520 534 L 520 556" fill="none" stroke="#9e9e9e" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ===== Lane 3: attributes and persistence ===== -->
+  <rect x="20" y="558" width="1000" height="248" rx="10" fill="#f8f9fa" stroke="#e0e0e0"/>
+  <text x="40" y="586" font-size="15" font-weight="bold" fill="#37474f">③ 属性をどう反映して保存するか</text>
+  <text x="290" y="586" font-size="12.5" fill="#616161">— 複数の認証手段が同じ属性集合を育てる前提で反映する</text>
+
+  <rect x="40" y="608" width="600" height="176" rx="8" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="58" y="634" font-size="13.5" font-weight="bold" fill="#1b5e20">custom_properties の反映規則</text>
+
+  <text x="58" y="662" font-size="12" fill="#2e7d32">・ルールが値を生成したキー</text>
+  <text x="330" y="662" font-size="12" fill="#1b5e20">→ 上書き</text>
+
+  <text x="58" y="686" font-size="12" fill="#2e7d32">・ルールが値を生成しなかったキー</text>
+  <text x="330" y="686" font-size="12" fill="#1b5e20">→ 既存値を保持</text>
+
+  <text x="58" y="710" font-size="12" fill="#2e7d32">・ルールが宣言していないキー</text>
+  <text x="330" y="710" font-size="12" fill="#1b5e20">→ 既存値を保持</text>
+
+  <text x="58" y="740" font-size="11.5" fill="#558b2f">他の認証手段が入れたキーを壊さないため、全置換はしない</text>
+  <text x="58" y="762" font-size="11.5" fill="#558b2f">この経路では削除できない。削除は管理APIのユーザー更新で行う</text>
+
+  <line x1="640" y1="696" x2="696" y2="696" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+
+  <rect x="702" y="608" width="298" height="176" rx="8" fill="#2e7d32" stroke="#1b5e20"/>
+  <text x="851" y="646" font-size="14" font-weight="bold" text-anchor="middle" fill="#ffffff">ユーザーの登録 / 更新</text>
+  <text x="851" y="676" font-size="11.5" text-anchor="middle" fill="#c8e6c9">新規なら登録</text>
+  <text x="851" y="696" font-size="11.5" text-anchor="middle" fill="#c8e6c9">既存なら属性をマージして更新</text>
+  <text x="851" y="726" font-size="11.5" text-anchor="middle" fill="#a5d6a7">認可が成立してから実行される</text>
+  <text x="851" y="752" font-size="11" text-anchor="middle" fill="#a5d6a7">認証が失敗した経路では保存されない</text>
+</svg>

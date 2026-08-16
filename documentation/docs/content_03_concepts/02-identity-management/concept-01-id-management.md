@@ -48,6 +48,10 @@ sequenceDiagram
 
 外部IdP（Google、Azure AD等）との連携によるユーザー登録の詳細は、[フェデレーション（外部IdP連携）](../03-authentication-authorization/concept-08-federation.md)を参照してください。
 
+#### 既存ユーザーへの属性反映
+
+2回目以降のログインでは登録ではなく更新になります。どの認証手段が身元を決め、どの手段が属性だけを足すのか、複数の手段が同じ属性を書くときに何が起きるのかは [ユーザー解決](../03-authentication-authorization/concept-11-user-resolution.md) を参照してください。
+
 ## データ構造
 
 ### ユーザーID（`sub`）

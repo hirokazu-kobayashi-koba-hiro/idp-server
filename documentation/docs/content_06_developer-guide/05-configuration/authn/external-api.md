@@ -159,6 +159,8 @@ idp-server が受け取ったリクエスト自体から取れる値です。RP 
 
 外部APIでユーザーを認証し、レスポンスからユーザー情報を解決します。
 
+> 1要素目と2要素目で何が変わるか、属性がどう反映されるかの全体像は [ユーザー解決](../../../content_03_concepts/03-authentication-authorization/concept-11-user-resolution.md) を参照してください。ここでは設定項目を扱います。
+
 ```json
 {
   "password_verify": {
