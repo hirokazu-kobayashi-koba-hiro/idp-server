@@ -111,6 +111,7 @@ const sidebars = {
             "content_03_concepts/authentication-authorization/concept-08-federation",
             "content_03_concepts/authentication-authorization/concept-09-jwt-bearer-grant",
             "content_03_concepts/authentication-authorization/concept-10-device-credential",
+            "content_03_concepts/authentication-authorization/concept-11-user-resolution",
           ]
         },
         {
