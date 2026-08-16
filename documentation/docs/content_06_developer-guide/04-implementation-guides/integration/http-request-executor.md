@@ -602,34 +602,32 @@ Response Resolverは、これらの複雑なレスポンスを統一的に扱う
 {
   "http_request": {
     "url": "https://api.example.com/verify",
-    "response_resolve_configs": {
-      "configs": [
-        {
-          "conditions": [
-            {"path": "$.httpStatusCode", "operation": "in", "value": [200, 201]},
-            {"path": "$.response_body.status", "operation": "eq", "value": "approved"}
-          ],
-          "match_mode": "all",
-          "mapped_status_code": 200
-        },
-        {
-          "conditions": [
-            {"path": "$.httpStatusCode", "operation": "eq", "value": 200},
-            {"path": "$.response_body.status", "operation": "eq", "value": "pending"}
-          ],
-          "match_mode": "all",
-          "mapped_status_code": 202
-        },
-        {
-          "conditions": [
-            {"path": "$.httpStatusCode", "operation": "eq", "value": 503}
-          ],
-          "match_mode": "all",
-          "mapped_status_code": 503,
-          "error_message_json_path": "$.response_body.message"
-        }
-      ]
-    }
+    "response_resolve_configs": [
+      {
+        "conditions": [
+          {"path": "$.status_code", "operation": "in", "value": [200, 201]},
+          {"path": "$.response_body.status", "operation": "eq", "value": "approved"}
+        ],
+        "match_mode": "ALL",
+        "mapped_status_code": 200
+      },
+      {
+        "conditions": [
+          {"path": "$.status_code", "operation": "eq", "value": 200},
+          {"path": "$.response_body.status", "operation": "eq", "value": "pending"}
+        ],
+        "match_mode": "ALL",
+        "mapped_status_code": 202
+      },
+      {
+        "conditions": [
+          {"path": "$.status_code", "operation": "eq", "value": 503}
+        ],
+        "match_mode": "ALL",
+        "mapped_status_code": 503,
+        "error_message_json_path": "$.response_body.message"
+      }
+    ]
   }
 }
 ```
@@ -639,19 +637,29 @@ Response Resolverは、これらの複雑なレスポンスを統一的に扱う
 | フィールド | 説明 |
 |-----------|------|
 | `conditions` | レスポンス判定条件の配列 |
-| `conditions[].path` | JSONPath（`$.httpStatusCode`、`$.response_body.*`） |
+| `conditions[].path` | JSONPath。指定できるのは `$.status_code` / `$.response_headers.*` / `$.response_body.*` の3つ |
 | `conditions[].operation` | 演算子（`eq`, `in`, `ne`, `gte`, `lte`等） |
 | `conditions[].value` | 比較値 |
-| `match_mode` | マッチモード（`all`: AND条件、`any`: OR条件） |
+| `match_mode` | マッチモード（`ALL`: AND条件、`ANY`: OR条件。大文字小文字は区別せず、未指定時は `ALL`） |
 | `mapped_status_code` | マッピング先のステータスコード |
 | `error_message_json_path` | エラーメッセージ抽出用JSONPath（オプション） |
+
+:::warning 条件パスは3つのキーしか解決しません
+`conditions[].path` が解決できるのは `$.status_code` / `$.response_headers.*` / `$.response_body.*` だけです（`HttpResponseResolver` が組み立てるコンテキスト）。存在しないパスを書いても**エラーにはならず null として扱われ**、その条件が黙って一致しなくなります（#1646）。設定の登録も GET も成功するため、気づけるのは実行時だけです。
+:::
+
+:::info 配列形式で書いてください
+`response_resolve_configs` は**配列**です。旧いラッパー形式 `{"configs": [...]}` も入力としては受理されますが、保存時に配列へ正規化されるため GET の応答は配列で返ります（#1500）。
+:::
 
 ### 動作
 
 1. レスポンスを受信
-2. `configs`を順番に評価
+2. 配列を順番に評価
 3. 最初にマッチした設定の`mapped_status_code`を適用
 4. どれもマッチしない場合は、元のHTTPステータスコードを使用
+
+解決されたステータスコードは、そのまま interaction のレスポンスステータスになります。`429` / `503` などにマップすれば、その値がクライアントまで届きます。単発（`http_request`）と複数（`http_requests`）のどちらの executor でも同じです（#1783 以前は `http_requests` のときだけ 400 / 500 に丸められていました）。
 
 ### 使用シーン
 
@@ -660,25 +668,23 @@ Response Resolverは、これらの複雑なレスポンスを統一的に扱う
 外部APIが常にHTTP 200を返すが、ボディで成功/失敗を区別する場合：
 
 ```json
-{
-  "configs": [
-    {
-      "conditions": [
-        {"path": "$.response_body.result", "operation": "eq", "value": "success"}
-      ],
-      "match_mode": "all",
-      "mapped_status_code": 200
-    },
-    {
-      "conditions": [
-        {"path": "$.response_body.result", "operation": "eq", "value": "error"}
-      ],
-      "match_mode": "all",
-      "mapped_status_code": 400,
-      "error_message_json_path": "$.response_body.error_message"
-    }
-  ]
-}
+[
+  {
+    "conditions": [
+      {"path": "$.response_body.result", "operation": "eq", "value": "success"}
+    ],
+    "match_mode": "ALL",
+    "mapped_status_code": 200
+  },
+  {
+    "conditions": [
+      {"path": "$.response_body.result", "operation": "eq", "value": "error"}
+    ],
+    "match_mode": "ALL",
+    "mapped_status_code": 400,
+    "error_message_json_path": "$.response_body.error_message"
+  }
+]
 ```
 
 **ケース2: ビジネスステータスによる判定**
@@ -686,26 +692,24 @@ Response Resolverは、これらの複雑なレスポンスを統一的に扱う
 eKYCの審査結果を判定する場合：
 
 ```json
-{
-  "configs": [
-    {
-      "conditions": [
-        {"path": "$.httpStatusCode", "operation": "eq", "value": 200},
-        {"path": "$.response_body.verification_status", "operation": "eq", "value": "approved"}
-      ],
-      "match_mode": "all",
-      "mapped_status_code": 200
-    },
-    {
-      "conditions": [
-        {"path": "$.httpStatusCode", "operation": "eq", "value": 200},
-        {"path": "$.response_body.verification_status", "operation": "eq", "value": "rejected"}
-      ],
-      "match_mode": "all",
-      "mapped_status_code": 400
-    }
-  ]
-}
+[
+  {
+    "conditions": [
+      {"path": "$.status_code", "operation": "eq", "value": 200},
+      {"path": "$.response_body.verification_status", "operation": "eq", "value": "approved"}
+    ],
+    "match_mode": "ALL",
+    "mapped_status_code": 200
+  },
+  {
+    "conditions": [
+      {"path": "$.status_code", "operation": "eq", "value": 200},
+      {"path": "$.response_body.verification_status", "operation": "eq", "value": "rejected"}
+    ],
+    "match_mode": "ALL",
+    "mapped_status_code": 400
+  }
+]
 ```
 
 **ケース3: 複数条件の組み合わせ**
@@ -713,17 +717,17 @@ eKYCの審査結果を判定する場合：
 ```json
 {
   "conditions": [
-    {"path": "$.httpStatusCode", "operation": "in", "value": [200, 201, 204]},
+    {"path": "$.status_code", "operation": "in", "value": [200, 201, 204]},
     {"path": "$.response_body.errors", "operation": "eq", "value": null}
   ],
-  "match_mode": "all",
+  "match_mode": "ALL",
   "mapped_status_code": 200
 }
 ```
 
 ### 評価順序
 
-- `configs`配列の**順番**が重要
+- 配列の**順番**が重要
 - 最初にマッチした設定が適用される
 - より具体的な条件を先に、一般的な条件を後に配置
 

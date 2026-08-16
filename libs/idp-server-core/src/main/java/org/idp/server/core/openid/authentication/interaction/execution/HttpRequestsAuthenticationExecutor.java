@@ -125,18 +125,28 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
     return AuthenticationExecutionResult.success(results);
   }
 
+  /**
+   * Builds the execution result from the request that stopped the chain.
+   *
+   * <p><b>Issue #1783:</b> the status has to be carried, not just its class. Answering {@code
+   * clientError()} / {@code serverError()} flattened every failure to 400 or 500, so a {@code
+   * response_resolve_configs} mapping to 429 or 503 was silently discarded here — while the same
+   * configuration on {@link HttpRequestAuthenticationExecutor} (the single-request executor) came
+   * through intact. The configuration validates and stores identically either way, so the two only
+   * diverged at runtime.
+   *
+   * <p>429 is the case that mattered: flattened to 400, a client cannot tell "you sent something
+   * wrong" from "we are rate limiting you", which inverts the reason for mapping it in the first
+   * place.
+   */
   private AuthenticationExecutionResult createExecutionResult(
       List<HttpRequestResult> httpResults, HttpRequestResult lastResult) {
     Map<String, Object> response = new HashMap<>();
     response.put(
         "execution_http_requests", httpResults.stream().map(HttpRequestResult::toMap).toList());
 
-    if (lastResult.isClientError()) {
-      return AuthenticationExecutionResult.clientError(response);
-    }
-
-    if (lastResult.isServerError()) {
-      return AuthenticationExecutionResult.serverError(response);
+    if (lastResult.isClientError() || lastResult.isServerError()) {
+      return AuthenticationExecutionResult.error(lastResult.statusCode(), response);
     }
 
     return AuthenticationExecutionResult.success(response);
