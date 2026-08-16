@@ -99,7 +99,7 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
 
       // If error occurs, return immediately with all results collected so far
       if (executionResult.isClientError() || executionResult.isServerError()) {
-        return createExecutionResult(httpRequestResults, executionResult);
+        return createErrorResult(httpRequestResults, executionResult);
       }
 
       param.put(
@@ -139,16 +139,12 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
    * wrong" from "we are rate limiting you", which inverts the reason for mapping it in the first
    * place.
    */
-  private AuthenticationExecutionResult createExecutionResult(
-      List<HttpRequestResult> httpResults, HttpRequestResult lastResult) {
+  private AuthenticationExecutionResult createErrorResult(
+      List<HttpRequestResult> httpResults, HttpRequestResult failedResult) {
     Map<String, Object> response = new HashMap<>();
     response.put(
         "execution_http_requests", httpResults.stream().map(HttpRequestResult::toMap).toList());
 
-    if (lastResult.isClientError() || lastResult.isServerError()) {
-      return AuthenticationExecutionResult.error(lastResult.statusCode(), response);
-    }
-
-    return AuthenticationExecutionResult.success(response);
+    return AuthenticationExecutionResult.error(failedResult.statusCode(), response);
   }
 }

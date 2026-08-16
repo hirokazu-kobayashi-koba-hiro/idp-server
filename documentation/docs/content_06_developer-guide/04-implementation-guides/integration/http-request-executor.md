@@ -624,8 +624,7 @@ Response Resolverは、これらの複雑なレスポンスを統一的に扱う
           {"path": "$.status_code", "operation": "eq", "value": 503}
         ],
         "match_mode": "ALL",
-        "mapped_status_code": 503,
-        "error_message_json_path": "$.response_body.message"
+        "mapped_status_code": 503
       }
     ]
   }
@@ -642,7 +641,6 @@ Response Resolverは、これらの複雑なレスポンスを統一的に扱う
 | `conditions[].value` | 比較値 |
 | `match_mode` | マッチモード（`ALL`: AND条件、`ANY`: OR条件。大文字小文字は区別せず、未指定時は `ALL`） |
 | `mapped_status_code` | マッピング先のステータスコード |
-| `error_message_json_path` | エラーメッセージ抽出用JSONPath（オプション） |
 
 :::warning 条件パスは3つのキーしか解決しません
 `conditions[].path` が解決できるのは `$.status_code` / `$.response_headers.*` / `$.response_body.*` だけです（`HttpResponseResolver` が組み立てるコンテキスト）。存在しないパスを書いても**エラーにはならず null として扱われ**、その条件が黙って一致しなくなります（#1646）。設定の登録も GET も成功するため、気づけるのは実行時だけです。
@@ -659,7 +657,20 @@ Response Resolverは、これらの複雑なレスポンスを統一的に扱う
 3. 最初にマッチした設定の`mapped_status_code`を適用
 4. どれもマッチしない場合は、元のHTTPステータスコードを使用
 
-解決されたステータスコードは、そのまま interaction のレスポンスステータスになります。`429` / `503` などにマップすれば、その値がクライアントまで届きます。単発（`http_request`）と複数（`http_requests`）のどちらの executor でも同じです（#1783 以前は `http_requests` のときだけ 400 / 500 に丸められていました）。
+#### 認証 interaction に届くコード
+
+`authentication-configurations` の実行結果として使う場合、解決されたステータスは interaction のレスポンスステータスになりますが、**そのまま届くのは下記のコードだけ**です。単発（`http_request`）と複数（`http_requests`）のどちらの executor でも同じです（#1783 以前は `http_requests` のときだけ丸められていました）。
+
+| `mapped_status_code` | interaction が返す status |
+|---------------------|--------------------------|
+| `401` / `403` / `404` / `408` / `409` / `429` / `500` / `502` / `503` / `504` | そのまま |
+| 上記以外の 4xx（`410` / `422` / `451` 等）| `400` |
+| 上記以外の 5xx（`501` / `507` 等）| `500` |
+| 400 未満（`200` / `202` / `204` 等）| `200` |
+
+400 未満が `200` になるのは、`HttpRequestResult.isSuccess()` が `statusCode < 400` で判定するため、成功として扱われるからです。上の設定構造の例にある `mapped_status_code: 202` も、認証 interaction では `200` として返ります（`202` を区別したい場合はレスポンスボディで表現してください）。
+
+列挙されたコードは `AuthenticationExecutionStatus` / `AuthenticationInteractionStatus` の定義と一致します。それ以外は `fromStatusCode` のフォールバックで 400 / 500 に寄せられます。
 
 ### 使用シーン
 
@@ -681,8 +692,7 @@ Response Resolverは、これらの複雑なレスポンスを統一的に扱う
       {"path": "$.response_body.result", "operation": "eq", "value": "error"}
     ],
     "match_mode": "ALL",
-    "mapped_status_code": 400,
-    "error_message_json_path": "$.response_body.error_message"
+    "mapped_status_code": 400
   }
 ]
 ```
