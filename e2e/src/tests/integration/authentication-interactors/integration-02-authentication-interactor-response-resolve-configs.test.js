@@ -66,6 +66,34 @@ describe("Authentication Interactor: response_resolve_configs schema symmetry (#
     body_mapping_rules: [{ from: "$.request_body", to: "*" }],
   };
 
+  // Issue #1783: the same resolution, run by the http_requests (plural) executor. 429 is the code
+  // that matters most here — rounding it to 400 makes "you sent something wrong" and "we are rate
+  // limiting you" indistinguishable to the client.
+  const pluralInteractionName = "rate_limit_probe";
+  const httpRequestsUnderTest = [
+    {
+      url: `${mockApiBaseUrl}/e2e/error-responses`,
+      method: "POST",
+      response_resolve_configs: [
+        {
+          conditions: [
+            {
+              path: "$.response_body.verification_status",
+              operation: "eq",
+              value: "pending",
+            },
+          ],
+          match_mode: "ALL",
+          mapped_status_code: 429,
+        },
+      ],
+      header_mapping_rules: [
+        { static_value: "application/json", to: "Content-Type" },
+      ],
+      body_mapping_rules: [{ from: "$.request_body", to: "*" }],
+    },
+  ];
+
   beforeAll(async () => {
     const timestamp = Date.now();
     organizationId = uuidv4();
@@ -218,6 +246,43 @@ describe("Authentication Interactor: response_resolve_configs schema symmetry (#
       },
     });
 
+    // Issue #1783: the plural counterpart. external-api-authentication without user_resolve is the
+    // "補助判定型" shape, so the interaction returns the execution result and nothing else — which
+    // makes it the smallest way to observe the status the executor produced.
+    await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-configurations`,
+      headers: { Authorization: `Bearer ${adminAccessToken}` },
+      body: {
+        id: uuidv4(),
+        type: "external-api-authentication",
+        attributes: {},
+        metadata: {
+          type: "external",
+          description: "response_resolve_configs on the http_requests executor",
+        },
+        interactions: {
+          [pluralInteractionName]: {
+            request: {
+              schema: {
+                type: "object",
+                required: ["interaction"],
+                properties: { interaction: { type: "string" } },
+              },
+            },
+            execution: {
+              function: "http_requests",
+              http_requests: httpRequestsUnderTest,
+            },
+            response: {
+              body_mapping_rules: [
+                { from: "$.execution_http_requests[0].response_body", to: "*" },
+              ],
+            },
+          },
+        },
+      },
+    });
+
     // Authentication policy allowing password + fido-uaf
     await postWithJson({
       url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-policies`,
@@ -231,7 +296,7 @@ describe("Authentication Interactor: response_resolve_configs schema symmetry (#
             description: "password_then_fido_uaf",
             priority: 10,
             conditions: { scopes: ["openid"] },
-            available_methods: ["password", "fido-uaf"],
+            available_methods: ["password", "fido-uaf", "external-api"],
             success_conditions: {
               any_of: [
                 [
@@ -359,5 +424,32 @@ describe("Authentication Interactor: response_resolve_configs schema symmetry (#
     expect(response.status).toBe(401);
     expect(response.status).not.toBe(200);
     expect(response.status).not.toBe(500);
+  });
+
+  /**
+   * Issue #1783: the same thing, run by the http_requests (plural) executor.
+   *
+   * HttpRequestsAuthenticationExecutor#createExecutionResult only answered clientError() /
+   * serverError(), so a resolved status was flattened to 400 or 500 while the singular executor
+   * passed it through. The config validates and stores identically either way, so the difference
+   * only appeared at runtime.
+   */
+  it("applies mapped_status_code on the http_requests executor too, without rounding to 400", async () => {
+    const authId = await startAuthorizationAndRegister();
+
+    const response = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: { interaction: pluralInteractionName },
+    });
+
+    console.log("Plural executor response status:", response.status);
+    console.log(
+      "Plural executor response data:",
+      JSON.stringify(response.data, null, 2)
+    );
+
+    expect(response.status).toBe(429);
+    // The bug's signature: any 4xx the resolver produced came back as a flat 400.
+    expect(response.status).not.toBe(400);
   });
 });
