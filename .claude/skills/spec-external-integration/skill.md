@@ -432,7 +432,21 @@ $.execution_http_requests[1].response_body.*    → 2番目のAPIのレスポン
 ]
 ```
 
-評価コンテキストは mapping rule と同じ（`$.request_body` / `$.request_attributes` / `$.user` / `$.interaction` / `$.execution_http_requests`）。`condition` 未指定は無条件実行（後方互換）。
+`condition` 未指定は無条件実行（後方互換）。演算子一覧・fail-closed 挙動の正典は `documentation/docs/content_06_developer-guide/04-implementation-guides/advanced/condition-spec.md`。
+
+**コンテキストは「常にある」とは限らない。**
+
+| パス | 存在条件 | 認証 | federation |
+|------|---------|:----:|:----------:|
+| `$.request_body` | 常に | ✅ | ✅（`{access_token}` のみ）|
+| `$.request_attributes` | 常に | ✅ | ✕ |
+| `$.user` | `hasTransactionUser()` = **2要素目以降のみ** | ✅ | ✕ |
+| `$.interaction` | `previous_interaction` 設定時のみ | ✅ | ✕ |
+| `$.execution_http_requests` | **2本目以降のリクエストのみ** | ✅ | ✅ |
+
+1本目の condition で `$.execution_http_requests` を書くと常に null → 常にスキップ（#1646 で無言）。federation は条件側が `$.execution_http_requests`、`userinfo_mapping_rules` 側が `$.userinfo_execution_http_requests` で**接頭辞が違う**。
+
+**HTTP エラーのガードには不要。** 前段が 4xx/5xx なら後段はもともと実行されない（早期終了）。`condition` の出番は「前段は成功扱いだが後段を呼びたくない」場合のみ。「200 だがボディが業務エラー」は `response_resolve_configs`（interaction 全体を失敗にする）と `condition`（成功のまま後段だけ省く）の使い分け。
 
 **添字はスキップしても詰まらない。** `execution_http_requests[N]` は「**設定の N 番目**」であって「実行された N 番目」ではない。スキップされた枠には `{"skipped": true}` が入る。
 
@@ -451,6 +465,22 @@ $.execution_http_requests[1].response_body.*    → 2番目のAPIのレスポン
 | federation userinfo（`UserinfoHttpRequestsExecutor`）| `userinfo_execution.http_requests[]` |
 
 `condition` は共有クラス `HttpRequestExecutionConfig` のフィールドなので**単発の `http_request` にも書けてしまうが、そこでは無視される**（分岐する相手がいないため）。
+
+#### 分岐（A のあと B か C）— マッピング側にもガードが要る
+
+排他条件で片方だけ実行できるが、**両方の枠が残る**ため同じ `to` に書くと壊れる。`writeResult` は後勝ちかつ null も無条件 put（`MappingRuleObjectMapper:326`）なので、スキップ側のルールが実行側の結果を null で上書きする。
+
+```json
+// http_requests: [probe, B(eq HIGH), C(ne HIGH)]
+"body_mapping_rules": [
+  { "from": "$.execution_http_requests[1].response_body.decision", "to": "decision",
+    "condition": { "operation": "missing", "path": "$.execution_http_requests[1].skipped" } },
+  { "from": "$.execution_http_requests[2].response_body.decision", "to": "decision",
+    "condition": { "operation": "missing", "path": "$.execution_http_requests[2].skipped" } }
+]
+```
+
+`{"skipped": true}` プレースホルダは、この「その枠は実行されたか」の判定手段でもある（詰める設計だとこのレシピが書けない）。ガード無しで null 上書きが起きることは e2e `integration-04` の `decision_unguarded` で固定済み。
 
 :::warning 条件の評価に失敗するとスキップされる
 `ConditionSpec.evaluate()` は例外時に warn ログを出して `false` を返す。パス誤り・型不一致などで評価が壊れると「実行しない」に倒れる。無条件実行に倒れるより安全だが、設定ミスが**静かなスキップ**として現れる点に注意。

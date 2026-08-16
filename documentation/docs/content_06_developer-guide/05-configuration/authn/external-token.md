@@ -172,9 +172,27 @@ External Token認証で受け付けるリクエストの構造：
 ]
 ```
 
-評価コンテキストは mapping rule と同じです（`$.request_body` / `$.request_attributes` / `$.user` / `$.interaction` / `$.execution_http_requests`）。
+演算子の一覧と、評価に失敗したときの挙動は [condition（条件式）](../../04-implementation-guides/advanced/condition-spec.md) を参照してください。
 
-**スキップしても添字は詰まりません。** `execution_http_requests[N]` は「**設定の N 番目**」を指し、スキップされた枠には `{"skipped": true}` が入ります。
+#### 参照できるコンテキスト
+
+`path` に書けるキーは以下です。**常に存在するとは限らない**点に注意してください。
+
+| パス | 存在する条件 | 内容 |
+|------|------------|------|
+| `$.request_body` | 常に | interaction のリクエストボディ |
+| `$.request_attributes` | 常に | `ip_address` / `user_agent` / `resource` / `action` / `request_url` / `headers` |
+| `$.user` | 認証済みユーザーがいるときのみ | 許可リスト投影。**1要素目には存在しません** |
+| `$.interaction` | `previous_interaction` を設定したときのみ | 前のインタラクションの保存データ |
+| `$.execution_http_requests` | **2本目以降のリクエストのみ** | それまでの結果 |
+
+:::warning 1本目の condition で execution_http_requests は参照できません
+条件はリクエストを送る前に評価されるため、1本目の時点ではまだ結果がありません。参照しても null になり、`eq` などは false になるので**そのリクエストは常にスキップされます**。エラーにはならないので気づけません。同じ理由で、1要素目のリクエストを `$.user.*` で分岐させることもできません。
+:::
+
+#### スキップしても添字は詰まりません
+
+`execution_http_requests[N]` は「**設定の N 番目**」を指し、スキップされた枠には `{"skipped": true}` が入ります。
 
 | 設定 | `execution_http_requests` |
 |------|---------------------------|
@@ -182,8 +200,46 @@ External Token認証で受け付けるリクエストの構造：
 
 条件の真偽で後続の参照パスが変わらないため、`$.execution_http_requests[2]` は常に3番目の設定を指します。
 
-:::warning 条件の評価に失敗するとスキップされます
-パス誤りや型不一致で評価が壊れた場合、warn ログを出して「実行しない」と判定されます。無条件実行に倒れるより安全ですが、設定ミスが**静かなスキップ**として現れる点にご注意ください。
+#### HTTPエラー時のガードには不要です
+
+前段が 4xx / 5xx を返した場合、後段は**もともと実行されません**（連鎖はその時点で中断します）。`response_resolve_configs` で 200 をエラーに寄せた場合も同じです。
+
+`condition` の出番は「**前段は成功扱いなのに、後段を呼びたくない**」場合です。同じ「200 だがボディが業務エラー」に対して、次のように使い分けます。
+
+| やりたいこと | 使うもの |
+|------------|---------|
+| interaction 全体を失敗にする | `response_resolve_configs` でエラーコードにマップ |
+| interaction は成功のまま、後段だけ省く | `condition` |
+
+#### 分岐: どちらか一方を実行する
+
+排他的な条件を書けば「A のあと B か C のどちらか」を表現できます。
+
+```json
+"http_requests": [
+  { "url": "https://api.example.com/assess", "method": "POST" },
+  { "url": "https://api.example.com/high-risk", "method": "POST",
+    "condition": { "operation": "eq", "path": "$.execution_http_requests[0].response_body.result", "value": "HIGH" } },
+  { "url": "https://api.example.com/normal", "method": "POST",
+    "condition": { "operation": "ne", "path": "$.execution_http_requests[0].response_body.result", "value": "HIGH" } }
+]
+```
+
+このとき **`response.body_mapping_rules` にも同じ条件相当のガードが必要です。** 実行された枠とスキップされた枠の両方が残るため、両方を同じ `to` に書くと、後ろのルールが null で上書きしてしまいます。
+
+スキップされた枠には `skipped` が入っているので、これを使ってガードします。
+
+```json
+"body_mapping_rules": [
+  { "from": "$.execution_http_requests[1].response_body.decision", "to": "decision",
+    "condition": { "operation": "missing", "path": "$.execution_http_requests[1].skipped" } },
+  { "from": "$.execution_http_requests[2].response_body.decision", "to": "decision",
+    "condition": { "operation": "missing", "path": "$.execution_http_requests[2].skipped" } }
+]
+```
+
+:::warning ガードを忘れると値が消えます
+マッピングは最後に書いたルールが勝ち、値が解決しなくても null をそのまま書き込みます。ガードなしで両方を同じ `to` に書くと、スキップされた側のルールが**実行された側の結果を null で上書き**します。エラーにはなりません。
 :::
 
 :::info 単発の http_request では無視されます

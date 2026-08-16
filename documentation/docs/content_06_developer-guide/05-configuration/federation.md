@@ -335,13 +335,28 @@ Provider IdPがidp-serverの場合、**Provider側の認可サーバーに`claim
 }
 ```
 
-条件の中で前段を参照するパスは `$.execution_http_requests[...]` です（`userinfo_mapping_rules` 側の `$.userinfo_execution_http_requests[...]` とは接頭辞が異なります。実行中のコンテキストと、実行完了後のマッピングコンテキストで別のキーを使うため）。
+演算子の一覧と、評価に失敗したときの挙動は [condition（条件式）](../04-implementation-guides/advanced/condition-spec.md) を参照してください。
+
+**参照できるコンテキストは2つだけです。**
+
+| パス | 存在する条件 | 内容 |
+|------|------------|------|
+| `$.request_body` | 常に | `{"access_token": "<上流のアクセストークン>"}` |
+| `$.execution_http_requests` | **2本目以降のリクエストのみ** | それまでの結果 |
+
+認証側にある `$.request_attributes` / `$.user` / `$.interaction` はフェデレーションにはありません。
+
+:::warning 条件とマッピングで接頭辞が違います
+条件の中で前段を参照するパスは **`$.execution_http_requests[...]`**（実行中のコンテキスト）で、`userinfo_mapping_rules` 側の **`$.userinfo_execution_http_requests[...]`**（実行完了後のコンテキスト）とは異なります。取り違えても値が null になるだけでエラーにならないため、条件が常に false になって**そのリクエストが永久にスキップされます**。
+:::
+
+:::warning 1本目の condition で execution_http_requests は参照できません
+条件はリクエストを送る前に評価されるため、1本目の時点ではまだ結果がありません。参照しても null になり、そのリクエストは常にスキップされます。
+:::
 
 **スキップしても添字は詰まりません。** `userinfo_execution_http_requests[N]` は「**設定の N 番目**」を指し、スキップされた枠には `{"skipped": true}` が入ります。条件の真偽で `userinfo_mapping_rules` の参照先がずれることはありません。
 
-:::warning 条件の評価に失敗するとスキップされます
-パス誤りや型不一致で評価が壊れた場合、warn ログを出して「実行しない」と判定されます。設定ミスが**静かなスキップ**として現れる点にご注意ください。
-:::
+排他的な条件で「A のあと B か C のどちらか」を書く場合、`userinfo_mapping_rules` 側にも `{"operation": "missing", "path": "$.userinfo_execution_http_requests[N].skipped"}` のガードが必要です（マッピングは後勝ちで、値が解決しなくても null を書き込むため）。詳しくは[外部トークン認証の設定](authn/external-token.md)の同じ節を参照してください。
 
 **重要**:
 - `userinfo_execution_http_requests[0]` - 1番目のAPIレスポンス

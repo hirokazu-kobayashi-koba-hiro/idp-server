@@ -73,6 +73,38 @@ describe("Authentication Interactor: conditional http_requests (#1789)", () => {
     body_mapping_rules: [{ static_value: PROBE, to: "user_id" }],
   };
 
+  // "run either B or C after A" — mutually exclusive conditions on the same probe value.
+  const branchProbeRequest = {
+    url: `${mockApiBaseUrl}/auth/password`,
+    method: "POST",
+    header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+    body_mapping_rules: [{ from: "$.request_body.mode", to: "username" }],
+  };
+
+  const highBranchRequest = {
+    url: `${mockApiBaseUrl}/user/details`,
+    method: "POST",
+    condition: {
+      operation: "eq",
+      path: "$.execution_http_requests[0].response_body.user_id",
+      value: "HIGH",
+    },
+    header_mapping_rules: [{ static_value: "test-client-id", to: "x-client-id" }],
+    body_mapping_rules: [{ static_value: "high", to: "user_id" }],
+  };
+
+  const otherBranchRequest = {
+    url: `${mockApiBaseUrl}/auth/password`,
+    method: "POST",
+    condition: {
+      operation: "ne",
+      path: "$.execution_http_requests[0].response_body.user_id",
+      value: "HIGH",
+    },
+    header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+    body_mapping_rules: [{ static_value: "other-branch", to: "username" }],
+  };
+
   beforeAll(async () => {
     const timestamp = Date.now();
     organizationId = uuidv4();
@@ -214,6 +246,53 @@ describe("Authentication Interactor: conditional http_requests (#1789)", () => {
               ],
             },
           },
+          // Branching: exactly one of [1] / [2] runs, decided by what [0] echoed back.
+          "fido-uaf-registration": {
+            request: {
+              schema: {
+                type: "object",
+                properties: { mode: { type: "string" } },
+              },
+            },
+            execution: {
+              function: "http_requests",
+              http_requests: [branchProbeRequest, highBranchRequest, otherBranchRequest],
+            },
+            response: {
+              body_mapping_rules: [
+                // Guarded: the placeholder left by a skipped request is what makes "did this slot
+                // run?" expressible from the mapping side.
+                {
+                  from: "$.execution_http_requests[1].response_body.role",
+                  to: "decision",
+                  condition: {
+                    operation: "missing",
+                    path: "$.execution_http_requests[1].skipped",
+                  },
+                },
+                {
+                  from: "$.execution_http_requests[2].response_body.user_id",
+                  to: "decision",
+                  condition: {
+                    operation: "missing",
+                    path: "$.execution_http_requests[2].skipped",
+                  },
+                },
+                // Unguarded, same two sources: writeResult puts unconditionally and the last rule
+                // wins, so the skipped slot nulls out whatever the branch that ran had written.
+                {
+                  from: "$.execution_http_requests[1].response_body.role",
+                  to: "decision_unguarded",
+                },
+                {
+                  from: "$.execution_http_requests[2].response_body.user_id",
+                  to: "decision_unguarded",
+                },
+                { from: "$.execution_http_requests[1]", to: "slot_high" },
+                { from: "$.execution_http_requests[2]", to: "slot_other" },
+              ],
+            },
+          },
         },
       },
     });
@@ -323,5 +402,62 @@ describe("Authentication Interactor: conditional http_requests (#1789)", () => {
     // ...so the third request is still reachable at [2]. If the skip had compacted the list this
     // would be undefined, because [2] would no longer exist.
     expect(response.data.third_birthdate).toBe("2000-02-02");
+  });
+
+  /**
+   * "Run either B or C after A" — the shape the placeholder design has to support.
+   *
+   * <p>Both slots survive in `execution_http_requests`, so collapsing the two branches into one
+   * output key needs the mapping rules gated too: `writeResult` puts unconditionally and the last
+   * rule wins, so the skipped branch would null out whatever the branch that ran had written.
+   * `decision_unguarded` is the same two rules without the gate, kept here so the failure mode is
+   * visible next to the fix rather than described in a comment.
+   */
+  async function runBranch(mode) {
+    const authId = await startAuthorizationAndRegister();
+
+    const challengeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/fido-uaf-registration-challenge`,
+      body: {},
+    });
+    expect(challengeResponse.status).toBe(200);
+
+    const response = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/fido-uaf-registration`,
+      body: { mode },
+    });
+    console.log(`Branch (mode=${mode}):`, JSON.stringify(response.data, null, 2));
+    expect(response.status).toBe(200);
+    return response.data;
+  }
+
+  it("runs exactly one of two mutually exclusive branches (mode=HIGH)", async () => {
+    const data = await runBranch("HIGH");
+
+    expect(data.slot_high.skipped).toBeUndefined();
+    expect(data.slot_other).toEqual({ skipped: true });
+
+    // /user/details answers role=Administrator for the HIGH branch.
+    expect(data.decision).toBe("Administrator");
+  });
+
+  it("runs exactly one of two mutually exclusive branches (mode=LOW)", async () => {
+    const data = await runBranch("LOW");
+
+    expect(data.slot_high).toEqual({ skipped: true });
+    expect(data.slot_other.skipped).toBeUndefined();
+
+    // /auth/password echoes the username the other branch sent.
+    expect(data.decision).toBe("other-branch");
+  });
+
+  it("shows why the mapping rules need the same gate", async () => {
+    // HIGH ran slot [1], so the guarded rules keep its value...
+    const data = await runBranch("HIGH");
+    expect(data.decision).toBe("Administrator");
+
+    // ...while the ungated pair lets the rule for the skipped slot [2] overwrite it. Pinned so the
+    // recipe in the docs is not just an assertion about how the mapper behaves.
+    expect(data.decision_unguarded).toBeNull();
   });
 });
