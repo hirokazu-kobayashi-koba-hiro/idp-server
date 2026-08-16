@@ -171,8 +171,23 @@ executor の結果は `execution_http_request` でラップされる。
 ```
 $.request_body          → クライアントからのリクエストボディ
 $.request_attributes    → HTTP リクエスト属性
+                          ip_address / user_agent / resource / action / request_url / headers
 $.interaction           → previous_interaction で取得した前のインタラクションの保存データ
                           ※ $.previous_interaction ではない
+$.user                  → 認証済みユーザーの許可リスト投影（external-api-authentication のみ）
+```
+
+`$.user` は `external-api-authentication` の interaction でのみ注入される（`ExternalApiAuthenticationInteractor` が唯一の設定元）。他の interactor（password 等）では**キー自体が存在しない**ため、書いても解決しない。
+
+公開されるのは `sub` / `provider_id` / `email` / `phone_number` / `name` / `given_name` / `family_name` / `middle_name` / `roles` / `custom_properties` のみ。パスワードハッシュ・認証情報・`verified_claims` は含まれない。1要素目ではユーザーが未確立のため空になる。
+
+```json
+"http_request": {
+  "body_mapping_rules": [
+    { "from": "$.user.sub", "to": "user_id" },
+    { "from": "$.user.custom_properties.rank", "to": "rank" }
+  ]
+}
 ```
 
 ```json
@@ -385,8 +400,26 @@ header_mapping_rules で使える関数:
 | 関数 | 用途 | 例 |
 |------|------|-----|
 | `format` | テンプレート置換 | `"Bearer {{value}}"` |
+| `base64` | Base64 エンコード（RFC 4648） | Basic 認証ヘッダーの組み立て |
 | `random_string` | ランダム文字列生成 | リクエストID、Nonce |
 | `now` | 現在時刻 | タイムスタンプ |
+
+`auth_type` に `basic` は無い。Basic 認証は `base64` + `format` で組み立てる。設定には生の資格情報を置ける。
+
+```json
+{
+  "static_value": "<client_id>:<client_secret>",
+  "to": "Authorization",
+  "functions": [
+    { "name": "base64" },
+    { "name": "format", "args": { "template": "Basic {{value}}" } }
+  ]
+}
+```
+
+`base64` の引数は `url_safe`（既定 `false`）/ `padding`（既定 `true`）/ `charset`（既定 `UTF-8`）。`url_safe: true` + `padding: false` が Base64URL。
+
+> `auth_type` が `none` 以外だと、`oauth2` は Bearer トークン、`hmac_sha256` は署名値で `Authorization` を**上書きする**。Basic を使う場合は `auth_type` を `none` にすること。
 
 ### エラーハンドリング
 

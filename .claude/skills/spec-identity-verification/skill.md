@@ -186,6 +186,7 @@ eKYC機能を有効にするには、認可サーバーに以下の設定が必�
 | 関数 | 用途 |
 |------|------|
 | `mimeEncodedWord` | RFC 2047 MIMEエンコード |
+| `base64` | Base64 エンコード（RFC 4648）。引数 `url_safe` / `padding` / `charset` |
 
 ### 関数チェーン
 

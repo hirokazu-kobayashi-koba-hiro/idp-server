@@ -392,13 +392,17 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
 
     User transactionUser = transaction.user();
 
-    // Verify external API response matches the authenticated user
+    // Verify external API response matches the authenticated user.
+    //
+    // Issue #1767 deliberately does NOT inject $.user here. The mapped user is only ever the
+    // subject of the identity comparison below and is discarded afterwards, so exposing $.user
+    // would buy nothing — while a rule such as {"from": "$.user.email", "to": "email"} would make
+    // the comparison read the authenticated user on both sides and always match, silently
+    // disabling the CWE-287 guard. The same principle the 1st factor follows: the value an
+    // identity decision is made on must not be derived from $.user.
     Map<String, Object> mappingSource = new HashMap<>();
     mappingSource.put("request_body", request.toMap());
     mappingSource.putAll(executionResult.contents());
-    // Issue #1767: same $.user.* projection the external request already receives (#1439), so the
-    // notation means one thing across body_mapping_rules and user_mapping_rules.
-    mappingSource.put("user", ExternalRequestUserContextCreator.create(transactionUser));
     User externalUser = toUser(userMappingRules, mappingSource);
 
     if (!matchesTransactionUser(transactionUser, externalUser, identityMatchField)) {
@@ -476,6 +480,12 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
 
     mappingSource.put("user", ExternalRequestUserContextCreator.create(existingUser));
     User user = toUser(userMappingRules, mappingSource);
+
+    // The user we bind must be the one we looked up: pin the lookup key from the first pass so a
+    // rule reading it from $.user cannot make "the key we searched by" and "the key we store"
+    // disagree, which would silently register a duplicate on the next login.
+    user.setProviderId(lookupKeyUser.providerId());
+    user.setExternalUserId(lookupKeyUser.externalUserId());
 
     if (existingUser.exists()) {
       log.debug(

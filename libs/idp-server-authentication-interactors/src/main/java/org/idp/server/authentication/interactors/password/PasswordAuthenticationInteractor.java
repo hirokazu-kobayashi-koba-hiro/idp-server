@@ -581,6 +581,12 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
     mappingSource.put("user", ExternalRequestUserContextCreator.create(existingUser));
     User user = toUser(userMappingRules, mappingSource);
 
+    // The user we bind must be the one we looked up: pin the lookup key from the first pass so a
+    // rule reading it from $.user cannot make "the key we searched by" and "the key we store"
+    // disagree, which would silently register a duplicate on the next login.
+    user.setProviderId(lookupKeyUser.providerId());
+    user.setExternalUserId(lookupKeyUser.externalUserId());
+
     if (existingUser.exists()) {
       log.debug(
           "Existing user found by externalUserId. providerId={}, externalUserId={}, sub={}",
