@@ -444,7 +444,17 @@ $.execution_http_requests[1].response_body.*    → 2番目のAPIのレスポン
 | `$.interaction` | `previous_interaction` 設定時のみ | ✅ | ✕ |
 | `$.execution_http_requests` | **2本目以降のリクエストのみ** | ✅ | ✅ |
 
-1本目の condition で `$.execution_http_requests` を書くと常に null → 常にスキップ（#1646 で無言）。federation は条件側が `$.execution_http_requests`、`userinfo_mapping_rules` 側が `$.userinfo_execution_http_requests` で**接頭辞が違う**。
+`$.request_body` / `$.request_attributes` は最初からあるので **1本目を条件付きにできる**（e2e 実測済み）。一方 `$.execution_http_requests` を1本目で書くと常に null → 常にスキップ（#1646 で無言）。federation は条件側が `$.execution_http_requests`、`userinfo_mapping_rules` 側が `$.userinfo_execution_http_requests` で**接頭辞が違う**。
+
+`$.user` は `setTransactionUser` を無条件に呼ぶが、投影が空なら `hasTransactionUser()`（`isEmpty` 判定）が false でキーごと入らない。よって「使えない」ではなく**演算子ごとに倒れ方が変わる**。
+
+| 条件 | 未確立 | 確立済み |
+|------|:------:|:--------:|
+| `exists $.user.sub` | スキップ | 実行 |
+| `missing $.user.sub` | 実行 | スキップ |
+| `eq $.user.email` | スキップ | 値で判定 |
+
+`missing` で「まだユーザーが確立していないときだけ呼ぶ」も書ける。値の中身もそのまま `body_mapping_rules` に載せられる（e2e `integration-04` で登録メールのエコーを固定）。
 
 **HTTP エラーのガードには不要。** 前段が 4xx/5xx なら後段はもともと実行されない（早期終了）。`condition` の出番は「前段は成功扱いだが後段を呼びたくない」場合のみ。「200 だがボディが業務エラー」は `response_resolve_configs`（interaction 全体を失敗にする）と `condition`（成功のまま後段だけ省く）の使い分け。
 

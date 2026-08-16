@@ -105,6 +105,47 @@ describe("Authentication Interactor: conditional http_requests (#1789)", () => {
     body_mapping_rules: [{ static_value: "other-branch", to: "username" }],
   };
 
+  // Branching on the request itself, with no earlier response to look at: the very first request
+  // is conditional. $.request_body is one of the two keys available before anything has run.
+  const requestBranchInteraction = "request_branch";
+  const requestBranchRequests = [
+    {
+      url: `${mockApiBaseUrl}/user/details`,
+      method: "POST",
+      condition: { operation: "eq", path: "$.request_body.mode", value: "A" },
+      header_mapping_rules: [{ static_value: "test-client-id", to: "x-client-id" }],
+      body_mapping_rules: [{ static_value: "branch-a", to: "user_id" }],
+    },
+    {
+      url: `${mockApiBaseUrl}/auth/password`,
+      method: "POST",
+      condition: { operation: "ne", path: "$.request_body.mode", value: "A" },
+      header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+      body_mapping_rules: [{ static_value: "branch-b", to: "username" }],
+    },
+  ];
+
+  // $.user is the allow-listed projection of the authenticated user. It is absent until one is
+  // established, so a condition on it behaves differently on a 1st and a 2nd factor.
+  const userBranchInteraction = "user_branch";
+  const userBranchRequests = [
+    {
+      url: `${mockApiBaseUrl}/auth/password`,
+      method: "POST",
+      condition: { operation: "exists", path: "$.user.sub" },
+      header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+      // Echoing the projection back proves the value is usable, not merely present.
+      body_mapping_rules: [{ from: "$.user.email", to: "username" }],
+    },
+    {
+      url: `${mockApiBaseUrl}/auth/password`,
+      method: "POST",
+      condition: { operation: "missing", path: "$.user.sub" },
+      header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+      body_mapping_rules: [{ static_value: "no-user", to: "username" }],
+    },
+  ];
+
   beforeAll(async () => {
     const timestamp = Date.now();
     organizationId = uuidv4();
@@ -297,6 +338,87 @@ describe("Authentication Interactor: conditional http_requests (#1789)", () => {
       },
     });
 
+    // external-api-authentication without user_resolve returns the execution result as-is, and its
+    // interaction names are free-form — the smallest way to exercise a chain that starts with a
+    // conditional request.
+    await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-configurations`,
+      headers: { Authorization: `Bearer ${adminAccessToken}` },
+      body: {
+        id: uuidv4(),
+        type: "external-api-authentication",
+        attributes: {},
+        metadata: { type: "external", description: "branch on request content" },
+        interactions: {
+          [userBranchInteraction]: {
+            request: {
+              schema: {
+                type: "object",
+                required: ["interaction"],
+                properties: { interaction: { type: "string" } },
+              },
+            },
+            execution: {
+              function: "http_requests",
+              http_requests: userBranchRequests,
+            },
+            response: {
+              body_mapping_rules: [
+                { from: "$.execution_http_requests[0]", to: "slot_with_user" },
+                { from: "$.execution_http_requests[1]", to: "slot_without_user" },
+                {
+                  from: "$.execution_http_requests[0].response_body.user_id",
+                  to: "echoed_email",
+                  condition: {
+                    operation: "missing",
+                    path: "$.execution_http_requests[0].skipped",
+                  },
+                },
+              ],
+            },
+          },
+          [requestBranchInteraction]: {
+            request: {
+              schema: {
+                type: "object",
+                required: ["interaction"],
+                properties: {
+                  interaction: { type: "string" },
+                  mode: { type: "string" },
+                },
+              },
+            },
+            execution: {
+              function: "http_requests",
+              http_requests: requestBranchRequests,
+            },
+            response: {
+              body_mapping_rules: [
+                {
+                  from: "$.execution_http_requests[0].response_body.role",
+                  to: "picked",
+                  condition: {
+                    operation: "missing",
+                    path: "$.execution_http_requests[0].skipped",
+                  },
+                },
+                {
+                  from: "$.execution_http_requests[1].response_body.user_id",
+                  to: "picked",
+                  condition: {
+                    operation: "missing",
+                    path: "$.execution_http_requests[1].skipped",
+                  },
+                },
+                { from: "$.execution_http_requests[0]", to: "slot_a" },
+                { from: "$.execution_http_requests[1]", to: "slot_b" },
+              ],
+            },
+          },
+        },
+      },
+    });
+
     await postWithJson({
       url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/authentication-policies`,
       headers: { Authorization: `Bearer ${adminAccessToken}` },
@@ -309,7 +431,7 @@ describe("Authentication Interactor: conditional http_requests (#1789)", () => {
             description: "password_then_fido_uaf",
             priority: 10,
             conditions: { scopes: ["openid"] },
-            available_methods: ["password", "fido-uaf"],
+            available_methods: ["password", "fido-uaf", "external-api"],
             success_conditions: {
               any_of: [
                 [
@@ -375,11 +497,11 @@ describe("Authentication Interactor: conditional http_requests (#1789)", () => {
     });
     expect(registrationResponse.status).toBe(200);
 
-    return authId;
+    return { authId, userEmail };
   }
 
   it("does not send a request whose condition is false, and keeps its slot in execution_http_requests", async () => {
-    const authId = await startAuthorizationAndRegister();
+    const { authId } = await startAuthorizationAndRegister();
 
     const response = await postWithJson({
       url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/fido-uaf-registration-challenge`,
@@ -414,7 +536,7 @@ describe("Authentication Interactor: conditional http_requests (#1789)", () => {
    * visible next to the fix rather than described in a comment.
    */
   async function runBranch(mode) {
-    const authId = await startAuthorizationAndRegister();
+    const { authId } = await startAuthorizationAndRegister();
 
     const challengeResponse = await postWithJson({
       url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/fido-uaf-registration-challenge`,
@@ -459,5 +581,62 @@ describe("Authentication Interactor: conditional http_requests (#1789)", () => {
     // ...while the ungated pair lets the rule for the skipped slot [2] overwrite it. Pinned so the
     // recipe in the docs is not just an assertion about how the mapper behaves.
     expect(data.decision_unguarded).toBeNull();
+  });
+
+  /**
+   * The chain's *first* request is conditional, decided by what the client sent. Nothing has run
+   * yet, so this only works because `$.request_body` is available from the start — unlike
+   * `$.execution_http_requests`, which does not exist until the first request has answered.
+   */
+  async function runRequestBranch(mode) {
+    const { authId } = await startAuthorizationAndRegister();
+
+    const response = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: { interaction: requestBranchInteraction, mode },
+    });
+    console.log(`Request branch (mode=${mode}):`, JSON.stringify(response.data, null, 2));
+    expect(response.status).toBe(200);
+    return response.data;
+  }
+
+  it("branches on the request body, with the first request itself conditional (mode=A)", async () => {
+    const data = await runRequestBranch("A");
+
+    expect(data.slot_a.skipped).toBeUndefined();
+    expect(data.slot_b).toEqual({ skipped: true });
+    expect(data.picked).toBe("Administrator");
+  });
+
+  it("branches on the request body, with the first request itself conditional (mode=B)", async () => {
+    const data = await runRequestBranch("B");
+
+    // The first configured request was skipped, so [0] is the placeholder and [1] still holds the
+    // second configured request — the slot numbering does not shift to fill the gap.
+    expect(data.slot_a).toEqual({ skipped: true });
+    expect(data.slot_b.skipped).toBeUndefined();
+    expect(data.picked).toBe("branch-b");
+  });
+
+  /**
+   * `$.user` exists only once a user has been established — `setTransactionUser` always runs but
+   * the projection is empty before then, and an empty map is not put into the context at all.
+   * Here the flow registers a user first, so the `exists` branch is the one that runs.
+   */
+  it("branches on $.user once a user is established, and carries its values", async () => {
+    const { authId, userEmail } = await startAuthorizationAndRegister();
+
+    const response = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: { interaction: userBranchInteraction },
+    });
+    console.log("User branch:", JSON.stringify(response.data, null, 2));
+    expect(response.status).toBe(200);
+
+    expect(response.data.slot_with_user.skipped).toBeUndefined();
+    expect(response.data.slot_without_user).toEqual({ skipped: true });
+
+    // The projection is not just present — its values reach the outgoing request.
+    expect(response.data.echoed_email).toBe(userEmail);
   });
 });
