@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.platform.json.JsonReadable;
+import org.idp.server.platform.mapper.ConditionSpec;
 import org.idp.server.platform.mapper.MappingRule;
 import org.idp.server.platform.oauth.OAuthAuthorizationConfiguration;
 
@@ -38,6 +39,7 @@ public class HttpRequestExecutionConfig
   HttpRetryConfiguration retryConfiguration = HttpRetryConfiguration.noRetry();
   HttpResponseResolveConfigs responseResolveConfigs = new HttpResponseResolveConfigs();
   Integer requestTimeoutSeconds;
+  ConditionSpec condition;
 
   public HttpRequestExecutionConfig() {}
 
@@ -196,6 +198,22 @@ public class HttpRequestExecutionConfig
     if (hasRetryConfiguration()) map.put("retry_configuration", retryConfiguration.toMap());
     if (hasRequestTimeout()) map.put("request_timeout_seconds", requestTimeoutSeconds);
     if (hasResponseConfigs()) map.put("response_resolve_configs", responseResolveConfigsMap());
+    if (hasCondition()) map.put("condition", condition.toMap());
     return map;
+  }
+
+  /**
+   * Gate for running this request at all, evaluated against the executor's context (#1789).
+   *
+   * <p>Only the executors that run a <em>list</em> of requests honour this — {@code http_requests}
+   * on an authentication interaction and on federation userinfo. A single {@code http_request} has
+   * nothing to branch on, so a condition there is inert.
+   */
+  public ConditionSpec condition() {
+    return condition;
+  }
+
+  public boolean hasCondition() {
+    return condition != null;
   }
 }

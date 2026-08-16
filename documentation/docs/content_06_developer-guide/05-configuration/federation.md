@@ -319,6 +319,30 @@ Provider IdPがidp-serverの場合、**Provider側の認可サーバーに`claim
 }
 ```
 
+#### condition: 条件付き実行
+
+各リクエストに `condition` を書くと、false のときそのリクエストを**送らずにスキップ**します。前段の応答で後段を呼ぶかどうかを決められます。
+
+```json
+{
+  "url": "${EXTERNAL_API_URL}/profile",
+  "method": "GET",
+  "condition": {
+    "operation": "eq",
+    "path": "$.execution_http_requests[0].response_body.account_type",
+    "value": "PREMIUM"
+  }
+}
+```
+
+条件の中で前段を参照するパスは `$.execution_http_requests[...]` です（`userinfo_mapping_rules` 側の `$.userinfo_execution_http_requests[...]` とは接頭辞が異なります。実行中のコンテキストと、実行完了後のマッピングコンテキストで別のキーを使うため）。
+
+**スキップしても添字は詰まりません。** `userinfo_execution_http_requests[N]` は「**設定の N 番目**」を指し、スキップされた枠には `{"skipped": true}` が入ります。条件の真偽で `userinfo_mapping_rules` の参照先がずれることはありません。
+
+:::warning 条件の評価に失敗するとスキップされます
+パス誤りや型不一致で評価が壊れた場合、warn ログを出して「実行しない」と判定されます。設定ミスが**静かなスキップ**として現れる点にご注意ください。
+:::
+
 **重要**:
 - `userinfo_execution_http_requests[0]` - 1番目のAPIレスポンス
 - `userinfo_execution_http_requests[1]` - 2番目のAPIレスポンス

@@ -151,6 +151,44 @@ External Token認証で受け付けるリクエストの構造：
 | `method` | HTTPメソッド（POST/GET等） |
 | `header_mapping_rules` | HTTPヘッダーのマッピングルール |
 | `body_mapping_rules` | リクエストボディのマッピングルール |
+| `condition` | このリクエストを送るかどうかの条件（省略時は無条件で実行）|
+
+#### condition: 条件付き実行
+
+前段の応答に応じて後段を呼ぶかどうかを切り替えられます。false のときそのリクエストは**送られません**。
+
+```json
+"http_requests": [
+  { "url": "https://api.example.com/assess", "method": "POST" },
+  {
+    "url": "https://api.example.com/notify",
+    "method": "POST",
+    "condition": {
+      "operation": "eq",
+      "path": "$.execution_http_requests[0].response_body.result",
+      "value": "HIGH"
+    }
+  }
+]
+```
+
+評価コンテキストは mapping rule と同じです（`$.request_body` / `$.request_attributes` / `$.user` / `$.interaction` / `$.execution_http_requests`）。
+
+**スキップしても添字は詰まりません。** `execution_http_requests[N]` は「**設定の N 番目**」を指し、スキップされた枠には `{"skipped": true}` が入ります。
+
+| 設定 | `execution_http_requests` |
+|------|---------------------------|
+| `[A, B(条件false), C]` | `[0]`=A の結果 / `[1]`=`{"skipped": true}` / `[2]`=C の結果 |
+
+条件の真偽で後続の参照パスが変わらないため、`$.execution_http_requests[2]` は常に3番目の設定を指します。
+
+:::warning 条件の評価に失敗するとスキップされます
+パス誤りや型不一致で評価が壊れた場合、warn ログを出して「実行しない」と判定されます。無条件実行に倒れるより安全ですが、設定ミスが**静かなスキップ**として現れる点にご注意ください。
+:::
+
+:::info 単発の http_request では無視されます
+`condition` は `http_request` / `http_requests` 共通の設定クラスのフィールドなので単発側にも書けますが、分岐する相手がいないため効果はありません。
+:::
 
 ### Mapping Functions
 

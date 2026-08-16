@@ -31,6 +31,7 @@ import org.idp.server.platform.http.*;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -41,6 +42,7 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
   AuthenticationInteractionQueryRepository interactionQueryRepository;
   HttpRequestExecutor httpRequestExecutor;
   JsonConverter jsonConverter;
+  LoggerWrapper log = LoggerWrapper.getLogger(HttpRequestsAuthenticationExecutor.class);
 
   public HttpRequestsAuthenticationExecutor(
       AuthenticationInteractionCommandRepository interactionCommandRepository,
@@ -88,29 +90,32 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
 
     List<HttpRequestExecutionConfig> httpRequestExecutionConfigs = configuration.httpRequests();
 
-    List<HttpRequestResult> httpRequestResults = new ArrayList<>();
+    // One entry per *configured* request, skipped ones included (#1789). See skippedRecord().
+    List<Map<String, Object>> executionRecords = new ArrayList<>();
     for (HttpRequestExecutionConfig httpRequestExecutionConfig : httpRequestExecutionConfigs) {
+
+      if (shouldSkip(httpRequestExecutionConfig, param)) {
+        executionRecords.add(skippedRecord());
+        param.put("execution_http_requests", List.copyOf(executionRecords));
+        continue;
+      }
 
       HttpRequestBaseParams httpRequestBaseParams = new HttpRequestBaseParams(param);
       HttpRequestResult executionResult =
           httpRequestExecutor.execute(httpRequestExecutionConfig, httpRequestBaseParams);
 
-      httpRequestResults.add(executionResult);
+      executionRecords.add(executionResult.toMap());
 
       // If error occurs, return immediately with all results collected so far
       if (executionResult.isClientError() || executionResult.isServerError()) {
-        return createErrorResult(httpRequestResults, executionResult);
+        return createErrorResult(executionRecords, executionResult);
       }
 
-      param.put(
-          "execution_http_requests",
-          httpRequestResults.stream().map(HttpRequestResult::toMap).toList());
+      param.put("execution_http_requests", List.copyOf(executionRecords));
     }
 
     Map<String, Object> results = new HashMap<>();
-    results.put(
-        "execution_http_requests",
-        httpRequestResults.stream().map(HttpRequestResult::toMap).toList());
+    results.put("execution_http_requests", List.copyOf(executionRecords));
 
     if (configuration.hasHttpRequestsStore()) {
       AuthenticationExecutionStoreConfig httpRequestStore = configuration.httpRequestsStore();
@@ -140,11 +145,51 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
    * place.
    */
   private AuthenticationExecutionResult createErrorResult(
-      List<HttpRequestResult> httpResults, HttpRequestResult failedResult) {
+      List<Map<String, Object>> executionRecords, HttpRequestResult failedResult) {
     Map<String, Object> response = new HashMap<>();
-    response.put(
-        "execution_http_requests", httpResults.stream().map(HttpRequestResult::toMap).toList());
+    response.put("execution_http_requests", List.copyOf(executionRecords));
 
     return AuthenticationExecutionResult.error(failedResult.statusCode(), response);
+  }
+
+  /**
+   * Decides whether the configured {@code condition} lets this request run (#1789).
+   *
+   * <p>Evaluated against the same context the mapping rules see — {@code $.request_body} / {@code
+   * $.request_attributes} / {@code $.user} / {@code $.interaction} / {@code
+   * $.execution_http_requests} — so a request can be gated on what an earlier one answered. No
+   * condition means run, which is what every configuration written before this existed says.
+   */
+  private boolean shouldSkip(HttpRequestExecutionConfig config, Map<String, Object> param) {
+    if (!config.hasCondition()) {
+      return false;
+    }
+
+    JsonNodeWrapper contextNode = JsonNodeWrapper.fromMap(param);
+    JsonPathWrapper contextPath = new JsonPathWrapper(contextNode.toJson());
+    boolean satisfied = config.condition().evaluate(contextPath);
+
+    if (!satisfied) {
+      log.debug(
+          "Skipping http request due to condition evaluation. url={}, condition={}",
+          config.httpRequestUrl().value(),
+          config.condition().toMap());
+    }
+    return !satisfied;
+  }
+
+  /**
+   * Placeholder kept in place of a skipped request.
+   *
+   * <p>{@code execution_http_requests[N]} means "the Nth configured request", not "the Nth request
+   * that ran". Dropping the entry would renumber everything after it, so a mapping rule pointing at
+   * a later request would read a different one depending on whether the condition happened to hold
+   * — and a JSONPath that lands on the wrong request resolves to null rather than failing (#1646),
+   * so nothing would report it.
+   */
+  private Map<String, Object> skippedRecord() {
+    Map<String, Object> record = new HashMap<>();
+    record.put("skipped", true);
+    return record;
   }
 }

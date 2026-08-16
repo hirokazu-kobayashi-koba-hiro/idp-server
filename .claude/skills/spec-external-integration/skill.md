@@ -413,6 +413,49 @@ $.execution_http_requests[0].response_headers.* → 1番目のAPIのレスポン
 $.execution_http_requests[1].response_body.*    → 2番目のAPIのレスポンスボディ
 ```
 
+### 条件付き実行（#1789）
+
+各リクエストに `condition`（`ConditionSpec`）を書くと、false のときそのリクエストを**送らずにスキップ**する。前段の応答で後段を呼ぶか決められる。
+
+```json
+"http_requests": [
+  { "url": "https://api.example.com/assess", "method": "POST" },
+  {
+    "url": "https://api.example.com/notify",
+    "method": "POST",
+    "condition": {
+      "operation": "eq",
+      "path": "$.execution_http_requests[0].response_body.result",
+      "value": "HIGH"
+    }
+  }
+]
+```
+
+評価コンテキストは mapping rule と同じ（`$.request_body` / `$.request_attributes` / `$.user` / `$.interaction` / `$.execution_http_requests`）。`condition` 未指定は無条件実行（後方互換）。
+
+**添字はスキップしても詰まらない。** `execution_http_requests[N]` は「**設定の N 番目**」であって「実行された N 番目」ではない。スキップされた枠には `{"skipped": true}` が入る。
+
+```
+設定: [A, B(条件false), C]
+  $.execution_http_requests[0] → A の結果
+  $.execution_http_requests[1] → {"skipped": true}
+  $.execution_http_requests[2] → C の結果   ← 条件の真偽で位置が変わらない
+```
+
+詰める設計にすると、条件が false のときだけ後続の mapping が別のリクエストを読むことになり、しかも外れた JSONPath は例外でなく null になる（#1646）ので誰も気づけない。
+
+| 適用される executor | 設定キー |
+|---|---|
+| 認証 interaction（`HttpRequestsAuthenticationExecutor`）| `execution.http_requests[]` |
+| federation userinfo（`UserinfoHttpRequestsExecutor`）| `userinfo_execution.http_requests[]` |
+
+`condition` は共有クラス `HttpRequestExecutionConfig` のフィールドなので**単発の `http_request` にも書けてしまうが、そこでは無視される**（分岐する相手がいないため）。
+
+:::warning 条件の評価に失敗するとスキップされる
+`ConditionSpec.evaluate()` は例外時に warn ログを出して `false` を返す。パス誤り・型不一致などで評価が壊れると「実行しない」に倒れる。無条件実行に倒れるより安全だが、設定ミスが**静かなスキップ**として現れる点に注意。
+:::
+
 ### レスポンスマッピング
 
 `http_requests` の場合、`response.body_mapping_rules` では全ステップの結果を参照できる:
