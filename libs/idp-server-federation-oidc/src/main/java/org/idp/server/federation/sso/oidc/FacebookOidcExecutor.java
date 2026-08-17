@@ -120,16 +120,23 @@ public class FacebookOidcExecutor implements OidcSsoExecutor {
 
       JsonNodeWrapper json = httpResult.body();
       HashMap<String, Object> map = new HashMap<>();
+      map.put("status_code", httpResult.statusCode());
+      // DEPRECATED: misspelling of status_code, kept for compatibility. Remove in v1.0.0.
+      //
+      // It was the only name available, so a userinfo_mapping_rule out there may read it — and a
+      // path that stops resolving fails silently as null (#1646) rather than erroring. Nothing in
+      // this repository references it and no documentation ever showed it, so the risk is limited
+      // to rules written against the typo directly.
       map.put("staus_code", httpResult.statusCode());
       map.put("response_headers", httpResult.headers());
       map.put("response_body", json.toMap());
 
-      if (httpResult.statusCode() >= 400 && httpResult.statusCode() < 500) {
-        return UserinfoExecutionResult.clientError(map);
-      }
-
-      if (httpResult.statusCode() >= 500) {
-        return UserinfoExecutionResult.serverError(map);
+      // #1800: carry the status the IdP answered. clientError() / serverError() flattened it to
+      // 400 / 500, so a rate limited (429) or briefly unavailable (503) upstream was
+      // indistinguishable from a malformed request. This type has no response_resolve_configs to
+      // fall back on — the upstream's own status is the only signal there is.
+      if (httpResult.statusCode() >= 400) {
+        return UserinfoExecutionResult.error(httpResult.statusCode(), map);
       }
 
       return UserinfoExecutionResult.success(Map.of("http_request", map));

@@ -77,9 +77,14 @@ public enum UserinfoExecutionStatus {
    * Maps an HTTP status code onto this enum.
    *
    * <p>Codes with no constant fall back to their class, so an unlisted 4xx / 5xx is still reported
-   * as a failure rather than throwing.
+   * as a failure rather than throwing. Any 2xx collapses to {@code OK}, matching {@link
+   * org.idp.server.core.openid.federation.FederationInteractionStatus} — without it a 204 would
+   * become {@code SERVER_ERROR}, which is the wrong default for a value this permissive to produce.
    */
   public static UserinfoExecutionStatus fromStatusCode(int statusCode) {
+    if (statusCode >= 200 && statusCode <= 299) {
+      return OK;
+    }
     for (UserinfoExecutionStatus status : values()) {
       if (status.statusCode == statusCode) {
         return status;

@@ -86,7 +86,14 @@ class UserinfoExecutionStatusTest {
           UserinfoExecutionStatus.TOO_MANY_REQUESTS, UserinfoExecutionStatus.fromStatusCode(429));
       assertEquals(
           UserinfoExecutionStatus.SERVICE_UNAVAILABLE, UserinfoExecutionStatus.fromStatusCode(503));
+    }
+
+    @Test
+    void collapsesAny2xxToOk() {
+      // Kept consistent with FederationInteractionStatus: without this a 204 would land in
+      // SERVER_ERROR, and error(int, Map) is public enough that a 2xx will eventually reach it.
       assertEquals(UserinfoExecutionStatus.OK, UserinfoExecutionStatus.fromStatusCode(200));
+      assertEquals(UserinfoExecutionStatus.OK, UserinfoExecutionStatus.fromStatusCode(204));
     }
 
     @Test
