@@ -120,16 +120,21 @@ public class FacebookOidcExecutor implements OidcSsoExecutor {
 
       JsonNodeWrapper json = httpResult.body();
       HashMap<String, Object> map = new HashMap<>();
-      map.put("staus_code", httpResult.statusCode());
-      map.put("response_headers", httpResult.headers());
+      map.put("status_code", httpResult.statusCode());
+      // Single value per header, matching what oauth-extension exposes via
+      // HttpRequestResult#toMap. Raw headers() would put a List here, so the same
+      // $.http_request.response_headers.* would read "application/json" on one provider type and
+      // ["application/json"] on another — and a mapping rule copying that into a claim would carry
+      // the array through (#1800).
+      map.put("response_headers", httpResult.headersAsSingleValueMap());
       map.put("response_body", json.toMap());
 
-      if (httpResult.statusCode() >= 400 && httpResult.statusCode() < 500) {
-        return UserinfoExecutionResult.clientError(map);
-      }
-
-      if (httpResult.statusCode() >= 500) {
-        return UserinfoExecutionResult.serverError(map);
+      // #1800: carry the status the IdP answered. clientError() / serverError() flattened it to
+      // 400 / 500, so a rate limited (429) or briefly unavailable (503) upstream was
+      // indistinguishable from a malformed request. This type has no response_resolve_configs to
+      // fall back on — the upstream's own status is the only signal there is.
+      if (httpResult.statusCode() >= 400) {
+        return UserinfoExecutionResult.error(httpResult.statusCode(), map);
       }
 
       return UserinfoExecutionResult.success(Map.of("http_request", map));

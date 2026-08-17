@@ -60,6 +60,8 @@ libs/
 | `oauth-extension` (単一) | `$.userinfo_execution_http_request.response_body.{field}` | http_request使用時 |
 | `oauth-extension` (複数) | `$.userinfo_execution_http_requests[index].response_body.{field}` | http_requests使用時 |
 
+`standard` / `facebook` はボディ以外に `$.http_request.status_code` / `$.http_request.response_headers.*` も参照できる。#1800 で2点変更: `status_code` は以前 **`staus_code`** というタイポだった（旧キーは削除済み）。`response_headers.*` は配列だったが `oauth-extension` に揃えて文字列にした。
+
 `http_requests` の各要素に `condition` を書くと false のとき送信をスキップできる（#1789）。条件の中で前段を参照するパスは **`$.execution_http_requests[...]`**（実行中コンテキスト）で、`userinfo_mapping_rules` の `$.userinfo_execution_http_requests[...]`（実行後コンテキスト）とは接頭辞が違う。スキップしても添字は詰まらず、枠には `{"skipped": true}` が入る。詳細は skill: `spec-external-integration` の「条件付き実行」。
 
 ### 実装の流れ

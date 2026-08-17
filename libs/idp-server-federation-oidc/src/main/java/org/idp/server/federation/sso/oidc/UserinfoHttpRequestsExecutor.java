@@ -75,12 +75,10 @@ public class UserinfoHttpRequestsExecutor implements UserinfoExecutor {
       HttpRequestResult executionResult =
           httpRequestExecutor.execute(httpRequestExecutionConfig, httpRequestBaseParams);
 
-      if (executionResult.isClientError()) {
-        return UserinfoExecutionResult.clientError(executionResult.body().toMap());
-      }
-
-      if (executionResult.isServerError()) {
-        return UserinfoExecutionResult.serverError(executionResult.body().toMap());
+      // #1800: carry the resolved status rather than flattening it to 400 / 500.
+      if (executionResult.isClientError() || executionResult.isServerError()) {
+        return UserinfoExecutionResult.error(
+            executionResult.statusCode(), executionResult.body().toMap());
       }
 
       executionRecords.add(executionResult.toMap());
@@ -150,8 +148,8 @@ public class UserinfoHttpRequestsExecutor implements UserinfoExecutor {
    * <p>Kept identical to {@code HttpRequestsAuthenticationExecutor}. Failing costs no
    * compatibility: this state is unreachable without {@code condition}, which arrives with #1789.
    *
-   * <p>Note that the status is flattened to 500 here because {@code UserinfoExecutionResult} has no
-   * way to carry an arbitrary code — see #1800.
+   * <p>500 is the right code on its own terms: nothing was requested, so there is no upstream
+   * status to report and the fault is in this server's configuration.
    */
   private UserinfoExecutionResult noExecutionResult(List<Map<String, Object>> executionRecords) {
     log.warn(
@@ -166,7 +164,7 @@ public class UserinfoHttpRequestsExecutor implements UserinfoExecutor {
         "error_description",
         "All configured http requests were skipped by their conditions. No external call was made.");
 
-    return UserinfoExecutionResult.serverError(response);
+    return UserinfoExecutionResult.error(500, response);
   }
 
   /**

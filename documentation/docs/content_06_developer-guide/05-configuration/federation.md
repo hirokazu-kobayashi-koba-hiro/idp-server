@@ -267,6 +267,21 @@ Federation認証を構成する3つの設定要素の関係を示します。
 
 ⚠️ **StandardOidcExecutor**: UserInfoレスポンスが`http_request.response_body`でラップされるため、JSONPathを調整が必要です。
 
+`standard` / `Facebook` では、レスポンスボディ以外に次も参照できます。
+
+| パス | 内容 | 値の形 |
+|------|------|--------|
+| `$.http_request.status_code` | UserInfo レスポンスのHTTPステータスコード | 数値 |
+| `$.http_request.response_headers.*` | UserInfo レスポンスヘッダー | 文字列（同名ヘッダーが複数ある場合は先頭の値）|
+
+`oauth-extension` の `$.userinfo_execution_http_requests[N].response_headers.*` と同じ形です。
+
+:::warning 以前は `staus_code` という綴りでした
+ステータスコードのキーは **`staus_code`**（タイポ）でした。`status_code` に修正し、**旧キーは削除しました**。
+
+`staus_code` を参照している `userinfo_mapping_rules` があれば `status_code` に書き換えてください。参照パスが解決しなくなってもエラーにはならず、値が null になるだけです。
+:::
+
 ##### idp-server同士のフェデレーション時の注意
 
 Provider IdPがidp-serverの場合、**Provider側の認可サーバーに`claims_supported`を設定**する必要があります：
