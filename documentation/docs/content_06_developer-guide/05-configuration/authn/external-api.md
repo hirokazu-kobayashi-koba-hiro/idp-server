@@ -248,6 +248,29 @@ idp-server が受け取ったリクエスト自体から取れる値です。RP 
 マージのため、外部IdPが返さなくなった属性や条件を満たさなくなったランク等は残り続けます。削除は管理APIのユーザー更新で行ってください。`PUT`（更新）はリクエストの内容でユーザーを組み直すため全置換、`PATCH`（部分更新）も `custom_properties` を含めた場合はそのキー集合で全置換されます。
 :::
 
+#### 認証結果は interaction ごとに記録されます
+
+1つの設定に複数の interaction を持つため、認証結果には**合計と interaction ごとの内訳の両方**が記録されます。
+
+```json
+"external-api-authentication": {
+  "success_count": 3,
+  "interactions": {
+    "password_verify": { "success_count": 1, "failure_count": 0, "call_count": 1 },
+    "risk_check":     { "success_count": 2, "failure_count": 0, "call_count": 2 }
+  }
+}
+```
+
+`authentication-policy` からは内訳を名指しで参照できます。
+
+```json
+{ "path": "$.external-api-authentication.interactions.risk_check.success_count",
+  "operation": "gte", "value": 1 }
+```
+
+合計だけを使うと「1つの interaction を複数回呼ぶ」でも条件が成立してしまうため、**多段フローで各段を必須にしたい場合は内訳を使ってください**。詳細は [Authentication Policy の設定](../authentication-policy.md#interactions%E3%81%AE%E5%86%85%E8%A8%B3) を参照してください。
+
 ### 2. 補助判定型（user_resolve なし）
 
 外部APIの結果だけを返します。リスク判定やステータスチェック等に使用します。

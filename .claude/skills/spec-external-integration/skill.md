@@ -413,6 +413,27 @@ $.execution_http_requests[0].response_headers.* → 1番目のAPIのレスポン
 $.execution_http_requests[1].response_body.*    → 2番目のAPIのレスポンスボディ
 ```
 
+### 認証結果は interaction ごとに記録（#1771）
+
+`external-api-authentication` は1設定に複数 interaction を持つため、結果は**合計 + 内訳**の2階層。
+
+```json
+"external-api-authentication": {
+  "success_count": 3,                                    // 全 interaction の合計（従来どおり）
+  "interactions": {
+    "step-a": { "success_count": 1, "failure_count": 0, "call_count": 1 },
+    "step-b": { "success_count": 2, "failure_count": 0, "call_count": 2 }
+  }
+}
+```
+
+ポリシーからは `$.external-api-authentication.interactions.step-a.success_count`（ドット記法でOK）。合計だけで `gte 3` を書くと**1つを3回呼んでも成立**するため、多段フローで各段を必須にするなら内訳を使う。
+
+- 未実行の interaction はキーが無い → path 未解決 → null → `gte` は false（fail closed、#1646）
+- 内訳を持つのは `external-api-authentication` のみ。他は 1 interactor = 1 要素なので `interactions` キー自体が出ない
+- 刻印は `ExternalApiAuthenticationInteractor#interact`（ラッパー）で出口1箇所。return が12箇所あるため各所に書くと欠落する
+- 復元経路は**2つ**（`AuthenticationInteractionResults#fromMap` = OPSession / `ModelConverter#toAuthenticationInteractionResults` = 認証トランザクションDB）。片方だけ直すとリクエストをまたいだ時点で内訳が消える
+
 ### 条件付き実行（#1789）
 
 各リクエストに `condition`（`ConditionSpec`）を書くと、false のときそのリクエストを**送らずにスキップ**する。前段の応答で後段を呼ぶか決められる。

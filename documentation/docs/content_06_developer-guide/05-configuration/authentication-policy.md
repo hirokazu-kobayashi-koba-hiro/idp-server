@@ -198,7 +198,52 @@ ACR値と認証方式のマッピング：
 | 名前空間 | 内容 | 例 |
 |---------|------|---|
 | `$.<interaction-type>.*` | 各認証方式のインタラクション結果 | `$.password-authentication.success_count` |
+| `$.<interaction-type>.interactions.<interaction>.*` | interaction ごとの内訳（`external-api-authentication` のみ）| `$.external-api-authentication.interactions.risk-check.success_count` |
 | `$.user.*` | 認証対象ユーザーの属性 | `$.user.status`, `$.user.roles` |
+
+#### `interactions.*`（interaction ごとの内訳）
+
+`external-api-authentication` は1つの設定に複数の interaction を持てますが、それらはすべて同じエンドポイントパスに届くため、`$.external-api-authentication.success_count` は**全 interaction の合計**です。
+
+そのため合計だけで条件を書くと、意図しない形で成立します。
+
+```json
+// ❌ 3つの interaction を通したいが、1つを3回呼んでも成立する
+{ "path": "$.external-api-authentication.success_count", "operation": "gte", "value": 3 }
+```
+
+interaction ごとの内訳を使えば、それぞれを名指しで要求できます。
+
+```json
+// ✅ 3つの interaction がそれぞれ1回以上成功したことを要求する
+"success_conditions": {
+  "any_of": [[
+    { "path": "$.external-api-authentication.interactions.step-a.success_count",
+      "type": "integer", "operation": "gte", "value": 1 },
+    { "path": "$.external-api-authentication.interactions.step-b.success_count",
+      "type": "integer", "operation": "gte", "value": 1 },
+    { "path": "$.external-api-authentication.interactions.step-c.success_count",
+      "type": "integer", "operation": "gte", "value": 1 }
+  ]]
+}
+```
+
+`failure_count` / `call_count` も同じ形で参照でき、interaction ごとに試行回数の上限を変えられます。
+
+| path | 内容 |
+|------|------|
+| `$.external-api-authentication.success_count` | 全 interaction の合計（従来どおり）|
+| `$.external-api-authentication.interactions.<interaction>.success_count` | その interaction だけの成功回数 |
+| `$.external-api-authentication.interactions.<interaction>.failure_count` | その interaction だけの失敗回数 |
+| `$.external-api-authentication.interactions.<interaction>.call_count` | その interaction の呼び出し回数 |
+
+:::info 未実行の interaction は値がありません
+一度も呼ばれていない interaction はキー自体が存在せず、`path` が解決しません。解決しない `path` は null として扱われ、`gte` などの数値比較は **false** になります（#1646）。「必須の interaction が実行されていない」は条件を満たさない側に倒れます。
+:::
+
+:::info この内訳を持つのは `external-api-authentication` だけです
+他の認証方式は「1つの interactor = 1つの認証要素」で、type そのものが数えたい対象と一致するため、内訳は作られません（`interactions` キーが出力されません）。
+:::
 
 #### `$.user.*`（ユーザー属性）
 

@@ -24,6 +24,8 @@ import org.idp.server.platform.security.event.SecurityEventType;
 
 public class AuthenticationInteractionRequestResult {
 
+  String interactionName;
+
   AuthenticationInteractionStatus status;
   AuthenticationInteractionType type;
   OperationType operationType;
@@ -247,6 +249,30 @@ public class AuthenticationInteractionRequestResult {
 
   public String interactionTypeName() {
     return type.name();
+  }
+
+  /**
+   * Names the specific interaction within the type, when the type covers more than one (#1771).
+   *
+   * <p>Almost every interactor is one authentication factor, so its type <em>is</em> the thing
+   * being counted. {@code external-api-authentication} is not: a single configuration holds several
+   * interactions, each calling a different external API, and they all arrive through the same
+   * endpoint path. Without this, their results accumulate under one key and a policy cannot tell
+   * "interaction-a succeeded" from "interaction-a was called three times".
+   *
+   * <p>Set by the interactor; left unset means the type key alone, which is what every existing
+   * result looks like.
+   */
+  public void setInteractionName(String interactionName) {
+    this.interactionName = interactionName;
+  }
+
+  public String interactionName() {
+    return interactionName;
+  }
+
+  public boolean hasInteractionName() {
+    return interactionName != null && !interactionName.isEmpty();
   }
 
   public boolean hasUser() {

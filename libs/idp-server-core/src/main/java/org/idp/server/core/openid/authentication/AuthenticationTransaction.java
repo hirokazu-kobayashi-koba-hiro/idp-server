@@ -90,14 +90,22 @@ public class AuthenticationTransaction {
 
     } else {
 
+      // #1771: a named interaction gets its own entry under the type from the very first call, so
+      // the breakdown is not missing for whichever interaction happened to run first.
       String operationType = interactionRequestResult.operationType().name();
       String method = interactionRequestResult.method();
       int successCount = interactionRequestResult.isSuccess() ? 1 : 0;
       int failureCount = interactionRequestResult.isSuccess() ? 0 : 1;
       LocalDateTime interactionTime = SystemDateTime.now();
+      Map<String, AuthenticationInteractionResult> interactions = new HashMap<>();
+      if (interactionRequestResult.hasInteractionName()) {
+        interactions.put(
+            interactionRequestResult.interactionName(),
+            AuthenticationInteractionResult.initialResultFor(interactionRequestResult));
+      }
       AuthenticationInteractionResult result =
           new AuthenticationInteractionResult(
-              operationType, method, 1, successCount, failureCount, interactionTime);
+              operationType, method, 1, successCount, failureCount, interactionTime, interactions);
       resultMap.put(interactionRequestResult.interactionTypeName(), result);
     }
 
