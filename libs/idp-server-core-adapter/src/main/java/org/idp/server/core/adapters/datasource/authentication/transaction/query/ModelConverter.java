@@ -131,23 +131,61 @@ public class ModelConverter {
       for (Iterator<String> it = interactions.fieldNames(); it.hasNext(); ) {
         String interaction = it.next();
         JsonNodeWrapper node = interactions.getValueAsJsonNode(interaction);
-        String operationType = node.getValueOrEmptyAsString("operation_type");
-        String method = node.getValueOrEmptyAsString("method");
-        int callCount = node.getValueAsInt("call_count");
-        int successCount = node.getValueAsInt("success_count");
-        int failureCount = node.getValueAsInt("failure_count");
-        LocalDateTime interactionTIme =
-            LocalDateTimeParser.parse(node.getValueOrEmptyAsString("interaction_time"));
-        AuthenticationInteractionResult authenticationInteractionResult =
-            new AuthenticationInteractionResult(
-                operationType, method, callCount, successCount, failureCount, interactionTIme);
-        results.put(interaction, authenticationInteractionResult);
+        results.put(interaction, toResult(node));
       }
 
       return new AuthenticationInteractionResults(results);
     }
 
     return new AuthenticationInteractionResults();
+  }
+
+  /**
+   * Rebuilds one interaction result, including its per-interaction breakdown (#1771).
+   *
+   * <p>The breakdown has to be restored here, not only in {@code
+   * AuthenticationInteractionResults#fromMap} (which serves OPSession): every request re-reads the
+   * transaction through this converter, so dropping it would reset the breakdown between steps of a
+   * multi-step flow while the totals kept accumulating.
+   *
+   * <p>Note the two meanings of "interactions" in this file: the outer one is the DB column holding
+   * the whole result map, the nested one is the per-interaction breakdown of a single result.
+   */
+  private static AuthenticationInteractionResult toResult(JsonNodeWrapper node) {
+    String operationType = node.getValueOrEmptyAsString("operation_type");
+    String method = node.getValueOrEmptyAsString("method");
+    int callCount = node.getValueAsInt("call_count");
+    int successCount = node.getValueAsInt("success_count");
+    int failureCount = node.getValueAsInt("failure_count");
+    LocalDateTime interactionTime =
+        LocalDateTimeParser.parse(node.getValueOrEmptyAsString("interaction_time"));
+
+    return new AuthenticationInteractionResult(
+        operationType,
+        method,
+        callCount,
+        successCount,
+        failureCount,
+        interactionTime,
+        toNestedResults(node));
+  }
+
+  /**
+   * Rows written before the breakdown existed have no nested node and come back with an empty map.
+   */
+  private static Map<String, AuthenticationInteractionResult> toNestedResults(
+      JsonNodeWrapper node) {
+    HashMap<String, AuthenticationInteractionResult> nested = new HashMap<>();
+    if (!node.contains("interactions")) {
+      return nested;
+    }
+
+    JsonNodeWrapper nestedNode = node.getValueAsJsonNode("interactions");
+    for (Iterator<String> it = nestedNode.fieldNames(); it.hasNext(); ) {
+      String name = it.next();
+      nested.put(name, toResult(nestedNode.getValueAsJsonNode(name)));
+    }
+    return nested;
   }
 
   static AuthenticationTransactionAttributes toAuthenticationTransactionAttributes(

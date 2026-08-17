@@ -40,19 +40,42 @@ public class AuthenticationInteractionResults implements JsonReadable {
   public static AuthenticationInteractionResults fromMap(Map<String, Map<String, Object>> mapData) {
     Map<String, AuthenticationInteractionResult> results = new HashMap<>();
     for (Map.Entry<String, Map<String, Object>> entry : mapData.entrySet()) {
-      String key = entry.getKey();
-      Map<String, Object> data = entry.getValue();
-      AuthenticationInteractionResult result =
-          new AuthenticationInteractionResult(
-              (String) data.get("operation_type"),
-              (String) data.get("method"),
-              getIntValue(data.get("call_count")),
-              getIntValue(data.get("success_count")),
-              getIntValue(data.get("failure_count")),
-              parseInteractionTime(data.get("interaction_time")));
-      results.put(key, result);
+      results.put(entry.getKey(), toResult(entry.getValue()));
     }
     return new AuthenticationInteractionResults(results);
+  }
+
+  /**
+   * Rebuilds one result, including the per-interaction breakdown when present (#1771).
+   *
+   * <p>Rows written before the breakdown existed simply have no {@code interactions} key and come
+   * back with an empty map.
+   */
+  private static AuthenticationInteractionResult toResult(Map<String, Object> data) {
+    return new AuthenticationInteractionResult(
+        (String) data.get("operation_type"),
+        (String) data.get("method"),
+        getIntValue(data.get("call_count")),
+        getIntValue(data.get("success_count")),
+        getIntValue(data.get("failure_count")),
+        parseInteractionTime(data.get("interaction_time")),
+        toNestedResults(data.get("interactions")));
+  }
+
+  private static Map<String, AuthenticationInteractionResult> toNestedResults(Object value) {
+    Map<String, AuthenticationInteractionResult> nested = new HashMap<>();
+    if (!(value instanceof Map<?, ?> raw)) {
+      return nested;
+    }
+    raw.forEach(
+        (name, data) -> {
+          if (name instanceof String key && data instanceof Map<?, ?> dataMap) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> typed = (Map<String, Object>) dataMap;
+            nested.put(key, toResult(typed));
+          }
+        });
+    return nested;
   }
 
   private static int getIntValue(Object value) {

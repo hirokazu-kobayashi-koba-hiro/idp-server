@@ -107,8 +107,56 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     return "external-api";
   }
 
+  /**
+   * Runs the interaction and labels the result with which one it was (#1771).
+   *
+   * <p>Every interaction of this type arrives through the same endpoint path, so the type alone
+   * cannot say which external API was called. Without the label their counts accumulate under one
+   * key and a policy condition like "success_count >= 3" is satisfied by calling a single
+   * interaction three times — the required ones can be skipped entirely.
+   *
+   * <p>Stamped here rather than at each {@code return} because the body has a dozen exits, and one
+   * of them forgetting would produce a silently missing breakdown.
+   */
   @Override
   public AuthenticationInteractionRequestResult interact(
+      Tenant tenant,
+      AuthenticationTransaction transaction,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes,
+      UserQueryRepository userQueryRepository) {
+
+    AuthenticationInteractionRequestResult result =
+        execute(tenant, transaction, type, request, requestAttributes, userQueryRepository);
+
+    if (isConfiguredInteraction(tenant, request)) {
+      result.setInteractionName(request.optValueAsString("interaction", ""));
+    }
+    return result;
+  }
+
+  /**
+   * Whether the requested interaction is one this tenant actually configured.
+   *
+   * <p>The name becomes a key in the stored authentication result, and it arrives in the request
+   * body. Stamping it unconditionally would let a caller write arbitrary keys into the transaction
+   * — a request naming an unconfigured interaction is rejected with 400, but the failure would
+   * still be recorded under whatever string was sent, and a different string each time grows the
+   * row without bound before any authentication has succeeded.
+   */
+  private boolean isConfiguredInteraction(Tenant tenant, AuthenticationInteractionRequest request) {
+    String interaction = request.optValueAsString("interaction", "");
+    if (interaction.isEmpty()) {
+      return false;
+    }
+
+    AuthenticationConfiguration configuration =
+        configurationRepository.get(tenant, "external-api-authentication");
+    return configuration.getAuthenticationConfig(interaction) != null;
+  }
+
+  private AuthenticationInteractionRequestResult execute(
       Tenant tenant,
       AuthenticationTransaction transaction,
       AuthenticationInteractionType type,

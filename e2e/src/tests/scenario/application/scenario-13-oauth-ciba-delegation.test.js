@@ -185,5 +185,61 @@ describe("oauth - ciba delegation via external api authentication", () => {
     expect(status.data.status).toBe("success");
     expect(status.data.interaction_results["password-authentication"].success_count).toBe(1);
     expect(status.data.interaction_results["external-api-authentication"].success_count).toBe(3);
+
+    // Each step is required by name, not by the total (#1771).
+    const breakdown =
+      status.data.interaction_results["external-api-authentication"].interactions;
+    expect(breakdown.ciba_start.success_count).toBe(1);
+    expect(breakdown.ciba_poll.success_count).toBe(1);
+    expect(breakdown.userinfo.success_count).toBe(1);
   });
+
+  /**
+   * The policy used to require only `external-api-authentication.success_count >= 3`, which counts
+   * every interaction of this configuration together. `ciba_start` merely *initiates* a CIBA
+   * request — it does not wait for the device — and it succeeds every time it is called.
+   *
+   * So calling it three times satisfied the total, and the second factor completed without the user
+   * ever approving anything: no `ciba_poll`, no `userinfo`, no device interaction. The policy now
+   * names each step through the per-interaction breakdown (#1771).
+   */
+  it("does not accept repeated ciba_start in place of an approval", async () => {
+    const authId = await authorize({ acr_values: "urn:idp:acr:password-ciba" });
+
+    const password = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/password-authentication`,
+      body: {
+        username: serverConfig.ciba.username,
+        password: serverConfig.ciba.userCode,
+      },
+    });
+    expect(password.status).toBe(200);
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const start = await externalApi(authId, {
+        interaction: "ciba_start",
+        login_hint: cibaLoginHint,
+      });
+      expect(start.status).toBe(200);
+    }
+
+    const status = await authenticationStatus(authId);
+    expect(status.status).toBe(200);
+
+    const typeResult = status.data.interaction_results["external-api-authentication"];
+    // The total reaches 3 — which is exactly why it was not a usable condition.
+    expect(typeResult.success_count).toBe(3);
+    expect(typeResult.interactions.ciba_start.success_count).toBe(3);
+    expect(typeResult.interactions.ciba_poll).toBeUndefined();
+    expect(typeResult.interactions.userinfo).toBeUndefined();
+
+    // Authentication is not complete, and the flow cannot be authorized.
+    expect(status.data.status).toBe("in_progress");
+
+    const authorizeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/authorize`,
+      body: {},
+    });
+    expect(authorizeResponse.status).not.toBe(200);
+  }, 90000);
 });
