@@ -401,6 +401,10 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return hasBackchannelLogoutUri() || hasFrontchannelLogoutUri();
   }
 
+  public ClientExtensionConfiguration extensionConfiguration() {
+    return extension;
+  }
+
   public ClientAttributes clientAttributes() {
     return new ClientAttributes(
         clientId, clientIdAlias, clientName, clientUri, logoUri, contacts, tosUri, policyUri);

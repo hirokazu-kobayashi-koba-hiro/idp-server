@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.core.openid.grant_management.AuthorizationGranted;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
 import org.idp.server.core.openid.oauth.*;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationHeaderValidator;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
@@ -67,12 +68,13 @@ public class OAuthRequestHandler {
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       RequestObjectGateway requestObjectGateway,
       RequestObjectFactories requestObjectFactories,
-      AuthorizationGrantedRepository grantedRepository) {
+      AuthorizationGrantedRepository grantedRepository,
+      ClientAuthenticationHandler clientAuthenticationHandler) {
     this.oAuthRequestContextCreators =
         new OAuthRequestContextCreators(
             requestObjectGateway, authorizationRequestRepository, requestObjectFactories);
     this.verifier = new OAuthRequestVerifier();
-    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
+    this.clientAuthenticationHandler = clientAuthenticationHandler;
     this.authorizationRequestRepository = authorizationRequestRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
@@ -100,6 +102,9 @@ public class OAuthRequestHandler {
     OAuthPushedRequestValidator validator = new OAuthPushedRequestValidator(tenant, pushedRequest);
     validator.validate();
     new DPoPHeaderValidator(pushedRequest.dpopProofHeaders()).validate();
+    new ClientAttestationHeaderValidator(
+            pushedRequest.clientAttestationHeaders(), pushedRequest.clientAttestationPopHeaders())
+        .validate();
 
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
@@ -130,6 +135,8 @@ public class OAuthRequestHandler {
             context,
             pushedRequest.clientSecretBasic(),
             pushedRequest.toClientCert(),
+            pushedRequest.toClientAttestationJwt(),
+            pushedRequest.toClientAttestationPopJwt(),
             pushedRequest.toBackchannelParameters());
     ClientCredentials clientCredentials =
         clientAuthenticationHandler.authenticate(oAuthPushedRequestContext);
