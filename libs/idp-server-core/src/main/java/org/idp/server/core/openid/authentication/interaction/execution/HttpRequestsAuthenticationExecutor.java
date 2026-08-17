@@ -44,6 +44,15 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
   JsonConverter jsonConverter;
   LoggerWrapper log = LoggerWrapper.getLogger(HttpRequestsAuthenticationExecutor.class);
 
+  /**
+   * Marks the entry standing in for a request that was not sent (#1789).
+   *
+   * <p>Part of the configuration contract, not an internal detail: mapping rules identify a skipped
+   * slot with {@code {"operation": "missing", "path": "$.execution_http_requests[N].skipped"}}, so
+   * the key is depended on from outside this class.
+   */
+  private static final String SKIPPED_KEY = "skipped";
+
   public HttpRequestsAuthenticationExecutor(
       AuthenticationInteractionCommandRepository interactionCommandRepository,
       AuthenticationInteractionQueryRepository interactionQueryRepository,
@@ -190,7 +199,7 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
    */
   private boolean nothingRan(List<Map<String, Object>> executionRecords) {
     return !executionRecords.isEmpty()
-        && executionRecords.stream().allMatch(record -> record.containsKey("skipped"));
+        && executionRecords.stream().allMatch(record -> record.containsKey(SKIPPED_KEY));
   }
 
   /**
@@ -241,7 +250,7 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
    */
   private Map<String, Object> skippedRecord() {
     Map<String, Object> record = new HashMap<>();
-    record.put("skipped", true);
+    record.put(SKIPPED_KEY, true);
     return record;
   }
 }

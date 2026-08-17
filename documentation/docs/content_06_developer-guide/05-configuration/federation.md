@@ -356,6 +356,14 @@ Provider IdPがidp-serverの場合、**Provider側の認可サーバーに`claim
 
 **スキップしても添字は詰まりません。** `userinfo_execution_http_requests[N]` は「**設定の N 番目**」を指し、スキップされた枠には `{"skipped": true}` が入ります。条件の真偽で `userinfo_mapping_rules` の参照先がずれることはありません。
 
+:::danger 全リクエストがスキップされた場合は userinfo 取得が失敗します
+設定した**すべてのリクエストがスキップされた場合、userinfo 取得は失敗します**（SSO ログイン全体が失敗します）。
+
+この chain は上流IdPからユーザー情報を取得する手段そのものです。1本も実行されなければ取得結果が空になり、そのまま成功にすると **`external_user_id` が解決できないまま新規ユーザーを作成する**経路に入ります。条件のパスを1文字間違えただけで、上流IdPに一度も問い合わせないままフェデレーションユーザーが増えることになるため、失敗として扱います。
+
+一部だけスキップされる通常の分岐は該当しません。
+:::
+
 排他的な条件で「A のあと B か C のどちらか」を書く場合、`userinfo_mapping_rules` 側にも `{"operation": "missing", "path": "$.userinfo_execution_http_requests[N].skipped"}` のガードが必要です（マッピングは後勝ちで、値が解決しなくても null を書き込むため）。詳しくは[外部トークン認証の設定](authn/external-token.md)の同じ節を参照してください。
 
 **重要**:
