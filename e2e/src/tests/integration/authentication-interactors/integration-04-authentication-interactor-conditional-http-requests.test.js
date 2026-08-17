@@ -13,7 +13,7 @@ import { faker } from "@faker-js/faker";
  * `http_requests` ran every configured request unconditionally, so "call the second API only when
  * the first one said X" could not be expressed. The same `ConditionSpec` gate already existed for
  * identity-verification pre_hook parameters and for mapping rules — only the authentication
- * executor lacked the口.
+ * executor had no way to declare one.
  *
  * Two things are pinned here:
  *
@@ -143,6 +143,18 @@ describe("Authentication Interactor: conditional http_requests (#1789)", () => {
       condition: { operation: "missing", path: "$.user.sub" },
       header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
       body_mapping_rules: [{ static_value: "no-user", to: "username" }],
+    },
+  ];
+
+  // Every request gated on something that never holds — the chain runs nothing at all.
+  const nothingRunsInteraction = "nothing_runs";
+  const nothingRunsRequests = [
+    {
+      url: `${mockApiBaseUrl}/auth/password`,
+      method: "POST",
+      condition: { operation: "eq", path: "$.request_body.mode", value: "never-matches" },
+      header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+      body_mapping_rules: [{ static_value: "unused", to: "username" }],
     },
   ];
 
@@ -350,6 +362,27 @@ describe("Authentication Interactor: conditional http_requests (#1789)", () => {
         attributes: {},
         metadata: { type: "external", description: "branch on request content" },
         interactions: {
+          [nothingRunsInteraction]: {
+            request: {
+              schema: {
+                type: "object",
+                required: ["interaction"],
+                properties: {
+                  interaction: { type: "string" },
+                  mode: { type: "string" },
+                },
+              },
+            },
+            execution: {
+              function: "http_requests",
+              http_requests: nothingRunsRequests,
+            },
+            response: {
+              body_mapping_rules: [
+                { from: "$.execution_http_requests[0]", to: "only_slot" },
+              ],
+            },
+          },
           [userBranchInteraction]: {
             request: {
               schema: {
@@ -638,5 +671,25 @@ describe("Authentication Interactor: conditional http_requests (#1789)", () => {
 
     // The projection is not just present — its values reach the outgoing request.
     expect(response.data.echoed_email).toBe(userEmail);
+  });
+
+  /**
+   * A chain where every request was skipped has checked nothing. The execution *is* the check, so
+   * reporting success would let the step pass without the external service ever being consulted —
+   * the shape a mistyped condition path produces, since an unresolved JSONPath is null rather than
+   * an error (#1646).
+   */
+  it("fails the interaction when every request was skipped", async () => {
+    const { authId } = await startAuthorizationAndRegister();
+
+    const response = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/external-api-authentication`,
+      body: { interaction: nothingRunsInteraction, mode: "anything-else" },
+    });
+
+    console.log("Nothing ran:", response.status, JSON.stringify(response.data, null, 2));
+
+    expect(response.status).toBe(500);
+    expect(response.status).not.toBe(200);
   });
 });

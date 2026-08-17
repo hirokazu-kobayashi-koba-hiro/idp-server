@@ -440,21 +440,25 @@ $.execution_http_requests[1].response_body.*    → 2番目のAPIのレスポン
 |------|---------|:----:|:----------:|
 | `$.request_body` | 常に | ✅ | ✅（`{access_token}` のみ）|
 | `$.request_attributes` | 常に | ✅ | ✕ |
-| `$.user` | `hasTransactionUser()` = **2要素目以降のみ** | ✅ | ✕ |
+| `$.user` | **`external-api-authentication` の interaction のみ** かつユーザー確立時 | △ | ✕ |
 | `$.interaction` | `previous_interaction` 設定時のみ | ✅ | ✕ |
 | `$.execution_http_requests` | **2本目以降のリクエストのみ** | ✅ | ✅ |
 
 `$.request_body` / `$.request_attributes` は最初からあるので **1本目を条件付きにできる**（e2e 実測済み）。一方 `$.execution_http_requests` を1本目で書くと常に null → 常にスキップ（#1646 で無言）。federation は条件側が `$.execution_http_requests`、`userinfo_mapping_rules` 側が `$.userinfo_execution_http_requests` で**接頭辞が違う**。
 
-`$.user` は `setTransactionUser` を無条件に呼ぶが、投影が空なら `hasTransactionUser()`（`isEmpty` 判定）が false でキーごと入らない。よって「使えない」ではなく**演算子ごとに倒れ方が変わる**。
+`$.user` は他の2つと性質が違う。executor が入れるのではなく **interactor が入れる**（`setTransactionUser` の呼び出しは `ExternalApiAuthenticationInteractor:205` の1箇所のみ）。したがって `external-token` / `fido-uaf` / `sms` / `email` の chain には**一度も入らない**。要素の位置ではなく **どの interactor か** で決まる。
 
-| 条件 | 未確立 | 確立済み |
-|------|:------:|:--------:|
+`external-api-authentication` の中でも、投影が空なら `hasTransactionUser()`（`isEmpty` 判定）が false でキーごと入らない。よって演算子ごとに倒れ方が変わる。
+
+| 条件 | 未確立 / 非対応 interactor | 確立済み（external-api）|
+|------|:------------------------:|:---------------------:|
 | `exists $.user.sub` | スキップ | 実行 |
 | `missing $.user.sub` | 実行 | スキップ |
 | `eq $.user.email` | スキップ | 値で判定 |
 
-`missing` で「まだユーザーが確立していないときだけ呼ぶ」も書ける。値の中身もそのまま `body_mapping_rules` に載せられる（e2e `integration-04` で登録メールのエコーを固定）。
+確立していれば chain の1本目からでも使える。値の中身もそのまま `body_mapping_rules` に載せられる（e2e `integration-04` は登録メールのエコーを固定。`external-api-authentication` で書いてあるのはこの理由）。
+
+**全スキップはエラー。** 設定した全リクエストがスキップされたら 500 で失敗する（`nothingRan()` / `noExecutionResult()`）。executor の実行そのものが検証なので、1本も走っていなければ何も検証できていない。条件のパスを1文字間違えるだけで「外部に問い合わせず認証ステップが通る」状態になるため、成功にはしない。空の `http_requests` は対象外（条件が無ければ全スキップは起こりえないので後方互換の影響もゼロ）。一部スキップの通常分岐は影響なし。
 
 **HTTP エラーのガードには不要。** 前段が 4xx/5xx なら後段はもともと実行されない（早期終了）。`condition` の出番は「前段は成功扱いだが後段を呼びたくない」場合のみ。「200 だがボディが業務エラー」は `response_resolve_configs`（interaction 全体を失敗にする）と `condition`（成功のまま後段だけ省く）の使い分け。
 

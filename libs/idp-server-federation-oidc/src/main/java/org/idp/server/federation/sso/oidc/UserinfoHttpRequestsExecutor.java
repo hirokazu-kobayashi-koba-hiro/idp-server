@@ -78,6 +78,10 @@ public class UserinfoHttpRequestsExecutor implements UserinfoExecutor {
       param.put("execution_http_requests", List.copyOf(executionRecords));
     }
 
+    if (nothingRan(executionRecords)) {
+      return noExecutionResult(executionRecords);
+    }
+
     results.put("userinfo_execution_http_requests", List.copyOf(executionRecords));
 
     return UserinfoExecutionResult.success(results);
@@ -110,6 +114,50 @@ public class UserinfoHttpRequestsExecutor implements UserinfoExecutor {
           config.condition().toMap());
     }
     return !satisfied;
+  }
+
+  /**
+   * Whether every configured request was skipped (#1789).
+   *
+   * <p>An empty {@code http_requests} is not this case — that is a configuration with nothing to
+   * run, which behaved as success before conditions existed and still does.
+   */
+  private boolean nothingRan(List<Map<String, Object>> executionRecords) {
+    return !executionRecords.isEmpty()
+        && executionRecords.stream().allMatch(record -> record.containsKey("skipped"));
+  }
+
+  /**
+   * Fails a userinfo chain in which nothing ran (#1789).
+   *
+   * <p>The chain is how the upstream IdP's userinfo is obtained. If every request was skipped there
+   * is nothing to map a user from, so reporting success would resolve a user out of an empty
+   * response rather than out of the IdP.
+   *
+   * <p>The most likely way to get here is a mistyped path: an unresolved JSONPath is null rather
+   * than an error (#1646), so {@code ConditionSpec} logs nothing and returns false, and the
+   * per-request skip is debug.
+   *
+   * <p>Kept identical to {@code HttpRequestsAuthenticationExecutor}. Failing costs no
+   * compatibility: this state is unreachable without {@code condition}, which arrives with #1789.
+   *
+   * <p>Note that the status is flattened to 500 here because {@code UserinfoExecutionResult} has no
+   * way to carry an arbitrary code — see #1800.
+   */
+  private UserinfoExecutionResult noExecutionResult(List<Map<String, Object>> executionRecords) {
+    log.warn(
+        "All configured userinfo http requests were skipped by their conditions. count={}. "
+            + "Nothing was executed, so the userinfo request fails instead of reporting success.",
+        executionRecords.size());
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("userinfo_execution_http_requests", List.copyOf(executionRecords));
+    response.put("error", "server_error");
+    response.put(
+        "error_description",
+        "All configured http requests were skipped by their conditions. No external call was made.");
+
+    return UserinfoExecutionResult.serverError(response);
   }
 
   /**

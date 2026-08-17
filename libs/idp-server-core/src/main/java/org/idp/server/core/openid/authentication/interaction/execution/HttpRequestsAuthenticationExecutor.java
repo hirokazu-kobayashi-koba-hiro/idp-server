@@ -114,6 +114,10 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
       param.put("execution_http_requests", List.copyOf(executionRecords));
     }
 
+    if (nothingRan(executionRecords)) {
+      return noExecutionResult(executionRecords);
+    }
+
     Map<String, Object> results = new HashMap<>();
     results.put("execution_http_requests", List.copyOf(executionRecords));
 
@@ -176,6 +180,54 @@ public class HttpRequestsAuthenticationExecutor implements AuthenticationExecuto
           config.condition().toMap());
     }
     return !satisfied;
+  }
+
+  /**
+   * Whether every configured request was skipped (#1789).
+   *
+   * <p>An empty {@code http_requests} is not this case — that is a configuration with nothing to
+   * run, which behaved as success before conditions existed and still does.
+   */
+  private boolean nothingRan(List<Map<String, Object>> executionRecords) {
+    return !executionRecords.isEmpty()
+        && executionRecords.stream().allMatch(record -> record.containsKey("skipped"));
+  }
+
+  /**
+   * Fails a chain in which nothing ran (#1789).
+   *
+   * <p>Skipping is not automatically the safe side. The execution <em>is</em> the check — an
+   * external password verification, a risk assessment — so a chain where every request was skipped
+   * has verified nothing, and reporting success would let the step pass without the external
+   * service ever being consulted.
+   *
+   * <p>The most likely way to get here is a mistyped path: an unresolved JSONPath is null rather
+   * than an error (#1646), so {@code ConditionSpec} logs nothing and returns false, and the
+   * per-request skip is debug. Succeeding quietly would make that indistinguishable from a healthy
+   * run.
+   *
+   * <p>Failing costs no compatibility: this state is unreachable without {@code condition}, which
+   * arrives with #1789. A configuration that legitimately wants "call nothing this time" can leave
+   * one request unconditional; if a real need for the permissive behaviour turns up it can be opted
+   * into later, whereas the reverse would be a breaking change.
+   *
+   * <p>Ordinary branching, where some requests ran, is unaffected.
+   */
+  private AuthenticationExecutionResult noExecutionResult(
+      List<Map<String, Object>> executionRecords) {
+    log.warn(
+        "All configured http requests were skipped by their conditions. count={}. "
+            + "Nothing was executed, so the interaction fails instead of reporting success.",
+        executionRecords.size());
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("execution_http_requests", List.copyOf(executionRecords));
+    response.put("error", "server_error");
+    response.put(
+        "error_description",
+        "All configured http requests were skipped by their conditions. No external call was made.");
+
+    return AuthenticationExecutionResult.error(500, response);
   }
 
   /**
