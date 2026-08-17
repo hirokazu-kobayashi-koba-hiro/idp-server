@@ -413,6 +413,93 @@ $.execution_http_requests[0].response_headers.* → 1番目のAPIのレスポン
 $.execution_http_requests[1].response_body.*    → 2番目のAPIのレスポンスボディ
 ```
 
+### 条件付き実行（#1789）
+
+各リクエストに `condition`（`ConditionSpec`）を書くと、false のときそのリクエストを**送らずにスキップ**する。前段の応答で後段を呼ぶか決められる。
+
+```json
+"http_requests": [
+  { "url": "https://api.example.com/assess", "method": "POST" },
+  {
+    "url": "https://api.example.com/notify",
+    "method": "POST",
+    "condition": {
+      "operation": "eq",
+      "path": "$.execution_http_requests[0].response_body.result",
+      "value": "HIGH"
+    }
+  }
+]
+```
+
+`condition` 未指定は無条件実行（後方互換）。演算子一覧・fail-closed 挙動の正典は `documentation/docs/content_06_developer-guide/04-implementation-guides/advanced/condition-spec.md`。
+
+**コンテキストは「常にある」とは限らない。**
+
+| パス | 存在条件 | 認証 | federation |
+|------|---------|:----:|:----------:|
+| `$.request_body` | 常に | ✅ | ✅（`{access_token}` のみ）|
+| `$.request_attributes` | 常に | ✅ | ✕ |
+| `$.user` | **`external-api-authentication` の interaction のみ** かつユーザー確立時 | △ | ✕ |
+| `$.interaction` | `previous_interaction` 設定時のみ | ✅ | ✕ |
+| `$.execution_http_requests` | **2本目以降のリクエストのみ** | ✅ | ✅ |
+
+`$.request_body` / `$.request_attributes` は最初からあるので **1本目を条件付きにできる**（e2e 実測済み）。一方 `$.execution_http_requests` を1本目で書くと常に null → 常にスキップ（#1646 で無言）。federation は条件側が `$.execution_http_requests`、`userinfo_mapping_rules` 側が `$.userinfo_execution_http_requests` で**接頭辞が違う**。
+
+`$.user` は他の2つと性質が違う。executor が入れるのではなく **interactor が入れる**（`setTransactionUser` の呼び出しは `ExternalApiAuthenticationInteractor:205` の1箇所のみ）。したがって `external-token` / `fido-uaf` / `sms` / `email` の chain には**一度も入らない**。要素の位置ではなく **どの interactor か** で決まる。
+
+`external-api-authentication` の中でも、投影が空なら `hasTransactionUser()`（`isEmpty` 判定）が false でキーごと入らない。よって演算子ごとに倒れ方が変わる。
+
+| 条件 | 未確立 / 非対応 interactor | 確立済み（external-api）|
+|------|:------------------------:|:---------------------:|
+| `exists $.user.sub` | スキップ | 実行 |
+| `missing $.user.sub` | 実行 | スキップ |
+| `eq $.user.email` | スキップ | 値で判定 |
+
+確立していれば chain の1本目からでも使える。値の中身もそのまま `body_mapping_rules` に載せられる（e2e `integration-04` は登録メールのエコーを固定。`external-api-authentication` で書いてあるのはこの理由）。
+
+**全スキップはエラー。** 設定した全リクエストがスキップされたら 500 で失敗する（`nothingRan()` / `noExecutionResult()`）。executor の実行そのものが検証なので、1本も走っていなければ何も検証できていない。条件のパスを1文字間違えるだけで「外部に問い合わせず認証ステップが通る」状態になるため、成功にはしない。空の `http_requests` は対象外（条件が無ければ全スキップは起こりえないので後方互換の影響もゼロ）。一部スキップの通常分岐は影響なし。
+
+**HTTP エラーのガードには不要。** 前段が 4xx/5xx なら後段はもともと実行されない（早期終了）。`condition` の出番は「前段は成功扱いだが後段を呼びたくない」場合のみ。「200 だがボディが業務エラー」は `response_resolve_configs`（interaction 全体を失敗にする）と `condition`（成功のまま後段だけ省く）の使い分け。
+
+**添字はスキップしても詰まらない。** `execution_http_requests[N]` は「**設定の N 番目**」であって「実行された N 番目」ではない。スキップされた枠には `{"skipped": true}` が入る。
+
+```
+設定: [A, B(条件false), C]
+  $.execution_http_requests[0] → A の結果
+  $.execution_http_requests[1] → {"skipped": true}
+  $.execution_http_requests[2] → C の結果   ← 条件の真偽で位置が変わらない
+```
+
+詰める設計にすると、条件が false のときだけ後続の mapping が別のリクエストを読むことになり、しかも外れた JSONPath は例外でなく null になる（#1646）ので誰も気づけない。
+
+| 適用される executor | 設定キー |
+|---|---|
+| 認証 interaction（`HttpRequestsAuthenticationExecutor`）| `execution.http_requests[]` |
+| federation userinfo（`UserinfoHttpRequestsExecutor`）| `userinfo_execution.http_requests[]` |
+
+`condition` は共有クラス `HttpRequestExecutionConfig` のフィールドなので**単発の `http_request` にも書けてしまうが、そこでは無視される**（分岐する相手がいないため）。
+
+#### 分岐（A のあと B か C）— マッピング側にもガードが要る
+
+排他条件で片方だけ実行できるが、**両方の枠が残る**ため同じ `to` に書くと壊れる。`writeResult` は後勝ちかつ null も無条件 put（`MappingRuleObjectMapper:326`）なので、スキップ側のルールが実行側の結果を null で上書きする。
+
+```json
+// http_requests: [probe, B(eq HIGH), C(ne HIGH)]
+"body_mapping_rules": [
+  { "from": "$.execution_http_requests[1].response_body.decision", "to": "decision",
+    "condition": { "operation": "missing", "path": "$.execution_http_requests[1].skipped" } },
+  { "from": "$.execution_http_requests[2].response_body.decision", "to": "decision",
+    "condition": { "operation": "missing", "path": "$.execution_http_requests[2].skipped" } }
+]
+```
+
+`{"skipped": true}` プレースホルダは、この「その枠は実行されたか」の判定手段でもある（詰める設計だとこのレシピが書けない）。ガード無しで null 上書きが起きることは e2e `integration-04` の `decision_unguarded` で固定済み。
+
+:::warning 条件の評価に失敗するとスキップされる
+`ConditionSpec.evaluate()` は例外時に warn ログを出して `false` を返す。パス誤り・型不一致などで評価が壊れると「実行しない」に倒れる。無条件実行に倒れるより安全だが、設定ミスが**静かなスキップ**として現れる点に注意。
+:::
+
 ### レスポンスマッピング
 
 `http_requests` の場合、`response.body_mapping_rules` では全ステップの結果を参照できる:
