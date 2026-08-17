@@ -50,12 +50,12 @@ public class UserinfoHttpRequestExecutor implements UserinfoExecutor {
     HttpRequestResult executionResult =
         httpRequestExecutor.execute(configuration.httpRequest(), httpRequestBaseParams);
 
-    if (executionResult.isClientError()) {
-      return UserinfoExecutionResult.clientError(executionResult.body().toMap());
-    }
-
-    if (executionResult.isServerError()) {
-      return UserinfoExecutionResult.serverError(executionResult.body().toMap());
+    // #1800: carry the resolved status. Answering clientError() / serverError() flattened a
+    // response_resolve_configs mapping to 429 or 503 into a bare 400 or 500, so the caller could
+    // not tell a malformed request from an upstream that is rate limiting or briefly unavailable.
+    if (executionResult.isClientError() || executionResult.isServerError()) {
+      return UserinfoExecutionResult.error(
+          executionResult.statusCode(), executionResult.body().toMap());
     }
 
     return UserinfoExecutionResult.success(

@@ -40,6 +40,18 @@ public class UserinfoExecutionResult {
     return new UserinfoExecutionResult(UserinfoExecutionStatus.SERVER_ERROR, contents);
   }
 
+  /**
+   * Fails with the status the upstream response resolved to (#1800).
+   *
+   * <p>Prefer this over {@link #clientError(Map)} / {@link #serverError(Map)} when a real status
+   * code is at hand: those flatten every failure to 400 or 500, which discards what {@code
+   * response_resolve_configs} was configured to express.
+   */
+  public static UserinfoExecutionResult error(int statusCode, Map<String, Object> contents) {
+    return new UserinfoExecutionResult(
+        UserinfoExecutionStatus.fromStatusCode(statusCode), contents);
+  }
+
   public UserinfoExecutionStatus status() {
     return status;
   }
