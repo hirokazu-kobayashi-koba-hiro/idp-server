@@ -120,14 +120,12 @@ public class StandardOidcExecutor implements OidcSsoExecutor {
       JsonNodeWrapper json = httpResult.body();
       HashMap<String, Object> map = new HashMap<>();
       map.put("status_code", httpResult.statusCode());
-      // DEPRECATED: misspelling of status_code, kept for compatibility. Remove in v1.0.0.
-      //
-      // It was the only name available, so a userinfo_mapping_rule out there may read it — and a
-      // path that stops resolving fails silently as null (#1646) rather than erroring. Nothing in
-      // this repository references it and no documentation ever showed it, so the risk is limited
-      // to rules written against the typo directly.
-      map.put("staus_code", httpResult.statusCode());
-      map.put("response_headers", httpResult.headers());
+      // Single value per header, matching what oauth-extension exposes via
+      // HttpRequestResult#toMap. Raw headers() would put a List here, so the same
+      // $.http_request.response_headers.* would read "application/json" on one provider type and
+      // ["application/json"] on another — and a mapping rule copying that into a claim would carry
+      // the array through (#1800).
+      map.put("response_headers", httpResult.headersAsSingleValueMap());
       map.put("response_body", json.toMap());
 
       // #1800: carry the status the IdP answered. clientError() / serverError() flattened it to

@@ -37,21 +37,28 @@ import org.junit.jupiter.api.Test;
  */
 class OidcExecutorUserinfoStatusTest {
 
-  /** Answers a fixed status for any request, bypassing the network. */
+  /** Answers a fixed status and headers for any request, bypassing the network. */
   private static class FixedStatusExecutor extends HttpRequestExecutor {
     private final int statusCode;
+    private final Map<String, List<String>> headers;
 
     FixedStatusExecutor(int statusCode) {
+      this(statusCode, Map.of());
+    }
+
+    FixedStatusExecutor(int statusCode, Map<String, List<String>> headers) {
+      // Relies on the constructor not using its arguments: it only assembles a HttpRequestBuilder
+      // and a HttpRetryStrategy, and execute(HttpRequest) is overridden below so neither is
+      // reached. If either argument starts being validated, give this a real stub instead.
       super(null, null);
       this.statusCode = statusCode;
+      this.headers = headers;
     }
 
     @Override
     public HttpRequestResult execute(HttpRequest httpRequest) {
       return new HttpRequestResult(
-          statusCode,
-          Map.<String, List<String>>of(),
-          JsonNodeWrapper.fromMap(Map.of("error", "upstream said so")));
+          statusCode, headers, JsonNodeWrapper.fromMap(Map.of("error", "upstream said so")));
     }
   }
 
@@ -92,6 +99,36 @@ class OidcExecutorUserinfoStatusTest {
 
     assertEquals(429, result.statusCode());
     assertTrue(result.isError());
+  }
+
+  @Test
+  void bothProvidersExposeHeadersAsSingleValues() {
+    // Raw headers() would put a List here, so $.http_request.response_headers.content-type would
+    // read ["application/json"] on standard / facebook and "application/json" on oauth-extension.
+    // A mapping rule copying that into a claim would carry the array through (#1800). Both are
+    // asserted because leaving one behind is the very asymmetry this change removes.
+    Map<String, List<String>> headers = Map.of("content-type", List.of("application/json"));
+
+    assertEquals(
+        "application/json",
+        responseHeaderOf(
+            new StandardOidcExecutor(new FixedStatusExecutor(200, headers))
+                .requestUserInfo(userinfoRequest()),
+            "content-type"));
+    assertEquals(
+        "application/json",
+        responseHeaderOf(
+            new FacebookOidcExecutor(new FixedStatusExecutor(200, headers))
+                .requestUserInfo(userinfoRequest()),
+            "content-type"));
+  }
+
+  private static Object responseHeaderOf(UserinfoExecutionResult result, String headerName) {
+    @SuppressWarnings("unchecked")
+    Map<String, Object> httpRequest = (Map<String, Object>) result.contents().get("http_request");
+    @SuppressWarnings("unchecked")
+    Map<String, Object> responseHeaders = (Map<String, Object>) httpRequest.get("response_headers");
+    return responseHeaders.get(headerName);
   }
 
   @Test
