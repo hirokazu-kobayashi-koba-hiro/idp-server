@@ -42,7 +42,10 @@ describe("Advance Use Case: Federation userinfo status code (Issue #1800)", () =
   let providerClientSecret;
   let providerUserEmail;
   let providerUserPassword;
-  let ssoProvider;
+  // Two providers: one whose upstream really answers 429, one that answers 200 and is remapped to
+  // 503 by response_resolve_configs. Both must reach the caller intact.
+  let upstreamStatusProvider;
+  let resolvedStatusProvider;
   const consumerRedirectUri = "http://localhost:3000/callback";
 
   beforeAll(async () => {
@@ -54,7 +57,8 @@ describe("Advance Use Case: Federation userinfo status code (Issue #1800)", () =
     providerClientId = uuidv4();
     consumerClientSecret = `consumer-secret-${timestamp}`;
     providerClientSecret = `provider-secret-${timestamp}`;
-    ssoProvider = `sso-${timestamp}`;
+    upstreamStatusProvider = `sso-upstream-${timestamp}`;
+    resolvedStatusProvider = `sso-resolved-${timestamp}`;
     providerUserEmail = `provider-user-${timestamp}@example.com`;
     providerUserPassword = `ProviderPass_${timestamp}!`;
 
@@ -134,7 +138,8 @@ describe("Advance Use Case: Federation userinfo status code (Issue #1800)", () =
           application_type: "web",
           extension: {
             available_federations: [
-              { id: uuidv4(), type: "oidc", sso_provider: ssoProvider, auto_selected: true },
+              { id: uuidv4(), type: "oidc", sso_provider: upstreamStatusProvider },
+              { id: uuidv4(), type: "oidc", sso_provider: resolvedStatusProvider },
             ],
           },
         },
@@ -229,53 +234,81 @@ describe("Advance Use Case: Federation userinfo status code (Issue #1800)", () =
     expect(providerUserResponse.status).toBe(201);
 
     // oauth-extension: userinfo is an HTTP call we control, so the upstream can be made to answer
-    // 429. The mock's /e2e/error-responses returns the status named in the request body.
-    const federationConfigResponse = await postWithJson({
-      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${consumerTenantId}/federation-configurations`,
-      headers: { Authorization: `Bearer ${orgAccessToken}` },
-      body: {
-        id: uuidv4(),
-        type: "oidc",
-        sso_provider: ssoProvider,
-        enabled: true,
-        payload: {
-          type: "oauth-extension",
-          provider: "oauth-extension",
-          issuer: `${backendUrl}/${providerTenantId}`,
-          issuer_name: ssoProvider,
-          authorization_endpoint: `${backendUrl}/${providerTenantId}/v1/authorizations`,
-          token_endpoint: `${backendUrl}/${providerTenantId}/v1/tokens`,
-          userinfo_endpoint: `${backendUrl}/${providerTenantId}/v1/userinfo`,
-          jwks_uri: `${backendUrl}/${providerTenantId}/v1/jwks`,
-          scopes_supported: ["openid", "profile", "email"],
-          client_id: providerClientId,
-          client_secret: providerClientSecret,
-          redirect_uri: `${backendUrl}/${consumerTenantId}/v1/authorizations/federations/oidc/callback`,
-          userinfo_execution: {
-            function: "http_requests",
-            http_requests: [
+    // whatever the test needs. The mock's /e2e/error-responses returns the status named in the
+    // request body, and falls through to 200 with verification_status: "pending" when none matches.
+    const registerFederation = async (ssoProvider, httpRequest) => {
+      const response = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${consumerTenantId}/federation-configurations`,
+        headers: { Authorization: `Bearer ${orgAccessToken}` },
+        body: {
+          id: uuidv4(),
+          type: "oidc",
+          sso_provider: ssoProvider,
+          enabled: true,
+          payload: {
+            type: "oauth-extension",
+            provider: "oauth-extension",
+            issuer: `${backendUrl}/${providerTenantId}`,
+            issuer_name: ssoProvider,
+            authorization_endpoint: `${backendUrl}/${providerTenantId}/v1/authorizations`,
+            token_endpoint: `${backendUrl}/${providerTenantId}/v1/tokens`,
+            userinfo_endpoint: `${backendUrl}/${providerTenantId}/v1/userinfo`,
+            jwks_uri: `${backendUrl}/${providerTenantId}/v1/jwks`,
+            scopes_supported: ["openid", "profile", "email"],
+            client_id: providerClientId,
+            client_secret: providerClientSecret,
+            redirect_uri: `${backendUrl}/${consumerTenantId}/v1/authorizations/federations/oidc/callback`,
+            userinfo_execution: {
+              function: "http_requests",
+              http_requests: [httpRequest],
+            },
+            userinfo_mapping_rules: [
               {
-                url: `${mockApiBaseUrl}/e2e/error-responses`,
-                method: "POST",
-                header_mapping_rules: [
-                  { static_value: "application/json", to: "Content-Type" },
-                ],
-                // The upstream is rate limiting. Nothing is remapped here — 429 is the real status
-                // the IdP answered, and it must survive to the caller unchanged.
-                body_mapping_rules: [{ static_value: "429", to: "status" }],
+                from: "$.userinfo_execution_http_requests[0].response_body.sub",
+                to: "external_user_id",
               },
             ],
           },
-          userinfo_mapping_rules: [
-            {
-              from: "$.userinfo_execution_http_requests[0].response_body.sub",
-              to: "external_user_id",
-            },
-          ],
         },
-      },
+      });
+      expect(response.status).toBe(201);
+      return response;
+    };
+
+    // The upstream is rate limiting. Nothing is remapped — 429 is the real status the IdP
+    // answered, and it must survive to the caller unchanged.
+    await registerFederation(upstreamStatusProvider, {
+      url: `${mockApiBaseUrl}/e2e/error-responses`,
+      method: "POST",
+      header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+      body_mapping_rules: [{ static_value: "429", to: "status" }],
     });
-    expect(federationConfigResponse.status).toBe(201);
+
+    // The upstream answers 200 with a body meaning "not ready", and response_resolve_configs
+    // turns that into 503. This is the path the issue was originally written about, and it is
+    // flattened at exactly the same two places as a real 429.
+    const resolvedStatusConfigResponse = await registerFederation(resolvedStatusProvider, {
+      url: `${mockApiBaseUrl}/e2e/error-responses`,
+      method: "POST",
+      header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+      body_mapping_rules: [{ static_value: "no-match-falls-through-to-200", to: "status" }],
+      response_resolve_configs: [
+        {
+          conditions: [
+            { path: "$.response_body.verification_status", operation: "eq", value: "pending" },
+          ],
+          match_mode: "ALL",
+          mapped_status_code: 503,
+        },
+      ],
+    });
+
+    // #1500-class check: a field that stores but never comes back is how response_resolve_configs
+    // was inert on the authentication side. Confirm the federation config echoes it.
+    const storedResolveConfigs =
+      resolvedStatusConfigResponse.data?.result?.payload?.userinfo_execution?.http_requests?.[0]
+        ?.response_resolve_configs;
+    console.log("Stored response_resolve_configs:", JSON.stringify(storedResolveConfigs));
   });
 
   afterAll(async () => {
@@ -295,7 +328,8 @@ describe("Advance Use Case: Federation userinfo status code (Issue #1800)", () =
     }
   });
 
-  it("answers 429 from the federation callback when the upstream userinfo is rate limited", async () => {
+  /** Runs a full SSO round trip against the named provider and returns the callback response. */
+  async function federationCallbackFor(ssoProvider) {
     let callbackResponse;
 
     await requestAuthorizations({
@@ -325,27 +359,43 @@ describe("Advance Use Case: Federation userinfo status code (Issue #1800)", () =
           },
         });
 
-        // The upstream leg succeeded; userinfo is where the 429 surfaces.
+        // The upstream leg succeeded; userinfo is where the failure surfaces.
         callbackResponse = await post({
           url: `${backendUrl}/${consumerTenantId}/v1/authorizations/federations/oidc/callback`,
           body: params.toString(),
         });
         console.log(
-          "Federation callback:",
+          `Federation callback (${ssoProvider}):`,
           callbackResponse.status,
           JSON.stringify(callbackResponse.data, null, 2)
         );
       },
     }).catch(() => {
       // The flow cannot reach an authorization code — the callback failed on purpose. The
-      // assertions below are on the callback itself.
+      // assertions are on the callback itself.
     });
 
     expect(callbackResponse).toBeDefined();
+    return callbackResponse;
+  }
+
+  it("answers 429 when the upstream userinfo really is rate limited", async () => {
+    const callbackResponse = await federationCallbackFor(upstreamStatusProvider);
 
     // Before #1800 both UserinfoExecutionStatus and FederationInteractionStatus collapsed this to
     // CLIENT_ERROR, so the caller saw 400 and could not tell a bad request from "retry later".
     expect(callbackResponse.status).toBe(429);
     expect(callbackResponse.status).not.toBe(400);
+  }, 90000);
+
+  it("answers 503 when response_resolve_configs maps a 200 body to it", async () => {
+    const callbackResponse = await federationCallbackFor(resolvedStatusProvider);
+
+    // The upstream answered 200; the 503 exists only because response_resolve_configs said so.
+    // This pins that the resolver is honoured on the federation side at all, and that its result
+    // survives both flattening points.
+    expect(callbackResponse.status).toBe(503);
+    expect(callbackResponse.status).not.toBe(200);
+    expect(callbackResponse.status).not.toBe(500);
   }, 90000);
 });
