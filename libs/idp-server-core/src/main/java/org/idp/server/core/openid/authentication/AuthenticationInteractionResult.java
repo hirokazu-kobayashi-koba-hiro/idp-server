@@ -86,17 +86,33 @@ public class AuthenticationInteractionResult {
 
   public AuthenticationInteractionResult updateWith(
       AuthenticationInteractionRequestResult interactionRequestResult) {
-    int increaseSuccessCount = interactionRequestResult.isSuccess() ? 1 : 0;
-    int increaseFailureCount = interactionRequestResult.isSuccess() ? 0 : 1;
+    return incrementTotals(interactionRequestResult)
+        .withInteractions(updatedInteractions(interactionRequestResult));
+  }
 
+  /**
+   * Advances this result's own counters, leaving the breakdown alone.
+   *
+   * <p>Separate from {@link #updateWith} because a breakdown entry must be advanced with this and
+   * not with {@code updateWith}: the latter also rebuilds the breakdown, so a nested entry would
+   * grow a breakdown of its own — one level deeper on every call to the same interaction.
+   */
+  private AuthenticationInteractionResult incrementTotals(
+      AuthenticationInteractionRequestResult interactionRequestResult) {
     return new AuthenticationInteractionResult(
         operationType,
         method,
         callCount + 1,
-        successCount + increaseSuccessCount,
-        failureCount + increaseFailureCount,
+        successCount + (interactionRequestResult.isSuccess() ? 1 : 0),
+        failureCount + (interactionRequestResult.isSuccess() ? 0 : 1),
         SystemDateTime.now(),
-        updatedInteractions(interactionRequestResult));
+        interactions);
+  }
+
+  private AuthenticationInteractionResult withInteractions(
+      Map<String, AuthenticationInteractionResult> value) {
+    return new AuthenticationInteractionResult(
+        operationType, method, callCount, successCount, failureCount, interactionTime, value);
   }
 
   /**
@@ -116,7 +132,9 @@ public class AuthenticationInteractionResult {
     AuthenticationInteractionResult existing = updated.get(name);
 
     if (existing != null) {
-      updated.put(name, existing.updateWith(interactionRequestResult));
+      // incrementTotals, not updateWith: the breakdown is one level deep by design, and updateWith
+      // would give this entry a breakdown of its own.
+      updated.put(name, existing.incrementTotals(interactionRequestResult));
       return updated;
     }
 
@@ -144,6 +162,11 @@ public class AuthenticationInteractionResult {
     return interactions != null && !interactions.isEmpty();
   }
 
+  /**
+   * Federation has no per-interaction breakdown — it records under its own type key and never names
+   * an interaction — but the existing breakdown is carried so the two {@code updateWith} overloads
+   * do not differ in whether they preserve it.
+   */
   public AuthenticationInteractionResult updateWith(
       FederationInteractionResult interactionRequestResult) {
     int increaseSuccessCount = interactionRequestResult.isSuccess() ? 1 : 0;
@@ -155,7 +178,8 @@ public class AuthenticationInteractionResult {
         callCount + 1,
         successCount + increaseSuccessCount,
         failureCount + increaseFailureCount,
-        SystemDateTime.now());
+        SystemDateTime.now(),
+        interactions);
   }
 
   public OperationType operationType() {

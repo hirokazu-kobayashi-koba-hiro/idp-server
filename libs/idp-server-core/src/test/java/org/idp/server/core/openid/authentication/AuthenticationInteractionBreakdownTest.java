@@ -125,6 +125,25 @@ class AuthenticationInteractionBreakdownTest {
     }
 
     @Test
+    void doesNotNestTheBreakdownInsideItself() {
+      // The breakdown is exactly one level deep. Advancing a breakdown entry with updateWith
+      // instead of incrementTotals gave it a breakdown of its own, one level deeper per call, so
+      // the stored JSON grew with every request while the depth-1 counts stayed correct — nothing
+      // in the counting or the policy noticed.
+      AuthenticationInteractionResults results =
+          resultsOf(
+              result("interaction-a", true),
+              result("interaction-a", true),
+              result("interaction-a", true));
+
+      AuthenticationInteractionResult inner = results.get(TYPE).interactions().get("interaction-a");
+
+      assertEquals(3, inner.callCount());
+      assertFalse(inner.hasInteractions());
+      assertFalse(inner.toMap().containsKey("interactions"));
+    }
+
+    @Test
     void countsFailuresPerInteraction() {
       // Per-interaction attempt limits are the other half of #1771: a shared failure_count cannot
       // express "lock after 3 failures of interaction-b".

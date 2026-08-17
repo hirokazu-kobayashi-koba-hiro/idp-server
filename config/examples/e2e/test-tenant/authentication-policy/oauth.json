@@ -673,10 +673,22 @@
         "any_of": [
           [
             {
-              "path": "$.external-api-authentication.success_count",
+              "path": "$.external-api-authentication.interactions.ciba_start.success_count",
               "type": "integer",
               "operation": "gte",
-              "value": 3
+              "value": 1
+            },
+            {
+              "path": "$.external-api-authentication.interactions.ciba_poll.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.external-api-authentication.interactions.userinfo.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
             }
           ]
         ]
@@ -720,10 +732,22 @@
               "value": 1
             },
             {
-              "path": "$.external-api-authentication.success_count",
+              "path": "$.external-api-authentication.interactions.ciba_start.success_count",
               "type": "integer",
               "operation": "gte",
-              "value": 3
+              "value": 1
+            },
+            {
+              "path": "$.external-api-authentication.interactions.ciba_poll.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            },
+            {
+              "path": "$.external-api-authentication.interactions.userinfo.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
             }
           ]
         ]

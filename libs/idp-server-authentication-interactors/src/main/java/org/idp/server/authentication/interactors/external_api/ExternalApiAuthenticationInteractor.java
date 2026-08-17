@@ -130,11 +130,30 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     AuthenticationInteractionRequestResult result =
         execute(tenant, transaction, type, request, requestAttributes, userQueryRepository);
 
-    String interactionName = request.optValueAsString("interaction", "");
-    if (!interactionName.isEmpty()) {
-      result.setInteractionName(interactionName);
+    if (isConfiguredInteraction(tenant, request)) {
+      result.setInteractionName(request.optValueAsString("interaction", ""));
     }
     return result;
+  }
+
+  /**
+   * Whether the requested interaction is one this tenant actually configured.
+   *
+   * <p>The name becomes a key in the stored authentication result, and it arrives in the request
+   * body. Stamping it unconditionally would let a caller write arbitrary keys into the transaction
+   * — a request naming an unconfigured interaction is rejected with 400, but the failure would
+   * still be recorded under whatever string was sent, and a different string each time grows the
+   * row without bound before any authentication has succeeded.
+   */
+  private boolean isConfiguredInteraction(Tenant tenant, AuthenticationInteractionRequest request) {
+    String interaction = request.optValueAsString("interaction", "");
+    if (interaction.isEmpty()) {
+      return false;
+    }
+
+    AuthenticationConfiguration configuration =
+        configurationRepository.get(tenant, "external-api-authentication");
+    return configuration.getAuthenticationConfig(interaction) != null;
   }
 
   private AuthenticationInteractionRequestResult execute(
