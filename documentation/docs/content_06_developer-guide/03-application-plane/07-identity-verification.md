@@ -466,6 +466,7 @@ describe('Identity Verification Application', () => {
 | `regex_replace` | 正規表現置換 | `{"name": "regex_replace", "args": {"pattern": "\\d+", "replacement": "***"}}` |
 | `substring` | 部分文字列抽出 | `{"name": "substring", "args": {"start": 0, "end": 10}}` |
 | `format` | フォーマット文字列適用 | `{"name": "format", "args": {"template": "ID-{{value}}"}}` |
+| `normalize` | Unicode 正規化（半角カナ⇄全角カナ等の表記ゆれ吸収） | `{"name": "normalize", "args": {"form": "NFKC"}}` |
 
 ### コレクション操作
 
