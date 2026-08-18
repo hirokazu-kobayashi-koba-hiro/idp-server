@@ -71,6 +71,15 @@ import java.util.Map;
  * fullwidth alphanumerics. Use NFC when the value only needs a canonical representation and its
  * notation has to survive.
  *
+ * <h2>Not for identity matching</h2>
+ *
+ * <p>Folding notation together means different inputs produce the same output, so this must not be
+ * applied to a field that decides whether two values are the same principal — {@code
+ * identity_match_field} in {@code external-api-authentication} compares such a value with {@code
+ * equals}. An attacker who can register {@code "Ａdmin@example.com"} (fullwidth U+FF21) at the
+ * external provider would match a stored {@code "Admin@example.com"}. Some foldings render
+ * identically to their target (U+212A KELVIN SIGN becomes {@code K}), so review cannot catch them.
+ *
  * <h2>Scope</h2>
  *
  * <p>Unicode normalization only. Whitespace removal, case folding and trimming are {@code
@@ -84,8 +93,15 @@ import java.util.Map;
  * }</pre>
  *
  * <p>Hiragana and katakana are distinct characters, not notational variants, so no form converts
- * between them. Arrays are handled by {@code map}: {@code {"name": "map", "args": {"function":
- * "normalize"}}}.
+ * between them.
+ *
+ * <p>Arrays are handled by {@code map}. Its argument key is {@code function_args}: nesting {@code
+ * args} instead is not an error, it silently leaves this function with no arguments and applies the
+ * default NFKC.
+ *
+ * <pre>{@code
+ * { "name": "map", "args": { "function": "normalize", "function_args": { "form": "NFC" } } }
+ * }</pre>
  *
  * @see <a href="https://www.unicode.org/reports/tr15/">UAX #15: Unicode Normalization Forms</a>
  */

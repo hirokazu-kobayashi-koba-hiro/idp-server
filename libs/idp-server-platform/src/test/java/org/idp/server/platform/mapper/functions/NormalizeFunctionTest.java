@@ -214,6 +214,27 @@ public class NormalizeFunctionTest {
   }
 
   @Test
+  public void testMapPassesArgumentsUnderFunctionArgsOnly() {
+    FunctionRegistry registry = new FunctionRegistry();
+    ValueFunction map = registry.get("map");
+
+    assertEquals(
+        List.of(HALFWIDTH_GA),
+        map.apply(
+            List.of(HALFWIDTH_GA),
+            args("function", "normalize", "function_args", Map.of("form", "NFC"))));
+
+    // Nesting under "args" instead is not an error: map reads function_args and nothing else, so
+    // this function receives no arguments and the default NFKC is applied. Same failure class as an
+    // invalid form — a comparison succeeds under a form nobody asked for — but it cannot be
+    // detected from here, which is why the documented example uses function_args.
+    assertEquals(
+        List.of(KATAKANA_GA),
+        map.apply(
+            List.of(HALFWIDTH_GA), args("function", "normalize", "args", Map.of("form", "NFC"))));
+  }
+
+  @Test
   public void testNormalizesFromDocumentedConfiguration() {
     // The documented recipe parsed as configuration JSON rather than hand-built, so the snake_case
     // binding and the chain with regex_replace are both covered. Whitespace removal stays a
