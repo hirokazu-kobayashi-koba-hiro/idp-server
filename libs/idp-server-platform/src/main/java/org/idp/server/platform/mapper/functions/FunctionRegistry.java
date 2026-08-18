@@ -108,6 +108,9 @@ public class FunctionRegistry {
     Base64Function base64Function = new Base64Function();
     temp.put(base64Function.name(), base64Function);
 
+    NormalizeFunction normalizeFunction = new NormalizeFunction();
+    temp.put(normalizeFunction.name(), normalizeFunction);
+
     // Initialize map field before calling setFunctionRegistry to prevent partial construction
     // escape
     this.map = Collections.unmodifiableMap(temp);

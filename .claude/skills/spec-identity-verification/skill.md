@@ -152,6 +152,7 @@ eKYC機能を有効にするには、認可サーバーに以下の設定が必�
 | `regex_replace` | 正規表現置換 | `{"name":"regex_replace","args":{"pattern":"\\d+","replacement":"*"}}` |
 | `substring` | 部分文字列抽出 | `{"name":"substring","args":{"start":0,"end":10}}` |
 | `format` | テンプレート置換 | `{"name":"format","args":{"template":"Bearer {{value}}"}}` |
+| `normalize` | Unicode 正規化（表記ゆれ吸収）。`form`: NFC/NFD/NFKC/NFKD、既定 NFKC | `{"name":"normalize","args":{"form":"NFKC"}}` |
 
 ### コレクション操作
 
