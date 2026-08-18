@@ -17,7 +17,8 @@
 package org.idp.server.core.openid.oauth.type.oidc;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,6 +33,11 @@ import java.util.stream.Collectors;
  * SHOULD NOT result if some or all of the requested locales are not supported by the OpenID
  * Provider.
  *
+ * <p>Preference order is part of the value, so the tags are held in a {@link LinkedHashSet}: the
+ * request order survives {@link #values()}, {@link #toStringList()} and {@link #toStringValues()},
+ * which is what the sign-in view needs to pick the first bundle it has. A plain {@code HashSet}
+ * would hand the view an arbitrary order and "fr-CA fr en" could arrive as "en fr-CA fr".
+ *
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">3.1.2.1.
  *     Authentication Request</a>
  */
@@ -40,23 +46,28 @@ public class UiLocales {
   Set<String> values;
 
   public UiLocales() {
-    this.values = new HashSet<>();
+    this.values = new LinkedHashSet<>();
   }
 
   public UiLocales(String value) {
     if (Objects.isNull(value) || value.isEmpty()) {
-      this.values = new HashSet<>();
+      this.values = new LinkedHashSet<>();
       return;
     }
-    this.values = Arrays.stream(value.split(" ")).collect(Collectors.toSet());
-  }
-
-  public UiLocales(Set<String> values) {
-    this.values = values;
+    // Blanks are dropped so a doubled separator does not put an empty tag in the list handed to the
+    // view, which would look like a locale it should try to resolve.
+    this.values =
+        Arrays.stream(value.split(" "))
+            .filter(tag -> !tag.isBlank())
+            .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
   public Set<String> values() {
     return values;
+  }
+
+  public List<String> toStringList() {
+    return List.copyOf(values);
   }
 
   public boolean exists() {

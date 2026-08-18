@@ -156,6 +156,9 @@ public class ServerConfigurationResponseCreator {
       map.put(
           "display_values_supported", authorizationServerConfiguration.displayValuesSupported());
     }
+    if (authorizationServerConfiguration.hasUiLocalesSupported()) {
+      map.put("ui_locales_supported", authorizationServerConfiguration.uiLocalesSupported());
+    }
     if (authorizationServerConfiguration.hasClaimTypesSupported()) {
       map.put("claim_types_supported", authorizationServerConfiguration.claimTypesSupported());
     }

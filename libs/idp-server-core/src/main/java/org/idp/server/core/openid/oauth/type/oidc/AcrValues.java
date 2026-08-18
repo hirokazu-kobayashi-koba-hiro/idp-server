@@ -17,7 +17,7 @@
 package org.idp.server.core.openid.oauth.type.oidc;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,6 +31,12 @@ import java.util.stream.Collectors;
  * Context Class satisfied by the authentication performed is returned as the acr Claim Value, as
  * specified in Section 2. The acr Claim is requested as a Voluntary Claim by this parameter.
  *
+ * <p>Held in a {@link LinkedHashSet} so the requested order of preference survives. Matching is by
+ * membership ({@link #contains}), so nothing decides differently because of it today, but the value
+ * is persisted with the authorization request through {@link #toStringValues()} and a stored
+ * "urn:mace:incommon:iap:silver urn:mace:incommon:iap:bronze" that reads back in the other order is
+ * simply wrong.
+ *
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest">3.1.2.1.
  *     Authentication Request</a>
  */
@@ -39,20 +45,19 @@ public class AcrValues {
   Set<String> values;
 
   public AcrValues() {
-    this.values = new HashSet<>();
+    this.values = new LinkedHashSet<>();
   }
 
   public AcrValues(String value) {
     if (Objects.isNull(value) || value.isEmpty()) {
-      this.values = new HashSet<>();
+      this.values = new LinkedHashSet<>();
       return;
     }
-    this.values = Arrays.stream(value.split(" ")).collect(Collectors.toSet());
-    ;
-  }
-
-  public AcrValues(Set<String> values) {
-    this.values = values;
+    // Only the ordering is changed here. UiLocales additionally drops blank entries because its
+    // values are handed to the view as a list to resolve; nothing reads an acr value that way, and
+    // matching is by membership, so this stays as it was.
+    this.values =
+        Arrays.stream(value.split(" ")).collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
   public Set<String> values() {

@@ -142,4 +142,66 @@ class ServerConfigurationResponseCreatorTest {
       assertTrue(legacy.documentsSupported().isEmpty());
     }
   }
+
+  /**
+   * #1801: {@code ui_locales_supported} was written in every tenant template and documented in both
+   * OpenAPI specs, but the field did not exist on the configuration, so Jackson dropped it on read
+   * and discovery never advertised it. The configuration registered fine and only the runtime was
+   * missing — the same shape as #1500 and #1783.
+   */
+  @Nested
+  class UiLocalesSupported {
+
+    @Test
+    void advertisesConfiguredUiLocales() {
+      Map<String, Object> map =
+          discovery(
+              config(
+                  """
+                  {
+                    "ui_locales_supported": ["ja-JP", "en-US", "fr-FR"]
+                  }
+                  """));
+
+      assertEquals(List.of("ja-JP", "en-US", "fr-FR"), map.get("ui_locales_supported"));
+    }
+
+    @Test
+    void keepsTheConfiguredOrder() {
+      // The tenant lists them in the order it prefers to offer them, and discovery is what an RP
+      // reads to decide what to request.
+      AuthorizationServerConfiguration configuration =
+          config(
+              """
+              {
+                "ui_locales_supported": ["fr-CA", "fr", "en"]
+              }
+              """);
+
+      assertEquals(List.of("fr-CA", "fr", "en"), configuration.uiLocalesSupported());
+      assertEquals(
+          List.of("fr-CA", "fr", "en"), discovery(configuration).get("ui_locales_supported"));
+    }
+
+    @Test
+    void omitsWhenNotConfigured() {
+      Map<String, Object> map = discovery(config("{}"));
+
+      assertFalse(map.containsKey("ui_locales_supported"));
+    }
+
+    @Test
+    void isCarriedByTheManagementRepresentation() {
+      // A GET -> modify -> PUT round trip through the management API must not drop it.
+      AuthorizationServerConfiguration configuration =
+          config(
+              """
+              {
+                "ui_locales_supported": ["ja-JP"]
+              }
+              """);
+
+      assertEquals(List.of("ja-JP"), configuration.toMap().get("ui_locales_supported"));
+    }
+  }
 }

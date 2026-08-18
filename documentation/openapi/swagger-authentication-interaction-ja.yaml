@@ -1320,6 +1320,34 @@ components:
               dark_mode: true
               beta_features: false
             max_sessions: 5
+        login_hint:
+          type: string
+          description: |
+            認可リクエストの `login_hint`。指定された場合のみ含まれます。
+            ユーザー名の事前入力などに使用します。
+          example: "sub:3ec055a8-8000-44a2-8677-e70ebff414e2"
+        ui_locales:
+          type: array
+          items:
+            type: string
+          description: |
+            認可リクエストの `ui_locales`（BCP47 言語タグ）。指定された場合のみ含まれます。
+
+            **優先順位順**の配列です。仕様上サポート外の locale でもエラーにはしないため、
+            `ui_locales_supported` によるフィルタは行わず、要求された値をそのまま返します。
+            画面側で先頭から順に、表示可能な言語が見つかるまで走査してください。
+
+            **値は検証していません。** BCP47 として妥当かも確認せずクライアントの指定を
+            そのまま返すため、既知の locale 一覧と照合してから使用してください
+            （値をパスやURLに直接埋め込まないこと）。
+          example: ["fr-CA", "fr", "en"]
+        authentication_policy:
+          type: object
+          additionalProperties: true
+          description: |
+            このリクエストに適用される認証ポリシー。利用可能な認証方式、ステップ定義、
+            成功条件などを含みます。スキーマは管理APIの `AuthenticationPolicy`
+            （`swagger-cp-authentication-ja.yaml`）と同じです。
 
     FederationInfo:
       type: object

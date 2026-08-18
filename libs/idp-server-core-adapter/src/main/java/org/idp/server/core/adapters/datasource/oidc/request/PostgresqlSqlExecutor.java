@@ -151,7 +151,7 @@ public class PostgresqlSqlExecutor implements AuthorizationRequestSqlExecutor {
       params.add(null);
     }
 
-    if (authorizationRequest.hasUilocales()) {
+    if (authorizationRequest.hasUiLocales()) {
       params.add(authorizationRequest.uiLocales().toStringValues());
     } else {
       params.add(null);

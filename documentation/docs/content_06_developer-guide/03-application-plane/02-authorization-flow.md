@@ -219,7 +219,9 @@ OAuthFlowEntryService.getViewData()
         ├─ セッション有効判定
         ├─ 利用可能フェデレーション一覧
         ├─ カスタムパラメータ
-        └─ client_custom_properties（設定時のみ）
+        ├─ client_custom_properties（設定時のみ）
+        ├─ login_hint（リクエストで指定時のみ）
+        └─ ui_locales（リクエストで指定時のみ）
 
 → レスポンス: 認可画面描画用データ（JSON）
 ```
@@ -256,8 +258,22 @@ OAuthFlowEntryService.getViewData()
 | `available_federations` | 利用可能な外部IdP連携（Google、Azure AD等） |
 | `custom_params` | 認可リクエストのカスタムパラメータ |
 | `client_custom_properties` | クライアントのextension.custom_propertiesに設定した任意データ（未設定時は含まれない） |
+| `login_hint` | 認可リクエストの`login_hint`（未指定時は含まれない） |
+| `ui_locales` | 認可リクエストの`ui_locales`。**優先順位順の配列**（未指定時は含まれない） |
 
 `session_enabled`が`true`の場合、SPAは再認証をスキップして直接`/authorize`を呼び出すことができます。
+
+`ui_locales`は先頭から順に、表示可能な言語が見つかるまで走査してください。`ui_locales_supported`によるフィルタは行わず、要求された値をそのまま返します（仕様上、サポート外のlocaleが来てもエラーにはしないため）。
+
+:::warning ui_locales の値は検証していません
+BCP47として妥当かも確認せず、クライアントの指定をそのまま返します。**既知のlocale一覧と照合してから使用**してください。値をパスやURLに直接埋め込む実装（`fetch('/locales/' + tag + '.json')`等）は避けてください。
+:::
+
+なお`ui_locales`はサインイン画面へのリダイレクトURLにも空白区切りで付与されるため、view-dataの往復を待たずに初回描画の言語を確定できます。
+
+```
+/signin/index.html?id=abc-123-def&tenant_id=18ffff8d-...&ui_locales=fr-CA+fr+en
+```
 
 **実装**: [OAuthViewDataCreator.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/view/OAuthViewDataCreator.java)
 
