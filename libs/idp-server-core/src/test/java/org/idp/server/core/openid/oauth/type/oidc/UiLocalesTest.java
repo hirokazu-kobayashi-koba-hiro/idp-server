@@ -18,6 +18,8 @@ package org.idp.server.core.openid.oauth.type.oidc;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -73,6 +75,16 @@ class UiLocalesTest {
 
     assertTrue(uiLocales.exists());
     assertEquals(List.of("ja-JP"), uiLocales.toStringList());
+  }
+
+  @Test
+  void copiesAnUnorderedSetIntoAnOrderedOne() {
+    // The Set constructor has no production caller today. Holding the argument would let one that
+    // passes a HashSet drop the ordering this class exists to keep, and every other test here would
+    // still pass — so the copy is pinned rather than left to the constructor's shape.
+    UiLocales uiLocales = new UiLocales(new HashSet<>(List.of("ja")));
+
+    assertInstanceOf(LinkedHashSet.class, uiLocales.values());
   }
 
   @Test

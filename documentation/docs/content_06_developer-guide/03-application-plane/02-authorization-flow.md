@@ -265,6 +265,10 @@ OAuthFlowEntryService.getViewData()
 
 `ui_locales`は先頭から順に、表示可能な言語が見つかるまで走査してください。`ui_locales_supported`によるフィルタは行わず、要求された値をそのまま返します（仕様上、サポート外のlocaleが来てもエラーにはしないため）。
 
+:::warning ui_locales の値は検証していません
+BCP47として妥当かも確認せず、クライアントの指定をそのまま返します。**既知のlocale一覧と照合してから使用**してください。値をパスやURLに直接埋め込む実装（`fetch('/locales/' + tag + '.json')`等）は避けてください。
+:::
+
 なお`ui_locales`はサインイン画面へのリダイレクトURLにも空白区切りで付与されるため、view-dataの往復を待たずに初回描画の言語を確定できます。
 
 ```

@@ -55,13 +55,14 @@ class AcrValuesTest {
   }
 
   @Test
-  void leavesBlankHandlingAsItWas() {
+  void keepsBlankEntriesFromADoubledSeparator() {
     // Unlike UiLocales, blanks are not filtered: only the ordering was broken here. A doubled
-    // separator therefore still yields an empty member, which no consumer looks up and which
-    // String.join puts back as it was.
+    // separator therefore still yields an empty member, which no consumer looks up.
     AcrValues doubledSeparator = new AcrValues("acr1  acr2");
 
     assertTrue(doubledSeparator.contains(""));
+    // The round trip is exact now that the order is kept. Under the previous HashSet the empty
+    // member could land anywhere, so " acr1 acr2" and "acr1 acr2 " were equally possible.
     assertEquals("acr1  acr2", doubledSeparator.toStringValues());
   }
 

@@ -60,8 +60,9 @@ public class AcrValues {
         Arrays.stream(value.split(" ")).collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
+  /** Copies into a {@link LinkedHashSet} for the same reason as {@code UiLocales}. */
   public AcrValues(Set<String> values) {
-    this.values = values;
+    this.values = new LinkedHashSet<>(values);
   }
 
   public Set<String> values() {

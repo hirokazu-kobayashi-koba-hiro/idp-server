@@ -62,8 +62,13 @@ public class UiLocales {
             .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
+  /**
+   * Copies into a {@link LinkedHashSet} rather than holding the argument. Taking it as-is would let
+   * a caller passing a {@code HashSet} silently drop the ordering this class exists to keep, and no
+   * test on this class would notice.
+   */
   public UiLocales(Set<String> values) {
-    this.values = values;
+    this.values = new LinkedHashSet<>(values);
   }
 
   public Set<String> values() {
