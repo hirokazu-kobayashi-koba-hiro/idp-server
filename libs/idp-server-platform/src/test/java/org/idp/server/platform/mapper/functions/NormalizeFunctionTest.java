@@ -172,8 +172,8 @@ public class NormalizeFunctionTest {
   public void testEveryFormFoldsCanonicalSingletons() {
     // Why the documentation says no form is safe for identity matching. U+212A KELVIN SIGN and
     // U+212B ANGSTROM SIGN have canonical rather than compatibility decompositions, so NFC folds
-    // them too — choosing NFC over NFKC narrows the folding but does not remove it. Both render
-    // identically to what they fold into.
+    // them too — choosing NFC over NFKC narrows the folding but does not remove it.
+    //
     // Built from code points: these render exactly like what they fold into, so a literal here
     // would silently be the already-folded character and the test would assert nothing.
     String kelvinSign = Character.toString(0x212A);
