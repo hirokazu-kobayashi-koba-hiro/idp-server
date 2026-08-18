@@ -80,6 +80,10 @@ import java.util.Map;
  * external provider would match a stored {@code "Admin@example.com"}. Some foldings render
  * identically to their target (U+212A KELVIN SIGN becomes {@code K}), so review cannot catch them.
  *
+ * <p>Choosing NFC does not avoid this. U+212A and U+212B have canonical, not compatibility,
+ * decompositions, so every form folds them; only the compatibility cases above are specific to
+ * NFKC/NFKD. No form is safe for identity matching — use the raw value.
+ *
  * <h2>Scope</h2>
  *
  * <p>Unicode normalization only. Whitespace removal, case folding and trimming are {@code
