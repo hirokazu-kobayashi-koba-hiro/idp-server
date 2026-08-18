@@ -1424,6 +1424,7 @@ Access to XMLHttpRequest at 'https://idp.example.com/...' from origin 'https://a
 |-----------|------------|
 | `grant_types_supported` | `["authorization_code", "implicit"]` |
 | `acr_values_supported` | `[]` |
+| `ui_locales_supported` | `[]` |
 | `token_endpoint_auth_methods_supported` | `["client_secret_basic"]` |
 | `id_token_signing_alg_values_supported` | `["RS256"]` |
 | `extension` | - |
