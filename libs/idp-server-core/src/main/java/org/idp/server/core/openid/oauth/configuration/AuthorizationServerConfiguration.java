@@ -58,6 +58,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   List<String> tokenEndpointAuthMethodsSupported = new ArrayList<>();
   List<String> tokenEndpointAuthSigningAlgValuesSupported = new ArrayList<>();
   List<String> displayValuesSupported = new ArrayList<>();
+  List<String> uiLocalesSupported = new ArrayList<>();
   List<String> claimTypesSupported = new ArrayList<>();
   List<String> claimsSupported = new ArrayList<>();
   boolean claimsParameterSupported = true;
@@ -240,6 +241,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
 
   public List<String> displayValuesSupported() {
     return displayValuesSupported;
+  }
+
+  public List<String> uiLocalesSupported() {
+    return uiLocalesSupported;
   }
 
   public List<String> claimTypesSupported() {
@@ -520,6 +525,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
 
   public boolean hasDisplayValuesSupported() {
     return !displayValuesSupported.isEmpty();
+  }
+
+  public boolean hasUiLocalesSupported() {
+    return !uiLocalesSupported.isEmpty();
   }
 
   public boolean hasClaimTypesSupported() {
@@ -809,6 +818,9 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     }
     if (hasDisplayValuesSupported()) {
       map.put("display_values_supported", displayValuesSupported);
+    }
+    if (hasUiLocalesSupported()) {
+      map.put("ui_locales_supported", uiLocalesSupported);
     }
     if (hasClaimTypesSupported()) {
       map.put("claim_types_supported", claimTypesSupported);

@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.oauth.view;
 
 import org.idp.server.core.openid.oauth.OAuthRequestContext;
+import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
 import org.idp.server.core.openid.oauth.type.oauth.CustomParams;
 import org.idp.server.core.openid.oauth.type.oauth.Error;
 import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
@@ -50,10 +51,17 @@ public class OAuthViewUrlResolver {
   private static String buildUrl(String base, String path, OAuthRequestContext context) {
     String normalizedBase = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
     String normalizedPath = path.startsWith("/") ? path.replaceFirst("/", "") : path;
-    CustomParams customParams = context.authorizationRequest().customParams();
+    AuthorizationRequest authorizationRequest = context.authorizationRequest();
+    CustomParams customParams = authorizationRequest.customParams();
     HttpQueryParams httpQueryParams = new HttpQueryParams(customParams.values());
     httpQueryParams.add("id", context.authorizationRequestIdentifier().value());
     httpQueryParams.add("tenant_id", context.tenantIdentifier().value());
+    // Carried on the URL as well as in view-data so the page can settle its language — html lang,
+    // text direction — on first paint instead of after the view-data round trip. Kept in the
+    // request's space-separated form; the array form is view-data's.
+    if (authorizationRequest.hasUiLocales()) {
+      httpQueryParams.add("ui_locales", authorizationRequest.uiLocales().toStringValues());
+    }
     String params = httpQueryParams.params();
     return String.format("%s/%s?%s", normalizedBase, normalizedPath, params);
   }

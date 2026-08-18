@@ -75,6 +75,14 @@ public class OAuthViewDataCreator {
       additionalViewData.put("login_hint", authorizationRequest.loginHint().value());
     }
 
+    // Handed over as requested, without filtering against ui_locales_supported. The spec says an
+    // error SHOULD NOT result from an unsupported locale, and the view is the side that knows which
+    // bundles it actually has — filtering here would also empty the list for a tenant that never
+    // configured ui_locales_supported.
+    if (authorizationRequest.hasUiLocales()) {
+      additionalViewData.put("ui_locales", authorizationRequest.uiLocales().toStringList());
+    }
+
     return new OAuthViewData(
         clientId,
         clientName,

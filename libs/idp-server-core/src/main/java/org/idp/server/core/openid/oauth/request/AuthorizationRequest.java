@@ -235,7 +235,7 @@ public class AuthorizationRequest {
     return uiLocales;
   }
 
-  public boolean hasUilocales() {
+  public boolean hasUiLocales() {
     return uiLocales.exists();
   }
 
