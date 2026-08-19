@@ -52,7 +52,7 @@
 
 RPは①で受け取ったIDトークンの `sub` を保持しておき、③で `login_hint=sub:{sub}` として渡します。初回ログインではRPが `sub` を知らないためこれができず、**パスワード + FIDO-UAF（MFA）**のパターンを使います（[後述](#login_hintなし--fido-uafのみの認証はサポートしない)）。
 
-実装: [OAuthFlowEntryService.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/application/enduser/OAuthFlowEntryService.java)（`resolveUserFromLoginHint`）
+実装: [OAuthFlowEntryService.java](../../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/application/enduser/OAuthFlowEntryService.java)（`resolveUserFromLoginHint`）
 :::
 
 ---
@@ -525,7 +525,7 @@ login_hintを指定しない場合でも、パスワード認証でユーザー�
 
 値は**いずれか1つを満たせばよい**方式のリストです。満たしていないスコープは**付与されずに落とされます**（エラーにはなりません）。パスワード認証だけでは `transfers` が付かず、FIDO-UAF を実行すると付く、という挙動になります。
 
-実装: [LoaDeniedScopeResolver.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/loa/LoaDeniedScopeResolver.java)
+実装: [LoaDeniedScopeResolver.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/loa/LoaDeniedScopeResolver.java)
 
 ---
 
