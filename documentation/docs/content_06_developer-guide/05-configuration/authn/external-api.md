@@ -38,6 +38,14 @@ External API認証は、**リクエストボディの `interaction` フィール
 7. 認証結果を返却
 ```
 
+:::warning 同梱のサインイン画面（app-view）は非対応
+`external-api-authentication` は**専用のサインイン画面が必要**です。
+
+同梱の汎用画面は `password` / `email` / `sms` / `fido2` / `fido-uaf` のステップだけを描画でき、`external-api` のステップには `Unsupported authentication step` と表示されます（`app-view/src/components/auth/StepRenderer.tsx`）。
+
+interaction ごとに入力項目が `request.schema` でテナント固有に定義されるため、汎用画面は「何を入力させればよいか」を知り得ません。これは実装漏れではなく、この認証方式の性質によるものです。
+:::
+
 ---
 
 ## 設定
@@ -269,7 +277,7 @@ idp-server が受け取ったリクエスト自体から取れる値です。RP 
   "operation": "gte", "value": 1 }
 ```
 
-合計だけを使うと「1つの interaction を複数回呼ぶ」でも条件が成立してしまうため、**多段フローで各段を必須にしたい場合は内訳を使ってください**。詳細は [Authentication Policy の設定](../authentication-policy.md#interactions%E3%81%AE%E5%86%85%E8%A8%B3) を参照してください。
+合計だけを使うと「1つの interaction を複数回呼ぶ」でも条件が成立してしまうため、**多段フローで各段を必須にしたい場合は内訳を使ってください**。詳細は [Authentication Policy の設定](../authentication-policy.md#interactionsinteraction-ごとの内訳) を参照してください。
 
 ### 2. 補助判定型（user_resolve なし）
 
@@ -402,6 +410,14 @@ POST /external-api-authentication
 ## MFA での利用（2段階目）
 
 認証ポリシーで `external-api` を2段階目に設定できます。
+
+:::info 複数の interaction で 1st / 2nd factor を分ける場合
+下の例のように `method` だけを書いた定義は、**この設定内の全 interaction に適用されます**（どの interaction を実行しても `method` は `"external-api"` のため）。
+
+interaction ごとに `requires_user` を変えたい場合は、step 定義に `interaction` を指定してください。書き忘れた interaction はチェックが行われないため、`method` 単位の既定を1つ置く形を推奨します。
+
+→ [step_definitions の interaction 単位の定義](../authentication-policy.md#interaction-単位の定義)
+:::
 
 ### 認証ポリシー設定
 

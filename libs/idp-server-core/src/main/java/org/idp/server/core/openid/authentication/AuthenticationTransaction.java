@@ -422,6 +422,23 @@ public class AuthenticationTransaction {
   }
 
   public AuthenticationStepDefinition getCurrentStepDefinition(String method) {
+    return getCurrentStepDefinition(method, null);
+  }
+
+  /**
+   * Resolves the step definition for a method, optionally narrowed to one of its interactions.
+   *
+   * <p>A definition naming the interaction wins; otherwise one keyed on the method alone applies.
+   * That ordering is what makes the method-level definition a default and the interaction-level one
+   * an override, so a configuration can say "these steps need an authenticated user, except this
+   * one that identifies them". Falling back also keeps every existing configuration — none of which
+   * names an interaction — resolving exactly as before. (#1813)
+   *
+   * @param method the interactor's {@code method()}
+   * @param interaction the interaction that ran, or null when the method has only one
+   * @return the definition to apply, or null when the policy defines none for this method
+   */
+  public AuthenticationStepDefinition getCurrentStepDefinition(String method, String interaction) {
 
     if (!hasAuthenticationPolicy()) {
       return null;
@@ -431,12 +448,22 @@ public class AuthenticationTransaction {
       return null;
     }
 
+    AuthenticationStepDefinition methodLevel = null;
     for (AuthenticationStepDefinition step : authenticationPolicy.stepDefinitions()) {
-      if (method.equals(step.authenticationMethod())) {
+      if (!method.equals(step.authenticationMethod())) {
+        continue;
+      }
+      if (!step.hasInteraction()) {
+        if (methodLevel == null) {
+          methodLevel = step;
+        }
+        continue;
+      }
+      if (step.interaction().equals(interaction)) {
         return step;
       }
     }
-    return null;
+    return methodLevel;
   }
 
   /**

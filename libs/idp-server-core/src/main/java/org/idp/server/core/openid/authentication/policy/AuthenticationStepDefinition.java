@@ -50,6 +50,7 @@ import org.idp.server.platform.json.JsonReadable;
  */
 public class AuthenticationStepDefinition implements JsonReadable {
   String method;
+  String interaction; // optional; narrows this definition to one interaction of the method
   int order;
 
   // 1st/2nd factor control
@@ -68,6 +69,25 @@ public class AuthenticationStepDefinition implements JsonReadable {
 
   public String authenticationMethod() {
     return method;
+  }
+
+  /**
+   * The interaction this definition applies to, within {@link #authenticationMethod()}.
+   *
+   * <p>An interactor that holds several interactions under one method — {@code
+   * external-api-authentication} is the only one today — reports the same {@code method()}
+   * whichever interaction ran, so a definition keyed on the method alone applies to all of them.
+   * Naming an interaction narrows the definition to it, which is what lets one configuration carry
+   * a 1st factor and a 2nd factor. (#1813)
+   *
+   * @return interaction name, or null/empty when the definition applies to the whole method
+   */
+  public String interaction() {
+    return interaction;
+  }
+
+  public boolean hasInteraction() {
+    return interaction != null && !interaction.isEmpty();
   }
 
   public int order() {
@@ -157,6 +177,9 @@ public class AuthenticationStepDefinition implements JsonReadable {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("method", method);
+    if (hasInteraction()) {
+      map.put("interaction", interaction);
+    }
     map.put("order", order);
     map.put("requires_user", requiresUser);
     map.put("allow_registration", allowRegistration);

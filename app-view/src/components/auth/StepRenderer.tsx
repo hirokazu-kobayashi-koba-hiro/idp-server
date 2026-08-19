@@ -28,6 +28,11 @@ const isAuthenticateOnly = (step: StepView): boolean =>
  *
  * Adding a new method (or a new register/authenticate variant) means editing only this resolver —
  * no new page or route. Steps with no mapping fall back to a notice.
+ *
+ * `external-api` is deliberately absent and cannot be added here. Each of its interactions declares
+ * its own request schema in the tenant's configuration, so what to ask the user for is only known
+ * at runtime and differs per tenant — a fixed component cannot cover it. A tenant authenticating
+ * through an external API needs its own screen.
  */
 const resolveStepComponent = (
   step: StepView,
