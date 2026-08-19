@@ -38,6 +38,14 @@ External API認証は、**リクエストボディの `interaction` フィール
 7. 認証結果を返却
 ```
 
+:::warning 同梱のサインイン画面（app-view）は非対応
+`external-api-authentication` は**専用のサインイン画面が必要**です。
+
+同梱の汎用画面は `password` / `email` / `sms` / `fido2` / `fido-uaf` のステップだけを描画でき、`external-api` のステップには `Unsupported authentication step` と表示されます（`app-view/src/components/auth/StepRenderer.tsx`）。
+
+interaction ごとに入力項目が `request.schema` でテナント固有に定義されるため、汎用画面は「何を入力させればよいか」を知り得ません。これは実装漏れではなく、この認証方式の性質によるものです。
+:::
+
 ---
 
 ## 設定
