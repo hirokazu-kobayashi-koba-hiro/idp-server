@@ -290,7 +290,8 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     if (!userMappingRules.isEmpty()) {
 
       // 2nd factor: verify external API user matches authenticated user
-      AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
+      AuthenticationStepDefinition stepDefinition =
+          transaction.getCurrentStepDefinition(method(), interaction);
       if (stepDefinition != null && stepDefinition.requiresUser()) {
         String identityMatchField = interactionConfig.userResolve().identityMatchField();
         return handleSecondFactor(
@@ -345,7 +346,8 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
 
     // No user resolution - return execution result as-is
     // But still enforce 2nd factor requires_user check (e.g., risk analysis API as 2nd factor)
-    AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
+    AuthenticationStepDefinition stepDefinition =
+        transaction.getCurrentStepDefinition(method(), interaction);
     if (stepDefinition != null && stepDefinition.requiresUser()) {
       if (!transaction.hasUser()) {
         log.warn(
