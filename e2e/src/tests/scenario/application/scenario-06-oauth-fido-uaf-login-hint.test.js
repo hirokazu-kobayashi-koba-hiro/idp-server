@@ -438,6 +438,120 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     expect(tokenResponse.data.id_token).toBeDefined();
   });
 
+  it("should let the device verify the number-matching code with only the ids it can actually obtain (#1770)", async () => {
+    // The test above verifies the code through /authorizations/{authorization-id}/, which is fine
+    // for a test that already holds that id but is not reachable for a real device: the
+    // device-facing transaction carries the transaction id and never the authorization id
+    // (AuthenticationRequest#toMapForPublic). This walks the device's actual path — discover the
+    // transaction, then interact on /authentications/{transaction-id}/ — so the documented flow and
+    // the overview diagram describe something a device can do.
+    const { user, accessToken } = await createFederatedUser({
+      serverConfig: serverConfig,
+      federationServerConfig: federationServerConfig,
+      client: clientSecretPostClient,
+      adminClient: clientSecretPostClient,
+    });
+    const { authenticationDeviceId } = await registerFidoUaf({ accessToken });
+
+    const authorizeResponse = await get({
+      url:
+        `${backendUrl}/${serverConfig.tenantId}/v1/authorizations?` +
+        new URLSearchParams({
+          response_type: "code",
+          client_id: clientSecretPostClient.clientId,
+          redirect_uri: clientSecretPostClient.redirectUri,
+          scope: "openid profile email",
+          state: `state_${Date.now()}`,
+          login_hint: `sub:${user.sub},idp:idp-server`,
+        }).toString(),
+      headers: {},
+    });
+    expect(authorizeResponse.status).toBe(302);
+    const authId = new URL(authorizeResponse.headers.location, backendUrl).searchParams.get("id");
+
+    // Sign-in screen issues the code. This half is unambiguously the SPA's, and the authorization
+    // id is the id it holds.
+    const challengeResponse = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-device-number-matching-challenge`,
+      body: {},
+    });
+    expect(challengeResponse.status).toBe(200);
+    const numberMatchingCode = challengeResponse.data.number_matching_code;
+    expect(numberMatchingCode).toMatch(/^[0-9]{4}$/);
+
+    // Device discovers its own transaction. This is the only lookup a device has.
+    const deviceTxResponse = await getAuthenticationDeviceAuthenticationTransaction({
+      endpoint: serverConfig.authenticationDeviceEndpoint,
+      deviceId: authenticationDeviceId,
+      params: { flow: "oauth" },
+    });
+    expect(deviceTxResponse.status).toBe(200);
+    const deviceTx = deviceTxResponse.data.list[0];
+    console.log("device-facing transaction:", JSON.stringify(deviceTx, null, 2));
+
+    // What the device is told: prompt for a code, and which transaction. Not which code, and not
+    // the authorization id — pinning the absence is the point, because the diagram routes the
+    // device's call by which id it can hold.
+    expect(deviceTx.number_matching_required).toBe(true);
+    expect(deviceTx).not.toHaveProperty("number_matching_code");
+    expect(deviceTx).not.toHaveProperty("authorization_id");
+    expect(JSON.stringify(deviceTx)).not.toContain(authId);
+
+    const transactionId = deviceTx.id;
+    expect(transactionId).toBeDefined();
+    expect(transactionId).not.toBe(authId);
+
+    // The transcribed value, submitted on the path the device can address. Both paths converge on
+    // OAuthFlowEntryService#interactInternal, so this is the same verification, reached the way a
+    // device reaches it.
+    const verifyResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: "oauth",
+      id: transactionId,
+      interactionType: "authentication-device-number-matching",
+      body: { number_matching_code: numberMatchingCode },
+    });
+    console.log("number-matching verify via transaction id:", verifyResponse.status, verifyResponse.data);
+    expect(verifyResponse.status).toBe(200);
+
+    // A wrong code fails the same way here as on the other path.
+    const wrongCode = numberMatchingCode === "0000" ? "1111" : "0000";
+    const wrongResponse = await postAuthenticationDeviceInteraction({
+      endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+      flowType: "oauth",
+      id: transactionId,
+      interactionType: "authentication-device-number-matching",
+      body: { number_matching_code: wrongCode },
+    });
+    expect(wrongResponse.status).toBe(400);
+    expect(wrongResponse.data.error_description).toBe("number_matching_code does not match");
+
+    // FIDO-UAF on the same path completes the authentication and the flow issues tokens.
+    for (const interactionType of ["fido-uaf-authentication-challenge", "fido-uaf-authentication"]) {
+      const fidoResponse = await postAuthenticationDeviceInteraction({
+        endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
+        flowType: "oauth",
+        id: transactionId,
+        interactionType,
+        body: {},
+      });
+      expect(fidoResponse.status).toBe(200);
+    }
+
+    const statusAfter = await get({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-status`,
+      headers: {},
+    });
+    expect(statusAfter.status).toBe(200);
+    expect(statusAfter.data.status).toBe("success");
+
+    const authorizeResp = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authorize`,
+    });
+    expect(authorizeResp.status).toBe(200);
+    expect(authorizeResp.data.redirect_uri).toContain("code=");
+  });
+
   it("should filter scopes based on level_of_authentication_scopes", async () => {
     // Setup: Create user and register FIDO-UAF device
     console.log("\n=== Setup: Create user and register FIDO-UAF device ===");
