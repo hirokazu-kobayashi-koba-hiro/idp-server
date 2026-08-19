@@ -277,7 +277,7 @@ idp-server が受け取ったリクエスト自体から取れる値です。RP 
   "operation": "gte", "value": 1 }
 ```
 
-合計だけを使うと「1つの interaction を複数回呼ぶ」でも条件が成立してしまうため、**多段フローで各段を必須にしたい場合は内訳を使ってください**。詳細は [Authentication Policy の設定](../authentication-policy.md#interactions%E3%81%AE%E5%86%85%E8%A8%B3) を参照してください。
+合計だけを使うと「1つの interaction を複数回呼ぶ」でも条件が成立してしまうため、**多段フローで各段を必須にしたい場合は内訳を使ってください**。詳細は [Authentication Policy の設定](../authentication-policy.md#interactionsinteraction-ごとの内訳) を参照してください。
 
 ### 2. 補助判定型（user_resolve なし）
 
