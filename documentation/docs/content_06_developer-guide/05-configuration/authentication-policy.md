@@ -393,13 +393,13 @@ interaction ごとに `requires_user` を変えたい場合は `interaction` を
 ```json
 {
   "step_definitions": [
-    { "method": "external-api", "order": 1, "requires_user": true },
+    { "method": "external-api", "order": 2, "requires_user": true },
     { "method": "external-api", "interaction": "identify", "order": 1, "requires_user": false }
   ]
 }
 ```
 
-上記では `identify` だけが 1st factor になり、それ以外の interaction はすべて 2nd factor として扱われます。
+上記では `identify` だけが 1st factor になり、それ以外の interaction はすべて 2nd factor として扱われます。既定を先に書いても後に書いても結果は変わりません。
 
 :::warning method 単位の既定を必ず1つ書いてください
 `interaction` 単位の定義だけを並べると、**そこに書かれていない interaction は「定義なし」になり、`requires_user` のチェックが行われません**（`step_definitions` を設定していない場合と同じ挙動）。
