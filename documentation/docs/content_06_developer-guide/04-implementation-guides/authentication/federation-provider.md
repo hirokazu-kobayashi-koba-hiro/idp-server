@@ -314,5 +314,5 @@ describe('GitHub Federation', () => {
 
 ---
 
-**情報源**: [OidcFederationInteractor.java](../../../../libs/idp-server-federation-oidc/src/main/java/org/idp/server/federation/sso/oidc/OidcFederationInteractor.java)
+**情報源**: [OidcFederationInteractor.java](../../../../../libs/idp-server-federation-oidc/src/main/java/org/idp/server/federation/sso/oidc/OidcFederationInteractor.java)
 **最終更新**: 2025-10-13

@@ -775,7 +775,7 @@ e2e/src/tests/monkey/
 
 ## 付録B: 関連ドキュメント
 
-- [E2Eテストセットアップガイド](../../e2e/README.md)
+- [E2Eテストセットアップガイド](../../../e2e/README.md)
 - [APIドキュメント](./api-documentation.md)
 - [認証フローガイド](./authentication-flows.md)
 - [管理APIガイド](./management-api-guide.md)

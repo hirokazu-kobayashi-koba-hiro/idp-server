@@ -430,5 +430,5 @@ RoleManagementContext context = creator.create();
 
 ---
 
-**情報源**: [ClientManagementEntryService.java](../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/system_manager/ClientManagementEntryService.java)
+**情報源**: [ClientManagementEntryService.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/system_manager/ClientManagementEntryService.java)
 **最終更新**: 2025-10-12

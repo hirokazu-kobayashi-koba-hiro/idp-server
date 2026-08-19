@@ -178,7 +178,7 @@
 
 ## AuthenticationPolicy 実装
 
-**情報源**: [AuthenticationPolicy.java:29-80](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicy.java#L29-L80)
+**情報源**: [AuthenticationPolicy.java:29-80](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicy.java#L29-L80)
 
 ### ドメインオブジェクト構造
 
@@ -312,10 +312,10 @@ if (shouldLock) {
 
 | 項目 | 記載内容 | 実装確認 | 状態 |
 |------|---------|---------|------|
-| **AuthenticationPolicyフィールド** | 10フィールド (priority, description含む) | ✅ [AuthenticationPolicy.java:31-40](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicy.java#L31-L40) | ✅ 完全一致 |
-| **allMatch()メソッド** | ポリシー適用判定（全条件ANDマッチ） | ✅ [AuthenticationPolicy.java:44-46](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicy.java#L44-L46) | ✅ 正確 |
-| **findSatisfiedAuthenticationPolicy()** | ポリシー選択ロジック（.max()使用） | ✅ [AuthenticationPolicyConfiguration.java:68-88](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicyConfiguration.java#L68-L88) | ✅ 修正済み |
-| **toMap()にpriority/description含む** | DB永続化対応 | ✅ [AuthenticationPolicy.java:134-148](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicy.java#L134-L148) | ✅ 実装済み |
+| **AuthenticationPolicyフィールド** | 10フィールド (priority, description含む) | ✅ [AuthenticationPolicy.java:31-40](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicy.java#L31-L40) | ✅ 完全一致 |
+| **allMatch()メソッド** | ポリシー適用判定（全条件ANDマッチ） | ✅ [AuthenticationPolicy.java:44-46](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicy.java#L44-L46) | ✅ 正確 |
+| **findSatisfiedAuthenticationPolicy()** | ポリシー選択ロジック（.max()使用） | ✅ [AuthenticationPolicyConfiguration.java:68-88](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicyConfiguration.java#L68-L88) | ✅ 修正済み |
+| **toMap()にpriority/description含む** | DB永続化対応 | ✅ [AuthenticationPolicy.java:134-148](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicy.java#L134-L148) | ✅ 実装済み |
 | **条件評価構造** | any_of, path, operation | ✅ 実装確認 | ✅ 正確 |
 | **JSON設定例** | 全フィールド | ✅ JsonReadable準拠 | ✅ 正確 |
 
@@ -343,8 +343,8 @@ if (shouldLock) {
 ---
 
 **情報源**:
-- [AuthenticationPolicy.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicy.java)
-- [AuthenticationPolicyConfiguration.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicyConfiguration.java)
+- [AuthenticationPolicy.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicy.java)
+- [AuthenticationPolicyConfiguration.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/policy/AuthenticationPolicyConfiguration.java)
 
 **最終更新**: 2025-12-08
 **検証者**: Claude Code（AI開発支援）

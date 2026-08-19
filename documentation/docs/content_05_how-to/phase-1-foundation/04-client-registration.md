@@ -47,7 +47,7 @@
 - **Confidential Client（機密クライアント）**: `client_secret`を安全に保管できる（例：サーバーサイドWebアプリ）
 - **Public Client（公開クライアント）**: `client_secret`を保管できない（例：SPA、モバイルアプリ）
 
-**詳細**: [📖 Concept 19: Client](../content_03_concepts/01-foundation/concept-04-client.md) - Client種別、認証方法、Tenant-Client-User関係の詳細解説
+**詳細**: [📖 Concept 19: Client](../../content_03_concepts/01-foundation/concept-04-client.md) - Client種別、認証方法、Tenant-Client-User関係の詳細解説
 
 ---
 
@@ -646,16 +646,16 @@ Google、Azure AD、LINEなどの外部IdPと連携してソーシャルログ�
 - [How-to: ユーザー登録と認証](./05-user-registration.md) - ユーザー作成と初回ログイン
 
 ### 高度な設定
-- [Developer Guide: Client設定](../content_06_developer-guide/05-configuration/client.md) - 詳細な設定オプション
+- [Developer Guide: Client設定](../../content_06_developer-guide/05-configuration/client.md) - 詳細な設定オプション
 - [How-to: CIBA Flow](../phase-3-advanced/fido-uaf/01-ciba-flow.md) - バックチャネル認証
 
 ---
 
 ## 関連ドキュメント
 
-- [Concept: OAuth 2.0とOpenID Connect](../content_11_learning/04-openid-connect/oauth-oidc-basics.md) - プロトコル概要
-- [Developer Guide: Client Authentication](../content_06_developer-guide/03-application-plane/10-client-authentication.md) - 7つの認証方式詳細
-- [API Reference](../content_07_reference/api-reference.md) - Management API仕様
+- [Concept: OAuth 2.0とOpenID Connect](../../content_11_learning/04-openid-connect/oauth-oidc-basics.md) - プロトコル概要
+- [Developer Guide: Client Authentication](../../content_06_developer-guide/03-application-plane/10-client-authentication.md) - 7つの認証方式詳細
+- [API Reference](../../content_07_reference/api-reference.md) - Management API仕様
 
 ---
 

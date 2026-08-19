@@ -85,7 +85,7 @@ public class AuditLog {
 }
 ```
 
-**参考実装**: [AuditLog.java:25](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLog.java#L25)
+**参考実装**: [AuditLog.java:25](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLog.java#L25)
 
 ### AuditLog生成例
 
@@ -122,7 +122,7 @@ public class AuditLogCreator {
 }
 ```
 
-**参考実装**: [AuditLogCreator.java:25](../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/base/AuditLogCreator.java#L25)
+**参考実装**: [AuditLogCreator.java:25](../../../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/base/AuditLogCreator.java#L25)
 
 ---
 
@@ -154,7 +154,7 @@ public interface AuditLogWriter {
 }
 ```
 
-**参考実装**: [AuditLogWriter.java:21](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogWriter.java#L21)
+**参考実装**: [AuditLogWriter.java:21](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogWriter.java#L21)
 
 ### デフォルト実装: AuditLogDataBaseWriter
 
@@ -176,7 +176,7 @@ public class AuditLogDataBaseWriter implements AuditLogWriter {
 }
 ```
 
-**参考実装**: [AuditLogDataBaseWriter.java:21](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogDataBaseWriter.java#L21)
+**参考実装**: [AuditLogDataBaseWriter.java:21](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogDataBaseWriter.java#L21)
 
 ### AuditLogWriters（複数Writer管理）
 
@@ -206,7 +206,7 @@ public class AuditLogWriters {
 }
 ```
 
-**参考実装**: [AuditLogWriters.java:23](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogWriters.java#L23)
+**参考実装**: [AuditLogWriters.java:23](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogWriters.java#L23)
 
 **特徴**:
 - 複数のWriterを登録可能（データベース + CloudWatch Logs等）
@@ -233,7 +233,7 @@ public interface AuditLogPublisher {
 }
 ```
 
-**参考実装**: [AuditLogPublisher.java:28](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogPublisher.java#L28)
+**参考実装**: [AuditLogPublisher.java:28](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogPublisher.java#L28)
 
 ### 実装パターン: Spring Events
 
@@ -671,13 +671,13 @@ auditLog.request().put("password", "***");  // マスク
 - [impl-03: トランザクション管理](./impl-03-transaction.md) - データベース永続化
 
 **参考実装クラス**:
-- [AuditLog.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLog.java)
-- [AuditLogWriter.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogWriter.java)
-- [AuditLogWriterProvider.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogWriterProvider.java)
-- [AuditLogPublisher.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogPublisher.java)
-- [AuditLogCreator.java](../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/base/AuditLogCreator.java)
-- [AuditLogWriters.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogWriters.java)
-- [AuditLogDataBaseWriter.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogDataBaseWriter.java)
+- [AuditLog.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLog.java)
+- [AuditLogWriter.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogWriter.java)
+- [AuditLogWriterProvider.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogWriterProvider.java)
+- [AuditLogPublisher.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogPublisher.java)
+- [AuditLogCreator.java](../../../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/base/AuditLogCreator.java)
+- [AuditLogWriters.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogWriters.java)
+- [AuditLogDataBaseWriter.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/audit/AuditLogDataBaseWriter.java)
 
 ---
 

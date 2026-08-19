@@ -654,8 +654,8 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 
 ## 関連ドキュメント
 
-- [Concept: ID管理](../content_03_concepts/02-identity-management/concept-01-id-management.md) - Federation概念
-- [Developer Guide: Federation実装](../content_06_developer-guide/03-application-plane/08-federation.md) - 開発者向け
+- [Concept: ID管理](../../content_03_concepts/02-identity-management/concept-01-id-management.md) - Federation概念
+- [Developer Guide: Federation実装](../../content_06_developer-guide/03-application-plane/08-federation.md) - 開発者向け
 - [組織初期化](../phase-1-foundation/02-organization-initialization.md) - テナント・ユーザー作成
 
 ---

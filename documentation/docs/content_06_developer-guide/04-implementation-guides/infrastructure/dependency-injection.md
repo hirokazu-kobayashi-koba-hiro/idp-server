@@ -11,7 +11,7 @@
 
 ### 1. ApplicationComponentDependencyContainer（初期依存コンテナ）
 
-**情報源**: [ApplicationComponentDependencyContainer.java:22-41](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentDependencyContainer.java#L22-L41)
+**情報源**: [ApplicationComponentDependencyContainer.java:22-41](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentDependencyContainer.java#L22-L41)
 
 ```java
 public class ApplicationComponentDependencyContainer {
@@ -46,7 +46,7 @@ container.register(PasswordVerificationDelegation.class, passwordVerificationDel
 
 ### 2. ApplicationComponentProvider（ファクトリーインターフェース）
 
-**情報源**: [ApplicationComponentProvider.java:19-23](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentProvider.java#L19-L23)
+**情報源**: [ApplicationComponentProvider.java:19-23](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentProvider.java#L19-L23)
 
 ```java
 public interface ApplicationComponentProvider<T> {
@@ -84,7 +84,7 @@ public class UserQueryRepositoryProvider
 
 ### 3. ApplicationComponentContainer（最終インスタンスコンテナ）
 
-**情報源**: [ApplicationComponentContainer.java:22-41](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentContainer.java#L22-L41)
+**情報源**: [ApplicationComponentContainer.java:22-41](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentContainer.java#L22-L41)
 
 ```java
 public class ApplicationComponentContainer {
@@ -186,9 +186,9 @@ interactors.put(WEBAUTHN, container.resolve(WEBAUTHN));
 | `FederationDependencyContainerPluginLoader` | idp-server-core | Federation（外部IdP連携）処理 |
 
 **実装ファイル**:
-- [AuthenticationDependencyContainerPluginLoader.java](../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/plugin/AuthenticationDependencyContainerPluginLoader.java)
-- [ApplicationComponentContainerPluginLoader.java](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/plugin/ApplicationComponentContainerPluginLoader.java)
-- [FederationDependencyContainerPluginLoader.java](../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/plugin/FederationDependencyContainerPluginLoader.java)
+- [AuthenticationDependencyContainerPluginLoader.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/plugin/AuthenticationDependencyContainerPluginLoader.java)
+- [ApplicationComponentContainerPluginLoader.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/plugin/ApplicationComponentContainerPluginLoader.java)
+- [FederationDependencyContainerPluginLoader.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/plugin/FederationDependencyContainerPluginLoader.java)
 
 ---
 
@@ -207,7 +207,7 @@ interactors.put(WEBAUTHN, container.resolve(WEBAUTHN));
 
 #### 1. DependencyContainer（初期依存不足）
 
-**情報源**: [ApplicationComponentDependencyMissionException.java](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentDependencyMissionException.java)
+**情報源**: [ApplicationComponentDependencyMissionException.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentDependencyMissionException.java)
 
 ```text
 ApplicationComponentDependencyMissionException: Missing dependency for type: PasswordVerificationDelegation
@@ -225,7 +225,7 @@ dependencyContainer.register(PasswordVerificationDelegation.class, passwordVerif
 
 #### 2. ComponentContainer（最終インスタンス不足）
 
-**情報源**: [ApplicationComponentMissionException.java](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentMissionException.java)
+**情報源**: [ApplicationComponentMissionException.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentMissionException.java)
 
 ```text
 ApplicationComponentMissionException: Missing datasource for type: UserQueryRepository
@@ -300,9 +300,9 @@ log.info("ComponentContainer registered types: {}", componentContainer.registere
 ---
 
 **情報源**:
-- [ApplicationComponentDependencyContainer.java](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentDependencyContainer.java)
-- [ApplicationComponentProvider.java](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentProvider.java)
-- [ApplicationComponentContainer.java](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentContainer.java)
+- [ApplicationComponentDependencyContainer.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentDependencyContainer.java)
+- [ApplicationComponentProvider.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentProvider.java)
+- [ApplicationComponentContainer.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/dependency/ApplicationComponentContainer.java)
 
 **最終更新**: 2025-10-12
 **検証者**: Claude Code（AI開発支援）

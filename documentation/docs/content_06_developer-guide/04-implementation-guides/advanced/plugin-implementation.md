@@ -357,5 +357,5 @@ public interface NotificationSender {
 
 ---
 
-**情報源**: [PluginLoader.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/plugin/PluginLoader.java)
+**情報源**: [PluginLoader.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/plugin/PluginLoader.java)
 **最終更新**: 2025-10-12

@@ -438,8 +438,8 @@ AUTH_SESSION Cookieは以下のエンドポイントで検証されます：
 
 ### 関連ドキュメント
 
-- [セッション管理コンセプト](../../../content_03_concepts/03-authentication-authorization/concept-03-session-management.md#認証トランザクションとのセッションバインディング)
-- [セッション管理セキュリティ](../../../content_03_concepts/03-authentication-authorization/concept-03-session-management-security.md#対策認可フローハイジャック)
+- [セッション管理コンセプト](../../content_03_concepts/03-authentication-authorization/concept-03-session-management.md#認証トランザクションとのセッションバインディング)
+- [セッション管理セキュリティ](../../content_03_concepts/03-authentication-authorization/concept-03-session-management-security.md#対策認可フローハイジャック)
 
 ---
 

@@ -12,8 +12,8 @@
 - AuthorizationServerConfiguration からのメタデータ抽出
 
 **前提知識**:
-- [basic-15: OIDC Discovery & Dynamic Registration](../../content_11_learning/04-openid-connect/oidc-discovery-dynamic-registration.md)の理解
-- [basic-12: OpenID Connect詳解](../../content_11_learning/04-openid-connect/openid-connect-detail.md)の理解
+- [basic-15: OIDC Discovery & Dynamic Registration](../../../content_11_learning/04-openid-connect/oidc-discovery-dynamic-registration.md)の理解
+- [basic-12: OpenID Connect詳解](../../../content_11_learning/04-openid-connect/openid-connect-detail.md)の理解
 - OAuth 2.0 / OIDC の基礎知識
 
 ---
@@ -99,7 +99,7 @@ public class DiscoveryHandler {
 }
 ```
 
-**参考実装**: [DiscoveryHandler.java:30](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/handler/DiscoveryHandler.java#L30)
+**参考実装**: [DiscoveryHandler.java:30](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/handler/DiscoveryHandler.java#L30)
 
 ---
 
@@ -298,7 +298,7 @@ public class ServerConfigurationResponseCreator {
 }
 ```
 
-**参考実装**: [ServerConfigurationResponseCreator.java:23](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/ServerConfigurationResponseCreator.java#L23)
+**参考実装**: [ServerConfigurationResponseCreator.java:23](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/ServerConfigurationResponseCreator.java#L23)
 
 ### レスポンス例
 
@@ -373,7 +373,7 @@ public class JwksResponseCreator {
 }
 ```
 
-**参考実装**: [JwksResponseCreator.java:24](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/JwksResponseCreator.java#L24)
+**参考実装**: [JwksResponseCreator.java:24](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/JwksResponseCreator.java#L24)
 
 ### JwkParser.parsePublicKeys
 
@@ -405,7 +405,7 @@ public class JwkParser {
 }
 ```
 
-**参考実装**: [JwkParser.java:26](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JwkParser.java#L26)
+**参考実装**: [JwkParser.java:26](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JwkParser.java#L26)
 
 **重要なポイント**:
 - ✅ **公開鍵のみ**を返す（`toPublicJWKSet()`）
@@ -688,19 +688,19 @@ map.put("jwks_uri", "https://idp.example.com/.well-known/jwks.json");
 ## 🔗 関連ドキュメント
 
 **概念・基礎**:
-- [basic-15: OIDC Discovery & Dynamic Registration](../../content_11_learning/04-openid-connect/oidc-discovery-dynamic-registration.md) - Discovery概念
-- [basic-12: OpenID Connect詳解](../../content_11_learning/04-openid-connect/openid-connect-detail.md) - OIDC基礎
+- [basic-15: OIDC Discovery & Dynamic Registration](../../../content_11_learning/04-openid-connect/oidc-discovery-dynamic-registration.md) - Discovery概念
+- [basic-12: OpenID Connect詳解](../../../content_11_learning/04-openid-connect/openid-connect-detail.md) - OIDC基礎
 
 **実装詳細**:
 - [impl-22: FAPI実装ガイド](./impl-22-fapi-implementation.md) - FAPI関連メタデータ
 - [03-application-plane/06-ciba-flow.md](../03-application-plane/06-ciba-flow.md) - CIBA関連メタデータ
 
 **参考実装クラス**:
-- [DiscoveryHandler.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/handler/DiscoveryHandler.java)
-- [ServerConfigurationResponseCreator.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/ServerConfigurationResponseCreator.java)
-- [JwksResponseCreator.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/JwksResponseCreator.java)
-- [JwkParser.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JwkParser.java)
-- [OidcMetaDataApi.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/OidcMetaDataApi.java)
+- [DiscoveryHandler.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/handler/DiscoveryHandler.java)
+- [ServerConfigurationResponseCreator.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/ServerConfigurationResponseCreator.java)
+- [JwksResponseCreator.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/JwksResponseCreator.java)
+- [JwkParser.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JwkParser.java)
+- [OidcMetaDataApi.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/discovery/OidcMetaDataApi.java)
 
 **RFC/仕様**:
 - [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)

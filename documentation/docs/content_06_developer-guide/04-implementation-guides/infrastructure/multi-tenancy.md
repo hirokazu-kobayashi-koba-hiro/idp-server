@@ -12,7 +12,7 @@
 - テナントコンテキスト管理の仕組み
 
 **前提知識**:
-- [concept-01: マルチテナント](../../content_03_concepts/01-foundation/concept-03-multi-tenant.md)の理解
+- [concept-01: マルチテナント](../../../content_03_concepts/01-foundation/concept-03-multi-tenant.md)の理解
 - [Hexagonal Architecture](../../content_01_intro/tech-overview.md#アーキテクチャ)の基礎知識
 - Repository パターンの理解
 
@@ -42,8 +42,8 @@ public interface UserCommandRepository {
 ```
 
 **参考実装**:
-- [UserCommandRepository.java:23](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/repository/UserCommandRepository.java#L23)
-- [AuthenticationConfigurationQueryRepository.java:24](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/repository/AuthenticationConfigurationQueryRepository.java#L24)
+- [UserCommandRepository.java:23](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/repository/UserCommandRepository.java#L23)
+- [AuthenticationConfigurationQueryRepository.java:24](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/repository/AuthenticationConfigurationQueryRepository.java#L24)
 
 #### 2. 二重防御（Defense in Depth）
 アプリケーション層とデータベース層の両方でテナント分離を強制します。
@@ -101,7 +101,7 @@ public class Tenant implements Configurable {
 }
 ```
 
-**参考実装**: [Tenant.java:34](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/Tenant.java#L34)
+**参考実装**: [Tenant.java:34](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/Tenant.java#L34)
 
 ### TenantIdentifier
 
@@ -121,7 +121,7 @@ public class TenantIdentifier implements UuidConvertable {
 }
 ```
 
-**参考実装**: [TenantIdentifier.java:23](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/TenantIdentifier.java#L23)
+**参考実装**: [TenantIdentifier.java:23](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/TenantIdentifier.java#L23)
 
 ### TenantType
 
@@ -135,7 +135,7 @@ public enum TenantType {
 }
 ```
 
-**参考実装**: [TenantType.java:19](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/TenantType.java#L19)
+**参考実装**: [TenantType.java:19](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/TenantType.java#L19)
 
 **使い分け**:
 - **ADMIN**: システム全体の初期設定・管理用（1つのみ）
@@ -170,7 +170,7 @@ public class Organization implements Configurable {
 }
 ```
 
-**参考実装**: [Organization.java:23](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/organization/Organization.java#L23)
+**参考実装**: [Organization.java:23](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/organization/Organization.java#L23)
 
 ### OrganizationIdentifier
 
@@ -190,7 +190,7 @@ public class OrganizationIdentifier implements UuidConvertable {
 }
 ```
 
-**参考実装**: [OrganizationIdentifier.java:24](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/organization/OrganizationIdentifier.java#L24)
+**参考実装**: [OrganizationIdentifier.java:24](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/organization/OrganizationIdentifier.java#L24)
 
 ---
 
@@ -214,7 +214,7 @@ public interface AuthenticationConfigurationQueryRepository {
 }
 ```
 
-**参考実装**: [AuthenticationConfigurationQueryRepository.java:24](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/repository/AuthenticationConfigurationQueryRepository.java#L24)
+**参考実装**: [AuthenticationConfigurationQueryRepository.java:24](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/repository/AuthenticationConfigurationQueryRepository.java#L24)
 
 #### Command Repository
 
@@ -228,7 +228,7 @@ public interface UserCommandRepository {
 }
 ```
 
-**参考実装**: [UserCommandRepository.java:23](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/repository/UserCommandRepository.java#L23)
+**参考実装**: [UserCommandRepository.java:23](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/repository/UserCommandRepository.java#L23)
 
 ### 例外: OrganizationRepository
 
@@ -245,7 +245,7 @@ public interface OrganizationRepository {
 }
 ```
 
-**参考実装**: [OrganizationRepository.java:21](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/organization/OrganizationRepository.java#L21)
+**参考実装**: [OrganizationRepository.java:21](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/organization/OrganizationRepository.java#L21)
 
 ---
 
@@ -270,7 +270,7 @@ CREATE POLICY tenant_isolation_policy
 ALTER TABLE tenant FORCE ROW LEVEL SECURITY;
 ```
 
-**参考実装**: [V0_9_0__init_lib.sql](../../../libs/idp-server-database/postgresql/V0_9_0__init_lib.sql) (RLS設定箇所)
+**参考実装**: [V0_9_0__init_lib.sql](../../../../../libs/idp-server-database/postgresql/V0_9_0__init_lib.sql) (RLS設定箇所)
 
 #### 全テーブルへのRLS適用
 
@@ -294,7 +294,7 @@ WHERE schemaname = 'public'
 ORDER BY tablename, policyname;
 ```
 
-**参考実装**: [select-rls-policy.sql](../../../libs/idp-server-database/postgresql/operation/select-rls-policy.sql)
+**参考実装**: [select-rls-policy.sql](../../../../../libs/idp-server-database/postgresql/operation/select-rls-policy.sql)
 
 ### TransactionManagerによるテナントコンテキスト設定
 
@@ -338,7 +338,7 @@ public class TransactionManager {
 }
 ```
 
-**参考実装**: [TransactionManager.java:25](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java#L25)
+**参考実装**: [TransactionManager.java:25](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java#L25)
 
 **重要なポイント**:
 
@@ -628,7 +628,7 @@ stmt.execute("SELECT set_config('app.tenant_id', ?, true)");
 ## 🔗 関連ドキュメント
 
 **概念・基礎**:
-- [concept-01: マルチテナント](../../content_03_concepts/01-foundation/concept-03-multi-tenant.md) - マルチテナントの設計思想
+- [concept-01: マルチテナント](../../../content_03_concepts/01-foundation/concept-03-multi-tenant.md) - マルチテナントの設計思想
 - [how-to-02: 組織初期化](../../content_05_how-to/how-to-02-organization-initialization.md) - 組織作成手順
 - [how-to-03: テナントセットアップ](../../content_05_how-to/how-to-03-tenant-setup.md) - テナント作成手順
 
@@ -642,10 +642,10 @@ stmt.execute("SELECT set_config('app.tenant_id', ?, true)");
 - [02-control-plane/04-organization-level-api.md](../02-control-plane/04-organization-level-api.md) - 組織レベルAPI
 
 **参考実装クラス**:
-- [Tenant.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/Tenant.java)
-- [Organization.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/organization/Organization.java)
-- [TransactionManager.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java)
-- [UserCommandRepository.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/repository/UserCommandRepository.java)
+- [Tenant.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/Tenant.java)
+- [Organization.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/organization/Organization.java)
+- [TransactionManager.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java)
+- [UserCommandRepository.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/repository/UserCommandRepository.java)
 
 ---
 

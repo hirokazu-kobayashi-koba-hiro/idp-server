@@ -65,7 +65,7 @@
 | `PUBLIC` | アプリケーション用テナント | 組織レベルAPIで作成 | 通常のアプリケーション用 |
 
 **実装リファレンス**:
-- `ADMIN`: [IdpServerStarterContextCreator.java:78](../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/admin/starter/IdpServerStarterContextCreator.java)
+- `ADMIN`: [IdpServerStarterContextCreator.java:78](../../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/admin/starter/IdpServerStarterContextCreator.java)
 - `ORGANIZER`: [OnboardingContextCreator.java:82](../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/onboarding/OnboardingContextCreator.java)
 - `PUBLIC`: [TenantManagementRegistrationContextCreator.java:68](../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/tenant/TenantManagementRegistrationContextCreator.java)
 
@@ -444,8 +444,8 @@ GET /authorize?scope=openid profile&claims={"id_token":{"name":null}}&...
 - `claims_supported`: サポートするクレームの宣言（Discovery）
 
 **実装リファレンス**:
-- [GrantIdTokenClaims.java:218-221](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/grant_management/grant/GrantIdTokenClaims.java#L218-L221)
-- [AuthorizationServerExtensionConfiguration.java:40](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerExtensionConfiguration.java#L40)
+- [GrantIdTokenClaims.java:218-221](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/grant_management/grant/GrantIdTokenClaims.java#L218-L221)
+- [AuthorizationServerExtensionConfiguration.java:40](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerExtensionConfiguration.java#L40)
 
 #### FAPI設定
 
@@ -454,7 +454,7 @@ GET /authorize?scope=openid profile&claims={"id_token":{"name":null}}&...
 | `fapi_baseline_scopes` | `[]` | FAPI Baseline検証スコープ |
 | `fapi_advance_scopes` | `[]` | FAPI Advanced検証スコープ |
 
-**実装リファレンス**: [AuthorizationServerExtensionConfiguration.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerExtensionConfiguration.java)
+**実装リファレンス**: [AuthorizationServerExtensionConfiguration.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerExtensionConfiguration.java)
 
 ---
 
@@ -572,7 +572,7 @@ OpenID Connectでは、**クレーム（claim）**とはユーザーに関する
 
 **参照**: [OpenID Connect Core 1.0 Section 5.6 - Claim Types](https://openid.net/specs/openid-connect-core-1_0.html#ClaimTypes)
 
-**実装リファレンス**: [AuthorizationServerConfiguration.java:58](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerConfiguration.java#L58)
+**実装リファレンス**: [AuthorizationServerConfiguration.java:58](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerConfiguration.java#L58)
 
 **将来の拡張**: `aggregated`/`distributed`は高度なユースケース（複数IDプロバイダー統合、プライバシー保護）で有用ですが、現状では実装されていません。
 
@@ -685,7 +685,7 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 | `signup_page` | string | `/auth-views/signup/index.html` | カスタムサインアップページのパス |
 | `signin_page` | string | `/auth-views/signin/index.html` | カスタムサインインページのパス |
 
-**実装**: [UIConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/UIConfiguration.java)
+**実装**: [UIConfiguration.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/UIConfiguration.java)
 
 ---
 
@@ -712,7 +712,7 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 | `allow_methods` | string | `GET, POST, PUT, PATCH, DELETE, OPTIONS` | 許可するHTTPメソッド |
 | `allow_credentials` | boolean | `true` | クレデンシャル送信を許可 |
 
-**実装**: [CorsConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/CorsConfiguration.java)
+**実装**: [CorsConfiguration.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/CorsConfiguration.java)
 
 ---
 
@@ -893,9 +893,9 @@ Set-Cookie: IDP_AUTH_SESSION=xxx; Path=/idp-admin/{tenant_id}/
 
 **ローカルテスト**: docker-compose.yamlの`app-view-context-path`サービスとnginx.confの`/idp-admin/`ルーティングを使用してAPI Gateway動作をシミュレートできます。
 
-**実装**: [SessionConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/SessionConfiguration.java)
+**実装**: [SessionConfiguration.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/SessionConfiguration.java)
 
-**関連ドキュメント**: [Webセッションの基礎 - オリジンとCookieの送信](../../../content_11_learning/19-session-management/01-web-session-basics.md#オリジンとcookieの送信)
+**関連ドキュメント**: [Webセッションの基礎 - オリジンとCookieの送信](../../content_11_learning/19-session-management/01-web-session-basics.md#オリジンとcookieの送信)
 
 ---
 
@@ -960,7 +960,7 @@ Set-Cookie: IDP_AUTH_SESSION=xxx; Path=/idp-admin/{tenant_id}/
 - 本番環境: `include_user_pii: false`, `include_user_detail: false`
 - デバッグ: `debug_logging: true`, `include_event_detail: true`（一時的のみ）
 
-**実装**: [SecurityEventLogConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/log/SecurityEventLogConfiguration.java)
+**実装**: [SecurityEventLogConfiguration.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/log/SecurityEventLogConfiguration.java)
 
 ---
 
@@ -1024,7 +1024,7 @@ Set-Cookie: IDP_AUTH_SESSION=xxx; Path=/idp-admin/{tenant_id}/
 | **詳細** | + `include_phone_number` | デバッグ・調査時（一時的） |
 | **フル** | 全て`true` | ❌ 非推奨（GDPR/個人情報保護法違反リスク） |
 
-**実装**: [SecurityEventUserAttributeConfiguration.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/event/SecurityEventUserAttributeConfiguration.java)
+**実装**: [SecurityEventUserAttributeConfiguration.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/event/SecurityEventUserAttributeConfiguration.java)
 
 ---
 
@@ -1178,8 +1178,8 @@ Set-Cookie: IDP_AUTH_SESSION=xxx; Path=/idp-admin/{tenant_id}/
 → パスワード複雑性はデフォルト（NIST推奨）のまま、10回失敗で10分ロックアウト
 
 **実装リファレンス**:
-- [TenantIdentityPolicy.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/policy/TenantIdentityPolicy.java)
-- [PasswordPolicyConfig.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/policy/PasswordPolicyConfig.java)
+- [TenantIdentityPolicy.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/policy/TenantIdentityPolicy.java)
+- [PasswordPolicyConfig.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/policy/PasswordPolicyConfig.java)
 
 ---
 
@@ -1465,9 +1465,9 @@ Access to XMLHttpRequest at 'https://idp.example.com/...' from origin 'https://a
 ### 実装クラスへのリンク
 
 **Core**:
-- [AuthorizationServerConfiguration.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerConfiguration.java)
-- [AuthorizationServerExtensionConfiguration.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerExtensionConfiguration.java)
-- [Tenant.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/Tenant.java)
+- [AuthorizationServerConfiguration.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerConfiguration.java)
+- [AuthorizationServerExtensionConfiguration.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerExtensionConfiguration.java)
+- [Tenant.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/Tenant.java)
 
 **Control Plane**:
 - [TenantManagementRegistrationContextCreator.java](../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/tenant/TenantManagementRegistrationContextCreator.java)

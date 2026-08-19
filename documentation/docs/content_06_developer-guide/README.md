@@ -131,8 +131,8 @@
 
 ## 🔗 関連ドキュメント
 
-- [Concepts](../../content_03_concepts/) - OAuth/OIDC仕様解説
-- [How-To](../../content_05_how-to/) - 運用手順・デプロイガイド
+- [Concepts](../content_03_concepts) - OAuth/OIDC仕様解説
+- [How-To](../content_05_how-to) - 運用手順・デプロイガイド
 
 ---
 

@@ -1030,9 +1030,9 @@ curl "..."  # いきなり本番実行
 - [クライアント登録](./04-client-registration.md) - アプリケーションクライアント登録
 
 ### 関連ドキュメント
-- [Concept: エンタープライズID](../content_03_concepts/05-advanced-id/concept-02-enterprise-id.md) - 組織・テナント概念
-- [Concept: マルチテナント](../content_03_concepts/01-foundation/concept-03-multi-tenant.md) - マルチテナント設計
-- [Configuration: Tenant設定](../content_06_developer-guide/05-configuration/tenant.md) - テナント設定詳細
+- [Concept: エンタープライズID](../../content_03_concepts/05-advanced-id/concept-02-enterprise-id.md) - 組織・テナント概念
+- [Concept: マルチテナント](../../content_03_concepts/01-foundation/concept-03-multi-tenant.md) - マルチテナント設計
+- [Configuration: Tenant設定](../../content_06_developer-guide/05-configuration/tenant.md) - テナント設定詳細
 
 ### 参考資料
 - [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)

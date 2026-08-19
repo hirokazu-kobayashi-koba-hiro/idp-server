@@ -40,7 +40,7 @@ GET /{tenant-id}/v1/authorizations?request_uri=urn:ietf:params:oauth:request_uri
 GET /{tenant-id}/view/v1/authorizations?response_type=code&client_id=xxx&...
 ```
 
-**実装**: [OAuthV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/oauth/OAuthV1Api.java)
+**実装**: [OAuthV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/oauth/OAuthV1Api.java)
 
 #### トークンエンドポイント
 
@@ -58,7 +58,7 @@ POST /{tenant-id}/v1/tokens/introspection
 POST /{tenant-id}/v1/tokens/revocation
 ```
 
-**実装**: [TokenV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/token/TokenV1Api.java)
+**実装**: [TokenV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/token/TokenV1Api.java)
 
 #### UserInfo
 
@@ -67,7 +67,7 @@ GET /{tenant-id}/v1/userinfo
 Authorization: Bearer eyJ...
 ```
 
-**実装**: [UserinfoV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/userinfo/UserinfoV1Api.java)
+**実装**: [UserinfoV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/userinfo/UserinfoV1Api.java)
 
 #### Discovery（メタデータ）
 
@@ -112,7 +112,7 @@ POST /{tenant-id}/v1/tokens
 }
 ```
 
-**実装**: [CibaV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/ciba/CibaV1Api.java)
+**実装**: [CibaV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/ciba/CibaV1Api.java)
 
 ---
 
@@ -130,7 +130,7 @@ GET /{tenant-id}/v1/me
 Authorization: Bearer eyJ...
 ```
 
-**実装**: [UserV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/me/UserV1Api.java)
+**実装**: [UserV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/me/UserV1Api.java)
 
 #### 身元確認申込み
 
@@ -145,8 +145,8 @@ Authorization: Bearer eyJ...
 ```
 
 **実装**:
-- [IdentityVerificationApplicationV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/me/IdentityVerificationApplicationV1Api.java)
-- [IdentityVerificationV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/me/IdentityVerificationV1Api.java)
+- [IdentityVerificationApplicationV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/me/IdentityVerificationApplicationV1Api.java)
+- [IdentityVerificationV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/me/IdentityVerificationV1Api.java)
 
 ---
 
@@ -170,8 +170,8 @@ DELETE /{tenant-id}/v1/authentication-devices/{device-id}
 ```
 
 **実装**:
-- [AuthenticationV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/authentication/AuthenticationV1Api.java)
-- [AuthenticationDeviceV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/authentication/device/AuthenticationDeviceV1Api.java)
+- [AuthenticationV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/authentication/AuthenticationV1Api.java)
+- [AuthenticationDeviceV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/authentication/device/AuthenticationDeviceV1Api.java)
 
 ---
 
@@ -203,8 +203,8 @@ GET /{tenant-id}/internal/v1/identity-verification/results/{result-id}
 ```
 
 **実装**:
-- [IdentityVerificationCallbackInternalV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/internal/IdentityVerificationCallbackInternalV1Api.java)
-- [IdentityVerificationInternalV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/internal/IdentityVerificationInternalV1Api.java)
+- [IdentityVerificationCallbackInternalV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/internal/IdentityVerificationCallbackInternalV1Api.java)
+- [IdentityVerificationInternalV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/internal/IdentityVerificationInternalV1Api.java)
 
 ---
 
@@ -212,7 +212,7 @@ GET /{tenant-id}/internal/v1/identity-verification/results/{result-id}
 
 ### Authorization Code Flow（最も一般的）
 
-**実装**: [OAuthV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/oauth/OAuthV1Api.java) + [TokenV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/token/TokenV1Api.java)
+**実装**: [OAuthV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/oauth/OAuthV1Api.java) + [TokenV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/token/TokenV1Api.java)
 
 ```
 1. [ユーザー] アプリでログインボタンをクリック
@@ -282,7 +282,7 @@ GET /{tenant-id}/internal/v1/identity-verification/results/{result-id}
 
 ### Client Credentials Flow（サーバー間通信）
 
-**実装**: [TokenV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/token/TokenV1Api.java)
+**実装**: [TokenV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/token/TokenV1Api.java)
 
 **用途**: マイクロサービス間通信、バッチ処理、管理用スクリプト（ユーザーコンテキストなし）
 
@@ -318,7 +318,7 @@ GET /{tenant-id}/internal/v1/identity-verification/results/{result-id}
 
 ### CIBA Flow（プッシュ通知認証）
 
-**実装**: [CibaV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/ciba/CibaV1Api.java) + [TokenV1Api.java](../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/token/TokenV1Api.java)
+**実装**: [CibaV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/ciba/CibaV1Api.java) + [TokenV1Api.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/restapi/token/TokenV1Api.java)
 
 **用途**: スマートフォンアプリによるバックチャネル認証（ユーザーは別デバイスで承認）
 
