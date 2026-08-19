@@ -1,0 +1,273 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 1330" font-family="'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif">
+  <title>認可コードフロー + FIDO-UAF ― 画面とAPIの全体像</title>
+  <desc>サインイン画面（SPA）と認証デバイス（モバイルアプリ）が別チャネルで進行し、サーバー生成のナンバーマッチングコードをユーザーが転記することで push fatigue を防ぐフローの全体図。</desc>
+
+  <defs>
+    <marker id="aBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1565c0"/>
+    </marker>
+    <marker id="aPurple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5e35b1"/>
+    </marker>
+    <marker id="aGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2e7d32"/>
+    </marker>
+    <marker id="aAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef6c00"/>
+    </marker>
+    <marker id="aGrey" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#cfd8dc"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="1330" fill="#ffffff"/>
+
+  <!-- ================= header ================= -->
+  <text x="40" y="42" font-size="21" font-weight="bold" fill="#212121">認可コードフロー + FIDO-UAF ― 画面とAPIの全体像</text>
+  <text x="40" y="66" font-size="12.5" fill="#616161">サインイン画面（SPA）と認証デバイスが別チャネルで進行。サーバー生成のコードを「人が転記」させることで push fatigue を防ぐ。</text>
+
+  <rect x="952" y="20" width="296" height="60" rx="8" fill="#fafafa" stroke="#e0e0e0"/>
+  <rect x="968" y="35" width="12" height="12" rx="2" fill="#1565c0"/>
+  <text x="990" y="45" font-size="11" fill="#37474f">サインイン画面（SPA）が呼ぶ</text>
+  <rect x="968" y="57" width="12" height="12" rx="2" fill="#5e35b1"/>
+  <text x="990" y="67" font-size="11" fill="#37474f">認証デバイスが呼ぶ</text>
+
+  <!-- ================= lanes ================= -->
+  <rect x="24"  y="96" width="352" height="1068" rx="12" fill="#fafafa" stroke="#e0e0e0"/>
+  <rect x="388" y="96" width="472" height="1068" rx="12" fill="#f7f9fa" stroke="#e0e0e0"/>
+  <rect x="872" y="96" width="384" height="1068" rx="12" fill="#fafafa" stroke="#e0e0e0"/>
+
+  <text x="44"  y="120" font-size="13.5" font-weight="bold" fill="#0d47a1">ブラウザ（サインイン画面 / SPA）</text>
+  <text x="408" y="120" font-size="13.5" font-weight="bold" fill="#263238">idp-server API</text>
+  <text x="892" y="120" font-size="13.5" font-weight="bold" fill="#4527a0">認証デバイス（モバイルアプリ）</text>
+  <text x="408" y="138" font-size="10" fill="#78909c">以下 /{id}/… は /{tenant-id}/v1/authorizations 配下</text>
+
+  <!-- ================= S1: client app ================= -->
+  <rect x="38" y="136" width="324" height="96" rx="8" fill="#ffffff" stroke="#90a4ae"/>
+  <path d="M38 144 a8 8 0 0 1 8 -8 h308 a8 8 0 0 1 8 8 v14 h-324 z" fill="#eceff1"/>
+  <circle cx="52" cy="147" r="3" fill="#b0bec5"/>
+  <circle cx="62" cy="147" r="3" fill="#b0bec5"/>
+  <circle cx="72" cy="147" r="3" fill="#b0bec5"/>
+  <text x="86" y="151" font-size="9.5" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#607d8b">app.example.com</text>
+  <text x="54" y="186" font-size="13" font-weight="bold" fill="#263238">サンプルアプリ</text>
+  <rect x="54" y="196" width="120" height="26" rx="5" fill="#1565c0"/>
+  <text x="114" y="214" font-size="11.5" text-anchor="middle" fill="#ffffff">ログイン</text>
+  <text x="186" y="214" font-size="10" fill="#607d8b">→ 認可リクエストへ</text>
+
+  <!-- ================= S2: sign-in screen ================= -->
+  <rect x="38" y="248" width="324" height="338" rx="8" fill="#ffffff" stroke="#1565c0" stroke-width="1.5"/>
+  <path d="M38 256 a8 8 0 0 1 8 -8 h308 a8 8 0 0 1 8 8 v14 h-324 z" fill="#e3f2fd"/>
+  <circle cx="52" cy="259" r="3" fill="#90caf9"/>
+  <circle cx="62" cy="259" r="3" fill="#90caf9"/>
+  <circle cx="72" cy="259" r="3" fill="#90caf9"/>
+  <text x="86" y="263" font-size="9.5" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#1565c0">idp.example.com/signin?id=…</text>
+
+  <text x="54" y="292" font-size="10.5" fill="#607d8b">② view-data の内容を表示</text>
+  <rect x="54" y="300" width="292" height="46" rx="6" fill="#f5f7fa" stroke="#cfd8dc"/>
+  <text x="66" y="319" font-size="11.5" fill="#37474f">My App がログインを要求しています</text>
+  <text x="66" y="337" font-size="10.5" fill="#78909c">scope: openid profile email</text>
+
+  <text x="54" y="372" font-size="10.5" fill="#607d8b">③ 確認番号（この画面にだけ表示される）</text>
+  <rect x="54" y="380" width="292" height="76" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="204" y="434" font-size="42" font-weight="bold" letter-spacing="8" text-anchor="middle" fill="#0d47a1">4821</text>
+
+  <text x="200" y="478" font-size="11.5" text-anchor="middle" fill="#37474f">スマートフォンのアプリに</text>
+  <text x="200" y="496" font-size="11.5" text-anchor="middle" fill="#37474f">この番号を入力してください</text>
+
+  <line x1="54" y1="512" x2="346" y2="512" stroke="#eceff1" stroke-width="1.5"/>
+  <circle cx="140" cy="532" r="4" fill="#bbdefb"/>
+  <circle cx="152" cy="532" r="4" fill="#64b5f6"/>
+  <circle cx="164" cy="532" r="4" fill="#1565c0"/>
+  <text x="178" y="536" font-size="11" fill="#607d8b">認証完了を待機中</text>
+  <text x="54" y="562" font-size="10" fill="#90a4ae">⑧ authentication-status を 3〜5秒ごとに確認</text>
+
+  <!-- waiting annotation between S2 and S3 -->
+  <line x1="200" y1="676" x2="200" y2="974" stroke="#cfd8dc" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#aGrey)"/>
+  <rect x="54" y="798" width="292" height="58" rx="8" fill="#ffffff" stroke="#cfd8dc"/>
+  <text x="200" y="822" font-size="11" text-anchor="middle" fill="#607d8b">サインイン画面は表示したまま待機</text>
+  <text x="200" y="842" font-size="10.5" text-anchor="middle" fill="#90a4ae">⑧ を 3〜5秒間隔でポーリングし続ける</text>
+
+  <!-- ================= S3: completed ================= -->
+  <rect x="38" y="984" width="324" height="164" rx="8" fill="#ffffff" stroke="#2e7d32" stroke-width="1.5"/>
+  <path d="M38 992 a8 8 0 0 1 8 -8 h308 a8 8 0 0 1 8 8 v14 h-324 z" fill="#e8f5e9"/>
+  <circle cx="52" cy="995" r="3" fill="#a5d6a7"/>
+  <circle cx="62" cy="995" r="3" fill="#a5d6a7"/>
+  <circle cx="72" cy="995" r="3" fill="#a5d6a7"/>
+  <text x="86" y="999" font-size="9.5" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#2e7d32">app.example.com/callback?code=…</text>
+  <circle cx="72" cy="1040" r="14" fill="#2e7d32"/>
+  <path d="M65 1040 l5 6 l10 -12" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="96" y="1046" font-size="14" font-weight="bold" fill="#1b5e20">ログイン完了</text>
+  <text x="54" y="1076" font-size="10.5" fill="#607d8b">⑨ 認可コード → ⑩ トークン交換</text>
+  <rect x="54" y="1086" width="292" height="46" rx="6" fill="#f5f7fa" stroke="#cfd8dc"/>
+  <text x="66" y="1105" font-size="10" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">"id_token": { … ,</text>
+  <text x="66" y="1122" font-size="10" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#2e7d32">  "amr": ["fido-uaf"] }</text>
+
+  <!-- D0: prerequisite -->
+  <rect x="1010" y="180" width="228" height="82" rx="10" fill="#f5f0fb" stroke="#d1c4e9"/>
+  <text x="1124" y="206" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#4527a0">前提条件</text>
+  <text x="1124" y="228" font-size="10.5" text-anchor="middle" fill="#6a1b9a">FIDO-UAF デバイス登録が完了</text>
+  <text x="1124" y="248" font-size="10.5" text-anchor="middle" fill="#6a1b9a">login_hint でこのデバイスに解決</text>
+
+  <!-- ================= D1: notification / polling ================= -->
+  <rect x="1010" y="422" width="228" height="164" rx="14" fill="#ffffff" stroke="#5e35b1" stroke-width="1.5"/>
+  <path d="M1010 436 a14 14 0 0 1 14 -14 h200 a14 14 0 0 1 14 14 v6 h-228 z" fill="#ede7f6"/>
+  <rect x="1094" y="424" width="60" height="6" rx="3" fill="#b39ddb"/>
+  <text x="1026" y="464" font-size="10.5" fill="#7e57c2">④ push 通知 または ⑤ ポーリング</text>
+  <rect x="1024" y="474" width="200" height="56" rx="8" fill="#f3e5f5" stroke="#ce93d8"/>
+  <path d="M1044 500 v-8 a8 8 0 0 1 16 0 v8 h3 v3 h-22 v-3 z" fill="#8e24aa"/>
+  <circle cx="1052" cy="506" r="3" fill="#8e24aa"/>
+  <text x="1074" y="495" font-size="11" font-weight="bold" fill="#4a148c">ログイン要求</text>
+  <text x="1074" y="512" font-size="10" fill="#6a1b9a">タップして確認</text>
+  <text x="1024" y="552" font-size="10" fill="#c62828">通知に番号は含まれない</text>
+  <text x="1024" y="570" font-size="9.5" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#78909c">number_matching_required: true</text>
+
+  <!-- ================= D2: number entry ================= -->
+  <rect x="1010" y="684" width="228" height="130" rx="14" fill="#ffffff" stroke="#5e35b1" stroke-width="1.5"/>
+  <path d="M1010 698 a14 14 0 0 1 14 -14 h200 a14 14 0 0 1 14 14 v6 h-228 z" fill="#ede7f6"/>
+  <rect x="1094" y="686" width="60" height="6" rx="3" fill="#b39ddb"/>
+  <text x="1124" y="722" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#4527a0">⑥ 画面の番号を入力</text>
+  <rect x="1044" y="732" width="34" height="40" rx="6" fill="#f5f0fb" stroke="#9575cd"/>
+  <rect x="1086" y="732" width="34" height="40" rx="6" fill="#f5f0fb" stroke="#9575cd"/>
+  <rect x="1128" y="732" width="34" height="40" rx="6" fill="#f5f0fb" stroke="#9575cd"/>
+  <rect x="1170" y="732" width="34" height="40" rx="6" fill="#f5f0fb" stroke="#9575cd"/>
+  <text x="1061" y="761" font-size="20" font-weight="bold" text-anchor="middle" fill="#4527a0">4</text>
+  <text x="1103" y="761" font-size="20" font-weight="bold" text-anchor="middle" fill="#4527a0">8</text>
+  <text x="1145" y="761" font-size="20" font-weight="bold" text-anchor="middle" fill="#4527a0">2</text>
+  <text x="1187" y="761" font-size="20" font-weight="bold" text-anchor="middle" fill="#4527a0">1</text>
+  <text x="1124" y="794" font-size="10" text-anchor="middle" fill="#78909c">サインイン画面から転記した値</text>
+
+  <!-- ================= D3: biometric ================= -->
+  <rect x="1010" y="828" width="228" height="140" rx="14" fill="#ffffff" stroke="#5e35b1" stroke-width="1.5"/>
+  <path d="M1010 842 a14 14 0 0 1 14 -14 h200 a14 14 0 0 1 14 14 v6 h-228 z" fill="#ede7f6"/>
+  <rect x="1094" y="830" width="60" height="6" rx="3" fill="#b39ddb"/>
+  <text x="1124" y="866" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#4527a0">⑦ FIDO-UAF 生体認証</text>
+  <path d="M1101 918 a23 23 0 0 1 46 0" fill="none" stroke="#9575cd" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M1108 918 a16 16 0 0 1 32 0" fill="none" stroke="#7e57c2" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M1115 918 a9 9 0 0 1 18 0" fill="none" stroke="#5e35b1" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="1124" y1="918" x2="1124" y2="924" stroke="#5e35b1" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="1124" y="948" font-size="10.5" text-anchor="middle" fill="#2e7d32">承認 → 認証完了</text>
+
+  <!-- ================= API pills ================= -->
+  <!-- (1) authorization request -->
+  <rect x="400" y="152" width="448" height="76" rx="8" fill="#ffffff" stroke="#cfd8dc"/>
+  <rect x="402" y="160" width="4" height="60" rx="2" fill="#1565c0"/>
+  <text x="418" y="174" font-size="12.5" font-weight="bold" fill="#0d47a1">① 認可リクエスト（login_hint でユーザーを事前解決）</text>
+  <text x="418" y="196" font-size="11" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">GET /{tenant-id}/v1/authorizations?…&amp;login_hint=sub:{userId}</text>
+  <text x="418" y="216" font-size="10.5" fill="#2e7d32">→ 302 リダイレクト（クエリに認可トランザクション id）</text>
+
+  <!-- (2) view-data -->
+  <rect x="400" y="248" width="448" height="66" rx="8" fill="#ffffff" stroke="#cfd8dc"/>
+  <rect x="402" y="256" width="4" height="50" rx="2" fill="#1565c0"/>
+  <text x="418" y="270" font-size="12.5" font-weight="bold" fill="#0d47a1">② 画面表示データの取得</text>
+  <text x="418" y="290" font-size="11" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">GET /{id}/view-data</text>
+  <text x="418" y="307" font-size="10.5" fill="#2e7d32">→ client_name / scopes / login_hint / authentication_policy</text>
+
+  <!-- (3) number-matching challenge -->
+  <rect x="400" y="326" width="448" height="84" rx="8" fill="#ffffff" stroke="#1565c0"/>
+  <rect x="402" y="334" width="4" height="68" rx="2" fill="#1565c0"/>
+  <text x="418" y="348" font-size="12.5" font-weight="bold" fill="#0d47a1">③ ナンバーマッチングコードの発行（必須）</text>
+  <text x="418" y="370" font-size="11" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">POST /{id}/authentication-device-number-matching-challenge</text>
+  <text x="418" y="388" font-size="10.5" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#2e7d32">→ { "number_matching_code": "4821" }</text>
+  <text x="418" y="404" font-size="10" fill="#c62828">コードはこのレスポンス＝サインイン画面にだけ返る（デバイスには渡さない）</text>
+
+  <!-- (4) device notification -->
+  <rect x="400" y="422" width="448" height="76" rx="8" fill="#ffffff" stroke="#cfd8dc"/>
+  <rect x="402" y="430" width="4" height="60" rx="2" fill="#1565c0"/>
+  <text x="418" y="444" font-size="12.5" font-weight="bold" fill="#0d47a1">④ デバイスへの push 送信（任意）</text>
+  <text x="418" y="466" font-size="11" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">POST /{id}/authentication-device-notification</text>
+  <text x="418" y="486" font-size="10.5" fill="#616161">→ CIBA と共通の interactor。FCM 設定は1箇所に集約</text>
+
+  <!-- (5) device transaction list -->
+  <rect x="400" y="510" width="448" height="88" rx="8" fill="#ffffff" stroke="#cfd8dc"/>
+  <rect x="402" y="518" width="4" height="60" rx="2" fill="#5e35b1"/>
+  <text x="418" y="532" font-size="12.5" font-weight="bold" fill="#4527a0">⑤ 自デバイス宛の認証トランザクションを取得</text>
+  <text x="418" y="554" font-size="11" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">GET /v1/authentication-devices/{device-id}/authentications</text>
+  <text x="418" y="571" font-size="10.5" fill="#616161">→ ?flow=oauth。id（= transaction-id）と number_matching_required を返す</text>
+  <text x="418" y="585" font-size="10.5" fill="#c62828">認可リクエストの id は含まない → デバイス側の呼び出しは transaction-id で行う</text>
+
+  <!-- ============ transcription band (human step) ============ -->
+  <rect x="36" y="600" width="1208" height="70" rx="10" fill="#fff8e1" stroke="#f9a825"/>
+  <circle cx="70" cy="626" r="7" fill="#ef6c00"/>
+  <path d="M58 646 a12 12 0 0 1 24 0 z" fill="#ef6c00"/>
+  <text x="98" y="624" font-size="13" font-weight="bold" fill="#e65100">人が転記する（number-matching）</text>
+  <text x="98" y="646" font-size="11.5" fill="#6d4c41">サインイン画面に表示された4桁を、ユーザーが目で読んで認証デバイスに手入力する</text>
+  <text x="890" y="618" font-size="10.5" text-anchor="middle" fill="#ef6c00">画面 →（人）→ デバイス</text>
+  <line x1="620" y1="636" x2="1176" y2="636" stroke="#f9a825" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#aAmber)"/>
+  <text x="890" y="658" font-size="10" text-anchor="middle" fill="#c62828">サーバーは push にもデバイス向けトランザクションにも番号を渡さない</text>
+
+  <!-- (6) number-matching verify -->
+  <rect x="400" y="684" width="448" height="92" rx="8" fill="#ffffff" stroke="#5e35b1"/>
+  <rect x="402" y="692" width="4" height="76" rx="2" fill="#5e35b1"/>
+  <text x="418" y="704" font-size="12.5" font-weight="bold" fill="#4527a0">⑥ 転記されたコードの検証</text>
+  <text x="418" y="723" font-size="10.5" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">POST /v1/authentications/{transaction-id}/</text>
+  <text x="418" y="739" font-size="10.5" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">     authentication-device-number-matching</text>
+  <text x="418" y="755" font-size="10.5" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#546e7a">body: { "number_matching_code": "4821" }</text>
+  <text x="418" y="770" font-size="10.5" fill="#616161">→ 200 一致 / 400 has not been issued・does not match</text>
+
+  <!-- (7) fido-uaf -->
+  <rect x="400" y="788" width="448" height="92" rx="8" fill="#ffffff" stroke="#5e35b1"/>
+  <rect x="402" y="796" width="4" height="76" rx="2" fill="#5e35b1"/>
+  <text x="418" y="810" font-size="12.5" font-weight="bold" fill="#4527a0">⑦ FIDO-UAF 認証（チャレンジ → 認証）</text>
+  <text x="418" y="832" font-size="10.5" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">POST /v1/authentications/{transaction-id}/</text>
+  <text x="418" y="849" font-size="10.5" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">     fido-uaf-authentication-challenge → fido-uaf-authentication</text>
+  <text x="418" y="869" font-size="10.5" fill="#2e7d32">→ 生体認証に成功すると AuthenticationTransaction が更新される</text>
+
+  <!-- (8) authentication-status polling -->
+  <rect x="400" y="892" width="448" height="80" rx="8" fill="#ffffff" stroke="#cfd8dc"/>
+  <rect x="402" y="900" width="4" height="64" rx="2" fill="#1565c0"/>
+  <text x="418" y="914" font-size="12.5" font-weight="bold" fill="#0d47a1">⑧ 認証完了のポーリング（③以降ずっと実行）</text>
+  <text x="418" y="936" font-size="11" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">GET /{id}/authentication-status</text>
+  <text x="418" y="956" font-size="10.5" fill="#2e7d32">→ in_progress → success（他に failure / locked）／3〜5秒間隔</text>
+
+  <!-- (9) authorize -->
+  <rect x="400" y="984" width="448" height="72" rx="8" fill="#ffffff" stroke="#cfd8dc"/>
+  <rect x="402" y="992" width="4" height="56" rx="2" fill="#1565c0"/>
+  <text x="418" y="1006" font-size="12.5" font-weight="bold" fill="#0d47a1">⑨ 認可の確定</text>
+  <text x="418" y="1028" font-size="11" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">POST /{id}/authorize</text>
+  <text x="418" y="1047" font-size="10.5" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#2e7d32">→ { "redirect_uri": "…/callback?code=…&amp;state=…" }</text>
+
+  <!-- (10) token -->
+  <rect x="400" y="1068" width="448" height="80" rx="8" fill="#ffffff" stroke="#cfd8dc"/>
+  <rect x="402" y="1076" width="4" height="64" rx="2" fill="#1565c0"/>
+  <text x="418" y="1090" font-size="12.5" font-weight="bold" fill="#0d47a1">⑩ トークン交換</text>
+  <text x="418" y="1112" font-size="11" font-family="'SFMono-Regular','Menlo','Consolas',monospace" fill="#37474f">POST /{tenant-id}/v1/tokens  (grant_type=authorization_code)</text>
+  <text x="418" y="1132" font-size="10.5" fill="#2e7d32">→ access_token / id_token（amr に fido-uaf が含まれる）</text>
+
+  <!-- ================= connectors ================= -->
+  <line x1="366" y1="190" x2="394" y2="190" stroke="#1565c0" stroke-width="1.5" marker-end="url(#aBlue)"/>
+  <line x1="366" y1="281" x2="394" y2="281" stroke="#1565c0" stroke-width="1.5" marker-end="url(#aBlue)"/>
+  <line x1="366" y1="358" x2="394" y2="358" stroke="#1565c0" stroke-width="1.5" marker-end="url(#aBlue)"/>
+  <line x1="394" y1="386" x2="366" y2="386" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#aGreen)"/>
+  <line x1="366" y1="460" x2="394" y2="460" stroke="#1565c0" stroke-width="1.5" marker-end="url(#aBlue)"/>
+  <line x1="394" y1="1020" x2="366" y2="1020" stroke="#2e7d32" stroke-width="1.5" marker-end="url(#aGreen)"/>
+  <line x1="366" y1="1108" x2="394" y2="1108" stroke="#1565c0" stroke-width="1.5" marker-end="url(#aBlue)"/>
+
+  <text x="928" y="458" font-size="10.5" text-anchor="middle" fill="#ef6c00">FCM push</text>
+  <line x1="852" y1="470" x2="1004" y2="470" stroke="#ef6c00" stroke-width="1.8" marker-end="url(#aAmber)"/>
+  <text x="928" y="488" font-size="10" text-anchor="middle" fill="#c62828">コードは含まない</text>
+
+  <text x="930" y="538" font-size="10" text-anchor="middle" fill="#5e35b1">push が無くても可</text>
+  <line x1="1004" y1="550" x2="854" y2="550" stroke="#5e35b1" stroke-width="1.5" marker-end="url(#aPurple)"/>
+
+  <text x="930" y="720" font-size="10" text-anchor="middle" fill="#5e35b1">転記された値を送信</text>
+  <line x1="1004" y1="732" x2="854" y2="732" stroke="#5e35b1" stroke-width="1.5" marker-end="url(#aPurple)"/>
+
+  <text x="930" y="840" font-size="10" text-anchor="middle" fill="#5e35b1">生体認証</text>
+  <line x1="1004" y1="852" x2="854" y2="852" stroke="#5e35b1" stroke-width="1.5" marker-end="url(#aPurple)"/>
+
+  <!-- ================= notes ================= -->
+  <rect x="36" y="1184" width="1208" height="124" rx="10" fill="#f8f9fa" stroke="#e0e0e0"/>
+  <text x="56" y="1210" font-size="13" font-weight="bold" fill="#37474f">設計上のポイント</text>
+
+  <rect x="56" y="1230" width="5" height="5" fill="#1565c0"/>
+  <text x="72" y="1235" font-size="11.5" fill="#37474f">コード発行（③・必須）と push 送信（④・任意）は別エンドポイント。push が届かなくても、デバイス側のポーリング（⑤）で number-matching は成立する。</text>
+
+  <rect x="56" y="1252" width="5" height="5" fill="#c62828"/>
+  <text x="72" y="1257" font-size="11.5" fill="#37474f">number_matching_required はコード検証に成功しても true のまま。攻撃者が自分で検証を通し「もう入力は不要」を被害者デバイスへ伝える経路を塞ぐため。</text>
+
+  <rect x="56" y="1274" width="5" height="5" fill="#5e35b1"/>
+  <text x="72" y="1279" font-size="11.5" fill="#37474f">CIBA の binding_message はリクエスト由来でデバイスに表示（transaction binding）。本フローはサーバー生成・デバイス非開示（anti push-fatigue）で目的が異なる別 interactor。</text>
+
+  <rect x="56" y="1296" width="5" height="5" fill="#2e7d32"/>
+  <text x="72" y="1301" font-size="11.5" fill="#37474f">login_hint なし + FIDO-UAF のみは非サポート（ユーザー未解決）。サポートは login_hint + FIDO-UAF / パスワード + FIDO-UAF(MFA) / CIBA + FIDO-UAF の3パターン。</text>
+</svg>

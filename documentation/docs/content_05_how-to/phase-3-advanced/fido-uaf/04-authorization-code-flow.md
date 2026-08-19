@@ -8,7 +8,8 @@
 
 ✅ **認可コードフロー + FIDO-UAFの基礎**
 - CIBAとの違い（SPAがフロントチャネル、デバイスがバックチャネル）
-- login_hintによるユーザー事前解決
+- login_hintによるユーザー事前解決と、それが必要な理由
+- スコープ単位で認証強度を要求する step-up の組み方
 - 認証ステータスAPIによるポーリング
 
 ✅ **実践的な知識**
@@ -27,18 +28,51 @@
 
 ---
 
-## CIBAフローとの比較
+## 想定するケース
 
-| 項目 | CIBAフロー | 認可コードフロー |
-|------|-----------|--------------|
-| フロントチャネル | サーバーサイドクライアント | SPA（ブラウザ） |
-| ユーザー特定 | login_hint（必須） | login_hint（任意） |
-| 完了検知 | トークンエンドポイントのポーリング | authentication-status APIのポーリング |
-| トークン取得 | トークンエンドポイント直接 | 認可コード → トークンエンドポイント |
+**public クライアント（SPA・モバイルアプリ）で、ログイン後に追加の認証をさせたい場合**を想定しています。
+
+同じことは [CIBA](./01-ciba-flow.md) のほうがシームレスに実現できますが、CIBA はクライアント認証が必須（CIBA Core §7.1）のため public クライアントでは使えません。confidential クライアントなら CIBA を検討してください。
+
+### 典型的な使いどころ: スコープの step-up
+
+**初回ログインのためのフローではありません。** ログイン済みのユーザーに、より強い認証を要求するスコープを後から取得させるケースです。
+
+```
+① 通常ログイン（パスワード等）    → scope: openid profile email
+② ユーザーが送金画面へ
+③ 追加の認可リクエスト（login_hint + scope に transfers）
+   → FIDO-UAF 生体認証         → transfers を含むアクセストークン
+```
+
+スコープごとに必要な認証方式は認証ポリシーの `level_of_authentication_scopes` で設定します（[後述](#スコープ単位で認証強度を要求する)）。
+
+:::info なぜログイン済みでも login_hint が必要なのか
+`AuthenticationTransaction` のユーザーは **`login_hint` からのみ解決されます**。既存のOPセッションは `prompt=none` の判定と view-data の `session_enabled` にしか使われず、認証トランザクションのユーザーには反映されません。
+
+RPは①で受け取ったIDトークンの `sub` を保持しておき、③で `login_hint=sub:{sub}` として渡します。初回ログインではRPが `sub` を知らないためこれができず、**パスワード + FIDO-UAF（MFA）**のパターンを使います（[後述](#login_hintなし--fido-uafのみの認証はサポートしない)）。
+
+実装: [OAuthFlowEntryService.java](../../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/application/enduser/OAuthFlowEntryService.java)（`resolveUserFromLoginHint`）
+:::
 
 ---
 
 ## フロー全体の流れ（概要）
+
+サインイン画面（SPA）と認証デバイスが**別チャネルで並行して進行**します。まず画面とAPIの対応を俯瞰してください。
+
+![認可コードフロー + FIDO-UAF の画面とAPIの全体像](./authorization-code-fido-uaf-overview.svg)
+
+呼び出し元でパスが分かれる点が要注意です。
+
+| 呼び出し元 | パス | 使うID |
+|-----------|------|--------|
+| サインイン画面（SPA） | `/{tenant-id}/v1/authorizations/{id}/…` | 認可リクエストのID |
+| 認証デバイス | `/{tenant-id}/v1/authentications/{transaction-id}/…` | 認証トランザクションのID |
+
+デバイスは認証トランザクション取得API（⑤）でしか自分宛のリクエストを知ることができず、そのレスポンスに認可リクエストのIDは含まれません。
+
+以下は同じフローのシーケンス図です。
 
 ```mermaid
 sequenceDiagram
@@ -209,11 +243,17 @@ Content-Type: application/json
 #### コードの検証（device）
 
 ```
-POST {tenant-id}/v1/authorizations/{id}/authentication-device-number-matching
+POST {tenant-id}/v1/authentications/{transaction-id}/authentication-device-number-matching
 Content-Type: application/json
 
 { "number_matching_code": "4821" }
 ```
+
+`{transaction-id}` は次節の認証トランザクション取得APIが返す `id` です。**デバイスは認可リクエストの `id` を知りません**（取得APIのレスポンスに含まれません）。デバイス側の呼び出しは FIDO-UAF 認証と同じ `/v1/authentications/{transaction-id}/` 配下に揃います。
+
+:::note SPA 側のパスからも到達できます
+`POST {tenant-id}/v1/authorizations/{id}/authentication-device-number-matching` でも同じ検証が実行されます（両者は `OAuthFlowEntryService#interactInternal` に合流します）。ただしデバイスは認可リクエストの `id` を取得できないため、デバイス実装では使えません。
+:::
 
 | ステータス | 説明 |
 |-----------|------|
@@ -243,7 +283,9 @@ GET {tenant-id}/v1/authentication-devices/{device-id}/authentications?flow=oauth
 }
 ```
 
-コードが発行されると `true` になります。**コード検証に成功した後も `true` のままです。** 検証成功でクリアすると、フローを開始した攻撃者が自分でコード検証を通すことで「もう入力は不要」という状態を被害者のデバイスへ伝えられてしまい、number-matching が塞いでいる push fatigue の経路が再び開くためです。実際にコードが検証済みかどうかは認証結果側で管理されます。
+`id` は**認証トランザクションのID**です。以降のデバイス側の呼び出し（コード検証・FIDO-UAF認証）はこの値を使います。
+
+コードが発行されると `number_matching_required` が `true` になります。**コード検証に成功した後も `true` のままです。** 検証成功でクリアすると、フローを開始した攻撃者が自分でコード検証を通すことで「もう入力は不要」という状態を被害者のデバイスへ伝えられてしまい、number-matching が塞いでいる push fatigue の経路が再び開くためです。実際にコードが検証済みかどうかは認証結果側で管理されます。
 
 ---
 
@@ -469,6 +511,32 @@ login_hintを指定しない場合でも、パスワード認証でユーザー�
   ]
 }
 ```
+
+### スコープ単位で認証強度を要求する
+
+`level_of_authentication_scopes` に「スコープ → それを許可する認証方式」を書きます（`config/templates/use-cases/mfa-fido-uaf/authentication-policy.json` より）。
+
+```json
+"level_of_authentication_scopes": {
+  "transfers": ["fido-uaf"],
+  "account": ["password", "email"]
+}
+```
+
+値は**いずれか1つを満たせばよい**方式のリストです。満たしていないスコープは**付与されずに落とされます**（エラーにはなりません）。パスワード認証だけでは `transfers` が付かず、FIDO-UAF を実行すると付く、という挙動になります。
+
+実装: [LoaDeniedScopeResolver.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/loa/LoaDeniedScopeResolver.java)
+
+---
+
+## CIBAフローとの比較
+
+| 項目 | CIBAフロー | 認可コードフロー |
+|------|-----------|--------------|
+| フロントチャネル | サーバーサイドクライアント | SPA（ブラウザ） |
+| ユーザー特定 | login_hint（必須） | login_hint（FIDO-UAFのみで認証する場合は必須） |
+| 完了検知 | トークンエンドポイントのポーリング | authentication-status APIのポーリング |
+| トークン取得 | トークンエンドポイント直接 | 認可コード → トークンエンドポイント |
 
 ---
 
