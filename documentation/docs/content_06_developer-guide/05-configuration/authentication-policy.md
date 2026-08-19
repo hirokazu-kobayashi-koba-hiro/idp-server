@@ -311,6 +311,7 @@ interaction ごとの内訳を使えば、それぞれを名指しで要求で�
 | フィールド | 型 | 必須 | 説明 | 例 |
 |-----------|-----|------|------|---|
 | `method` | string | ✅ | 認証方式 | `"email"`, `"sms"`, `"password"` |
+| `interaction` | string | ❌ | `method` 内の特定の interaction に限定する（後述） | `"identify"`, `"verify"` |
 | `order` | integer | ✅ | 実行順序（小さい値が先） | `1`, `2`, `3` |
 | `requires_user` | boolean | ✅ | ユーザーが事前に識別されている必要があるか | `false`（1st factor）/ `true`（2nd factor） |
 | `allow_registration` | boolean | ❌ | このステップでユーザー登録を許可するか | `true` / `false` |
@@ -362,11 +363,58 @@ interaction ごとの内訳を使えば、それぞれを名指しで要求で�
 - ユーザーが既に特定されている必要あり
 - ユーザーを変更できない
 
+### interaction 単位の定義
+
+`external-api-authentication` は**複数の interaction を1つの設定に持ちます**が、どれを実行しても `method` は `"external-api"` です。そのため `method` だけを書いた定義は、設定内の**全 interaction に適用**されます。
+
+interaction ごとに `requires_user` を変えたい場合は `interaction` を指定します。
+
+```json
+{
+  "step_definitions": [
+    { "method": "external-api", "interaction": "identify", "order": 1, "requires_user": false },
+    { "method": "external-api", "interaction": "verify",   "order": 2, "requires_user": true }
+  ]
+}
+```
+
+`interaction` の値は、認証設定の `interactions` のキー（＝リクエストボディの `interaction` に指定する値）です。
+
+**解決順**:
+
+| 優先 | 条件 |
+|------|------|
+| 1 | `method` と `interaction` の両方が一致する定義 |
+| 2 | `method` が一致し、`interaction` を持たない定義 |
+| 3 | どちらも無い場合は定義なし（制約なし） |
+
+2 があるため、`method` 単位の定義を**既定**、`interaction` 単位の定義をその**上書き**として書けます。宣言順には依存しません。
+
+```json
+{
+  "step_definitions": [
+    { "method": "external-api", "order": 1, "requires_user": true },
+    { "method": "external-api", "interaction": "identify", "order": 1, "requires_user": false }
+  ]
+}
+```
+
+上記では `identify` だけが 1st factor になり、それ以外の interaction はすべて 2nd factor として扱われます。
+
+:::warning method 単位の既定を必ず1つ書いてください
+`interaction` 単位の定義だけを並べると、**そこに書かれていない interaction は「定義なし」になり、`requires_user` のチェックが行われません**（`step_definitions` を設定していない場合と同じ挙動）。
+
+interaction を1つ追加して step 定義に書き忘れると、2nd factor の同一性検証が静かに無効化されます。上の例のように `method` 単位の既定を1つ置き、例外だけを `interaction` で上書きしてください。
+:::
+
+`external-api-authentication` 以外の認証方式は1 method に interaction が1つなので、`interaction` を書く必要はありません。
+
 ### 使用シーン
 
 - **段階的なユーザー登録**: Email認証 → SMS認証で段階的に情報を収集
 - **ステップアップ認証**: 通常ログイン後、重要な操作前にSMS認証を要求
 - **複合認証**: 複数の認証方式を組み合わせてセキュリティを強化
+- **1設定内での 1st / 2nd factor 混在**: `external-api-authentication` で本人特定と追加確認を分ける（`interaction` 単位の定義）
 
 ---
 

@@ -411,6 +411,14 @@ POST /external-api-authentication
 
 認証ポリシーで `external-api` を2段階目に設定できます。
 
+:::info 複数の interaction で 1st / 2nd factor を分ける場合
+下の例のように `method` だけを書いた定義は、**この設定内の全 interaction に適用されます**（どの interaction を実行しても `method` は `"external-api"` のため）。
+
+interaction ごとに `requires_user` を変えたい場合は、step 定義に `interaction` を指定してください。書き忘れた interaction はチェックが行われないため、`method` 単位の既定を1つ置く形を推奨します。
+
+→ [step_definitions の interaction 単位の定義](../authentication-policy.md#interaction-単位の定義)
+:::
+
 ### 認証ポリシー設定
 
 ```json
