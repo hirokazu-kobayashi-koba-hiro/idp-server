@@ -831,15 +831,15 @@ curl -X PUT "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/te
 - [How-to: MFA設定](../phase-2-security/01-mfa-setup.md)
 
 ### 関連概念
-- [Concept: 認証ポリシー](../content_03_concepts/03-authentication-authorization/concept-01-authentication-policy.md)
-- [Concept: MFA](../content_03_concepts/03-authentication-authorization/concept-02-mfa.md)
+- [Concept: 認証ポリシー](../../content_03_concepts/03-authentication-authorization/concept-01-authentication-policy.md)
+- [Concept: MFA](../../content_03_concepts/03-authentication-authorization/concept-02-mfa.md)
 
 ---
 
 ## 関連ドキュメント
 
-- [Developer Guide: Authentication実装](../content_06_developer-guide/03-application-plane/04-authentication.md) - 開発者向け実装ガイド
-- [API Reference](../content_07_reference/api-reference.md) - Management API仕様
+- [Developer Guide: Authentication実装](../../content_06_developer-guide/03-application-plane/04-authentication.md) - 開発者向け実装ガイド
+- [API Reference](../../content_07_reference/api-reference.md) - Management API仕様
 
 ---
 

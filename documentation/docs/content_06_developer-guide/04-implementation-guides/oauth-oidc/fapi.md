@@ -13,8 +13,8 @@
 - Request Object 検証の詳細
 
 **前提知識**:
-- [concept-22: FAPI](../../content_03_concepts/03-authentication-authorization/concept-06-fapi.md)の理解
-- [basic-08: 認可コードフロー](../../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md)の理解
+- [concept-22: FAPI](../../../content_03_concepts/03-authentication-authorization/concept-06-fapi.md)の理解
+- [basic-08: 認可コードフロー](../../../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md)の理解
 - OAuth 2.0 / OIDC の基礎知識
 
 ---
@@ -104,7 +104,7 @@ public class FapiBaselineVerifier implements AuthorizationRequestVerifier {
 }
 ```
 
-**参考実装**: [FapiBaselineVerifier.java:31](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java#L31)
+**参考実装**: [FapiBaselineVerifier.java:31](../../../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java#L31)
 
 ### 1. リダイレクトURI検証
 
@@ -303,7 +303,7 @@ public class FapiAdvanceVerifier implements AuthorizationRequestVerifier {
 }
 ```
 
-**参考実装**: [FapiAdvanceVerifier.java:34](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L34)
+**参考実装**: [FapiAdvanceVerifier.java:34](../../../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java#L34)
 
 ### 1. Request Object 必須
 
@@ -590,7 +590,7 @@ public class TlsClientAuthAuthenticator implements ClientAuthenticator {
 }
 ```
 
-**参考実装**: [TlsClientAuthAuthenticator.java:35](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java#L35)
+**参考実装**: [TlsClientAuthAuthenticator.java:35](../../../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java#L35)
 
 **証明書検証方式**:
 1. **subject DN**: 証明書のSubject Distinguished Nameで検証
@@ -808,8 +808,8 @@ OIDF適合性テストスイート (`fapi1-advanced-final-test-plan`) の63テ�
 ## 🔗 関連ドキュメント
 
 **概念・基礎**:
-- [concept-22: FAPI](../../content_03_concepts/03-authentication-authorization/concept-06-fapi.md) - FAPI概念説明
-- [basic-08: 認可コードフロー](../../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md) - 基本フロー
+- [concept-22: FAPI](../../../content_03_concepts/03-authentication-authorization/concept-06-fapi.md) - FAPI概念説明
+- [basic-08: 認可コードフロー](../../../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md) - 基本フロー
 
 **実装詳細**:
 - [impl-12: Plugin実装ガイド](./impl-12-plugin-implementation.md) - プラグインシステム
@@ -817,9 +817,9 @@ OIDF適合性テストスイート (`fapi1-advanced-final-test-plan`) の63テ�
 - [03-application-plane/10-client-authentication.md](../03-application-plane/10-client-authentication.md) - クライアント認証
 
 **参考実装クラス**:
-- [FapiBaselineVerifier.java](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java)
-- [FapiAdvanceVerifier.java](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java)
-- [TlsClientAuthAuthenticator.java](../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java)
+- [FapiBaselineVerifier.java](../../../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiBaselineVerifier.java)
+- [FapiAdvanceVerifier.java](../../../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/FapiAdvanceVerifier.java)
+- [TlsClientAuthAuthenticator.java](../../../../../libs/idp-server-core-extension-fapi/src/main/java/org/idp/server/core/openid/extension/fapi/TlsClientAuthAuthenticator.java)
 
 **RFC/仕様**:
 - [Financial-grade API Security Profile 1.0 - Part 1: Baseline](https://openid.net/specs/openid-financial-api-part-1-1_0.html)

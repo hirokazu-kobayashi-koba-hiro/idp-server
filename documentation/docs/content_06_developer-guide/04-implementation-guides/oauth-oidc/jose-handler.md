@@ -93,7 +93,7 @@ JoseContext
     └─ JsonWebKey（鍵情報）
 ```
 
-**実装**: [JoseHandler.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JoseHandler.java)
+**実装**: [JoseHandler.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JoseHandler.java)
 
 ---
 
@@ -141,7 +141,7 @@ public class JoseHandler {
 
 ### 3種類のJOSE形式
 
-**実装**: [JoseType.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JoseType.java)
+**実装**: [JoseType.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JoseType.java)
 
 ```java
 public enum JoseType {
@@ -176,7 +176,7 @@ public enum JoseType {
 
 JOSEの解析結果を保持するコンテナ。
 
-**実装**: [JoseContext.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JoseContext.java)
+**実装**: [JoseContext.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JoseContext.java)
 
 ```java
 public class JoseContext {
@@ -238,7 +238,7 @@ String sub = (String) claims.get("sub");
 
 ### JwsContextCreator
 
-**実装**: [JwsContextCreator.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JwsContextCreator.java)
+**実装**: [JwsContextCreator.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JwsContextCreator.java)
 
 ```java
 public class JwsContextCreator implements JoseContextCreator {
@@ -300,7 +300,7 @@ JoseContext
 
 ### サポートされるアルゴリズム
 
-**実装**: [JsonWebSignatureAlgorithm.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JsonWebSignatureAlgorithm.java)
+**実装**: [JsonWebSignatureAlgorithm.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JsonWebSignatureAlgorithm.java)
 
 #### 対称鍵アルゴリズム（共有鍵）
 
@@ -340,7 +340,7 @@ JoseContext
 
 ### 署名付きJWTの処理
 
-**実装**: [JsonWebSignature.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JsonWebSignature.java)
+**実装**: [JsonWebSignature.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JsonWebSignature.java)
 
 **ライブラリ委譲**: Nimbus JOSE + JWTの`SignedJWT`クラスをラップ
 
@@ -426,7 +426,7 @@ RS256(Header + "." + Payload, privateKey)
 
 ### クレーム（ペイロード）の処理
 
-**実装**: [JsonWebTokenClaims.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JsonWebTokenClaims.java)
+**実装**: [JsonWebTokenClaims.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JsonWebTokenClaims.java)
 
 **ライブラリ委譲**: Nimbus JOSE + JWTの`JWTClaimsSet`クラスをラップ
 
@@ -630,7 +630,7 @@ public String createAccessToken(
 
 ### 公開鍵の表現形式
 
-**実装**: [JsonWebKey.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JsonWebKey.java)
+**実装**: [JsonWebKey.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JsonWebKey.java)
 
 **ライブラリ委譲**: Nimbus JOSE + JWTの`JWK`/`JWKSet`クラスをラップ
 
@@ -833,7 +833,7 @@ JsonWebKeys jsonWebKeys = JsonWebKeys.parse(jwks);
 
 ### 📖 関連ドキュメント
 
-- [実装ガイド: ID Token生成](../../content_03_concepts/04-tokens-claims/concept-01-id-token.md) - at_hash/c_hash計算
+- [実装ガイド: ID Token生成](../../../content_03_concepts/04-tokens-claims/concept-01-id-token.md) - at_hash/c_hash計算
 
 ### 🔗 詳細情報
 
@@ -844,8 +844,8 @@ JsonWebKeys jsonWebKeys = JsonWebKeys.parse(jwks);
 ---
 
 **情報源**:
-- [JoseHandler.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JoseHandler.java)
-- [JsonWebSignature.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JsonWebSignature.java)
-- [JsonWebTokenClaims.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JsonWebTokenClaims.java)
+- [JoseHandler.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JoseHandler.java)
+- [JsonWebSignature.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JsonWebSignature.java)
+- [JsonWebTokenClaims.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/jose/JsonWebTokenClaims.java)
 
 **最終更新**: 2025-10-13

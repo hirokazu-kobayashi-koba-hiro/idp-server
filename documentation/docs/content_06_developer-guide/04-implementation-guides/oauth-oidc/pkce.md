@@ -12,7 +12,7 @@
 - モバイルアプリ・SPAでのPKCE適用パターン
 
 **前提知識**:
-- [basic-08: 認可コードフロー](../../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md)の理解
+- [basic-08: 認可コードフロー](../../../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md)の理解
 - OAuth 2.0 の基礎知識
 
 ---
@@ -82,7 +82,7 @@ public class CodeVerifier {
 }
 ```
 
-**参考実装**: [CodeVerifier.java:21](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/pkce/CodeVerifier.java#L21)
+**参考実装**: [CodeVerifier.java:21](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/pkce/CodeVerifier.java#L21)
 
 ### 2. Code Challenge 生成
 
@@ -112,7 +112,7 @@ public class CodeChallengeCalculator implements MessageDigestable, Base64Codeabl
 }
 ```
 
-**参考実装**: [CodeChallengeCalculator.java:24](../../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/CodeChallengeCalculator.java#L24)
+**参考実装**: [CodeChallengeCalculator.java:24](../../../../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/CodeChallengeCalculator.java#L24)
 
 #### plain メソッド（非推奨）
 
@@ -199,7 +199,7 @@ public class AuthorizationCodeGrantPkceVerifier
 }
 ```
 
-**参考実装**: [AuthorizationCodeGrantPkceVerifier.java:29](../../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/AuthorizationCodeGrantPkceVerifier.java#L29)
+**参考実装**: [AuthorizationCodeGrantPkceVerifier.java:29](../../../../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/AuthorizationCodeGrantPkceVerifier.java#L29)
 
 ---
 
@@ -631,19 +631,19 @@ const base64url = btoa(String.fromCharCode(...buffer))
 ## 🔗 関連ドキュメント
 
 **概念・基礎**:
-- [basic-08: 認可コードフロー](../../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md) - 基本フロー
-- [concept-22: FAPI](../../content_03_concepts/03-authentication-authorization/concept-06-fapi.md) - FAPI BaselineでのPKCE必須化
+- [basic-08: 認可コードフロー](../../../content_11_learning/02-oauth-fundamentals/oauth2-authorization-code-flow.md) - 基本フロー
+- [concept-22: FAPI](../../../content_03_concepts/03-authentication-authorization/concept-06-fapi.md) - FAPI BaselineでのPKCE必須化
 
 **実装詳細**:
 - [impl-22: FAPI実装ガイド](./impl-22-fapi-implementation.md) - FAPI BaselineのPKCE要件
 - [03-application-plane/02-authorization-flow.md](../03-application-plane/02-authorization-flow.md) - 認可フロー
 
 **参考実装クラス**:
-- [CodeVerifier.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/pkce/CodeVerifier.java)
-- [CodeChallenge.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/pkce/CodeChallenge.java)
-- [CodeChallengeMethod.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/pkce/CodeChallengeMethod.java)
-- [CodeChallengeCalculator.java](../../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/CodeChallengeCalculator.java)
-- [AuthorizationCodeGrantPkceVerifier.java](../../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/AuthorizationCodeGrantPkceVerifier.java)
+- [CodeVerifier.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/pkce/CodeVerifier.java)
+- [CodeChallenge.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/pkce/CodeChallenge.java)
+- [CodeChallengeMethod.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/pkce/CodeChallengeMethod.java)
+- [CodeChallengeCalculator.java](../../../../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/CodeChallengeCalculator.java)
+- [AuthorizationCodeGrantPkceVerifier.java](../../../../../libs/idp-server-core-extension-pkce/src/main/java/org/idp/server/core/openid/extension/pkce/AuthorizationCodeGrantPkceVerifier.java)
 
 **RFC/仕様**:
 - [RFC 7636 - Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636)

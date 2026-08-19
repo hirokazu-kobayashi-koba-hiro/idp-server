@@ -370,9 +370,9 @@ this.myApi = ManagementTypeEntryServiceProxy.createProxy(
 ---
 
 **情報源**:
-- [TransactionManager.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java)
-- [TenantAwareEntryServiceProxy.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/TenantAwareEntryServiceProxy.java)
-- [ManagementTypeEntryServiceProxy.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/ManagementTypeEntryServiceProxy.java)
+- [TransactionManager.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java)
+- [TenantAwareEntryServiceProxy.java](../../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/TenantAwareEntryServiceProxy.java)
+- [ManagementTypeEntryServiceProxy.java](../../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/ManagementTypeEntryServiceProxy.java)
 - [PostgreSQL - Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
 - [PostgreSQL - set_config()](https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-SET)
 - [MySQL - Transaction Isolation Levels](https://dev.mysql.com/doc/refman/8.0/en/innodb-transaction-isolation-levels.html)

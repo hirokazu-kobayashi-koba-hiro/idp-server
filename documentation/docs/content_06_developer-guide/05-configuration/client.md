@@ -744,7 +744,7 @@ CIBAリクエスト時に、authorization_details（RAR: Rich Authorization Requ
 ### 実装クラスへのリンク
 
 **Core**:
-- [ClientConfiguration.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/client/ClientConfiguration.java)
+- [ClientConfiguration.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/client/ClientConfiguration.java)
 
 **Control Plane**:
 - [ClientManagementRegistrationContextCreator.java](../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/client/ClientManagementRegistrationContextCreator.java)

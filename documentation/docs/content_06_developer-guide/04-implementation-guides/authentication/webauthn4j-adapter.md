@@ -429,8 +429,8 @@ AuthenticationParameters params = new AuthenticationParameters(
 
 - [FIDO2/WebAuthn改善バックログ](../../99-refactoring/refactor-02-fido2-webauthn-improvements.md)
 - [認証インタラクター](./authentication-interactor.md)
-- [AAGUID解説](../../../../content_11_learning/05-fido-webauthn/fido2-aaguid-authenticator-identification.md)
-- [Attestation解説](../../../../content_11_learning/05-fido-webauthn/fido2-attestation-types-and-verification.md)
+- [AAGUID解説](../../../content_11_learning/05-fido-webauthn/fido2-aaguid-authenticator-identification.md)
+- [Attestation解説](../../../content_11_learning/05-fido-webauthn/fido2-attestation-types-and-verification.md)
 
 ---
 

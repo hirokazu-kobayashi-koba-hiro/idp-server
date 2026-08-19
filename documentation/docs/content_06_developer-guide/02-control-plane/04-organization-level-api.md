@@ -377,5 +377,5 @@ this.orgRoleManagementApi =
 
 ---
 
-**情報源**: [OrgRoleManagementEntryService.java](../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/organization_manager/OrgRoleManagementEntryService.java)
+**情報源**: [OrgRoleManagementEntryService.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/organization_manager/OrgRoleManagementEntryService.java)
 **最終更新**: 2025-10-12

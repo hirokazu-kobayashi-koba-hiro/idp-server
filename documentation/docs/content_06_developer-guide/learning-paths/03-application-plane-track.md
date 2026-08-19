@@ -25,9 +25,9 @@
 
 #### 実装の参考
 実際のコードを読んで理解：
-- [AuthorizationCodeGrantService.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/service/AuthorizationCodeGrantService.java)
-- [ClientCredentialsGrantService.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/service/ClientCredentialsGrantService.java)
-- [RefreshTokenGrantService.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/service/RefreshTokenGrantService.java)
+- [AuthorizationCodeGrantService.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/service/AuthorizationCodeGrantService.java)
+- [ClientCredentialsGrantService.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/service/ClientCredentialsGrantService.java)
+- [RefreshTokenGrantService.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/service/RefreshTokenGrantService.java)
 
 #### チェックリスト
 - [ ] Authorization Code Flowの8ステップを説明できる
@@ -47,10 +47,10 @@
 
 #### 実装の参考
 既存の認証インタラクターを読んで理解：
-- [PasswordAuthenticationInteractor.java](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java)
-- [SmsAuthenticationInteractor.java](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/sms/SmsAuthenticationInteractor.java)
-- [Fido2AuthenticationInteractor.java](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/fido2/Fido2AuthenticationInteractor.java)
-- [FidoUafAuthenticationInteractor.java](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/fidouaf/FidoUafAuthenticationInteractor.java)
+- [PasswordAuthenticationInteractor.java](../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java)
+- [SmsAuthenticationInteractor.java](../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/sms/SmsAuthenticationInteractor.java)
+- [Fido2AuthenticationInteractor.java](../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/fido2/Fido2AuthenticationInteractor.java)
+- [FidoUafAuthenticationInteractor.java](../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/fidouaf/FidoUafAuthenticationInteractor.java)
 
 #### チェックリスト
 - [ ] AuthenticationInteractorインターフェースを説明できる
@@ -69,9 +69,9 @@
 - [ ] [CIBA Flow実装ガイド](../03-application-plane/06-ciba-flow.md)
 
 #### 実装の参考
-- [AuthorizationCodeGrantService.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/service/AuthorizationCodeGrantService.java)
-- [ClientCredentialsGrantService.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/service/ClientCredentialsGrantService.java)
-- [CibaGrantService.java](../../../libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/ciba/token/CibaGrantService.java)
+- [AuthorizationCodeGrantService.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/service/AuthorizationCodeGrantService.java)
+- [ClientCredentialsGrantService.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/service/ClientCredentialsGrantService.java)
+- [CibaGrantService.java](../../../../libs/idp-server-core-extension-ciba/src/main/java/org/idp/server/core/extension/ciba/token/CibaGrantService.java)
 
 #### チェックリスト
 - [ ] `OAuthTokenCreationService`インターフェースを理解
@@ -90,7 +90,7 @@
 - [ ] [Federation Provider実装ガイド](../04-implementation-guides/impl-08-federation-provider.md)
 
 #### 実装の参考
-- [OidcSsoExecutor.java](../../../libs/idp-server-federation-oidc/src/main/java/org/idp/server/federation/sso/oidc/OidcSsoExecutor.java)
+- [OidcSsoExecutor.java](../../../../libs/idp-server-federation-oidc/src/main/java/org/idp/server/federation/sso/oidc/OidcSsoExecutor.java)
 
 #### チェックリスト
 - [ ] SsoExecutorインターフェースを理解

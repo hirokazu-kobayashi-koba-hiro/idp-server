@@ -78,7 +78,7 @@ sequenceDiagram
 
 ## 1. ログイン
 
-[認可コードフロー](../content_04_protocols/protocol-01-authorization-code-flow.md)を参照。
+[認可コードフロー](../../../content_04_protocols/protocol-01-authorization-code-flow.md)を参照。
 
 ## 2. FIDO-UAF解除開始リクエスト
 

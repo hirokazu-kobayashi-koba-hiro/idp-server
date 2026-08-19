@@ -32,7 +32,7 @@ CacheStore.find(key) - キャッシュ確認
             return
 ```
 
-**実装**: [TenantQueryDataSource.java:40-60](../../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/multi_tenancy/tenant/query/TenantQueryDataSource.java#L40-L60)
+**実装**: [TenantQueryDataSource.java:40-60](../../../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/multi_tenancy/tenant/query/TenantQueryDataSource.java#L40-L60)
 
 ```java
 @Override
@@ -72,7 +72,7 @@ private String key(TenantIdentifier tenantIdentifier) {
 
 ## CacheStore インターフェース
 
-**情報源**: [CacheStore.java:21-27](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/cache/CacheStore.java#L21-L27)
+**情報源**: [CacheStore.java:21-27](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/cache/CacheStore.java#L21-L27)
 
 ```java
 public interface CacheStore {
@@ -137,7 +137,7 @@ public void update(Tenant tenant, ClientConfiguration clientConfiguration) {
 
 ### NoOperationCacheStore
 
-**情報源**: [NoOperationCacheStore.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/cache/NoOperationCacheStore.java)
+**情報源**: [NoOperationCacheStore.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/cache/NoOperationCacheStore.java)
 
 ```java
 public class NoOperationCacheStore implements CacheStore {
@@ -266,8 +266,8 @@ TOKEN_CACHE_ENABLED=false
 
 | 項目 | 記載内容 | 実装確認 | 状態 |
 |------|---------|---------|------|
-| **CacheStore interface** | 6メソッド（put x2, find, exists, delete, increment） | ✅ [CacheStore.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/cache/CacheStore.java) | ✅ 完全一致 |
-| **Cache-Aside実装** | TenantQueryDataSource | ✅ [TenantQueryDataSource.java:40-60](../../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/multi_tenancy/tenant/query/TenantQueryDataSource.java#L40-L60) | ✅ 完全一致 |
+| **CacheStore interface** | 6メソッド（put x2, find, exists, delete, increment） | ✅ [CacheStore.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/cache/CacheStore.java) | ✅ 完全一致 |
+| **Cache-Aside実装** | TenantQueryDataSource | ✅ [TenantQueryDataSource.java:40-60](../../../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/multi_tenancy/tenant/query/TenantQueryDataSource.java#L40-L60) | ✅ 完全一致 |
 | **NoOperationCacheStore** | テスト用実装 | ✅ 実装確認 | ✅ 正確 |
 | **キャッシュキー** | `tenant:{id}`, `client:{tenant}:{client}` | ✅ 実装確認 | ✅ 正確 |
 | **Write-Through戦略** | 更新時削除 | ✅ 実装パターン確認 | ✅ 正確 |
@@ -308,9 +308,9 @@ TOKEN_CACHE_ENABLED=false
 ---
 
 **情報源**:
-- [CacheStore.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/cache/CacheStore.java)
-- [TenantQueryDataSource.java](../../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/multi_tenancy/tenant/query/TenantQueryDataSource.java)
-- [NoOperationCacheStore.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/cache/NoOperationCacheStore.java)
+- [CacheStore.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/cache/CacheStore.java)
+- [TenantQueryDataSource.java](../../../../../libs/idp-server-core-adapter/src/main/java/org/idp/server/core/adapters/datasource/multi_tenancy/tenant/query/TenantQueryDataSource.java)
+- [NoOperationCacheStore.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/cache/NoOperationCacheStore.java)
 
 **最終更新**: 2025-10-12
 **検証者**: Claude Code（AI開発支援）

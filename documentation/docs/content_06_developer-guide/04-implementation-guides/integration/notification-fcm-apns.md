@@ -84,7 +84,7 @@ public interface AuthenticationDeviceNotifier {
 }
 ```
 
-**参考実装**: [AuthenticationDeviceNotifier.java:25](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/device/AuthenticationDeviceNotifier.java#L25)
+**参考実装**: [AuthenticationDeviceNotifier.java:25](../../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/device/AuthenticationDeviceNotifier.java#L25)
 
 ### NotificationResult
 
@@ -115,7 +115,7 @@ public class NotificationResult {
 }
 ```
 
-**参考実装**: [NotificationResult.java:21](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/notification/NotificationResult.java#L21)
+**参考実装**: [NotificationResult.java:21](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/notification/NotificationResult.java#L21)
 
 ### NotificationTemplate
 
@@ -150,7 +150,7 @@ public class NotificationTemplate implements JsonReadable {
 }
 ```
 
-**参考実装**: [NotificationTemplate.java:21](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/notification/NotificationTemplate.java#L21)
+**参考実装**: [NotificationTemplate.java:21](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/notification/NotificationTemplate.java#L21)
 
 ---
 
@@ -255,7 +255,7 @@ public class FcmNotifier implements AuthenticationDeviceNotifier {
 }
 ```
 
-**参考実装**: [FcmNotifier.java:37](../../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java#L37)
+**参考実装**: [FcmNotifier.java:37](../../../../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java#L37)
 
 ### FCM設定
 
@@ -401,7 +401,7 @@ public class ApnsNotifier implements AuthenticationDeviceNotifier {
 }
 ```
 
-**参考実装**: [ApnsNotifier.java:42](../../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java#L42)
+**参考実装**: [ApnsNotifier.java:42](../../../../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java#L42)
 
 ### APNs設定
 
@@ -801,11 +801,11 @@ case "ExpiredProviderToken" -> {
 - [03-application-plane/06-ciba-flow.md](../03-application-plane/06-ciba-flow.md) - CIBAフロー
 
 **参考実装クラス**:
-- [AuthenticationDeviceNotifier.java](../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/device/AuthenticationDeviceNotifier.java)
-- [FcmNotifier.java](../../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java)
-- [ApnsNotifier.java](../../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java)
-- [NotificationTemplate.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/notification/NotificationTemplate.java)
-- [NotificationResult.java](../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/notification/NotificationResult.java)
+- [AuthenticationDeviceNotifier.java](../../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/device/AuthenticationDeviceNotifier.java)
+- [FcmNotifier.java](../../../../../libs/idp-server-notification-fcm-adapter/src/main/java/org/idp/server/notification/push/fcm/FcmNotifier.java)
+- [ApnsNotifier.java](../../../../../libs/idp-server-notification-apns-adapter/src/main/java/org/idp/server/notification/push/apns/ApnsNotifier.java)
+- [NotificationTemplate.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/notification/NotificationTemplate.java)
+- [NotificationResult.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/notification/NotificationResult.java)
 
 **外部リソース**:
 - [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging)

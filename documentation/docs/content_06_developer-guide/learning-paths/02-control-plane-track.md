@@ -27,9 +27,9 @@
 
 #### 実装の参考
 実際のコードを読んで理解：
-- [ClientManagementEntryService.java](../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/system_manager/ClientManagementEntryService.java)
-- [ClientManagementHandler.java](../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/oidc/client/handler/ClientManagementHandler.java)
-- [ClientCreationService.java](../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/oidc/client/handler/ClientCreationService.java)
+- [ClientManagementEntryService.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/system_manager/ClientManagementEntryService.java)
+- [ClientManagementHandler.java](../../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/oidc/client/handler/ClientManagementHandler.java)
+- [ClientCreationService.java](../../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/oidc/client/handler/ClientCreationService.java)
 
 #### チェックリスト
 - [ ] Handler-Serviceパターンを理解している
@@ -47,8 +47,8 @@
 - [ ] [組織レベルAPI実装ガイド](../02-control-plane/04-organization-level-api.md)
 
 #### 実装の参考
-- [OrgClientManagementEntryService.java](../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/organization_manager/OrgClientManagementEntryService.java)
-- [OrgClientManagementHandler.java](../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/oidc/client/handler/OrgClientManagementHandler.java)
+- [OrgClientManagementEntryService.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/control_plane/organization_manager/OrgClientManagementEntryService.java)
+- [OrgClientManagementHandler.java](../../../../libs/idp-server-control-plane/src/main/java/org/idp/server/control_plane/management/oidc/client/handler/OrgClientManagementHandler.java)
 
 #### チェックリスト
 - [ ] システムレベルとの差分を理解している

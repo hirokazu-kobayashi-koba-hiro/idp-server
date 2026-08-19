@@ -52,7 +52,7 @@ idp-serverのセッション管理は、Keycloakのアーキテクチャを参�
 | `IDP_IDENTITY` | opSessionId | Yes | SSO識別用（サーバー側で使用） |
 | `IDP_SESSION` | SHA256(opSessionId) | No | Session Management iframe用 |
 
-**参考実装**: [SessionCookieService.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/session/SessionCookieService.java)
+**参考実装**: [SessionCookieService.java](../../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/session/SessionCookieService.java)
 
 ### Cookieのパススコープ（テナント分離）
 
@@ -97,7 +97,7 @@ public class OPSession {
 }
 ```
 
-**参考実装**: [OPSession.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/OPSession.java)
+**参考実装**: [OPSession.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/OPSession.java)
 
 ### ClientSession
 
@@ -114,7 +114,7 @@ public class ClientSession {
 }
 ```
 
-**参考実装**: [ClientSession.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/ClientSession.java)
+**参考実装**: [ClientSession.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/ClientSession.java)
 
 ### OIDCSessionHandler
 
@@ -154,7 +154,7 @@ public class OIDCSessionHandler {
 }
 ```
 
-**参考実装**: [OIDCSessionHandler.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/OIDCSessionHandler.java)
+**参考実装**: [OIDCSessionHandler.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/OIDCSessionHandler.java)
 
 ---
 
@@ -425,7 +425,7 @@ public interface SessionCookieDelegate {
 }
 ```
 
-**参考実装**: [SessionCookieDelegate.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/SessionCookieDelegate.java)
+**参考実装**: [SessionCookieDelegate.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/SessionCookieDelegate.java)
 
 ### Spring Boot実装
 
@@ -457,7 +457,7 @@ public class SessionCookieService implements SessionCookieDelegate {
 }
 ```
 
-**参考実装**: [SessionCookieService.java](../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/session/SessionCookieService.java)
+**参考実装**: [SessionCookieService.java](../../../../../libs/idp-server-springboot-adapter/src/main/java/org/idp/server/adapters/springboot/application/session/SessionCookieService.java)
 
 ### セッションハッシュ計算
 
@@ -482,7 +482,7 @@ public class SessionHashCalculator {
 }
 ```
 
-**参考実装**: [SessionHashCalculator.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/SessionHashCalculator.java)
+**参考実装**: [SessionHashCalculator.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/SessionHashCalculator.java)
 
 ---
 
@@ -641,8 +641,8 @@ public OPSession onAuthenticationSuccess(
 ```
 
 **参考実装**:
-- [SessionSwitchPolicy.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/SessionSwitchPolicy.java)
-- [DifferentUserAuthenticatedException.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/DifferentUserAuthenticatedException.java)
+- [SessionSwitchPolicy.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/SessionSwitchPolicy.java)
+- [DifferentUserAuthenticatedException.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/session/DifferentUserAuthenticatedException.java)
 
 ---
 

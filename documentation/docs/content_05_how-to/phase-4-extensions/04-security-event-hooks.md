@@ -263,7 +263,7 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 | `refresh_token_success` | トークン更新成功 |
 | `revoke_token_success` | トークン失効 |
 
-**完全なリスト**: [DefaultSecurityEventType.java](../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/event/DefaultSecurityEventType.java)
+**完全なリスト**: [DefaultSecurityEventType.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/security/event/DefaultSecurityEventType.java)
 
 ---
 
@@ -341,7 +341,7 @@ curl -X POST "${IDP_SERVER_URL}/v1/management/organizations/${ORGANIZATION_ID}/t
 }
 ```
 
-**詳細**: [Developer Guide: Events](../content_06_developer-guide/03-application-plane/09-events.md)
+**詳細**: [Developer Guide: Events](../../content_06_developer-guide/03-application-plane/09-events.md)
 
 ---
 
@@ -679,20 +679,20 @@ SecurityEventHook executed: type=Webhook, event=login_failure, status=RETRY (att
 ✅ セキュリティイベントフックを設定できました！
 
 ### より高度な設定
-- [Developer Guide: Events実装](../content_06_developer-guide/03-application-plane/09-events.md)
+- [Developer Guide: Events実装](../../content_06_developer-guide/03-application-plane/09-events.md)
 - [Implementation Guide: Security Event Hooks](../content_06_developer-guide/04-implementation-guides/impl-15-security-event-hooks.md)
 
 ### 関連機能
 - [Identity Verification](./identity-verification/02-application.md) - 本人確認申請
-- [Concept: Security Events](../content_03_concepts/06-security-extensions/concept-01-security-events.md)
+- [Concept: Security Events](../../content_03_concepts/06-security-extensions/concept-01-security-events.md)
 
 ---
 
 ## 関連ドキュメント
 
-- [Concept: Audit & Compliance](../content_03_concepts/07-operations/concept-01-audit-compliance.md) - 監査ログ
+- [Concept: Audit & Compliance](../../content_03_concepts/07-operations/concept-01-audit-compliance.md) - 監査ログ
 - [Implementation Guide: HTTP Request Executor](../content_06_developer-guide/04-implementation-guides/impl-16-http-request-executor.md) - リトライ機構
-- [API Reference](../content_07_reference/api-reference.md) - Management API仕様
+- [API Reference](../../content_07_reference/api-reference.md) - Management API仕様
 
 ---
 

@@ -69,11 +69,11 @@
 
 | コンポーネント | 実装クラス | 役割 |
 |--------------|----------|------|
-| **Proxy** | [TenantAwareEntryServiceProxy.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/TenantAwareEntryServiceProxy.java) | @Transactionアノテーション検出、Writer/Reader分岐 |
-| **TransactionManager** | [TransactionManager.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java) | トランザクション開始・コミット・ロールバック |
+| **Proxy** | [TenantAwareEntryServiceProxy.java](../../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/TenantAwareEntryServiceProxy.java) | @Transactionアノテーション検出、Writer/Reader分岐 |
+| **TransactionManager** | [TransactionManager.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java) | トランザクション開始・コミット・ロールバック |
 | **OperationContext** | OperationContext | READ/WRITE判定保持（ThreadLocal） |
-| **ApplicationDatabaseTypeProvider** | [ApplicationDatabaseTypeProvider.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/ApplicationDatabaseTypeProvider.java) | **アプリケーション単位**でDB種別解決（PostgreSQL/MySQL） |
-| **DbConnectionProvider** | [DbConnectionProvider.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/DbConnectionProvider.java) | Writer/ReaderからConnection供給 |
+| **ApplicationDatabaseTypeProvider** | [ApplicationDatabaseTypeProvider.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/ApplicationDatabaseTypeProvider.java) | **アプリケーション単位**でDB種別解決（PostgreSQL/MySQL） |
+| **DbConnectionProvider** | [DbConnectionProvider.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/DbConnectionProvider.java) | Writer/ReaderからConnection供給 |
 
 ### ApplicationDatabaseTypeProviderの役割
 
@@ -257,9 +257,9 @@ public class TenantAwareEntryServiceProxy implements InvocationHandler {
 ---
 
 **情報源**:
-- [TenantAwareEntryServiceProxy.java](../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/TenantAwareEntryServiceProxy.java)
-- [TransactionManager.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java)
-- [ApplicationDatabaseTypeProvider.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/ApplicationDatabaseTypeProvider.java)
-- [DbConnectionProvider.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/DbConnectionProvider.java)
+- [TenantAwareEntryServiceProxy.java](../../../../../libs/idp-server-use-cases/src/main/java/org/idp/server/usecases/TenantAwareEntryServiceProxy.java)
+- [TransactionManager.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/TransactionManager.java)
+- [ApplicationDatabaseTypeProvider.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/ApplicationDatabaseTypeProvider.java)
+- [DbConnectionProvider.java](../../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/datasource/DbConnectionProvider.java)
 
 **最終更新**: 2025-12-18

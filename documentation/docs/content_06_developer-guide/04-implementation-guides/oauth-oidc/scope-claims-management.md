@@ -12,8 +12,8 @@
 - 標準クレームのスコープマッピング
 
 **前提知識**:
-- [basic-12: OpenID Connect詳解](../../content_11_learning/04-openid-connect/openid-connect-detail.md)の理解
-- [concept-09: カスタムクレーム](../../content_03_concepts/04-tokens-claims/concept-03-custom-claims.md)の理解
+- [basic-12: OpenID Connect詳解](../../../content_11_learning/04-openid-connect/openid-connect-detail.md)の理解
+- [concept-09: カスタムクレーム](../../../content_03_concepts/04-tokens-claims/concept-03-custom-claims.md)の理解
 - [impl-12: Plugin実装ガイド](./impl-12-plugin-implementation.md)の理解
 
 ---
@@ -51,7 +51,7 @@ public class Scopes implements Iterable<String> {
 }
 ```
 
-**参考実装**: [Scopes.java:47](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/oauth/Scopes.java#L47)
+**参考実装**: [Scopes.java:47](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/oauth/Scopes.java#L47)
 
 **主なメソッド**:
 - `contains(String scope)` - スコープが含まれているか確認
@@ -79,7 +79,7 @@ public class Claims {
 }
 ```
 
-**参考実装**: [Claims.java:26](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/oidc/Claims.java#L26)
+**参考実装**: [Claims.java:26](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/oidc/Claims.java#L26)
 
 ---
 
@@ -150,7 +150,7 @@ public interface IndividualClaimsCreatable extends ClaimHashable {
 }
 ```
 
-**参考実装**: [IndividualClaimsCreatable.java:25](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/id_token/IndividualClaimsCreatable.java#L25)
+**参考実装**: [IndividualClaimsCreatable.java:25](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/id_token/IndividualClaimsCreatable.java#L25)
 
 **重要なポイント**:
 - **2段階チェック**: `idTokenClaims.hasXxx() && user.hasXxx()`
@@ -206,7 +206,7 @@ public class IdTokenCreator implements IndividualClaimsCreatable {
 }
 ```
 
-**参考実装**: [IdTokenCreator.java:36](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/id_token/IdTokenCreator.java#L36)
+**参考実装**: [IdTokenCreator.java:36](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/id_token/IdTokenCreator.java#L36)
 
 **含まれる必須クレーム**:
 - `iss` - トークン発行者
@@ -255,7 +255,7 @@ public class AccessTokenCustomClaimsCreators {
 }
 ```
 
-**参考実装**: [AccessTokenCustomClaimsCreators.java:30](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/plugin/AccessTokenCustomClaimsCreators.java#L30)
+**参考実装**: [AccessTokenCustomClaimsCreators.java:30](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/plugin/AccessTokenCustomClaimsCreators.java#L30)
 
 **アクセストークンの特徴**:
 - **リソースサーバー向け**: APIアクセスに必要な情報を含む
@@ -293,7 +293,7 @@ public class UserinfoClaimsCreator implements IndividualClaimsCreatable {
 }
 ```
 
-**参考実装**: [UserinfoClaimsCreator.java:28](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/userinfo/UserinfoClaimsCreator.java#L28)
+**参考実装**: [UserinfoClaimsCreator.java:28](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/userinfo/UserinfoClaimsCreator.java#L28)
 
 **Userinfoの特徴**:
 - **詳細な属性情報**: IDトークンより多くのクレームを含められる
@@ -331,7 +331,7 @@ public interface AccessTokenCustomClaimsCreator {
 }
 ```
 
-**参考実装**: [AccessTokenCustomClaimsCreator.java:25](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/plugin/AccessTokenCustomClaimsCreator.java#L25)
+**参考実装**: [AccessTokenCustomClaimsCreator.java:25](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/plugin/AccessTokenCustomClaimsCreator.java#L25)
 
 #### 実装例: ScopeMappingCustomClaimsCreator
 
@@ -408,7 +408,7 @@ public class ScopeMappingCustomClaimsCreator implements AccessTokenCustomClaimsC
 }
 ```
 
-**参考実装**: [ScopeMappingCustomClaimsCreator.java:29](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/plugin/ScopeMappingCustomClaimsCreator.java#L29)
+**参考実装**: [ScopeMappingCustomClaimsCreator.java:29](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/plugin/ScopeMappingCustomClaimsCreator.java#L29)
 
 **対応しているクレーム**:
 - `claims:status` - ユーザーステータス
@@ -460,7 +460,7 @@ public interface CustomIndividualClaimsCreator {
 }
 ```
 
-**参考実装**: [CustomIndividualClaimsCreator.java:28](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/id_token/plugin/CustomIndividualClaimsCreator.java#L28)
+**参考実装**: [CustomIndividualClaimsCreator.java:28](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/id_token/plugin/CustomIndividualClaimsCreator.java#L28)
 
 #### 実装例: 組織情報の追加
 
@@ -544,7 +544,7 @@ public class AccessTokenCustomClaimsCreationPluginLoader extends PluginLoader {
 }
 ```
 
-**参考実装**: [AccessTokenCustomClaimsCreationPluginLoader.java:25](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/plugin/token/AccessTokenCustomClaimsCreationPluginLoader.java#L25)
+**参考実装**: [AccessTokenCustomClaimsCreationPluginLoader.java:25](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/plugin/token/AccessTokenCustomClaimsCreationPluginLoader.java#L25)
 
 ---
 
@@ -796,9 +796,9 @@ if (scopes.contains("claims:email")) {
 ## 🔗 関連ドキュメント
 
 **概念・基礎**:
-- [basic-12: OpenID Connect詳解](../../content_11_learning/04-openid-connect/openid-connect-detail.md) - OIDC仕様
-- [basic-14: OIDCクレーム設計](../../content_11_learning/04-openid-connect/oidc-claim-design.md) - クレーム設計ガイド
-- [concept-09: カスタムクレーム](../../content_03_concepts/04-tokens-claims/concept-03-custom-claims.md) - カスタムクレームの概念
+- [basic-12: OpenID Connect詳解](../../../content_11_learning/04-openid-connect/openid-connect-detail.md) - OIDC仕様
+- [basic-14: OIDCクレーム設計](../../../content_11_learning/04-openid-connect/oidc-claim-design.md) - クレーム設計ガイド
+- [concept-09: カスタムクレーム](../../../content_03_concepts/04-tokens-claims/concept-03-custom-claims.md) - カスタムクレームの概念
 
 **実装詳細**:
 - [impl-12: Plugin実装ガイド](./impl-12-plugin-implementation.md) - プラグインシステムの詳細
@@ -806,12 +806,12 @@ if (scopes.contains("claims:email")) {
 - [03-application-plane/05-userinfo.md](../03-application-plane/05-userinfo.md) - Userinfoエンドポイント
 
 **参考実装クラス**:
-- [Scopes.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/oauth/Scopes.java)
-- [Claims.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/oidc/Claims.java)
-- [IndividualClaimsCreatable.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/id_token/IndividualClaimsCreatable.java)
-- [ScopeMappingCustomClaimsCreator.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/plugin/ScopeMappingCustomClaimsCreator.java)
-- [AccessTokenCustomClaimsCreator.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/plugin/AccessTokenCustomClaimsCreator.java)
-- [CustomIndividualClaimsCreator.java](../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/id_token/plugin/CustomIndividualClaimsCreator.java)
+- [Scopes.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/oauth/Scopes.java)
+- [Claims.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/oidc/Claims.java)
+- [IndividualClaimsCreatable.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/id_token/IndividualClaimsCreatable.java)
+- [ScopeMappingCustomClaimsCreator.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/plugin/ScopeMappingCustomClaimsCreator.java)
+- [AccessTokenCustomClaimsCreator.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/token/plugin/AccessTokenCustomClaimsCreator.java)
+- [CustomIndividualClaimsCreator.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/identity/id_token/plugin/CustomIndividualClaimsCreator.java)
 
 **RFC/仕様**:
 - [RFC 6749 - OAuth 2.0 (Section 3.3: Access Token Scope)](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3)

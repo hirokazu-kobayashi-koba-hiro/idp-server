@@ -17,7 +17,7 @@
 
 ## AuthenticationInteractor インターフェース
 
-**情報源**: [AuthenticationInteractor.java:23-40](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/AuthenticationInteractor.java#L23-L40)
+**情報源**: [AuthenticationInteractor.java:23-40](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/AuthenticationInteractor.java#L23-L40)
 
 ```java
 public interface AuthenticationInteractor {
@@ -53,7 +53,7 @@ public interface AuthenticationInteractor {
 
 ## 実装パターン: Password認証
 
-**情報源**: [PasswordAuthenticationInteractor.java:30-80](../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java#L30-L80)
+**情報源**: [PasswordAuthenticationInteractor.java:30-80](../../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java#L30-L80)
 
 ### 完全な実装例
 
@@ -453,7 +453,7 @@ User user = userQueryRepository.findByEmail(tenant, username, providerId);
 | 項目 | 記載内容 | 実装確認 | 状態 |
 |------|---------|---------|------|
 | **AuthenticationInteractorインターフェース** | 4メソッド | ✅ 実装確認 | ✅ 正確 |
-| **Password認証実装** | 完全なコード | ✅ [PasswordAuthenticationInteractor.java:30-80](../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java#L30-L80) | ✅ 正確 |
+| **Password認証実装** | 完全なコード | ✅ [PasswordAuthenticationInteractor.java:30-80](../../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java#L30-L80) | ✅ 正確 |
 | **Challenge-Response実装** | WebAuthn例 | ✅ 実装確認 | ✅ 正確 |
 | **AMR値** | RFC 8176準拠 | ✅ 準拠 | ✅ 正確 |
 | **7ステップ追加手順** | 実装→Plugin登録 | ✅ 実践的 | ✅ 正確 |
@@ -492,8 +492,8 @@ User user = userQueryRepository.findByEmail(tenant, username, providerId);
 ---
 
 **情報源**:
-- [AuthenticationInteractor.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/AuthenticationInteractor.java)
-- [PasswordAuthenticationInteractor.java](../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java)
+- [AuthenticationInteractor.java](../../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/authentication/AuthenticationInteractor.java)
+- [PasswordAuthenticationInteractor.java](../../../../../libs/idp-server-authentication-interactors/src/main/java/org/idp/server/authentication/interactors/password/PasswordAuthenticationInteractor.java)
 - [RFC 8176 - Authentication Method Reference Values](https://www.rfc-editor.org/rfc/rfc8176.html)
 
 **最終更新**: 2025-10-12
