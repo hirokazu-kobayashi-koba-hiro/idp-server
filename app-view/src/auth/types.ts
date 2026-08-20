@@ -50,6 +50,14 @@ export type ViewData = {
   logo_uri?: string;
   scopes?: string[];
   claims?: RequestedClaims;
+  /**
+   * Candidate values for requested claims backed by an array custom property (backend #1816).
+   *
+   * Present only once the transaction has an authenticated user, and only for arrays — a scalar
+   * has nothing to select between. The consent screen offers the elements individually and sends
+   * the kept ones as `granted_claim_values`.
+   */
+  claim_values?: Record<string, string[]>;
   authentication_policy?: AuthenticationPolicy;
   available_federations?: Federation[];
   custom_params?: Record<string, string>;

@@ -26,6 +26,7 @@ import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.extension.DeniedClaims;
 import org.idp.server.core.openid.oauth.type.extension.DeniedScopes;
+import org.idp.server.core.openid.oauth.type.extension.GrantedClaimValues;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
@@ -37,6 +38,7 @@ public class OAuthAuthorizeRequest {
   Authentication authentication;
   List<String> deniedScopes = new ArrayList<>();
   List<String> deniedClaims = new ArrayList<>();
+  GrantedClaimValues grantedClaimValues = new GrantedClaimValues();
   Map<String, Object> customProperties = new HashMap<>();
 
   public OAuthAuthorizeRequest(Tenant tenant, String id, User user, Authentication authentication) {
@@ -53,6 +55,16 @@ public class OAuthAuthorizeRequest {
 
   public OAuthAuthorizeRequest setDeniedClaims(List<String> deniedClaims) {
     this.deniedClaims = deniedClaims;
+    return this;
+  }
+
+  /**
+   * Records the per-element consent for array claims, taken from the {@code granted_claim_values}
+   * object of the request body (#1816). Parsing lives here so callers hand over the raw body value
+   * rather than knowing its shape.
+   */
+  public OAuthAuthorizeRequest setGrantedClaimValues(Object grantedClaimValues) {
+    this.grantedClaimValues = GrantedClaimValues.fromObject(grantedClaimValues);
     return this;
   }
 
@@ -91,5 +103,9 @@ public class OAuthAuthorizeRequest {
 
   public DeniedClaims toDeniedClaims() {
     return new DeniedClaims(deniedClaims);
+  }
+
+  public GrantedClaimValues grantedClaimValues() {
+    return grantedClaimValues;
   }
 }

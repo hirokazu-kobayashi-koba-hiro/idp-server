@@ -226,7 +226,11 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
 
     OAuthViewDataRequest oAuthViewDataRequest =
         new OAuthViewDataRequest(
-            tenant, authorizationRequestIdentifier.value(), opSession, additionalViewData);
+            tenant,
+            authorizationRequestIdentifier.value(),
+            opSession,
+            authenticationTransaction.user(),
+            additionalViewData);
 
     OAuthProtocol oAuthProtocol = oAuthProtocols.get(tenant.authorizationProvider());
 
@@ -484,6 +488,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
                 : null);
     oAuthAuthorizeRequest.setDeniedScopes(deniedScopes);
     oAuthAuthorizeRequest.setDeniedClaims(extractDeniedClaims(params));
+    // Per-element consent for array claims (#1816). Applied to the grant's copy of the user, so
+    // the instance persisted below still holds everything the user owns.
+    oAuthAuthorizeRequest.setGrantedClaimValues(params.get("granted_claim_values"));
 
     // Create ClientSession for OIDC Session Management
     oidcSessionHandler

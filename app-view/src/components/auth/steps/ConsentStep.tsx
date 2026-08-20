@@ -72,6 +72,55 @@ const ConsentSection = ({
   );
 };
 
+/**
+ * Per-element consent for an array claim (backend #1816).
+ *
+ * The value list comes from `view-data.claim_values`, which the server only fills once the flow has
+ * an authenticated user. Unchecking elements sends the kept ones as `granted_claim_values`; the
+ * server intersects them with what the user actually owns, so this can only take away.
+ */
+const ClaimValueSection = ({
+  claim,
+  values,
+  denied,
+  onToggle,
+}: {
+  claim: string;
+  values: string[];
+  denied: Set<string>;
+  onToggle: (value: string) => void;
+}) => (
+  <Box>
+    <Typography
+      variant="caption"
+      color="text.secondary"
+      fontWeight={600}
+      display="block"
+    >
+      {humanizeClaim(claim)}
+    </Typography>
+    <FormGroup data-testid={`claim-values-${claim}`}>
+      {values.map((value) => (
+        <FormControlLabel
+          key={value}
+          sx={{ my: -0.25 }}
+          control={
+            <Checkbox
+              size="small"
+              inputProps={
+                { "data-testid": `claim-value-${claim}-${value}` } as never
+              }
+              checked={!denied.has(value)}
+              onChange={() => onToggle(value)}
+            />
+          }
+          label={<Typography variant="body2">{value}</Typography>}
+        />
+      ))}
+    </FormGroup>
+  </Box>
+);
+
 type Props = {
   tenantId: string;
   id: string;
@@ -90,6 +139,11 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
   const [loading, setLoading] = useState(false);
   const [deniedScopes, setDeniedScopes] = useState<Set<string>>(new Set());
   const [deniedClaims, setDeniedClaims] = useState<Set<string>>(new Set());
+  // Declined elements are tracked rather than kept ones so that everything starts consented, the
+  // same default as the scope and claim checkboxes.
+  const [deniedClaimValues, setDeniedClaimValues] = useState<
+    Record<string, Set<string>>
+  >({});
 
   const clientName = viewData?.client_name ?? "the application";
   // "openid" is a protocol marker, not a user-facing/declinable permission.
@@ -116,10 +170,42 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
     label: humanizeClaim(name),
   }));
 
+  // Only claims that were not declined whole are selectable per element — unchecking the claim
+  // itself already removes everything, so keeping its element list on screen would be misleading.
+  const claimValueEntries = Object.entries(viewData?.claim_values ?? {}).filter(
+    ([claim]) => !deniedClaims.has(claim),
+  );
+
   const hasConsentItems =
     scopeItems.length > 0 ||
     standardItems.length > 0 ||
-    verifiedItems.length > 0;
+    verifiedItems.length > 0 ||
+    claimValueEntries.length > 0;
+
+  const toggleClaimValue = (claim: string) => (value: string) =>
+    setDeniedClaimValues((prev) => {
+      const next = new Set(prev[claim] ?? []);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return { ...prev, [claim]: next };
+    });
+
+  /**
+   * The kept elements, sent only for claims where something was actually declined.
+   *
+   * Omitting untouched claims keeps the request minimal and preserves the server default of
+   * releasing everything. A claim whose elements were all declined is sent as an empty list, which
+   * the server treats the same as denying the claim whole.
+   */
+  const grantedClaimValues = (): Record<string, string[]> =>
+    Object.fromEntries(
+      claimValueEntries
+        .filter(([claim]) => (deniedClaimValues[claim]?.size ?? 0) > 0)
+        .map(([claim, values]) => [
+          claim,
+          values.filter((value) => !deniedClaimValues[claim].has(value)),
+        ]),
+    );
 
   const toggle =
     (setter: typeof setDeniedScopes) => (value: string) =>
@@ -145,6 +231,7 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
                   action: "signup",
                   denied_scopes: Array.from(deniedScopes),
                   denied_claims: Array.from(deniedClaims),
+                  granted_claim_values: grantedClaimValues(),
                 })
               : undefined,
         },
@@ -193,6 +280,15 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
               denied={deniedClaims}
               onToggle={toggle(setDeniedClaims)}
             />
+            {claimValueEntries.map(([claim, values]) => (
+              <ClaimValueSection
+                key={claim}
+                claim={claim}
+                values={values}
+                denied={deniedClaimValues[claim] ?? new Set()}
+                onToggle={toggleClaimValue(claim)}
+              />
+            ))}
           </Stack>
         </Box>
       )}
