@@ -7,7 +7,7 @@
     "authorization_provider": "idp-server",
     "ui_config": {
       "base_url": "${UI_BASE_URL}",
-      "signin_page": "/signin/",
+      "signin_page": "/auth/",
       "signup_page": "/signup/"
     },
     "session_config": {
@@ -118,6 +118,7 @@
     "token_revocation_endpoint": "${BASE_URL}/${PUBLIC_TENANT_ID}/v1/tokens/revocation",
     "extension": {
       "access_token_type": "JWT",
+      "custom_claims_scope_mapping": true,
       "token_signed_key_id": "${TOKEN_SIGNING_KEY_ID}",
       "id_token_signed_key_id": "${ID_TOKEN_SIGNING_KEY_ID}",
       "access_token_duration": 3600,
