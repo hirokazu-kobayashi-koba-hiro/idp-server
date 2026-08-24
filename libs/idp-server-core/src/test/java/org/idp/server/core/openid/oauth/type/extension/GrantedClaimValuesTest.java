@@ -18,11 +18,9 @@ package org.idp.server.core.openid.oauth.type.extension;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.json.JsonConverter;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,6 +32,8 @@ import org.junit.jupiter.api.Test;
  * user owns was all-or-nothing. This narrows it to what the End-User picked on the consent screen.
  */
 class GrantedClaimValuesTest {
+
+  private static final JsonConverter jsonConverter = JsonConverter.defaultInstance();
 
   private static final List<String> OWNED = List.of("acc-1", "acc-2", "acc-3");
 
@@ -121,132 +121,78 @@ class GrantedClaimValuesTest {
     }
   }
 
+  /**
+   * The selection travels with the grant as a sentinel token inside the existing claim-name TEXT
+   * column, the same way the OIDC4IDA verified_claims request does (#1628). What matters is that an
+   * element read back from storage still equals the element parsed from the user's properties, so
+   * the intersection keeps working after a round trip.
+   */
   @Nested
-  class AppliedToUser {
+  class Sentinel {
 
-    private static User userOwning(Map<String, Object> properties) {
-      return new User().setSub("user-1").setCustomProperties(new HashMap<>(properties));
+    @Test
+    void survivesARoundTrip() {
+      GrantedClaimValues selection = selecting("accounts", "acc-2");
+
+      GrantedClaimValues restored = GrantedClaimValues.fromSentinel(selection.toSentinelToken());
+
+      assertEquals(List.of("acc-2"), restored.narrow(owned()).get("accounts"));
     }
 
     @Test
-    void narrowsTheCopyThatBecomesTheGrant() {
-      User user = userOwning(owned());
+    void survivesARoundTripWithObjectElements() {
+      Map<String, Object> ownedCards =
+          jsonConverter.read(
+              "{\"cards\":[{\"id\":\"card-1\",\"brand\":\"visa\",\"limit\":100000}]}", Map.class);
+      GrantedClaimValues selection =
+          GrantedClaimValues.fromObject(
+              jsonConverter.read(
+                  "{\"cards\":[{\"id\":\"card-1\",\"brand\":\"visa\",\"limit\":100000}]}",
+                  Map.class));
 
-      User narrowed = user.narrowCustomProperties(selecting("accounts", "acc-2"));
+      GrantedClaimValues restored = GrantedClaimValues.fromSentinel(selection.toSentinelToken());
 
-      assertEquals(List.of("acc-2"), narrowed.customProperties().getValue("accounts"));
+      assertEquals(1, ((List<?>) restored.narrow(ownedCards).get("cards")).size());
     }
 
     @Test
-    void leavesTheOriginalUserUntouched() {
-      // OAuthFlowEntryService hands the same user to UserRegistrator#registerOrUpdate after a
-      // successful authorization, while OAuthAuthorizeContext narrows only the copy it puts in the
-      // grant. If narrowing were in place, consenting to one account would DELETE the others from
-      // the stored user. Consent decides what a token carries, never what the user owns.
-      User user = userOwning(owned());
-
-      User narrowed = user.narrowCustomProperties(selecting("accounts", "acc-2"));
-
-      assertEquals(OWNED, user.customProperties().getValue("accounts"));
-      assertNotSame(user, narrowed);
+    void isRecognizedByItsPrefix() {
+      assertTrue(GrantedClaimValues.isSentinel(selecting("accounts", "acc-2").toSentinelToken()));
+      assertFalse(GrantedClaimValues.isSentinel("accounts"));
+      assertFalse(GrantedClaimValues.isSentinel(null));
     }
 
     @Test
-    void returnsTheSameInstanceWhenNothingWasSelected() {
-      User user = userOwning(owned());
-
-      assertSame(user, user.narrowCustomProperties(new GrantedClaimValues()));
-      assertSame(user, user.narrowCustomProperties(null));
-    }
-
-    @Test
-    void keepsTheRestOfTheUser() {
-      User user = userOwning(owned()).setEmail("user@example.com");
-
-      User narrowed = user.narrowCustomProperties(selecting("accounts", "acc-2"));
-
-      assertEquals("user-1", narrowed.sub());
-      assertEquals("user@example.com", narrowed.email());
+    void isEmptyWhenNothingWasSelected() {
+      assertEquals("", new GrantedClaimValues().toSentinelToken());
+      assertFalse(GrantedClaimValues.fromSentinel("").exists());
+      assertFalse(GrantedClaimValues.fromSentinel("accounts").exists());
     }
   }
 
-  /**
-   * A custom property whose elements are objects rather than strings — {@code cards}, {@code
-   * accounts} with attributes — which is what a real deployment stores.
-   *
-   * <p>Selection is by whole element: matching is {@link List#contains}, so an element matches when
-   * the submitted object equals the owned one. {@link Map#equals} compares entry sets, so key order
-   * does not matter, but every field must be present and equal — a request naming only the id does
-   * not select the element.
-   */
   @Nested
-  class ObjectElements {
+  class DeniedWholeClaims {
 
-    private static final JsonConverter jsonConverter = JsonConverter.defaultInstance();
+    @Test
+    void dropsTheSelectionForADeniedClaim() {
+      // Nothing left to select between once the claim itself is denied.
+      GrantedClaimValues selection = selecting("accounts", "acc-2");
 
-    private static final String OWNED_CARDS_JSON =
-        """
-        {"cards":[
-          {"id":"card-1","brand":"visa","limit":100000},
-          {"id":"card-2","brand":"master","limit":50000}
-        ]}
-        """;
+      GrantedClaimValues remaining = selection.removeClaims(new DeniedClaims(List.of("accounts")));
 
-    /** Properties as they come back from the JSONB column, through the same converter. */
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> ownedCards() {
-      return jsonConverter.read(OWNED_CARDS_JSON, Map.class);
-    }
-
-    /** A consent body as it arrives on the wire, through the same converter. */
-    @SuppressWarnings("unchecked")
-    private static GrantedClaimValues selectingJson(String grantedClaimValuesJson) {
-      return GrantedClaimValues.fromObject(jsonConverter.read(grantedClaimValuesJson, Map.class));
+      assertFalse(remaining.exists());
     }
 
     @Test
-    void keepsTheSelectedObject() {
-      Map<String, Object> narrowed =
-          selectingJson("{\"cards\":[{\"id\":\"card-1\",\"brand\":\"visa\",\"limit\":100000}]}")
-              .narrow(ownedCards());
+    void keepsSelectionsForClaimsThatWereNotDenied() {
+      GrantedClaimValues selection =
+          GrantedClaimValues.fromObject(
+              Map.of("accounts", List.of("acc-2"), "cards", List.of("card-1")));
 
-      assertEquals(1, ((List<?>) narrowed.get("cards")).size());
-      assertEquals(
-          Map.of("id", "card-1", "brand", "visa", "limit", 100000),
-          ((List<?>) narrowed.get("cards")).get(0));
-    }
+      GrantedClaimValues remaining = selection.removeClaims(new DeniedClaims(List.of("accounts")));
 
-    @Test
-    void matchesRegardlessOfFieldOrder() {
-      // Both sides are parsed JSON objects; Map equality is by entry set, not by insertion order,
-      // so the consent screen may submit the fields in any order.
-      Map<String, Object> narrowed =
-          selectingJson("{\"cards\":[{\"limit\":100000,\"brand\":\"visa\",\"id\":\"card-1\"}]}")
-              .narrow(ownedCards());
-
-      assertEquals(1, ((List<?>) narrowed.get("cards")).size());
-    }
-
-    @Test
-    void doesNotSelectByIdAlone() {
-      // The limit of whole-element matching: a partial object is not the owned object, so it
-      // matches nothing and the claim is dropped. Selecting by a key field would need the
-      // selection to name which field identifies an element.
-      Map<String, Object> narrowed =
-          selectingJson("{\"cards\":[{\"id\":\"card-1\"}]}").narrow(ownedCards());
-
-      assertFalse(narrowed.containsKey("cards"));
-    }
-
-    @Test
-    void cannotIntroduceAnObjectTheUserDoesNotHave() {
-      Map<String, Object> narrowed =
-          selectingJson(
-                  "{\"cards\":[{\"id\":\"card-1\",\"brand\":\"visa\",\"limit\":100000},"
-                      + "{\"id\":\"card-9\",\"brand\":\"amex\",\"limit\":999999}]}")
-              .narrow(ownedCards());
-
-      assertEquals(1, ((List<?>) narrowed.get("cards")).size());
+      assertFalse(remaining.values().containsKey("accounts"));
+      assertEquals(List.of("card-1"), remaining.values().get("cards"));
     }
   }
 

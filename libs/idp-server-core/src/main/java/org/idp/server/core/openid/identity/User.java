@@ -26,7 +26,6 @@ import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.device.AuthenticationDevices;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
-import org.idp.server.core.openid.oauth.type.extension.GrantedClaimValues;
 import org.idp.server.core.openid.oauth.type.vc.Credential;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonNodeWrapper;
@@ -711,26 +710,6 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
   public User setCustomProperties(HashMap<String, Object> customProperties) {
     this.customProperties = customProperties;
     return this;
-  }
-
-  /**
-   * A copy of this user exposing only the array elements the End-User consented to (#1816).
-   *
-   * <p>Claims are built from the user held by the authorization grant, so narrowing here is what
-   * keeps an unselected element out of the id_token and userinfo.
-   *
-   * <p><b>Returns a copy.</b> The same user instance goes on to {@code
-   * UserRegistrator#registerOrUpdate} after a successful authorization, so narrowing in place would
-   * persist the consent decision as a deletion — consenting to one account would remove the others
-   * from the user. Consent decides what a token carries, never what the user owns.
-   */
-  public User narrowCustomProperties(GrantedClaimValues grantedClaimValues) {
-    if (grantedClaimValues == null || !grantedClaimValues.exists()) {
-      return this;
-    }
-    // updateWith(this) copies every field; the new map is then set on the copy alone.
-    return updateWith(this)
-        .setCustomProperties(new HashMap<>(grantedClaimValues.narrow(customProperties)));
   }
 
   public User addCustomProperties(HashMap<String, Object> customProperties) {

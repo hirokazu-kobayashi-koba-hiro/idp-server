@@ -91,8 +91,8 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
             "claims:branch",
             "claims:cards",
           ],
-          response_types_supported: ["code"],
-          response_modes_supported: ["query"],
+          response_types_supported: ["code", "code id_token"],
+          response_modes_supported: ["query", "fragment"],
           subject_types_supported: ["public"],
           grant_types_supported: ["authorization_code", "password"],
           id_token_signing_alg_values_supported: ["ES256"],
@@ -119,7 +119,7 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
           client_secret: clientSecret,
           redirect_uris: [redirectUri],
           grant_types: ["authorization_code", "password"],
-          response_types: ["code"],
+          response_types: ["code", "code id_token"],
           scope: "openid profile email claims:accounts claims:branch claims:cards",
           client_name: "Claim Value Selection Client",
           token_endpoint_auth_method: "client_secret_post",
@@ -138,7 +138,7 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
     }
   });
 
-  async function startAuthorization() {
+  async function startAuthorization(overrides = {}) {
     const authResponse = await getAuthorizations({
       endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
       clientId,
@@ -146,6 +146,7 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
       state: `claim-values-${Date.now()}`,
       scope: "openid claims:accounts claims:branch claims:cards",
       redirectUri,
+      ...overrides,
     });
     expect(authResponse.status).toBe(302);
     return convertNextAction(authResponse.headers.location).params.get("id");
@@ -311,6 +312,29 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
 
     expect(accessToken).not.toHaveProperty("cards");
     expect(idToken).not.toHaveProperty("cards");
+  }, 90000);
+
+  it("narrows the ID Token issued straight from the authorization endpoint", async () => {
+    // The hybrid flow builds the ID Token at /authorize from the live user, not from the grant's
+    // stored snapshot, so it is a separate path from the token endpoint and can leak on its own.
+    const authId = await startAuthorization({
+      responseType: "code id_token",
+      responseMode: "fragment",
+      nonce: `claim-values-nonce-${Date.now()}`,
+    });
+    await authenticate(authId);
+
+    const authorizeResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/authorize`,
+      body: { granted_claim_values: { accounts: ["acc-2"] } },
+    });
+    expect(authorizeResponse.status).toBe(200);
+
+    const fragment = new URL(authorizeResponse.data.redirect_uri).hash.substring(1);
+    const idToken = decodeJwtPayload(new URLSearchParams(fragment).get("id_token"));
+    console.log("hybrid id_token:", JSON.stringify(idToken));
+
+    expect(idToken.accounts).toEqual(["acc-2"]);
   }, 90000);
 
   it("omits the claim when no element is selected", async () => {

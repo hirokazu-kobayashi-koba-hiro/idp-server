@@ -16,11 +16,14 @@
 
 package org.idp.server.core.openid.oauth.type.extension;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.platform.json.JsonConverter;
 
 /**
  * The elements of an array claim the End-User allowed on the consent screen (#1816).
@@ -41,8 +44,23 @@ import java.util.Map;
  * <p>Selecting none of the elements removes the property, which makes the claim absent rather than
  * empty — the same result as denying it whole, and consistent with omitting a claim that has no
  * value (OIDC Core §5.3.2, #1699).
+ *
+ * <h2>It is the decision, not the result</h2>
+ *
+ * <p>The selection is persisted with the grant and applied when claims are built, rather than
+ * applied once to the user the grant holds. UserInfo loads the user from the repository at request
+ * time rather than reading the grant's snapshot, so only a decision that travels with the grant
+ * reaches every channel. It rides inside the existing claim-name TEXT column as a single sentinel
+ * token {@code gcv:<base64url(JSON)>}, the same way the OIDC4IDA verified_claims request does
+ * ({@link org.idp.server.core.openid.grant_management.grant.RequestedVerifiedClaims}, #1628), so no
+ * schema change is needed. Claim emission matches fixed known claim names rather than enumerating
+ * the token set, so code that predates this change ignores an unrecognized {@code gcv:} token —
+ * keeping rolling deploys safe.
  */
 public class GrantedClaimValues {
+
+  static final String SENTINEL_PREFIX = "gcv:";
+  private static final JsonConverter jsonConverter = JsonConverter.defaultInstance();
 
   Map<String, List<Object>> values;
 
@@ -52,6 +70,53 @@ public class GrantedClaimValues {
 
   public GrantedClaimValues(Map<String, List<Object>> values) {
     this.values = values;
+  }
+
+  /** True when {@code token} is the selection sentinel rather than a plain claim name. */
+  public static boolean isSentinel(String token) {
+    return token != null && token.startsWith(SENTINEL_PREFIX);
+  }
+
+  /** Restores a selection from its serialized sentinel token. */
+  public static GrantedClaimValues fromSentinel(String sentinelToken) {
+    if (!isSentinel(sentinelToken)) {
+      return new GrantedClaimValues();
+    }
+    String base64 = sentinelToken.substring(SENTINEL_PREFIX.length());
+    String json = new String(Base64.getUrlDecoder().decode(base64), StandardCharsets.UTF_8);
+    // Parsed the same way as the request body, so an element read back from storage equals the
+    // element parsed from the user's properties — both come through the same JSON mapping.
+    return fromObject(jsonConverter.read(json, Map.class));
+  }
+
+  /** The serialized sentinel token, or an empty string when nothing was selected. */
+  public String toSentinelToken() {
+    if (!exists()) {
+      return "";
+    }
+    String json = jsonConverter.write(values);
+    return SENTINEL_PREFIX
+        + Base64.getUrlEncoder()
+            .withoutPadding()
+            .encodeToString(json.getBytes(StandardCharsets.UTF_8));
+  }
+
+  /**
+   * A copy without the selections for claims the End-User denied whole, since a claim that is not
+   * released has nothing left to select between.
+   */
+  public GrantedClaimValues removeClaims(DeniedClaims deniedClaims) {
+    if (!exists() || deniedClaims == null || deniedClaims.isEmpty()) {
+      return this;
+    }
+    Map<String, List<Object>> kept = new LinkedHashMap<>();
+    values.forEach(
+        (claimName, selected) -> {
+          if (!deniedClaims.contains(claimName)) {
+            kept.put(claimName, selected);
+          }
+        });
+    return new GrantedClaimValues(kept);
   }
 
   /** Reads the {@code granted_claim_values} object of an authorize request body. */

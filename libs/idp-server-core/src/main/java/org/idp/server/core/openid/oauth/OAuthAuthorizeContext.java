@@ -130,6 +130,10 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     RequestedClaimsPayload requestedClaimsPayload = authorizationRequest.requestedClaimsPayload();
     boolean idTokenStrictMode = serverConfiguration().isIdTokenStrictMode();
 
+    // The elements the End-User kept of an array claim (#1816) travel with the grant alongside
+    // removeScopes / removeClaims, rather than being applied to the user here. Claims are built
+    // from the user as it is at issuance time — UserInfo loads it from the repository rather than
+    // reading the grant's snapshot — so only a decision that is persisted reaches every channel.
     GrantIdTokenClaims grantIdTokenClaims =
         GrantIdTokenClaims.create(
                 removeScopes,
@@ -137,20 +141,19 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
                 supportedClaims,
                 requestedClaimsPayload.idToken(),
                 idTokenStrictMode)
-            .removeClaims(deniedClaims);
+            .removeClaims(deniedClaims)
+            .withGrantedClaimValues(grantedClaimValues);
     GrantUserinfoClaims grantUserinfoClaims =
         GrantUserinfoClaims.create(removeScopes, supportedClaims, requestedClaimsPayload.userinfo())
-            .removeClaims(deniedClaims);
+            .removeClaims(deniedClaims)
+            .withGrantedClaimValues(grantedClaimValues);
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
     ConsentClaims consentClaims = createConsentClaims();
     GrantType grantType = GrantType.authorization_code;
 
-    // The End-User may have kept only some elements of an array claim (#1816). Narrowed here,
-    // alongside removeScopes / removeClaims, because this is where consent shapes the grant — and
-    // on a copy, so the user the caller goes on to persist is not reduced by the decision.
     return new AuthorizationGrant(
         tenantIdentifier,
-        user.narrowCustomProperties(grantedClaimValues),
+        user,
         authentication,
         requestedClientId,
         clientAttributes,

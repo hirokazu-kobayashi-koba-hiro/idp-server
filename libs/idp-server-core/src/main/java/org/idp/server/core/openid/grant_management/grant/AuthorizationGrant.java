@@ -26,6 +26,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientIdentifier;
 import org.idp.server.core.openid.oauth.configuration.client.ClientName;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
+import org.idp.server.core.openid.oauth.type.extension.GrantedClaimValues;
 import org.idp.server.core.openid.oauth.type.oauth.GrantType;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
@@ -170,6 +171,17 @@ public class AuthorizationGrant {
 
   public boolean hasAuthorizationDetails() {
     return authorizationDetails.exists();
+  }
+
+  /**
+   * The elements of an array claim the End-User kept on the consent screen (#1816).
+   *
+   * <p>Recorded on both claim sets at authorization time, so either answers. The ID Token set is
+   * read first only because it is the one present on a grant that releases no UserInfo claims.
+   */
+  public GrantedClaimValues grantedClaimValues() {
+    GrantedClaimValues fromIdToken = idTokenClaims.grantedClaimValues();
+    return fromIdToken.exists() ? fromIdToken : userinfoClaims.grantedClaimValues();
   }
 
   public boolean hasIdTokenClaims() {
