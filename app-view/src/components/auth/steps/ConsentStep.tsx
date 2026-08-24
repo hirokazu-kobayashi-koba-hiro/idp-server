@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { backendUrl } from "@/pages/_app";
-import { ViewData } from "@/auth/types";
+import { ClaimValue, ViewData } from "@/auth/types";
 
 /** Human-readable labels for common scopes; unknown scopes are shown as-is. */
 const SCOPE_LABELS: Record<string, string> = {
@@ -23,10 +23,42 @@ const SCOPE_LABELS: Record<string, string> = {
   offline_access: "Keep you signed in",
 };
 
-const describeScope = (scope: string): string => SCOPE_LABELS[scope] ?? scope;
+/** Scope prefix that releases a user custom property as a claim of the same name (backend). */
+const CLAIMS_SCOPE_PREFIX = "claims:";
 
 const humanizeClaim = (name: string): string =>
   name.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+
+const claimNameOf = (scope: string): string | undefined =>
+  scope.startsWith(CLAIMS_SCOPE_PREFIX)
+    ? scope.slice(CLAIMS_SCOPE_PREFIX.length)
+    : undefined;
+
+const describeScope = (scope: string): string => {
+  const claim = claimNameOf(scope);
+  return SCOPE_LABELS[scope] ?? (claim ? humanizeClaim(claim) : scope);
+};
+
+/**
+ * A label for one selectable element.
+ *
+ * An element can be an object (an account with its branch, a card with its brand), which has no
+ * natural single label, so its own scalar fields are shown as `field: value` pairs. Nested objects
+ * are left out — they would not fit on one line, and the fields that identify an element to a
+ * person are scalars.
+ */
+const describeClaimValue = (value: ClaimValue): string => {
+  if (typeof value !== "object" || value === null) return String(value);
+
+  const fields = Object.entries(value).filter(
+    ([, field]) => field === null || typeof field !== "object",
+  );
+  if (fields.length === 0) return JSON.stringify(value);
+
+  return fields
+    .map(([name, field]) => `${humanizeClaim(name)}: ${field}`)
+    .join(" · ");
+};
 
 type ConsentItem = { value: string; label: string };
 
@@ -72,54 +104,109 @@ const ConsentSection = ({
   );
 };
 
+type ScopeItem = {
+  scope: string;
+  label: string;
+  /** Set when the scope releases an array custom property the user can pick elements from. */
+  claim?: string;
+  values?: ClaimValue[];
+};
+
 /**
- * Per-element consent for an array claim (backend #1816).
+ * The permissions being granted, each with the individual values it would release (backend #1816).
  *
- * The value list comes from `view-data.claim_values`, which the server only fills once the flow has
- * an authenticated user. Unchecking elements sends the kept ones as `granted_claim_values`; the
- * server intersects them with what the user actually owns, so this can only take away.
+ * The values are nested under their scope rather than listed separately because they are the same
+ * permission at a finer grain: unchecking `claims:accounts` releases no account at all, so its
+ * elements are shown disabled instead of disappearing — the row above explains why they no longer
+ * apply.
+ *
+ * Elements are tracked by position, not by value: an element can be an object, and two elements
+ * can look alike, so position is the only stable identity. Declined positions are tracked (rather
+ * than kept ones) so everything starts consented, the same default as the checkboxes above.
  */
-const ClaimValueSection = ({
-  claim,
-  values,
-  denied,
-  onToggle,
+const PermissionSection = ({
+  items,
+  deniedScopes,
+  deniedClaimValues,
+  onToggleScope,
+  onToggleClaimValue,
 }: {
-  claim: string;
-  values: string[];
-  denied: Set<string>;
-  onToggle: (value: string) => void;
-}) => (
-  <Box>
-    <Typography
-      variant="caption"
-      color="text.secondary"
-      fontWeight={600}
-      display="block"
-    >
-      {humanizeClaim(claim)}
-    </Typography>
-    <FormGroup data-testid={`claim-values-${claim}`}>
-      {values.map((value) => (
-        <FormControlLabel
-          key={value}
-          sx={{ my: -0.25 }}
-          control={
-            <Checkbox
-              size="small"
-              inputProps={
-                { "data-testid": `claim-value-${claim}-${value}` } as never
-              }
-              checked={!denied.has(value)}
-              onChange={() => onToggle(value)}
-            />
-          }
-          label={<Typography variant="body2">{value}</Typography>}
-        />
-      ))}
-    </FormGroup>
-  </Box>
-);
+  items: ScopeItem[];
+  deniedScopes: Set<string>;
+  deniedClaimValues: Record<string, Set<number>>;
+  onToggleScope: (scope: string) => void;
+  onToggleClaimValue: (claim: string, index: number) => void;
+}) => {
+  if (items.length === 0) return null;
+  return (
+    <Box>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        fontWeight={600}
+        display="block"
+      >
+        Permissions
+      </Typography>
+      <FormGroup>
+        {items.map((item) => {
+          const scopeDenied = deniedScopes.has(item.scope);
+          const deniedValues = item.claim
+            ? (deniedClaimValues[item.claim] ?? new Set<number>())
+            : new Set<number>();
+          return (
+            <Box key={item.scope}>
+              <FormControlLabel
+                sx={{ my: -0.25 }}
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={!scopeDenied}
+                    onChange={() => onToggleScope(item.scope)}
+                  />
+                }
+                label={<Typography variant="body2">{item.label}</Typography>}
+              />
+              {item.claim && item.values && (
+                <FormGroup
+                  sx={{ pl: 3.5 }}
+                  data-testid={`claim-values-${item.claim}`}
+                >
+                  {item.values.map((value, index) => (
+                    <FormControlLabel
+                      key={index}
+                      disabled={scopeDenied}
+                      sx={{ my: -0.5 }}
+                      control={
+                        <Checkbox
+                          size="small"
+                          inputProps={
+                            {
+                              "data-testid": `claim-value-${item.claim}-${index}`,
+                            } as never
+                          }
+                          checked={!scopeDenied && !deniedValues.has(index)}
+                          onChange={() =>
+                            onToggleClaimValue(item.claim as string, index)
+                          }
+                        />
+                      }
+                      label={
+                        <Typography variant="body2" color="text.secondary">
+                          {describeClaimValue(value)}
+                        </Typography>
+                      }
+                    />
+                  ))}
+                </FormGroup>
+              )}
+            </Box>
+          );
+        })}
+      </FormGroup>
+    </Box>
+  );
+};
 
 type Props = {
   tenantId: string;
@@ -139,17 +226,24 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
   const [loading, setLoading] = useState(false);
   const [deniedScopes, setDeniedScopes] = useState<Set<string>>(new Set());
   const [deniedClaims, setDeniedClaims] = useState<Set<string>>(new Set());
-  // Declined elements are tracked rather than kept ones so that everything starts consented, the
-  // same default as the scope and claim checkboxes.
   const [deniedClaimValues, setDeniedClaimValues] = useState<
-    Record<string, Set<string>>
+    Record<string, Set<number>>
   >({});
 
   const clientName = viewData?.client_name ?? "the application";
+  const claimValues = viewData?.claim_values ?? {};
   // "openid" is a protocol marker, not a user-facing/declinable permission.
-  const scopeItems: ConsentItem[] = (viewData?.scopes ?? [])
+  const scopeItems: ScopeItem[] = (viewData?.scopes ?? [])
     .filter((scope) => scope !== "openid")
-    .map((scope) => ({ value: scope, label: describeScope(scope) }));
+    .map((scope) => {
+      const claim = claimNameOf(scope);
+      const values = claim ? claimValues[claim] : undefined;
+      return {
+        scope,
+        label: describeScope(scope),
+        ...(values && values.length > 0 ? { claim, values } : {}),
+      };
+    });
 
   const claims = viewData?.claims;
   // "sub" is the essential subject identifier and is never deniable.
@@ -170,23 +264,16 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
     label: humanizeClaim(name),
   }));
 
-  // Only claims that were not declined whole are selectable per element — unchecking the claim
-  // itself already removes everything, so keeping its element list on screen would be misleading.
-  const claimValueEntries = Object.entries(viewData?.claim_values ?? {}).filter(
-    ([claim]) => !deniedClaims.has(claim),
-  );
-
   const hasConsentItems =
     scopeItems.length > 0 ||
     standardItems.length > 0 ||
-    verifiedItems.length > 0 ||
-    claimValueEntries.length > 0;
+    verifiedItems.length > 0;
 
-  const toggleClaimValue = (claim: string) => (value: string) =>
+  const toggleClaimValue = (claim: string, index: number) =>
     setDeniedClaimValues((prev) => {
       const next = new Set(prev[claim] ?? []);
-      if (next.has(value)) next.delete(value);
-      else next.add(value);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
       return { ...prev, [claim]: next };
     });
 
@@ -195,15 +282,24 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
    *
    * Omitting untouched claims keeps the request minimal and preserves the server default of
    * releasing everything. A claim whose elements were all declined is sent as an empty list, which
-   * the server treats the same as denying the claim whole.
+   * the server treats the same as denying the claim whole. A claim whose scope was declined is
+   * left out entirely — `denied_scopes` already removes it, and its element checkboxes are
+   * disabled rather than cleared, so a selection made before declining must not leak out.
+   *
+   * Elements are echoed exactly as they were received: the server matches whole elements, so a
+   * value rebuilt from its label would match nothing.
    */
-  const grantedClaimValues = (): Record<string, string[]> =>
+  const grantedClaimValues = (): Record<string, ClaimValue[]> =>
     Object.fromEntries(
-      claimValueEntries
-        .filter(([claim]) => (deniedClaimValues[claim]?.size ?? 0) > 0)
-        .map(([claim, values]) => [
-          claim,
-          values.filter((value) => !deniedClaimValues[claim].has(value)),
+      scopeItems
+        .filter((item) => item.claim && item.values)
+        .filter((item) => !deniedScopes.has(item.scope))
+        .filter((item) => (deniedClaimValues[item.claim!]?.size ?? 0) > 0)
+        .map((item) => [
+          item.claim,
+          item.values!.filter(
+            (_, index) => !deniedClaimValues[item.claim!].has(index),
+          ),
         ]),
     );
 
@@ -262,11 +358,12 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
             Choose what to share with {clientName}
           </Typography>
           <Stack spacing={1.5} mt={1}>
-            <ConsentSection
-              title="Permissions"
+            <PermissionSection
               items={scopeItems}
-              denied={deniedScopes}
-              onToggle={toggle(setDeniedScopes)}
+              deniedScopes={deniedScopes}
+              deniedClaimValues={deniedClaimValues}
+              onToggleScope={toggle(setDeniedScopes)}
+              onToggleClaimValue={toggleClaimValue}
             />
             <ConsentSection
               title="Profile information"
@@ -280,15 +377,6 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
               denied={deniedClaims}
               onToggle={toggle(setDeniedClaims)}
             />
-            {claimValueEntries.map(([claim, values]) => (
-              <ClaimValueSection
-                key={claim}
-                claim={claim}
-                values={values}
-                denied={deniedClaimValues[claim] ?? new Set()}
-                onToggle={toggleClaimValue(claim)}
-              />
-            ))}
           </Stack>
         </Box>
       )}
