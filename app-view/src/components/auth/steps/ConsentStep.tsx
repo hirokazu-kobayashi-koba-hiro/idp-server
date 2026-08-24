@@ -278,13 +278,18 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
     });
 
   /**
-   * The kept elements, sent only for claims where something was actually declined.
+   * The kept elements, sent for every claim the screen offered a choice on.
    *
-   * Omitting untouched claims keeps the request minimal and preserves the server default of
-   * releasing everything. A claim whose elements were all declined is sent as an empty list, which
-   * the server treats the same as denying the claim whole. A claim whose scope was declined is
-   * left out entirely — `denied_scopes` already removes it, and its element checkboxes are
-   * disabled rather than cleared, so a selection made before declining must not leak out.
+   * Sent even when nothing was declined, so the request states what the screen showed rather than
+   * leaving it to be inferred from an absent key. Each authorization carries its own consent — the
+   * grant is built from this request, not from an earlier one — so omitting the key and sending
+   * every element mean the same thing today. Saying it explicitly keeps that from being a silent
+   * dependency, and is what a reviewer reading the request sees.
+   *
+   * A claim whose elements were all declined is sent as an empty list, which the server treats the
+   * same as denying the claim whole. A claim whose scope was declined is left out entirely —
+   * `denied_scopes` already removes it, and its element checkboxes are disabled rather than
+   * cleared, so a selection made before declining must not leak out.
    *
    * Elements are echoed exactly as they were received: the server matches whole elements, so a
    * value rebuilt from its label would match nothing.
@@ -294,11 +299,10 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
       scopeItems
         .filter((item) => item.claim && item.values)
         .filter((item) => !deniedScopes.has(item.scope))
-        .filter((item) => (deniedClaimValues[item.claim!]?.size ?? 0) > 0)
         .map((item) => [
           item.claim,
           item.values!.filter(
-            (_, index) => !deniedClaimValues[item.claim!].has(index),
+            (_, index) => !(deniedClaimValues[item.claim!] ?? new Set()).has(index),
           ),
         ]),
     );

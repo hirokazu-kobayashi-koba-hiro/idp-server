@@ -184,8 +184,10 @@ public class GrantIdTokenClaims implements Iterable<String> {
     newValues.removeIf(deniedClaims::contains);
     RequestedVerifiedClaims newVerifiedClaims =
         requestedVerifiedClaims.removeClaims(deniedClaims.toList());
-    return new GrantIdTokenClaims(
-        newValues, newVerifiedClaims, grantedClaimValues.removeClaims(deniedClaims));
+    // The per-element selection is carried through untouched. Custom claims are released by the
+    // grant's claims:* scopes rather than by these claim names, so a denied name does not stop
+    // them — and dropping its selection would release every element instead of the chosen one.
+    return new GrantIdTokenClaims(newValues, newVerifiedClaims, grantedClaimValues);
   }
 
   @Override

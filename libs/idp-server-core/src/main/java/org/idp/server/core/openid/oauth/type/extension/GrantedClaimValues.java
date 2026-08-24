@@ -39,7 +39,14 @@ import org.idp.server.platform.json.JsonConverter;
  * caller could put an arbitrary value into a token claim by naming it here.
  *
  * <p>An entry naming a claim that is absent, or whose value is not an array, is ignored: there is
- * nothing to select between, and {@code denied_claims} already expresses all-or-nothing for it.
+ * nothing to select between. All-or-nothing for these claims is expressed by {@code denied_scopes}
+ * removing the {@code claims:*} scope that releases them — the custom claims creators read the
+ * grant's scopes, so {@code denied_claims} does not stop them.
+ *
+ * <p>A selection is never pruned, not even for a claim that ends up unreleased. {@link #narrow}
+ * only ever removes elements, so a selection the creators never consult is inert; dropping one, on
+ * the other hand, removes the narrowing and releases every element of a claim the scope still
+ * carries.
  *
  * <p>Selecting none of the elements removes the property, which makes the claim absent rather than
  * empty — the same result as denying it whole, and consistent with omitting a claim that has no
@@ -101,24 +108,6 @@ public class GrantedClaimValues {
             .encodeToString(json.getBytes(StandardCharsets.UTF_8));
   }
 
-  /**
-   * A copy without the selections for claims the End-User denied whole, since a claim that is not
-   * released has nothing left to select between.
-   */
-  public GrantedClaimValues removeClaims(DeniedClaims deniedClaims) {
-    if (!exists() || deniedClaims == null || deniedClaims.isEmpty()) {
-      return this;
-    }
-    Map<String, List<Object>> kept = new LinkedHashMap<>();
-    values.forEach(
-        (claimName, selected) -> {
-          if (!deniedClaims.contains(claimName)) {
-            kept.put(claimName, selected);
-          }
-        });
-    return new GrantedClaimValues(kept);
-  }
-
   /** Reads the {@code granted_claim_values} object of an authorize request body. */
   public static GrantedClaimValues fromObject(Object value) {
     if (!(value instanceof Map<?, ?> map)) {
@@ -127,10 +116,29 @@ public class GrantedClaimValues {
     Map<String, List<Object>> parsed = new LinkedHashMap<>();
     for (Map.Entry<?, ?> entry : map.entrySet()) {
       if (entry.getValue() instanceof List<?> list) {
-        parsed.put(String.valueOf(entry.getKey()), List.copyOf(list));
+        parsed.put(String.valueOf(entry.getKey()), normalize(list));
       }
     }
     return new GrantedClaimValues(parsed);
+  }
+
+  /**
+   * Re-reads a submitted element through the converter the stored side came through.
+   *
+   * <p>{@link #narrow} matches an element by equality, and the two sides reach it by different
+   * routes: the selection arrives on the wire (parsed by the web layer) on the request that
+   * authorizes, and from the sentinel on every request after it, while the properties it is matched
+   * against always come from the repository through {@link JsonConverter}. Two mappings that
+   * disagree on a number — {@code Integer} against {@code Long}, say — would make an object element
+   * unequal to the one the user holds, and the element the End-User picked would silently drop out
+   * of the claim. Normalizing here puts both sides on one mapping instead of relying on the web
+   * layer happening to agree with it.
+   */
+  private static List<Object> normalize(List<?> elements) {
+    if (elements.isEmpty()) {
+      return List.of();
+    }
+    return jsonConverter.read(jsonConverter.write(elements), List.class);
   }
 
   public boolean exists() {

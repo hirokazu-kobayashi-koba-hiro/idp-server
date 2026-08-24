@@ -331,6 +331,8 @@ paths:
                       id_token: ["given_name", "family_name", "email"]
                       userinfo: ["given_name", "family_name", "email"]
                       verified_claims: []
+                    claim_values:
+                      accounts: ["acc-1", "acc-2", "acc-3"]
                     session_enabled: true
                     custom_params:
                       organization_id: "org123"
@@ -552,6 +554,8 @@ paths:
             発行されません（認証ポリシー(LoA)由来の拒否スコープにマージされます）。
           - `denied_claims`: 拒否されたクレーム名。付与時に id_token / userinfo / verified_claims から
             除外されます（OIDC4IDA §5.7.3、claim単位の同意）。
+          - `granted_claim_values`: 配列クレームのうち共有を許可した要素（view-data の `claim_values`
+            から選択）。クレーム丸ごとではなく**要素単位**の同意です。
 
           ボディ無し（従来どおり）の場合は全要求 scope / クレームを許可します。
         content:
@@ -571,6 +575,28 @@ paths:
                     type: string
                   description: 共有を拒否したクレーム名の一覧
                   example: ["family_name"]
+                granted_claim_values:
+                  type: object
+                  description: |
+                    配列クレームのうち共有を許可した要素。クレーム名をキーとし、値は許可した要素の配列です。
+
+                    **絞る方向にしか働きません。** ユーザーが実際に保有する値との積集合だけが残るため、
+                    ここに保有していない値を書いてもクレームには入りません。
+
+                    - 指定しなかったクレームは従来どおり全要素を共有します
+                    - 空配列を指定するとそのクレームは省略されます（`null` や空配列ではなくキーごと消えます。
+                      クレームを丸ごと拒否した場合と同じ結果、OIDC Core §5.3.2）
+                    - 一致は**要素まるごと**です。オブジェクト要素はフィールドの集合で比較するため順序は
+                      問いませんが、識別子フィールドだけの部分指定では選択できません
+                    - 配列でないクレームや、ユーザーが持たないクレームを指定した場合は無視されます
+
+                    選択は同意の決定としてグラントに保存され、アクセストークン / ID Token / UserInfo の
+                    すべてに適用されます。
+                  additionalProperties:
+                    type: array
+                    items: {}
+                  example:
+                    accounts: ["acc-2"]
             examples:
               deny-scope:
                 summary: email スコープの共有を拒否
@@ -580,6 +606,16 @@ paths:
                 summary: family_name クレームの共有を拒否
                 value:
                   denied_claims: ["family_name"]
+              grant-single-account:
+                summary: accounts クレームのうち acc-2 のみ共有
+                value:
+                  granted_claim_values:
+                    accounts: ["acc-2"]
+              grant-no-account:
+                summary: accounts クレームの要素を1つも共有しない（クレームごと省略される）
+                value:
+                  granted_claim_values:
+                    accounts: []
       responses:
         '200':
           description: 認可承認成功
@@ -1291,6 +1327,31 @@ components:
             id_token: ["given_name", "family_name", "email"]
             userinfo: ["given_name", "family_name", "email"]
             verified_claims: ["given_name", "family_name"]
+        claim_values:
+          type: object
+          description: |
+            要素単位で同意を選べるクレームの候補値。クレーム名をキーとし、値はユーザーが保有する配列です。
+
+            対象は `claims:{key}` スコープが解放するユーザーの `custom_properties` のうち**配列のもの**
+            だけです。スカラーは選ぶ余地がないため含まれません（丸ごとの拒否は `denied_scopes` の担当）。
+            `roles` / `permissions` / `assigned_tenants` はサーバーが決めるものなので対象外です。
+
+            **認証トランザクションがユーザーを解決したあとにのみ返ります。** 認証前の view-data には
+            含まれないため、認可リクエストIDを取得しただけの相手にユーザー属性は渡りません。
+            `authorization_server.extension.custom_claims_scope_mapping` が無効な場合も返りません。
+
+            選んだ要素は `/authorize` の `granted_claim_values` として返します。サーバーは要素まるごとの
+            一致で判定するため、**ここで受け取った値をそのまま返す**必要があります。
+          additionalProperties:
+            type: array
+            items: {}
+          example:
+            accounts: ["acc-1", "acc-2", "acc-3"]
+            cards:
+            - id: "card-1"
+              brand: "visa"
+            - id: "card-2"
+              brand: "master"
         session_enabled:
           type: boolean
           description: セッション有効化フラグ

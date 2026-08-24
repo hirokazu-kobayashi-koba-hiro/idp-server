@@ -314,6 +314,38 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
     expect(idToken).not.toHaveProperty("cards");
   }, 90000);
 
+  it("keeps the selection when the same claim name is also denied", async () => {
+    // denied_claims does not stop a custom claim — those are released by the claims:* scope, and
+    // the creators read the grant's scopes. Dropping the selection on a denied name would hand the
+    // client every account instead of the one the End-User picked.
+    const { userinfo, accessToken } = await authorizeWith({
+      denied_claims: ["accounts"],
+      granted_claim_values: { accounts: ["acc-2"] },
+    });
+    console.log("denied name + selection:", JSON.stringify({ accessToken, userinfo }));
+
+    expect(accessToken.accounts).toEqual(["acc-2"]);
+    expect(userinfo.accounts).toEqual(["acc-2"]);
+  }, 90000);
+
+  it("carries the selection per authorization rather than from an earlier one", async () => {
+    // Each authorization builds its own grant, so a selection does not survive into the next one:
+    // the merge that keeps an earlier consent applies to the authorization_granted record used for
+    // SSO decisions, not to the grant a token is issued from. Pinned because the alternative — an
+    // earlier narrowing silently applying to a later token — would be just as defensible a design,
+    // and the choice should be visible rather than incidental.
+    const narrowed = await authorizeWith({
+      granted_claim_values: { accounts: ["acc-2"] },
+    });
+    expect(narrowed.accessToken.accounts).toEqual(["acc-2"]);
+
+    const withoutSelection = await authorizeWith({});
+    console.log("re-consent without selection:", JSON.stringify(withoutSelection.accessToken));
+
+    expect(withoutSelection.accessToken.accounts).toEqual(OWNED_ACCOUNTS);
+    expect(withoutSelection.userinfo.accounts).toEqual(OWNED_ACCOUNTS);
+  }, 90000);
+
   it("narrows the ID Token issued straight from the authorization endpoint", async () => {
     // The hybrid flow builds the ID Token at /authorize from the live user, not from the grant's
     // stored snapshot, so it is a separate path from the token endpoint and can leak on its own.

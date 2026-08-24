@@ -488,8 +488,9 @@ public class OAuthFlowEntryService implements OAuthFlowApi, OAuthUserDelegate {
                 : null);
     oAuthAuthorizeRequest.setDeniedScopes(deniedScopes);
     oAuthAuthorizeRequest.setDeniedClaims(extractDeniedClaims(params));
-    // Per-element consent for array claims (#1816). Applied to the grant's copy of the user, so
-    // the instance persisted below still holds everything the user owns.
+    // Per-element consent for array claims (#1816). Recorded on the grant as the decision and
+    // applied when claims are built, so the user below is persisted with everything they own —
+    // consent decides what a token carries, never what the user has.
     oAuthAuthorizeRequest.setGrantedClaimValues(params.get("granted_claim_values"));
 
     // Create ClientSession for OIDC Session Management

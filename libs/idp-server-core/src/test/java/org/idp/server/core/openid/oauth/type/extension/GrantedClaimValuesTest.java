@@ -122,6 +122,84 @@ class GrantedClaimValuesTest {
   }
 
   /**
+   * A custom property whose elements are objects rather than strings — {@code cards}, {@code
+   * accounts} with attributes — which is what a real deployment stores.
+   *
+   * <p>Selection is by whole element: matching is {@link List#contains}, so an element matches when
+   * the submitted object equals the owned one. {@link Map#equals} compares entry sets, so key order
+   * does not matter, but every field must be present and equal — a request naming only the id does
+   * not select the element.
+   */
+  @Nested
+  class ObjectElements {
+
+    private static final String OWNED_CARDS_JSON =
+        """
+        {"cards":[
+          {"id":"card-1","brand":"visa","limit":100000},
+          {"id":"card-2","brand":"master","limit":50000}
+        ]}
+        """;
+
+    /** Properties as they come back from the JSONB column, through the same converter. */
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> ownedCards() {
+      return jsonConverter.read(OWNED_CARDS_JSON, Map.class);
+    }
+
+    /** A consent body as it arrives on the wire, through the same converter. */
+    @SuppressWarnings("unchecked")
+    private static GrantedClaimValues selectingJson(String grantedClaimValuesJson) {
+      return GrantedClaimValues.fromObject(jsonConverter.read(grantedClaimValuesJson, Map.class));
+    }
+
+    @Test
+    void keepsTheSelectedObject() {
+      Map<String, Object> narrowed =
+          selectingJson("{\"cards\":[{\"id\":\"card-1\",\"brand\":\"visa\",\"limit\":100000}]}")
+              .narrow(ownedCards());
+
+      assertEquals(1, ((List<?>) narrowed.get("cards")).size());
+      assertEquals(
+          Map.of("id", "card-1", "brand", "visa", "limit", 100000),
+          ((List<?>) narrowed.get("cards")).get(0));
+    }
+
+    @Test
+    void matchesRegardlessOfFieldOrder() {
+      // Both sides are parsed JSON objects; Map equality is by entry set, not by insertion order,
+      // so the consent screen may submit the fields in any order.
+      Map<String, Object> narrowed =
+          selectingJson("{\"cards\":[{\"limit\":100000,\"brand\":\"visa\",\"id\":\"card-1\"}]}")
+              .narrow(ownedCards());
+
+      assertEquals(1, ((List<?>) narrowed.get("cards")).size());
+    }
+
+    @Test
+    void doesNotSelectByIdAlone() {
+      // The limit of whole-element matching: a partial object is not the owned object, so it
+      // matches nothing and the claim is dropped. Selecting by a key field would need the
+      // selection to name which field identifies an element.
+      Map<String, Object> narrowed =
+          selectingJson("{\"cards\":[{\"id\":\"card-1\"}]}").narrow(ownedCards());
+
+      assertFalse(narrowed.containsKey("cards"));
+    }
+
+    @Test
+    void cannotIntroduceAnObjectTheUserDoesNotHave() {
+      Map<String, Object> narrowed =
+          selectingJson(
+                  "{\"cards\":[{\"id\":\"card-1\",\"brand\":\"visa\",\"limit\":100000},"
+                      + "{\"id\":\"card-9\",\"brand\":\"amex\",\"limit\":999999}]}")
+              .narrow(ownedCards());
+
+      assertEquals(1, ((List<?>) narrowed.get("cards")).size());
+    }
+  }
+
+  /**
    * The selection travels with the grant as a sentinel token inside the existing claim-name TEXT
    * column, the same way the OIDC4IDA verified_claims request does (#1628). What matters is that an
    * element read back from storage still equals the element parsed from the user's properties, so
@@ -170,29 +248,53 @@ class GrantedClaimValuesTest {
     }
   }
 
+  /**
+   * The selection is matched by equality, and the two sides of that comparison reach it by
+   * different routes: the properties always come from the repository through the converter, while
+   * the selection arrives on the wire on the authorizing request and from the sentinel afterwards.
+   * A mapping that disagreed on a number would silently drop the element the End-User picked.
+   */
   @Nested
-  class DeniedWholeClaims {
+  class ElementMappingIsNormalized {
 
     @Test
-    void dropsTheSelectionForADeniedClaim() {
-      // Nothing left to select between once the claim itself is denied.
-      GrantedClaimValues selection = selecting("accounts", "acc-2");
+    void matchesAnOwnedIntegerSubmittedAsALong() {
+      Map<String, Object> ownedLimits = new LinkedHashMap<>();
+      ownedLimits.put("limits", List.of(100000));
 
-      GrantedClaimValues remaining = selection.removeClaims(new DeniedClaims(List.of("accounts")));
+      // A web layer that maps JSON integers to Long rather than Integer.
+      GrantedClaimValues selection =
+          GrantedClaimValues.fromObject(Map.of("limits", List.of(100000L)));
 
-      assertFalse(remaining.exists());
+      assertEquals(List.of(100000), selection.narrow(ownedLimits).get("limits"));
     }
 
     @Test
-    void keepsSelectionsForClaimsThatWereNotDenied() {
+    void matchesAnOwnedObjectWhoseNumberWasSubmittedAsALong() {
+      Map<String, Object> ownedCards =
+          jsonConverter.read("{\"cards\":[{\"id\":\"card-1\",\"limit\":100000}]}", Map.class);
+      Map<String, Object> submitted = new LinkedHashMap<>();
+      submitted.put("id", "card-1");
+      submitted.put("limit", 100000L);
+
       GrantedClaimValues selection =
-          GrantedClaimValues.fromObject(
-              Map.of("accounts", List.of("acc-2"), "cards", List.of("card-1")));
+          GrantedClaimValues.fromObject(Map.of("cards", List.of(submitted)));
 
-      GrantedClaimValues remaining = selection.removeClaims(new DeniedClaims(List.of("accounts")));
+      assertEquals(1, ((List<?>) selection.narrow(ownedCards).get("cards")).size());
+    }
+  }
 
-      assertFalse(remaining.values().containsKey("accounts"));
-      assertEquals(List.of("card-1"), remaining.values().get("cards"));
+  @Nested
+  class NullElements {
+
+    @Test
+    void areCarriedThroughRatherThanRejected() {
+      // A submitted null is not a value the user holds, so it selects nothing. It must not take
+      // the request down on the way there.
+      GrantedClaimValues selection =
+          GrantedClaimValues.fromObject(Map.of("accounts", java.util.Arrays.asList("acc-2", null)));
+
+      assertEquals(List.of("acc-2"), selection.narrow(owned()).get("accounts"));
     }
   }
 

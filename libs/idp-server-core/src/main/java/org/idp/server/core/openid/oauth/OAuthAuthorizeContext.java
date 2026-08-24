@@ -134,6 +134,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     // removeScopes / removeClaims, rather than being applied to the user here. Claims are built
     // from the user as it is at issuance time — UserInfo loads it from the repository rather than
     // reading the grant's snapshot — so only a decision that is persisted reaches every channel.
+
     GrantIdTokenClaims grantIdTokenClaims =
         GrantIdTokenClaims.create(
                 removeScopes,
@@ -141,12 +142,12 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
                 supportedClaims,
                 requestedClaimsPayload.idToken(),
                 idTokenStrictMode)
-            .removeClaims(deniedClaims)
-            .withGrantedClaimValues(grantedClaimValues);
+            .withGrantedClaimValues(grantedClaimValues)
+            .removeClaims(deniedClaims);
     GrantUserinfoClaims grantUserinfoClaims =
         GrantUserinfoClaims.create(removeScopes, supportedClaims, requestedClaimsPayload.userinfo())
-            .removeClaims(deniedClaims)
-            .withGrantedClaimValues(grantedClaimValues);
+            .withGrantedClaimValues(grantedClaimValues)
+            .removeClaims(deniedClaims);
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
     ConsentClaims consentClaims = createConsentClaims();
     GrantType grantType = GrantType.authorization_code;
