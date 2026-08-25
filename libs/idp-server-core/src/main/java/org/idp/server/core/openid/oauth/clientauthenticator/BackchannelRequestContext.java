@@ -63,6 +63,19 @@ public interface BackchannelRequestContext {
     return null;
   }
 
+  /**
+   * Whether the {@code challenge} claim of the Client Attestation PoP JWT is enforced
+   * (draft-ietf-oauth-attestation-based-client-auth-10 Section 7.2 item 5).
+   */
+  default boolean isClientAttestationChallengeRequired() {
+    return serverConfiguration().isClientAttestationChallengeRequired();
+  }
+
+  /** Lifetime in seconds of a Challenge issued while handling this request. */
+  default int clientAttestationChallengeDuration() {
+    return serverConfiguration().clientAttestationChallengeDuration();
+  }
+
   AuthorizationServerConfiguration serverConfiguration();
 
   ClientConfiguration clientConfiguration();

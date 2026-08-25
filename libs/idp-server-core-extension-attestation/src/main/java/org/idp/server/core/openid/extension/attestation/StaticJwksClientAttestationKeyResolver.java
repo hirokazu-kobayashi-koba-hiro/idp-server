@@ -32,9 +32,9 @@ public class StaticJwksClientAttestationKeyResolver implements ClientAttestation
   @Override
   public String resolveJwks(BackchannelRequestContext context, JsonWebSignatureHeader header) {
     ClientConfiguration clientConfiguration = context.clientConfiguration();
-    if (!clientConfiguration.extensionConfiguration().hasClientAttestationAttesterJwks()) {
+    if (!clientConfiguration.hasClientAttestationAttesterJwks()) {
       return null;
     }
-    return clientConfiguration.extensionConfiguration().clientAttestationAttesterJwks();
+    return clientConfiguration.clientAttestationAttesterJwks();
   }
 }
