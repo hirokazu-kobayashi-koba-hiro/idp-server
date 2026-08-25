@@ -253,6 +253,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     map.put("pushed_authorization_request_expires_in", pushedAuthorizationRequestExpiresIn);
     map.put("fapi_baseline_scopes", fapiBaselineScopes);
     map.put("fapi_advance_scopes", fapiAdvanceScopes);
+    map.put("fapi20_scopes", fapi20Scopes);
     map.put("required_identity_verification_scopes", requiredIdentityVerificationScopes);
     map.put("custom_claims_scope_mapping", customClaimsScopeMapping);
     map.put(
