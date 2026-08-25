@@ -18,6 +18,7 @@
  *   7.6 Client Attestation as an additional security signal
  *   8.  Authorization Server Metadata
  *   9.3 Refresh token binding
+ *   9.4 Binding of OAuth protocol artifacts
  *   11.1 Replay Attacks
  *
  * Prerequisite: the test tenant's authorization-server enables attest_jwt_client_auth
@@ -732,6 +733,13 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
   describe("9.3. Refresh token binding (not implemented yet)", () => {
 
     xit("Authorization servers issuing a refresh token in response to a token request using the client attestation mechanism MUST bind the refresh token to the Client Instance and its associated public key. To prove this binding, the Client Instance MUST use the client attestation mechanism when refreshing an access token, and MUST also use the same key that was present in the cnf claim.", async () => {});
+  });
+
+  describe("9.4. Binding of OAuth protocol artifacts (not implemented yet)", () => {
+
+    xit("Authorization servers using Attestation-Based Client Authentication are RECOMMENDED to bind relevant protocol artifacts to the Client Instance and its associated public key where possible, and NOT just the client as specified in [RFC6749]. (the authorization_code as specified in Section 4.1 of [RFC6749])", async () => {});
+
+    xit("Examples of these artifacts include but are not limited to: the auth_req_id as specified in section 7.3 [CIBA].", async () => {});
   });
 
   describe("11.1. Replay Attacks (not implemented yet)", () => {
