@@ -73,13 +73,14 @@ public class TokenRevocationErrorHandler {
     }
 
     // RFC 7009: invalid_client (401)
-    if (exception instanceof ClientUnAuthorizedException) {
+    if (exception instanceof ClientUnAuthorizedException clientUnAuthorized) {
       log.warn(
-          "Token revocation failed: status=unauthorized, error=invalid_client, description={}",
+          "Token revocation failed: status=unauthorized, error={}, description={}",
+          clientUnAuthorized.errorCode(),
           exception.getMessage());
 
       Map<String, Object> contents = new HashMap<>();
-      contents.put("error", "invalid_client");
+      contents.put("error", clientUnAuthorized.errorCode());
       contents.put("error_description", exception.getMessage());
 
       return new TokenRevocationResponse(UNAUTHORIZED, new OAuthToken(), contents);
