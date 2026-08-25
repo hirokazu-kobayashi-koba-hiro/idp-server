@@ -37,6 +37,8 @@ const REGISTERED_DEVICE_ID = "7736a252-60b4-45f5-b817-65ea9a540860";
 
 let managementHeaders;
 let clientId;
+let attestationOnlyClientId;
+let policylessClientId;
 
 const base64url = (buffer) =>
   buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -111,10 +113,10 @@ const enrollInstance = async (deviceId = REGISTERED_DEVICE_ID) => {
   return { jwk, instanceId, deviceId };
 };
 
-const selfSignedAttestationJwt = ({ jwk, instanceId }) =>
+const selfSignedAttestationJwt = ({ jwk, instanceId, sub = () => clientId }) =>
   createJwtWithPrivateKey({
     payload: {
-      sub: clientId,
+      sub: typeof sub === "function" ? sub() : sub,
       iat: toEpocTime({ adjusted: 0 }),
       exp: toEpocTime({ adjusted: 300 }),
       cnf: { jwk: publicJwkOf(jwk) },
@@ -151,6 +153,23 @@ beforeAll(async () => {
   managementHeaders = { Authorization: `Bearer ${tokenResponse.data.access_token}` };
 
   clientId = uuidv4();
+  const registerClient = async (id, extension) =>
+    await postWithJson({
+      url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
+      headers: managementHeaders,
+      body: {
+        client_id: id,
+        client_name: `Client Instance Registration Test Client ${id}`,
+        token_endpoint_auth_method: "attest_jwt_client_auth",
+        extension,
+        grant_types: ["client_credentials"],
+        redirect_uris: ["http://localhost:3000/callback"],
+        response_types: ["code"],
+        scope: "account management",
+        enabled: true,
+      },
+    });
+
   const registrationResponse = await postWithJson({
     url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
     headers: managementHeaders,
@@ -170,6 +189,22 @@ beforeAll(async () => {
     },
   });
   expect(registrationResponse.status).toBe(201);
+
+  // A wallet style client: no authentication device exists, so the platform attestation is the
+  // only backing (OID4VCI / HAIP).
+  attestationOnlyClientId = uuidv4();
+  const attestationOnlyResponse = await registerClient(attestationOnlyClientId, {
+    client_attestation_trust_source: "registered_instance_key",
+    client_instance_registration_policy: "attestation_only",
+  });
+  expect(attestationOnlyResponse.status).toBe(201);
+
+  // A client whose registration policy was never configured.
+  policylessClientId = uuidv4();
+  const policylessResponse = await registerClient(policylessClientId, {
+    client_attestation_trust_source: "registered_instance_key",
+  });
+  expect(policylessResponse.status).toBe(201);
 });
 
 describe("Client Instance registration (application plane)", () => {
@@ -206,6 +241,15 @@ describe("Client Instance registration (application plane)", () => {
       const response = await requestChallenge({ client: uuidv4() });
       expect(response.status).toBe(400);
     });
+
+    it("rejects a client whose client_instance_registration_policy is not configured, rather than falling back to the weaker policy", async () => {
+      const response = await requestChallenge({
+        client: () => policylessClientId,
+        deviceId: undefined,
+      });
+      expect(response.status).toBe(400);
+      expect(response.data).toHaveProperty("error", "invalid_request");
+    });
   });
 
   describe("registration endpoint", () => {
@@ -225,6 +269,39 @@ describe("Client Instance registration (application plane)", () => {
       });
 
       console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+    });
+
+    it("attestation_only registers without an authentication device and the instance can authenticate", async () => {
+      // The wallet case: no device_id is sent, and the platform attestation bound to the challenge
+      // is the only backing for the registration.
+      const jwk = await generateInstanceJwk();
+      const challengeResponse = await requestChallenge({
+        client: () => attestationOnlyClientId,
+        deviceId: undefined,
+      });
+      expect(challengeResponse.status).toBe(200);
+
+      const { challenge, instance_id: instanceId } = challengeResponse.data;
+      const registerResponse = await registerInstance({ challenge, jwk });
+      expect(registerResponse.status).toBe(201);
+
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        scope: "account",
+        clientId: attestationOnlyClientId,
+        additionalHeaders: {
+          "OAuth-Client-Attestation": selfSignedAttestationJwt({
+            jwk,
+            instanceId,
+            sub: () => attestationOnlyClientId,
+          }),
+          "OAuth-Client-Attestation-PoP": popJwt(jwk),
+        },
+      });
+      console.log(tokenResponse.status, tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
       expect(tokenResponse.data).toHaveProperty("access_token");
     });
