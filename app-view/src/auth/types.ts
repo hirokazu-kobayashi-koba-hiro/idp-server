@@ -45,11 +45,27 @@ export type RequestedClaims = {
   verified_claims?: string[];
 };
 
+/**
+ * One element of an array-valued custom property, as stored: a plain value or an object with its
+ * own fields (an account with a branch, a card with a brand).
+ */
+export type ClaimValue = string | number | boolean | Record<string, unknown>;
+
 export type ViewData = {
   client_name?: string;
   logo_uri?: string;
   scopes?: string[];
   claims?: RequestedClaims;
+  /**
+   * Candidate values for claims released by a `claims:*` scope, keyed by claim name (backend
+   * #1816).
+   *
+   * Present only once the transaction has an authenticated user, and only for arrays — a scalar
+   * has nothing to select between. The consent screen offers the elements individually and sends
+   * the kept ones back as `granted_claim_values`; the server matches whole elements, so an element
+   * has to be echoed exactly as it was received here.
+   */
+  claim_values?: Record<string, ClaimValue[]>;
   authentication_policy?: AuthenticationPolicy;
   available_federations?: Federation[];
   custom_params?: Record<string, string>;

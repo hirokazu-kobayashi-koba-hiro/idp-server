@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.oauth.io;
 
 import java.util.Map;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequestIdentifier;
 import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -25,6 +26,7 @@ public class OAuthViewDataRequest {
   Tenant tenant;
   String id;
   OPSession opSession;
+  User user;
   Map<String, Object> additionalViewData;
 
   public OAuthViewDataRequest(Tenant tenant, String id) {
@@ -40,9 +42,23 @@ public class OAuthViewDataRequest {
 
   public OAuthViewDataRequest(
       Tenant tenant, String id, OPSession opSession, Map<String, Object> additionalViewData) {
+    this(tenant, id, opSession, User.notFound(), additionalViewData);
+  }
+
+  /**
+   * @param user the user the authentication transaction has resolved, or {@code User.notFound()}
+   *     before authentication. Claim values are only surfaced once one exists.
+   */
+  public OAuthViewDataRequest(
+      Tenant tenant,
+      String id,
+      OPSession opSession,
+      User user,
+      Map<String, Object> additionalViewData) {
     this.tenant = tenant;
     this.id = id;
     this.opSession = opSession;
+    this.user = user;
     this.additionalViewData = additionalViewData;
   }
 
@@ -56,6 +72,10 @@ public class OAuthViewDataRequest {
 
   public OPSession opSession() {
     return opSession;
+  }
+
+  public User user() {
+    return user != null ? user : User.notFound();
   }
 
   public Map<String, Object> additionalViewData() {

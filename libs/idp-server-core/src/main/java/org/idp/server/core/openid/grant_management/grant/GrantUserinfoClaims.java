@@ -20,6 +20,7 @@ import java.util.*;
 import org.idp.server.core.openid.identity.id_token.RequestedUserinfoClaims;
 import org.idp.server.core.openid.identity.id_token.VerifiedClaimsObject;
 import org.idp.server.core.openid.oauth.type.extension.DeniedClaims;
+import org.idp.server.core.openid.oauth.type.extension.GrantedClaimValues;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 
 public class GrantUserinfoClaims implements Iterable<String> {
@@ -28,11 +29,15 @@ public class GrantUserinfoClaims implements Iterable<String> {
   // The OIDC4IDA verified_claims request persisted with the grant, so UserInfo can honor the
   // claims parameter at issuance time (when the original request is gone). (#1628)
   RequestedVerifiedClaims requestedVerifiedClaims;
+  // The elements of an array claim the End-User kept, persisted with the grant so UserInfo can
+  // narrow the user it loads at request time to what was consented. (#1816)
+  GrantedClaimValues grantedClaimValues;
   private static final String delimiter = " ";
 
   public GrantUserinfoClaims() {
     this.values = new HashSet<>();
     this.requestedVerifiedClaims = RequestedVerifiedClaims.empty();
+    this.grantedClaimValues = new GrantedClaimValues();
   }
 
   public static GrantUserinfoClaims create(
@@ -69,29 +74,55 @@ public class GrantUserinfoClaims implements Iterable<String> {
     if (Objects.isNull(value) || value.isEmpty()) {
       this.values = new HashSet<>();
       this.requestedVerifiedClaims = RequestedVerifiedClaims.empty();
+      this.grantedClaimValues = new GrantedClaimValues();
       return;
     }
     Set<String> names = new HashSet<>();
     RequestedVerifiedClaims parsed = RequestedVerifiedClaims.empty();
+    GrantedClaimValues parsedClaimValues = new GrantedClaimValues();
     for (String token : value.split(delimiter)) {
       if (RequestedVerifiedClaims.isSentinel(token)) {
         parsed = RequestedVerifiedClaims.fromSentinel(token);
+      } else if (GrantedClaimValues.isSentinel(token)) {
+        parsedClaimValues = GrantedClaimValues.fromSentinel(token);
       } else {
         names.add(token);
       }
     }
     this.values = names;
     this.requestedVerifiedClaims = parsed;
+    this.grantedClaimValues = parsedClaimValues;
   }
 
   public GrantUserinfoClaims(Set<String> values) {
     this.values = values;
     this.requestedVerifiedClaims = RequestedVerifiedClaims.empty();
+    this.grantedClaimValues = new GrantedClaimValues();
   }
 
   public GrantUserinfoClaims(Set<String> values, RequestedVerifiedClaims requestedVerifiedClaims) {
+    this(values, requestedVerifiedClaims, new GrantedClaimValues());
+  }
+
+  public GrantUserinfoClaims(
+      Set<String> values,
+      RequestedVerifiedClaims requestedVerifiedClaims,
+      GrantedClaimValues grantedClaimValues) {
     this.values = values;
     this.requestedVerifiedClaims = requestedVerifiedClaims;
+    this.grantedClaimValues = grantedClaimValues;
+  }
+
+  /** A copy carrying the End-User's per-element selection for array claims. (#1816) */
+  public GrantUserinfoClaims withGrantedClaimValues(GrantedClaimValues grantedClaimValues) {
+    if (grantedClaimValues == null || !grantedClaimValues.exists()) {
+      return this;
+    }
+    return new GrantUserinfoClaims(values, requestedVerifiedClaims, grantedClaimValues);
+  }
+
+  public GrantedClaimValues grantedClaimValues() {
+    return grantedClaimValues;
   }
 
   public GrantUserinfoClaims merge(GrantUserinfoClaims other) {
@@ -102,7 +133,10 @@ public class GrantUserinfoClaims implements Iterable<String> {
         other.requestedVerifiedClaims.exists()
             ? other.requestedVerifiedClaims
             : this.requestedVerifiedClaims;
-    return new GrantUserinfoClaims(newValues, mergedVerifiedClaims);
+    // Same rule for the per-element selection: the consent just given supersedes the earlier one.
+    GrantedClaimValues mergedClaimValues =
+        other.grantedClaimValues.exists() ? other.grantedClaimValues : this.grantedClaimValues;
+    return new GrantUserinfoClaims(newValues, mergedVerifiedClaims, mergedClaimValues);
   }
 
   /**
@@ -118,7 +152,10 @@ public class GrantUserinfoClaims implements Iterable<String> {
     newValues.removeIf(deniedClaims::contains);
     RequestedVerifiedClaims newVerifiedClaims =
         requestedVerifiedClaims.removeClaims(deniedClaims.toList());
-    return new GrantUserinfoClaims(newValues, newVerifiedClaims);
+    // The per-element selection is carried through untouched. Custom claims are released by the
+    // grant's claims:* scopes rather than by these claim names, so a denied name does not stop
+    // them — and dropping its selection would release every element instead of the chosen one.
+    return new GrantUserinfoClaims(newValues, newVerifiedClaims, grantedClaimValues);
   }
 
   @Override
@@ -130,7 +167,10 @@ public class GrantUserinfoClaims implements Iterable<String> {
     // Also true when only a verified_claims request is present (no plain claim names): otherwise
     // the
     // persistence write path skips userinfo_claims and the sentinel is lost. (#1628)
-    return (values != null && !values.isEmpty()) || requestedVerifiedClaims.exists();
+    // The same applies to the per-element selection sentinel. (#1816)
+    return (values != null && !values.isEmpty())
+        || requestedVerifiedClaims.exists()
+        || grantedClaimValues.exists();
   }
 
   public Set<String> toStringSet() {
@@ -138,12 +178,14 @@ public class GrantUserinfoClaims implements Iterable<String> {
   }
 
   public String toStringValues() {
-    String names = String.join(delimiter, values);
-    if (!requestedVerifiedClaims.exists()) {
-      return names;
+    List<String> tokens = new ArrayList<>(values);
+    if (requestedVerifiedClaims.exists()) {
+      tokens.add(requestedVerifiedClaims.toSentinelToken());
     }
-    String sentinel = requestedVerifiedClaims.toSentinelToken();
-    return names.isEmpty() ? sentinel : names + delimiter + sentinel;
+    if (grantedClaimValues.exists()) {
+      tokens.add(grantedClaimValues.toSentinelToken());
+    }
+    return String.join(delimiter, tokens);
   }
 
   public boolean hasVerifiedClaims() {

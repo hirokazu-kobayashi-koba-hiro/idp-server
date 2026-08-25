@@ -18,25 +18,32 @@ package org.idp.server.core.openid.oauth.view;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.idp.server.core.openid.grant_management.grant.GrantIdTokenClaims;
 import org.idp.server.core.openid.grant_management.grant.GrantUserinfoClaims;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.id_token.VerifiedClaimsObject;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.request.AuthorizationRequest;
+import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.session.OPSession;
 
 public class OAuthViewDataCreator {
 
+  /** Prefix that maps a scope to a user custom property, as the custom claims creators read it. */
+  private static final String customClaimsScopePrefix = "claims:";
+
   AuthorizationRequest authorizationRequest;
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
   OPSession opSession;
+  User user;
   Map<String, Object> additionalViewData;
 
   public OAuthViewDataCreator(
@@ -45,10 +52,27 @@ public class OAuthViewDataCreator {
       ClientConfiguration clientConfiguration,
       OPSession opSession,
       Map<String, Object> additionalViewData) {
+    this(
+        authorizationRequest,
+        authorizationServerConfiguration,
+        clientConfiguration,
+        opSession,
+        User.notFound(),
+        additionalViewData);
+  }
+
+  public OAuthViewDataCreator(
+      AuthorizationRequest authorizationRequest,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
+      OPSession opSession,
+      User user,
+      Map<String, Object> additionalViewData) {
     this.authorizationRequest = authorizationRequest;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
     this.opSession = opSession;
+    this.user = user;
     this.additionalViewData = additionalViewData;
   }
 
@@ -81,6 +105,11 @@ public class OAuthViewDataCreator {
     // configured ui_locales_supported.
     if (authorizationRequest.hasUiLocales()) {
       additionalViewData.put("ui_locales", authorizationRequest.uiLocales().toStringList());
+    }
+
+    Map<String, Object> selectableClaimValues = selectableClaimValues();
+    if (!selectableClaimValues.isEmpty()) {
+      additionalViewData.put("claim_values", selectableClaimValues);
     }
 
     return new OAuthViewData(
@@ -127,6 +156,47 @@ public class OAuthViewDataCreator {
     requestedClaims.put("userinfo", sorted(userinfoClaims.toStringSet()));
     requestedClaims.put("verified_claims", requestedVerifiedClaimNames());
     return requestedClaims;
+  }
+
+  /**
+   * Candidate values for requested claims whose backing custom property is an array, so the consent
+   * view can offer the elements individually (#1816).
+   *
+   * <p>Names come from the {@code claims:*} scopes, the same source {@link
+   * org.idp.server.core.openid.identity.id_token.plugin.ScopeMappingCustomClaimsCreator} issues
+   * from — {@link #createRequestedClaims()} resolves standard OIDC claims only, so a custom
+   * property never appears there. The {@code custom_claims_scope_mapping} switch is honored for the
+   * same reason: with it off, those scopes release nothing, and offering a choice over them would
+   * describe a decision that has no effect.
+   *
+   * <p>Only arrays appear: a scalar has nothing to choose between, and the consent view already
+   * expresses "all or nothing" for it through {@code denied_claims}. Values are limited to the
+   * user's {@code custom_properties} — {@code roles} / {@code permissions} / {@code
+   * assigned_tenants} are also released by {@code claims:*} scopes and are also lists, but they are
+   * decided by the server, not by the End-User.
+   *
+   * <p>Nothing is returned before the transaction has resolved a user, which is what keeps the
+   * pre-authentication view-data free of user attributes.
+   */
+  private Map<String, Object> selectableClaimValues() {
+    if (user == null || !user.exists()) {
+      return Map.of();
+    }
+    if (!authorizationServerConfiguration.enabledCustomClaimsScopeMapping()) {
+      return Map.of();
+    }
+
+    CustomProperties customProperties = user.customProperties();
+    Map<String, Object> selectable = new LinkedHashMap<>();
+    for (String scope :
+        authorizationRequest.scopes().filterMatchedPrefix(customClaimsScopePrefix)) {
+      String claimName = scope.substring(customClaimsScopePrefix.length());
+      Object value = customProperties.getValue(claimName);
+      if (value instanceof List<?> list && !list.isEmpty()) {
+        selectable.put(claimName, List.copyOf(list));
+      }
+    }
+    return selectable;
   }
 
   private List<String> requestedVerifiedClaimNames() {

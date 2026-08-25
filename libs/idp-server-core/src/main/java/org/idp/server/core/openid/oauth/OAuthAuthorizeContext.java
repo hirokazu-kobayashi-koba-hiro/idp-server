@@ -39,6 +39,7 @@ import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.extension.DeniedClaims;
 import org.idp.server.core.openid.oauth.type.extension.DeniedScopes;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
+import org.idp.server.core.openid.oauth.type.extension.GrantedClaimValues;
 import org.idp.server.core.openid.oauth.type.oauth.*;
 import org.idp.server.core.openid.oauth.type.oidc.ResponseMode;
 import org.idp.server.platform.date.SystemDateTime;
@@ -52,6 +53,7 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
   CustomProperties customProperties;
   DeniedScopes deniedScopes;
   DeniedClaims deniedClaims;
+  GrantedClaimValues grantedClaimValues = new GrantedClaimValues();
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
 
@@ -66,12 +68,35 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
       DeniedClaims deniedClaims,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
+    this(
+        authorizationRequest,
+        user,
+        authentication,
+        customProperties,
+        deniedScopes,
+        deniedClaims,
+        new GrantedClaimValues(),
+        authorizationServerConfiguration,
+        clientConfiguration);
+  }
+
+  public OAuthAuthorizeContext(
+      AuthorizationRequest authorizationRequest,
+      User user,
+      Authentication authentication,
+      CustomProperties customProperties,
+      DeniedScopes deniedScopes,
+      DeniedClaims deniedClaims,
+      GrantedClaimValues grantedClaimValues,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration) {
     this.authorizationRequest = authorizationRequest;
     this.user = user;
     this.authentication = authentication;
     this.customProperties = customProperties;
     this.deniedScopes = deniedScopes;
     this.deniedClaims = deniedClaims;
+    this.grantedClaimValues = grantedClaimValues;
     this.clientConfiguration = clientConfiguration;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
   }
@@ -105,6 +130,11 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
     RequestedClaimsPayload requestedClaimsPayload = authorizationRequest.requestedClaimsPayload();
     boolean idTokenStrictMode = serverConfiguration().isIdTokenStrictMode();
 
+    // The elements the End-User kept of an array claim (#1816) travel with the grant alongside
+    // removeScopes / removeClaims, rather than being applied to the user here. Claims are built
+    // from the user as it is at issuance time — UserInfo loads it from the repository rather than
+    // reading the grant's snapshot — so only a decision that is persisted reaches every channel.
+
     GrantIdTokenClaims grantIdTokenClaims =
         GrantIdTokenClaims.create(
                 removeScopes,
@@ -112,9 +142,11 @@ public class OAuthAuthorizeContext implements ResponseModeDecidable {
                 supportedClaims,
                 requestedClaimsPayload.idToken(),
                 idTokenStrictMode)
+            .withGrantedClaimValues(grantedClaimValues)
             .removeClaims(deniedClaims);
     GrantUserinfoClaims grantUserinfoClaims =
         GrantUserinfoClaims.create(removeScopes, supportedClaims, requestedClaimsPayload.userinfo())
+            .withGrantedClaimValues(grantedClaimValues)
             .removeClaims(deniedClaims);
     AuthorizationDetails authorizationDetails = authorizationRequest.authorizationDetails();
     ConsentClaims consentClaims = createConsentClaims();

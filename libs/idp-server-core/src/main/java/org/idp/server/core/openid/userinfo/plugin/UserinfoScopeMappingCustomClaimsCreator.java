@@ -22,7 +22,6 @@ import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
-import org.idp.server.core.openid.oauth.type.extension.CustomProperties;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 
 public class UserinfoScopeMappingCustomClaimsCreator
@@ -55,14 +54,17 @@ public class UserinfoScopeMappingCustomClaimsCreator
 
     Scopes scopes = authorizationGrant.scopes();
     Scopes filteredClaimsScope = scopes.filterMatchedPrefix(prefix);
-    CustomProperties customProperties = user.customProperties();
+    // Narrowed by the per-element consent recorded on the grant, so an element the End-User did
+    // not keep never reaches the claim — whichever user instance this creator was handed. (#1816)
+    Map<String, Object> customProperties =
+        authorizationGrant.grantedClaimValues().narrow(user.customProperties().values());
 
     for (String scope : filteredClaimsScope) {
       String claimName = scope.substring(prefix.length());
 
       // A null custom property value must be omitted, not returned as "key": null
       // (OIDC Core §5.3.2). Issue #1699.
-      Object customValue = customProperties.getValue(claimName);
+      Object customValue = customProperties.get(claimName);
       if (customValue != null) {
         claims.put(claimName, customValue);
       }
