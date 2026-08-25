@@ -140,7 +140,7 @@ public class ClientInstanceRegistrationEntryService implements ClientInstanceReg
       Tenant tenant, ClientConfiguration clientConfiguration, String deviceId) {
 
     ClientInstanceRegistrationPolicy policy =
-        clientConfiguration.extensionConfiguration().clientInstanceRegistrationPolicy();
+        clientConfiguration.clientInstanceRegistrationPolicy();
 
     if (policy.isUndefined()) {
       throw new ClientInstanceRegistrationException(

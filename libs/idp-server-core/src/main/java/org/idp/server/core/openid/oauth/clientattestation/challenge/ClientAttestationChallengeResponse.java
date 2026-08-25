@@ -28,7 +28,7 @@ public record ClientAttestationChallengeResponse(int statusCode, Map<String, Obj
 
   public static ClientAttestationChallengeResponse ok(ClientAttestationChallenge challenge) {
     return new ClientAttestationChallengeResponse(
-        200, Map.of("attestation_challenge", challenge.challenge()));
+        200, Map.of("attestation_challenge", challenge.value()));
   }
 
   /**
