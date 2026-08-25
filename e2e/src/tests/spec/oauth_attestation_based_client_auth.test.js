@@ -138,6 +138,21 @@ const expectInvalidClient = (response) => {
   expect(response.data).toHaveProperty("error", "invalid_client");
 };
 
+/**
+ * Section 7.4: a failure of the Client Attestation JWT or of its proof of possession is reported
+ * with the dedicated code. Presenting no attestation at all stays on the general invalid_client.
+ */
+const expectInvalidClientAttestation = (response) => {
+  expect(response.status).toBe(401);
+  expect(response.data).toHaveProperty("error", "invalid_client_attestation");
+};
+
+/** Section 7.4: the Client Attestation JWT is no longer fresh; the client must obtain a new one. */
+const expectUseFreshAttestation = (response) => {
+  expect(response.status).toBe(401);
+  expect(response.data).toHaveProperty("error", "use_fresh_attestation");
+};
+
 beforeAll(async () => {
   // admin access token for Control Plane APIs
   const tokenResponse = await requestToken({
@@ -204,7 +219,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt({ typ: "JWT" }),
         popJwt: createPopJwt(),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     it("sub REQUIRED. The sub (subject) claim MUST specify client_id value of the OAuth Client.", async () => {
@@ -212,7 +227,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt({ sub: null }),
         popJwt: createPopJwt(),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     it("exp REQUIRED. The Authorization Server MUST reject any JWT with an expiration time that has passed.", async () => {
@@ -220,7 +235,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt({ exp: toEpocTime({ adjusted: -300 }) }),
         popJwt: createPopJwt(),
       });
-      expectInvalidClient(response);
+      expectUseFreshAttestation(response);
     });
 
     it("cnf REQUIRED. The cnf (confirmation) claim MUST specify a key conforming to [RFC7800] that is used by the Client Instance to generate the Client Attestation PoP JWT.", async () => {
@@ -228,7 +243,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt({ cnf: null }),
         popJwt: createPopJwt(),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     it("The key MUST be expressed using the \"jwk\" representation. (cnf without jwk is rejected)", async () => {
@@ -238,7 +253,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         }),
         popJwt: createPopJwt(),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     it("The JWT MAY contain other claims. All claims that are not understood by implementations MUST be ignored.", async () => {
@@ -260,7 +275,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt(),
         popJwt: createPopJwt({ typ: "JWT" }),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     it("The JWT MUST be digitally signed using an asymmetric cryptographic algorithm. (MAC-signed PoP is rejected)", async () => {
@@ -273,7 +288,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt(),
         popJwt: hmacPop,
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     it("aud REQUIRED. When the JWT is presented to an Authorization Server, the [RFC8414] issuer identifier URL of the Authorization Server MUST be used.", async () => {
@@ -281,7 +296,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt(),
         popJwt: createPopJwt({ aud: "https://other-as.example.com" }),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     it("jti REQUIRED. The jti (JWT identifier) claim MUST specify a unique identifier for the Client Attestation PoP.", async () => {
@@ -289,7 +304,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt(),
         popJwt: createPopJwt({ jti: null }),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     it("iat REQUIRED. The iat (issued at) claim MUST specify the time at which the Client Attestation PoP was issued. (outside the acceptable window is rejected)", async () => {
@@ -297,7 +312,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt(),
         popJwt: createPopJwt({ iat: toEpocTime({ adjusted: -600 }) }),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
   });
 
@@ -334,7 +349,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt({ signingKey: () => attesterEs384Jwk }),
         popJwt: createPopJwt(),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     it("4. The signature of the Client Attestation JWT verifies with the public key of a known and trusted Client Attester.", async () => {
@@ -343,7 +358,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt({ signingKey: () => untrustedAttesterJwk }),
         popJwt: createPopJwt(),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     it("5. The key contained in the cnf claim of the Client Attestation JWT is not a private key.", async () => {
@@ -351,7 +366,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt({ cnf: () => ({ jwk: instanceEs256Jwk }) }),
         popJwt: createPopJwt(),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     xit("6. The Client Attestation JWT is fresh enough per local policy by checking the iat or exp claims. (iat-based freshness policy / use_fresh_attestation, exp expiry is covered in Section 4)", async () => {});
@@ -381,7 +396,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         }),
         popJwt: createPopJwt({ signingKey: () => instanceEs384Jwk }),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     it("4. The signature of the Client Attestation PoP JWT verifies with the public key contained in the cnf claim of the Client Attestation JWT.", async () => {
@@ -390,7 +405,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt(),
         popJwt: createPopJwt({ signingKey: () => anotherInstanceJwk }),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     xit("5. If the server provided a challenge value to the client, the challenge claim is present in the Client Attestation PoP JWT and matches the server-provided challenge value.", async () => {});
@@ -413,13 +428,36 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
     xit("5. If the Client received a challenge, it MUST match the nonce payload claim of the DPoP proof.", async () => {});
   });
 
-  describe("7.4. Errors (dedicated error codes are not implemented yet; invalid_client per RFC 6749 is returned)", () => {
+  describe("7.4. Errors", () => {
 
     xit("use_attestation_challenge MUST be used when the Client Attestation PoP JWT is not using an expected server-provided challenge. When used this error code MUST be accompanied by the OAuth-Client-Attestation-Challenge HTTP header field parameter.", async () => {});
 
-    xit("use_fresh_attestation MUST be used when the Client Attestation JWT is deemed to be not fresh enough to be acceptable by the server.", async () => {});
+    it("use_fresh_attestation MUST be used when the Client Attestation JWT is deemed to be not fresh enough to be acceptable by the server.", async () => {
+      const response = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt({ exp: toEpocTime({ adjusted: -300 }) }),
+        popJwt: createPopJwt(),
+      });
+      expectUseFreshAttestation(response);
+    });
 
-    xit("invalid_client_attestation MAY be used in addition to the more general invalid_client error code if the attestation or its proof of possession could not be successfully verified.", async () => {});
+    it("invalid_client_attestation MAY be used in addition to the more general invalid_client error code if the attestation or its proof of possession could not be successfully verified.", async () => {
+      const attestationFailure = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt({ signingKey: () => instanceEs256Jwk }),
+        popJwt: createPopJwt(),
+      });
+      expectInvalidClientAttestation(attestationFailure);
+
+      const popFailure = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ signingKey: () => attesterEs256Jwk }),
+      });
+      expectInvalidClientAttestation(popFailure);
+    });
+
+    it("Presenting no Client Attestation at all stays on the general invalid_client: there is no attestation whose verification could have failed.", async () => {
+      const response = await requestTokenWithAttestation({ popJwt: createPopJwt() });
+      expectInvalidClient(response);
+    });
   });
 
   describe("7.5. Client Attestation as an OAuth Client Authentication", () => {
@@ -439,7 +477,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
         attestationJwt: createAttestationJwt({ sub: "another-client" }),
         popJwt: createPopJwt(),
       });
-      expectInvalidClient(response);
+      expectInvalidClientAttestation(response);
     });
 
     it("authenticates the client at endpoints where the client authenticates: Pushed Authorization Request endpoint (RFC 9126).", async () => {

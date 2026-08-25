@@ -20,7 +20,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
-import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.InvalidClientAttestationException;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebKey;
@@ -169,15 +169,15 @@ class ClientAttestationPopJwtVerifier {
     }
   }
 
-  private ClientUnAuthorizedException exception(String message) {
-    return new ClientUnAuthorizedException(
+  private InvalidClientAttestationException exception(String message) {
+    return new InvalidClientAttestationException(
         ClientAuthenticationType.attest_jwt_client_auth.name(),
         context.requestedClientId(),
         message);
   }
 
-  private ClientUnAuthorizedException exception(String message, Throwable cause) {
-    return new ClientUnAuthorizedException(
+  private InvalidClientAttestationException exception(String message, Throwable cause) {
+    return new InvalidClientAttestationException(
         ClientAuthenticationType.attest_jwt_client_auth.name(),
         context.requestedClientId(),
         message,

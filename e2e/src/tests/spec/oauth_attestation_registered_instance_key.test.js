@@ -176,7 +176,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed C
         popJwt: createPopJwt(),
       });
       expect(response.status).toBe(401);
-      expect(response.data).toHaveProperty("error", "invalid_client");
+      expect(response.data).toHaveProperty("error", "invalid_client_attestation");
     });
 
     it("rejects a Client Attestation JWT signed by a key that is not the registered Client Instance Key", async () => {
@@ -189,7 +189,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed C
         popJwt: createPopJwt({ signingKey: () => attackerJwk }),
       });
       expect(response.status).toBe(401);
-      expect(response.data).toHaveProperty("error", "invalid_client");
+      expect(response.data).toHaveProperty("error", "invalid_client_attestation");
     });
 
     it("rejects when cnf.jwk is not the registered key that signed the Client Attestation JWT", async () => {
@@ -203,7 +203,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed C
         popJwt: createPopJwt({ signingKey: () => otherJwk }),
       });
       expect(response.status).toBe(401);
-      expect(response.data).toHaveProperty("error", "invalid_client");
+      expect(response.data).toHaveProperty("error", "invalid_client_attestation");
     });
 
     it("rejects a Client Attestation JWT whose lifetime (exp - iat) exceeds the server policy", async () => {
@@ -214,7 +214,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed C
         popJwt: createPopJwt(),
       });
       expect(response.status).toBe(401);
-      expect(response.data).toHaveProperty("error", "invalid_client");
+      expect(response.data).toHaveProperty("error", "invalid_client_attestation");
     });
 
     it("stops authenticating the instance as soon as it is deleted", async () => {
@@ -246,7 +246,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed C
         popJwt: createPopJwt({ signingKey: () => disposableJwk }),
       });
       expect(after.status).toBe(401);
-      expect(after.data).toHaveProperty("error", "invalid_client");
+      expect(after.data).toHaveProperty("error", "invalid_client_attestation");
     });
   });
 });
