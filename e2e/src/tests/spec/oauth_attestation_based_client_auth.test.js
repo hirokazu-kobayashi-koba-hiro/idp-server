@@ -461,6 +461,97 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
       expect(response.status).toBe(201);
       expect(response.data).toHaveProperty("request_uri");
     });
+
+    it("authenticates the client at endpoints where the client authenticates: Token Introspection endpoint (RFC 7662).", async () => {
+      const tokenResponse = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt(),
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const params = new URLSearchParams();
+      params.append("token", tokenResponse.data.access_token);
+      params.append("client_id", attestedClient.clientId);
+      const response = await post({
+        url: serverConfig.tokenIntrospectionEndpoint,
+        body: params,
+        headers: {
+          [ATTESTATION_HEADER]: createAttestationJwt(),
+          [POP_HEADER]: createPopJwt(),
+        },
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("active", true);
+    });
+
+    it("Token Introspection endpoint rejects the request when the Client Attestation headers are absent.", async () => {
+      const tokenResponse = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt(),
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const params = new URLSearchParams();
+      params.append("token", tokenResponse.data.access_token);
+      params.append("client_id", attestedClient.clientId);
+      const response = await post({
+        url: serverConfig.tokenIntrospectionEndpoint,
+        body: params,
+      });
+      console.log(response.status, response.data);
+      // The introspection endpoint reports client authentication failure as 400 with
+      // active:false, matching rfc7662_token_introspection.test.js (#1707), rather than the
+      // 401 used by the token endpoint.
+      expect(response.status).toBe(400);
+      expect(response.data).toHaveProperty("active", false);
+      expect(response.data).toHaveProperty("error", "invalid_client");
+    });
+
+    it("authenticates the Resource Server at the introspection-extensions endpoint: the Client Attestation headers are the Resource Server's own credentials, not a forwarded artifact.", async () => {
+      const tokenResponse = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt(),
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const params = new URLSearchParams();
+      params.append("token", tokenResponse.data.access_token);
+      params.append("client_id", attestedClient.clientId);
+      const response = await post({
+        url: serverConfig.tokenIntrospectionExtensionsEndpoint,
+        body: params,
+        headers: {
+          [ATTESTATION_HEADER]: createAttestationJwt(),
+          [POP_HEADER]: createPopJwt(),
+        },
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("active", true);
+    });
+
+    it("authenticates the client at endpoints where the client authenticates: Token Revocation endpoint (RFC 7009).", async () => {
+      const tokenResponse = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt(),
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const params = new URLSearchParams();
+      params.append("token", tokenResponse.data.access_token);
+      params.append("client_id", attestedClient.clientId);
+      const response = await post({
+        url: serverConfig.tokenRevocationEndpoint,
+        body: params,
+        headers: {
+          [ATTESTATION_HEADER]: createAttestationJwt(),
+          [POP_HEADER]: createPopJwt(),
+        },
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(200);
+    });
   });
 
   describe("7.6. Client Attestation as an additional security signal (not implemented yet)", () => {

@@ -16,7 +16,10 @@
 
 package org.idp.server.core.openid.token.handler.tokenrevocation.io;
 
+import java.util.List;
 import java.util.Map;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -46,6 +49,30 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
 
   public String getClientCert() {
     return inputs.tlsClientCertPem();
+  }
+
+  public List<String> clientAttestationHeaders() {
+    return inputs.headerValues(ClientAttestationJwt.HEADER_NAME);
+  }
+
+  public List<String> clientAttestationPopHeaders() {
+    return inputs.headerValues(ClientAttestationPopJwt.HEADER_NAME);
+  }
+
+  public ClientAttestationJwt toClientAttestationJwt() {
+    List<String> headers = clientAttestationHeaders();
+    if (headers.isEmpty()) {
+      return new ClientAttestationJwt();
+    }
+    return new ClientAttestationJwt(headers.get(0));
+  }
+
+  public ClientAttestationPopJwt toClientAttestationPopJwt() {
+    List<String> headers = clientAttestationPopHeaders();
+    if (headers.isEmpty()) {
+      return new ClientAttestationPopJwt();
+    }
+    return new ClientAttestationPopJwt(headers.get(0));
   }
 
   public Tenant tenant() {
