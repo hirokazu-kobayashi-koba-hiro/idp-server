@@ -57,7 +57,7 @@ public class ClientAttestationChallenge implements Serializable, JsonReadable {
     this.createdAt = createdAt;
   }
 
-  public String challenge() {
+  public String value() {
     return challenge;
   }
 

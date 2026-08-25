@@ -29,7 +29,7 @@ class StubClientAttestationChallengeRepository implements ClientAttestationChall
 
   @Override
   public void register(Tenant tenant, ClientAttestationChallenge challenge) {
-    stored.put(challenge.challenge(), challenge);
+    stored.put(challenge.value(), challenge);
   }
 
   @Override
