@@ -77,7 +77,9 @@ class RegisteredInstanceKeyModeTest {
     repository = new StubClientInstanceQueryRepository();
     repository.put(activeInstance(instanceKey));
     authenticator =
-        new AttestJwtClientAuthAuthenticator(new ClientAttestationKeyResolvers(repository));
+        new AttestJwtClientAuthAuthenticator(
+            new ClientAttestationKeyResolvers(repository),
+            new StubClientAttestationChallengeRepository());
 
     clientConfiguration =
         JSON.read(

@@ -120,7 +120,8 @@ public class TokenIntrospectionErrorHandler {
       contents.put("error_description", exception.getMessage());
       contents.put("status_code", 400);
 
-      return new TokenIntrospectionResponse(BAD_REQUEST, contents);
+      return new TokenIntrospectionResponse(
+          BAD_REQUEST, contents, clientUnAuthorized.responseHeaders());
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {

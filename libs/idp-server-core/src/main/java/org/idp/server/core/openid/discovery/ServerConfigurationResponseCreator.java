@@ -237,6 +237,9 @@ public class ServerConfigurationResponseCreator {
           "client_attestation_pop_signing_alg_values_supported",
           authorizationServerConfiguration.clientAttestationPopSigningAlgValuesSupported());
     }
+    if (authorizationServerConfiguration.hasChallengeEndpoint()) {
+      map.put("challenge_endpoint", authorizationServerConfiguration.challengeEndpoint());
+    }
 
     // RFC 8414 - Introspection and Revocation endpoints
     if (authorizationServerConfiguration.hasIntrospectionEndpoint()) {

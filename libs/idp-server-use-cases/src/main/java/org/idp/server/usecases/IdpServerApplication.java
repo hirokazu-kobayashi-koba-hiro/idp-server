@@ -145,6 +145,8 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.oauth.*;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeApi;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeRepository;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticators;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
@@ -272,6 +274,7 @@ public class IdpServerApplication {
   ClientManagementApi clientManagementApi;
   ClientInstanceManagementApi clientInstanceManagementApi;
   ClientInstanceRegistrationApi clientInstanceRegistrationApi;
+  ClientAttestationChallengeApi clientAttestationChallengeApi;
   UserManagementApi userManagementApi;
   AuthenticationConfigurationManagementApi authenticationConfigurationManagementApi;
   AuthenticationPolicyConfigurationManagementApi authenticationPolicyConfigurationManagementApi;
@@ -1093,6 +1096,15 @@ public class IdpServerApplication {
             ClientInstanceRegistrationApi.class,
             databaseTypeProvider);
 
+    this.clientAttestationChallengeApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new ClientAttestationChallengeEntryService(
+                tenantQueryRepository,
+                authorizationServerConfigurationQueryRepository,
+                applicationComponentContainer.resolve(ClientAttestationChallengeRepository.class)),
+            ClientAttestationChallengeApi.class,
+            databaseTypeProvider);
+
     this.userManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new UserManagementEntryService(
@@ -1619,6 +1631,10 @@ public class IdpServerApplication {
 
   public ClientManagementApi clientManagementApi() {
     return clientManagementApi;
+  }
+
+  public ClientAttestationChallengeApi clientAttestationChallengeApi() {
+    return clientAttestationChallengeApi;
   }
 
   public UserManagementApi userManagementAPi() {

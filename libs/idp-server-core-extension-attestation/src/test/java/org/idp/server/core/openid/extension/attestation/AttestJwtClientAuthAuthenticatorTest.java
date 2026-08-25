@@ -64,7 +64,8 @@ class AttestJwtClientAuthAuthenticatorTest {
 
   AttestJwtClientAuthAuthenticator authenticator =
       new AttestJwtClientAuthAuthenticator(
-          new ClientAttestationKeyResolvers(new StubClientInstanceQueryRepository()));
+          new ClientAttestationKeyResolvers(new StubClientInstanceQueryRepository()),
+          new StubClientAttestationChallengeRepository());
 
   @BeforeAll
   static void setup() throws Exception {

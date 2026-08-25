@@ -14,48 +14,50 @@
  * limitations under the License.
  */
 
-package org.idp.server.adapters.springboot.application.restapi.ciba;
+package org.idp.server.adapters.springboot.application.restapi.challenge;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
-import org.idp.server.core.extension.ciba.CibaFlowApi;
-import org.idp.server.core.extension.ciba.handler.io.CibaRequestResponse;
-import org.idp.server.platform.http.HttpRequestInputs;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeApi;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeResponse;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Challenge endpoint of draft-ietf-oauth-attestation-based-client-auth-10 Section 6.1.
+ *
+ * <p>Unauthenticated by design: it hands out an opaque nonce that the Client Instance carries in
+ * the {@code challenge} claim of its next Client Attestation PoP JWT.
+ */
 @RestController
-@RequestMapping("{tenant-id}/v1/backchannel/authentications")
-public class CibaV1Api implements ParameterTransformable {
+@RequestMapping("{tenant-id}/v1/client-attestation/challenges")
+public class ClientAttestationChallengeV1Api implements ParameterTransformable {
 
-  CibaFlowApi cibaFlowApi;
+  ClientAttestationChallengeApi clientAttestationChallengeApi;
 
-  public CibaV1Api(IdpServerApplication idpServerApplication) {
-    this.cibaFlowApi = idpServerApplication.cibaFlowApi();
+  public ClientAttestationChallengeV1Api(IdpServerApplication idpServerApplication) {
+    this.clientAttestationChallengeApi = idpServerApplication.clientAttestationChallengeApi();
   }
 
-  @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-  public ResponseEntity<?> request(
-      @RequestBody(required = false) MultiValueMap<String, String> body,
+  @PostMapping
+  public ResponseEntity<?> challenge(
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
       HttpServletRequest httpServletRequest) {
 
-    HttpRequestInputs inputs = transformInputs(body, httpServletRequest);
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    CibaRequestResponse response = cibaFlowApi.request(tenantIdentifier, inputs, requestAttributes);
+    ClientAttestationChallengeResponse response =
+        clientAttestationChallengeApi.issue(tenantIdentifier, requestAttributes);
 
     HttpHeaders httpHeaders = new HttpHeaders();
-    httpHeaders.add("Content-Type", response.contentTypeValue());
-    // Section 6.2: a fresh Challenge travels back on the response of the failed request.
-    httpHeaders.setAll(response.responseHeaders());
+    httpHeaders.add("Content-Type", "application/json");
+    // Section 6.1: the response MUST be uncacheable.
+    httpHeaders.add("Cache-Control", "no-store");
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }
