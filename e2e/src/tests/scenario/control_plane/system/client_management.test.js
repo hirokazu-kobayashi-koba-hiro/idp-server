@@ -198,6 +198,81 @@ describe("client management api", () => {
     });
   });
 
+  describe("GET -> PUT round trip", () => {
+
+    /**
+     * The management API replaces the whole client on PUT, so an operator editing one field
+     * naturally does GET -> modify -> PUT. Any field the GET representation omits is therefore
+     * silently deleted on the next update. Same failure class as #1762, which fixed it for the
+     * authorization-server representation.
+     */
+    it("returns every configured field so that a GET -> PUT cycle does not drop settings", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: adminServerConfig.tokenEndpoint,
+        grantType: "password",
+        username: adminServerConfig.oauth.username,
+        password: adminServerConfig.oauth.password,
+        scope: adminServerConfig.adminClient.scope,
+        clientId: adminServerConfig.adminClient.clientId,
+        clientSecret: adminServerConfig.adminClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+      const headers = { Authorization: `Bearer ${tokenResponse.data.access_token}` };
+      const clientsUrl = `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/clients`;
+
+      const clientId = uuidv4();
+      const body = {
+        client_id: clientId,
+        client_name: "Round Trip Client",
+        redirect_uris: ["http://localhost:3000/callback"],
+        response_types: ["code"],
+        grant_types: ["authorization_code", "client_credentials"],
+        scope: "openid profile",
+        token_endpoint_auth_method: "attest_jwt_client_auth",
+        application_type: "native",
+        enabled: true,
+        extension: {
+          access_token_duration: 1800,
+          refresh_token_duration: 86400,
+          rotate_refresh_token: true,
+          client_attestation_trust_source: "attester_jwks",
+          client_attestation_attester_jwks: JSON.stringify({ keys: [] }),
+          client_instance_registration_policy: "attestation_only",
+        },
+      };
+
+      const createResponse = await postWithJson({ url: clientsUrl, headers, body });
+      expect(createResponse.status).toBe(201);
+
+      try {
+        const first = await get({ url: `${clientsUrl}/${clientId}`, headers });
+        expect(first.status).toBe(200);
+
+        // What was configured has to come back, otherwise the next PUT deletes it.
+        for (const [key, value] of Object.entries(body.extension)) {
+          expect(first.data.extension?.[key]).toEqual(value);
+        }
+
+        // Feed the representation straight back, the way an operator edit would.
+        const putResponse = await putWithJson({
+          url: `${clientsUrl}/${clientId}`,
+          headers,
+          body: first.data,
+        });
+        expect(putResponse.status).toBe(200);
+
+        const second = await get({ url: `${clientsUrl}/${clientId}`, headers });
+        expect(second.status).toBe(200);
+        for (const [key, value] of Object.entries(body.extension)) {
+          expect(second.data.extension?.[key]).toEqual(value);
+        }
+        expect(second.data.token_endpoint_auth_method).toBe("attest_jwt_client_auth");
+      } finally {
+        await deletion({ url: `${clientsUrl}/${clientId}`, headers });
+      }
+    });
+  });
+
   describe("ClientQueries and Pagination", () => {
     
     it("should support basic pagination with total_count", async () => {
