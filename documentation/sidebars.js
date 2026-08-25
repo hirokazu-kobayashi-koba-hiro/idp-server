@@ -170,7 +170,8 @@ const sidebars = {
         "content_04_protocols/protocol-05-fapi-ciba",
         "content_04_protocols/protocol-06-client-authentication",
         "content_04_protocols/protocol-07-authorization-code-device-authentication",
-        "content_04_protocols/protocol-08-self-service-contact-change"
+        "content_04_protocols/protocol-08-self-service-contact-change",
+        "content_04_protocols/protocol-08-attestation-based-client-authentication"
       ]
     },
     {
