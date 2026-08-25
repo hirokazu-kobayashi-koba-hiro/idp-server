@@ -79,7 +79,7 @@ public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
     throwExceptionIfNotContainsAttestationHeaders(context);
 
     ClientAttestationTrustSource trustSource =
-        context.clientConfiguration().extensionConfiguration().clientAttestationTrustSource();
+        context.clientConfiguration().clientAttestationTrustSource();
     if (trustSource.isUndefined()) {
       throw new ClientUnAuthorizedException(
           ClientAuthenticationType.attest_jwt_client_auth.name(),

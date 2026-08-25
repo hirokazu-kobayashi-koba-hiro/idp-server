@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
+import org.idp.server.core.openid.clientinstance.ClientAttestationTrustSource;
+import org.idp.server.core.openid.clientinstance.ClientInstanceRegistrationPolicy;
 import org.idp.server.core.openid.oauth.type.ciba.BackchannelTokenDeliveryMode;
 import org.idp.server.core.openid.oauth.type.extension.RegisteredRedirectUris;
 import org.idp.server.core.openid.oauth.type.oauth.*;
@@ -548,6 +550,28 @@ public class ClientConfiguration implements JsonReadable, Configurable {
 
   public boolean hasDefaultCibaAuthenticationInteractionType() {
     return extension.hasDefaultCibaAuthenticationInteractionType();
+  }
+
+  /**
+   * Where the Authorization Server takes its trust from when verifying this client's Client
+   * Attestation JWT. draft-ietf-oauth-attestation-based-client-auth-10 Section 9.8 leaves trust
+   * management out of scope, so it is a per-client deployment choice.
+   */
+  public ClientAttestationTrustSource clientAttestationTrustSource() {
+    return extension.clientAttestationTrustSource();
+  }
+
+  /** JWKS of the Client Attester trusted for this client. */
+  public String clientAttestationAttesterJwks() {
+    return extension.clientAttestationAttesterJwks();
+  }
+
+  public boolean hasClientAttestationAttesterJwks() {
+    return extension.hasClientAttestationAttesterJwks();
+  }
+
+  public ClientInstanceRegistrationPolicy clientInstanceRegistrationPolicy() {
+    return extension.clientInstanceRegistrationPolicy();
   }
 
   public boolean isCibaRequireRar() {

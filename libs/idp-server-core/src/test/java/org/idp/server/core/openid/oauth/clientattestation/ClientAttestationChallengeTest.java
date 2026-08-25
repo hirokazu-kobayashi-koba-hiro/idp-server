@@ -40,11 +40,11 @@ class ClientAttestationChallengeTest {
   void issuedChallengeIsBase64UrlEncodedRandomOf32Bytes() {
     ClientAttestationChallenge challenge = issuer.issue(300);
 
-    byte[] decoded = Base64.getUrlDecoder().decode(challenge.challenge());
+    byte[] decoded = Base64.getUrlDecoder().decode(challenge.value());
     assertEquals(32, decoded.length);
-    assertFalse(challenge.challenge().contains("="), "base64url without padding");
-    assertFalse(challenge.challenge().contains("+"));
-    assertFalse(challenge.challenge().contains("/"));
+    assertFalse(challenge.value().contains("="), "base64url without padding");
+    assertFalse(challenge.value().contains("+"));
+    assertFalse(challenge.value().contains("/"));
   }
 
   @Test
@@ -52,7 +52,7 @@ class ClientAttestationChallengeTest {
     ClientAttestationChallenge first = issuer.issue(300);
     ClientAttestationChallenge second = issuer.issue(300);
 
-    assertNotEquals(first.challenge(), second.challenge());
+    assertNotEquals(first.value(), second.value());
   }
 
   @Test

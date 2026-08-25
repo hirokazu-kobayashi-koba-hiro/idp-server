@@ -37,7 +37,7 @@ public class MysqlExecutor implements ClientAttestationChallengeSqlExecutor {
         """;
 
     List<Object> params = new ArrayList<>();
-    params.add(challenge.challenge());
+    params.add(challenge.value());
     params.add(tenant.identifierValue());
     params.add(challenge.expiresAt());
 

@@ -37,7 +37,7 @@ public class PostgresqlExecutor implements ClientAttestationChallengeSqlExecutor
         """;
 
     List<Object> params = new ArrayList<>();
-    params.add(challenge.challenge());
+    params.add(challenge.value());
     params.add(tenant.identifierUUID());
     params.add(challenge.expiresAt());
 

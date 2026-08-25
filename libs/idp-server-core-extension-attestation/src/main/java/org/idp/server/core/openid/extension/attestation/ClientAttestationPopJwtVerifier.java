@@ -192,12 +192,10 @@ class ClientAttestationPopJwtVerifier {
    * adopt it before requests without a challenge start failing.
    */
   private void throwExceptionIfInvalidChallenge(JsonWebTokenClaims claims) {
-    boolean required = context.serverConfiguration().isClientAttestationChallengeRequired();
-    Object claim = claims.payload().get("challenge");
-    String presented = claim instanceof String value ? value : null;
+    String presented = claims.getValue("challenge");
 
-    if (presented == null || presented.isEmpty()) {
-      if (!required) {
+    if (presented.isEmpty()) {
+      if (!context.isClientAttestationChallengeRequired()) {
         return;
       }
       throw useAttestationChallengeException(
@@ -225,7 +223,7 @@ class ClientAttestationPopJwtVerifier {
         ClientAuthenticationType.attest_jwt_client_auth.name(),
         context.requestedClientId(),
         message,
-        fresh.challenge());
+        fresh.value());
   }
 
   private InvalidClientAttestationException exception(String message) {
