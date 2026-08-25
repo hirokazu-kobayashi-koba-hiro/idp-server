@@ -192,6 +192,15 @@ public class ClientExtensionConfiguration implements JsonReadable {
       map.put(
           "default_ciba_authentication_interaction_type", defaultCibaAuthenticationInteractionType);
     map.put("ciba_require_rar", cibaRequireRar);
+    // The raw strings are exposed, not the enums: the management update replaces the whole client,
+    // so a value this representation omits is deleted by a GET -> modify -> PUT round trip, and an
+    // unknown value has to survive the round trip rather than be normalized away.
+    if (clientAttestationTrustSource != null && !clientAttestationTrustSource.isEmpty())
+      map.put("client_attestation_trust_source", clientAttestationTrustSource);
+    if (clientInstanceRegistrationPolicy != null && !clientInstanceRegistrationPolicy.isEmpty())
+      map.put("client_instance_registration_policy", clientInstanceRegistrationPolicy);
+    if (hasClientAttestationAttesterJwks())
+      map.put("client_attestation_attester_jwks", clientAttestationAttesterJwks);
     if (hasCustomProperties()) map.put("custom_properties", customProperties);
     return map;
   }

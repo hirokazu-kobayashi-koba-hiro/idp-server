@@ -454,7 +454,8 @@ describe("organization authorization server management api", () => {
           "backchannel_authentication_request_expires_in", "backchannel_authentication_polling_interval",
           "required_backchannel_auth_user_code", "backchannel_auth_user_code_type",
           "default_ciba_authentication_interaction_type", "oauth_authorization_request_expires_in",
-          "fapi_baseline_scopes", "fapi_advance_scopes", "required_identity_verification_scopes",
+          "fapi_baseline_scopes", "fapi_advance_scopes", "fapi20_scopes",
+          "required_identity_verification_scopes",
           "custom_claims_scope_mapping", "access_token_selective_user_custom_properties",
           "access_token_selective_verified_claims", "access_token_selective_standard_claims",
           "client_attestation_challenge_required", "client_attestation_challenge_duration"
