@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
-import { deletion, get, postWithJson } from "../../../lib/http";
+import { deletion, get, patchWithJson, postWithJson } from "../../../lib/http";
 import { requestToken, getAuthorizations, getUserinfo } from "../../../api/oauthClient";
 import { onboarding } from "../../../api/managementClient";
 import { generateECP256JWKS } from "../../../lib/jose";
@@ -90,6 +90,9 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
             "claims:accounts",
             "claims:branch",
             "claims:cards",
+            "management",
+            "org-management",
+            "account",
           ],
           response_types_supported: ["code", "code id_token"],
           response_modes_supported: ["query", "fragment"],
@@ -120,7 +123,8 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
           redirect_uris: [redirectUri],
           grant_types: ["authorization_code", "password"],
           response_types: ["code", "code id_token"],
-          scope: "openid profile email claims:accounts claims:branch claims:cards",
+          scope:
+            "openid profile email claims:accounts claims:branch claims:cards management org-management account",
           client_name: "Claim Value Selection Client",
           token_endpoint_auth_method: "client_secret_post",
         },
@@ -207,6 +211,7 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
 
     return {
       userinfo: userinfoResponse.data,
+      accessTokenValue: tokenResponse.data.access_token,
       accessToken: decodeJwtPayload(tokenResponse.data.access_token),
       idToken: decodeJwtPayload(tokenResponse.data.id_token),
     };
@@ -344,6 +349,46 @@ describe("Advance Use Case: claim value selection (Issue #1816)", () => {
 
     expect(withoutSelection.accessToken.accounts).toEqual(OWNED_ACCOUNTS);
     expect(withoutSelection.userinfo.accounts).toEqual(OWNED_ACCOUNTS);
+  }, 90000);
+
+  it("does not release an element the user gained after the selection was made", async () => {
+    // granted_claim_values is an allow-list: naming elements says "these and no others", and the
+    // grant keeps that list for as long as it lives. An account opened after the consent was given
+    // was never granted, so it must not start appearing on a token issued from that grant.
+    const { accessToken, accessTokenValue } = await authorizeWith({
+      granted_claim_values: { accounts: ["acc-2"] },
+    });
+    expect(accessToken.accounts).toEqual(["acc-2"]);
+
+    // The org-level user API needs a token issued by the organization's own tenant.
+    const orgTokenResponse = await requestToken({
+      endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
+      grantType: "password",
+      username: userEmail,
+      password: userPassword,
+      scope: "org-management account management",
+      clientId,
+      clientSecret,
+    });
+    expect(orgTokenResponse.status).toBe(200);
+
+    const added = [...OWNED_ACCOUNTS, "acc-4-opened-later"];
+    const patched = await patchWithJson({
+      url: `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenantId}/users/${accessToken.sub}`,
+      headers: { Authorization: `Bearer ${orgTokenResponse.data.access_token}` },
+      body: { custom_properties: { accounts: added, branch: "tokyo", cards: OWNED_CARDS } },
+    });
+    expect(patched.status).toBe(200);
+
+    // UserInfo reads the user as it is now, so it sees the added account and has to narrow it away.
+    const refreshed = await getUserinfo({
+      endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
+      authorizationHeader: { Authorization: `Bearer ${accessTokenValue}` },
+    });
+    console.log("userinfo after the user gained an account:", JSON.stringify(refreshed.data));
+
+    expect(refreshed.status).toBe(200);
+    expect(refreshed.data.accounts).toEqual(["acc-2"]);
   }, 90000);
 
   it("narrows the ID Token issued straight from the authorization endpoint", async () => {

@@ -278,13 +278,13 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
     });
 
   /**
-   * The kept elements, sent for every claim the screen offered a choice on.
+   * The kept elements, sent only for claims the user actually narrowed.
    *
-   * Sent even when nothing was declined, so the request states what the screen showed rather than
-   * leaving it to be inferred from an absent key. Each authorization carries its own consent — the
-   * grant is built from this request, not from an earlier one — so omitting the key and sending
-   * every element mean the same thing today. Saying it explicitly keeps that from being a silent
-   * dependency, and is what a reviewer reading the request sees.
+   * `granted_claim_values` is an allow-list: naming elements says "these and no others", and the
+   * grant keeps that list for as long as it lives. Sending every element would therefore not mean
+   * "no restriction" — it would pin the claim to what the user happens to own right now, so an
+   * account opened later would stop reaching a client the user never restricted. A user who
+   * declined nothing has stated no restriction, so the key is left out.
    *
    * A claim whose elements were all declined is sent as an empty list, which the server treats the
    * same as denying the claim whole. A claim whose scope was declined is left out entirely —
@@ -299,10 +299,11 @@ export const ConsentStep = ({ tenantId, id, viewData }: Props) => {
       scopeItems
         .filter((item) => item.claim && item.values)
         .filter((item) => !deniedScopes.has(item.scope))
+        .filter((item) => (deniedClaimValues[item.claim!]?.size ?? 0) > 0)
         .map((item) => [
           item.claim,
           item.values!.filter(
-            (_, index) => !(deniedClaimValues[item.claim!] ?? new Set()).has(index),
+            (_, index) => !deniedClaimValues[item.claim!].has(index),
           ),
         ]),
     );
