@@ -110,12 +110,13 @@ public class TokenIntrospectionErrorHandler {
       return new TokenIntrospectionResponse(INSUFFICIENT_SCOPE, contents);
     }
 
-    if (exception instanceof ClientUnAuthorizedException) {
-      logTokenIntrospectionError("invalid_client", "invalid_client", exception.getMessage());
+    if (exception instanceof ClientUnAuthorizedException clientUnAuthorized) {
+      logTokenIntrospectionError(
+          "invalid_client", clientUnAuthorized.errorCode(), exception.getMessage());
 
       Map<String, Object> contents = new HashMap<>();
       contents.put("active", false);
-      contents.put("error", "invalid_client");
+      contents.put("error", clientUnAuthorized.errorCode());
       contents.put("error_description", exception.getMessage());
       contents.put("status_code", 400);
 
