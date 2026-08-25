@@ -19,6 +19,7 @@ package org.idp.server.core.openid.token.handler.tokenintrospection;
 import java.util.Map;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserStatus;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationHeaderValidator;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
@@ -64,6 +65,9 @@ public class TokenIntrospectionHandler {
       TokenIntrospectionRequest request, TokenUserFindingDelegate delegate) {
     TokenIntrospectionValidator validator = new TokenIntrospectionValidator(request.toParameters());
     validator.validate();
+    new ClientAttestationHeaderValidator(
+            request.clientAttestationHeaders(), request.clientAttestationPopHeaders())
+        .validate();
 
     Tenant tenant = request.tenant();
     AuthorizationServerConfiguration authorizationServerConfiguration =
@@ -73,8 +77,11 @@ public class TokenIntrospectionHandler {
 
     TokenIntrospectionRequestContext introspectionRequestContext =
         new TokenIntrospectionRequestContext(
+            tenant,
             request.clientSecretBasic(),
             request.toClientCert(),
+            request.toClientAttestationJwt(),
+            request.toClientAttestationPopJwt(),
             request.toParameters(),
             authorizationServerConfiguration,
             clientConfiguration);
