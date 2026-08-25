@@ -1,0 +1,935 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.core.openid.oauth.configuration;
+
+import java.util.*;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionType;
+import org.idp.server.core.openid.oauth.configuration.vc.VerifiableCredentialConfiguration;
+import org.idp.server.core.openid.oauth.type.oauth.GrantType;
+import org.idp.server.core.openid.oauth.type.oauth.ResponseType;
+import org.idp.server.core.openid.oauth.type.oauth.TokenIssuer;
+import org.idp.server.platform.configuration.Configurable;
+import org.idp.server.platform.json.JsonReadable;
+
+/** ServerConfiguration */
+public class AuthorizationServerConfiguration implements JsonReadable, Configurable {
+  String issuer;
+  String authorizationEndpoint;
+  String tokenEndpoint = "";
+  String userinfoEndpoint = "";
+  String jwks;
+  String jwksUri;
+  String registrationEndpoint = "";
+  String endSessionEndpoint = "";
+  String pushedAuthorizationRequestEndpoint = "";
+  boolean requirePushedAuthorizationRequests = false;
+  List<String> scopesSupported = new ArrayList<>();
+  List<String> responseTypesSupported = new ArrayList<>();
+  List<String> responseModesSupported = new ArrayList<>();
+  List<String> grantTypesSupported = new ArrayList<>();
+  List<String> acrValuesSupported = new ArrayList<>();
+  List<String> subjectTypesSupported = new ArrayList<>();
+  List<String> idTokenSigningAlgValuesSupported = new ArrayList<>();
+  List<String> idTokenEncryptionAlgValuesSupported = new ArrayList<>();
+  List<String> idTokenEncryptionEncValuesSupported = new ArrayList<>();
+  List<String> userinfoSigningAlgValuesSupported = new ArrayList<>();
+  List<String> userinfoEncryptionAlgValuesSupported = new ArrayList<>();
+  List<String> userinfoEncryptionEncValuesSupported = new ArrayList<>();
+  List<String> requestObjectSigningAlgValuesSupported = new ArrayList<>();
+  List<String> requestObjectEncryptionAlgValuesSupported = new ArrayList<>();
+  List<String> requestObjectEncryptionEncValuesSupported = new ArrayList<>();
+  List<String> authorizationSigningAlgValuesSupported = new ArrayList<>();
+  List<String> authorizationEncryptionAlgValuesSupported = new ArrayList<>();
+  List<String> authorizationEncryptionEncValuesSupported = new ArrayList<>();
+  List<String> tokenEndpointAuthMethodsSupported = new ArrayList<>();
+  List<String> tokenEndpointAuthSigningAlgValuesSupported = new ArrayList<>();
+  List<String> displayValuesSupported = new ArrayList<>();
+  List<String> uiLocalesSupported = new ArrayList<>();
+  List<String> claimTypesSupported = new ArrayList<>();
+  List<String> claimsSupported = new ArrayList<>();
+  boolean claimsParameterSupported = true;
+  boolean requestParameterSupported = true;
+  boolean requestUriParameterSupported = true;
+  boolean requireRequestUriRegistration = true;
+  String revocationEndpoint = "";
+  List<String> revocationEndpointAuthMethodsSupported = new ArrayList<>();
+  List<String> revocationEndpointAuthSigningAlgValuesSupported = new ArrayList<>();
+  String introspectionEndpoint = "";
+  List<String> introspectionEndpointAuthMethodsSupported = new ArrayList<>();
+  List<String> introspectionEndpointAuthSigningAlgValuesSupported = new ArrayList<>();
+  List<String> codeChallengeMethodsSupported = new ArrayList<>();
+  boolean tlsClientCertificateBoundAccessTokens = false;
+  Map<String, String> mtlsEndpointAliases = new HashMap<>();
+  List<String> dpopSigningAlgValuesSupported = new ArrayList<>();
+  boolean requireSignedRequestObject = false;
+  boolean authorizationResponseIssParameterSupported = false;
+
+  // ciba
+  List<String> backchannelTokenDeliveryModesSupported = new ArrayList<>();
+  String backchannelAuthenticationEndpoint = "";
+  List<String> backchannelAuthenticationRequestSigningAlgValuesSupported = new ArrayList<>();
+  boolean backchannelUserCodeParameterSupported = false;
+  List<String> authorizationDetailsTypesSupported = new ArrayList<>();
+
+  // ida
+  boolean verifiedClaimsSupported = false;
+  List<String> trustFrameworksSupported = new ArrayList<>();
+  List<String> evidenceSupported = new ArrayList<>();
+  List<String> documentsSupported = new ArrayList<>();
+  List<String> documentsMethodsSupported = new ArrayList<>();
+  List<String> documentsCheckMethodsSupported = new ArrayList<>();
+  List<String> electronicRecordsSupported = new ArrayList<>();
+  List<String> claimsInVerifiedClaimsSupported = new ArrayList<>();
+
+  // enable/disable
+  boolean enabled = true;
+
+  // vc
+  VerifiableCredentialConfiguration credentialIssuerMetadata =
+      new VerifiableCredentialConfiguration();
+
+  public AuthorizationServerExtensionConfiguration extension =
+      new AuthorizationServerExtensionConfiguration();
+
+  public AuthorizationServerConfiguration() {}
+
+  public TokenIssuer tokenIssuer() {
+    return new TokenIssuer(issuer);
+  }
+
+  public String issuer() {
+    return issuer;
+  }
+
+  public String authorizationEndpoint() {
+    return authorizationEndpoint;
+  }
+
+  public String tokenEndpoint() {
+    return tokenEndpoint;
+  }
+
+  public String userinfoEndpoint() {
+    return userinfoEndpoint;
+  }
+
+  public String jwks() {
+    return jwks;
+  }
+
+  public boolean hasJwks() {
+    return jwks != null && !jwks.isBlank();
+  }
+
+  public String jwksUri() {
+    return jwksUri;
+  }
+
+  public String registrationEndpoint() {
+    return registrationEndpoint;
+  }
+
+  /**
+   * The {@code scopes_supported} OpenID Provider / Authorization Server metadata.
+   *
+   * <p>Per OpenID Connect Discovery 1.0 and RFC 8414 this is RECOMMENDED, <em>informational</em>
+   * metadata advertised at the discovery endpoint: "Servers MAY choose not to advertise some
+   * supported scope values even when this parameter is used." It is therefore <strong>not</strong>
+   * an enforcement allowlist — a server may grant scopes that are not listed here.
+   *
+   * <p>Per-client scope filtering (the actual control point) is performed against the client's
+   * registered scope via {@link
+   * org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration#filteredScope}.
+   */
+  public List<String> scopesSupported() {
+    return scopesSupported;
+  }
+
+  public List<String> responseTypesSupported() {
+    return responseTypesSupported;
+  }
+
+  public List<String> responseModesSupported() {
+    return responseModesSupported;
+  }
+
+  public List<String> grantTypesSupported() {
+    return grantTypesSupported;
+  }
+
+  public List<String> acrValuesSupported() {
+    return acrValuesSupported;
+  }
+
+  public List<String> subjectTypesSupported() {
+    return subjectTypesSupported;
+  }
+
+  public List<String> idTokenSigningAlgValuesSupported() {
+    return idTokenSigningAlgValuesSupported;
+  }
+
+  public List<String> idTokenEncryptionAlgValuesSupported() {
+    return idTokenEncryptionAlgValuesSupported;
+  }
+
+  public List<String> idTokenEncryptionEncValuesSupported() {
+    return idTokenEncryptionEncValuesSupported;
+  }
+
+  public List<String> userinfoSigningAlgValuesSupported() {
+    return userinfoSigningAlgValuesSupported;
+  }
+
+  public List<String> userinfoEncryptionAlgValuesSupported() {
+    return userinfoEncryptionAlgValuesSupported;
+  }
+
+  public List<String> userinfoEncryptionEncValuesSupported() {
+    return userinfoEncryptionEncValuesSupported;
+  }
+
+  public List<String> requestObjectSigningAlgValuesSupported() {
+    return requestObjectSigningAlgValuesSupported;
+  }
+
+  public List<String> requestObjectEncryptionAlgValuesSupported() {
+    return requestObjectEncryptionAlgValuesSupported;
+  }
+
+  public List<String> requestObjectEncryptionEncValuesSupported() {
+    return requestObjectEncryptionEncValuesSupported;
+  }
+
+  public List<String> authorizationSigningAlgValuesSupported() {
+    return authorizationSigningAlgValuesSupported;
+  }
+
+  public List<String> authorizationEncryptionAlgValuesSupported() {
+    return authorizationEncryptionAlgValuesSupported;
+  }
+
+  public List<String> authorizationEncryptionEncValuesSupported() {
+    return authorizationEncryptionEncValuesSupported;
+  }
+
+  public List<String> tokenEndpointAuthMethodsSupported() {
+    return tokenEndpointAuthMethodsSupported;
+  }
+
+  public boolean isSupportedClientAuthenticationType(String value) {
+    return tokenEndpointAuthMethodsSupported.contains(value);
+  }
+
+  public List<String> tokenEndpointAuthSigningAlgValuesSupported() {
+    return tokenEndpointAuthSigningAlgValuesSupported;
+  }
+
+  public List<String> displayValuesSupported() {
+    return displayValuesSupported;
+  }
+
+  public List<String> uiLocalesSupported() {
+    return uiLocalesSupported;
+  }
+
+  public List<String> claimTypesSupported() {
+    return claimTypesSupported;
+  }
+
+  public List<String> claimsSupported() {
+    return claimsSupported;
+  }
+
+  public boolean claimsParameterSupported() {
+    return claimsParameterSupported;
+  }
+
+  public boolean requestParameterSupported() {
+    return requestParameterSupported;
+  }
+
+  public boolean requestUriParameterSupported() {
+    return requestUriParameterSupported;
+  }
+
+  public boolean requireRequestUriRegistration() {
+    return requireRequestUriRegistration;
+  }
+
+  public String revocationEndpoint() {
+    return revocationEndpoint;
+  }
+
+  public List<String> revocationEndpointAuthMethodsSupported() {
+    return revocationEndpointAuthMethodsSupported;
+  }
+
+  public List<String> revocationEndpointAuthSigningAlgValuesSupported() {
+    return revocationEndpointAuthSigningAlgValuesSupported;
+  }
+
+  public String introspectionEndpoint() {
+    return introspectionEndpoint;
+  }
+
+  public List<String> introspectionEndpointAuthMethodsSupported() {
+    return introspectionEndpointAuthMethodsSupported;
+  }
+
+  public List<String> introspectionEndpointAuthSigningAlgValuesSupported() {
+    return introspectionEndpointAuthSigningAlgValuesSupported;
+  }
+
+  public List<String> codeChallengeMethodsSupported() {
+    return codeChallengeMethodsSupported;
+  }
+
+  public boolean isTlsClientCertificateBoundAccessTokens() {
+    return tlsClientCertificateBoundAccessTokens;
+  }
+
+  public Map<String, String> mtlsEndpointAliases() {
+    return mtlsEndpointAliases;
+  }
+
+  public boolean hasMtlsEndpointAliases() {
+    return mtlsEndpointAliases != null && !mtlsEndpointAliases.isEmpty();
+  }
+
+  public List<String> dpopSigningAlgValuesSupported() {
+    return dpopSigningAlgValuesSupported;
+  }
+
+  public boolean hasDpopSigningAlgValuesSupported() {
+    return dpopSigningAlgValuesSupported != null && !dpopSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean isDPoPSupported() {
+    return hasDpopSigningAlgValuesSupported();
+  }
+
+  public boolean requireSignedRequestObject() {
+    return requireSignedRequestObject;
+  }
+
+  public boolean authorizationResponseIssParameterSupported() {
+    return authorizationResponseIssParameterSupported;
+  }
+
+  public boolean hasFapiBaselineScope(Set<String> scopes) {
+    return extension.hasFapiBaselineScope(scopes);
+  }
+
+  public boolean hasFapiAdvanceScope(Set<String> scopes) {
+    return extension.hasFapiAdvanceScope(scopes);
+  }
+
+  public boolean hasFapi20Scope(Set<String> scopes) {
+    return extension.hasFapi20Scope(scopes);
+  }
+
+  public boolean hasRequiredIdentityVerificationScope(Set<String> scopes) {
+    return extension.hasRequiredIdentityVerificationScope(scopes);
+  }
+
+  public List<String> requiredIdentityVerificationScope() {
+    return extension.requiredIdentityVerificationScopes();
+  }
+
+  public boolean isIdentifierAccessTokenType() {
+    return extension.isIdentifierAccessTokenType();
+  }
+
+  public int authorizationCodeValidDuration() {
+    return extension.authorizationCodeValidDuration();
+  }
+
+  public String tokenSignedKeyId() {
+    return extension.tokenSignedKeyId();
+  }
+
+  public String idTokenSignedKeyId() {
+    return extension.idTokenSignedKeyId();
+  }
+
+  public long accessTokenDuration() {
+    return extension.accessTokenDuration();
+  }
+
+  public long refreshTokenDuration() {
+    return extension.refreshTokenDuration();
+  }
+
+  public RefreshTokenStrategy refreshTokenIssuingStrategy() {
+    return extension.refreshTokenStrategy();
+  }
+
+  public boolean isFixedRefreshTokenStrategy() {
+    return extension.isFixedRefreshTokenStrategy();
+  }
+
+  public boolean isExtendsRefreshTokenStrategy() {
+    return extension.isExtendsRefreshTokenStrategy();
+  }
+
+  public boolean isRotateRefreshToken() {
+    return extension.isRotateRefreshToken();
+  }
+
+  public long idTokenDuration() {
+    return extension.idTokenDuration();
+  }
+
+  public boolean isIdTokenStrictMode() {
+    return extension.idTokenStrictMode();
+  }
+
+  public boolean hasTokenEndpoint() {
+    return Objects.nonNull(tokenEndpoint) && !tokenEndpoint.isEmpty();
+  }
+
+  public boolean hasUserinfoEndpoint() {
+    return Objects.nonNull(userinfoEndpoint) && !userinfoEndpoint.isEmpty();
+  }
+
+  public boolean hasRegistrationEndpoint() {
+    return Objects.nonNull(registrationEndpoint) && !registrationEndpoint.isEmpty();
+  }
+
+  public String endSessionEndpoint() {
+    return endSessionEndpoint;
+  }
+
+  public boolean hasEndSessionEndpoint() {
+    return Objects.nonNull(endSessionEndpoint) && !endSessionEndpoint.isEmpty();
+  }
+
+  public String pushedAuthorizationRequestEndpoint() {
+    return pushedAuthorizationRequestEndpoint;
+  }
+
+  /**
+   * RFC 9126 Section 5 {@code require_pushed_authorization_requests}. Advertised in discovery
+   * metadata and enforced across all profiles by {@code RequirePushedAuthorizationRequestVerifier}:
+   * when {@code true}, direct authorization requests are rejected and only PAR-originated requests
+   * are accepted. FAPI 2.0 tenants require PAR through {@code FapiSecurity20Verifier} regardless of
+   * this flag.
+   */
+  public boolean requirePushedAuthorizationRequests() {
+    return requirePushedAuthorizationRequests;
+  }
+
+  public boolean hasPushedAuthorizationRequestEndpoint() {
+    return Objects.nonNull(pushedAuthorizationRequestEndpoint)
+        && !pushedAuthorizationRequestEndpoint.isEmpty();
+  }
+
+  public boolean isSupportedResponseType(ResponseType responseType) {
+    return responseTypesSupported.contains(responseType.value());
+  }
+
+  public boolean hasScopesSupported() {
+    return !scopesSupported.isEmpty();
+  }
+
+  public boolean hasResponseTypesSupported() {
+    return !responseTypesSupported.isEmpty();
+  }
+
+  public boolean hasResponseModesSupported() {
+    return !responseModesSupported.isEmpty();
+  }
+
+  public boolean hasGrantTypesSupported() {
+    return !grantTypesSupported.isEmpty();
+  }
+
+  public boolean hasAcrValuesSupported() {
+    return !acrValuesSupported.isEmpty();
+  }
+
+  public boolean hasSubjectTypesSupported() {
+    return !subjectTypesSupported.isEmpty();
+  }
+
+  public boolean hasIdTokenSigningAlgValuesSupported() {
+    return !idTokenSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasIdTokenEncryptionAlgValuesSupported() {
+    return !idTokenEncryptionAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasIdTokenEncryptionEncValuesSupported() {
+    return !idTokenEncryptionEncValuesSupported.isEmpty();
+  }
+
+  public boolean hasUserinfoSigningAlgValuesSupported() {
+    return !userinfoSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasUserinfoEncryptionAlgValuesSupported() {
+    return !userinfoEncryptionAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasUserinfoEncryptionEncValuesSupported() {
+    return !userinfoEncryptionEncValuesSupported.isEmpty();
+  }
+
+  public boolean hasRequestObjectSigningAlgValuesSupported() {
+    return !requestObjectSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasRequestObjectEncryptionAlgValuesSupported() {
+    return !requestObjectEncryptionAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasRequestObjectEncryptionEncValuesSupported() {
+    return !requestObjectEncryptionEncValuesSupported.isEmpty();
+  }
+
+  public boolean hasAuthorizationSigningAlgValuesSupported() {
+    return !authorizationSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasAuthorizationEncryptionAlgValuesSupported() {
+    return !authorizationEncryptionAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasAuthorizationEncryptionEncValuesSupported() {
+    return !authorizationEncryptionEncValuesSupported.isEmpty();
+  }
+
+  public boolean hasTokenEndpointAuthMethodsSupported() {
+    return !tokenEndpointAuthMethodsSupported.isEmpty();
+  }
+
+  public boolean hasTokenEndpointAuthSigningAlgValuesSupported() {
+    return !tokenEndpointAuthSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasDisplayValuesSupported() {
+    return !displayValuesSupported.isEmpty();
+  }
+
+  public boolean hasUiLocalesSupported() {
+    return !uiLocalesSupported.isEmpty();
+  }
+
+  public boolean hasClaimTypesSupported() {
+    return !claimTypesSupported.isEmpty();
+  }
+
+  public boolean hasClaimsSupported() {
+    return !claimsSupported.isEmpty();
+  }
+
+  public boolean hasRevocationEndpoint() {
+    return Objects.nonNull(revocationEndpoint) && !revocationEndpoint.isEmpty();
+  }
+
+  public boolean hasRevocationEndpointAuthMethodsSupported() {
+    return !revocationEndpointAuthMethodsSupported.isEmpty();
+  }
+
+  public boolean hasRevocationEndpointAuthSigningAlgValuesSupported() {
+    return !revocationEndpointAuthSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasIntrospectionEndpoint() {
+    return Objects.nonNull(introspectionEndpoint) && !introspectionEndpoint.isEmpty();
+  }
+
+  public boolean hasIntrospectionEndpointAuthMethodsSupported() {
+    return !introspectionEndpointAuthMethodsSupported.isEmpty();
+  }
+
+  public boolean hasIntrospectionEndpointAuthSigningAlgValuesSupported() {
+    return !introspectionEndpointAuthSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean hasCodeChallengeMethodsSupported() {
+    return !codeChallengeMethodsSupported.isEmpty();
+  }
+
+  public List<String> backchannelTokenDeliveryModesSupported() {
+    return backchannelTokenDeliveryModesSupported;
+  }
+
+  public boolean hasBackchannelTokenDeliveryModesSupported() {
+    return !backchannelTokenDeliveryModesSupported.isEmpty();
+  }
+
+  public String backchannelAuthenticationEndpoint() {
+    return backchannelAuthenticationEndpoint;
+  }
+
+  public boolean hasBackchannelAuthenticationEndpoint() {
+    return Objects.nonNull(backchannelAuthenticationEndpoint)
+        && !backchannelAuthenticationEndpoint.isEmpty();
+  }
+
+  public List<String> backchannelAuthenticationRequestSigningAlgValuesSupported() {
+    return backchannelAuthenticationRequestSigningAlgValuesSupported;
+  }
+
+  public boolean hasBackchannelAuthenticationRequestSigningAlgValuesSupported() {
+    return !backchannelAuthenticationRequestSigningAlgValuesSupported.isEmpty();
+  }
+
+  public boolean backchannelUserCodeParameterSupported() {
+    return backchannelUserCodeParameterSupported;
+  }
+
+  public boolean hasBackchannelUserCodeParameterSupported() {
+    return Objects.nonNull(backchannelUserCodeParameterSupported);
+  }
+
+  public boolean isSupportedGrantType(GrantType grantType) {
+    return grantTypesSupported.contains(grantType.value());
+  }
+
+  public long defaultMaxAge() {
+    return extension.defaultMaxAge();
+  }
+
+  public List<String> authorizationDetailsTypesSupported() {
+    return authorizationDetailsTypesSupported;
+  }
+
+  public boolean hasAuthorizationDetailsTypesSupported() {
+    return authorizationDetailsTypesSupported != null
+        && !authorizationDetailsTypesSupported.isEmpty();
+  }
+
+  public boolean isSupportedAuthorizationDetailsType(String type) {
+    return authorizationDetailsTypesSupported.contains(type);
+  }
+
+  public long authorizationResponseDuration() {
+    return extension.authorizationResponseDuration();
+  }
+
+  public boolean hasKey(String algorithm) {
+    return jwks.contains(algorithm);
+  }
+
+  public VerifiableCredentialConfiguration credentialIssuerMetadata() {
+    return credentialIssuerMetadata;
+  }
+
+  public boolean hasCredentialIssuerMetadata() {
+    return credentialIssuerMetadata.exists();
+  }
+
+  public AuthenticationInteractionType defaultCibaAuthenticationInteractionType() {
+    return extension.defaultCibaAuthenticationInteractionType();
+  }
+
+  public int backchannelAuthenticationRequestExpiresIn() {
+    return extension.backchannelAuthenticationRequestExpiresIn();
+  }
+
+  public int backchannelAuthenticationPollingInterval() {
+    return extension.backchannelAuthenticationPollingInterval();
+  }
+
+  public boolean requiredBackchannelAuthUserCode() {
+    return extension.requiredBackchannelAuthUserCode();
+  }
+
+  public String backchannelAuthUserCodeType() {
+    return extension.backchannelAuthUserCodeType();
+  }
+
+  public int oauthAuthorizationRequestExpiresIn() {
+    return extension.oauthAuthorizationRequestExpiresIn();
+  }
+
+  public int pushedAuthorizationRequestExpiresIn() {
+    return extension.pushedAuthorizationRequestExpiresIn();
+  }
+
+  public boolean enabledCustomClaimsScopeMapping() {
+    return extension.enabledCustomClaimsScopeMapping();
+  }
+
+  public boolean enabledAccessTokenSelectiveUserCustomProperties() {
+    return extension.enabledAccessTokenSelectiveUserCustomProperties();
+  }
+
+  public boolean enabledAccessTokenSelectiveVerifiedClaims() {
+    return extension.enabledAccessTokenSelectiveVerifiedClaims();
+  }
+
+  public boolean enabledAccessTokenSelectiveStandardClaims() {
+    return extension.enabledAccessTokenSelectiveStandardClaims();
+  }
+
+  public boolean verifiedClaimsSupported() {
+    return verifiedClaimsSupported;
+  }
+
+  public List<String> trustFrameworksSupported() {
+    return trustFrameworksSupported;
+  }
+
+  public boolean hasTrustFrameworksSupported() {
+    return trustFrameworksSupported != null && !trustFrameworksSupported.isEmpty();
+  }
+
+  public List<String> evidenceSupported() {
+    return evidenceSupported;
+  }
+
+  public boolean hasEvidenceSupported() {
+    return evidenceSupported != null && !evidenceSupported.isEmpty();
+  }
+
+  public List<String> documentsSupported() {
+    return documentsSupported;
+  }
+
+  public boolean hasDocumentsSupported() {
+    return documentsSupported != null && !documentsSupported.isEmpty();
+  }
+
+  public List<String> documentsMethodsSupported() {
+    return documentsMethodsSupported;
+  }
+
+  public boolean hasDocumentsMethodsSupported() {
+    return documentsMethodsSupported != null && !documentsMethodsSupported.isEmpty();
+  }
+
+  public List<String> documentsCheckMethodsSupported() {
+    return documentsCheckMethodsSupported;
+  }
+
+  public boolean hasDocumentsCheckMethodsSupported() {
+    return documentsCheckMethodsSupported != null && !documentsCheckMethodsSupported.isEmpty();
+  }
+
+  public List<String> electronicRecordsSupported() {
+    return electronicRecordsSupported;
+  }
+
+  public boolean hasElectronicRecordsSupported() {
+    return electronicRecordsSupported != null && !electronicRecordsSupported.isEmpty();
+  }
+
+  public List<String> claimsInVerifiedClaimsSupported() {
+    return claimsInVerifiedClaimsSupported;
+  }
+
+  public boolean hasClaimsInVerifiedClaimsSupported() {
+    return claimsInVerifiedClaimsSupported != null && !claimsInVerifiedClaimsSupported.isEmpty();
+  }
+
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("issuer", issuer);
+    map.put("authorization_endpoint", authorizationEndpoint);
+    if (hasTokenEndpoint()) {
+      map.put("token_endpoint", tokenEndpoint);
+    }
+    if (hasUserinfoEndpoint()) {
+      map.put("userinfo_endpoint", userinfoEndpoint);
+    }
+    if (hasRegistrationEndpoint()) {
+      map.put("registration_endpoint", registrationEndpoint);
+    }
+    if (hasEndSessionEndpoint()) {
+      map.put("end_session_endpoint", endSessionEndpoint);
+    }
+    map.put("jwks_uri", jwksUri());
+    // #1762: the management update is a full replacement, so every field has to be round-trippable
+    // via GET -> modify -> PUT. Leaving jwks out made a caller drop the signing keys of the tenant
+    // with a single save, which stops all token issuance for it.
+    if (hasJwks()) {
+      map.put("jwks", jwks);
+    }
+    if (hasScopesSupported()) {
+      map.put("scopes_supported", scopesSupported);
+    }
+    map.put("response_types_supported", responseTypesSupported);
+    if (hasResponseModesSupported()) {
+      map.put("response_modes_supported", responseModesSupported);
+    }
+    if (hasGrantTypesSupported()) {
+      map.put("grant_types_supported", grantTypesSupported);
+    }
+    if (hasAcrValuesSupported()) {
+      map.put("acr_values_supported", acrValuesSupported);
+    }
+    map.put("subject_types_supported", subjectTypesSupported);
+    map.put("id_token_signing_alg_values_supported", idTokenSigningAlgValuesSupported);
+    if (hasIdTokenEncryptionAlgValuesSupported()) {
+      map.put("id_token_encryption_alg_values_supported", idTokenEncryptionAlgValuesSupported);
+    }
+    if (hasIdTokenEncryptionEncValuesSupported()) {
+      map.put("id_token_encryption_enc_values_supported", idTokenEncryptionEncValuesSupported);
+    }
+    if (hasUserinfoSigningAlgValuesSupported()) {
+      map.put("userinfo_signing_alg_values_supported", userinfoSigningAlgValuesSupported);
+    }
+    if (hasUserinfoEncryptionAlgValuesSupported()) {
+      map.put("userinfo_encryption_alg_values_supported", userinfoEncryptionAlgValuesSupported);
+    }
+    if (hasUserinfoEncryptionEncValuesSupported()) {
+      map.put("userinfo_encryption_enc_values_supported", userinfoEncryptionEncValuesSupported);
+    }
+    if (hasRequestObjectSigningAlgValuesSupported()) {
+      map.put(
+          "request_object_signing_alg_values_supported", requestObjectSigningAlgValuesSupported);
+    }
+    if (hasRequestObjectEncryptionAlgValuesSupported()) {
+      map.put(
+          "request_object_encryption_alg_values_supported",
+          requestObjectEncryptionAlgValuesSupported);
+    }
+    if (hasRequestObjectEncryptionEncValuesSupported()) {
+      map.put(
+          "request_object_encryption_enc_values_supported",
+          requestObjectEncryptionEncValuesSupported);
+    }
+    if (hasTokenEndpointAuthMethodsSupported()) {
+      map.put("token_endpoint_auth_methods_supported", tokenEndpointAuthMethodsSupported);
+    }
+    if (hasTokenEndpointAuthSigningAlgValuesSupported()) {
+      map.put(
+          "token_endpoint_auth_signing_alg_values_supported",
+          tokenEndpointAuthSigningAlgValuesSupported);
+    }
+    if (hasDisplayValuesSupported()) {
+      map.put("display_values_supported", displayValuesSupported);
+    }
+    if (hasUiLocalesSupported()) {
+      map.put("ui_locales_supported", uiLocalesSupported);
+    }
+    if (hasClaimTypesSupported()) {
+      map.put("claim_types_supported", claimTypesSupported);
+    }
+    if (hasClaimsSupported()) {
+      map.put("claims_supported", claimsSupported);
+    }
+    map.put("claims_parameter_supported", claimsParameterSupported);
+    map.put("request_parameter_supported", requestParameterSupported);
+    map.put("request_uri_parameter_supported", requestUriParameterSupported);
+    map.put("require_request_uri_registration", requireRequestUriRegistration);
+    if (hasPushedAuthorizationRequestEndpoint()) {
+      map.put("pushed_authorization_request_endpoint", pushedAuthorizationRequestEndpoint);
+    }
+    if (hasCodeChallengeMethodsSupported()) {
+      map.put("code_challenge_methods_supported", codeChallengeMethodsSupported);
+    }
+    map.put("require_signed_request_object", requireSignedRequestObject);
+    map.put(
+        "authorization_response_iss_parameter_supported",
+        authorizationResponseIssParameterSupported);
+    if (hasAuthorizationSigningAlgValuesSupported()) {
+      map.put("authorization_signing_alg_values_supported", authorizationSigningAlgValuesSupported);
+    }
+    map.put("tls_client_certificate_bound_access_tokens", tlsClientCertificateBoundAccessTokens);
+    if (hasMtlsEndpointAliases()) {
+      map.put("mtls_endpoint_aliases", mtlsEndpointAliases);
+    }
+    if (hasDpopSigningAlgValuesSupported()) {
+      map.put("dpop_signing_alg_values_supported", dpopSigningAlgValuesSupported);
+    }
+    if (hasBackchannelTokenDeliveryModesSupported()) {
+      map.put("backchannel_token_delivery_modes_supported", backchannelTokenDeliveryModesSupported);
+    }
+    if (hasBackchannelAuthenticationEndpoint()) {
+      map.put("backchannel_authentication_endpoint", backchannelAuthenticationEndpoint);
+    }
+    if (hasBackchannelAuthenticationRequestSigningAlgValuesSupported()) {
+      map.put(
+          "backchannel_authentication_request_signing_alg_values_supported",
+          backchannelAuthenticationRequestSigningAlgValuesSupported);
+    }
+    if (hasBackchannelUserCodeParameterSupported()) {
+      map.put("backchannel_user_code_parameter_supported", backchannelUserCodeParameterSupported);
+    }
+    map.put("verified_claims_supported", verifiedClaimsSupported);
+    map.put("trust_frameworks_supported", trustFrameworksSupported);
+    map.put("evidence_supported", evidenceSupported);
+    map.put("documents_supported", documentsSupported);
+    map.put("documents_methods_supported", documentsMethodsSupported);
+    map.put("documents_check_methods_supported", documentsCheckMethodsSupported);
+    map.put("electronic_records_supported", electronicRecordsSupported);
+    map.put("claims_in_verified_claims_supported", claimsInVerifiedClaimsSupported);
+    // #1762: the management update is a full replacement, so anything missing here is dropped by a
+    // GET -> modify -> PUT round trip. require_pushed_authorization_requests in particular used to
+    // fall back to false on such a save, silently lifting the PAR requirement of the tenant.
+    map.put("require_pushed_authorization_requests", requirePushedAuthorizationRequests);
+    if (hasAuthorizationEncryptionAlgValuesSupported()) {
+      map.put(
+          "authorization_encryption_alg_values_supported",
+          authorizationEncryptionAlgValuesSupported);
+    }
+    if (hasAuthorizationEncryptionEncValuesSupported()) {
+      map.put(
+          "authorization_encryption_enc_values_supported",
+          authorizationEncryptionEncValuesSupported);
+    }
+    if (hasRevocationEndpoint()) {
+      map.put("revocation_endpoint", revocationEndpoint);
+    }
+    if (hasRevocationEndpointAuthMethodsSupported()) {
+      map.put("revocation_endpoint_auth_methods_supported", revocationEndpointAuthMethodsSupported);
+    }
+    if (hasRevocationEndpointAuthSigningAlgValuesSupported()) {
+      map.put(
+          "revocation_endpoint_auth_signing_alg_values_supported",
+          revocationEndpointAuthSigningAlgValuesSupported);
+    }
+    if (hasIntrospectionEndpoint()) {
+      map.put("introspection_endpoint", introspectionEndpoint);
+    }
+    if (hasIntrospectionEndpointAuthMethodsSupported()) {
+      map.put(
+          "introspection_endpoint_auth_methods_supported",
+          introspectionEndpointAuthMethodsSupported);
+    }
+    if (hasIntrospectionEndpointAuthSigningAlgValuesSupported()) {
+      map.put(
+          "introspection_endpoint_auth_signing_alg_values_supported",
+          introspectionEndpointAuthSigningAlgValuesSupported);
+    }
+    if (hasAuthorizationDetailsTypesSupported()) {
+      map.put("authorization_details_types_supported", authorizationDetailsTypesSupported);
+    }
+    // credential_issuer_metadata is deliberately left out: the verifiable credential model is
+    // provisional and does not hold every member of the stored metadata, so emitting it here would
+    // advertise a round trip that silently drops the parts the model does not know about.
+    map.put("enabled", enabled);
+    map.put("extension", extension.toMap());
+    return map;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  @Override
+  public boolean exists() {
+    return issuer != null && !issuer.isEmpty();
+  }
+}

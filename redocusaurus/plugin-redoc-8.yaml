@@ -1101,21 +1101,81 @@ components:
       additionalProperties: true
     AuthenticationStepDefinition:
       type: object
-      description: Authentication step definition
+      description: >
+        多段階認証の1ステップの定義。
+
+
+        実装は `AuthenticationStepDefinition`（`libs/idp-server-core`）。
+
+        設定方法は
+        [認証ポリシー設定ガイド](../docs/content_06_developer-guide/05-configuration/authentication-policy.md#step-definitions多段階認証)
+        を参照。
+      required:
+        - method
       properties:
-        step:
-          type: integer
-          description: Step number in the authentication flow
         method:
           type: string
-          description: Authentication method for this step
-        required:
+          description: 認証方式。
+          example: password
+        interaction:
+          type: string
+          description: |
+            オプション。`method` 内の特定の interaction にこの定義を限定する。
+
+            `external-api-authentication` は複数の interaction を1つの設定に持ち、
+            どれを実行しても method は `external-api` となる。指定しない場合、この
+            定義は当該 method の全 interaction に適用される。
+
+            解決順は「method + interaction 一致」→「method のみ一致（interaction 未指定）」→
+            「該当なし」。
+          example: identify
+        order:
+          type: integer
+          description: |
+            実行順序（小さい値が先）。
+
+            注: 現時点では評価に使用されていない。
+          example: 1
+        requires_user:
           type: boolean
-          description: Whether this step is required
-        configuration:
-          type: object
-          description: Step-specific configuration
-          additionalProperties: true
+          default: true
+          description: |
+            ユーザーが事前に識別されている必要があるか。
+
+            `false` は 1st factor（ユーザー識別フェーズ）、`true` は 2nd factor
+            （認証検証フェーズ）を表す。
+          example: false
+        allow_registration:
+          type: boolean
+          default: false
+          description: |
+            このステップで新規ユーザー登録を許可するか。`requires_user` が false の
+            ときのみ有効。
+        registration_mode:
+          type: string
+          default: allowed
+          enum:
+            - allowed
+            - required
+            - disabled
+          description: |
+            登録の可否。`allowed` は既存・新規の両方、`required` は新規のみ、
+            `disabled` は既存のみ。
+
+            注: 現時点では評価に使用されていない。
+        user_identity_source:
+          type: string
+          description: |
+            ユーザー識別に使用する属性。
+
+            注: 現時点では評価に使用されていない。
+          example: email
+        verification_source:
+          type: string
+          description: |
+            2nd factor の検証に使用する属性。
+
+            注: 現時点では評価に使用されていない。
       additionalProperties: false
     OrganizationAuthenticationInteraction:
       type: object

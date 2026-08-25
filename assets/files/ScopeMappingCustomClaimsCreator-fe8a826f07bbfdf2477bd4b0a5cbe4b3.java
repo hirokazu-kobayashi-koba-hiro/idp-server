@@ -1,0 +1,110 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.core.openid.token.plugin;
+
+import java.util.HashMap;
+import java.util.Map;
+import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.type.oauth.Scopes;
+
+public class ScopeMappingCustomClaimsCreator implements AccessTokenCustomClaimsCreator {
+
+  private static final String prefix = "claims:";
+
+  @Override
+  public boolean shouldCreate(
+      AuthorizationGrant authorizationGrant,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
+      ClientCredentials clientCredentials) {
+
+    if (!authorizationServerConfiguration.enabledCustomClaimsScopeMapping()) {
+      return false;
+    }
+
+    return authorizationGrant.scopes().hasScopeMatchedPrefix(prefix);
+  }
+
+  @Override
+  public Map<String, Object> create(
+      AuthorizationGrant authorizationGrant,
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration,
+      ClientCredentials clientCredentials) {
+
+    User user = authorizationGrant.user();
+    Map<String, Object> claims = new HashMap<>();
+
+    Scopes scopes = authorizationGrant.scopes();
+    Scopes filteredClaimsScope = scopes.filterMatchedPrefix(prefix);
+    // Narrowed by the per-element consent recorded on the grant, so an element the End-User did
+    // not keep never reaches the claim — whichever user instance this creator was handed. (#1816)
+    Map<String, Object> customProperties =
+        authorizationGrant.grantedClaimValues().narrow(user.customProperties().values());
+
+    for (String scope : filteredClaimsScope) {
+      String claimName = scope.substring(prefix.length());
+
+      // A null custom property value must be omitted, not returned as "key": null
+      // (OIDC Core §5.3.2). Issue #1699.
+      Object customValue = customProperties.get(claimName);
+      if (customValue != null) {
+        claims.put(claimName, customValue);
+      }
+
+      if (claimName.equals("status")) {
+        claims.put("status", user.status().name());
+      }
+
+      if (claimName.equals("ex_sub") && user.hasExternalUserId()) {
+        claims.put("ex_sub", user.externalUserId());
+      }
+
+      if (claimName.equals("provider_id") && user.hasProviderId()) {
+        claims.put("provider_id", user.providerId());
+      }
+
+      if (claimName.equals("roles") && user.hasRoles()) {
+        claims.put("roles", user.roleNameAsListString());
+      }
+
+      if (claimName.equals("permissions") && user.hasPermissions()) {
+        claims.put("permissions", user.permissions());
+      }
+
+      if (claimName.equals("assigned_tenants") && user.hasAssignedTenants()) {
+        claims.put("assigned_tenants", user.assignedTenants());
+        claims.put("current_tenant_id", user.currentTenantIdentifier().value());
+      }
+
+      if (claimName.equals("assigned_organizations") && user.hasAssignedOrganizations()) {
+        claims.put("assigned_organizations", user.assignedOrganizations());
+        claims.put("current_organization_id", user.currentTenantIdentifier().value());
+      }
+
+      if (claimName.equals("authentication_devices") && user.hasAuthenticationDevices()) {
+        claims.put("authentication_devices", user.authenticationDevicesListAsMap());
+      }
+    }
+
+    return claims;
+  }
+}
