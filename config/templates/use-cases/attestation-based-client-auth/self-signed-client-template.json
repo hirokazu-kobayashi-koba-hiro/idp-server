@@ -1,0 +1,23 @@
+{
+  "client_id": "${SELF_SIGNED_CLIENT_ID}",
+  "client_id_alias": "${SELF_SIGNED_CLIENT_ALIAS}",
+  "redirect_uris": [
+    "${REDIRECT_URI}"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "client_credentials"
+  ],
+  "scope": "openid profile email account",
+  "client_name": "${SELF_SIGNED_CLIENT_NAME}",
+  "token_endpoint_auth_method": "attest_jwt_client_auth",
+  "application_type": "native",
+  "extension": {
+    "client_attestation_trust_source": "registered_instance_key",
+    "client_instance_registration_policy": "${CLIENT_INSTANCE_REGISTRATION_POLICY}"
+  }
+}
