@@ -35,5 +35,25 @@
       "Bash(git push --force:*)",
       "Bash(git reset --hard:*)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // \"\"' | grep -qE -e '(^|[;&|][[:space:]]*)git[[:space:]]+add[[:space:]]+(-A|--all|\\.([[:space:]]|$))' -e '(^|[;&|][[:space:]]*)git[[:space:]]+commit[[:space:]]+(-[a-zA-Z]*a[a-zA-Z]*([[:space:]]|$)|--all([[:space:]]|$))' && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"作業ツリーを一括で拾う形は、意図しないファイルを巻き込むため禁止です。コミットするパスを明示的に指定してください。\"}}' || true",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // \"\"' | grep -qE 'git[[:space:]]+commit' && printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":%s}}' \"$(git -C \"${CLAUDE_PROJECT_DIR:-.}\" status --porcelain | sed 's/^/  /' | { printf 'コミット前チェック — git status --porcelain:\\n'; cat; printf '\\nステージ済みのものだけがコミットされます。意図しないファイルが混ざっていないか確認してください。\\n'; } | jq -Rs .)\" || true",
+            "timeout": 10,
+            "statusMessage": "コミット対象を確認中"
+          }
+        ]
+      }
+    ]
   }
 }
