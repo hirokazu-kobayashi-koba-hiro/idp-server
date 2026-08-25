@@ -21,7 +21,8 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientAttestationTrustSource;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
-import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.InvalidClientAttestationException;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseFreshAttestationException;
 import org.idp.server.core.openid.oauth.dpop.JwkThumbprint;
 import org.idp.server.core.openid.oauth.dpop.JwkThumbprintCalculator;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
@@ -174,7 +175,7 @@ class ClientAttestationJwtVerifier {
       throw exception("client attestation jwt must contain exp claim");
     }
     if (claims.getExp().before(new Date(SystemDateTime.currentEpochMilliSecond()))) {
-      throw exception("client attestation jwt is expired");
+      throw staleAttestationException("client attestation jwt is expired");
     }
   }
 
@@ -240,18 +241,29 @@ class ClientAttestationJwtVerifier {
     }
   }
 
-  private ClientUnAuthorizedException exception(String message) {
-    return new ClientUnAuthorizedException(
+  private InvalidClientAttestationException exception(String message) {
+    return new InvalidClientAttestationException(
         ClientAuthenticationType.attest_jwt_client_auth.name(),
         context.requestedClientId(),
         message);
   }
 
-  private ClientUnAuthorizedException exception(String message, Throwable cause) {
-    return new ClientUnAuthorizedException(
+  private InvalidClientAttestationException exception(String message, Throwable cause) {
+    return new InvalidClientAttestationException(
         ClientAuthenticationType.attest_jwt_client_auth.name(),
         context.requestedClientId(),
         message,
         cause);
+  }
+
+  /**
+   * The client can recover by fetching a new Client Attestation JWT from its Client Attester, so
+   * this is reported as {@code use_fresh_attestation} rather than as a verification failure.
+   */
+  private UseFreshAttestationException staleAttestationException(String message) {
+    return new UseFreshAttestationException(
+        ClientAuthenticationType.attest_jwt_client_auth.name(),
+        context.requestedClientId(),
+        message);
   }
 }

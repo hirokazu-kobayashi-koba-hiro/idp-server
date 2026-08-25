@@ -57,14 +57,16 @@ public class CibaRequestErrorHandler {
               badRequest.error(), badRequest.errorDescription()));
     }
 
-    if (exception instanceof ClientUnAuthorizedException) {
+    if (exception instanceof ClientUnAuthorizedException clientUnAuthorized) {
       log.warn(
-          "CIBA request failed: status=unauthorized, error=invalid_client, description={}",
+          "CIBA request failed: status=unauthorized, error={}, description={}",
+          clientUnAuthorized.errorCode(),
           exception.getMessage());
       return new CibaIssueResponse(
           CibaRequestStatus.UNAUTHORIZE,
           new BackchannelAuthenticationErrorResponse(
-              new Error("invalid_client"), new ErrorDescription(exception.getMessage())));
+              new Error(clientUnAuthorized.errorCode()),
+              new ErrorDescription(exception.getMessage())));
     }
 
     if (exception instanceof BackchannelAuthenticationForbiddenException forbidden) {

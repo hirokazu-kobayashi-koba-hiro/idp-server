@@ -45,7 +45,7 @@ public class OAuthRequestErrorHandler {
 
     if (exception instanceof ClientUnAuthorizedException clientAuthException) {
       Map<String, Object> response = new HashMap<>();
-      response.put("error", "invalid_client");
+      response.put("error", clientAuthException.errorCode());
       response.put("error_description", clientAuthException.getMessage());
       return new OAuthPushedRequestResponse(OAuthPushedRequestStatus.BAD_REQUEST, response);
     }

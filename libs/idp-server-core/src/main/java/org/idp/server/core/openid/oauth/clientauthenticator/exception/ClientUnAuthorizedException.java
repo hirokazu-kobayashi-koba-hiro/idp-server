@@ -71,6 +71,15 @@ public class ClientUnAuthorizedException extends RuntimeException {
     return reason;
   }
 
+  /**
+   * OAuth error code to report for this failure. RFC 6749 Section 5.2 defines {@code
+   * invalid_client} as the general code for a failed client authentication; subclasses override
+   * this with a more specific code where a specification defines one.
+   */
+  public String errorCode() {
+    return "invalid_client";
+  }
+
   public boolean hasStructuredData() {
     return method != null && clientId != null && reason != null;
   }
