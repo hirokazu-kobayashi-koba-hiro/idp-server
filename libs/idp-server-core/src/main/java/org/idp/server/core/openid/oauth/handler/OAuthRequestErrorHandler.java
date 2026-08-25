@@ -47,7 +47,8 @@ public class OAuthRequestErrorHandler {
       Map<String, Object> response = new HashMap<>();
       response.put("error", clientAuthException.errorCode());
       response.put("error_description", clientAuthException.getMessage());
-      return new OAuthPushedRequestResponse(OAuthPushedRequestStatus.BAD_REQUEST, response);
+      return new OAuthPushedRequestResponse(
+          OAuthPushedRequestStatus.BAD_REQUEST, response, clientAuthException.responseHeaders());
     }
 
     if (exception instanceof OAuthBadRequestException badRequestException) {

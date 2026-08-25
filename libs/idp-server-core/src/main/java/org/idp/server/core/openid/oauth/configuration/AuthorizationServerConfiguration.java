@@ -77,6 +77,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   List<String> dpopSigningAlgValuesSupported = new ArrayList<>();
   List<String> clientAttestationSigningAlgValuesSupported = new ArrayList<>();
   List<String> clientAttestationPopSigningAlgValuesSupported = new ArrayList<>();
+  String challengeEndpoint = "";
   boolean requireSignedRequestObject = false;
   boolean authorizationResponseIssParameterSupported = false;
 
@@ -323,6 +324,19 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
 
   public boolean isDPoPSupported() {
     return hasDpopSigningAlgValuesSupported();
+  }
+
+  public String challengeEndpoint() {
+    return challengeEndpoint;
+  }
+
+  /**
+   * draft-ietf-oauth-attestation-based-client-auth-10 Section 6.1 makes the challenge endpoint
+   * optional, and requires it to be advertised as {@code challenge_endpoint} when offered. A tenant
+   * that leaves this unset does not offer server-provided challenges.
+   */
+  public boolean hasChallengeEndpoint() {
+    return Objects.nonNull(challengeEndpoint) && !challengeEndpoint.isEmpty();
   }
 
   public List<String> clientAttestationSigningAlgValuesSupported() {
@@ -645,6 +659,14 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return extension.authorizationResponseDuration();
   }
 
+  public boolean isClientAttestationChallengeRequired() {
+    return extension.clientAttestationChallengeRequired();
+  }
+
+  public int clientAttestationChallengeDuration() {
+    return extension.clientAttestationChallengeDuration();
+  }
+
   public boolean hasKey(String algorithm) {
     return jwks.contains(algorithm);
   }
@@ -881,6 +903,9 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
       map.put(
           "client_attestation_pop_signing_alg_values_supported",
           clientAttestationPopSigningAlgValuesSupported);
+    }
+    if (hasChallengeEndpoint()) {
+      map.put("challenge_endpoint", challengeEndpoint);
     }
     if (hasBackchannelTokenDeliveryModesSupported()) {
       map.put("backchannel_token_delivery_modes_supported", backchannelTokenDeliveryModesSupported);

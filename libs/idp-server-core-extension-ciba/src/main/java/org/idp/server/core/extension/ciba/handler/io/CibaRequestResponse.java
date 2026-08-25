@@ -16,6 +16,7 @@
 
 package org.idp.server.core.extension.ciba.handler.io;
 
+import java.util.Map;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationErrorResponse;
 import org.idp.server.core.extension.ciba.response.BackchannelAuthenticationResponse;
 import org.idp.server.core.openid.oauth.type.ContentType;
@@ -25,6 +26,7 @@ public class CibaRequestResponse {
   BackchannelAuthenticationResponse backchannelAuthenticationResponse;
   BackchannelAuthenticationErrorResponse errorResponse;
   ContentType contentType;
+  Map<String, String> headers;
 
   public CibaRequestResponse(
       CibaRequestStatus status,
@@ -33,13 +35,30 @@ public class CibaRequestResponse {
     this.backchannelAuthenticationResponse = backchannelAuthenticationResponse;
     this.errorResponse = new BackchannelAuthenticationErrorResponse();
     this.contentType = ContentType.application_json;
+    this.headers = Map.of();
   }
 
   public CibaRequestResponse(
       CibaRequestStatus status, BackchannelAuthenticationErrorResponse errorResponse) {
+    this(status, errorResponse, Map.of());
+  }
+
+  /**
+   * @param headers response headers an error carries, such as the {@code
+   *     OAuth-Client-Attestation-Challenge} that must accompany {@code use_attestation_challenge}
+   */
+  public CibaRequestResponse(
+      CibaRequestStatus status,
+      BackchannelAuthenticationErrorResponse errorResponse,
+      Map<String, String> headers) {
     this.status = status;
     this.errorResponse = errorResponse;
     this.contentType = ContentType.application_json;
+    this.headers = headers;
+  }
+
+  public Map<String, String> responseHeaders() {
+    return headers;
   }
 
   public int statusCode() {

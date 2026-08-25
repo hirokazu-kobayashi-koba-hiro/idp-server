@@ -356,6 +356,11 @@
       },
       "description": "OPTIONAL. JSON array containing a list of the JWS signing algorithms (alg values) supported for the Client Attestation PoP JWT of the attest_jwt_client_auth authentication method (OAuth 2.0 Attestation-Based Client Authentication). Only asymmetric algorithms are allowed. REQUIRED when token_endpoint_auth_methods_supported includes attest_jwt_client_auth."
     },
+    "challenge_endpoint": {
+      "type": "string",
+      "format": "uri",
+      "description": "OPTIONAL. URL of the challenge endpoint defined in OAuth 2.0 Attestation-Based Client Authentication Section 6.1. When present the Authorization Server offers server-provided Challenges and the value is published in the discovery document; clients are then expected to fetch a Challenge and carry it in the Client Attestation PoP JWT."
+    },
     "display_values_supported": {
       "type": "array",
       "items": {
@@ -668,6 +673,16 @@
           "type": "integer",
           "default": 5,
           "description": "CIBA backchannel auth polling interval."
+        },
+        "client_attestation_challenge_required": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the challenge claim of the Client Attestation PoP JWT is enforced (OAuth 2.0 Attestation-Based Client Authentication Section 7.2 item 5). Kept separate from challenge_endpoint so a deployment can publish the endpoint first and only start rejecting requests without a Challenge once its clients have adopted it."
+        },
+        "client_attestation_challenge_duration": {
+          "type": "integer",
+          "default": 300,
+          "description": "Lifetime in seconds of an issued Challenge. A Challenge stays valid for its whole lifetime by design; the default matches backchannel_authentication_request_expires_in so that one Challenge covers a whole CIBA polling cycle."
         },
         "required_backchannel_auth_user_code": {
           "type": "boolean",

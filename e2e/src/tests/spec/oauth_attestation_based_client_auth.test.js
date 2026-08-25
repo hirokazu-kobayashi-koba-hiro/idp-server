@@ -47,6 +47,7 @@ const ATTESTATION_TYP = "oauth-client-attestation+jwt";
 const POP_TYP = "oauth-client-attestation-pop+jwt";
 const ATTESTATION_HEADER = "OAuth-Client-Attestation";
 const POP_HEADER = "OAuth-Client-Attestation-PoP";
+const CHALLENGE_HEADER = "OAuth-Client-Attestation-Challenge";
 
 let attesterEs256Jwk;
 let attesterEs384Jwk;
@@ -120,6 +121,16 @@ const createPopJwt = ({
   });
 };
 
+/** Section 6.1: fetch a server-provided Challenge from the challenge endpoint. */
+const fetchChallenge = async () => {
+  const response = await postWithJson({
+    url: `${backendUrl}/${serverConfig.tenantId}/v1/client-attestation/challenges`,
+    body: {},
+  });
+  expect(response.status).toBe(200);
+  return response.data.attestation_challenge;
+};
+
 const requestTokenWithAttestation = async ({ attestationJwt, popJwt, scope = "account" }) => {
   return await requestToken({
     endpoint: serverConfig.tokenEndpoint,
@@ -145,6 +156,16 @@ const expectInvalidClient = (response) => {
 const expectInvalidClientAttestation = (response) => {
   expect(response.status).toBe(401);
   expect(response.data).toHaveProperty("error", "invalid_client_attestation");
+};
+
+/**
+ * Section 7.4: the PoP JWT did not use an expected server-provided challenge. The error MUST be
+ * accompanied by the OAuth-Client-Attestation-Challenge header carrying a Challenge to use next.
+ */
+const expectUseAttestationChallenge = (response) => {
+  expect(response.status).toBe(401);
+  expect(response.data).toHaveProperty("error", "use_attestation_challenge");
+  expect(response.headers[CHALLENGE_HEADER.toLowerCase()]).toBeDefined();
 };
 
 /** Section 7.4: the Client Attestation JWT is no longer fresh; the client must obtain a new one. */
@@ -316,15 +337,75 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
     });
   });
 
-  describe("6. Challenges (not implemented yet)", () => {
+  describe("6. Challenges", () => {
 
-    xit("6.1. The Authorization Server or Resource Server MAY offer a challenge endpoint for Clients to fetch Challenges. It MUST signal support by including the metadata entry challenge_endpoint.", async () => {});
+    it("6.1. The Authorization Server or Resource Server MAY offer a challenge endpoint for Clients to fetch Challenges. It MUST signal support by including the metadata entry challenge_endpoint.", async () => {
+      const response = await get({ url: serverConfig.discoveryEndpoint });
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("challenge_endpoint");
+      expect(response.data.challenge_endpoint).toContain("/v1/client-attestation/challenges");
+    });
 
-    xit("6.1. The response contains attestation_challenge. The Authorization Server MUST make the response uncacheable by adding a Cache-Control header field including the value no-store.", async () => {});
+    it("6.1. The response contains attestation_challenge. The Authorization Server MUST make the response uncacheable by adding a Cache-Control header field including the value no-store.", async () => {
+      const response = await postWithJson({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/client-attestation/challenges`,
+        body: {},
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("attestation_challenge");
+      expect(typeof response.data.attestation_challenge).toBe("string");
+      expect(response.headers["cache-control"]).toContain("no-store");
+    });
 
-    xit("6.2. The Authorization Server MAY provide a fresh Challenge with any HTTP response using the OAuth-Client-Attestation-Challenge HTTP header field.", async () => {});
+    it("6.1. The value of the challenge is opaque to the client and is not reused across requests.", async () => {
+      const first = await fetchChallenge();
+      const second = await fetchChallenge();
 
-    xit("challenge OPTIONAL. If the Authorization Server offers a challenge endpoint, the Client MUST retrieve a challenge and MUST use this challenge in the Client Attestation PoP JWT.", async () => {});
+      expect(first).not.toBe(second);
+    });
+
+    it("6.2. The Authorization Server MAY provide a fresh Challenge with any HTTP response using the OAuth-Client-Attestation-Challenge HTTP header field.", async () => {
+      // A challenge the server never issued is rejected, and the rejection carries the Challenge
+      // the client is expected to use next.
+      const response = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ extraClaims: { challenge: "never-issued-by-this-server" } }),
+      });
+      console.log(response.status, response.data, response.headers[CHALLENGE_HEADER.toLowerCase()]);
+      expect(response.status).toBe(401);
+      expect(response.data).toHaveProperty("error", "use_attestation_challenge");
+      expect(response.headers[CHALLENGE_HEADER.toLowerCase()]).toBeDefined();
+    });
+
+    it("challenge OPTIONAL. If the Authorization Server offers a challenge endpoint, the Client MUST retrieve a challenge and MUST use this challenge in the Client Attestation PoP JWT.", async () => {
+      const challenge = await fetchChallenge();
+      const response = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ extraClaims: { challenge } }),
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("access_token");
+    });
+
+    it("6.1. A Challenge stays usable for its whole lifetime, so one Challenge covers a polling cycle.", async () => {
+      // Section 9.7: a challenge bound to a Client Instance session is validated against the single
+      // value expected for that session, without a seen-values store. It is therefore not consumed.
+      const challenge = await fetchChallenge();
+
+      const first = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ extraClaims: { challenge } }),
+      });
+      const second = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ extraClaims: { challenge } }),
+      });
+
+      expect(first.status).toBe(200);
+      expect(second.status).toBe(200);
+    });
   });
 
   describe("7.1. Verification: Client Attestation JWT", () => {
@@ -408,9 +489,37 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
       expectInvalidClientAttestation(response);
     });
 
-    xit("5. If the server provided a challenge value to the client, the challenge claim is present in the Client Attestation PoP JWT and matches the server-provided challenge value.", async () => {});
+    it("5. If the server provided a challenge value to the client, the challenge claim is present in the Client Attestation PoP JWT and matches the server-provided challenge value.", async () => {
+      const challenge = await fetchChallenge();
+      const accepted = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ extraClaims: { challenge } }),
+      });
+      expect(accepted.status).toBe(200);
 
-    xit("8. If the Client received a challenge through the Authorization Server's challenge endpoint or within previous responses, it MUST match the challenge claim of the Client Attestation PoP JWT.", async () => {});
+      const mismatched = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ extraClaims: { challenge: `${challenge}-tampered` } }),
+      });
+      expectUseAttestationChallenge(mismatched);
+    });
+
+    it("8. If the Client received a challenge through the Authorization Server's challenge endpoint or within previous responses, it MUST match the challenge claim of the Client Attestation PoP JWT.", async () => {
+      // The Challenge handed back on a previous response is accepted on the next request, which is
+      // the Section 6.2 hand-off working end to end.
+      const rejected = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ extraClaims: { challenge: "never-issued-by-this-server" } }),
+      });
+      expectUseAttestationChallenge(rejected);
+
+      const handedBack = rejected.headers[CHALLENGE_HEADER.toLowerCase()];
+      const response = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ extraClaims: { challenge: handedBack } }),
+      });
+      expect(response.status).toBe(200);
+    });
 
     xit("9. Depending on the security requirements of the deployment, additional checks to guarantee replay protection for the Client Attestation PoP JWT might need to be applied.", async () => {});
   });
@@ -430,7 +539,13 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
 
   describe("7.4. Errors", () => {
 
-    xit("use_attestation_challenge MUST be used when the Client Attestation PoP JWT is not using an expected server-provided challenge. When used this error code MUST be accompanied by the OAuth-Client-Attestation-Challenge HTTP header field parameter.", async () => {});
+    it("use_attestation_challenge MUST be used when the Client Attestation PoP JWT is not using an expected server-provided challenge. When used this error code MUST be accompanied by the OAuth-Client-Attestation-Challenge HTTP header field parameter.", async () => {
+      const response = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ extraClaims: { challenge: "never-issued-by-this-server" } }),
+      });
+      expectUseAttestationChallenge(response);
+    });
 
     it("use_fresh_attestation MUST be used when the Client Attestation JWT is deemed to be not fresh enough to be acceptable by the server.", async () => {
       const response = await requestTokenWithAttestation({
