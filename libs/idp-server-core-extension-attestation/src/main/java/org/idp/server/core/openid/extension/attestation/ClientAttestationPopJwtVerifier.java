@@ -19,8 +19,12 @@ package org.idp.server.core.openid.extension.attestation;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallenge;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeIssuer;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeRepository;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.InvalidClientAttestationException;
+import org.idp.server.core.openid.oauth.clientauthenticator.exception.UseAttestationChallengeException;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebKey;
@@ -50,9 +54,12 @@ import org.idp.server.platform.jose.JwtClockSkewValidator;
  *   <li>The {@code iat} claim is present and within an acceptable time window
  * </ol>
  *
- * <p>The {@code challenge} claim (server-provided challenge) is not verified: the challenge
- * endpoint is not implemented yet. Replay detection of {@code jti} (SHOULD) relies on the {@code
- * iat} time window, the same policy as the DPoP proof verification.
+ * <p>The {@code challenge} claim is verified last, after the PoP has otherwise proven possession of
+ * the Client Instance Key: rejecting it mints a fresh Challenge (Section 7.4 requires the error to
+ * carry one), so an unauthenticated caller must not be able to drive that write.
+ *
+ * <p>Replay detection of {@code jti} (SHOULD) relies on the {@code iat} time window, the same
+ * policy as the DPoP proof verification.
  */
 class ClientAttestationPopJwtVerifier {
 
@@ -61,10 +68,18 @@ class ClientAttestationPopJwtVerifier {
 
   BackchannelRequestContext context;
   JsonWebKey clientInstanceKey;
+  ClientAttestationChallengeRepository challengeRepository;
+  ClientAttestationChallengeIssuer challengeIssuer;
 
-  ClientAttestationPopJwtVerifier(BackchannelRequestContext context, JsonWebKey clientInstanceKey) {
+  ClientAttestationPopJwtVerifier(
+      BackchannelRequestContext context,
+      JsonWebKey clientInstanceKey,
+      ClientAttestationChallengeRepository challengeRepository,
+      ClientAttestationChallengeIssuer challengeIssuer) {
     this.context = context;
     this.clientInstanceKey = clientInstanceKey;
+    this.challengeRepository = challengeRepository;
+    this.challengeIssuer = challengeIssuer;
   }
 
   /** Verifies the Client Attestation PoP JWT and returns the verified JWS. */
@@ -77,6 +92,7 @@ class ClientAttestationPopJwtVerifier {
     throwExceptionIfInvalidAud(claims);
     throwExceptionIfInvalidJti(claims);
     throwExceptionIfInvalidIat(claims);
+    throwExceptionIfInvalidChallenge(claims);
     return jws;
   }
 
@@ -167,6 +183,49 @@ class ClientAttestationPopJwtVerifier {
     } catch (JwtClockSkewException e) {
       throw exception("client attestation pop jwt " + e.getMessage());
     }
+  }
+
+  /**
+   * Section 7.2 item 5 and item 8: a Challenge the server provided has to come back in the {@code
+   * challenge} claim. A presented challenge is always validated; whether one is mandatory is a
+   * tenant policy, so that a deployment can advertise the challenge endpoint and let its clients
+   * adopt it before requests without a challenge start failing.
+   */
+  private void throwExceptionIfInvalidChallenge(JsonWebTokenClaims claims) {
+    boolean required = context.serverConfiguration().isClientAttestationChallengeRequired();
+    Object claim = claims.payload().get("challenge");
+    String presented = claim instanceof String value ? value : null;
+
+    if (presented == null || presented.isEmpty()) {
+      if (!required) {
+        return;
+      }
+      throw useAttestationChallengeException(
+          "client attestation pop jwt must contain challenge claim");
+    }
+
+    ClientAttestationChallenge stored = challengeRepository.find(context.tenant(), presented);
+    if (!stored.isValid()) {
+      throw useAttestationChallengeException(
+          "client attestation pop jwt challenge claim is unknown or expired");
+    }
+  }
+
+  /**
+   * Section 7.4 requires {@code use_attestation_challenge} to be accompanied by a fresh Challenge,
+   * so one is issued here and travels back on the {@code OAuth-Client-Attestation-Challenge}
+   * response header.
+   */
+  private UseAttestationChallengeException useAttestationChallengeException(String message) {
+    ClientAttestationChallenge fresh =
+        challengeIssuer.issue(context.serverConfiguration().clientAttestationChallengeDuration());
+    challengeRepository.register(context.tenant(), fresh);
+
+    return new UseAttestationChallengeException(
+        ClientAuthenticationType.attest_jwt_client_auth.name(),
+        context.requestedClientId(),
+        message,
+        fresh.challenge());
   }
 
   private InvalidClientAttestationException exception(String message) {

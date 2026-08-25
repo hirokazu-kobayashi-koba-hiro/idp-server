@@ -55,6 +55,18 @@ public class TokenRequestResponse {
   }
 
   public TokenRequestResponse(TokenRequestStatus status, TokenErrorResponse errorResponse) {
+    this(status, errorResponse, Map.of());
+  }
+
+  /**
+   * @param additionalHeaders response headers an error carries beyond the defaults, such as the
+   *     {@code OAuth-Client-Attestation-Challenge} that must accompany {@code
+   *     use_attestation_challenge}
+   */
+  public TokenRequestResponse(
+      TokenRequestStatus status,
+      TokenErrorResponse errorResponse,
+      Map<String, String> additionalHeaders) {
     this.status = status;
     this.tokenResponse = new TokenResponseBuilder().build();
     this.errorResponse = errorResponse;
@@ -62,6 +74,7 @@ public class TokenRequestResponse {
     values.put("Content-Type", "application/json");
     values.put("Cache-Control", "no-store");
     values.put("Pragma", "no-cache");
+    values.putAll(additionalHeaders);
     this.headers = values;
   }
 
