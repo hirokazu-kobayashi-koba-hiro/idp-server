@@ -83,7 +83,8 @@ public class TokenRevocationErrorHandler {
       contents.put("error", clientUnAuthorized.errorCode());
       contents.put("error_description", exception.getMessage());
 
-      return new TokenRevocationResponse(UNAUTHORIZED, new OAuthToken(), contents);
+      return new TokenRevocationResponse(
+          UNAUTHORIZED, new OAuthToken(), contents, clientUnAuthorized.responseHeaders());
     }
 
     // Configuration errors (400)

@@ -71,6 +71,7 @@ public class OAuthV1Api implements ParameterTransformable, SecurityHeaderConfigu
     HttpHeaders httpHeaders = createSecurityHeaders();
     httpHeaders.setCacheControl("no-store, private");
     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+    httpHeaders.setAll(response.responseHeaders());
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }

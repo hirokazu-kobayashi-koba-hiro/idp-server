@@ -19,6 +19,8 @@ package org.idp.server.core.openid.extension.attestation;
 import org.idp.server.core.openid.clientinstance.ClientAttestationTrustSource;
 import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
 import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeIssuer;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeRepository;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAssertionJwt;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAuthenticationPublicKey;
@@ -54,9 +56,15 @@ public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
 
   LoggerWrapper log = LoggerWrapper.getLogger(AttestJwtClientAuthAuthenticator.class);
   ClientAttestationKeyResolvers keyResolvers;
+  ClientAttestationChallengeRepository challengeRepository;
+  ClientAttestationChallengeIssuer challengeIssuer;
 
-  public AttestJwtClientAuthAuthenticator(ClientAttestationKeyResolvers keyResolvers) {
+  public AttestJwtClientAuthAuthenticator(
+      ClientAttestationKeyResolvers keyResolvers,
+      ClientAttestationChallengeRepository challengeRepository) {
     this.keyResolvers = keyResolvers;
+    this.challengeRepository = challengeRepository;
+    this.challengeIssuer = new ClientAttestationChallengeIssuer();
   }
 
   @Override
@@ -83,7 +91,9 @@ public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
     JsonWebKey clientInstanceKey =
         new ClientAttestationJwtVerifier(context, keyResolver, trustSource).verify();
     JsonWebSignature popJws =
-        new ClientAttestationPopJwtVerifier(context, clientInstanceKey).verify();
+        new ClientAttestationPopJwtVerifier(
+                context, clientInstanceKey, challengeRepository, challengeIssuer)
+            .verify();
 
     log.debug(
         "Client authentication succeeded: method={}, client_id={}",

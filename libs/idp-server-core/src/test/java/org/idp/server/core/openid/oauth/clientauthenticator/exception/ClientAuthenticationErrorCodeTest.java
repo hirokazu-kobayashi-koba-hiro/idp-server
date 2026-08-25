@@ -76,6 +76,55 @@ class ClientAuthenticationErrorCodeTest {
   }
 
   @Test
+  void useAttestationChallengeCarriesAFreshChallengeOnTheResponseHeader() {
+    // Section 7.4: the error code MUST be accompanied by OAuth-Client-Attestation-Challenge.
+    UseAttestationChallengeException exception =
+        new UseAttestationChallengeException(METHOD, CLIENT_ID, "no challenge", "fresh-challenge");
+
+    assertEquals("use_attestation_challenge", exception.errorCode());
+    assertEquals("fresh-challenge", exception.challenge());
+    assertEquals(
+        "fresh-challenge",
+        exception.responseHeaders().get(UseAttestationChallengeException.CHALLENGE_HEADER_NAME));
+  }
+
+  @Test
+  void generalFailureCarriesNoExtraResponseHeader() {
+    ClientUnAuthorizedException exception =
+        new ClientUnAuthorizedException(METHOD, CLIENT_ID, "no credential presented");
+
+    assertTrue(exception.responseHeaders().isEmpty());
+  }
+
+  @Test
+  void tokenEndpointCopiesTheChallengeHeaderOntoTheResponse() {
+    TokenRequestResponse response =
+        new TokenRequestErrorHandler()
+            .handle(
+                new UseAttestationChallengeException(
+                    METHOD, CLIENT_ID, "no challenge", "fresh-challenge"));
+
+    assertEquals(401, response.statusCode());
+    assertTrue(response.contents().contains("use_attestation_challenge"), response.contents());
+    assertEquals(
+        "fresh-challenge",
+        response.responseHeaders().get(UseAttestationChallengeException.CHALLENGE_HEADER_NAME));
+  }
+
+  @Test
+  void revocationEndpointCopiesTheChallengeHeaderOntoTheResponse() {
+    TokenRevocationResponse response =
+        new TokenRevocationErrorHandler()
+            .handle(
+                new UseAttestationChallengeException(
+                    METHOD, CLIENT_ID, "no challenge", "fresh-challenge"));
+
+    assertEquals(
+        "fresh-challenge",
+        response.responseHeaders().get(UseAttestationChallengeException.CHALLENGE_HEADER_NAME));
+  }
+
+  @Test
   void tokenEndpointReportsTheSubclassErrorCode() {
     TokenRequestResponse response =
         new TokenRequestErrorHandler()

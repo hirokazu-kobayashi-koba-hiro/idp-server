@@ -66,7 +66,8 @@ public class CibaRequestErrorHandler {
           CibaRequestStatus.UNAUTHORIZE,
           new BackchannelAuthenticationErrorResponse(
               new Error(clientUnAuthorized.errorCode()),
-              new ErrorDescription(exception.getMessage())));
+              new ErrorDescription(exception.getMessage())),
+          clientUnAuthorized.responseHeaders());
     }
 
     if (exception instanceof BackchannelAuthenticationForbiddenException forbidden) {

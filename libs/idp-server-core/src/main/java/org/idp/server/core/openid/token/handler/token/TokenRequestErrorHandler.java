@@ -79,7 +79,8 @@ public class TokenRequestErrorHandler {
           UNAUTHORIZE,
           new TokenErrorResponse(
               new Error(clientUnAuthorized.errorCode()),
-              new ErrorDescription(exception.getLocalizedMessage())));
+              new ErrorDescription(exception.getLocalizedMessage())),
+          clientUnAuthorized.responseHeaders());
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {

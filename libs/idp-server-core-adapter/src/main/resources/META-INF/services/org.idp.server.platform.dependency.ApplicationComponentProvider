@@ -69,3 +69,4 @@ org.idp.server.core.adapters.datasource.system.SystemConfigurationDataSourceProv
 org.idp.server.core.adapters.datasource.oidc.clientinstance.ClientInstanceQueryDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.clientinstance.ClientInstanceCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.clientinstance.registration.ClientInstanceRegistrationChallengeDataSourceProvider
+org.idp.server.core.adapters.datasource.oidc.clientattestation.challenge.ClientAttestationChallengeDataSourceProvider
