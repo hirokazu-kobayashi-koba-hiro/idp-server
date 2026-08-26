@@ -121,7 +121,7 @@ public class AccountLinkingCompleteHandler {
           tenant,
           session,
           credentials.federatedUserId(),
-          configurationResolver.linking(tenant, session.provider()).duplicateLinkPolicy());
+          configurationResolver.resolve(tenant, session.provider()).duplicateLinkPolicy());
     }
 
     LinkedExternalAccount account =

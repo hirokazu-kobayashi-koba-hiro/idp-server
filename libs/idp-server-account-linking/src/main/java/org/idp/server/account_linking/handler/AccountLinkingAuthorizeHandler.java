@@ -21,6 +21,7 @@ import org.idp.server.account_linking.*;
 import org.idp.server.account_linking.exception.AccountLinkingNotFoundException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
 import org.idp.server.account_linking.io.AccountLinkingAuthorizeRequest;
+import org.idp.server.account_linking.io.AccountLinkingAuthorizeResult;
 import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
@@ -55,7 +56,7 @@ public class AccountLinkingAuthorizeHandler {
     this.errorHandler = new AccountLinkingErrorHandler();
   }
 
-  public AccountLinkingAuthorization handle(AccountLinkingAuthorizeRequest request) {
+  public AccountLinkingAuthorizeResult handle(AccountLinkingAuthorizeRequest request) {
 
     Tenant tenant = request.tenant();
     AccountLinkingState state = request.state();
@@ -67,7 +68,8 @@ public class AccountLinkingAuthorizeHandler {
 
       AccountLinkingBrowserBinding browserBinding = AccountLinkingBrowserBinding.generate();
       AccountLinkingSession authorized =
-          session.authorize(request.operator().userIdentifier(), browserBinding, null, "pwd", now);
+          session.authorize(
+              request.operator().userIdentifier(), browserBinding, request.authentication());
 
       if (!sessionCommandRepository.claim(
           tenant, state, AccountLinkingSessionStatus.PENDING, authorized.status(), now)) {
@@ -77,14 +79,14 @@ public class AccountLinkingAuthorizeHandler {
       sessionCommandRepository.update(tenant, authorized);
 
       OidcSsoConfiguration configuration =
-          configurationResolver.oidc(tenant, authorized.provider());
+          configurationResolver.resolve(tenant, authorized.provider()).oidc();
 
-      return AccountLinkingAuthorization.of(
+      return AccountLinkingAuthorizeResult.of(
           AccountLinkingResult.redirect(externalAuthorizationUri(configuration, authorized)),
           browserBinding.secret());
 
     } catch (Exception exception) {
-      return AccountLinkingAuthorization.error(
+      return AccountLinkingAuthorizeResult.error(
           errorHandler
               .handle(exception)
               .withContext(new RequestedClientId(""), request.operator()));

@@ -19,6 +19,7 @@ package org.idp.server.account_linking;
 import java.time.LocalDateTime;
 import org.idp.server.account_linking.exception.AccountLinkingOperatorMismatchException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
+import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -129,17 +130,15 @@ public class AccountLinkingSession {
   public AccountLinkingSession authorize(
       UserIdentifier operator,
       AccountLinkingBrowserBinding browserBinding,
-      String acr,
-      String amr,
-      LocalDateTime authenticatedAt) {
+      Authentication authentication) {
     verifyOperator(operator);
     verifyTransitionTo(AccountLinkingSessionStatus.AUTHORIZED);
 
     return toBuilder()
         .browserBindingHash(browserBinding.hash())
-        .acr(acr)
-        .amr(amr)
-        .authenticatedAt(authenticatedAt)
+        .acr(authentication.acr())
+        .amr(String.join(" ", authentication.methods()))
+        .authenticatedAt(authentication.time())
         .status(AccountLinkingSessionStatus.AUTHORIZED)
         .build();
   }
