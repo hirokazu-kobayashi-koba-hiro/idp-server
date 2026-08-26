@@ -10,6 +10,15 @@
  */
 import forge from "node-forge";
 
+import {
+  derEnumerated,
+  derInteger,
+  derOctetString,
+  derSequence,
+  derSet,
+  derTagged,
+} from "../der.js";
+
 const asn1 = forge.asn1;
 
 export const KEY_ATTESTATION_OID = "1.3.6.1.4.1.11129.2.1.17";
@@ -19,74 +28,6 @@ export const SECURITY_LEVEL = {
   software: 0,
   trusted_environment: 1,
   strong_box: 2,
-};
-
-/**
- * A minimal DER writer.
- *
- * The extension is built as bytes rather than through node-forge's ASN.1 tree: forge writes its own
- * identifier for every node, which cannot express the [709] tag (it truncates tag numbers above 30)
- * and cannot carry pre-encoded bytes without prefixing them. Both are needed here.
- */
-const tlv = (tag, content) => {
-  const length = [];
-  if (content.length < 128) {
-    length.push(content.length);
-  } else {
-    const octets = [];
-    let remaining = content.length;
-    while (remaining > 0) {
-      octets.unshift(remaining & 0xff);
-      remaining >>= 8;
-    }
-    length.push(0x80 | octets.length, ...octets);
-  }
-  return Buffer.concat([Buffer.from([tag]), Buffer.from(length), content]);
-};
-
-const derInteger = (value) => tlv(0x02, Buffer.from([value]));
-const derEnumerated = (value) => tlv(0x0a, Buffer.from([value]));
-const derOctetString = (content) => tlv(0x04, Buffer.from(content));
-const derSequence = (...parts) => tlv(0x30, Buffer.concat(parts));
-const derSet = (...parts) => tlv(0x31, Buffer.concat(parts));
-
-/**
- * A context specific constructed tag.
- *
- * attestationApplicationId is [709], which needs the high tag number form: 0xBF (context |
- * constructed | 31) followed by the tag number in base 128.
- */
-const derTagged = (tagNumber, content) => {
-  const identifier = [];
-  if (tagNumber < 31) {
-    identifier.push(0xa0 | tagNumber);
-  } else {
-    identifier.push(0xbf);
-    const base128 = [];
-    let remaining = tagNumber;
-    do {
-      base128.unshift(remaining & 0x7f);
-      remaining >>= 7;
-    } while (remaining > 0);
-    base128.forEach((part, index) =>
-      identifier.push(index === base128.length - 1 ? part : part | 0x80),
-    );
-  }
-
-  const length = [];
-  if (content.length < 128) {
-    length.push(content.length);
-  } else {
-    const octets = [];
-    let remaining = content.length;
-    while (remaining > 0) {
-      octets.unshift(remaining & 0xff);
-      remaining >>= 8;
-    }
-    length.push(0x80 | octets.length, ...octets);
-  }
-
-  return Buffer.concat([Buffer.from(identifier), Buffer.from(length), content]);
 };
 
 /**
@@ -104,10 +45,12 @@ const keyDescription = ({
 }) => {
   const applicationId = derSequence(
     derSet(derSequence(derOctetString(packageName), derInteger(1))),
-    derSet(...signatureDigests.map((digest) => derOctetString(digest))),
+    derSet(...signatureDigests.map((digest) => derOctetString(digest)))
   );
 
-  const softwareEnforced = derSequence(derTagged(709, derOctetString(applicationId)));
+  const softwareEnforced = derSequence(
+    derTagged(709, derOctetString(applicationId))
+  );
 
   const level = encodeSecurityLevelAsInteger
     ? derInteger(securityLevel)
@@ -121,11 +64,17 @@ const keyDescription = ({
     derOctetString(challenge), // attestationChallenge
     derOctetString(Buffer.alloc(0)), // uniqueId
     softwareEnforced,
-    derSequence(), // hardwareEnforced
+    derSequence() // hardwareEnforced
   );
 };
 
-const certificate = ({ publicKey, signWith, subject, issuer, extensionDer }) => {
+const certificate = ({
+  publicKey,
+  signWith,
+  subject,
+  issuer,
+  extensionDer,
+}) => {
   const cert = forge.pki.createCertificate();
   cert.publicKey = publicKey;
   cert.serialNumber = `0${Math.floor(Math.random() * 900000) + 100000}`;
@@ -135,7 +84,11 @@ const certificate = ({ publicKey, signWith, subject, issuer, extensionDer }) => 
   cert.setIssuer([{ name: "commonName", value: issuer }]);
   if (extensionDer) {
     cert.setExtensions([
-      { id: KEY_ATTESTATION_OID, critical: false, value: extensionDer.toString("binary") },
+      {
+        id: KEY_ATTESTATION_OID,
+        critical: false,
+        value: extensionDer.toString("binary"),
+      },
     ]);
   }
   cert.sign(signWith.privateKey, forge.md.sha256.create());
