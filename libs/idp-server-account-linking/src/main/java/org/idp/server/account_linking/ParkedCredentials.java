@@ -25,6 +25,9 @@ import org.idp.server.platform.crypto.EncryptedData;
  * <p>Held here rather than written straight into {@code linked_external_accounts} so that the
  * unauthenticated callback cannot finalize a link. Encryption matches {@code oauth_token}: AES-GCM
  * via {@code AesCipher}, serialized as {@code {cipherText, iv}}.
+ *
+ * <p>The identity fields are optional. A plain OAuth 2.0 delegation grants access to a resource
+ * without saying who the resource owner is.
  */
 public class ParkedCredentials {
 
@@ -39,23 +42,15 @@ public class ParkedCredentials {
 
   public ParkedCredentials() {}
 
-  public ParkedCredentials(
-      String federatedUserId,
-      String federatedUsername,
-      String grantedScope,
-      EncryptedData encryptedAccessToken,
-      EncryptedData encryptedRefreshToken,
-      String encryptionKeyId,
-      LocalDateTime accessTokenExpiresAt,
-      LocalDateTime refreshTokenExpiresAt) {
-    this.federatedUserId = federatedUserId;
-    this.federatedUsername = federatedUsername;
-    this.grantedScope = grantedScope;
-    this.encryptedAccessToken = encryptedAccessToken;
-    this.encryptedRefreshToken = encryptedRefreshToken;
-    this.encryptionKeyId = encryptionKeyId;
-    this.accessTokenExpiresAt = accessTokenExpiresAt;
-    this.refreshTokenExpiresAt = refreshTokenExpiresAt;
+  ParkedCredentials(Builder builder) {
+    this.federatedUserId = builder.federatedUserId;
+    this.federatedUsername = builder.federatedUsername;
+    this.grantedScope = builder.grantedScope;
+    this.encryptedAccessToken = builder.encryptedAccessToken;
+    this.encryptedRefreshToken = builder.encryptedRefreshToken;
+    this.encryptionKeyId = builder.encryptionKeyId;
+    this.accessTokenExpiresAt = builder.accessTokenExpiresAt;
+    this.refreshTokenExpiresAt = builder.refreshTokenExpiresAt;
   }
 
   public String federatedUserId() {
@@ -100,5 +95,61 @@ public class ParkedCredentials {
 
   public boolean exists() {
     return encryptedAccessToken != null;
+  }
+
+  public static class Builder {
+
+    String federatedUserId;
+    String federatedUsername;
+    String grantedScope;
+    EncryptedData encryptedAccessToken;
+    EncryptedData encryptedRefreshToken;
+    String encryptionKeyId;
+    LocalDateTime accessTokenExpiresAt;
+    LocalDateTime refreshTokenExpiresAt;
+
+    public Builder federatedUserId(String federatedUserId) {
+      this.federatedUserId = federatedUserId;
+      return this;
+    }
+
+    public Builder federatedUsername(String federatedUsername) {
+      this.federatedUsername = federatedUsername;
+      return this;
+    }
+
+    public Builder grantedScope(String grantedScope) {
+      this.grantedScope = grantedScope;
+      return this;
+    }
+
+    public Builder encryptedAccessToken(EncryptedData encryptedAccessToken) {
+      this.encryptedAccessToken = encryptedAccessToken;
+      return this;
+    }
+
+    public Builder encryptedRefreshToken(EncryptedData encryptedRefreshToken) {
+      this.encryptedRefreshToken = encryptedRefreshToken;
+      return this;
+    }
+
+    public Builder encryptionKeyId(String encryptionKeyId) {
+      this.encryptionKeyId = encryptionKeyId;
+      return this;
+    }
+
+    public Builder accessTokenExpiresAt(LocalDateTime accessTokenExpiresAt) {
+      this.accessTokenExpiresAt = accessTokenExpiresAt;
+      return this;
+    }
+
+    public Builder refreshTokenExpiresAt(LocalDateTime refreshTokenExpiresAt) {
+      this.refreshTokenExpiresAt = refreshTokenExpiresAt;
+      return this;
+    }
+
+    public ParkedCredentials build() {
+      return new ParkedCredentials(this);
+    }
   }
 }

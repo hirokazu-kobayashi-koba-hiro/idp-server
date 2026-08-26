@@ -26,6 +26,7 @@ import org.idp.server.account_linking.handler.AccountLinkingCallbackHandler;
 import org.idp.server.account_linking.handler.AccountLinkingCompleteHandler;
 import org.idp.server.account_linking.handler.AccountLinkingStartHandler;
 import org.idp.server.account_linking.io.AccountLinkingAuthorizeRequest;
+import org.idp.server.account_linking.io.AccountLinkingAuthorizeResult;
 import org.idp.server.account_linking.io.AccountLinkingCallbackRequest;
 import org.idp.server.account_linking.io.AccountLinkingCompleteRequest;
 import org.idp.server.account_linking.io.AccountLinkingResult;
@@ -134,9 +135,10 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     }
 
     OPSession browserSession = opSession.get();
-    AccountLinkingAuthorization authorization =
+    AccountLinkingAuthorizeResult authorization =
         authorizeHandler.handle(
-            new AccountLinkingAuthorizeRequest(tenant, state, browserSession.user()));
+            new AccountLinkingAuthorizeRequest(
+                tenant, state, browserSession.user(), browserSession.authentication()));
     AccountLinkingResult result = authorization.result();
 
     if (authorization.hasBrowserBinding()) {
@@ -183,7 +185,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
 
     if (result.isRedirect()) {
       return AccountLinkingResult.redirect(
-          String.format("%s?linking=done&state=%s", result.redirectUri(), state.value()));
+          new AccountLinkingReturnUri(result.redirectUri(), state).value());
     }
 
     return result;
@@ -222,7 +224,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     Map<String, Object> contents = new HashMap<>();
     contents.put("list", list);
 
-    return AccountLinkingResult.success(AccountLinkingStatus.OK, contents, null, user);
+    return AccountLinkingResult.success(AccountLinkingStatus.OK, contents, user);
   }
 
   private void publish(
