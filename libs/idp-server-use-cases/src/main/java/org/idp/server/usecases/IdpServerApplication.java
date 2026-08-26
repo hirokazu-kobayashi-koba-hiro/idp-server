@@ -18,6 +18,13 @@ package org.idp.server.usecases;
 
 import java.net.http.HttpClient;
 import java.util.Map;
+import org.idp.server.account_linking.AccountLinkingApi;
+import org.idp.server.account_linking.AccountLinkingService;
+import org.idp.server.account_linking.AccountLinkingTokenClient;
+import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
+import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
+import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRepository;
+import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
@@ -231,6 +238,7 @@ public class IdpServerApplication {
   OrganizationTenantResolverApi organizationTenantResolverApi;
   TenantInvitationMetaDataApi tenantInvitationMetaDataApi;
   UserOperationApi userOperationApi;
+  AccountLinkingApi accountLinkingApi;
   UserOperationApi rawUserOperationApi;
   UserLifecycleEventApi userLifecycleEventApi;
   AuthenticationDeviceLogApi authenticationDeviceLogApi;
@@ -715,6 +723,31 @@ public class IdpServerApplication {
             userLifecycleEventPublisher,
             passwordVerificationDelegation,
             passwordEncodeDelegation);
+    LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository =
+        applicationComponentContainer.resolve(LinkedExternalAccountQueryRepository.class);
+    AccountLinkingService accountLinkingService =
+        new AccountLinkingService(
+            federationConfigurationQueryRepository,
+            oidcSsoExecutors,
+            new AccountLinkingTokenClient(httpRequestExecutor),
+            applicationComponentContainer.resolve(AccountLinkingSessionCommandRepository.class),
+            applicationComponentContainer.resolve(AccountLinkingSessionQueryRepository.class),
+            applicationComponentContainer.resolve(LinkedExternalAccountCommandRepository.class),
+            linkedExternalAccountQueryRepository,
+            aesCipher);
+    this.accountLinkingApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AccountLinkingEntryService(
+                tenantQueryRepository,
+                clientConfigurationQueryRepository,
+                authorizationServerConfigurationQueryRepository,
+                linkedExternalAccountQueryRepository,
+                accountLinkingService,
+                oidcSessionHandler,
+                sessionCookieDelegate),
+            AccountLinkingApi.class,
+            databaseTypeProvider);
+
     this.rawUserOperationApi = userOperationEntryService;
     this.userOperationApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -1413,6 +1446,10 @@ public class IdpServerApplication {
 
   public UserOperationApi userOperationApi() {
     return userOperationApi;
+  }
+
+  public AccountLinkingApi accountLinkingApi() {
+    return accountLinkingApi;
   }
 
   public UserOperationApi rawUserOperationApi() {
