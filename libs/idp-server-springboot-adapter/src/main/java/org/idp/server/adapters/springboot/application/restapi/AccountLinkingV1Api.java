@@ -20,7 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import org.idp.server.account_linking.AccountLinkingApi;
 import org.idp.server.account_linking.AccountLinkingState;
-import org.idp.server.account_linking.io.AccountLinkingResponse;
+import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;
@@ -54,7 +54,7 @@ public class AccountLinkingV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    AccountLinkingResponse response =
+    AccountLinkingResult response =
         accountLinkingApi.authorizeStart(
             tenantIdentifier, new AccountLinkingState(state), requestAttributes);
 
@@ -73,7 +73,7 @@ public class AccountLinkingV1Api implements ParameterTransformable {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    AccountLinkingResponse response =
+    AccountLinkingResult response =
         accountLinkingApi.handleCallback(
             tenantIdentifier,
             new AccountLinkingState(state),
@@ -85,7 +85,7 @@ public class AccountLinkingV1Api implements ParameterTransformable {
     return toResponseEntity(response);
   }
 
-  private ResponseEntity<?> toResponseEntity(AccountLinkingResponse response) {
+  private ResponseEntity<?> toResponseEntity(AccountLinkingResult response) {
     HttpHeaders httpHeaders = new HttpHeaders();
 
     if (response.isRedirect()) {

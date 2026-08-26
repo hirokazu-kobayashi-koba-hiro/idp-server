@@ -21,8 +21,7 @@ import java.util.Map;
 import org.idp.server.account_linking.AccountLinkingApi;
 import org.idp.server.account_linking.AccountLinkingState;
 import org.idp.server.account_linking.ExternalIdpProvider;
-import org.idp.server.account_linking.io.AccountLinkingResponse;
-import org.idp.server.account_linking.io.AccountLinkingStartRequest;
+import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
 import org.idp.server.core.openid.identity.User;
@@ -65,13 +64,13 @@ public class LinkedExternalAccountV1Api implements ParameterTransformable {
     OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    AccountLinkingResponse response =
+    AccountLinkingResult response =
         accountLinkingApi.startLink(
             tenantIdentifier,
             user,
             oAuthToken,
             new ExternalIdpProvider(provider),
-            new AccountLinkingStartRequest(requestBody),
+            requestBody,
             requestAttributes);
 
     return toResponseEntity(response);
@@ -89,7 +88,7 @@ public class LinkedExternalAccountV1Api implements ParameterTransformable {
     RequestAttributes requestAttributes = transform(httpServletRequest);
     String state = requestBody == null ? null : String.valueOf(requestBody.get("state"));
 
-    AccountLinkingResponse response =
+    AccountLinkingResult response =
         accountLinkingApi.complete(
             tenantIdentifier, user, oAuthToken, new AccountLinkingState(state), requestAttributes);
 
@@ -105,13 +104,13 @@ public class LinkedExternalAccountV1Api implements ParameterTransformable {
     User user = resourceOwnerPrincipal.getUser();
     RequestAttributes requestAttributes = transform(httpServletRequest);
 
-    AccountLinkingResponse response =
+    AccountLinkingResult response =
         accountLinkingApi.findList(tenantIdentifier, user, requestAttributes);
 
     return toResponseEntity(response);
   }
 
-  private ResponseEntity<?> toResponseEntity(AccountLinkingResponse response) {
+  private ResponseEntity<?> toResponseEntity(AccountLinkingResult response) {
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
     return new ResponseEntity<>(

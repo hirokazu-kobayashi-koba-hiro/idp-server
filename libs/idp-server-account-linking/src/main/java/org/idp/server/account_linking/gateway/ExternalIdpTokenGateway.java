@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.account_linking;
+package org.idp.server.account_linking.gateway;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
@@ -37,12 +37,12 @@ import org.idp.server.platform.log.LoggerWrapper;
  * code_verifier}: {@code OidcTokenRequest} has no field for one. Refresh lives here too, so that
  * both the lazy refresh and the explicit refresh endpoint go through one implementation.
  */
-public class AccountLinkingTokenClient {
+public class ExternalIdpTokenGateway {
 
   HttpRequestExecutor httpRequestExecutor;
-  LoggerWrapper log = LoggerWrapper.getLogger(AccountLinkingTokenClient.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(ExternalIdpTokenGateway.class);
 
-  public AccountLinkingTokenClient(HttpRequestExecutor httpRequestExecutor) {
+  public ExternalIdpTokenGateway(HttpRequestExecutor httpRequestExecutor) {
     this.httpRequestExecutor = httpRequestExecutor;
   }
 
