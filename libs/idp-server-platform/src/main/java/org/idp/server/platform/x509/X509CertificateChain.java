@@ -100,6 +100,61 @@ public class X509CertificateChain {
     }
   }
 
+  /**
+   * Verifies that every certificate is inside its validity window, that each is signed by the next,
+   * and that the last one is signed by one of {@code trustedRoots}.
+   *
+   * <p>For chains that do not carry their own root. Apple App Attest is the case this exists for:
+   * the evidence holds the leaf and the intermediate only, and the root is one the verifier already
+   * holds, so there is nothing in the chain to pin a digest against. Passing the root as a
+   * certificate rather than a digest is what makes the terminating check a signature check.
+   *
+   * @throws X509CertInvalidException when any check fails
+   */
+  public void verifyToRoot(List<X509Certificate> trustedRoots) throws X509CertInvalidException {
+    if (certificates.isEmpty()) {
+      throw new X509CertInvalidException("certificate chain is empty");
+    }
+    if (trustedRoots == null || trustedRoots.isEmpty()) {
+      throw new X509CertInvalidException("no trusted root is configured");
+    }
+
+    try {
+      for (X509Certificate certificate : certificates) {
+        certificate.checkValidity();
+      }
+      for (int i = 0; i < certificates.size() - 1; i++) {
+        certificates.get(i).verify(certificates.get(i + 1).getPublicKey());
+      }
+    } catch (Exception e) {
+      throw new X509CertInvalidException(e);
+    }
+
+    X509Certificate last = certificates.get(certificates.size() - 1);
+    for (X509Certificate trustedRoot : trustedRoots) {
+      try {
+        trustedRoot.checkValidity();
+        last.verify(trustedRoot.getPublicKey());
+        return;
+      } catch (Exception e) {
+        // Try the next root: several may be configured, and only one has to sign this chain.
+      }
+    }
+
+    throw new X509CertInvalidException("certificate chain does not lead to a trusted root");
+  }
+
+  /** Parses a single base64 encoded DER certificate. */
+  public static X509Certificate parseCertificate(String base64Der) throws X509CertInvalidException {
+    try {
+      byte[] der = Base64.getDecoder().decode(base64Der.replaceAll("\\s", ""));
+      CertificateFactory factory = CertificateFactory.getInstance("X.509");
+      return (X509Certificate) factory.generateCertificate(new ByteArrayInputStream(der));
+    } catch (Exception e) {
+      throw new X509CertInvalidException(e);
+    }
+  }
+
   /** base64url encoded SHA-256 of a DER encoded certificate, the form {@link #verify} compares. */
   public static String sha256(byte[] der) throws X509CertInvalidException {
     try {

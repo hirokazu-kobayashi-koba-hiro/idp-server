@@ -1,1 +1,2 @@
 org.idp.server.core.openid.extension.attestation.android.AndroidKeyAttestationVerifier
+org.idp.server.core.openid.extension.attestation.ios.IosAppAttestVerifier
