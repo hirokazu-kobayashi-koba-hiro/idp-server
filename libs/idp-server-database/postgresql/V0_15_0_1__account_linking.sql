@@ -27,7 +27,7 @@ CREATE TABLE linked_external_accounts
     user_id                  UUID                    NOT NULL,
     provider                 VARCHAR(255)            NOT NULL,
     account_alias            VARCHAR(255)            NOT NULL,
-    federated_user_id        VARCHAR(255)            NOT NULL,
+    federated_user_id        VARCHAR(255),
     federated_username       VARCHAR(255),
     scope                    TEXT,
     encrypted_access_token   JSONB                   NOT NULL,
@@ -118,6 +118,17 @@ CREATE INDEX idx_account_linking_sessions_expires_at
 -- ============================================================================
 -- 3. Comments
 -- ============================================================================
+COMMENT ON COLUMN linked_external_accounts.federated_user_id IS
+'Who the external provider says this grant belongs to, when it says anything at all.
+
+Nullable on purpose. OAuth 2.0 delegates access to a resource; a provider is under no obligation to
+identify the resource owner, and many have no endpoint that would. A link is keyed by
+(tenant_id, user_id, provider, account_alias), which holds without this column.
+
+When present it is the sub of a verified id_token, or a value an explicit mapping rule produced. It
+then enables two things that are otherwise skipped: recognising a re-link of the same external
+account, and the tenant''s duplicate link policy.';
+
 COMMENT ON COLUMN linked_external_accounts.account_alias IS
 'Server-assigned identifier, {provider}-{seq} (google-1, google-2). Appears in URLs.
 Never derived from federated_username, which the external IdP can change.';

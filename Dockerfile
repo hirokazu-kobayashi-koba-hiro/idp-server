@@ -19,7 +19,7 @@ FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
 
 # app/build/libs/app-x.x.x.jar
-COPY --from=builder /workspace/app/build/libs/idp-server-*.jar /app/idp-server.jar
+COPY ./app/build/libs/idp-server-*.jar /app/idp-server.jar
 COPY entrypoint.sh /app/entrypoint.sh
 COPY plugins /app/plugins
 

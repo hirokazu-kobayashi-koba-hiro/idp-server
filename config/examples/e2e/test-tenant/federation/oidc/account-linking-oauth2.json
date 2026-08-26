@@ -1,0 +1,35 @@
+{
+  "id": "9e3b7d52-1c48-4a06-b7f9-2d5e8c0a4f13",
+  "type": "oidc",
+  "sso_provider": "account-linking-oauth2",
+  "enabled": true,
+  "payload": {
+    "type": "standard",
+    "provider": "standard",
+    "issuer": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3",
+    "issuer_name": "account-linking-oauth2",
+    "description": "Plain OAuth 2.0 delegation: no openid scope, so no id_token, and no userinfo endpoint. The provider never says who the resource owner is, which a link does not need it to.",
+    "authorization_endpoint": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/authorizations",
+    "token_endpoint": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens",
+    "client_id": "clientSecretPost",
+    "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
+    "client_authentication_type": "client_secret_post",
+    "redirect_uri": "https://api.local.test/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/linking/callback/account-linking-oauth2",
+    "scopes_supported": [
+      "account",
+      "offline_access"
+    ],
+    "response_types_supported": [
+      "code"
+    ],
+    "code_challenge_methods_supported": [
+      "S256"
+    ],
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "duplicate_link_policy": "reject",
+    "refresh_token_expires_in": 86400
+  }
+}

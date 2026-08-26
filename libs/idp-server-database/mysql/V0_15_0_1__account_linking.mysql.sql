@@ -30,7 +30,9 @@ CREATE TABLE linked_external_accounts
     user_id                  CHAR(36)                                 NOT NULL,
     provider                 VARCHAR(255)                             NOT NULL,
     account_alias            VARCHAR(255)                             NOT NULL,
-    federated_user_id        VARCHAR(255)                             NOT NULL,
+    -- Nullable on purpose. See the PostgreSQL migration: a plain OAuth 2.0 provider need
+    -- not identify the resource owner, and a link is keyed without this column.
+    federated_user_id        VARCHAR(255),
     federated_username       VARCHAR(255),
     scope                    TEXT,
     encrypted_access_token   JSON                                     NOT NULL,
