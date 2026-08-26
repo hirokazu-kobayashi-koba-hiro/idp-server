@@ -57,13 +57,13 @@ describe("account linking", () => {
     return tokenResponse.data.access_token;
   };
 
-  const startLink = async (accessToken) =>
+  const startLink = async (accessToken, provider = PROVIDER, scope = "openid profile email offline_access") =>
     await postWithJson({
-      url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts/link/${PROVIDER}`,
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts/link/${provider}`,
       headers: { Authorization: `Bearer ${accessToken}` },
       body: {
         redirect_uri: RETURN_TO,
-        scope: "openid profile email offline_access",
+        scope,
       },
     });
 
@@ -132,6 +132,28 @@ describe("account linking", () => {
     expect(authorizeResponse.status).toBe(200);
 
     return authorizeResponse.data.redirect_uri;
+  };
+
+  /** 連携を1回通して alias を返す。 */
+  const linkOnce = async (accessToken, provider) => {
+    const linkResponse = await startLink(accessToken, provider, "account offline_access");
+    expect(linkResponse.status).toBe(201);
+
+    const startResponse = await get({ url: linkResponse.data.start_url });
+    expect(startResponse.status).toBe(302);
+
+    const callbackUri = await consentAtExternalIdp(startResponse.headers.location);
+    const callbackResponse = await get({ url: callbackUri });
+    expect(callbackResponse.status).toBe(302);
+
+    const completeResponse = await postWithJson({
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts/complete`,
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: { state: linkResponse.data.state },
+    });
+    expect(completeResponse.status).toBe(201);
+
+    return completeResponse.data.alias;
   };
 
   describe("success pattern", () => {
@@ -219,6 +241,84 @@ describe("account linking", () => {
         body: { state },
       });
       expect(replayResponse.status).toBeGreaterThanOrEqual(400);
+    });
+  });
+
+  describe("plain OAuth 2.0 delegation", () => {
+
+    const OAUTH2_PROVIDER = "account-linking-oauth2";
+
+    /**
+     * 連携先が OAuth 2.0 の認可委譲だけを行う場合。
+     *
+     * openid スコープを要求しないので id_token は返らず、userinfo も設定されていない。
+     * つまりプロバイダーは「誰の grant か」を一切名乗らない。連携はそれでも成立する必要がある
+     * ——リンクのキーは (tenant, user, provider, alias) であって、外部の識別子ではないため。
+     */
+    it("links without any identifier from the provider", async () => {
+      const accessToken = await login(ownerUser);
+
+      const linkResponse = await startLink(accessToken, OAUTH2_PROVIDER, "account offline_access");
+      console.log(linkResponse.data);
+      expect(linkResponse.status).toBe(201);
+
+      const state = linkResponse.data.state;
+
+      const startResponse = await get({ url: linkResponse.data.start_url });
+      expect(startResponse.status).toBe(302);
+
+      const externalAuthorizationUri = startResponse.headers.location;
+      // openid が無いことが前提。あると id_token が返り、別の経路になってしまう。
+      expect(externalAuthorizationUri).not.toContain("openid");
+
+      const callbackUri = await consentAtExternalIdp(externalAuthorizationUri);
+      expect(callbackUri).toContain(`/v1/linking/callback/${OAUTH2_PROVIDER}`);
+
+      const callbackResponse = await get({ url: callbackUri });
+      expect(callbackResponse.status).toBe(302);
+
+      const completeResponse = await postWithJson({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts/complete`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: { state },
+      });
+      console.log(completeResponse.data);
+      expect(completeResponse.status).toBe(201);
+      expect(completeResponse.data.provider).toBe(OAUTH2_PROVIDER);
+      expect(completeResponse.data.alias).toContain(`${OAUTH2_PROVIDER}-`);
+
+      // 識別子が無いので表示名も無い。連携そのものは成立している。
+      expect(completeResponse.data.federated_username).toBeNull();
+
+      const listResponse = await get({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      expect(listResponse.status).toBe(200);
+      expect(listResponse.data.list.map((it) => it.alias)).toContain(
+        completeResponse.data.alias
+      );
+    });
+
+    /**
+     * 識別子が無いと「同じ外部アカウントか」を判定できないので、再連携の検出は成立しない。
+     * もう一度連携すれば別の grant として増える。OAuth 2.0 の委譲としてはそれが自然。
+     */
+    it("adds a new link each time, because there is nothing to compare", async () => {
+      const accessToken = await login(ownerUser);
+
+      const firstAlias = await linkOnce(accessToken, OAUTH2_PROVIDER);
+      const secondAlias = await linkOnce(accessToken, OAUTH2_PROVIDER);
+
+      expect(firstAlias).not.toBe(secondAlias);
+
+      const listResponse = await get({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/me/linked-external-accounts`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const aliases = listResponse.data.list.map((it) => it.alias);
+      expect(aliases).toContain(firstAlias);
+      expect(aliases).toContain(secondAlias);
     });
   });
 
