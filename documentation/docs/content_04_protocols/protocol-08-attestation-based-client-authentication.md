@@ -371,7 +371,7 @@ draft-10 の章立てに沿った E2E 仕様準拠テストがあります。
 
 | テスト | 内容 | 状況 |
 |--------|------|------|
-| `e2e/src/tests/spec/oauth_attestation_based_client_auth.test.js` | draft-10 の要件 | 40 実装 / 13 未対応（`xit` で列挙） |
+| `e2e/src/tests/spec/oauth_attestation_based_client_auth.test.js` | draft-10 の要件 | 42 実装 / 13 未対応（`xit` で列挙） |
 | `e2e/src/tests/spec/oauth_attestation_registered_instance_key.test.js` | 自己署名モード | 8 |
 | `e2e/src/tests/spec/oauth_attestation_instance_registration.test.js` | インスタンス登録フロー | 14 |
 
