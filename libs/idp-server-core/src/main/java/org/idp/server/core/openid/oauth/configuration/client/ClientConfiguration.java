@@ -574,6 +574,11 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return extension.clientInstanceRegistrationPolicy();
   }
 
+  /** Per-platform settings read by the platform attestation verifiers at instance registration. */
+  public Map<String, Object> clientInstancePlatformConfig() {
+    return extension.clientInstancePlatformConfig();
+  }
+
   public boolean isCibaRequireRar() {
     return extension.isCibaRequireRar();
   }
