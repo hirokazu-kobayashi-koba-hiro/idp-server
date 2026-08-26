@@ -72,3 +72,7 @@ org.idp.server.core.adapters.datasource.oidc.clientinstance.ClientInstanceQueryD
 org.idp.server.core.adapters.datasource.oidc.clientinstance.ClientInstanceCommandDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.clientinstance.registration.ClientInstanceRegistrationChallengeDataSourceProvider
 org.idp.server.core.adapters.datasource.oidc.clientinstance.registration.operation.ClientInstanceRegistrationChallengeOperationCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.account_linking.AccountLinkingSessionCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.account_linking.AccountLinkingSessionQueryDataSourceProvider
+org.idp.server.core.adapters.datasource.account_linking.LinkedExternalAccountCommandDataSourceProvider
+org.idp.server.core.adapters.datasource.account_linking.LinkedExternalAccountQueryDataSourceProvider
