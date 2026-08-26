@@ -21,103 +21,97 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.idp.server.account_linking.*;
-import org.idp.server.account_linking.exception.AccountLinkingOperatorMismatchException;
-import org.idp.server.account_linking.io.AccountLinkingResponse;
+import org.idp.server.account_linking.handler.AccountLinkingAuthorizeHandler;
+import org.idp.server.account_linking.handler.AccountLinkingCallbackHandler;
+import org.idp.server.account_linking.handler.AccountLinkingCompleteHandler;
+import org.idp.server.account_linking.handler.AccountLinkingStartHandler;
+import org.idp.server.account_linking.io.AccountLinkingAuthorizeRequest;
+import org.idp.server.account_linking.io.AccountLinkingCallbackRequest;
+import org.idp.server.account_linking.io.AccountLinkingCompleteRequest;
+import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.account_linking.io.AccountLinkingStartRequest;
+import org.idp.server.account_linking.io.AccountLinkingStatus;
 import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.core.openid.identity.User;
-import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
-import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
-import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.session.OIDCSessionHandler;
 import org.idp.server.core.openid.session.OPSession;
 import org.idp.server.core.openid.session.SessionCookieDelegate;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
-import org.idp.server.platform.exception.UnauthorizedException;
-import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
+import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
  * Entry service for external IdP account linking.
  *
- * <p>Reads the operator for {@code /linking/start} from the OP session rather than from a Bearer
- * token, because that endpoint is reached by a top level browser navigation.
+ * <p>Owns the transaction, resolves the tenant, and turns each handler result into a response plus
+ * the security event it should be recorded as. The handlers never throw on a failed check, so a
+ * rejected browser binding or a mismatched operator is recorded rather than lost — a run of those
+ * is what an attempt to attach someone else's external account looks like.
  */
 @Transaction
 public class AccountLinkingEntryService implements AccountLinkingApi {
 
   TenantQueryRepository tenantQueryRepository;
-  ClientConfigurationQueryRepository clientConfigurationQueryRepository;
-  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository;
-  AccountLinkingService accountLinkingService;
+  AccountLinkingStartHandler startHandler;
+  AccountLinkingAuthorizeHandler authorizeHandler;
+  AccountLinkingCallbackHandler callbackHandler;
+  AccountLinkingCompleteHandler completeHandler;
   OIDCSessionHandler oidcSessionHandler;
   SessionCookieDelegate sessionCookieDelegate;
   AccountLinkingCookieDelegate accountLinkingCookieDelegate;
-  LoggerWrapper log = LoggerWrapper.getLogger(AccountLinkingEntryService.class);
-
-  static final long LINKING_SESSION_DURATION_SECONDS = 900;
+  UserEventPublisher eventPublisher;
 
   public AccountLinkingEntryService(
       TenantQueryRepository tenantQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
-      AuthorizationServerConfigurationQueryRepository
-          authorizationServerConfigurationQueryRepository,
       LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository,
-      AccountLinkingService accountLinkingService,
+      AccountLinkingStartHandler startHandler,
+      AccountLinkingAuthorizeHandler authorizeHandler,
+      AccountLinkingCallbackHandler callbackHandler,
+      AccountLinkingCompleteHandler completeHandler,
       OIDCSessionHandler oidcSessionHandler,
       SessionCookieDelegate sessionCookieDelegate,
-      AccountLinkingCookieDelegate accountLinkingCookieDelegate) {
+      AccountLinkingCookieDelegate accountLinkingCookieDelegate,
+      UserEventPublisher eventPublisher) {
     this.tenantQueryRepository = tenantQueryRepository;
-    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
-    this.authorizationServerConfigurationQueryRepository =
-        authorizationServerConfigurationQueryRepository;
     this.linkedExternalAccountQueryRepository = linkedExternalAccountQueryRepository;
-    this.accountLinkingService = accountLinkingService;
+    this.startHandler = startHandler;
+    this.authorizeHandler = authorizeHandler;
+    this.callbackHandler = callbackHandler;
+    this.completeHandler = completeHandler;
     this.oidcSessionHandler = oidcSessionHandler;
     this.sessionCookieDelegate = sessionCookieDelegate;
     this.accountLinkingCookieDelegate = accountLinkingCookieDelegate;
+    this.eventPublisher = eventPublisher;
   }
 
   @Override
-  public AccountLinkingResponse startLink(
+  public AccountLinkingResult startLink(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
       ExternalIdpProvider provider,
-      AccountLinkingStartRequest request,
+      Map<String, Object> body,
       RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, oAuthToken.requestedClientId());
-    List<String> allowedRedirectUris = clientConfiguration.linkingReturnUris();
 
-    AccountLinkingSession session =
-        accountLinkingService.start(
-            tenant,
-            user,
-            oAuthToken.requestedClientId(),
-            provider,
-            request.redirectUri(),
-            request.scope(),
-            allowedRedirectUris);
+    AccountLinkingResult result =
+        startHandler.handle(
+            new AccountLinkingStartRequest(tenant, user, oAuthToken, provider, body));
 
-    Map<String, Object> contents = new HashMap<>();
-    String issuer = authorizationServerConfigurationQueryRepository.get(tenant).issuer();
-    contents.put("start_url", accountLinkingService.startUri(issuer, session));
-    contents.put("state", session.state().value());
-    contents.put("expires_in", 900);
+    publish(tenant, oAuthToken, result, requestAttributes);
 
-    return new AccountLinkingResponse(201, contents);
+    return result;
   }
 
   @Override
-  public AccountLinkingResponse authorizeStart(
+  public AccountLinkingResult authorizeStart(
       TenantIdentifier tenantIdentifier,
       AccountLinkingState state,
       RequestAttributes requestAttributes) {
@@ -130,23 +124,40 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     Optional<OPSession> opSession =
         oidcSessionHandler.getOPSessionFromCookie(tenant, sessionCookieDelegate);
     if (opSession.isEmpty()) {
-      throw new UnauthorizedException(
-          "Account linking requires an authenticated browser session at this endpoint.");
+      AccountLinkingResult result =
+          AccountLinkingResult.error(
+              AccountLinkingStatus.UNAUTHORIZED,
+              "Account linking requires an authenticated browser session at this endpoint.",
+              DefaultSecurityEventType.external_account_link_failed);
+      publish(tenant, result, requestAttributes);
+      return result;
     }
 
+    OPSession browserSession = opSession.get();
     AccountLinkingAuthorization authorization =
-        accountLinkingService.authorize(tenant, state, opSession.get().userIdentifier());
+        authorizeHandler.handle(
+            new AccountLinkingAuthorizeRequest(tenant, state, browserSession.user()));
+    AccountLinkingResult result = authorization.result();
 
-    // The callback carries no Bearer token and is reached from the external IdP, so this cookie is
-    // the only thing that will tell it the returning browser is the one leaving here now.
-    accountLinkingCookieDelegate.setBrowserBindingCookie(
-        tenant, authorization.browserBindingSecret(), LINKING_SESSION_DURATION_SECONDS);
+    if (authorization.hasBrowserBinding()) {
+      // The callback carries no Bearer token and is reached from the external IdP, so this cookie
+      // is the only thing that will tell it the returning browser is the one leaving here now.
+      accountLinkingCookieDelegate.setBrowserBindingCookie(
+          tenant,
+          authorization.browserBindingSecret(),
+          AccountLinkingStartHandler.SESSION_DURATION_SECONDS);
+    }
 
-    return AccountLinkingResponse.redirect(authorization.authorizationUri());
+    publish(
+        tenant,
+        result.withContext(result.requestedClientId(), browserSession.user()),
+        requestAttributes);
+
+    return result;
   }
 
   @Override
-  public AccountLinkingResponse handleCallback(
+  public AccountLinkingResult handleCallback(
       TenantIdentifier tenantIdentifier,
       AccountLinkingState state,
       String code,
@@ -156,36 +167,30 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    if (error != null && !error.isEmpty()) {
-      log.warn("Account linking denied at the external identity provider. error={}", error);
-      accountLinkingCookieDelegate.clearBrowserBindingCookie(tenant);
-      Map<String, Object> contents = new HashMap<>();
-      contents.put("error", error);
-      contents.put("error_description", errorDescription);
-      return new AccountLinkingResponse(400, contents);
-    }
-
     String browserBindingSecret =
         accountLinkingCookieDelegate.getBrowserBindingSecret().orElse(null);
 
-    String redirectUri;
-    try {
-      redirectUri = accountLinkingService.handleCallback(tenant, state, code, browserBindingSecret);
-    } catch (AccountLinkingOperatorMismatchException e) {
-      // A browser that cannot present the binding is not the one that started this link. Drop the
-      // cookie so a stale value cannot be replayed, and leave the session for the browser that can.
-      accountLinkingCookieDelegate.clearBrowserBindingCookie(tenant);
-      throw e;
-    }
+    AccountLinkingResult result =
+        callbackHandler.handle(
+            new AccountLinkingCallbackRequest(
+                tenant, state, code, error, errorDescription, browserBindingSecret));
 
+    // The cookie has done its job either way. Dropping it on failure keeps a stale value from
+    // being replayed; the linking session itself is left for the browser that can present one.
     accountLinkingCookieDelegate.clearBrowserBindingCookie(tenant);
 
-    return AccountLinkingResponse.redirect(
-        String.format("%s?linking=done&state=%s", redirectUri, state.value()));
+    publish(tenant, result, requestAttributes);
+
+    if (result.isRedirect()) {
+      return AccountLinkingResult.redirect(
+          String.format("%s?linking=done&state=%s", result.redirectUri(), state.value()));
+    }
+
+    return result;
   }
 
   @Override
-  public AccountLinkingResponse complete(
+  public AccountLinkingResult complete(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
@@ -194,15 +199,17 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
-    LinkedExternalAccount account =
-        accountLinkingService.complete(tenant, state, user.userIdentifier());
+    AccountLinkingResult result =
+        completeHandler.handle(new AccountLinkingCompleteRequest(tenant, state, user, oAuthToken));
 
-    return new AccountLinkingResponse(201, account.toMap());
+    publish(tenant, oAuthToken, result, requestAttributes);
+
+    return result;
   }
 
   @Override
   @Transaction(readOnly = true)
-  public AccountLinkingResponse findList(
+  public AccountLinkingResult findList(
       TenantIdentifier tenantIdentifier, User user, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
@@ -214,6 +221,31 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
 
     Map<String, Object> contents = new HashMap<>();
     contents.put("list", list);
-    return new AccountLinkingResponse(200, contents);
+
+    return AccountLinkingResult.success(AccountLinkingStatus.OK, contents, null, user);
+  }
+
+  private void publish(
+      Tenant tenant,
+      OAuthToken oAuthToken,
+      AccountLinkingResult result,
+      RequestAttributes requestAttributes) {
+    if (!result.hasEventType()) {
+      return;
+    }
+    eventPublisher.publish(tenant, oAuthToken, result.eventType(), requestAttributes);
+  }
+
+  private void publish(
+      Tenant tenant, AccountLinkingResult result, RequestAttributes requestAttributes) {
+    if (!result.hasEventType()) {
+      return;
+    }
+    eventPublisher.publish(
+        tenant,
+        result.requestedClientId(),
+        result.hasUser() ? result.user() : new User(),
+        result.eventType(),
+        requestAttributes);
   }
 }

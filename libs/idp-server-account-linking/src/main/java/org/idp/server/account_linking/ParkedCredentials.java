@@ -62,6 +62,10 @@ public class ParkedCredentials {
     return federatedUserId;
   }
 
+  public boolean hasFederatedUserId() {
+    return federatedUserId != null && !federatedUserId.isEmpty();
+  }
+
   public String federatedUsername() {
     return federatedUsername;
   }

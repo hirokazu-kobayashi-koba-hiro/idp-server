@@ -16,42 +16,33 @@
 
 package org.idp.server.account_linking.io;
 
-import java.util.Map;
-
-/** Result of one account linking API call. */
-public class AccountLinkingResponse {
+/** Outcome of one account linking operation, mapped to the HTTP status the API answers with. */
+public enum AccountLinkingStatus {
+  OK(200),
+  CREATED(201),
+  REDIRECT(302),
+  BAD_REQUEST(400),
+  UNAUTHORIZED(401),
+  FORBIDDEN(403),
+  NOT_FOUND(404),
+  CONFLICT(409),
+  SERVER_ERROR(500);
 
   int statusCode;
-  Map<String, Object> contents;
-  String redirectUri;
 
-  public AccountLinkingResponse(int statusCode, Map<String, Object> contents) {
-    this(statusCode, contents, null);
-  }
-
-  public AccountLinkingResponse(int statusCode, Map<String, Object> contents, String redirectUri) {
+  AccountLinkingStatus(int statusCode) {
     this.statusCode = statusCode;
-    this.contents = contents;
-    this.redirectUri = redirectUri;
-  }
-
-  public static AccountLinkingResponse redirect(String redirectUri) {
-    return new AccountLinkingResponse(302, Map.of(), redirectUri);
   }
 
   public int statusCode() {
     return statusCode;
   }
 
-  public Map<String, Object> contents() {
-    return contents;
-  }
-
-  public String redirectUri() {
-    return redirectUri;
+  public boolean isError() {
+    return statusCode >= 400;
   }
 
   public boolean isRedirect() {
-    return redirectUri != null && !redirectUri.isEmpty();
+    return this == REDIRECT;
   }
 }

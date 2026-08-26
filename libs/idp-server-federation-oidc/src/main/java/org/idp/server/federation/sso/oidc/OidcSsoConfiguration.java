@@ -150,11 +150,43 @@ public class OidcSsoConfiguration implements JsonReadable {
     return userinfoEndpoint;
   }
 
+  /**
+   * Whether this provider can be asked about the account behind an access token.
+   *
+   * <p>A plain OAuth 2.0 delegation cannot: it grants access to a resource and need not expose the
+   * resource owner. Note that {@link #userinfoExecution()} answers with an empty config rather than
+   * null, so it cannot be used to tell configured from unconfigured.
+   */
+  public boolean hasUserinfo() {
+    return hasUserinfoEndpoint() || hasUserinfoExecution();
+  }
+
+  public boolean hasUserinfoEndpoint() {
+    return userinfoEndpoint != null && !userinfoEndpoint.isEmpty();
+  }
+
+  public boolean hasUserinfoExecution() {
+    return userinfoExecution != null
+        && userinfoExecution.function() != null
+        && !userinfoExecution.function().isEmpty();
+  }
+
   public OAuthExtensionUserinfoExecutionConfig userinfoExecution() {
     if (userinfoExecution == null) {
       return new OAuthExtensionUserinfoExecutionConfig();
     }
     return userinfoExecution;
+  }
+
+  /**
+   * Whether the provider publishes keys to fetch.
+   *
+   * <p>Absent for a provider that signs its id_token with a MAC algorithm, where the client secret
+   * is the key. Absent as well for a plain OAuth 2.0 delegation, which issues no id_token to
+   * verify.
+   */
+  public boolean hasJwksUri() {
+    return jwksUri != null && !jwksUri.isEmpty();
   }
 
   public String jwksUri() {

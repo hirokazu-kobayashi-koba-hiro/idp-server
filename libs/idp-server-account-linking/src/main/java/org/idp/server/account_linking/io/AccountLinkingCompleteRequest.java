@@ -16,36 +16,33 @@
 
 package org.idp.server.account_linking.io;
 
-import java.util.Map;
-import org.idp.server.account_linking.ExternalIdpProvider;
+import org.idp.server.account_linking.AccountLinkingState;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-/** Everything the link start phase works from. */
-public class AccountLinkingStartRequest {
+/** Everything the complete phase works from. */
+public class AccountLinkingCompleteRequest {
 
   Tenant tenant;
+  AccountLinkingState state;
   User user;
   OAuthToken oAuthToken;
-  ExternalIdpProvider provider;
-  Map<String, Object> body;
 
-  public AccountLinkingStartRequest(
-      Tenant tenant,
-      User user,
-      OAuthToken oAuthToken,
-      ExternalIdpProvider provider,
-      Map<String, Object> body) {
+  public AccountLinkingCompleteRequest(
+      Tenant tenant, AccountLinkingState state, User user, OAuthToken oAuthToken) {
     this.tenant = tenant;
+    this.state = state;
     this.user = user;
     this.oAuthToken = oAuthToken;
-    this.provider = provider;
-    this.body = body == null ? Map.of() : body;
   }
 
   public Tenant tenant() {
     return tenant;
+  }
+
+  public AccountLinkingState state() {
+    return state;
   }
 
   public User user() {
@@ -54,23 +51,5 @@ public class AccountLinkingStartRequest {
 
   public OAuthToken oAuthToken() {
     return oAuthToken;
-  }
-
-  public ExternalIdpProvider provider() {
-    return provider;
-  }
-
-  /** Where the browser is sent once the link settles. Checked against the client's allow list. */
-  public String redirectUri() {
-    return optString("redirect_uri");
-  }
-
-  public String scope() {
-    return optString("scope");
-  }
-
-  private String optString(String key) {
-    Object value = body.get(key);
-    return value == null ? null : value.toString();
   }
 }
