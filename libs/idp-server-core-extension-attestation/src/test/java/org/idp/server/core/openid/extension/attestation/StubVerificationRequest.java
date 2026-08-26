@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.extension.attestation.android;
+package org.idp.server.core.openid.extension.attestation;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -26,14 +26,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
 /** Assembles a verification request the way the registration service would. */
-class StubVerificationRequest {
+public class StubVerificationRequest {
 
   static final String TENANT_ID = "1e68932e-ed4a-43e7-b412-460665e42df3";
   static final String CLIENT_ID = "wallet-client";
 
   private static final JsonConverter JSON = JsonConverter.snakeCaseInstance();
 
-  static PlatformAttestationVerificationRequest of(
+  public static PlatformAttestationVerificationRequest of(
       Map<String, Object> clientExtension,
       String challenge,
       Map<String, Object> instanceKey,

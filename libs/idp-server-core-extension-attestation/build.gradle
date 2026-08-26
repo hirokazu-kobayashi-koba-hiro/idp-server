@@ -20,6 +20,8 @@ dependencies {
 	// Test only: builds attestation chains so the verifier can run without a device.
 	testImplementation 'org.bouncycastle:bcprov-jdk18on:1.84'
 	testImplementation 'org.bouncycastle:bcpkix-jdk18on:1.84'
+	// Test only: encodes App Attest attestation objects, which arrive as CBOR from a device.
+	testImplementation 'tools.jackson.dataformat:jackson-dataformat-cbor:3.1.2'
 }
 
 test {
