@@ -72,7 +72,7 @@ ClientCredentials（認証済み情報）
 
 ---
 
-## 7つの認証方式
+## 8つの認証方式
 
 ### 標準認証方式（5種類）
 
@@ -92,6 +92,20 @@ ClientCredentials（認証済み情報）
 | **self_signed_tls_client_auth** | 自己署名証明書（MTLS） | ⭐⭐⭐⭐ | FAPI準拠・開発環境 |
 
 **拡張方式**: FAPIモジュールロード時のみ有効（Plugin）
+
+### 証明ベース認証方式（1種類）
+
+| 認証方式 | 送信方法 | セキュリティ | 用途 |
+|---------|---------|------------|------|
+| **attest_jwt_client_auth** | 2つのJWT（HTTPヘッダー） | ⭐⭐⭐⭐⭐ | ネイティブアプリ・ウォレット |
+
+シークレットを配布せずにネイティブアプリを認証します。端末内で生成した鍵（Client Instance Key）で認証するため、アプリを複製しても他の端末では使えません。
+
+処理も設定も他の7方式と大きく異なる（**登録フェーズと認証フェーズの2段構え**、2つの JWT、プラットフォーム証明の検証）ため、専用のドキュメントに分けています。
+
+→ **[11. Attestation-Based Client Authentication 実装ガイド](./11-attestation-based-client-authentication.md)**
+
+**拡張方式**: attestation モジュールロード時のみ有効（Plugin）
 
 ---
 
@@ -524,6 +538,7 @@ Public Client（`client_secret_none`）でPKCEなし：
 
 ### 📖 次に読むべきドキュメント
 
+- [11. Attestation-Based Client Authentication](./11-attestation-based-client-authentication.md) - ネイティブアプリ向けの8つ目の方式
 - [03. Token Flow](./03-token-endpoint.md) - トークン発行フロー全体
 - [06. CIBA Flow](./06-ciba-flow.md) - CIBA認証リクエスト
 

@@ -255,6 +255,37 @@ canonical_jwk = RFC 7638 thumbprint の入力（必須メンバのみ・辞書�
 固定ベクタ: `challenge=Zm9vYmFyLWNoYWxsZW5nZS0wMQ` → `request_hash=YY-nDEK6JHQLVe893qieCiyyQ2kW5fBmIPNlVdflj1I`
 :::
 
+### プラットフォーム証明の検証
+
+`platform_evidence` を検証するのは `PlatformAttestationVerifier` の実装で、プラットフォームごとにモジュールが提供します。**実装が1つも登録されていなければ、登録はすべて拒否されます**（無認証エンドポイントに対する安全側の既定）。
+
+Android Key Attestation の検証は次の順で行います。
+
+![Android Key Attestation の検証](./img/android-key-attestation-verification.svg)
+
+証明書チェーンは攻撃者が自由に作れる入力なので、**ピン留めしたルートまで検証しない限り以降の判定は意味を持ちません**。攻撃者は自分で拡張を書けるため、チャレンジもアプリ名も望みどおりに入れられます。
+
+設定はクライアントの `client_instance_platform_config` に置きます。
+
+```json
+"client_instance_platform_config": {
+  "android_key_attestation": {
+    "package_names": ["com.example.wallet"],
+    "signature_digests": ["<署名証明書の SHA-256（base64url）>"],
+    "min_security_level": "trusted_environment"
+  }
+}
+```
+
+| フィールド | 既定 | 内容 |
+|---|---|---|
+| `package_names` | 必須 | 許可するパッケージ名 |
+| `signature_digests` | 必須 | 署名証明書のダイジェスト。**提示された値がすべてここに含まれること**が条件 |
+| `min_security_level` | `trusted_environment` | `trusted_environment` / `strong_box`。`software` は常に拒否 |
+| `trusted_root_certificates` | — | ルートの上書き。設定すると WARN ログが出ます（実質そのルートの持ち主を信頼することになるため） |
+
+`signature_digests` が必須なのは、パッケージ名が秘密ではないためです。攻撃者は自分の端末で同じパッケージ名のアプリを名乗れるので、**再署名を見分けるのは署名証明書のダイジェストだけ**です。
+
 登録をどこまでデバイスに紐づけるかは `client_instance_registration_policy` で決めます。
 
 | 値 | 意味 |
