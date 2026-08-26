@@ -14,32 +14,21 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.adapters.datasource.account_linking;
+package org.idp.server.core.adapters.datasource.account_linking.account;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.idp.server.account_linking.*;
-import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRepository;
-import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
+import org.idp.server.account_linking.AccountAlias;
+import org.idp.server.account_linking.ExternalIdpProvider;
+import org.idp.server.account_linking.LinkedExternalAccount;
+import org.idp.server.core.adapters.datasource.account_linking.ModelConverter;
 import org.idp.server.core.openid.identity.UserIdentifier;
-import org.idp.server.platform.crypto.EncryptedData;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 
-/**
- * PostgreSQL persistence for {@code linked_external_accounts}.
- *
- * <p>Command and query sides share one class here because this is a spike. The MySQL executor split
- * that the rest of the adapters follow comes with the MySQL implementation.
- */
-public class LinkedExternalAccountDataSource
-    implements LinkedExternalAccountCommandRepository, LinkedExternalAccountQueryRepository {
-
-  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+public class PostgresqlExecutor implements LinkedExternalAccountSqlExecutor {
 
   static final String SELECT_COLUMNS =
       """
@@ -51,7 +40,7 @@ public class LinkedExternalAccountDataSource
       """;
 
   @Override
-  public void register(Tenant tenant, LinkedExternalAccount account) {
+  public void insert(Tenant tenant, LinkedExternalAccount account) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -73,12 +62,15 @@ public class LinkedExternalAccountDataSource
     params.add(account.federatedUserId());
     params.add(account.federatedUsername());
     params.add(account.scope());
-    params.add(jsonConverter.write(account.encryptedAccessToken()));
-    params.add(toJsonOrNull(account.encryptedRefreshToken()));
+    params.add(ModelConverter.toJsonOrNull(account.encryptedAccessToken()));
+    params.add(ModelConverter.toJsonOrNull(account.encryptedRefreshToken()));
     params.add(account.encryptionKeyId());
     params.add(account.accessTokenExpiresAt());
     params.add(account.refreshTokenExpiresAt());
-    params.add(account.metadata() == null ? null : jsonConverter.write(account.metadata()));
+    params.add(
+        account.metadata() == null
+            ? null
+            : JsonConverter.snakeCaseInstance().write(account.metadata()));
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -102,8 +94,8 @@ public class LinkedExternalAccountDataSource
         """;
 
     List<Object> params = new ArrayList<>();
-    params.add(jsonConverter.write(account.encryptedAccessToken()));
-    params.add(toJsonOrNull(account.encryptedRefreshToken()));
+    params.add(ModelConverter.toJsonOrNull(account.encryptedAccessToken()));
+    params.add(ModelConverter.toJsonOrNull(account.encryptedRefreshToken()));
     params.add(account.encryptionKeyId());
     params.add(account.accessTokenExpiresAt());
     params.add(account.refreshTokenExpiresAt());
@@ -142,7 +134,7 @@ public class LinkedExternalAccountDataSource
   }
 
   @Override
-  public List<LinkedExternalAccount> findList(Tenant tenant, UserIdentifier userIdentifier) {
+  public List<Map<String, String>> selectListByUser(Tenant tenant, UserIdentifier userIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -152,15 +144,12 @@ public class LinkedExternalAccountDataSource
              ORDER BY created_at;
             """;
 
-    List<Map<String, String>> results =
-        sqlExecutor.selectList(
-            sqlTemplate, List.of(tenant.identifierUUID(), userIdentifier.valueAsUuid()));
-
-    return results.stream().map(this::convert).toList();
+    return sqlExecutor.selectList(
+        sqlTemplate, List.of(tenant.identifierUUID(), userIdentifier.valueAsUuid()));
   }
 
   @Override
-  public LinkedExternalAccount find(
+  public Map<String, String> selectByAlias(
       Tenant tenant, UserIdentifier userIdentifier, AccountAlias alias) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
@@ -170,16 +159,12 @@ public class LinkedExternalAccountDataSource
              WHERE tenant_id = ?::uuid AND user_id = ?::uuid AND account_alias = ?;
             """;
 
-    Map<String, String> result =
-        sqlExecutor.selectOne(
-            sqlTemplate,
-            List.of(tenant.identifierUUID(), userIdentifier.valueAsUuid(), alias.value()));
-
-    return result == null || result.isEmpty() ? new LinkedExternalAccount() : convert(result);
+    return sqlExecutor.selectOne(
+        sqlTemplate, List.of(tenant.identifierUUID(), userIdentifier.valueAsUuid(), alias.value()));
   }
 
   @Override
-  public LinkedExternalAccount findByUserAndFederatedUser(
+  public Map<String, String> selectByUserAndFederatedUser(
       Tenant tenant,
       UserIdentifier userIdentifier,
       ExternalIdpProvider provider,
@@ -195,20 +180,17 @@ public class LinkedExternalAccountDataSource
                AND federated_user_id = ?;
             """;
 
-    Map<String, String> result =
-        sqlExecutor.selectOne(
-            sqlTemplate,
-            List.of(
-                tenant.identifierUUID(),
-                userIdentifier.valueAsUuid(),
-                provider.value(),
-                federatedUserId));
-
-    return result == null || result.isEmpty() ? new LinkedExternalAccount() : convert(result);
+    return sqlExecutor.selectOne(
+        sqlTemplate,
+        List.of(
+            tenant.identifierUUID(),
+            userIdentifier.valueAsUuid(),
+            provider.value(),
+            federatedUserId));
   }
 
   @Override
-  public boolean existsForOtherUser(
+  public int countByOtherUser(
       Tenant tenant,
       UserIdentifier userIdentifier,
       ExternalIdpProvider provider,
@@ -234,7 +216,7 @@ public class LinkedExternalAccountDataSource
                 federatedUserId,
                 userIdentifier.valueAsUuid()));
 
-    return result != null && !result.isEmpty() && Integer.parseInt(result.get("count")) > 0;
+    return toCount(result);
   }
 
   @Override
@@ -254,14 +236,11 @@ public class LinkedExternalAccountDataSource
             sqlTemplate,
             List.of(tenant.identifierUUID(), userIdentifier.valueAsUuid(), provider.value()));
 
-    if (result == null || result.isEmpty()) {
-      return 0;
-    }
-    return Integer.parseInt(result.get("count"));
+    return toCount(result);
   }
 
   @Override
-  public LinkedExternalAccount lock(
+  public Map<String, String> selectByAliasForUpdate(
       Tenant tenant, UserIdentifier userIdentifier, AccountAlias alias) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
@@ -272,51 +251,14 @@ public class LinkedExternalAccountDataSource
              FOR UPDATE;
             """;
 
-    Map<String, String> result =
-        sqlExecutor.selectOne(
-            sqlTemplate,
-            List.of(tenant.identifierUUID(), userIdentifier.valueAsUuid(), alias.value()));
-
-    return result == null || result.isEmpty() ? new LinkedExternalAccount() : convert(result);
+    return sqlExecutor.selectOne(
+        sqlTemplate, List.of(tenant.identifierUUID(), userIdentifier.valueAsUuid(), alias.value()));
   }
 
-  private LinkedExternalAccount convert(Map<String, String> row) {
-    LinkedExternalAccount.Builder builder =
-        new LinkedExternalAccount.Builder()
-            .identifier(new LinkedExternalAccountIdentifier(row.get("id")))
-            .tenantIdentifier(new TenantIdentifier(row.get("tenant_id")))
-            .userIdentifier(new UserIdentifier(row.get("user_id")))
-            .provider(new ExternalIdpProvider(row.get("provider")))
-            .accountAlias(new AccountAlias(row.get("account_alias")))
-            .federatedUserId(row.get("federated_user_id"))
-            .federatedUsername(row.get("federated_username"))
-            .scope(row.get("scope"))
-            .encryptedAccessToken(toEncryptedData(row.get("encrypted_access_token")))
-            .encryptedRefreshToken(toEncryptedData(row.get("encrypted_refresh_token")))
-            .encryptionKeyId(row.get("encryption_key_id"))
-            .accessTokenExpiresAt(toDateTime(row.get("access_token_expires_at")))
-            .refreshTokenExpiresAt(toDateTime(row.get("refresh_token_expires_at")))
-            .createdAt(toDateTime(row.get("created_at")))
-            .updatedAt(toDateTime(row.get("updated_at")));
-
-    return builder.build();
-  }
-
-  private String toJsonOrNull(EncryptedData data) {
-    return data == null ? null : jsonConverter.write(data);
-  }
-
-  private EncryptedData toEncryptedData(String json) {
-    if (json == null || json.isEmpty()) {
-      return null;
+  private int toCount(Map<String, String> result) {
+    if (result == null || result.isEmpty()) {
+      return 0;
     }
-    return jsonConverter.read(json, EncryptedData.class);
-  }
-
-  private LocalDateTime toDateTime(String value) {
-    if (value == null || value.isEmpty()) {
-      return null;
-    }
-    return LocalDateTime.parse(value.replace(" ", "T"));
+    return Integer.parseInt(result.get("count"));
   }
 }
