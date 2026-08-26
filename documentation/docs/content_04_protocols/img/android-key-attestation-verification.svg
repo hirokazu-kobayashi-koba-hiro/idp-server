@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 900" font-family="'Helvetica Neue', Arial, 'Hiragino Sans', 'Noto Sans JP', sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#B91C1C"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="900" fill="#ffffff"/>
+
+  <!-- title -->
+  <text x="490" y="34" text-anchor="middle" font-size="20" font-weight="bold" fill="#0F172A">Android Key Attestation の検証</text>
+  <text x="490" y="54" text-anchor="middle" font-size="12" fill="#64748B">Client Instance 登録は無認証。この検証がリクエストの認証そのものになる</text>
+
+  <!-- inputs -->
+  <rect x="40" y="78" width="420" height="128" rx="8" fill="#FEF2F2" stroke="#B91C1C" stroke-width="1.5"/>
+  <text x="60" y="100" font-size="13" font-weight="bold" fill="#7F1D1D">入力（すべて攻撃者が自由に作れる）</text>
+  <text x="60" y="124" font-size="11.5" fill="#991B1B">platform_evidence.x5c — 証明書チェーン</text>
+  <text x="60" y="144" font-size="11.5" fill="#991B1B">client_instance_public_key — 登録したい鍵</text>
+  <text x="60" y="164" font-size="11.5" fill="#991B1B">challenge — 発行済みチケットの値</text>
+  <text x="60" y="190" font-size="11" fill="#B91C1C">「パースできた」は何の保証にもならない</text>
+
+  <rect x="520" y="78" width="420" height="128" rx="8" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+  <text x="540" y="100" font-size="13" font-weight="bold" fill="#14532D">照合先（サーバー側が持つ真実）</text>
+  <text x="540" y="124" font-size="11.5" fill="#166534">ピン留めされたルート証明書</text>
+  <text x="540" y="144" font-size="11.5" fill="#166534">発行済みチャレンジ（DB・単回消費）</text>
+  <text x="540" y="164" font-size="11.5" fill="#166534">クライアント設定 package_names / signature_digests</text>
+  <text x="540" y="190" font-size="11" fill="#15803D">この4つと突き合わせて初めて意味を持つ</text>
+
+  <!-- pipeline title -->
+  <text x="490" y="240" text-anchor="middle" font-size="14" font-weight="bold" fill="#0F172A">検証パイプライン（どれか1つでも落ちれば登録は拒否）</text>
+
+  <!-- step 0: chain -->
+  <rect x="120" y="258" width="740" height="86" rx="8" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.5"/>
+  <text x="140" y="280" font-size="13" font-weight="bold" fill="#312E81">0. チェーン検証</text>
+  <text x="140" y="302" font-size="11.5" fill="#4338CA">有効期限 → 各証明書が次の証明書で署名されている → 末尾がピン留めルートと一致（SHA-256）</text>
+  <text x="140" y="324" font-size="11.5" font-weight="bold" fill="#B91C1C">ここが無いと以降の検証は全て無意味 — 攻撃者は自分で拡張を書けるため</text>
+
+  <line x1="490" y1="344" x2="490" y2="372" stroke="#334155" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- step 1 -->
+  <rect x="120" y="374" width="740" height="76" rx="8" fill="#F8FAFC" stroke="#334155" stroke-width="1.5"/>
+  <text x="140" y="396" font-size="13" font-weight="bold" fill="#1E293B">1. チャレンジの束縛</text>
+  <text x="140" y="418" font-size="11.5" fill="#334155">拡張(OID 1.3.6.1.4.1.11129.2.1.17)の attestationChallenge == 発行済みチャレンジ</text>
+  <text x="140" y="438" font-size="11" fill="#64748B">→ 過去に取得した証明の使い回しを防ぐ</text>
+
+  <line x1="490" y1="450" x2="490" y2="478" stroke="#334155" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- step 2 -->
+  <rect x="120" y="480" width="740" height="76" rx="8" fill="#F8FAFC" stroke="#334155" stroke-width="1.5"/>
+  <text x="140" y="502" font-size="13" font-weight="bold" fill="#1E293B">2. インスタンス鍵の束縛</text>
+  <text x="140" y="524" font-size="11.5" fill="#334155">リーフ証明書の公開鍵 == client_instance_public_key</text>
+  <text x="140" y="544" font-size="11" fill="#64748B">→ 本物の証明に攻撃者の鍵を差し替えて登録することを防ぐ</text>
+
+  <line x1="490" y1="556" x2="490" y2="584" stroke="#334155" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- step 3 -->
+  <rect x="120" y="586" width="740" height="96" rx="8" fill="#F8FAFC" stroke="#334155" stroke-width="1.5"/>
+  <text x="140" y="608" font-size="13" font-weight="bold" fill="#1E293B">3. アプリ同一性の束縛</text>
+  <text x="140" y="630" font-size="11.5" fill="#334155">attestationApplicationId の package name が設定に含まれる</text>
+  <text x="140" y="650" font-size="11.5" fill="#334155">かつ 提示された署名証明書ダイジェストが<tspan font-weight="bold">すべて</tspan>設定済み</text>
+  <text x="140" y="670" font-size="11" fill="#64748B">→ 「1つでも一致」にすると、本物の証明に攻撃者の署名証明書を足したものが通る</text>
+
+  <line x1="490" y1="682" x2="490" y2="710" stroke="#334155" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- step 4 -->
+  <rect x="120" y="712" width="740" height="76" rx="8" fill="#FFF7ED" stroke="#D97706" stroke-width="1.5"/>
+  <text x="140" y="734" font-size="13" font-weight="bold" fill="#7C2D12">4. ハードウェア裏付け</text>
+  <text x="140" y="756" font-size="11.5" fill="#B45309">attestationSecurityLevel が trusted_environment 以上（既定）。software は拒否</text>
+  <text x="140" y="776" font-size="11" fill="#B45309">→ OS が持つ鍵は侵害された端末から取り出せるため、証明の意味が消える</text>
+
+  <line x1="490" y1="788" x2="490" y2="816" stroke="#334155" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- result -->
+  <rect x="300" y="818" width="380" height="52" rx="8" fill="#F0FDF4" stroke="#15803D" stroke-width="1.5"/>
+  <text x="490" y="840" text-anchor="middle" font-size="13" font-weight="bold" fill="#14532D">Client Instance Key として登録</text>
+  <text x="490" y="859" text-anchor="middle" font-size="11" fill="#166534">以降この鍵で Client Attestation JWT を自己署名できる</text>
+
+  <!-- side note: what android gives for free -->
+  <rect x="620" y="374" width="0" height="0" fill="none"/>
+  <text x="866" y="418" text-anchor="end" font-size="10.5" fill="#0F766E">Android は</text>
+  <text x="866" y="434" text-anchor="end" font-size="10.5" fill="#0F766E">「鍵そのもの」の証明書なので</text>
+  <text x="866" y="524" text-anchor="end" font-size="10.5" fill="#0F766E">2 が構造的に満たせる</text>
+  <text x="866" y="540" text-anchor="end" font-size="10.5" fill="#0F766E">（iOS は別鍵のため hash で縛る）</text>
+</svg>
