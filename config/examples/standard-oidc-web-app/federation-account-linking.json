@@ -44,12 +44,22 @@
       "refresh_token"
     ],
     "userinfo_mapping_rules": [
-      {"from": "$.http_request.response_body.sub", "to": "external_user_id"},
-      {"from": "$.http_request.response_body.email", "to": "email"},
-      {"from": "$.http_request.response_body.name", "to": "name"}
+      {
+        "from": "$.http_request.response_body.sub",
+        "to": "external_user_id"
+      },
+      {
+        "from": "$.http_request.response_body.email",
+        "to": "email"
+      },
+      {
+        "from": "$.http_request.response_body.name",
+        "to": "name"
+      }
     ],
     "store_credentials": true,
     "access_token_expires_in": 300,
-    "refresh_token_expires_in": 86400
+    "refresh_token_expires_in": 86400,
+    "duplicate_link_policy": "reject"
   }
 }

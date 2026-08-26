@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.idp.server.account_linking.*;
+import org.idp.server.account_linking.exception.AccountLinkingOperatorMismatchException;
 import org.idp.server.account_linking.io.AccountLinkingResponse;
 import org.idp.server.account_linking.io.AccountLinkingStartRequest;
 import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
@@ -56,7 +57,10 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
   AccountLinkingService accountLinkingService;
   OIDCSessionHandler oidcSessionHandler;
   SessionCookieDelegate sessionCookieDelegate;
+  AccountLinkingCookieDelegate accountLinkingCookieDelegate;
   LoggerWrapper log = LoggerWrapper.getLogger(AccountLinkingEntryService.class);
+
+  static final long LINKING_SESSION_DURATION_SECONDS = 900;
 
   public AccountLinkingEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -66,7 +70,8 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
       LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository,
       AccountLinkingService accountLinkingService,
       OIDCSessionHandler oidcSessionHandler,
-      SessionCookieDelegate sessionCookieDelegate) {
+      SessionCookieDelegate sessionCookieDelegate,
+      AccountLinkingCookieDelegate accountLinkingCookieDelegate) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
@@ -75,6 +80,7 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
     this.accountLinkingService = accountLinkingService;
     this.oidcSessionHandler = oidcSessionHandler;
     this.sessionCookieDelegate = sessionCookieDelegate;
+    this.accountLinkingCookieDelegate = accountLinkingCookieDelegate;
   }
 
   @Override
@@ -128,10 +134,15 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
           "Account linking requires an authenticated browser session at this endpoint.");
     }
 
-    String authorizationUri =
+    AccountLinkingAuthorization authorization =
         accountLinkingService.authorize(tenant, state, opSession.get().userIdentifier());
 
-    return AccountLinkingResponse.redirect(authorizationUri);
+    // The callback carries no Bearer token and is reached from the external IdP, so this cookie is
+    // the only thing that will tell it the returning browser is the one leaving here now.
+    accountLinkingCookieDelegate.setBrowserBindingCookie(
+        tenant, authorization.browserBindingSecret(), LINKING_SESSION_DURATION_SECONDS);
+
+    return AccountLinkingResponse.redirect(authorization.authorizationUri());
   }
 
   @Override
@@ -147,13 +158,27 @@ public class AccountLinkingEntryService implements AccountLinkingApi {
 
     if (error != null && !error.isEmpty()) {
       log.warn("Account linking denied at the external identity provider. error={}", error);
+      accountLinkingCookieDelegate.clearBrowserBindingCookie(tenant);
       Map<String, Object> contents = new HashMap<>();
       contents.put("error", error);
       contents.put("error_description", errorDescription);
       return new AccountLinkingResponse(400, contents);
     }
 
-    String redirectUri = accountLinkingService.handleCallback(tenant, state, code);
+    String browserBindingSecret =
+        accountLinkingCookieDelegate.getBrowserBindingSecret().orElse(null);
+
+    String redirectUri;
+    try {
+      redirectUri = accountLinkingService.handleCallback(tenant, state, code, browserBindingSecret);
+    } catch (AccountLinkingOperatorMismatchException e) {
+      // A browser that cannot present the binding is not the one that started this link. Drop the
+      // cookie so a stale value cannot be replayed, and leave the session for the browser that can.
+      accountLinkingCookieDelegate.clearBrowserBindingCookie(tenant);
+      throw e;
+    }
+
+    accountLinkingCookieDelegate.clearBrowserBindingCookie(tenant);
 
     return AccountLinkingResponse.redirect(
         String.format("%s?linking=done&state=%s", redirectUri, state.value()));

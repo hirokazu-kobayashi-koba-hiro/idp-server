@@ -44,8 +44,14 @@ CREATE TABLE linked_external_accounts
     -- UserLifecycleEventExecutor runs (UserDeletionService deletes the user at
     -- step 4 and publishes the lifecycle event at step 5), leaving the token
     -- alive at the external IdP with nothing left to revoke.
-    UNIQUE (tenant_id, user_id, provider, account_alias),
-    UNIQUE (tenant_id, provider, federated_user_id)
+    UNIQUE (tenant_id, user_id, provider, account_alias)
+    -- No UNIQUE on (tenant_id, provider, federated_user_id) by design. This column is a note of
+    -- whose tokens these are, not an identity: nothing authenticates through it. Login federation
+    -- keeps that constraint on idp_user (uk_external_user), where it stops one external identity
+    -- from resolving to two users. Repeating it here would only forbid the legitimate cases —
+    -- a shared corporate account linked by two people — and let a first link squat an account
+    -- its owner could then never link, with no unlink API to recover. Whose tokens these are is
+    -- established by the user binding in the linking flow, not by a constraint.
 );
 
 ALTER TABLE linked_external_accounts ENABLE ROW LEVEL SECURITY;
@@ -57,6 +63,9 @@ ALTER TABLE linked_external_accounts FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_linked_external_accounts_user
     ON linked_external_accounts (tenant_id, user_id);
+
+CREATE INDEX idx_linked_external_accounts_federated_user
+    ON linked_external_accounts (tenant_id, provider, federated_user_id);
 
 CREATE INDEX idx_linked_external_accounts_access_token_expires_at
     ON linked_external_accounts (tenant_id, access_token_expires_at);
@@ -80,6 +89,7 @@ CREATE TABLE account_linking_sessions
     amr                      TEXT,
     authenticated_at         TIMESTAMP,
     status                   VARCHAR(20)             NOT NULL,
+    browser_binding_hash     VARCHAR(255),
     federated_user_id        VARCHAR(255),
     federated_username       VARCHAR(255),
     granted_scope            TEXT,
@@ -121,6 +131,14 @@ COMMENT ON COLUMN account_linking_sessions.user_id IS
 'Bound from the Bearer token at link time. MUST NOT be re-derived at the callback.
 This binding plus the check at /linking/start and complete is what prevents
 linking CSRF in both directions.';
+
+COMMENT ON COLUMN account_linking_sessions.browser_binding_hash IS
+'SHA-256 of the secret handed to the browser at /linking/start.
+
+The callback arrives from the external IdP without a Bearer token, so it cannot tell whose link it
+is. Matching this hash is what proves the browser completing the flow is the one that started it.
+Without it, an attacker can walk /linking/start himself, forward the resulting external
+authorization URL to a victim, and have the victim''s tokens parked on the attacker''s session.';
 
 COMMENT ON COLUMN account_linking_sessions.status IS
 'pending -> authorized -> parked -> consumed.

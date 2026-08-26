@@ -109,6 +109,7 @@ public class AccountLinkingSessionDataSource
         """
         UPDATE account_linking_sessions
            SET account_alias = ?,
+               browser_binding_hash = ?,
                acr = ?,
                amr = ?,
                authenticated_at = ?,
@@ -127,6 +128,7 @@ public class AccountLinkingSessionDataSource
     ParkedCredentials credentials = session.parkedCredentials();
     List<Object> params = new ArrayList<>();
     params.add(session.hasAccountAlias() ? session.accountAlias().value() : null);
+    params.add(session.browserBindingHash());
     params.add(session.acr());
     params.add(session.amr());
     params.add(session.authenticatedAt());
@@ -164,7 +166,7 @@ public class AccountLinkingSessionDataSource
         """
         SELECT state, tenant_id, user_id, client_id, provider, account_alias,
                redirect_uri, requested_scope, code_verifier, nonce, acr, amr,
-               authenticated_at, status, federated_user_id, federated_username,
+               authenticated_at, status, browser_binding_hash, federated_user_id, federated_username,
                granted_scope, encrypted_access_token, encrypted_refresh_token,
                encryption_key_id, access_token_expires_at, refresh_token_expires_at,
                expires_at
@@ -198,6 +200,7 @@ public class AccountLinkingSessionDataSource
             .amr(row.get("amr"))
             .authenticatedAt(toDateTime(row.get("authenticated_at")))
             .status(AccountLinkingSessionStatus.valueOf(row.get("status").toUpperCase()))
+            .browserBindingHash(row.get("browser_binding_hash"))
             .expiresAt(toDateTime(row.get("expires_at")));
 
     if (row.get("account_alias") != null) {
