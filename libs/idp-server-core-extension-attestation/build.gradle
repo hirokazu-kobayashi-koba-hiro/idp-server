@@ -17,6 +17,9 @@ dependencies {
 	testImplementation platform('org.junit:junit-bom:5.10.0')
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testImplementation 'com.nimbusds:nimbus-jose-jwt:10.9.1'
+	// Test only: builds attestation chains so the verifier can run without a device.
+	testImplementation 'org.bouncycastle:bcprov-jdk18on:1.84'
+	testImplementation 'org.bouncycastle:bcpkix-jdk18on:1.84'
 }
 
 test {
