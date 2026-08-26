@@ -47,12 +47,16 @@ CREATE TABLE linked_external_accounts
     -- UserLifecycleEventExecutor runs (UserDeletionService deletes the user at
     -- step 4 and publishes the lifecycle event at step 5), leaving the token
     -- alive at the external IdP with nothing left to revoke.
-    UNIQUE KEY uk_linked_external_accounts_alias (tenant_id, user_id, provider, account_alias),
-    UNIQUE KEY uk_linked_external_accounts_federated_user (tenant_id, provider, federated_user_id)
+    -- No UNIQUE on (tenant_id, provider, federated_user_id) by design. See the PostgreSQL
+    -- migration for the reasoning: this column records whose tokens these are, not an identity.
+    UNIQUE KEY uk_linked_external_accounts_alias (tenant_id, user_id, provider, account_alias)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_linked_external_accounts_user
     ON linked_external_accounts (tenant_id, user_id);
+
+CREATE INDEX idx_linked_external_accounts_federated_user
+    ON linked_external_accounts (tenant_id, provider, federated_user_id);
 
 CREATE INDEX idx_linked_external_accounts_access_token_expires_at
     ON linked_external_accounts (tenant_id, access_token_expires_at);
@@ -76,6 +80,7 @@ CREATE TABLE account_linking_sessions
     amr                      TEXT,
     authenticated_at         DATETIME(6),
     status                   VARCHAR(20)                              NOT NULL,
+    browser_binding_hash     VARCHAR(255),
     federated_user_id        VARCHAR(255),
     federated_username       VARCHAR(255),
     granted_scope            TEXT,
