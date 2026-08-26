@@ -71,9 +71,11 @@ class AccountLinkingSessionTest {
     void fullFlow() {
       AccountLinkingSession pending = pendingSessionFor(VICTIM);
 
+      AccountLinkingBrowserBinding binding = AccountLinkingBrowserBinding.generate();
       AccountLinkingSession authorized =
-          pending.authorize(VICTIM, "urn:mace:incommon:iap:silver", "pwd", NOW);
+          pending.authorize(VICTIM, binding, "urn:mace:incommon:iap:silver", "pwd", NOW);
       assertEquals(AccountLinkingSessionStatus.AUTHORIZED, authorized.status());
+      assertDoesNotThrow(() -> authorized.verifyBrowserBinding(binding.secret()));
 
       AccountLinkingSession parked = authorized.park(credentialsOf("victim-google-sub"));
       assertEquals(AccountLinkingSessionStatus.PARKED, parked.status());
@@ -93,7 +95,7 @@ class AccountLinkingSessionTest {
     void attackerCannotClaimVictimSession() {
       AccountLinkingSession parked =
           pendingSessionFor(VICTIM)
-              .authorize(VICTIM, null, "pwd", NOW)
+              .authorize(VICTIM, AccountLinkingBrowserBinding.generate(), null, "pwd", NOW)
               .park(credentialsOf("victim-google-sub"));
 
       assertThrows(AccountLinkingOperatorMismatchException.class, () -> parked.consume(ATTACKER));
@@ -111,7 +113,9 @@ class AccountLinkingSessionTest {
 
       assertThrows(
           AccountLinkingOperatorMismatchException.class,
-          () -> attackerSession.authorize(VICTIM, null, "pwd", NOW));
+          () ->
+              attackerSession.authorize(
+                  VICTIM, AccountLinkingBrowserBinding.generate(), null, "pwd", NOW));
     }
 
     @Test
@@ -138,6 +142,44 @@ class AccountLinkingSessionTest {
   }
 
   @Nested
+  @DisplayName("linking CSRF: 攻撃者が自分で start を通り、外部IdPのURLだけ被害者に渡す向き")
+  class ForwardExternalAuthorizationUrl {
+
+    @Test
+    @DisplayName("start を通すのは攻撃者自身なので operator 照合では止まらない")
+    void operatorCheckDoesNotCoverThisDirection() {
+      AccountLinkingSession attackerSession = pendingSessionFor(ATTACKER);
+
+      // 攻撃者は束縛されたユーザー本人なので、ここは正常に通る。
+      // つまり operator 照合はこの向きに対して何も守っていない。
+      assertDoesNotThrow(
+          () ->
+              attackerSession.authorize(
+                  ATTACKER, AccountLinkingBrowserBinding.generate(), null, "pwd", NOW));
+    }
+
+    @Test
+    @DisplayName("binding を持たない被害者のブラウザからの callback は拒否される")
+    void callbackWithoutBindingIsRejected() {
+      AccountLinkingBrowserBinding attackerBinding = AccountLinkingBrowserBinding.generate();
+      AccountLinkingSession authorized =
+          pendingSessionFor(ATTACKER).authorize(ATTACKER, attackerBinding, null, "pwd", NOW);
+
+      // 被害者のブラウザには binding cookie が無い。ここで止まるので
+      // 被害者の認可コードは交換されない。
+      assertThrows(
+          AccountLinkingOperatorMismatchException.class,
+          () -> authorized.verifyBrowserBinding(null));
+      assertThrows(
+          AccountLinkingOperatorMismatchException.class,
+          () -> authorized.verifyBrowserBinding("guessed-secret"));
+
+      // start を通したブラウザ本人なら通る。
+      assertDoesNotThrow(() -> authorized.verifyBrowserBinding(attackerBinding.secret()));
+    }
+  }
+
+  @Nested
   @DisplayName("単回消費と期限")
   class SingleShotAndExpiry {
 
@@ -146,7 +188,7 @@ class AccountLinkingSessionTest {
     void consumedIsTerminal() {
       AccountLinkingSession consumed =
           pendingSessionFor(VICTIM)
-              .authorize(VICTIM, null, "pwd", NOW)
+              .authorize(VICTIM, AccountLinkingBrowserBinding.generate(), null, "pwd", NOW)
               .park(credentialsOf("victim-google-sub"))
               .consume(VICTIM);
 

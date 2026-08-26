@@ -24,6 +24,7 @@ import org.idp.server.adapters.springboot.application.event.SecurityEventPublish
 import org.idp.server.adapters.springboot.application.event.UserLifecycleEventPublisherService;
 import org.idp.server.adapters.springboot.application.property.AppDatabaseConfigProperties;
 import org.idp.server.adapters.springboot.application.property.ControlPlaneDatabaseConfigProperties;
+import org.idp.server.adapters.springboot.application.session.AccountLinkingCookieService;
 import org.idp.server.adapters.springboot.application.session.AuthSessionCookieService;
 import org.idp.server.adapters.springboot.application.session.SessionCookieService;
 import org.idp.server.core.adapters.datasource.cache.JedisCacheStore;
@@ -133,6 +134,7 @@ public class IdPServerConfiguration {
   public IdpServerApplication idpServerApplication(
       SessionCookieService sessionCookieService,
       AuthSessionCookieService authSessionCookieService,
+      AccountLinkingCookieService accountLinkingCookieService,
       SecurityEventPublisherService eventPublisherService,
       AuditLogPublisherService auditLogPublisher,
       UserLifecycleEventPublisherService userLifecycleEventPublisherService) {
@@ -160,6 +162,7 @@ public class IdPServerConfiguration {
         sessionStore,
         sessionCookieService,
         authSessionCookieService,
+        accountLinkingCookieService,
         passwordEncoder,
         passwordVerification,
         eventPublisherService,

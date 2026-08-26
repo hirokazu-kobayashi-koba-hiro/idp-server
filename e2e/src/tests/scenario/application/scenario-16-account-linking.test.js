@@ -151,6 +151,14 @@ describe("account linking", () => {
       const startResponse = await get({ url: linkResponse.data.start_url });
       expect(startResponse.status).toBe(302);
 
+      // コールバックは Bearer を運べないので、start が発行するこの Cookie だけが
+      // 「戻ってきたブラウザは start を通ったブラウザか」を判定できる。
+      // SameSite=Lax でないと外部IdPからのクロスサイト遷移で送られず、連携が成立しない。
+      const setCookie = (startResponse.headers["set-cookie"] || []).join("; ");
+      expect(setCookie).toContain("IDP_LINK_BINDING=");
+      expect(setCookie).toContain("HttpOnly");
+      expect(setCookie).toContain("SameSite=Lax");
+
       const externalAuthorizationUri = startResponse.headers.location;
       console.log(externalAuthorizationUri);
       expect(externalAuthorizationUri).toContain(federationServerConfig.tenantId);

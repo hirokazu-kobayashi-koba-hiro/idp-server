@@ -65,6 +65,7 @@ public class AccountLinkingSession {
   String amr;
   LocalDateTime authenticatedAt;
   AccountLinkingSessionStatus status;
+  String browserBindingHash;
   ParkedCredentials parkedCredentials;
   LocalDateTime expiresAt;
 
@@ -85,6 +86,7 @@ public class AccountLinkingSession {
     this.amr = builder.amr;
     this.authenticatedAt = builder.authenticatedAt;
     this.status = builder.status;
+    this.browserBindingHash = builder.browserBindingHash;
     this.parkedCredentials = builder.parkedCredentials;
     this.expiresAt = builder.expiresAt;
   }
@@ -125,16 +127,37 @@ public class AccountLinkingSession {
    * session or from a step-up authentication.
    */
   public AccountLinkingSession authorize(
-      UserIdentifier operator, String acr, String amr, LocalDateTime authenticatedAt) {
+      UserIdentifier operator,
+      AccountLinkingBrowserBinding browserBinding,
+      String acr,
+      String amr,
+      LocalDateTime authenticatedAt) {
     verifyOperator(operator);
     verifyTransitionTo(AccountLinkingSessionStatus.AUTHORIZED);
 
     return toBuilder()
+        .browserBindingHash(browserBinding.hash())
         .acr(acr)
         .amr(amr)
         .authenticatedAt(authenticatedAt)
         .status(AccountLinkingSessionStatus.AUTHORIZED)
         .build();
+  }
+
+  /**
+   * Verifies that the browser presenting the callback is the one that walked {@code
+   * /linking/start}.
+   *
+   * @throws AccountLinkingOperatorMismatchException if the secret is absent or does not match
+   */
+  public void verifyBrowserBinding(String presentedSecret) {
+    if (!AccountLinkingBrowserBinding.matches(browserBindingHash, presentedSecret)) {
+      throw new AccountLinkingOperatorMismatchException(
+          "Account linking callback came from a browser that did not start this link. state="
+              + state.value()
+              + ", provider="
+              + provider.value());
+    }
   }
 
   /**
@@ -236,6 +259,10 @@ public class AccountLinkingSession {
     return status;
   }
 
+  public String browserBindingHash() {
+    return browserBindingHash;
+  }
+
   public ParkedCredentials parkedCredentials() {
     return parkedCredentials;
   }
@@ -264,6 +291,7 @@ public class AccountLinkingSession {
         .amr(amr)
         .authenticatedAt(authenticatedAt)
         .status(status)
+        .browserBindingHash(browserBindingHash)
         .parkedCredentials(parkedCredentials)
         .expiresAt(expiresAt);
   }
@@ -284,6 +312,7 @@ public class AccountLinkingSession {
     String amr;
     LocalDateTime authenticatedAt;
     AccountLinkingSessionStatus status = AccountLinkingSessionStatus.PENDING;
+    String browserBindingHash;
     ParkedCredentials parkedCredentials;
     LocalDateTime expiresAt;
 
@@ -354,6 +383,11 @@ public class AccountLinkingSession {
 
     public Builder status(AccountLinkingSessionStatus status) {
       this.status = status;
+      return this;
+    }
+
+    public Builder browserBindingHash(String browserBindingHash) {
+      this.browserBindingHash = browserBindingHash;
       return this;
     }
 
