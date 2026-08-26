@@ -19,9 +19,15 @@ package org.idp.server.usecases;
 import java.net.http.HttpClient;
 import java.util.Map;
 import org.idp.server.account_linking.AccountLinkingApi;
+import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
 import org.idp.server.account_linking.AccountLinkingCookieDelegate;
-import org.idp.server.account_linking.AccountLinkingService;
-import org.idp.server.account_linking.AccountLinkingTokenClient;
+import org.idp.server.account_linking.gateway.ExternalIdpIdTokenGateway;
+import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
+import org.idp.server.account_linking.gateway.ExternalIdpUserinfoGateway;
+import org.idp.server.account_linking.handler.AccountLinkingAuthorizeHandler;
+import org.idp.server.account_linking.handler.AccountLinkingCallbackHandler;
+import org.idp.server.account_linking.handler.AccountLinkingCompleteHandler;
+import org.idp.server.account_linking.handler.AccountLinkingStartHandler;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
 import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRepository;
@@ -727,27 +733,44 @@ public class IdpServerApplication {
             passwordEncodeDelegation);
     LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository =
         applicationComponentContainer.resolve(LinkedExternalAccountQueryRepository.class);
-    AccountLinkingService accountLinkingService =
-        new AccountLinkingService(
-            federationConfigurationQueryRepository,
-            oidcSsoExecutors,
-            new AccountLinkingTokenClient(httpRequestExecutor),
-            applicationComponentContainer.resolve(AccountLinkingSessionCommandRepository.class),
-            applicationComponentContainer.resolve(AccountLinkingSessionQueryRepository.class),
-            applicationComponentContainer.resolve(LinkedExternalAccountCommandRepository.class),
-            linkedExternalAccountQueryRepository,
-            aesCipher);
+    AccountLinkingSessionCommandRepository accountLinkingSessionCommandRepository =
+        applicationComponentContainer.resolve(AccountLinkingSessionCommandRepository.class);
+    AccountLinkingSessionQueryRepository accountLinkingSessionQueryRepository =
+        applicationComponentContainer.resolve(AccountLinkingSessionQueryRepository.class);
+    AccountLinkingConfigurationResolver accountLinkingConfigurationResolver =
+        new AccountLinkingConfigurationResolver(federationConfigurationQueryRepository);
     this.accountLinkingApi =
         TenantAwareEntryServiceProxy.createProxy(
             new AccountLinkingEntryService(
                 tenantQueryRepository,
-                clientConfigurationQueryRepository,
-                authorizationServerConfigurationQueryRepository,
                 linkedExternalAccountQueryRepository,
-                accountLinkingService,
+                new AccountLinkingStartHandler(
+                    accountLinkingSessionCommandRepository,
+                    clientConfigurationQueryRepository,
+                    authorizationServerConfigurationQueryRepository),
+                new AccountLinkingAuthorizeHandler(
+                    accountLinkingSessionQueryRepository,
+                    accountLinkingSessionCommandRepository,
+                    accountLinkingConfigurationResolver),
+                new AccountLinkingCallbackHandler(
+                    accountLinkingSessionQueryRepository,
+                    accountLinkingSessionCommandRepository,
+                    accountLinkingConfigurationResolver,
+                    new ExternalIdpTokenGateway(httpRequestExecutor),
+                    new ExternalIdpIdTokenGateway(oidcSsoExecutors),
+                    new ExternalIdpUserinfoGateway(oidcSsoExecutors),
+                    aesCipher),
+                new AccountLinkingCompleteHandler(
+                    accountLinkingSessionQueryRepository,
+                    accountLinkingSessionCommandRepository,
+                    linkedExternalAccountQueryRepository,
+                    applicationComponentContainer.resolve(
+                        LinkedExternalAccountCommandRepository.class),
+                    accountLinkingConfigurationResolver),
                 oidcSessionHandler,
                 sessionCookieDelegate,
-                accountLinkingCookieDelegate),
+                accountLinkingCookieDelegate,
+                userEventPublisher),
             AccountLinkingApi.class,
             databaseTypeProvider);
 
