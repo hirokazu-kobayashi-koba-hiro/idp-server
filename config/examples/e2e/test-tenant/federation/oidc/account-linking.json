@@ -58,6 +58,7 @@
     ],
     "store_credentials": true,
     "access_token_expires_in": 300,
-    "refresh_token_expires_in": 86400
+    "refresh_token_expires_in": 86400,
+    "duplicate_link_policy": "reject"
   }
 }
