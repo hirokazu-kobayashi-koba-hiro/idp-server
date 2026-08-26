@@ -490,6 +490,17 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
       expectInvalidClientAttestation(response);
     });
 
+    it("4. A Client Attestation JWT captured from a legitimate instance cannot be paired with a PoP signed by another key.", async () => {
+      // The attacker view of item 4: both headers travel in plain sight, so a captured Client
+      // Attestation JWT is not a credential on its own. Possession of the cnf key is what counts.
+      const attackerJwk = await generateSigningJwk("ES256", "attacker-key");
+      const response = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ signingKey: () => attackerJwk }),
+      });
+      expectInvalidClientAttestation(response);
+    });
+
     it("5. If the server provided a challenge value to the client, the challenge claim is present in the Client Attestation PoP JWT and matches the server-provided challenge value.", async () => {
       const challenge = await fetchChallenge();
       const accepted = await requestTokenWithAttestation({
@@ -745,5 +756,29 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
   describe("11.1. Replay Attacks (not implemented yet)", () => {
 
     xit("An Authorization/Resource Server SHOULD implement measures to detect replay attacks by the Client Instance. (witnessed jti values of the Client Attestation PoP JWT for the validity time window)", async () => {});
+  });
+  describe("11.2. Client Attestation Protection", () => {
+
+    it("This specification allows both, digital signatures using asymmetric cryptography, and Message Authentication Codes (MAC) to be used to protect Client Attestation JWTs. (idp-server accepts only digital signatures)", async () => {
+      // Section 11.2 permits MACs where the Attester and the Authorization Server share a key.
+      // idp-server does not: the trust sources it offers are a public JWKS and a registered public
+      // key, neither of which can verify a MAC. A MAC-protected attestation is therefore rejected
+      // rather than silently trusted.
+      const hmacAttestation = createJwt({
+        payload: {
+          iss: "test-attester",
+          sub: attestedClient.clientId,
+          exp: toEpocTime({ adjusted: 300 }),
+          cnf: { jwk: publicJwkOf(instanceEs256Jwk) },
+        },
+        secret: "shared-secret-value-for-hmac-signing-test",
+        options: { algorithm: "HS256", header: { typ: ATTESTATION_TYP } },
+      });
+      const response = await requestTokenWithAttestation({
+        attestationJwt: hmacAttestation,
+        popJwt: createPopJwt(),
+      });
+      expectInvalidClientAttestation(response);
+    });
   });
 });
