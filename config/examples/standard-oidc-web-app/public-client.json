@@ -20,5 +20,10 @@
   "scope": "openid profile email",
   "client_name": "Local Development Public Web Application",
   "token_endpoint_auth_method": "none",
-  "application_type": "web"
+  "application_type": "web",
+  "extension": {
+    "linking_return_uris": [
+      "https://sample.local.test/api/linked-accounts/complete"
+    ]
+  }
 }

@@ -191,6 +191,77 @@ if [ "${HTTP_CODE}" = "201" ]; then
     fi
   fi
 
+  # Step 6: Authentication for the public tenant (password) and a demo user
+  if [ -n "${PUBLIC_TENANT_ID}" ]; then
+    echo "🔑 Step 6: Registering password authentication, policy and demo user..."
+
+    post_public_config() {
+      local label="$1"
+      local path="$2"
+      local file="$3"
+
+      if [ ! -f "${file}" ]; then
+        echo "⚠️  ${label}: $(basename "${file}") not found, skipping"
+        return
+      fi
+
+      local response
+      response=$(curl -s -w "\n%{http_code}" -X POST \
+        "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}/${path}" \
+        -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d @"${file}")
+
+      local code
+      code=$(echo "${response}" | tail -n1)
+      if [ "${code}" = "200" ] || [ "${code}" = "201" ]; then
+        echo "✅ ${label} registered"
+      else
+        echo "⚠️  ${label} failed (HTTP ${code})"
+        echo "${response}" | sed '$d' | jq '.' || echo "${response}" | sed '$d'
+      fi
+    }
+
+    post_public_config "Password authentication config" "authentication-configurations" \
+      "${SCRIPT_DIR}/public-authentication-config-password.json"
+    post_public_config "Authentication policy" "authentication-policies" \
+      "${SCRIPT_DIR}/public-authentication-policy.json"
+    post_public_config "Demo user" "users" \
+      "${SCRIPT_DIR}/public-user.json"
+    echo ""
+  fi
+
+  # Step 7: Register the external IdP used by the account linking demo (#1531)
+  if [ -n "${PUBLIC_TENANT_ID}" ]; then
+    echo "🔗 Step 7: Registering account linking federation config..."
+
+    FEDERATION_FILE="${SCRIPT_DIR}/federation-account-linking.json"
+    if [ ! -f "${FEDERATION_FILE}" ]; then
+      echo "⚠️  federation-account-linking.json not found at ${FEDERATION_FILE}"
+      echo "⚠️  Skipping account linking setup..."
+      echo ""
+    else
+      FEDERATION_JSON=$(cat "${FEDERATION_FILE}")
+
+      FEDERATION_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+        "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${PUBLIC_TENANT_ID}/federation-configurations" \
+        -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${FEDERATION_JSON}")
+
+      FEDERATION_HTTP_CODE=$(echo "${FEDERATION_RESPONSE}" | tail -n1)
+      FEDERATION_RESPONSE_BODY=$(echo "${FEDERATION_RESPONSE}" | sed '$d')
+
+      if [ "${FEDERATION_HTTP_CODE}" = "200" ] || [ "${FEDERATION_HTTP_CODE}" = "201" ]; then
+        echo "✅ Account linking federation config registered"
+      else
+        echo "⚠️  Account linking federation config failed (HTTP ${FEDERATION_HTTP_CODE})"
+        echo "Response: ${FEDERATION_RESPONSE_BODY}" | jq '.' || echo "${FEDERATION_RESPONSE_BODY}"
+      fi
+      echo ""
+    fi
+  fi
+
   echo "=========================================="
   echo "✅ Setup Complete!"
   echo "=========================================="

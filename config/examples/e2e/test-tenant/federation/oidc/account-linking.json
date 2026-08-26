@@ -1,0 +1,63 @@
+{
+  "id": "c1d4a3f8-6b2e-4d51-9a07-3f8b2c5e1d94",
+  "type": "oidc",
+  "sso_provider": "account-linking",
+  "enabled": true,
+  "payload": {
+    "type": "standard",
+    "provider": "standard",
+    "issuer": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3",
+    "issuer_name": "account-linking",
+    "authorization_endpoint": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/authorizations",
+    "token_endpoint": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens",
+    "userinfo_endpoint": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/userinfo",
+    "jwks_uri": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/jwks",
+    "revocation_endpoint": "https://api.local.test/1e68932e-ed4a-43e7-b412-460665e42df3/v1/tokens/revocation",
+    "client_id": "clientSecretPost",
+    "client_secret": "clientSecretPostPassword1234567890123456789012345678901234567890123456789012345678901234567890",
+    "client_authentication_type": "client_secret_post",
+    "redirect_uri": "https://api.local.test/67e7eae6-62b0-4500-9eff-87459f63fc66/v1/linking/callback/account-linking",
+    "scopes_supported": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access"
+    ],
+    "response_types_supported": [
+      "code"
+    ],
+    "subject_types_supported": [
+      "public"
+    ],
+    "id_token_signing_alg_values_supported": [
+      "RS256"
+    ],
+    "token_endpoint_auth_methods_supported": [
+      "client_secret_post"
+    ],
+    "code_challenge_methods_supported": [
+      "S256"
+    ],
+    "grant_types_supported": [
+      "authorization_code",
+      "refresh_token"
+    ],
+    "userinfo_mapping_rules": [
+      {
+        "from": "$.http_request.response_body.sub",
+        "to": "external_user_id"
+      },
+      {
+        "from": "$.http_request.response_body.email",
+        "to": "email"
+      },
+      {
+        "from": "$.http_request.response_body.name",
+        "to": "name"
+      }
+    ],
+    "store_credentials": true,
+    "access_token_expires_in": 300,
+    "refresh_token_expires_in": 86400
+  }
+}
