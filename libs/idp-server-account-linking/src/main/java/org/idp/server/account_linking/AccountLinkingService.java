@@ -148,12 +148,15 @@ public class AccountLinkingService {
    * check at complete would pass. Verifying here stops it before the victim ever authenticates at
    * the external IdP.
    */
-  public String authorize(Tenant tenant, AccountLinkingState state, UserIdentifier operator) {
+  public AccountLinkingAuthorization authorize(
+      Tenant tenant, AccountLinkingState state, UserIdentifier operator) {
     LocalDateTime now = SystemDateTime.now();
     AccountLinkingSession session = getSession(tenant, state);
     session.verifyNotExpired(now);
 
-    AccountLinkingSession authorized = session.authorize(operator, null, "pwd", now);
+    AccountLinkingBrowserBinding browserBinding = AccountLinkingBrowserBinding.generate();
+    AccountLinkingSession authorized =
+        session.authorize(operator, browserBinding, null, "pwd", now);
 
     if (!sessionCommandRepository.claim(
         tenant, state, AccountLinkingSessionStatus.PENDING, authorized.status(), now)) {
@@ -163,7 +166,9 @@ public class AccountLinkingService {
     sessionCommandRepository.update(tenant, authorized);
 
     OidcSsoConfiguration configuration = configurationOf(tenant, authorized.provider());
-    return externalAuthorizationUri(configuration, authorized);
+
+    return new AccountLinkingAuthorization(
+        externalAuthorizationUri(configuration, authorized), browserBinding);
   }
 
   /**
@@ -171,10 +176,16 @@ public class AccountLinkingService {
    *
    * @return where to send the browser next, which is the RP's redirect URI recorded at start
    */
-  public String handleCallback(Tenant tenant, AccountLinkingState state, String code) {
+  public String handleCallback(
+      Tenant tenant, AccountLinkingState state, String code, String browserBindingSecret) {
     LocalDateTime now = SystemDateTime.now();
     AccountLinkingSession session = getSession(tenant, state);
     session.verifyNotExpired(now);
+
+    // Before anything else, and before the session is claimed: a browser that cannot present the
+    // secret issued at /linking/start is not the one that started this link, and its authorization
+    // code must not be redeemed. Rejecting here leaves the session usable by the browser that can.
+    session.verifyBrowserBinding(browserBindingSecret);
 
     // Claimed before the exchange: a request that loses here must not redeem the code.
     if (!sessionCommandRepository.claim(
@@ -248,25 +259,49 @@ public class AccountLinkingService {
   private LinkedExternalAccount store(
       Tenant tenant, AccountLinkingSession session, LocalDateTime now) {
     ParkedCredentials credentials = session.parkedCredentials();
-    LinkedExternalAccount existing =
-        accountQueryRepository.findByFederatedUser(
-            tenant, session.provider(), credentials.federatedUserId());
 
-    if (existing.exists()) {
-      if (!existing.userIdentifier().equals(session.userIdentifier())) {
-        // Deliberately vague: naming the current owner would turn this into an enumeration oracle.
-        throw new ConflictException("This external account cannot be linked.");
-      }
+    LinkedExternalAccount own =
+        accountQueryRepository.findByUserAndFederatedUser(
+            tenant, session.userIdentifier(), session.provider(), credentials.federatedUserId());
 
-      LinkedExternalAccount relinked = existing.relinkedWith(credentials, now);
+    if (own.exists()) {
+      LinkedExternalAccount relinked = own.relinkedWith(credentials, now);
       accountCommandRepository.update(tenant, relinked);
       return relinked;
     }
+
+    verifyDuplicateLinkAllowed(tenant, session, credentials);
 
     LinkedExternalAccount account =
         LinkedExternalAccount.fromConsumedSession(session, nextAlias(tenant, session), now);
     accountCommandRepository.register(tenant, account);
     return account;
+  }
+
+  /**
+   * Applies the tenant's policy for an external account already linked by someone else.
+   *
+   * <p>The database does not forbid this. The stored external account identifier is not an identity
+   * — nothing authenticates through it — so a blanket constraint would block a shared corporate
+   * account and would let whoever links first keep the owner out for good.
+   */
+  private void verifyDuplicateLinkAllowed(
+      Tenant tenant, AccountLinkingSession session, ParkedCredentials credentials) {
+    DuplicateLinkPolicy policy =
+        linkingConfigurationOf(tenant, session.provider()).duplicateLinkPolicy();
+
+    if (!policy.isReject()) {
+      return;
+    }
+
+    boolean linkedByAnother =
+        accountQueryRepository.existsForOtherUser(
+            tenant, session.userIdentifier(), session.provider(), credentials.federatedUserId());
+
+    if (linkedByAnother) {
+      // Deliberately vague: naming the current owner would turn this into an enumeration oracle.
+      throw new ConflictException("This external account cannot be linked.");
+    }
   }
 
   private AccountAlias nextAlias(Tenant tenant, AccountLinkingSession session) {
@@ -341,6 +376,15 @@ public class AccountLinkingService {
     params.add("code_challenge_method", pkce.codeChallengeMethod());
 
     return String.format("%s?%s", configuration.authorizationEndpoint(), params.params());
+  }
+
+  private AccountLinkingConfiguration linkingConfigurationOf(
+      Tenant tenant, ExternalIdpProvider provider) {
+    return configurationQueryRepository.get(
+        tenant,
+        FEDERATION_TYPE,
+        new SsoProvider(provider.value()),
+        AccountLinkingConfiguration.class);
   }
 
   private OidcSsoConfiguration configurationOf(Tenant tenant, ExternalIdpProvider provider) {

@@ -179,21 +179,62 @@ public class LinkedExternalAccountDataSource
   }
 
   @Override
-  public LinkedExternalAccount findByFederatedUser(
-      Tenant tenant, ExternalIdpProvider provider, String federatedUserId) {
+  public LinkedExternalAccount findByUserAndFederatedUser(
+      Tenant tenant,
+      UserIdentifier userIdentifier,
+      ExternalIdpProvider provider,
+      String federatedUserId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
         SELECT_COLUMNS
             + """
-             WHERE tenant_id = ?::uuid AND provider = ? AND federated_user_id = ?;
+             WHERE tenant_id = ?::uuid
+               AND user_id = ?::uuid
+               AND provider = ?
+               AND federated_user_id = ?;
             """;
 
     Map<String, String> result =
         sqlExecutor.selectOne(
-            sqlTemplate, List.of(tenant.identifierUUID(), provider.value(), federatedUserId));
+            sqlTemplate,
+            List.of(
+                tenant.identifierUUID(),
+                userIdentifier.valueAsUuid(),
+                provider.value(),
+                federatedUserId));
 
     return result == null || result.isEmpty() ? new LinkedExternalAccount() : convert(result);
+  }
+
+  @Override
+  public boolean existsForOtherUser(
+      Tenant tenant,
+      UserIdentifier userIdentifier,
+      ExternalIdpProvider provider,
+      String federatedUserId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        """
+        SELECT count(*) AS count
+          FROM linked_external_accounts
+         WHERE tenant_id = ?::uuid
+           AND provider = ?
+           AND federated_user_id = ?
+           AND user_id <> ?::uuid;
+        """;
+
+    Map<String, String> result =
+        sqlExecutor.selectOne(
+            sqlTemplate,
+            List.of(
+                tenant.identifierUUID(),
+                provider.value(),
+                federatedUserId,
+                userIdentifier.valueAsUuid()));
+
+    return result != null && !result.isEmpty() && Integer.parseInt(result.get("count")) > 0;
   }
 
   @Override

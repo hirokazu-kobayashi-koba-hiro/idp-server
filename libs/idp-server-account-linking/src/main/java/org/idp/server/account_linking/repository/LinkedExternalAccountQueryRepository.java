@@ -29,9 +29,24 @@ public interface LinkedExternalAccountQueryRepository {
 
   LinkedExternalAccount find(Tenant tenant, UserIdentifier userIdentifier, AccountAlias alias);
 
-  /** Resolves the owner of an external account, for the duplicate link check. */
-  LinkedExternalAccount findByFederatedUser(
-      Tenant tenant, ExternalIdpProvider provider, String federatedUserId);
+  /**
+   * Finds this user's own link to the given external account, if any.
+   *
+   * <p>Used to tell a re-link from a new link. Scoped to the user because several users may hold a
+   * link to the same external account depending on the tenant's duplicate link policy.
+   */
+  LinkedExternalAccount findByUserAndFederatedUser(
+      Tenant tenant,
+      UserIdentifier userIdentifier,
+      ExternalIdpProvider provider,
+      String federatedUserId);
+
+  /** Whether anyone other than {@code userIdentifier} already links the given external account. */
+  boolean existsForOtherUser(
+      Tenant tenant,
+      UserIdentifier userIdentifier,
+      ExternalIdpProvider provider,
+      String federatedUserId);
 
   /** Row count for the alias sequence. */
   int countByProvider(Tenant tenant, UserIdentifier userIdentifier, ExternalIdpProvider provider);

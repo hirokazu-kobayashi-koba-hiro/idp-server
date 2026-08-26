@@ -20,6 +20,7 @@ import java.net.http.HttpClient;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.account_linking.AccountLinkingApi;
+import org.idp.server.account_linking.AccountLinkingCookieDelegate;
 import org.idp.server.account_linking.AccountLinkingService;
 import org.idp.server.account_linking.AccountLinkingTokenClient;
 import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
@@ -402,6 +403,7 @@ public class IdpServerApplication {
       SessionStore sessionStore,
       SessionCookieDelegate sessionCookieDelegate,
       AuthSessionCookieDelegate authSessionCookieDelegate,
+      AccountLinkingCookieDelegate accountLinkingCookieDelegate,
       PasswordEncodeDelegation passwordEncodeDelegation,
       PasswordVerificationDelegation passwordVerificationDelegation,
       SecurityEventPublisher securityEventPublisher,
@@ -877,7 +879,8 @@ public class IdpServerApplication {
                 linkedExternalAccountQueryRepository,
                 accountLinkingService,
                 oidcSessionHandler,
-                sessionCookieDelegate),
+                sessionCookieDelegate,
+                accountLinkingCookieDelegate),
             AccountLinkingApi.class,
             databaseTypeProvider);
 
