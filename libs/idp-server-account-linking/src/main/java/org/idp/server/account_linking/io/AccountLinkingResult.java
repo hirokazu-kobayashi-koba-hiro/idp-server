@@ -28,9 +28,9 @@ import org.idp.server.platform.security.event.SecurityEventType;
  *
  * <p>Failures are returned rather than thrown so that the caller can record them. A rejected
  * browser binding or a mismatched operator is the signal that someone is trying to attach an
- * external account to another user; if it left as an exception, the only trace would be a stack
- * trace in the application log. The layer that decides a request failed is also the layer that
- * knows which event it was, so the event type travels with the result.
+ * external account to another user; left as an exception, the only trace would be a stack trace in
+ * the application log. The layer that decides a request failed is also the layer that knows which
+ * event it was, so the event type travels with the result.
  *
  * <p>Exceptions remain for what is genuinely unforeseen.
  */
@@ -48,31 +48,20 @@ public class AccountLinkingResult {
       Map<String, Object> contents,
       String redirectUri,
       SecurityEventType eventType,
-      User user) {
+      User user,
+      RequestedClientId requestedClientId) {
     this.status = status;
     this.contents = contents;
     this.redirectUri = redirectUri;
     this.eventType = eventType;
     this.user = user;
-    this.requestedClientId = new RequestedClientId("");
+    this.requestedClientId = requestedClientId;
   }
 
-  /**
-   * Returns a copy carrying who the event should be attributed to.
-   *
-   * <p>The browser legs have no Bearer token, so the event has to be built from what the linking
-   * session knows. A run of failures is only useful if it says which account and client were being
-   * targeted.
-   */
-  public AccountLinkingResult withContext(RequestedClientId requestedClientId, User user) {
-    AccountLinkingResult copy =
-        new AccountLinkingResult(status, contents, redirectUri, eventType, user);
-    copy.requestedClientId = requestedClientId;
-    return copy;
-  }
-
-  public RequestedClientId requestedClientId() {
-    return requestedClientId;
+  /** Success that is not worth an event on its own. */
+  public static AccountLinkingResult success(
+      AccountLinkingStatus status, Map<String, Object> contents, User user) {
+    return new AccountLinkingResult(status, contents, null, null, user, noClient());
   }
 
   public static AccountLinkingResult success(
@@ -81,42 +70,52 @@ public class AccountLinkingResult {
       DefaultSecurityEventType eventType,
       User user) {
     return new AccountLinkingResult(
-        status, contents, null, eventType == null ? null : eventType.toEventType(), user);
+        status, contents, null, eventType.toEventType(), user, noClient());
   }
 
   /** Success that continues as a browser redirect. */
-  public static AccountLinkingResult redirect(
-      String redirectUri, DefaultSecurityEventType eventType, User user) {
-    return new AccountLinkingResult(
-        AccountLinkingStatus.REDIRECT,
-        Map.of(),
-        redirectUri,
-        eventType == null ? null : eventType.toEventType(),
-        user);
-  }
-
-  /** Success that continues as a browser redirect and is not worth an event on its own. */
   public static AccountLinkingResult redirect(String redirectUri) {
     return new AccountLinkingResult(
-        AccountLinkingStatus.REDIRECT, Map.of(), redirectUri, null, null);
+        AccountLinkingStatus.REDIRECT, Map.of(), redirectUri, null, null, noClient());
   }
 
   public static AccountLinkingResult error(
       AccountLinkingStatus status, String errorDescription, DefaultSecurityEventType eventType) {
-    return error(status, "invalid_request", errorDescription, eventType, null);
+    return error(status, "invalid_request", errorDescription, eventType);
   }
 
+  /** Error carrying the code the external identity provider used, rather than this server's. */
   public static AccountLinkingResult error(
       AccountLinkingStatus status,
       String error,
       String errorDescription,
-      DefaultSecurityEventType eventType,
-      User user) {
+      DefaultSecurityEventType eventType) {
     Map<String, Object> contents = new HashMap<>();
     contents.put("error", error);
     contents.put("error_description", errorDescription);
     return new AccountLinkingResult(
-        status, contents, null, eventType == null ? null : eventType.toEventType(), user);
+        status,
+        contents,
+        null,
+        eventType == null ? null : eventType.toEventType(),
+        null,
+        noClient());
+  }
+
+  /**
+   * Returns a copy naming who the event should be attributed to.
+   *
+   * <p>The browser legs have no Bearer token, so the event has to be built from what the linking
+   * session knows. A run of failures is only useful if it says which account and client were being
+   * targeted.
+   */
+  public AccountLinkingResult withContext(RequestedClientId requestedClientId, User user) {
+    return new AccountLinkingResult(
+        status, contents, redirectUri, eventType, user, requestedClientId);
+  }
+
+  private static RequestedClientId noClient() {
+    return new RequestedClientId("");
   }
 
   public AccountLinkingStatus status() {
@@ -157,5 +156,9 @@ public class AccountLinkingResult {
 
   public boolean hasUser() {
     return user != null && user.exists();
+  }
+
+  public RequestedClientId requestedClientId() {
+    return requestedClientId;
   }
 }

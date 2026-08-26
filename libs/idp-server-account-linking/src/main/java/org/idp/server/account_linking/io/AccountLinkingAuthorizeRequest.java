@@ -17,6 +17,7 @@
 package org.idp.server.account_linking.io;
 
 import org.idp.server.account_linking.AccountLinkingState;
+import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -31,11 +32,14 @@ public class AccountLinkingAuthorizeRequest {
   Tenant tenant;
   AccountLinkingState state;
   User operator;
+  Authentication authentication;
 
-  public AccountLinkingAuthorizeRequest(Tenant tenant, AccountLinkingState state, User operator) {
+  public AccountLinkingAuthorizeRequest(
+      Tenant tenant, AccountLinkingState state, User operator, Authentication authentication) {
     this.tenant = tenant;
     this.state = state;
     this.operator = operator;
+    this.authentication = authentication;
   }
 
   public Tenant tenant() {
@@ -48,5 +52,10 @@ public class AccountLinkingAuthorizeRequest {
 
   public User operator() {
     return operator;
+  }
+
+  /** How the operator authenticated in this browser, as the OP session recorded it. */
+  public Authentication authentication() {
+    return authentication;
   }
 }

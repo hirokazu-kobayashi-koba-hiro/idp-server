@@ -54,15 +54,16 @@ public class ModelConverter {
 
     if (result.get("encrypted_access_token") != null) {
       builder.parkedCredentials(
-          new ParkedCredentials(
-              result.get("federated_user_id"),
-              result.get("federated_username"),
-              result.get("granted_scope"),
-              toEncryptedData(result.get("encrypted_access_token")),
-              toEncryptedData(result.get("encrypted_refresh_token")),
-              result.get("encryption_key_id"),
-              toDateTime(result.get("access_token_expires_at")),
-              toDateTime(result.get("refresh_token_expires_at"))));
+          new ParkedCredentials.Builder()
+              .federatedUserId(result.get("federated_user_id"))
+              .federatedUsername(result.get("federated_username"))
+              .grantedScope(result.get("granted_scope"))
+              .encryptedAccessToken(toEncryptedData(result.get("encrypted_access_token")))
+              .encryptedRefreshToken(toEncryptedData(result.get("encrypted_refresh_token")))
+              .encryptionKeyId(result.get("encryption_key_id"))
+              .accessTokenExpiresAt(toDateTime(result.get("access_token_expires_at")))
+              .refreshTokenExpiresAt(toDateTime(result.get("refresh_token_expires_at")))
+              .build());
     }
 
     return builder.build();

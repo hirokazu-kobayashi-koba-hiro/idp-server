@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.LocalDateTime;
 import org.idp.server.account_linking.exception.AccountLinkingOperatorMismatchException;
 import org.idp.server.account_linking.exception.AccountLinkingSessionStateException;
+import org.idp.server.core.openid.authentication.Authentication;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.crypto.EncryptedData;
@@ -34,6 +35,13 @@ class AccountLinkingSessionTest {
   static final UserIdentifier VICTIM = new UserIdentifier("11111111-1111-1111-1111-111111111111");
   static final UserIdentifier ATTACKER = new UserIdentifier("22222222-2222-2222-2222-222222222222");
   static final LocalDateTime NOW = LocalDateTime.of(2026, 8, 26, 12, 0, 0);
+
+  static Authentication authentication() {
+    return new Authentication()
+        .setTime(NOW)
+        .addMethods(java.util.List.of("pwd"))
+        .addAcr("urn:mace:incommon:iap:bronze");
+  }
 
   static AccountLinkingSession pendingSessionFor(UserIdentifier user) {
     return new AccountLinkingSession.Builder()
@@ -51,15 +59,16 @@ class AccountLinkingSessionTest {
   }
 
   static ParkedCredentials credentialsOf(String federatedUserId) {
-    return new ParkedCredentials(
-        federatedUserId,
-        federatedUserId + "@example.com",
-        "openid email",
-        new EncryptedData(),
-        new EncryptedData(),
-        "default",
-        NOW.plusHours(1),
-        NOW.plusDays(30));
+    return new ParkedCredentials.Builder()
+        .federatedUserId(federatedUserId)
+        .federatedUsername(federatedUserId + "@example.com")
+        .grantedScope("openid email")
+        .encryptedAccessToken(new EncryptedData())
+        .encryptedRefreshToken(new EncryptedData())
+        .encryptionKeyId("default")
+        .accessTokenExpiresAt(NOW.plusHours(1))
+        .refreshTokenExpiresAt(NOW.plusDays(30))
+        .build();
   }
 
   @Nested
@@ -72,10 +81,15 @@ class AccountLinkingSessionTest {
       AccountLinkingSession pending = pendingSessionFor(VICTIM);
 
       AccountLinkingBrowserBinding binding = AccountLinkingBrowserBinding.generate();
-      AccountLinkingSession authorized =
-          pending.authorize(VICTIM, binding, "urn:mace:incommon:iap:silver", "pwd", NOW);
+      AccountLinkingSession authorized = pending.authorize(VICTIM, binding, authentication());
       assertEquals(AccountLinkingSessionStatus.AUTHORIZED, authorized.status());
       assertDoesNotThrow(() -> authorized.verifyBrowserBinding(binding.secret()));
+
+      // 操作者がどう認証したかはブラウザセッションが知っている。列があるのに決め打ちの値を
+      // 入れると、記録されていないものが記録されているように見えてしまう。
+      assertEquals("urn:mace:incommon:iap:bronze", authorized.acr());
+      assertEquals("pwd", authorized.amr());
+      assertEquals(NOW, authorized.authenticatedAt());
 
       AccountLinkingSession parked = authorized.park(credentialsOf("victim-google-sub"));
       assertEquals(AccountLinkingSessionStatus.PARKED, parked.status());
@@ -95,7 +109,7 @@ class AccountLinkingSessionTest {
     void attackerCannotClaimVictimSession() {
       AccountLinkingSession parked =
           pendingSessionFor(VICTIM)
-              .authorize(VICTIM, AccountLinkingBrowserBinding.generate(), null, "pwd", NOW)
+              .authorize(VICTIM, AccountLinkingBrowserBinding.generate(), authentication())
               .park(credentialsOf("victim-google-sub"));
 
       assertThrows(AccountLinkingOperatorMismatchException.class, () -> parked.consume(ATTACKER));
@@ -115,7 +129,7 @@ class AccountLinkingSessionTest {
           AccountLinkingOperatorMismatchException.class,
           () ->
               attackerSession.authorize(
-                  VICTIM, AccountLinkingBrowserBinding.generate(), null, "pwd", NOW));
+                  VICTIM, AccountLinkingBrowserBinding.generate(), authentication()));
     }
 
     @Test
@@ -155,7 +169,7 @@ class AccountLinkingSessionTest {
       assertDoesNotThrow(
           () ->
               attackerSession.authorize(
-                  ATTACKER, AccountLinkingBrowserBinding.generate(), null, "pwd", NOW));
+                  ATTACKER, AccountLinkingBrowserBinding.generate(), authentication()));
     }
 
     @Test
@@ -163,7 +177,7 @@ class AccountLinkingSessionTest {
     void callbackWithoutBindingIsRejected() {
       AccountLinkingBrowserBinding attackerBinding = AccountLinkingBrowserBinding.generate();
       AccountLinkingSession authorized =
-          pendingSessionFor(ATTACKER).authorize(ATTACKER, attackerBinding, null, "pwd", NOW);
+          pendingSessionFor(ATTACKER).authorize(ATTACKER, attackerBinding, authentication());
 
       // 被害者のブラウザには binding cookie が無い。ここで止まるので
       // 被害者の認可コードは交換されない。
@@ -188,7 +202,7 @@ class AccountLinkingSessionTest {
     void consumedIsTerminal() {
       AccountLinkingSession consumed =
           pendingSessionFor(VICTIM)
-              .authorize(VICTIM, AccountLinkingBrowserBinding.generate(), null, "pwd", NOW)
+              .authorize(VICTIM, AccountLinkingBrowserBinding.generate(), authentication())
               .park(credentialsOf("victim-google-sub"))
               .consume(VICTIM);
 

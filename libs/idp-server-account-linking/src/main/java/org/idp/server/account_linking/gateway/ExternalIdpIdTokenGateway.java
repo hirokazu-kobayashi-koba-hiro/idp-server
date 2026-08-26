@@ -21,8 +21,6 @@ import org.idp.server.account_linking.AccountLinkingSession;
 import org.idp.server.account_linking.exception.ExternalIdpRequestFailedException;
 import org.idp.server.core.openid.federation.sso.oidc.OidcSsoSession;
 import org.idp.server.federation.sso.oidc.*;
-import org.idp.server.platform.jose.JoseContext;
-import org.idp.server.platform.jose.JoseHandler;
 import org.idp.server.platform.log.LoggerWrapper;
 
 /**
@@ -86,7 +84,7 @@ public class ExternalIdpIdTokenGateway {
           "Account linking could not verify the id_token issued by the external identity provider.");
     }
 
-    String subject = subjectOf(configuration, jwksResult, tokenResult);
+    String subject = verification.claims().getSub();
     if (subject == null || subject.isEmpty()) {
       // sub is REQUIRED in OpenID Connect. A token without one is malformed, not a provider that
       // declines to identify the account, so it is rejected rather than treated as anonymous.
@@ -102,24 +100,5 @@ public class ExternalIdpIdTokenGateway {
       return new OidcJwksResult(200, Map.of(), "");
     }
     return executor.getJwks(new OidcJwksRequest(configuration.jwksUri()));
-  }
-
-  private String subjectOf(
-      OidcSsoConfiguration configuration, OidcJwksResult jwksResult, OidcTokenResult tokenResult) {
-    try {
-      // Same inputs the verification above used. Parsing with empty keys fails outright, so the
-      // JWKS just fetched and the client credentials have to be handed over again.
-      JoseContext joseContext =
-          new JoseHandler()
-              .handle(
-                  tokenResult.idToken(),
-                  jwksResult.body(),
-                  configuration.privateKeys(),
-                  configuration.clientSecret());
-      return joseContext.claims().getSub();
-    } catch (Exception e) {
-      throw new ExternalIdpRequestFailedException(
-          "Account linking could not read the id_token issued by the external identity provider.");
-    }
   }
 }

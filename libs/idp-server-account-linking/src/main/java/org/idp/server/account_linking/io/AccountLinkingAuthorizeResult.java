@@ -14,31 +14,32 @@
  * limitations under the License.
  */
 
-package org.idp.server.account_linking;
-
-import org.idp.server.account_linking.io.AccountLinkingResult;
+package org.idp.server.account_linking.io;
 
 /**
  * Outcome of {@code /linking/start}: the result to answer with, and — on success — the secret the
  * browser must carry back to the callback.
+ *
+ * <p>This phase alone answers with more than a {@link AccountLinkingResult}, because it decides
+ * that a binding cookie is due while the entry service is the one that can write it.
  */
-public class AccountLinkingAuthorization {
+public class AccountLinkingAuthorizeResult {
 
   AccountLinkingResult result;
   String browserBindingSecret;
 
-  AccountLinkingAuthorization(AccountLinkingResult result, String browserBindingSecret) {
+  AccountLinkingAuthorizeResult(AccountLinkingResult result, String browserBindingSecret) {
     this.result = result;
     this.browserBindingSecret = browserBindingSecret;
   }
 
-  public static AccountLinkingAuthorization of(
+  public static AccountLinkingAuthorizeResult of(
       AccountLinkingResult result, String browserBindingSecret) {
-    return new AccountLinkingAuthorization(result, browserBindingSecret);
+    return new AccountLinkingAuthorizeResult(result, browserBindingSecret);
   }
 
-  public static AccountLinkingAuthorization error(AccountLinkingResult result) {
-    return new AccountLinkingAuthorization(result, null);
+  public static AccountLinkingAuthorizeResult error(AccountLinkingResult result) {
+    return new AccountLinkingAuthorizeResult(result, null);
   }
 
   public AccountLinkingResult result() {
