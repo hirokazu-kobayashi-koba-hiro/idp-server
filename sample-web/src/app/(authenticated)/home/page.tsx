@@ -11,6 +11,7 @@ import SecurityIcon from "@mui/icons-material/Security";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
 import AddIcon from "@mui/icons-material/Add";
 import PhoneAndroidIcon from "@mui/icons-material/PhoneAndroid";
+import LinkIcon from "@mui/icons-material/Link";
 import PasskeyRegistrationStatus from "@/components/PasskeyRegistrationStatus";
 
 const Home = async () => {
@@ -73,6 +74,15 @@ const Home = async () => {
               size="small"
             >
               セキュリティデモ
+            </Button>
+            <Button
+              href="/linked-accounts"
+              variant="outlined"
+              color="secondary"
+              startIcon={<LinkIcon />}
+              size="small"
+            >
+              外部アカウント連携
             </Button>
             <LogoutButton idToken={session.idToken} />
           </Box>
