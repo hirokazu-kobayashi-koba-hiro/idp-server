@@ -40,6 +40,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   String clientAttestationTrustSource;
   String clientInstanceRegistrationPolicy;
   String clientAttestationAttesterJwks;
+  Map<String, Object> clientInstancePlatformConfig = new HashMap<>();
   Map<String, Object> customProperties = new HashMap<>();
 
   public ClientExtensionConfiguration() {}
@@ -70,6 +71,23 @@ public class ClientExtensionConfiguration implements JsonReadable {
    */
   public String clientAttestationAttesterJwks() {
     return clientAttestationAttesterJwks;
+  }
+
+  /**
+   * Per-platform settings a {@link
+   * org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerifier} reads at
+   * Client Instance registration, keyed by platform.
+   *
+   * <p>Kept as the raw structure rather than a typed model: each platform brings its own shape
+   * (Android wants package names and signing digests, iOS a team and bundle id), and the verifiers
+   * live in their own modules. A typed model here would have to know all of them.
+   */
+  public Map<String, Object> clientInstancePlatformConfig() {
+    return clientInstancePlatformConfig != null ? clientInstancePlatformConfig : new HashMap<>();
+  }
+
+  public boolean hasClientInstancePlatformConfig() {
+    return clientInstancePlatformConfig != null && !clientInstancePlatformConfig.isEmpty();
   }
 
   public boolean hasClientAttestationAttesterJwks() {
@@ -197,6 +215,8 @@ public class ClientExtensionConfiguration implements JsonReadable {
     // unknown value has to survive the round trip rather than be normalized away.
     if (clientAttestationTrustSource != null && !clientAttestationTrustSource.isEmpty())
       map.put("client_attestation_trust_source", clientAttestationTrustSource);
+    if (hasClientInstancePlatformConfig())
+      map.put("client_instance_platform_config", clientInstancePlatformConfig);
     if (clientInstanceRegistrationPolicy != null && !clientInstanceRegistrationPolicy.isEmpty())
       map.put("client_instance_registration_policy", clientInstanceRegistrationPolicy);
     if (hasClientAttestationAttesterJwks())
