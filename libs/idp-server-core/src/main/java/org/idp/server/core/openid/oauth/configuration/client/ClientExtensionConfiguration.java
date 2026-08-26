@@ -46,6 +46,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   List<String> clientAttestationTrustedRootCertificates = new ArrayList<>();
   Map<String, Object> clientInstancePlatformConfig = new HashMap<>();
   Boolean crossSiteAuthorizationView;
+  List<String> linkingReturnUris;
   Map<String, Object> customProperties = new HashMap<>();
 
   public ClientExtensionConfiguration() {}
@@ -264,6 +265,22 @@ public class ClientExtensionConfiguration implements JsonReadable {
     return crossSiteAuthorizationView;
   }
 
+  /**
+   * Where an account linking flow may return the browser once it finishes.
+   *
+   * <p>Kept apart from {@code redirect_uris}. The place a user lands after linking is normally an
+   * application settings screen, not a URL that receives authorization codes; reusing the
+   * authorization list would mean registering such screens as redirect URIs, which would let
+   * authorization codes be sent to them.
+   */
+  public List<String> linkingReturnUris() {
+    return linkingReturnUris == null ? List.of() : linkingReturnUris;
+  }
+
+  public boolean hasLinkingReturnUris() {
+    return linkingReturnUris != null && !linkingReturnUris.isEmpty();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (hasAccessTokenDuration()) map.put("access_token_duration", accessTokenDuration);
@@ -299,6 +316,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
           "client_attestation_trusted_root_certificates", clientAttestationTrustedRootCertificates);
     if (hasCrossSiteAuthorizationView())
       map.put("cross_site_authorization_view", crossSiteAuthorizationView);
+    if (hasLinkingReturnUris()) map.put("linking_return_uris", linkingReturnUris);
     if (hasCustomProperties()) map.put("custom_properties", customProperties);
     return map;
   }
