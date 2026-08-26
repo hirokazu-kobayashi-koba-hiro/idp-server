@@ -174,7 +174,8 @@ const sidebars = {
         "content_04_protocols/protocol-07-authorization-code-device-authentication",
         "content_04_protocols/protocol-08-self-service-contact-change",
         "content_04_protocols/protocol-08-attestation-based-client-authentication",
-        "content_04_protocols/protocol-09-certificate-chain-verification"
+        "content_04_protocols/protocol-09-certificate-chain-verification",
+        "content_04_protocols/protocol-09-account-linking"
       ]
     },
     {
