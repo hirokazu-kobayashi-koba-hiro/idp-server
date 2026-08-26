@@ -17,6 +17,10 @@
 package org.idp.server.core.adapters.datasource.account_linking;
 
 import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
+import org.idp.server.core.adapters.datasource.account_linking.account.LinkedExternalAccountDataSource;
+import org.idp.server.core.adapters.datasource.account_linking.account.LinkedExternalAccountSqlExecutor;
+import org.idp.server.core.adapters.datasource.account_linking.account.LinkedExternalAccountSqlExecutors;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -31,6 +35,10 @@ public class LinkedExternalAccountQueryDataSourceProvider
   @Override
   public LinkedExternalAccountQueryRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new LinkedExternalAccountDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    LinkedExternalAccountSqlExecutors executors = new LinkedExternalAccountSqlExecutors();
+    LinkedExternalAccountSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new LinkedExternalAccountDataSource(executor);
   }
 }
