@@ -17,6 +17,10 @@
 package org.idp.server.core.adapters.datasource.account_linking;
 
 import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
+import org.idp.server.core.adapters.datasource.account_linking.session.AccountLinkingSessionDataSource;
+import org.idp.server.core.adapters.datasource.account_linking.session.AccountLinkingSessionSqlExecutor;
+import org.idp.server.core.adapters.datasource.account_linking.session.AccountLinkingSessionSqlExecutors;
+import org.idp.server.platform.datasource.ApplicationDatabaseTypeProvider;
 import org.idp.server.platform.dependency.ApplicationComponentDependencyContainer;
 import org.idp.server.platform.dependency.ApplicationComponentProvider;
 
@@ -31,6 +35,10 @@ public class AccountLinkingSessionQueryDataSourceProvider
   @Override
   public AccountLinkingSessionQueryRepository provide(
       ApplicationComponentDependencyContainer container) {
-    return new AccountLinkingSessionDataSource();
+    ApplicationDatabaseTypeProvider databaseTypeProvider =
+        container.resolve(ApplicationDatabaseTypeProvider.class);
+    AccountLinkingSessionSqlExecutors executors = new AccountLinkingSessionSqlExecutors();
+    AccountLinkingSessionSqlExecutor executor = executors.get(databaseTypeProvider.provide());
+    return new AccountLinkingSessionDataSource(executor);
   }
 }
