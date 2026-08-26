@@ -29,10 +29,24 @@ public class TokenRevocationResponse {
 
   public TokenRevocationResponse(
       TokenRevocationRequestStatus status, OAuthToken oAuthToken, Map<String, Object> contents) {
+    this(status, oAuthToken, contents, Map.of());
+  }
+
+  /**
+   * @param additionalHeaders response headers an error carries beyond the defaults, such as the
+   *     {@code OAuth-Client-Attestation-Challenge} that must accompany {@code
+   *     use_attestation_challenge}
+   */
+  public TokenRevocationResponse(
+      TokenRevocationRequestStatus status,
+      OAuthToken oAuthToken,
+      Map<String, Object> contents,
+      Map<String, String> additionalHeaders) {
     this.status = status;
     this.oAuthToken = oAuthToken;
     this.response = contents;
     this.headers = createDefaultHeaders();
+    this.headers.putAll(additionalHeaders);
   }
 
   private Map<String, String> createDefaultHeaders() {

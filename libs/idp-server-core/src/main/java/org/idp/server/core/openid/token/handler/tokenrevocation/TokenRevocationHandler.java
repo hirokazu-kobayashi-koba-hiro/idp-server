@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.token.handler.tokenrevocation;
 
 import java.util.Map;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationHeaderValidator;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
@@ -47,18 +48,22 @@ public class TokenRevocationHandler {
       OAuthTokenQueryRepository oAuthTokenQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
-      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      ClientAuthenticationHandler clientAuthenticationHandler) {
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.oAuthTokenQueryRepository = oAuthTokenQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
-    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
+    this.clientAuthenticationHandler = clientAuthenticationHandler;
   }
 
   public TokenRevocationResponse handle(TokenRevocationRequest request) {
     TokenRevocationValidator validator = new TokenRevocationValidator(request.toParameters());
     validator.validate();
+    new ClientAttestationHeaderValidator(
+            request.clientAttestationHeaders(), request.clientAttestationPopHeaders())
+        .validate();
 
     Tenant tenant = request.tenant();
     AuthorizationServerConfiguration authorizationServerConfiguration =
@@ -67,8 +72,11 @@ public class TokenRevocationHandler {
         clientConfigurationQueryRepository.get(tenant, request.clientId());
     TokenRevocationRequestContext tokenRevocationRequestContext =
         new TokenRevocationRequestContext(
+            tenant,
             request.clientSecretBasic(),
             request.toClientCert(),
+            request.toClientAttestationJwt(),
+            request.toClientAttestationPopJwt(),
             request.toParameters(),
             authorizationServerConfiguration,
             clientConfiguration);

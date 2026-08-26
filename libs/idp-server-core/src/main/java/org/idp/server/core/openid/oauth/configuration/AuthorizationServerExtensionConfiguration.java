@@ -43,6 +43,8 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   long authorizationResponseDuration = 60;
   int backchannelAuthenticationRequestExpiresIn = 300;
   int backchannelAuthenticationPollingInterval = 5;
+  boolean clientAttestationChallengeRequired = false;
+  int clientAttestationChallengeDuration = 300;
   boolean requiredBackchannelAuthUserCode = false;
   String backchannelAuthUserCodeType = "password";
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification";
@@ -146,6 +148,27 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return backchannelAuthenticationPollingInterval;
   }
 
+  /**
+   * Whether the {@code challenge} claim of the Client Attestation PoP JWT is enforced
+   * (draft-ietf-oauth-attestation-based-client-auth-10 Section 7.2 item 5).
+   *
+   * <p>Kept separate from advertising {@code challenge_endpoint} so a tenant can publish the
+   * endpoint first, let its clients start fetching challenges, and only then start rejecting
+   * requests that carry none.
+   */
+  public boolean clientAttestationChallengeRequired() {
+    return clientAttestationChallengeRequired;
+  }
+
+  /**
+   * Lifetime of an issued Challenge. Defaults to 300 seconds, matching {@code
+   * backchannel_authentication_request_expires_in} so that one challenge covers a whole CIBA
+   * polling cycle; a challenge stays valid for its whole lifetime by design.
+   */
+  public int clientAttestationChallengeDuration() {
+    return clientAttestationChallengeDuration;
+  }
+
   public boolean requiredBackchannelAuthUserCode() {
     return requiredBackchannelAuthUserCode;
   }
@@ -220,6 +243,8 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
         "backchannel_authentication_request_expires_in", backchannelAuthenticationRequestExpiresIn);
     map.put(
         "backchannel_authentication_polling_interval", backchannelAuthenticationPollingInterval);
+    map.put("client_attestation_challenge_required", clientAttestationChallengeRequired);
+    map.put("client_attestation_challenge_duration", clientAttestationChallengeDuration);
     map.put("required_backchannel_auth_user_code", requiredBackchannelAuthUserCode);
     map.put("backchannel_auth_user_code_type", backchannelAuthUserCodeType);
     map.put(
@@ -228,6 +253,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     map.put("pushed_authorization_request_expires_in", pushedAuthorizationRequestExpiresIn);
     map.put("fapi_baseline_scopes", fapiBaselineScopes);
     map.put("fapi_advance_scopes", fapiAdvanceScopes);
+    map.put("fapi20_scopes", fapi20Scopes);
     map.put("required_identity_verification_scopes", requiredIdentityVerificationScopes);
     map.put("custom_claims_scope_mapping", customClaimsScopeMapping);
     map.put(

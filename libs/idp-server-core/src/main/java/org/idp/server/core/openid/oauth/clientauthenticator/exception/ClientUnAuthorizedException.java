@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth.clientauthenticator.exception;
 
+import java.util.Map;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 
 public class ClientUnAuthorizedException extends RuntimeException {
@@ -69,6 +70,24 @@ public class ClientUnAuthorizedException extends RuntimeException {
 
   public String getReason() {
     return reason;
+  }
+
+  /**
+   * OAuth error code to report for this failure. RFC 6749 Section 5.2 defines {@code
+   * invalid_client} as the general code for a failed client authentication; subclasses override
+   * this with a more specific code where a specification defines one.
+   */
+  public String errorCode() {
+    return "invalid_client";
+  }
+
+  /**
+   * Extra HTTP response headers this failure has to carry. Empty for a general client
+   * authentication failure; a specification that requires one supplies it through a subclass, and
+   * every error handler copies whatever is returned here into the response.
+   */
+  public Map<String, String> responseHeaders() {
+    return Map.of();
   }
 
   public boolean hasStructuredData() {

@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 770" font-family="'Helvetica Neue', Arial, 'Hiragino Sans', 'Noto Sans JP', sans-serif">
+  <defs>
+    <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="770" fill="#ffffff"/>
+
+  <!-- title -->
+  <text x="500" y="32" text-anchor="middle" font-size="20" font-weight="bold" fill="#0F172A">Attestation-Based Client Authentication のエコシステム全体像</text>
+  <text x="500" y="52" text-anchor="middle" font-size="12" fill="#64748B">プラットフォーム証明から Authorization Server の検証までの信頼の流れ</text>
+
+  <!-- platform attestation services band -->
+  <rect x="40" y="70" width="620" height="122" rx="10" fill="#F8FAFC" stroke="#64748B" stroke-width="1.2"/>
+  <text x="350" y="92" text-anchor="middle" font-size="13" font-weight="bold" fill="#0F172A">Platform Attestation Services — OS ベンダーによる端末・アプリの真正性証明</text>
+
+  <rect x="60" y="104" width="280" height="72" rx="8" fill="#F1F5F9" stroke="#475569" stroke-width="1"/>
+  <text x="200" y="124" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#0F172A">Apple App Attest</text>
+  <text x="200" y="142" text-anchor="middle" font-size="11" fill="#334155">Secure Enclave の鍵 + attestationObject（CBOR）</text>
+  <text x="200" y="159" text-anchor="middle" font-size="11" fill="#334155">Apple ルート CA への証明書チェーンで検証（オフライン可）</text>
+
+  <rect x="360" y="104" width="280" height="72" rx="8" fill="#F1F5F9" stroke="#475569" stroke-width="1"/>
+  <text x="500" y="124" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#0F172A">Google Play Integrity</text>
+  <text x="500" y="142" text-anchor="middle" font-size="11" fill="#334155">暗号化された integrity token を発行</text>
+  <text x="500" y="159" text-anchor="middle" font-size="11" fill="#334155">Google API で復号し verdict（device / app）を確認</text>
+
+  <!-- scope separator -->
+  <line x1="672" y1="210" x2="672" y2="540" stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="6 5"/>
+  <text x="660" y="537" text-anchor="end" font-size="11.5" font-weight="bold" fill="#64748B">◀ 仕様のスコープ外（証明方式・信頼確立はエコシステムの選択）</text>
+  <text x="684" y="537" font-size="11.5" font-weight="bold" fill="#B45309">仕様が規定 ▶</text>
+
+  <!-- actor: mobile app -->
+  <rect x="40" y="250" width="250" height="90" rx="8" fill="#F0FDFA" stroke="#0D9488" stroke-width="1.5"/>
+  <text x="165" y="276" text-anchor="middle" font-size="14" font-weight="bold" fill="#134E4A">Mobile App（Wallet）</text>
+  <text x="165" y="296" text-anchor="middle" font-size="11" fill="#0F766E">Client Instance</text>
+  <text x="165" y="314" text-anchor="middle" font-size="11" fill="#0F766E">CIK を TEE / Secure Enclave に保持</text>
+
+  <!-- actor: attester -->
+  <rect x="380" y="250" width="250" height="90" rx="8" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.5"/>
+  <text x="505" y="276" text-anchor="middle" font-size="14" font-weight="bold" fill="#312E81">Client Attester</text>
+  <text x="505" y="296" text-anchor="middle" font-size="11" fill="#4338CA">アプリのバックエンド</text>
+  <text x="505" y="314" text-anchor="middle" font-size="11" fill="#4338CA">デバイス証明を検証して CAJ を発行</text>
+
+  <!-- actor: AS -->
+  <rect x="710" y="250" width="250" height="90" rx="8" fill="#FFF7ED" stroke="#D97706" stroke-width="1.5"/>
+  <text x="835" y="276" text-anchor="middle" font-size="14" font-weight="bold" fill="#7C2D12">Authorization Server</text>
+  <text x="835" y="296" text-anchor="middle" font-size="11" fill="#B45309">CAJ と PoP JWT を検証</text>
+  <text x="835" y="314" text-anchor="middle" font-size="11" fill="#B45309">（attest_jwt_client_auth）</text>
+
+  <!-- flow 2: device attestation -->
+  <line x1="165" y1="250" x2="165" y2="196" stroke="#334155" stroke-width="1.4" marker-start="url(#arrow2)" marker-end="url(#arrow2)"/>
+  <text x="178" y="222" font-size="11.5" font-weight="bold" fill="#0F172A">② OS API でデバイス証明を取得</text>
+
+  <!-- flow 4: attester verifies evidence -->
+  <line x1="505" y1="250" x2="505" y2="196" stroke="#334155" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow2)"/>
+  <text x="518" y="222" font-size="11.5" font-weight="bold" fill="#0F172A">④ 証明を検証</text>
+  <text x="518" y="238" font-size="10.5" fill="#64748B">（Google はオンライン照会）</text>
+
+  <!-- flow 3: send evidence + key -->
+  <line x1="290" y1="278" x2="371" y2="278" stroke="#334155" stroke-width="1.4" marker-end="url(#arrow2)"/>
+  <text x="331" y="268" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#0F172A">③ 証明 + CIK 公開鍵</text>
+
+  <!-- flow 5: issue CAJ -->
+  <line x1="371" y1="318" x2="290" y2="318" stroke="#334155" stroke-width="1.4" marker-end="url(#arrow2)"/>
+  <text x="331" y="336" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#0F172A">⑤ CAJ を発行</text>
+
+  <!-- app notes -->
+  <rect x="40" y="366" width="250" height="52" rx="6" fill="#ffffff" stroke="#0D9488" stroke-width="1.2"/>
+  <text x="165" y="387" text-anchor="middle" font-size="11.5" fill="#134E4A">① CIK 鍵ペアを生成</text>
+  <text x="165" y="405" text-anchor="middle" font-size="11.5" fill="#134E4A">⑥ リクエスト毎に PoP JWT を CIK で署名</text>
+
+  <!-- flow 7: send headers -->
+  <polyline points="165,418 165,452 700,452" fill="none" stroke="#334155" stroke-width="1.4" marker-end="url(#arrow2)"/>
+  <text x="440" y="442" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#0F172A">⑦ OAuth-Client-Attestation ／ OAuth-Client-Attestation-PoP ヘッダで送信</text>
+
+  <!-- AS verification note -->
+  <rect x="710" y="418" width="250" height="98" rx="8" fill="#FFF7ED" stroke="#D97706" stroke-width="1.2"/>
+  <line x1="835" y1="340" x2="835" y2="418" stroke="#D97706" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="726" y="440" font-size="12" font-weight="bold" fill="#7C2D12">⑧ 検証（§7.1 / §7.2）</text>
+  <text x="726" y="460" font-size="11" fill="#1E293B">・CAJ の署名を信頼する鍵で検証</text>
+  <text x="726" y="477" font-size="11" fill="#1E293B">・cnf.jwk で PoP の署名を検証</text>
+  <text x="726" y="494" font-size="11" fill="#1E293B">・iat 時間窓 ／ jti ／ challenge</text>
+  <text x="726" y="511" font-size="11" font-weight="bold" fill="#15803D">→ インスタンス単位の認証が成立</text>
+
+  <!-- deployment models -->
+  <text x="40" y="576" font-size="14" font-weight="bold" fill="#0F172A">デプロイモデル — 「AS が何を信頼するか」の2つの選択肢（どちらも仕様準拠）</text>
+
+  <rect x="40" y="590" width="450" height="118" rx="8" fill="#F8FAFC" stroke="#4F46E5" stroke-width="1.2"/>
+  <text x="60" y="614" font-size="12.5" font-weight="bold" fill="#312E81">① Attester 方式</text>
+  <text x="60" y="636" font-size="11.5" fill="#1E293B">バックエンド（Attester）が CAJ に署名する。</text>
+  <text x="60" y="654" font-size="11.5" fill="#1E293B">AS は事前登録した Attester の公開鍵（JWKS / x5c 等）を信頼。</text>
+  <text x="60" y="672" font-size="11.5" fill="#64748B">典型例: OID4VCI / HAIP のウォレットアテステーション</text>
+
+  <rect x="510" y="590" width="450" height="118" rx="8" fill="#F8FAFC" stroke="#0D9488" stroke-width="1.2"/>
+  <text x="530" y="614" font-size="12.5" font-weight="bold" fill="#134E4A">② 自己署名方式（バックエンドなし・§1）</text>
+  <text x="530" y="636" font-size="11.5" fill="#1E293B">Client Instance が CIK 自身で CAJ に署名する。</text>
+  <text x="530" y="654" font-size="11.5" fill="#1E293B">AS は「登録時にデバイス証明を検証して登録した CIK」を信頼。</text>
+  <text x="530" y="672" font-size="11.5" fill="#64748B">典型例: 自社モバイルアプリと自社 AS の直接連携</text>
+
+  <!-- footer -->
+  <text x="500" y="744" text-anchor="middle" font-size="11.5" fill="#64748B">主な利用文脈: EUDI Wallet ／ OpenID for Verifiable Credentials（OID4VCI）／ HAIP（High Assurance Interoperability Profile）</text>
+</svg>

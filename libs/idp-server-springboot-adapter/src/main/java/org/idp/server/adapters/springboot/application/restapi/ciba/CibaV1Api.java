@@ -54,6 +54,8 @@ public class CibaV1Api implements ParameterTransformable {
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", response.contentTypeValue());
+    // Section 6.2: a fresh Challenge travels back on the response of the failed request.
+    httpHeaders.setAll(response.responseHeaders());
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
   }

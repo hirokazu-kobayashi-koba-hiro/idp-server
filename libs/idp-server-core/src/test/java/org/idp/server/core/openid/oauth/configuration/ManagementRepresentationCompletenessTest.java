@@ -24,6 +24,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientExtensionConfiguration;
 import org.idp.server.platform.json.JsonConverter;
 import org.junit.jupiter.api.Test;
 
@@ -62,6 +63,27 @@ class ManagementRepresentationCompletenessTest {
   @Test
   void clientRepresentationCarriesEveryField() {
     assertRoundTrippable(ClientConfiguration.class, CLIENT_EXCLUSIONS);
+  }
+
+  /**
+   * The nested extension objects are a single field of their parent, so walking the parent alone
+   * cannot see inside them. #1521 lost the three attestation settings that way: they were stored
+   * and read, but never returned, so any client update deleted them.
+   */
+  /**
+   * available_federations is exposed by toMap(), but this test cannot synthesize an
+   * AvailableFederation to prove it, so it is verified by reading the representation instead.
+   */
+  private static final Set<String> CLIENT_EXTENSION_EXCLUSIONS = Set.of("available_federations");
+
+  @Test
+  void clientExtensionRepresentationCarriesEveryField() {
+    assertRoundTrippable(ClientExtensionConfiguration.class, CLIENT_EXTENSION_EXCLUSIONS);
+  }
+
+  @Test
+  void authorizationServerExtensionRepresentationCarriesEveryField() {
+    assertRoundTrippable(AuthorizationServerExtensionConfiguration.class, Set.of());
   }
 
   private <T> void assertRoundTrippable(Class<T> type, Set<String> exclusions) {
