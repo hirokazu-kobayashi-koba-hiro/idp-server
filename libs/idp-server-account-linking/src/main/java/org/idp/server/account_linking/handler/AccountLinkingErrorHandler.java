@@ -77,7 +77,7 @@ public class AccountLinkingErrorHandler {
     String message = exception.getMessage() != null ? exception.getMessage() : "unexpected error";
     log.error("Account linking server error: {}", message, exception);
     return AccountLinkingResult.error(
-        AccountLinkingStatus.SERVER_ERROR, "server_error", message, null, null);
+        AccountLinkingStatus.SERVER_ERROR, "server_error", message, null);
   }
 
   private AccountLinkingResult linkFailed(AccountLinkingStatus status, String description) {

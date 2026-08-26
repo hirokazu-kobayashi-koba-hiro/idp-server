@@ -90,8 +90,7 @@ public class AccountLinkingCallbackHandler {
           AccountLinkingStatus.BAD_REQUEST,
           request.error(),
           request.errorDescription(),
-          DefaultSecurityEventType.external_account_link_failed,
-          null);
+          DefaultSecurityEventType.external_account_link_failed);
     }
 
     LocalDateTime now = SystemDateTime.now();
@@ -136,7 +135,8 @@ public class AccountLinkingCallbackHandler {
   private ParkedCredentials exchange(
       Tenant tenant, AccountLinkingSession session, String code, LocalDateTime now) {
 
-    OidcSsoConfiguration configuration = configurationResolver.oidc(tenant, session.provider());
+    OidcSsoConfiguration configuration =
+        configurationResolver.resolve(tenant, session.provider()).oidc();
 
     OidcTokenResult tokenResult =
         tokenGateway.exchangeAuthorizationCode(
@@ -172,15 +172,17 @@ public class AccountLinkingCallbackHandler {
     EncryptedData refreshToken =
         tokenResult.hasRefreshToken() ? aesCipher.encrypt(tokenResult.refreshToken()) : null;
 
-    return new ParkedCredentials(
-        federatedUserId,
-        federatedUsername,
-        tokenResult.hasScope() ? tokenResult.scope() : configuration.scopeAsString(),
-        accessToken,
-        refreshToken,
-        DEFAULT_ENCRYPTION_KEY_ID,
-        now.plusSeconds(tokenResult.expiresIn()),
-        refreshToken == null ? null : now.plusSeconds(configuration.refreshTokenExpiresIn()));
+    return new ParkedCredentials.Builder()
+        .federatedUserId(federatedUserId)
+        .federatedUsername(federatedUsername)
+        .grantedScope(tokenResult.hasScope() ? tokenResult.scope() : configuration.scopeAsString())
+        .encryptedAccessToken(accessToken)
+        .encryptedRefreshToken(refreshToken)
+        .encryptionKeyId(DEFAULT_ENCRYPTION_KEY_ID)
+        .accessTokenExpiresAt(now.plusSeconds(tokenResult.expiresIn()))
+        .refreshTokenExpiresAt(
+            refreshToken == null ? null : now.plusSeconds(configuration.refreshTokenExpiresIn()))
+        .build();
   }
 
   private AccountLinkingSession getSession(Tenant tenant, AccountLinkingState state) {

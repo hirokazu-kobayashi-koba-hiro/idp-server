@@ -22,13 +22,7 @@ import org.idp.server.core.openid.federation.sso.SsoProvider;
 import org.idp.server.federation.sso.oidc.OidcSsoConfiguration;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-/**
- * Reads the linking provider's settings.
- *
- * <p>Both views come from the same {@code federation_configurations} row for now. A dedicated
- * configuration type is what this should use: login and linking want different scopes and different
- * redirect URIs, so sharing a row makes the login consent screen advertise API scopes.
- */
+/** Reads the linking provider's settings from the federation configuration. */
 public class AccountLinkingConfigurationResolver {
 
   static final FederationType FEDERATION_TYPE = new FederationType("oidc");
@@ -40,16 +34,16 @@ public class AccountLinkingConfigurationResolver {
     this.configurationQueryRepository = configurationQueryRepository;
   }
 
-  public OidcSsoConfiguration oidc(Tenant tenant, ExternalIdpProvider provider) {
-    return configurationQueryRepository.get(
-        tenant, FEDERATION_TYPE, new SsoProvider(provider.value()), OidcSsoConfiguration.class);
-  }
+  public AccountLinkingProviderConfiguration resolve(Tenant tenant, ExternalIdpProvider provider) {
+    SsoProvider ssoProvider = new SsoProvider(provider.value());
 
-  public AccountLinkingConfiguration linking(Tenant tenant, ExternalIdpProvider provider) {
-    return configurationQueryRepository.get(
-        tenant,
-        FEDERATION_TYPE,
-        new SsoProvider(provider.value()),
-        AccountLinkingConfiguration.class);
+    OidcSsoConfiguration oidc =
+        configurationQueryRepository.get(
+            tenant, FEDERATION_TYPE, ssoProvider, OidcSsoConfiguration.class);
+    AccountLinkingConfiguration linking =
+        configurationQueryRepository.get(
+            tenant, FEDERATION_TYPE, ssoProvider, AccountLinkingConfiguration.class);
+
+    return new AccountLinkingProviderConfiguration(oidc, linking);
   }
 }

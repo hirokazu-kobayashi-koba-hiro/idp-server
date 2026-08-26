@@ -90,8 +90,7 @@ public class AccountLinkingStartHandler {
       contents.put("state", session.state().value());
       contents.put("expires_in", SESSION_DURATION_SECONDS);
 
-      return AccountLinkingResult.success(
-          AccountLinkingStatus.CREATED, contents, null, request.user());
+      return AccountLinkingResult.success(AccountLinkingStatus.CREATED, contents, request.user());
 
     } catch (Exception exception) {
       return errorHandler
