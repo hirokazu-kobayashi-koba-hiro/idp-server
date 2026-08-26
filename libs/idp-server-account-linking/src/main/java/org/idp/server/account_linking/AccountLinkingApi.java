@@ -16,8 +16,8 @@
 
 package org.idp.server.account_linking;
 
-import org.idp.server.account_linking.io.AccountLinkingResponse;
-import org.idp.server.account_linking.io.AccountLinkingStartRequest;
+import java.util.Map;
+import org.idp.server.account_linking.io.AccountLinkingResult;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -30,25 +30,28 @@ import org.idp.server.platform.type.RequestAttributes;
  * token. {@code authorizeStart} and {@code handleCallback} are browser navigations that cannot
  * carry one, so they live outside the {@code /me} namespace and establish the subject by other
  * means.
+ *
+ * <p>Every operation answers with a result rather than throwing on a failed check, so that the
+ * failure can be recorded as a security event.
  */
 public interface AccountLinkingApi {
 
-  AccountLinkingResponse startLink(
+  AccountLinkingResult startLink(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
       ExternalIdpProvider provider,
-      AccountLinkingStartRequest request,
+      Map<String, Object> body,
       RequestAttributes requestAttributes);
 
   /** Browser navigation. The subject comes from the OP session, not from a Bearer token. */
-  AccountLinkingResponse authorizeStart(
+  AccountLinkingResult authorizeStart(
       TenantIdentifier tenantIdentifier,
       AccountLinkingState state,
       RequestAttributes requestAttributes);
 
   /** Browser navigation from the external IdP. Establishes nothing on its own. */
-  AccountLinkingResponse handleCallback(
+  AccountLinkingResult handleCallback(
       TenantIdentifier tenantIdentifier,
       AccountLinkingState state,
       String code,
@@ -56,13 +59,13 @@ public interface AccountLinkingApi {
       String errorDescription,
       RequestAttributes requestAttributes);
 
-  AccountLinkingResponse complete(
+  AccountLinkingResult complete(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
       AccountLinkingState state,
       RequestAttributes requestAttributes);
 
-  AccountLinkingResponse findList(
+  AccountLinkingResult findList(
       TenantIdentifier tenantIdentifier, User user, RequestAttributes requestAttributes);
 }

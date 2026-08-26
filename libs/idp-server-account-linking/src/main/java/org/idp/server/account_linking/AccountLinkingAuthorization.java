@@ -16,26 +16,40 @@
 
 package org.idp.server.account_linking;
 
+import org.idp.server.account_linking.io.AccountLinkingResult;
+
 /**
- * Outcome of {@code /linking/start}: where to send the browser, and the secret that browser must
- * carry back to the callback.
+ * Outcome of {@code /linking/start}: the result to answer with, and — on success — the secret the
+ * browser must carry back to the callback.
  */
 public class AccountLinkingAuthorization {
 
-  String authorizationUri;
-  AccountLinkingBrowserBinding browserBinding;
+  AccountLinkingResult result;
+  String browserBindingSecret;
 
-  public AccountLinkingAuthorization(
-      String authorizationUri, AccountLinkingBrowserBinding browserBinding) {
-    this.authorizationUri = authorizationUri;
-    this.browserBinding = browserBinding;
+  AccountLinkingAuthorization(AccountLinkingResult result, String browserBindingSecret) {
+    this.result = result;
+    this.browserBindingSecret = browserBindingSecret;
   }
 
-  public String authorizationUri() {
-    return authorizationUri;
+  public static AccountLinkingAuthorization of(
+      AccountLinkingResult result, String browserBindingSecret) {
+    return new AccountLinkingAuthorization(result, browserBindingSecret);
+  }
+
+  public static AccountLinkingAuthorization error(AccountLinkingResult result) {
+    return new AccountLinkingAuthorization(result, null);
+  }
+
+  public AccountLinkingResult result() {
+    return result;
   }
 
   public String browserBindingSecret() {
-    return browserBinding.secret();
+    return browserBindingSecret;
+  }
+
+  public boolean hasBrowserBinding() {
+    return browserBindingSecret != null && !browserBindingSecret.isEmpty();
   }
 }
