@@ -26,6 +26,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationException;
+import org.idp.server.core.openid.extension.attestation.StubVerificationRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
