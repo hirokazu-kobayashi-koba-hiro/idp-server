@@ -32,8 +32,8 @@ public class TokenIntrospectionContentsCreator {
     AccessToken accessToken = oAuthToken.accessToken();
     contents.put("active", true);
     contents.put("iss", accessToken.tokenIssuer().value());
-    if (accessToken.hasSubject()) {
-      contents.put("sub", accessToken.subject().value());
+    if (accessToken.tokenSubject().exists()) {
+      contents.put("sub", accessToken.tokenSubject().value());
     }
     contents.put("client_id", accessToken.requestedClientId().value());
     contents.put("scope", accessToken.scopes().toStringValues());

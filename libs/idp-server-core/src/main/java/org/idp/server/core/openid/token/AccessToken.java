@@ -135,6 +135,20 @@ public class AccessToken {
     return authorizationGrant.subject();
   }
 
+  /**
+   * The subject as the token reports it.
+   *
+   * <p>Falls back to the client where no resource owner is involved, so that what a resource server
+   * reads from the token and what it reads from introspection agree. {@link #subject()} keeps
+   * returning the resource owner alone, because callers that resolve a user against it would
+   * otherwise go looking for one that does not exist.
+   *
+   * @see org.idp.server.core.openid.grant_management.grant.AuthorizationGrant#tokenSubject()
+   */
+  public Subject tokenSubject() {
+    return authorizationGrant.tokenSubject();
+  }
+
   public CreatedAt createdAt() {
     return createdAt;
   }

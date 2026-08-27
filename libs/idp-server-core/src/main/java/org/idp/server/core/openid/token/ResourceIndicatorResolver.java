@@ -30,13 +30,17 @@ import org.idp.server.platform.log.LoggerWrapper;
  *
  * <pre>
  * "scope_resource_mapping": {
- *   "https://api.example.com":      ["openid", "account"],
+ *   "https://api.example.com":      ["account"],
  *   "https://payments.example.com": ["payments"]
  * }
  * </pre>
  *
  * <p>The mapping is written resource-first for the same reason {@code acr_mapping_rules} is written
  * acr-first: the key is the thing being asserted, and the list is what leads to it.
+ *
+ * <p>Protocol scopes are left out of it. {@code openid} accompanies every OpenID Connect request,
+ * so mapping it to a resource would make that resource a party to every request, and any request
+ * that also asked for another resource would then span two.
  *
  * @see <a href="https://www.rfc-editor.org/rfc/rfc9068.html#section-3">RFC 9068 Section 3</a>
  */
@@ -69,14 +73,16 @@ public class ResourceIndicatorResolver {
   /**
    * Whether a configured key is usable as a resource indicator.
    *
-   * <p>RFC 8707 requires an absolute URI without a fragment. The check matters beyond tidiness: a
-   * client identifier passes for a resource indicator if nothing looks, and an audience naming the
-   * client rather than the resource is the confusion this claim exists to prevent — that is what
-   * {@code client_id} is for, and what an ID token's audience means.
+   * <p>RFC 8707 requires an absolute URI without a fragment, and nothing more, so this is exactly
+   * that check rather than a stricter one. It catches the common way an audience ends up naming the
+   * client rather than the resource — a bare client identifier is not a URI — but it is not a
+   * defence against that mistake: a URN shaped identifier is an absolute URI and passes. What the
+   * audience means is a configuration decision, and the client already has {@code client_id}.
    *
    * <p>A rejected value is dropped and logged rather than failing the request, so a mistake in one
    * mapping entry does not stop tokens being issued for the others; the audience then falls back to
-   * the configured default.
+   * the configured default. Dropping it also keeps the entry out of the span check, which would
+   * otherwise refuse requests over a value that can never become an audience.
    *
    * @see <a href="https://www.rfc-editor.org/rfc/rfc8707.html#section-2">RFC 8707 Section 2</a>
    */

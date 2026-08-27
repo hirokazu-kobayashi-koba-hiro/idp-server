@@ -36,7 +36,6 @@ import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.Audience;
 import org.idp.server.core.openid.oauth.type.oauth.ExpiresIn;
 import org.idp.server.core.openid.oauth.type.oauth.TokenType;
-import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.core.openid.token.plugin.AccessTokenCustomClaimsCreators;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JoseInvalidException;
@@ -174,6 +173,12 @@ public class AccessTokenCreator {
       ExpiresIn expiresIn,
       ExpiresAt expiresAt)
       throws JsonWebKeyInvalidException, JoseInvalidException {
+    // An opaque access token carries no claims, so there is nothing to resolve for it.
+    Audience audience =
+        isIdentifierAccessTokenType(authorizationServerConfiguration, clientConfiguration)
+            ? new Audience()
+            : resolveAudience(authorizationGrant, authorizationServerConfiguration);
+
     AccessTokenPayloadBuilder payloadBuilder = new AccessTokenPayloadBuilder();
 
     // Custom claims first, then standard claims override
@@ -188,7 +193,7 @@ public class AccessTokenCreator {
 
     // Standard claims (these will override any conflicting custom claims)
     payloadBuilder.add(authorizationServerConfiguration.tokenIssuer());
-    payloadBuilder.add(resolveAudience(authorizationGrant, authorizationServerConfiguration));
+    payloadBuilder.add(audience);
     payloadBuilder.add(authorizationGrant.tokenSubject());
     payloadBuilder.add(authorizationGrant.requestedClientId());
     payloadBuilder.add(authorizationGrant.scopes());
@@ -237,13 +242,7 @@ public class AccessTokenCreator {
       ClientConfiguration clientConfiguration,
       Map<String, Object> accessTokenPayload)
       throws JsonWebKeyInvalidException, JoseInvalidException {
-    // Client-level access_token_type overrides the authorization-server default when configured,
-    // mirroring the access_token_duration / id_token_duration override pattern.
-    boolean identifierAccessTokenType =
-        clientConfiguration.hasAccessTokenType()
-            ? clientConfiguration.isIdentifierAccessTokenType()
-            : authorizationServerConfiguration.isIdentifierAccessTokenType();
-    if (identifierAccessTokenType) {
+    if (isIdentifierAccessTokenType(authorizationServerConfiguration, clientConfiguration)) {
       RandomStringGenerator randomStringGenerator = new RandomStringGenerator(32);
       String token = randomStringGenerator.generate();
       return new AccessTokenEntity(token);
@@ -277,15 +276,33 @@ public class AccessTokenCreator {
   }
 
   /**
-   * The resource the token is for.
+   * Whether the access token is an opaque identifier rather than a JWT.
+   *
+   * <p>Client-level access_token_type overrides the authorization-server default when configured,
+   * mirroring the access_token_duration / id_token_duration override pattern.
+   */
+  private boolean isIdentifierAccessTokenType(
+      AuthorizationServerConfiguration authorizationServerConfiguration,
+      ClientConfiguration clientConfiguration) {
+    return clientConfiguration.hasAccessTokenType()
+        ? clientConfiguration.isIdentifierAccessTokenType()
+        : authorizationServerConfiguration.isIdentifierAccessTokenType();
+  }
+
+  /**
+   * The audience for the resolved resources.
    *
    * <p>RFC 9068 requires an audience on every JWT access token, and where the request carries no
    * resource indicator it requires a default one rather than allowing the claim to be dropped. The
-   * default is inferred from the granted scopes, falling back to the configured value and then to
-   * the issuer, so a deployment that has not modelled its resources still issues conformant tokens.
+   * default falls back to the configured value and then to the issuer, so a deployment that has not
+   * modelled its resources still issues conformant tokens.
    *
-   * <p>Scopes spanning several resources are refused rather than resolved: an audience listing more
-   * than one resource lets each of them accept scopes that were meant for another.
+   * <p>Scopes spanning several resources are refused where the scope is decided — the authorization
+   * request, or the token request for the grants that carry their own scope — so reaching here with
+   * more than one means the mapping changed after the grant was made. The default is used rather
+   * than one of them: the grant predates the configuration, and picking a resource would let a
+   * token assert one it was never granted against. Refusing instead would fail a refresh of a grant
+   * the client was already told it had.
    *
    * @see <a href="https://www.rfc-editor.org/rfc/rfc9068.html#section-3">RFC 9068 Section 3</a>
    */
@@ -297,11 +314,6 @@ public class AccessTokenCreator {
         ResourceIndicatorResolver.resolve(
             authorizationServerConfiguration.scopeResourceMapping(),
             authorizationGrant.scopes().toStringList());
-
-    if (resources.size() > 1) {
-      throw new TokenBadRequestException(
-          "invalid_scope", "requested scopes belong to different resources: " + resources);
-    }
 
     if (resources.size() == 1) {
       return new Audience(resources.get(0));

@@ -16,25 +16,55 @@
 
 package org.idp.server.core.openid.token.verifier;
 
+import java.util.List;
+import java.util.Map;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
+import org.idp.server.core.openid.token.ResourceIndicatorResolver;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 
 public class ClientCredentialsGrantVerifier {
 
   Scopes scopes;
+  Map<String, List<String>> scopeResourceMapping;
 
-  public ClientCredentialsGrantVerifier(Scopes scopes) {
+  public ClientCredentialsGrantVerifier(
+      Scopes scopes, Map<String, List<String>> scopeResourceMapping) {
     this.scopes = scopes;
+    this.scopeResourceMapping = scopeResourceMapping;
   }
 
   public void verify() {
     throwExceptionIfInvalidScope();
+    throwExceptionIfScopesSpanResources();
   }
 
   void throwExceptionIfInvalidScope() {
     if (!scopes.exists()) {
       throw new TokenBadRequestException(
           "invalid_scope", "token request does not contains valid scope");
+    }
+  }
+
+  /**
+   * RFC 9068 Section 3.
+   *
+   * <p>If the values in the "scope" parameter refer to different default resource indicator values,
+   * the authorization server SHOULD reject the request with "invalid_scope".
+   *
+   * <p>This grant takes its scope at the token endpoint rather than through an authorization
+   * request, so this is where its scope is decided and where the check belongs. An access token can
+   * only name one resource, and Section 2.2.3 requires every scope string it carries to have
+   * meaning for the resources its audience names.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9068.html#section-3">RFC 9068 Section 3</a>
+   */
+  void throwExceptionIfScopesSpanResources() {
+    List<String> resources =
+        ResourceIndicatorResolver.resolve(scopeResourceMapping, scopes.toStringList());
+
+    if (resources.size() > 1) {
+      throw new TokenBadRequestException(
+          "invalid_scope", "requested scopes belong to different resources: " + resources);
     }
   }
 }

@@ -106,7 +106,8 @@ public class ResourceOwnerPasswordCredentialsGrantService
     Scopes scopes =
         new Scopes(clientConfiguration.filteredScope(context.scopes().toStringValues()));
     ResourceOwnerPasswordGrantVerifier verifier =
-        new ResourceOwnerPasswordGrantVerifier(user, scopes);
+        new ResourceOwnerPasswordGrantVerifier(
+            user, scopes, authorizationServerConfiguration.scopeResourceMapping());
     verifier.verify();
 
     CustomProperties customProperties = context.customProperties();
