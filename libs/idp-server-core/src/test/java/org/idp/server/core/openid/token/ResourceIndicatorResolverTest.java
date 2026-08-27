@@ -18,6 +18,7 @@ package org.idp.server.core.openid.token;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Nested;
@@ -105,7 +106,7 @@ class ResourceIndicatorResolverTest {
     void ignoresAnEntryWhoseScopesAreNotAList() {
       // A value written as a string rather than an array reads as null. Dropping the entry keeps
       // the promise the resolver makes: a malformed entry is ignored, and the rest still resolve.
-      Map<String, List<String>> mapping = new java.util.HashMap<>();
+      Map<String, List<String>> mapping = new HashMap<>();
       mapping.put(API, null);
       mapping.put(ADMIN, List.of("management"));
 

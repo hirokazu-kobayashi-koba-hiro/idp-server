@@ -72,22 +72,6 @@ public class ResourceIndicatorResolver {
   }
 
   /**
-   * Whether a configured key is usable as a resource indicator.
-   *
-   * <p>RFC 8707 requires an absolute URI without a fragment, and nothing more, so this is exactly
-   * that check rather than a stricter one. It catches the common way an audience ends up naming the
-   * client rather than the resource — a bare client identifier is not a URI — but it is not a
-   * defence against that mistake: a URN shaped identifier is an absolute URI and passes. What the
-   * audience means is a configuration decision, and the client already has {@code client_id}.
-   *
-   * <p>A rejected value is dropped and logged rather than failing the request, so a mistake in one
-   * mapping entry does not stop tokens being issued for the others; the audience then falls back to
-   * the configured default. Dropping it also keeps the entry out of the span check, which would
-   * otherwise refuse requests over a value that can never become an audience.
-   *
-   * @see <a href="https://www.rfc-editor.org/rfc/rfc8707.html#section-2">RFC 8707 Section 2</a>
-   */
-  /**
    * Whether an entry lists any scope.
    *
    * <p>A value that is not an array reads as null rather than failing the request, so an entry
@@ -106,6 +90,22 @@ public class ResourceIndicatorResolver {
     return true;
   }
 
+  /**
+   * Whether a configured key is usable as a resource indicator.
+   *
+   * <p>RFC 8707 requires an absolute URI without a fragment, and nothing more, so this is exactly
+   * that check rather than a stricter one. It catches the common way an audience ends up naming the
+   * client rather than the resource — a bare client identifier is not a URI — but it is not a
+   * defence against that mistake: a URN shaped identifier is an absolute URI and passes. What the
+   * audience means is a configuration decision, and the client already has {@code client_id}.
+   *
+   * <p>A rejected value is dropped and logged rather than failing the request, so a mistake in one
+   * mapping entry does not stop tokens being issued for the others; the audience then falls back to
+   * the configured default. Dropping it also keeps the entry out of the span check, which would
+   * otherwise refuse requests over a value that can never become an audience.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc8707.html#section-2">RFC 8707 Section 2</a>
+   */
   static boolean isResourceIndicator(String value) {
     try {
       URI uri = new URI(value);

@@ -371,7 +371,7 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return extension.hasDefaultResourceIndicator();
   }
 
-  public java.util.Map<String, java.util.List<String>> scopeResourceMapping() {
+  public Map<String, List<String>> scopeResourceMapping() {
     return extension.scopeResourceMapping();
   }
 
