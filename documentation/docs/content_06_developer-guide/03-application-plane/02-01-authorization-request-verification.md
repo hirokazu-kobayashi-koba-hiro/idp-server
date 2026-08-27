@@ -147,8 +147,13 @@ public void verify(OAuthRequestContext context) {
 | `RequestObjectVerifier` | `isRequestParameterPattern() && !isUnsignedRequestObject()` |
 | `OAuthAuthorizationDetailsVerifier` | `hasAuthorizationDetails()` |
 | `JarmVerifier` | `responseMode().isJwtMode()` |
+| `ScopeResourceVerifier` | `scope_resource_mapping` が設定されている |
 
 **注意**: `RequestObjectVerifier`は`isUnsignedRequestObject()`がtrueの場合（`alg: none`）スキップされる。
+
+`ScopeResourceVerifier`は、要求スコープが複数のリソースに属する場合に`invalid_scope`で拒否する（RFC 9068 §3）。アクセストークンの`aud`は1つのリソースしか指せず、RFC 9068 §2.2.3が「トークンが運ぶ全スコープは`aud`が指すリソースにとって意味を持つこと」を要求するため。
+
+スコープが決まるのは認可リクエストなので、拒否もここで行う。トークン発行時に拒否すると、クライアントが既に付与されたと伝えられているグラントを後から失敗させることになる。自前でスコープを受け取る`client_credentials`と`password`は、トークンリクエストがスコープの決まる場所であるため、各グラントのVerifierで同じ判定を行う。
 
 ## 4. Base Verifier詳細
 
