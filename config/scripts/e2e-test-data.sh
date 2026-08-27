@@ -251,6 +251,8 @@ federation_config_files=(
   facebook.json
   google.json
   oauth-extension.json
+  account-linking.json
+  account-linking-oauth2.json
 )
 
 for federation_config_file in "${federation_config_files[@]}"; do

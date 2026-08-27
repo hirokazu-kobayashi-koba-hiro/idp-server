@@ -35,6 +35,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   List<AvailableFederation> availableFederations;
   String defaultCibaAuthenticationInteractionType = "authentication-device-notification-no-action";
   boolean cibaRequireRar = false;
+  List<String> linkingReturnUris;
   Map<String, Object> customProperties = new HashMap<>();
 
   public ClientExtensionConfiguration() {}
@@ -140,6 +141,22 @@ public class ClientExtensionConfiguration implements JsonReadable {
     return cibaRequireRar;
   }
 
+  /**
+   * Where an account linking flow may return the browser once it finishes.
+   *
+   * <p>Kept apart from {@code redirect_uris}. The place a user lands after linking is normally an
+   * application settings screen, not a URL that receives authorization codes; reusing the
+   * authorization list would mean registering such screens as redirect URIs, which would let
+   * authorization codes be sent to them.
+   */
+  public List<String> linkingReturnUris() {
+    return linkingReturnUris == null ? List.of() : linkingReturnUris;
+  }
+
+  public boolean hasLinkingReturnUris() {
+    return linkingReturnUris != null && !linkingReturnUris.isEmpty();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (hasAccessTokenDuration()) map.put("access_token_duration", accessTokenDuration);
@@ -155,6 +172,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
       map.put(
           "default_ciba_authentication_interaction_type", defaultCibaAuthenticationInteractionType);
     map.put("ciba_require_rar", cibaRequireRar);
+    if (hasLinkingReturnUris()) map.put("linking_return_uris", linkingReturnUris);
     if (hasCustomProperties()) map.put("custom_properties", customProperties);
     return map;
   }

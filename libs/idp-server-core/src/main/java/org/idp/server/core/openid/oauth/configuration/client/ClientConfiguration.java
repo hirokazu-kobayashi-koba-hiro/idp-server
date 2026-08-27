@@ -449,6 +449,11 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return this;
   }
 
+  /** Return targets an account linking flow may send the browser to for this client. */
+  public java.util.List<String> linkingReturnUris() {
+    return extension.linkingReturnUris();
+  }
+
   public boolean hasAccessTokenDuration() {
     return extension.hasAccessTokenDuration();
   }

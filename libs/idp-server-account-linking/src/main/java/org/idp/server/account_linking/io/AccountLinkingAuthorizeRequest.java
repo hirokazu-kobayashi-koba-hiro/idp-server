@@ -1,0 +1,61 @@
+/*
+ * Copyright 2025 Hirokazu Kobayashi
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.idp.server.account_linking.io;
+
+import org.idp.server.account_linking.AccountLinkingState;
+import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+
+/**
+ * Everything {@code /linking/start} works from.
+ *
+ * <p>The operator is whoever the browser session says is driving this step, which is not
+ * necessarily the user the linking session was opened for — telling those apart is the point.
+ */
+public class AccountLinkingAuthorizeRequest {
+
+  Tenant tenant;
+  AccountLinkingState state;
+  User operator;
+  Authentication authentication;
+
+  public AccountLinkingAuthorizeRequest(
+      Tenant tenant, AccountLinkingState state, User operator, Authentication authentication) {
+    this.tenant = tenant;
+    this.state = state;
+    this.operator = operator;
+    this.authentication = authentication;
+  }
+
+  public Tenant tenant() {
+    return tenant;
+  }
+
+  public AccountLinkingState state() {
+    return state;
+  }
+
+  public User operator() {
+    return operator;
+  }
+
+  /** How the operator authenticated in this browser, as the OP session recorded it. */
+  public Authentication authentication() {
+    return authentication;
+  }
+}

@@ -18,6 +18,20 @@ package org.idp.server.usecases;
 
 import java.net.http.HttpClient;
 import java.util.Map;
+import org.idp.server.account_linking.AccountLinkingApi;
+import org.idp.server.account_linking.AccountLinkingConfigurationResolver;
+import org.idp.server.account_linking.AccountLinkingCookieDelegate;
+import org.idp.server.account_linking.gateway.ExternalIdpIdTokenGateway;
+import org.idp.server.account_linking.gateway.ExternalIdpTokenGateway;
+import org.idp.server.account_linking.gateway.ExternalIdpUserinfoGateway;
+import org.idp.server.account_linking.handler.AccountLinkingAuthorizeHandler;
+import org.idp.server.account_linking.handler.AccountLinkingCallbackHandler;
+import org.idp.server.account_linking.handler.AccountLinkingCompleteHandler;
+import org.idp.server.account_linking.handler.AccountLinkingStartHandler;
+import org.idp.server.account_linking.repository.AccountLinkingSessionCommandRepository;
+import org.idp.server.account_linking.repository.AccountLinkingSessionQueryRepository;
+import org.idp.server.account_linking.repository.LinkedExternalAccountCommandRepository;
+import org.idp.server.account_linking.repository.LinkedExternalAccountQueryRepository;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
@@ -231,6 +245,7 @@ public class IdpServerApplication {
   OrganizationTenantResolverApi organizationTenantResolverApi;
   TenantInvitationMetaDataApi tenantInvitationMetaDataApi;
   UserOperationApi userOperationApi;
+  AccountLinkingApi accountLinkingApi;
   UserOperationApi rawUserOperationApi;
   UserLifecycleEventApi userLifecycleEventApi;
   AuthenticationDeviceLogApi authenticationDeviceLogApi;
@@ -297,6 +312,7 @@ public class IdpServerApplication {
       SessionStore sessionStore,
       SessionCookieDelegate sessionCookieDelegate,
       AuthSessionCookieDelegate authSessionCookieDelegate,
+      AccountLinkingCookieDelegate accountLinkingCookieDelegate,
       PasswordEncodeDelegation passwordEncodeDelegation,
       PasswordVerificationDelegation passwordVerificationDelegation,
       SecurityEventPublisher securityEventPublisher,
@@ -715,6 +731,49 @@ public class IdpServerApplication {
             userLifecycleEventPublisher,
             passwordVerificationDelegation,
             passwordEncodeDelegation);
+    LinkedExternalAccountQueryRepository linkedExternalAccountQueryRepository =
+        applicationComponentContainer.resolve(LinkedExternalAccountQueryRepository.class);
+    AccountLinkingSessionCommandRepository accountLinkingSessionCommandRepository =
+        applicationComponentContainer.resolve(AccountLinkingSessionCommandRepository.class);
+    AccountLinkingSessionQueryRepository accountLinkingSessionQueryRepository =
+        applicationComponentContainer.resolve(AccountLinkingSessionQueryRepository.class);
+    AccountLinkingConfigurationResolver accountLinkingConfigurationResolver =
+        new AccountLinkingConfigurationResolver(federationConfigurationQueryRepository);
+    this.accountLinkingApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new AccountLinkingEntryService(
+                tenantQueryRepository,
+                linkedExternalAccountQueryRepository,
+                new AccountLinkingStartHandler(
+                    accountLinkingSessionCommandRepository,
+                    clientConfigurationQueryRepository,
+                    authorizationServerConfigurationQueryRepository),
+                new AccountLinkingAuthorizeHandler(
+                    accountLinkingSessionQueryRepository,
+                    accountLinkingSessionCommandRepository,
+                    accountLinkingConfigurationResolver),
+                new AccountLinkingCallbackHandler(
+                    accountLinkingSessionQueryRepository,
+                    accountLinkingSessionCommandRepository,
+                    accountLinkingConfigurationResolver,
+                    new ExternalIdpTokenGateway(httpRequestExecutor),
+                    new ExternalIdpIdTokenGateway(oidcSsoExecutors),
+                    new ExternalIdpUserinfoGateway(oidcSsoExecutors),
+                    aesCipher),
+                new AccountLinkingCompleteHandler(
+                    accountLinkingSessionQueryRepository,
+                    accountLinkingSessionCommandRepository,
+                    linkedExternalAccountQueryRepository,
+                    applicationComponentContainer.resolve(
+                        LinkedExternalAccountCommandRepository.class),
+                    accountLinkingConfigurationResolver),
+                oidcSessionHandler,
+                sessionCookieDelegate,
+                accountLinkingCookieDelegate,
+                userEventPublisher),
+            AccountLinkingApi.class,
+            databaseTypeProvider);
+
     this.rawUserOperationApi = userOperationEntryService;
     this.userOperationApi =
         TenantAwareEntryServiceProxy.createProxy(
@@ -1413,6 +1472,10 @@ public class IdpServerApplication {
 
   public UserOperationApi userOperationApi() {
     return userOperationApi;
+  }
+
+  public AccountLinkingApi accountLinkingApi() {
+    return accountLinkingApi;
   }
 
   public UserOperationApi rawUserOperationApi() {
