@@ -42,6 +42,9 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
 
   const redirectUri = "https://app.example.com/callback";
   const DEFAULT_RESOURCE = "https://default.example.com";
+  let opaqueTenantId;
+  let opaqueClientId;
+  let opaqueClientSecret;
   const ACCOUNT_RESOURCE = "https://api.example.com";
   const MANAGEMENT_RESOURCE = "https://admin.example.com";
   const ACR = "urn:mace:incommon:iap:silver";
@@ -120,7 +123,7 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
             token_signed_key_id: "token_rsa",
             default_resource_indicator: DEFAULT_RESOURCE,
             scope_resource_mapping: {
-              [ACCOUNT_RESOURCE]: ["openid", "account"],
+              [ACCOUNT_RESOURCE]: ["account"],
               [MANAGEMENT_RESOURCE]: ["management"],
             },
           },
@@ -274,6 +277,69 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
     expect(clientTokenResponse.status).toBe(200);
     clientToken = decode(clientTokenResponse.data.access_token);
 
+    opaqueTenantId = uuidv4();
+    opaqueClientId = uuidv4();
+    opaqueClientSecret = uuidv4();
+    const opaqueOnboarding = await onboarding({
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
+      body: {
+        organization: {
+          id: uuidv4(),
+          name: `RFC 9068 Opaque Org ${timestamp}`,
+          description: "E2E for #1824",
+        },
+        tenant: {
+          id: opaqueTenantId,
+          name: `RFC 9068 Opaque Tenant ${timestamp}`,
+          domain: backendUrl,
+          authorization_provider: "idp-server",
+        },
+        authorization_server: {
+          issuer: `${backendUrl}/${opaqueTenantId}`,
+          authorization_endpoint: `${backendUrl}/${opaqueTenantId}/v1/authorizations`,
+          token_endpoint: `${backendUrl}/${opaqueTenantId}/v1/tokens`,
+          userinfo_endpoint: `${backendUrl}/${opaqueTenantId}/v1/userinfo`,
+          jwks_uri: `${backendUrl}/${opaqueTenantId}/v1/jwks`,
+          jwks: JSON.stringify(jwks),
+          scopes_supported: ["account", "management"],
+          response_types_supported: ["code"],
+          response_modes_supported: ["query"],
+          subject_types_supported: ["public"],
+          grant_types_supported: ["client_credentials"],
+          id_token_signing_alg_values_supported: ["ES256"],
+          token_endpoint_auth_methods_supported: ["client_secret_post"],
+          claims_supported: ["sub"],
+          extension: {
+            // Opaque tokens carry no claims, so the mapping below can never produce an audience.
+            // It is configured anyway, because that is the combination that must still issue.
+            access_token_type: "opaque",
+            scope_resource_mapping: {
+              [ACCOUNT_RESOURCE]: ["account"],
+              [MANAGEMENT_RESOURCE]: ["management"],
+            },
+          },
+        },
+        user: {
+          sub: uuidv4(),
+          provider_id: "idp-server",
+          email: `rfc9068-opaque-${timestamp}@test.example.com`,
+          email_verified: true,
+          raw_password: `Rfc9068Opaque${timestamp}!`,
+        },
+        client: {
+          client_id: opaqueClientId,
+          client_secret: opaqueClientSecret,
+          redirect_uris: [redirectUri],
+          grant_types: ["client_credentials"],
+          response_types: ["code"],
+          scope: "account management",
+          client_name: "RFC 9068 Opaque Client",
+          token_endpoint_auth_method: "client_secret_post",
+        },
+      },
+    });
+    expect(opaqueOnboarding.status).toBe(201);
+
     console.log("code token   :", JSON.stringify(codeToken));
     console.log("client token :", JSON.stringify(clientToken));
   }, 120000);
@@ -408,6 +474,8 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
       // The mapping is what makes this hold: a token carries only the scopes that belong to the
       // resource it names. A management scope resolves to another resource, so it cannot appear
       // alongside this audience.
+      // openid is deliberately unmapped: it accompanies every OpenID Connect request, so binding
+      // it to a resource would make that resource a party to all of them.
       const configuredScopes = ["openid", "account"];
 
       expect(codeToken.payload.aud).toBe(ACCOUNT_RESOURCE);
@@ -461,8 +529,8 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
     });
 
     it('If the values in the "scope" parameter refer to different default resource indicator values, the authorization server SHOULD reject the request with "invalid_scope" - RFC 9068 Section 3 (#1824)', async () => {
-      // Resolving one of them instead would mint a token whose audience names a resource that some
-      // of its scopes were never meant for.
+      // Refused where the scope is decided. The client credentials grant carries its own scope, so
+      // the token request is that point for it, and the error takes the form that endpoint uses.
       const spanning = await requestToken({
         endpoint: tokenEndpoint(),
         grantType: "client_credentials",
@@ -471,13 +539,36 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
         clientSecret,
       });
       console.log(
-        "spanning resources:",
+        "spanning at token endpoint:",
         spanning.status,
         JSON.stringify(spanning.data)
       );
 
       expect(spanning.status).toBe(400);
       expect(spanning.data.error).toBe("invalid_scope");
+    });
+
+    it("rejects an authorization request whose scopes span resources, where the scope is decided - RFC 9068 Section 3 / RFC 6749 Section 4.1.2.1 (#1824)", async () => {
+      // Refusing at the token endpoint would fail a grant the client had already been told it had,
+      // and invalid_scope at the authorization endpoint is a redirect rather than a response body.
+      const response = await requestAuthorizations({
+        endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+        authorizeEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
+        denyEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/deny`,
+        clientId,
+        responseType: "code",
+        state: `spanning-${Date.now()}`,
+        scope: "account management",
+        redirectUri,
+        user: { username, password },
+      });
+      console.log(
+        "spanning at authorization endpoint:",
+        JSON.stringify(response.authorizationResponse)
+      );
+
+      expect(response.authorizationResponse.error).toBe("invalid_scope");
+      expect(response.authorizationResponse.code).toBeFalsy();
     });
   });
 
@@ -517,6 +608,44 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
 
       expect(managementToken.payload.iss).toBe(codeToken.payload.iss);
       expect(managementToken.payload.aud).not.toBe(codeToken.payload.aud);
+    });
+  });
+
+  describe("Applicability", () => {
+    it("issues an opaque access token, which carries no audience because it carries no claims", async () => {
+      // The profile applies to JWT access tokens, so the claims this file asserts do not exist on
+      // an opaque token. Reporting the audience through introspection is #1826.
+      const response = await requestToken({
+        endpoint: `${backendUrl}/${opaqueTenantId}/v1/tokens`,
+        grantType: "client_credentials",
+        scope: "account",
+        clientId: opaqueClientId,
+        clientSecret: opaqueClientSecret,
+      });
+      expect(response.status).toBe(200);
+
+      expect(response.data.access_token.split(".").length).toBe(1);
+    });
+
+    it("applies the configured resources to an opaque access token as well", async () => {
+      // Only the audience is format dependent. A tenant that has declared which scopes belong to
+      // which resource has that declaration applied either way, rather than having it ignored for
+      // the format that cannot carry the claim.
+      const response = await requestToken({
+        endpoint: `${backendUrl}/${opaqueTenantId}/v1/tokens`,
+        grantType: "client_credentials",
+        scope: "account management",
+        clientId: opaqueClientId,
+        clientSecret: opaqueClientSecret,
+      });
+      console.log(
+        "opaque spanning:",
+        response.status,
+        JSON.stringify(response.data)
+      );
+
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("invalid_scope");
     });
   });
 });
