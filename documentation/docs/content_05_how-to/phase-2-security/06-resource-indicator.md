@@ -107,7 +107,8 @@ JWTアクセストークンをリソースサーバーが自前で検証する�
 | スコープが決まる場所 | 返り方 |
 |:---|:---|
 | 認可リクエスト | リダイレクトでの`invalid_scope` |
-| トークンリクエスト（`client_credentials` / `password`） | レスポンスボディの`invalid_scope` |
+| CIBAバックチャネル認証リクエスト | レスポンスボディの`invalid_scope`（リダイレクト先が無いため） |
+| トークンリクエスト（`client_credentials` / `password` / `jwt-bearer`） | レスポンスボディの`invalid_scope` |
 
 リフレッシュでは検証しません。付与済みのグラントのスコープは変えられないため、設定変更を理由に既発行トークンのリフレッシュを失敗させないためです。
 
@@ -115,26 +116,35 @@ JWTアクセストークンをリソースサーバーが自前で検証する�
 
 設定はオプトインです。`scope_resource_mapping`が空のテナントでは検証自体が走らず、`aud`にはissuerが入ります。
 
-### 1. 現状を確認する
+:::warning
+認可サーバー設定の更新は**全置換**です。マージされません。`extension`だけを送ると、他の必須項目が欠けて`400`になります。
+
+必ず**GETで現在の設定を取得し、そこに項目を足して全体をPUT**してください。
+:::
+
+### 1. 現在の設定を取得する
 
 ```bash
-curl -X GET https://api.local.test/v1/management/tenants/{tenant-id}/authorization-server \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}"
+curl -sS -X GET \
+  https://api.local.test/v1/management/tenants/{tenant-id}/authorization-server \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -o authorization-server.json
 ```
 
-### 2. 対応表を設定する
+### 2. 対応表を足して全体をPUTする
+
+取得したJSONの`extension`に2項目を追加します。
 
 ```bash
-curl -X PUT https://api.local.test/v1/management/tenants/{tenant-id}/authorization-server \
+jq '.extension.scope_resource_mapping = {
+      "https://api.example.com": ["account"]
+    }' authorization-server.json > updated.json
+
+curl -sS -X PUT \
+  https://api.local.test/v1/management/tenants/{tenant-id}/authorization-server \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -d '{
-    "extension": {
-      "scope_resource_mapping": {
-        "https://api.example.com": ["account"]
-      }
-    }
-  }'
+  -d @updated.json
 ```
 
 対応づけたスコープだけが影響を受けます。対応表に無いスコープの挙動は変わりません。
@@ -144,7 +154,13 @@ curl -X PUT https://api.local.test/v1/management/tenants/{tenant-id}/authorizati
 対応表を空にすれば、導入前の挙動（`aud`はissuer、スコープの組み合わせは無制限）に戻ります。
 
 ```bash
--d '{ "extension": { "scope_resource_mapping": {} } }'
+jq '.extension.scope_resource_mapping = {}' authorization-server.json > rollback.json
+
+curl -sS -X PUT \
+  https://api.local.test/v1/management/tenants/{tenant-id}/authorization-server \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -d @rollback.json
 ```
 
 :::tip
