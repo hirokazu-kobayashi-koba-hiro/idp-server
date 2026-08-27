@@ -297,12 +297,13 @@ public class AccessTokenCreator {
    * default falls back to the configured value and then to the issuer, so a deployment that has not
    * modelled its resources still issues conformant tokens.
    *
-   * <p>Scopes spanning several resources are refused where the scope is decided — the authorization
-   * request, or the token request for the grants that carry their own scope — so reaching here with
-   * more than one means the mapping changed after the grant was made. The default is used rather
-   * than one of them: the grant predates the configuration, and picking a resource would let a
-   * token assert one it was never granted against. Refusing instead would fail a refresh of a grant
-   * the client was already told it had.
+   * <p>Scopes spanning several resources are refused where the scope is decided: the authorization
+   * request, the backchannel authentication request for CIBA, or the token request for the grants
+   * that carry their own scope. Reaching here with more than one therefore means the mapping
+   * changed after the grant was made. The default is used rather than one of them: the grant
+   * predates the configuration, and picking a resource would let a token assert one it was never
+   * granted against. Refusing instead would fail a refresh of a grant the client was already told
+   * it had.
    *
    * @see <a href="https://www.rfc-editor.org/rfc/rfc9068.html#section-3">RFC 9068 Section 3</a>
    */

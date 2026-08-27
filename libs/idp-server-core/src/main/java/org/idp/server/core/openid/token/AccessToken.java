@@ -127,10 +127,6 @@ public class AccessToken {
     return customClaims != null && customClaims.exists();
   }
 
-  public boolean hasSubject() {
-    return authorizationGrant.hasUser();
-  }
-
   public Subject subject() {
     return authorizationGrant.subject();
   }

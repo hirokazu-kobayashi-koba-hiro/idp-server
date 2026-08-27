@@ -53,6 +53,7 @@ public class CibaRequestVerifier {
     this.extensionVerifiers.add(new CibaRequestObjectVerifier());
     this.extensionVerifiers.add(new CibaRequiredRarVerifier());
     this.extensionVerifiers.add(new CibaAuthorizationDetailsVerifier());
+    this.extensionVerifiers.add(new CibaScopeResourceVerifier());
   }
 
   public void verify(CibaRequestContext context, ClientCredentials clientCredentials) {
