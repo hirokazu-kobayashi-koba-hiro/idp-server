@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.token;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
@@ -32,8 +33,10 @@ import org.idp.server.core.openid.oauth.dpop.JwkThumbprint;
 import org.idp.server.core.openid.oauth.type.extension.CreatedAt;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
+import org.idp.server.core.openid.oauth.type.oauth.Audience;
 import org.idp.server.core.openid.oauth.type.oauth.ExpiresIn;
 import org.idp.server.core.openid.oauth.type.oauth.TokenType;
+import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.core.openid.token.plugin.AccessTokenCustomClaimsCreators;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JoseInvalidException;
@@ -185,7 +188,8 @@ public class AccessTokenCreator {
 
     // Standard claims (these will override any conflicting custom claims)
     payloadBuilder.add(authorizationServerConfiguration.tokenIssuer());
-    payloadBuilder.add(authorizationGrant.subject());
+    payloadBuilder.add(resolveAudience(authorizationGrant, authorizationServerConfiguration));
+    payloadBuilder.add(authorizationGrant.tokenSubject());
     payloadBuilder.add(authorizationGrant.requestedClientId());
     payloadBuilder.add(authorizationGrant.scopes());
     payloadBuilder.add(authorizationGrant.authorizationDetails());
@@ -270,5 +274,43 @@ public class AccessTokenCreator {
     }
 
     return new ClientCertificationThumbprint();
+  }
+
+  /**
+   * The resource the token is for.
+   *
+   * <p>RFC 9068 requires an audience on every JWT access token, and where the request carries no
+   * resource indicator it requires a default one rather than allowing the claim to be dropped. The
+   * default is inferred from the granted scopes, falling back to the configured value and then to
+   * the issuer, so a deployment that has not modelled its resources still issues conformant tokens.
+   *
+   * <p>Scopes spanning several resources are refused rather than resolved: an audience listing more
+   * than one resource lets each of them accept scopes that were meant for another.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9068.html#section-3">RFC 9068 Section 3</a>
+   */
+  private Audience resolveAudience(
+      AuthorizationGrant authorizationGrant,
+      AuthorizationServerConfiguration authorizationServerConfiguration) {
+
+    List<String> resources =
+        ResourceIndicatorResolver.resolve(
+            authorizationServerConfiguration.scopeResourceMapping(),
+            authorizationGrant.scopes().toStringList());
+
+    if (resources.size() > 1) {
+      throw new TokenBadRequestException(
+          "invalid_scope", "requested scopes belong to different resources: " + resources);
+    }
+
+    if (resources.size() == 1) {
+      return new Audience(resources.get(0));
+    }
+
+    if (authorizationServerConfiguration.hasDefaultResourceIndicator()) {
+      return new Audience(authorizationServerConfiguration.defaultResourceIndicator());
+    }
+
+    return new Audience(authorizationServerConfiguration.tokenIssuer().value());
   }
 }

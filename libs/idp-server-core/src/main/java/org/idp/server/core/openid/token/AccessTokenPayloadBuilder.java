@@ -25,6 +25,7 @@ import org.idp.server.core.openid.oauth.dpop.JwkThumbprint;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.type.extension.CreatedAt;
 import org.idp.server.core.openid.oauth.type.extension.ExpiresAt;
+import org.idp.server.core.openid.oauth.type.oauth.Audience;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.oauth.type.oauth.Subject;
@@ -44,6 +45,13 @@ public class AccessTokenPayloadBuilder {
   public AccessTokenPayloadBuilder add(Subject subject) {
     if (subject.exists()) {
       values.put("sub", subject.value());
+    }
+    return this;
+  }
+
+  public AccessTokenPayloadBuilder add(Audience audience) {
+    if (audience.exists()) {
+      values.put("aud", audience.value());
     }
     return this;
   }
