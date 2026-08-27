@@ -8,11 +8,23 @@
  */
 import { beforeAll, afterAll, describe, expect, it, xit } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
+import crypto from "crypto";
 import { deletion, get, postWithJson } from "../../lib/http";
 import { requestAuthorizations } from "../../oauth/request";
-import { requestToken } from "../../api/oauthClient";
+import {
+  getAuthenticationDeviceAuthenticationTransaction,
+  postAuthenticationDeviceInteraction,
+  requestBackchannelAuthentications,
+  requestToken,
+} from "../../api/oauthClient";
 import { onboarding } from "../../api/managementClient";
-import { generateECP256JWKSObject, generateRS256KeyPair } from "../../lib/jose";
+import {
+  createJwt,
+  generateECP256JWKSObject,
+  generateJti,
+  generateRS256KeyPair,
+} from "../../lib/jose";
+import { toEpocTime } from "../../lib/util";
 import { adminServerConfig, backendUrl } from "../testConfig";
 
 const decode = (jwt) => {
@@ -31,16 +43,28 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
   let clientSecret;
   let issuer;
   let username;
-  let password;
+  let passwordValue;
 
   /** A token from the authorization code grant, the profile's own example of a resource owner grant. */
   let codeToken;
   /** A token from the client credentials grant, where no resource owner is involved. */
   let clientToken;
-  /** Redeemed once, to check that the authentication information claims do not move. */
-  let codeRefreshToken;
+  /**
+   * The authorization code grant's token after one refresh.
+   *
+   * <p>Redeemed once in setup rather than per test: refresh tokens rotate, so a second test
+   * redeeming the same one would fail on the rotation rather than on what it set out to check.
+   */
+  let refreshedCodeToken;
+  /** One token per grant that can issue one, so every requirement is checked against all of them. */
+  let passwordToken;
+  let jwtBearerToken;
+  let cibaToken;
 
   const redirectUri = "https://app.example.com/callback";
+  let userSub;
+  let deviceId;
+  let deviceSecret;
   const DEFAULT_RESOURCE = "https://default.example.com";
   let opaqueTenantId;
   let opaqueClientId;
@@ -51,6 +75,61 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
 
   const tokenEndpoint = () => `${backendUrl}/${tenantId}/v1/tokens`;
 
+  /** A device signed assertion for the JWT bearer grant. */
+  const deviceAssertion = () =>
+    createJwt({
+      payload: {
+        iss: `device:${deviceId}`,
+        sub: userSub,
+        aud: issuer,
+        jti: generateJti(),
+        exp: toEpocTime({ adjusted: 3600 }),
+        iat: toEpocTime({ adjusted: 0 }),
+      },
+      secret: deviceSecret,
+      options: { algorithm: "HS256" },
+    });
+
+  /** Runs a CIBA flow to completion and returns the token response. */
+  const completeCibaFlow = async (scope) => {
+    const backchannel = await requestBackchannelAuthentications({
+      endpoint: `${backendUrl}/${tenantId}/v1/backchannel/authentications`,
+      clientId,
+      clientSecret,
+      scope,
+      bindingMessage: "rfc9068",
+      loginHint: `sub:${userSub},idp:idp-server`,
+    });
+    expect(backchannel.status).toBe(200);
+
+    const transactions = await getAuthenticationDeviceAuthenticationTransaction(
+      {
+        endpoint: `${backendUrl}/${tenantId}/v1/authentication-devices/{id}/authentications`,
+        deviceId,
+        params: { "attributes.auth_req_id": backchannel.data.auth_req_id },
+      }
+    );
+    expect(transactions.status).toBe(200);
+
+    const transaction = transactions.data.list[0];
+    const interaction = await postAuthenticationDeviceInteraction({
+      endpoint: `${backendUrl}/${tenantId}/v1/authentications/{id}/`,
+      flowType: transaction.flow,
+      id: transaction.id,
+      interactionType: "password-authentication",
+      body: { username, password: passwordValue },
+    });
+    expect(interaction.status).toBe(200);
+
+    return await requestToken({
+      endpoint: tokenEndpoint(),
+      grantType: "urn:openid:params:grant-type:ciba",
+      authReqId: backchannel.data.auth_req_id,
+      clientId,
+      clientSecret,
+    });
+  };
+
   beforeAll(async () => {
     const timestamp = Date.now();
     organizationId = uuidv4();
@@ -59,7 +138,10 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
     clientSecret = uuidv4();
     issuer = `${backendUrl}/${tenantId}`;
     username = `rfc9068-${timestamp}@test.example.com`;
-    password = `Rfc9068${timestamp}!`;
+    userSub = uuidv4();
+    deviceId = uuidv4();
+    deviceSecret = crypto.randomBytes(32).toString("base64");
+    passwordValue = `Rfc9068${timestamp}!`;
 
     // The token signing key is RSA so that the profile's RS256 requirement is exercised directly.
     const ecJwks = await generateECP256JWKSObject();
@@ -114,7 +196,11 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
             "client_credentials",
             "password",
             "refresh_token",
+            "urn:openid:params:grant-type:ciba",
+            "urn:ietf:params:oauth:grant-type:jwt-bearer",
           ],
+          backchannel_authentication_endpoint: `${backendUrl}/${tenantId}/v1/backchannel/authentications`,
+          backchannel_token_delivery_modes_supported: ["poll"],
           id_token_signing_alg_values_supported: ["ES256"],
           token_endpoint_auth_methods_supported: ["client_secret_post"],
           claims_supported: ["sub"],
@@ -129,11 +215,24 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
           },
         },
         user: {
-          sub: uuidv4(),
+          sub: userSub,
           provider_id: "idp-server",
           email: username,
+          authentication_devices: [
+            {
+              id: deviceId,
+              app_name: "RFC 9068 Test App",
+              priority: 1,
+              credential_type: "jwt_bearer_symmetric",
+              credential_id: uuidv4(),
+              credential_payload: {
+                secret_value: deviceSecret,
+                algorithm: "HS256",
+              },
+            },
+          ],
           email_verified: true,
-          raw_password: password,
+          raw_password: passwordValue,
         },
         client: {
           client_id: clientId,
@@ -144,11 +243,24 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
             "client_credentials",
             "password",
             "refresh_token",
+            "urn:openid:params:grant-type:ciba",
+            "urn:ietf:params:oauth:grant-type:jwt-bearer",
           ],
           response_types: ["code"],
           scope: "openid account management profile",
           client_name: "RFC 9068 Client",
           token_endpoint_auth_method: "client_secret_post",
+          extension: {
+            // The JWT bearer grant resolves the assertion issuer against the client's federations.
+            available_federations: [
+              {
+                issuer: "device",
+                type: "device",
+                subject_claim_mapping: "sub",
+                jwt_bearer_grant_enabled: true,
+              },
+            ],
+          },
         },
       },
     });
@@ -158,7 +270,7 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
       endpoint: tokenEndpoint(),
       grantType: "password",
       username,
-      password,
+      password: passwordValue,
       scope: "management",
       clientId,
       clientSecret,
@@ -235,6 +347,43 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
     });
     expect(authenticationPolicyResponse.status).toBe(201);
 
+    // CIBA resolves the user's device and runs the same password interaction, so it needs its own
+    // policy: policies are looked up by flow.
+    const cibaPolicyResponse = await postWithJson({
+      url: `${managementUrl}/authentication-policies`,
+      headers: managementHeaders,
+      body: {
+        id: uuidv4(),
+        flow: "ciba",
+        enabled: true,
+        policies: [
+          {
+            description: "password_only",
+            priority: 1,
+            conditions: {},
+            available_methods: ["password"],
+            step_definitions: [
+              { method: "password", order: 1, requires_user: false },
+            ],
+            acr_mapping_rules: { [ACR]: ["password"] },
+            success_conditions: {
+              any_of: [
+                [
+                  {
+                    path: "$.password-authentication.success_count",
+                    type: "integer",
+                    operation: "gte",
+                    value: 1,
+                  },
+                ],
+              ],
+            },
+          },
+        ],
+      },
+    });
+    expect(cibaPolicyResponse.status).toBe(201);
+
     const { authorizationResponse } = await requestAuthorizations({
       endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
       authorizeEndpoint: `${backendUrl}/${tenantId}/v1/authorizations/{id}/authorize`,
@@ -244,7 +393,7 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
       state: `rfc9068-${timestamp}`,
       scope: "openid account",
       redirectUri,
-      user: { username, password },
+      user: { username, password: passwordValue },
       interaction: async (id, user) => {
         const response = await postWithJson({
           url: `${backendUrl}/${tenantId}/v1/authorizations/${id}/password-authentication`,
@@ -265,7 +414,15 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
     });
     expect(codeTokenResponse.status).toBe(200);
     codeToken = decode(codeTokenResponse.data.access_token);
-    codeRefreshToken = codeTokenResponse.data.refresh_token;
+    const refreshedResponse = await requestToken({
+      endpoint: tokenEndpoint(),
+      grantType: "refresh_token",
+      refreshToken: codeTokenResponse.data.refresh_token,
+      clientId,
+      clientSecret,
+    });
+    expect(refreshedResponse.status).toBe(200);
+    refreshedCodeToken = decode(refreshedResponse.data.access_token);
 
     const clientTokenResponse = await requestToken({
       endpoint: tokenEndpoint(),
@@ -340,6 +497,33 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
     });
     expect(opaqueOnboarding.status).toBe(201);
 
+    const passwordTokenResponse = await requestToken({
+      endpoint: tokenEndpoint(),
+      grantType: "password",
+      username,
+      password: passwordValue,
+      scope: "management",
+      clientId,
+      clientSecret,
+    });
+    expect(passwordTokenResponse.status).toBe(200);
+    passwordToken = decode(passwordTokenResponse.data.access_token);
+
+    const jwtBearerTokenResponse = await requestToken({
+      endpoint: tokenEndpoint(),
+      grantType: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: deviceAssertion(),
+      scope: "management",
+      clientId,
+      clientSecret,
+    });
+    expect(jwtBearerTokenResponse.status).toBe(200);
+    jwtBearerToken = decode(jwtBearerTokenResponse.data.access_token);
+
+    const cibaTokenResponse = await completeCibaFlow("openid management");
+    expect(cibaTokenResponse.status).toBe(200);
+    cibaToken = decode(cibaTokenResponse.data.access_token);
+
     console.log("code token   :", JSON.stringify(codeToken));
     console.log("client token :", JSON.stringify(clientToken));
   }, 120000);
@@ -355,8 +539,11 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
 
   describe("2.1.  Header", () => {
     it('JWT access tokens MUST be signed. ... JWT access tokens MUST NOT use "none" as the signing algorithm - RFC 9068 Section 2.1 (#1824)', async () => {
-      expect(codeToken.header.alg).toBeDefined();
       expect(codeToken.header.alg).not.toBe("none");
+      expect(clientToken.header.alg).not.toBe("none");
+      expect(passwordToken.header.alg).not.toBe("none");
+      expect(jwtBearerToken.header.alg).not.toBe("none");
+      expect(cibaToken.header.alg).not.toBe("none");
     });
 
     it("Authorization servers and resource servers conforming to this specification MUST include RS256 (as defined in [RFC7518]) among their supported signature algorithms - RFC 9068 Section 2.1 (#1824)", async () => {
@@ -364,11 +551,18 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
       // rather than a default: an authorization server that could only sign with EC would not
       // conform, and there is no metadata field that advertises access token signing algorithms.
       expect(codeToken.header.alg).toBe("RS256");
+      expect(clientToken.header.alg).toBe("RS256");
+      expect(passwordToken.header.alg).toBe("RS256");
+      expect(jwtBearerToken.header.alg).toBe("RS256");
+      expect(cibaToken.header.alg).toBe("RS256");
     });
 
     it('JWT access tokens MUST include this media type in the "typ" header parameter ... Therefore, the "typ" value used SHOULD be "at+jwt" - RFC 9068 Section 2.1 (#1824)', async () => {
       expect(codeToken.header.typ).toBe("at+jwt");
       expect(clientToken.header.typ).toBe("at+jwt");
+      expect(passwordToken.header.typ).toBe("at+jwt");
+      expect(jwtBearerToken.header.typ).toBe("at+jwt");
+      expect(cibaToken.header.typ).toBe("at+jwt");
     });
   });
 
@@ -376,22 +570,36 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
     it("iss REQUIRED - as defined in Section 4.1.1 of [RFC7519] - RFC 9068 Section 2.2 (#1824)", async () => {
       expect(codeToken.payload.iss).toBe(issuer);
       expect(clientToken.payload.iss).toBe(issuer);
+      expect(passwordToken.payload.iss).toBe(issuer);
+      expect(jwtBearerToken.payload.iss).toBe(issuer);
+      expect(cibaToken.payload.iss).toBe(issuer);
     });
 
     it("exp REQUIRED - as defined in Section 4.1.4 of [RFC7519] - RFC 9068 Section 2.2 (#1824)", async () => {
       expect(typeof codeToken.payload.exp).toBe("number");
       expect(typeof clientToken.payload.exp).toBe("number");
+      expect(typeof passwordToken.payload.exp).toBe("number");
+      expect(typeof jwtBearerToken.payload.exp).toBe("number");
+      expect(typeof cibaToken.payload.exp).toBe("number");
     });
 
     it("aud REQUIRED - as defined in Section 4.1.3 of [RFC7519] - RFC 9068 Section 2.2 (#1824)", async () => {
-      // The audience names the resource, never the client: the client is named by client_id.
-      expect(codeToken.payload.aud).toBe(ACCOUNT_RESOURCE);
+      // The audience names the resource the scopes belong to, never the client: the client is named
+      // by client_id. Each grant assembles its own scopes, so each reaches its resource separately.
+      expect(codeToken.payload.aud).toBe(ACCOUNT_RESOURCE); // scope: openid account
+      expect(clientToken.payload.aud).toBe(ACCOUNT_RESOURCE); // scope: account
+      expect(passwordToken.payload.aud).toBe(MANAGEMENT_RESOURCE); // scope: management
+      expect(jwtBearerToken.payload.aud).toBe(MANAGEMENT_RESOURCE); // scope: management
+      expect(cibaToken.payload.aud).toBe(MANAGEMENT_RESOURCE); // scope: openid management
+
       expect(codeToken.payload.aud).not.toBe(clientId);
-      expect(clientToken.payload.aud).toBe(ACCOUNT_RESOURCE);
     });
 
     it('sub REQUIRED ... In cases of access tokens obtained through grants where a resource owner is involved, such as the authorization code grant, the value of "sub" SHOULD correspond to the subject identifier of the resource owner - RFC 9068 Section 2.2 (#1824)', async () => {
-      expect(codeToken.payload.sub).toBeDefined();
+      expect(codeToken.payload.sub).toBe(userSub);
+      expect(passwordToken.payload.sub).toBe(userSub);
+      expect(jwtBearerToken.payload.sub).toBe(userSub);
+      expect(cibaToken.payload.sub).toBe(userSub);
     });
 
     it('sub REQUIRED ... In cases of access tokens obtained through grants where no resource owner is involved, such as the client credentials grant, the value of "sub" SHOULD correspond to an identifier the authorization server uses to indicate the client application - RFC 9068 Section 2.2 (#1824)', async () => {
@@ -401,17 +609,35 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
     it("client_id REQUIRED - as defined in Section 4.3 of [RFC8693] - RFC 9068 Section 2.2 (#1824)", async () => {
       expect(codeToken.payload.client_id).toBe(clientId);
       expect(clientToken.payload.client_id).toBe(clientId);
+      expect(passwordToken.payload.client_id).toBe(clientId);
+      expect(jwtBearerToken.payload.client_id).toBe(clientId);
+      expect(cibaToken.payload.client_id).toBe(clientId);
     });
 
     it("iat REQUIRED - as defined in Section 4.1.6 of [RFC7519]. This claim identifies the time at which the JWT access token was issued - RFC 9068 Section 2.2 (#1824)", async () => {
       expect(typeof codeToken.payload.iat).toBe("number");
       expect(typeof clientToken.payload.iat).toBe("number");
+      expect(typeof passwordToken.payload.iat).toBe("number");
+      expect(typeof jwtBearerToken.payload.iat).toBe("number");
+      expect(typeof cibaToken.payload.iat).toBe("number");
     });
 
     it("jti REQUIRED - as defined in Section 4.1.7 of [RFC7519] - RFC 9068 Section 2.2 (#1824)", async () => {
-      expect(codeToken.payload.jti).toBeDefined();
-      expect(clientToken.payload.jti).toBeDefined();
-      expect(codeToken.payload.jti).not.toBe(clientToken.payload.jti);
+      const identifiers = [
+        codeToken.payload.jti,
+        clientToken.payload.jti,
+        passwordToken.payload.jti,
+        jwtBearerToken.payload.jti,
+        cibaToken.payload.jti,
+      ];
+
+      identifiers.forEach((jti) => expect(typeof jti).toBe("string"));
+      // Distinct per token, which is what makes it usable for replay detection.
+      expect(new Set(identifiers).size).toBe(identifiers.length);
+    });
+
+    it("aud REQUIRED - a refreshed token keeps the audience of the grant it derives from - RFC 9068 Section 2.2 (#1824)", async () => {
+      expect(refreshedCodeToken.payload.aud).toBe(codeToken.payload.aud);
     });
   });
 
@@ -419,18 +645,22 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
     it("auth_time OPTIONAL - as defined in Section 2 of [OpenID.Core] - RFC 9068 Section 2.2.1 (#1824)", async () => {
       expect(typeof codeToken.payload.auth_time).toBe("number");
       expect(codeToken.payload.auth_time).toBeGreaterThan(0);
+      expect(typeof passwordToken.payload.auth_time).toBe("number");
+      expect(typeof cibaToken.payload.auth_time).toBe("number");
     });
 
     it("amr OPTIONAL - as defined in Section 2 of [OpenID.Core] - RFC 9068 Section 2.2.1 (#1824)", async () => {
-      expect(Array.isArray(codeToken.payload.amr)).toBe(true);
       expect(codeToken.payload.amr).toContain("password");
+      expect(passwordToken.payload.amr).toContain("password");
+      expect(cibaToken.payload.amr).toContain("password");
     });
 
     it("acr OPTIONAL - as defined in Section 2 of [OpenID.Core] - RFC 9068 Section 2.2.1 (#1824)", async () => {
       // The value is resolved from the authentication policy's acr_mapping_rules against the
-      // methods actually performed (AcrResolver), so this asserts the mapping took effect rather
-      // than that some string is present.
+      // methods actually performed. The authorization code flow and CIBA each run their own
+      // authentication transaction, resolved against the policy for their own flow.
       expect(codeToken.payload.acr).toBe(ACR);
+      expect(cibaToken.payload.acr).toBe(ACR);
     });
 
     it("The claims listed in this section MAY be issued in the context of authorization grants involving the resource owner and reflect the types and strength of authentication ... the authentication server enforced - RFC 9068 Section 2.2.1 (#1824)", async () => {
@@ -442,26 +672,15 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
     });
 
     it("Their values are fixed and remain the same across all access tokens that derive from a given authorization response, whether the access token was obtained directly in the response ... or after one or more token exchanges (e.g., obtaining a fresh access token using a refresh token ...) - RFC 9068 Section 2.2.1 (#1824)", async () => {
-      const refreshed = await requestToken({
-        endpoint: tokenEndpoint(),
-        grantType: "refresh_token",
-        refreshToken: codeRefreshToken,
-        clientId,
-        clientSecret,
-      });
-      expect(refreshed.status).toBe(200);
-
-      const refreshedToken = decode(refreshed.data.access_token);
-
       // A fresh token, so iat moves; the authentication these claims describe did not happen again.
-      expect(refreshedToken.payload.iat).toBeGreaterThanOrEqual(
+      expect(refreshedCodeToken.payload.iat).toBeGreaterThanOrEqual(
         codeToken.payload.iat
       );
-      expect(refreshedToken.payload.auth_time).toBe(
+      expect(refreshedCodeToken.payload.auth_time).toBe(
         codeToken.payload.auth_time
       );
-      expect(refreshedToken.payload.amr).toEqual(codeToken.payload.amr);
-      expect(refreshedToken.payload.acr).toBe(codeToken.payload.acr);
+      expect(refreshedCodeToken.payload.amr).toEqual(codeToken.payload.amr);
+      expect(refreshedCodeToken.payload.acr).toBe(codeToken.payload.acr);
     });
   });
 
@@ -528,9 +747,9 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
       expect(clientToken.payload.aud).toBe(ACCOUNT_RESOURCE);
     });
 
-    it('If the values in the "scope" parameter refer to different default resource indicator values, the authorization server SHOULD reject the request with "invalid_scope" - RFC 9068 Section 3 (#1824)', async () => {
-      // Refused where the scope is decided. The client credentials grant carries its own scope, so
-      // the token request is that point for it, and the error takes the form that endpoint uses.
+    it('If the values in the "scope" parameter refer to different default resource indicator values, the authorization server SHOULD reject the request with "invalid_scope" - client credentials grant - RFC 9068 Section 3 (#1824)', async () => {
+      // Refused where the scope is decided. This grant carries its own scope, so that is the token
+      // request, and the error takes the form that endpoint uses.
       const spanning = await requestToken({
         endpoint: tokenEndpoint(),
         grantType: "client_credentials",
@@ -539,7 +758,83 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
         clientSecret,
       });
       console.log(
-        "spanning at token endpoint:",
+        "spanning, client credentials:",
+        spanning.status,
+        JSON.stringify(spanning.data)
+      );
+
+      expect(spanning.status).toBe(400);
+      expect(spanning.data.error).toBe("invalid_scope");
+    });
+
+    it('If the values in the "scope" parameter refer to different default resource indicator values, the authorization server SHOULD reject the request with "invalid_scope" - resource owner password credentials grant - RFC 9068 Section 3 (#1824)', async () => {
+      const spanning = await requestToken({
+        endpoint: tokenEndpoint(),
+        grantType: "password",
+        username,
+        password: passwordValue,
+        scope: "account management",
+        clientId,
+        clientSecret,
+      });
+      console.log(
+        "spanning, password:",
+        spanning.status,
+        JSON.stringify(spanning.data)
+      );
+
+      expect(spanning.status).toBe(400);
+      expect(spanning.data.error).toBe("invalid_scope");
+    });
+
+    it('If the values in the "scope" parameter refer to different default resource indicator values, the authorization server SHOULD reject the request with "invalid_scope" - JWT bearer assertion grant - RFC 9068 Section 3 (#1824)', async () => {
+      // The assertion identifies the user, but the scope still comes from the token request, so
+      // this grant decides its scope in the same place the other two do.
+      const assertion = createJwt({
+        payload: {
+          iss: `device:${deviceId}`,
+          sub: userSub,
+          aud: issuer,
+          jti: generateJti(),
+          exp: toEpocTime({ adjusted: 3600 }),
+          iat: toEpocTime({ adjusted: 0 }),
+        },
+        secret: deviceSecret,
+        options: { algorithm: "HS256" },
+      });
+
+      const spanning = await requestToken({
+        endpoint: tokenEndpoint(),
+        grantType: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion,
+        scope: "account management",
+        clientId,
+        clientSecret,
+      });
+      console.log(
+        "spanning, jwt bearer:",
+        spanning.status,
+        JSON.stringify(spanning.data)
+      );
+
+      expect(spanning.status).toBe(400);
+      expect(spanning.data.error).toBe("invalid_scope");
+    });
+
+    it('If the values in the "scope" parameter refer to different default resource indicator values, the authorization server SHOULD reject the request with "invalid_scope" - CIBA backchannel authentication request - RFC 9068 Section 3 (#1824)', async () => {
+      // CIBA decides its scope at the backchannel authentication request, which is that flow's
+      // counterpart of the authorization request. The error is a response body because there is no
+      // redirect URI to send one to.
+      const spanning = await requestBackchannelAuthentications({
+        endpoint: `${backendUrl}/${tenantId}/v1/backchannel/authentications`,
+        clientId,
+        clientSecret,
+        scope: "openid account management",
+        bindingMessage: "rfc9068",
+        loginHint: `sub:${userSub},idp:idp-server`,
+      });
+      console.log(
+        "spanning, ciba:",
         spanning.status,
         JSON.stringify(spanning.data)
       );
@@ -560,7 +855,7 @@ describe("JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068)", 
         state: `spanning-${Date.now()}`,
         scope: "account management",
         redirectUri,
-        user: { username, password },
+        user: { username, password: passwordValue },
       });
       console.log(
         "spanning at authorization endpoint:",
