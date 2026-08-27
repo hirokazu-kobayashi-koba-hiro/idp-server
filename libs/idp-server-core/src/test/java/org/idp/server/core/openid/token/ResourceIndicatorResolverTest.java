@@ -102,6 +102,19 @@ class ResourceIndicatorResolverTest {
     }
 
     @Test
+    void ignoresAnEntryWhoseScopesAreNotAList() {
+      // A value written as a string rather than an array reads as null. Dropping the entry keeps
+      // the promise the resolver makes: a malformed entry is ignored, and the rest still resolve.
+      Map<String, List<String>> mapping = new java.util.HashMap<>();
+      mapping.put(API, null);
+      mapping.put(ADMIN, List.of("management"));
+
+      assertEquals(
+          List.of(ADMIN),
+          ResourceIndicatorResolver.resolve(mapping, List.of("account", "management")));
+    }
+
+    @Test
     void acceptsAnAbsoluteUriWithAQueryComponent() {
       // RFC 8707 permits a query component and forbids only a fragment.
       Map<String, List<String>> mapping =

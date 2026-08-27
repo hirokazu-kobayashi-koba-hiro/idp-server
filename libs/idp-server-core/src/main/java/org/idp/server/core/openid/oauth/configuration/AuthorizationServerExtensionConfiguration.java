@@ -107,7 +107,17 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return defaultResourceIndicator != null && !defaultResourceIndicator.isEmpty();
   }
 
+  /**
+   * The scopes that belong to each resource.
+   *
+   * <p>Never null: callers filter this map rather than check it, and a stored configuration
+   * carrying an explicit null would otherwise fail every authorization request for the tenant
+   * rather than behave as though no resources were modelled.
+   */
   public Map<String, List<String>> scopeResourceMapping() {
+    if (scopeResourceMapping == null) {
+      return Map.of();
+    }
     return scopeResourceMapping;
   }
 

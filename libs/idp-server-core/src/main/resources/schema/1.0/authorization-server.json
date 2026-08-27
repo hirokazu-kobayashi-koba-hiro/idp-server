@@ -572,6 +572,21 @@
           "default": 600,
           "description": "Authorization code validity duration in seconds."
         },
+        "default_resource_indicator": {
+          "type": "string",
+          "format": "uri",
+          "description": "Resource indicator used as the aud claim when the granted scopes point at no configured resource. RFC 9068 does not allow the claim to be omitted, so the issuer is used when this is unset."
+        },
+        "scope_resource_mapping": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": "Resource indicators mapped to the scopes that belong to them, used to decide the aud claim of an access token. Keys must be absolute URIs without a fragment (RFC 8707 Section 2). Scopes spanning several resources are rejected with invalid_scope."
+        },
         "token_signed_key_id": {
           "type": "string",
           "description": "Key ID used for signing access tokens."

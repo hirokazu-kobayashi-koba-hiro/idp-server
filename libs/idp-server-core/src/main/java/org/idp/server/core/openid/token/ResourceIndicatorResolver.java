@@ -64,6 +64,7 @@ public class ResourceIndicatorResolver {
     }
 
     return scopeResourceMapping.entrySet().stream()
+        .filter(ResourceIndicatorResolver::hasScopes)
         .filter(entry -> scopes.stream().anyMatch(entry.getValue()::contains))
         .map(Map.Entry::getKey)
         .filter(ResourceIndicatorResolver::isResourceIndicator)
@@ -86,6 +87,25 @@ public class ResourceIndicatorResolver {
    *
    * @see <a href="https://www.rfc-editor.org/rfc/rfc8707.html#section-2">RFC 8707 Section 2</a>
    */
+  /**
+   * Whether an entry lists any scope.
+   *
+   * <p>A value that is not an array reads as null rather than failing the request, so an entry
+   * written as {@code "https://api": "account"} arrives here empty. Dropping it keeps the promise
+   * the class makes about a malformed entry: it is ignored and logged, and the resources configured
+   * correctly still issue tokens.
+   */
+  private static boolean hasScopes(Map.Entry<String, List<String>> entry) {
+    if (entry.getValue() == null) {
+      log.warn(
+          "scope_resource_mapping entry lists no scopes, so it is ignored: resource={}."
+              + " The value must be an array of scope strings.",
+          entry.getKey());
+      return false;
+    }
+    return true;
+  }
+
   static boolean isResourceIndicator(String value) {
     try {
       URI uri = new URI(value);
