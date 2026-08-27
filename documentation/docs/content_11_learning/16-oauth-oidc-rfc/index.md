@@ -91,6 +91,7 @@ OAuth 2.0 / OIDC のセキュリティに関する仕様とベストプラクテ
 | 仕様 | ドキュメント | 内容 |
 |------|-------------|------|
 | RFC 9700 | [rfc9700-security-bcp](./security/rfc9700-security-bcp.md) | OAuth 2.0 Security Best Current Practice |
+| RFC 10017 | [rfc10017-browser-based-apps](./security/rfc10017-browser-based-apps.md) | OAuth 2.0 for Browser-Based Applications（BCP 212）|
 | - | [redirect-uri-validation](./security/redirect-uri-validation.md) | redirect_uri 検証の仕様比較 |
 | - | [attack-patterns](./security/attack-patterns.md) | 主要な攻撃パターンと対策 |
 | - | [token-security](./security/token-security.md) | トークンセキュリティのベストプラクティス |
