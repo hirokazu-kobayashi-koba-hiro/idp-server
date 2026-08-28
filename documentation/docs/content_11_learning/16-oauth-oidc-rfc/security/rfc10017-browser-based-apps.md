@@ -138,12 +138,20 @@ RFC の評価は明快です。
 
 ## 3. 非推奨・廃止されたパターン（§7）
 
-| § | パターン | 理由 |
+| § | 何が非推奨か | 理由 |
 |---|---------|------|
-| 7.1 | 単一ドメインで OAuth を使わない構成 | OAuth を使う必要がないケースの整理 |
+| 7.1 | 単一ドメインアプリで **OAuth を使うこと** | セッション管理を OAuth で置き換える必要はない |
 | 7.2 | **Implicit Grant** | アクセストークンがフラグメントで返るため、傍受の機会が多い |
 | 7.3 | **Resource Owner Password Credentials Grant** | 資格情報をクライアントに渡す構造そのものが問題 |
 | 7.4 | **Service Worker で OAuth フローを処理** | 攻撃者の到達範囲を狭められない |
+
+:::note 7.1 だけ向きが逆です
+7.2〜7.4 は「その方式を使うな」ですが、**7.1 は「OAuth を使うな」**です。RFC の見出しは "Single-Domain Browser-Based Applications (Not Using OAuth)" で、OAuth を使わない構成のほうが推奨されています。
+
+> Too often, simple applications are made needlessly complex by using OAuth to replace the concept of session management.
+
+フロントエンドとバックエンドが同一ドメインなら、両者の間のアクセス制御に OAuth は要りません。サーバーサイドの Cookie ベースのセッションで足ります。ユーザー認証を外部プロバイダに委ねる目的で OpenID Connect を使うのは、これとは別の話です。
+:::
 
 Implicit Grant について RFC は、認可サーバー側での対処を規範として述べています。
 
