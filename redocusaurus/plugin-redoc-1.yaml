@@ -1024,6 +1024,27 @@ components:
             policy_uri:
               type: string
               description: プライバシーポリシーURL
+            custom_properties:
+              type: object
+              additionalProperties: true
+              description: >
+                クライアント設定 `extension.custom_properties` に定義した任意の値。
+
+                デバイスアプリ固有の表示要素（ブランドカラー、問い合わせ先等）を渡すのに使う。
+
+
+                設定されていない場合はフィールドごと返却されません。
+
+
+                **セキュリティ注意**: `context` と異なり、デバイス認証の有無にかかわらず返却されます。
+
+                `authentication_device_rule.authentication_type` が `none`
+                のテナントでは
+
+                このAPIはデバイス識別子だけで到達できるため、**秘匿値を入れないでください**。
+              example:
+                brand_color: '#0075ca'
+                support_phone: 0120-000-000
         context:
           type: object
           description: |

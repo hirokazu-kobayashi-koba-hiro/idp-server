@@ -403,7 +403,15 @@ public class ClientConfiguration implements JsonReadable, Configurable {
 
   public ClientAttributes clientAttributes() {
     return new ClientAttributes(
-        clientId, clientIdAlias, clientName, clientUri, logoUri, contacts, tosUri, policyUri);
+        clientId,
+        clientIdAlias,
+        clientName,
+        clientUri,
+        logoUri,
+        contacts,
+        tosUri,
+        policyUri,
+        extension.customProperties());
   }
 
   public boolean hasJwks() {
