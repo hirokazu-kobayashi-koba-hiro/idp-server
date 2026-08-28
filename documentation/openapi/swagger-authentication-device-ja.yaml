@@ -1022,7 +1022,8 @@ components:
                 設定されていない場合はフィールドごと返却されません。
 
                 **セキュリティ注意**: `context` と異なり、デバイス認証の有無にかかわらず返却されます。
-                このAPIは認証トランザクションIDのみで到達できるため、**秘匿値を入れないでください**。
+                `authentication_device_rule.authentication_type` が `none` のテナントでは
+                このAPIはデバイス識別子だけで到達できるため、**秘匿値を入れないでください**。
               example:
                 brand_color: "#0075ca"
                 support_phone: "0120-000-000"

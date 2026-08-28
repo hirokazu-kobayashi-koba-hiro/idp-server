@@ -123,9 +123,12 @@ public class ClientAttributes implements JsonReadable {
    * <p>The sign-in screen already receives these via {@code client_custom_properties} in the
    * authorization view data. Exposing them here is what lets the authentication device read them
    * too, since the device only ever sees the client through {@link #toMap()}.
+   *
+   * <p>Folds null to an empty map: neither the field initializer nor the constructor guard survives
+   * a persisted {@code "custom_properties": null}, which Jackson writes straight onto the field.
    */
   public Map<String, Object> customProperties() {
-    return customProperties;
+    return customProperties != null ? customProperties : Map.of();
   }
 
   public boolean hasCustomProperties() {

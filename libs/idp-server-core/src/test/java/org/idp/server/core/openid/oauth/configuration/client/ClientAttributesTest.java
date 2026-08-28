@@ -83,6 +83,19 @@ class ClientAttributesTest {
   }
 
   @Test
+  void read_explicitNullCustomProperties() {
+    String jsonWithNull = """
+        {"client_id":"client-x","custom_properties":null}
+        """;
+
+    ClientAttributes clientAttributes = jsonConverter.read(jsonWithNull, ClientAttributes.class);
+
+    assertNotNull(clientAttributes.customProperties());
+    assertFalse(clientAttributes.hasCustomProperties());
+    assertFalse(clientAttributes.toMap().containsKey("custom_properties"));
+  }
+
+  @Test
   void read_roundTripsCustomProperties() {
     ClientAttributes original =
         new ClientAttributes(
