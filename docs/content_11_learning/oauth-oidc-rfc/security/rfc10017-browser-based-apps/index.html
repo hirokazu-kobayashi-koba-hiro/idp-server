@@ -5,7 +5,7 @@
 <meta name="generator" content="Docusaurus v3.7.0">
 <title data-rh="true">RFC 10017: OAuth 2.0 for Browser-Based Applications | IdP-Server Documentation</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_11_learning/oauth-oidc-rfc/security/rfc10017-browser-based-apps"><meta data-rh="true" property="og:locale" content="ja"><meta data-rh="true" name="docusaurus_locale" content="ja"><meta data-rh="true" name="docsearch:language" content="ja"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="RFC 10017: OAuth 2.0 for Browser-Based Applications | IdP-Server Documentation"><meta data-rh="true" name="description" content="RFC 10017（BCP 212、2026年8月）は、ブラウザで動くアプリケーションが OAuth 2.0 を使うときの脅威と対策をまとめた仕様です。SPA でのトークンの扱いについて、いままで議論が分かれていた点に決着をつけています。"><meta data-rh="true" property="og:description" content="RFC 10017（BCP 212、2026年8月）は、ブラウザで動くアプリケーションが OAuth 2.0 を使うときの脅威と対策をまとめた仕様です。SPA でのトークンの扱いについて、いままで議論が分かれていた点に決着をつけています。"><link data-rh="true" rel="icon" href="/idp-server/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_11_learning/oauth-oidc-rfc/security/rfc10017-browser-based-apps"><link data-rh="true" rel="alternate" href="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_11_learning/oauth-oidc-rfc/security/rfc10017-browser-based-apps" hreflang="ja"><link data-rh="true" rel="alternate" href="https://hirokazu-kobayashi-koba-hiro.github.io/idp-server/docs/content_11_learning/oauth-oidc-rfc/security/rfc10017-browser-based-apps" hreflang="x-default"><link rel="alternate" type="application/rss+xml" href="/idp-server/blog/rss.xml" title="IdP-Server Documentation RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/idp-server/blog/atom.xml" title="IdP-Server Documentation Atom Feed"><link rel="stylesheet" href="/idp-server/assets/css/styles.205b0e17.css">
-<script src="/idp-server/assets/js/runtime~main.58819b94.js" defer="defer"></script>
+<script src="/idp-server/assets/js/runtime~main.93944afe.js" defer="defer"></script>
 <script src="/idp-server/assets/js/main.4250cd39.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -77,7 +77,10 @@
 <p><strong>§5.1 のすべての攻撃シナリオに対して脆弱</strong>です。攻撃者はアクセストークンとリフレッシュトークンの両方を認可サーバーから取得でき、ユーザーに代わって保護されたリソースへ長期間アクセスできる可能性があります。</p>
 <hr>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="3-非推奨廃止されたパターン7">3. 非推奨・廃止されたパターン（§7）<a href="#3-非推奨廃止されたパターン7" class="hash-link" aria-label="3. 非推奨・廃止されたパターン（§7） への直接リンク" title="3. 非推奨・廃止されたパターン（§7） への直接リンク">​</a></h2>
-<table><thead><tr><th>§</th><th>パターン</th><th>理由</th></tr></thead><tbody><tr><td>7.1</td><td>単一ドメインで OAuth を使わない構成</td><td>OAuth を使う必要がないケースの整理</td></tr><tr><td>7.2</td><td><strong>Implicit Grant</strong></td><td>アクセストークンがフラグメントで返るため、傍受の機会が多い</td></tr><tr><td>7.3</td><td><strong>Resource Owner Password Credentials Grant</strong></td><td>資格情報をクライアントに渡す構造そのものが問題</td></tr><tr><td>7.4</td><td><strong>Service Worker で OAuth フローを処理</strong></td><td>攻撃者の到達範囲を狭められない</td></tr></tbody></table>
+<table><thead><tr><th>§</th><th>何が非推奨か</th><th>理由</th></tr></thead><tbody><tr><td>7.1</td><td>単一ドメインアプリで <strong>OAuth を使うこと</strong></td><td>セッション管理を OAuth で置き換える必要はない</td></tr><tr><td>7.2</td><td><strong>Implicit Grant</strong></td><td>アクセストークンがフラグメントで返るため、傍受の機会が多い</td></tr><tr><td>7.3</td><td><strong>Resource Owner Password Credentials Grant</strong></td><td>資格情報をクライアントに渡す構造そのものが問題</td></tr><tr><td>7.4</td><td><strong>Service Worker で OAuth フローを処理</strong></td><td>攻撃者の到達範囲を狭められない</td></tr></tbody></table>
+<div class="theme-admonition theme-admonition-note admonition_xJq3 alert alert--secondary"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>7.1 だけ向きが逆です</div><div class="admonitionContent_BuS1"><p>7.2〜7.4 は「その方式を使うな」ですが、**7.1 は「OAuth を使うな」**です。RFC の見出しは &quot;Single-Domain Browser-Based Applications (Not Using OAuth)&quot; で、OAuth を使わない構成のほうが推奨されています。</p><blockquote>
+<p>Too often, simple applications are made needlessly complex by using OAuth to replace the concept of session management.</p>
+</blockquote><p>フロントエンドとバックエンドが同一ドメインなら、両者の間のアクセス制御に OAuth は要りません。サーバーサイドの Cookie ベースのセッションで足ります。ユーザー認証を外部プロバイダに委ねる目的で OpenID Connect を使うのは、これとは別の話です。</p></div></div>
 <p>Implicit Grant について RFC は、認可サーバー側での対処を規範として述べています。</p>
 <blockquote>
 <p>the authorization server MUST NOT issue access tokens in the authorization response</p>
@@ -85,7 +88,7 @@
 <p>7.4 は、かつて「Service Worker がトークンを隠せば安全では」と提案されたパターンです。Service Worker がフローを実行し、クライアントコードから認可サーバーへの直接呼び出しをブロックする、という発想でしたが、RFC は採用していません。</p>
 <hr>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="4-ブラウザでのトークン保存8">4. ブラウザでのトークン保存（§8）<a href="#4-ブラウザでのトークン保存8" class="hash-link" aria-label="4. ブラウザでのトークン保存（§8） への直接リンク" title="4. ブラウザでのトークン保存（§8） への直接リンク">​</a></h2>
-<p>RFC は保存場所ごとの性質を整理していますが、<strong>§5 の分析を踏まえると保存場所の選択は決定打にならない</strong>という位置づけです。</p>
+<p>RFC は保存場 所ごとの性質を整理していますが、<strong>§5 の分析を踏まえると保存場所の選択は決定打にならない</strong>という位置づけです。</p>
 <table><thead><tr><th>§</th><th>保存場所</th></tr></thead><tbody><tr><td>8.1</td><td>Cookie</td></tr><tr><td>8.2</td><td>Service Worker</td></tr><tr><td>8.3</td><td>Web Worker</td></tr><tr><td>8.4</td><td>メモリ内</td></tr><tr><td>8.5</td><td>永続ストレージ</td></tr><tr><td>8.6</td><td>ブラウザストレージ API のファイルシステム上の考慮</td></tr></tbody></table>
 <p>保存場所ごとの具体的な比較は <a href="/idp-server/docs/content_11_learning/security/token-storage-security">トークン保存のセキュリティ</a> を参照してください。</p>
 <hr>
@@ -95,7 +98,7 @@
 <ul>
 <li>アクセストークンの<strong>有効期間を短く</strong>し、更新はリフレッシュトークンに任せる</li>
 <li>アクセストークンに紐づく<strong>スコープや権限を減らす</strong></li>
-<li><a href="/idp-server/docs/content_11_learning/oauth-oidc-rfc/extensions/rfc8707-resource-indicators">RFC 8707</a> の拡張で、アクセストークンを<strong>単一のリソースに限定</strong>する</li>
+<li><a href="/idp-server/docs/content_11_learning/oauth-oidc-rfc/extensions/rfc8707-resource-indicators">RFC 8707</a> の拡張で、アクセストークンを<strong>単  一のリソースに限定</strong>する</li>
 </ul>
 <p>OpenID Connect を使う場合は、ID Token のクレームによる情報漏洩にも注意が必要です。</p>
 <blockquote>
@@ -109,7 +112,7 @@
 <p><strong>ブラウザのみのクライアントが抱える制約は、sender-constrained token では解決しません。</strong> そのうえで、token-mediating backend やブラウザのみのクライアントで十分なユースケースであれば、<a href="/idp-server/docs/content_11_learning/oauth-oidc-rfc/extensions/rfc9449-dpop">DPoP（RFC 9449）</a> 等によってアクセストークンとリフレッシュトークンの安全性を高められる、としています。</p>
 <p>盗まれても、鍵の所持を証明できなければトークン単体では使えないためです。</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="53-origin-による分離94">5.3 Origin による分離（§9.4）<a href="#53-origin-による分離94" class="hash-link" aria-label="5.3 Origin による分離（§9.4） への直接リンク" title="5.3 Origin による分離（§9.4） への直接リンク">​</a></h3>
-<p>異なる信頼レベルのアプリケーションを別々の Origin に置くことで、境界を作れます。§5.2.3 で触れられているように、リソースサーバー側の CORS ポリシーで <code>web.example.org</code> からのリクエストを拒否する、といった防御が成立するのはこの分離があるためです。</p>
+<p>異なる信頼レベルのアプリケーションを別々の Origin に置くことで、境界を作れます。§5.2.3 で触れられているように、リソースサーバー側の CORS ポリシーで <code>web.example.org</code> からのリクエス  トを拒否する、といった防御が成立するのはこの分離があるためです。</p>
 <hr>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="まとめ">まとめ<a href="#まとめ" class="hash-link" aria-label="まとめ への直接リンク" title="まとめ への直接リンク">​</a></h2>
 <table><thead><tr><th>問い</th><th>RFC 10017 の答え</th></tr></thead><tbody><tr><td>トークンをどこに置くべきか？</td><td><strong>保存場所を変えても攻撃者の到達範囲は本質的に変わらない</strong></td></tr><tr><td>ではどうすべきか？</td><td><strong>ブラウザにトークンを渡さない</strong>（BFF）</td></tr><tr><td>BFF が難しい場合は？</td><td>Token-Mediating Backend でリフレッシュトークンだけでも守る</td></tr><tr><td>ブラウザのみのクライアントは？</td><td>§5.1 のすべての攻撃に脆弱であることを理解したうえで選ぶ</td></tr><tr><td>DPoP を使えば安全？</td><td>ブラウザのみのクライアントの制約は解決しない</td></tr></tbody></table>
