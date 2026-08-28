@@ -119,7 +119,7 @@ POST /{tenant-id}/v1/authorizations/{id}/authentication-device-number-matching-c
 ### 2. コード検証（認証デバイス）
 
 ```http
-POST /{tenant-id}/v1/authorizations/{id}/authentication-device-number-matching
+POST /{tenant-id}/v1/authentications/{transaction-id}/authentication-device-number-matching
 ```
 
 ```json
@@ -128,11 +128,15 @@ POST /{tenant-id}/v1/authorizations/{id}/authentication-device-number-matching
 }
 ```
 
+`{transaction-id}` は次節の認証トランザクション取得APIが返す `id` です。認証デバイスは認可リクエストの `id` を知らないため、こちらのパスを使います（サインイン画面側からは `POST /{tenant-id}/v1/authorizations/{id}/authentication-device-number-matching` でも同じ検証に到達しますが、デバイス実装では使えません）。
+
 | 状況 | HTTP | `error` | `error_description` |
 |---|---|---|---|
 | 一致 | 200 | - | - |
 | チャレンジ未実行 | 400 | `invalid_request` | `number_matching_code has not been issued` |
 | 不一致 | 400 | `invalid_request` | `number_matching_code does not match` |
+
+不一致は `$.authentication-device-number-matching.failure_count` に積算されます。このパスは認証なしで到達できるため、認証ポリシーの `failure_conditions` / `lock_conditions` で上限を必ず設けてください（同梱テンプレートは 5 回）。残り試行回数はデバイス向け API からは取得できません。
 
 ### 3. 入力画面の要否判定（認証デバイス）
 

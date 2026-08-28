@@ -256,6 +256,7 @@ GET {tenant-id}/v1/authentication-devices/{device-id}/authentications?client_id=
 | `user.sub`                      | `string`            | ユーザー識別子（Subject）                            | -  |
 | `user.status`                   | `string`            | ユーザーステータス                                   | -  |
 | `authentication_device`         | `object`            | 認証デバイス情報                                    | -  |
+| `number_matching_required`      | `boolean`           | 認可コードフローで number-matching コードが発行済みなら `true`（デバイスは入力画面を出す）。CIBA では常に `false`。詳細は [認可コードフロー + FIDO-UAF](./04-authorization-code-flow.md#入力画面の要否判定device) | ✅  |
 | `created_at`                    | `string` (ISO-8601) | トランザクション作成日時                                | ✅  |
 | `expires_at`                    | `string` (ISO-8601) | トランザクション有効期限                                | ✅  |
 

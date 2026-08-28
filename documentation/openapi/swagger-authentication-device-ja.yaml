@@ -113,8 +113,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/authentication-devices/logs:
     post:
@@ -170,8 +176,14 @@ paths:
             セキュリティイベントの発行有無に関わらず200を返却する。
         '400':
           $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/.well-known/fido-uaf/facets:
     get:
@@ -194,8 +206,14 @@ paths:
                 type: object
         '400':
           $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/authentications/{id}/fido-uaf-registration-challenge:
     post:
@@ -242,8 +260,14 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/authentications/{id}/fido-uaf-registration:
     post:
@@ -295,8 +319,14 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/authentications/{id}/fido-uaf-authentication-challenge:
     post:
@@ -333,8 +363,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/authentications/{id}/fido-uaf-authentication:
     post:
@@ -367,8 +403,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/authentications/{id}/fido-uaf-deregistration:
     post:
@@ -416,8 +458,14 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/authentications/{id}/authentication-cancel:
     post:
@@ -466,8 +514,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
   /{tenant-id}/v1/authentications/{id}/fido-uaf-cancel:
     post:
@@ -516,8 +570,168 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+
+  /{tenant-id}/v1/authentications/{id}/authentication-device-number-matching:
+    post:
+      tags:
+        - 認証
+      summary: ナンバーマッチングコードの検証
+      description: |
+        認可コードフローのデバイス認証（FIDO-UAF step-up）で、サインイン画面に表示された
+        ナンバーマッチングコードをユーザーが認証デバイスに転記し、その値を検証する（push fatigue 対策）。
+
+        - コードはサインイン画面側の `authentication-device-number-matching-challenge` で発行され、
+          サーバーに保存される。**認証デバイス向けの API・プッシュ通知には含まれない**
+        - 認証デバイスは、認証トランザクション取得APIのレスポンスの `number_matching_required` が
+          `true` のときに入力画面を表示し、この API で検証する
+        - 検証成功後に FIDO-UAF 認証（`fido-uaf-authentication-challenge` → `fido-uaf-authentication`）へ進む
+        - 不一致は `$.authentication-device-number-matching.failure_count` に積算される。
+          この API は認証なしで到達できるため、認証ポリシーの `failure_conditions` / `lock_conditions`
+          で試行回数の上限を設けること（同梱テンプレートは 5 回）。残り試行回数はこの API からは取得できない
+        - セキュリティイベント `authentication_device_number_matching_success` /
+          `authentication_device_number_matching_failure` が生成される
+
+        認可リクエストのIDを持つサインイン画面側からは
+        `POST /{tenant-id}/v1/authorizations/{id}/authentication-device-number-matching` でも同じ検証に到達するが、
+        認証デバイスは認可リクエストのIDを取得できないため、デバイス実装ではこの API を使う。
+      parameters:
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+          description: テナント識別子
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 認証トランザクションID（認証トランザクション取得APIの `list[].id`）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - number_matching_code
+              properties:
+                number_matching_code:
+                  type: string
+                  description: |
+                    ユーザーがサインイン画面から転記したコード。数字のみ。
+                    桁数は認証設定 `authentication-device-number-matching` の `execution.details.length`
+                    に従う（既定 4 桁）。桁数はこの API のレスポンスや認証トランザクション取得APIには含まれない
+                  example: "4821"
+      responses:
+        '200':
+          description: 一致。レスポンスボディは空のJSONオブジェクト。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+                example: {}
+        '400':
+          description: |
+            コード未発行、コード不一致、またはリクエスト不正。`error_description` で区別する。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "invalid_request"
+                  error_description:
+                    type: string
+                    example: "number_matching_code does not match"
+              examples:
+                not_issued:
+                  summary: サインイン画面側でチャレンジが未実行
+                  value:
+                    error: "invalid_request"
+                    error_description: "number_matching_code has not been issued"
+                mismatch:
+                  summary: コード不一致
+                  value:
+                    error: "invalid_request"
+                    error_description: "number_matching_code does not match"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+
+  /{tenant-id}/v1/authentications/{id}/authentication-device-deny:
+    post:
+      tags:
+        - 認証
+      summary: 認証デバイスによる認証の拒否
+      description: |
+        認証デバイス上でユーザーが認証要求を明示的に拒否する（「これは自分の操作ではない」）。
+
+        - `authentication-cancel` と同じく DENY 種別のインタラクションとして記録され、
+          認証ポリシーに `failure_conditions` が定義されていれば認証ステータスは `failure` になる
+        - `authentication-cancel`（操作の中断）との違いは監査上の意味とセキュリティイベント名のみ
+        - セキュリティイベント `authentication_device_deny_success` が生成される
+      parameters:
+        - in: path
+          name: tenant-id
+          required: true
+          schema:
+            type: string
+          description: テナント識別子
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 認証トランザクションID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+              example: {}
+      responses:
+        '200':
+          description: 拒否を記録。レスポンスボディは空のJSONオブジェクト。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+                example: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
 
 components:
   responses:
@@ -608,6 +822,91 @@ components:
               error_description:
                 type: string
                 example: "internal server error"
+
+    TooManyRequests:
+      description: |
+        レート制限超過。
+
+        クライアントが短時間に過剰なリクエストを送信した場合に返却されます。
+        このレスポンスは API Gateway がリクエストをアプリケーションに到達させる前に返却します。
+
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
+        認証デバイスがトランザクションをポーリングする場合は、ポーリング間隔を広げてください。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: リトライまでの推奨待機時間（秒）
+          required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            throttled:
+              summary: スロットリング（秒間リクエスト制限）
+              value:
+                message: "Too Many Requests"
+            quota_exceeded:
+              summary: クォータ超過（日次/月次リクエスト制限）
+              value:
+                message: "Limit Exceeded"
+
+    ServiceUnavailable:
+      description: |
+        サービス一時利用不可。
+
+        バックエンドサーバーが利用できない状態です（メンテナンス中を含む）。
+        このレスポンスは API Gateway がバックエンドへの接続に失敗した場合に返却します。
+
+        `Retry-After` ヘッダーが含まれる場合は、指定された秒数後にリトライしてください。
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: サービス復旧までの推定時間（秒）
+          required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            default:
+              summary: サービス利用不可
+              value:
+                message: "Service Unavailable"
+
+    GatewayTimeout:
+      description: |
+        ゲートウェイタイムアウト。
+
+        バックエンドサーバーからの応答が制限時間内に返却されませんでした。
+        このレスポンスは API Gateway がバックエンドの応答を待機してタイムアウトした場合に返却します。
+
+        ネットワークの一時的な問題の可能性があります。時間をおいてリトライしてください。
+        FIDO-UAF 系 API では、idp-server と FIDO サーバー間の通信遅延が原因の場合もあります。
+        認証トランザクションの有効期限（`expires_at`）内であれば同じトランザクションで再試行できます。
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: エラーメッセージ（optional。API Gateway の設定により含まれない場合があります）
+          examples:
+            default:
+              summary: タイムアウト
+              value:
+                message: "Endpoint request timed out"
 
   schemas:
     AuthenticationDeviceLogRequest:

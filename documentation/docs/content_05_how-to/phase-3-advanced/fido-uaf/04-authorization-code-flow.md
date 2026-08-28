@@ -238,7 +238,7 @@ Content-Type: application/json
 { "number_matching_code": "4821" }
 ```
 
-コードは**数字（0-9）**です（MS Authenticator / Okta の number matching と同様）。**長さ**は要件依存で、`authentication-device-number-matching` 設定の `execution.details.length` で調整できます（既定 **4桁**）。
+コードは**数字（0-9）**です（MS Authenticator / Okta の number matching と同様）。**長さ**は要件依存で、`authentication-device-number-matching` 設定の `execution.details.length` で調整できます（既定 **4桁**）。桁数はデバイス向け API のレスポンスには含まれないため、デバイスアプリの入力画面は桁数を固定にしないか、アプリ側の設定として持ってください。
 
 #### コードの検証（device）
 
@@ -266,6 +266,12 @@ Content-Type: application/json
 |---|---|
 | チャレンジ未実行 | `number_matching_code has not been issued` |
 | コード不一致 | `number_matching_code does not match` |
+
+#### 失敗回数の上限
+
+コード不一致は `$.authentication-device-number-matching.failure_count` に積算されます。認証ポリシーの `failure_conditions` / `lock_conditions` でこの値を参照すると、上限到達時に認証ステータスが `failure` / `locked` になります（同梱テンプレート `config/templates/use-cases/mfa-fido-uaf/authentication-policy.json` は **5回**で `failure` と `locked` の両方を満たす設定）。
+
+**残り試行回数はデバイス向け API から取得できません。** デバイスアプリは「不一致」を伝えるだけにし、上限到達後はサインイン画面側が `authentication-status` で `failure` / `locked` を検知して案内する、という役割分担にしてください。上限を設けない場合、デバイス側パスは認証なしで到達できる（[後述](#デバイス側apiの認証について)）ため、コードの総当たりが可能になります。**`failure_conditions` に上限を必ず入れてください。**
 
 #### 入力画面の要否判定（device）
 
@@ -353,7 +359,16 @@ Push通知を受信した認証デバイスは、CIBAフローと同じ`/authent
 GET {tenant-id}/v1/authentication-devices/{device-id}/authentications?flow=oauth
 ```
 
-認可コードフローの場合、`flow`パラメータに`oauth`を指定して検索します。
+認可コードフローの場合、`flow`パラメータに`oauth`を指定して検索します（取り得る値: `ciba` / `oauth` / `fido-uaf-registration` / `fido-uaf-deregistration`）。CIBA と認可コードフローの両方を扱うデバイスアプリは、`flow` を省略して取得し、レスポンスの `flow` で分岐することもできます。
+
+レスポンスのフィールドは [CIBA + FIDO-UAF](./01-ciba-flow.md#認証トランザクションの取得認証デバイス) と共通です。認可コードフローで特に見るもの:
+
+| フィールド | 用途 |
+|---|---|
+| `id` | 認証トランザクション ID。以降のデバイス側呼び出しに使う |
+| `number_matching_required` | 番号入力画面の要否（[前述](#入力画面の要否判定device)） |
+| `expires_at` | トランザクションの有効期限。期限内に FIDO-UAF 認証まで完了する必要がある |
+| `context`（`scopes` / `acr_values` 等） | **デバイス認証（`identity_policy_config.authentication_device_rule.authentication_type`）が `none` の場合は返りません。** 「どのスコープの承認か」をデバイス画面に表示したい場合はデバイス認証を有効にしてください |
 
 #### FIDO-UAFチャレンジ
 
@@ -378,6 +393,39 @@ Content-Type: application/json
 ```
 
 認証成功後、`AuthenticationTransaction`が更新され、SPAのポーリングで`status: "success"`が返ります。
+
+#### 取り消し・拒否（認証デバイス）
+
+ユーザーがデバイス側で認証を拒否した場合は、次のいずれかを呼び出します。いずれもボディなし（`{}`）の POST です。
+
+```
+POST {tenant-id}/v1/authentications/{transaction-id}/authentication-device-deny
+POST {tenant-id}/v1/authentications/{transaction-id}/authentication-cancel
+```
+
+| インタラクション | 意図 | 認証ステータスへの影響 |
+|---|---|---|
+| `authentication-device-deny` | ユーザーの明示的な拒否（「これは自分の操作ではない」） | `failure` |
+| `authentication-cancel` | 操作の中断（生体認証のキャンセル、画面を閉じた等） | `failure` |
+
+どちらも DENY 種別のインタラクションとして記録されるため、**認証ポリシーに `failure_conditions` が定義されていれば、成功が1回記録された時点で `authentication-status` は `failure` になります**（`failure_conditions` の個別条件に書かれていなくても同じです）。`failure_conditions` を持たないポリシーでは DENY 種別は評価されず、`in_progress` のまま有効期限切れを待つことになるので、[後述のポリシー例](#認証ポリシー設定例)のように必ず定義してください。
+
+いずれも `failure` になる点は同じなので、使い分けは主に監査目的です（セキュリティイベントは `authentication_device_deny_success` / `authentication_cancel_success` と別になります）。デバイスアプリには「拒否」と「中断」の両方の導線を用意し、それぞれを対応するインタラクションに割り当てることを推奨します。
+
+#### デバイス側APIの認証について
+
+`POST {tenant-id}/v1/authentications/{transaction-id}/{interaction-type}` は、**認証トランザクション ID のみで到達できます**（アクセストークンやデバイス認証は要求されません）。これは CIBA の FIDO-UAF 認証と同じです。認可コードフローで追加された number-matching 検証もこの経路に乗るため、セキュリティモデルは次のように組み合わせて成立しています。
+
+- トランザクション ID は推測困難な UUID で、デバイス向けの取得 API か Push 通知経由でしか得られない
+- number-matching コードはデバイス向けの API・Push には一切載らない（サインイン画面を見ている本人しか知らない）
+- コード不一致の回数は `failure_conditions` / `lock_conditions` で上限を設ける（[前述](#失敗回数の上限)）
+- FIDO-UAF 認証そのものは登録済み認証器の署名を要求する
+
+トランザクション取得 API（`GET .../authentication-devices/{device-id}/authentications`）側は、テナント設定によりデバイス認証を要求できます（`context` の返却制御）。
+
+#### 実行順序について
+
+認証ポリシーの `step_definitions.order` は**実行順序を強制しません**（`requires_user` の判定にのみ使われます）。number-matching 検証を経ずに FIDO-UAF チャレンジを呼んでもサーバーは拒否せず、`success_conditions` が満たされないために `in_progress` のまま留まるだけです。デバイスアプリは `number_matching_required` を見て、コード検証 → FIDO-UAF の順に呼び出すよう実装してください。
 
 ---
 
@@ -465,6 +513,10 @@ login_hintを指定しない場合でも、パスワード認証でユーザー�
 
 ### login_hint + FIDO-UAF（デバイス認証のみ）
 
+同梱テンプレート `config/templates/use-cases/mfa-fido-uaf/authentication-policy.json` と同じ構成です。number-matching を使うには、`available_methods` に**チャレンジと検証の両方**（`authentication-device-number-matching-challenge` / `authentication-device-number-matching`）を含め、`success_conditions` で number-matching と FIDO-UAF の**両方**を要求します（コード照合だけで認証が完了しないようにするため）。
+
+`available_methods` はサインイン画面に渡される **UIヒント**で、インタラクションの実行可否を制限するものではありません（[認証ポリシー設定](../../../content_06_developer-guide/05-configuration/authentication-policy.md)）。ここに書かれていない方式を呼び出してもサーバーは拒否せず、認証の成否は `success_conditions` / `failure_conditions` / `lock_conditions` だけで決まります（[実行順序について](#実行順序について)と同じ考え方）。
+
 ```json
 {
   "flow": "oauth",
@@ -472,34 +524,45 @@ login_hintを指定しない場合でも、パスワード認証でユーザー�
   "policies": [
     {
       "description": "device_fido_uaf_authentication",
-      "priority": 1,
+      "priority": 10,
       "conditions": {
         "acr_values": ["urn:idp:acr:device"]
       },
       "available_methods": [
         "authentication-device-notification",
+        "authentication-device-number-matching-challenge",
         "authentication-device-number-matching",
         "authentication-device-deny",
         "fido-uaf"
       ],
       "step_definitions": [
-        { "method": "authentication-device-notification", "order": 1, "requires_user": false },
-        { "method": "fido-uaf", "order": 2, "requires_user": true }
+        { "method": "authentication-device-number-matching-challenge", "order": 1, "requires_user": false },
+        { "method": "authentication-device-number-matching", "order": 2, "requires_user": false },
+        { "method": "fido-uaf", "order": 3, "requires_user": true }
       ],
       "success_conditions": {
         "any_of": [
-          [{ "path": "$.fido-uaf-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+          [
+            { "path": "$.authentication-device-number-matching.success_count", "type": "integer", "operation": "gte", "value": 1 },
+            { "path": "$.fido-uaf-authentication.success_count", "type": "integer", "operation": "gte", "value": 1 }
+          ]
         ]
       },
       "failure_conditions": {
         "any_of": [
-          [{ "path": "$.authentication-device-deny.success_count", "type": "integer", "operation": "gte", "value": 1 }]
+          [{ "path": "$.authentication-device-deny.success_count", "type": "integer", "operation": "gte", "value": 1 }],
+          [{ "path": "$.authentication-device-number-matching.failure_count", "type": "integer", "operation": "gte", "value": 5 }]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [{ "path": "$.authentication-device-number-matching.failure_count", "type": "integer", "operation": "gte", "value": 5 }]
         ]
       }
     },
     {
       "description": "password_fallback",
-      "priority": 2,
+      "priority": 1,
       "conditions": {},
       "available_methods": ["password"],
       "success_conditions": {
