@@ -248,6 +248,7 @@ GET {tenant-id}/v1/authentication-devices/{device-id}/authentications?client_id=
 | `client_attributes.contacts`    | `string`            | クライアントの連絡先（例: メールアドレス）                      | -  |
 | `client_attributes.tos_uri`     | `string`            | 利用規約ページURL                                  | -  |
 | `client_attributes.policy_uri`  | `string`            | プライバシーポリシーURL                               | -  |
+| `client_attributes.custom_properties` | `object`      | クライアント設定 `extension.custom_properties` の任意の値。デバイス認証の有無にかかわらず返るため、**秘匿値を入れないこと**。未設定ならフィールドごと返らない | -  |
 | `context`                       | `object`            | 認証リクエストのコンテキスト情報（※条件付き）                     | -  |
 | `context.acr_values`            | `string`            | 認証コンテキストクラス。例: `urn:mace:incommon:iap:gold` | -  |
 | `context.binding_message`       | `string`            | 認証デバイスに表示される確認用メッセージ                        | -  |

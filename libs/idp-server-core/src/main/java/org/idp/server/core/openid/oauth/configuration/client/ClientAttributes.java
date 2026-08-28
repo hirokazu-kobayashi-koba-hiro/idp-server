@@ -19,6 +19,7 @@ package org.idp.server.core.openid.oauth.configuration.client;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.idp.server.platform.json.JsonReadable;
 
 public class ClientAttributes implements JsonReadable {
@@ -31,6 +32,7 @@ public class ClientAttributes implements JsonReadable {
   List<String> contacts;
   String tosUri;
   String policyUri;
+  Map<String, Object> customProperties = new HashMap<>();
 
   public ClientAttributes() {}
 
@@ -42,7 +44,8 @@ public class ClientAttributes implements JsonReadable {
       String logoUri,
       List<String> contacts,
       String tosUri,
-      String policyUri) {
+      String policyUri,
+      Map<String, Object> customProperties) {
     this.clientId = clientId;
     this.clientIdAlias = clientIdAlias;
     this.clientName = clientName;
@@ -51,6 +54,7 @@ public class ClientAttributes implements JsonReadable {
     this.contacts = contacts;
     this.tosUri = tosUri;
     this.policyUri = policyUri;
+    this.customProperties = Objects.requireNonNullElseGet(customProperties, HashMap::new);
   }
 
   public ClientIdentifier identifier() {
@@ -113,6 +117,21 @@ public class ClientAttributes implements JsonReadable {
     return policyUri != null && !policyUri.isEmpty();
   }
 
+  /**
+   * Tenant-defined properties carried alongside the RFC 7591 client metadata (#1833).
+   *
+   * <p>The sign-in screen already receives these via {@code client_custom_properties} in the
+   * authorization view data. Exposing them here is what lets the authentication device read them
+   * too, since the device only ever sees the client through {@link #toMap()}.
+   */
+  public Map<String, Object> customProperties() {
+    return customProperties;
+  }
+
+  public boolean hasCustomProperties() {
+    return customProperties != null && !customProperties.isEmpty();
+  }
+
   public boolean exists() {
     return clientId != null && !clientId.isEmpty();
   }
@@ -131,6 +150,7 @@ public class ClientAttributes implements JsonReadable {
     if (hasContacts()) map.put("contacts", contacts);
     if (hasTosUri()) map.put("tos_uri", tosUri);
     if (hasPolicyUri()) map.put("policy_uri", policyUri);
+    if (hasCustomProperties()) map.put("custom_properties", customProperties);
     return map;
   }
 }

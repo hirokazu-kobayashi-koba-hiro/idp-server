@@ -497,6 +497,16 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     expect(deviceTx).not.toHaveProperty("authorization_id");
     expect(JSON.stringify(deviceTx)).not.toContain(authId);
 
+    // #1833: the tenant's client custom_properties reach the device too. They ride in
+    // client_attributes rather than context, so unlike scopes/acr_values they are returned even
+    // though this lookup performed no device authentication — that is the documented contract and
+    // the reason the configuration reference tells operators not to put secrets in them.
+    expect(deviceTx.client_attributes.custom_properties).toEqual({
+      app_label: "e2e-client-secret-post",
+      brand_color: "#0075ca",
+    });
+    expect(deviceTx).not.toHaveProperty("context");
+
     const transactionId = deviceTx.id;
     expect(transactionId).toBeDefined();
     expect(transactionId).not.toBe(authId);
