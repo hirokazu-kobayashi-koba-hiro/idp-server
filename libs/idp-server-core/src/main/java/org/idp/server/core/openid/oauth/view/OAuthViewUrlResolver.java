@@ -24,21 +24,47 @@ import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.UIViewVariant;
 
 public class OAuthViewUrlResolver {
 
   public static String resolve(OAuthRequestContext context) {
     Tenant tenant = context.tenant();
     UIConfiguration uiConfiguration = tenant.uiConfiguration();
-    String base = tenant.baseUrl();
+    UIViewVariant variant = resolveVariant(context, uiConfiguration);
+    String base = variant.hasBaseUrl() ? variant.baseUrl() : tenant.baseUrl();
 
     if (context.isPromptCreate()) {
-      String signupPage = uiConfiguration.signupPage();
+      String signupPage =
+          variant.hasSignupPage() ? variant.signupPage() : uiConfiguration.signupPage();
       return buildUrl(base, signupPage, context);
     }
 
-    String signinPage = uiConfiguration.signinPage();
+    String signinPage =
+        variant.hasSigninPage() ? variant.signinPage() : uiConfiguration.signinPage();
     return buildUrl(base, signinPage, context);
+  }
+
+  /**
+   * The pages this request should be sent to, when the tenant runs more than one set.
+   *
+   * <p>A canary release is driven by the relying party, which names the variant on the
+   * authorization request; the tenant declares what each name resolves to. The name is used as a
+   * key into that declaration and never as part of the path, because the authorization URL is
+   * public and anyone can put a value on it. A name nobody declared resolves to an empty variant,
+   * so the request lands on the tenant's default pages.
+   *
+   * <p>The name stays in the custom parameters, so it reaches the page on the URL and in view-data,
+   * and it is stored with the authorization request.
+   */
+  private static UIViewVariant resolveVariant(
+      OAuthRequestContext context, UIConfiguration uiConfiguration) {
+    if (!uiConfiguration.hasVariants()) {
+      return new UIViewVariant();
+    }
+    CustomParams customParams = context.authorizationRequest().customParams();
+    return uiConfiguration.variant(
+        customParams.getValueAsStringOrEmpty(uiConfiguration.variantParam()));
   }
 
   public static String resolveError(Tenant tenant, Error error, ErrorDescription errorDescription) {
