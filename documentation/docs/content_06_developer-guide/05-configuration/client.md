@@ -345,7 +345,7 @@ FAPI Advancedクライアントでは、認可レスポンスをJWTで保護す�
 #### カスタムプロパティ
 
 `custom_properties`を使って、クライアントに任意のキー・バリューデータを付与できます。
-認可画面（SPA）のUI表示カスタマイズや、アプリ固有の設定値の伝達に利用します。
+認可画面（SPA）のUI表示カスタマイズや、アプリ固有の設定値の伝達に利用します。認証デバイスアプリにも届きます。
 
 ```json
 {
@@ -362,8 +362,17 @@ FAPI Advancedクライアントでは、認可レスポンスをJWTで保護す�
 
 - 管理APIでクライアント作成・更新時に設定
 - 認可画面の view-data API レスポンスに `client_custom_properties` として反映
+- 認証デバイス向けの認証トランザクション取得APIに `client_attributes.custom_properties` として反映
 - 値にはオブジェクト、配列、数値、文字列、真偽値を自由に格納可能
-- 未設定の場合、view-data レスポンスには含まれない
+- 未設定の場合、どちらのレスポンスにも含まれない
+
+参照するタイミングが2つで異なります。認可画面は view-data 取得時に設定を都度読むのに対し、認証デバイス側は**認可リクエスト生成時点のスナップショット**が認証トランザクションに保存されたものです。フロー進行中に管理APIで値を書き換えると、画面は新しい値、デバイスは開始時点の値になります。
+
+:::warning 秘匿値を入れないこと
+認証トランザクション取得API（`GET /{tenant-id}/v1/authentication-devices/{device-id}/authentications`）は、テナントの `identity_policy.authentication_device_rule.authentication_type` が `none` の場合、**デバイス識別子だけで到達でき**、認証情報を要求しません。`context`（`scopes` / `acr_values` 等）と違ってデバイス認証の有無で出し分けもされないため、`none` を使う構成では**デバイス識別子を知る相手なら誰でも読める前提**で値を設計してください。
+
+`access_token` / `device_credential_jwt` を設定しているテナントでは、このAPIも認証情報を検証します。
+:::
 
 #### アプリケーション種類別の推奨値
 

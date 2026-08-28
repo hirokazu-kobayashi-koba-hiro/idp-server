@@ -44,7 +44,7 @@ class AuthorizationGrantedTest {
             new RequestedClientId("client-x"),
             grantType,
             scopes)
-        .add(new ClientAttributes("client-x", null, "My App", null, null, null, null, null));
+        .add(new ClientAttributes("client-x", null, "My App", null, null, null, null, null, null));
   }
 
   @Test
