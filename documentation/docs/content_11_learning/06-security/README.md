@@ -110,6 +110,8 @@ ID/認証システムを安全に構築・運用するためのセキュリテ�
 |-------------|-----------|---------|
 | [セキュリティヘッダー](./06-security-headers.md) | HSTS, CSP, SameSite Cookie等のHTTPヘッダー設定 | 30分 |
 | [セッションセキュリティ](./07-session-security.md) | セッション固定攻撃、ハイジャック対策、Cookie属性 | 25分 |
+| [Cookie と CSRF のアンチパターン集](./10-cookie-csrf-antipatterns.md) | SameSite の穴、判定単位のズレ、トークン保管・state 検証の失敗例 | 30分 |
+| [実践編: AWS で公開 Web アプリケーションを構築する](./11-aws-public-web-app.md) | 4案の構成比較。トークンの置き場所と画面の描画場所で選ぶ。セッションストアと FW 選定 | 40分 |
 
 ### 攻撃対策
 
