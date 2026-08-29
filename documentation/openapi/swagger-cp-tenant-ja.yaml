@@ -1022,6 +1022,53 @@ components:
           type: string
           default: /auth-views/signin/index.html
           description: カスタムサインインページのパス
+        variant_param:
+          type: string
+          default: view_version
+          description: |
+            バリアント名を運ぶカスタムパラメータの名前。
+
+            OAuth/OIDC の既知パラメータ名（display / prompt / ui_locales 等）を指定すると
+            カスタムパラメータとして扱われず、バリアントが一切選択されなくなります。
+          example: view_version
+        variants:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/UIViewVariant'
+          description: |
+            名前付きバリアント。カナリアリリースで、既定の画面と並べて別の画面を
+            リクエスト単位で出し分けるために使います。
+
+            宣言されていない名前を受け取った場合は既定の画面に落ちます。
+          example:
+            v2:
+              base_url: https://auth-next.example.com
+              signin_page: /signin
+              signup_page: /signup
+    UIViewVariant:
+      type: object
+      description: |
+        1つのバリアントが差し替える項目。宣言したものだけが既定を上書きします。
+
+        base_url とパスは常に同じ側から解決されます。パスはそれを配信している
+        デプロイでしか意味を持たないため、宣言していないページは既定側
+        （既定の base_url + 既定のパス）に落ちます。ページを1つも宣言していない
+        バリアントだけは「オリジンの差し替え」とみなされ、既定のパスを引き継ぎます。
+
+        別オリジンに置く場合は cors_config.allow_origins への追加も必要です。
+      properties:
+        base_url:
+          type: string
+          description: このバリアントの画面配信元。未設定時は既定の base_url
+          example: https://auth-next.example.com
+        signup_page:
+          type: string
+          description: このバリアントのサインアップページのパス
+          example: /signup
+        signin_page:
+          type: string
+          description: このバリアントのサインインページのパス
+          example: /signin
     CorsConfiguration:
       type: object
       properties:
