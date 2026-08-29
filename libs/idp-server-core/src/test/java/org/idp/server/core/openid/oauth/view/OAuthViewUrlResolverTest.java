@@ -139,15 +139,79 @@ class OAuthViewUrlResolverTest {
     }
 
     @Test
-    void inheritsThePageTheVariantDidNotMove() {
-      // The variant moves its base URL and sign-in page only, so prompt=create keeps the default
-      // sign-up path under the variant's own base URL.
+    void sendsThePageTheVariantDidNotMoveToTheDefaultDeployment() {
+      // The variant declares a scheme of its own (/signin, not /v1/signin), so the sign-up path it
+      // left out belongs to the default deployment and only resolves there. Pointing the variant's
+      // origin at it would 404 every canary sign-up.
       AuthorizationRequest request =
           requestAskingFor("v2").add(new Prompts(List.of(Prompt.create))).build();
 
       String url = OAuthViewUrlResolver.resolve(context(tenant(WITH_VARIANT), request));
 
-      assertTrue(url.startsWith("https://auth-next.example.com/v1/signup?"), url);
+      assertTrue(url.startsWith("https://auth.example.com/v1/signup?"), url);
+    }
+
+    @Test
+    void keepsTheDefaultPathsWhenTheVariantOnlyMovesTheOrigin() {
+      // Overriding no page reads as "the same pages on another origin", which is the plain
+      // redeploy case: the default path scheme still applies there.
+      Map<String, Object> originOnly =
+          Map.of(
+              "base_url", "https://auth.example.com",
+              "signin_page", "/v1/signin",
+              "signup_page", "/v1/signup",
+              "variants", Map.of("v2", Map.of("base_url", "https://auth-next.example.com")));
+
+      String signin =
+          OAuthViewUrlResolver.resolve(context(tenant(originOnly), requestAskingFor("v2").build()));
+      String signup =
+          OAuthViewUrlResolver.resolve(
+              context(
+                  tenant(originOnly),
+                  requestAskingFor("v2").add(new Prompts(List.of(Prompt.create))).build()));
+
+      assertTrue(signin.startsWith("https://auth-next.example.com/v1/signin?"), signin);
+      assertTrue(signup.startsWith("https://auth-next.example.com/v1/signup?"), signup);
+    }
+
+    @Test
+    void servesAPageTheVariantDeclaresFromItsOwnDeployment() {
+      // The signup_page branch, which no other case reaches.
+      Map<String, Object> bothPages =
+          Map.of(
+              "base_url", "https://auth.example.com",
+              "signin_page", "/v1/signin",
+              "signup_page", "/v1/signup",
+              "variants",
+                  Map.of(
+                      "v2",
+                      Map.of(
+                          "base_url", "https://auth-next.example.com",
+                          "signin_page", "/signin",
+                          "signup_page", "/signup")));
+
+      AuthorizationRequest request =
+          requestAskingFor("v2").add(new Prompts(List.of(Prompt.create))).build();
+
+      String url = OAuthViewUrlResolver.resolve(context(tenant(bothPages), request));
+
+      assertTrue(url.startsWith("https://auth-next.example.com/signup?"), url);
+    }
+
+    @Test
+    void movesAPathWithinTheDefaultDeploymentWithoutABaseUrl() {
+      // A variant that only renames a path stays on the tenant's own origin.
+      Map<String, Object> pathOnly =
+          Map.of(
+              "base_url", "https://auth.example.com",
+              "signin_page", "/v1/signin",
+              "signup_page", "/v1/signup",
+              "variants", Map.of("v2", Map.of("signin_page", "/v2/signin")));
+
+      String url =
+          OAuthViewUrlResolver.resolve(context(tenant(pathOnly), requestAskingFor("v2").build()));
+
+      assertTrue(url.startsWith("https://auth.example.com/v2/signin?"), url);
     }
 
     @Test

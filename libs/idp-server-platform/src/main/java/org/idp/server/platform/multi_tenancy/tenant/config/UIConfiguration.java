@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.idp.server.platform.log.LoggerWrapper;
 
 /**
  * UI and authorization page configuration
@@ -28,6 +29,8 @@ import java.util.Objects;
  * authorization flow.
  */
 public class UIConfiguration {
+
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(UIConfiguration.class);
 
   /** Custom parameter naming the variant when the tenant does not configure another name. */
   static final String DEFAULT_VARIANT_PARAM = "view_version";
@@ -162,7 +165,17 @@ public class UIConfiguration {
           if (rawVariant instanceof Map<?, ?> variantValues) {
             variants.put(
                 String.valueOf(name), new UIViewVariant((Map<String, Object>) variantValues));
+            return;
           }
+          // Dropping it silently would leave the tenant with a canary that never fires and no
+          // trace of why: the update itself is accepted, so the only signal is 0% traffic on the
+          // variant. Writing a page path straight onto the name is the easy version of this
+          // mistake, since signin_page next to it is a string.
+          log.warn(
+              "Ignored ui_config variant '{}': expected an object declaring base_url / signin_page"
+                  + " / signup_page, got {}",
+              name,
+              rawVariant == null ? "null" : rawVariant.getClass().getSimpleName());
         });
     return variants;
   }

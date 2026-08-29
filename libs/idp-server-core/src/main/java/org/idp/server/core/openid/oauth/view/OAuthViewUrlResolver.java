@@ -32,17 +32,40 @@ public class OAuthViewUrlResolver {
     Tenant tenant = context.tenant();
     UIConfiguration uiConfiguration = tenant.uiConfiguration();
     UIViewVariant variant = resolveVariant(context, uiConfiguration);
-    String base = variant.hasBaseUrl() ? variant.baseUrl() : tenant.baseUrl();
 
-    if (context.isPromptCreate()) {
-      String signupPage =
-          variant.hasSignupPage() ? variant.signupPage() : uiConfiguration.signupPage();
-      return buildUrl(base, signupPage, context);
+    return resolvePageUrl(variant, uiConfiguration, tenant, context);
+  }
+
+  /**
+   * The origin and the path, always taken from the same side.
+   *
+   * <p>A path only means something on the deployment that serves it, so the two cannot be inherited
+   * independently: a variant that moves the origin and renames one page would otherwise send the
+   * pages it did not name to a path that exists only on the default deployment.
+   *
+   * <p>Three cases, in order. The variant names this page, so it is served from the variant's
+   * origin. The variant names no page at all, so it only moves the origin and the default paths
+   * still apply there. The variant declares its own scheme but not this page, so the request falls
+   * back to the default deployment whole rather than mixing the two.
+   */
+  private static String resolvePageUrl(
+      UIViewVariant variant,
+      UIConfiguration uiConfiguration,
+      Tenant tenant,
+      OAuthRequestContext context) {
+
+    boolean promptCreate = context.isPromptCreate();
+    String variantPage = promptCreate ? variant.signupPage() : variant.signinPage();
+    String defaultPage = promptCreate ? uiConfiguration.signupPage() : uiConfiguration.signinPage();
+    String variantBase = variant.hasBaseUrl() ? variant.baseUrl() : tenant.baseUrl();
+
+    if (variantPage != null && !variantPage.isEmpty()) {
+      return buildUrl(variantBase, variantPage, context);
     }
-
-    String signinPage =
-        variant.hasSigninPage() ? variant.signinPage() : uiConfiguration.signinPage();
-    return buildUrl(base, signinPage, context);
+    if (!variant.hasPageOverrides()) {
+      return buildUrl(variantBase, defaultPage, context);
+    }
+    return buildUrl(tenant.baseUrl(), defaultPage, context);
   }
 
   /**

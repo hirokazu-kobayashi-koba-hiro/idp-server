@@ -19,6 +19,7 @@ package org.idp.server.platform.multi_tenancy.tenant.config;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;
+import org.idp.server.platform.json.JsonConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -147,6 +148,63 @@ class UIConfigurationTest {
       UIConfiguration configuration = new UIConfiguration(Map.of("variants", "v2"));
 
       assertFalse(configuration.hasVariants());
+    }
+  }
+
+  @Nested
+  @DisplayName("a tenant restored from the cache")
+  class JacksonRoundTrip {
+
+    /**
+     * The cache stores the whole tenant as JSON and reads it back with {@link
+     * JsonConverter#snakeCaseInstance()}, so a cache hit never runs the {@code Map} constructor
+     * every other test here goes through. Without this, variants could work on a cache miss and
+     * disappear on a hit — the shape of failure that only shows up under load.
+     */
+    @Test
+    void keepsItsVariantsThroughJson() {
+      JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+      UIConfiguration original =
+          new UIConfiguration(
+              Map.of(
+                  "base_url", "https://auth.example.com",
+                  "signin_page", "/v1/signin",
+                  "signup_page", "/v1/signup",
+                  "variant_param", "auth_view_release",
+                  "variants",
+                      Map.of(
+                          "v2",
+                          Map.of(
+                              "base_url", "https://auth-next.example.com",
+                              "signin_page", "/signin"))));
+
+      UIConfiguration restored =
+          jsonConverter.read(jsonConverter.write(original), UIConfiguration.class);
+
+      assertEquals("https://auth.example.com", restored.baseUrl());
+      assertEquals("/v1/signin", restored.signinPage());
+      assertEquals("auth_view_release", restored.variantParam());
+      assertTrue(restored.hasVariants());
+
+      UIViewVariant variant = restored.variant("v2");
+      assertEquals("https://auth-next.example.com", variant.baseUrl());
+      assertEquals("/signin", variant.signinPage());
+      assertFalse(variant.hasSignupPage());
+      assertTrue(variant.hasPageOverrides());
+    }
+
+    @Test
+    void staysOnTheDefaultsWhenNoVariantWasDeclared() {
+      JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
+      UIConfiguration original =
+          new UIConfiguration(
+              Map.of("base_url", "https://auth.example.com", "signin_page", "/v1/signin"));
+
+      UIConfiguration restored =
+          jsonConverter.read(jsonConverter.write(original), UIConfiguration.class);
+
+      assertFalse(restored.hasVariants());
+      assertEquals("view_version", restored.variantParam());
     }
   }
 }

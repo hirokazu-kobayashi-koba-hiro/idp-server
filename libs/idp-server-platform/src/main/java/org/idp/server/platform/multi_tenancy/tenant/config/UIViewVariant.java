@@ -75,6 +75,20 @@ public class UIViewVariant {
     return signinPage != null && !signinPage.isEmpty();
   }
 
+  /**
+   * Whether this variant declares a path scheme of its own.
+   *
+   * <p>Separates the two things a variant can mean. Declaring no page at all reads as "the same
+   * pages on another origin", so the default paths still apply there. Declaring any page makes the
+   * variant responsible for its own scheme, and a page it then leaves out cannot borrow a path from
+   * the default deployment — that path is only served there.
+   *
+   * @return true when the variant names at least one page
+   */
+  public boolean hasPageOverrides() {
+    return hasSigninPage() || hasSignupPage();
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     if (hasBaseUrl()) {
