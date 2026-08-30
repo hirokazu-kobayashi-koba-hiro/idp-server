@@ -24,21 +24,70 @@ import org.idp.server.core.openid.oauth.type.oauth.ErrorDescription;
 import org.idp.server.platform.http.HttpQueryParams;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.config.UIConfiguration;
+import org.idp.server.platform.multi_tenancy.tenant.config.UIViewVariant;
 
 public class OAuthViewUrlResolver {
 
   public static String resolve(OAuthRequestContext context) {
     Tenant tenant = context.tenant();
     UIConfiguration uiConfiguration = tenant.uiConfiguration();
-    String base = tenant.baseUrl();
+    UIViewVariant variant = resolveVariant(context, uiConfiguration);
 
-    if (context.isPromptCreate()) {
-      String signupPage = uiConfiguration.signupPage();
-      return buildUrl(base, signupPage, context);
+    return resolvePageUrl(variant, uiConfiguration, tenant, context);
+  }
+
+  /**
+   * The origin and the path, always taken from the same side.
+   *
+   * <p>A path only means something on the deployment that serves it, so the two cannot be inherited
+   * independently: a variant that moves the origin and renames one page would otherwise send the
+   * pages it did not name to a path that exists only on the default deployment.
+   *
+   * <p>Three cases, in order. The variant names this page, so it is served from the variant's
+   * origin. The variant names no page at all, so it only moves the origin and the default paths
+   * still apply there. The variant declares its own scheme but not this page, so the request falls
+   * back to the default deployment whole rather than mixing the two.
+   */
+  private static String resolvePageUrl(
+      UIViewVariant variant,
+      UIConfiguration uiConfiguration,
+      Tenant tenant,
+      OAuthRequestContext context) {
+
+    boolean promptCreate = context.isPromptCreate();
+    String variantPage = promptCreate ? variant.signupPage() : variant.signinPage();
+    String defaultPage = promptCreate ? uiConfiguration.signupPage() : uiConfiguration.signinPage();
+    String variantBase = variant.hasBaseUrl() ? variant.baseUrl() : tenant.baseUrl();
+
+    if (variantPage != null && !variantPage.isEmpty()) {
+      return buildUrl(variantBase, variantPage, context);
     }
+    if (!variant.hasPageOverrides()) {
+      return buildUrl(variantBase, defaultPage, context);
+    }
+    return buildUrl(tenant.baseUrl(), defaultPage, context);
+  }
 
-    String signinPage = uiConfiguration.signinPage();
-    return buildUrl(base, signinPage, context);
+  /**
+   * The pages this request should be sent to, when the tenant runs more than one set.
+   *
+   * <p>A canary release is driven by the relying party, which names the variant on the
+   * authorization request; the tenant declares what each name resolves to. The name is used as a
+   * key into that declaration and never as part of the path, because the authorization URL is
+   * public and anyone can put a value on it. A name nobody declared resolves to an empty variant,
+   * so the request lands on the tenant's default pages.
+   *
+   * <p>The name stays in the custom parameters, so it reaches the page on the URL and in view-data,
+   * and it is stored with the authorization request.
+   */
+  private static UIViewVariant resolveVariant(
+      OAuthRequestContext context, UIConfiguration uiConfiguration) {
+    if (!uiConfiguration.hasVariants()) {
+      return new UIViewVariant();
+    }
+    CustomParams customParams = context.authorizationRequest().customParams();
+    return uiConfiguration.variant(
+        customParams.getValueAsStringOrEmpty(uiConfiguration.variantParam()));
   }
 
   public static String resolveError(Tenant tenant, Error error, ErrorDescription errorDescription) {

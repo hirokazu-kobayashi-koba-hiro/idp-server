@@ -195,6 +195,7 @@ const sidebars = {
           collapsed: true,
           items: [
             "content_05_how-to/phase-3-advanced/federation-setup",
+            "content_05_how-to/phase-3-advanced/authorization-view-canary",
             {
               type: "category",
               label: "FIDO-UAF",

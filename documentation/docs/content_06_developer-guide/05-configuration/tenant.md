@@ -682,8 +682,32 @@ idp-serverでは、Tenant設定を型安全な6つのConfigurationクラスに�
 
 | フィールド | 型 | デフォルト | 説明 |
 |-----------|---|----------|------|
+| `base_url` | string | なし | 画面配信元のベースURL。未設定時はテナントドメイン |
 | `signup_page` | string | `/auth-views/signup/index.html` | カスタムサインアップページのパス |
 | `signin_page` | string | `/auth-views/signin/index.html` | カスタムサインインページのパス |
+| `variant_param` | string | `view_version` | バリアント名を運ぶカスタムパラメータの名前 |
+| `variants` | object | なし | 名前付きバリアント。カナリアリリース用 |
+
+**バリアント**（`variants`）は、既定の画面と並べて別の画面を走らせ、リクエスト単位で出し分ける仕組みです。各バリアントは `base_url` / `signin_page` / `signup_page` のうち差し替えるものだけを宣言します。
+
+```json
+{
+  "ui_config": {
+    "base_url": "https://auth.example.com",
+    "signin_page": "/v1/signin",
+    "signup_page": "/v1/signup",
+    "variants": {
+      "v2": { "base_url": "https://auth-next.example.com", "signin_page": "/signin", "signup_page": "/signup" }
+    }
+  }
+}
+```
+
+`base_url` とパスは常に同じ側から解決されます。パスはそれを配信しているデプロイでしか意味を持たないため、バリアントが宣言していないページは既定側（既定の `base_url` + 既定のパス）に落ちます。ページを1つも宣言していないバリアントだけは「オリジンの差し替え」とみなされ、既定のパスを引き継ぎます。
+
+宣言されていない名前を受け取った場合は既定の画面に落ちます。名前はパスに連結されず、宣言済み候補のキーとしてのみ使われます。
+
+設定手順は [認可画面のカナリアリリース](../../content_05_how-to/phase-3-advanced/02-authorization-view-canary.md) を参照してください。
 
 **実装**: [UIConfiguration.java](../../../../libs/idp-server-platform/src/main/java/org/idp/server/platform/multi_tenancy/tenant/config/UIConfiguration.java)
 

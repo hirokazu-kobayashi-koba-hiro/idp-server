@@ -8,7 +8,9 @@
     "ui_config": {
       "base_url": "",
       "signup_page": "/auth-views/signup/index.html",
-      "signin_page": "/auth-views/signin/index.html"
+      "signin_page": "/auth-views/signin/index.html",
+      "variant_param": "view_version",
+      "variants": {}
     },
     "cors_config": {
       "allow_origins": [],
