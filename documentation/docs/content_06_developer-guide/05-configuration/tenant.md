@@ -370,6 +370,7 @@
 | フィールド | デフォルト値 | 説明 |
 |-----------|------------|------|
 | `id_token_strict_mode` | `false` | IDトークン厳密モード（OIDC仕様準拠、詳細は下記参照） |
+| `redirect_uri_exact_match_required` | `false` | `redirect_uri` を完全一致で照合する（RFC 9700 §2.1、詳細は下記参照） |
 
 ##### id_token_strict_mode - IDトークンクレーム制御
 
@@ -446,6 +447,50 @@ GET /authorize?scope=openid profile&claims={"id_token":{"name":null}}&...
 **実装リファレンス**:
 - [GrantIdTokenClaims.java:218-221](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/grant_management/grant/GrantIdTokenClaims.java#L218-L221)
 - [AuthorizationServerExtensionConfiguration.java:40](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/configuration/AuthorizationServerExtensionConfiguration.java#L40)
+
+##### redirect_uri_exact_match_required - redirect_uri の照合方法
+
+**目的**: `redirect_uri` の照合を RFC 9700 §2.1 の exact string matching に揃えます。
+
+**デフォルト値**: `false`
+
+**仕様の位置づけ**: RFC 6749 §3.1.2.3 は登録済み URI との比較を「RFC 3986 §6 で定義された方法」と規定しており、構文ベース正規化（§6.2.2）も許容範囲でした。RFC 9700（BCP 240、2025年1月、RFC 6749 を更新）はこれを完全一致のみに狭めています。理由は §4.1.3 に「パターンマッチングを正しく実装・運用することの複雑さが、そのままセキュリティ問題を招く」と述べられています。
+
+**プロファイルごとの現状**:
+
+| プロファイル | 照合 |
+|---|---|
+| OAuth 2.0 | 完全一致 **または構文正規化一致**（このフラグの対象） |
+| OIDC | 完全一致のみ |
+| FAPI Baseline / Advance | 完全一致のみ |
+
+OAuth 2.0 プロファイルは要求スコープで決まる（`openid` を含まない）ため、**同じクライアント・同じ登録 URI でも `openid` を外すと緩い照合になります**。このフラグを `true` にすると全プロファイルで完全一致に揃います。
+
+**`false` のとき通ってしまう差**:
+
+| 差 | 例 |
+|---|---|
+| scheme / host の大文字小文字 | `HTTPS://APP.EXAMPLE.COM/cb` |
+| 既定ポートの明示 | `https://app.example.com:443/cb` |
+| **クエリの付加** | `https://app.example.com/cb?foo=bar` |
+
+前2つは RFC 3986 §6.2.2 / §6.2.3 の正規化として妥当で、宛先ホストは変わりません。3つ目は正規化ではなく、正規化段がクエリを比較していないために通っているものです。いずれも宛先は変わらないため、オープンリダイレクトや認可コード漏洩には直結しません。
+
+**native app の loopback は例外のまま**: RFC 8252 §7.3 のポート無視は、このフラグが `true` でも維持されます（RFC 9700 §2.1 自身が唯一の例外として認めているため）。
+
+:::warning 有効化前に既存クライアントを確認してください
+照合失敗は RFC 6749 §3.1.2.4 に従い、クライアントの `redirect_uri` へは**返りません**。テナントのエラー画面（`ui_config.base_url` + `/error/`）へ 302 するため、エンドユーザーが行き止まりになります。成功時も 302 なので、ステータスコードだけを見ていると気づけません。
+
+特に `redirect_uri` にクエリを付けて送っている実装は現状通っているため、確認せずに有効化すると停止します。検証環境で有効化して `Location` の行き先を確認してから本番に適用してください。
+:::
+
+**推奨設定**:
+- **新規テナント**: `true`（後段仕様に準拠）
+- **既存テナント**: 検証環境で確認後に `true`
+
+**実装リファレンス**:
+- [OAuth2RequestVerifier.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/verifier/OAuth2RequestVerifier.java)
+- [RegisteredRedirectUris.java](../../../../libs/idp-server-core/src/main/java/org/idp/server/core/openid/oauth/type/extension/RegisteredRedirectUris.java)
 
 #### FAPI設定
 

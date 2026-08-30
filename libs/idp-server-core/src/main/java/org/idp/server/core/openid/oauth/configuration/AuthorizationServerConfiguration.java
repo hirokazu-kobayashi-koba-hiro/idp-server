@@ -399,6 +399,15 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return extension.idTokenStrictMode();
   }
 
+  /**
+   * RFC 9700 Section 2.1: whether redirect_uri must match a registered URI exactly.
+   *
+   * @see AuthorizationServerExtensionConfiguration#isRedirectUriExactMatchRequired()
+   */
+  public boolean isRedirectUriExactMatchRequired() {
+    return extension.isRedirectUriExactMatchRequired();
+  }
+
   public boolean hasTokenEndpoint() {
     return Objects.nonNull(tokenEndpoint) && !tokenEndpoint.isEmpty();
   }
