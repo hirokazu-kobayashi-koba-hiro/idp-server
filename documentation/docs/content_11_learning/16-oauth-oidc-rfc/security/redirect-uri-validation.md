@@ -504,9 +504,11 @@ RFC 6749 §3.1.2.3 が認めていた「RFC 3986 §6 で定義された比較」
 
 #### ホスト名に localhost を使うことの是非
 
-これは RFC 9700 ではなく **RFC 8252 §7.3** の推奨事項。RFC 9700 §2.1 はむしろ `localhost` を例外として認めている（上記）ため、混同しないこと。
+これは RFC 9700 ではなく **RFC 8252 §8.3（Loopback Redirect Considerations）** の推奨事項。RFC 9700 §2.1 はむしろ `localhost` を例外として認めている（上記）ため、混同しないこと。
 
-RFC 8252 §7.3:
+なお §7.3（Loopback Interface Redirection）は別の節で、そちらは「認可サーバーはループバック IP のリダイレクト URI について任意のポートを許容しなければならない」というポート可変の規定。
+
+RFC 8252 §8.3:
 
 > While redirect URIs using localhost (i.e., `"http://localhost:{port}/{path}"`) function similarly to loopback IP redirects described in Section 7.3, the use of localhost is **NOT RECOMMENDED**.
 
@@ -599,11 +601,11 @@ FAPI 2.0 + PAR:
 | `https://app.example.com/cb` | `https://app.example.com/cb/` | ⚠️ | ❌ | ❌ |
 | `https://app.example.com/` | `https://app.example.com/cb` | ⚠️ | ❌ | ❌ |
 | `http://127.0.0.1/cb` | `http://127.0.0.1:8080/cb` | ❌ | ❌ | ❌ |
-
-RFC 6749 の欄が2通りあるのは、§3.1.2.3 の規範が登録の形で分かれるため（第2部の「照合方法」を参照）。最終行のポート差は、**native app に限り** RFC 8252 §7.3 / RFC 9700 §2.1 で許容される。
 | `http://127.0.0.1/cb` (Native) | `http://127.0.0.1:8080/cb` | ✅* | ✅* | N/A |
 
 *RFC 8252 に従う場合
+
+RFC 6749 の欄が2通りあるのは、§3.1.2.3 の規範が登録の形で分かれるため（第2部の「照合方法」を参照）。最後の2行のポート差は、**native app に限り** RFC 8252 §8.4 / RFC 9700 §2.1 で許容される。
 
 ### セキュリティと利便性のトレードオフ
 
