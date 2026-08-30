@@ -730,6 +730,22 @@ components:
               type: boolean
               default: false
               description: IDトークンクレームの厳格な検証を強制する。
+            redirect_uri_exact_match_required:
+              type: boolean
+              default: false
+              description: |
+                redirect_uri を RFC 9700 §2.1 の exact string matching で照合する。
+
+                既定（false）では OAuth 2.0 プロファイルのみ RFC 3986 §6.2.2 の
+                構文ベース正規化も許容するため、scheme / host の大文字小文字、
+                既定ポートの明示、クエリの付加が通ります。OIDC / FAPI は既定でも完全一致です。
+
+                true にすると全プロファイルで完全一致に揃います。
+                native app の loopback リダイレクト URI のポート無視
+                （RFC 8252 §7.3）は true でも維持されます。
+
+                照合失敗は RFC 6749 §3.1.2.4 に従いリダイレクトされないため、
+                有効化前に既存クライアントの redirect_uri を確認してください。
             default_max_age:
               type: integer
               default: 86400

@@ -351,7 +351,8 @@ describe("organization authorization server management api", () => {
           "custom_claims_scope_mapping": true,
           "access_token_selective_user_custom_properties": true,
           "access_token_selective_verified_claims": true,
-          "access_token_selective_standard_claims": true
+          "access_token_selective_standard_claims": true,
+          "redirect_uri_exact_match_required": true
         }
       };
 

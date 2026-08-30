@@ -259,6 +259,7 @@
       "access_token_duration": 3600,
       "id_token_duration": 3600,
       "id_token_strict_mode": false,
+      "redirect_uri_exact_match_required": false,
       "default_max_age": 86400,
       "fapi_baseline_scopes": [
         "read"
