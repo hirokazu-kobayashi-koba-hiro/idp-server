@@ -308,13 +308,42 @@ OAuth 2.0 の基本仕様。**曖昧な表現が多く、実装者の解釈に�
 | Confidential + Implicit | 必須 |
 | Confidential + Authorization Code | 推奨（SHOULD） |
 
-#### 検証方法
+#### redirect_uri を送る必要がある条件
 
 > If multiple redirection URIs have been registered, if only part of the redirection URI has been registered, or if no redirection URI has been registered, the client MUST include a redirection URI with the authorization request using the "redirect_uri" request parameter.
 
 **解釈の余地がある表現**:
 - 「part of the redirection URI」が何を意味するか不明確
 - 前方一致？ドメインのみ？パスのプレフィックス？
+
+#### 照合方法（§3.1.2.3）
+
+RFC 6749 の照合ロジックが分かりにくいのは、**1文目と2文目で規範が変わる**ため。
+
+> When a redirection URI is included in an authorization request, the authorization server MUST compare and match the value received against at least one of the registered redirection URIs **(or URI components)** as defined in [RFC3986] Section 6, if any redirection URIs were registered. **If the client registration included the full redirection URI**, the authorization server MUST compare the two URIs using simple string comparison as defined in [RFC3986] Section 6.2.1.
+
+読み解くとこうなる。
+
+| 登録の形 | 適用される規範 | 許される比較 |
+|---|---|---|
+| **URI 全体**を登録している | 2文目 | §6.2.1 の Simple String Comparison **のみ** |
+| **URI の一部**（コンポーネント）を登録している | 1文目 | RFC 3986 §6 で定義された比較（§6.2.2 の正規化なども可） |
+
+つまり RFC 6749 は「常に緩い」わけでも「常に完全一致」でもなく、**クライアント登録の形で枝が分かれる**。ここが混乱の元になりやすい。
+
+```
+登録が https://app.example.com/cb （URI 全体）
+  -> 2文目が効く。Simple String Comparison のみ
+
+登録が https://app.example.com （ホストまで＝コンポーネント）
+  -> 1文目が効く。RFC 3986 §6 の範囲で比較してよい
+```
+
+さらに1文目の「as defined in RFC 3986 Section 6」は §6.2.1〜§6.2.4 のどれを使うかを指定していないため、**正規化をどこまで許すかが実装依存**になる。RFC 9700 §2.1 がこの幅を潰して完全一致に一本化したのは、この曖昧さが実装ごとのばらつきを生んだため。
+
+:::info 「完全一致」と言うときの2つの意味
+仕様間で「完全一致」の語が指す範囲が違う。RFC 6749 §3.1.2.3 2文目 / OIDC Core / RFC 9700 はいずれも **RFC 3986 §6.2.1 の Simple String Comparison** を指しており、この点では同じ。違うのは**その規範がいつ効くか**（登録の形に依存するか、無条件か）。
+:::
 
 #### クエリパラメータ
 
@@ -427,15 +456,23 @@ OIDC では**完全一致**が要求される。
 
 ---
 
-### RFC 9700（OAuth 2.0 Security BCP, 2024年）
+### RFC 9700（OAuth 2.0 Security BCP, 2025年1月）
 
-セキュリティベストプラクティス。**最も厳格な推奨事項**を提示。
+セキュリティベストプラクティス。**BCP 240** として発行され、RFC 6749 / 6750 / 6819 を正式に更新する位置づけ。
 
 #### 完全一致の強制
 
-> Authorization servers MUST compare URIs using **exact string matching** as per Section 6.2.1 of [RFC3986] (Simple String Comparison).
+Section 2.1:
 
-Simple String Comparison = バイト単位での完全一致。
+> When comparing client redirection URIs against pre-registered URIs, authorization servers **MUST utilize exact string matching except for port numbers in `localhost` redirection URIs of native apps**.
+
+RFC 6749 §3.1.2.3 が認めていた「RFC 3986 §6 で定義された比較」という幅を、**§6.2.1 の Simple String Comparison だけに絞った**のがこの規定。バイト単位での完全一致になる。
+
+例外は1つだけで、native app の `localhost` リダイレクト URI のポート番号。
+
+> The only exception is native apps using a `localhost` URI: In this case, the authorization server MUST allow variable port numbers as described in Section 7.3 of [RFC8252].
+
+つまり RFC 8252 §7.3 のポート可変は、完全一致の要求と両立する。
 
 #### パターンマッチングの禁止
 
@@ -465,14 +502,18 @@ Simple String Comparison = バイト単位での完全一致。
 
 パストラバーサルやオープンリダイレクタの脆弱性と組み合わせて攻撃される。
 
-#### localhost の禁止
+#### ホスト名に localhost を使うことの是非
 
-> Clients **SHOULD NOT** use `localhost` as the hostname in loopback redirect URIs.
+これは RFC 9700 ではなく **RFC 8252 §7.3** の推奨事項。RFC 9700 §2.1 はむしろ `localhost` を例外として認めている（上記）ため、混同しないこと。
 
-理由：DNS リバインディング攻撃のリスク。
+RFC 8252 §7.3:
+
+> While redirect URIs using localhost (i.e., `"http://localhost:{port}/{path}"`) function similarly to loopback IP redirects described in Section 7.3, the use of localhost is **NOT RECOMMENDED**.
+
+理由は、ループバック以外のネットワークインターフェースで待ち受けてしまう事故を避けられること、クライアント側ファイアウォールや名前解決の設定ミスの影響を受けにくいこと。
 
 ```
-❌ http://localhost:8080/callback
+△ http://localhost:8080/callback      （NOT RECOMMENDED）
 ✅ http://127.0.0.1:8080/callback
 ✅ http://[::1]:8080/callback
 ```
@@ -541,7 +582,8 @@ FAPI 2.0 + PAR:
 
 | 仕様 | 一致方式 | クエリパラメータ | ポート | ワイルドカード |
 |------|----------|-----------------|--------|---------------|
-| RFC 6749 | 部分一致可 | 追加許可 | 固定 | 実装依存 |
+| RFC 6749（URI 全体を登録）| 完全一致（§6.2.1）| 登録済みのみ | 固定 | 実装依存 |
+| RFC 6749（一部のみ登録）| RFC 3986 §6 の範囲 | 追加許可 | 固定 | 実装依存 |
 | OIDC Core | 完全一致 | 登録済みのみ | 固定 | 禁止 |
 | RFC 8252 | 完全一致 | 固定 | Loopback は動的許可 | 禁止 |
 | RFC 9700 | 完全一致 | 固定 | Loopback は動的許可 | 禁止 |
@@ -557,6 +599,8 @@ FAPI 2.0 + PAR:
 | `https://app.example.com/cb` | `https://app.example.com/cb/` | ⚠️ | ❌ | ❌ |
 | `https://app.example.com/` | `https://app.example.com/cb` | ⚠️ | ❌ | ❌ |
 | `http://127.0.0.1/cb` | `http://127.0.0.1:8080/cb` | ❌ | ❌ | ❌ |
+
+RFC 6749 の欄が2通りあるのは、§3.1.2.3 の規範が登録の形で分かれるため（第2部の「照合方法」を参照）。最終行のポート差は、**native app に限り** RFC 8252 §7.3 / RFC 9700 §2.1 で許容される。
 | `http://127.0.0.1/cb` (Native) | `http://127.0.0.1:8080/cb` | ✅* | ✅* | N/A |
 
 *RFC 8252 に従う場合
