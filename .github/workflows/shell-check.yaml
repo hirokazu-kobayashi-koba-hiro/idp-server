@@ -1,0 +1,41 @@
+name: Shell check
+
+# シェルスクリプトの shebang を検査する。
+#   - zsh は Linux コンテナや CI イメージに入っていないことが多く、その環境で実行できない
+#   - 既存の shebang 分布は bash が大多数のため、bash に統一する
+on:
+  pull_request:
+    paths:
+      - '**/*.sh'
+      - '.github/workflows/shell-check.yaml'
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  shebang:
+    name: Reject zsh shebang
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check shebang
+        run: |
+          violations=""
+          while IFS= read -r file; do
+            case "$(head -n 1 "$file")" in
+              *zsh*) violations="${violations}  ${file}"$'\n' ;;
+            esac
+          done < <(git ls-files '*.sh')
+
+          if [ -n "$violations" ]; then
+            echo "::error::zsh shebang is not allowed. Use '#!/bin/bash' instead."
+            printf '%s' "$violations"
+            exit 1
+          fi
+          echo "OK: no zsh shebang"
