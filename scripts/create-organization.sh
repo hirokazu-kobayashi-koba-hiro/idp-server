@@ -96,29 +96,29 @@ echo "${GREEN}✅ Access token obtained${NC}"
 echo
 
 # Prompt for organization details
-read -p "Organization Name [Test Organization]: " org_name
+read -r -p "Organization Name [Test Organization]: " org_name
 org_name=${org_name:-Test Organization}
 
-read -p "Tenant Name [Test Organizer Tenant]: " tenant_name
+read -r -p "Tenant Name [Test Organizer Tenant]: " tenant_name
 tenant_name=${tenant_name:-Test Organizer Tenant}
 
-read -p "Admin Email [admin@test-org.com]: " admin_email
+read -r -p "Admin Email [admin@test-org.com]: " admin_email
 admin_email=${admin_email:-admin@test-org.com}
 
-read -p "Admin Username [org.admin]: " admin_username
+read -r -p "Admin Username [org.admin]: " admin_username
 admin_username=${admin_username:-org.admin}
 
-read -s -p "Admin Password [TestOrgPassword123!]: " admin_password
+read -r -s -p "Admin Password [TestOrgPassword123!]: " admin_password
 admin_password=${admin_password:-TestOrgPassword123!}
 echo
 
-read -p "Client Name [Test Organization Client]: " client_name
+read -r -p "Client Name [Test Organization Client]: " client_name
 client_name=${client_name:-Test Organization Client}
 
-read -p "Redirect URI [http://localhost:8081/callback]: " redirect_uri
+read -r -p "Redirect URI [http://localhost:8081/callback]: " redirect_uri
 redirect_uri=${redirect_uri:-http://localhost:8081/callback}
 
-read -p "Domain [http://localhost:8080]: " domain
+read -r -p "Domain [http://localhost:8080]: " domain
 domain=${domain:-http://localhost:8080}
 
 echo
@@ -296,7 +296,7 @@ echo
 
 # Confirm execution
 echo -n "${YELLOW}Execute organization initialization? (y/N): ${NC}"
-read confirm
+read -r confirm
 if [[ ! $confirm =~ ^[Yy]$ ]]; then
   echo "${RED}❌ Cancelled${NC}"
   exit 0
