@@ -409,44 +409,28 @@ paths:
       parameters:
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/Offset'
-      - name: transaction_id
-        in: query
-        required: false
-        schema:
-          type: string
-          format: uuid
-        description: 認証トランザクションIDでフィルタリング
-      - name: interaction_type
+      - name: type
         in: query
         required: false
         schema:
           type: string
         description: インタラクションタイプでフィルタリング
-      - name: status
-        in: query
-        required: false
-        schema:
-          type: string
-          enum:
-          - pending
-          - completed
-          - failed
-          - expired
-        description: ステータスでフィルタリング
-      - name: created_at_from
+      - name: from
         in: query
         required: false
         schema:
           type: string
           format: date-time
-        description: 作成日時の範囲指定開始
-      - name: created_at_to
+          example: "2025-07-01T00:00:00"
+        description: 作成日時の範囲指定開始（ISO-8601形式）。未指定時は 7 日前
+      - name: to
         in: query
         required: false
         schema:
           type: string
           format: date-time
-        description: 作成日時の範囲指定終了
+          example: "2025-07-15T23:59:59"
+        description: 作成日時の範囲指定終了（ISO-8601形式）。未指定時は 1 日後
       responses:
         '200':
           description: 認証インタラクション一覧取得成功
@@ -472,6 +456,12 @@ paths:
                     type: integer
                     description: 取得開始位置
                     example: 0
+        '400':
+          description: クエリパラメータが不正（from / to が ISO-8601 形式でない場合など）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -630,6 +620,12 @@ paths:
                     type: integer
                     description: 取得開始位置
                     example: 0
+        '400':
+          description: クエリパラメータが不正（id / authorization_id / device_id が UUID 形式でない、from / to が ISO-8601 形式でない場合など）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
