@@ -67,10 +67,6 @@ public class MysqlExecutor implements AuthenticationInteractionQuerySqlExecutor 
       params.add(queries.type());
     }
 
-    sql.append(" LIMIT ? OFFSET ?");
-    params.add(queries.limit());
-    params.add(queries.offset());
-
     return sqlExecutor.selectOne(sql.toString(), params);
   }
 
@@ -83,7 +79,7 @@ public class MysqlExecutor implements AuthenticationInteractionQuerySqlExecutor 
             """
             SELECT
             authentication_transaction_id,
-            type,
+            interaction_type,
             payload
             FROM authentication_interactions
             """);
