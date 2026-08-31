@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 # Organization Initialization Script
 # This script creates a new organization with tenant, admin user, and client configuration
 
@@ -26,11 +26,11 @@ mkdir -p "$TEMP_DIR"
 set -a; [ -f "$PROJECT_ROOT/.env" ] && source "$PROJECT_ROOT/.env"; set +a
 
 # Color codes for output
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+GREEN=$'\033[0;32m'
+BLUE=$'\033[0;34m'
+YELLOW=$'\033[1;33m'
+RED=$'\033[0;31m'
+NC=$'\033[0m' # No Color
 
 echo "${BLUE}=== Organization Initialization ===${NC}"
 echo
@@ -96,29 +96,29 @@ echo "${GREEN}✅ Access token obtained${NC}"
 echo
 
 # Prompt for organization details
-read "org_name?Organization Name [Test Organization]: "
+read -r -p "Organization Name [Test Organization]: " org_name
 org_name=${org_name:-Test Organization}
 
-read "tenant_name?Tenant Name [Test Organizer Tenant]: "
+read -r -p "Tenant Name [Test Organizer Tenant]: " tenant_name
 tenant_name=${tenant_name:-Test Organizer Tenant}
 
-read "admin_email?Admin Email [admin@test-org.com]: "
+read -r -p "Admin Email [admin@test-org.com]: " admin_email
 admin_email=${admin_email:-admin@test-org.com}
 
-read "admin_username?Admin Username [org.admin]: "
+read -r -p "Admin Username [org.admin]: " admin_username
 admin_username=${admin_username:-org.admin}
 
-read -s "admin_password?Admin Password [TestOrgPassword123!]: "
+read -r -s -p "Admin Password [TestOrgPassword123!]: " admin_password
 admin_password=${admin_password:-TestOrgPassword123!}
 echo
 
-read "client_name?Client Name [Test Organization Client]: "
+read -r -p "Client Name [Test Organization Client]: " client_name
 client_name=${client_name:-Test Organization Client}
 
-read "redirect_uri?Redirect URI [http://localhost:8081/callback]: "
+read -r -p "Redirect URI [http://localhost:8081/callback]: " redirect_uri
 redirect_uri=${redirect_uri:-http://localhost:8081/callback}
 
-read "domain?Domain [http://localhost:8080]: "
+read -r -p "Domain [http://localhost:8080]: " domain
 domain=${domain:-http://localhost:8080}
 
 echo
@@ -296,7 +296,7 @@ echo
 
 # Confirm execution
 echo -n "${YELLOW}Execute organization initialization? (y/N): ${NC}"
-read confirm
+read -r confirm
 if [[ ! $confirm =~ ^[Yy]$ ]]; then
   echo "${RED}❌ Cancelled${NC}"
   exit 0

@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 
 #admin
 curl -X POST "${IDP_SERVER_DOMAIN}v1/admin/operations/delete-expired-data" \

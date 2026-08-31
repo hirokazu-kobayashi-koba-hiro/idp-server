@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 # read .env
 set -a; [ -f .env ] && source .env; set +a
 

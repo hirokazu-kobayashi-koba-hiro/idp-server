@@ -83,8 +83,8 @@ Adminテナントを構築します。
 
 **setupスクリプト**:
 
-```txt
-#!/bin/zsh
+```bash
+#!/bin/bash
 # read .env
 set -a; [ -f .env ] && source .env; set +a
 
