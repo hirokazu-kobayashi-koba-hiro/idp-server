@@ -543,37 +543,68 @@ paths:
       parameters:
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/Offset'
-      - name: status
+      - name: id
         in: query
         required: false
         schema:
           type: string
-          enum:
-          - pending
-          - completed
-          - failed
-          - expired
-        description: トランザクションステータスでフィルタリング
+          format: uuid
+        description: 認証トランザクションIDでフィルタリング
+      - name: flow
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 認証フロー種別でフィルタリング
+      - name: authorization_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: 認可リクエストIDでフィルタリング
       - name: client_id
         in: query
         required: false
         schema:
           type: string
         description: クライアントIDでフィルタリング
-      - name: created_at_from
+      - name: device_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: 認証デバイスIDでフィルタリング
+      - name: from
         in: query
         required: false
         schema:
           type: string
           format: date-time
-        description: 作成日時の範囲指定開始
-      - name: created_at_to
+          example: "2025-07-01T00:00:00"
+        description: 作成日時の範囲指定開始（ISO-8601形式）
+      - name: to
         in: query
         required: false
         schema:
           type: string
           format: date-time
-        description: 作成日時の範囲指定終了
+          example: "2025-07-15T23:59:59"
+        description: 作成日時の範囲指定終了（ISO-8601形式）
+      - name: exclude_expired
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+        description: 有効期限切れを除外するか
+      - name: attributes.key
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 属性情報のオブジェクトのkeyに対する検索（keyは具体的な値に変更が必要）
       responses:
         '200':
           description: 認証トランザクション一覧取得成功
