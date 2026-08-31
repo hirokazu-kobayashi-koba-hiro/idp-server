@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 
 echo "🔐 Generating secrets and configuration..."
 
