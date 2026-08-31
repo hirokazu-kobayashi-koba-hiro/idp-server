@@ -184,8 +184,11 @@ describe("authentication transaction id filter", () => {
     });
     console.log("device list by id+other device_id:", otherDevice.status, JSON.stringify(otherDevice.data));
 
+    // パスのデバイスが勝ち、クエリの device_id は見られない。
     expect(otherDevice.status).toBe(200);
     expect(otherDevice.data.list).toHaveLength(otherDevice.data.total_count);
+    expect(otherDevice.data.list).toHaveLength(1);
+    expect(otherDevice.data.list[0].id).toBe(transaction.id);
   });
 
   it("device transaction list accepts exclude_expired", async () => {
