@@ -93,9 +93,18 @@ public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
    * <p>RFC 8252 Section 7.3: For native apps using loopback redirect URIs (localhost/127.0.0.1),
    * the port can be dynamic and should be ignored during comparison.
    *
+   * <p>RFC 9700 Section 2.1 narrows the above: authorization servers MUST use exact string
+   * matching, with the loopback port the only exception. Section 4.1.3 gives the reason — pattern
+   * matching is what implementations get wrong. That rule applies when the tenant sets {@code
+   * redirect_uri_exact_match_required}; without it this stays on RFC 6749's wider comparison, which
+   * also accepts RFC 3986 Section 6.2.2 syntax-based normalization (scheme/host case, default port)
+   * and, because the normalized comparison never looks at the query, a registered URI with a query
+   * appended. (#1835)
+   *
    * @param context
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2.3">3.1.2.3. Dynamic
    *     Configuration</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9700#section-2.1">RFC 9700 Section 2.1</a>
    * @see <a href="https://www.rfc-editor.org/rfc/rfc8252#section-7.3">RFC 8252 Section 7.3</a>
    * @see <a href="https://www.rfc-editor.org/rfc/rfc3986.html">rfc3986</a>
    */
@@ -110,6 +119,19 @@ public class OAuth2RequestVerifier implements AuthorizationRequestVerifier {
             "invalid_request",
             String.format(
                 "authorization request redirect_uri does not match registered redirect uris (%s)",
+                redirectUri),
+            context.tenant());
+      }
+      return;
+    }
+
+    // RFC 9700 Section 2.1: exact string matching, once the tenant has opted in
+    if (context.serverConfiguration().isRedirectUriExactMatchRequired()) {
+      if (!registeredRedirectUris.contains(redirectUri)) {
+        throw new OAuthBadRequestException(
+            "invalid_request",
+            String.format(
+                "redirect_uri does not match any registered redirect_uri, exact string matching failed (%s)",
                 redirectUri),
             context.tenant());
       }

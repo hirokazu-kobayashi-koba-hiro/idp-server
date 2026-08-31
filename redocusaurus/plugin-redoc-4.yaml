@@ -760,6 +760,27 @@ components:
               type: integer
               default: 600
               description: 認証コードの有効期間（秒）。
+            default_resource_indicator:
+              type: string
+              format: uri
+              description: >-
+                スコープがどのリソースも指さないときに、アクセストークンの aud に入れる リソース識別子。RFC 9068 は aud
+                の省略を許さないため、未設定の場合は issuer を用いる。
+            scope_resource_mapping:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+              description: >-
+                リソース識別子と、そのリソースに属するスコープの対応。付与されたスコープから アクセストークンの aud を決定する。キーは絶対
+                URI（フラグメント不可、RFC 8707 §2）であり、満たさない値は無視される。複数のリソースにまたがる要求は
+                invalid_scope で拒否される。
+              example:
+                https://api.example.com:
+                  - account
+                https://admin.example.com:
+                  - management
             token_signed_key_id:
               type: string
               description: アクセストークンの署名に使用するキーID。
@@ -790,6 +811,22 @@ components:
               type: boolean
               default: false
               description: IDトークンクレームの厳格な検証を強制する。
+            redirect_uri_exact_match_required:
+              type: boolean
+              default: false
+              description: |
+                redirect_uri を RFC 9700 §2.1 の exact string matching で照合する。
+
+                既定（false）では OAuth 2.0 プロファイルのみ RFC 3986 §6.2.2 の
+                構文ベース正規化も許容するため、scheme / host の大文字小文字、
+                既定ポートの明示、クエリの付加が通ります。OIDC / FAPI は既定でも完全一致です。
+
+                true にすると全プロファイルで完全一致に揃います。
+                native app の loopback リダイレクト URI のポート無視
+                （RFC 8252 §7.3）は true でも維持されます。
+
+                照合失敗は RFC 6749 §3.1.2.4 に従いリダイレクトされないため、
+                有効化前に既存クライアントの redirect_uri を確認してください。
             default_max_age:
               type: integer
               default: 86400
@@ -1072,6 +1109,53 @@ components:
           type: string
           default: /auth-views/signin/index.html
           description: カスタムサインインページのパス
+        variant_param:
+          type: string
+          default: view_version
+          description: |
+            バリアント名を運ぶカスタムパラメータの名前。
+
+            OAuth/OIDC の既知パラメータ名（display / prompt / ui_locales 等）を指定すると
+            カスタムパラメータとして扱われず、バリアントが一切選択されなくなります。
+          example: view_version
+        variants:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/UIViewVariant'
+          description: |
+            名前付きバリアント。カナリアリリースで、既定の画面と並べて別の画面を
+            リクエスト単位で出し分けるために使います。
+
+            宣言されていない名前を受け取った場合は既定の画面に落ちます。
+          example:
+            v2:
+              base_url: https://auth-next.example.com
+              signin_page: /signin
+              signup_page: /signup
+    UIViewVariant:
+      type: object
+      description: |
+        1つのバリアントが差し替える項目。宣言したものだけが既定を上書きします。
+
+        base_url とパスは常に同じ側から解決されます。パスはそれを配信している
+        デプロイでしか意味を持たないため、宣言していないページは既定側
+        （既定の base_url + 既定のパス）に落ちます。ページを1つも宣言していない
+        バリアントだけは「オリジンの差し替え」とみなされ、既定のパスを引き継ぎます。
+
+        別オリジンに置く場合は cors_config.allow_origins への追加も必要です。
+      properties:
+        base_url:
+          type: string
+          description: このバリアントの画面配信元。未設定時は既定の base_url
+          example: https://auth-next.example.com
+        signup_page:
+          type: string
+          description: このバリアントのサインアップページのパス
+          example: /signup
+        signin_page:
+          type: string
+          description: このバリアントのサインインページのパス
+          example: /signin
     CorsConfiguration:
       type: object
       properties:
