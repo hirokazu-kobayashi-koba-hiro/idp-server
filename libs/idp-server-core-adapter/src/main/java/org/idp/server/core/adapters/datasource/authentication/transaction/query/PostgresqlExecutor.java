@@ -91,8 +91,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     }
 
     if (queries.hasId()) {
-      sql.append(" AND id = ?");
-      params.add(queries.id());
+      sql.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
     }
 
     if (queries.hasFlow()) {
@@ -158,8 +158,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     }
 
     if (queries.hasId()) {
-      sql.append(" AND id = ?");
-      params.add(queries.id());
+      sql.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
     }
 
     if (queries.hasFlow()) {
@@ -219,8 +219,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     }
 
     if (queries.hasId()) {
-      sql.append(" AND id = ?");
-      params.add(queries.id());
+      sql.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
     }
 
     if (queries.hasFlow()) {
@@ -280,8 +280,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     }
 
     if (queries.hasId()) {
-      sql.append(" AND id = ?");
-      params.add(queries.id());
+      sql.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
     }
 
     if (queries.hasFlow()) {
