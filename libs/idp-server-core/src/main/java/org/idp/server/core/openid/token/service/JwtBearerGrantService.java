@@ -48,6 +48,7 @@ import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.core.openid.token.validator.JwtBearerGrantValidator;
 import org.idp.server.core.openid.token.verifier.JwtBearerGrantVerifier;
+import org.idp.server.core.openid.token.verifier.ScopeResourceGrantVerifier;
 import org.idp.server.platform.http.HttpRequestExecutor;
 import org.idp.server.platform.http.HttpRequestResult;
 import org.idp.server.platform.jose.JoseInvalidException;
@@ -129,6 +130,9 @@ public class JwtBearerGrantService implements OAuthTokenCreationService, Refresh
       Set<String> filteredScopes =
           clientConfiguration.filteredScope(context.scopes().toStringValues());
       Scopes scopes = new Scopes(filteredScopes);
+
+      // This grant carries its own scope, so the token request is where it is decided.
+      new ScopeResourceGrantVerifier(scopes, serverConfiguration.scopeResourceMapping()).verify();
 
       CustomProperties customProperties = context.customProperties();
 

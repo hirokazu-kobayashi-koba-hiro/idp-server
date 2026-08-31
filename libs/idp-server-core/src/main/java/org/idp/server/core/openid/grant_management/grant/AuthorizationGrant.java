@@ -101,6 +101,27 @@ public class AuthorizationGrant {
     return new Subject(user.sub());
   }
 
+  /**
+   * The subject to place in an issued token.
+   *
+   * <p>RFC 9068 requires the claim on every JWT access token, and where no resource owner is
+   * involved — the client credentials grant — has it identify the client application instead. The
+   * grant carries no user in that case, so the client identifier stands in.
+   *
+   * <p>{@link #subject()} keeps returning the resource owner alone, because that is what user
+   * lookups resolve against: naming the client there would send them looking for a user that does
+   * not exist.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9068.html#section-2.2">RFC 9068 Section 2.2</a>
+   */
+  public Subject tokenSubject() {
+    Subject subject = subject();
+    if (subject.exists()) {
+      return subject;
+    }
+    return new Subject(requestedClientId.value());
+  }
+
   public RequestedClientId requestedClientId() {
     return requestedClientId;
   }

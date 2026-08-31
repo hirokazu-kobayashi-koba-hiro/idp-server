@@ -25,6 +25,7 @@ import org.idp.server.core.openid.oauth.verifier.extension.OAuthAuthorizationDet
 import org.idp.server.core.openid.oauth.verifier.extension.PushedAuthorizationRequestVerifier;
 import org.idp.server.core.openid.oauth.verifier.extension.RequestObjectVerifier;
 import org.idp.server.core.openid.oauth.verifier.extension.RequirePushedAuthorizationRequestVerifier;
+import org.idp.server.core.openid.oauth.verifier.extension.ScopeResourceVerifier;
 import org.idp.server.core.openid.plugin.request.AuthorizationRequestExtensionVerifierPluginLoader;
 import org.idp.server.core.openid.plugin.request.AuthorizationRequestVerifierPluginLoader;
 import org.idp.server.platform.exception.UnSupportedException;
@@ -52,6 +53,7 @@ public class OAuthRequestVerifier {
     extensionVerifiers.add(new RequestObjectVerifier());
     extensionVerifiers.add(new OAuthAuthorizationDetailsVerifier());
     extensionVerifiers.add(new JarmVerifier());
+    extensionVerifiers.add(new ScopeResourceVerifier());
   }
 
   public void verify(OAuthRequestContext context) {

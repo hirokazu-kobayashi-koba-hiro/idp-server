@@ -700,6 +700,29 @@ components:
               type: integer
               default: 600
               description: 認証コードの有効期間（秒）。
+            default_resource_indicator:
+              type: string
+              format: uri
+              description: >-
+                スコープがどのリソースも指さないときに、アクセストークンの aud に入れる
+                リソース識別子。RFC 9068 は aud の省略を許さないため、未設定の場合は
+                issuer を用いる。
+            scope_resource_mapping:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+              description: >-
+                リソース識別子と、そのリソースに属するスコープの対応。付与されたスコープから
+                アクセストークンの aud を決定する。キーは絶対 URI（フラグメント不可、RFC 8707
+                §2）であり、満たさない値は無視される。複数のリソースにまたがる要求は
+                invalid_scope で拒否される。
+              example:
+                https://api.example.com:
+                - account
+                https://admin.example.com:
+                - management
             token_signed_key_id:
               type: string
               description: アクセストークンの署名に使用するキーID。

@@ -363,6 +363,18 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return extension.tokenSignedKeyId();
   }
 
+  public String defaultResourceIndicator() {
+    return extension.defaultResourceIndicator();
+  }
+
+  public boolean hasDefaultResourceIndicator() {
+    return extension.hasDefaultResourceIndicator();
+  }
+
+  public Map<String, List<String>> scopeResourceMapping() {
+    return extension.scopeResourceMapping();
+  }
+
   public String idTokenSignedKeyId() {
     return extension.idTokenSignedKeyId();
   }

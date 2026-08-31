@@ -31,6 +31,21 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
   String accessTokenType = "opaque";
 
   int authorizationCodeValidDuration = 600;
+
+  /**
+   * The audience of an access token when the granted scopes point at no configured resource.
+   *
+   * <p>RFC 9068 requires an audience on every JWT access token, so this is what a token carries
+   * when {@code scope_resource_mapping} matches nothing. Left empty, the issuer stands in, which
+   * keeps tokens conformant on a deployment that has not modelled its resources yet.
+   */
+  String defaultResourceIndicator = "";
+
+  /**
+   * Resource indicator to the scopes that belong to it, e.g. {@code {"https://api": ["account"]}}.
+   */
+  Map<String, List<String>> scopeResourceMapping = new HashMap<>();
+
   String tokenSignedKeyId = "";
   String idTokenSignedKeyId = "";
   long accessTokenDuration = 1800;
@@ -82,6 +97,28 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   public int authorizationCodeValidDuration() {
     return authorizationCodeValidDuration;
+  }
+
+  public String defaultResourceIndicator() {
+    return defaultResourceIndicator;
+  }
+
+  public boolean hasDefaultResourceIndicator() {
+    return defaultResourceIndicator != null && !defaultResourceIndicator.isEmpty();
+  }
+
+  /**
+   * The scopes that belong to each resource.
+   *
+   * <p>Never null: callers filter this map rather than check it, and a stored configuration
+   * carrying an explicit null would otherwise fail every authorization request for the tenant
+   * rather than behave as though no resources were modelled.
+   */
+  public Map<String, List<String>> scopeResourceMapping() {
+    if (scopeResourceMapping == null) {
+      return Map.of();
+    }
+    return scopeResourceMapping;
   }
 
   public String tokenSignedKeyId() {
@@ -226,6 +263,12 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     Map<String, Object> map = new HashMap<>();
     map.put("access_token_type", accessTokenType);
     map.put("authorization_code_valid_duration", authorizationCodeValidDuration);
+    if (hasDefaultResourceIndicator()) {
+      map.put("default_resource_indicator", defaultResourceIndicator);
+    }
+    if (scopeResourceMapping != null && !scopeResourceMapping.isEmpty()) {
+      map.put("scope_resource_mapping", scopeResourceMapping);
+    }
     map.put("token_signed_key_id", tokenSignedKeyId);
     map.put("id_token_signed_key_id", idTokenSignedKeyId);
     map.put("access_token_duration", accessTokenDuration);

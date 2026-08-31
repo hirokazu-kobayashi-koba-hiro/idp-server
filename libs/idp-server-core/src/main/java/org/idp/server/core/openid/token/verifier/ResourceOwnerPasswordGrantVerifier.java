@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.token.verifier;
 
+import java.util.List;
+import java.util.Map;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
@@ -24,16 +26,20 @@ public class ResourceOwnerPasswordGrantVerifier {
 
   User user;
   Scopes scopes;
+  Map<String, List<String>> scopeResourceMapping;
 
-  public ResourceOwnerPasswordGrantVerifier(User user, Scopes scopes) {
+  public ResourceOwnerPasswordGrantVerifier(
+      User user, Scopes scopes, Map<String, List<String>> scopeResourceMapping) {
     this.user = user;
     this.scopes = scopes;
+    this.scopeResourceMapping = scopeResourceMapping;
   }
 
   public void verify() {
     throwExceptionIfUnspecifiedUser();
     throwExceptionIfInactiveUser();
     throwExceptionIfInvalidScope();
+    new ScopeResourceGrantVerifier(scopes, scopeResourceMapping).verify();
   }
 
   void throwExceptionIfUnspecifiedUser() {

@@ -16,19 +16,25 @@
 
 package org.idp.server.core.openid.token.verifier;
 
+import java.util.List;
+import java.util.Map;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 
 public class ClientCredentialsGrantVerifier {
 
   Scopes scopes;
+  Map<String, List<String>> scopeResourceMapping;
 
-  public ClientCredentialsGrantVerifier(Scopes scopes) {
+  public ClientCredentialsGrantVerifier(
+      Scopes scopes, Map<String, List<String>> scopeResourceMapping) {
     this.scopes = scopes;
+    this.scopeResourceMapping = scopeResourceMapping;
   }
 
   public void verify() {
     throwExceptionIfInvalidScope();
+    new ScopeResourceGrantVerifier(scopes, scopeResourceMapping).verify();
   }
 
   void throwExceptionIfInvalidScope() {

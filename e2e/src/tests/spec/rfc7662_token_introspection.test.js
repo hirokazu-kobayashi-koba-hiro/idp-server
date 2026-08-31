@@ -7,7 +7,7 @@ import {
   clientSecretPostClient,
   privateKeyJwtClient,
   publicClient,
-  serverConfig
+  serverConfig,
 } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
 import { createBasicAuthHeader } from "../../lib/util";
@@ -17,9 +17,7 @@ import { postWithJson } from "../../lib/http";
 
 describe("OAuth 2.0 Token Introspection", () => {
   describe("success pattern", () => {
-
     it("client_secret_post ", async () => {
-
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
@@ -70,7 +68,6 @@ describe("OAuth 2.0 Token Introspection", () => {
     });
 
     it("client_secret_basic ", async () => {
-
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretBasicClient.clientId,
@@ -90,7 +87,7 @@ describe("OAuth 2.0 Token Introspection", () => {
         basicAuth: createBasicAuthHeader({
           username: clientSecretBasicClient.clientId,
           password: clientSecretBasicClient.clientSecret,
-        })
+        }),
       });
       console.log(tokenResponse.data);
       expect(tokenResponse.status).toBe(200);
@@ -102,7 +99,7 @@ describe("OAuth 2.0 Token Introspection", () => {
         basicAuth: createBasicAuthHeader({
           username: clientSecretBasicClient.clientId,
           password: clientSecretBasicClient.clientSecret,
-        })
+        }),
       });
       console.log(introspectionResponse.data);
       expect(introspectionResponse.status).toBe(200);
@@ -140,7 +137,9 @@ describe("OAuth 2.0 Token Introspection", () => {
       expect(tokenResponse.status).toBe(200);
       expect(tokenResponse.data).toHaveProperty("id_token");
 
-      const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+      const jwksResponse = await getJwks({
+        endpoint: serverConfig.jwksEndpoint,
+      });
       console.log(jwksResponse.data);
       expect(jwksResponse.status).toBe(200);
 
@@ -194,7 +193,9 @@ describe("OAuth 2.0 Token Introspection", () => {
       expect(tokenResponse.status).toBe(200);
       expect(tokenResponse.data).toHaveProperty("id_token");
 
-      const jwksResponse = await getJwks({ endpoint: serverConfig.jwksEndpoint });
+      const jwksResponse = await getJwks({
+        endpoint: serverConfig.jwksEndpoint,
+      });
       console.log(jwksResponse.data);
       expect(jwksResponse.status).toBe(200);
 
@@ -219,7 +220,7 @@ describe("OAuth 2.0 Token Introspection", () => {
   });
 
   describe("2.1. Introspection Request", () => {
-    it("The client makes a request to the introspection endpoint by sending the following parameters using the \"application/x-www-form-urlencoded\" format - RFC 7662 Section 2.1", async () => {
+    it('The client makes a request to the introspection endpoint by sending the following parameters using the "application/x-www-form-urlencoded" format - RFC 7662 Section 2.1', async () => {
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
@@ -292,7 +293,10 @@ describe("OAuth 2.0 Token Introspection", () => {
       });
       console.log(JSON.stringify(introspectionResponse.data, null, 2));
       expect(introspectionResponse.status).toBe(400);
-      expect(introspectionResponse.data).toHaveProperty("error", "invalid_client");
+      expect(introspectionResponse.data).toHaveProperty(
+        "error",
+        "invalid_client"
+      );
     });
 
     it("does not fall back to a refresh-token lookup — a refresh token introspects as active:false, avoiding token type confusion (#1707)", async () => {
@@ -363,6 +367,41 @@ describe("OAuth 2.0 Token Introspection", () => {
       expect(introspectionResponse.data.token_type).toBe("Bearer");
     });
 
+    it("sub OPTIONAL. Subject of the token, as defined in JWT [RFC7519] Section 4.1.2. Usually a machine-readable identifier of the resource owner who authorized this token - RFC 7662 Section 2.2 (#1824)", async () => {
+      const introspectionResponse = await introspectActiveToken();
+      expect(typeof introspectionResponse.data.sub).toBe("string");
+      expect(introspectionResponse.data.sub.length).toBeGreaterThan(0);
+    });
+
+    it("sub reports the client where no resource owner authorized the token, matching what the JWT access token carries - RFC 7662 Section 2.2 / RFC 9068 Section 2.2 (#1824)", async () => {
+      // The same token read two ways has to say the same thing. RFC 9068 has sub name the client
+      // when no resource owner is involved, so introspection reporting nothing there would leave a
+      // resource server with two different answers about the same token.
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        scope: clientSecretPostClient.scope,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const introspectionResponse = await inspectToken({
+        endpoint: serverConfig.tokenIntrospectionEndpoint,
+        token: tokenResponse.data.access_token,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      expect(introspectionResponse.status).toBe(200);
+      expect(introspectionResponse.data.active).toBe(true);
+
+      expect(introspectionResponse.data.sub).toBe(
+        clientSecretPostClient.clientId
+      );
+      // username stays absent: there is no resource owner to name.
+      expect(introspectionResponse.data.username).toBeUndefined();
+    });
+
     it("username OPTIONAL. Human-readable identifier for the resource owner who authorized this token - RFC 7662 Section 2.2 (#1707)", async () => {
       const introspectionResponse = await introspectActiveToken();
       // The resource owner (ito.ichiro) has a preferred_username, so username is asserted
@@ -372,5 +411,4 @@ describe("OAuth 2.0 Token Introspection", () => {
       expect(introspectionResponse.data.username.length).toBeGreaterThan(0);
     });
   });
-
 });
