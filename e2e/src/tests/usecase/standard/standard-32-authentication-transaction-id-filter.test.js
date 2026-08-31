@@ -138,15 +138,54 @@ describe("authentication transaction id filter", () => {
     const transaction = await prepareTransaction();
     const accessToken = await requestAdminToken();
 
-    const response = await get({
-      url: `${serverConfig.authenticationEndpoint}?device_id=${serverConfig.ciba.authenticationDeviceId}`,
+    // device_id だけだと同一デバイスの過去分に埋もれて既定の limit から押し出されるため、
+    // id を併用して 1 件に固定したうえで device_id が絞り込みとして働くことを見る。
+    const matched = await get({
+      url: `${serverConfig.authenticationEndpoint}?id=${transaction.id}&device_id=${serverConfig.ciba.authenticationDeviceId}`,
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    console.log("tenant list by device_id:", response.status, JSON.stringify(response.data));
+    console.log("tenant list by id+device_id:", matched.status, JSON.stringify(matched.data));
 
-    expect(response.status).toBe(200);
-    expect(response.data.list.length).toBeGreaterThan(0);
-    expect(response.data.list.map((it) => it.id)).toContain(transaction.id);
+    expect(matched.status).toBe(200);
+    expect(matched.data.list).toHaveLength(1);
+    expect(matched.data.list[0].id).toBe(transaction.id);
+
+    const unmatched = await get({
+      url: `${serverConfig.authenticationEndpoint}?id=${transaction.id}&device_id=00000000-0000-4000-8000-000000000000`,
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    console.log("tenant list by id+other device_id:", unmatched.status, JSON.stringify(unmatched.data));
+
+    expect(unmatched.status).toBe(200);
+    expect(unmatched.data.list).toHaveLength(0);
+    expect(unmatched.data.total_count).toBe(0);
+  });
+
+  it("device transaction list keeps list and total_count consistent with device_id", async () => {
+    const transaction = await prepareTransaction();
+
+    // パスのデバイスに対する device_id クエリ。selectListByDeviceId は device_id を
+    // 見ないため、件数側だけが絞られて list と食い違わないことを確認する。
+    const sameDevice = await getAuthenticationDeviceAuthenticationTransaction({
+      endpoint: serverConfig.authenticationDeviceEndpoint,
+      deviceId: serverConfig.ciba.authenticationDeviceId,
+      params: { id: transaction.id, device_id: serverConfig.ciba.authenticationDeviceId },
+    });
+    console.log("device list by id+same device_id:", sameDevice.status, JSON.stringify(sameDevice.data));
+
+    expect(sameDevice.status).toBe(200);
+    expect(sameDevice.data.list).toHaveLength(sameDevice.data.total_count);
+    expect(sameDevice.data.list).toHaveLength(1);
+
+    const otherDevice = await getAuthenticationDeviceAuthenticationTransaction({
+      endpoint: serverConfig.authenticationDeviceEndpoint,
+      deviceId: serverConfig.ciba.authenticationDeviceId,
+      params: { id: transaction.id, device_id: "00000000-0000-4000-8000-000000000000" },
+    });
+    console.log("device list by id+other device_id:", otherDevice.status, JSON.stringify(otherDevice.data));
+
+    expect(otherDevice.status).toBe(200);
+    expect(otherDevice.data.list).toHaveLength(otherDevice.data.total_count);
   });
 
   it("device transaction list accepts exclude_expired", async () => {
