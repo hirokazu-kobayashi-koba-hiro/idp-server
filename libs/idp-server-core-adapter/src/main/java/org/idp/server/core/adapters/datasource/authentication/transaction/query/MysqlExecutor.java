@@ -177,11 +177,6 @@ public class MysqlExecutor implements AuthenticationTransactionQuerySqlExecutor 
       params.add(queries.clientId());
     }
 
-    if (queries.hasDeviceId()) {
-      sql.append(" AND authentication_device_id = ?");
-      params.add(queries.deviceId());
-    }
-
     if (queries.isExcludeExpired()) {
       sql.append(" AND expires_at > ?");
       params.add(SystemDateTime.now());

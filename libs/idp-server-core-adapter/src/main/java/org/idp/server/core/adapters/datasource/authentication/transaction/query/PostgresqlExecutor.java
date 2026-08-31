@@ -91,8 +91,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     }
 
     if (queries.hasId()) {
-      sql.append(" AND id = ?");
-      params.add(queries.id());
+      sql.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
     }
 
     if (queries.hasFlow()) {
@@ -158,8 +158,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     }
 
     if (queries.hasId()) {
-      sql.append(" AND id = ?");
-      params.add(queries.id());
+      sql.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
     }
 
     if (queries.hasFlow()) {
@@ -175,11 +175,6 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     if (queries.hasClientId()) {
       sql.append(" AND client_id = ?");
       params.add(queries.clientId());
-    }
-
-    if (queries.hasDeviceId()) {
-      sql.append(" AND authentication_device_id = ?::uuid");
-      params.add(queries.deviceIdAsUuid());
     }
 
     if (queries.isExcludeExpired()) {
@@ -219,8 +214,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     }
 
     if (queries.hasId()) {
-      sql.append(" AND id = ?");
-      params.add(queries.id());
+      sql.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
     }
 
     if (queries.hasFlow()) {
@@ -280,8 +275,8 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
     }
 
     if (queries.hasId()) {
-      sql.append(" AND id = ?");
-      params.add(queries.id());
+      sql.append(" AND id = ?::uuid");
+      params.add(queries.idAsUuid());
     }
 
     if (queries.hasFlow()) {

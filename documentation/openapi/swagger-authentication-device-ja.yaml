@@ -53,7 +53,6 @@ paths:
           name: flow
           schema:
             type: string
-            enum: [ciba, oauth, fido-uaf-registration, fido-uaf-deregistration]
           description: 認証フロー種別
         - in: query
           name: authorization_id

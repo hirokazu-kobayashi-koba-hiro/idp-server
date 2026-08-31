@@ -77,7 +77,7 @@ public class AuthenticationTransactionQueries implements UuidConvertable {
   }
 
   public UUID deviceIdAsUuid() {
-    return convertUuid(clientId());
+    return convertUuid(deviceId());
   }
 
   public boolean hasDeviceId() {
@@ -88,9 +88,9 @@ public class AuthenticationTransactionQueries implements UuidConvertable {
     return !attributes().isEmpty();
   }
 
+  /** 既定は true。exclude_expired が明示されたときだけ、その値に従う。 */
   public boolean isExcludeExpired() {
-    // default true
-    if (!values.containsKey("expires_at")) {
+    if (!values.containsKey("exclude_expired")) {
       return true;
     }
 
