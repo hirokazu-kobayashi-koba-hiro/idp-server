@@ -177,11 +177,6 @@ public class PostgresqlExecutor implements AuthenticationTransactionQuerySqlExec
       params.add(queries.clientId());
     }
 
-    if (queries.hasDeviceId()) {
-      sql.append(" AND authentication_device_id = ?::uuid");
-      params.add(queries.deviceIdAsUuid());
-    }
-
     if (queries.isExcludeExpired()) {
       sql.append(" AND expires_at > ?");
       params.add(SystemDateTime.now());
