@@ -6,7 +6,9 @@ name: Shell check
 on:
   pull_request:
     paths:
-      - '**/*.sh'
+      # '**/*.sh' はパターン中の '/' がリテラル要求になり、リポジトリ直下の
+      # setup.sh 等にマッチしない。全階層を対象にするため '**.sh' を使う。
+      - '**.sh'
       - '.github/workflows/shell-check.yaml'
   push:
     branches:
@@ -26,16 +28,18 @@ jobs:
 
       - name: Check shebang
         run: |
-          violations=""
+          found=0
           while IFS= read -r file; do
+            # shebang 行だけを見る。1行目に zsh の語が出るコメントは違反にしない
             case "$(head -n 1 "$file")" in
-              *zsh*) violations="${violations}  ${file}"$'\n' ;;
+              '#!'*zsh*)
+                echo "::error file=${file},line=1::zsh shebang is not allowed. Use '#!/bin/bash' instead."
+                found=1
+                ;;
             esac
           done < <(git ls-files '*.sh')
 
-          if [ -n "$violations" ]; then
-            echo "::error::zsh shebang is not allowed. Use '#!/bin/bash' instead."
-            printf '%s' "$violations"
+          if [ "$found" -ne 0 ]; then
             exit 1
           fi
           echo "OK: no zsh shebang"
