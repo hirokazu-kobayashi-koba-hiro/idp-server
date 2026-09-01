@@ -645,7 +645,10 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
             ...extra,
           });
           expect(response.status).toBe(302);
-          const { params } = convertNextAction(response.headers.location);
+          // サインイン画面以外へリダイレクトすると id が取れず、後段が
+          // /authorizations/null/... を叩いて原因の読みにくい失敗になる。ここで切る。
+          const { nextAction, params } = convertNextAction(response.headers.location);
+          expect(nextAction).toBe("goAuthentication");
           return params.get("id");
         };
         const authorizeWithSession = async (id) =>
