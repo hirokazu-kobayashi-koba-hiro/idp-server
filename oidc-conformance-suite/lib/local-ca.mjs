@@ -42,7 +42,18 @@ export function resolveLocalCaPath() {
   const mainCheckout = mainCheckoutDir(repoRoot);
   if (mainCheckout) candidates.push(path.join(mainCheckout, CERT_RELATIVE_PATH));
 
-  const found = candidates.find((p) => fs.existsSync(p));
+  // existsSync だけでは足りない。docker compose を worktree から起動すると、bind mount の
+  // ソースが無い場合に Docker が**同名のディレクトリ**を作ってしまう。それを拾うと
+  // readFileSync が EISDIR で落ち、原因が CA の探索だと分かりにくい。ファイルだけ採用する。
+  const isFile = (p) => {
+    try {
+      return fs.statSync(p).isFile();
+    } catch {
+      return false;
+    }
+  };
+
+  const found = candidates.find(isFile);
   if (found) return found;
 
   throw new Error(
@@ -50,6 +61,7 @@ export function resolveLocalCaPath() {
       candidates.map((p) => `  - ${p}`).join("\n") +
       "\n" +
       "  docker/nginx/certs/*.pem は mkcert が生成するもので gitignore されています。\n" +
+      "  同名のディレクトリがある場合は docker compose が作ったものなので消してください。\n" +
       "  ローカル環境を構築していない場合は README の手順を実行するか、\n" +
       "  IDP_ROOT_CA で明示的に指定してください。",
   );
