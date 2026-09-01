@@ -18,28 +18,56 @@ description: OIDF適合性テストの実行・結果分析・不合格項目の
 
 ## 概要
 
-OpenID Foundation (OIDF) が提供する適合性テストスイート (`https://www.certification.openid.net/`) の結果を分析し、不合格項目を修正するためのワークフロー。
+OpenID Foundation (OIDF) の適合性テストスイートを**ローカルで実行**し、不合格項目を分析・修正するためのワークフロー。`certification.openid.net` も ngrok も使わない。
 
-### 対応テストプラン
+実行の手順そのものは `oidc-conformance-suite/README.md`、落とし穴は `.claude/rules/oidc-conformance.md`
+に書いてある。**この skill は「結果をどう読み、どう直すか」**を扱う。
 
-| テストプラン | クライアント認証 | テスト数 | テスト設定ファイル |
-|-------------|----------------|---------|------------------|
-| FAPI 1.0 Advanced Final | `private_key_jwt` | ~63 | `config/examples/financial-grade/oidc-test/fapi/private_key_jwt.json` |
-| FAPI 1.0 Advanced Final | `tls_client_auth` | ~63 | `config/examples/financial-grade/oidc-test/fapi/tls_client_auth.json` |
-| FAPI-CIBA ID1 | `private_key_jwt` + poll | ~30 | `config/examples/financial-grade/oidc-test/fapi-ciba/private_key_jwt_poll.json` |
-| FAPI-CIBA ID1 | `tls_client_auth` + poll | ~30 | `config/examples/financial-grade/oidc-test/fapi-ciba/tls_client_auth_poll.json` |
+### 対応状況
+
+`run.sh` があるディレクトリが実行できるスイート。
+
+| スイート | テストプラン | モジュール | 状態 |
+|---|---|---|---|
+| `oidc-conformance-suite/fapi1-advanced/` | `fapi1-advanced-final-test-plan` | 63 | ✅ 実行できる |
+| `oidc-conformance-suite/fapi-ciba/` | `fapi-ciba-id1-test-plan` | 70 | ❌ デバイス承認の自動化が未実装 |
+| `oidc-conformance-suite/fapi2/` | `fapi2-security-profile-final-test-plan` | 72 | ❌ テナント設定が存在しない |
+| `oidc-conformance-suite/oidcc/` | `oidcc-test-plan` ほか | 55 / 38 | ❌ 設定とプランの対応づけが未決 |
+
+テスト設定 JSON は各テナント設定に付随する（`config/examples/<setup>/oidc-test/`）。
 
 ### テスト環境構成
 
 ```
-OIDF Conformance Suite (https://www.certification.openid.net/)
-    ↕ HTTPS (ngrok等でローカルを公開)
-ローカル idp-server
-    ├── api.local.test (通常エンドポイント - discoveryUrl)
-    └── mtls.api.local.test (mTLSエンドポイント - resourceUrl)
-        ↕
-Financial-gradeテナント (tenant_id: c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8)
+oidc-conformance-suite/fapi1-advanced/run.sh
+        ↓ ランナーをコンテナ(python:3.13-alpine)で起動
+conformance suite (docker / OIDF 公開イメージ)
+        ↓ PAR / token / userinfo は suite が直接叩く（mTLS バックチャネル）
+idp-server ── api.local.test / mtls.api.local.test
+        ↑
+        │ 認可エンドポイントだけはブラウザが要る。suite 内蔵の HtmlUnit は
+        │ Next.js の CSR を描画できないため、外部ブラウザ API 経由で肩代わりする
+        │
+Playwright ドライバ (oidc-conformance-suite/driver/、常駐)
+    ├── email OTP  … 管理 API から検証コードを取得
+    ├── FIDO2      … CDP の仮想オーセンティケータ
+    └── 同意       … callback へ遷移
+
+Financial-grade テナント (tenant_id: c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8)
 ```
+
+### 結果の読み方
+
+| 結果 | 意味 | 対応 |
+|---|---|---|
+| `PASSED` | 合格 | — |
+| `REVIEW` | エラーページのスクリーンショットを人が確認するテスト。**失敗ではない** | 通常は対応不要 |
+| `WARNING` | 仕様上の SHOULD 違反、または suite が知らないメタデータ | 個別判断 |
+| `FAILED` | 条件が失敗した | 下記の分析ワークフローへ |
+| `WAITING` のままタイムアウト | **ドライバ側の問題**であることが多い | ドライバのログと `.claude/rules/oidc-conformance.md` を見る |
+
+`FAILED` / タイムアウトを見たら、**まず idp-server の問題かドライバの問題かを切り分ける**。
+実績として、初回の通し実行で出た 7 件の異常のうち 5 件はドライバ側だった。
 
 ## 不合格テスト分析ワークフロー
 
@@ -173,21 +201,30 @@ OAuthRequestVerifier
 □ コミットメッセージに GAP-XXX を含める
 ```
 
-## テスト環境のセットアップ
+## テストの実行
 
-### 初回セットアップ
+手順の詳細は `oidc-conformance-suite/README.md`。ここは要点だけ。
 
 ```bash
-# 1. ローカル環境起動
+# 1. idp-server とテナント
 docker compose up -d
+cd config/examples/financial-grade && ./setup.sh
 
-# 2. financial-gradeテナント作成
-cd config/examples/financial-grade
-./setup.sh
+# 2. suite スタック
+docker compose -f oidc-conformance-suite/docker-compose.yaml up -d
 
-# 3. ディスカバリエンドポイント確認
-curl https://api.local.test/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/openid-configuration
+# 3. ブラウザ操作ドライバ（別ターミナルで常駐。1 プロセスだけ）
+cd oidc-conformance-suite/driver && npm install && node driver.mjs
+
+# 4. テスト
+export CONFORMANCE_SUITE_DIR=/path/to/conformance-suite
+./oidc-conformance-suite/fapi1-advanced/run.sh --rerun 1:2   # happy path 1 本
+./oidc-conformance-suite/fapi1-advanced/run.sh --rerun 1     # private_key_jwt 全部
+./oidc-conformance-suite/fapi1-advanced/run.sh               # 両方式
 ```
+
+**実行前に必ず `pgrep -f "[d]river.mjs"` でドライバが 1 つだけか確認する。**
+複数動いていると URL を取り合い、原因の分かりにくい失敗になる（`.claude/rules/oidc-conformance.md`）。
 
 ### コード変更後の反映
 
@@ -196,21 +233,26 @@ curl https://api.local.test/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/ope
 docker compose up -d --build idp-server-1 idp-server-2
 ```
 
-### OIDFテストスイートへのインポート
+### 結果の確認
 
-1. `https://www.certification.openid.net/` にアクセス
-2. テストプラン作成 → JSON設定ファイルをインポート
-3. テスト設定ファイル:
-   - FAPI Advanced: `config/examples/financial-grade/oidc-test/fapi/{private_key_jwt,tls_client_auth}.json`
-   - FAPI-CIBA: `config/examples/financial-grade/oidc-test/fapi-ciba/{private_key_jwt_poll,tls_client_auth_poll}.json`
-
-### FAPI-CIBAテスト時の追加操作
-
-CIBAテストではユーザーのデバイス認証承認が必要:
 ```bash
-cd config/examples/financial-grade
-./ciba-device-auth.sh
+# suite の UI（dev プロファイルなのでログイン不要）
+open https://localhost:8443/plans.html
 ```
+
+エクスポートは `oidc-conformance-suite/results/` に HTML / JSON / zip で出る。
+API から直接読むこともできる。
+
+```bash
+curl -sk https://localhost:8443/api/info/{testId}   # status / result
+curl -sk https://localhost:8443/api/log/{testId}    # 全条件のログ。失敗理由はここ
+```
+
+### FAPI-CIBA（未対応）
+
+CIBA はブラウザを使わないため現在のドライバでは動かせない。デバイス認証の承認を
+自動化する仕組みが別途要る。現状は `config/examples/financial-grade/ciba-device-auth.sh`
+を手で叩く運用。詳細は `oidc-conformance-suite/fapi-ciba/README.md`。
 
 ## よくある不合格パターンと対処法
 
@@ -309,10 +351,25 @@ fix: FAPI 1.0 Advanced OIDF適合性テスト不合格項目を修正 (GAP-016�
 
 ## トラブルシューティング
 
+前提の確認順序と、ドライバまわりの落とし穴は `.claude/rules/oidc-conformance.md` にまとめてある。
+ここは分析時に迷いやすいものだけ。
+
+### 大量にタイムアウトする / 何も進まない
+ドライバが動いていないか、複数動いている。`pgrep -f "[d]river.mjs"` で 1 つであることを確認する。
+ドライバのログ（`oidc-conformance-suite/driver/driver.log`）に `⚠️ suite へのポーリング失敗`
+が出ていれば suite に届いていない。
+
 ### テストスイートがローカルサーバーに接続できない
-- ngrok等のトンネリングが稼働しているか確認
-- `api.local.test` と `mtls.api.local.test` の両方が公開されているか確認
-- Docker Composeの全サービスが起動しているか確認: `docker compose ps`
+```bash
+docker exec conformance-server curl -sk -o /dev/null -w '%{http_code}\n' \
+  https://api.local.test/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/openid-configuration
+```
+404 ならテナントが消えている（`setup.sh` を再実行）。接続自体が失敗するなら
+`docker-compose.yaml` の `extra_hosts`（`host-gateway`）と idp-server 側の 443 公開を確認する。
+
+### テナントが消えている
+`config/examples/financial-grade/` の `delete.sh` や組織削除で消える。discovery が 404 なら
+`setup.sh` を再実行する。**その場合 `driver/passkey.json` も消すこと**（ユーザーごと消えている）。
 
 ### テスト設定JSONの更新忘れ
 クライアント設定を変更した場合、以下の同期が必要:

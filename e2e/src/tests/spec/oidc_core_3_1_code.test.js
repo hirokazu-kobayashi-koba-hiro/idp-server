@@ -1,6 +1,10 @@
 import { describe, expect, it, xit } from "@jest/globals";
 
-import { getJwks, requestToken } from "../../api/oauthClient";
+import {
+  getAuthorizations,
+  getJwks,
+  requestToken,
+} from "../../api/oauthClient";
 import {
   clientSecretBasicClient,
   clientSecretPostClient,
@@ -8,9 +12,13 @@ import {
 } from "../testConfig";
 import { requestAuthorizations, requestLogout } from "../../oauth/request";
 import { createJwtWithPrivateKey, verifyAndDecodeJwt } from "../../lib/jose";
-import { createBasicAuthHeader, toEpocTime } from "../../lib/util";
+import {
+  convertNextAction,
+  createBasicAuthHeader,
+  toEpocTime,
+} from "../../lib/util";
 import { calculateIdTokenClaimHashWithS256 } from "../../lib/oauth";
-import { get, post } from "../../lib/http";
+import { get, post, postWithJson } from "../../lib/http";
 
 describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
   it("success pattern", async () => {
@@ -605,6 +613,7 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
       });
 
       it("The Authentication Request contains the prompt parameter with the value login. In this case, the Authorization Server MUST reauthenticate the End-User even if the End-User is already authenticated.\n", async () => {
+        // ここで認証まで行われるので、以降は「既に認証済み」の状態になる。
         const { authorizationResponse } = await requestAuthorizations({
           endpoint: serverConfig.authorizationEndpoint,
           clientId: clientSecretPostClient.clientId,
@@ -619,6 +628,51 @@ describe("OpenID Connect Core 1.0 incorporating errata set 1 code", () => {
         });
         console.log(authorizationResponse);
         expect(authorizationResponse.code).not.toBeNull();
+
+        // 「既に認証済みでも再認証する」を実際に確かめられるのは、認証せずに認可を
+        // 完了させる経路（authorize-with-session）を塞いでいるかどうか。
+        // 画面は view-data の session_enabled を見てから呼ぶが、この API は HTTP で
+        // 直接叩けるためサーバー側でも判定する（OIDCSessionVerifier）。
+        const startAuthorization = async (extra = {}) => {
+          const response = await getAuthorizations({
+            endpoint: serverConfig.authorizationEndpoint,
+            clientId: clientSecretPostClient.clientId,
+            responseType: "code",
+            scope: "openid " + clientSecretPostClient.scope,
+            redirectUri: clientSecretPostClient.redirectUri,
+            state: `state-${Date.now()}`,
+            nonce: `nonce-${Date.now()}`,
+            ...extra,
+          });
+          expect(response.status).toBe(302);
+          // サインイン画面以外へリダイレクトすると id が取れず、後段が
+          // /authorizations/null/... を叩いて原因の読みにくい失敗になる。ここで切る。
+          const { nextAction, params } = convertNextAction(response.headers.location);
+          expect(nextAction).toBe("goAuthentication");
+          return params.get("id");
+        };
+        const authorizeWithSession = async (id) =>
+          await postWithJson({
+            url:
+              serverConfig.authorizationIdEndpoint.replace("{id}", id) +
+              "authorize-with-session",
+            body: {},
+          });
+
+        const rejected = await authorizeWithSession(
+          await startAuthorization({ prompt: "login" }),
+        );
+        expect(rejected.status).toBe(400);
+        expect(rejected.data.error).toBe("invalid_request");
+        expect(rejected.data.error_description).toBe(
+          "prompt=login requires re-authentication",
+        );
+
+        // 対照: 同じセッションでも prompt が無ければ認可が完了する。
+        // 拒否がセッション不成立ではなく prompt=login によるものだと示す。
+        const accepted = await authorizeWithSession(await startAuthorization());
+        expect(accepted.status).toBe(200);
+        expect(accepted.data.redirect_uri).toBeDefined();
       });
     });
 

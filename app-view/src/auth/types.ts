@@ -67,6 +67,14 @@ export type ViewData = {
    */
   claim_values?: Record<string, ClaimValue[]>;
   authentication_policy?: AuthenticationPolicy;
+  /**
+   * True when the existing OP session can complete this authorization without re-authenticating.
+   *
+   * The server decides this (`OAuthViewDataCreator.isSessionEnabled`): it is false when there is no
+   * active session, when `prompt=login` forces re-authentication, when `max_age` has elapsed, or
+   * when `acr_values` does not match the session. The screen must not second-guess it.
+   */
+  session_enabled?: boolean;
   available_federations?: Federation[];
   custom_params?: Record<string, string>;
   tos_uri?: string;

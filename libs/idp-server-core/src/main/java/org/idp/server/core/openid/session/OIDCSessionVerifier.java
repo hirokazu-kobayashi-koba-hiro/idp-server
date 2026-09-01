@@ -62,6 +62,7 @@ public class OIDCSessionVerifier {
    *
    * <ul>
    *   <li>Session existence and expiration
+   *   <li>prompt=login - forces re-authentication
    *   <li>max_age constraint from authorization request
    *   <li>acr_values constraint - prevents ACR downgrade attacks
    *   <li>Authentication policy successConditions - prevents policy bypass
@@ -82,14 +83,24 @@ public class OIDCSessionVerifier {
       return SessionValidationResult.sessionNotFound();
     }
 
-    // 2. Session expiration and max_age check
+    // 2. prompt=login forces re-authentication (OIDC Core 3.1.2.1)
+    //
+    // The screen already asks the server whether the session may be reused
+    // (OAuthViewDataCreator.isSessionEnabled) and only calls this endpoint when it may. Checking it
+    // again here keeps the decision on the server: this endpoint completes an authorization without
+    // authenticating, so it must not depend on the caller honouring that flag.
+    if (authorizationRequest.isPromptLogin()) {
+      return SessionValidationResult.promptLoginRequired();
+    }
+
+    // 3. Session expiration and max_age check
     Long maxAge =
         authorizationRequest.maxAge().exists() ? authorizationRequest.maxAge().toLongValue() : null;
     if (!isSessionValid(opSession, maxAge)) {
       return SessionValidationResult.sessionExpired();
     }
 
-    // 3. ACR values check - prevent ACR downgrade attacks
+    // 4. ACR values check - prevent ACR downgrade attacks
     if (authorizationRequest.hasAcrValues()) {
       String sessionAcr = opSession.acr();
       if (sessionAcr == null
@@ -99,7 +110,7 @@ public class OIDCSessionVerifier {
       }
     }
 
-    // 4. Authentication policy check - prevent authentication policy bypass
+    // 5. Authentication policy check - prevent authentication policy bypass
     if (authenticationPolicy != null && authenticationPolicy.hasSuccessConditions()) {
       AuthenticationInteractionResults sessionResults =
           opSession.toAuthenticationInteractionResults();

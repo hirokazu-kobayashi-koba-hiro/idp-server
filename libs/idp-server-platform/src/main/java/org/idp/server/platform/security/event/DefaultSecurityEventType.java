@@ -137,6 +137,8 @@ public enum DefaultSecurityEventType {
       "Authorization failed because session ACR did not match requested acr_values"),
   oauth_authorize_with_session_policy_mismatch(
       "Authorization failed because session did not satisfy authentication policy"),
+  oauth_authorize_with_session_prompt_login(
+      "Authorization failed because prompt=login required re-authentication"),
   oauth_deny("User denied the authorization request"),
 
   // Token

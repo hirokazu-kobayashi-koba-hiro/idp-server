@@ -13,5 +13,13 @@
   "client": {
     "client_id": "context-path-client",
     "client_secret": "context-path-secret-32characters1"
+  },
+  "client_secret_post": {
+    "client_id": "oidcc-post-client-context-path",
+    "client_secret": "oidcc-post-secret-32characters12"
+  },
+  "client2": {
+    "client_id": "oidcc-second-client-context-path",
+    "client_secret": "oidcc-second-secret-32characters"
   }
 }

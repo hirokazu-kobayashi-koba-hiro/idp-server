@@ -153,40 +153,57 @@ if [ "${HTTP_CODE}" = "201" ]; then
   echo "   Organization ID: ${ORG_ID}"
   echo "   Tenant ID:       ${TENANT_ID}"
   echo ""
+  # 表示する値は設定ファイルから読む。ハードコードすると設定を変えたときに出力だけが古くなる。
+  USER_EMAIL=$(jq -r '.user.email' "${ONBOARDING_REQUEST}")
+  USER_PASSWORD=$(jq -r '.user.raw_password' "${ONBOARDING_REQUEST}")
+  CLIENT1_ID=$(jq -r '.client.client_id' "${ONBOARDING_REQUEST}")
+  CLIENT1_ALIAS=$(jq -r '.client.client_id_alias' "${ONBOARDING_REQUEST}")
+  CLIENT1_SECRET=$(jq -r '.client.client_secret' "${ONBOARDING_REQUEST}")
+  CLIENT1_AUTH=$(jq -r '.client.token_endpoint_auth_method' "${ONBOARDING_REQUEST}")
+  CLIENT1_REDIRECT=$(jq -r '.client.redirect_uris[0]' "${ONBOARDING_REQUEST}")
+  CLIENT2_ID=$(jq -r '.client_id' "${CLIENT_POST_FILE}")
+  CLIENT2_ALIAS=$(jq -r '.client_id_alias' "${CLIENT_POST_FILE}")
+  CLIENT2_SECRET=$(jq -r '.client_secret' "${CLIENT_POST_FILE}")
+  CLIENT2_AUTH=$(jq -r '.token_endpoint_auth_method' "${CLIENT_POST_FILE}")
+  CLIENT3_ID=$(jq -r '.client_id' "${CLIENT_SECOND_FILE}")
+  CLIENT3_ALIAS=$(jq -r '.client_id_alias' "${CLIENT_SECOND_FILE}")
+  CLIENT3_SECRET=$(jq -r '.client_secret' "${CLIENT_SECOND_FILE}")
+  CLIENT3_AUTH=$(jq -r '.token_endpoint_auth_method' "${CLIENT_SECOND_FILE}")
+
   echo "Test User:"
-  echo "   Email:    oidcc-test@example.com"
-  echo "   Password: OidccTestPassword123!"
+  echo "   Email:    ${USER_EMAIL}"
+  echo "   Password: ${USER_PASSWORD}"
   echo ""
-  echo "Client 1 (client_secret_basic):"
-  echo "   Client ID:     f4a5b6c7-d8e9-0123-abcd-456789012345"
-  echo "   Client Alias:  oidcc-basic-client"
-  echo "   Client Secret: oidcc-basic-secret-32characters!"
-  echo "   Auth Method:   client_secret_basic"
+  echo "Client 1 (${CLIENT1_AUTH}):"
+  echo "   Client ID:     ${CLIENT1_ID}"
+  echo "   Client Alias:  ${CLIENT1_ALIAS}"
+  echo "   Client Secret: ${CLIENT1_SECRET}"
+  echo "   Auth Method:   ${CLIENT1_AUTH}"
   echo ""
-  echo "Client 2 (client_secret_post):"
-  echo "   Client ID:     a5b6c7d8-e9f0-1234-bcde-567890123456"
-  echo "   Client Alias:  oidcc-post-client"
-  echo "   Client Secret: oidcc-post-secret-32characters!!"
-  echo "   Auth Method:   client_secret_post"
+  echo "Client 2 (${CLIENT2_AUTH}):"
+  echo "   Client ID:     ${CLIENT2_ID}"
+  echo "   Client Alias:  ${CLIENT2_ALIAS}"
+  echo "   Client Secret: ${CLIENT2_SECRET}"
+  echo "   Auth Method:   ${CLIENT2_AUTH}"
   echo ""
   echo "Client 3 (second client):"
-  echo "   Client ID:     b6c7d8e9-f0a1-2345-cdef-678901234567"
-  echo "   Client Alias:  oidcc-second-client"
-  echo "   Client Secret: oidcc-second-secret-32characters!"
-  echo "   Auth Method:   client_secret_basic"
+  echo "   Client ID:     ${CLIENT3_ID}"
+  echo "   Client Alias:  ${CLIENT3_ALIAS}"
+  echo "   Client Secret: ${CLIENT3_SECRET}"
+  echo "   Auth Method:   ${CLIENT3_AUTH}"
   echo ""
   echo "OIDC Discovery:"
   echo "   ${AUTHORIZATION_SERVER_URL}/${TENANT_ID}/.well-known/openid-configuration"
   echo ""
   echo "Conformance Suite Configuration:"
   echo "   Issuer:                  ${AUTHORIZATION_SERVER_URL}/${TENANT_ID}"
-  echo "   Client ID (basic):       f4a5b6c7-d8e9-0123-abcd-456789012345"
-  echo "   Client Secret (basic):   oidcc-basic-secret-32characters!"
-  echo "   Client ID (post):        a5b6c7d8-e9f0-1234-bcde-567890123456"
-  echo "   Client Secret (post):    oidcc-post-secret-32characters!!"
-  echo "   Second Client ID:        b6c7d8e9-f0a1-2345-cdef-678901234567"
-  echo "   Second Client Secret:    oidcc-second-secret-32characters!"
-  echo "   Redirect URI:            https://localhost.emobix.co.uk:8443/test/a/oidc-core-basic/callback"
+  echo "   Client ID (basic):       ${CLIENT1_ID}"
+  echo "   Client Secret (basic):   ${CLIENT1_SECRET}"
+  echo "   Client ID (post):        ${CLIENT2_ID}"
+  echo "   Client Secret (post):    ${CLIENT2_SECRET}"
+  echo "   Second Client ID:        ${CLIENT3_ID}"
+  echo "   Second Client Secret:    ${CLIENT3_SECRET}"
+  echo "   Redirect URI:            ${CLIENT1_REDIRECT}"
   echo ""
 else
   echo "Onboarding failed (HTTP ${HTTP_CODE})"

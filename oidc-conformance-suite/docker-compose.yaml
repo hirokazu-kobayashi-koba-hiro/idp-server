@@ -1,0 +1,74 @@
+# OIDF 適合性テストスイート（OpenID Foundation conformance suite）をローカルで動かす。
+#
+# 本体のビルドは不要で、OIDF が配布している公開イメージをそのまま使う。
+# suite は idp-server のスタック（docker-compose.yaml）とは別プロジェクトとして動き、
+# ホスト経由で api.local.test / mtls.api.local.test に到達する。
+#
+#   docker compose -f docker-compose-conformance.yaml up -d
+#   open https://localhost.emobix.co.uk:8443/
+#
+# 前提: docker-compose.yaml のスタックが起動していること（443 を公開している）。
+
+# プロジェクト名を固定する。既定ではディレクトリ名から決まるため、worktree から起動すると
+# ネットワーク名が変わってしまい、テストランナーの --network 指定が壊れる。
+name: idp-conformance
+
+services:
+  mongodb:
+    image: mongo:6.0.13
+    container_name: conformance-mongodb
+    volumes:
+      - conformance-mongo-data:/data/db
+    logging:
+      driver: "json-file"
+      options: { max-size: "50m", max-file: "1" }
+
+  server:
+    image: registry.gitlab.com/openid/conformance-suite:${CONFORMANCE_IMAGE_TAG:-latest}
+    container_name: conformance-server
+    depends_on:
+      - mongodb
+    environment:
+      # suite 自身の公開 URL。redirect_uri はこの下に生える。
+      # config/examples/financial-grade/*-client.json に登録済みの redirect_uris と一致させること。
+      BASE_URL: https://localhost.emobix.co.uk:8443
+      MONGODB_HOST: mongodb
+      # dev プロファイルは API 認証なし。run-test-plan.py に CONFORMANCE_TOKEN が不要になる。
+      SPRING_PROFILES_ACTIVE: dev
+      # suite の Web UI にログインするための外部 IdP 設定。ヘッドレス実行では使わないが、
+      # 空だと Spring の OAuth2ClientProperties 検証が
+      # 「Client id of registration 'gitlab' must not be empty」で起動に失敗するため
+      # ダミー値を入れる（OIDF 公式の docker-compose-prebuilt.yml と同じ扱い）。
+      OIDC_GOOGLE_CLIENTID: google-client
+      OIDC_GOOGLE_SECRET: google-secret
+      OIDC_GITLAB_CLIENTID: gitlab-client
+      OIDC_GITLAB_SECRET: gitlab-secret
+    extra_hosts:
+      # idp-server のスタックはホストの 443 を公開しているので、そこへ抜ける
+      - "api.local.test:host-gateway"
+      - "mtls.api.local.test:host-gateway"
+    logging:
+      driver: "json-file"
+      options: { max-size: "200m", max-file: "1" }
+
+  nginx:
+    image: registry.gitlab.com/openid/conformance-suite/nginx:${CONFORMANCE_IMAGE_TAG:-latest}
+    container_name: conformance-nginx
+    depends_on:
+      - server
+    ports:
+      - "8443:8443"
+    networks:
+      default:
+        aliases:
+          # suite のブラウザ（server コンテナ内の HtmlUnit）が自分の callback に
+          # 到達できるようにする。docker の埋め込み DNS が公開 DNS より先に引かれるため、
+          # 127.0.0.1 ではなく nginx コンテナへ解決される。
+          # これにより suite 側の redir（--fintechlabs.startredir）が不要になる。
+          - localhost.emobix.co.uk
+    logging:
+      driver: "json-file"
+      options: { max-size: "50m", max-file: "1" }
+
+volumes:
+  conformance-mongo-data:

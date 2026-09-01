@@ -1,0 +1,6 @@
+# 実行時に生成されるもの
+node_modules/
+passkey-*.json
+*.log
+videos/
+demo/
