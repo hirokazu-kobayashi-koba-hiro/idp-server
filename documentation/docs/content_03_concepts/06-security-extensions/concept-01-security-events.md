@@ -105,6 +105,7 @@ public void authenticate() {
 | セッションの期限が切れていた | `oauth_authorize_with_session_expired` |
 | セッションの認証レベルが要求と合わなかった | `oauth_authorize_with_session_acr_mismatch` |
 | セッションのポリシーが要求と合わなかった | `oauth_authorize_with_session_policy_mismatch` |
+| `prompt=login` で再認証が必要だった | `oauth_authorize_with_session_prompt_login` |
 | 認可処理中にエラーが発生した | `authorize_failure` |
 | ログアウトした | `logout` |
 

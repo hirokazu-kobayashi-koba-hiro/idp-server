@@ -73,8 +73,12 @@ public class SessionValidationResult {
   /**
    * prompt=login was requested, so the session must not be reused.
    *
-   * <p>OpenID Connect Core 3.1.2.1: the Authorization Server MUST prompt the End-User for
-   * reauthentication.
+   * <p>OpenID Connect Core 3.1.2.1 (prompt): "The Authorization Server SHOULD prompt the End-User
+   * for reauthentication. If it cannot reauthenticate the End-User, it MUST return an error,
+   * typically login_required."
+   *
+   * <p>Reusing the session here would silently skip that reauthentication, so this endpoint refuses
+   * instead. The screen falls back to the normal sign-in flow, which satisfies the SHOULD.
    */
   public static SessionValidationResult promptLoginRequired() {
     return new SessionValidationResult(

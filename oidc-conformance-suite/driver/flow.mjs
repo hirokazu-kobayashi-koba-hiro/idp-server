@@ -51,7 +51,7 @@ export const TENANTS = {
     email: "fapi2-conformance-driver@example.com",
     admin: {
       tenantId: "c2f3a4b5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
-      username: process.env.FAPI2_ADMIN_USERNAME || "fapi2-conformance-admin@example.com",
+      username: "fapi2-conformance-admin@example.com",
       password: "Fapi2ConformanceSecure123!",
       clientId: "c8f9a0b1-d2e3-4f4a-5b6c-7d8e9f0a1b2c",
       clientSecret: "fapi2-conformance-admin-secret-change-in-production-minimum-32-characters",
