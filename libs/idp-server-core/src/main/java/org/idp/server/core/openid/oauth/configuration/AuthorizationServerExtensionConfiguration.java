@@ -259,6 +259,10 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     return new AuthenticationInteractionType(defaultCibaAuthenticationInteractionType);
   }
 
+  /**
+   * The management update is a full replacement, so anything missing here is dropped by a GET -&gt;
+   * modify -&gt; PUT round trip, and the diff cannot show it either. See #1845.
+   */
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("access_token_type", accessTokenType);
@@ -291,6 +295,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
     map.put("pushed_authorization_request_expires_in", pushedAuthorizationRequestExpiresIn);
     map.put("fapi_baseline_scopes", fapiBaselineScopes);
     map.put("fapi_advance_scopes", fapiAdvanceScopes);
+    map.put("fapi20_scopes", fapi20Scopes);
     map.put("required_identity_verification_scopes", requiredIdentityVerificationScopes);
     map.put("custom_claims_scope_mapping", customClaimsScopeMapping);
     map.put(
