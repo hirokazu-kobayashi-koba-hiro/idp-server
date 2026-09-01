@@ -8,51 +8,42 @@
  *   そこで suite が人間向けに公開している外部ブラウザ API を使い、Playwright の Chromium で
  *   人間の代わりにログインする。
  *
- * 認証は財務テナントのポリシーどおり email OTP -> Passkey(FIDO2) の 2 段:
- *   - email OTP … no_action 設定なので管理 API からコードを取る（idp-api.mjs）
- *   - FIDO2     … CDP の仮想オーセンティケータ。モック実装は不要で実 WebAuthn が走る
- *
  * 1 つのテストが複数回ブラウザを要求する（FAPI Advanced の happy path は 2 クライアント目でも
  * 認可する）ため、1 回で終わらせずポーリングし続ける。
  *
  * 使い方:
  *   npm install
- *   npx playwright install chromium
  *   node driver.mjs
+ *
+ * サインイン手順そのものは flow.mjs にある（demo.mjs と共有）。
  */
 import fs from "node:fs";
 import { chromium } from "playwright";
 import { suite } from "./suite-api.mjs";
-import { emailVerificationCode } from "./idp-api.mjs";
+import {
+  CONFIG,
+  attachVirtualAuthenticator,
+  behaviorFor,
+  here,
+  savePasskey,
+  signIn,
+} from "./flow.mjs";
 
-const here = (name) => new URL(name, import.meta.url).pathname;
-
-const CONFIG = {
-  // メールアドレスを変えると新規ユーザー扱いになり、passkey は登録からやり直しになる。
-  // その場合は passkeyFile も消すこと（サーバ側の鍵と食い違うとクローン検知に当たる）。
-  email: process.env.DRIVER_EMAIL || "conformance-driver@example.com",
-  passkeyFile: process.env.DRIVER_PASSKEY_FILE || here("passkey.json"),
-  logFile: process.env.DRIVER_LOG || here("driver.log"),
-
-  // config/examples/financial-grade/setup.sh が作るリソース
-  organizationId: "f1a2b3c4-d5e6-f7a8-b9c0-d1e2f3a4b5c6",
-  tenantId: "c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8",
-  admin: {
-    tenantId: "e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2",
-    username: "fapi-test@example.com",
-    password: "FapiCibaTestSecure123!",
-    clientId: "c1d2e3f4-a5b6-c7d8-e9f0-a1b2c3d4e5f6",
-    clientSecret: "fapi-ciba-admin-secret-change-in-production-minimum-32-characters",
-  },
-};
+const logFile = process.env.DRIVER_LOG || here("driver.log");
 
 // バックグラウンド実行だと stdout がバッファされて進行が見えない。ログはファイルへ同期書き込みする。
-fs.writeFileSync(CONFIG.logFile, "");
+fs.writeFileSync(logFile, "");
 function log(line) {
   const entry = `${new Date().toISOString().slice(11, 19)} ${line}\n`;
-  fs.appendFileSync(CONFIG.logFile, entry);
+  fs.appendFileSync(logFile, entry);
   process.stdout.write(entry);
 }
+
+// 同一テスト内で何回目の訪問かを数える（firstVisit: "abandon" の判定に使う）
+const visitCounts = new Map();
+
+// DRIVER_VIDEO=1 で 1 認可ごとに WebM を録画する。ヘッドレスでも撮れる。
+const videoDir = process.env.DRIVER_VIDEO === "1" ? here("videos") : null;
 
 /** 失敗時に「今どの画面にいるのか」を残す。 */
 async function dumpState(page, tag) {
@@ -96,129 +87,74 @@ async function nextPendingUrl() {
   return null;
 }
 
-/** 仮想オーセンティケータを載せた使い捨てのブラウザコンテキストを作る。 */
-async function newAuthenticatedContext(browser) {
-  const context = await browser.newContext({ ignoreHTTPSErrors: true });
-  const page = await context.newPage();
-  const cdp = await context.newCDPSession(page);
-
-  // 財務テナントの fido2 設定（platform / resident key / user verification 必須）に合わせる。
-  await cdp.send("WebAuthn.enable");
-  const { authenticatorId } = await cdp.send("WebAuthn.addVirtualAuthenticator", {
-    options: {
-      protocol: "ctap2",
-      transport: "internal",
-      hasResidentKey: true,
-      hasUserVerification: true,
-      isUserVerified: true,
-      automaticPresenceSimulation: true,
-    },
-  });
-
-  // 仮想オーセンティケータはコンテキストごとに空。保存済みの passkey があれば注入する。
-  // 無ければ画面側が登録フローを出すので、登録された鍵を後で書き出して次回から使う。
-  if (fs.existsSync(CONFIG.passkeyFile)) {
-    const credential = JSON.parse(fs.readFileSync(CONFIG.passkeyFile, "utf8"));
-    await cdp.send("WebAuthn.addCredential", { authenticatorId, credential });
-  }
-  return { context, page, cdp, authenticatorId };
-}
-
 /**
- * 仮想オーセンティケータの資格情報をファイルへ書き戻す。
+ * 「エラーページが出ること」を目視で確認するテストの REVIEW を満たす。
  *
- * 初回は登録された鍵の保存、2 回目以降は署名カウンタの更新が目的。idp-server は
- * WebAuthn §6.1.1 のクローン検知（WebAuthn4jAuthenticationExecutor:117）を実装しており、
- * 署名カウンタが前回以下だと "Failed to verify authentication data" で弾かれる。
- * 毎回同じ値を注入するとカウンタが巻き戻り、2 回目の認証が必ず失敗する。
+ * この種のテスト（request_uri の再利用・期限切れ・別クライアント）は callback を返さない。
+ * suite はスクリーンショットの提出を待っており、埋めないと 240 秒でタイムアウトする。
  */
-async function savePasskey(cdp, authenticatorId) {
-  const { credentials } = await cdp.send("WebAuthn.getCredentials", { authenticatorId });
-  if (!credentials.length) return;
+async function fulfillReview(page, testId) {
+  const placeholders = await suite.pendingReviewPlaceholders(testId);
+  if (!placeholders.length) return false;
 
-  const c = credentials[0];
-  const next = {
-    credentialId: c.credentialId,
-    isResidentCredential: c.isResidentCredential,
-    rpId: c.rpId,
-    privateKey: c.privateKey,
-    userHandle: c.userHandle,
-    signCount: c.signCount,
-  };
-
-  const previous = fs.existsSync(CONFIG.passkeyFile)
-    ? JSON.parse(fs.readFileSync(CONFIG.passkeyFile, "utf8"))
-    : null;
-  const unchanged =
-    previous && previous.credentialId === next.credentialId && previous.signCount === next.signCount;
-  if (unchanged) return; // 認証まで進まなかった回。書き戻す必要がない
-
-  fs.writeFileSync(CONFIG.passkeyFile, JSON.stringify(next, null, 2));
-  log(`    passkey 保存 (signCount ${previous?.signCount ?? "-"} -> ${next.signCount})`);
-}
-
-/** サインイン画面を最後まで進めて、suite の callback に戻す。 */
-async function signIn(page) {
-  const authorizationId = new URL(page.url()).searchParams.get("id");
-  if (!authorizationId) throw new Error(`no authorization id in ${page.url()}`);
-
-  // 1 段目: email OTP
-  await page.getByLabel("Email").fill(CONFIG.email);
-  await page.getByRole("button", { name: "Send code" }).click();
-  await page.waitForTimeout(2000);
-
-  const code = await emailVerificationCode({
-    admin: CONFIG.admin,
-    organizationId: CONFIG.organizationId,
-    tenantId: CONFIG.tenantId,
-    authorizationId,
-  });
-
-  // 6 桁は 1 文字ずつのボックスに分かれている。先頭にフォーカスして打つと次へ送られる。
-  const codeBoxes = page.locator('input[type="text"]');
-  await codeBoxes.first().click();
-  await page.keyboard.type(code, { delay: 50 });
-  await page.getByRole("button", { name: "Verify" }).click();
-  log(`    email OTP ok (${code})`);
-
-  // 2 段目: Passkey。新規ユーザーなら "Set up passkey"（登録）、既存なら "Use passkey"（認証）。
-  // 固定 sleep ではなく次の画面の要素が出るのを待つ。
-  const passkeyButton = page.getByRole("button", { name: /passkey/i }).first();
-  await passkeyButton.waitFor({ state: "visible", timeout: 20000 });
-  const label = (await passkeyButton.innerText()).trim();
-  await passkeyButton.click();
-
-  // 同意
-  const consent = page.getByRole("button", { name: "Continue" });
-  await consent.waitFor({ state: "visible", timeout: 30000 });
-  log(`    passkey ok ("${label}")`);
-
-  await consent.click();
-  await page.waitForURL(/localhost\.emobix\.co\.uk/, { timeout: 30000 });
-  log("    consent ok -> callback");
+  const screenshot = await page.screenshot({ fullPage: true });
+  for (const placeholder of placeholders) {
+    await suite.uploadScreenshot(testId, placeholder, screenshot);
+  }
+  log(`    エラーページを提出 (${placeholders.length} 件の REVIEW)`);
+  return true;
 }
 
 async function handle(browser, pending) {
-  log(`▶ ${pending.testName} (${pending.testId})`);
+  const behavior = behaviorFor(pending.testName);
+  const visit = (visitCounts.get(pending.testId) ?? 0) + 1;
+  visitCounts.set(pending.testId, visit);
+
+  const note = [
+    behavior.consent === "deny" ? "deny" : null,
+    behavior.firstVisit === "abandon" ? `visit=${visit}` : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  log(`▶ ${pending.testName} (${pending.testId})${note ? ` [${note}]` : ""}`);
+
   // 拾った時点で visited にしておく。urls から外れるので次のポーリングで再度拾わない
   // （テスト自体は callback を待ち続けるので進行には影響しない）。
   await suite.markVisited(pending.testId, pending.url);
 
-  const { context, page, cdp, authenticatorId } = await newAuthenticatedContext(browser);
+  const context = await browser.newContext({
+    ignoreHTTPSErrors: true,
+    ...(videoDir ? { recordVideo: { dir: videoDir, size: { width: 1280, height: 800 } } } : {}),
+  });
+  const page = await context.newPage();
+  const { cdp, authenticatorId } = await attachVirtualAuthenticator(context, page);
+
   try {
     await page.goto(pending.url, { waitUntil: "networkidle", timeout: 60000 });
+
     if (page.url().includes("/error/")) {
-      log(`    ⚠️  エラーページに着地: ${new URL(page.url()).searchParams.get("error")}`);
+      const error = new URL(page.url()).searchParams.get("error");
+      const submitted = await fulfillReview(page, pending.testId);
+      log(`    エラーページに着地: ${error}${submitted ? "" : "（REVIEW なし）"}`);
       return;
     }
-    await signIn(page);
+
+    // ログイン画面が出ることだけを確認して離脱する回。ここでログインしてしまうと
+    // suite が「初回訪問で認証された」と判定してテストが落ちる。
+    if (behavior.firstVisit === "abandon" && visit === 1) {
+      await fulfillReview(page, pending.testId);
+      log("    ログイン画面を確認して離脱（2 回目で完遂する）");
+      return;
+    }
+
+    await signIn(page, behavior, log);
   } catch (e) {
     log(`    ❌ ${e.message.split("\n")[0].slice(0, 160)}`);
     await dumpState(page, `fail-${pending.testId}`);
   } finally {
     // 成功・失敗にかかわらず署名カウンタを書き戻す。認証まで進んだ後に落ちた場合、
     // 保存を飛ばすとカウンタが巻き戻り、次回の認証がクローン検知に引っかかる。
-    await savePasskey(cdp, authenticatorId).catch((e) =>
+    await savePasskey(cdp, authenticatorId, log).catch((e) =>
       log(`    ⚠️  passkey 保存に失敗: ${e.message.slice(0, 80)}`),
     );
     await context.close();
