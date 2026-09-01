@@ -40,6 +40,22 @@ docker exec conformance-server curl -sk -o /dev/null -w '%{http_code}\n' \
 テストを流す前に必ず `pgrep -f "[d]river.mjs"` で確認する。`kill` (SIGTERM) が効かないことが
 あるので、止まらなければ `kill -INT`。
 
+## テスト実行も同時に走らせない
+
+**実行中に別の `run.sh` を叩くと、走っているテストが alias 衝突で INTERRUPTED になる。**
+設定 JSON の `alias` は同時に 1 つのテストしか掴めない。
+
+```
+TEST-RUNNER | Stopping test due to alias conflict - before this test finished,
+              you have started another test using the same alias.
+```
+
+蹴られた側は条件エラーが 0 でも INTERRUPTED になるため、**テスト内容の問題と誤読しやすい**。
+INTERRUPTED を見たらまずログ末尾で alias conflict かどうかを確認する。
+
+途中で実行を止めた場合も alias を掴んだままのテストが残る。次の実行が同じ理由で落ちるので、
+もう一度流せばよい。
+
 ## passkey.json とユーザーは常にセットで扱う
 
 `driver/passkey.json` はサーバに登録済みの資格情報と 1:1 で対応している。片方だけ変えると壊れる。

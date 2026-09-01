@@ -15,13 +15,25 @@ suite は PAR / token / userinfo を自分で叩けるが、**認可エンドポ
 
 | スイート | 規格 | プラン | モジュール | 状態 |
 |---|---|---|---|---|
-| [fapi1-advanced](./fapi1-advanced/) | FAPI 1.0 Advanced Final | `fapi1-advanced-final-test-plan` | 68 | ✅ 実行できる |
-| [fapi-ciba](./fapi-ciba/) | FAPI-CIBA ID1 | `fapi-ciba-id1-test-plan` | 70 | ❌ デバイス承認の自動化が未実装 |
+| [fapi1-advanced](./fapi1-advanced/) | FAPI 1.0 Advanced Final | `fapi1-advanced-final-test-plan` | 63 | ✅ 58 PASSED / 3 REVIEW / 2 WARNING |
+| [fapi-ciba](./fapi-ciba/) | FAPI-CIBA ID1 | `fapi-ciba-id1-test-plan` | 35 | ✅ 34 PASSED / 1 WARNING |
 | [fapi2](./fapi2/) | FAPI 2.0 Security Profile Final | `fapi2-security-profile-final-test-plan` | 72 | ❌ テナント設定が存在しない |
 | [oidcc](./oidcc/) | OpenID Connect Core | `oidcc-test-plan` ほか | 55 / 38 | ❌ 設定とプランの対応づけが未決 |
 
+モジュール数は variants 適用後の実数。いずれも `client_auth_type` を `private_key_jwt` /
+`mtls` の 2 通りで流すため、実行されるテストはこの倍になる。
+
 **`run.sh` があるディレクトリが実行できるスイート。** 未対応のものは README だけを置いてあり、
 そこに「何が足りないか」を書いている。
+
+FAILED はどちらのスイートにも無い。残る WARNING は 2 種類。
+
+| WARNING | 内容 |
+|---|---|
+| `CheckForUnexpectedParametersInServerMetadata` | discovery の `verified_claims_supported` が suite のスキーマに登録されていない（OIDC4IDA の他のメタデータは登録済みなので登録漏れ）。idp-server 側は仕様どおり |
+| `EnsureHttpStatusCodeIs4xx` | 認可コード再利用後にアクセストークンを失効させていない。RFC 6749 §4.1.2 の SHOULD |
+
+REVIEW は「エラーページが表示されたことを確認する」テストの正常な終着点で、失敗ではない。
 
 ## ディレクトリ
 
@@ -30,10 +42,13 @@ oidc-conformance-suite/
 ├── README.md              このファイル
 ├── architecture.svg       環境全体図
 ├── docker-compose.yaml    suite スタック（全スイート共通）
-├── lib/runner.sh          ランナーコンテナ起動（全スイート共通）
-├── driver/                ブラウザ操作の常駐プロセス
+├── lib/
+│   ├── runner.sh          ランナーコンテナ起動（全スイート共通）
+│   └── local-ca.mjs       ローカル CA の探索（worktree からも解決できる）
+├── driver/                ブラウザ操作の常駐プロセス（FAPI 1.0 Advanced 用）
+├── ciba-approver/         デバイス承認の常駐プロセス（FAPI-CIBA 用）
 ├── fapi1-advanced/        ← run.sh あり
-├── fapi-ciba/             README のみ
+├── fapi-ciba/             ← run.sh あり
 ├── fapi2/                 README のみ
 ├── oidcc/                 README のみ
 └── results/               テスト結果（gitignore）
