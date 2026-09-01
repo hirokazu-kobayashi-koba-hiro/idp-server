@@ -347,6 +347,7 @@ describe("organization authorization server management api", () => {
           "oauth_authorization_request_expires_in": 3600,
           "fapi_baseline_scopes": ["openid", "profile"],
           "fapi_advance_scopes": ["openid", "profile", "email"],
+          "fapi20_scopes": ["openid", "profile", "email", "phone"],
           "required_identity_verification_scopes": ["identity_verification"],
           "custom_claims_scope_mapping": true,
           "access_token_selective_user_custom_properties": true,
@@ -724,6 +725,92 @@ describe("organization authorization server management api", () => {
       expect(afterRotation).toContain("jwks-roundtrip-rotated");
       expect(afterRotation).not.toContain("jwks-roundtrip-original");
       console.log("✅ explicit jwks still replaces the stored keys");
+
+      const deleteTenantResponse = await deletion({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}`,
+        headers
+      });
+      expect(deleteTenantResponse.status).toBe(204);
+    });
+
+    // #1845: fapi20_scopes was missing from the GET response for the same reason jwks was. Losing
+    // it drops the tenant out of the FAPI 2.0 profile, so PAR stops requiring PKCE and
+    // sender-constrained tokens stop being enforced - silently, because the diff cannot show a key
+    // the representation does not carry.
+    it("GET→UPDATE roundtrip keeps fapi20_scopes (#1845)", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: `${backendUrl}/952f6906-3e95-4ed3-86b2-981f90f785f9/v1/tokens`,
+        grantType: "password",
+        username: "ito.ichiro@gmail.com",
+        password: "successUserCode001",
+        scope: "org-management account management",
+        clientId: "org-client",
+        clientSecret: "org-client-001"
+      });
+      expect(tokenResponse.status).toBe(200);
+      const accessToken = tokenResponse.data.access_token;
+      const headers = { Authorization: `Bearer ${accessToken}` };
+
+      const newTenantId = uuidv4();
+      const createTenantResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${orgId}/tenants`,
+        headers,
+        body: {
+          tenant: {
+            "id": newTenantId,
+            "name": `Fapi20 Roundtrip Tenant ${Date.now()}`,
+            "domain": "http://localhost:8080",
+            "description": "Test tenant for fapi20_scopes preservation on roundtrip",
+            "authorization_provider": "idp-server"
+          },
+          authorization_server: {
+            "issuer": `http://localhost:8080/${newTenantId}`,
+            "authorization_endpoint": `http://localhost:8080/${newTenantId}/v1/authorizations`,
+            "token_endpoint": `http://localhost:8080/${newTenantId}/v1/tokens`,
+            "userinfo_endpoint": `http://localhost:8080/${newTenantId}/v1/userinfo`,
+            "jwks_uri": `http://localhost:8080/${newTenantId}/v1/jwks`,
+            "scopes_supported": ["openid", "profile", "email", "read", "write", "transfers"],
+            "response_types_supported": ["code"],
+            "response_modes_supported": ["query", "fragment"],
+            "subject_types_supported": ["public"],
+            "grant_types_supported": ["authorization_code", "refresh_token"],
+            "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"],
+            "extension": {
+              "fapi_baseline_scopes": ["read"],
+              "fapi_advance_scopes": ["transfers"],
+              "fapi20_scopes": ["write", "transfers"]
+            }
+          }
+        }
+      });
+      expect(createTenantResponse.status).toBe(201);
+
+      const configurationUrl = `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}/authorization-server`;
+
+      // The update replaces the whole configuration, so the GET response has to carry the scopes.
+      const getResponse = await get({ url: configurationUrl, headers });
+      expect(getResponse.status).toBe(200);
+      expect(getResponse.data.extension.fapi20_scopes).toEqual(["write", "transfers"]);
+      // The neighbouring scope lists were already exposed; they pin what "carried" means here.
+      expect(getResponse.data.extension.fapi_baseline_scopes).toEqual(["read"]);
+      expect(getResponse.data.extension.fapi_advance_scopes).toEqual(["transfers"]);
+
+      // Change something unrelated and write the GET response straight back.
+      const updateResponse = await putWithJson({
+        url: configurationUrl,
+        headers,
+        body: {
+          ...getResponse.data,
+          extension: { ...getResponse.data.extension, rotate_refresh_token: false }
+        }
+      });
+      expect(updateResponse.status).toBe(200);
+      expect(updateResponse.data.diff).not.toHaveProperty("fapi20_scopes");
+
+      const afterRoundtrip = await get({ url: configurationUrl, headers });
+      expect(afterRoundtrip.status).toBe(200);
+      expect(afterRoundtrip.data.extension.fapi20_scopes).toEqual(["write", "transfers"]);
+      console.log("✅ fapi20_scopes survived the GET→UPDATE roundtrip");
 
       const deleteTenantResponse = await deletion({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${newTenantId}`,
