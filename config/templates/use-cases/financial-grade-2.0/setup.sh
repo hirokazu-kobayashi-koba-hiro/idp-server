@@ -105,6 +105,9 @@ FIDO_UAF_SERVER_URL="${FIDO_UAF_SERVER_URL:-http://host.docker.internal:4000}"
 # FIDO2 settings
 FIDO2_RP_ID="${FIDO2_RP_ID:-local.test}"
 UI_BASE_URL="${UI_BASE_URL:-https://auth.local.test}"
+# サインイン画面のパス。既定は従来どおり。認証ポリシーが email/SMS 等の複数ステップを含む
+# 場合は、ステップを順に描画する /auth/ を指定する。
+SIGNIN_PAGE="${SIGNIN_PAGE:-/signin/fido2/}"
 
 # Client settings
 TLS_CLIENT_ID="${TLS_CLIENT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
@@ -387,6 +390,7 @@ FINANCIAL_TENANT_JSON=$(substitute_template "${SCRIPT_DIR}/fapi2-tenant-template
   "BASE_URL" "${AUTHORIZATION_SERVER_URL}" \
   "MTLS_BASE_URL" "${MTLS_BASE_URL}" \
   "UI_BASE_URL" "${UI_BASE_URL}" \
+  "SIGNIN_PAGE" "${SIGNIN_PAGE}" \
   "COOKIE_NAME" "${COOKIE_NAME}" \
   "JWKS_CONTENT" "${JWKS_CONTENT}" \
   "TOKEN_SIGNING_KEY_ID" "${TOKEN_SIGNING_KEY_ID}")

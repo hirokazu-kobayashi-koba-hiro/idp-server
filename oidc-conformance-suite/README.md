@@ -9,7 +9,8 @@ OpenID Foundation の conformance suite をローカルで動かし、idp-server
 
 suite は PAR / token / userinfo を自分で叩けるが、**認可エンドポイントだけはブラウザが要る**。
 そこが内蔵の HtmlUnit で描画できないため、その 1 工程だけをホスト常駐の Playwright ドライバが
-肩代わりする（[driver/README.md](./driver/README.md)）。
+肩代わりする（[driver/README.md](./driver/README.md)）。ドライバはサインイン URL の `tenant_id` で
+対象テナントを判別するので、**スイートをまたいで 1 プロセスで足りる**。
 
 ## 対応状況
 
@@ -17,23 +18,28 @@ suite は PAR / token / userinfo を自分で叩けるが、**認可エンドポ
 |---|---|---|---|---|
 | [fapi1-advanced](./fapi1-advanced/) | FAPI 1.0 Advanced Final | `fapi1-advanced-final-test-plan` | 63 | ✅ 58 PASSED / 3 REVIEW / 2 WARNING |
 | [fapi-ciba](./fapi-ciba/) | FAPI-CIBA ID1 | `fapi-ciba-id1-test-plan` | 35 | ✅ 34 PASSED / 1 WARNING |
-| [fapi2](./fapi2/) | FAPI 2.0 Security Profile Final | `fapi2-security-profile-final-test-plan` | 72 | ❌ テナント設定が存在しない |
+| [fapi2](./fapi2/) | FAPI 2.0 Security Profile Final | `fapi2-security-profile-final-test-plan` | 56 | ⚠️ 47 PASSED / 3 REVIEW / 4 WARNING / 1 SKIPPED / 1 FAILED |
 | [oidcc](./oidcc/) | OpenID Connect Core | `oidcc-test-plan` ほか | 55 / 38 | ❌ 設定とプランの対応づけが未決 |
 
-モジュール数は variants 適用後の実数。いずれも `client_auth_type` を `private_key_jwt` /
-`mtls` の 2 通りで流すため、実行されるテストはこの倍になる。
+モジュール数は variants 適用後の実数。いずれも 2 通りの設定で流すため（FAPI 1.0 / CIBA は
+`client_auth_type`、FAPI 2.0 は `sender_constrain`）、実行されるテストはこの倍になる。
+上の結果はいずれも 1 通り目の実測。
 
 **`run.sh` があるディレクトリが実行できるスイート。** 未対応のものは README だけを置いてあり、
 そこに「何が足りないか」を書いている。
 
-FAILED はどちらのスイートにも無い。残る WARNING は 2 種類。
+FAILED は FAPI 2.0 の 1 件だけ。
 
-| WARNING | 内容 |
-|---|---|
-| `CheckForUnexpectedParametersInServerMetadata` | discovery の `verified_claims_supported` が suite のスキーマに登録されていない（OIDC4IDA の他のメタデータは登録済みなので登録漏れ）。idp-server 側は仕様どおり |
-| `EnsureHttpStatusCodeIs4xx` | 認可コード再利用後にアクセストークンを失効させていない。RFC 6749 §4.1.2 の SHOULD |
+| 結果 | テスト | 内容 |
+|---|---|---|
+| FAILED | `fapi2 refresh-token` | リフレッシュトークンのローテーション時、直前のトークンを一定時間受け付けていない（FAPI 2.0 SP Final 5.3.2.1-9） |
+| WARNING | `CheckForUnexpectedParametersInServerMetadata` | discovery の `verified_claims_supported` が suite のスキーマに登録されていない（OIDC4IDA の他のメタデータは登録済みなので登録漏れ）。idp-server 側は仕様どおり |
+| WARNING | `EnsureHttpStatusCodeIs4xx` | 認可コード再利用後にアクセストークンを失効させていない。RFC 6749 §4.1.2 の SHOULD |
+| WARNING | `EnsureHttpStatusCodeIs400or401` | 同じ `jti` の DPoP proof を 2 回受け付けている。`DPoPProofVerifier.java:226` に未実装と明記（RFC 9449 §4.3 は条件付き要件） |
+| WARNING | `EnsureIdentityClaimsContainRequestedClaims` | `claims` パラメータで要求した属性がテストユーザーに入っていない。実装ではなくテストデータの問題 |
 
 REVIEW は「エラーページが表示されたことを確認する」テストの正常な終着点で、失敗ではない。
+FAPI 2.0 の SKIPPED 1 件はクライアント鍵が ES256 のため RS256 のテストを suite 自身が飛ばすもの。
 
 ## ディレクトリ
 
@@ -45,11 +51,11 @@ oidc-conformance-suite/
 ├── lib/
 │   ├── runner.sh          ランナーコンテナ起動（全スイート共通）
 │   └── local-ca.mjs       ローカル CA の探索（worktree からも解決できる）
-├── driver/                ブラウザ操作の常駐プロセス（FAPI 1.0 Advanced 用）
+├── driver/                ブラウザ操作の常駐プロセス（全スイート共用。1 プロセスでよい）
 ├── ciba-approver/         デバイス承認の常駐プロセス（FAPI-CIBA 用）
 ├── fapi1-advanced/        ← run.sh あり
 ├── fapi-ciba/             ← run.sh あり
-├── fapi2/                 README のみ
+├── fapi2/                 ← run.sh あり
 ├── oidcc/                 README のみ
 └── results/               テスト結果（gitignore）
 ```

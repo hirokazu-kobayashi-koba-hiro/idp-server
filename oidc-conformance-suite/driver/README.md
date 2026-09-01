@@ -1,7 +1,10 @@
 # ブラウザ操作ドライバ
 
 conformance suite が「ブラウザで訪問してほしい」と積んだ URL を、実 Chromium で消化し続ける
-常駐プロセス。ブラウザ操作を伴うスイート（FAPI 1.0 Advanced 等）で必要になる。
+常駐プロセス。ブラウザ操作を伴うスイート（FAPI 1.0 Advanced / FAPI 2.0）で必要になる。
+
+**スイートをまたいで 1 プロセスで足りる。** どのテナントのサインインかは URL の `tenant_id` で
+判別するため、FAPI 1.0 を流したあとそのまま FAPI 2.0 を流せる。
 
 ## なぜ必要か
 
@@ -42,8 +45,12 @@ node driver.mjs
 ```
 
 テストを流す間は常駐させておく。進行はターミナルと `driver.log` の両方に出る。
+起動時にさばけるテナントを出すので、対象のテナントが並んでいることを確認する。
 
 ```
+conformance driver 起動 (suite=https://localhost:8443/)
+  tenant financial-grade (c3d4e5f6-...) user=conformance-driver@example.com
+  tenant financial-grade-2.0 (c3f4a5b6-...) user=fapi2-conformance-driver@example.com
 ▶ fapi1-advanced-final (xxxxx)
     email OTP ok (123456)
     passkey ok ("Use passkey")
@@ -51,13 +58,26 @@ node driver.mjs
     passkey 保存 (signCount 7 -> 8)
 ```
 
+## テナント設定
+
+対象テナントは `flow.mjs` の `TENANTS` に持っている。キーはテナント ID で、認可エンドポイントの
+URL（`https://api.local.test/{tenantId}/v1/authorizations?...`）から引く。
+
+| 項目 | 用途 |
+|---|---|
+| `label` | passkey ファイル名（`passkey-<label>.json`） |
+| `email` | サインインに使うユーザー。テナントごとに別ユーザー |
+| `organizationId` / `admin` | email の検証コードを管理 API から取るための組織管理者 |
+
+新しいテナントを対象にするときはここに 1 エントリ足す。`TENANTS` に無いテナントの URL を拾うと
+既定テナント（financial-grade）の管理者で検証コードを取りにいって失敗する。
+
 ## 環境変数
 
 | 変数 | 既定 | 用途 |
 |---|---|---|
 | `SUITE` | `https://localhost:8443` | suite の API 接続先 |
-| `DRIVER_EMAIL` | `conformance-driver@example.com` | ログインに使うユーザー |
-| `DRIVER_PASSKEY_FILE` | `./passkey.json` | 登録した passkey の保存先 |
+| `DRIVER_PASSKEY_FILE` | `./passkey-<label>.json` | 登録した passkey の保存先（指定するとテナント別の分割が無効になる） |
 | `DRIVER_LOG` | `./driver.log` | ログ出力先 |
 | `IDP_BASE_URL` | `https://api.local.test` | idp-server |
 | `IDP_ROOT_CA` | `<repo>/docker/nginx/certs/rootCA.pem` | ローカル CA |
@@ -106,10 +126,13 @@ CDP の**仮想オーセンティケータ**（`WebAuthn.addVirtualAuthenticator
 実ブラウザが本物の WebAuthn 儀式を行う。テナントの fido2 設定に合わせて platform / resident key /
 user verification を有効にしている。
 
-新規ユーザーなら画面が「Set up passkey」（登録）を出すので登録し、鍵を `passkey.json` に保存する。
-以降は `WebAuthn.addCredential` で注入して「Use passkey」（認証）を通す。
+新規ユーザーなら画面が「Set up passkey」（登録）を出すので登録し、鍵を `passkey-<label>.json` に
+保存する。以降は `WebAuthn.addCredential` で注入して「Use passkey」（認証）を通す。
 
-## passkey.json の扱い（重要）
+**ファイルはテナントごとに分ける。** ユーザーがテナントごとに別なので、別テナントの鍵を注入すると
+クローン検知や credential 不一致に当たる。
+
+## passkey ファイルの扱い（重要）
 
 **署名カウンタごと保存し直している。** idp-server は WebAuthn §6.1.1 のクローン検知を実装している。
 
@@ -125,12 +148,16 @@ if (newSignCount > 0 && newSignCount <= webAuthn4jCredential.signCount()) {
 
 このため以下に注意する。
 
-- `DRIVER_EMAIL` を変えたら `passkey.json` も消す（新規ユーザーとして登録し直しになる）
-- `passkey.json` だけ消すとサーバに登録済みの鍵と食い違う。メールも変えること
-- テナントを作り直した（`setup.sh` の再実行）ら `passkey.json` は無効。消す
+- `TENANTS` の `email` を変えたらそのテナントの passkey ファイルも消す（登録し直しになる）
+- passkey ファイルだけ消すとサーバに登録済みの鍵と食い違う。メールも変えること
+- テナントを作り直した（`setup.sh` の再実行）ら passkey ファイルは無効。消す
+- ドライバを認証の途中で落とすと、サーバのカウンタだけ進んで保存が飛ぶ。次の 1 回は
+  `Failed to verify authentication data` で落ちるが、その失敗でカウンタが追いつくので
+  2 回目からは通る
 
 ## 既知の制限
 
 - FAPI-CIBA には使えない（ブラウザを使わないフロー。`../fapi-ciba/README.md` 参照）
-- 認証ポリシーが financial-grade 前提。別テナントを対象にする場合は手順の調整が要る
+- 認証ポリシーが **email OTP → Passkey** の 2 段であることを前提にしている。別構成のテナントを
+  対象にする場合は `signIn()` の調整が要る
 - 1 プロセスで 1 つの URL を順に処理する。suite 側も `alias` 付きプランは直列実行なので現状は足りている

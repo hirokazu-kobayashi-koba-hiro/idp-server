@@ -2,15 +2,15 @@
   "alias": "idp-server-fapi2-mtls",
   "description": "FAPI 2.0 Security Profile Final test configuration for local idp-server with tls_client_auth (mTLS) authentication",
   "server": {
-    "discoveryUrl": "https://api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/.well-known/openid-configuration"
+    "discoveryUrl": "https://api.local.test/c3f4a5b6-d7e8-4f9a-0b1c-2d3e4f5a6b7c/.well-known/openid-configuration"
   },
   "client": {
-    "client_id": "b58f5dec-dedb-4ee6-a7af-b03441d0e143",
-    "scope": "openid profile email fapi-2.0"
+    "client_id": "d3a4b5c6-e7f8-4a9b-0c1d-2e3f4a5b6c7d",
+    "scope": "openid profile email write"
   },
   "client2": {
-    "client_id": "2fcc1a71-b916-4e3f-a056-8092ff3f796e",
-    "scope": "openid profile email fapi-2.0"
+    "client_id": "d4a5b6c7-e8f9-4a0b-1c2d-3e4f5a6b7c8d",
+    "scope": "openid profile email write"
   },
   "mtls": {
     "cert": "-----BEGIN CERTIFICATE-----\nMIIC0zCCAbugAwIBAgIUSH+VTlUaiOOOcZfeJ2D3oMvFiOswDQYJKoZIhvcNAQEL\nBQAwXDELMAkGA1UEBhMCSlAxDjAMBgNVBAgMBVRva3lvMQ4wDAYDVQQHDAVUb2t5\nbzETMBEGA1UECgwKRXhhbXBsZSBDQTEYMBYGA1UEAwwPRXhhbXBsZSBSb290IENB\nMB4XDTI2MDUwMjExMjMwNVoXDTI3MDUwMjExMjMwNVowSTEZMBcGA1UEAwwQZmFw\naTItdGxzLWNsaWVudDEfMB0GA1UECgwWRkFQSSAyLjAgQ2VydGlmaWNhdGlvbjEL\nMAkGA1UEBhMCSlAwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAS6dx0642XKXm2q\nNnk6RAloFLpqLG+uPNAEIaVGW+CEMOZAKfQ1n9GgFk6+hRTODXxgQw3l7ZAiSFxh\nJsumoI34o2swaTAnBgNVHREEIDAeghxmYXBpMi10bHMtY2xpZW50LmV4YW1wbGUu\nY29tMB0GA1UdDgQWBBRqSSvm9woEVemHXVmMJk3gI67YcjAfBgNVHSMEGDAWgBSH\nV3b6X2bWEHc7Iwb3QCjS/n2EjzANBgkqhkiG9w0BAQsFAAOCAQEAaFaXKK7hnWma\niks6apX/BlDkd/7IdqNLkdN1C2uZlACcU5n955v7ISNgzNHTt/r/j6uqgJjx0CIo\nApo+JA2RWb5Dm1Coybv6ld1o/FrxAKGt95lA5HXoX19lg4zxXvUWpFxe3PawDxA/\n5uTdxHDtKtsxkiX5+k8dvUOPbjGJEoOC6QvPcb00x96UvPN18PcpxSQ/Ib2/VikV\nPhk2MMmgT++5GfZWnAsXm4KGT3p1eVEwW1oecp+JmEiLmps57x2T6fHbMB47RGJC\nGO4ZkcTKgMSh77IbkvONidOG8nd/pxF2hNw/3lIrqVaXNJgK6qbUaLulRaMMTPSm\n/htc/Mh16Q==\n-----END CERTIFICATE-----\n",
@@ -21,7 +21,7 @@
     "key": "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIDVoz1A94zIppr7w+1addARRAR2BKeY3RD17doFFGjWaoAoGCCqGSM49\nAwEHoUQDQgAE3Xt9WBac4sfrOhPwMWi6f0kDYPwFfVkGmhYhps85dkpCNsjZztMi\nMDCrMPATgAMdq1STpK2I8AZDHyzhqLJYnQ==\n-----END EC PRIVATE KEY-----\n"
   },
   "resource": {
-    "resourceUrl": "https://mtls.api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/userinfo",
+    "resourceUrl": "https://mtls.api.local.test/c3f4a5b6-d7e8-4f9a-0b1c-2d3e4f5a6b7c/v1/userinfo",
     "richAuthorizationRequest": {
       "type": "payment_initiation",
       "actions": [

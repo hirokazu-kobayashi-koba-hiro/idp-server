@@ -21,12 +21,14 @@ import fs from "node:fs";
 import { chromium } from "playwright";
 import { suite } from "./suite-api.mjs";
 import {
-  CONFIG,
+  TENANTS,
   attachVirtualAuthenticator,
   behaviorFor,
   here,
+  passkeyFileFor,
   savePasskey,
   signIn,
+  tenantIdFromAuthorizationUrl,
 } from "./flow.mjs";
 
 const logFile = process.env.DRIVER_LOG || here("driver.log");
@@ -127,7 +129,11 @@ async function handle(browser, pending) {
     ...(videoDir ? { recordVideo: { dir: videoDir, size: { width: 1280, height: 800 } } } : {}),
   });
   const page = await context.newPage();
-  const { cdp, authenticatorId } = await attachVirtualAuthenticator(context, page);
+  // サインイン画面へ遷移する前に passkey を注入する必要があるため、認可 URL の
+  // パスからテナントを判別する。1 プロセスで複数スイートをさばけるようにするため。
+  const tenantId = tenantIdFromAuthorizationUrl(pending.url);
+  const passkeyFile = passkeyFileFor(tenantId);
+  const { cdp, authenticatorId } = await attachVirtualAuthenticator(context, page, passkeyFile);
 
   try {
     await page.goto(pending.url, { waitUntil: "networkidle", timeout: 60000 });
@@ -149,12 +155,12 @@ async function handle(browser, pending) {
 
     await signIn(page, behavior, log);
   } catch (e) {
-    log(`    ❌ ${e.message.split("\n")[0].slice(0, 160)}`);
+    log(`    ❌ ${e.message.split("\n")[0].slice(0, 300)}`);
     await dumpState(page, `fail-${pending.testId}`);
   } finally {
     // 成功・失敗にかかわらず署名カウンタを書き戻す。認証まで進んだ後に落ちた場合、
     // 保存を飛ばすとカウンタが巻き戻り、次回の認証がクローン検知に引っかかる。
-    await savePasskey(cdp, authenticatorId, log).catch((e) =>
+    await savePasskey(cdp, authenticatorId, passkeyFile, log).catch((e) =>
       log(`    ⚠️  passkey 保存に失敗: ${e.message.slice(0, 80)}`),
     );
     await context.close();
@@ -174,10 +180,14 @@ const browser = await chromium.launch({
   args: ["--host-resolver-rules=MAP localhost.emobix.co.uk 127.0.0.1"],
 });
 
+// どのテナントをさばけるかは起動時に出す。設定の無いテナントの URL を拾うと
+// 既定テナントの管理者で検証コードを取りにいって失敗するため、ここで気づけるようにする。
 log(
-  `conformance driver 起動 (suite=${suite.baseUrl}, user=${CONFIG.email}` +
-    `${headed ? ", 画面あり" : ""})`,
+  `conformance driver 起動 (suite=${suite.baseUrl}${headed ? ", 画面あり" : ""})`,
 );
+for (const [id, t] of Object.entries(TENANTS)) {
+  log(`  tenant ${t.label} (${id}) user=${t.email}`);
+}
 process.on("SIGINT", async () => {
   log("停止");
   await browser.close();

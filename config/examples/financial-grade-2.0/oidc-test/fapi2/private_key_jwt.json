@@ -2,11 +2,11 @@
   "alias": "idp-server-fapi2-private_key_jwt",
   "description": "FAPI 2.0 Security Profile Final test configuration for local idp-server with private_key_jwt authentication",
   "server": {
-    "discoveryUrl": "https://api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/.well-known/openid-configuration"
+    "discoveryUrl": "https://api.local.test/c3f4a5b6-d7e8-4f9a-0b1c-2d3e4f5a6b7c/.well-known/openid-configuration"
   },
   "client": {
-    "client_id": "a7c57646-089b-4fe5-8301-353e7f460319",
-    "scope": "openid profile email fapi-2.0",
+    "client_id": "d1a2b3c4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "scope": "openid profile email write",
     "jwks": {
       "keys": [
         {
@@ -24,8 +24,8 @@
     "dpop_signing_alg": "ES256"
   },
   "client2": {
-    "client_id": "b8d68757-19ac-5fe6-9412-464f8f571430",
-    "scope": "openid profile email fapi-2.0",
+    "client_id": "d2a3b4c5-e6f7-4a8b-9c0d-1e2f3a4b5c6d",
+    "scope": "openid profile email write",
     "jwks": {
       "keys": [
         {
@@ -43,7 +43,7 @@
     "dpop_signing_alg": "ES256"
   },
   "resource": {
-    "resourceUrl": "https://api.local.test/edc3e984-05b6-499f-bd05-d48e5aaea1e4/v1/userinfo",
+    "resourceUrl": "https://api.local.test/c3f4a5b6-d7e8-4f9a-0b1c-2d3e4f5a6b7c/v1/userinfo",
     "richAuthorizationRequest": {
       "type": "payment_initiation",
       "actions": [

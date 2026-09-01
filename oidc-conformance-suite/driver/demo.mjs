@@ -18,7 +18,15 @@ import fs from "node:fs";
 import { spawn } from "node:child_process";
 import { chromium } from "playwright";
 import { suite } from "./suite-api.mjs";
-import { attachVirtualAuthenticator, behaviorFor, here, savePasskey, signIn } from "./flow.mjs";
+import {
+  attachVirtualAuthenticator,
+  behaviorFor,
+  here,
+  passkeyFileFor,
+  savePasskey,
+  signIn,
+  tenantIdFromAuthorizationUrl,
+} from "./flow.mjs";
 
 const OUT_DIR = here("demo");
 const VIDEO_DIR = `${OUT_DIR}/raw`;
@@ -68,7 +76,6 @@ const context = await browser.newContext({
 
 const suitePage = await context.newPage();
 const loginPage = await context.newPage();
-const { cdp, authenticatorId } = await attachVirtualAuthenticator(context, loginPage);
 
 await suitePage.goto(`${suite.baseUrl}plans.html`, { waitUntil: "domcontentloaded" });
 // 右が真っ白のまま始まると何を待っているのか分からないので、待機中であることを出す。
@@ -96,6 +103,11 @@ await suitePage.goto(`${suite.baseUrl}log-detail.html?log=${first.testId}`, {
   waitUntil: "domcontentloaded",
 });
 
+// 仮想オーセンティケータはテナントごとの passkey を注入するので、
+// どのテナントの認可 URL かが分かってから載せる。
+const passkeyFile = passkeyFileFor(tenantIdFromAuthorizationUrl(first.url));
+const { cdp, authenticatorId } = await attachVirtualAuthenticator(context, loginPage, passkeyFile);
+
 // happy path は 2 回ブラウザを使う（2 クライアント目の JARM 確認）。
 let pending = first;
 for (let i = 0; i < 2; i++) {
@@ -105,7 +117,7 @@ for (let i = 0; i < 2; i++) {
 
   await loginPage.goto(pending.url, { waitUntil: "networkidle", timeout: 60000 });
   await signIn(loginPage, behaviorFor(pending.testName), log);
-  await savePasskey(cdp, authenticatorId, log);
+  await savePasskey(cdp, authenticatorId, passkeyFile, log);
 
   // callback の着地と、suite 側の表示が追いつくのを少し見せる
   await loginPage.waitForTimeout(1500);

@@ -29,16 +29,40 @@ docker exec conformance-server curl -sk -o /dev/null -w '%{http_code}\n' \
   https://api.local.test/c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8/.well-known/openid-configuration
 ```
 
-## ドライバは 1 プロセスだけ（必須）
+## ドライバは全スイート共用。1 プロセスだけ（必須）
 
 **複数起動すると URL を取り合い、原因の分かりにくい失敗になる。** 実際に踏んだ症状:
 
 - 振る舞いテーブルを持たない古いプロセスが URL を拾い、`user-rejects` で Cancel が押されない
-- 2 プロセスが `passkey.json` を奪い合い、署名カウンタが壊れて
+- 2 プロセスが同じ passkey ファイルを奪い合い、署名カウンタが壊れて
   `Failed to verify authentication data`
 
 テストを流す前に必ず `pgrep -f "[d]river.mjs"` で確認する。`kill` (SIGTERM) が効かないことが
 あるので、止まらなければ `kill -INT`。
+
+**スイートごとにドライバを立てる必要はない。** サインイン画面の URL に `tenant_id` が載っており、
+`flow.mjs` の `TENANTS` からテナント別の設定（管理者・ユーザー・passkey ファイル）を引く。
+FAPI 1.0 を流した後そのまま FAPI 2.0 を流せる。新しいテナントを足すときは `TENANTS` に追加する。
+起動ログにさばけるテナントが出るので、そこに無い URL を拾うと既定テナントの管理者で
+検証コードを取りに行って失敗する。
+
+## テスト設定の scope が profile を起動する（最も誤読しやすい）
+
+idp-server はリクエストされた scope でプロファイルを決める
+（`AuthorizationServerExtensionConfiguration.isFapi20()` / `isFapiAdvance()` / `isFapiBaseline()`）。
+**テスト設定 JSON の `scope` にテナントの `fapi20_scopes` / `fapi_advance_scopes` の値が
+入っていないと、そのプロファイルの検証が 1 つも走らない。**
+
+このとき落ちるのは PKCE 必須・client assertion の `aud` 制限・sender-constrain 必須といった
+「プロファイル固有の要件」だけなので、**個々の実装バグに見えて実際は設定ミス**という誤読をする。
+FAPI 系のテストで複数の要件がまとめて素通りしていたら、まず scope の対応を疑う。
+
+```bash
+# テナント側
+jq '.authorization_server.extension | {fapi20_scopes, fapi_advance_scopes, fapi_baseline_scopes}' <テナント設定>
+# テスト設定側
+jq '.client.scope' <テスト設定>
+```
 
 ## テスト実行も同時に走らせない
 
@@ -53,18 +77,25 @@ TEST-RUNNER | Stopping test due to alias conflict - before this test finished,
 蹴られた側は条件エラーが 0 でも INTERRUPTED になるため、**テスト内容の問題と誤読しやすい**。
 INTERRUPTED を見たらまずログ末尾で alias conflict かどうかを確認する。
 
-途中で実行を止めた場合も alias を掴んだままのテストが残る。次の実行が同じ理由で落ちるので、
-もう一度流せばよい。
+途中で実行を止めた場合も alias を掴んだままのテストが残る。この状態で流すと **1 個目が
+alias 衝突で INTERRUPTED → ランナーが次のモジュールへ進む → それも INTERRUPTED** と連鎖し、
+全モジュールが 1〜2 秒で終わる。テスト内容とは無関係なので、suite を作り直してから流す。
 
-## passkey.json とユーザーは常にセットで扱う
+```bash
+docker restart conformance-server
+curl -sk https://localhost:8443/api/runner/running   # [] になっていること
+```
 
-`driver/passkey.json` はサーバに登録済みの資格情報と 1:1 で対応している。片方だけ変えると壊れる。
+## passkey ファイルとユーザーは常にセットで扱う
+
+passkey はテナントごとに `driver/passkey-<label>.json`（label は `TENANTS` の値）に保存され、
+サーバに登録済みの資格情報と 1:1 で対応している。片方だけ変えると壊れる。
 
 | 操作 | 必要な対応 |
 |---|---|
-| `DRIVER_EMAIL` を変える | `passkey.json` を**消す**（新規ユーザーとして登録し直し） |
-| `passkey.json` を消す | `DRIVER_EMAIL` も**変える**（サーバ側に残った鍵と食い違う） |
-| テナントを作り直す（`setup.sh` 再実行） | `passkey.json` を**消す**（ユーザーごと消えている） |
+| `TENANTS` の `email` を変える | その passkey ファイルを**消す**（新規ユーザーとして登録し直し） |
+| passkey ファイルを消す | `email` も**変える**（サーバ側に残った鍵と食い違う） |
+| テナントを作り直す（`setup.sh` 再実行） | passkey ファイルを**消す**（ユーザーごと消えている） |
 
 ## 署名カウンタを巻き戻さない
 
