@@ -61,6 +61,23 @@ node driver.mjs
 | `DRIVER_LOG` | `./driver.log` | ログ出力先 |
 | `IDP_BASE_URL` | `https://api.local.test` | idp-server |
 | `IDP_ROOT_CA` | `<repo>/docker/nginx/certs/rootCA.pem` | ローカル CA |
+| `DRIVER_HEADED` | （未設定 = ヘッドレス） | `1` で実ウィンドウを表示 |
+| `DRIVER_SLOWMO` | `0` | ひと操作ごとの待ち時間(ms)。画面ありで目で追うとき用 |
+
+## 画面を見ながら動かす
+
+ヘッドレスだと 1 回のサインインが数秒で終わってしまうので、目で追いたいときは遅延を入れる。
+
+```bash
+DRIVER_HEADED=1 DRIVER_SLOWMO=500 node driver.mjs
+```
+
+Chromium のウィンドウが開き、email 入力 → コード入力 → パスキー → 同意 →
+callback へのリダイレクトが実際に見える。FIDO2 は仮想オーセンティケータが処理するため
+OS の生体認証ダイアログは出ない。
+
+デバッグ用途では `DRIVER_SLOWMO=1000` くらいにして、どの画面で止まっているかを確認する。
+失敗時は `/tmp/conformance-driver-fail-{testId}.png` にスクリーンショットが残る。
 
 `docker/nginx/certs/*.pem` は mkcert が生成するもので gitignore されている。git worktree など
 証明書が無いチェックアウトから動かす場合は `IDP_ROOT_CA` でメインのチェックアウトを指す。

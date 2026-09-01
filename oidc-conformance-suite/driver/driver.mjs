@@ -228,12 +228,20 @@ async function handle(browser, pending) {
 // suite の callback は https://localhost.emobix.co.uk:8443/... に来る。このホスト名は公開 DNS で
 // 127.0.0.1 に解決される前提だが、そこに依存すると名前が引けない環境でブラウザが
 // ERR_NAME_NOT_RESOLVED になる。Chromium 側で固定して外部 DNS を不要にする。
+//
+// DRIVER_HEADED=1 で実ウィンドウを表示する。1 回のサインインは数秒で終わるため、
+// 目で追いたいときは DRIVER_SLOWMO でひと操作ごとに待たせる。
+const headed = process.env.DRIVER_HEADED === "1";
 const browser = await chromium.launch({
-  headless: true,
+  headless: !headed,
+  slowMo: Number(process.env.DRIVER_SLOWMO || 0),
   args: ["--host-resolver-rules=MAP localhost.emobix.co.uk 127.0.0.1"],
 });
 
-log(`conformance driver 起動 (suite=${suite.baseUrl}, user=${CONFIG.email})`);
+log(
+  `conformance driver 起動 (suite=${suite.baseUrl}, user=${CONFIG.email}` +
+    `${headed ? ", 画面あり" : ""})`,
+);
 process.on("SIGINT", async () => {
   log("停止");
   await browser.close();
