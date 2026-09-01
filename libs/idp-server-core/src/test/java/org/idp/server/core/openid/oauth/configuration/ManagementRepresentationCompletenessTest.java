@@ -24,6 +24,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
+import org.idp.server.core.openid.oauth.configuration.client.ClientExtensionConfiguration;
 import org.idp.server.platform.json.JsonConverter;
 import org.junit.jupiter.api.Test;
 
@@ -54,6 +55,12 @@ class ManagementRepresentationCompletenessTest {
    */
   private static final Set<String> CLIENT_EXCLUSIONS = Set.of("created_at", "updated_at");
 
+  /**
+   * A federation entry is a model of its own rather than a plain value, so this test cannot build a
+   * sample for it. {@code toMap()} does carry it; it is listed here because the sample cannot.
+   */
+  private static final Set<String> CLIENT_EXTENSION_EXCLUSIONS = Set.of("available_federations");
+
   @Test
   void authorizationServerRepresentationCarriesEveryField() {
     assertRoundTrippable(AuthorizationServerConfiguration.class, AUTHORIZATION_SERVER_EXCLUSIONS);
@@ -65,13 +72,18 @@ class ManagementRepresentationCompletenessTest {
   }
 
   /**
-   * #1845: the extension is nested inside the authorization server representation, so the test
-   * above only sees that the {@code extension} key is present, not what it carries. The extension
-   * needs the same ledger of its own; {@code fapi20_scopes} was dropped for exactly this reason.
+   * #1845: an extension is nested inside its parent representation, so the tests above only see
+   * that the {@code extension} key is present, not what it carries. Each extension needs the same
+   * ledger of its own; {@code fapi20_scopes} was dropped for exactly this reason.
    */
   @Test
   void authorizationServerExtensionRepresentationCarriesEveryField() {
     assertRoundTrippable(AuthorizationServerExtensionConfiguration.class, Set.of());
+  }
+
+  @Test
+  void clientExtensionRepresentationCarriesEveryField() {
+    assertRoundTrippable(ClientExtensionConfiguration.class, CLIENT_EXTENSION_EXCLUSIONS);
   }
 
   private <T> void assertRoundTrippable(Class<T> type, Set<String> exclusions) {
