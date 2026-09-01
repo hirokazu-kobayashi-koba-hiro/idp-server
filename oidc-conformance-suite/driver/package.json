@@ -1,0 +1,14 @@
+{
+  "name": "conformance-driver",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "OIDF conformance suite のブラウザ操作を実 Chromium で肩代わりするドライバ",
+  "scripts": {
+    "start": "node driver.mjs",
+    "postinstall": "playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.62.1"
+  }
+}

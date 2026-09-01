@@ -1,0 +1,4 @@
+# 実行時に生成されるもの
+node_modules/
+passkey.json
+driver.log
