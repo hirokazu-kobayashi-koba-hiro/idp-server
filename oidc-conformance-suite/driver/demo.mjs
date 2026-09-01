@@ -106,7 +106,11 @@ await suitePage.goto(`${suite.baseUrl}log-detail.html?log=${first.testId}`, {
 // 仮想オーセンティケータはテナントごとの passkey を注入するので、
 // どのテナントの認可 URL かが分かってから載せる。
 const passkeyFile = passkeyFileFor(tenantIdFromAuthorizationUrl(first.url));
-const { cdp, authenticatorId } = await attachVirtualAuthenticator(context, loginPage, passkeyFile);
+const { cdp, authenticatorId, injectedCredentialId } = await attachVirtualAuthenticator(
+  context,
+  loginPage,
+  passkeyFile,
+);
 
 // happy path は 2 回ブラウザを使う（2 クライアント目の JARM 確認）。
 let pending = first;
@@ -117,7 +121,7 @@ for (let i = 0; i < 2; i++) {
 
   await loginPage.goto(pending.url, { waitUntil: "networkidle", timeout: 60000 });
   await signIn(loginPage, behaviorFor(pending.testName), log);
-  await savePasskey(cdp, authenticatorId, passkeyFile, log);
+  await savePasskey(cdp, authenticatorId, passkeyFile, injectedCredentialId, log);
 
   // callback の着地と、suite 側の表示が追いつくのを少し見せる
   await loginPage.waitForTimeout(1500);

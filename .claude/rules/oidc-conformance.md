@@ -110,8 +110,27 @@ passkey はテナントごとに `driver/passkey-<label>.json`（label は `TENA
 | 操作 | 必要な対応 |
 |---|---|
 | `TENANTS` の `email` を変える | その passkey ファイルを**消す**（新規ユーザーとして登録し直し） |
-| passkey ファイルを消す | `email` も**変える**（サーバ側に残った鍵と食い違う） |
+| passkey ファイルを消す | `email` も**変える**（後述。サーバ側の資格情報を消すだけでは直らない） |
 | テナントを作り直す（`setup.sh` 再実行） | passkey ファイルを**消す**（ユーザーごと消えている） |
+
+### 「サーバの資格情報だけ消して登録し直す」はできない
+
+画面は資格情報の有無ではなく **`user.status`** で登録/認証を切り替える
+（`app-view/src/auth/stepHelpers.ts` の `shouldFido2Authenticate`）。
+
+```ts
+return !isInitialUser(userStatus);   // 初期ユーザー以外は常に「認証」
+```
+
+既存ユーザーの資格情報を DB から消しても、画面は「Use passkey」を出し続け、サーバは空の
+`allowCredentials` を返し、ブラウザは `Passkey sign-in was cancelled` になる。
+**復旧するには email を変えて新規ユーザーにする。**
+
+実際に踏んだ症状: passkey ファイルの持ち主（`conformance-driver4@example.com`）と
+`TENANTS` の `email`（`conformance-driver@example.com`）が食い違い、FAPI 1.0 の
+ほぼ全モジュールが 30 秒タイムアウト → 240 秒で UNKNOWN。1 時間で 19 モジュールしか進まなかった。
+サーバのログは `authentication challenge generated successfully` までしか出ず、
+`retrieving credential` が無い（＝ブラウザが assertion を返していない）ことで切り分けられる。
 
 ## 署名カウンタを巻き戻さない
 

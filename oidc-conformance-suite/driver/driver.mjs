@@ -215,7 +215,13 @@ async function handle(browser, pending) {
     // 成功・失敗にかかわらず署名カウンタを書き戻す。認証まで進んだ後に落ちた場合、
     // 保存を飛ばすとカウンタが巻き戻り、次回の認証がクローン検知に引っかかる。
     if (authenticator) {
-      await savePasskey(authenticator.cdp, authenticator.authenticatorId, passkeyFile, log).catch(
+      await savePasskey(
+        authenticator.cdp,
+        authenticator.authenticatorId,
+        passkeyFile,
+        authenticator.injectedCredentialId,
+        log,
+      ).catch(
         (e) => log(`    ⚠️  passkey 保存に失敗: ${e.message.slice(0, 80)}`),
       );
     }

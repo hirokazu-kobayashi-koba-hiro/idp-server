@@ -34,7 +34,7 @@ export const TENANTS = {
     label: "financial-grade",
     signIn: "otp-passkey",
     organizationId: "f1a2b3c4-d5e6-f7a8-b9c0-d1e2f3a4b5c6",
-    email: "conformance-driver@example.com",
+    email: "conformance-driver5@example.com",
     admin: {
       tenantId: "e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2",
       username: "fapi-test@example.com",
@@ -197,11 +197,13 @@ export async function attachVirtualAuthenticator(context, page, passkeyFile) {
     },
   });
 
+  let injectedCredentialId = null;
   if (fs.existsSync(passkeyFile)) {
     const credential = JSON.parse(fs.readFileSync(passkeyFile, "utf8"));
     await cdp.send("WebAuthn.addCredential", { authenticatorId, credential });
+    injectedCredentialId = credential.credentialId;
   }
-  return { cdp, authenticatorId };
+  return { cdp, authenticatorId, injectedCredentialId };
 }
 
 /**
@@ -212,11 +214,25 @@ export async function attachVirtualAuthenticator(context, page, passkeyFile) {
  * 署名カウンタが前回以下だと "Failed to verify authentication data" で弾かれる。
  * 毎回同じ値を注入するとカウンタが巻き戻り、2 回目の認証が必ず失敗する。
  */
-export async function savePasskey(cdp, authenticatorId, passkeyFile, log = () => {}) {
+export async function savePasskey(
+  cdp,
+  authenticatorId,
+  passkeyFile,
+  injectedCredentialId = null,
+  log = () => {},
+) {
   const { credentials } = await cdp.send("WebAuthn.getCredentials", { authenticatorId });
   if (!credentials.length) return;
 
-  const c = credentials[0];
+  // 登録が起きるとオーセンティケータには「注入した鍵」と「新しく登録された鍵」の 2 つが載る。
+  // credentials[0] を無条件に取ると古い方を拾い、"変化なし" と判断してファイルを更新しない。
+  // その結果、サーバーは新しい鍵を allowCredentials に載せるのに手元は古い鍵のまま、という
+  // 食い違いが残り、以降の認証がすべて "Passkey sign-in was cancelled" になる。
+  const registered = credentials.find((x) => x.credentialId !== injectedCredentialId);
+  const c = registered ?? credentials[0];
+  if (registered && injectedCredentialId) {
+    log("    passkey 新規登録を検出（注入した鍵を置き換える）");
+  }
   const next = {
     credentialId: c.credentialId,
     isResidentCredential: c.isResidentCredential,
