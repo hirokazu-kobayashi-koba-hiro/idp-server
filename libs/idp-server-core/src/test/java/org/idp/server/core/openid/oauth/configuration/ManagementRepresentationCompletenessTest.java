@@ -64,6 +64,16 @@ class ManagementRepresentationCompletenessTest {
     assertRoundTrippable(ClientConfiguration.class, CLIENT_EXCLUSIONS);
   }
 
+  /**
+   * #1845: the extension is nested inside the authorization server representation, so the test
+   * above only sees that the {@code extension} key is present, not what it carries. The extension
+   * needs the same ledger of its own; {@code fapi20_scopes} was dropped for exactly this reason.
+   */
+  @Test
+  void authorizationServerExtensionRepresentationCarriesEveryField() {
+    assertRoundTrippable(AuthorizationServerExtensionConfiguration.class, Set.of());
+  }
+
   private <T> void assertRoundTrippable(Class<T> type, Set<String> exclusions) {
     Map<String, Object> populated = new HashMap<>();
     List<String> unsupported = new ArrayList<>();
@@ -172,9 +182,23 @@ class ManagementRepresentationCompletenessTest {
       return elementType(field) == String.class ? List.of("value") : null;
     }
     if (Map.class.isAssignableFrom(type)) {
-      return Map.of("key", "value");
+      // A map of lists needs a list as its value, or the sample cannot be deserialized back.
+      return valueType(field) instanceof ParameterizedType parameterized
+              && List.class.isAssignableFrom((Class<?>) parameterized.getRawType())
+          ? Map.of("key", List.of("value"))
+          : Map.of("key", "value");
     }
     return null;
+  }
+
+  private Type valueType(Field field) {
+    if (field.getGenericType() instanceof ParameterizedType parameterized) {
+      Type[] arguments = parameterized.getActualTypeArguments();
+      if (arguments.length == 2) {
+        return arguments[1];
+      }
+    }
+    return Object.class;
   }
 
   private Type elementType(Field field) {
