@@ -25,6 +25,7 @@ import {
   attachVirtualAuthenticator,
   behaviorFor,
   here,
+  needsPasskey,
   passkeyFileFor,
   savePasskey,
   signIn,
@@ -43,6 +44,37 @@ function log(line) {
 
 // 同一テスト内で何回目の訪問かを数える（firstVisit: "abandon" の判定に使う）
 const visitCounts = new Map();
+
+/*
+ * session: "reuse" のテスト用に、テストごとに生かしておくブラウザコンテキスト。
+ *
+ * 1 本だけにすると、alias の違うプランが並列に走ったときに枠を奪い合う。実際に
+ * cross-site と context-path を同時に流して、片方の 2 回目の認可でセッションが
+ * 消えて login_required になった。テスト ID をキーに持つ。
+ *
+ * 使い終わりの通知は無いので、放置されたものは時間で閉じる（suite 側のテストは
+ * 240 秒で打ち切られるため、それを超えたものは終わっているとみなせる）。
+ */
+const liveSessions = new Map();
+const SESSION_TTL_MS = 300_000;
+
+async function closeSession(testId) {
+  const session = liveSessions.get(testId);
+  if (!session) return;
+  liveSessions.delete(testId);
+  await session.context.close().catch(() => {});
+}
+
+async function pruneSessions() {
+  const now = Date.now();
+  for (const [testId, session] of liveSessions) {
+    if (now - session.touchedAt > SESSION_TTL_MS) await closeSession(testId);
+  }
+}
+
+async function closeAllSessions() {
+  for (const testId of [...liveSessions.keys()]) await closeSession(testId);
+}
 
 // DRIVER_VIDEO=1 で 1 認可ごとに WebM を録画する。ヘッドレスでも撮れる。
 const videoDir = process.env.DRIVER_VIDEO === "1" ? here("videos") : null;
@@ -90,9 +122,10 @@ async function nextPendingUrl() {
 }
 
 /**
- * 「エラーページが出ること」を目視で確認するテストの REVIEW を満たす。
+ * 「その画面が出たこと」を目視で確認するテストの REVIEW を満たす。
  *
- * この種のテスト（request_uri の再利用・期限切れ・別クライアント）は callback を返さない。
+ * エラーページの確認（request_uri の再利用・期限切れ・別クライアント）と、
+ * 2 回目のログイン画面の確認（oidcc の prompt=login / max_age）の両方で使う。
  * suite はスクリーンショットの提出を待っており、埋めないと 240 秒でタイムアウトする。
  */
 async function fulfillReview(page, testId) {
@@ -103,7 +136,7 @@ async function fulfillReview(page, testId) {
   for (const placeholder of placeholders) {
     await suite.uploadScreenshot(testId, placeholder, screenshot);
   }
-  log(`    エラーページを提出 (${placeholders.length} 件の REVIEW)`);
+  log(`    スクリーンショットを提出 (${placeholders.length} 件の REVIEW)`);
   return true;
 }
 
@@ -115,6 +148,7 @@ async function handle(browser, pending) {
   const note = [
     behavior.consent === "deny" ? "deny" : null,
     behavior.firstVisit === "abandon" ? `visit=${visit}` : null,
+    behavior.session === "reuse" ? `session visit=${visit}` : null,
   ]
     .filter(Boolean)
     .join(" ");
@@ -124,16 +158,31 @@ async function handle(browser, pending) {
   // （テスト自体は callback を待ち続けるので進行には影響しない）。
   await suite.markVisited(pending.testId, pending.url);
 
-  const context = await browser.newContext({
-    ignoreHTTPSErrors: true,
-    ...(videoDir ? { recordVideo: { dir: videoDir, size: { width: 1280, height: 800 } } } : {}),
-  });
-  const page = await context.newPage();
   // サインイン画面へ遷移する前に passkey を注入する必要があるため、認可 URL の
   // パスからテナントを判別する。1 プロセスで複数スイートをさばけるようにするため。
   const tenantId = tenantIdFromAuthorizationUrl(pending.url);
-  const passkeyFile = passkeyFileFor(tenantId);
-  const { cdp, authenticatorId } = await attachVirtualAuthenticator(context, page, passkeyFile);
+  const passkeyFile = needsPasskey(tenantId) ? passkeyFileFor(tenantId) : null;
+
+  // 既定は認可ごとに使い捨て。セッションの有無で挙動が変わるテストだけ持ち越す。
+  const reuse = behavior.session === "reuse";
+  await pruneSessions();
+
+  let session = reuse ? liveSessions.get(pending.testId) : null;
+  if (session) {
+    session.touchedAt = Date.now();
+  } else {
+    const context = await browser.newContext({
+      ignoreHTTPSErrors: true,
+      ...(videoDir ? { recordVideo: { dir: videoDir, size: { width: 1280, height: 800 } } } : {}),
+    });
+    const page = await context.newPage();
+    const authenticator = passkeyFile
+      ? await attachVirtualAuthenticator(context, page, passkeyFile)
+      : null;
+    session = { context, page, authenticator, touchedAt: Date.now() };
+    if (reuse) liveSessions.set(pending.testId, session);
+  }
+  const { context, page, authenticator } = session;
 
   try {
     await page.goto(pending.url, { waitUntil: "networkidle", timeout: 60000 });
@@ -153,6 +202,11 @@ async function handle(browser, pending) {
       return;
     }
 
+    // 「2 回目のログイン画面が出たこと」の提出。サインインで画面が変わる前に撮る。
+    if (behavior.screenshot === "second-login" && visit > 1) {
+      await fulfillReview(page, pending.testId);
+    }
+
     await signIn(page, behavior, log);
   } catch (e) {
     log(`    ❌ ${e.message.split("\n")[0].slice(0, 300)}`);
@@ -160,10 +214,13 @@ async function handle(browser, pending) {
   } finally {
     // 成功・失敗にかかわらず署名カウンタを書き戻す。認証まで進んだ後に落ちた場合、
     // 保存を飛ばすとカウンタが巻き戻り、次回の認証がクローン検知に引っかかる。
-    await savePasskey(cdp, authenticatorId, passkeyFile, log).catch((e) =>
-      log(`    ⚠️  passkey 保存に失敗: ${e.message.slice(0, 80)}`),
-    );
-    await context.close();
+    if (authenticator) {
+      await savePasskey(authenticator.cdp, authenticator.authenticatorId, passkeyFile, log).catch(
+        (e) => log(`    ⚠️  passkey 保存に失敗: ${e.message.slice(0, 80)}`),
+      );
+    }
+    // 持ち越すコンテキストはここで閉じない。次のテストに移るときに閉じる。
+    if (!reuse) await context.close();
   }
 }
 
@@ -186,10 +243,11 @@ log(
   `conformance driver 起動 (suite=${suite.baseUrl}${headed ? ", 画面あり" : ""})`,
 );
 for (const [id, t] of Object.entries(TENANTS)) {
-  log(`  tenant ${t.label} (${id}) user=${t.email}`);
+  log(`  tenant ${t.label} (${id}) user=${t.email} auth=${t.signIn}`);
 }
 process.on("SIGINT", async () => {
   log("停止");
+  await closeAllSessions();
   await browser.close();
   process.exit(0);
 });

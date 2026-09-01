@@ -19,19 +19,25 @@ suite は PAR / token / userinfo を自分で叩けるが、**認可エンドポ
 | [fapi1-advanced](./fapi1-advanced/) | FAPI 1.0 Advanced Final | `fapi1-advanced-final-test-plan` | 63 | ✅ 58 PASSED / 3 REVIEW / 2 WARNING |
 | [fapi-ciba](./fapi-ciba/) | FAPI-CIBA ID1 | `fapi-ciba-id1-test-plan` | 35 | ✅ 34 PASSED / 1 WARNING |
 | [fapi2](./fapi2/) | FAPI 2.0 Security Profile Final | `fapi2-security-profile-final-test-plan` | 56 | ✅ 48 PASSED / 3 REVIEW / 4 WARNING / 1 SKIPPED |
-| [oidcc](./oidcc/) | OpenID Connect Core | `oidcc-test-plan` ほか | 55 / 38 | ❌ 設定とプランの対応づけが未決 |
+| [oidcc](./oidcc/) | OpenID Connect Core | `oidcc-basic-certification-test-plan` | 36 | ⚠️ 28 PASSED / 3 REVIEW / 3 WARNING / 1 FAILED |
 
 モジュール数は variants 適用後の実数。いずれも 2 通りの設定で流すため（FAPI 1.0 / CIBA は
-`client_auth_type`、FAPI 2.0 は `sender_constrain`）、実行されるテストはこの倍になる。
-上の結果はいずれも 1 通り目の実測。
+`client_auth_type`、FAPI 2.0 は `sender_constrain`、OIDC Core は 2 テナント）、実行される
+テストはこの倍になる。FAPI 系の結果は 1 通り目の実測、OIDC Core は 2 テナントとも同じ内訳。
 
-**`run.sh` があるディレクトリが実行できるスイート。** 未対応のものは README だけを置いてあり、
-そこに「何が足りないか」を書いている。
+**`run.sh` があるディレクトリが実行できるスイート。**
 
-FAILED はどのスイートにも無い。残る WARNING は 4 種類。
+OIDC Core の Form Post OP（`oidcc-formpost-basic-certification-test-plan`）だけは配線していない。
+idp-server が `response_mode=form_post` を実装しておらず、全モジュールが落ちるため
+（[oidcc/README.md](./oidcc/README.md) 参照）。テナントとテスト設定は残してある。
+
+FAILED は OIDC Core の 1 件だけ。
 
 | 結果 | テスト | 内容 |
 |---|---|---|
+| FAILED | `oidcc-max-age-10000` | 有効なセッションがあっても `prompt=none` 以外では再認証させるため `auth_time` が変わる。`canAutomaticallyAuthorize()` が `prompt=none` 限定 |
+| WARNING | `UserInfoEndpointWithAccessTokenInBodyNotSupported` | UserInfo に access_token を POST ボディで渡す形式が未対応 |
+| WARNING | `ValidateIdTokenACRClaimAgainstAcrValuesRequest` | ID Token の `acr` が要求した `acr_values` と一致しない |
 | WARNING | `CheckForUnexpectedParametersInServerMetadata` | discovery の `verified_claims_supported` が suite のスキーマに登録されていない（OIDC4IDA の他のメタデータは登録済みなので登録漏れ）。idp-server 側は仕様どおり |
 | WARNING | `EnsureHttpStatusCodeIs4xx` | 認可コード再利用後にアクセストークンを失効させていない。RFC 6749 §4.1.2 の SHOULD |
 | WARNING | `EnsureHttpStatusCodeIs400or401` | 同じ `jti` の DPoP proof を 2 回受け付けている。`DPoPProofVerifier.java:226` に未実装と明記（RFC 9449 §4.3 は条件付き要件） |
@@ -55,7 +61,7 @@ oidc-conformance-suite/
 ├── fapi1-advanced/        ← run.sh あり
 ├── fapi-ciba/             ← run.sh あり
 ├── fapi2/                 ← run.sh あり
-├── oidcc/                 README のみ
+├── oidcc/                 ← run.sh あり
 └── results/               テスト結果（gitignore）
 ```
 

@@ -46,6 +46,22 @@ FAPI 1.0 を流した後そのまま FAPI 2.0 を流せる。新しいテナン�
 起動ログにさばけるテナントが出るので、そこに無い URL を拾うと既定テナントの管理者で
 検証コードを取りに行って失敗する。
 
+## alias が違うプランは並列に走る
+
+`run.sh` に複数のプランを並べると、**alias が同じものは直列、違うものは並列**に実行される
+（キューが alias 単位）。並列で困るのは共有状態を持つとき。
+
+実際に踏んだ症状: ドライバがセッション用のブラウザコンテキストを 1 本しか持っておらず、
+別プランのテストに枠を奪われて 2 回目の認可が `login_required` になった。セッションは
+テスト ID をキーに持つこと（`driver.mjs` の `liveSessions`）。
+
+逆に **alias が同じプランを並べるのは危険**。同時に 1 テストしか掴めないので、片方が
+alias 衝突で落ちる。設定ファイルの alias が重複していないか確認する。
+
+```bash
+jq -r .alias config/examples/*/oidc-test/**/*.json | sort | uniq -d
+```
+
 ## テスト設定の scope が profile を起動する（最も誤読しやすい）
 
 idp-server はリクエストされた scope でプロファイルを決める
@@ -113,17 +129,34 @@ idp-server は WebAuthn §6.1.1 のクローン検知を実装している
 
 ```js
 // flow.mjs
-{ match: /user-rejects-authentication/, consent: "deny" }        // Cancel を押す
+{ match: /user-rejects-authentication/, consent: "deny" }              // Cancel を押す
 { match: /par-ensure-reused-request-uri-.../, firstVisit: "abandon" }  // 1 回目は離脱
+{ match: /oidcc-(prompt-login|max-age-1)$/, session: "reuse", screenshot: "second-login" }
 ```
 
-判別材料はテスト名しかない（`/api/info/{id}` の `testName`）。
+判別材料はテスト名しかない（`/api/info/{id}` の `testName`）。**先に一致したものが採用される**
+ので、具体的なパターンを先に置く（`max-age-1` を `max-age-10000` より先に、かつ末尾を固定する）。
+
+| 軸 | 既定 | 変える理由 |
+|---|---|---|
+| `consent` | `allow` | 同意を拒否させるテスト |
+| `firstVisit` | `complete` | 1 回目はログインせず離脱させるテスト |
+| `session` | `fresh` | 既存セッションでの挙動を見るテスト。既定を `fresh` にしているのは、あるテストのセッションが次に漏れると独立性が壊れるため |
+| `screenshot` | エラーページのみ | 2 回目のログイン画面の提出が要るテスト |
 
 ## REVIEW はスクリーンショット提出待ち。失敗ではない
 
-「エラーページが表示されること」を目視確認するテストは callback を返さない。suite は
+「その画面が表示されること」を目視確認するテストは callback を返さない。suite は
 REVIEW のログエントリを作り `upload` に提出先 ID を入れて待つ。埋めないと **240 秒で
 タイムアウト**する。`driver.mjs` の `fulfillReview()` が自動提出している。
+
+| 何を確認するテストか | 例 |
+|---|---|
+| エラーページが出ること | `par-attempt-reuse-request_uri` など |
+| 2 回目に再認証を求められること | `oidcc-prompt-login` / `oidcc-max-age-1` |
+
+後者は **検証がすべて成功していても提出しないと UNKNOWN で終わる**。条件エラーが 0 なのに
+UNKNOWN になっていたら、テスト側が `createPlaceholder()` で待っていないか確認する。
 
 結果が `REVIEW` で終わるのは**正常**。`FAILED` と混同しないこと。
 

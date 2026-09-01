@@ -16,6 +16,12 @@ export const here = (name) => new URL(name, import.meta.url).pathname;
  * ドライバ側で判別できる。1 プロセスで FAPI 1.0 / FAPI 2.0 の両方をさばくため、
  * 起動時の固定値ではなくテナント ID で引く。
  *
+ * 認証方式はテナントの認証ポリシーで決まるため `signIn` で指定する。
+ *
+ *   "otp-passkey"  email OTP → Passkey(FIDO2) の 2 段。検証コードを管理 API から取るため
+ *                  organizationId / admin が要る
+ *   "password"     email + password の 1 段。管理 API を使わないので admin は不要
+ *
  * email を変えると新規ユーザー扱いになり、passkey は登録からやり直しになる。
  * その場合は passkeyFileFor() が指すファイルも消すこと
  * （サーバ側に残った鍵と食い違うとクローン検知に当たる）。
@@ -26,6 +32,7 @@ export const TENANTS = {
   // config/examples/financial-grade/setup.sh（FAPI 1.0 Advanced / FAPI-CIBA）
   "c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8": {
     label: "financial-grade",
+    signIn: "otp-passkey",
     organizationId: "f1a2b3c4-d5e6-f7a8-b9c0-d1e2f3a4b5c6",
     email: "conformance-driver@example.com",
     admin: {
@@ -39,6 +46,7 @@ export const TENANTS = {
   // config/examples/financial-grade-2.0/setup.sh（FAPI 2.0 SP Final）
   "c3f4a5b6-d7e8-4f9a-0b1c-2d3e4f5a6b7c": {
     label: "financial-grade-2.0",
+    signIn: "otp-passkey",
     organizationId: "c1f2a3b4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
     email: "fapi2-conformance-driver@example.com",
     admin: {
@@ -48,6 +56,27 @@ export const TENANTS = {
       clientId: "c8f9a0b1-d2e3-4f4a-5b6c-7d8e9f0a1b2c",
       clientSecret: "fapi2-conformance-admin-secret-change-in-production-minimum-32-characters",
     },
+  },
+  // config/examples/oidcc-cross-site/setup.sh（OpenID Connect Core / Basic OP）
+  "e8c169c2-019f-46c9-af39-7be12ec51e4d": {
+    label: "oidcc-cross-site",
+    signIn: "password",
+    email: "oidcc-test@example.com",
+    password: "OidccTestPassword123!",
+  },
+  // config/examples/oidcc-formpost-basic/setup.sh（Form Post OP）
+  "d2e3f4a5-b6c7-8901-def0-234567890123": {
+    label: "oidcc-formpost-basic",
+    signIn: "password",
+    email: "oidcc-test@example.com",
+    password: "OidccTestPassword123!",
+  },
+  // config/examples/oidcc-cross-site-context-path/setup.sh（コンテキストパス付きデプロイ）
+  "76ec54ab-8923-468d-b04b-0d8d0a5eaade": {
+    label: "oidcc-cross-site-context-path",
+    signIn: "password",
+    email: "context-path-test@example.com",
+    password: "TestPassword123!",
   },
 };
 
@@ -74,6 +103,11 @@ export function tenantIdFromAuthorizationUrl(url) {
   }
 }
 
+/** そのテナントの認証が Passkey を使うか（使わないテナントでは仮想オーセンティケータが要らない）。 */
+export function needsPasskey(tenantId) {
+  return tenantConfigFor(tenantId).signIn !== "password";
+}
+
 /**
  * テナントごとの passkey 保存先。
  *
@@ -96,6 +130,16 @@ export function passkeyFileFor(tenantId) {
  *              "deny"           Cancel を押してエラーを返させる
  *   firstVisit "complete"(既定) 毎回ログインまで完遂する
  *              "abandon"        最初の訪問はログインせず離脱し、2 回目で完遂する
+ *   session    "fresh"(既定)    認可ごとに新しいブラウザコンテキストを使う（クッキーを持ち越さない）
+ *              "reuse"          同じテスト内ではコンテキストを共有し、セッションを持ち越す
+ *   screenshot なし(既定)        スクリーンショットはエラーページのときだけ提出する
+ *              "second-login"   2 回目以降のログイン画面を提出する
+ *
+ * 先に一致したものが採用されるため、具体的なパターンを先に置くこと。
+ *
+ * session を既定で "fresh" にしているのは、あるテストのセッションが次のテストへ漏れると
+ * 適合性テストの独立性が壊れるため。セッションの有無で挙動が変わることを確認するテストだけ
+ * "reuse" にする。
  */
 export const BEHAVIORS = [
   {
@@ -110,6 +154,22 @@ export const BEHAVIORS = [
     //  This must not be attempted until the second visit."
     match: /par-ensure-reused-request-uri-prior-to-auth-completion/,
     firstVisit: "abandon",
+  },
+  {
+    // 「2 回目は再認証を求められること」を目視確認するテスト。
+    // ExpectSecondLoginPage がスクリーンショットの提出先を作って待つため
+    // （OIDCCMaxAge1 / OIDCCPromptLogin の createPlaceholder）、埋めないと
+    // 検証がすべて成功していても 240 秒でタイムアウトして UNKNOWN になる。
+    // max-age-10000 に一致させないため末尾を固定する。
+    match: /oidcc-(prompt-login|max-age-1)$/,
+    session: "reuse",
+    screenshot: "second-login",
+  },
+  {
+    // 1 回目でログインし、2 回目は既存セッションでの挙動を見るテスト群。
+    // クッキーを持ち越さないと 2 回目が login_required になる。
+    match: /oidcc-(prompt-none-logged-in|max-age-10000|id-token-hint)/,
+    session: "reuse",
   },
 ];
 
@@ -177,17 +237,17 @@ export async function savePasskey(cdp, authenticatorId, passkeyFile, log = () =>
   log(`    passkey 保存 (signCount ${previous?.signCount ?? "-"} -> ${next.signCount})`);
 }
 
-/** サインイン画面を最後まで進めて、suite の callback に戻す。 */
-export async function signIn(page, behavior = {}, log = () => {}) {
-  const url = new URL(page.url());
-  const authorizationId = url.searchParams.get("id");
-  if (!authorizationId) throw new Error(`no authorization id in ${page.url()}`);
+/** email + password の 1 段（oidcc 系テナント）。 */
+async function signInWithPassword(page, tenant, log) {
+  await page.getByLabel("Email").fill(tenant.email);
+  // "Password" のラベルは入力欄と「表示」ボタンの両方に付くので、textbox に限定する。
+  await page.getByRole("textbox", { name: "Password" }).fill(tenant.password);
+  await page.getByRole("button", { name: "Continue" }).click();
+  log("    password ok");
+}
 
-  // どのテナントのサインインかは URL が持っている。1 プロセスで複数スイートを
-  // さばけるよう、起動時の固定値ではなくここで引く。
-  const tenant = tenantConfigFor(url.searchParams.get("tenant_id"));
-
-  // 1 段目: email OTP
+/** email OTP → Passkey の 2 段（financial-grade 系テナント）。 */
+async function signInWithOtpAndPasskey(page, tenant, authorizationId, log) {
   await page.getByLabel("Email").fill(tenant.email);
   await page.getByRole("button", { name: "Send code" }).click();
   await page.waitForTimeout(2000);
@@ -212,14 +272,47 @@ export async function signIn(page, behavior = {}, log = () => {}) {
   await passkeyButton.waitFor({ state: "visible", timeout: 20000 });
   const label = (await passkeyButton.innerText()).trim();
   await passkeyButton.click();
+  log(`    passkey ok ("${label}")`);
+}
+
+const CALLBACK = /localhost\.emobix\.co\.uk/;
+
+/** サインイン画面を最後まで進めて、suite の callback に戻す。 */
+export async function signIn(page, behavior = {}, log = () => {}) {
+  // 画面を出さずに callback へ直行する回。セッションを引き継いで認証が省略された場合と、
+  // prompt=none でセッションが無く login_required が返った場合の両方がある。
+  if (CALLBACK.test(page.url())) {
+    const error = new URL(page.url()).searchParams.get("error");
+    log(error ? `    画面なしで callback (${error})` : "    セッションで認証済み -> callback");
+    return;
+  }
+
+  const url = new URL(page.url());
+  const authorizationId = url.searchParams.get("id");
+  if (!authorizationId) throw new Error(`no authorization id in ${page.url()}`);
+
+  // どのテナントのサインインかは URL が持っている。1 プロセスで複数スイートを
+  // さばけるよう、起動時の固定値ではなくここで引く。
+  const tenant = tenantConfigFor(url.searchParams.get("tenant_id"));
+
+  // セッションが残っていると同意画面から始まる。その場合は認証をやり直さない。
+  const emailField = page.getByLabel("Email").first();
+  if (await emailField.isVisible().catch(() => false)) {
+    if (tenant.signIn === "password") {
+      await signInWithPassword(page, tenant, log);
+    } else {
+      await signInWithOtpAndPasskey(page, tenant, authorizationId, log);
+    }
+  } else {
+    log("    セッションで認証済み（同意から再開）");
+  }
 
   // 同意。deny のテストでは Cancel を押し、access_denied を返させる。
   const deny = behavior.consent === "deny";
   const button = page.getByRole("button", { name: deny ? "Cancel" : "Continue" });
   await button.waitFor({ state: "visible", timeout: 30000 });
-  log(`    passkey ok ("${label}")`);
 
   await button.click();
-  await page.waitForURL(/localhost\.emobix\.co\.uk/, { timeout: 30000 });
+  await page.waitForURL(CALLBACK, { timeout: 30000 });
   log(`    ${deny ? "cancel" : "consent"} ok -> callback`);
 }

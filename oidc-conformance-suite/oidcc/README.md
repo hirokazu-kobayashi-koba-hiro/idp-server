@@ -2,76 +2,121 @@
 
 | | |
 |---|---|
-| 状態 | ❌ 未配線（`run.sh` なし） |
-| テストプラン | `oidcc-test-plan`（55 モジュール）/ `oidcc-basic-certification-test-plan`（38 モジュール） |
-| テナント | `oidcc-cross-site` / `oidcc-cross-site-context-path` / `oidcc-formpost-basic` の 3 種 |
-| ブラウザ操作 | 必要と思われる（未検証） |
+| 状態 | ✅ 配線済み（`run.sh` あり） |
+| テストプラン | `oidcc-basic-certification-test-plan` |
+| モジュール数 | 36 |
+| テナント | `config/examples/oidcc-cross-site` / `config/examples/oidcc-cross-site-context-path` |
+| テスト設定 | 各テナントの `oidc-test/oidc-core-basic.json` |
+| ブラウザ操作 | 必要（`../driver/` を常駐させる） |
 
-FAPI 系と違い、**3 つの独立したテナント設定**がそれぞれ自分のテスト設定を持っている。
+Form Post OP（`config/examples/oidcc-formpost-basic`）は**未配線**。理由は後述。
+
+## variants
 
 ```
-config/examples/oidcc-cross-site/oidc-test/
-config/examples/oidcc-cross-site-context-path/oidc-test/
-config/examples/oidcc-formpost-basic/oidc-test/
-  ├── oidc-core-basic.json
-  ├── oidc-comprehensive-test.json
-  └── oidcc-discovery-endpoint-verification.json
+oidcc-basic-certification-test-plan[server_metadata=static][client_registration=static_client]
 ```
 
-いずれの setup も `setup.sh` / `update.sh` / `delete.sh` を持っており、テナント側の準備は
-FAPI 1.0 と同じ手順で行える。
+| variant | 値 | 根拠 |
+|---|---|---|
+| `server_metadata` | `static` | `oidc-core-basic.json` は `server` に issuer / 各 endpoint を直書きしている（`discoveryUrl` を持つ設定なら `discovery`） |
+| `client_registration` | `static_client` | idp-server は動的クライアント登録を discovery で広告していない |
 
-## 何が足りないか
+## 手順
 
-**どの設定をどのプランで回すかの対応づけ。**
+```bash
+# 1. idp-server とテナント
+docker compose up -d
+./config/examples/oidcc-cross-site/setup.sh
+./config/examples/oidcc-cross-site-context-path/setup.sh
 
-テスト設定が 3 テナント × 3 ファイル = 9 通りあるが、それぞれが `oidcc-test-plan` と
-`oidcc-basic-certification-test-plan` のどちらを想定しているか、また variants の値が
-決まっていない。ファイル名から推測はできるが未検証。
+# 2. suite スタック
+docker compose -f oidc-conformance-suite/docker-compose.yaml up -d
 
-## variants（未確定）
+# 3. ブラウザ操作ドライバ（別ターミナルで常駐。他スイートと共用で 1 プロセスだけ）
+cd oidc-conformance-suite/driver && npm install && node driver.mjs
 
-| プラン | variant キー |
+# 4. テスト
+export CONFORMANCE_SUITE_DIR=/path/to/conformance-suite
+./oidc-conformance-suite/oidcc/run.sh --rerun 1:1   # happy path 1本
+./oidc-conformance-suite/oidcc/run.sh               # 両テナント
+```
+
+## 認証方式が FAPI 系と違う
+
+oidcc テナントの認証は **email + password の 1 段**（financial-grade は email OTP → Passkey の 2 段）。
+ドライバは `flow.mjs` の `TENANTS` に持つ `signIn` でどちらを使うか決める。
+
+```js
+"e8c169c2-019f-46c9-af39-7be12ec51e4d": {
+  label: "oidcc-cross-site",
+  signIn: "password",
+  email: "oidcc-test@example.com",
+  password: "OidccTestPassword123!",
+},
+```
+
+`signIn: "password"` のテナントでは仮想オーセンティケータを載せない（passkey ファイルも作らない）。
+
+## セッションを引き継ぐテストがある
+
+`prompt=none` / `max_age` / `id_token_hint` は **1 回目でログインし、2 回目は既存セッションでの
+挙動を見る**。ドライバは既定で認可ごとに使い捨てのブラウザコンテキストを使う（テスト間で
+セッションが漏れると適合性テストの独立性が壊れるため）ので、これらのテストだけ
+`BEHAVIORS` で `session: "reuse"` にしている。
+
+セッションはテスト ID をキーに保持する。**alias の違うプランは並列に実行される**ため、
+1 本だけ持つ作りにすると別プランのテストに枠を奪われ、2 回目の認可が `login_required` になる。
+
+## 2 回目のログイン画面はスクリーンショットを出す
+
+`oidcc-prompt-login` と `oidcc-max-age-1` は「2 回目に再認証を求められること」を目視で確認する。
+suite 側（`OIDCCMaxAge1.createPlaceholder()` / `OIDCCPromptLogin.createPlaceholder()`）が
+`ExpectSecondLoginPage` で提出先を作って待つため、**検証がすべて成功していても提出しないと
+240 秒でタイムアウトして UNKNOWN になる**。`BEHAVIORS` の `screenshot: "second-login"` で
+2 回目のログイン画面を提出している。結果が `REVIEW` で終わるのは正常。
+
+## Form Post OP を配線していない理由
+
+**idp-server が `response_mode=form_post` を実装していない。** 実測で全 36 モジュール中
+34 が FAILED になる。
+
+```
+FAILURE CheckCallbackHttpMethodIsPost   The HTTP method used at redirect_uri is not 'POST'
+FAILURE RejectAuthCodeInUrlQuery        Authorization code is present in URL query
+```
+
+`ResponseMode.form_post` は `responseModeValue` が空なので
+`ResponseModeDecidable.decideResponseModeValue()` の `isDefinedResponseModeValue()` を満たさず、
+認可コードフローの分岐で `query` にフォールバックする。HTML の自動 POST を返す実装は無い。
+
+テナント設定（`config/examples/oidcc-formpost-basic`）とテスト設定は残してあるので、
+対応が入ったら `run.sh` にプランを 1 本足せば動く。
+
+なお `oidcc-formpost-basic` のテスト設定は `oidcc-cross-site` と **alias が同じ**
+（`oidc-core-basic`）。同時に流すと alias 衝突するので、配線する際は alias を分けること。
+
+## 実測済みの結果
+
+両テナントとも同じ内訳。
+
+| 結果 | 件数 | |
+|---|---|---|
+| PASSED | 28 | |
+| REVIEW | 3 | `prompt-login` / `max-age-1` / `ensure-registered-redirect-uri`。スクリーンショット提出で終わるテストで、正常 |
+| WARNING | 3 | 下記 |
+| FAILED | 1 | 下記 |
+
+### FAILED
+
+| テスト | 内容 |
 |---|---|
-| `oidcc-test-plan` | `client_registration`, `response_type`, `client_auth_type`, `response_mode` |
-| `oidcc-basic-certification-test-plan` | `server_metadata`, `client_registration` |
+| `oidcc-max-age-10000` | 2 回目の認可（`max_age=10000`、`prompt` 無し）でもログイン画面に戻るため `auth_time` が変わり、`CheckIdTokenAuthTimeClaimsSameIfPresent` で落ちる。`OAuthRequestContext.canAutomaticallyAuthorize()` が先頭で `if (!isPromptNone()) return false;` としており、有効なセッションがあっても `prompt=none` 以外では認証を省略しない。`OAuthRequestStatus.OK_SESSION_ENABLE` は定義されているが返すコードが無い |
 
-`oidcc-formpost-basic` は名前から `response_mode=form_post` を想定していると思われる。
-`oidcc-cross-site-context-path` はコンテキストパス付きデプロイの検証用で、テスト設定の
-discovery URL がそれを反映しているはず。配線時に実物を確認すること。
+### WARNING
 
-## ブラウザ操作について
-
-サインイン画面は FAPI 1.0 と同じ Next.js の CSR なので、`../driver/` がそのまま使える見込み。
-ただし認証ポリシーがテナントごとに違う（financial-grade は email OTP → FIDO2 の 2 段だが、
-oidcc 系は未確認）ため、ドライバの手順をポリシーに合わせる必要がある。
-
-## セッション挙動のテストについて（配線時にぶつかる）
-
-`oidcc-test-plan` には `prompt=none` / `prompt=login` / `max_age` など、**既存セッションの
-有無で挙動が変わることを確認するテスト**が含まれる。ここで 2 つ課題がある。
-
-### 1. ドライバがセッションを持たない
-
-現在のドライバは URL ごとに使い捨ての browser context を作るため、クッキーを毎回捨てている。
-これは適合性テストの独立性としては望ましい（あるテストのセッションが次に漏れない）が、
-セッション有無で分岐するテストは通らない。
-
-`driver.mjs` の `BEHAVIORS` にセッションスコープの軸を足して、必要なテストだけ
-context を再利用する（testId 単位で共有する）形にするのが素直。既定は現行の
-「使い捨て」のままにすること。
-
-### 2. idp-server 側にセッションスキップの経路が無い
-
-セッションがあっても認証画面を出さずに認可を完了させる経路が、現状は
-`prompt=none` 限定でしか実装されていない（`OAuthRequestContext.canAutomaticallyAuthorize`）。
-
-`OAuthRequestStatus.OK_SESSION_ENABLE` という状態が定義され、`OAuthController` /
-`OAuthV1Api` にも分岐があるが、**これを返すコードが存在しない**
-（`OAuthRequestContext.createResponse()` は `OK` か `OK_ACCOUNT_CREATION` しか返さない）。
-`POST /{tenant}/v1/authorizations/{id}/authorize-with-session` という API も存在し、
-旧画面 `app-view/src/pages/signin/index.tsx` は呼んでいるが、現行の `/auth/` 画面
-（`pages/auth/index.tsx`）は呼んでいない。
-
-つまり機能としては「半分ある」状態。OIDCC を配線する際は、この経路を実装するか
-デッドコードとして整理するかの判断が先に要る。
+| テスト | 条件 | 内容 |
+|---|---|---|
+| `oidcc-userinfo-post-body` | `UserInfoEndpointWithAccessTokenInBodyNotSupported` | UserInfo に access_token を POST ボディで渡す形式が未対応 |
+| `oidcc-ensure-request-with-acr-values-succeeds` | `ValidateIdTokenACRClaimAgainstAcrValuesRequest` | ID Token の `acr` が要求した `acr_values` と一致しない |
+| `oidcc-codereuse-30seconds` | `EnsureHttpStatusCodeIs4xx` | 認可コード再利用後に発行済みアクセストークンを失効させていない（RFC 6749 §4.1.2 の SHOULD）。FAPI 側と同じ |
