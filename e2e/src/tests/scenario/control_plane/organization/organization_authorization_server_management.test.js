@@ -805,6 +805,9 @@ describe("organization authorization server management api", () => {
         }
       });
       expect(updateResponse.status).toBe(200);
+      // The diff is calculated over the same representation, so this passes even when the key is
+      // missing entirely. It documents that the update was not meant to touch the scopes; the GET
+      // below is what actually catches the regression.
       expect(updateResponse.data.diff).not.toHaveProperty("fapi20_scopes");
 
       const afterRoundtrip = await get({ url: configurationUrl, headers });
