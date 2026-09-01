@@ -15,22 +15,11 @@
  */
 import https from "node:https";
 import fs from "node:fs";
+import { resolveLocalCaPath } from "../lib/local-ca.mjs";
 
 const BASE = new URL(process.env.IDP_BASE_URL || "https://api.local.test");
 
-// docker/nginx/certs/*.pem は mkcert がローカルで生成するもので gitignore されている。
-// git worktree など証明書が無いチェックアウトから動かす場合は IDP_ROOT_CA を指定する。
-const DEFAULT_ROOT_CA = new URL("../../docker/nginx/certs/rootCA.pem", import.meta.url).pathname;
-const caPath = process.env.IDP_ROOT_CA || DEFAULT_ROOT_CA;
-if (!fs.existsSync(caPath)) {
-  throw new Error(
-    `ローカル CA が見つかりません: ${caPath}\n` +
-      "  docker/nginx/certs/*.pem は gitignore なので、チェックアウトによっては存在しません。\n" +
-      "  IDP_ROOT_CA でメインのチェックアウトのものを指してください。例:\n" +
-      "    IDP_ROOT_CA=/path/to/idp-server/docker/nginx/certs/rootCA.pem node driver.mjs",
-  );
-}
-const agent = new https.Agent({ ca: fs.readFileSync(caPath) });
+const agent = new https.Agent({ ca: fs.readFileSync(resolveLocalCaPath()) });
 
 function call(method, path, { headers = {}, body } = {}) {
   return new Promise((resolve, reject) => {
