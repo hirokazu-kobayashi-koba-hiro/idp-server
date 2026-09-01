@@ -77,6 +77,17 @@ e2e 側と同じ ID を使うと 409 になる）。
 `e2e/src/tests/spec/fapi2_0_mtls.test.js` が使っており、認証ポリシーや `ui_config` を
 適合性テストの都合で変えると影響が読めないため分離している。
 
+## `rotate_refresh_token` は false にする
+
+FAPI 2.0 SP Final **5.3.2.1-9** は、認可サーバーが**リフレッシュトークンをローテーション
+しない**ことを求めている。suite の `refresh-token` はローテーションを検知した場合のみ
+「旧トークンでもう一度取れること」（レスポンスを取りこぼしたクライアントの救済）を検証し、
+取れないと FAILED になる。
+
+idp-server の既定は `rotate_refresh_token: true` なので、**FAPI 2.0 テナントでは明示的に
+false にする**（`RefreshTokenCreatable` の Javadoc にも同じことが書いてある）。
+テンプレートの `extension` に入れてある。
+
 ## scope が FAPI 2.0 プロファイルを起動する
 
 idp-server はリクエストされた scope でプロファイルを決める
@@ -99,22 +110,18 @@ idp-server はリクエストされた scope でプロファイルを決める
 
 | 結果 | 件数 | |
 |---|---|---|
-| PASSED | 47 | |
+| PASSED | 48 | |
 | REVIEW | 3 | エラーページのスクリーンショット提出で終わるテスト。正常 |
 | WARNING | 4 | 下記 |
 | SKIPPED | 1 | `ensure-signed-client-assertion-with-RS256-fails`。クライアント鍵が ES256 なので suite 自身がスキップする |
-| FAILED | 1 | 下記 |
+| FAILED | 0 | |
 
 happy path（`fapi2-security-profile-final-happy-flow`）は
 `FINISHED - result PASSED. 351 log entries - 239 SUCCESS 0 FAILURE, 0 WARNING, 10.6 seconds`。
+`refresh-token` は `rotate_refresh_token` を false にしたうえで
+`441 log entries - 285 SUCCESS 0 FAILURE, 0 WARNING`。
 
 `mtls` プランはまだ通していない。
-
-### FAILED
-
-| テスト | 要件 | 内容 |
-|---|---|---|
-| `refresh-token` | FAPI 2.0 SP Final **5.3.2.1-9** | リフレッシュトークンをローテーションする場合、**直前のトークンも一定時間は受け付ける**必要がある（レスポンスを受け取り損ねたクライアントの救済）。suite は新トークン取得の 30 秒後に旧トークンで再取得し 200 を期待するが、idp-server は `invalid_grant: refresh token does not exists.` を返す |
 
 ### WARNING
 

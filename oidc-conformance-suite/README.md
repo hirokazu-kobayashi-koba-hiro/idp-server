@@ -18,7 +18,7 @@ suite は PAR / token / userinfo を自分で叩けるが、**認可エンドポ
 |---|---|---|---|---|
 | [fapi1-advanced](./fapi1-advanced/) | FAPI 1.0 Advanced Final | `fapi1-advanced-final-test-plan` | 63 | ✅ 58 PASSED / 3 REVIEW / 2 WARNING |
 | [fapi-ciba](./fapi-ciba/) | FAPI-CIBA ID1 | `fapi-ciba-id1-test-plan` | 35 | ✅ 34 PASSED / 1 WARNING |
-| [fapi2](./fapi2/) | FAPI 2.0 Security Profile Final | `fapi2-security-profile-final-test-plan` | 56 | ⚠️ 47 PASSED / 3 REVIEW / 4 WARNING / 1 SKIPPED / 1 FAILED |
+| [fapi2](./fapi2/) | FAPI 2.0 Security Profile Final | `fapi2-security-profile-final-test-plan` | 56 | ✅ 48 PASSED / 3 REVIEW / 4 WARNING / 1 SKIPPED |
 | [oidcc](./oidcc/) | OpenID Connect Core | `oidcc-test-plan` ほか | 55 / 38 | ❌ 設定とプランの対応づけが未決 |
 
 モジュール数は variants 適用後の実数。いずれも 2 通りの設定で流すため（FAPI 1.0 / CIBA は
@@ -28,11 +28,10 @@ suite は PAR / token / userinfo を自分で叩けるが、**認可エンドポ
 **`run.sh` があるディレクトリが実行できるスイート。** 未対応のものは README だけを置いてあり、
 そこに「何が足りないか」を書いている。
 
-FAILED は FAPI 2.0 の 1 件だけ。
+FAILED はどのスイートにも無い。残る WARNING は 4 種類。
 
 | 結果 | テスト | 内容 |
 |---|---|---|
-| FAILED | `fapi2 refresh-token` | リフレッシュトークンのローテーション時、直前のトークンを一定時間受け付けていない（FAPI 2.0 SP Final 5.3.2.1-9） |
 | WARNING | `CheckForUnexpectedParametersInServerMetadata` | discovery の `verified_claims_supported` が suite のスキーマに登録されていない（OIDC4IDA の他のメタデータは登録済みなので登録漏れ）。idp-server 側は仕様どおり |
 | WARNING | `EnsureHttpStatusCodeIs4xx` | 認可コード再利用後にアクセストークンを失効させていない。RFC 6749 §4.1.2 の SHOULD |
 | WARNING | `EnsureHttpStatusCodeIs400or401` | 同じ `jti` の DPoP proof を 2 回受け付けている。`DPoPProofVerifier.java:226` に未実装と明記（RFC 9449 §4.3 は条件付き要件） |

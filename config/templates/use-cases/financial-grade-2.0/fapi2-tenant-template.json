@@ -200,6 +200,7 @@
       "access_token_duration": 300,
       "id_token_duration": 300,
       "refresh_token_duration": 2592000,
+      "rotate_refresh_token": false,
       "id_token_strict_mode": true,
       "default_max_age": 300,
       "authorization_code_valid_duration": 60,
