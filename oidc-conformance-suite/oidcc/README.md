@@ -68,6 +68,21 @@ oidcc テナントの認証は **email + password の 1 段**（financial-grade 
 セッションはテスト ID をキーに保持する。**alias の違うプランは並列に実行される**ため、
 1 本だけ持つ作りにすると別プランのテストに枠を奪われ、2 回目の認可が `login_required` になる。
 
+## 既存セッションでの認可（`session_enabled`）
+
+`max_age` や `id_token_hint` のテストは「2 回目の認可でも再認証されないこと」を見る。
+セッションを使ってよいかはサーバーが判定して `view-data.session_enabled` で返す
+（`OAuthViewDataCreator.isSessionEnabled()`。セッションが無い / `prompt=login` /
+`max_age` 超過 / `acr_values` 不一致 なら false）。
+
+画面（`app-view/src/auth/useSessionAuthorize.ts`）はその値だけを見て
+`POST .../authorize-with-session` を呼び、認証画面を出さずに認可を完了させる。
+
+**判定は最初の view-data だけを使う。** 画面はフローの進行に合わせて view-data を取り直すが、
+そのトランザクションで認証するとセッションができるため、後の取得では `session_enabled` が
+true になる。それを拾うと、ユーザーがこれから見るはずの同意画面を飛ばして認可を完了して
+しまう（実際に `oidcc-max-age-1` などが同意待ちでタイムアウトした）。
+
 ## 2 回目のログイン画面はスクリーンショットを出す
 
 `oidcc-prompt-login` と `oidcc-max-age-1` は「2 回目に再認証を求められること」を目視で確認する。
@@ -102,16 +117,10 @@ FAILURE RejectAuthCodeInUrlQuery        Authorization code is present in URL que
 
 | 結果 | 件数 | |
 |---|---|---|
-| PASSED | 28 | |
+| PASSED | 29 | |
 | REVIEW | 3 | `prompt-login` / `max-age-1` / `ensure-registered-redirect-uri`。スクリーンショット提出で終わるテストで、正常 |
 | WARNING | 3 | 下記 |
-| FAILED | 1 | 下記 |
-
-### FAILED
-
-| テスト | 内容 |
-|---|---|
-| `oidcc-max-age-10000` | 2 回目の認可（`max_age=10000`、`prompt` 無し）でもログイン画面に戻るため `auth_time` が変わり、`CheckIdTokenAuthTimeClaimsSameIfPresent` で落ちる。`OAuthRequestContext.canAutomaticallyAuthorize()` が先頭で `if (!isPromptNone()) return false;` としており、有効なセッションがあっても `prompt=none` 以外では認証を省略しない。`OAuthRequestStatus.OK_SESSION_ENABLE` は定義されているが返すコードが無い |
+| FAILED | 0 | |
 
 ### WARNING
 

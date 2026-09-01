@@ -70,6 +70,20 @@ public class SessionValidationResult {
         DefaultSecurityEventType.oauth_authorize_with_session_acr_mismatch);
   }
 
+  /**
+   * prompt=login was requested, so the session must not be reused.
+   *
+   * <p>OpenID Connect Core 3.1.2.1: the Authorization Server MUST prompt the End-User for
+   * reauthentication.
+   */
+  public static SessionValidationResult promptLoginRequired() {
+    return new SessionValidationResult(
+        false,
+        "invalid_request",
+        "prompt=login requires re-authentication",
+        DefaultSecurityEventType.oauth_authorize_with_session_prompt_login);
+  }
+
   public static SessionValidationResult policyMismatch() {
     return new SessionValidationResult(
         false,

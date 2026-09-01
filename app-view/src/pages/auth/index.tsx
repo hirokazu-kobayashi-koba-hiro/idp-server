@@ -4,6 +4,7 @@ import { Divider, Link, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { useAuthFlow } from "@/auth/useAuthFlow";
+import { useSessionAuthorize } from "@/auth/useSessionAuthorize";
 import { StepView } from "@/auth/types";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { ConfigDrivenStepper } from "@/components/auth/ConfigDrivenStepper";
@@ -41,6 +42,10 @@ export default function AuthPage() {
     refetch,
   } = useAuthFlow(tenantId, id);
 
+  // An existing session can complete the authorization without showing anything. The server
+  // decides that (view-data.session_enabled); while it redirects we keep the screen blank.
+  const authorizingWithSession = useSessionAuthorize(tenantId, id, viewData);
+
   const [registerMode, setRegisterMode] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
 
@@ -77,7 +82,7 @@ export default function AuthPage() {
     effectiveStep?.requires_user === false &&
     federations.length > 0;
 
-  if (!router.isReady || isLoading) return <Loading />;
+  if (!router.isReady || isLoading || authorizingWithSession) return <Loading />;
 
   const title = isComplete
     ? "You're all set"

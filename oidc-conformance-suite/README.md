@@ -19,7 +19,7 @@ suite は PAR / token / userinfo を自分で叩けるが、**認可エンドポ
 | [fapi1-advanced](./fapi1-advanced/) | FAPI 1.0 Advanced Final | `fapi1-advanced-final-test-plan` | 63 | ✅ 58 PASSED / 3 REVIEW / 2 WARNING |
 | [fapi-ciba](./fapi-ciba/) | FAPI-CIBA ID1 | `fapi-ciba-id1-test-plan` | 35 | ✅ 34 PASSED / 1 WARNING |
 | [fapi2](./fapi2/) | FAPI 2.0 Security Profile Final | `fapi2-security-profile-final-test-plan` | 56 | ✅ 48 PASSED / 3 REVIEW / 4 WARNING / 1 SKIPPED |
-| [oidcc](./oidcc/) | OpenID Connect Core | `oidcc-basic-certification-test-plan` | 36 | ⚠️ 28 PASSED / 3 REVIEW / 3 WARNING / 1 FAILED |
+| [oidcc](./oidcc/) | OpenID Connect Core | `oidcc-basic-certification-test-plan` | 36 | ✅ 29 PASSED / 3 REVIEW / 3 WARNING |
 
 モジュール数は variants 適用後の実数。いずれも 2 通りの設定で流すため（FAPI 1.0 / CIBA は
 `client_auth_type`、FAPI 2.0 は `sender_constrain`、OIDC Core は 2 テナント）、実行される
@@ -31,11 +31,10 @@ OIDC Core の Form Post OP（`oidcc-formpost-basic-certification-test-plan`）�
 idp-server が `response_mode=form_post` を実装しておらず、全モジュールが落ちるため
 （[oidcc/README.md](./oidcc/README.md) 参照）。テナントとテスト設定は残してある。
 
-FAILED は OIDC Core の 1 件だけ。
+FAILED はどのスイートにも無い。残る WARNING は 6 種類。
 
 | 結果 | テスト | 内容 |
 |---|---|---|
-| FAILED | `oidcc-max-age-10000` | 有効なセッションがあっても `prompt=none` 以外では再認証させるため `auth_time` が変わる。`canAutomaticallyAuthorize()` が `prompt=none` 限定 |
 | WARNING | `UserInfoEndpointWithAccessTokenInBodyNotSupported` | UserInfo に access_token を POST ボディで渡す形式が未対応 |
 | WARNING | `ValidateIdTokenACRClaimAgainstAcrValuesRequest` | ID Token の `acr` が要求した `acr_values` と一致しない |
 | WARNING | `CheckForUnexpectedParametersInServerMetadata` | discovery の `verified_claims_supported` が suite のスキーマに登録されていない（OIDC4IDA の他のメタデータは登録済みなので登録漏れ）。idp-server 側は仕様どおり |
