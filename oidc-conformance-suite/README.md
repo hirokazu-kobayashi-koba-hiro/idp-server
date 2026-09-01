@@ -21,9 +21,18 @@ suite は PAR / token / userinfo を自分で叩けるが、**認可エンドポ
 | [fapi2](./fapi2/) | FAPI 2.0 Security Profile Final | `fapi2-security-profile-final-test-plan` | 56 | ✅ 48 PASSED / 3 REVIEW / 4 WARNING / 1 SKIPPED |
 | [oidcc](./oidcc/) | OpenID Connect Core | `oidcc-basic-certification-test-plan` | 36 | ✅ 29 PASSED / 3 REVIEW / 3 WARNING |
 
-モジュール数は variants 適用後の実数。いずれも 2 通りの設定で流すため（FAPI 1.0 / CIBA は
-`client_auth_type`、FAPI 2.0 は `sender_constrain`、OIDC Core は 2 テナント）、実行される
-テストはこの倍になる。FAPI 系の結果は 1 通り目の実測、OIDC Core は 2 テナントとも同じ内訳。
+モジュール数は variants 適用後の実数。上の結果は 1 通り目（FAPI 1.0 / CIBA は
+`client_auth_type=private_key_jwt`、FAPI 2.0 は `sender_constrain=dpop`、OIDC Core は
+cross-site テナント）。**2 通り目も実測済みで、いずれも FAILED ゼロ。**
+
+| スイート | 2 通り目 | 結果 |
+|---|---|---|
+| fapi1-advanced | `client_auth_type=tls_client_auth` | 43 PASSED / 3 REVIEW / 2 WARNING / 1 SKIPPED |
+| fapi-ciba | `client_auth_type=tls_client_auth` | 31 PASSED / 1 WARNING / 1 SKIPPED |
+| fapi2 | `sender_constrain=mtls` | 31 PASSED / 3 REVIEW / 3 WARNING |
+| oidcc | context-path テナント | 29 PASSED / 3 REVIEW / 3 WARNING |
+
+SKIPPED はいずれも「RS256 の拒否テスト」で、クライアント鍵が ES256 のため suite 自身が飛ばす。
 
 **`run.sh` があるディレクトリが実行できるスイート。**
 

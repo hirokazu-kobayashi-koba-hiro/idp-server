@@ -35,6 +35,12 @@ fapi2-security-profile-final-test-plan[client_auth_type=...][sender_constrain=..
 | `private_key_jwt.json` | `private_key_jwt` | `dpop` | `dpop_signing_alg` があり `mtls` ブロックが無い |
 | `mtls.json` | `mtls` | `mtls` | `mtls` / `mtls2` ブロックがあり `resourceUrl` が `mtls.api.local.test` |
 
+**`mtls` でも client の JWKS が要る。** クライアント認証は証明書で行うが、suite は設定に
+JWKS が無いと `ValidateClientJWKsPrivatePart`（"Couldn't find JWKS in configuration"）で
+全モジュールが即 FAILED になる。FAPI 1.0 の `tls_client_auth.json` と同じく、
+**テスト設定に秘密鍵・クライアント登録に同じ kid の公開鍵**を置く
+（`fapi2_mtls_client_key` / `fapi2_mtls_client_key_2`）。
+
 ## 手順
 
 ```bash
@@ -121,7 +127,9 @@ happy path（`fapi2-security-profile-final-happy-flow`）は
 `refresh-token` は `rotate_refresh_token` を false にしたうえで
 `441 log entries - 285 SUCCESS 0 FAILURE, 0 WARNING`。
 
-`mtls` プランはまだ通していない。
+`mtls` プラン（`sender_constrain=mtls`、38 モジュール）も通し済みで
+**31 PASSED / 3 REVIEW / 3 WARNING / 0 FAILED**（2656 SUCCESS / 0 failures）。
+DPoP を使わないため `dpop-negative-tests` の WARNING は出ない。
 
 ### WARNING
 

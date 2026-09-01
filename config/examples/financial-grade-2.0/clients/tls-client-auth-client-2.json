@@ -32,5 +32,6 @@
     "payment_initiation",
     "account_information",
     "openid_credential"
-  ]
+  ],
+  "jwks": "{\"keys\":[{\"kty\":\"EC\",\"use\":\"sig\",\"crv\":\"P-256\",\"kid\":\"fapi2_mtls_client_key_2\",\"alg\":\"ES256\",\"x\":\"LqkQLcNHdgkL0XydAlvZDAtKKeBMsTSm3lriBLB2J68\",\"y\":\"i_HyoR5rlVwCEY68cYfSdmlFXgN8s_l3zXs4W4CXcAk\"}]}"
 }
