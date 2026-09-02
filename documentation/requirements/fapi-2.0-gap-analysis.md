@@ -9,7 +9,7 @@
 | 認定基準 | OIDF Conformance Suite `fapi2-security-profile-final-test-plan` |
 | 関連要件 | [fapi-2.0-requirements.yaml](./fapi-2.0-requirements.yaml) (94要件) |
 | 関連分析 | [oauth2-dpop-gap-analysis.md](./oauth2-dpop-gap-analysis.md) |
-| 関連 Issue | [#1525](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1525) |
+| 関連 Issue | [#1525](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1525) / [#1851](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1851) (Message Signing) / [#1852](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1852) (残 P1) |
 
 > **注**: 本分析は主要 5 カテゴリ（network/AS/client/RS/crypto）を対象とし、§2 の表に挙げた 52 要件を集計している。
 > 要件 YAML は 94 要件を持つため、突合は今後のリファクタで実施予定
@@ -27,8 +27,8 @@
 | Authorization Server | 24 | 23 | 1 | 0 | **96%** |
 | Client | 8 | 8 | 0 | 0 | **100%** |
 | Resource Server | 6 | 6 | 0 | 0 | **100%** |
-| Cryptography | 7 | 4 | 1 | 2 | **57%** |
-| **主要カテゴリ計** | **52** | **46** | **3** | **3** | **88%** |
+| Cryptography | 7 | 4 | 3 | 0 | **57%** |
+| **主要カテゴリ計** | **52** | **46** | **5** | **1** | **88%** |
 
 ### 1.2 認定可否評価
 
@@ -146,11 +146,11 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 
 | 要件 | レベル | 状況 | 備考 |
 |------|--------|------|------|
-| PS256, ES256, EdDSA のみ | MUST | ⚠️ | PS256 / ES256 に限定済み。EdDSA は未対応（GAP-FAPI2-006）。仕様は 3 つを許容するので、対応しないこと自体は不適合ではない |
+| PS256, ES256, EdDSA のみ | MUST | ⚠️ | PS256 / ES256 に限定済み。Verifier の allowlist には EdDSA が入っているが、platform が OKP 鍵を検証できないため実質未対応（GAP-FAPI2-006）。仕様は 3 つを許容するので、対応しないこと自体は不適合ではない |
 | RS256 等弱アルゴ拒否 | MUST | ✅ | discovery の `*_signing_alg_values_supported` は `ES256` / `PS256` のみ。適合性テストの `ensure-signed-client-assertion-with-RS256-fails` は、クライアント鍵が ES256 のため suite 自身が SKIPPED にする |
 | `none` 拒否 | MUST | ✅ | Request Object など |
-| RSA 鍵 ≥ 2048 bits | MUST | ❌ | クライアント JWKS の鍵長検証が無い（GAP-FAPI2-009） |
-| EC 鍵 ≥ 224 bits | MUST | ❌ | 同上（GAP-FAPI2-009） |
+| RSA 鍵 ≥ 2048 bits | MUST | ⚠️ | client assertion は `FapiSecurity20Verifier:276-305` で PS\* ≥ 2048 を強制。DPoP proof 鍵 / Request Object 署名鍵 / クライアント登録時の JWKS は未検証（GAP-FAPI2-009） |
+| EC 鍵 ≥ 224 bits | MUST | ⚠️ | 同上。client assertion は ES\* ≥ 224 を強制（GAP-FAPI2-009） |
 | Credentials ≥ 128 bits entropy | MUST | ✅ | `RandomStringGenerator` は `SecureRandom` ベース。認可コードは 20 バイト = 160 bits（`AuthorizationCodeCreatable:25`）、アクセス/リフレッシュトークンは 32 バイト = 256 bits |
 | `jwks_uri` TLS 保護 | MUST | ✅ | https:// 強制 |
 
@@ -247,10 +247,10 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 | ID | 項目 | レベル | 状態 | 推奨アクション |
 |----|------|--------|------|---------------|
 | GAP-FAPI2-005 | JARM `form_post.jwt` response mode | MUST | ❌ | #1266。前提となる素の `response_mode=form_post` も未実装（#1847）。現状 `form_post.jwt` は `unauthorized_client` ではなく HTTP 500 になる |
-| GAP-FAPI2-006 | EdDSA 明示サポート | MUST | ❌ | discovery の `*_signing_alg_values_supported` は `ES256` / `PS256` のみ。platform の jose に EdDSA / Ed25519 の実装が無い |
+| GAP-FAPI2-006 | EdDSA 明示サポート | MUST | ❌ | #1852。Verifier の allowlist には EdDSA があるが、`JsonWebKey.toPublicKey():81` の switch が RSA / EC / OCT のみで OKP に落ちない。discovery の `*_signing_alg_values_supported` も `ES256` / `PS256` のみ |
 | GAP-FAPI2-007 | CORS Authorization Endpoint 明示拒否 | MUST | ✅ | `DynamicCorsFilter.shouldNotFilter` で `/v1/authorizations` ルート除外 |
 | GAP-FAPI2-008 | DPoP jti リプレイ検出 | SHOULD | ❌ | Redis backend |
-| GAP-FAPI2-009 | RSA/EC 最小鍵長 enforcement | MUST | ❌ | 鍵長チェックは JWE の対称鍵のみ（`JsonWebEncDecrypterFactory`）。クライアント JWKS の RSA/EC 最小鍵長は未検証 |
+| GAP-FAPI2-009 | RSA/EC 最小鍵長 enforcement | MUST | ⚠️ | #1852。client assertion 経路のみ強制済み（`FapiSecurity20Verifier` / `AuthorizationCodeGrantFapi20Verifier`、PS\* ≥ 2048 / ES\* ≥ 224 / EdDSA ≥ 256）。DPoP proof 鍵 / Request Object 署名鍵 / クライアント登録時の JWKS は未検証 |
 
 ### 5.3 P2: OPTIONAL / 任意
 
@@ -291,11 +291,11 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 
 ### Phase 2: セキュリティ強化（後続、別 Issue 化）
 
-- JARM `form_post.jwt` response mode (TODO #1266)
-- DPoP jti リプレイ検出（Redis backend）
+- JARM `form_post.jwt` response mode (#1266 / 前提の #1847。#1851 で追跡)
+- DPoP jti リプレイ検出（Redis backend）— #1736 の Info
 - WWW-Authenticate `algs` パラメータ
-- EdDSA 明示サポート
-- RSA/EC 最小鍵長 enforcement
+- EdDSA 明示サポート — #1852
+- RSA/EC 最小鍵長 enforcement の適用範囲拡大 — #1852
 
 ---
 
