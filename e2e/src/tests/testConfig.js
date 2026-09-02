@@ -698,6 +698,19 @@ export const unsupportedClient = {
   identityVerificationScope: "transfers",
 };
 
+/**
+ * Public client (token_endpoint_auth_method=none) that is allowed grant_type=client_credentials.
+ *
+ * RFC 6749 Section 4.4 restricts the client credentials grant to confidential clients. The
+ * registration is intentionally non-conformant so the token endpoint guard can be exercised: a
+ * client without client_credentials in grant_types would be rejected earlier with
+ * unauthorized_client, which would not prove the public-client guard fired. Issue #1820.
+ */
+export const publicClientCredentialsClient = {
+  clientId: "publicClientCredentials",
+  scope: "account",
+};
+
 export const publicClient = {
   clientId: "publicClient",
   redirectUri: "https://www.certification.openid.net/test/a/idp_oidc_basic/callback",

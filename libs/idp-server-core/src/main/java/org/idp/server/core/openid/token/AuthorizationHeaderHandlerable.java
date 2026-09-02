@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.token;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.platform.http.BasicAuth;
@@ -48,7 +50,7 @@ public interface AuthorizationHeaderHandlerable {
     String value = authorizationHeader.substring("Basic ".length());
     try {
       byte[] decode = Base64.getUrlDecoder().decode(value);
-      String decodedValue = new String(decode);
+      String decodedValue = new String(decode, StandardCharsets.UTF_8);
       if (!decodedValue.contains(":")) {
         return new BasicAuth();
       }
@@ -56,10 +58,30 @@ public interface AuthorizationHeaderHandlerable {
       if (splitValues.length < 2) {
         return new BasicAuth();
       }
-      return new BasicAuth(splitValues[0], splitValues[1]);
+      return new BasicAuth(formUrlDecode(splitValues[0]), formUrlDecode(splitValues[1]));
     } catch (IllegalArgumentException e) {
       return new BasicAuth();
     }
+  }
+
+  /**
+   * Reverses the {@code application/x-www-form-urlencoded} encoding that RFC 6749 Section 2.3.1
+   * requires the client to apply to its identifier and password before Basic authentication.
+   *
+   * <p>The encoding is what makes the Basic credential unambiguous: a colon inside the identifier
+   * or the password is carried as {@code %3A}, so exactly one literal colon separates the two
+   * halves and {@code split(":", 2)} is always correct. Without decoding, a client that follows the
+   * specification fails authentication, and a {@code client_id_alias} containing a colon resolves
+   * to a different (truncated) client identifier instead.
+   *
+   * <p>Per RFC 6749 Appendix B this is HTML form encoding over UTF-8, so {@code +} denotes a space
+   * and a literal plus sign arrives as {@code %2B} -- the same algorithm as {@link URLDecoder}.
+   *
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-2.3.1">RFC 6749 Section 2.3.1</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#appendix-B">RFC 6749 Appendix B</a>
+   */
+  private static String formUrlDecode(String value) {
+    return URLDecoder.decode(value, StandardCharsets.UTF_8);
   }
 
   default AccessTokenEntity extractAccessToken(String authorizationHeader) {
