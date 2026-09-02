@@ -21,8 +21,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.platform.http.BasicAuth;
+import org.idp.server.platform.log.LoggerWrapper;
 
 public interface AuthorizationHeaderHandlerable {
+
+  LoggerWrapper log = LoggerWrapper.getLogger(AuthorizationHeaderHandlerable.class);
 
   default AuthorizationHeaderType type(String authorizationHeader) {
     return AuthorizationHeaderType.of(authorizationHeader);
@@ -47,11 +50,21 @@ public interface AuthorizationHeaderHandlerable {
    * Parses an HTTP Basic {@code Authorization} header into its two halves.
    *
    * <p>RFC 7617 encodes {@code user-id ":" password} with standard Base64 (RFC 4648 Section 4), so
-   * the URL-safe alphabet must not be used here: it rejects {@code +} and {@code /}, which appear
-   * in roughly one of every 32 characters of a Base64-encoded secret. The rejection surfaces as
-   * {@link IllegalArgumentException}, which this method swallows, so the credential would fail
-   * authentication with no diagnostic. This mirrors {@code BasicAuthConvertable} in the platform
-   * module, which was corrected the same way in #1245.
+   * the standard alphabet is tried first. The URL-safe alphabet was used here historically, which
+   * rejected {@code +} and {@code /} -- roughly one of every 32 characters of a Base64-encoded
+   * secret -- and the resulting {@link IllegalArgumentException} was swallowed, so conformant
+   * credentials failed authentication with no diagnostic. The platform module was corrected the
+   * same way in #1245; this is the core-side follow-up.
+   *
+   * <p><b>Transitional fallback.</b> Switching outright would swap which population breaks: a
+   * client that (incorrectly) encodes with the URL-safe alphabet authenticates today and would stop
+   * doing so. Both alphabets are therefore accepted for now. There is no ambiguity between them --
+   * a string containing {@code + /} decodes only as standard, one containing {@code - _} only as
+   * URL-safe, and a string with neither is byte-identical in both -- so acceptance stays
+   * deterministic. Every fallback is logged at ERROR naming the user-id -- the level is deliberate:
+   * this is a migration signal that has to stand out rather than settle into the warning noise --
+   * so the remaining callers can be identified before the fallback is removed and this becomes
+   * standard-only.
    *
    * <p>The credential is returned exactly as transmitted. Callers performing OAuth 2.0 client
    * authentication must use {@link #convertClientSecretBasicAuth(String)} instead, which
@@ -64,20 +77,43 @@ public interface AuthorizationHeaderHandlerable {
       return new BasicAuth();
     }
     String value = authorizationHeader.substring("Basic ".length());
+    String decodedValue;
+    boolean decodedWithUrlSafeAlphabet = false;
     try {
-      byte[] decode = Base64.getDecoder().decode(value);
-      String decodedValue = new String(decode, StandardCharsets.UTF_8);
-      if (!decodedValue.contains(":")) {
-        return new BasicAuth();
-      }
-      String[] splitValues = decodedValue.split(":", 2);
-      if (splitValues.length < 2) {
-        return new BasicAuth();
-      }
-      return new BasicAuth(splitValues[0], splitValues[1]);
+      decodedValue = new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
     } catch (IllegalArgumentException e) {
+      try {
+        decodedValue = new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8);
+        decodedWithUrlSafeAlphabet = true;
+      } catch (IllegalArgumentException ignored) {
+        return new BasicAuth();
+      }
+    }
+    if (!decodedValue.contains(":")) {
       return new BasicAuth();
     }
+    String[] splitValues = decodedValue.split(":", 2);
+    if (splitValues.length < 2) {
+      return new BasicAuth();
+    }
+    if (decodedWithUrlSafeAlphabet) {
+      log.error(
+          "Basic credential decoded with the URL-safe Base64 alphabet. RFC 7617 requires standard"
+              + " Base64 (RFC 4648 Section 4); this fallback is transitional and will be removed."
+              + " user-id={}",
+          forLog(splitValues[0]));
+    }
+    return new BasicAuth(splitValues[0], splitValues[1]);
+  }
+
+  /**
+   * Renders an untrusted credential half for a log line: control characters (a raw CR/LF would let
+   * the value forge additional log entries) are dropped and the result is truncated. Only the
+   * user-id is ever passed here -- the password must not reach the log.
+   */
+  private static String forLog(String value) {
+    String sanitized = value.replaceAll("\\p{Cntrl}", "");
+    return sanitized.length() > 64 ? sanitized.substring(0, 64) + "..." : sanitized;
   }
 
   /**

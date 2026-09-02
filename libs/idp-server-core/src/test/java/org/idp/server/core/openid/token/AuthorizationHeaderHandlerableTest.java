@@ -61,6 +61,23 @@ class AuthorizationHeaderHandlerableTest {
   }
 
   @Test
+  @DisplayName("convertBasicAuth should fall back to the URL-safe alphabet during the transition")
+  void convertBasicAuthFallsBackToUrlSafeAlphabet() {
+    // Switching outright would swap which population breaks: a client that (incorrectly) encodes
+    // with the URL-safe alphabet authenticates today. Both are accepted until the ERROR log shows
+    // no remaining callers. The two alphabets cannot collide -- this credential is only decodable
+    // as URL-safe.
+    String credentials = Base64.getUrlEncoder().encodeToString("s6BhdRkqt3:~~~?????".getBytes());
+    assertTrue(credentials.contains("-") || credentials.contains("_"));
+
+    BasicAuth result = handler.convertBasicAuth("Basic " + credentials);
+
+    assertTrue(result.exists());
+    assertEquals("s6BhdRkqt3", result.username());
+    assertEquals("~~~?????", result.password());
+  }
+
+  @Test
   @DisplayName("convertBasicAuth should NOT apply RFC 6749 Appendix B decoding")
   void convertBasicAuthKeepsCredentialAsTransmitted() {
     // Section 2.3.1 governs OAuth client authentication only. Other Basic-authenticated surfaces
