@@ -2,15 +2,18 @@
 
 | 項目 | 内容 |
 |------|------|
-| 分析日 | 2026-05-01 (更新) |
-| 対象ブランチ | `feat/fapi-2.0-sp-final` (`feat/dpop-rfc9449` の延長) |
+| 分析日 | 2026-09-02 (更新) |
+| 対象ブランチ | `main` |
+| 検証方法 | OIDF Conformance Suite をローカル実行 (#1842)。プラン別の実測結果は §4 |
 | 対象仕様 | FAPI 2.0 Security Profile Final |
 | 認定基準 | OIDF Conformance Suite `fapi2-security-profile-final-test-plan` |
 | 関連要件 | [fapi-2.0-requirements.yaml](./fapi-2.0-requirements.yaml) (94要件) |
 | 関連分析 | [oauth2-dpop-gap-analysis.md](./oauth2-dpop-gap-analysis.md) |
-| 関連 Issue | [#1525](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1525) |
+| 関連 Issue | [#1525](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1525) / [#1851](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1851) (Message Signing) / [#1852](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1852) (残 P1) |
 
-> **注**: 本分析は主要 5 カテゴリ（network/AS/client/RS/crypto）の 75 要件を対象。要件 YAML 内の cross-reference カテゴリ（critical_must_requirements, security_critical 等）との突合は今後のリファクタで実施予定。
+> **注**: 本分析は主要 5 カテゴリ（network/AS/client/RS/crypto）を対象とし、§2 の表に挙げた 52 要件を集計している。
+> 要件 YAML は 94 要件を持つため、突合は今後のリファクタで実施予定
+> （以前のサマリは 75 要件と記載していたが、§2 の表の実数と一致していなかったため実数に合わせた）。
 
 ---
 
@@ -20,20 +23,21 @@
 
 | カテゴリ | 全要件 | ✅対応 | ⚠️部分 | ❌未対応 | 対応率 |
 |---------|--------|--------|--------|---------|--------|
-| Network Layer Protections (TLS) | 8 | 7 | 0 | 1 | **88%** |
-| Authorization Server | 31 | 27 | 2 | 2 | **87%** |
-| Client | 20 | 16 | 2 | 2 | 80% |
-| Resource Server | 6 | 5 | 1 | 0 | 83% |
-| Cryptography | 10 | 9 | 0 | 1 | 90% |
-| **主要カテゴリ計** | **75** | **64** | **5** | **6** | **85%** |
+| Network Layer Protections (TLS) | 7 | 5 | 1 | 1 | **71%** |
+| Authorization Server | 24 | 23 | 1 | 0 | **96%** |
+| Client | 8 | 8 | 0 | 0 | **100%** |
+| Resource Server | 6 | 6 | 0 | 0 | **100%** |
+| Cryptography | 7 | 4 | 3 | 0 | **57%** |
+| **主要カテゴリ計** | **52** | **46** | **5** | **1** | **88%** |
 
 ### 1.2 認定可否評価
 
-FAPI 2.0 SP Final 認定に必須のテストケース：
-- **必須テスト（FAILURE 扱い）**: 32 件中 30 件対応（94%）
-- **推奨テスト（WARNING 扱い）**: 8 件中 4 件対応（50%）
+OIDF Conformance Suite `fapi2-security-profile-final-test-plan` を 2 プラン
+（`sender_constrain=dpop` / `=mtls`）通し実行し、**いずれも FAILED ゼロ**（詳細は §4.0）。
 
-**結論**: P0 (認定必須) ギャップは全て解消。残り P1 項目（JARM form_post.jwt 等）は Issue 化して段階的対応。FAPI 2.0 SP Final 認定取得可能な状態。
+**結論**: P0 (認定必須) ギャップは解消済みで、適合性テスト上も不合格項目は無い。
+残るのは P1（EdDSA、鍵長 enforcement、DPoP jti リプレイ検出、JARM `form_post.jwt`）で、
+いずれも本プランの必須テストでは FAILURE にならない。
 
 ### 1.3 直近対応サマリ (2026-04-30 → 2026-05-01)
 
@@ -61,7 +65,7 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 | TLS 1.2+ のみ | MUST | ✅ | Spring Boot TLS 設定 |
 | BCP195 推奨暗号スイート | MUST | ✅ | Tomcat デフォルト |
 | TLS サーバー証明書検証 | MUST | ✅ | JDK X509 検証 |
-| CORS が Authorization Endpoint で禁止 | MUST | ⚠️ | 明示的拒否ロジック未確認 |
+| CORS が Authorization Endpoint で禁止 | MUST | ✅ | `DynamicCorsFilter.java`（FAPI 2.0 §5.2.3.3 を明記）。E2E `fapi2_authorization_endpoint_cors.test.js` 3 ケース。PAR 等のサブパスは対象外 |
 | DNSSEC | SHOULD | ❌ | DNS ライブラリ依存 |
 | HSTS Preload | SHOULD | ⚠️ | HTTP ヘッダ設定可能 |
 | `mtls_endpoint_aliases` メタデータ | OPTIONAL | ✅ | `ServerConfigurationResponseCreator.java:212-214` |
@@ -74,14 +78,14 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 |------|--------|------|---------|
 | OIDC Discovery 対応 | MUST | ✅ | `DiscoveryHandler.java:41-49` |
 | ROPC Grant 拒否 | MUST | ✅ | 設定で禁止可能 |
-| Confidential Client のみ | MUST | ⚠️ | FAPI 1.0 Advanced で対応済み、FAPI 2.0 専用拡張要 |
-| Sender-Constrained Token (mTLS or DPoP) | MUST | ⚠️ | mTLS: ✅ / DPoP: ✅（PAR時の DPoP 未対応） |
+| Confidential Client のみ | MUST | ✅ | `FapiSecurity20Verifier.java:117`（FAPI 2.0 §5.3.3.1 public clients prohibited）。discovery の `token_endpoint_auth_methods_supported` に `none` を含めない |
+| Sender-Constrained Token (mTLS or DPoP) | MUST | ✅ | 両方式とも適合性テスト通過。`sender_constrain=dpop` / `=mtls` の 2 プランで確認（§4.3） |
 | Authorization Code 60 秒有効期限 | MUST | ✅ | `AuthorizationCodeGrantCreator.java` |
 | Authorization Code 単一使用 | MUST | ✅ | `AuthorizationCodeGrantBaseVerifier.java` |
 | `iss` パラメータを Authorization Response に含める | MUST | ✅ | `AuthorizationResponseBuilder.java`, `JarmCreatable.java` |
 | Open Redirector 禁止 | MUST | ✅ | `OAuthRequestBaseVerifier` |
 | `aud` クレームは文字列 | MUST | ✅ | `ClientAuthenticationJwtValidatable.java` |
-| Refresh Token Rotation 無効 (§5.3.2.1-9) | MUST | ⚠️ | グローバルデフォルトは `true`。FAPI 2.0 テナントは `extension.rotate_refresh_token: false` を必ず設定すること（`config/examples/e2e/fapi2-tenant/` 参照）。RT は `client_id` ＋ クライアント認証で sender-constrained されているためローテーション不要（RFC 9449 §5） |
+| Refresh Token Rotation 無効 (§5.3.2.1-9) | MUST | ✅ | グローバルデフォルトは `true` のままだが、FAPI 2.0 用テンプレート（`config/templates/use-cases/financial-grade-2.0/fapi2-tenant-template.json`）と e2e テナントの両方に `extension.rotate_refresh_token: false` が入っている。適合性テスト `refresh-token` PASSED。**新規テナントを作る際は必ず設定すること**（未設定だと suite が旧トークンの受け付けを要求して FAILED になる） |
 
 #### 2.2.2 PAR + PKCE
 
@@ -89,28 +93,28 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 |------|--------|------|----------------|
 | `response_type: code` のみ | MUST | ✅ | `FapiAdvanceVerifier.java:240-250` |
 | Implicit / Hybrid Flow 拒否 | MUST | ✅ | 実装済み |
-| **PAR 必須** | MUST | ❌ | PAR 実装あるが `require_pushed_authorization_requests` 未対応 |
+| **PAR 必須** | MUST | ✅ | discovery に `require_pushed_authorization_requests: true`（§3） |
 | PAR へのクライアント認証必須 | MUST | ✅ | `OAuthPushedRequest` |
-| **直接 Authorization Endpoint 拒否** | MUST | ❌ | PAR 強制メカニズムなし |
+| **直接 Authorization Endpoint 拒否** | MUST | ✅ | `ensure-unsigned-authorization-request-without-using-par-fails` PASSED |
 | PKCE S256 必須 | MUST | ✅ | `CodeChallengeMethod.java:39-41` |
 | PKCE plain メソッド拒否 | MUST | ✅ | S256 のみ許可 |
 | `redirect_uri` 必須 | MUST | ✅ | `OidcRequestBaseVerifier` |
-| PAR `request_uri` 有効期限 < 600 秒 | MUST | ⚠️ | 設定可能、デフォルト要明示 |
+| PAR `request_uri` 有効期限 < 600 秒 | MUST | ✅ | 既定 90 秒（`AuthorizationServerExtensionConfiguration:65`）。FAPI 2.0 テンプレートは 60 秒 |
 
 #### 2.2.3 JARM (JWT Secured Authorization Response Mode)
 
 | 要件 | レベル | 状況 | 実装箇所 |
 |------|--------|------|---------|
-| `response_mode=jwt` サポート | MUST | ⚠️ | `JarmVerifier.java` 存在、`form_post.jwt` 未実装（TODO #1266） |
+| `response_mode=jwt` サポート | MUST | ⚠️ | `jwt` / `query.jwt` / `fragment.jwt` は実装済み。`form_post.jwt` は未実装で `JarmVerifier` がブロックする（#1266）。前提となる素の `form_post` も未実装（#1847） |
 | JARM `iss` 含める | MUST | ✅ | `JarmCreatable.java` |
 
 #### 2.2.4 Authorization Code Binding (DPoP)
 
 | 要件 | レベル | 状況 |
 |------|--------|------|
-| `dpop_jkt` Authorization Request パラメータ | OPTIONAL（FAPI 2.0 で実質MUST） | ❌ |
-| `dpop_jkt` と DPoP proof JKT 一致検証 | MUST（dpop_jkt 使用時） | ❌ |
-| PAR エンドポイントで DPoP proof 検証 | MUST | ❌ |
+| `dpop_jkt` Authorization Request パラメータ | OPTIONAL（FAPI 2.0 で実質MUST） | ✅ | `ensure-dpop-auth-code-binding-success` PASSED |
+| `dpop_jkt` と DPoP proof JKT 一致検証 | MUST（dpop_jkt 使用時） | ✅ | `ensure-mismatched-dpop-jkt-fails` / `ensure-token-endpoint-fails-with-mismatched-dpop-jkt` PASSED |
+| PAR エンドポイントで DPoP proof 検証 | MUST | ✅ | `ensure-dpopproof-at-par-endpoint-binding-success` PASSED |
 
 → 詳細は [oauth2-dpop-gap-analysis.md](./oauth2-dpop-gap-analysis.md) §4.1 参照
 
@@ -124,7 +128,7 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 | Discovery 経由のメタデータのみ | MUST | ✅ | Discovery ハンドラ |
 | Issuer validation | MUST | ✅ | JARM / Auth Response 両方 |
 | CSRF 保護 (state) | MUST | ✅ | state 検証 |
-| PAR 使用 | MUST | ⚠️ | クライアント実装側、AS 強制なし |
+| PAR 使用 | MUST | ✅ | AS 側で強制する（`require_pushed_authorization_requests: true`）。直接リクエストは拒否される |
 | PKCE S256 | MUST | ✅ | クライアント SDK |
 
 ### 2.4 Resource Server (Section 5.3.4)
@@ -142,12 +146,12 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 
 | 要件 | レベル | 状況 | 備考 |
 |------|--------|------|------|
-| PS256, ES256, EdDSA のみ | MUST | ⚠️ | FAPI Advanced で PS256/ES256 限定、EdDSA explicit 未確認 |
-| RS256 等弱アルゴ拒否 | MUST | ⚠️ | EdDSA 列挙確認要 |
+| PS256, ES256, EdDSA のみ | MUST | ⚠️ | PS256 / ES256 に限定済み。Verifier の allowlist には EdDSA が入っているが、platform が OKP 鍵を検証できないため実質未対応（GAP-FAPI2-006）。仕様は 3 つを許容するので、対応しないこと自体は不適合ではない |
+| RS256 等弱アルゴ拒否 | MUST | ✅ | discovery の `*_signing_alg_values_supported` は `ES256` / `PS256` のみ。適合性テストの `ensure-signed-client-assertion-with-RS256-fails` は、クライアント鍵が ES256 のため suite 自身が SKIPPED にする |
 | `none` 拒否 | MUST | ✅ | Request Object など |
-| RSA 鍵 ≥ 2048 bits | MUST | ⚠️ | JWK validation 要確認 |
-| EC 鍵 ≥ 224 bits | MUST | ⚠️ | JWK validation 要確認 |
-| Credentials ≥ 128 bits entropy | MUST | ⚠️ | Auth Code / state 生成要確認 |
+| RSA 鍵 ≥ 2048 bits | MUST | ⚠️ | client assertion は `FapiSecurity20Verifier:276-305` で PS\* ≥ 2048 を強制。DPoP proof 鍵 / Request Object 署名鍵 / クライアント登録時の JWKS は未検証（GAP-FAPI2-009） |
+| EC 鍵 ≥ 224 bits | MUST | ⚠️ | 同上。client assertion は ES\* ≥ 224 を強制（GAP-FAPI2-009） |
+| Credentials ≥ 128 bits entropy | MUST | ✅ | `RandomStringGenerator` は `SecureRandom` ベース。認可コードは 20 バイト = 160 bits（`AuthorizationCodeCreatable:25`）、アクセス/リフレッシュトークンは 32 バイト = 256 bits |
 | `jwks_uri` TLS 保護 | MUST | ✅ | https:// 強制 |
 
 ---
@@ -160,7 +164,7 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 | `authorization_endpoint` | MUST | ✅ | line 65 |
 | `token_endpoint` | MUST | ✅ | line 67-68 |
 | `pushed_authorization_request_endpoint` | MUST (FAPI 2.0) | ✅ | line 179-181 |
-| **`require_pushed_authorization_requests`** | MUST (FAPI 2.0) | ❌ | 未実装 |
+| **`require_pushed_authorization_requests`** | MUST (FAPI 2.0) | ✅ | `financial-grade-2.0` テナントの discovery で `true` を確認 |
 | `response_types_supported` | MUST | ✅ | line 82 |
 | `response_modes_supported` (incl. "jwt") | MUST | ✅ | line 84-85 |
 | `code_challenge_methods_supported` | MUST | ✅ | line 186-188 |
@@ -175,6 +179,22 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 
 ## 4. OIDF Conformance Suite テスト対応
 
+### 4.0 実測結果
+
+`fapi2-security-profile-final-test-plan` をローカルで通し実行した結果（#1842 のハーネス）。
+手順は `oidc-conformance-suite/fapi2/README.md`。
+
+| プラン | variants | 結果 |
+|--------|----------|------|
+| 1 | `client_auth_type=private_key_jwt` / `sender_constrain=dpop`（56 モジュール） | **48 PASSED / 3 REVIEW / 4 WARNING / 1 SKIPPED / 0 FAILED**（4544 SUCCESS, 0 failures） |
+| 2 | `client_auth_type=mtls` / `sender_constrain=mtls`（38 モジュール） | **31 PASSED / 3 REVIEW / 3 WARNING / 0 FAILED**（2656 SUCCESS, 0 failures） |
+
+共通の variants は `[fapi_profile=plain_fapi][authorization_request_type=simple][openid=openid_connect][grant_management=disabled]`。
+
+- REVIEW は「エラーページが表示されたこと」をスクリーンショットで確認するテストの正常な終着点
+- SKIPPED は `ensure-signed-client-assertion-with-RS256-fails`。クライアント鍵が ES256 のため suite 自身が飛ばす
+- WARNING の内訳は §4.2
+
 ### 4.1 必須テスト（FAILURE 扱い）
 
 主要な FAPI 2.0 SP Final テストの対応状況（抜粋）：
@@ -185,8 +205,8 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 | `FAPI2SPFinalEnsureRequestObjectWithoutExpFails` | Request Object exp 必須 | ✅ |
 | `FAPI2SPFinalCheckDpopProofNbfExp` | DPoP nbf/exp | ✅ |
 | `FAPI2SPFinalDpopNegativeTests` | DPoP negative cases | ✅ ほぼ対応 |
-| `FAPI2SPFinalEnsureMismatchedDpopJktFails` | `dpop_jkt` 不一致拒否 | ❌ |
-| `FAPI2SPFinalEnsureTokenEndpointFailsWithMismatchedDpopJkt` | Token endpoint dpop_jkt 検証 | ❌ |
+| `FAPI2SPFinalEnsureMismatchedDpopJktFails` | `dpop_jkt` 不一致拒否 | ✅ |
+| `FAPI2SPFinalEnsureTokenEndpointFailsWithMismatchedDpopJkt` | Token endpoint dpop_jkt 検証 | ✅ |
 | `FAPI2SPFinalEnsureDpopAuthCodeBindingSuccess` | Authorization Code Binding | ✅ (`ef53a06cb`) |
 | `FAPI2SPFinalEnsureDpopProofAtParEndpointBindingSuccess` | PAR endpoint DPoP proof | ✅ (`8d780dac3`) |
 | `FAPI2SPFinalClientTestRSDpopAuthSchemeCaseInsenstivity` | DPoP auth scheme 大小文字非依存 | ✅ (`AuthorizationHeaderType.of` で case-insensitive) |
@@ -195,14 +215,19 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 | `FAPI2SPFinalClientTestEnsureSignedClientAssertionWithRS256Fails` | Client assertion RS256 拒否 | ✅ |
 | `FAPI2SPFinalEnsureUnsignedAuthorizationRequestWithoutUsingParFails` | 非 PAR で unsigned request 拒否 | ✅ (`FapiSecurity20Verifier`) |
 
-**結果**: 32 テスト中 30 テスト対応（**94%**）。残りは P1 項目（JARM form_post.jwt 等）。
+**結果**: 実測で FAILED ゼロ（§4.0）。`form_post.jwt`（#1266 / #1847）は `fapi2-message-signing-final-test-plan` 側の要件で、本プランには含まれない。
 
 ### 4.2 WARNING テスト
 
-| テスト | 検証項目 | 対応 |
-|--------|---------|------|
-| jti リプレイ検出 | DPoP jti 重複拒否 | ❌ (P1, RFC 9449 §11.1 では SHOULD レベル) |
-| URI 正規化 | scheme/host case-insensitive | ✅ (`UriWrapper`) |
+実測で残った WARNING（いずれも FAILED ではない）。
+
+| テスト | 条件 | 内容 |
+|--------|------|------|
+| `dpop-negative-tests` | `EnsureHttpStatusCodeIs400or401` | 同じ `jti` の DPoP proof を 2 回受け付ける。`DPoPProofVerifier.java:226` に未実装と明記（GAP-FAPI2-008 / RFC 9449 §4.3 は条件付き要件）。dpop プランのみ |
+| `discovery-end-point-verification` | `CheckForUnexpectedParametersInServerMetadata` | discovery の `verified_claims_supported` が suite の rfc8414 スキーマに無い。OIDC4IDA の他のメタデータは登録済みで、**suite 側の登録漏れ**。idp-server は仕様どおり |
+| `attempt-reuse-authorization-code-after-one-second` | `EnsureHttpStatusCodeIs4xx` | 認可コード再利用後に発行済みアクセストークンを失効させていない（RFC 6749 §4.1.2 の SHOULD） |
+| `test-claims-parameter-identity-claims` | `EnsureIdentityClaimsContainRequestedClaims` | `claims` パラメータで要求した属性がテストユーザーに入っていない。実装ではなくテストデータの問題 |
+| URI 正規化 | - | ✅ (`UriWrapper`) |
 
 ---
 
@@ -221,11 +246,11 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 
 | ID | 項目 | レベル | 状態 | 推奨アクション |
 |----|------|--------|------|---------------|
-| GAP-FAPI2-005 | JARM `form_post.jwt` response mode | MUST | ❌ | TODO #1266 完了 |
-| GAP-FAPI2-006 | EdDSA 明示サポート | MUST | ⚠️ | JWK/JWT 検証 + Discovery 記載 |
+| GAP-FAPI2-005 | JARM `form_post.jwt` response mode | MUST | ❌ | #1266。前提となる素の `response_mode=form_post` も未実装（#1847）。現状 `form_post.jwt` は `unauthorized_client` ではなく HTTP 500 になる |
+| GAP-FAPI2-006 | EdDSA 明示サポート | MUST | ❌ | #1852。Verifier の allowlist には EdDSA があるが、`JsonWebKey.toPublicKey():81` の switch が RSA / EC / OCT のみで OKP に落ちない。discovery の `*_signing_alg_values_supported` も `ES256` / `PS256` のみ |
 | GAP-FAPI2-007 | CORS Authorization Endpoint 明示拒否 | MUST | ✅ | `DynamicCorsFilter.shouldNotFilter` で `/v1/authorizations` ルート除外 |
 | GAP-FAPI2-008 | DPoP jti リプレイ検出 | SHOULD | ❌ | Redis backend |
-| GAP-FAPI2-009 | RSA/EC 最小鍵長 enforcement | MUST | ⚠️ | JWK validation |
+| GAP-FAPI2-009 | RSA/EC 最小鍵長 enforcement | MUST | ⚠️ | #1852。client assertion 経路のみ強制済み（`FapiSecurity20Verifier` / `AuthorizationCodeGrantFapi20Verifier`、PS\* ≥ 2048 / ES\* ≥ 224 / EdDSA ≥ 256）。DPoP proof 鍵 / Request Object 署名鍵 / クライアント登録時の JWKS は未検証 |
 
 ### 5.3 P2: OPTIONAL / 任意
 
@@ -266,11 +291,11 @@ DPoP 実装とあわせて FAPI 2.0 認定必須 P0 項目を全クリア:
 
 ### Phase 2: セキュリティ強化（後続、別 Issue 化）
 
-- JARM `form_post.jwt` response mode (TODO #1266)
-- DPoP jti リプレイ検出（Redis backend）
+- JARM `form_post.jwt` response mode (#1266 / 前提の #1847。#1851 で追跡)
+- DPoP jti リプレイ検出（Redis backend）— #1736 の Info
 - WWW-Authenticate `algs` パラメータ
-- EdDSA 明示サポート
-- RSA/EC 最小鍵長 enforcement
+- EdDSA 明示サポート — #1852
+- RSA/EC 最小鍵長 enforcement の適用範囲拡大 — #1852
 
 ---
 
