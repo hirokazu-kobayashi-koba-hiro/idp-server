@@ -43,13 +43,29 @@ public interface AuthorizationHeaderHandlerable {
     return type.isDPoP();
   }
 
+  /**
+   * Parses an HTTP Basic {@code Authorization} header into its two halves.
+   *
+   * <p>RFC 7617 encodes {@code user-id ":" password} with standard Base64 (RFC 4648 Section 4), so
+   * the URL-safe alphabet must not be used here: it rejects {@code +} and {@code /}, which appear
+   * in roughly one of every 32 characters of a Base64-encoded secret. The rejection surfaces as
+   * {@link IllegalArgumentException}, which this method swallows, so the credential would fail
+   * authentication with no diagnostic. This mirrors {@code BasicAuthConvertable} in the platform
+   * module, which was corrected the same way in #1245.
+   *
+   * <p>The credential is returned exactly as transmitted. Callers performing OAuth 2.0 client
+   * authentication must use {@link #convertClientSecretBasicAuth(String)} instead, which
+   * additionally reverses the encoding that RFC 6749 Section 2.3.1 requires of clients.
+   *
+   * @see <a href="https://datatracker.ietf.org/doc/html/rfc7617">RFC 7617</a>
+   */
   default BasicAuth convertBasicAuth(String authorizationHeader) {
     if (!isBasicAuth(authorizationHeader)) {
       return new BasicAuth();
     }
     String value = authorizationHeader.substring("Basic ".length());
     try {
-      byte[] decode = Base64.getUrlDecoder().decode(value);
+      byte[] decode = Base64.getDecoder().decode(value);
       String decodedValue = new String(decode, StandardCharsets.UTF_8);
       if (!decodedValue.contains(":")) {
         return new BasicAuth();
@@ -58,30 +74,46 @@ public interface AuthorizationHeaderHandlerable {
       if (splitValues.length < 2) {
         return new BasicAuth();
       }
-      return new BasicAuth(formUrlDecode(splitValues[0]), formUrlDecode(splitValues[1]));
+      return new BasicAuth(splitValues[0], splitValues[1]);
     } catch (IllegalArgumentException e) {
       return new BasicAuth();
     }
   }
 
   /**
-   * Reverses the {@code application/x-www-form-urlencoded} encoding that RFC 6749 Section 2.3.1
-   * requires the client to apply to its identifier and password before Basic authentication.
+   * Parses a {@code client_secret_basic} credential, reversing the {@code
+   * application/x-www-form-urlencoded} encoding that RFC 6749 Section 2.3.1 requires the client to
+   * apply to its identifier and password.
    *
-   * <p>The encoding is what makes the Basic credential unambiguous: a colon inside the identifier
-   * or the password is carried as {@code %3A}, so exactly one literal colon separates the two
-   * halves and {@code split(":", 2)} is always correct. Without decoding, a client that follows the
-   * specification fails authentication, and a {@code client_id_alias} containing a colon resolves
-   * to a different (truncated) client identifier instead.
+   * <p>The encoding is what makes the credential unambiguous: a colon inside either half is carried
+   * as {@code %3A}, so exactly one literal colon separates them and {@code split(":", 2)} is always
+   * correct. Without the decoding a specification-conformant client fails authentication, and a
+   * {@code client_id_alias} containing a colon resolves to a different (truncated) client
+   * identifier.
    *
    * <p>Per RFC 6749 Appendix B this is HTML form encoding over UTF-8, so {@code +} denotes a space
    * and a literal plus sign arrives as {@code %2B} -- the same algorithm as {@link URLDecoder}.
    *
+   * <p>Deliberately separate from {@link #convertBasicAuth(String)}: Section 2.3.1 governs OAuth
+   * client authentication at the token endpoint only. Applying it to other Basic-authenticated
+   * surfaces (for example the management API, whose secret is generated with {@code base64} and can
+   * therefore contain {@code +}) would silently rewrite a valid credential.
+   *
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#section-2.3.1">RFC 6749 Section 2.3.1</a>
    * @see <a href="https://www.rfc-editor.org/rfc/rfc6749#appendix-B">RFC 6749 Appendix B</a>
    */
-  private static String formUrlDecode(String value) {
-    return URLDecoder.decode(value, StandardCharsets.UTF_8);
+  default BasicAuth convertClientSecretBasicAuth(String authorizationHeader) {
+    BasicAuth basicAuth = convertBasicAuth(authorizationHeader);
+    if (!basicAuth.exists()) {
+      return basicAuth;
+    }
+    try {
+      return new BasicAuth(
+          URLDecoder.decode(basicAuth.username(), StandardCharsets.UTF_8),
+          URLDecoder.decode(basicAuth.password(), StandardCharsets.UTF_8));
+    } catch (IllegalArgumentException e) {
+      return new BasicAuth();
+    }
   }
 
   default AccessTokenEntity extractAccessToken(String authorizationHeader) {
