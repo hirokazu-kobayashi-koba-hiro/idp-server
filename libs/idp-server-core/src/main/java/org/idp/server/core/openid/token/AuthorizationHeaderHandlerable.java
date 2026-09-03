@@ -66,6 +66,13 @@ public interface AuthorizationHeaderHandlerable {
    * so the remaining callers can be identified before the fallback is removed and this becomes
    * standard-only.
    *
+   * <p>{@code BasicAuthConvertable} in the platform module switched to the standard alphabet
+   * outright in #1245 and has needed no such fallback. That is not a precedent for doing the same
+   * here: it is reached only from the identity-verification callback and pre-hook, whose callers
+   * are a handful of operator-managed services, whereas this method sits in front of every OAuth
+   * client. The population that a hard switch could break is of a different order, hence the staged
+   * migration.
+   *
    * <p>The credential is returned exactly as transmitted. Callers performing OAuth 2.0 client
    * authentication must use {@link #convertClientSecretBasicAuth(String)} instead, which
    * additionally reverses the encoding that RFC 6749 Section 2.3.1 requires of clients.
