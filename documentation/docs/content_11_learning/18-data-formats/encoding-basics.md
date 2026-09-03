@@ -742,6 +742,49 @@ byte[] decoded = HexFormat.of().parseHex("48656c6c6f");
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+#### ユーザー名にコロンを入れられない
+
+Basic 認証は `user-id` と `password` を **コロン 1 個で連結しただけ**の文字列を
+Base64 する仕組みです。区切りは「最初のコロン」と決まっているため、`user-id` 側に
+コロンが入ると区切りが判別できません。RFC 7617 はこれを明確に禁止しています。
+
+> a user-id containing a colon character is invalid, as the first colon in a
+> user-pass string separates user-id and password from one another.
+> User-ids containing colons cannot be encoded in user-pass strings.
+> — [RFC 7617](https://www.rfc-editor.org/rfc/rfc7617) §2
+
+つまり素の Basic 認証は、コロンを含む識別子を**表現できないまま諦めています**。
+
+#### OAuth 2.0 はエンコード層を1枚かぶせて解決した
+
+OAuth 2.0 のクライアント識別子は仕様上ただの文字列で、URI 形式など
+コロンを含む値もありえます。そのままでは Basic 認証に載りません。
+
+そこで RFC 6749 §2.3.1 は、Base64 する**前に**両方を
+`application/x-www-form-urlencoded` でエンコードすると定めました。
+
+> The client identifier is encoded using the "application/x-www-form-urlencoded"
+> encoding algorithm per Appendix B, and the encoded value is used as the username;
+> the client password is encoded using the same algorithm and used as the password.
+> — [RFC 6749](https://www.rfc-editor.org/rfc/rfc6749#section-2.3.1) §2.3.1
+
+```
+識別子 "https://client.example.com/"  パスワード "s3cret"
+
+  ① form-urlencoded          https%3A%2F%2Fclient.example.com%2F : s3cret
+                             └ コロンが %3A に逃げ、区切りのコロンが 1 個だけになる
+  ② コロンで連結
+  ③ Base64
+```
+
+これで「最初のコロンで割る」が常に正しくなります。**エンコードは体裁ではなく、
+パースを一意にするための前提**です。受け取る側は Base64 復号 → コロンで分割 →
+**両方を percent-decode** の順に戻す必要があります。
+
+なお `application/x-www-form-urlencoded` は HTML フォームの規則なので、
+**`+` はスペースを表し、リテラルの `+` は `%2B` として送られます**（[RFC 6749 Appendix B](https://www.rfc-editor.org/rfc/rfc6749#appendix-B) の例が
+SPACE → `+`、`+` → `%2B` を示しています）。単なる percent-encoding ではない点に注意が必要です。
+
 ### 例: OAuth redirect_uri
 
 ```
@@ -807,6 +850,42 @@ byte[] decoded = HexFormat.of().parseHex("48656c6c6f");
 │                                                                      │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+#### なぜ「たまにしか起きない」のか
+
+この取り違えが厄介なのは、**いつも失敗するわけではない**ことです。2つの文字テーブルは
+インデックス 62・63 の2文字しか違わないため、出力にその2文字が現れなければ
+**標準と Base64URL は完全に同じ文字列**になります。
+
+```
+出力に + / (または - _) が含まれない  → 両方のデコーダで成功。差が出ない
+出力に + /                            → 標準でのみ成功
+出力に - _                            → Base64URL でのみ成功
+```
+
+そのため「同じコードなのに、あるユーザーだけ失敗する」「あるトークンだけ壊れる」
+という形で現れ、入力データ依存のバグとして再現しにくくなります。
+
+#### インデックス 62・63 はどんなときに出るか
+
+62・63 は6ビットの塊が `111110` / `111111` になったときです。ASCII 文字だけの入力では、
+**4つ目の塊（＝3バイト目の下位6ビット）でしか到達しません**。1〜3つ目の塊は ASCII の
+ビット幅の制約から最大 61 にしかならないためです。
+
+結果として、ASCII 入力で `+` `/` を生むのは次の3文字だけになります。
+
+| 文字 | コード | 条件 |
+|---|---|---|
+| `>` | 0x3E | 位置が 3 の倍数 + 2（0 始まりで 3・6・9…番目）|
+| `?` | 0x3F | 同上 |
+| `~` | 0x7E | 同上 |
+
+同じ文字でも**位置が変われば出ません**。`a>b` は `>` が2番目なので `YT5i` となり、
+`+` は現れません。一方、非 ASCII（UTF-8 のマルチバイト）を含む場合は 4 つ目以外の塊でも
+62・63 に到達しうるため、条件はもっと緩くなります。
+
+英数字や16進文字だけの入力では 62・63 が構造的に出ないため、**取り違えていても
+まったく問題が起きない**まま運用されることがあります。
 
 ### 3. 文字エンコーディングの不一致
 
