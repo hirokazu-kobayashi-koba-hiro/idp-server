@@ -79,7 +79,7 @@ public class CibaRequest implements AuthorizationHeaderHandlerable {
     }
     String authorizationHeaders = inputs.authorizationHeader();
     if (isBasicAuth(authorizationHeaders)) {
-      BasicAuth basicAuth = convertBasicAuth(authorizationHeaders);
+      BasicAuth basicAuth = convertClientSecretBasicAuth(authorizationHeaders);
       return new RequestedClientId(basicAuth.username());
     }
     // RFC 7521/7523: Extract client_id from client_assertion JWT's iss claim
@@ -95,7 +95,7 @@ public class CibaRequest implements AuthorizationHeaderHandlerable {
   public ClientSecretBasic clientSecretBasic() {
     String authorizationHeaders = inputs.authorizationHeader();
     if (isBasicAuth(authorizationHeaders)) {
-      return new ClientSecretBasic(convertBasicAuth(authorizationHeaders));
+      return new ClientSecretBasic(convertClientSecretBasicAuth(authorizationHeaders));
     }
     return new ClientSecretBasic();
   }

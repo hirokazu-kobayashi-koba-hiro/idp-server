@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { requestToken } from "../../api/oauthClient";
-import { clientSecretPostClient, serverConfig, unsupportedServerConfig, unsupportedClient } from "../testConfig";
+import { clientSecretPostClient, publicClientCredentialsClient, serverConfig, unsupportedServerConfig, unsupportedClient } from "../testConfig";
 
 describe("The OAuth 2.0 Authorization Framework client credentials", () => {
   it("success pattern", async () => {
@@ -14,6 +14,29 @@ describe("The OAuth 2.0 Authorization Framework client credentials", () => {
     });
     console.log(tokenResponse.data);
     expect(tokenResponse.status).toBe(200);
+  });
+
+  describe("4.4.  Client Credentials Grant", () => {
+    it("The client credentials grant type MUST only be used by confidential clients.", async () => {
+      // publicClientCredentials is registered with token_endpoint_auth_method=none AND
+      // grant_types=[client_credentials], so the unauthorized_client check passes and the
+      // confidential-client guard is what has to reject the request. A public client presents no
+      // credential, so accepting it would issue an access token to an unauthenticated caller.
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        scope: publicClientCredentialsClient.scope,
+        clientId: publicClientCredentialsClient.clientId,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(401);
+      expect(tokenResponse.data.error).toEqual("invalid_client");
+      // TokenRequestErrorHandler maps both ClientUnAuthorizedException (this guard) and
+      // ClientConfigurationNotFoundException (client not registered) to 401 invalid_client, so the
+      // status and error code alone cannot tell them apart -- an unregistered fixture would make
+      // this test pass even with the guard removed. Assert on the description to pin the cause.
+      expect(tokenResponse.data.error_description).toContain("confidential client");
+    });
   });
 
   describe("4.4.2.  Access Token Request", () => {

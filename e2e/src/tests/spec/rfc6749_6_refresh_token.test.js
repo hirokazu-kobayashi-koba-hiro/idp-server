@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { requestToken } from "../../api/oauthClient";
-import { clientSecretPostClient, serverConfig } from "../testConfig";
+import { clientSecretBasicClient, clientSecretPostClient, serverConfig } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
-import { matchWithUSASCII } from "../../lib/util";
+import { createBasicAuthHeader, matchWithUSASCII } from "../../lib/util";
 
 describe("The OAuth 2.0 Authorization Framework refresh token", () => {
 
@@ -203,6 +203,36 @@ describe("The OAuth 2.0 Authorization Framework refresh token", () => {
       expect(refreshTokenResponse.data).toHaveProperty("scope");
       expect(refreshTokenResponse.data).toHaveProperty("refresh_token");
       expect(refreshTokenResponse.data.scope).toBe(scope);
+    });
+  });
+  describe("10.4.  Refresh Tokens", () => {
+    it("Authorization servers MUST verify the binding between the refresh token and client identity whenever the client identity can be authenticated.", async () => {
+      // A refresh token issued to clientSecretPost must not be redeemable by a different,
+      // successfully authenticated client. Without the binding check the second client would be
+      // able to mint access tokens from a grant it was never issued.
+      const { refreshToken } = await getRefreshToken({
+        server: serverConfig,
+        client: clientSecretPostClient,
+      });
+      expect(refreshToken).not.toBeNull();
+
+      // clientSecretBasic authenticates via the Authorization header; sending the secret in the
+      // body would fail client authentication before the binding check is ever reached.
+      const basicAuth = createBasicAuthHeader({
+        username: clientSecretBasicClient.clientId,
+        password: clientSecretBasicClient.clientSecret,
+      });
+      const refreshTokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        refreshToken,
+        grantType: "refresh_token",
+        clientId: clientSecretBasicClient.clientId,
+        basicAuth,
+      });
+
+      console.log(refreshTokenResponse.data);
+      expect(refreshTokenResponse.status).toBe(400);
+      expect(refreshTokenResponse.data.error).toEqual("invalid_grant");
     });
   });
 });

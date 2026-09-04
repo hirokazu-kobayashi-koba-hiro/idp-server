@@ -61,7 +61,7 @@ public class TokenIntrospectionRequest implements AuthorizationHeaderHandlerable
 
     String authorizationHeaders = inputs.authorizationHeader();
     if (isBasicAuth(authorizationHeaders)) {
-      BasicAuth basicAuth = convertBasicAuth(authorizationHeaders);
+      BasicAuth basicAuth = convertClientSecretBasicAuth(authorizationHeaders);
       return new RequestedClientId(basicAuth.username());
     }
 
@@ -75,7 +75,7 @@ public class TokenIntrospectionRequest implements AuthorizationHeaderHandlerable
   public ClientSecretBasic clientSecretBasic() {
     String authorizationHeaders = inputs.authorizationHeader();
     if (isBasicAuth(authorizationHeaders)) {
-      return new ClientSecretBasic(convertBasicAuth(authorizationHeaders));
+      return new ClientSecretBasic(convertClientSecretBasicAuth(authorizationHeaders));
     }
     return new ClientSecretBasic();
   }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { getJwks, inspectToken, requestToken } from "../../api/oauthClient";
-import { clientSecretPostClient, serverConfig, unsupportedServerConfig, unsupportedClient } from "../testConfig";
+import { clientSecretPostClient, publicClient, serverConfig, unsupportedServerConfig, unsupportedClient } from "../testConfig";
 import { verifyAndDecodeJwt } from "../../lib/jose";
 
 describe("The OAuth 2.0 Authorization Framework resource owner password credentials", () => {
@@ -22,6 +22,25 @@ describe("The OAuth 2.0 Authorization Framework resource owner password credenti
   });
 
   describe("4.3.2.  Access Token Request", () => {
+    it("client_id REQUIRED, if the client is not authenticating with the authorization server as described in Section 3.2.1.", async () => {
+      // Regression guard for the confidential-client restriction added for grant_type=
+      // client_credentials (RFC 6749 Section 4.4). That restriction is specific to Section 4.4:
+      // the resource owner password credentials grant still accepts a public client
+      // (token_endpoint_auth_method=none), which authenticates with client_id alone.
+      const { oauth } = serverConfig;
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "password",
+        username: oauth.username,
+        password: oauth.password,
+        scope: "account",
+        clientId: publicClient.clientId,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("access_token");
+    });
+
     it("grant_type REQUIRED.  Value MUST be set to \"password\".", async () => {
       const tokenResponse = await requestToken({
         endpoint: serverConfig.tokenEndpoint,

@@ -2,14 +2,15 @@ import { describe, expect, it, xit } from "@jest/globals";
 
 import { getAuthorizations, requestToken } from "../../api/oauthClient";
 import {
+  clientSecretBasicClient,
   clientSecretPostClient,
   serverConfig,
   unsupportedClient,
   unsupportedServerConfig,
 } from "../testConfig";
 import { requestAuthorizations } from "../../oauth/request";
-import { matchWithUSASCII } from "../../lib/util";
-import { postWithJson, get } from "../../lib/http";
+import { createBasicAuthHeader, matchWithUSASCII } from "../../lib/util";
+import { postWithJson, get, post } from "../../lib/http";
 
 describe("The OAuth 2.0 Authorization Framework code", () => {
   it("success pattern", async () => {
@@ -615,7 +616,7 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
       expect(tokenResponse.data).toHaveProperty("scope");
     });
 
-    xit("The authorization server MUST include the HTTP \"Cache-Control\" response header field [RFC2616] with a value of \"no-store\" in any response containing tokens, credentials, or other sensitive information, as well as the \"Pragma\" response header field [RFC2616] with a value of \"no-cache\"", async () => {
+    it("The authorization server MUST include the HTTP \"Cache-Control\" response header field [RFC2616] with a value of \"no-store\" in any response containing tokens, credentials, or other sensitive information, as well as the \"Pragma\" response header field [RFC2616] with a value of \"no-cache\"", async () => {
       const { authorizationResponse } = await requestAuthorizations({
         endpoint: serverConfig.authorizationEndpoint,
         clientId: clientSecretPostClient.clientId,
@@ -643,8 +644,10 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
       expect(tokenResponse.data.token_type).toEqual("Bearer");
       expect(tokenResponse.data).toHaveProperty("expires_in");
       expect(tokenResponse.data).toHaveProperty("scope");
-      //FIXME
-      expect(tokenResponse.headers["Cache-Control"]).toEqual("no-store");
+      // axios normalizes response header names to lower case, so "Cache-Control" never matches.
+      // The previous assertion always read undefined, which is why this case was disabled.
+      expect(tokenResponse.headers["cache-control"]).toEqual("no-store");
+      expect(tokenResponse.headers["pragma"]).toEqual("no-cache");
     });
   });
 
@@ -868,6 +871,180 @@ describe("The OAuth 2.0 Authorization Framework code", () => {
    * RFC 6749 Section 3.1.2: Redirection Endpoint
    * https://www.rfc-editor.org/rfc/rfc6749#section-3.1.2
    */
+  describe("2.3.1.  Client Password", () => {
+    it("The client identifier is encoded using the \"application/x-www-form-urlencoded\" encoding algorithm per Appendix B, and the encoded value is used as the username; the client password is encoded using the same algorithm and used as the password.", async () => {
+      // The encoding is what keeps the Basic credential unambiguous: a colon inside either half is
+      // carried as %3A, so exactly one literal colon separates them. Before the decoding was added
+      // a spec-conformant client failed authentication, and a client_id_alias containing a colon
+      // resolved to a truncated client identifier.
+      //
+      // Sending the leading "c" of the secret as "%63" must therefore authenticate exactly like
+      // the raw secret does.
+      const encodedSecret = "%63" + clientSecretBasicClient.clientSecret.slice(1);
+      const basicAuth = createBasicAuthHeader({
+        username: clientSecretBasicClient.clientId,
+        password: encodedSecret,
+      });
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        scope: "account",
+        basicAuth,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+    });
+  });
+
+  describe("3.2.  Token Endpoint", () => {
+    it("The client MUST use the HTTP \"POST\" method when making access token requests.", async () => {
+      const response = await get({ url: serverConfig.tokenEndpoint });
+      console.log(response.status);
+      expect(response.status).toBe(405);
+    });
+
+    it("Parameters sent without a value MUST be treated as if they were omitted from the request. The authorization server MUST ignore unrecognized request parameters. Request and response parameters MUST NOT be included more than once.", async () => {
+      // requestToken builds the body from URLSearchParams and cannot emit the same key twice, so
+      // the duplicated form body is sent directly.
+      const credentials = `client_id=${clientSecretPostClient.clientId}&client_secret=${clientSecretPostClient.clientSecret}`;
+
+      const duplicatedGrantType = await post({
+        url: serverConfig.tokenEndpoint,
+        body: `grant_type=client_credentials&grant_type=password&scope=account&${credentials}`,
+      });
+      console.log(duplicatedGrantType.data);
+      expect(duplicatedGrantType.status).toBe(400);
+      expect(duplicatedGrantType.data.error).toEqual("invalid_request");
+
+      const duplicatedClientId = await post({
+        url: serverConfig.tokenEndpoint,
+        body: `grant_type=client_credentials&scope=account&client_id=${clientSecretBasicClient.clientId}&${credentials}`,
+      });
+      console.log(duplicatedClientId.data);
+      expect(duplicatedClientId.status).toBe(400);
+      expect(duplicatedClientId.data.error).toEqual("invalid_request");
+    });
+  });
+
+  describe("3.3.  Access Token Scope", () => {
+    it("If the client omits the scope parameter when requesting authorization, the authorization server MUST either process the request using a pre-defined default value or fail the request indicating an invalid scope.", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("invalid_scope");
+    });
+
+    it("If the issued access token scope is different from the one requested by the client, the authorization server MUST include the \"scope\" response parameter to inform the client of the actual scope granted.", async () => {
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "client_credentials",
+        scope: "account totally_bogus",
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+      });
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(200);
+      expect(tokenResponse.data).toHaveProperty("scope");
+      expect(tokenResponse.data.scope).toEqual("account");
+    });
+  });
+
+  describe("10.2.  Client Impersonation", () => {
+    it("The authorization server MUST authenticate the client ... and ensure that the authorization code was issued to the same client.", async () => {
+      // An authorization code issued to clientSecretPost must not be redeemable by a different,
+      // successfully authenticated client. The existing invalid_grant case only sends a malformed
+      // code, so the "was issued to another client" branch of Section 5.2 was never exercised.
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const basicAuth = createBasicAuthHeader({
+        username: clientSecretBasicClient.clientId,
+        password: clientSecretBasicClient.clientSecret,
+      });
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "authorization_code",
+        code: authorizationResponse.code,
+        redirectUri: clientSecretBasicClient.redirectUri,
+        clientId: clientSecretBasicClient.clientId,
+        basicAuth,
+      });
+
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(400);
+      expect(tokenResponse.data.error).toEqual("invalid_grant");
+    });
+  });
+
+  describe("10.13.  Clickjacking", () => {
+    it("The authorization server SHOULD ... set the X-Frame-Options header ... to prevent the page from being displayed in a frame.", async () => {
+      const response = await get({
+        url: `${serverConfig.authorizationEndpoint}?response_type=code&client_id=${clientSecretPostClient.clientId}&scope=account&redirect_uri=${encodeURIComponent(clientSecretPostClient.redirectUri)}`,
+      });
+      console.log(response.headers["x-frame-options"]);
+      expect(response.headers["x-frame-options"]).toEqual("DENY");
+    });
+  });
+
+  describe("2.3.  Client Authentication", () => {
+    xit("The client MUST NOT use more than one authentication method in each request.", async () => {
+      // NOT IMPLEMENTED, and intentionally so.
+      //
+      // Presenting client_secret_basic (Authorization header) and client_secret_post (request
+      // body) at the same time is currently accepted: idp-server issues a token (verified against
+      // a running server, 2026-09-02).
+      //
+      // The normative sentence quoted in this test title binds the CLIENT, not the authorization
+      // server. RFC 6749 Section 2.3.1 only says that credentials in the request body are
+      // "NOT RECOMMENDED", so there is no server-side MUST to reject the combination. Keycloak
+      // does not reject it either: ClientIdAndSecretAuthenticator reads the Basic header first and
+      // then lets the form parameters override it, with a comment stating that this is deliberate.
+      //
+      // Kept as xit so the requirement stays visible in the compliance ledger. Enabling it
+      // requires deciding to reject the request with invalid_client, which is a breaking change
+      // for any client that currently sends both.
+      const { authorizationResponse } = await requestAuthorizations({
+        endpoint: serverConfig.authorizationEndpoint,
+        clientId: clientSecretPostClient.clientId,
+        responseType: "code",
+        state: "aiueo",
+        scope: clientSecretPostClient.scope,
+        redirectUri: clientSecretPostClient.redirectUri,
+      });
+      expect(authorizationResponse.code).not.toBeNull();
+
+      const basicAuth = createBasicAuthHeader({
+        username: clientSecretPostClient.clientId,
+        password: clientSecretPostClient.clientSecret,
+      });
+      const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "authorization_code",
+        code: authorizationResponse.code,
+        redirectUri: clientSecretPostClient.redirectUri,
+        clientId: clientSecretPostClient.clientId,
+        clientSecret: clientSecretPostClient.clientSecret,
+        basicAuth,
+      });
+
+      console.log(tokenResponse.data);
+      expect(tokenResponse.status).toBe(401);
+      expect(tokenResponse.data.error).toEqual("invalid_client");
+    });
+  });
+
   describe("3.1.2. Redirection Endpoint", () => {
     /**
      * Helper function for OAuth 2.0 authorization requests (no openid scope)
