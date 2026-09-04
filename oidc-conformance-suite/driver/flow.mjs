@@ -34,7 +34,7 @@ export const TENANTS = {
     label: "financial-grade",
     signIn: "otp-passkey",
     organizationId: "f1a2b3c4-d5e6-f7a8-b9c0-d1e2f3a4b5c6",
-    email: "conformance-driver5@example.com",
+    email: "conformance-driver6@example.com",
     admin: {
       tenantId: "e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2",
       username: "fapi-test@example.com",
@@ -48,7 +48,7 @@ export const TENANTS = {
     label: "financial-grade-2.0",
     signIn: "otp-passkey",
     organizationId: "c1f2a3b4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
-    email: "fapi2-conformance-driver@example.com",
+    email: "fapi2-conformance-driver2@example.com",
     admin: {
       tenantId: "c2f3a4b5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
       username: "fapi2-conformance-admin@example.com",

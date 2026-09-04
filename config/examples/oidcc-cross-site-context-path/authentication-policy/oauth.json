@@ -1,0 +1,56 @@
+{
+  "id": "5f8c0a71-2d94-4b63-8e15-7a6d9c3b0e42",
+  "flow": "oauth",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "oidcc_conformance_password_policy",
+      "priority": 100,
+      "conditions": {},
+      "available_methods": [
+        "password"
+      ],
+      "acr_mapping_rules": {
+        "urn:mace:incommon:iap:bronze": [
+          "password"
+        ]
+      },
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}
