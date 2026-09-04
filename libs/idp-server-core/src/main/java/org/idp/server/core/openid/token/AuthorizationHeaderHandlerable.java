@@ -51,10 +51,10 @@ public interface AuthorizationHeaderHandlerable {
    *
    * <p>RFC 7617 encodes {@code user-id ":" password} with standard Base64 (RFC 4648 Section 4), and
    * only that alphabet is accepted. The URL-safe alphabet was used here historically, which rejects
-   * {@code +} and {@code /} -- roughly one of every 32 characters of a Base64-encoded secret -- and
-   * the resulting {@link IllegalArgumentException} was swallowed, so conformant credentials failed
-   * authentication with no diagnostic. {@code BasicAuthConvertable} in the platform module was
-   * corrected the same way in #1245; this is the core-side follow-up.
+   * {@code +} and {@code /}, and the resulting {@link IllegalArgumentException} was swallowed, so a
+   * conformant credential whose encoding contains either character failed authentication with no
+   * diagnostic. {@code BasicAuthConvertable} in the platform module was corrected the same way in
+   * #1245; this is the core-side follow-up.
    *
    * <p>Correcting this swaps which population fails: a client that (incorrectly) encodes with the
    * URL-safe alphabet authenticates today and stops doing so. That population is narrow -- the two

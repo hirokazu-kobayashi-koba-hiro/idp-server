@@ -89,8 +89,14 @@ echo
 
 # ------------------------------------------------------------------ 設定ファイル
 if [ "$SCAN_CONFIG" -eq 1 ]; then
+  # -d 未指定＝リポジトリ同梱の ./config を見るケースに限り、e2e のテストフィクスチャを
+  # 既定で除外する。publicClientCredentials 等は意図的に非準拠な登録であり、利用者の
+  # 設定ではないため。-d で自分の設定を指定した場合は既定除外を適用しない。
+  DEFAULT_EXCLUDE_APPLIED=0
   if [ ${#CONFIG_PATHS[@]} -eq 0 ]; then
     CONFIG_PATHS=("./config")
+    EXCLUDES+=("/examples/e2e/")
+    DEFAULT_EXCLUDE_APPLIED=1
   fi
 
   for path in "${CONFIG_PATHS[@]}"; do
@@ -102,7 +108,11 @@ if [ "$SCAN_CONFIG" -eq 1 ]; then
 
   echo "▶ 設定ファイル: ${CONFIG_PATHS[*]}"
   if [ ${#EXCLUDES[@]} -gt 0 ]; then
-    echo "  除外: ${EXCLUDES[*]}"
+    if [ "$DEFAULT_EXCLUDE_APPLIED" -eq 1 ]; then
+      echo "  除外: ${EXCLUDES[*]}  （/examples/e2e/ は既定。-d で対象を指定すると適用されません）"
+    else
+      echo "  除外: ${EXCLUDES[*]}"
+    fi
   fi
   echo
 
@@ -130,7 +140,7 @@ sys.stdout.buffer.write(b"\0".join(out))
 ' "${EXCLUDES[@]}"
   }
 
-  CONFIG_RESULT=$(collect_files | filter_excluded \
+  if ! CONFIG_RESULT=$(collect_files | filter_excluded \
     | python3 -c '
 import base64, json, sys
 
@@ -146,6 +156,7 @@ def walk(node, path, out):
             walk(v, path, out)
 
 hits = {"13.1": [], "13.2": [], "13.3": []}
+unreadable = []
 files = sys.stdin.buffer.read().split(b"\0")
 
 for raw in files:
@@ -155,8 +166,12 @@ for raw in files:
     try:
         with open(path, encoding="utf-8") as f:
             doc = json.load(f)
-    except Exception:
+    except json.JSONDecodeError:
+        unreadable.append(path)
         continue
+    except OSError as e:
+        print(f"読み込めません: {path}: {e}", file=sys.stderr)
+        raise SystemExit(1)
 
     clients = []
     walk(doc, path, clients)
@@ -187,7 +202,21 @@ for raw in files:
 for key in ("13.1", "13.2", "13.3"):
     for label in sorted(set(hits[key])):
         print(f"{key}\t{label}")
-')
+for path in unreadable:
+    print(f"SKIP\t{path}")
+'); then
+    echo "❌ 設定ファイルの解析に失敗しました。結果が不完全なため中断します。" >&2
+    exit 2
+  fi
+
+  skipped=$(printf '%s\n' "$CONFIG_RESULT" | grep "^SKIP	" | sed 's/^SKIP	//')
+  skipped_count=$(printf '%s' "$skipped" | grep -c .)
+  if [ "$skipped_count" -gt 0 ]; then
+    printf "  ⚠️  JSON として読めず検査できなかったファイル: %s 件\n" "$skipped_count"
+    printf '%s\n' "$skipped" | sed 's/^/       - /'
+    echo "     これらに含まれるクライアントは未検査です。"
+    FOUND=1
+  fi
 
   for key in 13.1 13.2 13.3; do
     lines=$(printf '%s\n' "$CONFIG_RESULT" | grep "^${key}	" | sed "s/^${key}	//")
@@ -209,8 +238,12 @@ for key in ("13.1", "13.2", "13.3"):
 fi
 
 # ------------------------------------------------------------------ PostgreSQL
+# stderr を混ぜない。混ぜると client_id_alias に "error" を含むクライアントが
+# ヒットしたときにクエリ失敗と誤判定される。
+# 退避先はコマンド置換の外で確保する。関数内で作るとサブシェルに閉じて親から読めない。
+PSQL_STDERR=""
 run_psql() {
-  psql "$PSQL_CONN" -tAq -c "$1" 2>&1
+  psql "$PSQL_CONN" -tAq -c "$1" 2>"$PSQL_STDERR"
 }
 
 if [ -n "$PSQL_CONN" ]; then
@@ -220,6 +253,9 @@ if [ -n "$PSQL_CONN" ]; then
   fi
   echo "▶ PostgreSQL"
   echo
+
+  PSQL_STDERR=$(mktemp)
+  trap 'rm -f "$PSQL_STDERR"' EXIT
 
   q131="select coalesce(payload->>'client_id_alias', payload->>'client_id')
         from client_configuration
@@ -244,9 +280,8 @@ if [ -n "$PSQL_CONN" ]; then
               "13.2|$q132|平文 client_secret に % または +" \
               "13.3|$q133|Base64 結果に + または /"; do
     key="${pair%%|*}"; rest="${pair#*|}"; sql="${rest%|*}"; title="${rest##*|}"
-    out=$(run_psql "$sql")
-    if [ $? -ne 0 ] || printf '%s' "$out" | grep -qi "error"; then
-      printf "  ❌ [%s] クエリ失敗: %s\n" "$key" "$out"
+    if ! out=$(run_psql "$sql"); then
+      printf "  ❌ [%s] クエリ失敗: %s\n" "$key" "$(cat "$PSQL_STDERR")"
       exit 2
     fi
     count=$(printf '%s' "$out" | grep -c .)
