@@ -706,6 +706,20 @@ export const unsupportedClient = {
  * client without client_credentials in grant_types would be rejected earlier with
  * unauthorized_client, which would not prove the public-client guard fired. Issue #1820.
  */
+/**
+ * Client whose "client_id:client_secret" actually differs between the standard and URL-safe
+ * Base64 alphabets, so that rejecting the URL-safe one is observable.
+ *
+ * The two alphabets diverge only at indexes 62 and 63, so almost every credential encodes to the
+ * identical string under both and cannot tell the decoders apart. The secret therefore carries a
+ * `~` at a byte position of 3n+2, which is what puts a `+` into the standard encoding. Issue #1820.
+ */
+export const basicAuthAlphabetClient = {
+  clientId: "basicAuthAlphabet",
+  clientSecret: "a1~b2c3d4e5f6a7b8c9d0e1f2",
+  scope: "account",
+};
+
 export const publicClientCredentialsClient = {
   clientId: "publicClientCredentials",
   scope: "account",

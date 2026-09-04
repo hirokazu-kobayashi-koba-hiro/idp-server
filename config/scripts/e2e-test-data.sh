@@ -147,6 +147,7 @@ client_files=(
   ssoMfaRequiredClient.json
   cibaDelegationClient.json
   publicClientCredentials.json
+  basicAuthAlphabet.json
 )
 
 for client_file in "${client_files[@]}"; do

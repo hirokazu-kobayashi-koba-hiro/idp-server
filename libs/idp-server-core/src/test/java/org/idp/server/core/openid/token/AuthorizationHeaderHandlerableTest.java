@@ -61,20 +61,35 @@ class AuthorizationHeaderHandlerableTest {
   }
 
   @Test
-  @DisplayName("convertBasicAuth should fall back to the URL-safe alphabet during the transition")
-  void convertBasicAuthFallsBackToUrlSafeAlphabet() {
-    // Switching outright would swap which population breaks: a client that (incorrectly) encodes
-    // with the URL-safe alphabet authenticates today. Both are accepted until the ERROR log shows
-    // no remaining callers. The two alphabets cannot collide -- this credential is only decodable
-    // as URL-safe.
+  @DisplayName("convertBasicAuth should reject the URL-safe alphabet")
+  void convertBasicAuthRejectsUrlSafeAlphabet() {
+    // RFC 7617 specifies standard Base64, so a credential encoded with the URL-safe alphabet is
+    // not accepted. The rejection is only observable for credentials whose encoding actually
+    // differs between the two alphabets -- they diverge solely at indexes 62 and 63 -- so this
+    // input is chosen to contain - or _.
     String credentials = Base64.getUrlEncoder().encodeToString("s6BhdRkqt3:~~~?????".getBytes());
     assertTrue(credentials.contains("-") || credentials.contains("_"));
 
     BasicAuth result = handler.convertBasicAuth("Basic " + credentials);
 
+    assertFalse(result.exists());
+  }
+
+  @Test
+  @DisplayName("convertBasicAuth should accept a credential identical under both alphabets")
+  void convertBasicAuthAcceptsAlphabetAgnosticCredential() {
+    // Guards the blast radius of rejecting the URL-safe alphabet: when the encoding contains
+    // neither + / nor - _, the two alphabets produce the very same string, so a client encoding
+    // with either one is unaffected.
+    String std = Base64.getEncoder().encodeToString("s6BhdRkqt3:cf136dc3".getBytes());
+    String url = Base64.getUrlEncoder().encodeToString("s6BhdRkqt3:cf136dc3".getBytes());
+    assertEquals(std, url);
+
+    BasicAuth result = handler.convertBasicAuth("Basic " + url);
+
     assertTrue(result.exists());
     assertEquals("s6BhdRkqt3", result.username());
-    assertEquals("~~~?????", result.password());
+    assertEquals("cf136dc3", result.password());
   }
 
   @Test

@@ -49,29 +49,27 @@ public interface AuthorizationHeaderHandlerable {
   /**
    * Parses an HTTP Basic {@code Authorization} header into its two halves.
    *
-   * <p>RFC 7617 encodes {@code user-id ":" password} with standard Base64 (RFC 4648 Section 4), so
-   * the standard alphabet is tried first. The URL-safe alphabet was used here historically, which
-   * rejected {@code +} and {@code /} -- roughly one of every 32 characters of a Base64-encoded
-   * secret -- and the resulting {@link IllegalArgumentException} was swallowed, so conformant
-   * credentials failed authentication with no diagnostic. The platform module was corrected the
-   * same way in #1245; this is the core-side follow-up.
+   * <p>RFC 7617 encodes {@code user-id ":" password} with standard Base64 (RFC 4648 Section 4), and
+   * only that alphabet is accepted. The URL-safe alphabet was used here historically, which rejects
+   * {@code +} and {@code /} -- roughly one of every 32 characters of a Base64-encoded secret -- and
+   * the resulting {@link IllegalArgumentException} was swallowed, so conformant credentials failed
+   * authentication with no diagnostic. {@code BasicAuthConvertable} in the platform module was
+   * corrected the same way in #1245; this is the core-side follow-up.
    *
-   * <p><b>Transitional fallback.</b> Switching outright would swap which population breaks: a
-   * client that (incorrectly) encodes with the URL-safe alphabet authenticates today and would stop
-   * doing so. Both alphabets are therefore accepted for now. There is no ambiguity between them --
-   * a string containing {@code + /} decodes only as standard, one containing {@code - _} only as
-   * URL-safe, and a string with neither is byte-identical in both -- so acceptance stays
-   * deterministic. Every fallback is logged at ERROR naming the user-id -- the level is deliberate:
-   * this is a migration signal that has to stand out rather than settle into the warning noise --
-   * so the remaining callers can be identified before the fallback is removed and this becomes
-   * standard-only.
+   * <p>Correcting this swaps which population fails: a client that (incorrectly) encodes with the
+   * URL-safe alphabet authenticates today and stops doing so. That population is narrow -- the two
+   * alphabets differ only at indexes 62 and 63, so an encoded credential is identical under both
+   * unless it contains {@code + /} (equivalently {@code - _} in URL-safe form), which for ASCII
+   * input requires {@code >}, {@code ?} or {@code ~} at a byte position of 3n+2. Widening the
+   * accepted set to cover it was rejected: the fallback existed only to surface stragglers, yet it
+   * had to run before client authentication on public endpoints, so any caller could emit an
+   * unbounded number of log records with an arbitrary header.
    *
-   * <p>{@code BasicAuthConvertable} in the platform module switched to the standard alphabet
-   * outright in #1245 and has needed no such fallback. That is not a precedent for doing the same
-   * here: it is reached only from the identity-verification callback and pre-hook, whose callers
-   * are a handful of operator-managed services, whereas this method sits in front of every OAuth
-   * client. The population that a hard switch could break is of a different order, hence the staged
-   * migration.
+   * <p>The diagnostic is kept without accepting the credential. When standard decoding fails, the
+   * URL-safe alphabet is tried purely to classify the failure, and the outcome is logged at DEBUG
+   * without ever being returned. DEBUG is deliberate: this no longer signals a migration to chase,
+   * only an explanation to reach for when an otherwise inexplicable {@code invalid_client} is being
+   * investigated.
    *
    * <p>The credential is returned exactly as transmitted. Callers performing OAuth 2.0 client
    * authentication must use {@link #convertClientSecretBasicAuth(String)} instead, which
@@ -85,16 +83,11 @@ public interface AuthorizationHeaderHandlerable {
     }
     String value = authorizationHeader.substring("Basic ".length());
     String decodedValue;
-    boolean decodedWithUrlSafeAlphabet = false;
     try {
       decodedValue = new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
     } catch (IllegalArgumentException e) {
-      try {
-        decodedValue = new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8);
-        decodedWithUrlSafeAlphabet = true;
-      } catch (IllegalArgumentException ignored) {
-        return new BasicAuth();
-      }
+      logIfUrlSafeAlphabet(value);
+      return new BasicAuth();
     }
     if (!decodedValue.contains(":")) {
       return new BasicAuth();
@@ -103,24 +96,31 @@ public interface AuthorizationHeaderHandlerable {
     if (splitValues.length < 2) {
       return new BasicAuth();
     }
-    if (decodedWithUrlSafeAlphabet) {
-      log.error(
-          "Basic credential decoded with the URL-safe Base64 alphabet. RFC 7617 requires standard"
-              + " Base64 (RFC 4648 Section 4); this fallback is transitional and will be removed."
-              + " user-id={}",
-          forLog(splitValues[0]));
-    }
     return new BasicAuth(splitValues[0], splitValues[1]);
   }
 
   /**
-   * Renders an untrusted credential half for a log line: control characters (a raw CR/LF would let
-   * the value forge additional log entries) are dropped and the result is truncated. Only the
-   * user-id is ever passed here -- the password must not reach the log.
+   * Records why a credential that is not valid standard Base64 was rejected, when the reason is
+   * that it was encoded with the URL-safe alphabet. Rejection has already been decided by the
+   * caller -- this only classifies it, so that "the client sends base64url" is recoverable from the
+   * logs instead of having to be guessed at from a bare {@code invalid_client}.
+   *
+   * <p>Nothing derived from the header is logged. The value is attacker-controlled and reaches this
+   * method before any authentication, so emitting any part of it would let a caller write arbitrary
+   * content into the log at will.
    */
-  private static String forLog(String value) {
-    String sanitized = value.replaceAll("\\p{Cntrl}", "");
-    return sanitized.length() > 64 ? sanitized.substring(0, 64) + "..." : sanitized;
+  private static void logIfUrlSafeAlphabet(String value) {
+    if (!log.isDebugEnabled()) {
+      return;
+    }
+    try {
+      Base64.getUrlDecoder().decode(value);
+    } catch (IllegalArgumentException e) {
+      return;
+    }
+    log.debug(
+        "Basic credential rejected: encoded with the URL-safe Base64 alphabet. RFC 7617 requires"
+            + " standard Base64 (RFC 4648 Section 4).");
   }
 
   /**
