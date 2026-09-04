@@ -1,0 +1,17 @@
+{
+  "id": "9b1d4e2a-6c37-4f58-a0d9-3e5b7c81f204",
+  "flow": "oauth",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "acr_mapping_for_password_authentication",
+      "priority": 100,
+      "conditions": {},
+      "acr_mapping_rules": {
+        "urn:mace:incommon:iap:bronze": [
+          "password"
+        ]
+      }
+    }
+  ]
+}

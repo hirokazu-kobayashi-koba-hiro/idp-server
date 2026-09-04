@@ -145,6 +145,35 @@ if [ "${HTTP_CODE}" = "201" ]; then
   fi
   echo ""
 
+  # Step 5: Register authentication policy (acr mapping)
+  # acr クレームは認証ポリシーの acr_mapping_rules からしか生成されない。ポリシーが無いと
+  # AcrResolver が空文字を返し、ID Token に acr が付かない（Issue #1858）。
+  echo "Step 5: Registering authentication policy..."
+
+  AUTH_POLICY_FILE="${SCRIPT_DIR}/authentication-policy/oauth.json"
+  if [ -f "${AUTH_POLICY_FILE}" ]; then
+    AUTH_POLICY_JSON=$(cat "${AUTH_POLICY_FILE}")
+
+    AUTH_POLICY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+      "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/authentication-policies" \
+      -H "Authorization: Bearer ${SYSTEM_ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "${AUTH_POLICY_JSON}")
+
+    AUTH_POLICY_HTTP_CODE=$(echo "${AUTH_POLICY_RESPONSE}" | tail -n1)
+    AUTH_POLICY_RESPONSE_BODY=$(echo "${AUTH_POLICY_RESPONSE}" | sed '$d')
+
+    if [ "${AUTH_POLICY_HTTP_CODE}" = "200" ] || [ "${AUTH_POLICY_HTTP_CODE}" = "201" ]; then
+      echo "Authentication policy created successfully"
+    else
+      echo "Warning: Authentication policy creation failed (HTTP ${AUTH_POLICY_HTTP_CODE})"
+      echo "Response: ${AUTH_POLICY_RESPONSE_BODY}" | jq '.' || echo "${AUTH_POLICY_RESPONSE_BODY}"
+    fi
+  else
+    echo "Warning: authentication-policy/oauth.json not found, skipping"
+  fi
+  echo ""
+
   echo "=========================================="
   echo "Setup Complete!"
   echo "=========================================="
