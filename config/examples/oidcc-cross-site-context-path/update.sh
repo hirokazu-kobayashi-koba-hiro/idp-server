@@ -228,8 +228,9 @@ if [ -f "${AUTH_POLICY_FILE}" ]; then
   if [ "${AUTH_POLICY_HTTP_CODE}" = "200" ] || [ "${AUTH_POLICY_HTTP_CODE}" = "201" ]; then
     echo "Authentication policy updated successfully"
   else
-    echo "Warning: Authentication policy update failed (HTTP ${AUTH_POLICY_HTTP_CODE})"
+    echo "Error: Authentication policy update failed (HTTP ${AUTH_POLICY_HTTP_CODE})"
     echo "Response: ${AUTH_POLICY_RESPONSE_BODY}" | jq '.' || echo "${AUTH_POLICY_RESPONSE_BODY}"
+    exit 1
   fi
 else
   echo "Warning: authentication-policy/oauth.json not found, skipping"
