@@ -305,6 +305,11 @@ if [ -n "$MYSQL_CONN" ]; then
   echo "▶ MySQL"
   echo
 
+  # psql と同様に stderr を混ぜない。mysql は "Using a password on the command line
+  # interface can be insecure." を stderr に出すため、混ぜると結果 1 行として数えられる。
+  MYSQL_STDERR=$(mktemp)
+  trap 'rm -f "$MYSQL_STDERR"' EXIT
+
   # MySQL は TO_BASE64() が標準アルファベットを返す。76 文字ごとに改行が入るため除去する。
   m131="select coalesce(json_unquote(json_extract(payload,'\$.client_id_alias')), json_unquote(json_extract(payload,'\$.client_id')))
         from client_configuration
@@ -325,9 +330,8 @@ if [ -n "$MYSQL_CONN" ]; then
               "13.2|$m132|平文 client_secret に % または +" \
               "13.3|$m133|Base64 結果に + または /"; do
     key="${pair%%|*}"; rest="${pair#*|}"; sql="${rest%|*}"; title="${rest##*|}"
-    out=$(mysql $MYSQL_CONN -N -B -e "$sql" 2>&1)
-    if [ $? -ne 0 ]; then
-      printf "  ❌ [%s] クエリ失敗: %s\n" "$key" "$out"
+    if ! out=$(mysql $MYSQL_CONN -N -B -e "$sql" 2>"$MYSQL_STDERR"); then
+      printf "  ❌ [%s] クエリ失敗: %s\n" "$key" "$(cat "$MYSQL_STDERR")"
       exit 2
     fi
     count=$(printf '%s' "$out" | grep -c .)
