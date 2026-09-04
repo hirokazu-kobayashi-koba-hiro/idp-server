@@ -1,5 +1,5 @@
 # -------- Step 1: Build Stage --------
-FROM gradle:8.14-jdk21-alpine AS builder
+FROM gradle:9.6.1-jdk21-alpine AS builder
 
 WORKDIR /workspace
 

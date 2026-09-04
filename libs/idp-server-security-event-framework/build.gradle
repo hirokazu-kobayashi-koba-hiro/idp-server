@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id "com.diffplug.spotless" version "6.24.0"
+	id "com.diffplug.spotless" version "8.8.0"
 }
 
 group = 'org.idp.server'
@@ -16,6 +16,7 @@ dependencies {
 
 	testImplementation platform('org.junit:junit-bom:5.10.0')
 	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test {
@@ -27,7 +28,7 @@ spotless {
 		target 'src/*/java/**/*.java'
 		importOrder()
 		removeUnusedImports()
-		googleJavaFormat()
+		googleJavaFormat('1.19.2')
 		toggleOffOn()
 	}
 	groovyGradle {
