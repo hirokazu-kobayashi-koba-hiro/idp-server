@@ -4,12 +4,51 @@
   "enabled": true,
   "policies": [
     {
-      "description": "acr_mapping_for_password_authentication",
+      "description": "oidcc_conformance_password_policy",
       "priority": 100,
       "conditions": {},
+      "available_methods": [
+        "password"
+      ],
       "acr_mapping_rules": {
         "urn:mace:incommon:iap:bronze": [
           "password"
+        ]
+      },
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      },
+      "lock_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.password-authentication.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
         ]
       }
     }

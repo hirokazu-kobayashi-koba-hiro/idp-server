@@ -10,6 +10,8 @@ oidcc-cross-site/
 ├── onboarding-request.json   # Onboarding API 用設定（組織・テナント・ユーザー・クライアント1）
 ├── client-post.json          # 2つ目のクライアント（client_secret_post）
 ├── client-second.json        # 3つ目のクライアント（second client）
+├── authentication-policy/
+│   └── oauth.json            # 認証ポリシー（acr_mapping_rules）
 ├── setup.sh                  # セットアップスクリプト
 ├── update.sh                 # 更新スクリプト
 └── delete.sh                 # 削除スクリプト

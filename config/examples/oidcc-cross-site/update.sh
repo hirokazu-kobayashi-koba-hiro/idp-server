@@ -195,7 +195,7 @@ else
   echo ""
 fi
 
-# Step 5: Update authentication policy (acr mapping)
+# Step 7: Update authentication policy (acr mapping)
 # acr クレームは認証ポリシーの acr_mapping_rules からしか生成されない（Issue #1858）。
 # 既存が無いテナントもあるため、PUT が 404 のときは POST で作成する。
 echo "Step 7: Updating authentication policy..."
