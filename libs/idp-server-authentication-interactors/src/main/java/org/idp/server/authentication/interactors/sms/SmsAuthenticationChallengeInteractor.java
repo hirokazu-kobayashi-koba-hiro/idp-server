@@ -111,18 +111,15 @@ public class SmsAuthenticationChallengeInteractor implements AuthenticationInter
 
       AuthenticationExecutor executor = executors.get(executionConfig.function());
 
-      AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
-      boolean secondFactor = stepDefinition != null && stepDefinition.requiresUser();
-
       Map<String, Object> executionRequestValues = new HashMap<>(request.toMap());
       executionRequestValues.put("phone_number", phoneNumber);
       AuthenticationExecutionRequest executionRequest =
           new AuthenticationExecutionRequest(executionRequestValues);
       // Issue #1862: forward the allow-listed $.user.* projection so an http_request mapping can
       // build an external lookup key server-side instead of trusting the client to resend it.
-      // Gated on requires_user like the resolve* methods below: transaction.user() only means
-      // "identified", and a login_hint or a CIBA request fills it before any factor is verified.
-      if (secondFactor) {
+      // Gated on hasTrustedUser(): transaction.user() only means "identified", and a login_hint on
+      // the authorization endpoint fills it with no client authentication at all.
+      if (transaction.hasTrustedUser()) {
         executionRequest.setTransactionUser(
             ExternalRequestUserContextCreator.create(transaction.user()));
       }
