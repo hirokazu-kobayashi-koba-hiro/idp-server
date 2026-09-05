@@ -30,6 +30,7 @@ import org.idp.server.core.openid.federation.FederationInteractionResult;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.exception.BadRequestException;
 
@@ -381,6 +382,39 @@ public class AuthenticationTransaction {
 
   public boolean hasUser() {
     return request.hasUser();
+  }
+
+  /**
+   * Whether the user in this transaction may be forwarded to an external endpoint as the {@code
+   * $.user} projection.
+   *
+   * <p>{@link #user()} answers "who is this transaction about", which is not the same as "who has
+   * been proven to be here". The user is filled in from three places, and only two of them carry a
+   * guarantee:
+   *
+   * <ul>
+   *   <li><b>A verified factor</b> — an authentication interaction in this transaction succeeded.
+   *   <li><b>A client-authenticated request</b> — a CIBA backchannel request names the user, and
+   *       the client authenticated before the transaction was created ({@code
+   *       CibaRequestHandler#handle}). The client vouches for the identity; that is what CIBA is.
+   *   <li><b>An unverified hint</b> — a {@code login_hint} on the authorization endpoint, which
+   *       takes no client authentication. Anyone can name anyone.
+   * </ul>
+   *
+   * <p>The third case is why this method exists. Projecting there would let an unverified caller
+   * pick whose allow-listed attributes get sent to the tenant's external API.
+   *
+   * <p>Derived rather than stored: {@code flow} and {@code interactions} are both persisted
+   * columns, so an existing transaction answers this without a schema change.
+   */
+  public boolean hasTrustedUser() {
+    if (!hasUser()) {
+      return false;
+    }
+    if (hasInteractions() && interactionResults.containsAnySuccess()) {
+      return true;
+    }
+    return StandardAuthFlow.CIBA.toAuthFlow().equals(flow());
   }
 
   public boolean hasAuthenticationDevice() {

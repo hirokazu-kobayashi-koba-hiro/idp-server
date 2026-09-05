@@ -248,10 +248,14 @@ public class ExternalApiAuthenticationInteractor implements AuthenticationIntera
     AuthenticationExecutor executor = authenticationExecutors.get(executionConfig.function());
     AuthenticationExecutionRequest executionRequest =
         new AuthenticationExecutionRequest(request.toMap());
-    // #1439: forward the allow-listed authenticated user (if any) to the external API as $.user.*.
-    // Empty on a 1st factor with no user yet; populated on a 2nd factor.
-    executionRequest.setTransactionUser(
-        ExternalRequestUserContextCreator.create(transaction.user()));
+    // #1439: forward the allow-listed authenticated user to the external API as $.user.*.
+    // #1862: gated on hasTrustedUser(). A CIBA request still projects from the very first
+    // interaction — the client authenticated before naming the user — but a login_hint on the
+    // authorization endpoint, which takes no client authentication, no longer does.
+    if (transaction.hasTrustedUser()) {
+      executionRequest.setTransactionUser(
+          ExternalRequestUserContextCreator.create(transaction.user()));
+    }
     AuthenticationExecutionResult executionResult =
         executor.execute(
             tenant, transaction.identifier(), executionRequest, requestAttributes, executionConfig);
