@@ -288,9 +288,13 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
    * key from what the client submitted, which leaves no way to check that the key belongs to the
    * authenticated user.
    *
-   * <p>On a 1st factor the user is not resolved yet, the projection is empty and {@link
-   * AuthenticationExecutionRequest#hasTransactionUser()} stays false, so the executor omits {@code
-   * $.user} exactly as before.
+   * <p>The projection is gated on {@code requires_user}, the same boundary the #1396 username
+   * pinning above uses. {@link AuthenticationTransaction#user()} means "identified", not
+   * "authenticated": a {@code login_hint} on the authorization request and every CIBA flow fill it
+   * before any factor is verified. Projecting it on a step that does not require a prior user would
+   * hand an unverified caller the allow-listed attributes of whoever it named. On such a step
+   * nothing is set, {@link AuthenticationExecutionRequest#hasTransactionUser()} stays false and the
+   * executor omits {@code $.user} exactly as before.
    */
   AuthenticationExecutionRequest buildExecutionRequest(
       AuthenticationInteractionRequest request, User authenticatedUser, boolean secondFactor) {
@@ -307,8 +311,10 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
 
     AuthenticationExecutionRequest executionRequest =
         new AuthenticationExecutionRequest(executionRequestValues);
-    executionRequest.setTransactionUser(
-        ExternalRequestUserContextCreator.create(authenticatedUser));
+    if (secondFactor) {
+      executionRequest.setTransactionUser(
+          ExternalRequestUserContextCreator.create(authenticatedUser));
+    }
 
     return executionRequest;
   }
