@@ -71,8 +71,8 @@ class PasswordAuthenticationInteractorExecutionRequestTest {
 
   @Test
   void firstFactorLeavesTheProjectionEmpty() {
-    // No user is resolved yet on the 1st factor, so the executor must omit $.user exactly as it did
-    // before Issue #1862 — existing configurations keep behaving the same.
+    // With no user in the transaction the executor must omit $.user exactly as it did before Issue
+    // #1862 — existing configurations keep behaving the same.
     AuthenticationInteractionRequest request =
         new AuthenticationInteractionRequest(Map.of("username", "victim", "password", "secret"));
 
@@ -81,6 +81,21 @@ class PasswordAuthenticationInteractorExecutionRequestTest {
 
     assertFalse(executionRequest.hasTransactionUser());
     assertEquals("victim", executionRequest.toMap().get("username"));
+  }
+
+  @Test
+  void aStepThatDoesNotRequireAUserProjectsNothingEvenWhenTheTransactionHasOne() {
+    // transaction.user() means "identified", not "authenticated": a login_hint on the authorization
+    // request and every CIBA flow fill it before any factor is verified. Projecting there would let
+    // an unverified caller name a victim and have the victim's allow-listed attributes sent to the
+    // configured external API, so the projection is gated on requires_user.
+    AuthenticationInteractionRequest request =
+        new AuthenticationInteractionRequest(Map.of("username", "victim", "password", "secret"));
+
+    AuthenticationExecutionRequest executionRequest =
+        interactor.buildExecutionRequest(request, authenticatedUser(), false);
+
+    assertFalse(executionRequest.hasTransactionUser());
   }
 
   @Test

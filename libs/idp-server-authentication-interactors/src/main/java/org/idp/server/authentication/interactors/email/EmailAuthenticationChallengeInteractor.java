@@ -112,15 +112,21 @@ public class EmailAuthenticationChallengeInteractor implements AuthenticationInt
 
       AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
+      AuthenticationStepDefinition stepDefinition = transaction.getCurrentStepDefinition(method());
+      boolean secondFactor = stepDefinition != null && stepDefinition.requiresUser();
+
       Map<String, Object> executionRequestValues = new HashMap<>(request.toMap());
       executionRequestValues.put("email", email);
       AuthenticationExecutionRequest executionRequest =
           new AuthenticationExecutionRequest(executionRequestValues);
       // Issue #1862: forward the allow-listed $.user.* projection so an http_request mapping can
-      // build an external lookup key server-side instead of trusting the client to resend it. Empty
-      // on a 1st factor, where hasTransactionUser() stays false and the executor omits $.user.
-      executionRequest.setTransactionUser(
-          ExternalRequestUserContextCreator.create(transaction.user()));
+      // build an external lookup key server-side instead of trusting the client to resend it.
+      // Gated on requires_user like the resolve* methods below: transaction.user() only means
+      // "identified", and a login_hint or a CIBA request fills it before any factor is verified.
+      if (secondFactor) {
+        executionRequest.setTransactionUser(
+            ExternalRequestUserContextCreator.create(transaction.user()));
+      }
       AuthenticationExecutionResult executionResult =
           executor.execute(
               tenant, transaction.identifier(), executionRequest, requestAttributes, execution);
