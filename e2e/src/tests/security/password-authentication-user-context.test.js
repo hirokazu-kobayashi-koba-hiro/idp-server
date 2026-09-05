@@ -1,11 +1,12 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
-import { requestToken } from "../../api/oauthClient";
+import { getAuthorizations, requestToken } from "../../api/oauthClient";
 import { backendUrl, clientSecretPostClient, mockApiBaseUrl, serverConfig } from "../testConfig";
 import { postWithJson, get, deletion } from "../../lib/http";
 import { faker } from "@faker-js/faker";
 import { v4 as uuidv4 } from "uuid";
 import { requestAuthorizations } from "../../oauth/request";
 import { generateRS256KeyPair } from "../../lib/jose";
+import { convertNextAction } from "../../lib/util";
 
 /**
  * Issue #1862: the `execution` of a password interaction must receive the same allow-listed
@@ -27,6 +28,7 @@ describe("Security: password execution receives the authenticated user projectio
   let clientSecret;
   const redirectUri = "http://localhost:8080/callback";
   const scope = "openid profile email claims:auth_source";
+  const testPassword = "PasswordUserContext123!";
 
   beforeAll(async () => {
     const adminTokenResponse = await requestToken({
@@ -250,7 +252,6 @@ describe("Security: password execution receives the authenticated user projectio
    */
   const runFlow = async (extraPasswordBody = {}) => {
     const userEmail = faker.internet.email();
-    const testPassword = "PasswordUserContext123!";
     let passwordResponse;
 
     const interaction = async (id) => {
@@ -352,6 +353,45 @@ describe("Security: password execution receives the authenticated user projectio
     expect(["", "null", null, undefined]).toContain(
       passwordResponse.data.echoed_verified_claims
     );
+  }, 90000);
+
+  it("should NOT project a login_hint user before any factor has succeeded", async () => {
+    // The authorization endpoint takes no client authentication, so login_hint lets a caller name
+    // anyone. Step ordering is not enforced either, so the requires_user password step can be
+    // invoked as the very first interaction. That is the shape that would leak the named user's
+    // attributes to the external API before anything has been proven.
+    const { userEmail } = await runFlow(); // the victim now exists in the tenant
+
+    const authResponse = await getAuthorizations({
+      endpoint: `${backendUrl}/${tenantId}/v1/authorizations`,
+      clientId: clientId,
+      responseType: "code",
+      state: `login-hint-${Date.now()}`,
+      scope: scope,
+      redirectUri: redirectUri,
+      // LoginHintResolver requires a prefix; a bare address matches no matcher and resolves to
+      // User.notFound(). "idp-server" is the default provider when no ",idp:" part is given.
+      loginHint: `email:${userEmail}`,
+    });
+    expect(authResponse.status).toBe(302);
+    const { params } = convertNextAction(authResponse.headers.location);
+    const authId = params.get("id");
+
+    // The email step is skipped entirely: login_hint already put the victim in the transaction, so
+    // the requires_user guard passes and the step runs.
+    const passwordResponse = await postWithJson({
+      url: `${backendUrl}/${tenantId}/v1/authorizations/${authId}/password-authentication`,
+      body: { password: testPassword },
+    });
+    // A 200 here is itself the proof that login_hint resolved the victim: without a user in the
+    // transaction the requires_user guard would have rejected this with user_not_found.
+    expect(passwordResponse.status).toBe(200);
+
+    // ... but nothing is projected. hasTrustedUser() is false: no factor has succeeded in this
+    // transaction and this is not a client-authenticated CIBA request.
+    expect(passwordResponse.data.echoed_email).not.toBe(userEmail);
+    expect(["", "null", null, undefined]).toContain(passwordResponse.data.echoed_email);
+    expect(["", "null", null, undefined]).toContain(passwordResponse.data.echoed_sub);
   }, 90000);
 
   it("should NOT let the caller request body spoof $.user (top-level, server-injected)", async () => {
