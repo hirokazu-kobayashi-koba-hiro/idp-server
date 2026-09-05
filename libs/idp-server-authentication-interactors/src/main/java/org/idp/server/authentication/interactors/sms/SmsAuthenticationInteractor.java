@@ -27,6 +27,7 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutionResult;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutor;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
+import org.idp.server.core.openid.authentication.interaction.execution.ExternalRequestUserContextCreator;
 import org.idp.server.core.openid.authentication.policy.AuthenticationStepDefinition;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
@@ -140,6 +141,11 @@ public class SmsAuthenticationInteractor implements AuthenticationInteractor {
 
     AuthenticationExecutionRequest executionRequest =
         new AuthenticationExecutionRequest(request.toMap());
+    // Issue #1862: forward the allow-listed $.user.* projection so an http_request mapping can
+    // build an external lookup key server-side instead of trusting the client to resend it. Empty
+    // on a 1st factor, where hasTransactionUser() stays false and the executor omits $.user.
+    executionRequest.setTransactionUser(
+        ExternalRequestUserContextCreator.create(transaction.user()));
     AuthenticationExecutionResult executionResult =
         executor.execute(
             tenant, transaction.identifier(), executionRequest, requestAttributes, execution);
