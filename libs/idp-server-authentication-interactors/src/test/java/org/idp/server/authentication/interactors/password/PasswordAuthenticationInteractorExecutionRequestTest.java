@@ -50,7 +50,7 @@ class PasswordAuthenticationInteractorExecutionRequestTest {
         new AuthenticationInteractionRequest(Map.of("password", "secret"));
 
     AuthenticationExecutionRequest executionRequest =
-        interactor.buildExecutionRequest(request, authenticatedUser(), true);
+        interactor.buildExecutionRequest(request, authenticatedUser(), true, true);
 
     assertTrue(executionRequest.hasTransactionUser());
 
@@ -77,25 +77,27 @@ class PasswordAuthenticationInteractorExecutionRequestTest {
         new AuthenticationInteractionRequest(Map.of("username", "victim", "password", "secret"));
 
     AuthenticationExecutionRequest executionRequest =
-        interactor.buildExecutionRequest(request, User.notFound(), false);
+        interactor.buildExecutionRequest(request, User.notFound(), false, false);
 
     assertFalse(executionRequest.hasTransactionUser());
     assertEquals("victim", executionRequest.toMap().get("username"));
   }
 
   @Test
-  void aStepThatDoesNotRequireAUserProjectsNothingEvenWhenTheTransactionHasOne() {
-    // transaction.user() means "identified", not "authenticated": a login_hint on the authorization
-    // request and every CIBA flow fill it before any factor is verified. Projecting there would let
-    // an unverified caller name a victim and have the victim's allow-listed attributes sent to the
-    // configured external API, so the projection is gated on requires_user.
+  void anUnverifiedHintUserIsNotProjectedEvenOnARequiresUserStep() {
+    // A login_hint on the authorization endpoint fills the transaction user with no client
+    // authentication, so an unverified caller could name a victim and have the victim's
+    // allow-listed attributes sent to the configured external API. The policy still says this step
+    // requires a user (secondFactor), but who established that user is a separate question.
     AuthenticationInteractionRequest request =
-        new AuthenticationInteractionRequest(Map.of("username", "victim", "password", "secret"));
+        new AuthenticationInteractionRequest(Map.of("username", "attacker", "password", "secret"));
 
     AuthenticationExecutionRequest executionRequest =
-        interactor.buildExecutionRequest(request, authenticatedUser(), false);
+        interactor.buildExecutionRequest(request, authenticatedUser(), true, false);
 
     assertFalse(executionRequest.hasTransactionUser());
+    // The #1396 pinning is independent and still applies.
+    assertEquals("victim", executionRequest.toMap().get("username"));
   }
 
   @Test
@@ -106,7 +108,7 @@ class PasswordAuthenticationInteractorExecutionRequestTest {
             Map.of("username", "attacker", "provider_id", "evil-idp", "password", "secret"));
 
     AuthenticationExecutionRequest executionRequest =
-        interactor.buildExecutionRequest(request, authenticatedUser(), true);
+        interactor.buildExecutionRequest(request, authenticatedUser(), true, true);
 
     assertEquals("victim", executionRequest.toMap().get("username"));
     assertEquals("idp-server", executionRequest.toMap().get("provider_id"));
@@ -121,7 +123,7 @@ class PasswordAuthenticationInteractorExecutionRequestTest {
             Map.of("password", "secret", "user", Map.of("sub", "attacker-sub")));
 
     AuthenticationExecutionRequest executionRequest =
-        interactor.buildExecutionRequest(request, authenticatedUser(), true);
+        interactor.buildExecutionRequest(request, authenticatedUser(), true, true);
 
     assertEquals("victim-sub", executionRequest.transactionUser().get("sub"));
   }

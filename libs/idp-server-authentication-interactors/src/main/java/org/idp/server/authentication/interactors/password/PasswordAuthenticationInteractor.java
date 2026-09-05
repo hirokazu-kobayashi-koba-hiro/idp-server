@@ -204,7 +204,8 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
     }
 
     AuthenticationExecutionRequest executionRequest =
-        buildExecutionRequest(request, transaction.user(), secondFactor);
+        buildExecutionRequest(
+            request, transaction.user(), secondFactor, transaction.hasTrustedUser());
     AuthenticationExecutionResult executionResult =
         executor.execute(
             tenant, transaction.identifier(), executionRequest, requestAttributes, execution);
@@ -288,16 +289,20 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
    * key from what the client submitted, which leaves no way to check that the key belongs to the
    * authenticated user.
    *
-   * <p>The projection is gated on {@code requires_user}, the same boundary the #1396 username
-   * pinning above uses. {@link AuthenticationTransaction#user()} means "identified", not
-   * "authenticated": a {@code login_hint} on the authorization request and every CIBA flow fill it
-   * before any factor is verified. Projecting it on a step that does not require a prior user would
-   * hand an unverified caller the allow-listed attributes of whoever it named. On such a step
-   * nothing is set, {@link AuthenticationExecutionRequest#hasTransactionUser()} stays false and the
-   * executor omits {@code $.user} exactly as before.
+   * <p>{@code projectUser} is {@link AuthenticationTransaction#hasTrustedUser()} and is a separate
+   * question from {@code secondFactor}. The username pinning above asks what the policy requires;
+   * the projection asks who established the user. A {@code login_hint} on the authorization
+   * endpoint fills {@link AuthenticationTransaction#user()} with no client authentication at all,
+   * so projecting there would hand an unverified caller the allow-listed attributes of whoever it
+   * named. When it is false nothing is set, {@link
+   * AuthenticationExecutionRequest#hasTransactionUser()} stays false and the executor omits {@code
+   * $.user}.
    */
   AuthenticationExecutionRequest buildExecutionRequest(
-      AuthenticationInteractionRequest request, User authenticatedUser, boolean secondFactor) {
+      AuthenticationInteractionRequest request,
+      User authenticatedUser,
+      boolean secondFactor,
+      boolean projectUser) {
 
     Map<String, Object> executionRequestValues = new HashMap<>(request.toMap());
     if (secondFactor) {
@@ -311,7 +316,7 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
 
     AuthenticationExecutionRequest executionRequest =
         new AuthenticationExecutionRequest(executionRequestValues);
-    if (secondFactor) {
+    if (projectUser) {
       executionRequest.setTransactionUser(
           ExternalRequestUserContextCreator.create(authenticatedUser));
     }
