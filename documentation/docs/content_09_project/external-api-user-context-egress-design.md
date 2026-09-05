@@ -36,6 +36,20 @@
 - CIBA / login_hint フロー: 1回目の interaction から（`login_hint` で事前解決）
 - 真の1段階目: 空（`create()` が null ユーザーで空マップを返す。graceful、エラーにならない）
 
+### 更新: #1862 で判定を「利用者の確立源」に置き換えた
+
+上の「ユーザー確立後」は `transaction.user()` が埋まっているかを指していたが、これは**認可エンドポイントの `login_hint` でも埋まる**。認可エンドポイントにクライアント認証は無いため、何も証明していない呼び出し元が名指しした利用者の属性が egress しうる状態だった。
+
+`AuthenticationTransaction#hasTrustedUser()` に判定を移し、確立源で切るようにした。
+
+| 確立源 | 投影 |
+|---|---|
+| このトランザクションで認証 interaction が成功 | ✅ |
+| CIBA（backchannel はクライアント認証済み） | ✅ 1回目から |
+| 認可エンドポイントの `login_hint` | ❌ |
+
+`flow` と `interactions` はどちらも永続化済みの列のため、導出で判定でき、スキーマ変更は不要。投影を行う 6 箇所（password / sms×2 / email×2 / external-api）すべてがこの 1 つの判定を共有する。
+
 ### 既知ギャップ: thin-user（未対応・フォローアップ）
 
 `ExternalApiAuthenticationInteractor.resolveUser`（external-api を1段階目にした場合）は、DBユーザーから **`sub` と `status` しかコピーしない**。roles / custom_properties は捨てられる。
