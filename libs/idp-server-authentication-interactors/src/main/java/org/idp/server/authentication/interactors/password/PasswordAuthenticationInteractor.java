@@ -203,19 +203,8 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
           DefaultSecurityEventType.password_failure);
     }
 
-    Map<String, Object> executionRequestValues = new HashMap<>(request.toMap());
-    if (secondFactor) {
-      // hasUser() is guaranteed true here (rejected above otherwise).
-      User authenticatedUser = transaction.user();
-      executionRequestValues.put("username", authenticatedUser.preferredUsername());
-      executionRequestValues.put("provider_id", authenticatedUser.providerId());
-      log.debug(
-          "2nd factor: binding password verification to authenticated user. sub={}",
-          authenticatedUser.sub());
-    }
-
     AuthenticationExecutionRequest executionRequest =
-        new AuthenticationExecutionRequest(executionRequestValues);
+        buildExecutionRequest(request, transaction.user(), secondFactor);
     AuthenticationExecutionResult executionResult =
         executor.execute(
             tenant, transaction.identifier(), executionRequest, requestAttributes, execution);
@@ -283,6 +272,45 @@ public class PasswordAuthenticationInteractor implements AuthenticationInteracto
         verifiedUser,
         responseContents,
         DefaultSecurityEventType.password_success);
+  }
+
+  /**
+   * Builds the executor request for password verification.
+   *
+   * <p><b>Issue #1396:</b> on the 2nd factor the credentials are verified against the authenticated
+   * session user rather than the request-supplied username, so the identity established by the 1st
+   * factor cannot be switched.
+   *
+   * <p><b>Issue #1862:</b> forwards the same allow-listed {@code $.user.*} projection that {@code
+   * ExternalApiAuthenticationInteractor} already sends (#1439) and that {@code user_resolve}
+   * already receives (#1767), so the notation means one thing across the whole password
+   * configuration. Without it an {@code http_requests} mapping can only build an external lookup
+   * key from what the client submitted, which leaves no way to check that the key belongs to the
+   * authenticated user.
+   *
+   * <p>On a 1st factor the user is not resolved yet, the projection is empty and {@link
+   * AuthenticationExecutionRequest#hasTransactionUser()} stays false, so the executor omits {@code
+   * $.user} exactly as before.
+   */
+  AuthenticationExecutionRequest buildExecutionRequest(
+      AuthenticationInteractionRequest request, User authenticatedUser, boolean secondFactor) {
+
+    Map<String, Object> executionRequestValues = new HashMap<>(request.toMap());
+    if (secondFactor) {
+      // hasUser() is guaranteed true here (rejected above otherwise).
+      executionRequestValues.put("username", authenticatedUser.preferredUsername());
+      executionRequestValues.put("provider_id", authenticatedUser.providerId());
+      log.debug(
+          "2nd factor: binding password verification to authenticated user. sub={}",
+          authenticatedUser.sub());
+    }
+
+    AuthenticationExecutionRequest executionRequest =
+        new AuthenticationExecutionRequest(executionRequestValues);
+    executionRequest.setTransactionUser(
+        ExternalRequestUserContextCreator.create(authenticatedUser));
+
+    return executionRequest;
   }
 
   private AuthenticationConfiguration getConfig(Tenant tenant) {
