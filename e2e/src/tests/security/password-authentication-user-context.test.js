@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeAll } from "@jest/globals";
+import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { requestToken } from "../../api/oauthClient";
 import { backendUrl, clientSecretPostClient, mockApiBaseUrl, serverConfig } from "../testConfig";
-import { postWithJson, get } from "../../lib/http";
+import { postWithJson, get, deletion } from "../../lib/http";
 import { faker } from "@faker-js/faker";
 import { v4 as uuidv4 } from "uuid";
 import { requestAuthorizations } from "../../oauth/request";
@@ -316,6 +316,18 @@ describe("Security: password execution receives the authenticated user projectio
 
     return { userEmail, passwordResponse, userInfo: userInfoResponse.data };
   };
+
+  afterAll(async () => {
+    if (!adminAccessToken || !tenantId) {
+      return;
+    }
+    // The tenant owns the client, the authentication configurations, the policy and the users
+    // created by runFlow(), so deleting it leaves the shared organization clean.
+    await deletion({
+      url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}`,
+      headers: { Authorization: `Bearer ${adminAccessToken}` },
+    }).catch(() => {});
+  });
 
   it("should forward the authenticated user ($.user.*) to the password execution on a 2nd factor", async () => {
     const { userEmail, passwordResponse, userInfo } = await runFlow();
