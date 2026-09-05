@@ -321,8 +321,9 @@ describe("Security: password execution receives the authenticated user projectio
     if (!adminAccessToken || !tenantId) {
       return;
     }
-    // The tenant owns the client, the authentication configurations, the policy and the users
-    // created by runFlow(), so deleting it leaves the shared organization clean.
+    // The client, the authentication configurations and the policy cascade with the tenant, so
+    // deleting it leaves the shared organization clean. The users created by runFlow() outlive it:
+    // idp_user has no FK to tenant (#832).
     await deletion({
       url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${tenantId}`,
       headers: { Authorization: `Bearer ${adminAccessToken}` },
