@@ -1,0 +1,10 @@
+Aggregate  (cost=8.70..8.71 rows=1 width=8) (actual time=0.106..0.106 rows=1 loops=1)
+  Buffers: shared hit=4
+  ->  Index Scan using idx_bench_user_lower_preferred_username on idp_user  (cost=0.42..8.45 rows=100 width=0) (actual time=0.102..0.103 rows=1 loops=1)
+        Index Cond: ((tenant_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid) AND (lower((preferred_username)::text) ~>=~ 'user00000042@example.com'::text) AND (lower((preferred_username)::text) ~<~ 'user00000042@example.con'::text))
+        Filter: (lower((preferred_username)::text) ~~ 'user00000042@example.com%'::text)
+        Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=269
+Planning Time: 1.272 ms
+Execution Time: 0.161 ms

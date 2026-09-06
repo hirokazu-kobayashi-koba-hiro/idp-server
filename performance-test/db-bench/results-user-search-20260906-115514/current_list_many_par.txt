@@ -1,0 +1,20 @@
+Limit  (cost=4693.79..77814.54 rows=20 width=24) (actual time=816.165..835.954 rows=20 loops=1)
+  Buffers: shared hit=9228 read=143539
+  ->  Incremental Sort  (cost=4693.79..366641.51 rows=99 width=24) (actual time=816.164..835.951 rows=20 loops=1)
+        Sort Key: created_at DESC, id DESC
+        Presorted Key: created_at
+        Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB
+        Buffers: shared hit=9228 read=143539
+        ->  Gather Merge  (cost=1000.48..366637.06 rows=99 width=24) (actual time=815.992..835.915 rows=21 loops=1)
+              Workers Planned: 4
+              Workers Launched: 4
+              Buffers: shared hit=9223 read=143538
+              ->  Parallel Index Scan using idx_idp_user_tenant_created_at on idp_user  (cost=0.42..365625.21 rows=25 width=24) (actual time=483.575..645.179 rows=20 loops=5)
+                    Index Cond: (tenant_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid)
+                    Filter: ((preferred_username)::text ~~* '%user000001%'::text)
+                    Rows Removed by Filter: 199980
+                    Buffers: shared hit=9223 read=143538
+Planning:
+  Buffers: shared hit=258 read=7
+Planning Time: 1.502 ms
+Execution Time: 836.012 ms
