@@ -1,0 +1,13 @@
+SET
+Aggregate  (cost=57729.73..57729.74 rows=1 width=8) (actual time=468.694..468.696 rows=1 loops=1)
+  Buffers: shared hit=9357
+  ->  Index Only Scan using uk_preferred_username on idp_user  (cost=0.55..57729.49 rows=99 width=0) (actual time=0.084..468.687 rows=1 loops=1)
+        Index Cond: (tenant_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid)
+        Filter: ((preferred_username)::text ~~* '%user00000042@example.com%'::text)
+        Rows Removed by Filter: 999999
+        Heap Fetches: 14
+        Buffers: shared hit=9357
+Planning:
+  Buffers: shared hit=236
+Planning Time: 1.372 ms
+Execution Time: 468.776 ms

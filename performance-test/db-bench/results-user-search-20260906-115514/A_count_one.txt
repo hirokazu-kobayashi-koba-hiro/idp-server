@@ -1,0 +1,10 @@
+Aggregate  (cost=8.57..8.58 rows=1 width=8) (actual time=0.043..0.044 rows=1 loops=1)
+  Buffers: shared hit=5
+  ->  Index Only Scan using uk_preferred_username on idp_user  (cost=0.55..8.57 rows=1 width=0) (actual time=0.040..0.040 rows=1 loops=1)
+        Index Cond: ((tenant_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid) AND (provider_id = 'idp-server'::text) AND (preferred_username = 'user00000042@example.com'::text))
+        Heap Fetches: 0
+        Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=244
+Planning Time: 1.109 ms
+Execution Time: 0.108 ms
