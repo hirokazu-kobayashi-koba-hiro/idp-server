@@ -30,6 +30,7 @@ import {
   savePasskey,
   signIn,
   tenantIdFromAuthorizationUrl,
+  verifyPasskeyBindings,
 } from "./flow.mjs";
 
 const logFile = process.env.DRIVER_LOG || here("driver.log");
@@ -250,6 +251,22 @@ log(
 );
 for (const [id, t] of Object.entries(TENANTS)) {
   log(`  tenant ${t.label} (${id}) user=${t.email} auth=${t.signIn}`);
+}
+
+// passkey ファイルと email の食い違いは、実行しても 1 件も通らないまま
+// 30 秒タイムアウトを繰り返すだけになる。走らせる前に止める。
+const passkeyProblems = verifyPasskeyBindings();
+if (passkeyProblems.length > 0) {
+  for (const p of passkeyProblems) {
+    log(`passkey ファイルと email が食い違っています (${p.label})`);
+    log(`    設定の email         : ${p.configured}`);
+    log(`    ファイルの鍵の持ち主 : ${p.owner}`);
+    log(`    ファイル             : ${p.file}`);
+  }
+  log("  どちらかに合わせてください:");
+  log("    a) 手元の鍵を使う   -> driver/local.json で email を上書きする");
+  log("    b) 鍵を登録し直す   -> 上記ファイルを消す（新規ユーザーとして登録される）");
+  process.exit(1);
 }
 process.on("SIGINT", async () => {
   log("停止");

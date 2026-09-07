@@ -4,3 +4,4 @@ passkey-*.json
 *.log
 videos/
 demo/
+local.json

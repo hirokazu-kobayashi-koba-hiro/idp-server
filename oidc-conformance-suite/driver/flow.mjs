@@ -80,6 +80,28 @@ export const TENANTS = {
   },
 };
 
+/**
+ * 環境ごとの上書き（driver/local.json、gitignore 対象）。
+ *
+ * passkey は driver/passkey-<label>.json にしか無く gitignore なので共有されない。
+ * そのため TENANTS の email を変えるコミットは、その鍵を持っていない環境をすべて壊す。
+ * 実際 driver5 -> driver6 の変更でこれを踏み、fapi1-advanced の 53 モジュールが
+ * 30 秒タイムアウトを繰り返して 3.6 時間を溶かした（成功 0 件）。
+ *
+ * コミットされる TENANTS は「新規環境の既定値」とし、手元の鍵に合わせた値は
+ * local.json に置く。テナント ID をキーに、上書きしたいフィールドだけ書く。
+ *
+ *   { "c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8": { "email": "conformance-driver6@example.com" } }
+ */
+const LOCAL_OVERRIDES_FILE = here("local.json");
+if (fs.existsSync(LOCAL_OVERRIDES_FILE)) {
+  const overrides = JSON.parse(fs.readFileSync(LOCAL_OVERRIDES_FILE, "utf8"));
+  for (const [tenantId, patch] of Object.entries(overrides)) {
+    if (!TENANTS[tenantId]) continue;
+    Object.assign(TENANTS[tenantId], patch);
+  }
+}
+
 const DEFAULT_TENANT = "c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8";
 
 export function tenantConfigFor(tenantId) {
@@ -118,6 +140,41 @@ export function passkeyFileFor(tenantId) {
   if (process.env.DRIVER_PASSKEY_FILE) return process.env.DRIVER_PASSKEY_FILE;
   const label = TENANTS[tenantId]?.label ?? "default";
   return here(`passkey-${label}.json`);
+}
+
+/**
+ * passkey ファイルと TENANTS の email が同じ利用者を指しているか検証する。
+ *
+ * WebAuthn の userHandle には利用者の email が base64 で入っている。ファイルの鍵が
+ * 別の利用者のものだと、サーバは資格情報を持たないため登録用のオプションを返すが、
+ * 画面は user.status で分岐するので「認証」を出し続ける。ドライバは認証だと思って
+ * 進み、30 秒待って落ちる。これが全モジュールで起きるうえ、症状が
+ * "Passkey sign-in was cancelled" としか出ないため原因に辿り着くまでが長い。
+ *
+ * 起動時に気づけるようにする。合わない組み合わせは実行しても 1 件も通らない。
+ *
+ * @return 食い違っているテナントの一覧（問題が無ければ空配列）
+ */
+export function verifyPasskeyBindings() {
+  const problems = [];
+  for (const [tenantId, t] of Object.entries(TENANTS)) {
+    if (!needsPasskey(tenantId)) continue;
+    const file = passkeyFileFor(tenantId);
+    // 鍵が無いのは異常ではない。画面が登録フローを出し、登録後に書き出される。
+    if (!fs.existsSync(file)) continue;
+    let owner;
+    try {
+      const { userHandle } = JSON.parse(fs.readFileSync(file, "utf8"));
+      owner = Buffer.from(userHandle, "base64").toString("utf8");
+    } catch {
+      continue; // 読めない / userHandle が無い場合は判定材料が無いので触らない
+    }
+    if (!owner.includes("@")) continue; // email 以外の userHandle は対象外
+    if (owner !== t.email) {
+      problems.push({ label: t.label, file, owner, configured: t.email });
+    }
+  }
+  return problems;
 }
 
 /**
