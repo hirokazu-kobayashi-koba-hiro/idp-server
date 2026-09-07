@@ -98,7 +98,7 @@ sequenceDiagram
     idp -->> SPA: status: in_progress
 
     fcm -->> Device: Push通知（「画面の番号を入力」）
-    Device ->> idp: number-matching 検証（interact: authentication-device-number-matching, ユーザーが転記した値）
+    Device ->> idp: number-matching 検証（interact: authentication-device-number-matching, ユーザーが転記した値 + device_id）
     idp -->> Device: 一致OK
     Device ->> idp: FIDO-UAF 認証チャレンジ要求
     idp -->> Device: FIDO-UAF 認証チャレンジ
@@ -216,7 +216,8 @@ SPA                         idp-server                    device (bank-app)
  │                                                 ├─ 受信 or ポーリングで「画面の番号を入力」
  │                                                 ├─ ユーザーが "4821" を転記して送信
  │                                                 ├─ POST .../authentication-device-number-matching
- │                                                 │     body: { "number_matching_code": "4821" }
+ │                                                 │     body: { "device_id": "...", "number_matching_code": "4821" }
+ │                                     ├─ device_id を紐づく認証デバイスと照合
  │                                     ├─ 保存値と一致検証
  │                                                 ├─ POST .../fido-uaf-authentication（生体認証）
 ```

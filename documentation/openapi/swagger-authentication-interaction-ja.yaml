@@ -127,7 +127,7 @@ paths:
         | インタラクション | 呼び出し元 | 動作 |
         |---|---|---|
         | `authentication-device-number-matching-challenge` | サインイン画面 | コードを生成してサーバー側に保存し、レスポンス `number_matching_code` で画面に返す |
-        | `authentication-device-number-matching` | 認証デバイス | 転記されたコードをリクエストボディ `number_matching_code` で送り、保存値と照合する |
+        | `authentication-device-number-matching` | 認証デバイス | 転記されたコードをリクエストボディ `number_matching_code` で、自身の識別子を `device_id` で送る。コードは保存値と、`device_id` は認証トランザクションに紐づく認証デバイスと照合される |
 
         コードは数字のみで、桁数は認証設定 `authentication-device-number-matching` の
         `execution.details.length` で指定します（既定 4 桁）。
@@ -139,8 +139,13 @@ paths:
 
         | 状況 | `error` | `error_description` |
         |---|---|---|
+        | 認証デバイス未紐付け | `invalid_request` | `authentication device is not bound to this transaction` |
+        | `device_id` 不一致 | `invalid_request` | `device_id does not match the authentication device` |
         | チャレンジ未実行 | `invalid_request` | `number_matching_code has not been issued` |
         | コード不一致 | `invalid_request` | `number_matching_code does not match` |
+
+        `device_id` は必須です。認証トランザクションに認証デバイスが紐づいていない場合、
+        このインタラクションは成立しません（Issue #1869）。
 
         認証デバイス側が番号入力画面の要否を判定するためのフラグは、認証トランザクション取得API
         （`GET /{tenant-id}/v1/authentication-devices/{device-id}/authentications`）の

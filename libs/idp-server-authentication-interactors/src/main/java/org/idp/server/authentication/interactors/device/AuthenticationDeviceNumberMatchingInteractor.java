@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.core.openid.authentication.*;
 import org.idp.server.core.openid.authentication.exception.MfaTransactionNotFoundException;
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
+import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -38,6 +39,12 @@ import org.idp.server.platform.type.RequestAttributes;
  * reads it from the sign-in screen (SPA) and transcribes it into the device, which submits it here
  * for verification. Keeping the value out of the device-facing serialization is exactly what makes
  * number-matching resistant to push fatigue: the approver must look at the originating screen.
+ *
+ * <p><b>Issue #1869:</b> that arrangement only holds if the submission really comes from the device
+ * the transaction is about, so the request must carry {@code device_id} and it must match {@link
+ * AuthenticationTransaction#authenticationDevice()}. A transaction without a bound device cannot
+ * satisfy this step: there is nothing to transcribe the code into, so the verification is refused
+ * rather than passed through.
  */
 public class AuthenticationDeviceNumberMatchingInteractor implements AuthenticationInteractor {
 
@@ -74,6 +81,38 @@ public class AuthenticationDeviceNumberMatchingInteractor implements Authenticat
 
     try {
       log.debug("AuthenticationDeviceNumberMatchingInteractor called");
+
+      if (!transaction.hasAuthenticationDevice()) {
+        log.warn("Number-matching requires a bound authentication device, but none is present.");
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "invalid_request");
+        response.put("error_description", "authentication device is not bound to this transaction");
+
+        return AuthenticationInteractionRequestResult.clientError(
+            response,
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.authentication_device_number_matching_failure);
+      }
+
+      AuthenticationDevice authenticationDevice = transaction.authenticationDevice();
+      String submittedDeviceId = request.getValueAsString("device_id");
+      if (!authenticationDevice.id().equals(submittedDeviceId)) {
+        log.warn("Number-matching submitted from a device other than the bound one.");
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "invalid_request");
+        response.put("error_description", "device_id does not match the authentication device");
+
+        return AuthenticationInteractionRequestResult.clientError(
+            response,
+            type,
+            operationType(),
+            method(),
+            DefaultSecurityEventType.authentication_device_number_matching_failure);
+      }
 
       String expectedCode = resolveExpectedCode(tenant, transaction);
       if (expectedCode == null) {

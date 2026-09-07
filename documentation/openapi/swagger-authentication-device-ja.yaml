@@ -622,8 +622,16 @@ paths:
             schema:
               type: object
               required:
+                - device_id
                 - number_matching_code
               properties:
+                device_id:
+                  type: string
+                  format: uuid
+                  description: |
+                    提出元の認証デバイスID。認証トランザクション取得APIのパスに用いるものと同じ値。
+                    認証トランザクションに紐づく認証デバイスと照合され、一致しない場合は 400 になる（#1869）
+                  example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
                 number_matching_code:
                   type: string
                   description: |
@@ -642,7 +650,8 @@ paths:
                 example: {}
         '400':
           description: |
-            コード未発行、コード不一致、またはリクエスト不正。`error_description` で区別する。
+            デバイス未紐付け、`device_id` 不一致、コード未発行、コード不一致、またはリクエスト不正。
+            `error_description` で区別する。`device_id` の照合はコードの照合より先に行われる。
           content:
             application/json:
               schema:
@@ -655,6 +664,21 @@ paths:
                     type: string
                     example: "number_matching_code does not match"
               examples:
+                device_id_missing:
+                  summary: device_id 未指定
+                  value:
+                    error: "invalid_request"
+                    error_description: "Field 'device_id' is required"
+                device_not_bound:
+                  summary: 認証トランザクションに認証デバイスが紐づいていない
+                  value:
+                    error: "invalid_request"
+                    error_description: "authentication device is not bound to this transaction"
+                device_mismatch:
+                  summary: 紐づく認証デバイス以外からの提出
+                  value:
+                    error: "invalid_request"
+                    error_description: "device_id does not match the authentication device"
                 not_issued:
                   summary: サインイン画面側でチャレンジが未実行
                   value:

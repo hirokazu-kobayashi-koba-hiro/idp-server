@@ -27,7 +27,7 @@
  │                                │◀── GET /v1/authentication-devices/{device-id}/authentications
  │                                │                              │
  │                                │◀── POST /{id}/authentication-device-number-matching
- │                                │    ユーザーが画面から転記したコード
+ │                                │    ユーザーが画面から転記したコード + device_id
  │                                │                              │
  │                                │◀── POST /v1/authentications/{transaction-id}/fido-uaf-authentication-challenge
  │                                │◀── POST /v1/authentications/{transaction-id}/fido-uaf-authentication
@@ -78,7 +78,7 @@
 | インタラクション | 動作 |
 |---|---|
 | `authentication-device-number-matching-challenge` | コードを生成・保存し、レスポンス `number_matching_code` でサインイン画面に返す |
-| `authentication-device-number-matching` | 転記されたコードを保存値と照合する |
+| `authentication-device-number-matching` | 転記されたコードを保存値と、`device_id` を認証トランザクションに紐づく認証デバイスと照合する |
 
 コード発行はプッシュ配信（`authentication-device-notification`）と別のインタラクションであり、ナンバーマッチングの利用にプッシュは必須ではありません。
 

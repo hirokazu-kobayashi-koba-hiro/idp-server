@@ -15,7 +15,7 @@
 | インタラクション | 呼び出し元 | 動作 |
 |---|---|---|
 | `authentication-device-number-matching-challenge` | サインイン画面 | コードを生成して保存し、レスポンス `number_matching_code` で画面に返す |
-| `authentication-device-number-matching` | 認証デバイス | 転記されたコードを送り、保存値と照合する |
+| `authentication-device-number-matching` | 認証デバイス | 転記されたコードと自身の `device_id` を送る。コードは保存値と、`device_id` は認証トランザクションに紐づく認証デバイスと照合される |
 
 コード発行はプッシュ配信とは分離されています。プッシュ（FCM）は CIBA と共通の
 `authentication-device-notification` 側にあるため、**ナンバーマッチングの利用にプッシュは必須ではありません**。
@@ -124,17 +124,26 @@ POST /{tenant-id}/v1/authentications/{transaction-id}/authentication-device-numb
 
 ```json
 {
+  "device_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
   "number_matching_code": "8341"
 }
 ```
+
+`device_id` は認証トランザクション取得APIのパスに用いるものと同じ値です。デバイスは自身のトランザクションを引くために既にこの値を持っているため、追加で取得する必要はありません。
 
 `{transaction-id}` は次節の認証トランザクション取得APIが返す `id` です。認証デバイスは認可リクエストの `id` を知らないため、こちらのパスを使います（サインイン画面側からは `POST /{tenant-id}/v1/authorizations/{id}/authentication-device-number-matching` でも同じ検証に到達しますが、デバイス実装では使えません）。
 
 | 状況 | HTTP | `error` | `error_description` |
 |---|---|---|---|
 | 一致 | 200 | - | - |
+| `device_id` 未指定 | 400 | `invalid_request` | `Field 'device_id' is required` |
+| 認証デバイス未紐付け | 400 | `invalid_request` | `authentication device is not bound to this transaction` |
+| `device_id` 不一致 | 400 | `invalid_request` | `device_id does not match the authentication device` |
 | チャレンジ未実行 | 400 | `invalid_request` | `number_matching_code has not been issued` |
 | 不一致 | 400 | `invalid_request` | `number_matching_code does not match` |
+
+`device_id` の照合はコードの照合より先に行われます。認証トランザクションに認証デバイスが
+紐づいていない場合、このインタラクションは成立しません。
 
 不一致は `$.authentication-device-number-matching.failure_count` に積算されます。このパスは認証なしで到達できるため、認証ポリシーの `failure_conditions` / `lock_conditions` で上限を必ず設けてください（同梱テンプレートは 5 回）。残り試行回数はデバイス向け API からは取得できません。
 

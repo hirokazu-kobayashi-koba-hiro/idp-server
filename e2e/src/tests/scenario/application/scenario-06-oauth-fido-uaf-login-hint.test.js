@@ -277,7 +277,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       client: clientSecretPostClient,
       adminClient: clientSecretPostClient,
     });
-    await registerFidoUaf({ accessToken });
+    const { authenticationDeviceId } = await registerFidoUaf({ accessToken });
 
     // Start authorization code flow with login_hint
     const state = `state_${Date.now()}`;
@@ -320,9 +320,10 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
 
     // Verifying before any challenge is a distinct failure from a wrong code. The two are told
     // apart by error_description, which is part of the documented contract (#1754).
+    // #1869: device_id is checked before either, so it must be present to reach these branches.
     const notIssuedResponse = await postWithJson({
       url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-device-number-matching`,
-      body: { number_matching_code: "0000" },
+      body: { device_id: authenticationDeviceId, number_matching_code: "0000" },
     });
     expect(notIssuedResponse.status).toBe(400);
     expect(notIssuedResponse.data.error).toBe("invalid_request");
@@ -356,7 +357,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     const wrongCode = numberMatchingCode === "0000" ? "1111" : "0000";
     const wrongResponse = await postWithJson({
       url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-device-number-matching`,
-      body: { number_matching_code: wrongCode },
+      body: { device_id: authenticationDeviceId, number_matching_code: wrongCode },
     });
     expect(wrongResponse.status).toBe(400);
     expect(wrongResponse.data.error).toBe("invalid_request");
@@ -365,7 +366,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     // The value the user transcribed from the sign-in screen matches the stored one.
     const okResponse = await postWithJson({
       url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-device-number-matching`,
-      body: { number_matching_code: numberMatchingCode },
+      body: { device_id: authenticationDeviceId, number_matching_code: numberMatchingCode },
     });
     expect(okResponse.status).toBe(200);
 
@@ -513,13 +514,14 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
 
     // The transcribed value, submitted on the path the device can address. Both paths converge on
     // OAuthFlowEntryService#interactInternal, so this is the same verification, reached the way a
-    // device reaches it.
+    // device reaches it. #1869 requires device_id here: it is the same id the device just used to
+    // discover this transaction, so the binding costs the device nothing it does not already hold.
     const verifyResponse = await postAuthenticationDeviceInteraction({
       endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
       flowType: "oauth",
       id: transactionId,
       interactionType: "authentication-device-number-matching",
-      body: { number_matching_code: numberMatchingCode },
+      body: { device_id: authenticationDeviceId, number_matching_code: numberMatchingCode },
     });
     console.log("number-matching verify via transaction id:", verifyResponse.status, verifyResponse.data);
     expect(verifyResponse.status).toBe(200);
@@ -531,7 +533,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       flowType: "oauth",
       id: transactionId,
       interactionType: "authentication-device-number-matching",
-      body: { number_matching_code: wrongCode },
+      body: { device_id: authenticationDeviceId, number_matching_code: wrongCode },
     });
     expect(wrongResponse.status).toBe(400);
     expect(wrongResponse.data.error_description).toBe("number_matching_code does not match");
