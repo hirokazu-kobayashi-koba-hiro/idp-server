@@ -46,6 +46,19 @@ SMS認証は `interactions` ベースの設定構造を持ち、以下の2つの
 
 ---
 
+## `$.user.*` — 認証済みユーザー属性
+
+`execution.http_request` のマッピングルールから、認証済みユーザーの属性を参照できます（Issue #1862）。外部システムの照会キーをサーバ側で組み立てられるため、クライアントに再送させる必要がありません。
+
+```json
+"body_mapping_rules": [
+  { "from": "$.user.sub", "to": "user_id" },
+  { "from": "$.user.custom_properties.member_number", "to": "member_id" }
+]
+```
+
+値を持つ条件と、外部送信できる属性の allow-list は [External API認証](./external-api.md) の「マッピングソースで参照できるパス」と共通です。
+
 ## 設定パターン
 
 ### パターン1: 外部SMS認証サービスを利用したTOTP
