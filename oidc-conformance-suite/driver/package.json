@@ -6,7 +6,8 @@
   "description": "OIDF conformance suite のブラウザ操作を実 Chromium で肩代わりするドライバ",
   "scripts": {
     "start": "node driver.mjs",
-    "postinstall": "playwright install chromium"
+    "postinstall": "playwright install chromium",
+    "test": "node --test"
   },
   "dependencies": {
     "playwright": "^1.62.1"

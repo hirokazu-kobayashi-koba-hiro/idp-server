@@ -94,10 +94,27 @@ export const TENANTS = {
  *   { "c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8": { "email": "conformance-driver6@example.com" } }
  */
 const LOCAL_OVERRIDES_FILE = here("local.json");
+
+/** local.json の適用時に気づいた問題。driver.mjs が起動時に出す。 */
+export const localOverrideWarnings = [];
+
 if (fs.existsSync(LOCAL_OVERRIDES_FILE)) {
-  const overrides = JSON.parse(fs.readFileSync(LOCAL_OVERRIDES_FILE, "utf8"));
+  let overrides;
+  try {
+    overrides = JSON.parse(fs.readFileSync(LOCAL_OVERRIDES_FILE, "utf8"));
+  } catch (e) {
+    // 手で書くファイルなので JSON として壊れることがある。素の SyntaxError だと
+    // どのファイルの話か分からないため、ファイル名を添えて落とす。
+    throw new Error(`${LOCAL_OVERRIDES_FILE} を JSON として読めません: ${e.message}`);
+  }
   for (const [tenantId, patch] of Object.entries(overrides)) {
-    if (!TENANTS[tenantId]) continue;
+    if (!TENANTS[tenantId]) {
+      // 打ち間違えを黙って無視すると「手元の鍵に合わせたのに直らない」で次に迷う。
+      localOverrideWarnings.push(
+        `local.json の "${tenantId}" は TENANTS に無いため無視されます`,
+      );
+      continue;
+    }
     Object.assign(TENANTS[tenantId], patch);
   }
 }
@@ -155,11 +172,21 @@ export function passkeyFileFor(tenantId) {
  *
  * @return 食い違っているテナントの一覧（問題が無ければ空配列）
  */
-export function verifyPasskeyBindings() {
+export function verifyPasskeyBindings({
+  tenants = TENANTS,
+  resolveFile = passkeyFileFor,
+} = {}) {
+  // DRIVER_PASSKEY_FILE はテナント別の分割を意図的に無効化する機能（README 参照）。
+  // 全テナントが同じファイルを指すため、複数テナントと突き合わせれば必ずどれかが
+  // 食い違う。利用者が分割を切っている以上、突き合わせの前提が成立しないので見送る。
+  if (process.env.DRIVER_PASSKEY_FILE) return [];
+
   const problems = [];
-  for (const [tenantId, t] of Object.entries(TENANTS)) {
-    if (!needsPasskey(tenantId)) continue;
-    const file = passkeyFileFor(tenantId);
+  for (const [tenantId, t] of Object.entries(tenants)) {
+    // needsPasskey() はモジュール直下の TENANTS を引くため、ここでは手元の値を見る。
+    // 判定は同じ（signIn が "password" 以外なら passkey を使う）。
+    if (t.signIn === "password") continue;
+    const file = resolveFile(tenantId);
     // 鍵が無いのは異常ではない。画面が登録フローを出し、登録後に書き出される。
     if (!fs.existsSync(file)) continue;
     let owner;

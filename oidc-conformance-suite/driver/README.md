@@ -77,7 +77,7 @@ URL（`https://api.local.test/{tenantId}/v1/authorizations?...`）から引く�
 | 変数 | 既定 | 用途 |
 |---|---|---|
 | `SUITE` | `https://localhost:8443` | suite の API 接続先 |
-| `DRIVER_PASSKEY_FILE` | `./passkey-<label>.json` | 登録した passkey の保存先（指定するとテナント別の分割が無効になる） |
+| `DRIVER_PASSKEY_FILE` | `./passkey-<label>.json` | 登録した passkey の保存先（指定するとテナント別の分割が無効になり、後述の起動時チェックも見送られる） |
 | `DRIVER_LOG` | `./driver.log` | ログ出力先 |
 | `IDP_BASE_URL` | `https://api.local.test` | idp-server |
 | `IDP_ROOT_CA` | `<repo>/docker/nginx/certs/rootCA.pem` | ローカル CA |
@@ -172,6 +172,12 @@ passkey は `passkey-<label>.json` にしか無く **gitignore なので共有�
 **1. 起動時チェック。** passkey ファイルの `userHandle`（利用者の email が base64 で入っている）と
 `TENANTS` の `email` を突き合わせ、食い違えば起動せずに終了する。鍵ファイルが無い場合は
 画面が登録フローを出すので正常とみなす。
+
+`DRIVER_PASSKEY_FILE` を指定しているときは見送る。全テナントが同じファイルを指すため、
+複数テナントと突き合わせれば必ずどれかが食い違う。分割を切っている以上、突き合わせの
+前提が成立しない。
+
+判定は `npm test`（`flow.test.mjs`）で固定している。依存は無く `node --test` だけで動く。
 
 **2. `driver/local.json`（gitignore）で環境ごとに上書き。** テナント ID をキーに、上書きしたい
 フィールドだけ書く。`TENANTS` 側は「新規環境の既定値」として扱う。

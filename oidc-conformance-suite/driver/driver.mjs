@@ -31,6 +31,7 @@ import {
   signIn,
   tenantIdFromAuthorizationUrl,
   verifyPasskeyBindings,
+  localOverrideWarnings,
 } from "./flow.mjs";
 
 const logFile = process.env.DRIVER_LOG || here("driver.log");
@@ -251,6 +252,10 @@ log(
 );
 for (const [id, t] of Object.entries(TENANTS)) {
   log(`  tenant ${t.label} (${id}) user=${t.email} auth=${t.signIn}`);
+}
+
+for (const w of localOverrideWarnings) {
+  log(w);
 }
 
 // passkey ファイルと email の食い違いは、実行しても 1 件も通らないまま
