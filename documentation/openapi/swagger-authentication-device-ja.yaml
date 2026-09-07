@@ -664,6 +664,11 @@ paths:
                     type: string
                     example: "number_matching_code does not match"
               examples:
+                device_id_missing:
+                  summary: device_id 未指定
+                  value:
+                    error: "invalid_request"
+                    error_description: "Field 'device_id' is required"
                 device_not_bound:
                   summary: 認証トランザクションに認証デバイスが紐づいていない
                   value:

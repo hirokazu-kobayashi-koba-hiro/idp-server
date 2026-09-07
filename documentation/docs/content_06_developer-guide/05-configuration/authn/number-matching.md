@@ -136,6 +136,7 @@ POST /{tenant-id}/v1/authentications/{transaction-id}/authentication-device-numb
 | 状況 | HTTP | `error` | `error_description` |
 |---|---|---|---|
 | 一致 | 200 | - | - |
+| `device_id` 未指定 | 400 | `invalid_request` | `Field 'device_id' is required` |
 | 認証デバイス未紐付け | 400 | `invalid_request` | `authentication device is not bound to this transaction` |
 | `device_id` 不一致 | 400 | `invalid_request` | `device_id does not match the authentication device` |
 | チャレンジ未実行 | 400 | `invalid_request` | `number_matching_code has not been issued` |

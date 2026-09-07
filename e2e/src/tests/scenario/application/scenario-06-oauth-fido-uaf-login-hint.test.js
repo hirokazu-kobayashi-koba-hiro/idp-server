@@ -34,6 +34,7 @@ import { sleep } from "../../../lib/util";
  * 8. Verify ID token contains amr claim
  */
 describe("scenario - oauth fido-uaf with login_hint", () => {
+
   it("should authenticate via FIDO-UAF in authorization code flow with login_hint and issue tokens", async () => {
     // Step 1: Create user and register FIDO-UAF device
     console.log("\n=== Step 1: Create user and register FIDO-UAF device ===");
@@ -56,8 +57,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     const state = `state_${Date.now()}`;
 
     const authorizeResponse = await get({
-      url:
-        `${backendUrl}/${serverConfig.tenantId}/v1/authorizations?` +
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations?` +
         new URLSearchParams({
           response_type: "code",
           client_id: clientSecretPostClient.clientId,
@@ -104,11 +104,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-device-notification`,
       body: {},
     });
-    console.log(
-      "Push notification response:",
-      pushNotificationResponse.status,
-      pushNotificationResponse.data
-    );
+    console.log("Push notification response:", pushNotificationResponse.status, pushNotificationResponse.data);
 
     // Get admin token for management API access
     const adminTokenResponse = await requestToken({
@@ -141,19 +137,12 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     expect(pushEventResponse.status).toBe(200);
 
     const pushEvents = pushEventResponse.data.list || [];
-    console.log(
-      `Found ${pushEvents.length} authentication_device_notification_success event(s)`
-    );
+    console.log(`Found ${pushEvents.length} authentication_device_notification_success event(s)`);
 
     if (pushEvents.length > 0) {
       const latestEvent = pushEvents[0];
-      console.log(
-        "Latest push notification event:",
-        JSON.stringify(latestEvent, null, 2)
-      );
-      expect(latestEvent.type).toBe(
-        "authentication_device_notification_success"
-      );
+      console.log("Latest push notification event:", JSON.stringify(latestEvent, null, 2));
+      expect(latestEvent.type).toBe("authentication_device_notification_success");
     }
 
     // If push notification failed (no FCM configured), check failure event
@@ -170,21 +159,14 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       });
       expect(pushFailureEventResponse.status).toBe(200);
       const failureEvents = pushFailureEventResponse.data.list || [];
-      console.log(
-        `Found ${failureEvents.length} authentication_device_notification_failure event(s)`
-      );
+      console.log(`Found ${failureEvents.length} authentication_device_notification_failure event(s)`);
       if (failureEvents.length > 0) {
-        console.log(
-          "Push failure event:",
-          JSON.stringify(failureEvents[0], null, 2)
-        );
+        console.log("Push failure event:", JSON.stringify(failureEvents[0], null, 2));
       }
     }
 
     // Step 7: Get authentication transaction for device-side interaction
-    console.log(
-      "\n=== Step 7: FIDO-UAF authentication via /authentications/ ==="
-    );
+    console.log("\n=== Step 7: FIDO-UAF authentication via /authentications/ ===");
 
     const txListResponse = await get({
       url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${authId}`,
@@ -217,11 +199,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       interactionType: "fido-uaf-authentication",
       body: {},
     });
-    console.log(
-      "FIDO-UAF authentication:",
-      authResponse.status,
-      authResponse.data
-    );
+    console.log("FIDO-UAF authentication:", authResponse.status, authResponse.data);
     expect(authResponse.status).toBe(200);
 
     // Step 8: Verify authentication-status is "success"
@@ -235,14 +213,8 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     expect(statusAfter.data.status).toBe("success");
     expect(statusAfter.data.authentication_methods).toContain("fido-uaf");
     console.log("authentication-status:", statusAfter.data.status);
-    console.log(
-      "authentication_methods:",
-      statusAfter.data.authentication_methods
-    );
-    console.log(
-      "interaction_results:",
-      JSON.stringify(statusAfter.data.interaction_results, null, 2)
-    );
+    console.log("authentication_methods:", statusAfter.data.authentication_methods);
+    console.log("interaction_results:", JSON.stringify(statusAfter.data.interaction_results, null, 2));
 
     // Step 9: Authorize and get authorization code
     console.log("\n=== Step 9: Authorize and get tokens ===");
@@ -280,10 +252,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       jwt: tokenResponse.data.id_token,
       jwks: jwksResponse.data,
     });
-    console.log(
-      "ID Token payload:",
-      JSON.stringify(decodedIdToken.payload, null, 2)
-    );
+    console.log("ID Token payload:", JSON.stringify(decodedIdToken.payload, null, 2));
     expect(decodedIdToken.payload).toHaveProperty("amr");
 
     console.log("\n=== Test Completed ===");
@@ -327,10 +296,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       headers: {},
     });
     expect(authorizeResponse.status).toBe(302);
-    const authId = new URL(
-      authorizeResponse.headers.location,
-      backendUrl
-    ).searchParams.get("id");
+    const authId = new URL(authorizeResponse.headers.location, backendUrl).searchParams.get("id");
 
     // Admin token + device-facing transaction view, used to assert the number_matching_required flag.
     const adminTokenResponse = await requestToken({
@@ -345,9 +311,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     expect(adminTokenResponse.status).toBe(200);
 
     const txUrl = `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${authId}`;
-    const txHeaders = {
-      Authorization: `Bearer ${adminTokenResponse.data.access_token}`,
-    };
+    const txHeaders = { Authorization: `Bearer ${adminTokenResponse.data.access_token}` };
 
     // Before any challenge no code has been issued, so the device must NOT be prompted.
     const txBeforeChallenge = await get({ url: txUrl, headers: txHeaders });
@@ -363,9 +327,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     });
     expect(notIssuedResponse.status).toBe(400);
     expect(notIssuedResponse.data.error).toBe("invalid_request");
-    expect(notIssuedResponse.data.error_description).toBe(
-      "number_matching_code has not been issued"
-    );
+    expect(notIssuedResponse.data.error_description).toBe("number_matching_code has not been issued");
 
     // Issue the number-matching code. Generation is separate from push (FCM): this call only
     // generates + stores the code and returns it for the sign-in screen (SPA) to display. The code
@@ -388,35 +350,23 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     // The whole mechanism rests on the code never reaching the device: the device is told THAT a
     // code is required, never WHICH one. If it leaked into the device-facing transaction the user
     // would no longer have to read the sign-in screen, which is what number-matching is for.
-    expect(JSON.stringify(txAfterChallenge.data.list[0])).not.toContain(
-      numberMatchingCode
-    );
-    expect(txAfterChallenge.data.list[0]).not.toHaveProperty(
-      "number_matching_code"
-    );
+    expect(JSON.stringify(txAfterChallenge.data.list[0])).not.toContain(numberMatchingCode);
+    expect(txAfterChallenge.data.list[0]).not.toHaveProperty("number_matching_code");
 
     // A value that differs from the issued code must not match.
     const wrongCode = numberMatchingCode === "0000" ? "1111" : "0000";
     const wrongResponse = await postWithJson({
       url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-device-number-matching`,
-      body: {
-        device_id: authenticationDeviceId,
-        number_matching_code: wrongCode,
-      },
+      body: { device_id: authenticationDeviceId, number_matching_code: wrongCode },
     });
     expect(wrongResponse.status).toBe(400);
     expect(wrongResponse.data.error).toBe("invalid_request");
-    expect(wrongResponse.data.error_description).toBe(
-      "number_matching_code does not match"
-    );
+    expect(wrongResponse.data.error_description).toBe("number_matching_code does not match");
 
     // The value the user transcribed from the sign-in screen matches the stored one.
     const okResponse = await postWithJson({
       url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authentication-device-number-matching`,
-      body: {
-        device_id: authenticationDeviceId,
-        number_matching_code: numberMatchingCode,
-      },
+      body: { device_id: authenticationDeviceId, number_matching_code: numberMatchingCode },
     });
     expect(okResponse.status).toBe(200);
 
@@ -473,9 +423,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId}/authorize`,
     });
     expect(authorizeResp.status).toBe(200);
-    const code = new URL(authorizeResp.data.redirect_uri).searchParams.get(
-      "code"
-    );
+    const code = new URL(authorizeResp.data.redirect_uri).searchParams.get("code");
     expect(code).toBeDefined();
 
     const tokenResponse = await requestToken({
@@ -520,10 +468,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       headers: {},
     });
     expect(authorizeResponse.status).toBe(302);
-    const authId = new URL(
-      authorizeResponse.headers.location,
-      backendUrl
-    ).searchParams.get("id");
+    const authId = new URL(authorizeResponse.headers.location, backendUrl).searchParams.get("id");
 
     // Sign-in screen issues the code. This half is unambiguously the SPA's, and the authorization
     // id is the id it holds.
@@ -536,18 +481,14 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     expect(numberMatchingCode).toMatch(/^[0-9]{4}$/);
 
     // Device discovers its own transaction. This is the only lookup a device has.
-    const deviceTxResponse =
-      await getAuthenticationDeviceAuthenticationTransaction({
-        endpoint: serverConfig.authenticationDeviceEndpoint,
-        deviceId: authenticationDeviceId,
-        params: { flow: "oauth" },
-      });
+    const deviceTxResponse = await getAuthenticationDeviceAuthenticationTransaction({
+      endpoint: serverConfig.authenticationDeviceEndpoint,
+      deviceId: authenticationDeviceId,
+      params: { flow: "oauth" },
+    });
     expect(deviceTxResponse.status).toBe(200);
     const deviceTx = deviceTxResponse.data.list[0];
-    console.log(
-      "device-facing transaction:",
-      JSON.stringify(deviceTx, null, 2)
-    );
+    console.log("device-facing transaction:", JSON.stringify(deviceTx, null, 2));
 
     // What the device is told: prompt for a code, and which transaction. Not which code, and not
     // the authorization id — pinning the absence is the point, because the diagram routes the
@@ -580,16 +521,9 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       flowType: "oauth",
       id: transactionId,
       interactionType: "authentication-device-number-matching",
-      body: {
-        device_id: authenticationDeviceId,
-        number_matching_code: numberMatchingCode,
-      },
+      body: { device_id: authenticationDeviceId, number_matching_code: numberMatchingCode },
     });
-    console.log(
-      "number-matching verify via transaction id:",
-      verifyResponse.status,
-      verifyResponse.data
-    );
+    console.log("number-matching verify via transaction id:", verifyResponse.status, verifyResponse.data);
     expect(verifyResponse.status).toBe(200);
 
     // A wrong code fails the same way here as on the other path.
@@ -599,21 +533,13 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       flowType: "oauth",
       id: transactionId,
       interactionType: "authentication-device-number-matching",
-      body: {
-        device_id: authenticationDeviceId,
-        number_matching_code: wrongCode,
-      },
+      body: { device_id: authenticationDeviceId, number_matching_code: wrongCode },
     });
     expect(wrongResponse.status).toBe(400);
-    expect(wrongResponse.data.error_description).toBe(
-      "number_matching_code does not match"
-    );
+    expect(wrongResponse.data.error_description).toBe("number_matching_code does not match");
 
     // FIDO-UAF on the same path completes the authentication and the flow issues tokens.
-    for (const interactionType of [
-      "fido-uaf-authentication-challenge",
-      "fido-uaf-authentication",
-    ]) {
+    for (const interactionType of ["fido-uaf-authentication-challenge", "fido-uaf-authentication"]) {
       const fidoResponse = await postAuthenticationDeviceInteraction({
         endpoint: serverConfig.authenticationDeviceInteractionEndpoint,
         flowType: "oauth",
@@ -654,17 +580,14 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     console.log("FIDO-UAF device registered:", authenticationDeviceId);
 
     // Test 1: Password-only auth should NOT include "transfers" scope
-    console.log(
-      "\n=== Test 1: Password-only → transfers scope should be filtered ==="
-    );
+    console.log("\n=== Test 1: Password-only → transfers scope should be filtered ===");
 
     const loginHint1 = `sub:${user.sub},idp:idp-server`;
     const state1 = `state_loa_1_${Date.now()}`;
 
     // Use existing CIBA test user for password authentication (login_hint not used here)
     const authResponse1 = await get({
-      url:
-        `${backendUrl}/${serverConfig.tenantId}/v1/authorizations?` +
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations?` +
         new URLSearchParams({
           response_type: "code",
           client_id: clientSecretPostClient.clientId,
@@ -675,18 +598,12 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       headers: {},
     });
     expect(authResponse1.status).toBe(302);
-    const authId1 = new URL(
-      authResponse1.headers.location,
-      backendUrl
-    ).searchParams.get("id");
+    const authId1 = new URL(authResponse1.headers.location, backendUrl).searchParams.get("id");
 
     // Password authentication with CIBA test user
     const pwResponse = await postWithJson({
       url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations/${authId1}/password-authentication`,
-      body: {
-        username: serverConfig.oauth.username,
-        password: serverConfig.oauth.password,
-      },
+      body: { username: serverConfig.oauth.username, password: serverConfig.oauth.password },
     });
     expect(pwResponse.status).toBe(200);
 
@@ -696,9 +613,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     });
     expect(authorizeResponse1.status).toBe(200);
 
-    const code1 = new URL(
-      authorizeResponse1.data.redirect_uri
-    ).searchParams.get("code");
+    const code1 = new URL(authorizeResponse1.data.redirect_uri).searchParams.get("code");
     const tokenResponse1 = await requestToken({
       endpoint: serverConfig.tokenEndpoint,
       grantType: "authorization_code",
@@ -715,15 +630,12 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     console.log("PASS: transfers scope filtered out with password-only auth");
 
     // Test 2: FIDO-UAF auth should include "transfers" scope
-    console.log(
-      "\n=== Test 2: FIDO-UAF auth → transfers scope should be included ==="
-    );
+    console.log("\n=== Test 2: FIDO-UAF auth → transfers scope should be included ===");
 
     const state2 = `state_loa_2_${Date.now()}`;
 
     const authResponse2 = await get({
-      url:
-        `${backendUrl}/${serverConfig.tenantId}/v1/authorizations?` +
+      url: `${backendUrl}/${serverConfig.tenantId}/v1/authorizations?` +
         new URLSearchParams({
           response_type: "code",
           client_id: clientSecretPostClient.clientId,
@@ -735,10 +647,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
       headers: {},
     });
     expect(authResponse2.status).toBe(302);
-    const authId2 = new URL(
-      authResponse2.headers.location,
-      backendUrl
-    ).searchParams.get("id");
+    const authId2 = new URL(authResponse2.headers.location, backendUrl).searchParams.get("id");
 
     // Get admin token for management API
     const adminTokenResponse = await requestToken({
@@ -754,9 +663,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     // Get authentication transaction ID
     const txListResponse = await get({
       url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants/${serverConfig.tenantId}/authentication-transactions?authorization_id=${authId2}`,
-      headers: {
-        Authorization: `Bearer ${adminTokenResponse.data.access_token}`,
-      },
+      headers: { Authorization: `Bearer ${adminTokenResponse.data.access_token}` },
     });
     expect(txListResponse.data.list.length).toBeGreaterThanOrEqual(1);
     const transactionId = txListResponse.data.list[0].id;
@@ -786,9 +693,7 @@ describe("scenario - oauth fido-uaf with login_hint", () => {
     });
     expect(authorizeResponse2.status).toBe(200);
 
-    const code2 = new URL(
-      authorizeResponse2.data.redirect_uri
-    ).searchParams.get("code");
+    const code2 = new URL(authorizeResponse2.data.redirect_uri).searchParams.get("code");
     const tokenResponse2 = await requestToken({
       endpoint: serverConfig.tokenEndpoint,
       grantType: "authorization_code",
