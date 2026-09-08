@@ -77,7 +77,7 @@ URL（`https://api.local.test/{tenantId}/v1/authorizations?...`）から引く�
 | 変数 | 既定 | 用途 |
 |---|---|---|
 | `SUITE` | `https://localhost:8443` | suite の API 接続先 |
-| `DRIVER_PASSKEY_FILE` | `./passkey-<label>.json` | 登録した passkey の保存先（指定するとテナント別の分割が無効になる） |
+| `DRIVER_PASSKEY_FILE` | `./passkey-<label>.json` | 登録した passkey の保存先（指定するとテナント別の分割が無効になり、後述の起動時チェックも見送られる） |
 | `DRIVER_LOG` | `./driver.log` | ログ出力先 |
 | `IDP_BASE_URL` | `https://api.local.test` | idp-server |
 | `IDP_ROOT_CA` | `<repo>/docker/nginx/certs/rootCA.pem` | ローカル CA |
@@ -154,6 +154,45 @@ if (newSignCount > 0 && newSignCount <= webAuthn4jCredential.signCount()) {
 - ドライバを認証の途中で落とすと、サーバのカウンタだけ進んで保存が飛ぶ。次の 1 回は
   `Failed to verify authentication data` で落ちるが、その失敗でカウンタが追いつくので
   2 回目からは通る
+
+### `TENANTS` の `email` を変えるコミットは、鍵を持っていない環境をすべて壊す
+
+passkey は `passkey-<label>.json` にしか無く **gitignore なので共有されない**。一方 `flow.mjs` の
+`TENANTS` は**コミットされる**。片方だけがリポジトリに乗るため、email を変えたコミットは
+その鍵を登録した環境でしか動かない。
+
+実際に踏んだ症状: `conformance-driver5` → `conformance-driver6` の変更を取り込んだ環境で、
+サーバは driver6 の資格情報を持たないので**登録用**のオプションを返すが、画面は `user.status`
+で分岐するため「Use passkey」（認証）を出し続ける。ドライバは認証だと思って進み 30 秒待って
+落ちる。これが全モジュールで起きて **fapi1-advanced の 53 モジュールが WAITING のまま 3.6 時間**
+かかり、成功は 0 件だった。画面のメッセージは `Passkey sign-in was cancelled` としか出ない。
+
+対策を 2 つ入れてある。
+
+**1. 起動時チェック。** passkey ファイルの `userHandle`（利用者の email が base64 で入っている）と
+`TENANTS` の `email` を突き合わせ、食い違えば起動せずに終了する。鍵ファイルが無い場合は
+画面が登録フローを出すので正常とみなす。
+
+`DRIVER_PASSKEY_FILE` を指定しているときは見送る。全テナントが同じファイルを指すため、
+複数テナントと突き合わせれば必ずどれかが食い違う。分割を切っている以上、突き合わせの
+前提が成立しない。
+
+判定は `npm test`（`flow.test.mjs`）で固定している。依存は無く `node --test` だけで動く。
+
+**2. `driver/local.json`（gitignore）で環境ごとに上書き。** テナント ID をキーに、上書きしたい
+フィールドだけ書く。`TENANTS` 側は「新規環境の既定値」として扱う。
+
+```json
+{
+  "c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8": { "email": "conformance-driver5@example.com" },
+  "c3f4a5b6-d7e8-4f9a-0b1c-2d3e4f5a6b7c": { "email": "fapi2-conformance-driver@example.com" }
+}
+```
+
+手元の鍵に合わせるならこちらに書く。`TENANTS` を直接編集して commit すると、また他の環境が壊れる。
+
+**検知できないケース。** 「鍵ファイルが無く、かつサーバ側にはその利用者の資格情報がある」状態は
+起動時には分からない（サーバ照会が要る）。共有 DB を別マシンから使うときに起こりうる。
 
 ## 既知の制限
 

@@ -132,6 +132,22 @@ return !isInitialUser(userStatus);   // 初期ユーザー以外は常に「認�
 サーバのログは `authentication challenge generated successfully` までしか出ず、
 `retrieving credential` が無い（＝ブラウザが assertion を返していない）ことで切り分けられる。
 
+### 起動時チェックと `local.json`（2 回目を踏んだので入れた）
+
+上を README とこのルールに書いた後、**同じことがもう一度起きた**。`conformance-driver5` →
+`conformance-driver6` の変更をコミットで取り込んだ環境に driver6 の鍵が無く、
+fapi1-advanced の 53 モジュールが WAITING のまま 3.6 時間・成功 0 件。
+**書いておくだけでは防げなかった**ので、コードで止めるようにした。
+
+- **起動時チェック**: `flow.mjs` の `verifyPasskeyBindings()` が、passkey ファイルの
+  `userHandle`（email が base64 で入っている）と `TENANTS` の `email` を突き合わせ、
+  食い違えば `driver.mjs` が起動せずに終了する。鍵ファイルが無い場合は正常扱い（画面が登録を出す）
+- **`driver/local.json`（gitignore）**: テナント ID をキーに `email` 等を環境ごとに上書きする。
+  `TENANTS` は「新規環境の既定値」として扱い、**手元の鍵に合わせる値はここに書く**
+
+`TENANTS` を直接書き換えて commit すると、鍵を持っていない環境がまた全滅する。
+手元を通すだけなら `local.json` を使う。
+
 ## 署名カウンタを巻き戻さない
 
 idp-server は WebAuthn §6.1.1 のクローン検知を実装している
