@@ -7,6 +7,7 @@ import {
 } from "../../../testConfig";
 import { postWithJson, get, deletion } from "../../../../lib/http";
 import { v4 as uuidv4 } from "uuid";
+import { generateRS256KeyPair } from "../../../../lib/jose";
 
 /**
  * Issue #1866: preferred_username は (tenant_id, provider_id, preferred_username) の一意キーで、
@@ -42,6 +43,7 @@ describe("管理API ユーザー検索: preferred_username は完全一致 (#186
     adminAccessToken = adminTokenResponse.data.access_token;
 
     tenantId = uuidv4();
+    const { jwks } = await generateRS256KeyPair();
     const createTenantResponse = await postWithJson({
       url: `${backendUrl}/v1/management/organizations/${serverConfig.organizationId}/tenants`,
       headers: { Authorization: `Bearer ${adminAccessToken}` },
@@ -58,8 +60,11 @@ describe("管理API ユーザー検索: preferred_username は完全一致 (#186
           token_endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
           userinfo_endpoint: `${backendUrl}/${tenantId}/v1/userinfo`,
           jwks_uri: `${backendUrl}/${tenantId}/.well-known/jwks.json`,
+          jwks: jwks,
           scopes_supported: ["openid"],
           response_types_supported: ["code"],
+          response_modes_supported: ["query"],
+          subject_types_supported: ["public"],
           grant_types_supported: ["authorization_code"],
           token_endpoint_auth_methods_supported: ["client_secret_post"],
           id_token_signing_alg_values_supported: ["RS256"],
