@@ -533,6 +533,42 @@ describe("Me Use Case: self-service email change", () => {
     expect(aVerify.status).toBe(200);
   });
 
+  it("security: rejects a malformed new_email before any code is sent", async () => {
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL");
+    tenants.push(ctx);
+    const accessToken = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, "openid email")
+    ).data.access_token;
+
+    // new_email is committed verbatim as email and (EMAIL policy) as preferred_username, so a
+    // free-form string must never reach the sender or the user record.
+    for (const newEmail of ["not-an-email", "no-domain@", "@no-local.example.com", "a b@c.example.com", ""]) {
+      const startResp = await postWithJson({
+        url: `${backendUrl}/${ctx.tenantId}/v1/me/email/confirm`,
+        headers: createBearerHeader(accessToken),
+        body: { new_email: newEmail },
+      });
+      console.log("malformed new_email:", JSON.stringify(newEmail), startResp.status);
+      expect(startResp.status).toBe(400);
+      expect(startResp.data.error_description).toContain("invalid format");
+    }
+
+    // Missing entirely is rejected the same way.
+    const missingResp = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/confirm`,
+      headers: createBearerHeader(accessToken),
+      body: {},
+    });
+    expect(missingResp.status).toBe(400);
+
+    // The account is untouched.
+    const userinfoResp = await getUserinfo({
+      endpoint: `${backendUrl}/${ctx.tenantId}/v1/userinfo`,
+      authorizationHeader: createBearerHeader(accessToken),
+    });
+    expect(userinfoResp.data.email).toBe(ctx.adminEmail);
+  });
+
   it("audit: emits a security event for a successful email change", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
@@ -590,6 +626,12 @@ describe("Me Use Case: self-service email change", () => {
     console.log("race statuses:", ra.status, rb.status);
     const successes = [ra, rb].filter((r) => r.status === 200);
     expect(successes).toHaveLength(1);
+
+    // The loser must lose cleanly: a duplicate is a client error (400 from the pre-check, 409 if
+    // the uk_preferred_username constraint is what caught it), never a 500.
+    const loser = [ra, rb].find((r) => r.status !== 200);
+    console.log("race loser:", loser.status, JSON.stringify(loser.data));
+    expect([400, 409]).toContain(loser.status);
   });
 
   it("USERNAME policy: allows changing to a duplicate email (email is not the identifier)", async () => {

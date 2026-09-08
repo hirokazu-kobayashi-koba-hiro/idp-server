@@ -366,6 +366,33 @@ else
 fi
 echo ""
 
+# --- Step 7b: Create authentication policy for self-service email confirm / change ---
+# Required by POST /{tenant-id}/v1/me/email/confirm (#1416). Without a policy for the
+# "email-change" flow the endpoint cannot mint a transaction and returns 404.
+echo "Step 7b: Creating authentication policy (self-service email confirm/change)..."
+
+EMAIL_CHANGE_POLICY_ID="${EMAIL_CHANGE_POLICY_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+jq --arg id "${EMAIL_CHANGE_POLICY_ID}" '. + {id: $id}' "${SCRIPT_DIR}/authentication-policy-email-change.json" > "${OUTPUT_DIR}/authentication-policy-email-change.json"
+echo "  Saved: ${OUTPUT_DIR}/authentication-policy-email-change.json"
+
+EMAIL_CHANGE_POLICY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/authentication-policies" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d @"${OUTPUT_DIR}/authentication-policy-email-change.json")
+
+HTTP_CODE=$(echo "${EMAIL_CHANGE_POLICY_RESPONSE}" | tail -n1)
+RESPONSE_BODY=$(echo "${EMAIL_CHANGE_POLICY_RESPONSE}" | sed '$d')
+
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
+  echo "  Email change authentication policy created"
+else
+  echo "  Failed (HTTP ${HTTP_CODE})"
+  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
+  exit 1
+fi
+echo ""
+
 # --- Step 8: Create application client ---
 echo "Step 8: Creating application client..."
 
@@ -445,6 +472,7 @@ echo "  ${OUTPUT_DIR}/public-tenant.json"
 echo "  ${OUTPUT_DIR}/authentication-config-initial-registration.json"
 echo "  ${OUTPUT_DIR}/authentication-config-email.json"
 echo "  ${OUTPUT_DIR}/authentication-policy.json"
+echo "  ${OUTPUT_DIR}/authentication-policy-email-change.json"
 echo "  ${OUTPUT_DIR}/public-client.json"
 echo ""
 echo "Test Authorization Code Flow:"

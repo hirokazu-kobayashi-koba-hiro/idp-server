@@ -648,11 +648,23 @@ Content-Type: application/json
 
 - アクセストークン(`/v1/me`)で認証。verify は**呼び出しユーザーと transaction の所有者が一致**しないと `404`
 - 送信・検証・有効期限・試行上限は Email 認証設定の executor をそのまま使う。誤コード/期限切れ/試行上限超過は `400`、確定済み transaction の再利用は `404`
+- `new_email` は送信前に形式検証する(`local@domain.tld` 相当 + 最大 255 文字)。不正なら `400` で、メールは送られない
+
+#### `email-change` フロー限定(重要)
+
+`email-change-challenge` / `email-change` インタラクターは、**`flow: "email-change"` の transaction でのみ動作する**。それ以外の transaction に対しては `400`(`email change is not allowed for this transaction.`)を返す。
+
+インタラクターはグローバル登録されるため、無認証の
+`POST /{tenant-id}/v1/authorizations/{id}/{interaction-type}` および
+`POST /{tenant-id}/v1/authentications/{id}/{interaction-type}` から、**任意の transaction に対して**呼び出せる。
+ログイン transaction の `user` は `login_hint` だけでも埋まる(認証なしで確立する)ため、この 2 つのインタラクターだけは
+「リクエスト指定アドレスへ送る」という設計上、フロー限定が無いと識別子の乗っ取り経路になる。
+ログイン用の `EmailAuthenticationChallengeInteractor` が確立済みユーザーでリクエスト入力を無視しているのと同じ理由の対策。
 
 ### 必要な設定
 
 1. **Email 認証設定**(本ページの `email` config)。専用文面のため `templates` に `email_change`(変更用)と `email_verify`(検証用)を追加推奨(challenge が用途に応じて `template` を強制。未定義ならデフォルト文面にフォールバック)。
-2. **`flow: "email-change"` の認証ポリシー**(必須。無いと transaction 作成に失敗。フロー名は内部識別子で、確認・変更の両方に使う):
+2. **`flow: "email-change"` の認証ポリシー**(必須。無いと transaction 作成に失敗して `404`。フロー名は内部識別子で、確認・変更の両方に使う)。そのまま使えるテンプレートは `config/templates/use-cases/mfa-email/authentication-policy-email-change.json`(同ディレクトリの `setup.sh` が Step 7b で登録する):
 
 ```json
 {

@@ -289,7 +289,11 @@ paths:
               properties:
                 new_email:
                   type: string
-                  description: 新しいメールアドレス
+                  maxLength: 255
+                  pattern: '^[^\s@]+@[^\s@]+\.[^\s@]+$'
+                  description: |
+                    確認コードの送信先。現アドレスと同じなら検証、別なら変更。
+                    送信前に形式検証され、不正なら 400（メールは送信されない）。
             example:
               new_email: "new@example.com"
       responses:
@@ -309,7 +313,8 @@ paths:
                 id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
         '400':
           description: |
-            リクエストエラー（`new_email` 未指定 / 現在のメールと同一 / 送信失敗）
+            リクエストエラー（`new_email` 未指定・形式不正・255文字超 / 送信失敗 /
+            `email-change` フロー以外のトランザクション）
           content:
             application/json:
               schema:

@@ -45,12 +45,15 @@ public interface UserOperationApi {
       RequestAttributes requestAttributes);
 
   /**
-   * Creates a self-service email-change transaction (Issue #1416).
+   * Creates a self-service email confirm / change transaction (Issue #1416).
    *
    * <p>Shares the transaction model with {@link #requestMfaOperation} (a {@code $.user}-bound
-   * transaction driven via the standard interaction endpoint), but is exposed under its own {@code
-   * /v1/me/email/change} entry so the API surface reflects the domain operation rather than the
-   * internal reuse.
+   * transaction), but is exposed under its own {@code /v1/me/email/confirm} entry so the API
+   * surface reflects the domain operation rather than the internal reuse.
+   *
+   * <p>The transaction is minted with the {@code email-change} auth flow, which is what the
+   * email-change interactors require: they refuse to run on a login / CIBA transaction reached
+   * through the unauthenticated generic interaction endpoint.
    */
   UserOperationResponse requestEmailConfirm(
       TenantIdentifier tenantIdentifier,

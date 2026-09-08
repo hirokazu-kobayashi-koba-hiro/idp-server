@@ -33,6 +33,7 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserVerifier;
 import org.idp.server.core.openid.identity.exception.UserDuplicateException;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -51,6 +52,10 @@ import org.idp.server.platform.type.RequestAttributes;
  *
  * <p>Uniqueness is enforced here at commit time: if the candidate address is already used by a
  * different user in the tenant/provider, the change is rejected.
+ *
+ * <p><b>Restricted to the {@code email-change} auth flow</b>, for the reason spelled out on {@link
+ * EmailChangeChallengeInteractor}: this interactor commits an identity attribute, and the generic
+ * {@code POST /{tenant}/v1/authentications/{id}/{interaction-type}} endpoint is unauthenticated.
  */
 public class EmailChangeInteractor implements AuthenticationInteractor {
 
@@ -88,6 +93,16 @@ public class EmailChangeInteractor implements AuthenticationInteractor {
       UserQueryRepository userQueryRepository) {
 
     log.debug("EmailChangeInteractor called");
+
+    // Only a transaction created by the token-authenticated /v1/me/email/confirm entry may commit
+    // an identifier change. See the class javadoc.
+    if (!StandardAuthFlow.EMAIL_CHANGE.toAuthFlow().equals(transaction.flow())) {
+      log.warn(
+          "Email change verify rejected: transaction flow is {}, expected {}.",
+          transaction.flow().name(),
+          StandardAuthFlow.EMAIL_CHANGE.value());
+      return clientError(type, "email change is not allowed for this transaction.");
+    }
 
     if (!transaction.hasUser()) {
       return clientError(
