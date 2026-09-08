@@ -137,6 +137,19 @@ public class UserQueries implements UuidConvertable {
     return values.get("preferred_username");
   }
 
+  /**
+   * Issue #1866: preferred_username は一意な識別子なので {@link #preferredUsername()} は完全一致で
+   * 引く。断片で探したい呼び出し向けに、部分一致を別のキーとして明示的に分けている。索引が効かない
+   * のは前後ワイルドカードの性質上どうにもならないため、遅い経路であることが名前から分かるようにする。
+   */
+  public boolean hasPreferredUsernameLike() {
+    return values.containsKey("preferred_username_like");
+  }
+
+  public String preferredUsernameLike() {
+    return values.get("preferred_username_like");
+  }
+
   public boolean hasEmail() {
     return values.containsKey("email");
   }

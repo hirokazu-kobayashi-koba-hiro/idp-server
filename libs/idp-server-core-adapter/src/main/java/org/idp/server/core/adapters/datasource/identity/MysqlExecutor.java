@@ -221,6 +221,11 @@ public class MysqlExecutor implements UserSqlExecutor {
       params.add(queries.preferredUsername());
     }
 
+    if (queries.hasPreferredUsernameLike()) {
+      where.append(" AND LOWER(idp_user.preferred_username) LIKE ?");
+      params.add("%" + queries.preferredUsernameLike().toLowerCase() + "%");
+    }
+
     if (queries.hasPhoneNumber()) {
       where.append(" AND idp_user.phone_number = ?");
       params.add(queries.phoneNumber());
@@ -328,6 +333,11 @@ public class MysqlExecutor implements UserSqlExecutor {
     if (queries.hasPreferredUsername()) {
       cteWhere.append(" AND idp_user.preferred_username = ?");
       cteParams.add(queries.preferredUsername());
+    }
+
+    if (queries.hasPreferredUsernameLike()) {
+      cteWhere.append(" AND LOWER(idp_user.preferred_username) LIKE ?");
+      cteParams.add("%" + queries.preferredUsernameLike().toLowerCase() + "%");
     }
 
     if (queries.hasPhoneNumber()) {

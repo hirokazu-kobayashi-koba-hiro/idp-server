@@ -16,6 +16,9 @@ import { generateRS256KeyPair } from "../../../../lib/jose";
  *
  * 完全一致にしたことで uk_preferred_username が効く。ここでは索引の有無ではなく、
  * 検索の意味（完全一致で当たり、部分一致では当たらない）を固定する。
+ *
+ * 断片で探す用途は preferred_username_like に分けた。遅い経路であることが名前から分かるように
+ * するのが目的で、挙動は従来の preferred_username と同じ（前後ワイルドカード・大文字小文字区別なし）。
  */
 describe("管理API ユーザー検索: preferred_username は完全一致 (#1866)", () => {
   let adminAccessToken;
@@ -122,5 +125,29 @@ describe("管理API ユーザー検索: preferred_username は完全一致 (#186
       expect(response.status).toBe(200);
       expect(response.data.total_count).toBe(0);
     }
+  }, 60000);
+
+  it("preferred_username_like は部分一致で当たる", async () => {
+    // コンソールの検索ボックスはこちらへ差し替えることで、運用者の体験を変えずに済む。
+    const middle = preferredUsername.slice(4, 14);
+
+    const response = await search(
+      `preferred_username_like=${encodeURIComponent(middle)}`
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.data.total_count).toBe(1);
+    expect(response.data.list[0].sub).toBe(userSub);
+  }, 60000);
+
+  it("preferred_username_like は大文字小文字を区別しない", async () => {
+    const response = await search(
+      `preferred_username_like=${encodeURIComponent(
+        preferredUsername.toUpperCase()
+      )}`
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.data.total_count).toBe(1);
   }, 60000);
 });

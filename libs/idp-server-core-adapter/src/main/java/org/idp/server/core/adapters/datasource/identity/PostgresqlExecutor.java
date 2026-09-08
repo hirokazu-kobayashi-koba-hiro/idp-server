@@ -220,6 +220,11 @@ public class PostgresqlExecutor implements UserSqlExecutor {
       params.add(queries.preferredUsername());
     }
 
+    if (queries.hasPreferredUsernameLike()) {
+      where.append(" AND idp_user.preferred_username ILIKE ?");
+      params.add("%" + queries.preferredUsernameLike() + "%");
+    }
+
     if (queries.hasPhoneNumber()) {
       where.append(" AND idp_user.phone_number = ?");
       params.add(queries.phoneNumber());
@@ -325,6 +330,11 @@ public class PostgresqlExecutor implements UserSqlExecutor {
     if (queries.hasPreferredUsername()) {
       cteWhere.append(" AND idp_user.preferred_username = ?");
       cteParams.add(queries.preferredUsername());
+    }
+
+    if (queries.hasPreferredUsernameLike()) {
+      cteWhere.append(" AND idp_user.preferred_username ILIKE ?");
+      cteParams.add("%" + queries.preferredUsernameLike() + "%");
     }
 
     if (queries.hasPhoneNumber()) {
