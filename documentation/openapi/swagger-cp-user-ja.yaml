@@ -78,7 +78,9 @@ paths:
         required: false
         schema:
           type: string
-        description: 優先ユーザー名でフィルタリング
+        description: |
+          優先ユーザー名で完全一致検索。テナントとプロバイダーの範囲で一意な識別子のため、部分一致では検索しません（Issue #1866）。
+          名前で探す場合は name / given_name / family_name / nickname を使ってください。
       - name: email
         in: query
         required: false
