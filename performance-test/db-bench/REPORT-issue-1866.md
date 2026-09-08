@@ -108,7 +108,7 @@ COUNT は常に全件評価する。一覧は `ORDER BY created_at DESC LIMIT 20
 
 ## 4. 結論
 
-`preferred_username` の検索を**完全一致**に変更する。詳細と根拠は Issue #1866 を参照。
+`preferred_username` の検索を**完全一致**に変更した（PR #1867）。詳細と根拠は Issue #1866 を参照。
 
 - インデックス追加なし。既存の `uk_preferred_username` がそのまま効く
 - マイグレーション不要
