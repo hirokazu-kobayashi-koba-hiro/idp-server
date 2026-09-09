@@ -7,7 +7,7 @@ import { convertNextAction } from "../../lib/util";
 /**
  * Issue #1416 - self-service email change must stay bound to its own auth flow.
  *
- * The email-change interactors are the only ones that deliberately send a verification code to a
+ * The email-confirm interactors are the only ones that deliberately send a verification code to a
  * *request-supplied* address and then commit it as the user's `email` / `email_verified` (and, under
  * an EMAIL identity policy, `preferred_username` — the login identifier). Every other email
  * interactor hardens against exactly that: `EmailAuthenticationChallengeInteractor.resolveEmail`
@@ -20,15 +20,20 @@ import { convertNextAction } from "../../lib/util";
  * all — so without a flow guard an unauthenticated caller holding a login transaction id could
  * redirect a victim's identifier to an address they control.
  *
- * The legitimate entry (`POST /{tenant-id}/v1/me/email/confirm`) is token-authenticated and mints a
- * transaction whose flow is `email-change`. These tests assert the *other* doors stay shut.
+ * The legitimate entries are token-authenticated and mint a transaction whose flow is `email-verify`
+ * or `email-change`:
+ *   POST /{tenant-id}/v1/me/email/verification  (scope: openid)   - code to the CURRENT address only
+ *   POST /{tenant-id}/v1/me/email/change        (scope: email:change) - code to a supplied address
+ * These tests assert the *other* doors stay shut.
  *
  * Severity: Critical (CWE-287 / account takeover via identifier change)
  */
-describe("Issue #1416: email-change interactions are bound to the email-change flow", () => {
+describe("Issue #1416: email-confirm interactions are bound to the email-verify / email-change flows", () => {
   const victimEmail = serverConfig.ciba.username;
   const victimSub = serverConfig.ciba.sub;
 
+  // The guard rejects any flow that is not email-verify / email-change, so a login transaction is
+  // refused for both interaction types even though the login flow has a policy and a user.
   const managementAccessToken = async () => {
     const response = await requestToken({
       endpoint: serverConfig.tokenEndpoint,
@@ -68,14 +73,14 @@ describe("Issue #1416: email-change interactions are bound to the email-change f
     return response.data;
   };
 
-  it("rejects email-change interactions posted to a login transaction via /v1/authorizations", async () => {
+  it("rejects email-confirm interactions posted to a login transaction via /v1/authorizations", async () => {
     const accessToken = await managementAccessToken();
     const before = await readVictim(accessToken);
     const authorizationId = await startLoginTransaction();
     const attackerEmail = `attacker-${Date.now()}@email-change-guard.example.com`;
 
     // Both halves of the flow are guarded, not just the challenge.
-    for (const interactionType of ["email-change-challenge", "email-change"]) {
+    for (const interactionType of ["email-confirm-challenge", "email-confirm"]) {
       const response = await postWithJson({
         url: `${serverConfig.authorizationIdEndpoint.replace("{id}", authorizationId)}${interactionType}`,
         body: { new_email: attackerEmail, verification_code: "000000" },
@@ -85,7 +90,7 @@ describe("Issue #1416: email-change interactions are bound to the email-change f
       );
       expect(response.status).toBe(400);
       expect(response.data.error_description).toContain(
-        "email change is not allowed for this transaction"
+        "email confirmation is not allowed for this transaction"
       );
     }
 
@@ -95,7 +100,7 @@ describe("Issue #1416: email-change interactions are bound to the email-change f
     expect(after.preferred_username).toBe(before.preferred_username);
   });
 
-  it("rejects email-change interactions posted to a login transaction via /v1/authentications", async () => {
+  it("rejects email-confirm interactions posted to a login transaction via /v1/authentications", async () => {
     const accessToken = await managementAccessToken();
     const before = await readVictim(accessToken);
     const authorizationId = await startLoginTransaction();
@@ -109,7 +114,7 @@ describe("Issue #1416: email-change interactions are bound to the email-change f
     expect(transactionsResponse.status).toBe(200);
     const transactionId = transactionsResponse.data.list[0].id;
 
-    for (const interactionType of ["email-change-challenge", "email-change"]) {
+    for (const interactionType of ["email-confirm-challenge", "email-confirm"]) {
       const response = await postWithJson({
         url: `${backendUrl}/${serverConfig.tenantId}/v1/authentications/${transactionId}/${interactionType}`,
         body: { new_email: attackerEmail, verification_code: "000000" },
@@ -119,7 +124,7 @@ describe("Issue #1416: email-change interactions are bound to the email-change f
       );
       expect(response.status).toBe(400);
       expect(response.data.error_description).toContain(
-        "email change is not allowed for this transaction"
+        "email confirmation is not allowed for this transaction"
       );
     }
 

@@ -31,45 +31,55 @@ import org.idp.server.core.openid.authentication.repository.AuthenticationConfig
 import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
-import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.event.DefaultSecurityEventType;
+import org.idp.server.platform.type.Pairs;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Self-service email-change challenge (Issue #1416).
+ * Challenge step of the self-service email verification / change flows (Issue #1416).
  *
- * <p>Unlike {@link EmailAuthenticationChallengeInteractor}, whose {@code resolveEmail} deliberately
- * ignores request input for an established user (identifier-switching hardening), this interactor
- * always sends the verification code to the <b>request-supplied candidate address</b> — that is the
- * point of a change flow. It stores the candidate under a change-specific key so the {@link
- * EmailChangeInteractor} verify step can commit it.
+ * <p>One interactor serves both operations because the commit logic is identical; what differs is
+ * the <b>target address</b>, and that is decided by the transaction's auth flow, never by the
+ * request body:
  *
- * <p><b>Restricted to the {@code email-change} auth flow.</b> Dropping the identifier-switching
- * hardening is only safe on a transaction minted by the token-authenticated {@code
- * /v1/me/email/confirm} entry. Every interactor is registered globally and is therefore reachable
- * through the unauthenticated {@code POST /{tenant}/v1/authentications/{id}/{interaction-type}}
- * endpoint on <i>any</i> transaction, where {@code hasUser()} only means "identified" — a {@code
- * login_hint} on the authorization endpoint fills it with no client authentication at all. The flow
- * guard below is what keeps a login / CIBA transaction out of this code path.
+ * <ul>
+ *   <li>{@code email-verify} — the code goes to the address already on the account ({@code
+ *       user.email()}). The request body is ignored entirely, so this half cannot be pointed at an
+ *       attacker-chosen address at all.
+ *   <li>{@code email-change} — the code goes to the request-supplied {@code new_email}, after
+ *       validation. This is the only path that accepts a caller-supplied recipient.
+ * </ul>
  *
- * <p>The authoritative uniqueness check happens at commit time (verify), not here; the challenge
- * only rejects a malformed or empty candidate. A candidate equal to the current address is a
- * supported case (re-verification), not an error.
+ * <p><b>Why the flow, not an address comparison.</b> The two operations carry different privilege:
+ * verification only sets a claim, whereas a change moves {@code preferred_username} — the login
+ * identifier — under an EMAIL identity policy. Authorization therefore has to be decided before the
+ * code is sent, which is impossible if the intent is inferred from comparing {@code new_email} to
+ * the current address. Splitting the flows lets each endpoint carry its own scope requirement.
+ *
+ * <p><b>Restricted to those two flows.</b> Every interactor is registered globally and is reachable
+ * through the unauthenticated {@code POST
+ * /{tenant-id}/v1/authorizations|authentications/{id}/{type}} endpoints on <i>any</i> transaction,
+ * where {@code hasUser()} only means "identified" — a {@code login_hint} on the authorization
+ * endpoint fills it with no client authentication at all. The flow guard below is what keeps a
+ * login / CIBA transaction out of this code path, the same concern that makes {@link
+ * EmailAuthenticationChallengeInteractor#resolveEmail} ignore request input for an established
+ * user.
+ *
+ * <p>Uniqueness is checked at commit time (verify), not here.
  */
-public class EmailChangeChallengeInteractor implements AuthenticationInteractor {
+public class EmailConfirmChallengeInteractor implements AuthenticationInteractor {
 
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
   AuthenticationInteractionCommandRepository interactionCommandRepository;
   AuthenticationExecutors authenticationExecutors;
-  LoggerWrapper log = LoggerWrapper.getLogger(EmailChangeChallengeInteractor.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(EmailConfirmChallengeInteractor.class);
 
-  public EmailChangeChallengeInteractor(
+  public EmailConfirmChallengeInteractor(
       AuthenticationConfigurationQueryRepository configurationQueryRepository,
       AuthenticationInteractionCommandRepository interactionCommandRepository,
       AuthenticationExecutors authenticationExecutors) {
@@ -80,7 +90,7 @@ public class EmailChangeChallengeInteractor implements AuthenticationInteractor 
 
   @Override
   public AuthenticationInteractionType type() {
-    return StandardAuthenticationInteraction.EMAIL_CHANGE_CHALLENGE.toType();
+    return StandardAuthenticationInteraction.EMAIL_CONFIRM_CHALLENGE.toType();
   }
 
   @Override
@@ -102,43 +112,32 @@ public class EmailChangeChallengeInteractor implements AuthenticationInteractor 
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    log.debug("EmailChangeChallengeInteractor called");
+    log.debug("EmailConfirmChallengeInteractor called");
 
-    // Only a transaction created by the token-authenticated /v1/me/email/confirm entry may drive an
-    // identifier change. Without this the unauthenticated /v1/authentications/{id}/{type} endpoint
-    // would reach this interactor on a login / CIBA transaction. See the class javadoc.
-    if (!StandardAuthFlow.EMAIL_CHANGE.toAuthFlow().equals(transaction.flow())) {
+    EmailConfirmOperation operation = EmailConfirmOperation.of(transaction.flow());
+    if (operation == null) {
       log.warn(
-          "Email change challenge rejected: transaction flow is {}, expected {}.",
-          transaction.flow().name(),
-          StandardAuthFlow.EMAIL_CHANGE.value());
-      return clientError(type, "email change is not allowed for this transaction.");
+          "Email confirm challenge rejected: transaction flow is {}.", transaction.flow().name());
+      return clientError(
+          type,
+          EmailConfirmOperation.CHANGE,
+          "email confirmation is not allowed for this transaction.");
     }
 
     if (!transaction.hasUser()) {
       return clientError(
-          type, "email change requires an authenticated user, but none is established.");
+          type,
+          operation,
+          "email confirm requires an authenticated user, but none is established.");
     }
-
-    // Every client error below is raised before the change / verify intent is known (a malformed
-    // candidate can never be a re-verification of the current address), so they all report as
-    // email_change_request_failure. The split kicks in from the executor result onwards.
-    JsonSchemaValidationResult validationResult =
-        new EmailChangeRequestValidator(request).validate();
-    if (!validationResult.isValid()) {
-      return clientError(type, "new_email is unspecified or invalid format.", validationResult);
-    }
-
-    String newEmail = request.optValueAsString("new_email", "");
 
     User user = transaction.user();
-    // Same address = re-verify the current email; different = change. The commit logic is
-    // identical;
-    // only the template and audit event differ (see isChange). Case-sensitive on purpose: email is
-    // stored as-is and preferred_username uniqueness is case-sensitive, so a case change is a
-    // change.
-    boolean isChange = !newEmail.equals(user.email());
-    String providerId = user.providerId();
+    Pairs<String, AuthenticationInteractionRequestResult> target =
+        resolveTarget(type, operation, user, request);
+    if (target.getRight() != null) {
+      return target.getRight();
+    }
+    String targetEmail = target.getLeft();
 
     AuthenticationConfiguration configuration = configurationQueryRepository.get(tenant, "email");
     AuthenticationInteractionConfig authenticationConfig =
@@ -147,11 +146,10 @@ public class EmailChangeChallengeInteractor implements AuthenticationInteractor 
     AuthenticationExecutor executor = authenticationExecutors.get(execution.function());
 
     Map<String, Object> executionRequestValues = new HashMap<>(request.toMap());
-    executionRequestValues.put("email", newEmail);
-    // Force the operation-specific template so the code email reads as an email change /
-    // verification
+    executionRequestValues.put("email", targetEmail);
+    // Force the operation-specific template so the code email reads as a change / a verification
     // (not a login OTP), regardless of what the caller passed.
-    executionRequestValues.put("template", isChange ? "email_change" : "email_verify");
+    executionRequestValues.put("template", operation.templateKey());
     AuthenticationExecutionRequest executionRequest =
         new AuthenticationExecutionRequest(executionRequestValues);
     AuthenticationExecutionResult executionResult =
@@ -166,7 +164,7 @@ public class EmailChangeChallengeInteractor implements AuthenticationInteractor 
 
     if (!executionResult.isSuccess()) {
       log.warn(
-          "Email change challenge execution failed. status={}, contents={}",
+          "Email confirm challenge execution failed. status={}, contents={}",
           executionResult.statusCode(),
           contents);
       return AuthenticationInteractionRequestResult.error(
@@ -176,15 +174,13 @@ public class EmailChangeChallengeInteractor implements AuthenticationInteractor 
           operationType(),
           method(),
           user,
-          isChange
-              ? DefaultSecurityEventType.email_change_request_failure
-              : DefaultSecurityEventType.email_verify_request_failure);
+          operation.requestFailureEvent());
     }
 
     EmailVerificationChallengeRequest challengeRequest =
-        new EmailVerificationChallengeRequest(providerId, newEmail);
+        new EmailVerificationChallengeRequest(user.providerId(), targetEmail);
     interactionCommandRepository.register(
-        tenant, transaction.identifier(), "email-change-challenge-request", challengeRequest);
+        tenant, transaction.identifier(), "email-confirm-challenge-request", challengeRequest);
 
     return new AuthenticationInteractionRequestResult(
         AuthenticationInteractionStatus.SUCCESS,
@@ -193,18 +189,60 @@ public class EmailChangeChallengeInteractor implements AuthenticationInteractor 
         method(),
         user,
         contents,
-        isChange
-            ? DefaultSecurityEventType.email_change_request_success
-            : DefaultSecurityEventType.email_verify_request_success);
+        operation.requestSuccessEvent());
+  }
+
+  /**
+   * Resolves where the code is sent. Returns the address on the left, or a client error on the
+   * right.
+   */
+  private Pairs<String, AuthenticationInteractionRequestResult> resolveTarget(
+      AuthenticationInteractionType type,
+      EmailConfirmOperation operation,
+      User user,
+      AuthenticationInteractionRequest request) {
+
+    if (operation.isVerify()) {
+      // Deliberately ignores the request body: the verification half has no caller-supplied
+      // recipient, so it cannot be redirected.
+      if (!user.hasEmail()) {
+        return Pairs.of(
+            null, clientError(type, operation, "the account has no email address to verify."));
+      }
+      return Pairs.of(user.email(), null);
+    }
+
+    JsonSchemaValidationResult validationResult =
+        new EmailChangeRequestValidator(request).validate();
+    if (!validationResult.isValid()) {
+      return Pairs.of(
+          null,
+          clientError(
+              type, operation, "new_email is unspecified or invalid format.", validationResult));
+    }
+
+    String newEmail = request.optValueAsString("new_email", "");
+    // Case-sensitive on purpose: email is stored as-is and preferred_username uniqueness is
+    // case-sensitive, so a case-only difference is a real change.
+    if (newEmail.equals(user.email())) {
+      return Pairs.of(
+          null,
+          clientError(
+              type,
+              operation,
+              "new_email is the current address. use the email verification endpoint instead."));
+    }
+    return Pairs.of(newEmail, null);
   }
 
   private AuthenticationInteractionRequestResult clientError(
-      AuthenticationInteractionType type, String description) {
-    return clientError(type, description, null);
+      AuthenticationInteractionType type, EmailConfirmOperation operation, String description) {
+    return clientError(type, operation, description, null);
   }
 
   private AuthenticationInteractionRequestResult clientError(
       AuthenticationInteractionType type,
+      EmailConfirmOperation operation,
       String description,
       JsonSchemaValidationResult validationResult) {
     Map<String, Object> response = new HashMap<>();
@@ -214,10 +252,6 @@ public class EmailChangeChallengeInteractor implements AuthenticationInteractor 
       response.put("error_messages", validationResult.errors());
     }
     return AuthenticationInteractionRequestResult.clientError(
-        response,
-        type,
-        operationType(),
-        method(),
-        DefaultSecurityEventType.email_change_request_failure);
+        response, type, operationType(), method(), operation.requestFailureEvent());
   }
 }

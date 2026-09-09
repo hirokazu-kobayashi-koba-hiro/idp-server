@@ -1,9 +1,9 @@
 {
-  "flow": "email-change",
+  "flow": "email-verify",
   "enabled": true,
   "policies": [
     {
-      "description": "self_service_email_change",
+      "description": "self_service_email_verification",
       "priority": 1,
       "conditions": {},
       "available_methods": [

@@ -21,20 +21,20 @@ import org.idp.server.core.openid.authentication.interaction.execution.Authentic
 import org.idp.server.core.openid.authentication.plugin.AuthenticationDependencyContainer;
 import org.idp.server.core.openid.authentication.plugin.AuthenticationInteractorFactory;
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
-import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionCommandRepository;
+import org.idp.server.core.openid.authentication.repository.AuthenticationInteractionQueryRepository;
 
-public class EmailChangeChallengeInteractorFactory implements AuthenticationInteractorFactory {
+public class EmailConfirmInteractorFactory implements AuthenticationInteractorFactory {
 
   @Override
   public AuthenticationInteractor create(AuthenticationDependencyContainer container) {
 
-    AuthenticationConfigurationQueryRepository configurationQueryRepository =
-        container.resolve(AuthenticationConfigurationQueryRepository.class);
-    AuthenticationInteractionCommandRepository transactionCommandRepository =
-        container.resolve(AuthenticationInteractionCommandRepository.class);
     AuthenticationExecutors authenticationExecutors =
         container.resolve(AuthenticationExecutors.class);
-    return new EmailChangeChallengeInteractor(
-        configurationQueryRepository, transactionCommandRepository, authenticationExecutors);
+    AuthenticationInteractionQueryRepository interactionQueryRepository =
+        container.resolve(AuthenticationInteractionQueryRepository.class);
+    AuthenticationConfigurationQueryRepository configurationQueryRepository =
+        container.resolve(AuthenticationConfigurationQueryRepository.class);
+    return new EmailConfirmInteractor(
+        authenticationExecutors, interactionQueryRepository, configurationQueryRepository);
   }
 }

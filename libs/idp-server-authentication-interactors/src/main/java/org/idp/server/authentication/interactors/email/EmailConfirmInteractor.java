@@ -33,38 +33,42 @@ import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserVerifier;
 import org.idp.server.core.openid.identity.exception.UserDuplicateException;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
-import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.mapper.MappingRuleObjectMapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
-import org.idp.server.platform.security.event.DefaultSecurityEventType;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
  * Self-service email-change verify (Issue #1416).
  *
- * <p>Reads the candidate address stored by {@link EmailChangeChallengeInteractor}, verifies the
+ * <p>Reads the target address stored by {@link EmailConfirmChallengeInteractor}, verifies the
  * one-time code through the same executor as login, and on success commits {@code email} + {@code
  * email_verified=true} to the authenticated user. The mutated {@link User} is persisted by the
  * caller's success branch (same as MFA registration).
  *
- * <p>Uniqueness is enforced here at commit time: if the candidate address is already used by a
- * different user in the tenant/provider, the change is rejected.
+ * <p>Serves both the {@code email-verify} and {@code email-change} flows: the commit is identical,
+ * and for a verification the stored address simply equals the one already on the account, so only
+ * {@code email_verified} actually changes. Which operation it is comes from the transaction's flow
+ * — see {@link EmailConfirmOperation} for why that is not inferred from comparing addresses.
  *
- * <p><b>Restricted to the {@code email-change} auth flow</b>, for the reason spelled out on {@link
- * EmailChangeChallengeInteractor}: this interactor commits an identity attribute, and the generic
- * {@code POST /{tenant}/v1/authentications/{id}/{interaction-type}} endpoint is unauthenticated.
+ * <p>Uniqueness is enforced here at commit time: if the target address is already used by a
+ * different user in the tenant/provider, the commit is rejected.
+ *
+ * <p><b>Restricted to those two flows</b>, for the reason spelled out on {@link
+ * EmailConfirmChallengeInteractor}: this interactor commits an identity attribute, and the generic
+ * {@code POST /{tenant}/v1/authorizations|authentications/{id}/{interaction-type}} endpoints are
+ * unauthenticated.
  */
-public class EmailChangeInteractor implements AuthenticationInteractor {
+public class EmailConfirmInteractor implements AuthenticationInteractor {
 
   AuthenticationExecutors authenticationExecutors;
   AuthenticationInteractionQueryRepository interactionQueryRepository;
   AuthenticationConfigurationQueryRepository configurationQueryRepository;
-  LoggerWrapper log = LoggerWrapper.getLogger(EmailChangeInteractor.class);
+  LoggerWrapper log = LoggerWrapper.getLogger(EmailConfirmInteractor.class);
 
-  public EmailChangeInteractor(
+  public EmailConfirmInteractor(
       AuthenticationExecutors authenticationExecutors,
       AuthenticationInteractionQueryRepository interactionQueryRepository,
       AuthenticationConfigurationQueryRepository configurationQueryRepository) {
@@ -75,7 +79,7 @@ public class EmailChangeInteractor implements AuthenticationInteractor {
 
   @Override
   public AuthenticationInteractionType type() {
-    return StandardAuthenticationInteraction.EMAIL_CHANGE.toType();
+    return StandardAuthenticationInteraction.EMAIL_CONFIRM.toType();
   }
 
   @Override
@@ -92,35 +96,32 @@ public class EmailChangeInteractor implements AuthenticationInteractor {
       RequestAttributes requestAttributes,
       UserQueryRepository userQueryRepository) {
 
-    log.debug("EmailChangeInteractor called");
+    log.debug("EmailConfirmInteractor called");
 
-    // Only a transaction created by the token-authenticated /v1/me/email/confirm entry may commit
-    // an identifier change. See the class javadoc.
-    if (!StandardAuthFlow.EMAIL_CHANGE.toAuthFlow().equals(transaction.flow())) {
-      log.warn(
-          "Email change verify rejected: transaction flow is {}, expected {}.",
-          transaction.flow().name(),
-          StandardAuthFlow.EMAIL_CHANGE.value());
-      return clientError(type, "email change is not allowed for this transaction.");
+    EmailConfirmOperation operation = EmailConfirmOperation.of(transaction.flow());
+    if (operation == null) {
+      log.warn("Email confirm verify rejected: transaction flow is {}.", transaction.flow().name());
+      return clientError(
+          type,
+          EmailConfirmOperation.CHANGE,
+          "email confirmation is not allowed for this transaction.");
     }
 
     if (!transaction.hasUser()) {
       return clientError(
-          type, "email change requires an authenticated user, but none is established.");
+          type,
+          operation,
+          "email confirm requires an authenticated user, but none is established.");
     }
 
     EmailVerificationChallengeRequest challengeRequest =
         interactionQueryRepository.get(
             tenant,
             transaction.identifier(),
-            "email-change-challenge-request",
+            "email-confirm-challenge-request",
             EmailVerificationChallengeRequest.class);
-    String newEmail = challengeRequest.email();
+    String targetEmail = challengeRequest.email();
     String providerId = challengeRequest.providerId();
-    // Same address = verify the current email; different = change. Affects the audit event only;
-    // the commit below is identical either way. Case-sensitive to match the case-sensitive email /
-    // preferred_username identity model (email is stored as-is, no normalization).
-    boolean isChange = !newEmail.equals(transaction.user().email());
 
     AuthenticationConfiguration configuration = configurationQueryRepository.get(tenant, "email");
     AuthenticationInteractionConfig authenticationConfig =
@@ -141,7 +142,7 @@ public class EmailChangeInteractor implements AuthenticationInteractor {
         MappingRuleObjectMapper.execute(responseConfig.bodyMappingRules(), jsonPathWrapper);
 
     if (!executionResult.isSuccess()) {
-      log.warn("Email change verification failed. status={}", executionResult.statusCode());
+      log.warn("Email confirm verification failed. status={}", executionResult.statusCode());
       return AuthenticationInteractionRequestResult.error(
           executionResult.statusCode(),
           contents,
@@ -149,13 +150,11 @@ public class EmailChangeInteractor implements AuthenticationInteractor {
           operationType(),
           method(),
           transaction.user(),
-          isChange
-              ? DefaultSecurityEventType.email_change_failure
-              : DefaultSecurityEventType.email_verify_failure);
+          operation.failureEvent());
     }
 
     User user = transaction.user();
-    user.setEmail(newEmail);
+    user.setEmail(targetEmail);
     user.setEmailVerified(true);
     // Recompute preferred_username: when the tenant identity policy keys on email, the login
     // identifier must track the new email (same as UserRegistrator does on update).
@@ -168,11 +167,11 @@ public class EmailChangeInteractor implements AuthenticationInteractor {
       new UserVerifier(userQueryRepository).verify(tenant, user);
     } catch (UserDuplicateException e) {
       log.warn(
-          "Email change rejected: preferred_username already in use. providerId={}", providerId);
-      return clientError(type, "new_email is already in use.");
+          "Email confirm rejected: preferred_username already in use. providerId={}", providerId);
+      return clientError(type, operation, "new_email is already in use.");
     }
 
-    log.debug("Email change succeeded for user: {}", user.sub());
+    log.debug("Email confirm succeeded for user: {}", user.sub());
 
     Map<String, Object> responseContents = new HashMap<>(contents);
     responseContents.put("user", user.toMinimalizedMap());
@@ -184,17 +183,15 @@ public class EmailChangeInteractor implements AuthenticationInteractor {
         method(),
         user,
         responseContents,
-        isChange
-            ? DefaultSecurityEventType.email_change_success
-            : DefaultSecurityEventType.email_verify_success);
+        operation.successEvent());
   }
 
   private AuthenticationInteractionRequestResult clientError(
-      AuthenticationInteractionType type, String description) {
+      AuthenticationInteractionType type, EmailConfirmOperation operation, String description) {
     Map<String, Object> response = new HashMap<>();
     response.put("error", "invalid_request");
     response.put("error_description", description);
     return AuthenticationInteractionRequestResult.clientError(
-        response, type, operationType(), method(), DefaultSecurityEventType.email_change_failure);
+        response, type, operationType(), method(), operation.failureEvent());
   }
 }

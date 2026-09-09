@@ -366,32 +366,43 @@ else
 fi
 echo ""
 
-# --- Step 7b: Create authentication policy for self-service email confirm / change ---
-# Required by POST /{tenant-id}/v1/me/email/confirm (#1416). Without a policy for the
-# "email-change" flow the endpoint cannot mint a transaction and returns 404.
-echo "Step 7b: Creating authentication policy (self-service email confirm/change)..."
+# --- Step 7b/7c: Authentication policies for the self-service email endpoints ---
+# Required by POST /{tenant-id}/v1/me/email/verification and /v1/me/email/change (#1416).
+# They are separate flows on purpose: verification only sets a claim (scope: openid), while a
+# change moves preferred_username, the login identifier (scope: email:change). Without the policy
+# for a flow, that endpoint cannot mint a transaction and returns 404.
+register_email_policy() {
+  local step="$1" flow="$2" template="$3" out="$4"
+  echo "Step ${step}: Creating authentication policy (${flow})..."
 
-EMAIL_CHANGE_POLICY_ID="${EMAIL_CHANGE_POLICY_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
-jq --arg id "${EMAIL_CHANGE_POLICY_ID}" '. + {id: $id}' "${SCRIPT_DIR}/authentication-policy-email-change.json" > "${OUTPUT_DIR}/authentication-policy-email-change.json"
-echo "  Saved: ${OUTPUT_DIR}/authentication-policy-email-change.json"
+  local policy_id
+  policy_id="$(uuidgen | tr '[:upper:]' '[:lower:]')"
+  jq --arg id "${policy_id}" '. + {id: $id}' "${SCRIPT_DIR}/${template}" > "${OUTPUT_DIR}/${out}"
+  echo "  Saved: ${OUTPUT_DIR}/${out}"
 
-EMAIL_CHANGE_POLICY_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-  "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/authentication-policies" \
-  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d @"${OUTPUT_DIR}/authentication-policy-email-change.json")
+  local response http_code body
+  response=$(curl -s -w "\n%{http_code}" -X POST \
+    "${ORG_BASE_URL}/${PUBLIC_TENANT_ID}/authentication-policies" \
+    -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d @"${OUTPUT_DIR}/${out}")
+  http_code=$(echo "${response}" | tail -n1)
+  body=$(echo "${response}" | sed '$d')
 
-HTTP_CODE=$(echo "${EMAIL_CHANGE_POLICY_RESPONSE}" | tail -n1)
-RESPONSE_BODY=$(echo "${EMAIL_CHANGE_POLICY_RESPONSE}" | sed '$d')
+  if [ "${http_code}" = "200" ] || [ "${http_code}" = "201" ]; then
+    echo "  Authentication policy created (${flow})"
+  else
+    echo "  Failed (HTTP ${http_code})"
+    echo "  ${body}" | jq '.' 2>/dev/null || echo "  ${body}"
+    exit 1
+  fi
+  echo ""
+}
 
-if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "201" ]; then
-  echo "  Email change authentication policy created"
-else
-  echo "  Failed (HTTP ${HTTP_CODE})"
-  echo "  ${RESPONSE_BODY}" | jq '.' 2>/dev/null || echo "  ${RESPONSE_BODY}"
-  exit 1
-fi
-echo ""
+register_email_policy "7b" "email-verify" \
+  "authentication-policy-email-verify.json" "authentication-policy-email-verify.json"
+register_email_policy "7c" "email-change" \
+  "authentication-policy-email-change.json" "authentication-policy-email-change.json"
 
 # --- Step 8: Create application client ---
 echo "Step 8: Creating application client..."
@@ -472,6 +483,7 @@ echo "  ${OUTPUT_DIR}/public-tenant.json"
 echo "  ${OUTPUT_DIR}/authentication-config-initial-registration.json"
 echo "  ${OUTPUT_DIR}/authentication-config-email.json"
 echo "  ${OUTPUT_DIR}/authentication-policy.json"
+echo "  ${OUTPUT_DIR}/authentication-policy-email-verify.json"
 echo "  ${OUTPUT_DIR}/authentication-policy-email-change.json"
 echo "  ${OUTPUT_DIR}/public-client.json"
 echo ""
