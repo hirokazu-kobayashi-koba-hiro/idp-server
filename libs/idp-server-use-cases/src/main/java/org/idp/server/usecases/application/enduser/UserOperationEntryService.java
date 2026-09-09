@@ -44,6 +44,7 @@ import org.idp.server.core.openid.identity.io.UserOperationStatus;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -112,6 +113,19 @@ public class UserOperationEntryService implements UserOperationApi {
       AuthFlow authFlow,
       MfaRegistrationRequest request,
       RequestAttributes requestAttributes) {
+
+    // The flow comes straight from the URL path and nothing validates it, so this minter must not
+    // produce a transaction that another endpoint owns. oauth / ciba transactions minted here have
+    // an empty AuthorizationIdentifier and are orphans: mint returns 200, then driving them 500s.
+    if (StandardAuthFlow.isDedicatedEndpointOnly(authFlow)) {
+      log.warn("Rejected generic MFA minting for a dedicated-endpoint flow: {}", authFlow.name());
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "invalid_request");
+      contents.put(
+          "error_description",
+          String.format("'%s' is not an MFA operation. use its own endpoint.", authFlow.name()));
+      return UserOperationResponse.failure(contents);
+    }
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
