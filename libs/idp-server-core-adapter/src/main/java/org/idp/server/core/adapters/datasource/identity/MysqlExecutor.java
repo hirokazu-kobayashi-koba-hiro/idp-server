@@ -212,9 +212,18 @@ public class MysqlExecutor implements UserSqlExecutor {
       where.append(" AND LOWER(idp_user.nickname) LIKE ?");
       params.add("%" + queries.nickname().toLowerCase() + "%");
     }
+    // Issue #1866: preferred_username は (tenant_id, provider_id, preferred_username) の
+    // 一意キーであり、部分一致で探す対象ではない。認証時の引き当て
+    // （findByPreferredUsername）も、同じクラスの email / phone_number もすでに完全一致で、
+    // ここだけが例外になっていた。完全一致にすることで uk_preferred_username が効く。
     if (queries.hasPreferredUsername()) {
+      where.append(" AND idp_user.preferred_username = ?");
+      params.add(queries.preferredUsername());
+    }
+
+    if (queries.hasPreferredUsernameLike()) {
       where.append(" AND LOWER(idp_user.preferred_username) LIKE ?");
-      params.add("%" + queries.preferredUsername().toLowerCase() + "%");
+      params.add("%" + queries.preferredUsernameLike().toLowerCase() + "%");
     }
 
     if (queries.hasPhoneNumber()) {
@@ -322,8 +331,13 @@ public class MysqlExecutor implements UserSqlExecutor {
       cteParams.add("%" + queries.nickname().toLowerCase() + "%");
     }
     if (queries.hasPreferredUsername()) {
+      cteWhere.append(" AND idp_user.preferred_username = ?");
+      cteParams.add(queries.preferredUsername());
+    }
+
+    if (queries.hasPreferredUsernameLike()) {
       cteWhere.append(" AND LOWER(idp_user.preferred_username) LIKE ?");
-      cteParams.add("%" + queries.preferredUsername().toLowerCase() + "%");
+      cteParams.add("%" + queries.preferredUsernameLike().toLowerCase() + "%");
     }
 
     if (queries.hasPhoneNumber()) {

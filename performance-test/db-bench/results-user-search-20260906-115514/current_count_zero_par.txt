@@ -1,0 +1,18 @@
+Finalize Aggregate  (cost=49414.59..49414.60 rows=1 width=8) (actual time=341.936..347.452 rows=1 loops=1)
+  Buffers: shared hit=9378
+  ->  Gather  (cost=49414.17..49414.58 rows=4 width=8) (actual time=341.876..347.444 rows=5 loops=1)
+        Workers Planned: 4
+        Workers Launched: 4
+        Buffers: shared hit=9378
+        ->  Partial Aggregate  (cost=48414.17..48414.18 rows=1 width=8) (actual time=333.541..333.542 rows=1 loops=5)
+              Buffers: shared hit=9378
+              ->  Parallel Index Only Scan using uk_preferred_username on idp_user  (cost=0.55..48414.11 rows=25 width=0) (actual time=333.539..333.539 rows=0 loops=5)
+                    Index Cond: (tenant_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid)
+                    Filter: ((preferred_username)::text ~~* '%zzzzzzzzzzzz%'::text)
+                    Rows Removed by Filter: 200000
+                    Heap Fetches: 14
+                    Buffers: shared hit=9378
+Planning:
+  Buffers: shared hit=239
+Planning Time: 1.285 ms
+Execution Time: 347.530 ms

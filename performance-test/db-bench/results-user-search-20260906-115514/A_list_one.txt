@@ -1,0 +1,13 @@
+Limit  (cost=8.58..8.59 rows=1 width=24) (actual time=0.029..0.029 rows=1 loops=1)
+  Buffers: shared hit=11
+  ->  Sort  (cost=8.58..8.59 rows=1 width=24) (actual time=0.028..0.028 rows=1 loops=1)
+        Sort Key: created_at DESC, id DESC
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=11
+        ->  Index Scan using uk_preferred_username on idp_user  (cost=0.55..8.57 rows=1 width=24) (actual time=0.012..0.012 rows=1 loops=1)
+              Index Cond: ((tenant_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid) AND ((provider_id)::text = 'idp-server'::text) AND ((preferred_username)::text = 'user00000042@example.com'::text))
+              Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=262
+Planning Time: 1.138 ms
+Execution Time: 0.083 ms

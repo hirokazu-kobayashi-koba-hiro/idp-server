@@ -78,7 +78,17 @@ paths:
         required: false
         schema:
           type: string
-        description: 優先ユーザー名でフィルタリング
+        description: |
+          優先ユーザー名で完全一致検索。テナントとプロバイダーの範囲で一意な識別子のため、部分一致では検索しません（Issue #1866）。
+          名前で探す場合は name / given_name / family_name / nickname を使ってください。
+      - name: preferred_username_like
+        in: query
+        required: false
+        schema:
+          type: string
+        description: |
+          優先ユーザー名で部分一致検索（大文字小文字区別なし）。断片で探したい場合に使います。
+          一意キーに対する部分一致のため索引が効かず、テナントの全ユーザーを評価します。件数が多いテナントでは遅くなります。
       - name: email
         in: query
         required: false

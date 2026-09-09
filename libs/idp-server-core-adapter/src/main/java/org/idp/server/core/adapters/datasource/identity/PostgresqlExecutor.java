@@ -211,9 +211,18 @@ public class PostgresqlExecutor implements UserSqlExecutor {
       where.append(" AND idp_user.nickname ILIKE ?");
       params.add("%" + queries.nickname() + "%");
     }
+    // Issue #1866: preferred_username は (tenant_id, provider_id, preferred_username) の
+    // 一意キーであり、部分一致で探す対象ではない。認証時の引き当て
+    // （findByPreferredUsername）も、同じクラスの email / phone_number もすでに完全一致で、
+    // ここだけが例外になっていた。完全一致にすることで uk_preferred_username が効く。
     if (queries.hasPreferredUsername()) {
+      where.append(" AND idp_user.preferred_username = ?");
+      params.add(queries.preferredUsername());
+    }
+
+    if (queries.hasPreferredUsernameLike()) {
       where.append(" AND idp_user.preferred_username ILIKE ?");
-      params.add("%" + queries.preferredUsername() + "%");
+      params.add("%" + queries.preferredUsernameLike() + "%");
     }
 
     if (queries.hasPhoneNumber()) {
@@ -319,8 +328,13 @@ public class PostgresqlExecutor implements UserSqlExecutor {
       cteParams.add("%" + queries.nickname() + "%");
     }
     if (queries.hasPreferredUsername()) {
+      cteWhere.append(" AND idp_user.preferred_username = ?");
+      cteParams.add(queries.preferredUsername());
+    }
+
+    if (queries.hasPreferredUsernameLike()) {
       cteWhere.append(" AND idp_user.preferred_username ILIKE ?");
-      cteParams.add("%" + queries.preferredUsername() + "%");
+      cteParams.add("%" + queries.preferredUsernameLike() + "%");
     }
 
     if (queries.hasPhoneNumber()) {

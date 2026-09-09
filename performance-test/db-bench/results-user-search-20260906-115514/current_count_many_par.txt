@@ -1,0 +1,20 @@
+Finalize Aggregate  (cost=148216.99..148217.00 rows=1 width=8) (actual time=790.548..865.259 rows=1 loops=1)
+  Buffers: shared hit=126697 read=16730
+  ->  Gather  (cost=148216.57..148216.98 rows=4 width=8) (actual time=790.435..865.249 rows=5 loops=1)
+        Workers Planned: 4
+        Workers Launched: 4
+        Buffers: shared hit=126697 read=16730
+        ->  Partial Aggregate  (cost=147216.57..147216.58 rows=1 width=8) (actual time=739.335..739.335 rows=1 loops=5)
+              Buffers: shared hit=126697 read=16730
+              ->  Parallel Seq Scan on idp_user  (cost=0.00..147216.50 rows=25 width=0) (actual time=653.188..739.301 rows=20 loops=5)
+                    Filter: (((preferred_username)::text ~~* '%user000001%'::text) AND (tenant_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid))
+                    Rows Removed by Filter: 201988
+                    Buffers: shared hit=126697 read=16730
+Planning:
+  Buffers: shared hit=239
+Planning Time: 1.418 ms
+JIT:
+  Functions: 22
+  Options: Inlining false, Optimization false, Expressions true, Deforming true
+  Timing: Generation 2.526 ms, Inlining 0.000 ms, Optimization 2.941 ms, Emission 22.979 ms, Total 28.446 ms
+Execution Time: 888.891 ms
