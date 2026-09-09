@@ -241,6 +241,52 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
   }
 
   @Override
+  public void updateEmail(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    // Only the columns a self-service email confirm owns. A full-row write from a caller-held User
+    // would revert anything changed since that object was loaded, status included.
+    String sqlTemplate =
+        """
+                     UPDATE idp_user
+                     SET email = ?,
+                     email_verified = ?,
+                     preferred_username = ?,
+                     updated_at = now()
+                     WHERE id = ?::uuid
+                     AND tenant_id = ?::uuid;
+                     """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(user.email());
+    params.add(user.emailVerified());
+    params.add(user.preferredUsername());
+    params.add(user.subAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void updateEmailVerified(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                     UPDATE idp_user
+                     SET email_verified = ?,
+                     updated_at = now()
+                     WHERE id = ?::uuid
+                     AND tenant_id = ?::uuid;
+                     """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(user.emailVerified());
+    params.add(user.subAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
   public void delete(Tenant tenant, UserIdentifier userIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =

@@ -34,6 +34,11 @@ import org.idp.server.core.openid.identity.authentication.PasswordVerificationDe
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.device.AuthenticationDevicePatchValidator;
+import org.idp.server.core.openid.identity.email.EmailVerificationChallengeIdentifier;
+import org.idp.server.core.openid.identity.email.EmailVerificationOperation;
+import org.idp.server.core.openid.identity.email.EmailVerificationRequest;
+import org.idp.server.core.openid.identity.email.EmailVerificationResponse;
+import org.idp.server.core.openid.identity.email.EmailVerificationService;
 import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.openid.identity.event.UserLifecycleType;
@@ -73,6 +78,7 @@ public class UserOperationEntryService implements UserOperationApi {
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   PasswordVerificationDelegation passwordVerificationDelegation;
   PasswordEncodeDelegation passwordEncodeDelegation;
+  EmailVerificationService emailVerificationService;
 
   public UserOperationEntryService(
       UserQueryRepository userQueryRepository,
@@ -87,7 +93,8 @@ public class UserOperationEntryService implements UserOperationApi {
       UserOperationEventPublisher userOperationEventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       PasswordVerificationDelegation passwordVerificationDelegation,
-      PasswordEncodeDelegation passwordEncodeDelegation) {
+      PasswordEncodeDelegation passwordEncodeDelegation,
+      EmailVerificationService emailVerificationService) {
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
@@ -102,6 +109,7 @@ public class UserOperationEntryService implements UserOperationApi {
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
     this.passwordVerificationDelegation = passwordVerificationDelegation;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
+    this.emailVerificationService = emailVerificationService;
   }
 
   @Override
@@ -135,6 +143,71 @@ public class UserOperationEntryService implements UserOperationApi {
     contents.put("id", authenticationTransaction.identifier().value());
 
     return UserOperationResponse.success(contents);
+  }
+
+  @Override
+  public UserOperationResponse requestEmailVerification(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      EmailVerificationOperation operation,
+      EmailVerificationRequest request,
+      RequestAttributes requestAttributes) {
+
+    // Scope validation - RFC 6750 Section 3.1. The operation carries its own requirement, so the
+    // weaker one can never be applied to the stronger operation.
+    if (!oAuthToken.scopes().contains(operation.requiredScope())) {
+      return insufficientScope(operation.requiredScope());
+    }
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    EmailVerificationResponse response =
+        emailVerificationService.request(tenant, user, operation, request);
+
+    eventPublisher.publish(tenant, oAuthToken, response.eventType(), requestAttributes);
+    return toUserOperationResponse(response);
+  }
+
+  @Override
+  public UserOperationResponse verifyEmailVerification(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      EmailVerificationOperation operation,
+      EmailVerificationChallengeIdentifier challengeIdentifier,
+      EmailVerificationRequest request,
+      RequestAttributes requestAttributes) {
+
+    // Scope validation - RFC 6750 Section 3.1
+    if (!oAuthToken.scopes().contains(operation.requiredScope())) {
+      return insufficientScope(operation.requiredScope());
+    }
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    EmailVerificationResponse response =
+        emailVerificationService.verify(tenant, user, operation, challengeIdentifier, request);
+
+    eventPublisher.publish(tenant, oAuthToken, response.eventType(), requestAttributes);
+    return toUserOperationResponse(response);
+  }
+
+  private UserOperationResponse toUserOperationResponse(EmailVerificationResponse response) {
+    UserOperationStatus status =
+        switch (response.status()) {
+          case OK -> UserOperationStatus.OK;
+          case NOT_FOUND -> UserOperationStatus.NOT_FOUND;
+          case INVALID_REQUEST -> UserOperationStatus.INVALID_REQUEST;
+        };
+    return new UserOperationResponse(status, response.contents());
+  }
+
+  private UserOperationResponse insufficientScope(String requiredScope) {
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("error", "insufficient_scope");
+    contents.put(
+        "error_description", String.format("The request requires '%s' scope", requiredScope));
+    contents.put("scope", requiredScope);
+    return UserOperationResponse.insufficientScope(contents);
   }
 
   @Override

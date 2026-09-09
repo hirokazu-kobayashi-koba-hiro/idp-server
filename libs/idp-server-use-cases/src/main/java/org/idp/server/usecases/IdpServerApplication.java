@@ -19,6 +19,7 @@ package org.idp.server.usecases;
 import java.net.http.HttpClient;
 import java.util.Map;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
+import org.idp.server.authentication.interactors.email.EmailAuthenticationConfigCodeSender;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.authentication.interactors.plugin.AuthenticationDeviceNotifiersPluginLoader;
@@ -114,6 +115,8 @@ import org.idp.server.core.openid.identity.authentication.PasswordVerificationDe
 import org.idp.server.core.openid.identity.authentication.UserPasswordAuthenticator;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogApi;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogEventPublisher;
+import org.idp.server.core.openid.identity.email.EmailVerificationChallengeRepository;
+import org.idp.server.core.openid.identity.email.EmailVerificationService;
 import org.idp.server.core.openid.identity.event.*;
 import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
@@ -714,7 +717,13 @@ public class IdpServerApplication {
             userOperationEventPublisher,
             userLifecycleEventPublisher,
             passwordVerificationDelegation,
-            passwordEncodeDelegation);
+            passwordEncodeDelegation,
+            new EmailVerificationService(
+                applicationComponentContainer.resolve(EmailVerificationChallengeRepository.class),
+                new EmailAuthenticationConfigCodeSender(
+                    authenticationConfigurationQueryRepository, emailSenders),
+                userQueryRepository,
+                userCommandRepository));
     this.rawUserOperationApi = userOperationEntryService;
     this.userOperationApi =
         TenantAwareEntryServiceProxy.createProxy(

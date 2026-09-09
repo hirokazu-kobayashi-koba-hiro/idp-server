@@ -242,6 +242,52 @@ public class MysqlExecutor implements UserCommandSqlExecutor {
   }
 
   @Override
+  public void updateEmail(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    // Only the columns a self-service email confirm owns. A full-row write from a caller-held User
+    // would revert anything changed since that object was loaded, status included.
+    String sqlTemplate =
+        """
+                     UPDATE idp_user
+                     SET email = ?,
+                     email_verified = ?,
+                     preferred_username = ?,
+                     updated_at = CURRENT_TIMESTAMP(6)
+                     WHERE id = ?
+                     AND tenant_id = ?;
+                     """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(user.email());
+    params.add(user.emailVerified());
+    params.add(user.preferredUsername());
+    params.add(user.sub());
+    params.add(tenant.identifier().value());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void updateEmailVerified(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                     UPDATE idp_user
+                     SET email_verified = ?,
+                     updated_at = CURRENT_TIMESTAMP(6)
+                     WHERE id = ?
+                     AND tenant_id = ?;
+                     """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(user.emailVerified());
+    params.add(user.sub());
+    params.add(tenant.identifier().value());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
   public void delete(Tenant tenant, UserIdentifier userIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =

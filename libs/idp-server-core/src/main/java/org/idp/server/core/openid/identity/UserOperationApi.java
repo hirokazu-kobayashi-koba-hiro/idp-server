@@ -25,6 +25,9 @@ import org.idp.server.core.openid.identity.authentication.PasswordChangeRequest;
 import org.idp.server.core.openid.identity.authentication.PasswordChangeResponse;
 import org.idp.server.core.openid.identity.authentication.PasswordResetRequest;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
+import org.idp.server.core.openid.identity.email.EmailVerificationChallengeIdentifier;
+import org.idp.server.core.openid.identity.email.EmailVerificationOperation;
+import org.idp.server.core.openid.identity.email.EmailVerificationRequest;
 import org.idp.server.core.openid.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.openid.identity.io.UserOperationResponse;
@@ -42,6 +45,43 @@ public interface UserOperationApi {
       OAuthToken token,
       AuthFlow authFlow,
       MfaRegistrationRequest request,
+      RequestAttributes requestAttributes);
+
+  /**
+   * Starts a self-service email verification or change (Issue #1416).
+   *
+   * <p>Deliberately not built on {@link #requestMfaOperation}: that mints an {@code
+   * AuthenticationTransaction}, whose interaction endpoints are unauthenticated by design because
+   * they exist to drive parties that hold no credentials yet. An already-authenticated profile
+   * mutation has no business being reachable through those doors, so this flow keeps its own
+   * challenge state and is reachable only from {@code /v1/me}.
+   *
+   * <p>{@code operation} decides both the required scope and where the code is sent: {@code VERIFY}
+   * always targets the address already on the account and ignores the request body, {@code CHANGE}
+   * targets a validated {@code new_email}.
+   */
+  UserOperationResponse requestEmailVerification(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      EmailVerificationOperation operation,
+      EmailVerificationRequest request,
+      RequestAttributes requestAttributes);
+
+  /**
+   * Verifies the emailed code and commits the address for {@link #requestEmailVerification}.
+   *
+   * <p>The challenge is looked up by ({@code id}, tenant, owner), so one belonging to another user
+   * is not found rather than found-and-rejected, and the operation comes from the stored row so
+   * what was authorized and what is committed cannot disagree.
+   */
+  UserOperationResponse verifyEmailVerification(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      EmailVerificationOperation operation,
+      EmailVerificationChallengeIdentifier challengeIdentifier,
+      EmailVerificationRequest request,
       RequestAttributes requestAttributes);
 
   AuthenticationInteractionRequestResult interact(

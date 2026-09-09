@@ -66,6 +66,17 @@ public class UserCommandDataSource implements UserCommandRepository {
   }
 
   @Override
+  public void updateEmail(Tenant tenant, User user) {
+    executor.updateEmail(tenant, user);
+    invalidateStatusCache(tenant, user.userIdentifier());
+  }
+
+  @Override
+  public void updateEmailVerified(Tenant tenant, User user) {
+    executor.updateEmailVerified(tenant, user);
+  }
+
+  @Override
   public void updateStatus(Tenant tenant, User user) {
     executor.updateStatus(tenant, user);
     invalidateStatusCache(tenant, user.userIdentifier());

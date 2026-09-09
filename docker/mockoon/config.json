@@ -2118,6 +2118,41 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-sent-emails",
+      "type": "crud",
+      "documentation": "Issue #1416: CRUD over the sent-emails bucket. POST here from an email sender config; GET to list what was sent.",
+      "method": "",
+      "endpoint": "sent-emails",
+      "responses": [
+        {
+          "uuid": "e2e-sent-emails-response",
+          "body": "",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "sent emails crud",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "DATABUCKET",
+          "filePath": "",
+          "databucketID": "e2e-sent-emails-bucket",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -2268,6 +2303,10 @@
     {
       "type": "route",
       "uuid": "e2e-echo-request-context"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-sent-emails"
     }
   ],
   "proxyMode": false,
@@ -2320,6 +2359,13 @@
       "name": "Users",
       "documentation": "",
       "value": "[\n  {{#repeat 50}}\n  {\n    \"id\": \"{{faker 'string.uuid'}}\",\n]"
+    },
+    {
+      "uuid": "e2e-sent-emails-databucket",
+      "id": "e2e-sent-emails-bucket",
+      "name": "sent emails",
+      "documentation": "Issue #1416: stores what the tenant's email sender POSTed, so an E2E can read back the one-time code. idp-server generates the code and never returns it in an API response (that would defeat proving reachability of the address), so the test has to observe the outbound mail.",
+      "value": "[]"
     }
   ],
   "callbacks": []
