@@ -56,14 +56,27 @@ public enum StandardAuthFlow {
   }
 
   /**
-   * Flows that may only be minted by their own dedicated, scope-gated endpoint.
+   * Flows that may only be minted by their own dedicated endpoint, never by the generic {@code POST
+   * /{tenant-id}/v1/me/mfa/{mfa-operation-type}} minter.
    *
-   * <p><b>Add a flow here whenever its endpoint enforces a scope or any other authorization beyond
-   * "the token is valid".</b> The generic {@code POST /{tenant-id}/v1/me/mfa/{mfa-operation-type}}
-   * minter takes the flow straight from the path and checks no scope, so anything omitted from this
-   * set can be minted from there with a bare token — and every downstream guard is powerless,
-   * because it inspects the persisted transaction, which is indistinguishable from one the proper
-   * endpoint created (Issue #1416).
+   * <p><b>Add a flow here whenever it is not an MFA registration operation</b> — either because its
+   * endpoint enforces a scope or other authorization beyond "the token is valid", or because its
+   * transaction only makes sense alongside state the MFA minter cannot create. The minter takes the
+   * flow straight from the URL path and checks nothing, so anything omitted from this set can be
+   * minted from there with a bare token (Issue #1416).
+   *
+   * <p>Two distinct reasons are represented here:
+   *
+   * <ul>
+   *   <li>{@link #EMAIL_VERIFY} / {@link #EMAIL_CHANGE} — scope-gated. Minting these elsewhere
+   *       bypasses the {@code email:change} requirement, and every downstream guard is powerless
+   *       because it inspects the persisted transaction, which is indistinguishable from one the
+   *       proper endpoint created.
+   *   <li>{@link #OAUTH} / {@link #CIBA} — these need a real authorization / backchannel request.
+   *       {@code MfaRegistrationTransactionCreator} sets an empty {@code AuthorizationIdentifier},
+   *       so a transaction minted here is an orphan that makes the flow-specific entry service fail
+   *       on lookup (observed: mint 200, then 500 when driven).
+   * </ul>
    *
    * <p>Deliberately a deny set, not an allow set: {@code flow} is a free-form string on {@link
    * org.idp.server.core.openid.authentication.policy.AuthenticationPolicyConfiguration} and nothing
@@ -71,7 +84,7 @@ public enum StandardAuthFlow {
    * not listed here. Allow-listing would break those.
    */
   private static final Set<StandardAuthFlow> DEDICATED_ENDPOINT_ONLY =
-      EnumSet.of(EMAIL_VERIFY, EMAIL_CHANGE);
+      EnumSet.of(EMAIL_VERIFY, EMAIL_CHANGE, OAUTH, CIBA);
 
   /**
    * Whether {@code authFlow} is one of the {@link #DEDICATED_ENDPOINT_ONLY} flows, and therefore

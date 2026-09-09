@@ -665,7 +665,19 @@ describe("Me Use Case: self-service email change", () => {
 
     // new_email is committed verbatim as email and (EMAIL policy) as preferred_username, so a
     // free-form string must never reach the sender or the user record.
-    for (const newEmail of ["not-an-email", "no-domain@", "@no-local.example.com", "a b@c.example.com", ""]) {
+    // Non-string values must be rejected by the schema, not coerced by optValueAsString.
+    for (const newEmail of [
+      "not-an-email",
+      "no-domain@",
+      "@no-local.example.com",
+      "a b@c.example.com",
+      "",
+      12345,
+      { a: 1 },
+      ["x"],
+      null,
+      true,
+    ]) {
       const startResp = await postWithJson({
         url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
         headers: createBearerHeader(accessToken),
@@ -745,6 +757,66 @@ describe("Me Use Case: self-service email change", () => {
     expect((await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status).toBe(200);
     const proper = await submitCode(ctx, scopedToken, started.transactionId, started.code);
     expect(proper.status).toBe(200);
+  });
+
+  it("security: the generic MFA minter refuses non-MFA flows even when a policy exists", async () => {
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL");
+    tenants.push(ctx);
+
+    // Register oauth/ciba policies first: without them the minter 404s on the policy lookup, which
+    // would hide whether the flow itself is refused. With them, an unguarded minter returns 200 and
+    // the resulting orphan transaction (empty AuthorizationIdentifier) 500s when driven.
+    const loginPolicy = (flow) => ({
+      id: uuidv4(),
+      flow,
+      enabled: true,
+      policies: [
+        {
+          description: "password_login",
+          priority: 1,
+          conditions: {},
+          available_methods: ["password"],
+          step_definitions: [{ method: "password", order: 1, requires_user: false }],
+          success_conditions: {
+            any_of: [
+              [
+                {
+                  path: "$.password-authentication.success_count",
+                  type: "integer",
+                  operation: "gte",
+                  value: 1,
+                },
+              ],
+            ],
+          },
+        },
+      ],
+    });
+
+    for (const flow of ["oauth", "ciba"]) {
+      const policyResp = await postWithJson({
+        url: `${backendUrl}/v1/management/organizations/${ctx.organizationId}/tenants/${ctx.tenantId}/authentication-policies`,
+        headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
+        body: loginPolicy(flow),
+      });
+      expect(policyResp.status).toBe(201);
+    }
+
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, "openid email email:change")
+    ).data.access_token;
+
+    for (const flow of ["oauth", "ciba"]) {
+      const resp = await postWithJson({
+        url: `${backendUrl}/${ctx.tenantId}/v1/me/mfa/${flow}`,
+        headers: createBearerHeader(token),
+        body: {},
+      });
+      console.log(`mfa minter ${flow}:`, resp.status, JSON.stringify(resp.data));
+      expect(resp.status).toBe(400);
+      expect(resp.data.error_description).toContain("not an MFA operation");
+      expect(resp.data.id).toBeUndefined();
+    }
   });
 
   it("audit: emits a security event for a successful email change", async () => {

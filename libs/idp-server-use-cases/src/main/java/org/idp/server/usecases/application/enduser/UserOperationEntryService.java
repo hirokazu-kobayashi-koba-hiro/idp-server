@@ -114,10 +114,13 @@ public class UserOperationEntryService implements UserOperationApi {
       MfaRegistrationRequest request,
       RequestAttributes requestAttributes) {
 
-    // This minter takes the flow from the URL path and enforces no scope, so it must not be able to
-    // produce a transaction that a scope-gated endpoint owns. Without this, POST /v1/me/mfa/
-    // email-change would mint a flow=email-change transaction from a bare token, and the flow guard
-    // in the email-confirm interactors could not tell it apart from a legitimate one (#1416).
+    // This minter takes the flow from the URL path and enforces nothing, so it must not be able to
+    // produce a transaction that another endpoint owns. Two cases: a scope-gated flow (email-change
+    // minted here would bypass email:change, and the interactors' flow guard could not tell it
+    // apart
+    // from a legitimate one), and a flow that needs an authorization / backchannel request the
+    // minter cannot create (oauth / ciba minted here are orphans that 500 when driven). See
+    // StandardAuthFlow.DEDICATED_ENDPOINT_ONLY (#1416).
     if (StandardAuthFlow.isDedicatedEndpointOnly(authFlow)) {
       log.warn("Rejected generic MFA minting for a dedicated-endpoint flow: {}", authFlow.name());
       Map<String, Object> contents = new HashMap<>();
