@@ -44,6 +44,47 @@ public interface UserOperationApi {
       MfaRegistrationRequest request,
       RequestAttributes requestAttributes);
 
+  /**
+   * Creates a self-service email verification or change transaction (Issue #1416).
+   *
+   * <p>Shares the transaction model with {@link #requestMfaOperation} (a {@code $.user}-bound
+   * transaction), but is exposed under its own {@code /v1/me/email/verification} and {@code
+   * /v1/me/email/change} entries. They are separate endpoints because they carry different
+   * privilege: a verification only sets a claim, whereas a change moves {@code preferred_username}
+   * — the login identifier — under an EMAIL identity policy. The required scope therefore differs,
+   * and the authorization decision has to be made before any code is sent, which is impossible if
+   * the intent is inferred from the request body.
+   *
+   * <p>{@code authFlow} must be {@code email-verify} or {@code email-change}; it is fixed here and
+   * is what the email-confirm interactors check, so they refuse to run on a login / CIBA
+   * transaction reached through the unauthenticated generic interaction endpoints.
+   *
+   * @param authFlow which operation this transaction drives
+   */
+  UserOperationResponse requestEmailConfirm(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken token,
+      AuthFlow authFlow,
+      MfaRegistrationRequest request,
+      RequestAttributes requestAttributes);
+
+  /**
+   * Verifies the emailed code and commits the address for the {@link #requestEmailConfirm} flow.
+   *
+   * <p>The transaction must belong to {@code user}; otherwise it is treated as not found so one
+   * authenticated user cannot drive another's transaction by id. {@code token} is required because
+   * the same scope enforced when the transaction was created is re-checked at commit.
+   */
+  UserOperationResponse verifyEmailConfirm(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken token,
+      AuthFlow authFlow,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes);
+
   AuthenticationInteractionRequestResult interact(
       TenantIdentifier tenantIdentifier,
       AuthenticationTransactionIdentifier authenticationTransactionIdentifier,

@@ -21,6 +21,8 @@ import java.util.Map;
 import org.idp.server.adapters.springboot.application.restapi.FapiInteractionIdConfigurable;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.adapters.springboot.application.restapi.model.ResourceOwnerPrincipal;
+import org.idp.server.core.openid.authentication.AuthenticationInteractionRequest;
+import org.idp.server.core.openid.authentication.AuthenticationTransactionIdentifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserOperationApi;
 import org.idp.server.core.openid.identity.authentication.PasswordChangeRequest;
@@ -31,6 +33,7 @@ import org.idp.server.core.openid.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.openid.identity.io.UserOperationResponse;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -70,6 +73,134 @@ public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfi
         userOperationApi.requestMfaOperation(
             tenantIdentifier, user, oAuthToken, authFlow, request, requestAttributes);
 
+    HttpHeaders httpHeaders = new HttpHeaders();
+    addFapiInteractionId(httpHeaders, fapiInteractionId);
+    httpHeaders.add("Content-Type", "application/json");
+    return new ResponseEntity<>(
+        response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));
+  }
+
+  @PostMapping("/email/verification")
+  public ResponseEntity<?> requestEmailVerification(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    return requestEmailConfirm(
+        resourceOwnerPrincipal,
+        tenantIdentifier,
+        StandardAuthFlow.EMAIL_VERIFY.toAuthFlow(),
+        fapiInteractionId,
+        requestBody,
+        httpServletRequest);
+  }
+
+  @PostMapping("/email/verification/{id}/verify")
+  public ResponseEntity<?> verifyEmailVerification(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    return verifyEmailConfirm(
+        resourceOwnerPrincipal,
+        tenantIdentifier,
+        StandardAuthFlow.EMAIL_VERIFY.toAuthFlow(),
+        authenticationTransactionIdentifier,
+        fapiInteractionId,
+        requestBody,
+        httpServletRequest);
+  }
+
+  @PostMapping("/email/change")
+  public ResponseEntity<?> requestEmailChange(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    return requestEmailConfirm(
+        resourceOwnerPrincipal,
+        tenantIdentifier,
+        StandardAuthFlow.EMAIL_CHANGE.toAuthFlow(),
+        fapiInteractionId,
+        requestBody,
+        httpServletRequest);
+  }
+
+  @PostMapping("/email/change/{id}/verify")
+  public ResponseEntity<?> verifyEmailChange(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    return verifyEmailConfirm(
+        resourceOwnerPrincipal,
+        tenantIdentifier,
+        StandardAuthFlow.EMAIL_CHANGE.toAuthFlow(),
+        authenticationTransactionIdentifier,
+        fapiInteractionId,
+        requestBody,
+        httpServletRequest);
+  }
+
+  private ResponseEntity<?> requestEmailConfirm(
+      ResourceOwnerPrincipal resourceOwnerPrincipal,
+      TenantIdentifier tenantIdentifier,
+      AuthFlow authFlow,
+      String fapiInteractionId,
+      Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    User user = resourceOwnerPrincipal.getUser();
+    OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
+    MfaRegistrationRequest request = new MfaRegistrationRequest(requestBody);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserOperationResponse response =
+        userOperationApi.requestEmailConfirm(
+            tenantIdentifier, user, oAuthToken, authFlow, request, requestAttributes);
+
+    return toResponseEntity(response, fapiInteractionId);
+  }
+
+  private ResponseEntity<?> verifyEmailConfirm(
+      ResourceOwnerPrincipal resourceOwnerPrincipal,
+      TenantIdentifier tenantIdentifier,
+      AuthFlow authFlow,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      String fapiInteractionId,
+      Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    User user = resourceOwnerPrincipal.getUser();
+    OAuthToken oAuthToken = resourceOwnerPrincipal.getOAuthToken();
+    AuthenticationInteractionRequest request = new AuthenticationInteractionRequest(requestBody);
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    UserOperationResponse response =
+        userOperationApi.verifyEmailConfirm(
+            tenantIdentifier,
+            user,
+            oAuthToken,
+            authFlow,
+            authenticationTransactionIdentifier,
+            request,
+            requestAttributes);
+
+    return toResponseEntity(response, fapiInteractionId);
+  }
+
+  private ResponseEntity<?> toResponseEntity(
+      UserOperationResponse response, String fapiInteractionId) {
     HttpHeaders httpHeaders = new HttpHeaders();
     addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.add("Content-Type", "application/json");

@@ -44,6 +44,7 @@ import org.idp.server.core.openid.identity.io.UserOperationStatus;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.type.AuthFlow;
+import org.idp.server.core.openid.oauth.type.StandardAuthFlow;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.UserEventPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -113,6 +114,23 @@ public class UserOperationEntryService implements UserOperationApi {
       MfaRegistrationRequest request,
       RequestAttributes requestAttributes) {
 
+    // This minter takes the flow from the URL path and enforces nothing, so it must not be able to
+    // produce a transaction that another endpoint owns. Two cases: a scope-gated flow (email-change
+    // minted here would bypass email:change, and the interactors' flow guard could not tell it
+    // apart
+    // from a legitimate one), and a flow that needs an authorization / backchannel request the
+    // minter cannot create (oauth / ciba minted here are orphans that 500 when driven). See
+    // StandardAuthFlow.DEDICATED_ENDPOINT_ONLY (#1416).
+    if (StandardAuthFlow.isDedicatedEndpointOnly(authFlow)) {
+      log.warn("Rejected generic MFA minting for a dedicated-endpoint flow: {}", authFlow.name());
+      Map<String, Object> contents = new HashMap<>();
+      contents.put("error", "invalid_request");
+      contents.put(
+          "error_description",
+          String.format("'%s' is not an MFA operation. use its own endpoint.", authFlow.name()));
+      return UserOperationResponse.failure(contents);
+    }
+
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
 
     AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
@@ -135,6 +153,144 @@ public class UserOperationEntryService implements UserOperationApi {
     contents.put("id", authenticationTransaction.identifier().value());
 
     return UserOperationResponse.success(contents);
+  }
+
+  @Override
+  public UserOperationResponse requestEmailConfirm(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken token,
+      AuthFlow authFlow,
+      MfaRegistrationRequest request,
+      RequestAttributes requestAttributes) {
+
+    // Scope validation - RFC 6750 Section 3.1
+    String requiredScope = requiredEmailConfirmScope(authFlow);
+    if (!token.scopes().contains(requiredScope)) {
+      return insufficientScope(requiredScope);
+    }
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+
+    AuthenticationPolicyConfiguration authenticationPolicyConfiguration =
+        authenticationPolicyConfigurationQueryRepository.get(tenant, authFlow);
+
+    AuthenticationTransaction authenticationTransaction =
+        MfaRegistrationTransactionCreator.create(
+            tenant, user, token, authFlow, request, authenticationPolicyConfiguration);
+
+    authenticationTransactionCommandRepository.register(tenant, authenticationTransaction);
+
+    // Send the verification code to the target address in the same call (self-contained flow).
+    AuthenticationInteractionRequest interactionRequest =
+        new AuthenticationInteractionRequest(request.toMap());
+    AuthenticationInteractionRequestResult challenge =
+        interactInternal(
+            tenant,
+            authenticationTransaction,
+            StandardAuthenticationInteraction.EMAIL_CONFIRM_CHALLENGE.toType(),
+            interactionRequest,
+            requestAttributes);
+
+    Map<String, Object> contents = new HashMap<>(challenge.response());
+    contents.put("id", authenticationTransaction.identifier().value());
+
+    if (!challenge.isSuccess()) {
+      return new UserOperationResponse(UserOperationStatus.INVALID_REQUEST, contents);
+    }
+    return UserOperationResponse.success(contents);
+  }
+
+  @Override
+  public UserOperationResponse verifyEmailConfirm(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken token,
+      AuthFlow authFlow,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes) {
+
+    // Scope validation - RFC 6750 Section 3.1. Re-checked at commit, not only when the transaction
+    // was created, so a token that lost the scope in between cannot finish someone's change.
+    String requiredScope = requiredEmailConfirmScope(authFlow);
+    if (!token.scopes().contains(requiredScope)) {
+      return insufficientScope(requiredScope);
+    }
+
+    return verifyOwnedChange(
+        tenantIdentifier,
+        user,
+        authFlow,
+        authenticationTransactionIdentifier,
+        StandardAuthenticationInteraction.EMAIL_CONFIRM.toType(),
+        request,
+        requestAttributes);
+  }
+
+  /**
+   * The scope required to drive an email-confirm flow.
+   *
+   * <p>The two operations are deliberately scoped differently. Verifying the address already on the
+   * account only sets a claim, so {@code openid} is enough — the same bar as {@link
+   * #changePassword} and {@link #delete}. A change moves {@code preferred_username}, the login
+   * identifier, so it needs its own scope: gating it on {@code openid} would grant identifier
+   * takeover to every ordinary OIDC token.
+   */
+  private String requiredEmailConfirmScope(AuthFlow authFlow) {
+    if (StandardAuthFlow.EMAIL_CHANGE.toAuthFlow().equals(authFlow)) {
+      return "email:change";
+    }
+    return "openid";
+  }
+
+  private UserOperationResponse insufficientScope(String requiredScope) {
+
+    Map<String, Object> contents = new HashMap<>();
+    contents.put("error", "insufficient_scope");
+    contents.put(
+        "error_description", String.format("The request requires '%s' scope", requiredScope));
+    contents.put("scope", requiredScope);
+    return UserOperationResponse.insufficientScope(contents);
+  }
+
+  /**
+   * Drives a caller-owned self-service change interaction (email now, phone/SMS to follow). The
+   * transaction must belong to {@code user}; otherwise it is treated as not found so one
+   * authenticated user cannot drive another's change transaction by id.
+   */
+  private UserOperationResponse verifyOwnedChange(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      AuthFlow expectedAuthFlow,
+      AuthenticationTransactionIdentifier authenticationTransactionIdentifier,
+      AuthenticationInteractionType type,
+      AuthenticationInteractionRequest request,
+      RequestAttributes requestAttributes) {
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    AuthenticationTransaction transaction =
+        authenticationTransactionQueryRepository.getForUpdate(
+            tenant, authenticationTransactionIdentifier);
+
+    // The scope was checked against the flow this endpoint owns, but the interactor decides what to
+    // commit from the transaction's own flow. Without this equality the two disagree, and an
+    // email-change transaction posted to the email-verify URL would commit an identifier move under
+    // the weaker openid requirement. Reported as not found, like a foreign transaction, so the
+    // sibling endpoint cannot be used to probe which transactions exist.
+    if (!transaction.isSameUser(user) || !expectedAuthFlow.equals(transaction.flow())) {
+      Map<String, Object> body = new HashMap<>();
+      body.put("error", "invalid_request");
+      body.put("error_description", "change transaction not found.");
+      return new UserOperationResponse(UserOperationStatus.NOT_FOUND, body);
+    }
+
+    AuthenticationInteractionRequestResult result =
+        interactInternal(tenant, transaction, type, request, requestAttributes);
+
+    UserOperationStatus status =
+        result.isSuccess() ? UserOperationStatus.OK : UserOperationStatus.INVALID_REQUEST;
+    return new UserOperationResponse(status, result.response());
   }
 
   @Override

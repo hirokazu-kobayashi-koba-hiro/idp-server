@@ -627,6 +627,109 @@ Content-Type: application/json
 
 ---
 
+## セルフサービス: メールアドレスの確認・変更
+
+認証済みエンドユーザーが自分のメールアドレスを**確認(検証)**または**変更**するフロー。対象アドレスへ
+確認コードを送り、本人到達性を検証してから確定する。上記の Email 認証設定
+(`email-authentication-challenge` / `email-authentication`)の executor をそのまま流用する。
+
+**2つのエンドポイントに分かれている。** 権限が違うため:
+
+| | 確認 | 変更 |
+|---|---|---|
+| 変わるもの | `email_verified` のみ | `email` + `email_verified`(+ EMAIL policy なら `preferred_username`) |
+| IdP 内部の権限 | 実質なし(クレーム値のみ) | **ログイン識別子の移動** |
+| 必要スコープ | `openid` | **`email:change`** |
+| 送信先 | **現アドレス固定**(リクエストから受け取らない) | リクエストの `new_email` |
+
+1本にまとめると、**コードを送る前に認可を判定できない**(意図はサーバが `new_email` と現アドレスを
+比較して初めて分かる)。「再確認には十分軽く、識別子移動には十分重い」スコープは存在しないため分割している。
+`email:change` を `openid` で代替すると、通常の OIDC トークン全てに識別子の乗っ取り能力を与えることになる。
+
+### エンドポイント
+
+| メソッド・パス | ボディ | スコープ | 説明 |
+|---|---|---|---|
+| `POST /{tenant-id}/v1/me/email/verification` | なし | `openid` | 現アドレスへコード送信し `{ "id": "<tx>" }` を返す |
+| `POST /{tenant-id}/v1/me/email/verification/{id}/verify` | `{ "verification_code": "..." }` | `openid` | 検証 + `email_verified: true` |
+| `POST /{tenant-id}/v1/me/email/change` | `{ "new_email": "..." }` | `email:change` | 新アドレスへコード送信し `{ "id": "<tx>" }` を返す |
+| `POST /{tenant-id}/v1/me/email/change/{id}/verify` | `{ "verification_code": "..." }` | `email:change` | 検証 + アドレス確定 |
+
+- verify は**呼び出しユーザーと transaction の所有者が一致**しないと `404`。スコープはコミット時にも再チェックする
+- 確認側は `new_email` を**受け取らない**(送っても無視)。送信先が呼び出し側の指定で動かないので、この半分は宛先を差し替えられない
+- 変更側で `new_email` に現アドレスを指定すると `400`(確認エンドポイントを使う)
+- `new_email` は送信前に形式検証する(`local@domain.tld` 相当 + 最大 255 文字)。不正なら `400` で、メールは送られない
+- 送信・検証・有効期限・試行上限は Email 認証設定の executor をそのまま使う。誤コード/期限切れ/試行上限超過は `400`、確定済み transaction の再利用は `404`
+
+#### `email-verify` / `email-change` フロー限定(重要)
+
+`email-confirm-challenge` / `email-confirm` インタラクターは、**`flow` が `email-verify` または
+`email-change` の transaction でのみ動作する**。それ以外には `400`
+(`email confirmation is not allowed for this transaction.`)を返す。
+
+インタラクターはグローバル登録されるため、無認証の
+`POST /{tenant-id}/v1/authorizations/{id}/{interaction-type}` および
+`POST /{tenant-id}/v1/authentications/{id}/{interaction-type}` から、**任意の transaction に対して**呼び出せる。
+ログイン transaction の `user` は `login_hint` だけでも埋まる(クライアント認証なしで確立する)ため、
+リクエスト指定アドレスへ送る変更側は、フロー限定が無いと識別子の乗っ取り経路になる。
+ログイン用の `EmailAuthenticationChallengeInteractor` が確立済みユーザーでリクエスト入力を無視しているのと同じ理由の対策。
+
+### 必要な設定
+
+1. **Email 認証設定**(本ページの `email` config)。`templates` に `email_change`(変更用)と
+   `email_verify`(確認用)を追加推奨(challenge がフローに応じて `template` を強制。未定義ならデフォルト文面にフォールバック)。
+2. **認証ポリシーを2本**(必須。無いと該当エンドポイントが transaction 作成に失敗して `404`)。
+   テンプレートは `config/templates/use-cases/mfa-email/authentication-policy-email-verify.json` と
+   `-email-change.json`(同ディレクトリの `setup.sh` が Step 7b / 7c で登録する)。
+   インタラクター種別は両フロー共通の `email-confirm` なので、`success_conditions` のパスも共通:
+
+```json
+{
+  "flow": "email-verify",
+  "enabled": true,
+  "policies": [{
+    "conditions": {},
+    "available_methods": ["email"],
+    "step_definitions": [{ "method": "email", "order": 1, "requires_user": true }],
+    "success_conditions": { "any_of": [[
+      { "path": "$.email-confirm.success_count", "type": "integer", "operation": "gte", "value": 1 }
+    ]] }
+  }]
+}
+```
+
+3. **`email:change` スコープ**をテナントの `scopes_supported` とクライアントの `scope` に追加する。
+   無いとトークンに載らず、変更エンドポイントが常に `403 insufficient_scope` になる。
+4. **エラー文言をレスポンスに返す**には、`email-authentication` の response に条件付きマッピングを追加する。
+   組み込み executor のエラーはフラットな `{error, error_description}` で入るため、`$.response_body` 前提のマッピングだと本文が空になる:
+
+```json
+"body_mapping_rules": [
+  { "from": "$.error", "to": "error", "condition": { "operation": "exists", "path": "$.error" } },
+  { "from": "$.error_description", "to": "error_description", "condition": { "operation": "exists", "path": "$.error_description" } }
+]
+```
+
+### identity policy による一意性の挙動(変更時のみ)
+
+一意性は identity policy 由来の `preferred_username` に対して働く。確認側は現アドレスのままなので無関係。
+
+| `identity_unique_key_type` | 挙動 |
+|---|---|
+| `EMAIL` | メール = ログイン識別子。**既存ユーザーと同じメールへの変更は拒否**(`400`)。変更後は新メールでログイン(旧メールは不可)、並行変更は DB 制約により片方が `409` |
+| `USERNAME` 等 | メールは属性のみ。**重複メールへの変更も許可** |
+
+### 監査
+
+フローごとに別種別のイベントを発行する(いずれもログイン時の `email_verification_*` とは別):
+
+- **確認**: `email_verify_request_success` / `email_verify_request_failure` / `email_verify_success` / `email_verify_failure`
+- **変更**: `email_change_request_success` / `email_change_request_failure` / `email_change_success` / `email_change_failure`
+
+永続化して照会するにはテナントに `security_event_log_config.persistence_enabled: true` が必要。
+
+---
+
 ## 実装詳細
 
 ### 主要クラス
@@ -637,6 +740,9 @@ Content-Type: application/json
 | `EmailAuthenticationExecutor` | ワンタイムコード検証処理 |
 | `EmailVerificationChallenge` | チャレンジ情報の管理（コード、有効期限、試行回数） |
 | `EmailAuthenticationConfiguration` | Email認証設定の管理 |
+| `EmailConfirmChallengeInteractor` | セルフサービス メール確認・変更の challenge（フローで送信先を決定） |
+| `EmailConfirmInteractor` | セルフサービス メール確認・変更の verify（一意性チェック + 確定） |
+| `EmailConfirmOperation` | フロー → 送信先・テンプレート・監査イベントの対応 |
 
 ### 処理の流れ
 

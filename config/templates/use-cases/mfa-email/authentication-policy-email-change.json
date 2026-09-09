@@ -1,0 +1,45 @@
+{
+  "flow": "email-change",
+  "enabled": true,
+  "policies": [
+    {
+      "description": "self_service_email_change",
+      "priority": 1,
+      "conditions": {},
+      "available_methods": [
+        "email"
+      ],
+      "step_definitions": [
+        {
+          "method": "email",
+          "order": 1,
+          "requires_user": true
+        }
+      ],
+      "success_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.email-confirm.success_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 1
+            }
+          ]
+        ]
+      },
+      "failure_conditions": {
+        "any_of": [
+          [
+            {
+              "path": "$.email-confirm.failure_count",
+              "type": "integer",
+              "operation": "gte",
+              "value": 5
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}
