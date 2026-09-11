@@ -287,6 +287,50 @@ public class PostgresqlExecutor implements UserCommandSqlExecutor {
   }
 
   @Override
+  public void updatePhoneNumber(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                     UPDATE idp_user
+                     SET phone_number = ?,
+                     phone_number_verified = ?,
+                     preferred_username = ?,
+                     updated_at = now()
+                     WHERE id = ?::uuid
+                     AND tenant_id = ?::uuid;
+                     """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(user.phoneNumber());
+    params.add(user.phoneNumberVerified());
+    params.add(user.preferredUsername());
+    params.add(user.subAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public void updatePhoneNumberVerified(Tenant tenant, User user) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+                     UPDATE idp_user
+                     SET phone_number_verified = ?,
+                     updated_at = now()
+                     WHERE id = ?::uuid
+                     AND tenant_id = ?::uuid;
+                     """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(user.phoneNumberVerified());
+    params.add(user.subAsUuid());
+    params.add(tenant.identifier().valueAsUuid());
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
   public void delete(Tenant tenant, UserIdentifier userIdentifier) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =

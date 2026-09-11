@@ -31,14 +31,14 @@ import org.idp.server.core.openid.identity.authentication.PasswordChangeService;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.openid.identity.authentication.PasswordResetRequest;
 import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
+import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeIdentifier;
+import org.idp.server.core.openid.identity.contact.ContactVerificationOperation;
+import org.idp.server.core.openid.identity.contact.ContactVerificationRequest;
+import org.idp.server.core.openid.identity.contact.ContactVerificationResponse;
+import org.idp.server.core.openid.identity.contact.ContactVerificationService;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.device.AuthenticationDevicePatchValidator;
-import org.idp.server.core.openid.identity.email.EmailVerificationChallengeIdentifier;
-import org.idp.server.core.openid.identity.email.EmailVerificationOperation;
-import org.idp.server.core.openid.identity.email.EmailVerificationRequest;
-import org.idp.server.core.openid.identity.email.EmailVerificationResponse;
-import org.idp.server.core.openid.identity.email.EmailVerificationService;
 import org.idp.server.core.openid.identity.event.UserLifecycleEvent;
 import org.idp.server.core.openid.identity.event.UserLifecycleEventPublisher;
 import org.idp.server.core.openid.identity.event.UserLifecycleType;
@@ -78,7 +78,7 @@ public class UserOperationEntryService implements UserOperationApi {
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   PasswordVerificationDelegation passwordVerificationDelegation;
   PasswordEncodeDelegation passwordEncodeDelegation;
-  EmailVerificationService emailVerificationService;
+  ContactVerificationService contactVerificationService;
 
   public UserOperationEntryService(
       UserQueryRepository userQueryRepository,
@@ -94,7 +94,7 @@ public class UserOperationEntryService implements UserOperationApi {
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       PasswordVerificationDelegation passwordVerificationDelegation,
       PasswordEncodeDelegation passwordEncodeDelegation,
-      EmailVerificationService emailVerificationService) {
+      ContactVerificationService contactVerificationService) {
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
@@ -109,7 +109,7 @@ public class UserOperationEntryService implements UserOperationApi {
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
     this.passwordVerificationDelegation = passwordVerificationDelegation;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
-    this.emailVerificationService = emailVerificationService;
+    this.contactVerificationService = contactVerificationService;
   }
 
   @Override
@@ -146,68 +146,59 @@ public class UserOperationEntryService implements UserOperationApi {
   }
 
   @Override
-  public UserOperationResponse requestEmailVerification(
+  public ContactVerificationResponse requestContactVerification(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
-      EmailVerificationOperation operation,
-      EmailVerificationRequest request,
+      ContactVerificationOperation operation,
+      ContactVerificationRequest request,
       RequestAttributes requestAttributes) {
 
     // Scope validation - RFC 6750 Section 3.1. The operation carries its own requirement, so the
     // weaker one can never be applied to the stronger operation.
     if (!oAuthToken.scopes().contains(operation.requiredScope())) {
-      return insufficientScope(operation.requiredScope());
+      return ContactVerificationResponse.insufficientScope(operation.requiredScope());
     }
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    EmailVerificationResponse response =
-        emailVerificationService.request(tenant, user, operation, request);
+    ContactVerificationResponse response =
+        contactVerificationService.request(tenant, user, operation, request);
 
-    eventPublisher.publish(tenant, oAuthToken, response.eventType(), requestAttributes);
-    return toUserOperationResponse(response);
+    publish(tenant, oAuthToken, response, requestAttributes);
+    return response;
   }
 
   @Override
-  public UserOperationResponse verifyEmailVerification(
+  public ContactVerificationResponse verifyContactVerification(
       TenantIdentifier tenantIdentifier,
       User user,
       OAuthToken oAuthToken,
-      EmailVerificationOperation operation,
-      EmailVerificationChallengeIdentifier challengeIdentifier,
-      EmailVerificationRequest request,
+      ContactVerificationOperation operation,
+      ContactVerificationChallengeIdentifier challengeIdentifier,
+      ContactVerificationRequest request,
       RequestAttributes requestAttributes) {
 
     // Scope validation - RFC 6750 Section 3.1
     if (!oAuthToken.scopes().contains(operation.requiredScope())) {
-      return insufficientScope(operation.requiredScope());
+      return ContactVerificationResponse.insufficientScope(operation.requiredScope());
     }
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    EmailVerificationResponse response =
-        emailVerificationService.verify(tenant, user, operation, challengeIdentifier, request);
+    ContactVerificationResponse response =
+        contactVerificationService.verify(tenant, user, operation, challengeIdentifier, request);
 
-    eventPublisher.publish(tenant, oAuthToken, response.eventType(), requestAttributes);
-    return toUserOperationResponse(response);
+    publish(tenant, oAuthToken, response, requestAttributes);
+    return response;
   }
 
-  private UserOperationResponse toUserOperationResponse(EmailVerificationResponse response) {
-    UserOperationStatus status =
-        switch (response.status()) {
-          case OK -> UserOperationStatus.OK;
-          case NOT_FOUND -> UserOperationStatus.NOT_FOUND;
-          case INVALID_REQUEST -> UserOperationStatus.INVALID_REQUEST;
-        };
-    return new UserOperationResponse(status, response.contents());
-  }
-
-  private UserOperationResponse insufficientScope(String requiredScope) {
-    Map<String, Object> contents = new HashMap<>();
-    contents.put("error", "insufficient_scope");
-    contents.put(
-        "error_description", String.format("The request requires '%s' scope", requiredScope));
-    contents.put("scope", requiredScope);
-    return UserOperationResponse.insufficientScope(contents);
+  private void publish(
+      Tenant tenant,
+      OAuthToken oAuthToken,
+      ContactVerificationResponse response,
+      RequestAttributes requestAttributes) {
+    if (response.hasEventType()) {
+      eventPublisher.publish(tenant, oAuthToken, response.eventType(), requestAttributes);
+    }
   }
 
   @Override

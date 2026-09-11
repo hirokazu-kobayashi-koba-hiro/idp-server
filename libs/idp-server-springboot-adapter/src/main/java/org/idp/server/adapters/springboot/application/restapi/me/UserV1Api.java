@@ -26,10 +26,11 @@ import org.idp.server.core.openid.identity.UserOperationApi;
 import org.idp.server.core.openid.identity.authentication.PasswordChangeRequest;
 import org.idp.server.core.openid.identity.authentication.PasswordChangeResponse;
 import org.idp.server.core.openid.identity.authentication.PasswordResetRequest;
+import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeIdentifier;
+import org.idp.server.core.openid.identity.contact.ContactVerificationOperation;
+import org.idp.server.core.openid.identity.contact.ContactVerificationRequest;
+import org.idp.server.core.openid.identity.contact.ContactVerificationResponse;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
-import org.idp.server.core.openid.identity.email.EmailVerificationChallengeIdentifier;
-import org.idp.server.core.openid.identity.email.EmailVerificationOperation;
-import org.idp.server.core.openid.identity.email.EmailVerificationRequest;
 import org.idp.server.core.openid.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
 import org.idp.server.core.openid.identity.io.UserOperationResponse;
@@ -88,10 +89,10 @@ public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfi
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
-    return requestEmail(
+    return requestContact(
         resourceOwnerPrincipal,
         tenantIdentifier,
-        EmailVerificationOperation.VERIFY,
+        ContactVerificationOperation.EMAIL_VERIFY,
         fapiInteractionId,
         requestBody,
         httpServletRequest);
@@ -101,15 +102,15 @@ public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfi
   public ResponseEntity<?> verifyEmailVerification(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("id") EmailVerificationChallengeIdentifier challengeIdentifier,
+      @PathVariable("id") ContactVerificationChallengeIdentifier challengeIdentifier,
       @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
-    return verifyEmail(
+    return verifyContact(
         resourceOwnerPrincipal,
         tenantIdentifier,
-        EmailVerificationOperation.VERIFY,
+        ContactVerificationOperation.EMAIL_VERIFY,
         challengeIdentifier,
         fapiInteractionId,
         requestBody,
@@ -124,10 +125,10 @@ public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfi
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
-    return requestEmail(
+    return requestContact(
         resourceOwnerPrincipal,
         tenantIdentifier,
-        EmailVerificationOperation.CHANGE,
+        ContactVerificationOperation.EMAIL_CHANGE,
         fapiInteractionId,
         requestBody,
         httpServletRequest);
@@ -137,65 +138,137 @@ public class UserV1Api implements ParameterTransformable, FapiInteractionIdConfi
   public ResponseEntity<?> verifyEmailChange(
       @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("id") EmailVerificationChallengeIdentifier challengeIdentifier,
+      @PathVariable("id") ContactVerificationChallengeIdentifier challengeIdentifier,
       @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
       @RequestBody(required = false) Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
-    return verifyEmail(
+    return verifyContact(
         resourceOwnerPrincipal,
         tenantIdentifier,
-        EmailVerificationOperation.CHANGE,
+        ContactVerificationOperation.EMAIL_CHANGE,
         challengeIdentifier,
         fapiInteractionId,
         requestBody,
         httpServletRequest);
   }
 
-  private ResponseEntity<?> requestEmail(
+  @PostMapping("/phone/verification")
+  public ResponseEntity<?> requestPhoneVerification(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    return requestContact(
+        resourceOwnerPrincipal,
+        tenantIdentifier,
+        ContactVerificationOperation.PHONE_VERIFY,
+        fapiInteractionId,
+        requestBody,
+        httpServletRequest);
+  }
+
+  @PostMapping("/phone/verification/{id}/verify")
+  public ResponseEntity<?> verifyPhoneVerification(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") ContactVerificationChallengeIdentifier challengeIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    return verifyContact(
+        resourceOwnerPrincipal,
+        tenantIdentifier,
+        ContactVerificationOperation.PHONE_VERIFY,
+        challengeIdentifier,
+        fapiInteractionId,
+        requestBody,
+        httpServletRequest);
+  }
+
+  @PostMapping("/phone/change")
+  public ResponseEntity<?> requestPhoneChange(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    return requestContact(
+        resourceOwnerPrincipal,
+        tenantIdentifier,
+        ContactVerificationOperation.PHONE_CHANGE,
+        fapiInteractionId,
+        requestBody,
+        httpServletRequest);
+  }
+
+  @PostMapping("/phone/change/{id}/verify")
+  public ResponseEntity<?> verifyPhoneChange(
+      @AuthenticationPrincipal ResourceOwnerPrincipal resourceOwnerPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("id") ContactVerificationChallengeIdentifier challengeIdentifier,
+      @RequestHeader(required = false, value = "x-fapi-interaction-id") String fapiInteractionId,
+      @RequestBody(required = false) Map<String, Object> requestBody,
+      HttpServletRequest httpServletRequest) {
+
+    return verifyContact(
+        resourceOwnerPrincipal,
+        tenantIdentifier,
+        ContactVerificationOperation.PHONE_CHANGE,
+        challengeIdentifier,
+        fapiInteractionId,
+        requestBody,
+        httpServletRequest);
+  }
+
+  private ResponseEntity<?> requestContact(
       ResourceOwnerPrincipal resourceOwnerPrincipal,
       TenantIdentifier tenantIdentifier,
-      EmailVerificationOperation operation,
+      ContactVerificationOperation operation,
       String fapiInteractionId,
       Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
-    UserOperationResponse response =
-        userOperationApi.requestEmailVerification(
+    ContactVerificationResponse response =
+        userOperationApi.requestContactVerification(
             tenantIdentifier,
             resourceOwnerPrincipal.getUser(),
             resourceOwnerPrincipal.getOAuthToken(),
             operation,
-            new EmailVerificationRequest(requestBody),
+            new ContactVerificationRequest(requestBody),
             transform(httpServletRequest));
 
     return toResponseEntity(response, fapiInteractionId);
   }
 
-  private ResponseEntity<?> verifyEmail(
+  private ResponseEntity<?> verifyContact(
       ResourceOwnerPrincipal resourceOwnerPrincipal,
       TenantIdentifier tenantIdentifier,
-      EmailVerificationOperation operation,
-      EmailVerificationChallengeIdentifier challengeIdentifier,
+      ContactVerificationOperation operation,
+      ContactVerificationChallengeIdentifier challengeIdentifier,
       String fapiInteractionId,
       Map<String, Object> requestBody,
       HttpServletRequest httpServletRequest) {
 
-    UserOperationResponse response =
-        userOperationApi.verifyEmailVerification(
+    ContactVerificationResponse response =
+        userOperationApi.verifyContactVerification(
             tenantIdentifier,
             resourceOwnerPrincipal.getUser(),
             resourceOwnerPrincipal.getOAuthToken(),
             operation,
             challengeIdentifier,
-            new EmailVerificationRequest(requestBody),
+            new ContactVerificationRequest(requestBody),
             transform(httpServletRequest));
 
     return toResponseEntity(response, fapiInteractionId);
   }
 
   private ResponseEntity<?> toResponseEntity(
-      UserOperationResponse response, String fapiInteractionId) {
+      ContactVerificationResponse response, String fapiInteractionId) {
     HttpHeaders httpHeaders = new HttpHeaders();
     addFapiInteractionId(httpHeaders, fapiInteractionId);
     httpHeaders.add("Content-Type", "application/json");

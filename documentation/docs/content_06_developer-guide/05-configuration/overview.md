@@ -307,6 +307,7 @@ POST /v1/management/organizations/{organization-id}/tenants/{tenant-id}/clients
 |------------|------|-----------|
 | [Identity Verification](./identity-verification.md) | eKYC/本人確認（7フェーズ処理） | ✅ 完成 |
 | [Security Event Hook](./security-event-hook.md) | セキュリティイベント通知（SSF対応） | ✅ 完成 |
+| [セルフサービス 連絡先の確認・変更](./contact-verification.md) | 本人による Email/電話番号 の確認・変更 | ✅ 完成 |
 
 ---
 

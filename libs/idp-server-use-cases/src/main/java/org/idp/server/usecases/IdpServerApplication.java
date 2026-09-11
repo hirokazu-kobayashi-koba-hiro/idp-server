@@ -19,7 +19,6 @@ package org.idp.server.usecases;
 import java.net.http.HttpClient;
 import java.util.Map;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
-import org.idp.server.authentication.interactors.email.EmailAuthenticationConfigCodeSender;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
 import org.idp.server.authentication.interactors.fidouaf.plugin.FidoUafAdditionalRequestResolvers;
 import org.idp.server.authentication.interactors.plugin.AuthenticationDeviceNotifiersPluginLoader;
@@ -43,6 +42,8 @@ import org.idp.server.control_plane.management.authentication.policy.Authenticat
 import org.idp.server.control_plane.management.authentication.policy.OrgAuthenticationPolicyConfigManagementApi;
 import org.idp.server.control_plane.management.authentication.transaction.AuthenticationTransactionManagementApi;
 import org.idp.server.control_plane.management.authentication.transaction.OrgAuthenticationTransactionManagementApi;
+import org.idp.server.control_plane.management.contact.ContactVerificationChallengeManagementApi;
+import org.idp.server.control_plane.management.contact.OrgContactVerificationChallengeManagementApi;
 import org.idp.server.control_plane.management.federation.FederationConfigurationManagementApi;
 import org.idp.server.control_plane.management.federation.OrgFederationConfigManagementApi;
 import org.idp.server.control_plane.management.identity.user.OrgUserManagementApi;
@@ -113,10 +114,11 @@ import org.idp.server.core.openid.identity.*;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.openid.identity.authentication.UserPasswordAuthenticator;
+import org.idp.server.core.openid.identity.contact.ContactChannel;
+import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeRepository;
+import org.idp.server.core.openid.identity.contact.ContactVerificationService;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogApi;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogEventPublisher;
-import org.idp.server.core.openid.identity.email.EmailVerificationChallengeRepository;
-import org.idp.server.core.openid.identity.email.EmailVerificationService;
 import org.idp.server.core.openid.identity.event.*;
 import org.idp.server.core.openid.identity.permission.PermissionCommandRepository;
 import org.idp.server.core.openid.identity.permission.PermissionQueryRepository;
@@ -197,6 +199,9 @@ import org.idp.server.platform.system.SystemConfigurationResolver;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.enduser.AuthenticationDeviceLogEntryService;
+import org.idp.server.usecases.application.enduser.contact.ChannelRoutingCodeSender;
+import org.idp.server.usecases.application.enduser.contact.EmailAuthenticationConfigCodeSender;
+import org.idp.server.usecases.application.enduser.contact.SmsAuthenticationConfigCodeSender;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationCallbackEntryService;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationEntryService;
 import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
@@ -259,6 +264,7 @@ public class IdpServerApplication {
   SecurityEventHookManagementApi securityEventHookManagementApi;
   AuditLogManagementApi auditLogManagementApi;
   AuthenticationInteractionManagementApi authenticationInteractionManagementApi;
+  ContactVerificationChallengeManagementApi contactVerificationChallengeManagementApi;
   AuthenticationTransactionManagementApi authenticationTransactionManagementApi;
   PermissionManagementApi permissionManagementApi;
   RoleManagementApi roleManagementApi;
@@ -280,6 +286,7 @@ public class IdpServerApplication {
   OrgFederationConfigManagementApi orgFederationConfigManagementApi;
   OrgSecurityEventHookConfigManagementApi orgSecurityEventHookConfigManagementApi;
   OrgAuthenticationInteractionManagementApi orgAuthenticationInteractionManagementApi;
+  OrgContactVerificationChallengeManagementApi orgContactVerificationChallengeManagementApi;
   OrgAuthenticationTransactionManagementApi orgAuthenticationTransactionManagementApi;
   OrgAuthorizationServerManagementApi orgAuthorizationServerManagementApi;
   OrgPermissionManagementApi orgPermissionManagementApi;
@@ -441,6 +448,8 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(SecurityEventHookResultQueryRepository.class);
     AuditLogQueryRepository auditLogQueryRepository =
         applicationComponentContainer.resolve(AuditLogQueryRepository.class);
+    ContactVerificationChallengeRepository contactVerificationChallengeRepository =
+        applicationComponentContainer.resolve(ContactVerificationChallengeRepository.class);
     AuthenticationInteractionQueryRepository authenticationInteractionQueryRepository =
         applicationComponentContainer.resolve(AuthenticationInteractionQueryRepository.class);
     WebAuthn4jCredentialRepository webAuthn4jCredentialRepository =
@@ -718,10 +727,16 @@ public class IdpServerApplication {
             userLifecycleEventPublisher,
             passwordVerificationDelegation,
             passwordEncodeDelegation,
-            new EmailVerificationService(
-                applicationComponentContainer.resolve(EmailVerificationChallengeRepository.class),
-                new EmailAuthenticationConfigCodeSender(
-                    authenticationConfigurationQueryRepository, emailSenders),
+            new ContactVerificationService(
+                applicationComponentContainer.resolve(ContactVerificationChallengeRepository.class),
+                new ChannelRoutingCodeSender(
+                    Map.of(
+                        ContactChannel.EMAIL,
+                        new EmailAuthenticationConfigCodeSender(
+                            authenticationConfigurationQueryRepository, emailSenders),
+                        ContactChannel.PHONE,
+                        new SmsAuthenticationConfigCodeSender(
+                            authenticationConfigurationQueryRepository, smsSenders))),
                 userQueryRepository,
                 userCommandRepository));
     this.rawUserOperationApi = userOperationEntryService;
@@ -1080,6 +1095,13 @@ public class IdpServerApplication {
             AuthenticationInteractionManagementApi.class,
             databaseTypeProvider);
 
+    this.contactVerificationChallengeManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new ContactVerificationChallengeManagementEntryService(
+                contactVerificationChallengeRepository, tenantQueryRepository, auditLogPublisher),
+            ContactVerificationChallengeManagementApi.class,
+            databaseTypeProvider);
+
     this.authenticationTransactionManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new AuthenticationTransactionManagementEntryService(
@@ -1234,6 +1256,13 @@ public class IdpServerApplication {
             new OrgAuthenticationInteractionManagementEntryService(
                 tenantQueryRepository, authenticationInteractionQueryRepository, auditLogPublisher),
             OrgAuthenticationInteractionManagementApi.class,
+            databaseTypeProvider);
+
+    this.orgContactVerificationChallengeManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new OrgContactVerificationChallengeManagementEntryService(
+                tenantQueryRepository, contactVerificationChallengeRepository, auditLogPublisher),
+            OrgContactVerificationChallengeManagementApi.class,
             databaseTypeProvider);
 
     this.orgAuthenticationTransactionManagementApi =
@@ -1518,6 +1547,10 @@ public class IdpServerApplication {
     return auditLogManagementApi;
   }
 
+  public ContactVerificationChallengeManagementApi contactVerificationChallengeManagementApi() {
+    return contactVerificationChallengeManagementApi;
+  }
+
   public AuthenticationInteractionManagementApi authenticationInteractionManagementApi() {
     return authenticationInteractionManagementApi;
   }
@@ -1584,6 +1617,11 @@ public class IdpServerApplication {
 
   public OrgSecurityEventHookConfigManagementApi orgSecurityEventHookConfigManagementApi() {
     return orgSecurityEventHookConfigManagementApi;
+  }
+
+  public OrgContactVerificationChallengeManagementApi
+      orgContactVerificationChallengeManagementApi() {
+    return orgContactVerificationChallengeManagementApi;
   }
 
   public OrgAuthenticationInteractionManagementApi orgAuthenticationInteractionManagementApi() {

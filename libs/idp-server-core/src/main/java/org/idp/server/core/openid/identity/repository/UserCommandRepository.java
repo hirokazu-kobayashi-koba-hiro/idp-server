@@ -54,5 +54,11 @@ public interface UserCommandRepository {
    */
   void updateEmailVerified(Tenant tenant, User user);
 
+  /** Partial update of {@code phone_number} + {@code phone_number_verified} (Issue #1416). */
+  void updatePhoneNumber(Tenant tenant, User user);
+
+  /** Partial update of {@code phone_number_verified} only (Issue #1416). */
+  void updatePhoneNumberVerified(Tenant tenant, User user);
+
   void delete(Tenant tenant, UserIdentifier userIdentifier);
 }

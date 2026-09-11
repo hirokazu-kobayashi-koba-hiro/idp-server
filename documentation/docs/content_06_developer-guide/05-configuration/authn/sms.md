@@ -380,6 +380,18 @@ OTPの生成・検証は idp-server 内部で行いつつ、SMS送信のみを�
 ---
 
 
+## セルフサービス: 電話番号の確認・変更
+
+認証済みユーザーが自分の電話番号を確認・変更する `POST /{tenant-id}/v1/me/phone/...` は、
+ここで定義した `sms-authentication-challenge` の送信設定(sender / templates / retry / expire)を
+そのまま流用する。`templates` に `phone_verify` / `phone_change` を追加しておくと、それぞれ専用の
+文面になる(未定義ならデフォルトにフォールバック)。
+
+フロー・必要スコープ・管理APIは [セルフサービス 連絡先の確認・変更](../contact-verification.md) を参照。
+
+---
+
+
 ## 備考
 
 * この処理は `sms-authentication-challenge` によって事前に送信されたワンタイムコードの確認に使用されます。

@@ -2153,6 +2153,41 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-sent-sms",
+      "type": "crud",
+      "documentation": "Issue #1416: CRUD over the sent-sms bucket. POST here from an SMS sender config; GET to list what was sent.",
+      "method": "",
+      "endpoint": "sent-sms",
+      "responses": [
+        {
+          "uuid": "e2e-sent-sms-response",
+          "body": "",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "sent sms crud",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "DATABUCKET",
+          "filePath": "",
+          "databucketID": "e2e-sent-sms-bucket",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -2307,6 +2342,10 @@
     {
       "type": "route",
       "uuid": "e2e-sent-emails"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-sent-sms"
     }
   ],
   "proxyMode": false,
@@ -2365,6 +2404,13 @@
       "id": "e2e-sent-emails-bucket",
       "name": "sent emails",
       "documentation": "Issue #1416: stores what the tenant's email sender POSTed, so an E2E can read back the one-time code. idp-server generates the code and never returns it in an API response (that would defeat proving reachability of the address), so the test has to observe the outbound mail.",
+      "value": "[]"
+    },
+    {
+      "uuid": "e2e-sent-sms-databucket",
+      "id": "e2e-sent-sms-bucket",
+      "name": "sent sms",
+      "documentation": "Issue #1416: stores what the tenant's SMS sender POSTed, so an E2E can read back the one-time code. Same reason as the sent-emails bucket: idp-server generates the code and never returns it in an API response, so the test has to observe the outbound message.",
       "value": "[]"
     }
   ],
