@@ -136,6 +136,9 @@ paths:
 
         アカウントにメールアドレスが登録されていない場合は `400`。
 
+        直前の送信から `resend_cooldown_seconds`（未設定は 60 秒）以内の再送も `400`。
+        クールダウンは「ユーザー + 操作」単位なので、変更フロー側とは独立です。
+
         ## セキュリティイベント
         - `email_verify_request_success` / `email_verify_request_failure`
       parameters:
@@ -209,6 +212,10 @@ paths:
         実行できないようにしています。
 
         `new_value` に現在の値を指定した場合は `400`（`/v1/me/email/verification` を使います）。
+
+        直前の送信から `resend_cooldown_seconds`（未設定は 60 秒）以内の再送も `400`。
+        宛先を呼び出し側が指定できるため、無制限な送信を防ぐための制限です。
+        クールダウンは「ユーザー + 操作」単位なので、もう一方のチャネルや確認フローは通ります。
 
         ## セキュリティイベント
         - `email_change_request_success` / `email_change_request_failure`
@@ -304,6 +311,9 @@ paths:
 
         アカウントに電話番号が登録されていない場合は `400`。
 
+        直前の送信から `resend_cooldown_seconds`（未設定は 60 秒）以内の再送も `400`。
+        クールダウンは「ユーザー + 操作」単位なので、変更フロー側とは独立です。
+
         ## セキュリティイベント
         - `phone_verify_request_success` / `phone_verify_request_failure`
       parameters:
@@ -377,6 +387,10 @@ paths:
         実行できないようにしています。
 
         `new_value` に現在の値を指定した場合は `400`（`/v1/me/phone/verification` を使います）。
+
+        直前の送信から `resend_cooldown_seconds`（未設定は 60 秒）以内の再送も `400`。
+        宛先を呼び出し側が指定できるため、無制限な送信を防ぐための制限です。
+        クールダウンは「ユーザー + 操作」単位なので、もう一方のチャネルや確認フローは通ります。
 
         ## セキュリティイベント
         - `phone_change_request_success` / `phone_change_request_failure`

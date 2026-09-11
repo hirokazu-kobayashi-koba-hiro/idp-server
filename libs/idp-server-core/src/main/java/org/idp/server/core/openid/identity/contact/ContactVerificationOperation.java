@@ -16,6 +16,8 @@
 
 package org.idp.server.core.openid.identity.contact;
 
+import java.util.Arrays;
+import java.util.List;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
@@ -119,6 +121,20 @@ public enum ContactVerificationOperation {
       }
     }
     throw new UnSupportedException(String.format("unsupported contact operation (%s)", value));
+  }
+
+  /**
+   * The operation values belonging to a channel.
+   *
+   * <p>Used to scope a bulk delete: committing an email change must not discard an in-flight phone
+   * challenge, because the reason for the delete — a committed value must not be moved back by a
+   * stale challenge — only holds within the channel that was committed.
+   */
+  public static List<String> valuesOf(ContactChannel channel) {
+    return Arrays.stream(values())
+        .filter(operation -> operation.channel == channel)
+        .map(operation -> operation.value)
+        .toList();
   }
 
   public String value() {

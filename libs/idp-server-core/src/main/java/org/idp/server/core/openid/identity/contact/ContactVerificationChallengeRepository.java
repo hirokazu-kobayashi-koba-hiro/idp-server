@@ -41,6 +41,18 @@ public interface ContactVerificationChallengeRepository {
   /** Records a failed attempt so the retry cap can bite. */
   void countUpAttempts(Tenant tenant, ContactVerificationChallenge challenge);
 
+  /**
+   * Whether this user already had a code sent for this operation within {@code cooldownSeconds}.
+   *
+   * <p>Answered in SQL rather than by loading the row, so the check costs one count and never
+   * brings a live code into memory for a caller that is about to be refused.
+   */
+  boolean sentWithinCooldown(
+      Tenant tenant,
+      UserIdentifier userIdentifier,
+      ContactVerificationOperation operation,
+      int cooldownSeconds);
+
   void delete(Tenant tenant, ContactVerificationChallengeIdentifier identifier);
 
   /** Management-side lookup by id alone, without the owner predicate the self-service path uses. */
@@ -53,6 +65,9 @@ public interface ContactVerificationChallengeRepository {
 
   long findTotalCount(Tenant tenant, ContactVerificationChallengeQueries queries);
 
-  /** Drops every outstanding challenge of a user, so a committed change invalidates the others. */
-  void deleteAllBy(Tenant tenant, UserIdentifier userIdentifier);
+  /**
+   * Drops a user's outstanding challenges on one channel, so a committed change invalidates the
+   * others. Scoped to the channel: a committed email must not discard an in-flight phone challenge.
+   */
+  void deleteAllBy(Tenant tenant, UserIdentifier userIdentifier, ContactChannel channel);
 }

@@ -197,6 +197,7 @@ idp-server内部でワンタイムパスワードを生成・検証し、外部S
 | `execution.details.templates`  | テンプレート定義（`{VERIFICATION_CODE}`プレースホルダー使用） |
 | `execution.details.retry_count_limitation` | 検証リトライ上限回数（デフォルト: 5）                    |
 | `execution.details.expire_seconds` | OTP有効期限（秒）（デフォルト: 300）                  |
+| `execution.details.resend_cooldown_seconds` | 同一ユーザー・同一用途での再送を拒否する間隔（秒、未設定時: 60）。現状は[セルフサービス 連絡先の確認・変更](../contact-verification.md)のみが参照 |
 
 #### テンプレート設定項目
 

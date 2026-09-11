@@ -37,6 +37,9 @@ public interface ContactVerificationCodeSender {
   /** Maximum wrong attempts before a challenge is discarded. */
   int retryCountLimitation(Tenant tenant, ContactVerificationOperation operation);
 
+  /** Minimum interval between two sends for the same user and operation. */
+  int resendCooldownSeconds(Tenant tenant, ContactVerificationOperation operation);
+
   /**
    * @return true when the code was accepted for delivery
    */

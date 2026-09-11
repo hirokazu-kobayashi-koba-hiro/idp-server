@@ -17,12 +17,15 @@
 package org.idp.server.core.adapters.datasource.identity.contact;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.contact.ContactChannel;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallenge;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeIdentifier;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeQueries;
+import org.idp.server.core.openid.identity.contact.ContactVerificationOperation;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -79,6 +82,33 @@ public class MysqlExecutor implements ContactVerificationChallengeSqlExecutor {
   }
 
   @Override
+  public Map<String, String> selectSentWithinCooldown(
+      Tenant tenant,
+      UserIdentifier userIdentifier,
+      ContactVerificationOperation operation,
+      int cooldownSeconds) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    // The interval is computed by the database so a skewed application clock cannot shorten it.
+    String sqlTemplate =
+        """
+            SELECT COUNT(*) AS count
+            FROM contact_verification_challenge
+            WHERE tenant_id = ?
+            AND user_id = ?
+            AND operation = ?
+            AND created_at > DATE_SUB(now(), INTERVAL ? SECOND)
+            """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifier().value());
+    params.add(userIdentifier.value());
+    params.add(operation.value());
+    params.add(cooldownSeconds);
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
+  }
+
+  @Override
   public void updateAttempts(Tenant tenant, ContactVerificationChallenge challenge) {
     SqlExecutor sqlExecutor = new SqlExecutor();
     String sqlTemplate =
@@ -115,18 +145,23 @@ public class MysqlExecutor implements ContactVerificationChallengeSqlExecutor {
   }
 
   @Override
-  public void deleteAllBy(Tenant tenant, UserIdentifier userIdentifier) {
+  public void deleteAllBy(Tenant tenant, UserIdentifier userIdentifier, ContactChannel channel) {
     SqlExecutor sqlExecutor = new SqlExecutor();
+    List<String> operations = ContactVerificationOperation.valuesOf(channel);
+    String placeholders = String.join(", ", Collections.nCopies(operations.size(), "?"));
     String sqlTemplate =
         """
             DELETE FROM contact_verification_challenge
             WHERE tenant_id = ?
             AND user_id = ?
-            """;
+            AND operation IN (%s)
+            """
+            .formatted(placeholders);
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifier().value());
     params.add(userIdentifier.value());
+    params.addAll(operations);
 
     sqlExecutor.execute(sqlTemplate, params);
   }

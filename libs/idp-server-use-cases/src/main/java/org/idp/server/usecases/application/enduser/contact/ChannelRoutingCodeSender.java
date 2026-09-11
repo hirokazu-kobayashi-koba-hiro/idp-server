@@ -48,6 +48,11 @@ public class ChannelRoutingCodeSender implements ContactVerificationCodeSender {
   }
 
   @Override
+  public int resendCooldownSeconds(Tenant tenant, ContactVerificationOperation operation) {
+    return sender(operation).resendCooldownSeconds(tenant, operation);
+  }
+
+  @Override
   public boolean send(
       Tenant tenant,
       ContactVerificationOperation operation,

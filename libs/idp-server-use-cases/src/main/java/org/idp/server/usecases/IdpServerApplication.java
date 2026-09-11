@@ -115,6 +115,7 @@ import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegati
 import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.openid.identity.authentication.UserPasswordAuthenticator;
 import org.idp.server.core.openid.identity.contact.ContactChannel;
+import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeOperationCommandRepository;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeRepository;
 import org.idp.server.core.openid.identity.contact.ContactVerificationService;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogApi;
@@ -442,6 +443,10 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(CibaGrantOperationCommandRepository.class);
     SsoSessionOperationCommandRepository ssoSessionOperationCommandRepository =
         applicationComponentContainer.resolve(SsoSessionOperationCommandRepository.class);
+    ContactVerificationChallengeOperationCommandRepository
+        contactVerificationChallengeOperationCommandRepository =
+            applicationComponentContainer.resolve(
+                ContactVerificationChallengeOperationCommandRepository.class);
     SecurityEventQueryRepository securityEventQueryRepository =
         applicationComponentContainer.resolve(SecurityEventQueryRepository.class);
     SecurityEventHookResultQueryRepository securityEventHookResultQueryRepository =
@@ -608,7 +613,8 @@ public class IdpServerApplication {
                 authorizationCodeGrantOperationCommandRepository,
                 backchannelAuthenticationRequestOperationCommandRepository,
                 cibaGrantOperationCommandRepository,
-                ssoSessionOperationCommandRepository),
+                ssoSessionOperationCommandRepository,
+                contactVerificationChallengeOperationCommandRepository),
             IdpServerOperationApi.class,
             databaseTypeProvider);
 

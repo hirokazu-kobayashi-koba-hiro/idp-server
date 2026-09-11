@@ -68,6 +68,11 @@ public class EmailAuthenticationConfigCodeSender implements ContactVerificationC
   }
 
   @Override
+  public int resendCooldownSeconds(Tenant tenant, ContactVerificationOperation operation) {
+    return configuration(tenant).resendCooldownSeconds();
+  }
+
+  @Override
   public boolean send(
       Tenant tenant,
       ContactVerificationOperation operation,

@@ -32,7 +32,7 @@ import { createBearerHeader } from "../../../lib/util";
  */
 const redirectUri = "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
 
-const smsConfigBody = (expireSeconds = 300) => ({
+const smsConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
   id: uuidv4(),
   type: "sms",
   attributes: {},
@@ -59,6 +59,7 @@ const smsConfigBody = (expireSeconds = 300) => ({
           },
           retry_count_limitation: 5,
           expire_seconds: expireSeconds,
+          resend_cooldown_seconds: resendCooldownSeconds,
         },
       },
       response: { body_mapping_rules: [{ from: "$.response_body", to: "*" }] },
@@ -66,7 +67,7 @@ const smsConfigBody = (expireSeconds = 300) => ({
   },
 });
 
-const emailConfigBody = (expireSeconds = 300) => ({
+const emailConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
   id: uuidv4(),
   type: "email",
   attributes: {},
@@ -106,6 +107,7 @@ const emailConfigBody = (expireSeconds = 300) => ({
           },
           retry_count_limitation: 5,
           expire_seconds: expireSeconds,
+          resend_cooldown_seconds: resendCooldownSeconds,
         },
       },
       response: { body_mapping_rules: [{ from: "$.response_body", to: "*" }] },
@@ -118,7 +120,11 @@ const emailConfigBody = (expireSeconds = 300) => ({
  * feature owns its state, so it needs no per-tenant flow policy — only the email sender config and
  * the email:change scope.
  */
-async function provisionTenant(systemAccessToken, identityUniqueKeyType, { expireSeconds = 300 } = {}) {
+async function provisionTenant(
+  systemAccessToken,
+  identityUniqueKeyType,
+  { expireSeconds = 300, resendCooldownSeconds = 1 } = {}
+) {
   const timestamp = `${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
   const ctx = {
     organizationId: uuidv4(),
@@ -223,14 +229,14 @@ async function provisionTenant(systemAccessToken, identityUniqueKeyType, { expir
   const emailResp = await postWithJson({
     url: `${backendUrl}/v1/management/organizations/${ctx.organizationId}/tenants/${ctx.tenantId}/authentication-configurations`,
     headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
-    body: emailConfigBody(expireSeconds),
+    body: emailConfigBody(expireSeconds, resendCooldownSeconds),
   });
   expect(emailResp.status).toBe(201);
 
   const smsResp = await postWithJson({
     url: `${backendUrl}/v1/management/organizations/${ctx.organizationId}/tenants/${ctx.tenantId}/authentication-configurations`,
     headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
-    body: smsConfigBody(expireSeconds),
+    body: smsConfigBody(expireSeconds, resendCooldownSeconds),
   });
   expect(smsResp.status).toBe(201);
 
@@ -716,6 +722,48 @@ describe("Me Use Case: self-service contact verification and change", () => {
     expect(
       (await submitChangeCode(ctx, token, "phone", started.challengeId, started.code)).status
     ).toBe(200);
+  });
+
+  it("security: a second code for the same purpose is refused while within the cooldown", async () => {
+    // The recipient of a change code is chosen by the caller, so an unbounded request loop bills
+    // the tenant for SMS and floods an address that never asked to be involved.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", { resendCooldownSeconds: 60 });
+    tenants.push(ctx);
+    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
+      .access_token;
+
+    const first = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: `flood-1-${Date.now()}@me-email.example.com` },
+    });
+    expect(first.status).toBe(200);
+
+    const second = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: `flood-2-${Date.now()}@me-email.example.com` },
+    });
+    console.log("second send within cooldown:", second.status, JSON.stringify(second.data));
+    expect(second.status).toBe(400);
+
+    // The cooldown is keyed on user + operation, so the other channel and the other intent are
+    // still reachable — a flood guard that blocks unrelated work would just be an outage.
+    const otherChannel = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/phone/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: `+8170${String(Date.now()).slice(-8)}` },
+    });
+    console.log("other channel during email cooldown:", otherChannel.status);
+    expect(otherChannel.status).toBe(200);
+
+    const otherIntent = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/verification`,
+      headers: createBearerHeader(token),
+      body: {},
+    });
+    console.log("other intent during email change cooldown:", otherIntent.status);
+    expect(otherIntent.status).toBe(200);
   });
 
   it("support: the management API shows where the code was sent", async () => {

@@ -19,9 +19,11 @@ package org.idp.server.core.adapters.datasource.identity.contact;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.contact.ContactChannel;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallenge;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeIdentifier;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeQueries;
+import org.idp.server.core.openid.identity.contact.ContactVerificationOperation;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public interface ContactVerificationChallengeSqlExecutor {
@@ -35,9 +37,15 @@ public interface ContactVerificationChallengeSqlExecutor {
 
   void updateAttempts(Tenant tenant, ContactVerificationChallenge challenge);
 
+  Map<String, String> selectSentWithinCooldown(
+      Tenant tenant,
+      UserIdentifier userIdentifier,
+      ContactVerificationOperation operation,
+      int cooldownSeconds);
+
   void delete(Tenant tenant, ContactVerificationChallengeIdentifier identifier);
 
-  void deleteAllBy(Tenant tenant, UserIdentifier userIdentifier);
+  void deleteAllBy(Tenant tenant, UserIdentifier userIdentifier, ContactChannel channel);
 
   Map<String, String> selectOne(Tenant tenant, ContactVerificationChallengeIdentifier identifier);
 

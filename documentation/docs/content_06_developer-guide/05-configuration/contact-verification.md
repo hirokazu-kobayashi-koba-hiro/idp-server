@@ -65,6 +65,17 @@ sender / settings / templates / retry_count_limitation / expire_seconds はそ�
   - 非文字列(数値・オブジェクト・配列・null・真偽値)はいずれも拒否
 - スコープは**開始時と確定時の両方**で検証する
 
+### 再送クールダウン
+
+同一ユーザー × 同一操作で、直前の送信から `resend_cooldown_seconds` 以内の再送は `400` で拒否します。
+**未設定時は 60 秒**（0 = 無制限にはしません）。
+
+変更側は宛先を呼び出し側が指定できるため、無制限だと SMS の課金と送信者レピュテーションが、
+呼び出し側の都合で消費されます。受け取る側は関与を求めていない第三者です。
+
+キーは「ユーザー + 操作」なので、Email 変更のクールダウン中でも電話番号の変更や Email の確認は通ります。
+経過判定は DB 側の時刻で行うため、アプリ側の時計のズレで短縮されません。
+
 ---
 
 ## 所有権と操作種別の扱い
@@ -93,6 +104,7 @@ WHERE id = ? AND tenant_id = ? AND user_id = ? FOR UPDATE
      `email_change` を追加推奨(未定義ならデフォルト文面にフォールバック)
    - 電話番号: [SMS認証](./authn/sms.md) の `sms` config。`templates` に `phone_verify` /
      `phone_change` を追加推奨(同上)
+   - 再送間隔を変えるなら `resend_cooldown_seconds`（未設定は 60 秒）
 2. **変更用スコープ**をテナントの `scopes_supported` とクライアントの `scope` に追加する。
    無いとトークンに載らず、変更エンドポイントが常に `403 insufficient_scope` になる
    (クライアント登録スコープの allow-list フィルタが効くため、fail closed)。
@@ -129,6 +141,20 @@ WHERE id = ? AND tenant_id = ? AND user_id = ? FOR UPDATE
 | 電話番号 変更 | `phone_change_request_success` / `_failure`、`phone_change_success` / `_failure` |
 
 永続化して照会するにはテナントに `security_event_log_config.persistence_enabled: true` が必要。
+
+---
+
+## 運用: 期限切れチャレンジの掃除
+
+確定したチャレンジは削除されますが、**コードを要求して放置された行は残ります**（利用者がコードを持って
+戻ってこないだけなので、消す契機が無い）。有効な宛先と使い捨てコードを保持したままなので、他の
+有効期限付きテーブルと同じ一括削除の対象にしています。
+
+```
+POST /v1/admin/operations/delete-expired-data   { "max_deletion_number": 10000 }
+```
+
+レスポンスの内訳に `contact_verification_challenge` が並びます。
 
 ---
 

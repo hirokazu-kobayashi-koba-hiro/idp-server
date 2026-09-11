@@ -67,3 +67,4 @@ org.idp.server.core.adapters.datasource.session.OPSessionRepositoryProvider
 org.idp.server.core.adapters.datasource.session.ClientSessionRepositoryProvider
 org.idp.server.core.adapters.datasource.system.SystemConfigurationDataSourceProvider
 org.idp.server.core.adapters.datasource.identity.contact.ContactVerificationChallengeDataSourceProvider
+org.idp.server.core.adapters.datasource.identity.contact.operation.ContactVerificationChallengeOperationCommandDataSourceProvider

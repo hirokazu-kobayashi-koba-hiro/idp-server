@@ -27,6 +27,7 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
   Map<String, EmailVerificationTemplate> templates;
   int retryCountLimitation;
   int expireSeconds;
+  int resendCooldownSeconds;
 
   public EmailAuthenticationConfiguration() {}
 
@@ -75,6 +76,18 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
 
   public int expireSeconds() {
     return expireSeconds;
+  }
+
+  /**
+   * Minimum interval between two code sends for the same recipient and purpose.
+   *
+   * <p>Absent from the stored configuration means 0, which would leave sending unbounded, so an
+   * unset value falls back to 60 seconds rather than "no limit". Each send costs money on SMS and
+   * spends sender reputation on email, and the recipient of an unwanted flood is a third party who
+   * never asked to be involved.
+   */
+  public int resendCooldownSeconds() {
+    return resendCooldownSeconds > 0 ? resendCooldownSeconds : 60;
   }
 
   public boolean exists() {

@@ -75,6 +75,23 @@ public class ContactVerificationService {
       return target.rejection();
     }
 
+    // Checked after the candidate is validated but before anything is sent: a caller holding
+    // {channel}:change picks the recipient, so an unbounded request loop bills the tenant for SMS
+    // and floods an address that never asked to be involved. Keyed on user + operation so the two
+    // channels and the two intents do not share a budget.
+    int cooldownSeconds = codeSender.resendCooldownSeconds(tenant, operation);
+    if (challengeRepository.sentWithinCooldown(
+        tenant, user.userIdentifier(), operation, cooldownSeconds)) {
+      log.info(
+          "Contact verification code send refused: within cooldown. operation={}",
+          operation.value());
+      return ContactVerificationResponse.requestFailure(
+          String.format(
+              "a verification code was already sent; wait up to %d seconds before requesting another.",
+              cooldownSeconds),
+          operation);
+    }
+
     OneTimePassword oneTimePassword = OneTimePasswordGenerator.generate();
     if (!codeSender.send(tenant, operation, target.value(), oneTimePassword.value())) {
       log.warn("Contact verification code sending failed. operation={}", operation.value());
@@ -149,9 +166,9 @@ public class ContactVerificationService {
     }
 
     updateValue(tenant, user, operation);
-    // A committed value invalidates every other outstanding challenge of this user, so a stale
-    // one cannot later move it back or elsewhere.
-    challengeRepository.deleteAllBy(tenant, user.userIdentifier());
+    // A committed value invalidates this user's other outstanding challenges on the same channel,
+    // so a stale one cannot later move it back or elsewhere. The other channel is untouched.
+    challengeRepository.deleteAllBy(tenant, user.userIdentifier(), operation.channel());
 
     return ContactVerificationResponse.committed(user.toMinimalizedMap(), operation);
   }

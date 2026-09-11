@@ -20,10 +20,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.contact.ContactChannel;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallenge;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeIdentifier;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeQueries;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeRepository;
+import org.idp.server.core.openid.identity.contact.ContactVerificationOperation;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class ContactVerificationChallengeDataSource
@@ -53,6 +55,20 @@ public class ContactVerificationChallengeDataSource
     }
 
     return ModelConverter.convert(result);
+  }
+
+  @Override
+  public boolean sentWithinCooldown(
+      Tenant tenant,
+      UserIdentifier userIdentifier,
+      ContactVerificationOperation operation,
+      int cooldownSeconds) {
+    Map<String, String> result =
+        executor.selectSentWithinCooldown(tenant, userIdentifier, operation, cooldownSeconds);
+    if (result == null || result.isEmpty()) {
+      return false;
+    }
+    return Integer.parseInt(result.get("count")) > 0;
   }
 
   @Override
@@ -95,7 +111,7 @@ public class ContactVerificationChallengeDataSource
   }
 
   @Override
-  public void deleteAllBy(Tenant tenant, UserIdentifier userIdentifier) {
-    executor.deleteAllBy(tenant, userIdentifier);
+  public void deleteAllBy(Tenant tenant, UserIdentifier userIdentifier, ContactChannel channel) {
+    executor.deleteAllBy(tenant, userIdentifier, channel);
   }
 }
