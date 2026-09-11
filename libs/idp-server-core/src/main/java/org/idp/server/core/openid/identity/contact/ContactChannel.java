@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.identity.contact;
 
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.platform.multi_tenancy.tenant.policy.UniqueKeyAttribute;
 
 /**
  * A contact channel a one-time code can be delivered over (Issue #1416).
@@ -71,6 +72,16 @@ public enum ContactChannel {
   abstract void applyValue(User user, String value);
 
   abstract void markVerified(User user);
+
+  /**
+   * The tenant-unique-key attribute this channel owns.
+   *
+   * <p>Lets the policy answer "does changing this channel move the login identifier?" without the
+   * caller restating the mapping.
+   */
+  public UniqueKeyAttribute uniqueKeyAttribute() {
+    return this == EMAIL ? UniqueKeyAttribute.EMAIL : UniqueKeyAttribute.PHONE_NUMBER;
+  }
 
   public String value() {
     return value;

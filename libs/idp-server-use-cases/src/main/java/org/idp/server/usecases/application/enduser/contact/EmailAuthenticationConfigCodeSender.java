@@ -23,6 +23,7 @@ import org.idp.server.core.openid.authentication.config.AuthenticationInteractio
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.contact.ContactVerificationCodeSender;
 import org.idp.server.core.openid.identity.contact.ContactVerificationOperation;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -70,6 +71,38 @@ public class EmailAuthenticationConfigCodeSender implements ContactVerificationC
   @Override
   public int resendCooldownSeconds(Tenant tenant, ContactVerificationOperation operation) {
     return configuration(tenant).resendCooldownSeconds();
+  }
+
+  @Override
+  public void notifyChanged(
+      Tenant tenant,
+      ContactVerificationOperation operation,
+      String previousValue,
+      String newValueMasked) {
+
+    try {
+      EmailAuthenticationConfiguration configuration = configuration(tenant);
+      EmailVerificationTemplate template =
+          configuration.findTemplate(operation.noticeTemplateKey());
+      String body =
+          template.interpolateChangeNotice(SystemDateTime.now().toString(), newValueMasked);
+
+      EmailSendingRequest sendingRequest =
+          new EmailSendingRequest(configuration.sender(), previousValue, template.subject(), body);
+
+      EmailSender emailSender = emailSenders.get(configuration.function());
+      EmailSendResult sendResult = emailSender.send(sendingRequest, configuration.senderConfig());
+
+      if (sendResult.isError()) {
+        log.warn("Contact change notice sending failed. operation={}", operation.value());
+      }
+    } catch (Exception exception) {
+      // The change is already committed; a courtesy notice must not turn a success into a failure.
+      log.warn(
+          "Contact change notice sending failed. operation={}, error={}",
+          operation.value(),
+          exception.getMessage());
+    }
   }
 
   @Override

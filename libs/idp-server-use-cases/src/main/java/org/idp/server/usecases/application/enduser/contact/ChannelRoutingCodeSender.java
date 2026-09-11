@@ -53,6 +53,15 @@ public class ChannelRoutingCodeSender implements ContactVerificationCodeSender {
   }
 
   @Override
+  public void notifyChanged(
+      Tenant tenant,
+      ContactVerificationOperation operation,
+      String previousValue,
+      String newValueMasked) {
+    sender(operation).notifyChanged(tenant, operation, previousValue, newValueMasked);
+  }
+
+  @Override
   public boolean send(
       Tenant tenant,
       ContactVerificationOperation operation,

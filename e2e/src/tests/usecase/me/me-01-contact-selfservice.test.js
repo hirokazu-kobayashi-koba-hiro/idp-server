@@ -55,6 +55,7 @@ const smsConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
           templates: {
             authentication: { subject: "Login", body: "Code: {VERIFICATION_CODE}" },
             phone_change: { subject: "Phone change", body: "Confirm your new number. Code: {VERIFICATION_CODE}" },
+            phone_change_notice: { subject: "Phone changed", body: "Your number was changed at {CHANGED_AT} to {NEW_VALUE_MASKED}." },
             phone_verify: { subject: "Phone verification", body: "Confirm your number. Code: {VERIFICATION_CODE}" },
           },
           retry_count_limitation: 5,
@@ -104,6 +105,12 @@ const emailConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
               subject: "Email verification",
               body: "Confirm your email address. Code: {VERIFICATION_CODE}",
             },
+            email_change_notice: {
+              subject: "Email changed",
+              body:
+                "Your email was changed at {CHANGED_AT} to {NEW_VALUE_MASKED}." +
+                " If this was not you, contact support.",
+            },
           },
           retry_count_limitation: 5,
           expire_seconds: expireSeconds,
@@ -123,7 +130,7 @@ const emailConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
 async function provisionTenant(
   systemAccessToken,
   identityUniqueKeyType,
-  { expireSeconds = 300, resendCooldownSeconds = 1 } = {}
+  { expireSeconds = 300, resendCooldownSeconds = 1, contactChangePolicy } = {}
 ) {
   const timestamp = `${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
   const ctx = {
@@ -146,7 +153,10 @@ async function provisionTenant(
         name: `Me Tenant ${timestamp}`,
         domain: backendUrl,
         authorization_provider: "idp-server",
-        identity_policy_config: { identity_unique_key_type: identityUniqueKeyType },
+        identity_policy_config: {
+          identity_unique_key_type: identityUniqueKeyType,
+          ...(contactChangePolicy ? { contact_change_policy: contactChangePolicy } : {}),
+        },
         session_config: { cookie_name: `ME_${timestamp}`, use_secure_cookie: false },
         cors_config: { allow_origins: [backendUrl] },
         security_event_log_config: {
@@ -838,6 +848,147 @@ describe("Me Use Case: self-service contact verification and change", () => {
     });
     console.log("end-user token on management:", denied.status);
     expect([401, 403]).toContain(denied.status);
+  });
+
+  it("policy: an identifier move can require a specific authentication method", async () => {
+    // Under EMAIL policy an email change relocates preferred_username, so the tenant may demand a
+    // stronger proof than "holds a token". The requirement is written as a condition over amr, not
+    // as a named method, so a passkey-only tenant can express the same intent.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      contactChangePolicy: {
+        identifier_move: {
+          authentication_conditions: {
+            any_of: [[{ path: "$.amr", operation: "contains", value: "fido-uaf" }]],
+          },
+        },
+      },
+    });
+    tenants.push(ctx);
+    // password grant emits amr: ["password"], so the fido-uaf requirement is not met
+    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
+      .access_token;
+
+    const refusedTarget = `amr-denied-${Date.now()}@me-email.example.com`;
+    const denied = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: refusedTarget },
+    });
+    console.log("identifier move without required amr:", denied.status, JSON.stringify(denied.data));
+    expect(denied.status).toBe(400);
+
+    // No code was sent: the rule is checked before the sender runs, so a refusal cannot be used to
+    // deliver a message to a recipient of the caller's choosing. Matched on the exact address —
+    // the mockoon bucket is shared across cases, so a prefix match would catch other tests' mail.
+    const sent = await get({ url: "http://localhost:4000/sent-emails" });
+    expect(sent.data.filter((e) => e.to === refusedTarget).length).toBe(0);
+  });
+
+  it("policy: the same tenant leaves the other channel on the attribute-only rule", async () => {
+    // unique_key_type EMAIL means a phone change replaces an attribute, not the login identifier.
+    // The strict identifier_move rule must not spill onto it.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      contactChangePolicy: {
+        identifier_move: {
+          authentication_conditions: {
+            any_of: [[{ path: "$.amr", operation: "contains", value: "fido-uaf" }]],
+          },
+        },
+      },
+    });
+    tenants.push(ctx);
+    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
+      .access_token;
+
+    const resp = await runChange(ctx, token, "phone", `+8190${String(Date.now()).slice(-8)}`);
+    console.log("attribute-only change under a strict identifier rule:", resp.status);
+    expect(resp.status).toBe(200);
+  });
+
+  it("policy: a satisfied condition lets the identifier move through", async () => {
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      contactChangePolicy: {
+        identifier_move: {
+          authentication_conditions: {
+            any_of: [[{ path: "$.amr", operation: "contains", value: "password" }]],
+          },
+          max_auth_age_seconds: 600,
+        },
+      },
+    });
+    tenants.push(ctx);
+    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
+      .access_token;
+
+    const resp = await runChange(ctx, token, "email", `amr-ok-${Date.now()}@me-email.example.com`);
+    console.log("identifier move with satisfied amr:", resp.status);
+    expect(resp.status).toBe(200);
+  });
+
+  it("policy: a stale authentication fails max_auth_age_seconds", async () => {
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      contactChangePolicy: { identifier_move: { max_auth_age_seconds: 1 } },
+    });
+    tenants.push(ctx);
+    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
+      .access_token;
+
+    // auth_time is stamped at token issuance, so waiting ages it past the bound.
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+
+    const resp = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: `stale-${Date.now()}@me-email.example.com` },
+    });
+    console.log("stale authentication:", resp.status, JSON.stringify(resp.data));
+    expect(resp.status).toBe(400);
+  });
+
+  it("policy: the replaced value is told that it was replaced", async () => {
+    // The code goes to the NEW value, so nothing reaches the current owner during the flow. If the
+    // change was not theirs, this notice is the only thing that tells them.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL");
+    tenants.push(ctx);
+    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
+      .access_token;
+    const previousEmail = ctx.adminEmail;
+    const newEmail = `notice-${Date.now()}@me-email.example.com`;
+
+    expect((await runChange(ctx, token, "email", newEmail)).status).toBe(200);
+
+    const sent = await get({ url: "http://localhost:4000/sent-emails" });
+    const notices = sent.data.filter((e) => e.to === previousEmail);
+    console.log("notices to the previous address:", notices.length);
+    expect(notices.length).toBeGreaterThan(0);
+
+    const notice = notices[notices.length - 1];
+    // The new value is quoted only partially: after a takeover this inbox may be read by someone
+    // else too, and it is enough for the owner to tell "that is not mine".
+    const localPart = newEmail.split("@")[0];
+    expect(notice.body).toContain(`${localPart.charAt(0)}***@me-email.example.com`);
+    expect(notice.body).not.toContain(newEmail);
+    expect(notice.body).not.toContain("{CHANGED_AT}");
+    expect(notice.body).not.toContain("{NEW_VALUE_MASKED}");
+  });
+
+  it("policy: notify_previous_value false suppresses the notice", async () => {
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      contactChangePolicy: { identifier_move: { notify_previous_value: false } },
+    });
+    tenants.push(ctx);
+    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
+      .access_token;
+    const previousEmail = ctx.adminEmail;
+
+    expect(
+      (await runChange(ctx, token, "email", `silent-${Date.now()}@me-email.example.com`)).status
+    ).toBe(200);
+
+    const sent = await get({ url: "http://localhost:4000/sent-emails" });
+    const notices = sent.data.filter((e) => e.to === previousEmail);
+    console.log("notices when suppressed:", notices.length);
+    expect(notices.length).toBe(0);
   });
 
   it("audit: emits verify / change events separately", async () => {

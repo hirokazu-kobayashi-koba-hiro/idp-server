@@ -23,6 +23,7 @@ import org.idp.server.core.openid.authentication.config.AuthenticationInteractio
 import org.idp.server.core.openid.authentication.repository.AuthenticationConfigurationQueryRepository;
 import org.idp.server.core.openid.identity.contact.ContactVerificationCodeSender;
 import org.idp.server.core.openid.identity.contact.ContactVerificationOperation;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -68,6 +69,35 @@ public class SmsAuthenticationConfigCodeSender implements ContactVerificationCod
   @Override
   public int resendCooldownSeconds(Tenant tenant, ContactVerificationOperation operation) {
     return configuration(tenant).resendCooldownSeconds();
+  }
+
+  @Override
+  public void notifyChanged(
+      Tenant tenant,
+      ContactVerificationOperation operation,
+      String previousValue,
+      String newValueMasked) {
+
+    try {
+      SmsAuthenticationConfiguration configuration = configuration(tenant);
+      SmslVerificationTemplate template = configuration.findTemplate(operation.noticeTemplateKey());
+      String body =
+          template.interpolateChangeNotice(SystemDateTime.now().toString(), newValueMasked);
+
+      SmsSendingRequest sendingRequest = new SmsSendingRequest(previousValue, body);
+
+      SmsSender smsSender = smsSenders.get(configuration.senderType());
+      SmsSendResult sendResult = smsSender.send(sendingRequest, configuration.settings());
+
+      if (sendResult.isError()) {
+        log.warn("Contact change notice sending failed. operation={}", operation.value());
+      }
+    } catch (Exception exception) {
+      log.warn(
+          "Contact change notice sending failed. operation={}, error={}",
+          operation.value(),
+          exception.getMessage());
+    }
   }
 
   @Override

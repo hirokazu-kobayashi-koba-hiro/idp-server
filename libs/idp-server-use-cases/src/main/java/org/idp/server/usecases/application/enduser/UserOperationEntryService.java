@@ -31,6 +31,7 @@ import org.idp.server.core.openid.identity.authentication.PasswordChangeService;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.openid.identity.authentication.PasswordResetRequest;
 import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
+import org.idp.server.core.openid.identity.contact.ContactChangeAuthenticationContext;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeIdentifier;
 import org.idp.server.core.openid.identity.contact.ContactVerificationOperation;
 import org.idp.server.core.openid.identity.contact.ContactVerificationRequest;
@@ -162,7 +163,13 @@ public class UserOperationEntryService implements UserOperationApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     ContactVerificationResponse response =
-        contactVerificationService.request(tenant, user, operation, request);
+        contactVerificationService.request(
+            tenant,
+            user,
+            operation,
+            request,
+            new ContactChangeAuthenticationContext(
+                oAuthToken.authorizationGrant().authentication()));
 
     publish(tenant, oAuthToken, response, requestAttributes);
     return response;
@@ -185,7 +192,14 @@ public class UserOperationEntryService implements UserOperationApi {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
     ContactVerificationResponse response =
-        contactVerificationService.verify(tenant, user, operation, challengeIdentifier, request);
+        contactVerificationService.verify(
+            tenant,
+            user,
+            operation,
+            challengeIdentifier,
+            request,
+            new ContactChangeAuthenticationContext(
+                oAuthToken.authorizationGrant().authentication()));
 
     publish(tenant, oAuthToken, response, requestAttributes);
     return response;

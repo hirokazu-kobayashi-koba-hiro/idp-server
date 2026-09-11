@@ -41,6 +41,19 @@ public interface ContactVerificationCodeSender {
   int resendCooldownSeconds(Tenant tenant, ContactVerificationOperation operation);
 
   /**
+   * Tells the value that was just replaced that it was replaced (Issue #1416).
+   *
+   * <p>Best effort: the change is already committed when this runs, so a delivery failure is logged
+   * and swallowed rather than failing the operation. Undoing a proven change because a courtesy
+   * notice bounced would be worse than not sending it.
+   */
+  void notifyChanged(
+      Tenant tenant,
+      ContactVerificationOperation operation,
+      String previousValue,
+      String newValueMasked);
+
+  /**
    * @return true when the code was accepted for delivery
    */
   boolean send(

@@ -24,6 +24,7 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
+import org.idp.server.platform.multi_tenancy.tenant.policy.ContactChangeRule;
 import org.idp.server.platform.random.OneTimePassword;
 import org.idp.server.platform.random.OneTimePasswordGenerator;
 
@@ -68,7 +69,16 @@ public class ContactVerificationService {
       Tenant tenant,
       User user,
       ContactVerificationOperation operation,
-      ContactVerificationRequest request) {
+      ContactVerificationRequest request,
+      ContactChangeAuthenticationContext authenticationContext) {
+
+    // Before the candidate is even resolved: a rule the caller cannot satisfy must not reach the
+    // point of sending, or the refusal still costs a message to a recipient they chose.
+    ContactVerificationResponse policyRejection =
+        ContactChangePolicyVerifier.verify(tenant, user, operation, authenticationContext);
+    if (policyRejection != null) {
+      return policyRejection;
+    }
 
     TargetValue target = resolveTarget(operation, user, request);
     if (target.isRejected()) {
@@ -117,7 +127,16 @@ public class ContactVerificationService {
       User user,
       ContactVerificationOperation operation,
       ContactVerificationChallengeIdentifier challengeIdentifier,
-      ContactVerificationRequest request) {
+      ContactVerificationRequest request,
+      ContactChangeAuthenticationContext authenticationContext) {
+
+    // Re-checked at commit: the account's verification state and the token's authentication age can
+    // both have moved while the challenge was outstanding, the same reason the scope is re-checked.
+    ContactVerificationResponse policyRejection =
+        ContactChangePolicyVerifier.verify(tenant, user, operation, authenticationContext);
+    if (policyRejection != null) {
+      return policyRejection;
+    }
 
     // Ownership is part of the lookup, not a check afterwards, and the row is locked so two
     // concurrent verifies cannot both consume the code.
@@ -152,6 +171,10 @@ public class ContactVerificationService {
       return ContactVerificationResponse.committed(user.toMinimalizedMap(), operation);
     }
 
+    // Captured before the overwrite: the notice goes to the value being replaced, which is the
+    // inbox the rightful owner still reads if this change was not theirs.
+    String previousValue = operation.currentValue(user);
+
     operation.applyTarget(user, challenge.targetValue());
     operation.markVerified(user);
     // Under a matching identity policy the login identifier tracks this attribute, the same
@@ -170,7 +193,34 @@ public class ContactVerificationService {
     // so a stale one cannot later move it back or elsewhere. The other channel is untouched.
     challengeRepository.deleteAllBy(tenant, user.userIdentifier(), operation.channel());
 
+    notifyPreviousValue(tenant, operation, previousValue, challenge.targetValue());
+
     return ContactVerificationResponse.committed(user.toMinimalizedMap(), operation);
+  }
+
+  /**
+   * Tells the replaced value that it was replaced, when the tenant's policy asks for it.
+   *
+   * <p>This is detection, not prevention: the code went to the new value, so nothing reached the
+   * current owner during the flow. Skipped when there was no previous value — a first-time set has
+   * nobody to tell.
+   */
+  private void notifyPreviousValue(
+      Tenant tenant,
+      ContactVerificationOperation operation,
+      String previousValue,
+      String newValue) {
+
+    if (previousValue == null || previousValue.isBlank()) {
+      return;
+    }
+    ContactChangeRule rule =
+        ContactChangePolicyVerifier.ruleFor(tenant.identityPolicyConfig(), operation);
+    if (!rule.shouldNotifyPreviousValue()) {
+      return;
+    }
+    codeSender.notifyChanged(
+        tenant, operation, previousValue, ContactValueMask.of(operation.channel(), newValue));
   }
 
   /** The only channel branching in this class: which partial update to run. */

@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.exception.UnSupportedException;
+import org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy;
 import org.idp.server.platform.security.event.DefaultSecurityEventType;
 
 /**
@@ -163,6 +164,16 @@ public enum ContactVerificationOperation {
     return requiredScope;
   }
 
+  /**
+   * Template key for the notice sent to the value being replaced.
+   *
+   * <p>Only meaningful for a change — a verification replaces nothing, so there is no previous
+   * value to tell.
+   */
+  public String noticeTemplateKey() {
+    return templateKey + "_notice";
+  }
+
   /** Message template key; an undefined key falls back to the configuration's default body. */
   public String templateKey() {
     return templateKey;
@@ -187,6 +198,17 @@ public enum ContactVerificationOperation {
   /** Marks this channel verified. */
   public void markVerified(User user) {
     channel.markVerified(user);
+  }
+
+  /**
+   * Whether committing this operation relocates the tenant's login identifier.
+   *
+   * <p>Only a change can; a verification leaves the value alone. Which channel moves it depends on
+   * the tenant's unique key, so the same endpoint is an identifier move for one tenant and a plain
+   * attribute update for another.
+   */
+  public boolean movesIdentifier(TenantIdentityPolicy policy) {
+    return change && policy.movesIdentifier(channel.uniqueKeyAttribute());
   }
 
   /** Classpath schema validating a change candidate for this channel. */

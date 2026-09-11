@@ -402,6 +402,7 @@ idp-serverでワンタイムコードを生成・検証し、SMTPでメール送
 | `retry_count_limitation` | 検証リトライ上限回数（デフォルト：5）           |
 | `expire_seconds`         | ワンタイムコードの有効期限（秒、デフォルト：300）    |
 | `resend_cooldown_seconds` | 同一ユーザー・同一用途での再送を拒否する間隔（秒、未設定時：60）。現状は[セルフサービス 連絡先の確認・変更](../contact-verification.md)のみが参照 |
+| `templates.*_notice` | 変更通知の文面（`email_change_notice`）。`{CHANGED_AT}` / `{NEW_VALUE_MASKED}` を使う。確認コード用とはプレースホルダが異なる |
 | `templates`              | メールテンプレート（`registration`、`authentication`） |
 
 #### テンプレート設定
