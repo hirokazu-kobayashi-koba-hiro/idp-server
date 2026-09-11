@@ -19,15 +19,30 @@ package org.idp.server.core.openid.identity.contact;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
- * Delivers a one-time code over the operation's channel, using whatever the tenant configured
- * (Issue #1416).
+ * Drives the one-time code exchange over the operation's channel (Issue #1416).
  *
- * <p>A port so the domain service stays free of the sender plumbing: reading the tenant's email or
- * SMS configuration and picking a transport is infrastructure, and those configuration types live
- * outside this module. Every method takes the operation because expiry and the retry cap come from
- * the per-channel configuration too.
+ * <p>A port rather than a sender, because who owns the code depends on tenant configuration. Under
+ * {@code execution.function: "http_request"} the tenant delegates generation, delivery and
+ * verification to an external service, so there is no code to hand over — only an exchange to start
+ * and later ask about. Naming this "send a code" would be a lie for half the tenants.
  */
-public interface ContactVerificationCodeSender {
+public interface ContactVerificationGateway {
+
+  /** Begins the exchange, delivering a code to {@code targetValue}. */
+  ContactChallengeStart start(
+      Tenant tenant, ContactVerificationOperation operation, String targetValue);
+
+  /**
+   * Decides whether the submitted code is the one that was delivered.
+   *
+   * <p>Local comparison when idp-server owns the code; a call to the external service when it does
+   * not.
+   */
+  boolean verifyCode(
+      Tenant tenant,
+      ContactVerificationOperation operation,
+      ContactVerificationChallenge challenge,
+      String submittedCode);
 
   /**
    * @return how long the issued code stays valid, so the caller can build the challenge
@@ -39,26 +54,4 @@ public interface ContactVerificationCodeSender {
 
   /** Minimum interval between two sends for the same user and operation. */
   int resendCooldownSeconds(Tenant tenant, ContactVerificationOperation operation);
-
-  /**
-   * Tells the value that was just replaced that it was replaced (Issue #1416).
-   *
-   * <p>Best effort: the change is already committed when this runs, so a delivery failure is logged
-   * and swallowed rather than failing the operation. Undoing a proven change because a courtesy
-   * notice bounced would be worse than not sending it.
-   */
-  void notifyChanged(
-      Tenant tenant,
-      ContactVerificationOperation operation,
-      String previousValue,
-      String newValueMasked);
-
-  /**
-   * @return true when the code was accepted for delivery
-   */
-  boolean send(
-      Tenant tenant,
-      ContactVerificationOperation operation,
-      String targetValue,
-      String verificationCode);
 }

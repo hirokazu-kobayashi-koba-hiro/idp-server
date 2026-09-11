@@ -68,6 +68,58 @@ const smsConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
   },
 });
 
+/**
+ * A tenant that delegates code generation, delivery and verification to an external service.
+ *
+ * The marker is `execution.function: "http_request"` with no `details`: there is no local sender to
+ * describe, because idp-server never issues the code. `http_request_store` names what to keep from
+ * the challenge response so the verify call can identify the same exchange.
+ */
+const delegatedEmailConfigBody = () => ({
+  id: uuidv4(),
+  type: "email",
+  attributes: {},
+  metadata: { type: "external" },
+  interactions: {
+    "email-authentication-challenge": {
+      request: { schema: { type: "object", properties: { email: { type: "string" } } } },
+      execution: {
+        function: "http_request",
+        http_request: {
+          url: "http://host.docker.internal:4000/external-contact/challenge",
+          method: "POST",
+          header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+          body_mapping_rules: [{ from: "$.request_body", to: "*" }],
+        },
+        http_request_store: {
+          key: "email-authentication-challenge",
+          interaction_mapping_rules: [
+            { from: "$.response_body.transaction_id", to: "transaction_id" },
+          ],
+        },
+      },
+      response: { body_mapping_rules: [{ from: "$.response_body", to: "*" }] },
+    },
+    "email-authentication": {
+      request: { schema: { type: "object", properties: { verification_code: { type: "string" } } } },
+      execution: {
+        function: "http_request",
+        previous_interaction: { key: "email-authentication-challenge" },
+        http_request: {
+          url: "http://host.docker.internal:4000/external-contact/verify",
+          method: "POST",
+          header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+          body_mapping_rules: [
+            { from: "$.request_body.verification_code", to: "verification_code" },
+            { from: "$.interaction.transaction_id", to: "transaction_id" },
+          ],
+        },
+      },
+      response: { body_mapping_rules: [{ from: "$.response_body", to: "*" }] },
+    },
+  },
+});
+
 const emailConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
   id: uuidv4(),
   type: "email",
@@ -130,7 +182,7 @@ const emailConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
 async function provisionTenant(
   systemAccessToken,
   identityUniqueKeyType,
-  { expireSeconds = 300, resendCooldownSeconds = 1, contactChangePolicy } = {}
+  { expireSeconds = 300, resendCooldownSeconds = 1, contactChangePolicy, delegatedEmail = false } = {}
 ) {
   const timestamp = `${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
   const ctx = {
@@ -239,7 +291,9 @@ async function provisionTenant(
   const emailResp = await postWithJson({
     url: `${backendUrl}/v1/management/organizations/${ctx.organizationId}/tenants/${ctx.tenantId}/authentication-configurations`,
     headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
-    body: emailConfigBody(expireSeconds, resendCooldownSeconds),
+    body: delegatedEmail
+      ? delegatedEmailConfigBody()
+      : emailConfigBody(expireSeconds, resendCooldownSeconds),
   });
   expect(emailResp.status).toBe(201);
 
@@ -989,6 +1043,78 @@ describe("Me Use Case: self-service contact verification and change", () => {
     const notices = sent.data.filter((e) => e.to === previousEmail);
     console.log("notices when suppressed:", notices.length);
     expect(notices.length).toBe(0);
+  });
+
+  it("delegated: an external service owns the code and idp-server defers the decision", async () => {
+    // The tenant's email config declares execution.function: "http_request" with no details, so
+    // there is no local sender: the external service issues the code, delivers it and decides.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", { delegatedEmail: true });
+    tenants.push(ctx);
+    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
+      .access_token;
+    const newEmail = `delegated-${Date.now()}@me-email.example.com`;
+
+    const started = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: newEmail },
+    });
+    console.log("delegated start:", started.status, JSON.stringify(started.data));
+    expect(started.status).toBe(200);
+    expect(started.data.id).toBeDefined();
+
+    // A wrong code is rejected by the external service, not by a local comparison.
+    const wrong = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change/${started.data.id}/verify`,
+      headers: createBearerHeader(token),
+      body: { verification_code: "000000" },
+    });
+    console.log("delegated wrong code:", wrong.status);
+    expect(wrong.status).toBe(400);
+
+    // idp-server never generated this code; the mock accepts only 123456.
+    const ok = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change/${started.data.id}/verify`,
+      headers: createBearerHeader(token),
+      body: { verification_code: "123456" },
+    });
+    console.log("delegated correct code:", ok.status, JSON.stringify(ok.data));
+    expect(ok.status).toBe(200);
+
+    const userinfo = await getUserinfo({
+      endpoint: `${backendUrl}/${ctx.tenantId}/v1/userinfo`,
+      authorizationHeader: createBearerHeader(token),
+    });
+    expect(userinfo.data.email).toBe(newEmail);
+  });
+
+  it("delegated: the management API says where to find the code", async () => {
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", { delegatedEmail: true });
+    tenants.push(ctx);
+    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
+      .access_token;
+    const newEmail = `delegated-mgmt-${Date.now()}@me-email.example.com`;
+
+    const started = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: newEmail },
+    });
+    expect(started.status).toBe(200);
+
+    const one = await get({
+      url: `${backendUrl}/v1/management/tenants/${ctx.tenantId}/contact-verification-challenges/${started.data.id}`,
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
+    });
+    console.log("delegated mgmt:", one.status, JSON.stringify(one.data));
+    expect(one.status).toBe(200);
+
+    // Support still sees the recipient. The code is not here because idp-server never had it —
+    // what is here is the reference that joins this row to the external service's record.
+    expect(one.data.target_value).toBe(newEmail);
+    expect(one.data.delivery).toBe("external");
+    expect(one.data.verification_code).toBeUndefined();
+    expect(one.data.external_reference.transaction_id).toMatch(/^ext-/);
   });
 
   it("audit: emits verify / change events separately", async () => {

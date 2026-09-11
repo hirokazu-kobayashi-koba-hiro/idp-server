@@ -17,14 +17,19 @@
 package org.idp.server.core.adapters.datasource.identity.contact;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.identity.UserIdentifier;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallenge;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeIdentifier;
 import org.idp.server.core.openid.identity.contact.ContactVerificationOperation;
 import org.idp.server.platform.date.LocalDateTimeParser;
+import org.idp.server.platform.json.JsonConverter;
+import org.idp.server.platform.json.JsonNodeWrapper;
 
 class ModelConverter {
+
+  private static final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   static ContactVerificationChallenge convert(Map<String, String> result) {
     return new ContactVerificationChallenge(
@@ -33,11 +38,21 @@ class ModelConverter {
         ContactVerificationOperation.of(result.get("operation")),
         result.get("target_value"),
         result.get("verification_code"),
+        externalReference(result.get("external_reference")),
         Integer.parseInt(result.get("attempts")),
         parse(result.get("expires_at")));
   }
 
   private static LocalDateTime parse(String value) {
     return LocalDateTimeParser.parse(value);
+  }
+
+  /** Null for a locally generated code; the stored reference when the exchange was delegated. */
+  private static Map<String, Object> externalReference(String value) {
+    if (value == null || value.isBlank()) {
+      return new HashMap<>();
+    }
+    JsonNodeWrapper jsonNodeWrapper = jsonConverter.readTree(value);
+    return jsonNodeWrapper.toMap();
   }
 }

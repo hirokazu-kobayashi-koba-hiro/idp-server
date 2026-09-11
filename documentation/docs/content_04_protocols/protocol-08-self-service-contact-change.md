@@ -119,6 +119,14 @@ WHERE id = ? AND tenant_id = ? AND user_id = ? FOR UPDATE
 
 電話のチャレンジを email エンドポイントへ投げても `404` です。
 
+### コードは行に置くとは限らない
+
+`contact_verification_challenge` は、ローカル生成なら `verification_code` を、委譲なら
+`external_reference` を持ちます。どちらか一方だけが入ります。
+
+管理APIは `delivery` でどちらかを示し、`internal` なら `verification_code`、`external` なら
+`external_reference` を返します。監査ログにはどちらも残しません。
+
 ### 確定は部分更新
 
 確定時に書くのは該当する列だけです。全カラムを書き戻すと、呼び出し側が保持する古いユーザー像で `status` 等を巻き戻してしまいます。
@@ -127,6 +135,38 @@ WHERE id = ? AND tenant_id = ? AND user_id = ? FOR UPDATE
 |---|---|
 | `*_verify` | `*_verified` |
 | `*_change` | 値 + `*_verified` + `preferred_username` |
+
+---
+
+## コードを誰が持つか
+
+流用する認証設定には形が2つあり、どちらでも動きます。**モードを指定する設定項目はありません**
+（`execution` に sender の記述があるかで判定する）。
+
+```
+ローカル生成                              外部委譲
+  idp がコードを生成                       外部サービスがコードを生成
+  idp が送信                               外部サービスが送信
+  idp が照合（verification_code 列）        外部の検証APIが照合
+  idp が持つ: コード                        idp が持つ: transaction_id 等の識別子
+```
+
+委譲の場合、確定時の照合はこう流れます。
+
+```
+POST /v1/me/email/change/{id}/verify  { verification_code }
+  │
+  ├─ チャレンジ行から external_reference を読む
+  │
+  └─ 外部の検証API へ
+        body: { verification_code, transaction_id }
+              ↑ リクエスト由来        ↑ $.interaction.* から（保存済み）
+        200 → 確定へ / それ以外 → 試行回数を加算して 400
+```
+
+外部API は単発（`http_request`）とチェーン（`http_requests`）の両方に対応します。チェーンは
+最初の失敗で打ち切り、各結果を `$.execution_http_requests` に積むので、後続のリクエストと
+保存マッピングが前の結果を読めます。
 
 ---
 

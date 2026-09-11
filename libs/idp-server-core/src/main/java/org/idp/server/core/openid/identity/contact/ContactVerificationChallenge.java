@@ -37,6 +37,7 @@ public class ContactVerificationChallenge {
   ContactVerificationOperation operation;
   String targetValue;
   String verificationCode;
+  Map<String, Object> externalReference = new HashMap<>();
   int attempts;
   LocalDateTime expiresAt;
 
@@ -48,6 +49,7 @@ public class ContactVerificationChallenge {
       ContactVerificationOperation operation,
       String targetValue,
       String verificationCode,
+      Map<String, Object> externalReference,
       int attempts,
       LocalDateTime expiresAt) {
     this.identifier = identifier;
@@ -55,6 +57,7 @@ public class ContactVerificationChallenge {
     this.operation = operation;
     this.targetValue = targetValue;
     this.verificationCode = verificationCode;
+    this.externalReference = externalReference == null ? new HashMap<>() : externalReference;
     this.attempts = attempts;
     this.expiresAt = expiresAt;
   }
@@ -63,14 +66,15 @@ public class ContactVerificationChallenge {
       UserIdentifier userIdentifier,
       ContactVerificationOperation operation,
       String targetValue,
-      String verificationCode,
+      ContactChallengeStart start,
       int expireSeconds) {
     return new ContactVerificationChallenge(
         new ContactVerificationChallengeIdentifier(java.util.UUID.randomUUID().toString()),
         userIdentifier,
         operation,
         targetValue,
-        verificationCode,
+        start.verificationCode(),
+        start.externalReference(),
         0,
         SystemDateTime.now().plusSeconds(expireSeconds));
   }
@@ -100,6 +104,19 @@ public class ContactVerificationChallenge {
     return verificationCode;
   }
 
+  /**
+   * What identifies this exchange to the external verification service, when the tenant delegated
+   * it. Empty when idp-server owns the code.
+   */
+  public Map<String, Object> externalReference() {
+    return externalReference == null ? new HashMap<>() : externalReference;
+  }
+
+  /** Whether the code lives in an external service rather than on this row. */
+  public boolean isExternal() {
+    return verificationCode == null || verificationCode.isBlank();
+  }
+
   /** Returns a copy with one more failed attempt recorded. */
   public ContactVerificationChallenge countUpAttempts() {
     return new ContactVerificationChallenge(
@@ -108,6 +125,7 @@ public class ContactVerificationChallenge {
         operation,
         targetValue,
         verificationCode,
+        externalReference,
         attempts + 1,
         expiresAt);
   }
@@ -130,7 +148,15 @@ public class ContactVerificationChallenge {
     map.put("user_id", userIdentifier.value());
     map.put("operation", operation.value());
     map.put("target_value", targetValue);
-    map.put("verification_code", verificationCode);
+    // Which half of the answer idp-server holds. When the tenant delegates verification, the code
+    // lives in the external service the operator can already query, and what is useful here is the
+    // reference that joins the two records.
+    map.put("delivery", isExternal() ? "external" : "internal");
+    if (isExternal()) {
+      map.put("external_reference", externalReference());
+    } else {
+      map.put("verification_code", verificationCode);
+    }
     map.put("attempts", attempts);
     map.put("expires_at", expiresAt.toString());
     map.put("expired", isExpired());
@@ -148,6 +174,7 @@ public class ContactVerificationChallenge {
   public Map<String, Object> toAuditMap() {
     Map<String, Object> map = toMap();
     map.remove("verification_code");
+    map.remove("external_reference");
     return map;
   }
 

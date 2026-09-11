@@ -2188,6 +2188,110 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-external-contact-challenge",
+      "type": "http",
+      "documentation": "Issue #1416: external contact verification service - challenge. Records the recipient and returns a transaction_id. The code itself never leaves this service (E2E uses the fixed 123456).",
+      "method": "post",
+      "endpoint": "external-contact/challenge",
+      "responses": [
+        {
+          "uuid": "e2e-external-contact-challenge-ok",
+          "body": "{\n  \"transaction_id\": \"ext-{{faker 'string.uuid'}}\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "issued",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-external-contact-verify",
+      "type": "http",
+      "documentation": "Issue #1416: external contact verification service - verify. 200 only for the fixed code 123456, so an E2E can prove idp-server defers the decision instead of comparing locally.",
+      "method": "post",
+      "endpoint": "external-contact/verify",
+      "responses": [
+        {
+          "uuid": "e2e-external-contact-verify-ok",
+          "body": "{\n  \"verified\": true\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "correct code (123456)",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "verification_code",
+              "value": "123456",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "e2e-external-contact-verify-ng",
+          "body": "{\n  \"verified\": false,\n  \"error\": \"code_mismatch\"\n}",
+          "latency": 0,
+          "statusCode": 400,
+          "label": "wrong code",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -2346,6 +2450,14 @@
     {
       "type": "route",
       "uuid": "e2e-sent-sms"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-external-contact-challenge"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-external-contact-verify"
     }
   ],
   "proxyMode": false,

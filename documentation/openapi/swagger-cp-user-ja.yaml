@@ -28,7 +28,12 @@ paths:
 
         `verification_code` を返すのは意図的です。チャレンジの消費には本人のアクセストークンが必要なため、
         コードだけを入手したオペレーターが単独で確定させることはできません。
+
+        外部サービスにコード生成・検証を委譲しているテナントでは、コードは idp-server にありません
+        （`delivery: external`）。その場合は `external_reference` で外部サービスの記録を引きます。
+
         アクセスには `idp:contact-verification-challenge:read` 権限が必要で、参照は監査ログに記録されます。
+        ただし監査ログには `verification_code` も `external_reference` も残りません。
       tags:
       - organization-contact-verification-challenge
       parameters:
@@ -879,12 +884,31 @@ components:
           type: string
           description: |
             確認コードの実際の送信先。`*_verify` はアカウントの現在値、`*_change` は変更先の値。
-            「届かない」の問い合わせでまず確認する項目です
+            「届かない」の問い合わせでまず確認する項目で、`delivery` によらず記録されます
           example: new@example.com
+        delivery:
+          type: string
+          enum:
+          - internal
+          - external
+          description: |
+            コードの在処。`internal` は idp-server が生成・照合するモードで `verification_code` が入る。
+            `external` は外部サービスに委譲したモードで、コードは idp-server に無く `external_reference` が入る
+          example: internal
         verification_code:
           type: string
-          description: 発行した確認コード。確定には本人のアクセストークンが別途必要です
+          description: |
+            発行した確認コード。`delivery: internal` のときのみ返る。
+            確定には本人のアクセストークンが別途必要なため、コードだけでは確定できません
           example: "123456"
+        external_reference:
+          type: object
+          additionalProperties: true
+          description: |
+            外部サービスの記録に突き合わせるための識別子。`delivery: external` のときのみ返る。
+            中身はテナントが `http_request_store` のマッピングで選んだ項目（典型は `transaction_id`）
+          example:
+            transaction_id: ext-3fa85f64-5717-4562-b3fc-2c963f66afa6
         attempts:
           type: integer
           description: 検証失敗の試行回数。上限に達したチャレンジは使用できません

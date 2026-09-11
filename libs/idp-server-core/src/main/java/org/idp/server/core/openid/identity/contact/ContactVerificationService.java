@@ -25,8 +25,6 @@ import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.policy.ContactChangeRule;
-import org.idp.server.platform.random.OneTimePassword;
-import org.idp.server.platform.random.OneTimePasswordGenerator;
 
 /**
  * Self-service contact verification and change (Issue #1416).
@@ -48,18 +46,21 @@ import org.idp.server.platform.random.OneTimePasswordGenerator;
 public class ContactVerificationService {
 
   ContactVerificationChallengeRepository challengeRepository;
-  ContactVerificationCodeSender codeSender;
+  ContactVerificationGateway gateway;
+  ContactChangeNotifier notifier;
   UserQueryRepository userQueryRepository;
   UserCommandRepository userCommandRepository;
   LoggerWrapper log = LoggerWrapper.getLogger(ContactVerificationService.class);
 
   public ContactVerificationService(
       ContactVerificationChallengeRepository challengeRepository,
-      ContactVerificationCodeSender codeSender,
+      ContactVerificationGateway gateway,
+      ContactChangeNotifier notifier,
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository) {
     this.challengeRepository = challengeRepository;
-    this.codeSender = codeSender;
+    this.gateway = gateway;
+    this.notifier = notifier;
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
   }
@@ -89,7 +90,7 @@ public class ContactVerificationService {
     // {channel}:change picks the recipient, so an unbounded request loop bills the tenant for SMS
     // and floods an address that never asked to be involved. Keyed on user + operation so the two
     // channels and the two intents do not share a budget.
-    int cooldownSeconds = codeSender.resendCooldownSeconds(tenant, operation);
+    int cooldownSeconds = gateway.resendCooldownSeconds(tenant, operation);
     if (challengeRepository.sentWithinCooldown(
         tenant, user.userIdentifier(), operation, cooldownSeconds)) {
       log.info(
@@ -102,9 +103,12 @@ public class ContactVerificationService {
           operation);
     }
 
-    OneTimePassword oneTimePassword = OneTimePasswordGenerator.generate();
-    if (!codeSender.send(tenant, operation, target.value(), oneTimePassword.value())) {
-      log.warn("Contact verification code sending failed. operation={}", operation.value());
+    // Who owns the code depends on tenant configuration: idp-server generates it for a local
+    // sender, an external service does for a delegated one. Either way what comes back is what the
+    // challenge row must hold to decide a later submission.
+    ContactChallengeStart start = gateway.start(tenant, operation, target.value());
+    if (!start.isSucceeded()) {
+      log.warn("Contact verification challenge failed. operation={}", operation.value());
       return ContactVerificationResponse.requestFailure(
           "failed to send the verification code.", operation);
     }
@@ -114,8 +118,8 @@ public class ContactVerificationService {
             user.userIdentifier(),
             operation,
             target.value(),
-            oneTimePassword.value(),
-            codeSender.expireSeconds(tenant, operation));
+            start,
+            gateway.expireSeconds(tenant, operation));
     challengeRepository.register(tenant, challenge);
 
     return ContactVerificationResponse.challengeIssued(challenge.identifier(), operation);
@@ -219,7 +223,7 @@ public class ContactVerificationService {
     if (!rule.shouldNotifyPreviousValue()) {
       return;
     }
-    codeSender.notifyChanged(
+    notifier.notifyChanged(
         tenant, operation, previousValue, ContactValueMask.of(operation.channel(), newValue));
   }
 
@@ -250,13 +254,15 @@ public class ContactVerificationService {
       return ContactVerificationResponse.failure("verification code is expired.", operation);
     }
 
-    if (challenge.exceededRetryLimit(codeSender.retryCountLimitation(tenant, operation))) {
+    if (challenge.exceededRetryLimit(gateway.retryCountLimitation(tenant, operation))) {
       challengeRepository.delete(tenant, challenge.identifier());
       return ContactVerificationResponse.failure(
           "verification code retry limit exceeded.", operation);
     }
 
-    if (!challenge.matches(request.verificationCode())) {
+    // Delegated exchanges are decided by the external service, which holds the code; a local one
+    // is decided here. Either way a wrong answer costs an attempt.
+    if (!gateway.verifyCode(tenant, operation, challenge, request.verificationCode())) {
       challengeRepository.countUpAttempts(tenant, challenge.countUpAttempts());
       return ContactVerificationResponse.failure("verification code is unmatched.", operation);
     }

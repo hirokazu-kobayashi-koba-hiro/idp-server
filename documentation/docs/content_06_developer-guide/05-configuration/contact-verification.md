@@ -5,12 +5,61 @@
 
 送信には既存の認証設定をそのまま流用する（Email は [Email認証](./authn/email.md) の
 `email-authentication-challenge`、電話番号は [SMS認証](./authn/sms.md) の `sms-authentication-challenge`）。
-sender / settings / templates / retry_count_limitation / expire_seconds はそこから読む。
+テナントが追加で書く設定は、変更用スコープと（必要なら）変更ポリシーだけ。
 
 :::tip このページは設定リファレンスです
 - **なぜ**識別子移動と属性更新を分けるのか → [連絡先変更ポリシー](../../content_03_concepts/02-identity-management/concept-03-contact-change-policy.md)
 - **フローとエンドポイント** → [セルフサービス 連絡先の確認・変更（プロトコル）](../../content_04_protocols/protocol-08-self-service-contact-change.md)
 :::
+
+---
+
+## 2つのモード
+
+流用する認証設定には形が2つあり、**どちらも動く**。どちらになるかは設定から判定するので、
+モードを指定する設定項目は無い。
+
+| | ローカル生成 | 外部委譲 |
+|---|---|---|
+| 判定 | `execution.details` に sender の記述がある | `execution.function` が `http_request` / `http_requests`、または sender の記述が無い |
+| コード生成 | idp-server | 外部サービス |
+| 送信 | idp-server（SMTP / HTTP API / AWS SES など） | 外部サービス |
+| 照合 | idp-server（`verification_code` 列と比較） | 外部の検証API |
+| idp-server が保持するもの | コードそのもの | 外部の識別子（`transaction_id` 等） |
+| 参照する設定 | `details`（sender / settings / templates / retry / expire） | `http_request` / `http_requests` と `*_store` |
+
+### 外部委譲で参照する設定
+
+challenge 側（`{channel}-authentication-challenge`）:
+
+| 項目 | 用途 |
+|---|---|
+| `execution.http_request` | 外部API設定（単発） |
+| `execution.http_requests` | 外部API設定（チェーン。認証してから送るなど） |
+| `execution.http_request_store` / `http_requests_store` | レスポンスから何を保持するか |
+
+verify 側（`{channel}-authentication`）:
+
+| 項目 | 用途 |
+|---|---|
+| `execution.http_request` / `http_requests` | 外部検証API設定 |
+| `execution.previous_interaction` | challenge で保持した値の参照キー |
+
+保持した値は検証リクエストのマッピングで `$.interaction.*` から読める。ログイン側と同じ記法。
+
+チェーンは最初の失敗で打ち切り、各結果を `$.execution_http_requests` に積むので、後続の
+リクエストと保存マッピングが前の結果を読める。**空のチェーンは失敗扱い**（外部に一度も
+聞かずに成功を返さないため）。ログイン側にある条件付きスキップは、認証トランザクションが
+無いため評価できず、対応していない。
+
+### 外部委譲での制約
+
+| 項目 | 挙動 |
+|---|---|
+| `expire_seconds` / `retry_count_limitation` / `resend_cooldown_seconds` | `details` 由来のため既定値（300 / 5 / 60）。実際の有効期限や試行上限は外部サービスが持つ |
+| 変更通知（`notify_previous_value`） | **送られない**。文面の置き場が認証設定の `templates` しか無く、委譲設定はそれを持たないため。ログに残してスキップする |
+
+通知の制約は連絡先変更に固有ではなく、テナント単位の通知設定が存在しないことに起因する。
 
 ---
 
@@ -181,6 +230,11 @@ sender / settings / templates / retry_count_limitation / expire_seconds はそ�
 送信失敗は**ログに残して握りつぶします**。変更は既に確定しており、通知の不達で成功を
 失敗に変えるほうが悪いためです。
 
+:::warning 外部委譲モードでは送られません
+文面の置き場が認証設定の `templates` しか無く、委譲設定はそれを持たないためです。通知自体は
+認証チャレンジではないので本来は送れるはずで、テナント単位の通知設定ができれば解消します。
+:::
+
 ### 判定のタイミング
 
 開始時（コード送信前）と確定時の両方で評価します。満たせない要求で開始できてしまうと、
@@ -286,10 +340,28 @@ GET /v1/management/organizations/{org-id}/tenants/{tenant-id}/contact-verificati
 GET /v1/management/organizations/{org-id}/tenants/{tenant-id}/contact-verification-challenges/{id}
 ```
 
-権限は `idp:contact-verification-challenge:read`。返るのは `target_value`(実際の送信先)、
-`verification_code`、`attempts`、`expires_at`、`expired`。
+権限は `idp:contact-verification-challenge:read`。
 
-まず `target_value` を見る。ユーザーが言っているアドレス／番号と違っていれば、それが原因。
+**まず `target_value`（実際の送信先）を見る。** ユーザーが言っているアドレス／番号と違っていれば、
+それが原因。ここはモードによらず同じ。
 
-`verification_code` を返すのは意図的。チャレンジの消費には**本人のアクセストークン**が必要なため、
-コードだけを入手したオペレーターが単独で確定させることはできない。参照は監査ログに記録される。
+その次に見るものはモードで変わり、`delivery` がどちらかを示す。
+
+```json
+// ローカル生成
+{ "delivery": "internal", "target_value": "...", "verification_code": "123456", "attempts": 0, ... }
+
+// 外部委譲
+{ "delivery": "external", "target_value": "...", "external_reference": { "transaction_id": "ext-..." }, ... }
+```
+
+| `delivery` | コードの在処 |
+|---|---|
+| `internal` | `verification_code` に入っている |
+| `external` | **idp-server は持っていない。** 外部サービスの記録を `external_reference` で引く |
+
+`internal` で `verification_code` を返すのは意図的。チャレンジの消費には**本人のアクセストークン**が
+必要なため、コードだけを入手したオペレーターが単独で確定させることはできない。
+
+参照は監査ログに記録される。ただし監査ログには `verification_code` も `external_reference` も
+残さない（監査ログは永続で、そこに使い捨ての秘密を残す理由が無いため）。

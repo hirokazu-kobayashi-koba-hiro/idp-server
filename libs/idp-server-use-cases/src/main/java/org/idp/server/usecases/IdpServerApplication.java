@@ -27,6 +27,10 @@ import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentialRepository;
 import org.idp.server.authenticators.webauthn4j.mds.MdsConfiguration;
 import org.idp.server.authenticators.webauthn4j.mds.MdsResolver;
 import org.idp.server.authenticators.webauthn4j.mds.MdsResolverFactory;
+import org.idp.server.contact.adapter.ChannelRoutingGateway;
+import org.idp.server.contact.adapter.EmailAuthenticationConfigGateway;
+import org.idp.server.contact.adapter.ExternalContactVerificationExchange;
+import org.idp.server.contact.adapter.SmsAuthenticationConfigGateway;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.base.AdminUserAuthenticationApi;
@@ -200,9 +204,6 @@ import org.idp.server.platform.system.SystemConfigurationResolver;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.enduser.AuthenticationDeviceLogEntryService;
-import org.idp.server.usecases.application.enduser.contact.ChannelRoutingCodeSender;
-import org.idp.server.usecases.application.enduser.contact.EmailAuthenticationConfigCodeSender;
-import org.idp.server.usecases.application.enduser.contact.SmsAuthenticationConfigCodeSender;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationCallbackEntryService;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationEntryService;
 import org.idp.server.usecases.application.relying_party.OidcMetaDataEntryService;
@@ -297,6 +298,43 @@ public class IdpServerApplication {
   OrganizationUserAuthenticationApi organizationUserAuthenticationApi;
   OrgSecurityEventHookManagementApi orgSecurityEventHookManagementApi;
   OrgGrantManagementApi orgGrantManagementApi;
+
+  /**
+   * Builds the self-service contact flow (Issue #1416).
+   *
+   * <p>Extracted because the two channels each need a gateway that is also a notifier, and inlining
+   * that pairing at the call site buried what the service actually depends on.
+   */
+  private static ContactVerificationService contactVerificationService(
+      ContactVerificationChallengeRepository challengeRepository,
+      AuthenticationConfigurationQueryRepository authenticationConfigurationQueryRepository,
+      EmailSenders emailSenders,
+      SmsSenders smsSenders,
+      HttpRequestExecutor httpRequestExecutor,
+      UserQueryRepository userQueryRepository,
+      UserCommandRepository userCommandRepository) {
+
+    ExternalContactVerificationExchange externalExchange =
+        new ExternalContactVerificationExchange(httpRequestExecutor);
+    EmailAuthenticationConfigGateway emailGateway =
+        new EmailAuthenticationConfigGateway(
+            authenticationConfigurationQueryRepository, emailSenders, externalExchange);
+    SmsAuthenticationConfigGateway smsGateway =
+        new SmsAuthenticationConfigGateway(
+            authenticationConfigurationQueryRepository, smsSenders, externalExchange);
+
+    ChannelRoutingGateway routingGateway =
+        new ChannelRoutingGateway(
+            Map.of(ContactChannel.EMAIL, emailGateway, ContactChannel.PHONE, smsGateway),
+            Map.of(ContactChannel.EMAIL, emailGateway, ContactChannel.PHONE, smsGateway));
+
+    return new ContactVerificationService(
+        challengeRepository,
+        routingGateway,
+        routingGateway,
+        userQueryRepository,
+        userCommandRepository);
+  }
 
   public IdpServerApplication(
       String adminTenantId,
@@ -733,16 +771,12 @@ public class IdpServerApplication {
             userLifecycleEventPublisher,
             passwordVerificationDelegation,
             passwordEncodeDelegation,
-            new ContactVerificationService(
+            contactVerificationService(
                 applicationComponentContainer.resolve(ContactVerificationChallengeRepository.class),
-                new ChannelRoutingCodeSender(
-                    Map.of(
-                        ContactChannel.EMAIL,
-                        new EmailAuthenticationConfigCodeSender(
-                            authenticationConfigurationQueryRepository, emailSenders),
-                        ContactChannel.PHONE,
-                        new SmsAuthenticationConfigCodeSender(
-                            authenticationConfigurationQueryRepository, smsSenders))),
+                authenticationConfigurationQueryRepository,
+                emailSenders,
+                smsSenders,
+                httpRequestExecutor,
                 userQueryRepository,
                 userCommandRepository));
     this.rawUserOperationApi = userOperationEntryService;

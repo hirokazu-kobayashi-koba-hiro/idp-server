@@ -27,9 +27,12 @@ import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeI
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeQueries;
 import org.idp.server.core.openid.identity.contact.ContactVerificationOperation;
 import org.idp.server.platform.datasource.SqlExecutor;
+import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class PostgresqlExecutor implements ContactVerificationChallengeSqlExecutor {
+
+  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public void insert(Tenant tenant, ContactVerificationChallenge challenge) {
@@ -37,8 +40,8 @@ public class PostgresqlExecutor implements ContactVerificationChallengeSqlExecut
     String sqlTemplate =
         """
             INSERT INTO contact_verification_challenge
-            (id, tenant_id, user_id, operation, target_value, verification_code, attempts, expires_at)
-            VALUES (?::uuid, ?::uuid, ?::uuid, ?, ?, ?, ?, ?)
+            (id, tenant_id, user_id, operation, target_value, verification_code, external_reference, attempts, expires_at)
+            VALUES (?::uuid, ?::uuid, ?::uuid, ?, ?, ?, ?::jsonb, ?, ?)
             """;
 
     List<Object> params = new ArrayList<>();
@@ -48,6 +51,7 @@ public class PostgresqlExecutor implements ContactVerificationChallengeSqlExecut
     params.add(challenge.operation().value());
     params.add(challenge.targetValue());
     params.add(challenge.verificationCodeValue());
+    params.add(externalReferenceJson(challenge));
     params.add(challenge.attempts());
     params.add(challenge.expiresAt());
 
@@ -64,7 +68,7 @@ public class PostgresqlExecutor implements ContactVerificationChallengeSqlExecut
     // indistinguishable from one that does not exist, so no caller can forget to check ownership.
     String sqlTemplate =
         """
-            SELECT id, user_id, operation, target_value, verification_code, attempts, expires_at
+            SELECT id, user_id, operation, target_value, verification_code, external_reference, attempts, expires_at
             FROM contact_verification_challenge
             WHERE id = ?::uuid
             AND tenant_id = ?::uuid
@@ -173,7 +177,7 @@ public class PostgresqlExecutor implements ContactVerificationChallengeSqlExecut
     // do not own. Tenant scoping still applies.
     String sqlTemplate =
         """
-            SELECT id, user_id, operation, target_value, verification_code, attempts, expires_at
+            SELECT id, user_id, operation, target_value, verification_code, external_reference, attempts, expires_at
             FROM contact_verification_challenge
             WHERE id = ?::uuid
             AND tenant_id = ?::uuid
@@ -193,7 +197,7 @@ public class PostgresqlExecutor implements ContactVerificationChallengeSqlExecut
     StringBuilder sql =
         new StringBuilder(
             """
-            SELECT id, user_id, operation, target_value, verification_code, attempts, expires_at
+            SELECT id, user_id, operation, target_value, verification_code, external_reference, attempts, expires_at
             FROM contact_verification_challenge
             WHERE tenant_id = ?::uuid
             """);
@@ -241,5 +245,16 @@ public class PostgresqlExecutor implements ContactVerificationChallengeSqlExecut
       sql.append(" AND operation = ?");
       params.add(queries.operation().value());
     }
+  }
+
+  /**
+   * Null rather than {@code "{}"} when idp-server owns the code, so the column reads as "there is
+   * no external exchange" rather than "there is one, and it is empty".
+   */
+  private String externalReferenceJson(ContactVerificationChallenge challenge) {
+    if (challenge.externalReference().isEmpty()) {
+      return null;
+    }
+    return jsonConverter.write(challenge.externalReference());
   }
 }
