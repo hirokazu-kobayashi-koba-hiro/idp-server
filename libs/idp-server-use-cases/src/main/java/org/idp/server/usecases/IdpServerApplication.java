@@ -104,6 +104,7 @@ import org.idp.server.core.openid.authentication.repository.*;
 import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.clientinstance.registration.*;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationChallengeOperationCommandRepository;
 import org.idp.server.core.openid.discovery.*;
 import org.idp.server.core.openid.federation.FederationInteractors;
 import org.idp.server.core.openid.federation.plugin.FederationDependencyContainer;
@@ -127,6 +128,7 @@ import org.idp.server.core.openid.identity.role.RoleCommandRepository;
 import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.oauth.*;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeApi;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeOperationCommandRepository;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeRepository;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticators;
@@ -444,6 +446,14 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(CibaGrantOperationCommandRepository.class);
     SsoSessionOperationCommandRepository ssoSessionOperationCommandRepository =
         applicationComponentContainer.resolve(SsoSessionOperationCommandRepository.class);
+    ClientAttestationChallengeOperationCommandRepository
+        clientAttestationChallengeOperationCommandRepository =
+            applicationComponentContainer.resolve(
+                ClientAttestationChallengeOperationCommandRepository.class);
+    ClientInstanceRegistrationChallengeOperationCommandRepository
+        clientInstanceRegistrationChallengeOperationCommandRepository =
+            applicationComponentContainer.resolve(
+                ClientInstanceRegistrationChallengeOperationCommandRepository.class);
     SecurityEventQueryRepository securityEventQueryRepository =
         applicationComponentContainer.resolve(SecurityEventQueryRepository.class);
     SecurityEventHookResultQueryRepository securityEventHookResultQueryRepository =
@@ -617,7 +627,9 @@ public class IdpServerApplication {
                 authorizationCodeGrantOperationCommandRepository,
                 backchannelAuthenticationRequestOperationCommandRepository,
                 cibaGrantOperationCommandRepository,
-                ssoSessionOperationCommandRepository),
+                ssoSessionOperationCommandRepository,
+                clientAttestationChallengeOperationCommandRepository,
+                clientInstanceRegistrationChallengeOperationCommandRepository),
             IdpServerOperationApi.class,
             databaseTypeProvider);
 
