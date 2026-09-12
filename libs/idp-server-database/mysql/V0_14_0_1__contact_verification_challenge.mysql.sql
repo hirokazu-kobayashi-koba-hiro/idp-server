@@ -10,7 +10,12 @@ CREATE TABLE contact_verification_challenge
     user_id           CHAR(36)                                 NOT NULL,
     operation         VARCHAR(32)                              NOT NULL,
     target_value      VARCHAR(255)                             NOT NULL,
-    verification_code VARCHAR(16)                              NOT NULL,
+    -- One of these two carries the secret, never both. idp-server generates the code when the
+    -- tenant's authentication configuration describes a local sender; when it delegates generation
+    -- and verification to an external service, the code never reaches here and what is kept is the
+    -- reference that identifies the exchange.
+    verification_code VARCHAR(16),
+    external_reference JSON,
     attempts          INT         DEFAULT 0                    NOT NULL,
     expires_at        DATETIME(6)                              NOT NULL,
     created_at        DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
