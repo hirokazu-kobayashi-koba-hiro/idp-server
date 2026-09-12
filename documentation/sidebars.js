@@ -142,6 +142,7 @@ const sidebars = {
             "content_03_concepts/security-extensions/concept-02-external-service-integration",
             "content_03_concepts/security-extensions/concept-03-schema-validation",
             "content_03_concepts/security-extensions/concept-04-system-configuration",
+            "content_03_concepts/security-extensions/concept-05-certificate-chain-trust",
           ]
         },
         {
@@ -169,7 +170,8 @@ const sidebars = {
         "content_04_protocols/protocol-05-fapi-ciba",
         "content_04_protocols/protocol-06-client-authentication",
         "content_04_protocols/protocol-07-authorization-code-device-authentication",
-        "content_04_protocols/protocol-08-attestation-based-client-authentication"
+        "content_04_protocols/protocol-08-attestation-based-client-authentication",
+        "content_04_protocols/protocol-09-certificate-chain-verification"
       ]
     },
     {

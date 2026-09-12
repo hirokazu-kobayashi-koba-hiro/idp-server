@@ -265,6 +265,10 @@ Android Key Attestation の検証は次の順で行います。
 
 証明書チェーンは攻撃者が自由に作れる入力なので、**ピン留めしたルートまで検証しない限り以降の判定は意味を持ちません**。攻撃者は自分で拡張を書けるため、チャレンジもアプリ名も望みどおりに入れられます。
 
+リンクの署名が繋がっているだけでは足りず、**発行者の位置に現れる証明書が実際に発行権限を持つか**（`BasicConstraints cA=TRUE` / `pathLenConstraint` / `KeyUsage keyCertSign`）まで確認します。署名鍵は署名する相手を選ばないため、末端証明書の鍵でも別の証明書を作れてしまうからです。
+
+検査順序とプラットフォーム別の差は [証明書チェーンの検証](./protocol-09-certificate-chain-verification.md)、考え方は [証明書チェーンをどこまで信じるか](../content_03_concepts/06-security-extensions/concept-05-certificate-chain-trust.md) を参照。
+
 設定はクライアントの `client_instance_platform_config` に置きます。
 
 ```json

@@ -87,10 +87,16 @@ public class X509CertificateChain {
         certificate.checkValidity();
       }
       for (int i = 0; i < certificates.size() - 1; i++) {
-        certificates.get(i).verify(certificates.get(i + 1).getPublicKey());
+        X509Certificate issuer = certificates.get(i + 1);
+        // The issuer sits at index i+1, so exactly i CA certificates stand between it and the
+        // leaf — which is what pathLenConstraint bounds.
+        verifyIssuerIsCa(issuer, i);
+        certificates.get(i).verify(issuer.getPublicKey());
       }
       X509Certificate root = certificates.get(certificates.size() - 1);
       root.verify(root.getPublicKey());
+    } catch (X509CertInvalidException e) {
+      throw e;
     } catch (Exception e) {
       throw new X509CertInvalidException(e);
     }
@@ -124,8 +130,12 @@ public class X509CertificateChain {
         certificate.checkValidity();
       }
       for (int i = 0; i < certificates.size() - 1; i++) {
-        certificates.get(i).verify(certificates.get(i + 1).getPublicKey());
+        X509Certificate issuer = certificates.get(i + 1);
+        verifyIssuerIsCa(issuer, i);
+        certificates.get(i).verify(issuer.getPublicKey());
       }
+    } catch (X509CertInvalidException e) {
+      throw e;
     } catch (Exception e) {
       throw new X509CertInvalidException(e);
     }
@@ -134,6 +144,7 @@ public class X509CertificateChain {
     for (X509Certificate trustedRoot : trustedRoots) {
       try {
         trustedRoot.checkValidity();
+        verifyIssuerIsCa(trustedRoot, certificates.size() - 1);
         last.verify(trustedRoot.getPublicKey());
         return;
       } catch (Exception e) {
@@ -142,6 +153,59 @@ public class X509CertificateChain {
     }
 
     throw new X509CertInvalidException("certificate chain does not lead to a trusted root");
+  }
+
+  /**
+   * Requires that a certificate used as an issuer is actually allowed to issue.
+   *
+   * <p>Link signature checks alone do not establish a chain. Any signing key can sign a
+   * certificate, including an end-entity key: on Android, an app can generate a {@code
+   * PURPOSE_SIGN} key in the Keystore, obtain a genuine attestation chain for it, and then use that
+   * key to sign a leaf of its own choosing. Splicing that forged leaf on top of the genuine chain
+   * produces a chain where every link verifies and the root is the real one, while the leaf — which
+   * is where the attestation extension, the challenge and the instance key are read from — is
+   * entirely attacker controlled.
+   *
+   * <p>What stops it is the constraint the issuer carries about itself:
+   *
+   * <ul>
+   *   <li>{@code BasicConstraints cA=TRUE}, the statement that this certificate may sign others
+   *   <li>{@code pathLenConstraint}, the number of CAs allowed below it
+   *   <li>{@code KeyUsage keyCertSign}, when the extension is present at all
+   * </ul>
+   *
+   * @param issuer the certificate whose key signs the one below it
+   * @param subordinateCaCount how many CA certificates sit between {@code issuer} and the leaf,
+   *     which is what {@code pathLenConstraint} bounds
+   */
+  private void verifyIssuerIsCa(X509Certificate issuer, int subordinateCaCount)
+      throws X509CertInvalidException {
+
+    // getBasicConstraints() returns the pathLenConstraint for a CA (Integer.MAX_VALUE when absent)
+    // and -1 when the certificate is not a CA at all.
+    int pathLenConstraint = issuer.getBasicConstraints();
+    if (pathLenConstraint < 0) {
+      throw new X509CertInvalidException(
+          "certificate used as an issuer is not a CA: " + issuer.getSubjectX500Principal());
+    }
+    if (pathLenConstraint < subordinateCaCount) {
+      throw new X509CertInvalidException(
+          "certificate chain exceeds pathLenConstraint of "
+              + issuer.getSubjectX500Principal()
+              + ": allows "
+              + pathLenConstraint
+              + ", chain has "
+              + subordinateCaCount);
+    }
+
+    boolean[] keyUsage = issuer.getKeyUsage();
+    // Index 5 is keyCertSign (RFC 5280 4.2.1.3). A certificate without the extension is not
+    // constrained by it.
+    if (keyUsage != null && keyUsage.length > 5 && !keyUsage[5]) {
+      throw new X509CertInvalidException(
+          "certificate used as an issuer does not allow keyCertSign: "
+              + issuer.getSubjectX500Principal());
+    }
   }
 
   /** Parses a single base64 encoded DER certificate. */
