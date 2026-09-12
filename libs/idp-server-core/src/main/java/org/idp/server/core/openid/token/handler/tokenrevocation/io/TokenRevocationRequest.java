@@ -92,6 +92,18 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
       return parameters.clientId();
     }
 
+    // draft-10 Section 7.5: the client_id parameter is optional under attest_jwt_client_auth,
+    // because the Client Attestation names the client in sub. Unverified here, like the
+    // client_assertion iss above: it selects which client configuration to load, and
+    // ClientAttestationJwtVerifier still checks the signature and that sub is the requested client.
+    ClientAttestationJwt clientAttestationJwt = toClientAttestationJwt();
+    if (clientAttestationJwt.exists()) {
+      String subject = clientAttestationJwt.extractSubject();
+      if (!subject.isEmpty()) {
+        return new RequestedClientId(subject);
+      }
+    }
+
     return new RequestedClientId();
   }
 

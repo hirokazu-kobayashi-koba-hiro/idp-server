@@ -214,6 +214,18 @@ public class TokenRequestContext implements BackchannelRequestContext {
     if (parameters.hasClientId()) {
       return parameters.clientId();
     }
+    if (clientSecretBasic.exists()) {
+      return clientSecretBasic.clientId();
+    }
+    // draft-10 Section 7.5: the client_id parameter is optional under attest_jwt_client_auth,
+    // because the Client Attestation names the client in sub. Unverified here — the verifier still
+    // checks the signature and that sub equals this value.
+    if (clientAttestationJwt.exists()) {
+      String subject = clientAttestationJwt.extractSubject();
+      if (!subject.isEmpty()) {
+        return new RequestedClientId(subject);
+      }
+    }
     return clientSecretBasic.clientId();
   }
 

@@ -599,6 +599,27 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
       expect(response.data).toHaveProperty("access_token");
     });
 
+    it("client_id OPTIONAL. The client is identified by the sub claim of the Client Attestation, so a request that omits the parameter authenticates.", async () => {
+      // Section 7.5 example: POST /token with grant_type and scope only. RFC 7521 Section 4.2 says
+      // the same for assertion authentication — "The client_id is unnecessary for client assertion
+      // authentication because the client is identified by the subject of the assertion".
+      const params = new URLSearchParams();
+      params.append("grant_type", "client_credentials");
+      params.append("scope", "account");
+
+      const response = await post({
+        url: serverConfig.tokenEndpoint,
+        body: params,
+        headers: {
+          [ATTESTATION_HEADER]: createAttestationJwt(),
+          [POP_HEADER]: createPopJwt(),
+        },
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("access_token");
+    });
+
     it("If the token request contains a client_id parameter as per [RFC6749] the Authorization Server MUST verify that the value of this parameter is the same as the client_id value in the sub claim of the Client Attestation.", async () => {
       const response = await requestTokenWithAttestation({
         attestationJwt: createAttestationJwt({ sub: "another-client" }),
