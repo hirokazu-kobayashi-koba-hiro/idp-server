@@ -331,9 +331,15 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   }
 
   /**
-   * draft-ietf-oauth-attestation-based-client-auth-10 Section 6.1 makes the challenge endpoint
-   * optional, and requires it to be advertised as {@code challenge_endpoint} when offered. A tenant
-   * that leaves this unset does not offer server-provided challenges.
+   * Whether to advertise {@code challenge_endpoint} in discovery.
+   *
+   * <p>Descriptive only, like {@code userinfo_endpoint} and the other optional endpoint fields: it
+   * decides what discovery says, not whether the endpoint answers. Section 6.1 obliges the
+   * <em>client</em> to use a challenge once the server advertises one; it does not say a server
+   * that stays silent must refuse to issue them.
+   *
+   * <p>Rolling the feature out is staged by {@code client_attestation_challenge_required} instead —
+   * advertise, let clients follow, then start rejecting requests that carry no challenge.
    */
   public boolean hasChallengeEndpoint() {
     return Objects.nonNull(challengeEndpoint) && !challengeEndpoint.isEmpty();

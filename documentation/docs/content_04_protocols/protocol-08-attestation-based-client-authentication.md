@@ -355,6 +355,8 @@ discovery（`/.well-known/openid-configuration`）には次が出力されます
 | `client_attestation_pop_signing_alg_values_supported` | PoP JWT に許可する alg |
 | `challenge_endpoint` | チャレンジエンドポイントの URL |
 
+`challenge_endpoint` は**広告するかどうかだけ**を決めます（`userinfo_endpoint` などと同じ扱い）。未設定でもエンドポイント自体は応答します。§6.1 が課すのは「サーバーが広告したらクライアントは使う」という**クライアント側の義務**で、広告していないサーバーが応答してはならないとは定めていません。段階導入は `client_attestation_challenge_required` で行います。
+
 ---
 
 ## エラー
