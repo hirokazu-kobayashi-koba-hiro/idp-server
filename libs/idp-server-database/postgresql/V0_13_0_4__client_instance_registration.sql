@@ -43,7 +43,10 @@ POLICY tenant_isolation_policy
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE client_instance_registration_challenge FORCE ROW LEVEL SECURITY;
 
--- Expired challenges are removed by the retention job.
+-- Expired challenges are removed by POST /v1/admin/operations/delete-expired-data
+-- (ClientInstanceRegistrationChallengeOperationCommandRepository#deleteExpired).
+-- Expiry is the only condition: a consumed row stays while it is still valid so that a replay
+-- remains distinguishable from an unknown challenge, as described above.
 CREATE INDEX idx_client_instance_registration_challenge_expires_at
     ON client_instance_registration_challenge (expires_at);
 
