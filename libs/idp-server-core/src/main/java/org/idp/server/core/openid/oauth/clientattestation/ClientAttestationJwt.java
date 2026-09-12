@@ -17,6 +17,9 @@
 package org.idp.server.core.openid.oauth.clientattestation;
 
 import java.util.Objects;
+import org.idp.server.platform.jose.JoseInvalidException;
+import org.idp.server.platform.jose.JsonWebSignature;
+import org.idp.server.platform.jose.JsonWebTokenClaims;
 
 /**
  * Client Attestation JWT value object.
@@ -48,5 +51,37 @@ public class ClientAttestationJwt {
 
   public boolean exists() {
     return Objects.nonNull(value) && !value.isBlank();
+  }
+
+  /**
+   * Reads {@code sub} without verifying the signature, so the client can be looked up.
+   *
+   * <p>draft-10 Section 7.5 leaves the {@code client_id} parameter optional, because the Client
+   * Attestation already names the client: "If the token request contains a client_id parameter ...
+   * the Authorization Server MUST verify that the value of this parameter is the same as the
+   * client_id value in the sub claim". Without this, a compliant request that omits the parameter
+   * has no client to resolve and fails before reaching the authenticator.
+   *
+   * <p><strong>Security note:</strong> the value is unverified, exactly as {@code
+   * ClientAssertion#extractIssuer} is for {@code private_key_jwt}. It only selects which client
+   * configuration to load; authentication still happens in {@code ClientAttestationJwtVerifier},
+   * which checks the signature and that {@code sub} equals the requested client.
+   *
+   * @return the subject claim value, or an empty string when it cannot be read
+   */
+  public String extractSubject() {
+    if (!exists()) {
+      return "";
+    }
+    try {
+      JsonWebSignature jws = JsonWebSignature.parse(value);
+      JsonWebTokenClaims claims = jws.claims();
+      if (claims.hasSub()) {
+        return claims.getSub();
+      }
+      return "";
+    } catch (JoseInvalidException e) {
+      return "";
+    }
   }
 }
