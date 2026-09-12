@@ -30,12 +30,4 @@ public record ClientAttestationChallengeResponse(int statusCode, Map<String, Obj
     return new ClientAttestationChallengeResponse(
         200, Map.of("attestation_challenge", challenge.value()));
   }
-
-  /**
-   * Returned when the tenant does not offer server-provided challenges. Section 6.1 makes the
-   * endpoint optional, and a tenant that has not configured it must not look as if it had.
-   */
-  public static ClientAttestationChallengeResponse notFound() {
-    return new ClientAttestationChallengeResponse(404, Map.of("error", "not_found"));
-  }
 }

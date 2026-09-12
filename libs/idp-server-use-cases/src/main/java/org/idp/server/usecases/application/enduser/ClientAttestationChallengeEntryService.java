@@ -63,12 +63,6 @@ public class ClientAttestationChallengeEntryService implements ClientAttestation
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
 
-    // Section 6.1 leaves the endpoint optional. A tenant that does not advertise
-    // challenge_endpoint does not offer challenges, so it must not answer as if it did.
-    if (!authorizationServerConfiguration.hasChallengeEndpoint()) {
-      return ClientAttestationChallengeResponse.notFound();
-    }
-
     ClientAttestationChallenge challenge =
         challengeIssuer.issue(
             authorizationServerConfiguration.clientAttestationChallengeDuration());
