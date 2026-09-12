@@ -75,6 +75,26 @@ export const derSet = (...parts) => tlv(0x31, Buffer.concat(parts));
 export const derBitString = (content) =>
   tlv(0x03, Buffer.concat([Buffer.from([0x00]), Buffer.from(content)]));
 
+/**
+ * A BIT STRING of named bits, such as X.509 KeyUsage.
+ *
+ * Bit 0 is the top bit of the first byte. DER drops the trailing zero bits, so the highest bit set
+ * decides both how many bytes are written and how many bits of the last one go unused.
+ *
+ * @param bits the positions to set, e.g. [5, 6] for keyCertSign and cRLSign
+ */
+export const derNamedBits = (bits) => {
+  if (bits.length === 0) {
+    return tlv(0x03, Buffer.from([0x00]));
+  }
+  const highest = Math.max(...bits);
+  const bytes = Buffer.alloc(Math.floor(highest / 8) + 1);
+  bits.forEach((bit) => {
+    bytes[Math.floor(bit / 8)] |= 0x80 >> bit % 8;
+  });
+  return tlv(0x03, Buffer.concat([Buffer.from([7 - (highest % 8)]), bytes]));
+};
+
 /** The first two arcs share one byte as 40 * a + b, the rest are base 128. */
 export const derOid = (dotted) => {
   const arcs = dotted.split(".").map(Number);
