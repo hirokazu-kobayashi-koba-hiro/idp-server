@@ -206,8 +206,7 @@ public class OrgTenantCreationService implements TenantManagementService<OrgTena
   }
 
   private AuthorizationServerConfiguration createAuthorization(TenantRequest request) {
-    return JsonConverter.snakeCaseInstance()
-        .read(request.get("authorization_server"), AuthorizationServerConfiguration.class);
+    return AuthorizationServerConfigurationJwksEnricher.enrich(request.get("authorization_server"));
   }
 
   private TenantIdentityPolicy convertIdentityPolicyConfig(Map<String, Object> configMap) {

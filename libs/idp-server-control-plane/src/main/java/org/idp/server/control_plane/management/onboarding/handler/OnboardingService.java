@@ -28,6 +28,7 @@ import org.idp.server.control_plane.management.onboarding.io.OrganizationRegistr
 import org.idp.server.control_plane.management.onboarding.io.TenantRegistrationRequest;
 import org.idp.server.control_plane.management.onboarding.validator.OnboardingRequestValidator;
 import org.idp.server.control_plane.management.onboarding.verifier.OnboardingVerifier;
+import org.idp.server.control_plane.management.tenant.handler.AuthorizationServerConfigurationJwksEnricher;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserRegistrator;
 import org.idp.server.core.openid.identity.UserRole;
@@ -130,8 +131,7 @@ public class OnboardingService {
     TenantRegistrationRequest tenantRequest =
         jsonConverter.read(request.get("tenant"), TenantRegistrationRequest.class);
     AuthorizationServerConfiguration authorizationServerConfiguration =
-        jsonConverter.read(
-            request.get("authorization_server"), AuthorizationServerConfiguration.class);
+        AuthorizationServerConfigurationJwksEnricher.enrich(request.get("authorization_server"));
     User user = jsonConverter.read(request.get("user"), User.class);
     if (!user.hasStatus()) {
       user.setStatus(UserStatus.REGISTERED);
