@@ -195,6 +195,19 @@ class AndroidAttestationFixture {
             new X500Principal("CN=attestation-root"),
             keyPair.getPublic());
 
+    // Google's attestation root carries these; the verifier requires them of anything it treats as
+    // an issuer, so a fixture without them is not a fixture of the real thing.
+    builder.addExtension(
+        org.bouncycastle.asn1.x509.Extension.basicConstraints,
+        true,
+        new org.bouncycastle.asn1.x509.BasicConstraints(true));
+    builder.addExtension(
+        org.bouncycastle.asn1.x509.Extension.keyUsage,
+        true,
+        new org.bouncycastle.asn1.x509.KeyUsage(
+            org.bouncycastle.asn1.x509.KeyUsage.keyCertSign
+                | org.bouncycastle.asn1.x509.KeyUsage.cRLSign));
+
     ContentSigner signer =
         new JcaContentSignerBuilder("SHA256withECDSA").build(keyPair.getPrivate());
     return new JcaX509CertificateConverter().getCertificate(builder.build(signer));
