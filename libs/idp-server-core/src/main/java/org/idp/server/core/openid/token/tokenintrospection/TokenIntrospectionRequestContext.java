@@ -16,28 +16,40 @@
 
 package org.idp.server.core.openid.token.tokenintrospection;
 
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.clientauthenticator.BackchannelRequestContext;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.*;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 public class TokenIntrospectionRequestContext implements BackchannelRequestContext {
 
+  Tenant tenant;
   ClientSecretBasic clientSecretBasic;
   ClientCert clientCert;
+  ClientAttestationJwt clientAttestationJwt;
+  ClientAttestationPopJwt clientAttestationPopJwt;
   TokenIntrospectionRequestParameters parameters;
   AuthorizationServerConfiguration authorizationServerConfiguration;
   ClientConfiguration clientConfiguration;
 
   public TokenIntrospectionRequestContext(
+      Tenant tenant,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
+      ClientAttestationJwt clientAttestationJwt,
+      ClientAttestationPopJwt clientAttestationPopJwt,
       TokenIntrospectionRequestParameters parameters,
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
+    this.tenant = tenant;
     this.clientSecretBasic = clientSecretBasic;
     this.clientCert = clientCert;
+    this.clientAttestationJwt = clientAttestationJwt;
+    this.clientAttestationPopJwt = clientAttestationPopJwt;
     this.parameters = parameters;
     this.authorizationServerConfiguration = authorizationServerConfiguration;
     this.clientConfiguration = clientConfiguration;
@@ -56,6 +68,21 @@ public class TokenIntrospectionRequestContext implements BackchannelRequestConte
   @Override
   public boolean hasClientSecretBasic() {
     return clientSecretBasic.exists();
+  }
+
+  @Override
+  public Tenant tenant() {
+    return tenant;
+  }
+
+  @Override
+  public ClientAttestationJwt clientAttestationJwt() {
+    return clientAttestationJwt;
+  }
+
+  @Override
+  public ClientAttestationPopJwt clientAttestationPopJwt() {
+    return clientAttestationPopJwt;
   }
 
   public TokenIntrospectionRequestParameters parameters() {
@@ -80,6 +107,18 @@ public class TokenIntrospectionRequestContext implements BackchannelRequestConte
   public RequestedClientId requestedClientId() {
     if (parameters.hasClientId()) {
       return parameters.clientId();
+    }
+    if (clientSecretBasic.exists()) {
+      return clientSecretBasic.clientId();
+    }
+    // draft-10 Section 7.5: the client_id parameter is optional under attest_jwt_client_auth,
+    // because the Client Attestation names the client in sub. Unverified here — the verifier still
+    // checks the signature and that sub equals this value.
+    if (clientAttestationJwt.exists()) {
+      String subject = clientAttestationJwt.extractSubject();
+      if (!subject.isEmpty()) {
+        return new RequestedClientId(subject);
+      }
     }
     return clientSecretBasic.clientId();
   }

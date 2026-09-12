@@ -56,6 +56,8 @@ class ClientSecretJwtAuthenticatorTest {
         null,
         null,
         null,
+        null,
+        null,
         parameters,
         null,
         null,

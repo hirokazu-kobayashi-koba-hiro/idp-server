@@ -1,0 +1,22 @@
+{
+  "type": "authentication-device-notification",
+  "interactions": {
+    "authentication-device-notification": {
+      "execution": {
+        "function": "multi_channel_notification",
+        "details": {
+          "fcm": {
+            "templates": {
+              "default": {
+                "sender": "${BASE_URL}/${PUBLIC_TENANT_ID}",
+                "title": "Authentication Request",
+                "body": "Please authenticate on your device"
+              }
+            },
+            "credential": "${FCM_CREDENTIAL}"
+          }
+        }
+      }
+    }
+  }
+}

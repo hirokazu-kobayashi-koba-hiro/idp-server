@@ -16,7 +16,10 @@
 
 package org.idp.server.core.openid.token.handler.tokenrevocation.io;
 
+import java.util.List;
 import java.util.Map;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -48,6 +51,30 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
     return inputs.tlsClientCertPem();
   }
 
+  public List<String> clientAttestationHeaders() {
+    return inputs.headerValues(ClientAttestationJwt.HEADER_NAME);
+  }
+
+  public List<String> clientAttestationPopHeaders() {
+    return inputs.headerValues(ClientAttestationPopJwt.HEADER_NAME);
+  }
+
+  public ClientAttestationJwt toClientAttestationJwt() {
+    List<String> headers = clientAttestationHeaders();
+    if (headers.isEmpty()) {
+      return new ClientAttestationJwt();
+    }
+    return new ClientAttestationJwt(headers.get(0));
+  }
+
+  public ClientAttestationPopJwt toClientAttestationPopJwt() {
+    List<String> headers = clientAttestationPopHeaders();
+    if (headers.isEmpty()) {
+      return new ClientAttestationPopJwt();
+    }
+    return new ClientAttestationPopJwt(headers.get(0));
+  }
+
   public Tenant tenant() {
     return tenant;
   }
@@ -63,6 +90,18 @@ public class TokenRevocationRequest implements AuthorizationHeaderHandlerable {
 
     if (parameters.hasClientId()) {
       return parameters.clientId();
+    }
+
+    // draft-10 Section 7.5: the client_id parameter is optional under attest_jwt_client_auth,
+    // because the Client Attestation names the client in sub. Unverified here, like the
+    // client_assertion iss above: it selects which client configuration to load, and
+    // ClientAttestationJwtVerifier still checks the signature and that sub is the requested client.
+    ClientAttestationJwt clientAttestationJwt = toClientAttestationJwt();
+    if (clientAttestationJwt.exists()) {
+      String subject = clientAttestationJwt.extractSubject();
+      if (!subject.isEmpty()) {
+        return new RequestedClientId(subject);
+      }
     }
 
     return new RequestedClientId();

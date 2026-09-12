@@ -74,7 +74,9 @@ class ManagementRepresentationCompletenessTest {
   /**
    * #1845: an extension is nested inside its parent representation, so the tests above only see
    * that the {@code extension} key is present, not what it carries. Each extension needs the same
-   * ledger of its own; {@code fapi20_scopes} was dropped for exactly this reason.
+   * ledger of its own; {@code fapi20_scopes} was dropped for exactly this reason, and #1521 lost
+   * the three attestation settings the same way — stored and read, but never returned, so any
+   * update deleted them.
    */
   @Test
   void authorizationServerExtensionRepresentationCarriesEveryField() {

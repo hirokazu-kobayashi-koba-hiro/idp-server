@@ -18,6 +18,9 @@ package org.idp.server.core.openid.token.handler.token;
 
 import java.util.Map;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationHeaderValidator;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
+import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientCredentials;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
@@ -67,6 +70,7 @@ public class TokenRequestHandler {
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      ClientAuthenticationHandler clientAuthenticationHandler,
       Map<GrantType, OAuthTokenCreationService> extensionOAuthTokenCreationServices) {
     this.oAuthTokenCreationServices =
         new OAuthTokenCreationServices(
@@ -76,7 +80,7 @@ public class TokenRequestHandler {
             oAuthTokenQueryRepository,
             authorizationGrantedRepository,
             extensionOAuthTokenCreationServices);
-    this.clientAuthenticationHandler = new ClientAuthenticationHandler();
+    this.clientAuthenticationHandler = clientAuthenticationHandler;
     this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
@@ -93,10 +97,15 @@ public class TokenRequestHandler {
     TokenRequestValidator baseValidator = new TokenRequestValidator(parameters);
     baseValidator.validate();
     new DPoPHeaderValidator(tokenRequest.dpopProofHeaders()).validate();
+    new ClientAttestationHeaderValidator(
+            tokenRequest.clientAttestationHeaders(), tokenRequest.clientAttestationPopHeaders())
+        .validate();
 
     ClientSecretBasic clientSecretBasic = tokenRequest.clientSecretBasic();
     ClientCert clientCert = tokenRequest.toClientCert();
     DPoPProof dpopProof = tokenRequest.toDPoPProof();
+    ClientAttestationJwt clientAttestationJwt = tokenRequest.toClientAttestationJwt();
+    ClientAttestationPopJwt clientAttestationPopJwt = tokenRequest.toClientAttestationPopJwt();
     RequestedClientId requestedClientId = tokenRequest.clientId();
     CustomProperties customProperties = tokenRequest.toCustomProperties();
     AuthorizationServerConfiguration authorizationServerConfiguration =
@@ -110,6 +119,8 @@ public class TokenRequestHandler {
             clientSecretBasic,
             clientCert,
             dpopProof,
+            clientAttestationJwt,
+            clientAttestationPopJwt,
             tokenRequest.httpMethod(),
             tokenRequest.httpUri(),
             parameters,
