@@ -54,6 +54,18 @@ public enum UserStatus {
     return this == IDENTITY_VERIFIED;
   }
 
+  /**
+   * Whether identity verification has a stake in this account's attributes — it either completed,
+   * or it is required and may still be in flight.
+   *
+   * <p>Both states matter to a self-service change: the first has claims asserted against the
+   * current value, and the second would have a verification result land on a value the user moved
+   * while it was running.
+   */
+  public boolean isIdentityVerifiedOrRequired() {
+    return this == IDENTITY_VERIFIED || this == IDENTITY_VERIFICATION_REQUIRED;
+  }
+
   public boolean isInitialized() {
     return this == INITIALIZED;
   }

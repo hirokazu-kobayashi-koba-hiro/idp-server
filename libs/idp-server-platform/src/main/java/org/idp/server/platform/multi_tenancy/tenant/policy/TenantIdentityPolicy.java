@@ -32,6 +32,7 @@ public class TenantIdentityPolicy {
     this.passwordPolicyConfig = PasswordPolicyConfig.defaultPolicy();
     this.authenticationDeviceRule = AuthenticationDeviceRule.defaultRule();
     this.userAttributeLoadRule = UserAttributeLoadRule.defaultRule();
+    this.contactChangePolicy = ContactChangePolicyConfig.defaultPolicy();
   }
 
   public enum UniqueKeyType {
@@ -70,13 +71,30 @@ public class TenantIdentityPolicy {
     PHONE_OR_EXTERNAL_USER_ID,
 
     /** Use external user ID as unique key */
-    EXTERNAL_USER_ID
+    EXTERNAL_USER_ID;
+
+    /**
+     * The user attribute this policy keys on.
+     *
+     * <p>Single source of truth for the mapping, so a caller asking "does changing this attribute
+     * move the login identifier?" cannot drift from {@code User.applyIdentityPolicy}, which derives
+     * {@code preferred_username} from the same mapping.
+     */
+    public UniqueKeyAttribute attribute() {
+      return switch (this) {
+        case USERNAME, USERNAME_OR_EXTERNAL_USER_ID -> UniqueKeyAttribute.NAME;
+        case EMAIL, EMAIL_OR_EXTERNAL_USER_ID -> UniqueKeyAttribute.EMAIL;
+        case PHONE, PHONE_OR_EXTERNAL_USER_ID -> UniqueKeyAttribute.PHONE_NUMBER;
+        case EXTERNAL_USER_ID -> UniqueKeyAttribute.EXTERNAL_USER_ID;
+      };
+    }
   }
 
   private UniqueKeyType uniqueKeyType;
   private PasswordPolicyConfig passwordPolicyConfig;
   private AuthenticationDeviceRule authenticationDeviceRule;
   private UserAttributeLoadRule userAttributeLoadRule;
+  private ContactChangePolicyConfig contactChangePolicy;
 
   public TenantIdentityPolicy(UniqueKeyType uniqueKeyType) {
     this.uniqueKeyType =
@@ -84,6 +102,7 @@ public class TenantIdentityPolicy {
     this.passwordPolicyConfig = PasswordPolicyConfig.defaultPolicy();
     this.authenticationDeviceRule = AuthenticationDeviceRule.defaultRule();
     this.userAttributeLoadRule = UserAttributeLoadRule.defaultRule();
+    this.contactChangePolicy = ContactChangePolicyConfig.defaultPolicy();
   }
 
   public TenantIdentityPolicy(
@@ -94,6 +113,7 @@ public class TenantIdentityPolicy {
         passwordPolicyConfig != null ? passwordPolicyConfig : PasswordPolicyConfig.defaultPolicy();
     this.authenticationDeviceRule = AuthenticationDeviceRule.defaultRule();
     this.userAttributeLoadRule = UserAttributeLoadRule.defaultRule();
+    this.contactChangePolicy = ContactChangePolicyConfig.defaultPolicy();
   }
 
   public TenantIdentityPolicy(
@@ -118,6 +138,7 @@ public class TenantIdentityPolicy {
             : AuthenticationDeviceRule.defaultRule();
     this.userAttributeLoadRule =
         userAttributeLoadRule != null ? userAttributeLoadRule : UserAttributeLoadRule.defaultRule();
+    this.contactChangePolicy = ContactChangePolicyConfig.defaultPolicy();
   }
 
   /**
@@ -177,8 +198,16 @@ public class TenantIdentityPolicy {
       userAttributeLoadRule = UserAttributeLoadRule.fromMap(loadRuleMap);
     }
 
-    return new TenantIdentityPolicy(
-        uniqueKeyType, passwordPolicyConfig, authenticationDeviceRule, userAttributeLoadRule);
+    TenantIdentityPolicy policy =
+        new TenantIdentityPolicy(
+            uniqueKeyType, passwordPolicyConfig, authenticationDeviceRule, userAttributeLoadRule);
+
+    if (map.containsKey("contact_change_policy")) {
+      Map<String, Object> contactChangeMap = (Map<String, Object>) map.get("contact_change_policy");
+      policy.contactChangePolicy = ContactChangePolicyConfig.fromMap(contactChangeMap);
+    }
+
+    return policy;
   }
 
   /**
@@ -235,6 +264,18 @@ public class TenantIdentityPolicy {
    *
    * @return user attribute load rule
    */
+  /** Tenant rules for self-service contact changes (Issue #1416). */
+  public ContactChangePolicyConfig contactChangePolicy() {
+    return contactChangePolicy != null
+        ? contactChangePolicy
+        : ContactChangePolicyConfig.defaultPolicy();
+  }
+
+  /** Whether replacing {@code attribute} relocates the tenant's unique key. */
+  public boolean movesIdentifier(UniqueKeyAttribute attribute) {
+    return uniqueKeyType().attribute() == attribute;
+  }
+
   public UserAttributeLoadRule userAttributeLoadRule() {
     return userAttributeLoadRule != null
         ? userAttributeLoadRule
@@ -287,6 +328,7 @@ public class TenantIdentityPolicy {
     if (authenticationDeviceRule != null) {
       map.put("authentication_device_rule", authenticationDeviceRule.toMap());
     }
+    map.put("contact_change_policy", contactChangePolicy().toMap());
     if (userAttributeLoadRule != null) {
       map.put("user_attribute_load_rule", userAttributeLoadRule.toMap());
     }

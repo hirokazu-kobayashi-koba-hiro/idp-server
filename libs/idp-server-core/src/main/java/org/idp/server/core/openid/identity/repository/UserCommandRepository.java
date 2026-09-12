@@ -35,5 +35,30 @@ public interface UserCommandRepository {
 
   void updatePassword(Tenant tenant, User user);
 
+  /**
+   * Partial update of the email columns only (Issue #1416).
+   *
+   * <p>Deliberately not {@link #update(Tenant, User)}: that writes the whole row, so a caller
+   * holding a stale {@link User} silently reverts anything another actor changed in between —
+   * including {@code status}. A self-service email confirm knows exactly which three columns it
+   * means to change, so it writes only those.
+   */
+  void updateEmail(Tenant tenant, User user);
+
+  /**
+   * Partial update of {@code email_verified} only (Issue #1416).
+   *
+   * <p>Separate from {@link #updateEmail(Tenant, User)} because proving the current address is
+   * reachable must not be able to write {@code email} or {@code preferred_username} — those are
+   * what the stronger scope on the change endpoint exists to gate.
+   */
+  void updateEmailVerified(Tenant tenant, User user);
+
+  /** Partial update of {@code phone_number} + {@code phone_number_verified} (Issue #1416). */
+  void updatePhoneNumber(Tenant tenant, User user);
+
+  /** Partial update of {@code phone_number_verified} only (Issue #1416). */
+  void updatePhoneNumberVerified(Tenant tenant, User user);
+
   void delete(Tenant tenant, UserIdentifier userIdentifier);
 }

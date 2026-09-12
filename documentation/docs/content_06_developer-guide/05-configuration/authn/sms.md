@@ -197,6 +197,8 @@ idp-server内部でワンタイムパスワードを生成・検証し、外部S
 | `execution.details.templates`  | テンプレート定義（`{VERIFICATION_CODE}`プレースホルダー使用） |
 | `execution.details.retry_count_limitation` | 検証リトライ上限回数（デフォルト: 5）                    |
 | `execution.details.expire_seconds` | OTP有効期限（秒）（デフォルト: 300）                  |
+| `execution.details.resend_cooldown_seconds` | 同一ユーザー・同一用途での再送を拒否する間隔（秒、未設定時: 60）。現状は[セルフサービス 連絡先の確認・変更](../contact-verification.md)のみが参照 |
+| `execution.details.templates.*_notice` | 変更通知の文面（`phone_change_notice`）。`{CHANGED_AT}` / `{NEW_VALUE_MASKED}` を使う。確認コード用とはプレースホルダが異なる |
 
 #### テンプレート設定項目
 
@@ -376,6 +378,22 @@ OTPの生成・検証は idp-server 内部で行いつつ、SMS送信のみを�
 1. 認可フロー中に `prompt=login` または `acr_values` によってSMS認証が要求される
 2. `/v1/authorizations/{id}/sms-authentication-challenge` によって認証コードがSMS送信
 3. SMS送信後に、`/v1/authorizations/{id}/sms-authentication` 、で認証コードを検証する
+
+---
+
+
+## セルフサービス: 電話番号の確認・変更
+
+認証済みユーザーが自分の電話番号を確認・変更する `POST /{tenant-id}/v1/me/phone/...` は、
+ここで定義した `sms-authentication-challenge` の送信設定(sender / templates / retry / expire)を
+そのまま流用する。`templates` に `phone_verify` / `phone_change` を追加しておくと、それぞれ専用の
+文面になる(未定義ならデフォルトにフォールバック)。
+
+フロー・必要スコープ・管理APIは [セルフサービス 連絡先の確認・変更](../contact-verification.md) を参照。
+
+**外部サービスにコード生成・検証を委譲するパターンでも動きます。** その場合 idp-server はコードを
+持たず、外部の識別子だけを保持します（管理APIは `delivery: external` を返す）。ただし
+`phone_change_notice` の文面が委譲設定には無いため、**変更通知は送られません**。
 
 ---
 

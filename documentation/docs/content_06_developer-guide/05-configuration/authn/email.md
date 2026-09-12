@@ -401,6 +401,8 @@ idp-serverでワンタイムコードを生成・検証し、SMTPでメール送
 | `sender`                 | 送信元メールアドレス                    |
 | `retry_count_limitation` | 検証リトライ上限回数（デフォルト：5）           |
 | `expire_seconds`         | ワンタイムコードの有効期限（秒、デフォルト：300）    |
+| `resend_cooldown_seconds` | 同一ユーザー・同一用途での再送を拒否する間隔（秒、未設定時：60）。現状は[セルフサービス 連絡先の確認・変更](../contact-verification.md)のみが参照 |
+| `templates.*_notice` | 変更通知の文面（`email_change_notice`）。`{CHANGED_AT}` / `{NEW_VALUE_MASKED}` を使う。確認コード用とはプレースホルダが異なる |
 | `templates`              | メールテンプレート（`registration`、`authentication`） |
 
 #### テンプレート設定
@@ -624,6 +626,21 @@ Content-Type: application/json
   "error_description": "Invalid verification code"
 }
 ```
+
+---
+
+## セルフサービス: メールアドレスの確認・変更
+
+認証済みユーザーが自分のメールアドレスを確認・変更する `POST /{tenant-id}/v1/me/email/...` は、
+ここで定義した `email-authentication-challenge` の送信設定(sender / templates / retry / expire)を
+そのまま流用する。`templates` に `email_verify` / `email_change` を追加しておくと、それぞれ専用の
+文面になる(未定義ならデフォルトにフォールバック)。
+
+フロー・必要スコープ・管理APIは [セルフサービス 連絡先の確認・変更](../contact-verification.md) を参照。
+
+**外部サービスにコード生成・検証を委譲するパターンでも動きます。** その場合 idp-server はコードを
+持たず、外部の識別子だけを保持します（管理APIは `delivery: external` を返す）。ただし
+`email_change_notice` の文面が委譲設定には無いため、**変更通知は送られません**。
 
 ---
 

@@ -31,6 +31,12 @@ import org.idp.server.core.openid.identity.authentication.PasswordChangeService;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.openid.identity.authentication.PasswordResetRequest;
 import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
+import org.idp.server.core.openid.identity.contact.ContactChangeAuthenticationContext;
+import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeIdentifier;
+import org.idp.server.core.openid.identity.contact.ContactVerificationOperation;
+import org.idp.server.core.openid.identity.contact.ContactVerificationRequest;
+import org.idp.server.core.openid.identity.contact.ContactVerificationResponse;
+import org.idp.server.core.openid.identity.contact.ContactVerificationService;
 import org.idp.server.core.openid.identity.device.AuthenticationDevice;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.device.AuthenticationDevicePatchValidator;
@@ -73,6 +79,7 @@ public class UserOperationEntryService implements UserOperationApi {
   UserLifecycleEventPublisher userLifecycleEventPublisher;
   PasswordVerificationDelegation passwordVerificationDelegation;
   PasswordEncodeDelegation passwordEncodeDelegation;
+  ContactVerificationService contactVerificationService;
 
   public UserOperationEntryService(
       UserQueryRepository userQueryRepository,
@@ -87,7 +94,8 @@ public class UserOperationEntryService implements UserOperationApi {
       UserOperationEventPublisher userOperationEventPublisher,
       UserLifecycleEventPublisher userLifecycleEventPublisher,
       PasswordVerificationDelegation passwordVerificationDelegation,
-      PasswordEncodeDelegation passwordEncodeDelegation) {
+      PasswordEncodeDelegation passwordEncodeDelegation,
+      ContactVerificationService contactVerificationService) {
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
     this.tenantQueryRepository = tenantQueryRepository;
@@ -102,6 +110,7 @@ public class UserOperationEntryService implements UserOperationApi {
     this.userLifecycleEventPublisher = userLifecycleEventPublisher;
     this.passwordVerificationDelegation = passwordVerificationDelegation;
     this.passwordEncodeDelegation = passwordEncodeDelegation;
+    this.contactVerificationService = contactVerificationService;
   }
 
   @Override
@@ -135,6 +144,75 @@ public class UserOperationEntryService implements UserOperationApi {
     contents.put("id", authenticationTransaction.identifier().value());
 
     return UserOperationResponse.success(contents);
+  }
+
+  @Override
+  public ContactVerificationResponse requestContactVerification(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      ContactVerificationOperation operation,
+      ContactVerificationRequest request,
+      RequestAttributes requestAttributes) {
+
+    // Scope validation - RFC 6750 Section 3.1. The operation carries its own requirement, so the
+    // weaker one can never be applied to the stronger operation.
+    if (!oAuthToken.scopes().contains(operation.requiredScope())) {
+      return ContactVerificationResponse.insufficientScope(operation.requiredScope());
+    }
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    ContactVerificationResponse response =
+        contactVerificationService.request(
+            tenant,
+            user,
+            operation,
+            request,
+            new ContactChangeAuthenticationContext(
+                oAuthToken.authorizationGrant().authentication()));
+
+    publish(tenant, oAuthToken, response, requestAttributes);
+    return response;
+  }
+
+  @Override
+  public ContactVerificationResponse verifyContactVerification(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      ContactVerificationOperation operation,
+      ContactVerificationChallengeIdentifier challengeIdentifier,
+      ContactVerificationRequest request,
+      RequestAttributes requestAttributes) {
+
+    // Scope validation - RFC 6750 Section 3.1
+    if (!oAuthToken.scopes().contains(operation.requiredScope())) {
+      return ContactVerificationResponse.insufficientScope(operation.requiredScope());
+    }
+
+    Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
+    ContactVerificationResponse response =
+        contactVerificationService.verify(
+            tenant,
+            user,
+            operation,
+            challengeIdentifier,
+            request,
+            new ContactChangeAuthenticationContext(
+                oAuthToken.authorizationGrant().authentication()));
+
+    publish(tenant, oAuthToken, response, requestAttributes);
+    return response;
+  }
+
+  private void publish(
+      Tenant tenant,
+      OAuthToken oAuthToken,
+      ContactVerificationResponse response,
+      RequestAttributes requestAttributes) {
+    if (response.hasEventType()) {
+      eventPublisher.publish(tenant, oAuthToken, response.eventType(), requestAttributes);
+    }
   }
 
   @Override

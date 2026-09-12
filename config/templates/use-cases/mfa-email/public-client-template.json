@@ -12,7 +12,7 @@
     "authorization_code",
     "refresh_token"
   ],
-  "scope": "openid profile email password:reset",
+  "scope": "openid profile email password:reset email:change phone:change",
   "client_name": "${CLIENT_NAME}",
   "token_endpoint_auth_method": "client_secret_post",
   "application_type": "web"

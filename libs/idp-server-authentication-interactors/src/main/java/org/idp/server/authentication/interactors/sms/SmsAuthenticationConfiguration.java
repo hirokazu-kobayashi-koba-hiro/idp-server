@@ -28,6 +28,7 @@ public class SmsAuthenticationConfiguration implements JsonReadable {
   Map<String, SmslVerificationTemplate> templates = new HashMap<>();
   int retryCountLimitation = 5;
   int expireSeconds = 300;
+  int resendCooldownSeconds;
 
   public SmsAuthenticationConfiguration() {}
 
@@ -67,6 +68,18 @@ public class SmsAuthenticationConfiguration implements JsonReadable {
 
   public int expireSeconds() {
     return expireSeconds;
+  }
+
+  /**
+   * Minimum interval between two code sends for the same recipient and purpose.
+   *
+   * <p>Absent from the stored configuration means 0, which would leave sending unbounded, so an
+   * unset value falls back to 60 seconds rather than "no limit". Each send costs money on SMS and
+   * spends sender reputation on email, and the recipient of an unwanted flood is a third party who
+   * never asked to be involved.
+   */
+  public int resendCooldownSeconds() {
+    return resendCooldownSeconds > 0 ? resendCooldownSeconds : 60;
   }
 
   public boolean exists() {

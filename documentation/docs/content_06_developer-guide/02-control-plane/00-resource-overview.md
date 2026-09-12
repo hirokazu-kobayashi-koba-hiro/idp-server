@@ -23,6 +23,7 @@
 | **基本設定** | TenantManagement | テナント |
 | | ClientManagement | OAuthクライアント |
 | | UserManagement | ユーザー |
+| | ContactVerificationChallengeManagement | 連絡先確認チャレンジ（Email/電話番号のセルフサービス確認・変更） |
 | | RoleManagement | ロール |
 | | PermissionManagement | 権限 |
 | **認証設定** | AuthorizationServerManagement | 認可サーバー設定 |
@@ -51,6 +52,7 @@
 | **基本設定** | OrgTenantManagement | 組織配下のテナント |
 | | OrgClientManagement | 組織配下のクライアント |
 | | OrgUserManagement | 組織配下のユーザー |
+| | OrgContactVerificationChallengeManagement | 連絡先確認チャレンジ（Email/電話番号のセルフサービス確認・変更） |
 | | OrgRoleManagement | 組織配下のロール |
 | | OrgPermissionManagement | 組織配下の権限 |
 | **認証設定** | OrgAuthorizationServerManagement | 認可サーバー設定 |

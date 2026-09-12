@@ -43,6 +43,20 @@ public class SmslVerificationTemplate implements JsonReadable {
         .replace("{EXPIRE_SECONDS}", String.valueOf(expireSeconds));
   }
 
+  /**
+   * Body for a "this was changed" notice sent to the value being replaced (Issue #1416).
+   *
+   * <p>A separate interpolation because a notice has no code and no expiry: reusing {@link
+   * #interpolateBody} would leave {@code {VERIFICATION_CODE\}} unreplaced in the delivered text.
+   *
+   * @param changedAt when the change was committed
+   * @param newValueMasked the new value, partially masked — enough for the recipient to tell
+   *     whether they recognise it, without handing a full address to whoever reads the old inbox
+   */
+  public String interpolateChangeNotice(String changedAt, String newValueMasked) {
+    return body.replace("{CHANGED_AT}", changedAt).replace("{NEW_VALUE_MASKED}", newValueMasked);
+  }
+
   public boolean exists() {
     return subject != null && body != null;
   }

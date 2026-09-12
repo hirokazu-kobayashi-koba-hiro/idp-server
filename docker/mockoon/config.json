@@ -2118,6 +2118,180 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-sent-emails",
+      "type": "crud",
+      "documentation": "Issue #1416: CRUD over the sent-emails bucket. POST here from an email sender config; GET to list what was sent.",
+      "method": "",
+      "endpoint": "sent-emails",
+      "responses": [
+        {
+          "uuid": "e2e-sent-emails-response",
+          "body": "",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "sent emails crud",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "DATABUCKET",
+          "filePath": "",
+          "databucketID": "e2e-sent-emails-bucket",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-sent-sms",
+      "type": "crud",
+      "documentation": "Issue #1416: CRUD over the sent-sms bucket. POST here from an SMS sender config; GET to list what was sent.",
+      "method": "",
+      "endpoint": "sent-sms",
+      "responses": [
+        {
+          "uuid": "e2e-sent-sms-response",
+          "body": "",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "sent sms crud",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "DATABUCKET",
+          "filePath": "",
+          "databucketID": "e2e-sent-sms-bucket",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-external-contact-challenge",
+      "type": "http",
+      "documentation": "Issue #1416: external contact verification service - challenge. Records the recipient and returns a transaction_id. The code itself never leaves this service (E2E uses the fixed 123456).",
+      "method": "post",
+      "endpoint": "external-contact/challenge",
+      "responses": [
+        {
+          "uuid": "e2e-external-contact-challenge-ok",
+          "body": "{\n  \"transaction_id\": \"ext-{{faker 'string.uuid'}}\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "issued",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-external-contact-verify",
+      "type": "http",
+      "documentation": "Issue #1416: external contact verification service - verify. 200 only for the fixed code 123456, so an E2E can prove idp-server defers the decision instead of comparing locally.",
+      "method": "post",
+      "endpoint": "external-contact/verify",
+      "responses": [
+        {
+          "uuid": "e2e-external-contact-verify-ok",
+          "body": "{\n  \"verified\": true\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "correct code (123456)",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "verification_code",
+              "value": "123456",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "e2e-external-contact-verify-ng",
+          "body": "{\n  \"verified\": false,\n  \"error\": \"code_mismatch\"\n}",
+          "latency": 0,
+          "statusCode": 400,
+          "label": "wrong code",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -2268,6 +2442,22 @@
     {
       "type": "route",
       "uuid": "e2e-echo-request-context"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-sent-emails"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-sent-sms"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-external-contact-challenge"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-external-contact-verify"
     }
   ],
   "proxyMode": false,
@@ -2320,6 +2510,20 @@
       "name": "Users",
       "documentation": "",
       "value": "[\n  {{#repeat 50}}\n  {\n    \"id\": \"{{faker 'string.uuid'}}\",\n]"
+    },
+    {
+      "uuid": "e2e-sent-emails-databucket",
+      "id": "e2e-sent-emails-bucket",
+      "name": "sent emails",
+      "documentation": "Issue #1416: stores what the tenant's email sender POSTed, so an E2E can read back the one-time code. idp-server generates the code and never returns it in an API response (that would defeat proving reachability of the address), so the test has to observe the outbound mail.",
+      "value": "[]"
+    },
+    {
+      "uuid": "e2e-sent-sms-databucket",
+      "id": "e2e-sent-sms-bucket",
+      "name": "sent sms",
+      "documentation": "Issue #1416: stores what the tenant's SMS sender POSTed, so an E2E can read back the one-time code. Same reason as the sent-emails bucket: idp-server generates the code and never returns it in an API response, so the test has to observe the outbound message.",
+      "value": "[]"
     }
   ],
   "callbacks": []

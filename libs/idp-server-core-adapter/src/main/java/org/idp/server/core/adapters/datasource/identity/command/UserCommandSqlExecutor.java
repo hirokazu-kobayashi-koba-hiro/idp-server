@@ -29,6 +29,14 @@ public interface UserCommandSqlExecutor {
 
   void updatePassword(Tenant tenant, User user);
 
+  void updateEmail(Tenant tenant, User user);
+
+  void updateEmailVerified(Tenant tenant, User user);
+
+  void updatePhoneNumber(Tenant tenant, User user);
+
+  void updatePhoneNumberVerified(Tenant tenant, User user);
+
   void delete(Tenant tenant, UserIdentifier userIdentifier);
 
   void deleteRoles(Tenant tenant, User user);
