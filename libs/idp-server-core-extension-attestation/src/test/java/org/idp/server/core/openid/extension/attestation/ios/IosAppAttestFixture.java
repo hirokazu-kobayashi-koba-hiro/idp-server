@@ -82,7 +82,8 @@ class IosAppAttestFixture {
             rootKeyPair.getPublic(),
             "CN=test-app-attest-root",
             rootKeyPair,
-            null);
+            null,
+            true);
     this.intermediateKeyPair = generateKeyPair();
     this.intermediateCertificate =
         certificate(
@@ -90,7 +91,8 @@ class IosAppAttestFixture {
             intermediateKeyPair.getPublic(),
             "CN=test-app-attest-root",
             rootKeyPair,
-            null);
+            null,
+            true);
   }
 
   static KeyPair generateKeyPair() throws Exception {
@@ -179,7 +181,7 @@ class IosAppAttestFixture {
       x5c.add(credentialCertificate.getEncoded());
       x5c.add(
           signedByUntrustedRoot
-              ? certificate("CN=other-ca", issuer.getPublic(), "CN=other-ca", issuer, null)
+              ? certificate("CN=other-ca", issuer.getPublic(), "CN=other-ca", issuer, null, true)
                   .getEncoded()
               : intermediateCertificate.getEncoded());
 
@@ -228,6 +230,22 @@ class IosAppAttestFixture {
       KeyPair issuerKeyPair,
       byte[] nonce)
       throws Exception {
+    return certificate(subject, publicKey, issuer, issuerKeyPair, nonce, false);
+  }
+
+  /**
+   * @param isCa mirrors the real chain: Apple's root and intermediate carry {@code BasicConstraints
+   *     cA=TRUE}, the attested-key leaf does not. The verifier requires it of anything it treats as
+   *     an issuer, so a fixture without it is not a fixture of the real thing.
+   */
+  private X509Certificate certificate(
+      String subject,
+      java.security.PublicKey publicKey,
+      String issuer,
+      KeyPair issuerKeyPair,
+      byte[] nonce,
+      boolean isCa)
+      throws Exception {
 
     Instant now = Instant.now();
     JcaX509v3CertificateBuilder builder =
@@ -238,6 +256,19 @@ class IosAppAttestFixture {
             Date.from(now.plusSeconds(86400)),
             new X500Principal(subject),
             publicKey);
+
+    builder.addExtension(
+        org.bouncycastle.asn1.x509.Extension.basicConstraints,
+        true,
+        new org.bouncycastle.asn1.x509.BasicConstraints(isCa));
+    if (isCa) {
+      builder.addExtension(
+          org.bouncycastle.asn1.x509.Extension.keyUsage,
+          true,
+          new org.bouncycastle.asn1.x509.KeyUsage(
+              org.bouncycastle.asn1.x509.KeyUsage.keyCertSign
+                  | org.bouncycastle.asn1.x509.KeyUsage.cRLSign));
+    }
 
     if (nonce != null) {
       // SEQUENCE { [1] EXPLICIT OCTET STRING }, which is what Apple puts in 1.2.840.113635.100.8.2
