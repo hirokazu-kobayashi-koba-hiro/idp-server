@@ -68,12 +68,18 @@ const keyDescription = ({
   );
 };
 
+/**
+ * @param caPathLen when present, marks the certificate as a CA allowed to issue that many CAs below
+ *   itself. Google's roots carry it, and a verifier that checks the chain of trust rejects an issuer
+ *   without it, so the root built here carries it too
+ */
 const certificate = ({
   publicKey,
   signWith,
   subject,
   issuer,
   extensionDer,
+  caPathLen,
 }) => {
   const cert = forge.pki.createCertificate();
   cert.publicKey = publicKey;
@@ -82,15 +88,30 @@ const certificate = ({
   cert.validity.notAfter = new Date(Date.now() + 24 * 3600 * 1000);
   cert.setSubject([{ name: "commonName", value: subject }]);
   cert.setIssuer([{ name: "commonName", value: issuer }]);
-  if (extensionDer) {
-    cert.setExtensions([
+
+  const extensions = [];
+  if (caPathLen !== undefined) {
+    extensions.push(
       {
-        id: KEY_ATTESTATION_OID,
-        critical: false,
-        value: extensionDer.toString("binary"),
+        name: "basicConstraints",
+        critical: true,
+        cA: true,
+        pathLenConstraint: caPathLen,
       },
-    ]);
+      { name: "keyUsage", critical: true, keyCertSign: true, cRLSign: true }
+    );
   }
+  if (extensionDer) {
+    extensions.push({
+      id: KEY_ATTESTATION_OID,
+      critical: false,
+      value: extensionDer.toString("binary"),
+    });
+  }
+  if (extensions.length > 0) {
+    cert.setExtensions(extensions);
+  }
+
   cert.sign(signWith.privateKey, forge.md.sha256.create());
   return cert;
 };
@@ -127,6 +148,7 @@ export const generateAttestationRoot = () => {
     signWith: keys,
     subject: "attestation-root",
     issuer: "attestation-root",
+    caPathLen: 1,
   });
   return { keys, certificate: cert, base64Der: toBase64Der(cert) };
 };

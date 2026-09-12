@@ -16,7 +16,9 @@ import cbor from "cbor";
 
 import {
   derBitString,
+  derBoolean,
   derInteger,
+  derNamedBits,
   derOctetString,
   derOid,
   derSequence,
@@ -31,6 +33,10 @@ export const APP_ATTEST_NONCE_OID = "1.2.840.113635.100.8.2";
 
 const ECDSA_WITH_SHA256_OID = "1.2.840.10045.4.3.2";
 const COMMON_NAME_OID = "2.5.4.3";
+const BASIC_CONSTRAINTS_OID = "2.5.29.19";
+const KEY_USAGE_OID = "2.5.29.15";
+const KEY_CERT_SIGN_BIT = 5;
+const CRL_SIGN_BIT = 6;
 
 /** "appattest" padded to 16 bytes, and the 16 character development name. */
 export const ENVIRONMENT = {
@@ -54,11 +60,20 @@ const pemToDer = (pem) =>
     "base64"
   );
 
+/** Extension ::= SEQUENCE { extnID, critical DEFAULT FALSE, extnValue OCTET STRING } */
+const extension = (oid, critical, value) =>
+  critical
+    ? derSequence(derOid(oid), derBoolean(true), derOctetString(value))
+    : derSequence(derOid(oid), derOctetString(value));
+
 /**
  * An X.509 certificate.
  *
- * @param nonce when present, added as the App Attest nonce extension, which is the only extension
- *   the verifier reads
+ * @param nonce when present, added as the App Attest nonce extension, which is the extension the
+ *   verifier reads out of the credential certificate
+ * @param caPathLen when present, marks the certificate as a CA allowed to issue that many CAs below
+ *   itself. Apple's root and intermediate carry it, and a verifier that checks the chain of trust
+ *   rejects an issuer without it, so the ones built here carry it too
  */
 const certificate = ({
   subjectPublicKeyInfo,
@@ -66,6 +81,7 @@ const certificate = ({
   issuer,
   issuerPrivateKey,
   nonce,
+  caPathLen,
 }) => {
   const now = Date.now();
 
@@ -82,20 +98,36 @@ const certificate = ({
     subjectPublicKeyInfo,
   ];
 
-  if (nonce) {
-    // Extension ::= SEQUENCE { extnID, critical DEFAULT FALSE, extnValue OCTET STRING }, whose
-    // content is SEQUENCE { [1] EXPLICIT OCTET STRING } as Apple specifies.
-    parts.push(
-      derTagged(
-        3,
-        derSequence(
-          derSequence(
-            derOid(APP_ATTEST_NONCE_OID),
-            derOctetString(derSequence(derTagged(1, derOctetString(nonce))))
-          )
-        )
+  const extensions = [];
+
+  if (caPathLen !== undefined) {
+    extensions.push(
+      extension(
+        BASIC_CONSTRAINTS_OID,
+        true,
+        derSequence(derBoolean(true), derInteger(caPathLen))
+      ),
+      extension(
+        KEY_USAGE_OID,
+        true,
+        derNamedBits([KEY_CERT_SIGN_BIT, CRL_SIGN_BIT])
       )
     );
+  }
+
+  if (nonce) {
+    // extnValue is SEQUENCE { [1] EXPLICIT OCTET STRING } as Apple specifies.
+    extensions.push(
+      extension(
+        APP_ATTEST_NONCE_OID,
+        false,
+        derSequence(derTagged(1, derOctetString(nonce)))
+      )
+    );
+  }
+
+  if (extensions.length > 0) {
+    parts.push(derTagged(3, derSequence(...extensions)));
   }
 
   const tbsCertificate = derSequence(...parts);
@@ -131,6 +163,7 @@ export const generateAttestationAuthority = () => {
     subject: "test-app-attest-root",
     issuer: "test-app-attest-root",
     issuerPrivateKey: root.privateKey,
+    caPathLen: 1, // the intermediate sits below it
   });
 
   const intermediate = generateEcKeyPair();
@@ -139,6 +172,7 @@ export const generateAttestationAuthority = () => {
     subject: "test-app-attest-ca",
     issuer: "test-app-attest-root",
     issuerPrivateKey: root.privateKey,
+    caPathLen: 0, // it issues credential certificates, and nothing below them
   });
 
   return {
