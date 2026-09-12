@@ -738,6 +738,39 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
       console.log(response.status, response.data);
       expect(response.status).toBe(200);
     });
+
+    it("Token Revocation endpoint rejects the request when the Client Attestation headers are absent, and the token stays valid.", async () => {
+      const tokenResponse = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt(),
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const params = new URLSearchParams();
+      params.append("token", tokenResponse.data.access_token);
+      params.append("client_id", attestedClient.clientId);
+      const response = await post({
+        url: serverConfig.tokenRevocationEndpoint,
+        body: params,
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(401);
+      expect(response.data).toHaveProperty("error", "invalid_client");
+
+      // RFC 7009 Section 2.1 requires the client to authenticate, so an unauthenticated request
+      // must not revoke: rejecting after the fact would still have destroyed the token.
+      const introspection = await post({
+        url: serverConfig.tokenIntrospectionEndpoint,
+        body: params,
+        headers: {
+          [ATTESTATION_HEADER]: createAttestationJwt(),
+          [POP_HEADER]: createPopJwt(),
+        },
+      });
+      console.log(introspection.status, introspection.data);
+      expect(introspection.status).toBe(200);
+      expect(introspection.data).toHaveProperty("active", true);
+    });
   });
 
   describe("7.6. Client Attestation as an additional security signal (not implemented yet)", () => {
