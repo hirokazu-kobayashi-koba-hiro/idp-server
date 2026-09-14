@@ -27,11 +27,18 @@ import org.idp.server.platform.json.JsonReadable;
  * <p>draft-ietf-oauth-attestation-based-client-auth-10 Section 6. The value is opaque to the
  * client, which echoes it back as the {@code challenge} claim of the Client Attestation PoP JWT.
  *
- * <p>Deliberately reusable until {@link #expiresAt()}: Section 9.7 lets a server that issues a
- * challenge bound to a Client Instance session validate the PoP against the single value expected
- * for that session, with no seen-values store. CIBA polling is that case, and a single-use
- * challenge would force one round-trip per poll. Replay of an individual PoP JWT is detected
- * separately through its {@code jti}.
+ * <p>Deliberately reusable until {@link #expiresAt()}. Section 11.1 offers this as one of its three
+ * approaches — issue challenges without storing the seen ones — and states what it buys: "This
+ * approach scales well, while only guaranteeing freshness, but no replay protection within the
+ * limited time-window chosen by the Authorization/Resource Server." Nothing in the draft requires a
+ * challenge to be single-use, and CIBA polling is the case that makes reuse worth having: with the
+ * default 300s / 5s settings a single-use challenge would force up to 61 round-trips per
+ * authentication.
+ *
+ * <p>So the challenge here proves freshness, not uniqueness. Replay of an individual PoP JWT within
+ * its {@code iat} window is <strong>not</strong> detected — the {@code jti} seen-values store that
+ * would catch it is unimplemented (Section 11.1 makes it a SHOULD; see {@code
+ * ClientAttestationPopJwtVerifier}).
  */
 public class ClientAttestationChallenge implements Serializable, JsonReadable {
 

@@ -7,15 +7,21 @@
 -- `challenge` claim of the Client Attestation PoP JWT.
 --
 -- Reusable within its TTL, deliberately:
---   Section 9.7 and Section 11.1 allow a challenge bound to a Client Instance
---   session to be validated against the single value expected for that session,
---   without a seen-values store. CIBA polling is exactly that case -- with a
---   single-use challenge a poll-mode authentication would need one challenge per
---   poll (up to 61 with the default 300s / 5s settings). The TTL therefore
---   stands in for the session lifetime and the row is never consumed.
+--   Nothing in the draft requires a challenge to be single-use. Section 11.1
+--   lists issuing challenges without storing the seen ones as one of its three
+--   approaches, and says what it buys: "This approach scales well, while only
+--   guaranteeing freshness, but no replay protection within the limited
+--   time-window chosen by the Authorization/Resource Server."
 --
---   Replay of a single Client Attestation PoP JWT is detected separately, by the
---   jti seen-values store, not here.
+--   CIBA polling is the case that makes reuse worth having: with a single-use
+--   challenge a poll-mode authentication would need one challenge per poll (up
+--   to 61 with the default 300s / 5s settings). The row is therefore never
+--   consumed and the TTL is the only bound.
+--
+--   The challenge proves freshness, not uniqueness. Replay of a single Client
+--   Attestation PoP JWT within its iat window is NOT detected: the jti
+--   seen-values store that would catch it is unimplemented (Section 11.1 makes
+--   it a SHOULD).
 --
 -- Not tied to a client_id: the challenge endpoint is unauthenticated
 -- (Section 6.1), so the issuing request carries no credential to bind to.
