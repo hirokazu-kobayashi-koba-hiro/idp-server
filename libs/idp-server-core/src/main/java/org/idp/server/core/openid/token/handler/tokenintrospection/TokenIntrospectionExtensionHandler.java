@@ -26,6 +26,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.TokenUserFindingDelegate;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionExtensionRequest;
@@ -75,12 +76,14 @@ public class TokenIntrospectionExtensionHandler {
     Tenant tenant = request.tenant();
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
+    RequestedClientId requestedClientId = request.clientId();
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, request.clientId());
+        clientConfigurationQueryRepository.get(tenant, requestedClientId);
 
     TokenIntrospectionRequestContext introspectionRequestContext =
         new TokenIntrospectionRequestContext(
             tenant,
+            requestedClientId,
             request.clientSecretBasic(),
             request.clientCertFormMtls(),
             request.toClientAttestationJwt(),

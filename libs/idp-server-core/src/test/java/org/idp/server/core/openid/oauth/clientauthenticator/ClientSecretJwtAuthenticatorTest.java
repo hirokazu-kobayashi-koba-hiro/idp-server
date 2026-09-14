@@ -22,6 +22,7 @@ import java.util.Map;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.TokenRequestParameters;
 import org.idp.server.platform.json.JsonConverter;
@@ -51,6 +52,7 @@ class ClientSecretJwtAuthenticatorTest {
         JSON.read(clientConfigJson, ClientConfiguration.class);
     return new TokenRequestContext(
         null,
+        new RequestedClientId("c"),
         new ClientSecretBasic(),
         null,
         null,

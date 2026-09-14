@@ -39,6 +39,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 public class TokenRequestContext implements BackchannelRequestContext {
 
   Tenant tenant;
+  RequestedClientId requestedClientId;
   ClientSecretBasic clientSecretBasic;
   ClientCert clientCert;
   DPoPProof dpopProof;
@@ -56,6 +57,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
 
   public TokenRequestContext(
       Tenant tenant,
+      RequestedClientId requestedClientId,
       ClientSecretBasic clientSecretBasic,
       ClientCert clientCert,
       DPoPProof dpopProof,
@@ -71,6 +73,7 @@ public class TokenRequestContext implements BackchannelRequestContext {
       AuthorizationServerConfiguration authorizationServerConfiguration,
       ClientConfiguration clientConfiguration) {
     this.tenant = tenant;
+    this.requestedClientId = requestedClientId;
     this.clientSecretBasic = clientSecretBasic;
     this.clientCert = clientCert;
     this.dpopProof = dpopProof;
@@ -210,23 +213,17 @@ public class TokenRequestContext implements BackchannelRequestContext {
     return parameters.authReqId();
   }
 
+  /**
+   * The client identifier the {@link ClientConfiguration} was loaded with.
+   *
+   * <p>Resolved once, by {@code TokenRequest#clientId()}, and carried here rather than derived a
+   * second time. Client authenticators compare the credential they verify against this value —
+   * {@code attest_jwt_client_auth} checks the Client Attestation {@code sub} against it — so a
+   * second derivation with a different priority order would let the configuration and the
+   * authenticated identity name different clients.
+   */
   public RequestedClientId requestedClientId() {
-    if (parameters.hasClientId()) {
-      return parameters.clientId();
-    }
-    if (clientSecretBasic.exists()) {
-      return clientSecretBasic.clientId();
-    }
-    // draft-10 Section 7.5: the client_id parameter is optional under attest_jwt_client_auth,
-    // because the Client Attestation names the client in sub. Unverified here — the verifier still
-    // checks the signature and that sub equals this value.
-    if (clientAttestationJwt.exists()) {
-      String subject = clientAttestationJwt.extractSubject();
-      if (!subject.isEmpty()) {
-        return new RequestedClientId(subject);
-      }
-    }
-    return clientSecretBasic.clientId();
+    return requestedClientId;
   }
 
   public ClientIdentifier clientIdentifier() {

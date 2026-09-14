@@ -41,6 +41,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.TokenRequestParameters;
 import org.idp.server.platform.json.JsonConverter;
@@ -171,6 +172,7 @@ class RegisteredInstanceKeyModeTest {
             true);
     return new TokenRequestContext(
         tenant,
+        new RequestedClientId(CLIENT_ID),
         new ClientSecretBasic(),
         null,
         null,

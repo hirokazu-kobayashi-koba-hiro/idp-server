@@ -25,6 +25,7 @@ import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.AccessTokenEntity;
 import org.idp.server.core.openid.oauth.type.oauth.RefreshTokenEntity;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationRequest;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationRequestStatus;
@@ -68,11 +69,13 @@ public class TokenRevocationHandler {
     Tenant tenant = request.tenant();
     AuthorizationServerConfiguration authorizationServerConfiguration =
         authorizationServerConfigurationQueryRepository.get(tenant);
+    RequestedClientId requestedClientId = request.clientId();
     ClientConfiguration clientConfiguration =
-        clientConfigurationQueryRepository.get(tenant, request.clientId());
+        clientConfigurationQueryRepository.get(tenant, requestedClientId);
     TokenRevocationRequestContext tokenRevocationRequestContext =
         new TokenRevocationRequestContext(
             tenant,
+            requestedClientId,
             request.clientSecretBasic(),
             request.toClientCert(),
             request.toClientAttestationJwt(),
