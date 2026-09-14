@@ -116,6 +116,7 @@ public class TokenRequestHandler {
     TokenRequestContext tokenRequestContext =
         new TokenRequestContext(
             tenant,
+            requestedClientId,
             clientSecretBasic,
             clientCert,
             dpopProof,

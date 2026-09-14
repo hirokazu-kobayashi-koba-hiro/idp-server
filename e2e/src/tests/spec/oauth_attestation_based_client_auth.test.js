@@ -55,6 +55,12 @@ let attesterEs384Jwk;
 let instanceEs256Jwk;
 let instanceEs384Jwk;
 let attestedClient;
+/**
+ * A second attested client sharing the same Client Attester, standing in for a client the
+ * attacker does not hold credentials for. Used to check that the client whose configuration is
+ * loaded and the client the Client Attestation authenticates can never be two different clients.
+ */
+let otherAttestedClient;
 
 const generateSigningJwk = async (alg, kid) => {
   const { privateKey } = await jose.generateKeyPair(alg, { extractable: true });
@@ -230,6 +236,31 @@ beforeAll(async () => {
   console.log("client registration:", registrationResponse.status, registrationResponse.data);
   expect(registrationResponse.status).toBe(201);
   attestedClient = { clientId };
+
+  // a second client of the same Attester: same trust source, different client_id
+  const otherClientId = uuidv4();
+  const otherRegistrationResponse = await postWithJson({
+    url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
+    headers: managementHeaders,
+    body: {
+      client_id: otherClientId,
+      client_name: "Attestation Based Client Auth Test Client (other)",
+      token_endpoint_auth_method: "attest_jwt_client_auth",
+      extension: {
+        client_attestation_trust_source: "attester_jwks",
+        client_attestation_attester_jwks: JSON.stringify({
+          keys: [publicJwkOf(attesterEs256Jwk), publicJwkOf(attesterEs384Jwk)],
+        }),
+      },
+      grant_types: ["client_credentials"],
+      redirect_uris: ["http://localhost:3000/callback"],
+      response_types: ["code"],
+      scope: "account management",
+      enabled: true,
+    },
+  });
+  expect(otherRegistrationResponse.status).toBe(201);
+  otherAttestedClient = { clientId: otherClientId };
 });
 
 describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestation-Based Client Authentication", () => {
@@ -737,6 +768,71 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
       });
       console.log(response.status, response.data);
       expect(response.status).toBe(200);
+    });
+
+    it("The client whose configuration is loaded and the client the sub claim names are the same client: a client_assertion naming another client does not split them.", async () => {
+      // The server reads client_assertion's iss to decide which client configuration to load, and
+      // does so without verifying the signature (RFC 7521 Section 4.2 identifies the client by the
+      // assertion's subject, which the assertion's own verifier checks afterwards). If that value
+      // and the value the Client Attestation is checked against came from two different
+      // resolutions, an attestation the attacker legitimately holds would authenticate it as a
+      // client it does not hold — here both clients share an Attester, so every signature checks
+      // out and only the identity is wrong.
+      const params = new URLSearchParams();
+      params.append("grant_type", "client_credentials");
+      params.append("scope", "account");
+      params.append(
+        "client_assertion",
+        createJwtWithPrivateKey({
+          payload: { iss: otherAttestedClient.clientId, sub: otherAttestedClient.clientId },
+          privateKey: attesterEs256Jwk,
+          algorithm: "ES256",
+        })
+      );
+      params.append(
+        "client_assertion_type",
+        "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+      );
+
+      const response = await post({
+        url: serverConfig.tokenEndpoint,
+        body: params,
+        headers: {
+          [ATTESTATION_HEADER]: createAttestationJwt(),
+          [POP_HEADER]: createPopJwt(),
+        },
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(401);
+      expect(response.data).not.toHaveProperty("access_token");
+    });
+
+    it("The client whose configuration is loaded and the client the sub claim names are the same client: HTTP Basic naming another client does not split them.", async () => {
+      // The introspection and revocation endpoints read the Basic credentials before the client_id
+      // parameter, so the two must not be allowed to name different clients either.
+      const tokenResponse = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt(),
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const params = new URLSearchParams();
+      params.append("token", tokenResponse.data.access_token);
+      params.append("client_id", attestedClient.clientId);
+
+      const basic = Buffer.from(`${otherAttestedClient.clientId}:unused`).toString("base64");
+      const response = await post({
+        url: serverConfig.tokenIntrospectionEndpoint,
+        body: params,
+        headers: {
+          Authorization: `Basic ${basic}`,
+          [ATTESTATION_HEADER]: createAttestationJwt(),
+          [POP_HEADER]: createPopJwt(),
+        },
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(400);
+      expect(response.data).toHaveProperty("active", false);
     });
 
     it("Token Revocation endpoint rejects the request when the Client Attestation headers are absent, and the token stays valid.", async () => {

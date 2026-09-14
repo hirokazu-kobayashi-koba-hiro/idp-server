@@ -39,6 +39,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.TokenRequestContext;
 import org.idp.server.core.openid.token.TokenRequestParameters;
 import org.idp.server.platform.json.JsonConverter;
@@ -146,6 +147,7 @@ class AttestJwtClientAuthAuthenticatorTest {
         new TokenRequestParameters(Map.of("client_id", new String[] {CLIENT_ID}));
     return new TokenRequestContext(
         null,
+        new RequestedClientId(CLIENT_ID),
         new ClientSecretBasic(),
         null,
         null,
@@ -363,6 +365,7 @@ class AttestJwtClientAuthAuthenticatorTest {
     TokenRequestContext context =
         new TokenRequestContext(
             null,
+            new RequestedClientId(CLIENT_ID),
             new ClientSecretBasic(),
             null,
             null,

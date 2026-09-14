@@ -24,6 +24,7 @@ import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationJwt;
 import org.idp.server.core.openid.oauth.clientattestation.ClientAttestationPopJwt;
 import org.idp.server.core.openid.oauth.type.mtls.ClientCert;
 import org.idp.server.core.openid.oauth.type.oauth.ClientSecretBasic;
+import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionExtensionRequest;
 import org.idp.server.core.openid.token.handler.tokenintrospection.io.TokenIntrospectionRequest;
 import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocationRequest;
@@ -133,6 +134,7 @@ class ClientAttestationEndpointWiringTest {
     TokenIntrospectionRequestContext context =
         new TokenIntrospectionRequestContext(
             tenant,
+            new RequestedClientId("client"),
             new ClientSecretBasic(),
             new ClientCert(),
             new ClientAttestationJwt(ATTESTATION),
@@ -152,6 +154,7 @@ class ClientAttestationEndpointWiringTest {
     TokenRevocationRequestContext context =
         new TokenRevocationRequestContext(
             tenant,
+            new RequestedClientId("client"),
             new ClientSecretBasic(),
             new ClientCert(),
             new ClientAttestationJwt(ATTESTATION),
