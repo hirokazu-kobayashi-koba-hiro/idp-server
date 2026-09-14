@@ -1,5 +1,5 @@
 -- ============================================================================
--- V0_13_0_4__client_instance_registration.mysql.sql
+-- V0_14_0_3__client_instance_registration.mysql.sql
 -- Client Instance registration challenge (refs #1521)
 --
 -- See the PostgreSQL migration for the design notes. MySQL has no Row Level

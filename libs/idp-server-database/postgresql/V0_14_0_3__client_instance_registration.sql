@@ -1,5 +1,5 @@
 -- ============================================================================
--- V0_13_0_4__client_instance_registration.sql
+-- V0_14_0_3__client_instance_registration.sql
 -- Client Instance registration challenge (refs #1521)
 --
 -- Summary:
