@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.clientinstance.registration;
+package org.idp.server.core.openid.clientinstance.registration.handler.io;
 
 import java.util.HashMap;
 import java.util.Map;

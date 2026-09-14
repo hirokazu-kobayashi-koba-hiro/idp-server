@@ -113,6 +113,9 @@ import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.clientinstance.registration.*;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationChallengeOperationCommandRepository;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationEventPublisher;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationProtocol;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationProtocols;
 import org.idp.server.core.openid.discovery.*;
 import org.idp.server.core.openid.federation.FederationInteractors;
 import org.idp.server.core.openid.federation.plugin.FederationDependencyContainer;
@@ -148,7 +151,8 @@ import org.idp.server.core.openid.identity.role.RoleQueryRepository;
 import org.idp.server.core.openid.oauth.*;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeApi;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeOperationCommandRepository;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeRepository;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeProtocol;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeProtocols;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticators;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationCommandRepository;
@@ -163,7 +167,6 @@ import org.idp.server.core.openid.plugin.UserLifecycleEventExecutorPluginLoader;
 import org.idp.server.core.openid.plugin.authentication.AuthenticationExecutorPluginLoader;
 import org.idp.server.core.openid.plugin.authentication.AuthenticationInteractorPluginLoader;
 import org.idp.server.core.openid.plugin.authentication.FederationInteractorPluginLoader;
-import org.idp.server.core.openid.plugin.clientinstance.PlatformAttestationVerifierPluginLoader;
 import org.idp.server.core.openid.session.AuthSessionCookieDelegate;
 import org.idp.server.core.openid.session.OIDCSessionHandler;
 import org.idp.server.core.openid.session.OIDCSessionService;
@@ -1087,23 +1090,13 @@ public class IdpServerApplication {
             ClientInstanceManagementApi.class,
             databaseTypeProvider);
 
-    ClientInstanceRegistrationChallengeRepository clientInstanceRegistrationChallengeRepository =
-        applicationComponentContainer.resolve(ClientInstanceRegistrationChallengeRepository.class);
-    ClientInstanceRegistrationService clientInstanceRegistrationService =
-        new ClientInstanceRegistrationService(
-            clientInstanceRegistrationChallengeRepository,
-            applicationComponentContainer.resolve(ClientInstanceQueryRepository.class),
-            applicationComponentContainer.resolve(ClientInstanceCommandRepository.class),
-            clientConfigurationQueryRepository,
-            new PlatformAttestationVerifiers(PlatformAttestationVerifierPluginLoader.load()));
     this.clientInstanceRegistrationApi =
         TenantAwareEntryServiceProxy.createProxy(
             new ClientInstanceRegistrationEntryService(
                 tenantQueryRepository,
-                clientConfigurationQueryRepository,
-                userQueryRepository,
-                clientInstanceRegistrationChallengeRepository,
-                clientInstanceRegistrationService),
+                new ClientInstanceRegistrationProtocols(
+                    protocolContainer.resolveAll(ClientInstanceRegistrationProtocol.class)),
+                new ClientInstanceRegistrationEventPublisher(securityEventPublisher)),
             ClientInstanceRegistrationApi.class,
             databaseTypeProvider);
 
@@ -1111,8 +1104,8 @@ public class IdpServerApplication {
         TenantAwareEntryServiceProxy.createProxy(
             new ClientAttestationChallengeEntryService(
                 tenantQueryRepository,
-                authorizationServerConfigurationQueryRepository,
-                applicationComponentContainer.resolve(ClientAttestationChallengeRepository.class)),
+                new ClientAttestationChallengeProtocols(
+                    protocolContainer.resolveAll(ClientAttestationChallengeProtocol.class))),
             ClientAttestationChallengeApi.class,
             databaseTypeProvider);
 

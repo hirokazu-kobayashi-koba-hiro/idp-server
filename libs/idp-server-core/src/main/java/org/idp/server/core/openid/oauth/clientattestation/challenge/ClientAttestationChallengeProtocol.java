@@ -17,17 +17,13 @@
 package org.idp.server.core.openid.oauth.clientattestation.challenge;
 
 import org.idp.server.core.openid.oauth.clientattestation.challenge.handler.io.ClientAttestationChallengeResponse;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.type.RequestAttributes;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-/**
- * Challenge endpoint of draft-ietf-oauth-attestation-based-client-auth-10 Section 6.1.
- *
- * <p>Unauthenticated by design: the endpoint hands out an opaque nonce, and the credential it will
- * be used with is only presented on the subsequent request.
- */
-public interface ClientAttestationChallengeApi {
+/** The challenge endpoint, as a protocol a tenant can be served by. */
+public interface ClientAttestationChallengeProtocol {
 
-  ClientAttestationChallengeResponse issue(
-      TenantIdentifier tenantIdentifier, RequestAttributes requestAttributes);
+  AuthorizationProvider authorizationProtocolProvider();
+
+  ClientAttestationChallengeResponse issue(Tenant tenant);
 }
