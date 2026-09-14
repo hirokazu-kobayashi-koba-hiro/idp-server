@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.idp.server.core.openid.oauth.clientattestation.challenge;
+package org.idp.server.core.openid.oauth.clientattestation.challenge.handler.io;
 
 import java.util.Map;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallenge;
 
 /**
  * Response of the challenge endpoint.
@@ -29,5 +30,15 @@ public record ClientAttestationChallengeResponse(int statusCode, Map<String, Obj
   public static ClientAttestationChallengeResponse ok(ClientAttestationChallenge challenge) {
     return new ClientAttestationChallengeResponse(
         200, Map.of("attestation_challenge", challenge.value()));
+  }
+
+  /**
+   * The endpoint reads nothing from the request, so it has no way to be the caller's fault.
+   *
+   * <p>Anything that fails here is a fault on this side — the tenant's configuration, or the store
+   * the challenge is written to.
+   */
+  public static ClientAttestationChallengeResponse serverError() {
+    return new ClientAttestationChallengeResponse(500, Map.of("error", "server_error"));
   }
 }

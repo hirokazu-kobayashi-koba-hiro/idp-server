@@ -16,13 +16,10 @@
 
 package org.idp.server.usecases.application.enduser;
 
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallenge;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeApi;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeIssuer;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeRepository;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeResponse;
-import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
-import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeProtocol;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeProtocols;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.handler.io.ClientAttestationChallengeResponse;
 import org.idp.server.platform.datasource.Transaction;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
@@ -39,20 +36,12 @@ import org.idp.server.platform.type.RequestAttributes;
 public class ClientAttestationChallengeEntryService implements ClientAttestationChallengeApi {
 
   TenantQueryRepository tenantQueryRepository;
-  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
-  ClientAttestationChallengeRepository challengeRepository;
-  ClientAttestationChallengeIssuer challengeIssuer;
+  ClientAttestationChallengeProtocols protocols;
 
   public ClientAttestationChallengeEntryService(
-      TenantQueryRepository tenantQueryRepository,
-      AuthorizationServerConfigurationQueryRepository
-          authorizationServerConfigurationQueryRepository,
-      ClientAttestationChallengeRepository challengeRepository) {
+      TenantQueryRepository tenantQueryRepository, ClientAttestationChallengeProtocols protocols) {
     this.tenantQueryRepository = tenantQueryRepository;
-    this.authorizationServerConfigurationQueryRepository =
-        authorizationServerConfigurationQueryRepository;
-    this.challengeRepository = challengeRepository;
-    this.challengeIssuer = new ClientAttestationChallengeIssuer();
+    this.protocols = protocols;
   }
 
   @Override
@@ -60,14 +49,8 @@ public class ClientAttestationChallengeEntryService implements ClientAttestation
       TenantIdentifier tenantIdentifier, RequestAttributes requestAttributes) {
 
     Tenant tenant = tenantQueryRepository.get(tenantIdentifier);
-    AuthorizationServerConfiguration authorizationServerConfiguration =
-        authorizationServerConfigurationQueryRepository.get(tenant);
+    ClientAttestationChallengeProtocol protocol = protocols.get(tenant.authorizationProvider());
 
-    ClientAttestationChallenge challenge =
-        challengeIssuer.issue(
-            authorizationServerConfiguration.clientAttestationChallengeDuration());
-    challengeRepository.register(tenant, challenge);
-
-    return ClientAttestationChallengeResponse.ok(challenge);
+    return protocol.issue(tenant);
   }
 }

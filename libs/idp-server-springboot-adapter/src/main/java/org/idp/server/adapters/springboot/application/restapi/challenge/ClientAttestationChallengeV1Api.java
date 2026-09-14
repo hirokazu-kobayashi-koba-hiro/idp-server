@@ -19,7 +19,7 @@ package org.idp.server.adapters.springboot.application.restapi.challenge;
 import jakarta.servlet.http.HttpServletRequest;
 import org.idp.server.adapters.springboot.application.restapi.ParameterTransformable;
 import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeApi;
-import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeResponse;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.handler.io.ClientAttestationChallengeResponse;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;

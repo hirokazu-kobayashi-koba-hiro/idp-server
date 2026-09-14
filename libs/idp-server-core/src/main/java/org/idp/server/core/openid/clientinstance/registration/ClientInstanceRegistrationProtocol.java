@@ -19,19 +19,16 @@ package org.idp.server.core.openid.clientinstance.registration;
 import org.idp.server.core.openid.clientinstance.registration.handler.io.ClientInstanceChallengeRequest;
 import org.idp.server.core.openid.clientinstance.registration.handler.io.ClientInstanceRegisterRequest;
 import org.idp.server.core.openid.clientinstance.registration.handler.io.ClientInstanceRegistrationResponse;
-import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
-import org.idp.server.platform.type.RequestAttributes;
+import org.idp.server.platform.dependency.protocol.AuthorizationProvider;
+import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
-/** Application plane API for registering a Client Instance from an end-user application. */
-public interface ClientInstanceRegistrationApi {
+/** Client Instance registration, as a protocol a tenant can be served by. */
+public interface ClientInstanceRegistrationProtocol {
+
+  AuthorizationProvider authorizationProtocolProvider();
 
   ClientInstanceRegistrationResponse challenge(
-      TenantIdentifier tenantIdentifier,
-      ClientInstanceChallengeRequest request,
-      RequestAttributes requestAttributes);
+      Tenant tenant, ClientInstanceChallengeRequest request);
 
-  ClientInstanceRegistrationResponse register(
-      TenantIdentifier tenantIdentifier,
-      ClientInstanceRegisterRequest request,
-      RequestAttributes requestAttributes);
+  ClientInstanceRegistrationResponse register(Tenant tenant, ClientInstanceRegisterRequest request);
 }
