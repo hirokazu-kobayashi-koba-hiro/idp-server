@@ -1,5 +1,5 @@
 -- ============================================================================
--- V0_13_0_3__client_instance.mysql.sql
+-- V0_14_0_2__client_instance.mysql.sql
 -- Client Instance for Attestation-Based Client Authentication (refs #1521)
 --
 -- Summary:

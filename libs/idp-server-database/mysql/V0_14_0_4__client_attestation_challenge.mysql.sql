@@ -1,5 +1,5 @@
 -- ============================================================================
--- V0_13_0_5__client_attestation_challenge.mysql.sql
+-- V0_14_0_4__client_attestation_challenge.mysql.sql
 -- Server-provided challenge for Attestation-Based Client Authentication (refs #1521)
 --
 -- See the PostgreSQL migration for the design notes. MySQL has no Row Level

@@ -1,5 +1,5 @@
 -- ============================================================================
--- V0_13_0_5__client_attestation_challenge.sql
+-- V0_14_0_4__client_attestation_challenge.sql
 -- Server-provided challenge for Attestation-Based Client Authentication (refs #1521)
 --
 -- draft-ietf-oauth-attestation-based-client-auth-10 Section 6: the server may
