@@ -29,3 +29,13 @@ CREATE TABLE client_instance
     PRIMARY KEY (tenant_id, client_id, id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Registration rejects a device that already holds an active instance, which is
+-- a lookup by device rather than by primary key.
+CREATE INDEX idx_client_instance_tenant_client_device
+    ON client_instance (tenant_id, client_id, device_id);
+
+-- The management list API pages by (tenant_id, client_id) ordered by created_at.
+-- See the PostgreSQL migration for the measurements behind this index.
+CREATE INDEX idx_client_instance_tenant_client_created_at
+    ON client_instance (tenant_id, client_id, created_at DESC);
