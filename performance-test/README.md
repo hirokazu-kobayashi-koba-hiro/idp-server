@@ -151,6 +151,7 @@ performance-test/result/stress/
 | `scenario-14-client-attestation-challenge` | Client Attestation Challenge 発行 |
 | `scenario-15-token-attest-jwt-client-auth` | Token (attest_jwt_client_auth) ※事前準備あり |
 | `scenario-16-ciba-attest-jwt-client-auth` | CIBA BC Request (attest_jwt_client_auth) ※事前準備あり |
+| `scenario-17-token-attest-matrix` | 署名アルゴリズム × trust source 比較 ※事前準備あり |
 
 #### 日報レポート生成
 
@@ -187,6 +188,7 @@ k6 run ./performance-test/load/scenario-4-authorization-code.js
 ## Attestation-Based Client Authentication のテスト
 
 `attest_jwt_client_auth`（draft-ietf-oauth-attestation-based-client-auth-10）の計測。
+実測結果と考察は [stress/RESULT-attestation-client-auth.md](./stress/RESULT-attestation-client-auth.md)。
 
 ### scenario-14: Challenge 発行
 
@@ -226,6 +228,26 @@ scenario-15 と同じ JWT プールをそのまま流用できる（事前準備
 node ./performance-test/scripts/generate-client-instances.js --resign
 k6 run ./performance-test/stress/scenario-16-ciba-attest-jwt-client-auth.js
 ```
+
+### scenario-17: 署名アルゴリズム × trust source の比較
+
+クライアント認証で増えたコストがどこから来ているかを切り分けるハーネス。
+
+```bash
+node ./performance-test/scripts/generate-attestation-matrix.js
+node ./performance-test/scripts/generate-attestation-matrix.js --resign  # テスト直前
+
+ALG=RS256 TRUST_SOURCE=attester_jwks VU_COUNT=5 DURATION=20s \
+  k6 run ./performance-test/stress/scenario-17-token-attest-matrix.js
+```
+
+| 変数 | 値 | 何が分かるか |
+|------|-----|-------------|
+| `TRUST_SOURCE` | `registered_instance_key` / `attester_jwks` | 同じ `ALG` で比べた差が `client_instance` の鍵解決コスト（`attester_jwks` はクライアント設定の JWKS で検証するので DB を引かない） |
+| `ALG` | `ES256` `ES384` `ES512` `RS256` `PS256` | 同じ `TRUST_SOURCE` で比べた差が署名検証アルゴリズムのコスト |
+
+> `EdDSA` も生成対象に含めてあるが、現状 `unsupported key type` で 401 になる（JOSE 層が OKP 鍵に未対応）。
+> 対応状況の記録として残してある。
 
 ### 比較の読み方
 
