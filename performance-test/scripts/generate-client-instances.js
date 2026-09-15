@@ -209,7 +209,10 @@ async function main() {
       client_name: "Performance Test Attested Client",
       token_endpoint_auth_method: "attest_jwt_client_auth",
       extension: { client_attestation_trust_source: "registered_instance_key" },
-      grant_types: ["client_credentials"],
+      // scenario-2-bc との比較のため CIBA も perf クライアントと同じ設定で持たせる
+      grant_types: ["client_credentials", "urn:openid:params:grant-type:ciba"],
+      backchannel_token_delivery_mode: "poll",
+      backchannel_user_code_parameter: true,
       redirect_uris: ["http://localhost:3000/callback"],
       response_types: ["code"],
       // scenario-5 の比較対象になるよう、onboarding-template.json の perf クライアントと同じ scope にする
