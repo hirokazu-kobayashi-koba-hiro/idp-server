@@ -150,6 +150,7 @@ performance-test/result/stress/
 | `scenario-9-identity-verification-application` | 本人確認申請 |
 | `scenario-14-client-attestation-challenge` | Client Attestation Challenge 発行 |
 | `scenario-15-token-attest-jwt-client-auth` | Token (attest_jwt_client_auth) ※事前準備あり |
+| `scenario-16-ciba-attest-jwt-client-auth` | CIBA BC Request (attest_jwt_client_auth) ※事前準備あり |
 
 #### 日報レポート生成
 
@@ -215,6 +216,28 @@ k6 run ./performance-test/stress/scenario-15-token-attest-jwt-client-auth.js
 
 `--instances <n>`（デフォルト 100）で登録するインスタンス数を変更できる。
 シナリオは VU・iteration ごとにインスタンスを循環させるので、`client_instance` の鍵解決が分散する。
+
+### scenario-16: CIBA BC Request (attest_jwt_client_auth)
+
+`scenario-2-bc`（client_secret）との差分を見る。PoP JWT の `aud` は issuer なので、
+scenario-15 と同じ JWT プールをそのまま流用できる（事前準備は共通）。
+
+```bash
+node ./performance-test/scripts/generate-client-instances.js --resign
+k6 run ./performance-test/stress/scenario-16-ciba-attest-jwt-client-auth.js
+```
+
+### 比較の読み方
+
+クライアント認証方式**以外**を揃えてあるので、対になるシナリオとの差分がそのまま認証方式のコストになる。
+
+| 比較 | client_secret | attest_jwt | median 差 |
+|------|--------------|-----------|----------|
+| Token | `scenario-5-token-client-credentials` | `scenario-15` | 約 +1.6ms |
+| CIBA BC | `scenario-2-bc` | `scenario-16` | 約 +1.3ms |
+
+内訳は ES256 署名検証 2 回（Client Attestation JWT + PoP JWT）と `client_instance` の鍵解決 1 クエリ。
+エンドポイントに依らずほぼ一定で、高並列時は別のボトルネックに吸収されて TPS 差には出にくい。
 
 > **⚠️ 事前署名した JWT は 5 分で期限切れになる**
 > PoP JWT の `iat` 許容窓が ±5 分（`ClientAttestationPopJwtVerifier.DEFAULT_ACCEPTABLE_TIME_WINDOW`）のため。
