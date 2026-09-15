@@ -25,6 +25,19 @@
 --
 -- Not tied to a client_id: the challenge endpoint is unauthenticated
 -- (Section 6.1), so the issuing request carries no credential to bind to.
+--
+-- Key:
+--   PRIMARY KEY (tenant_id, challenge), with no surrogate id. This departs from the
+--   surrogate-plus-unique shape used elsewhere (idp_user, role, client_configuration)
+--   on purpose: the challenge is the identity of the row, no table references this
+--   one, the only access path is the exact (tenant_id, challenge) lookup of the
+--   verifying request, and tenant-scoped uniqueness is required by the flow rather
+--   than incidental. A surrogate id would add a column no query reads and would still
+--   need a unique index to keep the same guarantee.
+--
+--   The cost is carried by InnoDB, where the clustered index is ordered by a 43
+--   character random value (32 bytes base64url) and every secondary index repeats the
+--   primary key. The table is bounded by its TTL, so the fragmentation is accepted.
 -- ============================================================================
 
 CREATE TABLE client_attestation_challenge
