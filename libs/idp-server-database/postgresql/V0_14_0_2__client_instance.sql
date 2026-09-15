@@ -10,8 +10,13 @@
 --   header kid (= client_instance.id).
 --
 -- Design:
---   - id: instance identifier. Matches the kid of the self-signed
---     Client Attestation JWT. Client-generated (e.g. UUID).
+--   - id: instance identifier, and the kid that the Client Attestation JWT carries to
+--     select which registered key to verify with. Two paths assign it, and they differ
+--     in who chooses the value:
+--       * the registration endpoint (V0_14_0_3) issues it together with the challenge
+--         and keeps it server-side, so the registration request cannot choose it
+--       * the management API takes a caller supplied id, and only generates one when
+--         the request omits it
 --   - instance_key: CIK public key (JWK). Never contains private material.
 --   - status: active / revoked. Revocation applies immediately because
 --     every authentication resolves the key from this table.
@@ -44,3 +49,18 @@ POLICY tenant_isolation_policy
   ON client_instance
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE client_instance FORCE ROW LEVEL SECURITY;
+
+-- Registration rejects a device that already holds an active instance, which is
+-- a lookup by device rather than by primary key.
+CREATE INDEX idx_client_instance_tenant_client_device
+    ON client_instance (tenant_id, client_id, device_id);
+
+-- The management list API pages by (tenant_id, client_id) ordered by created_at.
+-- Without this index the ordering has to be produced by sorting every instance of the
+-- client, and once a client holds enough of the table the planner drops the index scan
+-- for a sequential scan: measured at 300k instances under one client_id, a single
+-- 20 row page read the whole table (27k buffers, 112ms). A mobile deployment is exactly
+-- that shape, since one client_id covers the whole app and instances scale with installs.
+-- With the ordering carried by the index the LIMIT stops early (5 buffers, 0.09ms).
+CREATE INDEX idx_client_instance_tenant_client_created_at
+    ON client_instance (tenant_id, client_id, created_at DESC);

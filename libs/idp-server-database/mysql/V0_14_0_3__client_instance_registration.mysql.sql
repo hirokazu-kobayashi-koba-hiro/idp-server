@@ -20,6 +20,3 @@ CREATE TABLE client_instance_registration_challenge
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE,
     INDEX idx_client_instance_registration_challenge_expires_at (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE INDEX idx_client_instance_tenant_client_device
-    ON client_instance (tenant_id, client_id, device_id);

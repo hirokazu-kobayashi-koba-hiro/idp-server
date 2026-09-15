@@ -62,8 +62,3 @@ ALTER TABLE client_instance_registration_challenge FORCE ROW LEVEL SECURITY;
 -- remains distinguishable from an unknown challenge, as described above.
 CREATE INDEX idx_client_instance_registration_challenge_expires_at
     ON client_instance_registration_challenge (expires_at);
-
--- Registration rejects a device that already holds an active instance, which is
--- a lookup by device rather than by primary key.
-CREATE INDEX idx_client_instance_tenant_client_device
-    ON client_instance (tenant_id, client_id, device_id);
