@@ -20,6 +20,19 @@
 -- Single use:
 --   used_at is stamped on consumption. Rows are kept after use so that replays
 --   are distinguishable from unknown challenges in the audit trail.
+--
+-- Key:
+--   PRIMARY KEY (tenant_id, challenge), with no surrogate id. This departs from the
+--   surrogate-plus-unique shape used elsewhere (idp_user, role, client_configuration)
+--   on purpose: the challenge is the identity of the row, no table references this
+--   one, the only access path is the exact (tenant_id, challenge) lookup of the
+--   consuming request, and tenant-scoped uniqueness is required by the flow rather
+--   than incidental. A surrogate id would add a column no query reads and would still
+--   need a unique index to keep the same guarantee.
+--
+--   The cost is carried by InnoDB, where the clustered index is ordered by a 43
+--   character random value (32 bytes base64url) and every secondary index repeats the
+--   primary key. The table is bounded by its TTL, so the fragmentation is accepted.
 -- ============================================================================
 
 CREATE TABLE client_instance_registration_challenge
