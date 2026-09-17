@@ -205,7 +205,7 @@ public class MysqlExecutor implements ContactVerificationChallengeSqlExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifier().value());
-    appendFilters(sql, params, queries, false);
+    appendFilters(sql, params, queries);
     sql.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?");
     params.add(queries.limit());
     params.add(queries.offset());
@@ -227,18 +227,16 @@ public class MysqlExecutor implements ContactVerificationChallengeSqlExecutor {
 
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifier().value());
-    appendFilters(sql, params, queries, false);
+    appendFilters(sql, params, queries);
 
     return sqlExecutor.selectOne(sql.toString(), params);
   }
 
   private void appendFilters(
-      StringBuilder sql,
-      List<Object> params,
-      ContactVerificationChallengeQueries queries,
-      boolean castUuid) {
+      StringBuilder sql, List<Object> params, ContactVerificationChallengeQueries queries) {
     if (queries.hasUserId()) {
-      sql.append(castUuid ? " AND user_id = ?" : " AND user_id = ?");
+      // No cast: MySQL stores the identifier as CHAR(36), unlike the PostgreSQL counterpart.
+      sql.append(" AND user_id = ?");
       params.add(queries.userIdentifier().value());
     }
     if (queries.hasOperation()) {

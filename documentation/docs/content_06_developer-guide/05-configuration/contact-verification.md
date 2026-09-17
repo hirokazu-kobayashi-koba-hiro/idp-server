@@ -277,6 +277,21 @@ verify 側（`{channel}-authentication`）:
 
 未設定なら条件なし＝スコープだけが門番です。
 
+:::warning 既定では再認証を要求しません
+`max_auth_age_seconds` の既定は `0`（＝上限なし）で、`authentication_conditions` も空です。
+つまり**既定のままだと、`{channel}:change` スコープを持つトークンがあれば、いつ認証したかに
+関係なく識別子を動かせます**。長期アクセストークンや refresh で延命されたトークンでは
+「認証したのは数週間前」ということが起こります。
+
+`authentication_conditions` を既定で空にしているのはテナントごとに保有する認証方式が違うから
+ですが、`max_auth_age_seconds` は**方式に依存しません**。識別子が動くテナントでは明示的に
+設定することを推奨します。
+
+```json
+"identifier_move": { "max_auth_age_seconds": 300 }
+```
+:::
+
 ### `identity_verified_behavior`
 
 | 値 | 挙動 |

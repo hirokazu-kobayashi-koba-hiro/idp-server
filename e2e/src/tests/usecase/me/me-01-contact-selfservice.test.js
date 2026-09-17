@@ -764,6 +764,75 @@ describe("Me Use Case: self-service contact verification and change", () => {
     expect(userinfoResp.data.email_verified).toBe(true);
   });
 
+  it("security: a code loses its meaning when the account value moves under it", async () => {
+    // The code proves challenge.target_value is reachable. What gets marked verified is whatever
+    // the account holds at commit time, and other paths move that without knowing this table
+    // exists - the management user update, and an identity verification result patching email.
+    // Without a re-check, a code delivered to the previous address sets email_verified on an
+    // address nobody proved.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL");
+    tenants.push(ctx);
+    const stamp = `${Date.now()}`;
+    const original = `drift-original-${stamp}@me-email.example.com`;
+    const password = `DriftPass_${stamp}!`;
+    const sub = await createUser(ctx, {
+      name: original,
+      email: original,
+      password,
+      emailVerified: false,
+    });
+    const token = (await passwordGrant(ctx, original, password, "openid")).data
+      .access_token;
+
+    // A challenge is issued to, and delivered to, the address on the account right now.
+    const started = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/verification`,
+      headers: createBearerHeader(token),
+      body: {},
+    });
+    expect(started.status).toBe(200);
+    const code = await readSentCode("email", original);
+
+    // Meanwhile the address moves through a path that has nothing to do with this feature.
+    const moved = `drift-moved-${stamp}@me-email.example.com`;
+    const patched = await putWithJson({
+      url: `${backendUrl}/v1/management/organizations/${ctx.organizationId}/tenants/${ctx.tenantId}/users/${sub}`,
+      headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
+      body: {
+        sub,
+        provider_id: "idp-server",
+        name: original,
+        preferred_username: moved,
+        email: moved,
+        email_verified: false,
+        status: "REGISTERED",
+      },
+    });
+    expect(patched.status).toBe(200);
+
+    const finish = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/verification/${started.data.id}/verify`,
+      headers: createBearerHeader(token),
+      body: { verification_code: code },
+    });
+    console.log(
+      "code after the value moved:",
+      finish.status,
+      JSON.stringify(finish.data)
+    );
+    expect(finish.status).toBe(400);
+
+    // The address that was never proved stays unverified.
+    const users = await get({
+      url: `${backendUrl}/v1/management/organizations/${
+        ctx.organizationId
+      }/tenants/${ctx.tenantId}/users?email=${encodeURIComponent(moved)}`,
+      headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
+    });
+    const found = users.data.list.find((u) => u.email === moved);
+    expect(found.email_verified).toBe(false);
+  });
+
   it("verification endpoint ignores a caller-supplied new_value", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);

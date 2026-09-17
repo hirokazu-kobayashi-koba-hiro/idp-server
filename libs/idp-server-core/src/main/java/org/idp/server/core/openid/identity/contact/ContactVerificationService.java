@@ -93,6 +93,11 @@ public class ContactVerificationService {
     // {channel}:change picks the recipient, so an unbounded request loop bills the tenant for SMS
     // and floods an address that never asked to be involved. Keyed on user + operation so the two
     // channels and the two intents do not share a budget.
+    //
+    // Not serialised: there is no lock between this count and the register() below, so requests
+    // arriving together all pass. Bounding it would need a row lock on the user or a partial unique
+    // index, and the window is one round trip wide — it caps a burst, not a sustained loop, which
+    // is what the cooldown is for. Left as-is deliberately rather than overlooked.
     int cooldownSeconds = exchange.resendCooldownSeconds(tenant, operation);
     if (challengeRepository.sentWithinCooldown(
         tenant, user.userIdentifier(), operation, cooldownSeconds)) {
@@ -171,6 +176,21 @@ public class ContactVerificationService {
       ContactVerificationOperation operation) {
 
     if (operation.isVerify()) {
+      // What the code proves is that challenge.targetValue() is reachable, and what gets marked
+      // verified is whatever the account holds now. Those are the same value only if nothing moved
+      // it while the challenge was outstanding — and other paths do move it without knowing this
+      // table exists (the management user update, and an identity verification result patching
+      // email / phone_number). Without this check a code delivered to the previous address would
+      // set *_verified on an address nobody proved.
+      if (!challenge.targetValue().equals(operation.currentValue(user))) {
+        log.warn(
+            "Contact verification refused: the account value changed while the challenge was"
+                + " outstanding. operation={}",
+            operation.value());
+        return ContactVerificationResponse.failure(
+            "the account value changed after this code was sent; request a new code.", operation);
+      }
+
       // The value is unchanged by definition, so only the claim moves. Writing the value or
       // preferred_username here would let the openid-gated half touch what the change scope exists
       // to gate, and would re-assert a snapshot over any out-of-band correction.
@@ -260,6 +280,13 @@ public class ContactVerificationService {
    * <p>Keeping the row also makes the refusal stick: a burnt challenge keeps answering "retry limit
    * exceeded" instead of turning back into "not found". The expiry sweep collects them ({@code POST
    * /v1/admin/operations/delete-expired-data}), which is what it is for.
+   *
+   * <p>A <em>successful</em> commit still deletes, and that does free the cooldown early, because
+   * the budget is counted the same way. It stays because those deletes are load-bearing: a consumed
+   * code must not be redeemable twice, and {@code deleteAllBy} is what stops a stale challenge
+   * moving a committed value back. The failure path had no such reason. Nor does it reopen what the
+   * cooldown guards — reaching the success path means producing the code, which means already
+   * controlling the address being messaged.
    */
   private ContactVerificationResponse verifyCode(
       Tenant tenant,
