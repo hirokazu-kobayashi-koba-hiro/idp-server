@@ -91,7 +91,7 @@ public class ContactVerificationResponse {
   public static ContactVerificationResponse notFound(ContactVerificationOperation operation) {
     return new ContactVerificationResponse(
         ContactVerificationStatus.NOT_FOUND,
-        errorContents("email verification challenge not found.", null),
+        errorContents("contact verification challenge not found.", null),
         operation.failureEvent());
   }
 

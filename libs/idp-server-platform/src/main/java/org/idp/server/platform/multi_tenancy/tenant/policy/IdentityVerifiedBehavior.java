@@ -16,12 +16,21 @@
 
 package org.idp.server.platform.multi_tenancy.tenant.policy;
 
+import org.idp.server.platform.log.LoggerWrapper;
+
 /**
  * What a self-service contact change may do to an identity-verified account (Issue #1416).
  *
  * <p>An account that went through eKYC carries claims asserted by an external provider. Moving the
  * login identifier afterwards is not the same act as updating a plain attribute, so the tenant
- * decides which of the three it is.
+ * decides which of the two it is.
+ *
+ * <p>A third option — allow the change and drop the verified state on commit — is deliberately
+ * <em>not</em> here. It was, briefly, and nothing acted on it: the only question asked at commit
+ * time is {@link #isDeny()}, so a tenant naming it got the permissive branch and kept {@code
+ * IDENTITY_VERIFIED} across an identifier move, which is exactly what this enum exists to prevent.
+ * An unimplemented option that reads as the strictest and behaves as the loosest is worse than no
+ * option, so it stays out until something downgrades the status.
  */
 public enum IdentityVerifiedBehavior {
   /** The verification state is irrelevant to this change. */
@@ -31,11 +40,17 @@ public enum IdentityVerifiedBehavior {
    * Refuse while the account is identity verified, or while verification is required. This is the
    * line {@code IdentityVerificationUserUpdater} already draws for verification results.
    */
-  DENY,
+  DENY;
 
-  /** Allow, but drop the verified state on commit, because its basis no longer holds. */
-  DOWNGRADE_STATUS;
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(IdentityVerifiedBehavior.class);
 
+  /**
+   * Resolves the configured value, falling back when it names nothing this version implements.
+   *
+   * <p>The fallback is the caller's default, which is {@code DENY} for a change that moves the
+   * login identifier — so a typo, or a value from a future version, lands on the strict side rather
+   * than the permissive one.
+   */
   public static IdentityVerifiedBehavior of(String value, IdentityVerifiedBehavior defaultValue) {
     if (value == null || value.isBlank()) {
       return defaultValue;
@@ -45,14 +60,12 @@ public enum IdentityVerifiedBehavior {
         return behavior;
       }
     }
+    log.warn(
+        "Unsupported identity_verified_behavior ({}); falling back to {}.", value, defaultValue);
     return defaultValue;
   }
 
   public boolean isDeny() {
     return this == DENY;
-  }
-
-  public boolean isDowngradeStatus() {
-    return this == DOWNGRADE_STATUS;
   }
 }

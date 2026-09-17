@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeAll, afterAll } from "@jest/globals";
 import { onboarding } from "../../../api/managementClient";
-import { deletion, get, postWithJson } from "../../../lib/http";
+import { deletion, get, postWithJson, putWithJson } from "../../../lib/http";
 import { requestToken, getUserinfo } from "../../../api/oauthClient";
 import { generateECP256JWKS, verifyAndDecodeJwt } from "../../../lib/jose";
 import { adminServerConfig, backendUrl } from "../../testConfig";
@@ -549,7 +549,7 @@ async function provisionTenant(
 
 async function createUser(
   ctx,
-  { name, email, password, emailVerified = true }
+  { name, email, password, emailVerified = true, status = "REGISTERED" }
 ) {
   const sub = uuidv4();
   const resp = await postWithJson({
@@ -567,6 +567,26 @@ async function createUser(
     },
   });
   expect(resp.status).toBe(201);
+
+  // UserCreationService forces REGISTERED (UserCreationService:139,166), so a different lifecycle
+  // state has to be set through the update endpoint, which keeps a supplied status.
+  if (status !== "REGISTERED") {
+    const updated = await putWithJson({
+      url: `${backendUrl}/v1/management/organizations/${ctx.organizationId}/tenants/${ctx.tenantId}/users/${sub}`,
+      headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
+      body: {
+        sub,
+        provider_id: "idp-server",
+        name,
+        preferred_username:
+          ctx.identityUniqueKeyType === "EMAIL" ? email : name,
+        email,
+        email_verified: emailVerified,
+        status,
+      },
+    });
+    expect(updated.status).toBe(200);
+  }
   return sub;
 }
 
@@ -1749,6 +1769,170 @@ describe("Me Use Case: self-service contact verification and change", () => {
       headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
     });
     expect(users.data.list.some((u) => u.email === newEmail)).toBe(true);
+  });
+
+  it("policy: an identity-verified account cannot move the login identifier", async () => {
+    // The default for identifier_move is DENY, and it is the whole reason the policy exists:
+    // IdentityVerificationUserUpdater refuses to patch preferred_username even from a verification
+    // result, so self-service must not move it with one code either.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL");
+    tenants.push(ctx);
+    const stamp = `${Date.now()}`;
+    const email = `verified-${stamp}@me-email.example.com`;
+    const password = `VerifiedPass_${stamp}!`;
+    await createUser(ctx, {
+      name: `verified-${stamp}`,
+      email,
+      password,
+      status: "IDENTITY_VERIFIED",
+    });
+    const token = (await passwordGrant(ctx, email, password, changeScope)).data
+      .access_token;
+
+    const moved = `moved-${stamp}@me-email.example.com`;
+    const denied = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: moved },
+    });
+    console.log(
+      "identity verified identifier move:",
+      denied.status,
+      JSON.stringify(denied.data)
+    );
+    expect(denied.status).toBe(400);
+
+    // Refused before the sender runs, so no message reached the address the caller named.
+    const sent = await get({ url: "http://localhost:4000/sent-emails" });
+    expect(sent.data.filter((e) => e.to === moved)).toHaveLength(0);
+
+    // The other channel is attribute_only for this tenant, and its default is ALLOW: a rule this
+    // strict must not spread to a change that moves no identifier.
+    const phone = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/phone/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: `+8190${stamp.slice(-8)}` },
+    });
+    console.log("identity verified attribute-only change:", phone.status);
+    expect(phone.status).toBe(200);
+  });
+
+  it("policy: identity_verified_behavior falls back to DENY for an unimplemented value", async () => {
+    // DOWNGRADE_STATUS reads as the strict option but nothing downgrades anything, so resolving it
+    // would leave IDENTITY_VERIFIED standing across an identifier move.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      contactChangePolicy: {
+        identifier_move: { identity_verified_behavior: "DOWNGRADE_STATUS" },
+      },
+    });
+    tenants.push(ctx);
+    const stamp = `${Date.now()}`;
+    const email = `downgrade-${stamp}@me-email.example.com`;
+    const password = `DowngradePass_${stamp}!`;
+    await createUser(ctx, {
+      name: `downgrade-${stamp}`,
+      email,
+      password,
+      status: "IDENTITY_VERIFIED",
+    });
+    const token = (await passwordGrant(ctx, email, password, changeScope)).data
+      .access_token;
+
+    const denied = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: `downgraded-${stamp}@me-email.example.com` },
+    });
+    console.log(
+      "unimplemented identity_verified_behavior:",
+      denied.status,
+      JSON.stringify(denied.data)
+    );
+    expect(denied.status).toBe(400);
+  });
+
+  it("policy: an unreadable authentication_conditions refuses instead of relaxing", async () => {
+    // One unusable operation name. Dropping it would leave the group with nothing in it, and a rule
+    // with no conditions is a rule that anything satisfies - the opposite of what was written.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      contactChangePolicy: {
+        identifier_move: {
+          authentication_conditions: {
+            any_of: [
+              [
+                {
+                  path: "$.amr",
+                  operation: "definitely-not-an-operation",
+                  value: "password",
+                },
+              ],
+            ],
+          },
+        },
+      },
+    });
+    tenants.push(ctx);
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
+
+    const denied = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: `unreadable-${Date.now()}@me-email.example.com` },
+    });
+    console.log(
+      "unreadable authentication_conditions:",
+      denied.status,
+      JSON.stringify(denied.data)
+    );
+    expect(denied.status).toBe(400);
+  });
+
+  it("security: burning the retry limit does not clear the resend cooldown", async () => {
+    // The cooldown is measured by counting recent rows, so deleting the challenge on exhaustion
+    // would hand the caller a reset: request, spend the attempts, request again.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      resendCooldownSeconds: 120,
+    });
+    tenants.push(ctx);
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
+
+    const started = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: `cooldown-burn-${Date.now()}@me-email.example.com` },
+    });
+    expect(started.status).toBe(200);
+
+    // retry_count_limitation is 5 in this tenant: five wrong answers, then the sixth is refused
+    // outright.
+    let last;
+    for (let i = 0; i < 6; i++) {
+      last = await postWithJson({
+        url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change/${started.data.id}/verify`,
+        headers: createBearerHeader(token),
+        body: { verification_code: "000000" },
+      });
+      expect(last.status).toBe(400);
+    }
+    console.log("after burning attempts:", JSON.stringify(last.data));
+    expect(last.data.error_description).toContain("retry limit");
+
+    const resend = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: `cooldown-burn-2-${Date.now()}@me-email.example.com` },
+    });
+    console.log(
+      "resend after burning attempts:",
+      resend.status,
+      JSON.stringify(resend.data)
+    );
+    expect(resend.status).toBe(400);
+    expect(resend.data.error_description).toContain("wait up to");
   });
 
   it("audit: emits verify / change events separately", async () => {

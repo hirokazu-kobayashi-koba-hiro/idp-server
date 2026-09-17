@@ -25,6 +25,7 @@ import org.idp.server.platform.condition.ConditionEvaluator;
 import org.idp.server.platform.condition.ConditionMatchMode;
 import org.idp.server.platform.condition.ConditionOperation;
 import org.idp.server.platform.json.path.JsonPathWrapper;
+import org.idp.server.platform.log.LoggerWrapper;
 
 /**
  * Rules for one kind of self-service contact change (Issue #1416).
@@ -49,8 +50,32 @@ import org.idp.server.platform.json.path.JsonPathWrapper;
  */
 public class ContactChangeRule {
 
+  private static final LoggerWrapper log = LoggerWrapper.getLogger(ContactChangeRule.class);
+
   boolean allowed;
   List<List<ConditionDefinition>> authenticationConditions;
+
+  /**
+   * Set when {@code authentication_conditions} was written but could not be read as conditions.
+   *
+   * <p>Kept rather than silently dropping the unreadable part: dropping only ever makes a rule
+   * easier to satisfy, and this rule is the whole of what makes an identifier move heavy. A typo in
+   * one operation name would otherwise leave the surviving conditions — or, if nothing survived, no
+   * requirement at all — which turns a strict policy permissive without anything saying so.
+   */
+  boolean authenticationConditionsMalformed;
+
+  /**
+   * The {@code authentication_conditions} value exactly as the tenant wrote it.
+   *
+   * <p>Persistence goes through {@link #toMap()} ({@code Tenant.toMap()} -> {@code
+   * identity_policy_config}), so emitting only what parsed would delete an unreadable block on the
+   * next write and leave the rule permissive from then on — the read-side refusal would never be
+   * reached again. Writing the original back keeps it failing closed, and shows the operator their
+   * own typo in the management API response.
+   */
+  Object rawAuthenticationConditions;
+
   int maxAuthAgeSeconds;
   boolean notifyPreviousValue;
   IdentityVerifiedBehavior identityVerifiedBehavior;
@@ -61,9 +86,29 @@ public class ContactChangeRule {
       int maxAuthAgeSeconds,
       boolean notifyPreviousValue,
       IdentityVerifiedBehavior identityVerifiedBehavior) {
+    this(
+        allowed,
+        authenticationConditions,
+        false,
+        null,
+        maxAuthAgeSeconds,
+        notifyPreviousValue,
+        identityVerifiedBehavior);
+  }
+
+  ContactChangeRule(
+      boolean allowed,
+      List<List<ConditionDefinition>> authenticationConditions,
+      boolean authenticationConditionsMalformed,
+      Object rawAuthenticationConditions,
+      int maxAuthAgeSeconds,
+      boolean notifyPreviousValue,
+      IdentityVerifiedBehavior identityVerifiedBehavior) {
     this.allowed = allowed;
     this.authenticationConditions =
         authenticationConditions == null ? new ArrayList<>() : authenticationConditions;
+    this.authenticationConditionsMalformed = authenticationConditionsMalformed;
+    this.rawAuthenticationConditions = rawAuthenticationConditions;
     this.maxAuthAgeSeconds = maxAuthAgeSeconds;
     this.notifyPreviousValue = notifyPreviousValue;
     this.identityVerifiedBehavior = identityVerifiedBehavior;
@@ -95,10 +140,19 @@ public class ContactChangeRule {
   }
 
   /**
-   * Whether the authentication behind the token satisfies at least one condition group. No
-   * configured condition means no requirement beyond the scope.
+   * Whether the authentication behind the token satisfies at least one condition group.
+   *
+   * <p>No configured condition means no requirement beyond the scope. A condition block that was
+   * configured but could not be read is not the same thing: the tenant asked for a requirement, so
+   * nothing satisfies it until the configuration is fixed.
    */
   public boolean satisfiedBy(JsonPathWrapper authenticationContext) {
+    if (authenticationConditionsMalformed) {
+      log.warn(
+          "contact_change_policy authentication_conditions could not be read; refusing the change"
+              + " rather than applying a weaker rule than the one configured.");
+      return false;
+    }
     if (!hasAuthenticationConditions()) {
       return true;
     }
@@ -154,48 +208,78 @@ public class ContactChangeRule {
       identityVerifiedBehavior = IdentityVerifiedBehavior.of(value, identityVerifiedBehavior);
     }
 
+    Object rawConditions = map.get("authentication_conditions");
+    ParsedConditions parsed = parseConditions(rawConditions);
+
     return new ContactChangeRule(
         allowed,
-        parseConditions(map.get("authentication_conditions")),
+        parsed.groups(),
+        parsed.malformed(),
+        rawConditions,
         maxAuthAgeSeconds,
         notifyPreviousValue,
         identityVerifiedBehavior);
   }
 
+  /** What {@code authentication_conditions} parsed to, and whether any of it was unreadable. */
+  private record ParsedConditions(List<List<ConditionDefinition>> groups, boolean malformed) {
+
+    static ParsedConditions absent() {
+      return new ParsedConditions(new ArrayList<>(), false);
+    }
+
+    static ParsedConditions unreadable() {
+      return new ParsedConditions(new ArrayList<>(), true);
+    }
+  }
+
   /**
    * Reads {@code {"any_of": [[{path, operation, value}, ...], ...]}}.
    *
-   * <p>A malformed entry is dropped rather than throwing: this is tenant configuration read on
-   * every request, and a typo in one condition must not take the whole policy — or the tenant —
-   * down. A dropped condition makes the rule easier to satisfy, so anything unparseable that leaves
-   * the group empty drops that group instead.
+   * <p>Never throws: this is tenant configuration read on every request, and a typo must not take
+   * the tenant down. It is reported instead, because the alternative — dropping what could not be
+   * read — silently relaxes the rule. A group that loses one of two conditions still evaluates, and
+   * now passes on half the proof that was asked for; a block where nothing parsed evaluates as "no
+   * conditions configured", which passes on none.
+   *
+   * <p>Absent is not malformed. A tenant that wrote no conditions gets the documented default of no
+   * requirement beyond the scope.
    */
   @SuppressWarnings("unchecked")
-  private static List<List<ConditionDefinition>> parseConditions(Object value) {
-    List<List<ConditionDefinition>> groups = new ArrayList<>();
+  private static ParsedConditions parseConditions(Object value) {
+    if (value == null) {
+      return ParsedConditions.absent();
+    }
     if (!(value instanceof Map<?, ?> conditionsMap)) {
-      return groups;
+      return ParsedConditions.unreadable();
     }
     Object anyOf = ((Map<String, Object>) conditionsMap).get("any_of");
-    if (!(anyOf instanceof List<?> anyOfList)) {
-      return groups;
+    if (anyOf == null) {
+      return ParsedConditions.absent();
     }
+    if (!(anyOf instanceof List<?> anyOfList)) {
+      return ParsedConditions.unreadable();
+    }
+    if (anyOfList.isEmpty()) {
+      return ParsedConditions.absent();
+    }
+
+    List<List<ConditionDefinition>> groups = new ArrayList<>();
     for (Object groupValue : anyOfList) {
-      if (!(groupValue instanceof List<?> groupList)) {
-        continue;
+      if (!(groupValue instanceof List<?> groupList) || groupList.isEmpty()) {
+        return ParsedConditions.unreadable();
       }
       List<ConditionDefinition> group = new ArrayList<>();
       for (Object conditionValue : groupList) {
         ConditionDefinition condition = parseCondition(conditionValue);
-        if (condition != null) {
-          group.add(condition);
+        if (condition == null) {
+          return ParsedConditions.unreadable();
         }
+        group.add(condition);
       }
-      if (!group.isEmpty()) {
-        groups.add(group);
-      }
+      groups.add(group);
     }
-    return groups;
+    return new ParsedConditions(groups, false);
   }
 
   private static ConditionDefinition parseCondition(Object value) {
@@ -217,7 +301,10 @@ public class ContactChangeRule {
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<>();
     map.put("allowed", allowed);
-    if (hasAuthenticationConditions()) {
+    if (authenticationConditionsMalformed) {
+      // Round-trip what was written. See rawAuthenticationConditions.
+      map.put("authentication_conditions", rawAuthenticationConditions);
+    } else if (hasAuthenticationConditions()) {
       List<List<Map<String, Object>>> groups = new ArrayList<>();
       for (List<ConditionDefinition> group : authenticationConditions) {
         groups.add(new ArrayList<>(group.stream().map(ConditionDefinition::toMap).toList()));

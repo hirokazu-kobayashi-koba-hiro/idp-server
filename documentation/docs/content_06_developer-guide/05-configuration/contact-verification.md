@@ -283,10 +283,13 @@ verify 側（`{channel}-authentication`）:
 |---|---|
 | `ALLOW` | 身元確認状態に関係なく許可 |
 | `DENY` | `IDENTITY_VERIFIED` / `IDENTITY_VERIFICATION_REQUIRED` では拒否 |
-| `DOWNGRADE_STATUS` | （未実装） |
 
 `identifier_move` の既定は `DENY` です。身元確認結果ですら `preferred_username` を
 動かさない設計（`IdentityVerificationUserUpdater`）と同じ線に揃えています。
+
+上記以外の値を書いた場合は、**その `*_move` / `*_only` の既定値にフォールバック**します
+（`identifier_move` なら `DENY`）。警告ログが出ます。誤記や将来バージョンの値が、
+緩いほうではなく厳しいほうに落ちるようにしています。
 
 ### `notify_previous_value`
 

@@ -256,14 +256,6 @@ public class TenantIdentityPolicy {
         : AuthenticationDeviceRule.defaultRule();
   }
 
-  /**
-   * Returns the user attribute load rule for this tenant.
-   *
-   * <p>Controls which optional associations (assigned_organizations / assigned_tenants) are loaded
-   * by {@code UserQueryRepository}.
-   *
-   * @return user attribute load rule
-   */
   /** Tenant rules for self-service contact changes (Issue #1416). */
   public ContactChangePolicyConfig contactChangePolicy() {
     return contactChangePolicy != null
@@ -276,6 +268,14 @@ public class TenantIdentityPolicy {
     return uniqueKeyType().attribute() == attribute;
   }
 
+  /**
+   * Returns the user attribute load rule for this tenant.
+   *
+   * <p>Controls which optional associations (assigned_organizations / assigned_tenants) are loaded
+   * by {@code UserQueryRepository}.
+   *
+   * @return user attribute load rule
+   */
   public UserAttributeLoadRule userAttributeLoadRule() {
     return userAttributeLoadRule != null
         ? userAttributeLoadRule

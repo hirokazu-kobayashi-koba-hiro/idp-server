@@ -247,7 +247,20 @@ public class ContactVerificationService {
     }
   }
 
-  /** Returns a rejection when the code is expired, exhausted or wrong; otherwise null. */
+  /**
+   * Returns a rejection when the code is expired, exhausted or wrong; otherwise null.
+   *
+   * <p>A dead challenge is left on the table rather than deleted. The resend cooldown is measured
+   * by counting this user's recent rows for this operation, so removing one here hands the caller a
+   * way to clear it: request a code, spend the attempts on wrong ones, and the row that was holding
+   * the cooldown is gone — a fresh message for roughly {@code retry_count_limitation + 2} requests.
+   * That defeats the reason the cooldown exists, which is that a change picks its own recipient and
+   * every send costs money and lands on someone who did not ask for it.
+   *
+   * <p>Keeping the row also makes the refusal stick: a burnt challenge keeps answering "retry limit
+   * exceeded" instead of turning back into "not found". The expiry sweep collects them ({@code POST
+   * /v1/admin/operations/delete-expired-data}), which is what it is for.
+   */
   private ContactVerificationResponse verifyCode(
       Tenant tenant,
       User user,
@@ -257,12 +270,10 @@ public class ContactVerificationService {
       RequestAttributes requestAttributes) {
 
     if (challenge.isExpired()) {
-      challengeRepository.delete(tenant, challenge.identifier());
       return ContactVerificationResponse.failure("verification code is expired.", operation);
     }
 
     if (challenge.exceededRetryLimit(exchange.retryCountLimitation(tenant, operation))) {
-      challengeRepository.delete(tenant, challenge.identifier());
       return ContactVerificationResponse.failure(
           "verification code retry limit exceeded.", operation);
     }
