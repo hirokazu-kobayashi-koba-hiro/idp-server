@@ -45,6 +45,16 @@ public class SmsAuthenticationConfiguration implements JsonReadable {
     return new SmsSenderType(senderType);
   }
 
+  /**
+   * Whether the tenant actually defined this template.
+   *
+   * <p>See the email counterpart: the fallback body is a verification-code message, so a change
+   * notice rendered over it ships an unreplaced placeholder to the number being replaced.
+   */
+  public boolean hasTemplate(String templateKey) {
+    return templates != null && templates.containsKey(templateKey);
+  }
+
   public SmslVerificationTemplate findTemplate(String templateKey) {
     if (templates == null) {
       return defaultTemplate();

@@ -17,9 +17,15 @@
 /**
  * Adapters that drive the self-service contact code exchange (Issue #1416).
  *
- * <p>These implement {@code ContactVerificationGateway} and {@code ContactChangeNotifier} on top of
- * the tenant's existing {@code type: "email"} / {@code type: "sms"} authentication configuration,
- * so a tenant that already runs login OTP needs no configuration of its own.
+ * <p>These are the locally generating {@code ContactVerificationExecutor}s — the ones registered
+ * under {@code email_authentication_challenge} / {@code sms_authentication_challenge} — plus the
+ * change notifiers. All of them read the tenant's existing {@code type: "email"} / {@code type:
+ * "sms"} authentication configuration, so a tenant that already runs login OTP needs no
+ * configuration of its own.
+ *
+ * <p>The delegating executors ({@code http_request} / {@code http_requests}) are not here: they
+ * need nothing beyond {@code HttpRequestExecutor} and live in core alongside their authentication
+ * counterparts.
  *
  * <h2>Why a module rather than a package in core</h2>
  *

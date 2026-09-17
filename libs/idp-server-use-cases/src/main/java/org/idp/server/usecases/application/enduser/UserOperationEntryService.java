@@ -169,7 +169,8 @@ public class UserOperationEntryService implements UserOperationApi {
             operation,
             request,
             new ContactChangeAuthenticationContext(
-                oAuthToken.authorizationGrant().authentication()));
+                oAuthToken.authorizationGrant().authentication()),
+            requestAttributes);
 
     publish(tenant, oAuthToken, response, requestAttributes);
     return response;
@@ -199,7 +200,8 @@ public class UserOperationEntryService implements UserOperationApi {
             challengeIdentifier,
             request,
             new ContactChangeAuthenticationContext(
-                oAuthToken.authorizationGrant().authentication()));
+                oAuthToken.authorizationGrant().authentication()),
+            requestAttributes);
 
     publish(tenant, oAuthToken, response, requestAttributes);
     return response;

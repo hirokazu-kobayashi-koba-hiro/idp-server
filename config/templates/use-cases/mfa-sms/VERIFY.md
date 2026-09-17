@@ -409,6 +409,239 @@ curl -s \
 
 ---
 
+# Phase 3: Contact Verification & Change（セルフサービス 連絡先）
+
+認証済みユーザーが自分の電話番号を確認・変更するフローです（`POST /{tenant-id}/v1/me/phone/...`）。
+
+このユースケースは **外部委譲モード**（`authentication-config-sms.json` の
+`execution.function: "http_request"`）で、OTP の生成・送信・照合をすべて外部サービスが行います。
+idp-server はコードを持たず、突き合わせ用の識別子だけを保持します。
+ローカル生成モードの手順は `../mfa-email/VERIFY.md` の Phase 4 を参照してください。
+
+## 前提
+
+- `mock-server.js`（ポート 4004）が起動していること
+- `public-tenant-template.json` の `scopes_supported` と `public-client-template.json` の `scope` に
+  `phone:change` が含まれていること
+- テナントの `identity_unique_key_type` が `PHONE_OR_EXTERNAL_USER_ID` であること
+  → **電話番号の変更はログイン識別子の移動**に分類されます
+
+> **変更通知は送られません。** 通知の文面の置き場が認証設定の `templates` しか無く、委譲設定は
+> それを持たないためです（→ #1879）。ログに `Contact change notice skipped` が出ます。
+
+## Step 10: phone:change 付きトークンの取得
+
+スコープを広げて MFA を 1 回通します。
+
+### リクエスト
+
+**1. スコープを拡張して認可リクエスト**
+
+```bash
+CONTACT_SCOPE="openid profile email phone:change"
+COOKIE_JAR3=$(mktemp)
+CONTACT_STATE="verify-contact-$(date +%s)"
+
+CONTACT_AUTH_ID=$(curl -s -c "${COOKIE_JAR3}" -o /dev/null \
+  -w "%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=$(echo "${CONTACT_SCOPE}" | sed 's/:/%3A/g; s/ /+/g')&state=${CONTACT_STATE}&prompt=login" \
+  | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
+echo "Authorization ID: ${CONTACT_AUTH_ID}"
+```
+
+**2. SMS OTP とパスワードを通す（Step 6 〜 8 と同じ手順）**
+
+```bash
+curl -s -b "${COOKIE_JAR3}" -c "${COOKIE_JAR3}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${CONTACT_AUTH_ID}/sms-authentication-challenge" \
+  -H "Content-Type: application/json" \
+  -d '{"phone_number": "+819012345678", "template": "authentication"}' > /dev/null
+
+CONTACT_TXN_ID=$(curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/authentication-transactions?authorization_id=${CONTACT_AUTH_ID}" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq -r '.list[0].id')
+
+CONTACT_OTP=$(curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/authentication-interactions/${CONTACT_TXN_ID}/sms-authentication-challenge" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq -r '.payload.verification_code')
+
+curl -s -b "${COOKIE_JAR3}" -c "${COOKIE_JAR3}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${CONTACT_AUTH_ID}/sms-authentication" \
+  -H "Content-Type: application/json" \
+  -d "{\"verification_code\": \"${CONTACT_OTP}\"}" > /dev/null
+
+curl -s -b "${COOKIE_JAR3}" -c "${COOKIE_JAR3}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${CONTACT_AUTH_ID}/password-authentication" \
+  -H "Content-Type: application/json" \
+  -d "{\"username\": \"${TEST_EMAIL}\", \"password\": \"${TEST_PASSWORD}\"}" > /dev/null
+```
+
+**3. authorize -> token**
+
+```bash
+CONTACT_CODE=$(curl -s -b "${COOKIE_JAR3}" -c "${COOKIE_JAR3}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${CONTACT_AUTH_ID}/authorize" \
+  -H "Content-Type: application/json" -d '{}' \
+  | jq -r '.redirect_uri' | sed -n 's/.*[?&]code=\([^&#]*\).*/\1/p')
+
+CONTACT_TOKEN_RESPONSE=$(curl -s \
+  -X POST "${TENANT_BASE}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=authorization_code" \
+  --data-urlencode "code=${CONTACT_CODE}" \
+  --data-urlencode "redirect_uri=${REDIRECT_URI}" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "client_secret=${CLIENT_SECRET}")
+
+CONTACT_TOKEN=$(echo "${CONTACT_TOKEN_RESPONSE}" | jq -r '.access_token')
+echo "${CONTACT_TOKEN_RESPONSE}" | jq -r '.scope'
+```
+
+### 確認ポイント
+
+- レスポンスの `scope` に `phone:change` が含まれること
+
+---
+
+## Step 11: 電話番号を持たないアカウントの確認は拒否される
+
+Step 3 の登録では電話番号を設定していないため、**確認するものがありません**。
+
+### リクエスト
+
+```bash
+curl -s \
+  -X POST "${TENANT_BASE}/v1/me/phone/verification" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 400 と `the account has no phone to verify.` が返ること
+- **送信は行われない**こと（mock-server のコンソールに何も出ない）
+
+---
+
+## Step 12: 電話番号の変更（外部サービスがコードを持つ）
+
+`phone:change` スコープが要ります。外部サービスが OTP を生成・送信し、照合もそちらが行います。
+
+### リクエスト
+
+**1. 変更を開始**
+
+```bash
+NEW_PHONE_NUMBER="+819011112222"
+
+CHANGE_CHALLENGE_ID=$(curl -s \
+  -X POST "${TENANT_BASE}/v1/me/phone/change" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" \
+  -d "{\"new_value\": \"${NEW_PHONE_NUMBER}\"}" | jq -r '.id')
+echo "Challenge ID: ${CHANGE_CHALLENGE_ID}"
+```
+
+**2. Management API でチャレンジを見る**
+
+```bash
+curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/contact-verification-challenges/${CHANGE_CHALLENGE_ID}" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq .
+
+CHANGE_CODE=$(curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/contact-verification-challenges/${CHANGE_CHALLENGE_ID}" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq -r '.external_reference.verification_code')
+echo "Verification Code: ${CHANGE_CODE}"
+```
+
+**3. 誤ったコードが外部サービスに拒否されることを確認**
+
+```bash
+curl -s \
+  -X POST "${TENANT_BASE}/v1/me/phone/change/${CHANGE_CHALLENGE_ID}/verify" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" \
+  -d '{"verification_code": "000000"}' | jq .
+```
+
+**4. 正しいコードで確定**
+
+```bash
+curl -s \
+  -X POST "${TENANT_BASE}/v1/me/phone/change/${CHANGE_CHALLENGE_ID}/verify" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" \
+  -d "{\"verification_code\": \"${CHANGE_CODE}\"}" | jq .
+```
+
+### 確認ポイント
+
+- 1 で HTTP 200 と `id` が返ること
+- mock-server のコンソールに `OTP generated: ...` が出ること
+  — 送信ボディの項目名は **`phone_number`**（`sms-authentication-challenge` の
+  `request.schema` と同じ名前）。`phone_number is required` の 400 が返る場合はここがずれています
+- 2 の Management API が `"delivery": "external"` を返し、`verification_code` ではなく
+  `external_reference` を返すこと（idp-server はコードを持たないため）
+- 3 が HTTP 400 になること。**ローカル比較ではなく外部サービスが拒否**しています
+- 4 が HTTP 200 になり、`user.phone_number` が `${NEW_PHONE_NUMBER}`、
+  `user.preferred_username` も同じ値に追従すること（識別子の移動）
+
+---
+
+## Step 13: 設定した番号の確認と、拒否されること
+
+### リクエスト
+
+```bash
+# 1. 今度は確認できる（openid だけで足りる）
+echo -n "verification after set: "
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -X POST "${TENANT_BASE}/v1/me/phone/verification" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}"
+
+# 2. スコープ不足（ACCESS_TOKEN2 は openid profile email のみ）
+echo -n "insufficient scope: "
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -X POST "${TENANT_BASE}/v1/me/phone/change" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN2}" \
+  -d '{"new_value": "+819033334444"}'
+
+# 3. 現在値と同じ値への変更
+echo -n "same value: "
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -X POST "${TENANT_BASE}/v1/me/phone/change" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" \
+  -d "{\"new_value\": \"${NEW_PHONE_NUMBER}\"}"
+
+# 4. 送信先に渡せない形式
+echo -n "malformed: "
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -X POST "${TENANT_BASE}/v1/me/phone/change" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" \
+  -d '{"new_value": "+81 90 <script>"}'
+
+# 5. 本テナントには email 認証設定が無いため、email 系は到達しない
+echo -n "email (no email config): "
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -X POST "${TENANT_BASE}/v1/me/email/verification" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}"
+```
+
+### 確認ポイント
+
+| # | 期待 |
+|---|------|
+| 1 | `200` — アカウントに番号があるので確認できる。宛先は現在値に固定 |
+| 2 | `403` — `phone:change` スコープが無い |
+| 3 | `400` — 現在値と同じ（確認エンドポイントを使うべき） |
+| 4 | `400` — スキーマ検証で**送信前**に拒否される |
+| 5 | `404` — `email` 認証設定が未登録。メールの手順は `../mfa-email/VERIFY.md` を参照 |
+
+---
+
 ## チェックリスト
 
 ### Phase 1: User Registration
@@ -435,3 +668,16 @@ curl -s \
 | 9b | ID Token の amr に sms と password が含まれる | |
 | 9c | UserInfo で sub が返る | |
 | 9d | Refresh token が動作する | |
+
+### Phase 3: Contact Verification & Change
+
+| Step | 確認項目 | 結果 |
+|------|---------|------|
+| 10 | `phone:change` を含むトークンが取得できる | |
+| 11 | 電話番号を持たないアカウントの確認が `400` かつ送信ゼロ | |
+| 12 | 委譲モードで変更を開始でき、mock-server が `phone_number` を受け取る | |
+| 12 | Management API が `delivery: external` と `external_reference` を返す | |
+| 12 | 誤ったコードが外部サービスに `400` で拒否される | |
+| 12 | 確定で `phone_number` と `preferred_username` が新しい値になる | |
+| 13 | 設定後は確認が `200` になる | |
+| 13 | スコープ不足 `403` / 同一値 `400` / 不正形式 `400` / email 系 `404` | |

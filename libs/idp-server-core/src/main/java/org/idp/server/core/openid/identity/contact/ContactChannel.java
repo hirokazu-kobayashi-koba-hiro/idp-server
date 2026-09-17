@@ -26,7 +26,7 @@ import org.idp.server.platform.multi_tenancy.tenant.policy.UniqueKeyAttribute;
  * service nor {@link ContactVerificationOperation} repeats a switch over channels.
  */
 public enum ContactChannel {
-  EMAIL("email", "/schema/1.0/contact/email-target.json") {
+  EMAIL("email", "email", "email", "/schema/1.0/contact/email-target.json") {
     @Override
     String currentValue(User user) {
       return user.email();
@@ -42,7 +42,7 @@ public enum ContactChannel {
       user.setEmailVerified(true);
     }
   },
-  PHONE("phone", "/schema/1.0/contact/phone-target.json") {
+  PHONE("phone", "sms", "phone_number", "/schema/1.0/contact/phone-target.json") {
     @Override
     String currentValue(User user) {
       return user.phoneNumber();
@@ -60,10 +60,18 @@ public enum ContactChannel {
   };
 
   String value;
+  String authenticationConfigType;
+  String targetFieldName;
   String targetSchemaPath;
 
-  ContactChannel(String value, String targetSchemaPath) {
+  ContactChannel(
+      String value,
+      String authenticationConfigType,
+      String targetFieldName,
+      String targetSchemaPath) {
     this.value = value;
+    this.authenticationConfigType = authenticationConfigType;
+    this.targetFieldName = targetFieldName;
     this.targetSchemaPath = targetSchemaPath;
   }
 
@@ -85,6 +93,51 @@ public enum ContactChannel {
 
   public String value() {
     return value;
+  }
+
+  /**
+   * The {@code type} of the authentication configuration this channel's sending is described in.
+   *
+   * <p>Not the same string as {@link #value()}: the phone channel is served by the {@code sms}
+   * configuration. Reusing it is the point — sender, templates, retry cap and expiry are already
+   * modelled and operated there.
+   */
+  public String authenticationConfigType() {
+    return authenticationConfigType;
+  }
+
+  /** The interaction describing how a code is issued and delivered. */
+  public String challengeInteractionKey() {
+    return authenticationConfigType + "-authentication-challenge";
+  }
+
+  /** The interaction describing how a submitted code is decided. */
+  public String verifyInteractionKey() {
+    return authenticationConfigType + "-authentication";
+  }
+
+  /**
+   * The executor used when no verify interaction is configured.
+   *
+   * <p>Same function name the interaction would have named, so the fallback and the configured path
+   * run the identical implementation. Deciding a locally generated code needs no configuration —
+   * the code is on the challenge row — and a tenant whose configuration only describes sending
+   * never had a reason to write one.
+   */
+  public String localVerifyFunction() {
+    return authenticationConfigType + "_authentication";
+  }
+
+  /**
+   * The request field the destination is carried in.
+   *
+   * <p>Taken from the {@code request.schema} the channel's interaction already declares — {@code
+   * email} for email, {@code phone_number} for SMS — not from {@link #value()}. The two differ for
+   * phone, and naming the field after the channel is what made a delegated phone challenge post
+   * {@code {"phone": ...}} to a service that documents, validates and mocks {@code phone_number}.
+   */
+  public String targetFieldName() {
+    return targetFieldName;
   }
 
   String targetSchemaPath() {

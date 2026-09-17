@@ -391,9 +391,15 @@ OTPの生成・検証は idp-server 内部で行いつつ、SMS送信のみを�
 
 フロー・必要スコープ・管理APIは [セルフサービス 連絡先の確認・変更](../contact-verification.md) を参照。
 
-**外部サービスにコード生成・検証を委譲するパターンでも動きます。** その場合 idp-server はコードを
-持たず、外部の識別子だけを保持します（管理APIは `delivery: external` を返す）。ただし
-`phone_change_notice` の文面が委譲設定には無いため、**変更通知は送られません**。
+**外部サービスにコード生成・検証を委譲するパターンでも動きます。** どちらで動くかは
+`execution.function` が決めます（`sms_authentication_challenge` ならローカル生成、
+`http_request` / `http_requests` なら委譲）。委譲時は idp-server はコードを持たず、外部の識別子
+だけを保持します（管理APIは `delivery: external` を返す）。宛先は `phone_number` という項目名で
+渡されるので、ログイン側の `sms-authentication-challenge` と同じ外部APIをそのまま向けられます。
+ただし `phone_change_notice` の文面が委譲設定には無いため、**変更通知は送られません**。
+
+`phone_change_notice` を定義していない場合、変更通知は**スキップされます**（確認コード用の
+デフォルト文面にはフォールバックしません）。
 
 ---
 

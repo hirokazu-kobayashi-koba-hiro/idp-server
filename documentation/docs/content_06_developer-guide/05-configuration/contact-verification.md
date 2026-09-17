@@ -14,19 +14,67 @@
 
 ---
 
-## 2つのモード
+## どの実装が動くかは `execution.function` が決める
 
-流用する認証設定には形が2つあり、**どちらも動く**。どちらになるかは設定から判定するので、
-モードを指定する設定項目は無い。
+流用する認証設定には形が2つあり、**どちらも動く**。どちらになるかは `execution.function` の値で
+決まる。ログイン側の `AuthenticationExecutors` と同じ仕組みで、モードを指定する設定項目は無いし、
+設定の形から推測もしない。
+
+| `execution.function` | 動く実装 | コードを持つのは |
+|---|---|---|
+| `email_authentication_challenge` | ローカル生成・送信（`details` の sender を使う） | idp-server |
+| `sms_authentication_challenge` | 同上 | idp-server |
+| `http_request` | 外部サービスへ単発で委譲 | 外部サービス |
+| `http_requests` | 外部サービスへチェーンで委譲 | 外部サービス |
+| `email_authentication` / `sms_authentication` | チャレンジ行の `verification_code` と照合 | idp-server |
+| 上記以外 | （実装が無い） | — |
+
+実装が無い `function` は**設定エラーとして報告される**。以前は sender の記述が無いことから
+「委譲だろう」と推測していたため、`no_action` のような別の設定形で 500 になっていた。
 
 | | ローカル生成 | 外部委譲 |
 |---|---|---|
-| 判定 | `execution.details` に sender の記述がある | `execution.function` が `http_request` / `http_requests`、または sender の記述が無い |
-| コード生成 | idp-server | 外部サービス |
-| 送信 | idp-server（SMTP / HTTP API / AWS SES など） | 外部サービス |
+| コード生成・送信 | idp-server（SMTP / HTTP API / AWS SES など） | 外部サービス |
 | 照合 | idp-server（`verification_code` 列と比較） | 外部の検証API |
 | idp-server が保持するもの | コードそのもの | 外部の識別子（`transaction_id` 等） |
-| 参照する設定 | `details`（sender / settings / templates / retry / expire） | `http_request` / `http_requests` と `*_store` |
+| 参照する設定 | `details`（sender / settings / templates） | `http_request` / `http_requests` と `*_store` |
+
+### インタラクションの必須・任意
+
+| インタラクション | 必須 | 無い場合 |
+|---|---|---|
+| `{channel}-authentication-challenge` | **必須** | 設定エラー。送信手段が無いため安全な既定が無い |
+| `{channel}-authentication` | 任意 | チャレンジ行との照合にフォールバックする |
+
+送信だけを設定したテナント（verify 側を書いていない）でも、ローカル生成なら動く。委譲のチャレンジが
+このフォールバックに来た場合は、行にコードが無いので必ず失敗する（fail closed）。
+
+### idp-server が組み立てるリクエストボディ
+
+委譲時、idp-server は次のボディを `$.request_body` として渡す。実際に外部へ送る形は
+テナントの `body_mapping_rules` が決める（`{"from": "$.request_body", "to": "*"}` なら素通し）。
+
+```jsonc
+// {channel}-authentication-challenge
+{ "email": "new@example.com", "template": "email_change", "operation": "email_change" }
+{ "phone_number": "+819011112222", "template": "phone_change", "operation": "phone_change" }
+
+// {channel}-authentication
+{ "verification_code": "123456", "operation": "email_change" }
+```
+
+宛先の項目名は各チャネルの `request.schema` と同じ **`email` / `phone_number`**。ログイン側の
+チャレンジと同じ名前なので、既存の外部サービス設定をそのまま向けられる。
+
+マッピングで読める値もログイン側と同じ。
+
+| パス | 内容 |
+|---|---|
+| `$.request_body` | 上記のボディ |
+| `$.request_attributes` | IPアドレス・User-Agent など |
+| `$.user` | 認証済みユーザーの許可リスト射影（`sub` / `email` / `phone_number` / 名前 / `roles` / `custom_properties`） |
+| `$.interaction` | challenge で保持した値（`previous_interaction` を書いた場合） |
+| `$.execution_http_requests` | チェーン中の各結果（チェーンのみ） |
 
 ### 外部委譲で参照する設定
 
@@ -36,30 +84,70 @@ challenge 側（`{channel}-authentication-challenge`）:
 |---|---|
 | `execution.http_request` | 外部API設定（単発） |
 | `execution.http_requests` | 外部API設定（チェーン。認証してから送るなど） |
-| `execution.http_request_store` / `http_requests_store` | レスポンスから何を保持するか |
+| `execution.http_request_store` / `http_requests_store` | レスポンスから何を保持するか。入力は `$.response_body.*` / `$.status_code` / `$.response_headers` |
 
 verify 側（`{channel}-authentication`）:
 
 | 項目 | 用途 |
 |---|---|
 | `execution.http_request` / `http_requests` | 外部検証API設定 |
-| `execution.previous_interaction` | challenge で保持した値の参照キー |
+| `execution.previous_interaction` | challenge で保持した値を `$.interaction.*` に載せる（`key` は受け付けるが無視される。チャレンジ行が持つ交換は1つだけのため） |
 
-保持した値は検証リクエストのマッピングで `$.interaction.*` から読める。ログイン側と同じ記法。
+チェーンの挙動もログイン側と同じ。各結果を `$.execution_http_requests` に積み、最初の失敗で
+打ち切る。`condition` を満たさないリクエストはスキップされ、その枠に `skipped` が残るので
+インデックス指定のマッピングがずれない。**全部スキップされたチェーンは失敗扱い**（外部に一度も
+聞かずに成功を返さないため）。設定が空のチェーンは、実行するものが無い設定なので成功扱い。
 
-チェーンは最初の失敗で打ち切り、各結果を `$.execution_http_requests` に積むので、後続の
-リクエストと保存マッピングが前の結果を読める。**空のチェーンは失敗扱い**（外部に一度も
-聞かずに成功を返さないため）。ログイン側にある条件付きスキップは、認証トランザクションが
-無いため評価できず、対応していない。
+### 失敗時のレスポンス整形
+
+`response.body_mapping_rules` は**失敗時のみ**適用される。マッピング結果に `error_description` が
+あれば、それをそのまま API のエラー内容として返す。外部サービスが断った理由（配信不可の番号、
+レート制限、向こう側での期限切れ）が呼び出し側に届く。
+
+成功時の応答は `{id}` / 更新後のユーザーで固定。テナントの設定で公開APIの形が変わらないようにしている。
 
 ### 外部委譲での制約
 
 | 項目 | 挙動 |
 |---|---|
-| `expire_seconds` / `retry_count_limitation` / `resend_cooldown_seconds` | `details` 由来のため既定値（300 / 5 / 60）。実際の有効期限や試行上限は外部サービスが持つ |
+| `expire_seconds` / `retry_count_limitation` / `resend_cooldown_seconds` | `execution.details` に書けば効く。委譲設定は通常持たないので既定値（300 / 5 / 60）。実際の有効期限や試行上限は外部サービスが持つ |
 | 変更通知（`notify_previous_value`） | **送られない**。文面の置き場が認証設定の `templates` しか無く、委譲設定はそれを持たないため。ログに残してスキップする |
 
 通知の制約は連絡先変更に固有ではなく、テナント単位の通知設定が存在しないことに起因する。
+
+### 成否をボディで伝える外部サービス
+
+外部OTPサービスには、誤ったコードでも `200` を返してボディで結果を伝える形がある。
+成否は HTTP ステータスで判定するので、そのままだと誤コードが通ってしまう。
+
+`http_request.response_resolve_configs` で、ボディを条件にステータスを差し替える。
+ログイン側と同じ設定項目で、書く場所も同じ。
+
+```json
+"response_resolve_configs": [
+  {
+    "conditions": [
+      { "path": "$.status_code", "operation": "in", "value": [200, 201] },
+      { "path": "$.response_body.verified", "operation": "eq", "value": true }
+    ],
+    "match_mode": "ALL",
+    "mapped_status_code": 200
+  },
+  {
+    "conditions": [{ "path": "$.status_code", "operation": "in", "value": [200, 201] }],
+    "match_mode": "ALL",
+    "mapped_status_code": 401
+  }
+]
+```
+
+条件は `$.status_code` / `$.response_headers.*` / `$.response_body.*` に対して書く。
+上から順に最初に一致したものが使われるので、**成功条件を先に**置く。どれにも一致しなければ
+元のステータスのまま。
+
+:::warning ボディで成否を伝えるサービスでは必須です
+設定しないと `200` がすべて成功として扱われ、**誤ったコードで連絡先が書き換わります**。
+:::
 
 ---
 
@@ -224,6 +312,15 @@ verify 側（`{channel}-authentication`）:
 | `{VERIFICATION_CODE}` / `{EXPIRE_SECONDS}` | 確認コード（`email_change` / `email_verify` 等） |
 | `{CHANGED_AT}` / `{NEW_VALUE_MASKED}` | 変更通知（`*_notice`） |
 
+:::info `*_notice` を定義していない場合は送られません
+確認コード側（`email_change` 等）は未定義なら既定文面にフォールバックしますが、変更通知は
+**フォールバックせずスキップ**し、ログに `Contact change notice skipped` を残します。
+
+既定文面は確認コード用（`Your verification code is: {VERIFICATION_CODE}`）なので、通知として
+流用すると**プレースホルダが未置換のまま旧アドレスに届きます**。コードが書かれていないのに
+コードの案内に見えるメールになるため、送らないほうを選んでいます。
+:::
+
 新しい値は部分マスクで引用します（`n***@example.com` / `*****5678`）。乗っ取り後は
 その受信箱を第三者も読んでいる可能性があるため、本人が「自分のではない」と判別できる分だけを載せます。
 
@@ -271,7 +368,8 @@ WHERE id = ? AND tenant_id = ? AND user_id = ? FOR UPDATE
      `phone_change` を追加推奨(同上)
    - 再送間隔を変えるなら `resend_cooldown_seconds`（未設定は 60 秒）
    - 変更通知を使うなら `templates` に `email_change_notice` / `phone_change_notice`
-     （未定義ならデフォルト文面にフォールバックしますが、確認コード用の文面が出るので設定推奨）
+     （**未定義なら通知は送られません**。確認コード用のデフォルト文面にはフォールバックしない）
+   - 外部委譲で、成否をボディで伝えるサービスなら `http_request.response_resolve_configs`
 2. **変更用スコープ**をテナントの `scopes_supported` とクライアントの `scope` に追加する。
    無いとトークンに載らず、変更エンドポイントが常に `403 insufficient_scope` になる
    (クライアント登録スコープの allow-list フィルタが効くため、fail closed)。

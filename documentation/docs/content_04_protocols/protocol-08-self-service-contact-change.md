@@ -140,16 +140,23 @@ WHERE id = ? AND tenant_id = ? AND user_id = ? FOR UPDATE
 
 ## コードを誰が持つか
 
-流用する認証設定には形が2つあり、どちらでも動きます。**モードを指定する設定項目はありません**
-（`execution` に sender の記述があるかで判定する）。
+流用する認証設定には形が2つあり、どちらでも動きます。**モードを指定する設定項目はありません**。
+どちらになるかは `execution.function` が名指しする実装で決まります。ログイン側の
+`AuthenticationExecutors` と同じ仕組みで、設定の形からモードを推測しません。
 
 ```
 ローカル生成                              外部委譲
+  function:                                function:
+    email_authentication_challenge           http_request / http_requests
+    sms_authentication_challenge
+  ─────────────────────────                ─────────────────────────
   idp がコードを生成                       外部サービスがコードを生成
   idp が送信                               外部サービスが送信
   idp が照合（verification_code 列）        外部の検証APIが照合
   idp が持つ: コード                        idp が持つ: transaction_id 等の識別子
 ```
+
+実装が登録されていない `function` は設定エラーとして報告されます。
 
 委譲の場合、確定時の照合はこう流れます。
 
@@ -166,7 +173,10 @@ POST /v1/me/email/change/{id}/verify  { verification_code }
 
 外部API は単発（`http_request`）とチェーン（`http_requests`）の両方に対応します。チェーンは
 最初の失敗で打ち切り、各結果を `$.execution_http_requests` に積むので、後続のリクエストと
-保存マッピングが前の結果を読めます。
+保存マッピングが前の結果を読めます。`condition` を満たさないリクエストはスキップされます。
+
+`200` を返しつつボディで失敗を伝える外部サービスは、`response_resolve_configs` でボディを条件に
+ステータスを差し替えます。これもログイン側と同じ設定項目です。
 
 ---
 

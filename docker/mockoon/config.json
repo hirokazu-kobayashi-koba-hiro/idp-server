@@ -2192,16 +2192,55 @@
     {
       "uuid": "e2e-external-contact-challenge",
       "type": "http",
-      "documentation": "Issue #1416: external contact verification service - challenge. Records the recipient and returns a transaction_id. The code itself never leaves this service (E2E uses the fixed 123456).",
+      "documentation": "Issue #1416: external contact verification service - challenge. Answers 200 only when the recipient arrived under the field name that channel's request.schema declares (email / phone_number), and echoes it back so a test can pin the wire contract. Anything else is 400: a mock that accepts any body cannot catch idp-server naming the field after the channel.",
       "method": "post",
       "endpoint": "external-contact/challenge",
       "responses": [
         {
           "uuid": "e2e-external-contact-challenge-ok",
-          "body": "{\n  \"transaction_id\": \"ext-{{faker 'string.uuid'}}\"\n}",
+          "body": "{\n  \"transaction_id\": \"ext-{{faker 'string.uuid'}}\",\n  \"received_email\": \"{{body 'email'}}\",\n  \"received_phone_number\": \"{{body 'phone_number'}}\"\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "issued",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "email",
+              "value": ".+",
+              "invert": false,
+              "operator": "regex"
+            },
+            {
+              "target": "body",
+              "modifier": "phone_number",
+              "value": ".+",
+              "invert": false,
+              "operator": "regex"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "e2e-external-contact-challenge-missing-recipient",
+          "body": "{\n  \"error\": \"invalid_request\",\n  \"error_description\": \"email or phone_number is required\"\n}",
+          "latency": 0,
+          "statusCode": 400,
+          "label": "no recognised recipient field",
           "headers": [
             {
               "key": "Content-Type",
@@ -2270,6 +2309,74 @@
           "latency": 0,
           "statusCode": 400,
           "label": "wrong code",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e2e-external-contact-verify-soft",
+      "type": "http",
+      "documentation": "Issue #1416: external contact verification service that reports its verdict in the body and always answers 200. Exists so an E2E can prove response_resolve_configs is what turns that into a rejection - without it every code, right or wrong, reads as success.",
+      "method": "post",
+      "endpoint": "external-contact/verify-soft",
+      "responses": [
+        {
+          "uuid": "e2e-external-contact-verify-soft-ok",
+          "body": "{\n  \"verified\": true\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "correct code (123456), 200",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "verification_code",
+              "value": "123456",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "e2e-external-contact-verify-soft-ng",
+          "body": "{\n  \"verified\": false,\n  \"error\": \"code_mismatch\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "wrong code, still 200",
           "headers": [
             {
               "key": "Content-Type",
@@ -2458,6 +2565,10 @@
     {
       "type": "route",
       "uuid": "e2e-external-contact-verify"
+    },
+    {
+      "type": "route",
+      "uuid": "e2e-external-contact-verify-soft"
     }
   ],
   "proxyMode": false,

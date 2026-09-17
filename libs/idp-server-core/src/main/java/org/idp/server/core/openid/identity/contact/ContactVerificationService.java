@@ -18,6 +18,7 @@ package org.idp.server.core.openid.identity.contact;
 
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserVerifier;
+import org.idp.server.core.openid.identity.contact.execution.ContactExecutionResult;
 import org.idp.server.core.openid.identity.exception.UserDuplicateException;
 import org.idp.server.core.openid.identity.repository.UserCommandRepository;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
@@ -25,6 +26,7 @@ import org.idp.server.platform.json.schema.JsonSchemaValidationResult;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.multi_tenancy.tenant.policy.ContactChangeRule;
+import org.idp.server.platform.type.RequestAttributes;
 
 /**
  * Self-service contact verification and change (Issue #1416).
@@ -46,7 +48,7 @@ import org.idp.server.platform.multi_tenancy.tenant.policy.ContactChangeRule;
 public class ContactVerificationService {
 
   ContactVerificationChallengeRepository challengeRepository;
-  ContactVerificationGateway gateway;
+  ContactVerificationExchange exchange;
   ContactChangeNotifier notifier;
   UserQueryRepository userQueryRepository;
   UserCommandRepository userCommandRepository;
@@ -54,12 +56,12 @@ public class ContactVerificationService {
 
   public ContactVerificationService(
       ContactVerificationChallengeRepository challengeRepository,
-      ContactVerificationGateway gateway,
+      ContactVerificationExchange exchange,
       ContactChangeNotifier notifier,
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository) {
     this.challengeRepository = challengeRepository;
-    this.gateway = gateway;
+    this.exchange = exchange;
     this.notifier = notifier;
     this.userQueryRepository = userQueryRepository;
     this.userCommandRepository = userCommandRepository;
@@ -71,7 +73,8 @@ public class ContactVerificationService {
       User user,
       ContactVerificationOperation operation,
       ContactVerificationRequest request,
-      ContactChangeAuthenticationContext authenticationContext) {
+      ContactChangeAuthenticationContext authenticationContext,
+      RequestAttributes requestAttributes) {
 
     // Before the candidate is even resolved: a rule the caller cannot satisfy must not reach the
     // point of sending, or the refusal still costs a message to a recipient they chose.
@@ -90,7 +93,7 @@ public class ContactVerificationService {
     // {channel}:change picks the recipient, so an unbounded request loop bills the tenant for SMS
     // and floods an address that never asked to be involved. Keyed on user + operation so the two
     // channels and the two intents do not share a budget.
-    int cooldownSeconds = gateway.resendCooldownSeconds(tenant, operation);
+    int cooldownSeconds = exchange.resendCooldownSeconds(tenant, operation);
     if (challengeRepository.sentWithinCooldown(
         tenant, user.userIdentifier(), operation, cooldownSeconds)) {
       log.info(
@@ -103,14 +106,14 @@ public class ContactVerificationService {
           operation);
     }
 
-    // Who owns the code depends on tenant configuration: idp-server generates it for a local
-    // sender, an external service does for a delegated one. Either way what comes back is what the
-    // challenge row must hold to decide a later submission.
-    ContactChallengeStart start = gateway.start(tenant, operation, target.value());
-    if (!start.isSucceeded()) {
-      log.warn("Contact verification challenge failed. operation={}", operation.value());
+    // Who owns the code is decided by the executor the tenant's execution.function names: a local
+    // one generates and delivers it, a delegated one asks an external service to. Either way what
+    // comes back is what the challenge row must hold to decide a later submission.
+    ContactExecutionResult executionResult =
+        exchange.challenge(tenant, user, operation, target.value(), requestAttributes);
+    if (!executionResult.isSuccess()) {
       return ContactVerificationResponse.requestFailure(
-          "failed to send the verification code.", operation);
+          describe(executionResult, "failed to send the verification code."), operation);
     }
 
     ContactVerificationChallenge challenge =
@@ -118,8 +121,8 @@ public class ContactVerificationService {
             user.userIdentifier(),
             operation,
             target.value(),
-            start,
-            gateway.expireSeconds(tenant, operation));
+            executionResult,
+            exchange.expireSeconds(tenant, operation));
     challengeRepository.register(tenant, challenge);
 
     return ContactVerificationResponse.challengeIssued(challenge.identifier(), operation);
@@ -132,7 +135,8 @@ public class ContactVerificationService {
       ContactVerificationOperation operation,
       ContactVerificationChallengeIdentifier challengeIdentifier,
       ContactVerificationRequest request,
-      ContactChangeAuthenticationContext authenticationContext) {
+      ContactChangeAuthenticationContext authenticationContext,
+      RequestAttributes requestAttributes) {
 
     // Re-checked at commit: the account's verification state and the token's authentication age can
     // both have moved while the challenge was outstanding, the same reason the scope is re-checked.
@@ -151,7 +155,8 @@ public class ContactVerificationService {
       return ContactVerificationResponse.notFound(operation);
     }
 
-    ContactVerificationResponse codeFailure = verifyCode(tenant, challenge, request, operation);
+    ContactVerificationResponse codeFailure =
+        verifyCode(tenant, user, challenge, request, operation, requestAttributes);
     if (codeFailure != null) {
       return codeFailure;
     }
@@ -245,29 +250,52 @@ public class ContactVerificationService {
   /** Returns a rejection when the code is expired, exhausted or wrong; otherwise null. */
   private ContactVerificationResponse verifyCode(
       Tenant tenant,
+      User user,
       ContactVerificationChallenge challenge,
       ContactVerificationRequest request,
-      ContactVerificationOperation operation) {
+      ContactVerificationOperation operation,
+      RequestAttributes requestAttributes) {
 
     if (challenge.isExpired()) {
       challengeRepository.delete(tenant, challenge.identifier());
       return ContactVerificationResponse.failure("verification code is expired.", operation);
     }
 
-    if (challenge.exceededRetryLimit(gateway.retryCountLimitation(tenant, operation))) {
+    if (challenge.exceededRetryLimit(exchange.retryCountLimitation(tenant, operation))) {
       challengeRepository.delete(tenant, challenge.identifier());
       return ContactVerificationResponse.failure(
           "verification code retry limit exceeded.", operation);
     }
 
-    // Delegated exchanges are decided by the external service, which holds the code; a local one
-    // is decided here. Either way a wrong answer costs an attempt.
-    if (!gateway.verifyCode(tenant, operation, challenge, request.verificationCode())) {
+    // Which executor decides is the tenant's configuration: a local one compares against this row,
+    // a delegated one asks the service that holds the code. Either way a wrong answer costs an
+    // attempt.
+    ContactExecutionResult executionResult =
+        exchange.verify(
+            tenant, user, operation, challenge, request.verificationCode(), requestAttributes);
+    if (!executionResult.isSuccess()) {
       challengeRepository.countUpAttempts(tenant, challenge.countUpAttempts());
-      return ContactVerificationResponse.failure("verification code is unmatched.", operation);
+      return ContactVerificationResponse.failure(
+          describe(executionResult, "verification code is unmatched."), operation);
     }
 
     return null;
+  }
+
+  /**
+   * The reason to report, preferring what the tenant's {@code response.body_mapping_rules}
+   * produced.
+   *
+   * <p>A delegated exchange fails for reasons only the external service knows — a number the
+   * provider will not deliver to, a rate limit, an expired exchange on its side — and flattening
+   * all of them to one sentence is what makes such a tenant undiagnosable.
+   */
+  private String describe(ContactExecutionResult executionResult, String fallback) {
+    Object description = executionResult.contents().get("error_description");
+    if (description instanceof String string && !string.isBlank()) {
+      return string;
+    }
+    return fallback;
   }
 
   private TargetValue resolveTarget(

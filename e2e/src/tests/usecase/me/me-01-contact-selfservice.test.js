@@ -30,7 +30,8 @@ import { createBearerHeader } from "../../../lib/util";
  *   EMAIL    -> preferred_username tracks email -> change to a taken email is REJECTED
  *   USERNAME -> email is a plain attribute      -> duplicate ALLOWED
  */
-const redirectUri = "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
+const redirectUri =
+  "https://www.certification.openid.net/test/a/idp_oidc_basic/callback";
 
 const smsConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
   id: uuidv4(),
@@ -39,7 +40,12 @@ const smsConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
   metadata: { type: "internal" },
   interactions: {
     "sms-authentication-challenge": {
-      request: { schema: { type: "object", properties: { phone_number: { type: "string" } } } },
+      request: {
+        schema: {
+          type: "object",
+          properties: { phone_number: { type: "string" } },
+        },
+      },
       execution: {
         function: "sms_authentication_challenge",
         details: {
@@ -48,15 +54,29 @@ const smsConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
             http_request: {
               url: "http://host.docker.internal:4000/sent-sms",
               method: "POST",
-              header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+              header_mapping_rules: [
+                { static_value: "application/json", to: "Content-Type" },
+              ],
               body_mapping_rules: [{ from: "$.request_body", to: "*" }],
             },
           },
           templates: {
-            authentication: { subject: "Login", body: "Code: {VERIFICATION_CODE}" },
-            phone_change: { subject: "Phone change", body: "Confirm your new number. Code: {VERIFICATION_CODE}" },
-            phone_change_notice: { subject: "Phone changed", body: "Your number was changed at {CHANGED_AT} to {NEW_VALUE_MASKED}." },
-            phone_verify: { subject: "Phone verification", body: "Confirm your number. Code: {VERIFICATION_CODE}" },
+            authentication: {
+              subject: "Login",
+              body: "Code: {VERIFICATION_CODE}",
+            },
+            phone_change: {
+              subject: "Phone change",
+              body: "Confirm your new number. Code: {VERIFICATION_CODE}",
+            },
+            phone_change_notice: {
+              subject: "Phone changed",
+              body: "Your number was changed at {CHANGED_AT} to {NEW_VALUE_MASKED}.",
+            },
+            phone_verify: {
+              subject: "Phone verification",
+              body: "Confirm your number. Code: {VERIFICATION_CODE}",
+            },
           },
           retry_count_limitation: 5,
           expire_seconds: expireSeconds,
@@ -82,13 +102,17 @@ const delegatedEmailConfigBody = () => ({
   metadata: { type: "external" },
   interactions: {
     "email-authentication-challenge": {
-      request: { schema: { type: "object", properties: { email: { type: "string" } } } },
+      request: {
+        schema: { type: "object", properties: { email: { type: "string" } } },
+      },
       execution: {
         function: "http_request",
         http_request: {
           url: "http://host.docker.internal:4000/external-contact/challenge",
           method: "POST",
-          header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+          header_mapping_rules: [
+            { static_value: "application/json", to: "Content-Type" },
+          ],
           body_mapping_rules: [{ from: "$.request_body", to: "*" }],
         },
         http_request_store: {
@@ -101,21 +125,202 @@ const delegatedEmailConfigBody = () => ({
       response: { body_mapping_rules: [{ from: "$.response_body", to: "*" }] },
     },
     "email-authentication": {
-      request: { schema: { type: "object", properties: { verification_code: { type: "string" } } } },
+      request: {
+        schema: {
+          type: "object",
+          properties: { verification_code: { type: "string" } },
+        },
+      },
       execution: {
         function: "http_request",
         previous_interaction: { key: "email-authentication-challenge" },
         http_request: {
           url: "http://host.docker.internal:4000/external-contact/verify",
           method: "POST",
-          header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+          header_mapping_rules: [
+            { static_value: "application/json", to: "Content-Type" },
+          ],
           body_mapping_rules: [
-            { from: "$.request_body.verification_code", to: "verification_code" },
+            {
+              from: "$.request_body.verification_code",
+              to: "verification_code",
+            },
             { from: "$.interaction.transaction_id", to: "transaction_id" },
           ],
         },
       },
       response: { body_mapping_rules: [{ from: "$.response_body", to: "*" }] },
+    },
+  },
+});
+
+/**
+ * A tenant that delegates the phone channel.
+ *
+ * Exists because the delegated path was only ever exercised on email, where the request field the
+ * executor fills (`email`) happens to match the channel name. Phone is where they differ: the
+ * schema, the user attribute, the column and every SMS integration in this repository say
+ * `phone_number`, and the mock refuses anything else — so naming the field after the channel fails
+ * here instead of silently reaching a provider that rejects it.
+ *
+ * `received_phone_number` is stored alongside the transaction so the assertion can read what the
+ * service was actually handed, rather than only that the call succeeded.
+ */
+const delegatedPhoneConfigBody = () => ({
+  id: uuidv4(),
+  type: "sms",
+  attributes: {},
+  metadata: { type: "external" },
+  interactions: {
+    "sms-authentication-challenge": {
+      request: {
+        schema: {
+          type: "object",
+          properties: { phone_number: { type: "string" } },
+        },
+      },
+      execution: {
+        function: "http_request",
+        http_request: {
+          url: "http://host.docker.internal:4000/external-contact/challenge",
+          method: "POST",
+          header_mapping_rules: [
+            { static_value: "application/json", to: "Content-Type" },
+          ],
+          body_mapping_rules: [{ from: "$.request_body", to: "*" }],
+        },
+        http_request_store: {
+          key: "sms-authentication-challenge",
+          interaction_mapping_rules: [
+            { from: "$.response_body.transaction_id", to: "transaction_id" },
+            {
+              from: "$.response_body.received_phone_number",
+              to: "received_phone_number",
+            },
+          ],
+        },
+      },
+      response: {
+        body_mapping_rules: [
+          { from: "$.execution_http_request.response_body", to: "*" },
+        ],
+      },
+    },
+    "sms-authentication": {
+      request: {
+        schema: {
+          type: "object",
+          properties: { verification_code: { type: "string" } },
+        },
+      },
+      execution: {
+        function: "http_request",
+        previous_interaction: { key: "sms-authentication-challenge" },
+        http_request: {
+          url: "http://host.docker.internal:4000/external-contact/verify",
+          method: "POST",
+          header_mapping_rules: [
+            { static_value: "application/json", to: "Content-Type" },
+          ],
+          body_mapping_rules: [
+            {
+              from: "$.request_body.verification_code",
+              to: "verification_code",
+            },
+            { from: "$.interaction.transaction_id", to: "transaction_id" },
+          ],
+        },
+      },
+      response: {
+        body_mapping_rules: [
+          { from: "$.execution_http_request.response_body", to: "*" },
+        ],
+      },
+    },
+  },
+});
+
+/**
+ * A tenant whose external service answers 200 whatever the code is and puts the verdict in the body.
+ *
+ * Success is decided by the status the HTTP execution resolved to, so without
+ * `response_resolve_configs` every code would read as correct. These rules are what turn the body
+ * into a rejection, and they are the same ones the login path uses.
+ */
+const softVerdictEmailConfigBody = () => ({
+  id: uuidv4(),
+  type: "email",
+  attributes: {},
+  metadata: { type: "external" },
+  interactions: {
+    "email-authentication-challenge": {
+      request: {
+        schema: { type: "object", properties: { email: { type: "string" } } },
+      },
+      execution: {
+        function: "http_request",
+        http_request: {
+          url: "http://host.docker.internal:4000/external-contact/challenge",
+          method: "POST",
+          header_mapping_rules: [
+            { static_value: "application/json", to: "Content-Type" },
+          ],
+          body_mapping_rules: [{ from: "$.request_body", to: "*" }],
+        },
+        http_request_store: {
+          key: "email-authentication-challenge",
+          interaction_mapping_rules: [
+            { from: "$.response_body.transaction_id", to: "transaction_id" },
+          ],
+        },
+      },
+    },
+    "email-authentication": {
+      request: {
+        schema: {
+          type: "object",
+          properties: { verification_code: { type: "string" } },
+        },
+      },
+      execution: {
+        function: "http_request",
+        previous_interaction: { key: "email-authentication-challenge" },
+        http_request: {
+          url: "http://host.docker.internal:4000/external-contact/verify-soft",
+          method: "POST",
+          header_mapping_rules: [
+            { static_value: "application/json", to: "Content-Type" },
+          ],
+          body_mapping_rules: [
+            {
+              from: "$.request_body.verification_code",
+              to: "verification_code",
+            },
+            { from: "$.interaction.transaction_id", to: "transaction_id" },
+          ],
+          response_resolve_configs: [
+            {
+              conditions: [
+                { path: "$.status_code", operation: "in", value: [200, 201] },
+                {
+                  path: "$.response_body.verified",
+                  operation: "eq",
+                  value: true,
+                },
+              ],
+              match_mode: "ALL",
+              mapped_status_code: 200,
+            },
+            {
+              conditions: [
+                { path: "$.status_code", operation: "in", value: [200, 201] },
+              ],
+              match_mode: "ALL",
+              mapped_status_code: 401,
+            },
+          ],
+        },
+      },
     },
   },
 });
@@ -143,12 +348,17 @@ const emailConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
             http_request: {
               url: "http://host.docker.internal:4000/sent-emails",
               method: "POST",
-              header_mapping_rules: [{ static_value: "application/json", to: "Content-Type" }],
+              header_mapping_rules: [
+                { static_value: "application/json", to: "Content-Type" },
+              ],
               body_mapping_rules: [{ from: "$.request_body", to: "*" }],
             },
           },
           templates: {
-            authentication: { subject: "Login code", body: "Code: {VERIFICATION_CODE}" },
+            authentication: {
+              subject: "Login code",
+              body: "Code: {VERIFICATION_CODE}",
+            },
             email_change: {
               subject: "Email change confirmation",
               body: "You requested an email change. Code: {VERIFICATION_CODE}",
@@ -182,7 +392,14 @@ const emailConfigBody = (expireSeconds = 300, resendCooldownSeconds = 1) => ({
 async function provisionTenant(
   systemAccessToken,
   identityUniqueKeyType,
-  { expireSeconds = 300, resendCooldownSeconds = 1, contactChangePolicy, delegatedEmail = false } = {}
+  {
+    expireSeconds = 300,
+    resendCooldownSeconds = 1,
+    contactChangePolicy,
+    delegatedEmail = false,
+    delegatedPhone = false,
+    softVerdictEmail = false,
+  } = {}
 ) {
   const timestamp = `${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
   const ctx = {
@@ -199,7 +416,11 @@ async function provisionTenant(
 
   const onboardingResponse = await onboarding({
     body: {
-      organization: { id: ctx.organizationId, name: `Me Org ${timestamp}`, description: "e2e" },
+      organization: {
+        id: ctx.organizationId,
+        name: `Me Org ${timestamp}`,
+        description: "e2e",
+      },
       tenant: {
         id: ctx.tenantId,
         name: `Me Tenant ${timestamp}`,
@@ -207,9 +428,14 @@ async function provisionTenant(
         authorization_provider: "idp-server",
         identity_policy_config: {
           identity_unique_key_type: identityUniqueKeyType,
-          ...(contactChangePolicy ? { contact_change_policy: contactChangePolicy } : {}),
+          ...(contactChangePolicy
+            ? { contact_change_policy: contactChangePolicy }
+            : {}),
         },
-        session_config: { cookie_name: `ME_${timestamp}`, use_secure_cookie: false },
+        session_config: {
+          cookie_name: `ME_${timestamp}`,
+          use_secure_cookie: false,
+        },
         cors_config: { allow_origins: [backendUrl] },
         security_event_log_config: {
           format: "structured_json",
@@ -228,7 +454,11 @@ async function provisionTenant(
         userinfo_endpoint: `${backendUrl}/${ctx.tenantId}/v1/userinfo`,
         jwks_uri: `${backendUrl}/${ctx.tenantId}/v1/jwks`,
         jwks: jwksContent,
-        grant_types_supported: ["authorization_code", "refresh_token", "password"],
+        grant_types_supported: [
+          "authorization_code",
+          "refresh_token",
+          "password",
+        ],
         token_signed_key_id: "signing_key_1",
         id_token_signed_key_id: "signing_key_1",
         scopes_supported: [
@@ -251,7 +481,8 @@ async function provisionTenant(
         sub: ctx.adminSub,
         provider_id: "idp-server",
         name: ctx.adminName,
-        preferred_username: identityUniqueKeyType === "EMAIL" ? ctx.adminEmail : ctx.adminName,
+        preferred_username:
+          identityUniqueKeyType === "EMAIL" ? ctx.adminEmail : ctx.adminName,
         email: ctx.adminEmail,
         email_verified: true,
         raw_password: ctx.adminPassword,
@@ -262,7 +493,8 @@ async function provisionTenant(
         redirect_uris: [redirectUri],
         response_types: ["code"],
         grant_types: ["authorization_code", "refresh_token", "password"],
-        scope: "openid profile email email:change phone:change management org-management",
+        scope:
+          "openid profile email email:change phone:change management org-management",
         client_name: "Me Client",
         token_endpoint_auth_method: "client_secret_post",
         application_type: "web",
@@ -271,14 +503,18 @@ async function provisionTenant(
     headers: { Authorization: `Bearer ${systemAccessToken}` },
   });
   if (onboardingResponse.status !== 201) {
-    console.error("Onboarding failed:", JSON.stringify(onboardingResponse.data, null, 2));
+    console.error(
+      "Onboarding failed:",
+      JSON.stringify(onboardingResponse.data, null, 2)
+    );
   }
   expect(onboardingResponse.status).toBe(201);
 
   const mgmtTokenResponse = await requestToken({
     endpoint: `${backendUrl}/${ctx.tenantId}/v1/tokens`,
     grantType: "password",
-    username: identityUniqueKeyType === "EMAIL" ? ctx.adminEmail : ctx.adminName,
+    username:
+      identityUniqueKeyType === "EMAIL" ? ctx.adminEmail : ctx.adminName,
     password: ctx.adminPassword,
     scope: "management org-management",
     clientId: ctx.clientId,
@@ -291,7 +527,9 @@ async function provisionTenant(
   const emailResp = await postWithJson({
     url: `${backendUrl}/v1/management/organizations/${ctx.organizationId}/tenants/${ctx.tenantId}/authentication-configurations`,
     headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
-    body: delegatedEmail
+    body: softVerdictEmail
+      ? softVerdictEmailConfigBody()
+      : delegatedEmail
       ? delegatedEmailConfigBody()
       : emailConfigBody(expireSeconds, resendCooldownSeconds),
   });
@@ -300,14 +538,19 @@ async function provisionTenant(
   const smsResp = await postWithJson({
     url: `${backendUrl}/v1/management/organizations/${ctx.organizationId}/tenants/${ctx.tenantId}/authentication-configurations`,
     headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
-    body: smsConfigBody(expireSeconds, resendCooldownSeconds),
+    body: delegatedPhone
+      ? delegatedPhoneConfigBody()
+      : smsConfigBody(expireSeconds, resendCooldownSeconds),
   });
   expect(smsResp.status).toBe(201);
 
   return ctx;
 }
 
-async function createUser(ctx, { name, email, password, emailVerified = true }) {
+async function createUser(
+  ctx,
+  { name, email, password, emailVerified = true }
+) {
   const sub = uuidv4();
   const resp = await postWithJson({
     url: `${backendUrl}/v1/management/organizations/${ctx.organizationId}/tenants/${ctx.tenantId}/users`,
@@ -379,7 +622,12 @@ function submitChangeCode(ctx, accessToken, channel, challengeId, code) {
 }
 
 async function runChange(ctx, accessToken, channel, newValue) {
-  const { challengeId, code } = await startChange(ctx, accessToken, channel, newValue);
+  const { challengeId, code } = await startChange(
+    ctx,
+    accessToken,
+    channel,
+    newValue
+  );
   return submitChangeCode(ctx, accessToken, channel, challengeId, code);
 }
 
@@ -430,8 +678,9 @@ describe("Me Use Case: self-service contact verification and change", () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
     const newEmail = `fresh-${Date.now()}@me-email.example.com`;
-    const accessToken = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope))
-      .data.access_token;
+    const accessToken = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
 
     const verifyResp = await runChange(ctx, accessToken, "email", newEmail);
     expect(verifyResp.status).toBe(200);
@@ -443,13 +692,25 @@ describe("Me Use Case: self-service contact verification and change", () => {
     expect(userinfoResp.data.email).toBe(newEmail);
     expect(userinfoResp.data.email_verified).toBe(true);
 
-    const newLogin = await passwordGrant(ctx, newEmail, ctx.adminPassword, "openid email");
+    const newLogin = await passwordGrant(
+      ctx,
+      newEmail,
+      ctx.adminPassword,
+      "openid email"
+    );
     expect(newLogin.status).toBe(200);
-    const jwksResp = await get({ url: `${backendUrl}/${ctx.tenantId}/v1/jwks` });
-    const { payload } = verifyAndDecodeJwt({ jwt: newLogin.data.id_token, jwks: jwksResp.data });
+    const jwksResp = await get({
+      url: `${backendUrl}/${ctx.tenantId}/v1/jwks`,
+    });
+    const { payload } = verifyAndDecodeJwt({
+      jwt: newLogin.data.id_token,
+      jwks: jwksResp.data,
+    });
     expect(payload.email).toBe(newEmail);
 
-    expect((await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status).toBe(400);
+    expect(
+      (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status
+    ).toBe(400);
   });
 
   it("verification endpoint verifies the current address without changing it", async () => {
@@ -458,9 +719,15 @@ describe("Me Use Case: self-service contact verification and change", () => {
 
     const email = `unverified-${Date.now()}@me-email.example.com`;
     const password = "UnverifiedPass_1!";
-    await createUser(ctx, { name: email, email, password, emailVerified: false });
+    await createUser(ctx, {
+      name: email,
+      email,
+      password,
+      emailVerified: false,
+    });
     // Only openid: the verification half must not require email:change.
-    const token = (await passwordGrant(ctx, email, password, "openid")).data.access_token;
+    const token = (await passwordGrant(ctx, email, password, "openid")).data
+      .access_token;
 
     const verifyResp = await runVerification(ctx, token, "email", email);
     expect(verifyResp.status).toBe(200);
@@ -468,7 +735,9 @@ describe("Me Use Case: self-service contact verification and change", () => {
     const userinfoResp = await getUserinfo({
       endpoint: `${backendUrl}/${ctx.tenantId}/v1/userinfo`,
       authorizationHeader: createBearerHeader(
-        (await passwordGrant(ctx, email, password, "openid email")).data.access_token
+        (
+          await passwordGrant(ctx, email, password, "openid email")
+        ).data.access_token
       ),
     });
     expect(userinfoResp.data.email).toBe(email);
@@ -478,8 +747,9 @@ describe("Me Use Case: self-service contact verification and change", () => {
   it("verification endpoint ignores a caller-supplied new_value", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
 
     const startResp = await postWithJson({
       url: `${backendUrl}/${ctx.tenantId}/v1/me/email/verification`,
@@ -495,14 +765,17 @@ describe("Me Use Case: self-service contact verification and change", () => {
     });
     expect(finish.status).toBe(200);
 
-    expect((await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status).toBe(200);
+    expect(
+      (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status
+    ).toBe(200);
   });
 
   it("change endpoint rejects the current address and points at the verification endpoint", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
 
     const resp = await postWithJson({
       url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
@@ -518,35 +791,60 @@ describe("Me Use Case: self-service contact verification and change", () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
 
-    const scopedToken = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope))
-      .data.access_token;
-    const started = await startChange(ctx, scopedToken, "email", `scope-${Date.now()}@me-email.example.com`);
+    const scopedToken = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
+    const started = await startChange(
+      ctx,
+      scopedToken,
+      "email",
+      `scope-${Date.now()}@me-email.example.com`
+    );
 
-    const plainToken = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, "openid")).data
-      .access_token;
+    const plainToken = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, "openid")
+    ).data.access_token;
 
     const startDenied = await postWithJson({
       url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
       headers: createBearerHeader(plainToken),
       body: { new_value: `denied-${Date.now()}@me-email.example.com` },
     });
-    console.log("change without scope:", startDenied.status, JSON.stringify(startDenied.data));
+    console.log(
+      "change without scope:",
+      startDenied.status,
+      JSON.stringify(startDenied.data)
+    );
     expect(startDenied.status).toBe(403);
     expect(startDenied.data.error).toBe("insufficient_scope");
     expect(startDenied.data.scope).toBe("email:change");
 
-    const finishDenied = await submitChangeCode(ctx, plainToken, "email", started.challengeId, started.code);
+    const finishDenied = await submitChangeCode(
+      ctx,
+      plainToken,
+      "email",
+      started.challengeId,
+      started.code
+    );
     expect(finishDenied.status).toBe(403);
 
-    expect((await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status).toBe(200);
+    expect(
+      (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status
+    ).toBe(200);
   });
 
   it("security: a change challenge cannot be committed through the verification endpoint", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
-    const started = await startChange(ctx, token, "email", `cross-${Date.now()}@me-email.example.com`);
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
+    const started = await startChange(
+      ctx,
+      token,
+      "email",
+      `cross-${Date.now()}@me-email.example.com`
+    );
 
     // The operation is stored on the challenge row, so the sibling endpoint cannot commit it under
     // the weaker scope it requires. Reported as not found, so it cannot probe which ids exist.
@@ -555,11 +853,23 @@ describe("Me Use Case: self-service contact verification and change", () => {
       headers: createBearerHeader(token),
       body: { verification_code: started.code },
     });
-    console.log("cross-operation commit:", crossed.status, JSON.stringify(crossed.data));
+    console.log(
+      "cross-operation commit:",
+      crossed.status,
+      JSON.stringify(crossed.data)
+    );
     expect(crossed.status).toBe(404);
 
-    expect((await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status).toBe(200);
-    const proper = await submitChangeCode(ctx, token, "email", started.challengeId, started.code);
+    expect(
+      (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status
+    ).toBe(200);
+    const proper = await submitChangeCode(
+      ctx,
+      token,
+      "email",
+      started.challengeId,
+      started.code
+    );
     expect(proper.status).toBe(200);
   });
 
@@ -569,30 +879,60 @@ describe("Me Use Case: self-service contact verification and change", () => {
 
     const bEmail = `userb-${Date.now()}@me-email.example.com`;
     const bPassword = "UserBPass_1!";
-    await createUser(ctx, { name: "User B", email: bEmail, password: bPassword });
+    await createUser(ctx, {
+      name: "User B",
+      email: bEmail,
+      password: bPassword,
+    });
 
-    const aToken = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
-    const started = await startChange(ctx, aToken, "email", `a-new-${Date.now()}@me-email.example.com`);
+    const aToken = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
+    const started = await startChange(
+      ctx,
+      aToken,
+      "email",
+      `a-new-${Date.now()}@me-email.example.com`
+    );
 
     // B holds A's challenge id AND A's code, and still cannot drive it: ownership is part of the
     // lookup predicate, so the row is invisible to B.
-    const bToken = (await passwordGrant(ctx, bEmail, bPassword, changeScope)).data.access_token;
-    const bVerify = await submitChangeCode(ctx, bToken, "email", started.challengeId, started.code);
-    console.log("cross-user verify:", bVerify.status, JSON.stringify(bVerify.data));
+    const bToken = (await passwordGrant(ctx, bEmail, bPassword, changeScope))
+      .data.access_token;
+    const bVerify = await submitChangeCode(
+      ctx,
+      bToken,
+      "email",
+      started.challengeId,
+      started.code
+    );
+    console.log(
+      "cross-user verify:",
+      bVerify.status,
+      JSON.stringify(bVerify.data)
+    );
     expect(bVerify.status).toBe(404);
 
     // A's challenge is untouched.
-    expect((await submitChangeCode(ctx, aToken, "email", started.challengeId, started.code)).status).toBe(
-      200
-    );
+    expect(
+      (
+        await submitChangeCode(
+          ctx,
+          aToken,
+          "email",
+          started.challengeId,
+          started.code
+        )
+      ).status
+    ).toBe(200);
   });
 
   it("security: rejects a malformed or non-string new_value before any code is sent", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
 
     for (const newValue of [
       "not-an-email",
@@ -611,7 +951,11 @@ describe("Me Use Case: self-service contact verification and change", () => {
         headers: createBearerHeader(token),
         body: { new_value: newValue },
       });
-      console.log("malformed new_value:", JSON.stringify(newValue), resp.status);
+      console.log(
+        "malformed new_value:",
+        JSON.stringify(newValue),
+        resp.status
+      );
       expect(resp.status).toBe(400);
       expect(resp.data.error_description).toContain("invalid format");
     }
@@ -633,19 +977,49 @@ describe("Me Use Case: self-service contact verification and change", () => {
   it("code robustness: wrong code, reuse, and retry limit", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
-    const started = await startChange(ctx, token, "email", `robust-${Date.now()}@me-email.example.com`);
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
+    const started = await startChange(
+      ctx,
+      token,
+      "email",
+      `robust-${Date.now()}@me-email.example.com`
+    );
 
-    const wrong = await submitChangeCode(ctx, token, "email", started.challengeId, "000000");
+    const wrong = await submitChangeCode(
+      ctx,
+      token,
+      "email",
+      started.challengeId,
+      "000000"
+    );
     expect(wrong.status).toBe(400);
-    expect((await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status).toBe(200);
+    expect(
+      (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status
+    ).toBe(200);
 
     // The correct code still works after a failed attempt.
-    expect((await submitChangeCode(ctx, token, "email", started.challengeId, started.code)).status).toBe(200);
+    expect(
+      (
+        await submitChangeCode(
+          ctx,
+          token,
+          "email",
+          started.challengeId,
+          started.code
+        )
+      ).status
+    ).toBe(200);
 
     // A consumed challenge is gone.
-    const reused = await submitChangeCode(ctx, token, "email", started.challengeId, started.code);
+    const reused = await submitChangeCode(
+      ctx,
+      token,
+      "email",
+      started.challengeId,
+      started.code
+    );
     console.log("reuse:", reused.status, JSON.stringify(reused.data));
     expect(reused.status).toBe(404);
   });
@@ -654,16 +1028,23 @@ describe("Me Use Case: self-service contact verification and change", () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
     const otherEmail = `taken-${Date.now()}@me-email.example.com`;
-    await createUser(ctx, { name: "Other User", email: otherEmail, password: "OtherPass_1!" });
+    await createUser(ctx, {
+      name: "Other User",
+      email: otherEmail,
+      password: "OtherPass_1!",
+    });
 
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
     const resp = await runChange(ctx, token, "email", otherEmail);
     console.log("duplicate(email):", resp.status, JSON.stringify(resp.data));
     expect(resp.status).toBe(400);
     expect(resp.data.error_description).toContain("already in use");
 
-    expect((await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status).toBe(200);
+    expect(
+      (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status
+    ).toBe(200);
   });
 
   it("USERNAME policy: allows changing to a duplicate email (email is not the identifier)", async () => {
@@ -676,21 +1057,25 @@ describe("Me Use Case: self-service contact verification and change", () => {
       password: "OtherPass_1!",
     });
 
-    const token = (await passwordGrant(ctx, ctx.adminName, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminName, ctx.adminPassword, changeScope)
+    ).data.access_token;
     const resp = await runChange(ctx, token, "email", sharedEmail);
     console.log("duplicate(username):", resp.status, JSON.stringify(resp.data));
     expect(resp.status).toBe(200);
 
     // The login identifier is the name, so it is unaffected.
-    expect((await passwordGrant(ctx, ctx.adminName, ctx.adminPassword)).status).toBe(200);
+    expect(
+      (await passwordGrant(ctx, ctx.adminName, ctx.adminPassword)).status
+    ).toBe(200);
   });
 
   it("PHONE: changes the number and marks it verified", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
     const newPhone = `+8190${String(Date.now()).slice(-8)}`;
 
     const resp = await runChange(ctx, token, "phone", newPhone);
@@ -698,7 +1083,11 @@ describe("Me Use Case: self-service contact verification and change", () => {
     expect(resp.status).toBe(200);
 
     const user = await get({
-      url: `${backendUrl}/v1/management/organizations/${ctx.organizationId}/tenants/${ctx.tenantId}/users?email=${encodeURIComponent(ctx.adminEmail)}`,
+      url: `${backendUrl}/v1/management/organizations/${
+        ctx.organizationId
+      }/tenants/${ctx.tenantId}/users?email=${encodeURIComponent(
+        ctx.adminEmail
+      )}`,
       headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
     });
     const found = user.data.list.find((u) => u.email === ctx.adminEmail);
@@ -706,21 +1095,25 @@ describe("Me Use Case: self-service contact verification and change", () => {
     expect(found.phone_number_verified).toBe(true);
 
     // The identity policy is EMAIL here, so the login identifier must NOT have moved to the phone.
-    expect((await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status).toBe(200);
+    expect(
+      (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword)).status
+    ).toBe(200);
   });
 
   it("PHONE: verification marks the current number verified without changing it", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
     const phone = `+8180${String(Date.now()).slice(-8)}`;
 
     // Give the account a number first, then verify it with a plain openid token.
     expect((await runChange(ctx, token, "phone", phone)).status).toBe(200);
 
-    const plainToken = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, "openid")).data
-      .access_token;
+    const plainToken = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, "openid")
+    ).data.access_token;
     const resp = await runVerification(ctx, plainToken, "phone", phone);
     console.log("phone verification:", resp.status, JSON.stringify(resp.data));
     expect(resp.status).toBe(200);
@@ -729,15 +1122,20 @@ describe("Me Use Case: self-service contact verification and change", () => {
   it("PHONE: a token without phone:change cannot start a change", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const plainToken = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, "openid")).data
-      .access_token;
+    const plainToken = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, "openid")
+    ).data.access_token;
 
     const resp = await postWithJson({
       url: `${backendUrl}/${ctx.tenantId}/v1/me/phone/change`,
       headers: createBearerHeader(plainToken),
       body: { new_value: `+8170${String(Date.now()).slice(-8)}` },
     });
-    console.log("phone change without scope:", resp.status, JSON.stringify(resp.data));
+    console.log(
+      "phone change without scope:",
+      resp.status,
+      JSON.stringify(resp.data)
+    );
     expect(resp.status).toBe(403);
     expect(resp.data.scope).toBe("phone:change");
   });
@@ -745,12 +1143,21 @@ describe("Me Use Case: self-service contact verification and change", () => {
   it("PHONE: rejects a value that is not safe to hand to a sender", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
 
     // Deliberately loose on notation (national vs E.164) but strict on what makes a value unsafe:
     // letters, CR/LF, control characters, and non-strings are all rejected.
-    for (const newValue of ["not-a-number", "+81 90 1234 5678\n", "+81\r\n90", "", 12345, null, ["x"]]) {
+    for (const newValue of [
+      "not-a-number",
+      "+81 90 1234 5678\n",
+      "+81\r\n90",
+      "",
+      12345,
+      null,
+      ["x"],
+    ]) {
       const resp = await postWithJson({
         url: `${backendUrl}/${ctx.tenantId}/v1/me/phone/change`,
         headers: createBearerHeader(token),
@@ -773,28 +1180,55 @@ describe("Me Use Case: self-service contact verification and change", () => {
   it("PHONE: a phone challenge cannot be committed through the email endpoint", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
-    const started = await startChange(ctx, token, "phone", `+8160${String(Date.now()).slice(-8)}`);
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
+    const started = await startChange(
+      ctx,
+      token,
+      "phone",
+      `+8160${String(Date.now()).slice(-8)}`
+    );
 
     // The channel is part of the persisted operation, so the sibling channel's endpoint cannot
     // commit it — same guarantee as verify vs change.
-    const crossed = await submitChangeCode(ctx, token, "email", started.challengeId, started.code);
-    console.log("cross-channel commit:", crossed.status, JSON.stringify(crossed.data));
+    const crossed = await submitChangeCode(
+      ctx,
+      token,
+      "email",
+      started.challengeId,
+      started.code
+    );
+    console.log(
+      "cross-channel commit:",
+      crossed.status,
+      JSON.stringify(crossed.data)
+    );
     expect(crossed.status).toBe(404);
 
     expect(
-      (await submitChangeCode(ctx, token, "phone", started.challengeId, started.code)).status
+      (
+        await submitChangeCode(
+          ctx,
+          token,
+          "phone",
+          started.challengeId,
+          started.code
+        )
+      ).status
     ).toBe(200);
   });
 
   it("security: a second code for the same purpose is refused while within the cooldown", async () => {
     // The recipient of a change code is chosen by the caller, so an unbounded request loop bills
     // the tenant for SMS and floods an address that never asked to be involved.
-    const ctx = await provisionTenant(systemAccessToken, "EMAIL", { resendCooldownSeconds: 60 });
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      resendCooldownSeconds: 60,
+    });
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
 
     const first = await postWithJson({
       url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
@@ -808,7 +1242,11 @@ describe("Me Use Case: self-service contact verification and change", () => {
       headers: createBearerHeader(token),
       body: { new_value: `flood-2-${Date.now()}@me-email.example.com` },
     });
-    console.log("second send within cooldown:", second.status, JSON.stringify(second.data));
+    console.log(
+      "second send within cooldown:",
+      second.status,
+      JSON.stringify(second.data)
+    );
     expect(second.status).toBe(400);
 
     // The cooldown is keyed on user + operation, so the other channel and the other intent are
@@ -826,15 +1264,19 @@ describe("Me Use Case: self-service contact verification and change", () => {
       headers: createBearerHeader(token),
       body: {},
     });
-    console.log("other intent during email change cooldown:", otherIntent.status);
+    console.log(
+      "other intent during email change cooldown:",
+      otherIntent.status
+    );
     expect(otherIntent.status).toBe(200);
   });
 
   it("support: the management API shows where the code was sent", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
     const newEmail = `support-${Date.now()}@me-email.example.com`;
 
     // A user reports "the code never arrived". Support starts from the user id.
@@ -846,7 +1288,11 @@ describe("Me Use Case: self-service contact verification and change", () => {
       headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
       params: { user_id: ctx.adminSub },
     });
-    console.log("org list:", listed.status, JSON.stringify(listed.data).slice(0, 300));
+    console.log(
+      "org list:",
+      listed.status,
+      JSON.stringify(listed.data).slice(0, 300)
+    );
     expect(listed.status).toBe(200);
     const found = listed.data.list.find((c) => c.id === started.challengeId);
     expect(found).toBeDefined();
@@ -873,16 +1319,26 @@ describe("Me Use Case: self-service contact verification and change", () => {
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       params: { user_id: ctx.adminSub, operation: "email_change" },
     });
-    console.log("system list:", sysListed.status, JSON.stringify(sysListed.data).slice(0, 300));
+    console.log(
+      "system list:",
+      sysListed.status,
+      JSON.stringify(sysListed.data).slice(0, 300)
+    );
     expect(sysListed.status).toBe(200);
     expect(sysListed.data.list.map((c) => c.id)).toContain(started.challengeId);
-    expect(sysListed.data.list.every((c) => c.operation === "email_change")).toBe(true);
+    expect(
+      sysListed.data.list.every((c) => c.operation === "email_change")
+    ).toBe(true);
 
     const sysOne = await get({
       url: `${sysBase}/${started.challengeId}`,
       headers: { Authorization: `Bearer ${systemAccessToken}` },
     });
-    console.log("system get:", sysOne.status, JSON.stringify(sysOne.data).slice(0, 300));
+    console.log(
+      "system get:",
+      sysOne.status,
+      JSON.stringify(sysOne.data).slice(0, 300)
+    );
     expect(sysOne.status).toBe(200);
     expect(sysOne.data.target_value).toBe(newEmail);
 
@@ -892,7 +1348,11 @@ describe("Me Use Case: self-service contact verification and change", () => {
       headers: { Authorization: `Bearer ${systemAccessToken}` },
       params: { operation: "email_verifyy" },
     });
-    console.log("bad operation filter:", badFilter.status, JSON.stringify(badFilter.data));
+    console.log(
+      "bad operation filter:",
+      badFilter.status,
+      JSON.stringify(badFilter.data)
+    );
     expect(badFilter.status).toBe(400);
 
     // An end-user token has no business here, whatever scopes it carries.
@@ -912,15 +1372,18 @@ describe("Me Use Case: self-service contact verification and change", () => {
       contactChangePolicy: {
         identifier_move: {
           authentication_conditions: {
-            any_of: [[{ path: "$.amr", operation: "contains", value: "fido-uaf" }]],
+            any_of: [
+              [{ path: "$.amr", operation: "contains", value: "fido-uaf" }],
+            ],
           },
         },
       },
     });
     tenants.push(ctx);
     // password grant emits amr: ["password"], so the fido-uaf requirement is not met
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
 
     const refusedTarget = `amr-denied-${Date.now()}@me-email.example.com`;
     const denied = await postWithJson({
@@ -928,7 +1391,11 @@ describe("Me Use Case: self-service contact verification and change", () => {
       headers: createBearerHeader(token),
       body: { new_value: refusedTarget },
     });
-    console.log("identifier move without required amr:", denied.status, JSON.stringify(denied.data));
+    console.log(
+      "identifier move without required amr:",
+      denied.status,
+      JSON.stringify(denied.data)
+    );
     expect(denied.status).toBe(400);
 
     // No code was sent: the rule is checked before the sender runs, so a refusal cannot be used to
@@ -945,17 +1412,28 @@ describe("Me Use Case: self-service contact verification and change", () => {
       contactChangePolicy: {
         identifier_move: {
           authentication_conditions: {
-            any_of: [[{ path: "$.amr", operation: "contains", value: "fido-uaf" }]],
+            any_of: [
+              [{ path: "$.amr", operation: "contains", value: "fido-uaf" }],
+            ],
           },
         },
       },
     });
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
 
-    const resp = await runChange(ctx, token, "phone", `+8190${String(Date.now()).slice(-8)}`);
-    console.log("attribute-only change under a strict identifier rule:", resp.status);
+    const resp = await runChange(
+      ctx,
+      token,
+      "phone",
+      `+8190${String(Date.now()).slice(-8)}`
+    );
+    console.log(
+      "attribute-only change under a strict identifier rule:",
+      resp.status
+    );
     expect(resp.status).toBe(200);
   });
 
@@ -964,17 +1442,25 @@ describe("Me Use Case: self-service contact verification and change", () => {
       contactChangePolicy: {
         identifier_move: {
           authentication_conditions: {
-            any_of: [[{ path: "$.amr", operation: "contains", value: "password" }]],
+            any_of: [
+              [{ path: "$.amr", operation: "contains", value: "password" }],
+            ],
           },
           max_auth_age_seconds: 600,
         },
       },
     });
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
 
-    const resp = await runChange(ctx, token, "email", `amr-ok-${Date.now()}@me-email.example.com`);
+    const resp = await runChange(
+      ctx,
+      token,
+      "email",
+      `amr-ok-${Date.now()}@me-email.example.com`
+    );
     console.log("identifier move with satisfied amr:", resp.status);
     expect(resp.status).toBe(200);
   });
@@ -984,8 +1470,9 @@ describe("Me Use Case: self-service contact verification and change", () => {
       contactChangePolicy: { identifier_move: { max_auth_age_seconds: 1 } },
     });
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
 
     // auth_time is stamped at token issuance, so waiting ages it past the bound.
     await new Promise((resolve) => setTimeout(resolve, 2500));
@@ -995,7 +1482,11 @@ describe("Me Use Case: self-service contact verification and change", () => {
       headers: createBearerHeader(token),
       body: { new_value: `stale-${Date.now()}@me-email.example.com` },
     });
-    console.log("stale authentication:", resp.status, JSON.stringify(resp.data));
+    console.log(
+      "stale authentication:",
+      resp.status,
+      JSON.stringify(resp.data)
+    );
     expect(resp.status).toBe(400);
   });
 
@@ -1004,8 +1495,9 @@ describe("Me Use Case: self-service contact verification and change", () => {
     // change was not theirs, this notice is the only thing that tells them.
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
     const previousEmail = ctx.adminEmail;
     const newEmail = `notice-${Date.now()}@me-email.example.com`;
 
@@ -1020,7 +1512,9 @@ describe("Me Use Case: self-service contact verification and change", () => {
     // The new value is quoted only partially: after a takeover this inbox may be read by someone
     // else too, and it is enough for the owner to tell "that is not mine".
     const localPart = newEmail.split("@")[0];
-    expect(notice.body).toContain(`${localPart.charAt(0)}***@me-email.example.com`);
+    expect(notice.body).toContain(
+      `${localPart.charAt(0)}***@me-email.example.com`
+    );
     expect(notice.body).not.toContain(newEmail);
     expect(notice.body).not.toContain("{CHANGED_AT}");
     expect(notice.body).not.toContain("{NEW_VALUE_MASKED}");
@@ -1028,15 +1522,25 @@ describe("Me Use Case: self-service contact verification and change", () => {
 
   it("policy: notify_previous_value false suppresses the notice", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
-      contactChangePolicy: { identifier_move: { notify_previous_value: false } },
+      contactChangePolicy: {
+        identifier_move: { notify_previous_value: false },
+      },
     });
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
     const previousEmail = ctx.adminEmail;
 
     expect(
-      (await runChange(ctx, token, "email", `silent-${Date.now()}@me-email.example.com`)).status
+      (
+        await runChange(
+          ctx,
+          token,
+          "email",
+          `silent-${Date.now()}@me-email.example.com`
+        )
+      ).status
     ).toBe(200);
 
     const sent = await get({ url: "http://localhost:4000/sent-emails" });
@@ -1048,10 +1552,13 @@ describe("Me Use Case: self-service contact verification and change", () => {
   it("delegated: an external service owns the code and idp-server defers the decision", async () => {
     // The tenant's email config declares execution.function: "http_request" with no details, so
     // there is no local sender: the external service issues the code, delivers it and decides.
-    const ctx = await provisionTenant(systemAccessToken, "EMAIL", { delegatedEmail: true });
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      delegatedEmail: true,
+    });
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
     const newEmail = `delegated-${Date.now()}@me-email.example.com`;
 
     const started = await postWithJson({
@@ -1059,7 +1566,11 @@ describe("Me Use Case: self-service contact verification and change", () => {
       headers: createBearerHeader(token),
       body: { new_value: newEmail },
     });
-    console.log("delegated start:", started.status, JSON.stringify(started.data));
+    console.log(
+      "delegated start:",
+      started.status,
+      JSON.stringify(started.data)
+    );
     expect(started.status).toBe(200);
     expect(started.data.id).toBeDefined();
 
@@ -1089,10 +1600,13 @@ describe("Me Use Case: self-service contact verification and change", () => {
   });
 
   it("delegated: the management API says where to find the code", async () => {
-    const ctx = await provisionTenant(systemAccessToken, "EMAIL", { delegatedEmail: true });
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      delegatedEmail: true,
+    });
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
     const newEmail = `delegated-mgmt-${Date.now()}@me-email.example.com`;
 
     const started = await postWithJson({
@@ -1117,14 +1631,143 @@ describe("Me Use Case: self-service contact verification and change", () => {
     expect(one.data.external_reference.transaction_id).toMatch(/^ext-/);
   });
 
+  it("delegated phone: the external service is handed the number as phone_number", async () => {
+    // The field name is the whole point. The mock answers 400 unless the recipient arrives as
+    // `email` or `phone_number`, which is what the channel's request.schema declares and what every
+    // SMS integration here expects — so a challenge named after the channel fails at step one.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      delegatedPhone: true,
+    });
+    tenants.push(ctx);
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
+    const newPhone = `+8190${String(Date.now()).slice(-8)}`;
+
+    const started = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/phone/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: newPhone },
+    });
+    console.log(
+      "delegated phone start:",
+      started.status,
+      JSON.stringify(started.data)
+    );
+    expect(started.status).toBe(200);
+
+    const challenge = await get({
+      url: `${backendUrl}/v1/management/tenants/${ctx.tenantId}/contact-verification-challenges/${started.data.id}`,
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
+    });
+    expect(challenge.status).toBe(200);
+    expect(challenge.data.delivery).toBe("external");
+    expect(challenge.data.external_reference.transaction_id).toMatch(/^ext-/);
+    // What the service echoed back: proof the number travelled under the expected field.
+    expect(challenge.data.external_reference.received_phone_number).toBe(
+      newPhone
+    );
+
+    const wrong = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/phone/change/${started.data.id}/verify`,
+      headers: createBearerHeader(token),
+      body: { verification_code: "000000" },
+    });
+    console.log("delegated phone wrong code:", wrong.status);
+    expect(wrong.status).toBe(400);
+
+    const committed = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/phone/change/${started.data.id}/verify`,
+      headers: createBearerHeader(token),
+      body: { verification_code: "123456" },
+    });
+    console.log(
+      "delegated phone commit:",
+      committed.status,
+      JSON.stringify(committed.data)
+    );
+    expect(committed.status).toBe(200);
+
+    const users = await get({
+      url: `${backendUrl}/v1/management/organizations/${
+        ctx.organizationId
+      }/tenants/${ctx.tenantId}/users?email=${encodeURIComponent(
+        ctx.adminEmail
+      )}`,
+      headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
+    });
+    const found = users.data.list.find((u) => u.email === ctx.adminEmail);
+    expect(found.phone_number).toBe(newPhone);
+    expect(found.phone_number_verified).toBe(true);
+  });
+
+  it("delegated: a body-level verdict is decided by response_resolve_configs", async () => {
+    // This service answers 200 whichever code it is told. Success is read off the resolved status,
+    // so the rules in the configuration are the only thing standing between a wrong code and a
+    // committed change.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      softVerdictEmail: true,
+    });
+    tenants.push(ctx);
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
+    const newEmail = `soft-verdict-${Date.now()}@me-email.example.com`;
+
+    const started = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: newEmail },
+    });
+    expect(started.status).toBe(200);
+
+    const wrong = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change/${started.data.id}/verify`,
+      headers: createBearerHeader(token),
+      body: { verification_code: "000000" },
+    });
+    console.log(
+      "soft verdict wrong code:",
+      wrong.status,
+      JSON.stringify(wrong.data)
+    );
+    // 200 { "verified": false } mapped to 401 by the rules, so the change does not commit.
+    expect(wrong.status).toBe(400);
+
+    const committed = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change/${started.data.id}/verify`,
+      headers: createBearerHeader(token),
+      body: { verification_code: "123456" },
+    });
+    console.log("soft verdict correct code:", committed.status);
+    expect(committed.status).toBe(200);
+
+    const users = await get({
+      url: `${backendUrl}/v1/management/organizations/${
+        ctx.organizationId
+      }/tenants/${ctx.tenantId}/users?email=${encodeURIComponent(newEmail)}`,
+      headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
+    });
+    expect(users.data.list.some((u) => u.email === newEmail)).toBe(true);
+  });
+
   it("audit: emits verify / change events separately", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);
-    const token = (await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)).data
-      .access_token;
+    const token = (
+      await passwordGrant(ctx, ctx.adminEmail, ctx.adminPassword, changeScope)
+    ).data.access_token;
 
-    expect((await runChange(ctx, token, "email", `audit-${Date.now()}@me-email.example.com`)).status)
-      .toBe(200);
+    expect(
+      (
+        await runChange(
+          ctx,
+          token,
+          "email",
+          `audit-${Date.now()}@me-email.example.com`
+        )
+      ).status
+    ).toBe(200);
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
     const events = await get({

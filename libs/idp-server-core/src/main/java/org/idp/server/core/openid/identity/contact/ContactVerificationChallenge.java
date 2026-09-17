@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.contact.execution.ContactExecutionResult;
 import org.idp.server.platform.date.SystemDateTime;
 
 /**
@@ -62,19 +63,35 @@ public class ContactVerificationChallenge {
     this.expiresAt = expiresAt;
   }
 
+  /**
+   * The absence of a challenge, passed to an executor that is issuing one.
+   *
+   * <p>{@code ContactVerificationExecutor} takes the challenge where its authentication counterpart
+   * takes a transaction identifier, and at challenge time there is nothing yet.
+   */
+  public static ContactVerificationChallenge notFound() {
+    return new ContactVerificationChallenge();
+  }
+
+  /**
+   * Builds the row from what the executor answered.
+   *
+   * <p>Exactly one of the code and the stored payload is populated, and which one is the executor's
+   * answer rather than something inferred from configuration here.
+   */
   public static ContactVerificationChallenge create(
       UserIdentifier userIdentifier,
       ContactVerificationOperation operation,
       String targetValue,
-      ContactChallengeStart start,
+      ContactExecutionResult executionResult,
       int expireSeconds) {
     return new ContactVerificationChallenge(
         new ContactVerificationChallengeIdentifier(java.util.UUID.randomUUID().toString()),
         userIdentifier,
         operation,
         targetValue,
-        start.verificationCode(),
-        start.externalReference(),
+        executionResult.verificationCode(),
+        executionResult.storedPayload(),
         0,
         SystemDateTime.now().plusSeconds(expireSeconds));
   }

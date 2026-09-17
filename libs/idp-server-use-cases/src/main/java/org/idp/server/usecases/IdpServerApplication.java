@@ -17,6 +17,7 @@
 package org.idp.server.usecases;
 
 import java.net.http.HttpClient;
+import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.authentication.interactors.device.AuthenticationDeviceNotifiers;
 import org.idp.server.authentication.interactors.fidouaf.AuthenticationMetaDataApi;
@@ -27,10 +28,11 @@ import org.idp.server.authenticators.webauthn4j.WebAuthn4jCredentialRepository;
 import org.idp.server.authenticators.webauthn4j.mds.MdsConfiguration;
 import org.idp.server.authenticators.webauthn4j.mds.MdsResolver;
 import org.idp.server.authenticators.webauthn4j.mds.MdsResolverFactory;
-import org.idp.server.contact.adapter.ChannelRoutingGateway;
-import org.idp.server.contact.adapter.EmailAuthenticationConfigGateway;
-import org.idp.server.contact.adapter.ExternalContactVerificationExchange;
-import org.idp.server.contact.adapter.SmsAuthenticationConfigGateway;
+import org.idp.server.contact.adapter.ChannelRoutingContactChangeNotifier;
+import org.idp.server.contact.adapter.EmailChallengeContactVerificationExecutor;
+import org.idp.server.contact.adapter.EmailContactChangeNotifier;
+import org.idp.server.contact.adapter.SmsChallengeContactVerificationExecutor;
+import org.idp.server.contact.adapter.SmsContactChangeNotifier;
 import org.idp.server.control_plane.admin.operation.IdpServerOperationApi;
 import org.idp.server.control_plane.admin.starter.IdpServerStarterApi;
 import org.idp.server.control_plane.base.AdminUserAuthenticationApi;
@@ -118,10 +120,17 @@ import org.idp.server.core.openid.identity.*;
 import org.idp.server.core.openid.identity.authentication.PasswordEncodeDelegation;
 import org.idp.server.core.openid.identity.authentication.PasswordVerificationDelegation;
 import org.idp.server.core.openid.identity.authentication.UserPasswordAuthenticator;
+import org.idp.server.core.openid.identity.contact.ContactChangeNotifier;
 import org.idp.server.core.openid.identity.contact.ContactChannel;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeOperationCommandRepository;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeRepository;
+import org.idp.server.core.openid.identity.contact.ContactVerificationExchange;
 import org.idp.server.core.openid.identity.contact.ContactVerificationService;
+import org.idp.server.core.openid.identity.contact.execution.ContactVerificationExecutor;
+import org.idp.server.core.openid.identity.contact.execution.ContactVerificationExecutors;
+import org.idp.server.core.openid.identity.contact.execution.HttpRequestContactVerificationExecutor;
+import org.idp.server.core.openid.identity.contact.execution.HttpRequestsContactVerificationExecutor;
+import org.idp.server.core.openid.identity.contact.execution.LocalCodeContactVerificationExecutor;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogApi;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceLogEventPublisher;
 import org.idp.server.core.openid.identity.event.*;
@@ -302,8 +311,13 @@ public class IdpServerApplication {
   /**
    * Builds the self-service contact flow (Issue #1416).
    *
-   * <p>Extracted because the two channels each need a gateway that is also a notifier, and inlining
-   * that pairing at the call site buried what the service actually depends on.
+   * <p>The executor registry is the same idea as {@code AuthenticationExecutors}: a tenant's {@code
+   * execution.function} selects the implementation, so a locally generating configuration and a
+   * delegated one differ by configuration alone and neither is inferred from the shape of the
+   * other.
+   *
+   * <p>Constructed here rather than through a plugin loader because these need {@code EmailSenders}
+   * / {@code SmsSenders}, which do not exist yet when the component plugin loader runs.
    */
   private static ContactVerificationService contactVerificationService(
       ContactVerificationChallengeRepository challengeRepository,
@@ -314,26 +328,40 @@ public class IdpServerApplication {
       UserQueryRepository userQueryRepository,
       UserCommandRepository userCommandRepository) {
 
-    ExternalContactVerificationExchange externalExchange =
-        new ExternalContactVerificationExchange(httpRequestExecutor);
-    EmailAuthenticationConfigGateway emailGateway =
-        new EmailAuthenticationConfigGateway(
-            authenticationConfigurationQueryRepository, emailSenders, externalExchange);
-    SmsAuthenticationConfigGateway smsGateway =
-        new SmsAuthenticationConfigGateway(
-            authenticationConfigurationQueryRepository, smsSenders, externalExchange);
+    Map<String, ContactVerificationExecutor> executors = new HashMap<>();
+    registerContactExecutor(
+        executors, new HttpRequestContactVerificationExecutor(httpRequestExecutor));
+    registerContactExecutor(
+        executors, new HttpRequestsContactVerificationExecutor(httpRequestExecutor));
+    registerContactExecutor(executors, new EmailChallengeContactVerificationExecutor(emailSenders));
+    registerContactExecutor(executors, new SmsChallengeContactVerificationExecutor(smsSenders));
+    registerContactExecutor(
+        executors, new LocalCodeContactVerificationExecutor("email_authentication"));
+    registerContactExecutor(
+        executors, new LocalCodeContactVerificationExecutor("sms_authentication"));
 
-    ChannelRoutingGateway routingGateway =
-        new ChannelRoutingGateway(
-            Map.of(ContactChannel.EMAIL, emailGateway, ContactChannel.PHONE, smsGateway),
-            Map.of(ContactChannel.EMAIL, emailGateway, ContactChannel.PHONE, smsGateway));
+    ContactVerificationExchange exchange =
+        new ContactVerificationExchange(
+            authenticationConfigurationQueryRepository,
+            new ContactVerificationExecutors(executors));
+
+    ContactChangeNotifier notifier =
+        new ChannelRoutingContactChangeNotifier(
+            Map.of(
+                ContactChannel.EMAIL,
+                new EmailContactChangeNotifier(
+                    authenticationConfigurationQueryRepository, emailSenders),
+                ContactChannel.PHONE,
+                new SmsContactChangeNotifier(
+                    authenticationConfigurationQueryRepository, smsSenders)));
 
     return new ContactVerificationService(
-        challengeRepository,
-        routingGateway,
-        routingGateway,
-        userQueryRepository,
-        userCommandRepository);
+        challengeRepository, exchange, notifier, userQueryRepository, userCommandRepository);
+  }
+
+  private static void registerContactExecutor(
+      Map<String, ContactVerificationExecutor> executors, ContactVerificationExecutor executor) {
+    executors.put(executor.function(), executor);
   }
 
   public IdpServerApplication(

@@ -581,6 +581,303 @@ curl -s -b "${COOKIE_JAR4}" -c "${COOKIE_JAR4}" \
 
 ---
 
+# Phase 4: Contact Verification & Change（セルフサービス 連絡先）
+
+認証済みユーザーが自分の連絡先を確認・変更するフローです（`POST /{tenant-id}/v1/me/{channel}/...`）。
+
+このユースケースは **ローカル生成モード**（`authentication-config-email.json` の
+`execution.details.function: "no_action"`）で、idp-server がコードを生成・保持・照合します。
+外部サービスにコード生成・検証を委譲するパターンの手順は `../mfa-sms/VERIFY.md` の Phase 4 を参照してください。
+
+## 前提
+
+- `public-tenant-template.json` の `scopes_supported` と `public-client-template.json` の `scope` に
+  `email:change` が含まれていること
+- `authentication-config-email.json` の `templates` に `email_verify` / `email_change` /
+  `email_change_notice` が定義されていること（未定義でも動きますが、既定の「確認コード」文面に
+  フォールバックします）
+- テナントの `identity_unique_key_type` が `EMAIL_OR_EXTERNAL_USER_ID` であること
+  → **email の変更はログイン識別子の移動**、phone の変更は属性のみ、に分類されます
+- no-action モードでは実際のメールは送信されません。検証コードは Management API から取得します
+
+## Step 13: email:change 付きトークンの取得
+
+確認（`/verification`）は `openid` で足りますが、変更（`/change`）には `email:change` が要ります。
+1 本のトークンで両方を試すため、スコープを広げて MFA を 1 回通します。
+
+### リクエスト
+
+**1. スコープを拡張して認可リクエスト**
+
+```bash
+CONTACT_SCOPE="openid profile email email:change"
+COOKIE_JAR5=$(mktemp)
+CONTACT_STATE="verify-contact-$(date +%s)"
+
+CONTACT_REDIRECT=$(curl -s -c "${COOKIE_JAR5}" -o /dev/null \
+  -w "%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=$(echo "${CONTACT_SCOPE}" | sed 's/:/%3A/g; s/ /+/g')&state=${CONTACT_STATE}&prompt=login")
+
+CONTACT_AUTH_ID=$(echo "${CONTACT_REDIRECT}" | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
+echo "Authorization ID: ${CONTACT_AUTH_ID}"
+```
+
+**2. Email OTP を通す（Step 6 〜 6b と同じ手順）**
+
+```bash
+curl -s -b "${COOKIE_JAR5}" -c "${COOKIE_JAR5}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${CONTACT_AUTH_ID}/email-authentication-challenge" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\": \"${TEST_EMAIL}\"}" > /dev/null
+
+CONTACT_TXN_ID=$(curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/authentication-transactions?authorization_id=${CONTACT_AUTH_ID}" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq -r '.list[0].id')
+
+CONTACT_OTP=$(curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/authentication-interactions/${CONTACT_TXN_ID}/email-authentication-challenge" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq -r '.payload.verification_code')
+
+curl -s -b "${COOKIE_JAR5}" -c "${COOKIE_JAR5}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${CONTACT_AUTH_ID}/email-authentication" \
+  -H "Content-Type: application/json" \
+  -d "{\"verification_code\": \"${CONTACT_OTP}\"}" > /dev/null
+```
+
+**3. パスワード認証（Phase 3 でリセット済みのパスワードを使用）**
+
+```bash
+curl -s -b "${COOKIE_JAR5}" -c "${COOKIE_JAR5}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${CONTACT_AUTH_ID}/password-authentication" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"username\": \"${TEST_EMAIL}\",
+    \"password\": \"${RESET_PASSWORD}\"
+  }" > /dev/null
+```
+
+**4. authorize -> token**
+
+```bash
+CONTACT_CODE=$(curl -s -b "${COOKIE_JAR5}" -c "${COOKIE_JAR5}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${CONTACT_AUTH_ID}/authorize" \
+  -H "Content-Type: application/json" -d '{}' \
+  | jq -r '.redirect_uri' | sed -n 's/.*[?&]code=\([^&#]*\).*/\1/p')
+
+CONTACT_TOKEN_RESPONSE=$(curl -s \
+  -X POST "${TENANT_BASE}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=authorization_code" \
+  --data-urlencode "code=${CONTACT_CODE}" \
+  --data-urlencode "redirect_uri=${REDIRECT_URI}" \
+  --data-urlencode "client_id=${CLIENT_ID}" \
+  --data-urlencode "client_secret=${CLIENT_SECRET}")
+
+CONTACT_TOKEN=$(echo "${CONTACT_TOKEN_RESPONSE}" | jq -r '.access_token')
+echo "${CONTACT_TOKEN_RESPONSE}" | jq -r '.scope'
+```
+
+### 確認ポイント
+
+- `access_token` が取得できること
+- レスポンスの `scope` に `email:change` が含まれること
+  （含まれない場合はテナントの `scopes_supported` とクライアントの `scope` を確認）
+
+---
+
+## Step 14: Email の確認（`openid` で足りること）
+
+アカウントに登録済みのアドレスが到達可能であることを確認します。**宛先はアカウントの現在値に固定**され、
+リクエストボディを取りません。
+
+### リクエスト
+
+**1. コードを要求**
+
+```bash
+VERIFY_CHALLENGE=$(curl -s \
+  -X POST "${TENANT_BASE}/v1/me/email/verification" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" \
+  -d '{"new_value": "attacker@example.com"}')
+
+echo "${VERIFY_CHALLENGE}" | jq .
+VERIFY_CHALLENGE_ID=$(echo "${VERIFY_CHALLENGE}" | jq -r '.id')
+```
+
+**2. Management API でチャレンジを取得**
+
+```bash
+USER_ID=$(curl -s "${TENANT_BASE}/v1/userinfo" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" | jq -r '.sub')
+
+curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/contact-verification-challenges?user_id=${USER_ID}&operation=email_verify" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq '.list[0]'
+
+VERIFY_CODE=$(curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/contact-verification-challenges/${VERIFY_CHALLENGE_ID}" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq -r '.verification_code')
+echo "Verification Code: ${VERIFY_CODE}"
+```
+
+**3. 確定**
+
+```bash
+curl -s \
+  -X POST "${TENANT_BASE}/v1/me/email/verification/${VERIFY_CHALLENGE_ID}/verify" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" \
+  -d "{\"verification_code\": \"${VERIFY_CODE}\"}" | jq .
+```
+
+### 確認ポイント
+
+- 1 で HTTP 200 と `id` が返ること
+- Management API の `target_value` が **`${TEST_EMAIL}`（現在値）** であること
+  — ボディに入れた `attacker@example.com` は**無視される**
+- `delivery` が `"internal"` であること（ローカル生成モード）
+- `verification_code` が 6 桁の数字、`attempts` が `0`、`expired` が `false` であること
+- 3 で HTTP 200 が返り、`user.email_verified` が `true` になること
+
+---
+
+## Step 15: Email の変更（ログイン識別子の移動）
+
+`email:change` スコープが要ります。確定すると `email` が置き換わり、`identity_unique_key_type` が
+`EMAIL_OR_EXTERNAL_USER_ID` なので **`preferred_username`（ログイン識別子）も追従** します。
+
+### リクエスト
+
+```bash
+NEW_EMAIL="verify-changed-$(date +%s)@example.com"
+
+CHANGE_CHALLENGE_ID=$(curl -s \
+  -X POST "${TENANT_BASE}/v1/me/email/change" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" \
+  -d "{\"new_value\": \"${NEW_EMAIL}\"}" | jq -r '.id')
+
+CHANGE_CODE=$(curl -s \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/organizations/${ORG_ID}/tenants/${PUBLIC_TENANT_ID}/contact-verification-challenges/${CHANGE_CHALLENGE_ID}" \
+  -H "Authorization: Bearer ${ORG_ACCESS_TOKEN}" | jq -r '.verification_code')
+
+curl -s \
+  -X POST "${TENANT_BASE}/v1/me/email/change/${CHANGE_CHALLENGE_ID}/verify" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" \
+  -d "{\"verification_code\": \"${CHANGE_CODE}\"}" | jq .
+```
+
+### 確認ポイント
+
+- HTTP 200 が返ること
+- レスポンスの `user.email` が `${NEW_EMAIL}` であること
+- レスポンスの `user.preferred_username` も `${NEW_EMAIL}` に追従していること
+- コードの宛先は**新しいアドレス**、変更通知（`email_change_notice`）の宛先は**旧アドレス**であること
+  — no-action モードでは実際には送信されないため、送信内容はアプリケーションログで確認します
+- 確定後に同じチャレンジ ID を再送すると HTTP 400 になること（使い捨て）
+
+---
+
+## Step 16: 新しいアドレスでログインできること
+
+識別子が移動したことの確認です。
+
+### リクエスト
+
+```bash
+COOKIE_JAR6=$(mktemp)
+NEW_LOGIN_STATE="verify-newlogin-$(date +%s)"
+
+NEW_LOGIN_AUTH_ID=$(curl -s -c "${COOKIE_JAR6}" -o /dev/null \
+  -w "%{redirect_url}" \
+  "${TENANT_BASE}/v1/authorizations?response_type=code&client_id=${CLIENT_ID}&redirect_uri=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${REDIRECT_URI}', safe=''))")&scope=openid+profile+email&state=${NEW_LOGIN_STATE}&prompt=login" \
+  | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
+
+curl -s -b "${COOKIE_JAR6}" -c "${COOKIE_JAR6}" \
+  -X POST "${TENANT_BASE}/v1/authorizations/${NEW_LOGIN_AUTH_ID}/password-authentication" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"username\": \"${NEW_EMAIL}\",
+    \"password\": \"${RESET_PASSWORD}\"
+  }" | jq .
+```
+
+### 確認ポイント
+
+- 新しいアドレスで HTTP 200 が返ること
+- 旧アドレス（`${TEST_EMAIL}`）では認証できないこと
+
+---
+
+## Step 17: 拒否されること（負の確認）
+
+### リクエスト
+
+```bash
+# 1. スコープ不足（ACCESS_TOKEN2 は openid profile email のみ）
+echo -n "insufficient scope: "
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -X POST "${TENANT_BASE}/v1/me/email/change" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN2}" \
+  -d '{"new_value": "someone-else@example.com"}'
+
+# 2. 現在値と同じ値への変更
+echo -n "same value: "
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -X POST "${TENANT_BASE}/v1/me/email/change" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" \
+  -d "{\"new_value\": \"${NEW_EMAIL}\"}"
+
+# 3. 不正な形式
+echo -n "malformed: "
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -X POST "${TENANT_BASE}/v1/me/email/change" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" \
+  -d '{"new_value": 12345}'
+
+# 4. 存在しない（＝他人の）チャレンジ ID
+echo -n "foreign challenge: "
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -X POST "${TENANT_BASE}/v1/me/email/change/00000000-0000-0000-0000-000000000000/verify" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}" \
+  -d '{"verification_code": "123456"}'
+
+# 5. クールダウン中の再送（resend_cooldown_seconds: 60）
+echo -n "1st send: "
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -X POST "${TENANT_BASE}/v1/me/email/verification" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}"
+echo -n "2nd send within cooldown: "
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -X POST "${TENANT_BASE}/v1/me/email/verification" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}"
+
+# 6. 本テナントには sms 認証設定が無いため、phone 系は到達しない
+echo -n "phone (no sms config): "
+curl -s -o /dev/null -w "%{http_code}\n" \
+  -X POST "${TENANT_BASE}/v1/me/phone/verification" \
+  -H "Authorization: Bearer ${CONTACT_TOKEN}"
+```
+
+### 確認ポイント
+
+| # | 期待 |
+|---|------|
+| 1 | `403` — `email:change` スコープが無い |
+| 2 | `400` — 現在値と同じ（確認エンドポイントを使うべき） |
+| 3 | `400` — 非文字列はスキーマ検証で弾かれ、**送信前**に拒否される |
+| 4 | `404` — 他人のチャレンジは「拒否」ではなく「存在しない」 |
+| 5 | 1 通目 `200` / 2 通目 `400` — 同一ユーザー × 同一操作の再送間隔 |
+| 6 | `404` — `sms` 認証設定が未登録。電話番号の手順は `../mfa-sms/VERIFY.md` を参照 |
+
+---
+
 ## チェックリスト
 
 ### Phase 1: User Registration
@@ -617,3 +914,17 @@ curl -s -b "${COOKIE_JAR4}" -c "${COOKIE_JAR4}" \
 | 11 | password:reset スコープ付きトークンが取得できる | |
 | 11 | Password reset が成功する | |
 | 12 | リセット後のパスワードでログインできる | |
+
+### Phase 4: Contact Verification & Change
+
+| Step | 確認項目 | 結果 |
+|------|---------|------|
+| 13 | `email:change` を含むトークンが取得できる | |
+| 14 | 確認は `openid` だけで開始でき、宛先が現在値に固定される（`new_value` が無視される） | |
+| 14 | Management API で `delivery: internal` と `verification_code` が取得できる | |
+| 14 | 確認の確定で `email_verified` が `true` になる | |
+| 15 | Email 変更が確定し、`email` が新しい値になる | |
+| 15 | `preferred_username` が新しい値に追従する（識別子の移動） | |
+| 16 | 新しいアドレスでログインでき、旧アドレスではできない | |
+| 17 | スコープ不足 `403` / 同一値 `400` / 不正形式 `400` / 他人のチャレンジ `404` | |
+| 17 | クールダウン中の再送が `400` になる | |
