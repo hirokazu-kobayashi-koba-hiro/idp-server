@@ -1840,32 +1840,49 @@ describe("Me Use Case: self-service contact verification and change", () => {
     expect(users.data.list.some((u) => u.email === newEmail)).toBe(true);
   });
 
-  it("policy: an identity-verified account cannot move the login identifier", async () => {
-    // The default for identifier_move is DENY, and it is the whole reason the policy exists:
-    // IdentityVerificationUserUpdater refuses to patch preferred_username even from a verification
-    // result, so self-service must not move it with one code either.
-    const ctx = await provisionTenant(systemAccessToken, "EMAIL");
+  it("policy: identity verification is expressed as a condition, not a switch", async () => {
+    // Both directions are the same knob. A tenant that wants only verified accounts to move the
+    // login identifier writes eq; one that wants the opposite writes ne. A dedicated two-valued
+    // setting could say one of those at best, which is why there is no longer one.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
+      contactChangePolicy: {
+        identifier_move: {
+          authentication_conditions: {
+            any_of: [
+              [
+                {
+                  path: "$.user.status",
+                  operation: "eq",
+                  value: "IDENTITY_VERIFIED",
+                },
+              ],
+            ],
+          },
+        },
+      },
+    });
     tenants.push(ctx);
     const stamp = `${Date.now()}`;
-    const email = `verified-${stamp}@me-email.example.com`;
-    const password = `VerifiedPass_${stamp}!`;
-    await createUser(ctx, {
-      name: `verified-${stamp}`,
-      email,
-      password,
-      status: "IDENTITY_VERIFIED",
-    });
-    const token = (await passwordGrant(ctx, email, password, changeScope)).data
-      .access_token;
 
-    const moved = `moved-${stamp}@me-email.example.com`;
+    const plain = `plain-${stamp}@me-email.example.com`;
+    const plainPassword = `PlainPass_${stamp}!`;
+    await createUser(ctx, {
+      name: `plain-${stamp}`,
+      email: plain,
+      password: plainPassword,
+    });
+    const plainToken = (
+      await passwordGrant(ctx, plain, plainPassword, changeScope)
+    ).data.access_token;
+
+    const refused = `refused-${stamp}@me-email.example.com`;
     const denied = await postWithJson({
       url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
-      headers: createBearerHeader(token),
-      body: { new_value: moved },
+      headers: createBearerHeader(plainToken),
+      body: { new_value: refused },
     });
     console.log(
-      "identity verified identifier move:",
+      "unverified identifier move:",
       denied.status,
       JSON.stringify(denied.data)
     );
@@ -1873,51 +1890,74 @@ describe("Me Use Case: self-service contact verification and change", () => {
 
     // Refused before the sender runs, so no message reached the address the caller named.
     const sent = await get({ url: "http://localhost:4000/sent-emails" });
-    expect(sent.data.filter((e) => e.to === moved)).toHaveLength(0);
+    expect(sent.data.filter((e) => e.to === refused)).toHaveLength(0);
 
-    // The other channel is attribute_only for this tenant, and its default is ALLOW: a rule this
-    // strict must not spread to a change that moves no identifier.
-    const phone = await postWithJson({
-      url: `${backendUrl}/${ctx.tenantId}/v1/me/phone/change`,
-      headers: createBearerHeader(token),
-      body: { new_value: `+8190${stamp.slice(-8)}` },
+    // The same tenant, the same rule, an account that satisfies it.
+    const verified = `verified-${stamp}@me-email.example.com`;
+    const verifiedPassword = `VerifiedPass_${stamp}!`;
+    await createUser(ctx, {
+      name: `verified-${stamp}`,
+      email: verified,
+      password: verifiedPassword,
+      status: "IDENTITY_VERIFIED",
     });
-    console.log("identity verified attribute-only change:", phone.status);
-    expect(phone.status).toBe(200);
+    const verifiedToken = (
+      await passwordGrant(ctx, verified, verifiedPassword, changeScope)
+    ).data.access_token;
+
+    const allowed = await runChange(
+      ctx,
+      verifiedToken,
+      "email",
+      `allowed-${stamp}@me-email.example.com`
+    );
+    console.log("verified identifier move:", allowed.status);
+    expect(allowed.status).toBe(200);
   });
 
-  it("policy: identity_verified_behavior falls back to DENY for an unimplemented value", async () => {
-    // DOWNGRADE_STATUS reads as the strict option but nothing downgrades anything, so resolving it
-    // would leave IDENTITY_VERIFIED standing across an identifier move.
+  it("policy: a device-registered account is not caught by an identity verification rule", async () => {
+    // IDENTITY_VERIFICATION_REQUIRED means verification was asked for and has not happened. A
+    // tenant using authentication_device_rule.required_identity_verification puts every user there
+    // on device registration, so treating it as "verified" left a device-bound client with no user
+    // able to change a contact at all.
     const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
       contactChangePolicy: {
-        identifier_move: { identity_verified_behavior: "DOWNGRADE_STATUS" },
+        identifier_move: {
+          authentication_conditions: {
+            any_of: [
+              [
+                {
+                  path: "$.user.status",
+                  operation: "ne",
+                  value: "IDENTITY_VERIFIED",
+                },
+              ],
+            ],
+          },
+        },
       },
     });
     tenants.push(ctx);
     const stamp = `${Date.now()}`;
-    const email = `downgrade-${stamp}@me-email.example.com`;
-    const password = `DowngradePass_${stamp}!`;
+    const email = `pending-${stamp}@me-email.example.com`;
+    const password = `PendingPass_${stamp}!`;
     await createUser(ctx, {
-      name: `downgrade-${stamp}`,
+      name: `pending-${stamp}`,
       email,
       password,
-      status: "IDENTITY_VERIFIED",
+      status: "IDENTITY_VERIFICATION_REQUIRED",
     });
     const token = (await passwordGrant(ctx, email, password, changeScope)).data
       .access_token;
 
-    const denied = await postWithJson({
-      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
-      headers: createBearerHeader(token),
-      body: { new_value: `downgraded-${stamp}@me-email.example.com` },
-    });
-    console.log(
-      "unimplemented identity_verified_behavior:",
-      denied.status,
-      JSON.stringify(denied.data)
+    const resp = await runChange(
+      ctx,
+      token,
+      "email",
+      `pending-moved-${stamp}@me-email.example.com`
     );
-    expect(denied.status).toBe(400);
+    console.log("verification-required identifier move:", resp.status);
+    expect(resp.status).toBe(200);
   });
 
   it("policy: an unreadable authentication_conditions refuses instead of relaxing", async () => {

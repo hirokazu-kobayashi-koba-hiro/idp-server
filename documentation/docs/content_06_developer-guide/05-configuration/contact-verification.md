@@ -244,12 +244,10 @@ verify 側（`{channel}-authentication`）:
         ]
       },
       "max_auth_age_seconds": 300,
-      "notify_previous_value": true,
-      "identity_verified_behavior": "DENY"
+      "notify_previous_value": true
     },
     "attribute_only": {
-      "notify_previous_value": true,
-      "identity_verified_behavior": "ALLOW"
+      "notify_previous_value": true
     }
   }
 }
@@ -292,19 +290,45 @@ verify 側（`{channel}-authentication`）:
 ```
 :::
 
-### `identity_verified_behavior`
+### 身元確認の状態で絞る
 
-| 値 | 挙動 |
-|---|---|
-| `ALLOW` | 身元確認状態に関係なく許可 |
-| `DENY` | `IDENTITY_VERIFIED` / `IDENTITY_VERIFICATION_REQUIRED` では拒否 |
+専用の設定項目はありません。`$.user.status` に対する条件として書きます。
 
-`identifier_move` の既定は `DENY` です。身元確認結果ですら `preferred_username` を
-動かさない設計（`IdentityVerificationUserUpdater`）と同じ線に揃えています。
+```json
+// 身元確認済みだけが識別子を動かせる
+"identifier_move": {
+  "authentication_conditions": {
+    "any_of": [[ { "path": "$.user.status", "operation": "eq", "value": "IDENTITY_VERIFIED" } ]]
+  }
+}
 
-上記以外の値を書いた場合は、**その `*_move` / `*_only` の既定値にフォールバック**します
-（`identifier_move` なら `DENY`）。警告ログが出ます。誤記や将来バージョンの値が、
-緩いほうではなく厳しいほうに落ちるようにしています。
+// 身元確認済みは動かせない（確認結果が主張した連絡先を守りたい場合）
+"identifier_move": {
+  "authentication_conditions": {
+    "any_of": [[ { "path": "$.user.status", "operation": "ne", "value": "IDENTITY_VERIFIED" } ]]
+  }
+}
+```
+
+条件式なので、**認証の強さと組み合わせられます**。
+
+```json
+"any_of": [[
+  { "path": "$.user.status", "operation": "eq", "value": "IDENTITY_VERIFIED" },
+  { "path": "$.amr", "operation": "contains", "value": "fido-uaf" }
+]]
+```
+
+:::warning `IDENTITY_VERIFICATION_REQUIRED` は「未確認」です
+「身元確認が要求されている」状態であって、**済んでいる状態ではありません**。
+`authentication_device_rule.required_identity_verification: true` のテナントでは
+**端末登録の時点で全利用者がこの状態になります**（`FidoUafRegistrationInteractor` /
+`Fido2RegistrationInteractor`）。`IDENTITY_VERIFIED` と同一視すると、端末必須の
+クライアントでは連絡先を変更できる利用者が居なくなります。
+
+確認が**実施中**かどうかは利用者の status ではなく `identity_verification_application`
+側で持ちます。
+:::
 
 ### `notify_previous_value`
 
@@ -397,8 +421,7 @@ WHERE id = ? AND tenant_id = ? AND user_id = ? FOR UPDATE
 ```
 
 3. **変更の重さを決めるなら** `identity_policy_config.contact_change_policy`。
-   未設定なら `identifier_move.identity_verified_behavior: DENY` と
-   `notify_previous_value: true` だけが効きます
+   未設定なら `notify_previous_value: true` だけが効きます（＝スコープだけが門番）
 
 **認証ポリシー（`flow` 設定）の追加は不要。**
 

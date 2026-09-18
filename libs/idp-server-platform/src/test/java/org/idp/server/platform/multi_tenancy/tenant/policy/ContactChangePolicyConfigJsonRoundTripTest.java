@@ -46,13 +46,10 @@ class ContactChangePolicyConfigJsonRoundTripTest {
 
     TenantIdentityPolicy restored = roundTrip(policy);
 
-    assertEquals(
-        IdentityVerifiedBehavior.DENY,
-        restored.contactChangePolicy().identifierMove().identityVerifiedBehavior());
-    assertEquals(
-        IdentityVerifiedBehavior.ALLOW,
-        restored.contactChangePolicy().attributeOnly().identityVerifiedBehavior());
+    assertTrue(restored.contactChangePolicy().identifierMove().isAllowed());
+    assertTrue(restored.contactChangePolicy().attributeOnly().isAllowed());
     assertTrue(restored.contactChangePolicy().identifierMove().shouldNotifyPreviousValue());
+    assertFalse(restored.contactChangePolicy().identifierMove().hasAuthenticationConditions());
   }
 
   @Test
@@ -82,9 +79,7 @@ class ContactChangePolicyConfigJsonRoundTripTest {
                         "max_auth_age_seconds",
                         300,
                         "notify_previous_value",
-                        false,
-                        "identity_verified_behavior",
-                        "DENY"))));
+                        false))));
 
     TenantIdentityPolicy restored = roundTrip(policy);
     ContactChangeRule identifierMove = restored.contactChangePolicy().identifierMove();
@@ -92,7 +87,6 @@ class ContactChangePolicyConfigJsonRoundTripTest {
     assertTrue(identifierMove.hasAuthenticationConditions());
     assertEquals(300, identifierMove.maxAuthAgeSeconds());
     assertFalse(identifierMove.shouldNotifyPreviousValue());
-    assertEquals(IdentityVerifiedBehavior.DENY, identifierMove.identityVerifiedBehavior());
   }
 
   /**

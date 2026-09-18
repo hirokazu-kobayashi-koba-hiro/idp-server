@@ -48,11 +48,6 @@ public class ContactChangePolicyVerifier {
           "this tenant does not allow changing this contact.", operation);
     }
 
-    if (rule.identityVerifiedBehavior().isDeny() && user.status().isIdentityVerifiedOrRequired()) {
-      return ContactVerificationResponse.failure(
-          "this contact is fixed by identity verification and cannot be changed here.", operation);
-    }
-
     if (!rule.satisfiedBy(authenticationContext.toJsonPath())) {
       return ContactVerificationResponse.failure(
           "this change requires a stronger authentication than the one behind this token.",

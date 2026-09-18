@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.authentication.Authentication;
+import org.idp.server.core.openid.authentication.evaluator.PolicyEvaluationUserContextCreator;
+import org.idp.server.core.openid.identity.User;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonNodeWrapper;
 import org.idp.server.platform.json.path.JsonPathWrapper;
@@ -47,9 +49,11 @@ import org.idp.server.platform.json.path.JsonPathWrapper;
 public class ContactChangeAuthenticationContext {
 
   Authentication authentication;
+  User user;
 
-  public ContactChangeAuthenticationContext(Authentication authentication) {
+  public ContactChangeAuthenticationContext(Authentication authentication, User user) {
     this.authentication = authentication == null ? new Authentication() : authentication;
+    this.user = user;
   }
 
   public List<String> methods() {
@@ -86,6 +90,12 @@ public class ContactChangeAuthenticationContext {
       context.put("auth_time", SystemDateTime.toEpochSecond(authentication.time()));
       context.put("auth_age", authAgeSeconds());
     }
+    // The same $.user.* projection authentication policy conditions already evaluate against
+    // (Issue #1501), reused rather than rebuilt: without it a rule can say how the caller
+    // authenticated but nothing about who they are, so "only an identity-verified account may move
+    // the login identifier" had no way to be written. It is an allow list for a reason — the
+    // boolean outcome is observable, so it stays a read of what the policy author can already see.
+    context.put("user", PolicyEvaluationUserContextCreator.create(user));
     return new JsonPathWrapper(JsonNodeWrapper.fromMap(context).toJson());
   }
 }

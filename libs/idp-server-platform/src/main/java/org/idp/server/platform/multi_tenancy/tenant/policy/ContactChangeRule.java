@@ -44,9 +44,18 @@ import org.idp.server.platform.log.LoggerWrapper;
  *   "amr": ["password", "sms"], // as emitted by StandardAuthenticationMethod, not RFC 8176 names
  *   "acr": "urn:...",
  *   "auth_time": 1789000000,  // epoch seconds; absent when the token carries no auth time
- *   "auth_age": 42            // seconds since auth_time; absent when auth_time is
+ *   "auth_age": 42,           // seconds since auth_time; absent when auth_time is
+ *   "user": { "status": "IDENTITY_VERIFIED", "email_verified": true, "roles": [...], ... }
  * }
  * }</pre>
+ *
+ * <p>{@code $.user.*} is the projection authentication policy conditions already evaluate against
+ * (Issue #1501). It is why there is no separate switch for identity verification: "only a verified
+ * account may move the login identifier" and its inverse are both conditions over {@code
+ * $.user.status}, and a dedicated two-valued setting could express one of them at best. It also
+ * kept drawing the line in the wrong place — it fired on a plain verification, which replaces
+ * nothing, and it covered {@code IDENTITY_VERIFICATION_REQUIRED}, which means verification has been
+ * asked for and not done.
  */
 public class ContactChangeRule {
 
@@ -78,7 +87,6 @@ public class ContactChangeRule {
 
   int maxAuthAgeSeconds;
   boolean notifyPreviousValue;
-  IdentityVerifiedBehavior identityVerifiedBehavior;
 
   /**
    * Required by the Jackson round trip. See {@link
@@ -90,16 +98,8 @@ public class ContactChangeRule {
       boolean allowed,
       List<List<ConditionDefinition>> authenticationConditions,
       int maxAuthAgeSeconds,
-      boolean notifyPreviousValue,
-      IdentityVerifiedBehavior identityVerifiedBehavior) {
-    this(
-        allowed,
-        authenticationConditions,
-        false,
-        null,
-        maxAuthAgeSeconds,
-        notifyPreviousValue,
-        identityVerifiedBehavior);
+      boolean notifyPreviousValue) {
+    this(allowed, authenticationConditions, false, null, maxAuthAgeSeconds, notifyPreviousValue);
   }
 
   ContactChangeRule(
@@ -108,8 +108,7 @@ public class ContactChangeRule {
       boolean authenticationConditionsMalformed,
       Object rawAuthenticationConditions,
       int maxAuthAgeSeconds,
-      boolean notifyPreviousValue,
-      IdentityVerifiedBehavior identityVerifiedBehavior) {
+      boolean notifyPreviousValue) {
     this.allowed = allowed;
     this.authenticationConditions =
         authenticationConditions == null ? new ArrayList<>() : authenticationConditions;
@@ -117,7 +116,6 @@ public class ContactChangeRule {
     this.rawAuthenticationConditions = rawAuthenticationConditions;
     this.maxAuthAgeSeconds = maxAuthAgeSeconds;
     this.notifyPreviousValue = notifyPreviousValue;
-    this.identityVerifiedBehavior = identityVerifiedBehavior;
   }
 
   /**
@@ -129,12 +127,12 @@ public class ContactChangeRule {
    * not silently keep an eKYC assertion whose basis just moved.
    */
   public static ContactChangeRule defaultIdentifierMoveRule() {
-    return new ContactChangeRule(true, new ArrayList<>(), 0, true, IdentityVerifiedBehavior.DENY);
+    return new ContactChangeRule(true, new ArrayList<>(), 0, true);
   }
 
   /** Default for a change that only updates an attribute. */
   public static ContactChangeRule defaultAttributeOnlyRule() {
-    return new ContactChangeRule(true, new ArrayList<>(), 0, true, IdentityVerifiedBehavior.ALLOW);
+    return new ContactChangeRule(true, new ArrayList<>(), 0, true);
   }
 
   public boolean isAllowed() {
@@ -185,19 +183,6 @@ public class ContactChangeRule {
     return notifyPreviousValue;
   }
 
-  /**
-   * Falls back to {@code DENY} rather than returning null.
-   *
-   * <p>Same reason as {@link ContactChangePolicyConfig#identifierMove()}: the caller calls {@code
-   * isDeny()} on the answer. Of the two defaults this is the strict one, which is the right side to
-   * land on when the configuration says nothing readable.
-   */
-  public IdentityVerifiedBehavior identityVerifiedBehavior() {
-    return identityVerifiedBehavior != null
-        ? identityVerifiedBehavior
-        : IdentityVerifiedBehavior.DENY;
-  }
-
   public static ContactChangeRule fromMap(Map<String, Object> map, ContactChangeRule defaultRule) {
     if (map == null || map.isEmpty()) {
       return defaultRule;
@@ -218,11 +203,6 @@ public class ContactChangeRule {
       notifyPreviousValue = value;
     }
 
-    IdentityVerifiedBehavior identityVerifiedBehavior = defaultRule.identityVerifiedBehavior;
-    if (map.get("identity_verified_behavior") instanceof String value) {
-      identityVerifiedBehavior = IdentityVerifiedBehavior.of(value, identityVerifiedBehavior);
-    }
-
     Object rawConditions = map.get("authentication_conditions");
     ParsedConditions parsed = parseConditions(rawConditions);
 
@@ -232,8 +212,7 @@ public class ContactChangeRule {
         parsed.malformed(),
         rawConditions,
         maxAuthAgeSeconds,
-        notifyPreviousValue,
-        identityVerifiedBehavior);
+        notifyPreviousValue);
   }
 
   /** What {@code authentication_conditions} parsed to, and whether any of it was unreadable. */
@@ -332,7 +311,6 @@ public class ContactChangeRule {
       map.put("max_auth_age_seconds", maxAuthAgeSeconds);
     }
     map.put("notify_previous_value", notifyPreviousValue);
-    map.put("identity_verified_behavior", identityVerifiedBehavior.name());
     return map;
   }
 }

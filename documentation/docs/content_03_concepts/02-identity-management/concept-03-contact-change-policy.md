@@ -58,11 +58,11 @@ identifiers and lifecycle state must never be patchable from verification result
 even by tenant configuration.
 ```
 
-外部の身元確認プロバイダの結果でも動かさないものを、セルフサービスがワンタイムコード 1 本で動かしてよいか——という問いが残ります。テナントが答えられるようにしたのが `identity_verified_behavior` です。
+外部の身元確認プロバイダの結果でも動かさないものを、セルフサービスがワンタイムコード 1 本で動かしてよいか——という問いが残ります。テナントが答えるのは `authentication_conditions` です（後述）。
 
 ---
 
-## ポリシーの 3 つの軸
+## ポリシーの 2 つの軸
 
 ### 1. どんな認証を経ていることを要求するか
 
@@ -86,18 +86,23 @@ even by tenant configuration.
 
 長期のアクセストークンやリフレッシュで延命されたトークンでは、「認証したのは数週間前」ということが起こります。識別子を動かす操作にそれを許すかはテナントの判断です。
 
-### 3. 身元確認済みのアカウントをどう扱うか
+### 身元確認の状態は、専用の軸ではなく条件で書く
 
-`identity_verified_behavior` で決めます。
+「身元確認済みだけに許す」も「身元確認済みには許さない」も、**どちらも実在する要求**です。専用の設定項目にすると 2 値では片方しか言えず、値を足しても次の要求で詰まります。
 
-| 値 | 意味 |
-|---|---|
-| `ALLOW` | 身元確認状態に関係なく許可する |
-| `DENY` | 身元確認済み、または身元確認が必要な状態では拒否する |
+`authentication_conditions` は認証ポリシーと同じ `$.user.*` を読めるので、どちらも同じ書き方で表せます。
 
-`DENY` は eKYC 途中（`IDENTITY_VERIFICATION_REQUIRED`）も含みます。途中で識別子が動くと、確認結果が「開始時とは違う識別子」に着地するためです。
+```json
+// 身元確認済みだけが識別子を動かせる
+{ "path": "$.user.status", "operation": "eq", "value": "IDENTITY_VERIFIED" }
 
-「許可するが確定時に身元確認状態を落とす」という第3の選択肢は、**まだありません**。降格を実行する処理が無い状態で値だけ受け付けると、名前は最も厳しく見えるのに挙動は `ALLOW` と同じになり、この設定が防ごうとしているものをそのまま通してしまうためです。
+// 身元確認済みには動かさせない
+{ "path": "$.user.status", "operation": "ne", "value": "IDENTITY_VERIFIED" }
+```
+
+条件式なので、認証の強さと組み合わせることもできます（グループ内は AND）。
+
+**`IDENTITY_VERIFICATION_REQUIRED` は「未確認」です。** 「確認が要求されている」状態であって、済んでいる状態ではありません。`authentication_device_rule.required_identity_verification: true` のテナントでは端末登録の時点で全利用者がこの状態になるため、`IDENTITY_VERIFIED` と同一視すると、端末必須のクライアントでは変更できる利用者が居なくなります。確認が実施中かどうかは利用者の status ではなく、身元確認申込み側で持ちます。
 
 ---
 
@@ -124,20 +129,19 @@ even by tenant configuration.
 
 ## デフォルトの考え方
 
-未設定のテナントで効くのは 2 つだけです。
+未設定のテナントで効くのは 1 つだけです。
 
 | | `identifier_move` | `attribute_only` |
 |---|---|---|
 | `authentication_conditions` | **なし** | なし |
+| `max_auth_age_seconds` | なし | なし |
 | `notify_previous_value` | `true` | `true` |
-| `identity_verified_behavior` | **`DENY`** | `ALLOW` |
 
 `authentication_conditions` をデフォルトで空にしているのは、前述のとおり**デフォルトで方式を名指しすると、その方式を使っていないテナントを締め出す**からです。ここはテナントが自分の構成を知って書くべき箇所です。
 
-デフォルトに入れたのは、方式に依存せず安全に仮定できるものだけです。
+デフォルトに入れたのは、方式にも利用者の状態にも依存せず安全に仮定できるもの——**置き換えた事実を旧い値に伝える**（検知の層）——だけです。
 
-- 置き換えた事実を旧い値に伝える（検知の層）
-- 身元確認済みアカウントの識別子は、セルフサービスでは動かさない（確認結果の扱いと同じ線）
+裏を返すと、**既定のままではスコープだけが門番**です。識別子が動くテナントは `authentication_conditions` と `max_auth_age_seconds` を明示的に書いてください。
 
 `attribute_only` を緩いままにしているのは、これが本当にただの属性更新だからです。
 
