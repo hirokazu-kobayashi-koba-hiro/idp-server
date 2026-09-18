@@ -80,6 +80,12 @@ public class ContactChangeRule {
   boolean notifyPreviousValue;
   IdentityVerifiedBehavior identityVerifiedBehavior;
 
+  /**
+   * Required by the Jackson round trip. See {@link
+   * ContactChangePolicyConfig#ContactChangePolicyConfig()}.
+   */
+  public ContactChangeRule() {}
+
   public ContactChangeRule(
       boolean allowed,
       List<List<ConditionDefinition>> authenticationConditions,
@@ -179,8 +185,17 @@ public class ContactChangeRule {
     return notifyPreviousValue;
   }
 
+  /**
+   * Falls back to {@code DENY} rather than returning null.
+   *
+   * <p>Same reason as {@link ContactChangePolicyConfig#identifierMove()}: the caller calls {@code
+   * isDeny()} on the answer. Of the two defaults this is the strict one, which is the right side to
+   * land on when the configuration says nothing readable.
+   */
   public IdentityVerifiedBehavior identityVerifiedBehavior() {
-    return identityVerifiedBehavior;
+    return identityVerifiedBehavior != null
+        ? identityVerifiedBehavior
+        : IdentityVerifiedBehavior.DENY;
   }
 
   public static ContactChangeRule fromMap(Map<String, Object> map, ContactChangeRule defaultRule) {

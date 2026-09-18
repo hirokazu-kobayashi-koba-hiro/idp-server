@@ -38,6 +38,18 @@ public class ContactChangePolicyConfig {
   ContactChangeRule identifierMove;
   ContactChangeRule attributeOnly;
 
+  /**
+   * Required by the Jackson round trip the tenant cache performs.
+   *
+   * <p>{@code JedisCacheStore} writes a {@code Tenant} with {@code JsonConverter.write} and reads
+   * it back with {@code JsonConverter.read}, so every nested policy needs a way to be constructed.
+   * Without it the read throws, the failure is swallowed into a fallback to the database, and the
+   * tenant cache is silently dead for every tenant that configured this — with an ERROR per lookup.
+   * The sibling policies ({@code PasswordPolicyConfig}, {@code AuthenticationDeviceRule}, {@code
+   * UserAttributeLoadRule}) all carry one for the same reason.
+   */
+  public ContactChangePolicyConfig() {}
+
   public ContactChangePolicyConfig(
       ContactChangeRule identifierMove, ContactChangeRule attributeOnly) {
     this.identifierMove = identifierMove;
@@ -56,15 +68,25 @@ public class ContactChangePolicyConfig {
    * @param movesIdentifier whether committing this change relocates {@code preferred_username}
    */
   public ContactChangeRule ruleFor(boolean movesIdentifier) {
-    return movesIdentifier ? identifierMove : attributeOnly;
+    return movesIdentifier ? identifierMove() : attributeOnly();
   }
 
+  /**
+   * Falls back to the default rather than returning null.
+   *
+   * <p>Nothing this codebase writes omits the rules, but the no-arg constructor exists for Jackson,
+   * so a document that predates or outlives this shape can produce one. The caller's next move is
+   * {@code identityVerifiedBehavior().isDeny()} — a null here would be an NPE on a security
+   * decision, answered as a 500. Landing on the default instead keeps an identifier move on {@code
+   * DENY}.
+   */
   public ContactChangeRule identifierMove() {
-    return identifierMove;
+    return identifierMove != null ? identifierMove : ContactChangeRule.defaultIdentifierMoveRule();
   }
 
+  /** Falls back to the default. See {@link #identifierMove()}. */
   public ContactChangeRule attributeOnly() {
-    return attributeOnly;
+    return attributeOnly != null ? attributeOnly : ContactChangeRule.defaultAttributeOnlyRule();
   }
 
   @SuppressWarnings("unchecked")
