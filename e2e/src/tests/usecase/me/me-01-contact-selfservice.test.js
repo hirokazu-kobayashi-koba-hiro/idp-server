@@ -2044,6 +2044,77 @@ describe("Me Use Case: self-service contact verification and change", () => {
     expect(resend.data.error_description).toContain("wait up to");
   });
 
+  it("notification: an Email hook on email_change_success reaches the pre-change address", async () => {
+    // A delegated channel cannot send the *_notice (no templates in that configuration), and the
+    // documented alternative is a security event hook. That only helps if the hook's recipient is
+    // the address being replaced - EmailSecurityEventHookExecutor sends to
+    // securityEvent.user().email(), which comes from oAuthToken.user() -> accessToken.user(), a
+    // snapshot taken when the token was issued rather than the user the change just wrote.
+    const ctx = await provisionTenant(systemAccessToken, "EMAIL");
+    tenants.push(ctx);
+    const stamp = `${Date.now()}`;
+    const original = `hook-original-${stamp}@me-email.example.com`;
+    const password = `HookPass_${stamp}!`;
+    await createUser(ctx, { name: `hook-${stamp}`, email: original, password });
+
+    const hookCreated = await postWithJson({
+      url: `${backendUrl}/v1/management/organizations/${ctx.organizationId}/tenants/${ctx.tenantId}/security-event-hook-configurations`,
+      headers: { Authorization: `Bearer ${ctx.mgmtAccessToken}` },
+      body: {
+        id: uuidv4(),
+        type: "Email",
+        triggers: ["email_change_success"],
+        events: {
+          email_change_success: {
+            execution: {
+              function: "email",
+              details: {
+                function: "http_request",
+                sender: "hook@me-email.example.com",
+                subject: `hook-notice-${stamp}`,
+                body: "Your registered contact was changed.",
+                http_request: {
+                  url: "http://host.docker.internal:4000/sent-emails",
+                  method: "POST",
+                  header_mapping_rules: [
+                    { static_value: "application/json", to: "Content-Type" },
+                  ],
+                  body_mapping_rules: [{ from: "$.request_body", to: "*" }],
+                },
+              },
+            },
+          },
+        },
+        enabled: true,
+      },
+    });
+    console.log("email hook create:", hookCreated.status);
+    expect(hookCreated.status).toBe(201);
+
+    const token = (await passwordGrant(ctx, original, password, changeScope))
+      .data.access_token;
+    const moved = `hook-moved-${stamp}@me-email.example.com`;
+
+    expect((await runChange(ctx, token, "email", moved)).status).toBe(200);
+
+    // Hooks run asynchronously.
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    const sent = await get({ url: "http://localhost:4000/sent-emails" });
+    const notices = sent.data.filter(
+      (e) => e.subject === `hook-notice-${stamp}`
+    );
+    console.log(
+      "hook notices:",
+      JSON.stringify(notices.map((e) => ({ to: e.to, subject: e.subject })))
+    );
+    expect(notices.length).toBeGreaterThan(0);
+
+    // The point of the test: the pre-change address, not the one just committed.
+    expect(notices.every((e) => e.to === original)).toBe(true);
+    expect(notices.some((e) => e.to === moved)).toBe(false);
+  });
+
   it("audit: emits verify / change events separately", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL");
     tenants.push(ctx);

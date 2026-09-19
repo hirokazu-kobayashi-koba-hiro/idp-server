@@ -161,6 +161,9 @@ verify 側（`{channel}-authentication`）:
 `AccessToken.user()`）。結果として `email_change_success` のフックは実質**変更前のアドレス**に届くが、
 「置き換えられた値」ではなく「トークンを取った時点の値」なので、**同じトークンで 2 回変更した場合は
 2 回とも最初のアドレス**に飛ぶ。
+
+この宛先は E2E で固定している（`me-01-contact-selfservice.test.js` の
+"an Email hook on email_change_success reaches the pre-change address"）。
 :::
 
 ### 成否をボディで伝える外部サービス
