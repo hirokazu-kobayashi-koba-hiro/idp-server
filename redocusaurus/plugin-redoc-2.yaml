@@ -1,15 +1,24 @@
 openapi: 3.0.3
 info:
   title: リソースオーナー用API
+  description: リソースオーナー（エンドユーザー）本人が、自身のアカウント・連絡先・認証手段・身元確認を操作するためのエンドポイント仕様
   version: 1.0.0
+  contact:
+    name: idp-server OSS
+servers:
+  - url: https://api.local.test
+    description: IdP Server API エンドポイント(ローカル)
 tags:
   - name: ユーザー
     description: |
       リソースオーナー（ユーザー）本人による操作に関するAPI群。
 
       主に以下のような操作を提供します：
-       - 自身のアカウント削除
+       - 連絡先（メールアドレス / 電話番号）の確認・変更
+       - パスワードの変更・リセット
        - 多要素認証（MFA）の登録要求（FIDO-UAF など）
+       - 認証デバイスの部分更新・削除
+       - 自身のアカウント削除
 
       アクセストークンを用いて、ユーザー本人による安全な自己操作を実現します。
   - name: 身元確認申込み
@@ -50,15 +59,24 @@ paths:
         ユーザー（リソースオーナー）自身の削除を行う。
       parameters:
         - $ref: '#/components/parameters/TenantId'
+      security:
+        - OAuth2:
+            - openid
       responses:
         '204':
           description: User deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`openid` が必要）
           content:
             application/json:
               schema:
-                type: object
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: The request requires 'openid' scope
+                scope: openid
         '500':
           $ref: '#/components/responses/InternalServerError'
   /{tenant-id}/v1/me/mfa/{mfa-operation-type}:
@@ -71,6 +89,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/MfaOperationType'
+      security:
+        - OAuth2: []
       requestBody:
         required: false
         description: MFAの仕様に応じたパラメータをBodyに設定する。
@@ -109,6 +129,9 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/DeviceId'
+      security:
+        - OAuth2:
+            - claims:authentication_devices
       requestBody:
         required: false
         content:
@@ -119,11 +142,460 @@ paths:
         '200':
           description: 200 OK
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: |
+            リクエストボディの検証エラー、または指定したデバイスを当該ユーザーが保持していない。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: invalid_request
+                  error_description:
+                    type: string
+                    example: >-
+                      User does not have authentication device
+                      (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).
+                  error_messages:
+                    type: array
+                    items:
+                      type: string
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`claims:authentication_devices` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: The request requires 'claims:authentication_devices' scope
+                scope: claims:authentication_devices
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - ユーザー
+      summary: 認証デバイス削除API
+      description: >
+        認証デバイスの登録解除を行う。削除後、当該デバイスでの認証はできなくなる。
+
+
+        ## セキュリティイベント
+
+        - `authentication_device_deregistration_success` /
+        `authentication_device_deregistration_failure`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/DeviceId'
+      security:
+        - OAuth2:
+            - claims:authentication_devices
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`claims:authentication_devices` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: The request requires 'claims:authentication_devices' scope
+                scope: claims:authentication_devices
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: |
+            指定したデバイスを当該ユーザーが保持していない。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: invalid_request
+                  error_description:
+                    type: string
+                    example: >-
+                      User does not have authentication device
+                      (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /{tenant-id}/v1/me/email/verification:
+    post:
+      tags:
+        - ユーザー
+      summary: メールアドレスの確認（開始）
+      description: |
+        認証済みユーザーが、**現在アカウントに登録されているメールアドレス**の到達性を確認するフローを開始します。
+
+        **送信先はサーバが決めます。** リクエストボディは受け取らず、`new_value` を送っても無視されるため、
+        このエンドポイントは送信先を差し替えられません。メールアドレスを変える場合は `/v1/me/email/change` を
+        使います（必要スコープが異なります）。
+
+        アカウントにメールアドレスが登録されていない場合は `400`。
+
+        直前の送信から `resend_cooldown_seconds`（未設定は 60 秒）以内の再送も `400`。
+        クールダウンは「ユーザー + 操作」単位なので、変更フロー側とは独立です。
+
+        ## セキュリティイベント
+        - `email_verify_request_success` / `email_verify_request_failure`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      security:
+        - OAuth2:
+            - openid
+      responses:
+        '200':
+          $ref: '#/components/responses/ContactChallengeStarted'
+        '400':
+          $ref: '#/components/responses/ContactVerificationBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`openid` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: The request requires 'openid' scope
+                scope: openid
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /{tenant-id}/v1/me/email/verification/{id}/verify:
+    post:
+      tags:
+        - ユーザー
+      summary: メールアドレスの確認（コード検証・確定）
+      description: |
+        コードを検証し、`email_verified: true` を確定します。メールアドレス自体は変わりません。
+
+        ## セキュリティイベント
+        - `email_verify_success` / `email_verify_failure`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ContactChallengeId'
+      security:
+        - OAuth2:
+            - openid
+      requestBody:
+        $ref: '#/components/requestBodies/ContactVerificationCode'
+      responses:
+        '200':
+          description: 検証成功
+        '400':
+          description: コード不正 / 期限切れ / 試行上限超過
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`openid` が必要）
+        '404':
+          $ref: '#/components/responses/ContactChallengeNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /{tenant-id}/v1/me/email/change:
+    post:
+      tags:
+        - ユーザー
+      summary: メールアドレスの変更（開始）
+      description: >
+        認証済みユーザーが自分のメールアドレスを**別の値に変更**するフローを開始します。
+
+        確認コードは**変更先**にメールで送信されます。
+
+
+        **`openid` ではなく専用スコープ `email:change` が必要です。** identity policy が `EMAIL`
+        の場合、
+
+        確定後は新しいメールアドレスがログイン識別子（`preferred_username`）になるため、通常の OIDC トークンでは
+
+        実行できないようにしています。
+
+
+        `new_value` に現在の値を指定した場合は `400`（`/v1/me/email/verification` を使います）。
+
+
+        直前の送信から `resend_cooldown_seconds`（未設定は 60 秒）以内の再送も `400`。
+
+        宛先を呼び出し側が指定できるため、無制限な送信を防ぐための制限です。
+
+        クールダウンは「ユーザー + 操作」単位なので、もう一方のチャネルや確認フローは通ります。
+
+
+        ## セキュリティイベント
+
+        - `email_change_request_success` / `email_change_request_failure`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      security:
+        - OAuth2:
+            - email:change
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - new_value
+              properties:
+                new_value:
+                  type: string
+                  maxLength: 255
+                  pattern: ^[^\s@]+@[^\s@]+\.[^\s@]+$
+                  description: |
+                    新しいメールアドレス。
+                    送信前に形式・型検証され、不正なら 400（コードは送信されない）。
+                    非文字列（数値・オブジェクト・配列・null・真偽値）も拒否されます。
+            example:
+              new_value: new@example.com
+      responses:
+        '200':
+          $ref: '#/components/responses/ContactChallengeStarted'
+        '400':
+          $ref: '#/components/responses/ContactVerificationBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`email:change` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: The request requires 'email:change' scope
+                scope: email:change
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /{tenant-id}/v1/me/email/change/{id}/verify:
+    post:
+      tags:
+        - ユーザー
+      summary: メールアドレスの変更（コード検証・確定）
+      description: |
+        コードを検証し、メールアドレスを確定します。`email` が更新され `email_verified: true` になります。
+        identity policy が `EMAIL` の場合、確定後は新しいメールアドレスがログイン識別子になり、
+        旧メールアドレスでのログインはできなくなります。
+
+        ## セキュリティイベント
+        - `email_change_success` / `email_change_failure`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ContactChallengeId'
+      security:
+        - OAuth2:
+            - email:change
+      requestBody:
+        $ref: '#/components/requestBodies/ContactVerificationCode'
+      responses:
+        '200':
+          description: 検証成功
+        '400':
+          description: コード不正 / 期限切れ / 試行上限超過 / 変更先が他ユーザーで使用済み
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`email:change` が必要）
+        '404':
+          $ref: '#/components/responses/ContactChallengeNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /{tenant-id}/v1/me/phone/verification:
+    post:
+      tags:
+        - ユーザー
+      summary: 電話番号の確認（開始）
+      description: |
+        認証済みユーザーが、**現在アカウントに登録されている電話番号**の到達性を確認するフローを開始します。
+
+        **送信先はサーバが決めます。** リクエストボディは受け取らず、`new_value` を送っても無視されるため、
+        このエンドポイントは送信先を差し替えられません。電話番号を変える場合は `/v1/me/phone/change` を
+        使います（必要スコープが異なります）。
+
+        アカウントに電話番号が登録されていない場合は `400`。
+
+        直前の送信から `resend_cooldown_seconds`（未設定は 60 秒）以内の再送も `400`。
+        クールダウンは「ユーザー + 操作」単位なので、変更フロー側とは独立です。
+
+        ## セキュリティイベント
+        - `phone_verify_request_success` / `phone_verify_request_failure`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      security:
+        - OAuth2:
+            - openid
+      responses:
+        '200':
+          $ref: '#/components/responses/ContactChallengeStarted'
+        '400':
+          $ref: '#/components/responses/ContactVerificationBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`openid` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: The request requires 'openid' scope
+                scope: openid
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /{tenant-id}/v1/me/phone/verification/{id}/verify:
+    post:
+      tags:
+        - ユーザー
+      summary: 電話番号の確認（コード検証・確定）
+      description: |
+        コードを検証し、`phone_number_verified: true` を確定します。電話番号自体は変わりません。
+
+        ## セキュリティイベント
+        - `phone_verify_success` / `phone_verify_failure`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ContactChallengeId'
+      security:
+        - OAuth2:
+            - openid
+      requestBody:
+        $ref: '#/components/requestBodies/ContactVerificationCode'
+      responses:
+        '200':
+          description: 検証成功
+        '400':
+          description: コード不正 / 期限切れ / 試行上限超過
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`openid` が必要）
+        '404':
+          $ref: '#/components/responses/ContactChallengeNotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /{tenant-id}/v1/me/phone/change:
+    post:
+      tags:
+        - ユーザー
+      summary: 電話番号の変更（開始）
+      description: >
+        認証済みユーザーが自分の電話番号を**別の値に変更**するフローを開始します。
+
+        確認コードは**変更先**にSMSで送信されます。
+
+
+        **`openid` ではなく専用スコープ `phone:change` が必要です。** identity policy が `PHONE`
+        の場合、
+
+        確定後は新しい電話番号がログイン識別子（`preferred_username`）になるため、通常の OIDC トークンでは
+
+        実行できないようにしています。
+
+
+        `new_value` に現在の値を指定した場合は `400`（`/v1/me/phone/verification` を使います）。
+
+
+        直前の送信から `resend_cooldown_seconds`（未設定は 60 秒）以内の再送も `400`。
+
+        宛先を呼び出し側が指定できるため、無制限な送信を防ぐための制限です。
+
+        クールダウンは「ユーザー + 操作」単位なので、もう一方のチャネルや確認フローは通ります。
+
+
+        ## セキュリティイベント
+
+        - `phone_change_request_success` / `phone_change_request_failure`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      security:
+        - OAuth2:
+            - phone:change
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - new_value
+              properties:
+                new_value:
+                  type: string
+                  maxLength: 32
+                  pattern: ^[+0-9][0-9 ()\-]{2,31}$
+                  description: >
+                    新しい電話番号。E.164
+                    を推奨しますが、国内表記（ハイフン区切り等）も受け付けます（テナントごとの表記揺れを弾かないため、意図的に緩い検証です）。
+
+                    送信前に形式・型検証され、不正なら 400（コードは送信されない）。
+
+                    非文字列（数値・オブジェクト・配列・null・真偽値）も拒否されます。
+            example:
+              new_value: '+819012345678'
+      responses:
+        '200':
+          $ref: '#/components/responses/ContactChallengeStarted'
+        '400':
+          $ref: '#/components/responses/ContactVerificationBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`phone:change` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: The request requires 'phone:change' scope
+                scope: phone:change
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /{tenant-id}/v1/me/phone/change/{id}/verify:
+    post:
+      tags:
+        - ユーザー
+      summary: 電話番号の変更（コード検証・確定）
+      description: >
+        コードを検証し、電話番号を確定します。`phone_number` が更新され `phone_number_verified: true`
+        になります。
+
+        identity policy が `PHONE` の場合、確定後は新しい電話番号がログイン識別子になり、
+
+        旧電話番号でのログインはできなくなります。
+
+
+        ## セキュリティイベント
+
+        - `phone_change_success` / `phone_change_failure`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/ContactChallengeId'
+      security:
+        - OAuth2:
+            - phone:change
+      requestBody:
+        $ref: '#/components/requestBodies/ContactVerificationCode'
+      responses:
+        '200':
+          description: 検証成功
+        '400':
+          description: コード不正 / 期限切れ / 試行上限超過 / 変更先が他ユーザーで使用済み
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`phone:change` が必要）
+        '404':
+          $ref: '#/components/responses/ContactChallengeNotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /{tenant-id}/v1/me/password/change:
@@ -761,6 +1233,8 @@ paths:
                     description: ページネーション用のオフセット
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /{tenant-id}/v1/me/identity-verification/applications/{verification-type}/{id}/{verification-process}:
@@ -866,6 +1340,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -876,7 +1352,7 @@ paths:
         - 身元確認結果
       security:
         - OAuth2:
-            - identity-verification-result
+            - identity_verification_result
       summary: 身元確認結果の一覧取得
       description: |
         身元確認結果の一覧を取得します。
@@ -1059,12 +1535,48 @@ paths:
                     description: ページネーション用のオフセット
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
   responses:
+    ContactChallengeStarted:
+      description: 確認コード送信成功。返却された id を verify に渡す
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - id
+            properties:
+              id:
+                type: string
+                description: チャレンジID
+          example:
+            id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+    ContactVerificationBadRequest:
+      description: リクエストエラー（詳細は description 参照）
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: invalid_request
+              error_description:
+                type: string
+              error_messages:
+                type: array
+                items:
+                  type: string
+    ContactChallengeNotFound:
+      description: |
+        チャレンジが存在しない。呼び出しユーザーのものでない場合、操作種別が一致しない場合、
+        既に消費済みの場合も同じ 404（存在有無を推測させないため）。
     BadRequest:
       description: |
         リクエストパラメータが不正、検証エラー、プロセスシーケンスエラー
@@ -1244,59 +1756,106 @@ components:
                     error: invalid_token
                     error_description: The access token provided is invalid or expired
     Forbidden:
-      description: |
-        権限エラー。スコープ不足、または外部サービスから403エラーが返された場合
+      description: >
+        権限エラー。**ボディの形が 2 通りあります。**
+
+
+        ## 1. スコープ不足
+
+
+        身元確認系のスコープ検査は Spring Security のフィルタ層で行うため
+
+        （`SecurityConfig` の `hasAuthority`）、OAuth のエラー形式ではなく
+
+        フレームワーク既定のエラーボディが返ります。`insufficient_scope` は**返りません**。
+
+
+        ```json
+
+        { "timestamp": "2026-09-19T07:56:30.704Z", "status": 403, "error":
+        "Forbidden", "path": "/{tenant-id}/v1/me/identity-verification/results"
+        }
+
+        ```
+
+
+        連絡先・パスワード・認証デバイス・ユーザー削除は各操作の中で検査するため
+
+        `insufficient_scope` 形式です（各操作の `403` を参照）。
+
+
+        ## 2. 外部サービスが 403 を返した
+
+
+        `execution_failed` として `error_details` に外部の応答を入れて返します。
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - error
-              - error_description
-            properties:
-              error:
-                type: string
-                example: insufficient_scope
-                description: >
-                  エラーコード。`insufficient_scope`（スコープ不足）または
-                  `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: >-
-                  The request requires higher privileges than provided by the
-                  access token
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
+            oneOf:
+              - title: スコープ不足（フィルタ層）
                 type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
                 required:
-                  - execution_type
-                  - status_category
-                  - status_code
+                  - status
+                  - error
                 properties:
-                  execution_type:
+                  timestamp:
                     type: string
-                    example: http_request
-                  status_category:
-                    type: string
-                    example: client_error
-                  status_code:
+                    format: date-time
+                    example: '2026-09-19T07:56:30.704Z'
+                  status:
                     type: integer
                     example: 403
-                  response_body:
+                  error:
+                    type: string
+                    example: Forbidden
+                  path:
+                    type: string
+                    example: /{tenant-id}/v1/me/identity-verification/results
+              - title: 外部サービスエラー
+                type: object
+                required:
+                  - error
+                  - error_description
+                properties:
+                  error:
+                    type: string
+                    example: execution_failed
+                  error_description:
+                    type: string
+                    example: execution failed
+                  error_messages:
+                    type: array
+                    items:
+                      type: string
+                    description: エラーメッセージ配列。オプショナル。
+                  error_details:
                     type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
+                    description: 外部サービスエラー時の詳細情報。オプショナル。
+                    required:
+                      - execution_type
+                      - status_category
+                      - status_code
+                    properties:
+                      execution_type:
+                        type: string
+                        example: http_request
+                      status_category:
+                        type: string
+                        example: client_error
+                      status_code:
+                        type: integer
+                        example: 403
+                      response_body:
+                        type: object
+                        description: 外部サービスのレスポンスボディ（オプショナル）
           examples:
             insufficient_scope:
+              summary: スコープ不足（フィルタ層で弾かれた場合）
               value:
-                error: insufficient_scope
-                error_description: >-
-                  The request requires higher privileges than provided by the
-                  access token
+                timestamp: '2026-09-19T07:56:30.704Z'
+                status: 403
+                error: Forbidden
+                path: /{tenant-id}/v1/me/identity-verification/results
             external_service_403:
               value:
                 error: execution_failed
@@ -2036,13 +2595,39 @@ components:
       type: oauth2
       flows:
         authorizationCode:
-          authorizationUrl: https://xxx/{tenant-id}/v1/authorizations
-          tokenUrl: https://xxx/{tenant-id}/v1//tokens
+          authorizationUrl: https://api.local.test/{tenant-id}/v1/authorizations
+          tokenUrl: https://api.local.test/{tenant-id}/v1/tokens
           scopes:
+            openid: OpenID Connect の必須スコープ。自身の連絡先の確認とプロフィール操作に必要
+            email:change: メールアドレスの変更に必要なスコープ。確認（verification）には不要
+            phone:change: 電話番号の変更に必要なスコープ。確認（verification）には不要
+            password:reset: パスワードリセットに必要なスコープ
+            claims:authentication_devices: 認証デバイス情報の参照・更新に必要なスコープ
             identity_verification_application: 身元確認の申込みのAPIに必要なスコープ
             identity_verification_application_delete: 身元確認の申込みの削除スコープ
             identity_verification_result: 身元確認結果のAPIに必要なスコープ
+  requestBodies:
+    ContactVerificationCode:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - verification_code
+            properties:
+              verification_code:
+                type: string
+          example:
+            verification_code: '123456'
   parameters:
+    ContactChallengeId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: チャレンジID（開始レスポンスの id）
     TenantId:
       name: tenant-id
       in: path
@@ -2085,6 +2670,17 @@ components:
         type: string
         format: uuid
   schemas:
+    InsufficientScopeError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: insufficient_scope
+        error_description:
+          type: string
+        scope:
+          type: string
+          description: 要求されるスコープ
     FidoUafRegistrationRequest:
       description: FIDO-UAF登録用のリクエスト
       allOf:
