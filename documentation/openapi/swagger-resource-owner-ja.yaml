@@ -61,6 +61,16 @@ paths:
           description: User deleted
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`openid` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: "The request requires 'openid' scope"
+                scope: openid
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -246,7 +256,7 @@ paths:
                 $ref: '#/components/schemas/InsufficientScopeError'
               example:
                 error: insufficient_scope
-                error_description: "this endpoint requires scope (openid)"
+                error_description: "The request requires 'openid' scope"
                 scope: openid
         '500':
           $ref: '#/components/responses/InternalServerError'
@@ -343,7 +353,7 @@ paths:
                 $ref: '#/components/schemas/InsufficientScopeError'
               example:
                 error: insufficient_scope
-                error_description: "this endpoint requires scope (email:change)"
+                error_description: "The request requires 'email:change' scope"
                 scope: email:change
         '500':
           $ref: '#/components/responses/InternalServerError'
@@ -421,7 +431,7 @@ paths:
                 $ref: '#/components/schemas/InsufficientScopeError'
               example:
                 error: insufficient_scope
-                error_description: "this endpoint requires scope (openid)"
+                error_description: "The request requires 'openid' scope"
                 scope: openid
         '500':
           $ref: '#/components/responses/InternalServerError'
@@ -518,7 +528,7 @@ paths:
                 $ref: '#/components/schemas/InsufficientScopeError'
               example:
                 error: insufficient_scope
-                error_description: "this endpoint requires scope (phone:change)"
+                error_description: "The request requires 'phone:change' scope"
                 scope: phone:change
         '500':
           $ref: '#/components/responses/InternalServerError'
@@ -1104,6 +1114,8 @@ paths:
                     description:  ページネーション用のオフセット
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -1206,6 +1218,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -1395,6 +1409,8 @@ paths:
                     description: ページネーション用のオフセット
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -1602,53 +1618,92 @@ components:
 
     Forbidden:
       description: |
-        権限エラー。スコープ不足、または外部サービスから403エラーが返された場合
+        権限エラー。**ボディの形が 2 通りあります。**
+
+        ## 1. スコープ不足
+
+        身元確認系のスコープ検査は Spring Security のフィルタ層で行うため
+        （`SecurityConfig` の `hasAuthority`）、OAuth のエラー形式ではなく
+        フレームワーク既定のエラーボディが返ります。`insufficient_scope` は**返りません**。
+
+        ```json
+        { "timestamp": "2026-09-19T07:56:30.704Z", "status": 403, "error": "Forbidden", "path": "/{tenant-id}/v1/me/identity-verification/results" }
+        ```
+
+        連絡先・パスワード・認証デバイス・ユーザー削除は各操作の中で検査するため
+        `insufficient_scope` 形式です（各操作の `403` を参照）。
+
+        ## 2. 外部サービスが 403 を返した
+
+        `execution_failed` として `error_details` に外部の応答を入れて返します。
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - error
-              - error_description
-            properties:
-              error:
-                type: string
-                example: "insufficient_scope"
-                description: |
-                  エラーコード。`insufficient_scope`（スコープ不足）または `execution_failed`（外部サービスエラー）
-              error_description:
-                type: string
-                example: "The request requires higher privileges than provided by the access token"
-              error_messages:
-                type: array
-                items:
-                  type: string
-                description: エラーメッセージ配列。オプショナル。
-              error_details:
+            oneOf:
+              - title: スコープ不足（フィルタ層）
                 type: object
-                description: 外部サービスエラー時の詳細情報（execution_failed の場合のみ）。オプショナル。
                 required:
-                  - execution_type
-                  - status_category
-                  - status_code
+                  - status
+                  - error
                 properties:
-                  execution_type:
+                  timestamp:
                     type: string
-                    example: "http_request"
-                  status_category:
-                    type: string
-                    example: "client_error"
-                  status_code:
+                    format: date-time
+                    example: "2026-09-19T07:56:30.704Z"
+                  status:
                     type: integer
                     example: 403
-                  response_body:
+                  error:
+                    type: string
+                    example: "Forbidden"
+                  path:
+                    type: string
+                    example: "/{tenant-id}/v1/me/identity-verification/results"
+              - title: 外部サービスエラー
+                type: object
+                required:
+                  - error
+                  - error_description
+                properties:
+                  error:
+                    type: string
+                    example: "execution_failed"
+                  error_description:
+                    type: string
+                    example: "execution failed"
+                  error_messages:
+                    type: array
+                    items:
+                      type: string
+                    description: エラーメッセージ配列。オプショナル。
+                  error_details:
                     type: object
-                    description: 外部サービスのレスポンスボディ（オプショナル）
+                    description: 外部サービスエラー時の詳細情報。オプショナル。
+                    required:
+                      - execution_type
+                      - status_category
+                      - status_code
+                    properties:
+                      execution_type:
+                        type: string
+                        example: "http_request"
+                      status_category:
+                        type: string
+                        example: "client_error"
+                      status_code:
+                        type: integer
+                        example: 403
+                      response_body:
+                        type: object
+                        description: 外部サービスのレスポンスボディ（オプショナル）
           examples:
             insufficient_scope:
+              summary: スコープ不足（フィルタ層で弾かれた場合）
               value:
-                error: "insufficient_scope"
-                error_description: "The request requires higher privileges than provided by the access token"
+                timestamp: "2026-09-19T07:56:30.704Z"
+                status: 403
+                error: "Forbidden"
+                path: "/{tenant-id}/v1/me/identity-verification/results"
             external_service_403:
               value:
                 error: "execution_failed"
