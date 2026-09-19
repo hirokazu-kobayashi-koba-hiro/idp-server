@@ -642,7 +642,9 @@ Content-Type: application/json
 `execution.function` が決めます（`email_authentication_challenge` ならローカル生成、
 `http_request` / `http_requests` なら委譲）。委譲時は idp-server はコードを持たず、外部の識別子
 だけを保持します（管理APIは `delivery: external` を返す）。ただし `email_change_notice` の文面が
-委譲設定には無いため、**変更通知は送られません**。
+委譲設定には無いため、**変更通知は送られません**。別チャネルで知らせたい場合は
+セキュリティイベントフック（`Email` 型）を使う手があります（宛先・文面の制約は
+[セルフサービス 連絡先の確認・変更](../contact-verification.md) を参照）。
 
 `email_change_notice` を定義していない場合、変更通知は**スキップされます**（確認コード用の
 デフォルト文面にはフォールバックしません）。

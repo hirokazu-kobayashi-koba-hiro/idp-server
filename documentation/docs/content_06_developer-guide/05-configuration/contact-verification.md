@@ -115,6 +115,54 @@ verify 側（`{channel}-authentication`）:
 
 通知の制約は連絡先変更に固有ではなく、テナント単位の通知設定が存在しないことに起因する。
 
+#### 委譲チャネルで通知したい場合: セキュリティイベントフック
+
+`notify_previous_value` が使えない委譲チャネルでも、**セキュリティイベントフック（`Email` 型）で
+別チャネルに知らせる**ことはできる。電話番号の変更をメールで通知する、という組み合わせになる。
+
+```json
+{
+  "type": "Email",
+  "triggers": ["phone_change_success"],
+  "events": {
+    "phone_change_success": {
+      "execution": {
+        "function": "email",
+        "details": {
+          "function": "smtp",
+          "sender": "noreply@example.com",
+          "subject": "登録情報が変更されました",
+          "body": "お客様の登録情報が変更されました。心当たりが無い場合はサポートへご連絡ください。"
+        }
+      }
+    }
+  }
+}
+```
+
+`details.function` が送信手段（`smtp` / `http_request` / `no_action` など）で、`sender` / `subject` /
+`body` と並ぶ。`events` に `default` を置くと、個別キーが無い trigger はそちらに落ちる。
+実例は `config/examples/e2e/test-tenant/security-event-hook/email.json`。
+
+発火できるイベントは [セキュリティイベント](../03-application-plane/09-security-event.md) の
+`{email|phone}_{verify|change}_{request_,}{success|failure}` 系。
+
+:::warning `*_notice` の代わりにはなりません
+書ける内容が違うので、どちらか一方で済む関係ではない。
+
+| | `notify_previous_value`（`*_notice`） | `Email` フック |
+|---|---|---|
+| 宛先 | **置き換えられる側の値**（チャネル内） | `securityEvent.user().email()` **固定**。狙って旧値に送ることはできず、電話番号の変更でもメールに飛ぶ |
+| 文面 | `{CHANGED_AT}` / `{NEW_VALUE_MASKED}` が使える | `EmailSenderConfiguration` の **固定文言**。変更後の値などは差し込めない |
+| チャネル | 変更したチャネルと同じ | メールのみ |
+
+宛先に使われる `securityEvent.user()` は、変更後のユーザーではなく
+**アクセストークン発行時のスナップショット**（`UserEventCreator` → `OAuthToken.user()` →
+`AccessToken.user()`）。結果として `email_change_success` のフックは実質**変更前のアドレス**に届くが、
+「置き換えられた値」ではなく「トークンを取った時点の値」なので、**同じトークンで 2 回変更した場合は
+2 回とも最初のアドレス**に飛ぶ。
+:::
+
 ### 成否をボディで伝える外部サービス
 
 外部OTPサービスには、誤ったコードでも `200` を返してボディで結果を伝える形がある。
@@ -354,13 +402,17 @@ verify 側（`{channel}-authentication`）:
 | `{VERIFICATION_CODE}` / `{EXPIRE_SECONDS}` | 確認コード（`email_change` / `email_verify` 等） |
 | `{CHANGED_AT}` / `{NEW_VALUE_MASKED}` | 変更通知（`*_notice`） |
 
-:::info `*_notice` を定義していない場合は送られません
+:::warning `*_notice` を定義していない場合は送られません（既定は `notify_previous_value: true`）
 確認コード側（`email_change` 等）は未定義なら既定文面にフォールバックしますが、変更通知は
 **フォールバックせずスキップ**し、ログに `Contact change notice skipped` を残します。
 
 既定文面は確認コード用（`Your verification code is: {VERIFICATION_CODE}`）なので、通知として
 流用すると**プレースホルダが未置換のまま旧アドレスに届きます**。コードが書かれていないのに
 コードの案内に見えるメールになるため、送らないほうを選んでいます。
+
+`notify_previous_value` の既定は `true` なので、**「有効にしたのに飛ばない」ではなく
+「テンプレートを書いていないので飛んでいない」**という形で現れます。切り分けはログの
+`Contact change notice skipped: template (email_change_notice) is not configured.` を見てください。
 :::
 
 新しい値は部分マスクで引用します（`n***@example.com` / `*****5678`）。乗っ取り後は

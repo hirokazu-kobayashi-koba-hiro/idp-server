@@ -397,6 +397,8 @@ OTPの生成・検証は idp-server 内部で行いつつ、SMS送信のみを�
 だけを保持します（管理APIは `delivery: external` を返す）。宛先は `phone_number` という項目名で
 渡されるので、ログイン側の `sms-authentication-challenge` と同じ外部APIをそのまま向けられます。
 ただし `phone_change_notice` の文面が委譲設定には無いため、**変更通知は送られません**。
+別チャネルで知らせたい場合はセキュリティイベントフック（`Email` 型）を使う手があります
+（宛先・文面の制約は [セルフサービス 連絡先の確認・変更](../contact-verification.md) を参照）。
 
 `phone_change_notice` を定義していない場合、変更通知は**スキップされます**（確認コード用の
 デフォルト文面にはフォールバックしません）。
