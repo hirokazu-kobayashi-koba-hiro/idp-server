@@ -46,7 +46,9 @@
           "none"
         ]
       },
-      "default": ["code"],
+      "default": [
+        "code"
+      ],
       "description": "OPTIONAL. JSON [RFC8259] array containing a list of the OAuth 2.0 response_type values that the Client is declaring that it will restrict itself to using. If omitted, the default is that the Client will use only the code Response Type."
     },
     "grant_types": {
@@ -251,6 +253,7 @@
         "private_key_jwt",
         "tls_client_auth",
         "self_signed_tls_client_auth",
+        "attest_jwt_client_auth",
         "none"
       ],
       "description": "OPTIONAL. Requested Client Authentication method for the Token Endpoint. The options are client_secret_post, client_secret_basic, client_secret_jwt, private_key_jwt, and none, as described in Section 9 of OpenID Connect Core 1.0 [OpenID.Core]. Other authentication methods MAY be defined by extensions. If omitted, the default is client_secret_basic -- the HTTP Basic Authentication Scheme specified in Section 2.3.1 of OAuth 2.0 [RFC6749]."
@@ -265,7 +268,7 @@
       ],
       "description": "OPTIONAL. JWS [JWS] alg algorithm [JWA] that MUST be used for signing the JWT [JWT] used to authenticate the Client at the Token Endpoint for the private_key_jwt and client_secret_jwt authentication methods. All Token Requests using these authentication methods from this Client MUST be rejected, if the JWT is not signed with this algorithm. Servers SHOULD support RS256. The value none MUST NOT be used. The default, if omitted, is that any algorithm supported by the OP and the RP MAY be used."
     },
-    "default_max_age":{
+    "default_max_age": {
       "type": "integer",
       "description": "OPTIONAL. Default Maximum Authentication Age. Specifies that the End-User MUST be actively authenticated if the End-User was authenticated longer ago than the specified number of seconds. The max_age request parameter overrides this default value. If omitted, no default Maximum Authentication Age is specified."
     },
@@ -282,7 +285,7 @@
       "description": "OPTIONAL. Default requested Authentication Context Class Reference values. Array of strings that specifies the default acr values that the OP is being requested to use for processing requests from this Client, with the values appearing in order of preference. The Authentication Context Class satisfied by the authentication performed is returned as the acr Claim Value in the issued ID Token. The acr Claim is requested as a Voluntary Claim by this parameter. The acr_values_supported discovery element contains a list of the supported acr values supported by the OP. Values specified in the acr_values request parameter or an individual acr Claim request override these default values."
     },
     "initiate_login_uri": {
-     "type": "string",
+      "type": "string",
       "format": "uri",
       "description": "OPTIONAL. URI using the https scheme that a third party can use to initiate a login by the RP, as specified in Section 4 of OpenID Connect Core 1.0 [OpenID.Core]. The URI MUST accept requests via both GET and POST. The Client MUST understand the login_hint and iss parameters and SHOULD support the target_link_uri parameter."
     },
@@ -337,7 +340,12 @@
               },
               "type": {
                 "type": "string",
-                "enum": ["oauth2", "saml2", "oidc", "device"],
+                "enum": [
+                  "oauth2",
+                  "saml2",
+                  "oidc",
+                  "device"
+                ],
                 "description": "Federation type"
               },
               "sso_provider": {
@@ -374,7 +382,9 @@
                 "description": "Cache TTL in seconds for JWKS fetched from jwks_uri"
               }
             },
-            "required": ["type"]
+            "required": [
+              "type"
+            ]
           },
           "description": "OPTIONAL. List of available federation configurations"
         },
@@ -386,6 +396,27 @@
           ],
           "default": "authentication-device-notification",
           "description": "OPTIONAL. Default CIBA authentication interaction type"
+        },
+        "client_attestation_trust_source": {
+          "type": "string",
+          "enum": [
+            "registered_instance_key",
+            "attester_jwks"
+          ],
+          "description": "OPTIONAL. idp-server specific. Where the Authorization Server takes its trust from when verifying a Client Attestation JWT for attest_jwt_client_auth. OAuth 2.0 Attestation-Based Client Authentication leaves trust management and key resolution out of scope (Section 9.8), so this is a deployment choice. registered_instance_key: the Client Instance signs its own Client Attestation JWT and the server trusts the Client Instance Key registered via the client instance management API. attester_jwks: a Client Attester signs it and the server trusts client_attestation_attester_jwks. Required when the client uses attest_jwt_client_auth."
+        },
+        "client_attestation_attester_jwks": {
+          "type": "string",
+          "format": "jwks",
+          "description": "OPTIONAL. idp-server specific. JWK Set document holding the trusted Client Attester public keys, used when client_attestation_trust_source is attester_jwks. MUST NOT contain private or symmetric key values."
+        },
+        "client_instance_registration_policy": {
+          "type": "string",
+          "enum": [
+            "require_authentication_device",
+            "attestation_only"
+          ],
+          "description": "OPTIONAL. idp-server specific. How much a client instance registration must be backed by an authentication device. require_authentication_device: device_id must be an authentication device registered at this Authorization Server, which ties the registration to a device the user approved (FIDO UAF registration uses biometrics). attestation_only: no device is involved and the platform attestation is the only backing, as for wallet style clients. Required when the client instance registration endpoints are used."
         }
       }
     }

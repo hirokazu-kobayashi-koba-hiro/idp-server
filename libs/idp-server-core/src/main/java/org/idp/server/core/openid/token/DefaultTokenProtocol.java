@@ -18,6 +18,7 @@ package org.idp.server.core.openid.token;
 
 import java.util.Map;
 import org.idp.server.core.openid.grant_management.AuthorizationGrantedRepository;
+import org.idp.server.core.openid.oauth.clientauthenticator.ClientAuthenticationHandler;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantRepository;
@@ -70,6 +71,7 @@ public class DefaultTokenProtocol implements TokenProtocol {
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       PasswordCredentialsGrantDelegate passwordCredentialsGrantDelegate,
       JwtBearerUserFindingDelegate jwtBearerUserFindingDelegate,
+      ClientAuthenticationHandler clientAuthenticationHandler,
       Map<GrantType, OAuthTokenCreationService> extensionOAuthTokenCreationServices) {
     this.tokenRequestHandler =
         new TokenRequestHandler(
@@ -80,18 +82,21 @@ public class DefaultTokenProtocol implements TokenProtocol {
             authorizationGrantedRepository,
             authorizationServerConfigurationQueryRepository,
             clientConfigurationQueryRepository,
+            clientAuthenticationHandler,
             extensionOAuthTokenCreationServices);
     this.errorHandler = new TokenRequestErrorHandler();
     this.introspectionHandler =
         new TokenIntrospectionHandler(
             oAuthTokenQueryRepository,
             authorizationServerConfigurationQueryRepository,
-            clientConfigurationQueryRepository);
+            clientConfigurationQueryRepository,
+            clientAuthenticationHandler);
     this.introspectionExtensionHandler =
         new TokenIntrospectionExtensionHandler(
             oAuthTokenQueryRepository,
             authorizationServerConfigurationQueryRepository,
-            clientConfigurationQueryRepository);
+            clientConfigurationQueryRepository,
+            clientAuthenticationHandler);
     this.introspectionInternalHandler =
         new TokenIntrospectionInternalHandler(oAuthTokenQueryRepository);
     this.introspectionErrorHandler = new TokenIntrospectionErrorHandler();
@@ -100,7 +105,8 @@ public class DefaultTokenProtocol implements TokenProtocol {
             oAuthTokenCommandRepository,
             oAuthTokenQueryRepository,
             authorizationServerConfigurationQueryRepository,
-            clientConfigurationQueryRepository);
+            clientConfigurationQueryRepository,
+            clientAuthenticationHandler);
     this.revocationErrorHandler = new TokenRevocationErrorHandler();
     this.passwordCredentialsGrantDelegate = passwordCredentialsGrantDelegate;
     this.jwtBearerUserFindingDelegate = jwtBearerUserFindingDelegate;

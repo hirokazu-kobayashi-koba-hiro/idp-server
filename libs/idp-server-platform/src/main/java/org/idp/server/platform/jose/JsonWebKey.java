@@ -26,6 +26,8 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.List;
 import java.util.Objects;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /** JsonWebKey */
 public class JsonWebKey {
@@ -131,6 +133,25 @@ public class JsonWebKey {
       return new JsonWebKey();
     }
     return new JsonWebKey(value.toPublicJWK());
+  }
+
+  /**
+   * Returns the canonical JSON of this key as defined by RFC 7638 Section 3.2: the required members
+   * only, in lexicographic order, without whitespace.
+   *
+   * <p>This is the exact byte sequence hashed by {@link #thumbprintSha256()}. It is exposed because
+   * platform attestation binds a key by hashing it together with other data (Android {@code
+   * request_hash}, iOS {@code client_data_hash}), which the thumbprint alone cannot express.
+   */
+  public String canonicalJson() throws JsonWebKeyInvalidException {
+    try {
+      return new TreeMap<>(value.getRequiredParams())
+          .entrySet().stream()
+              .map(entry -> "\"" + entry.getKey() + "\":\"" + entry.getValue() + "\"")
+              .collect(Collectors.joining(",", "{", "}"));
+    } catch (Exception e) {
+      throw new JsonWebKeyInvalidException("Failed to build canonical JWK: " + e.getMessage(), e);
+    }
   }
 
   public String thumbprintSha256() throws JsonWebKeyInvalidException {

@@ -23,6 +23,7 @@ public enum ClientAuthenticationType {
   private_key_jwt,
   tls_client_auth,
   self_signed_tls_client_auth,
+  attest_jwt_client_auth,
   none;
 
   public boolean isClientSecretBasic() {
@@ -47,6 +48,10 @@ public enum ClientAuthenticationType {
 
   public boolean isSelfSignedTlsClientAuth() {
     return this == self_signed_tls_client_auth;
+  }
+
+  public boolean isAttestJwtClientAuth() {
+    return this == attest_jwt_client_auth;
   }
 
   public boolean isNone() {

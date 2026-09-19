@@ -25,8 +25,10 @@ import org.idp.server.control_plane.admin.operation.io.IdpServerOperationStatus;
 import org.idp.server.core.extension.ciba.repository.BackchannelAuthenticationRequestOperationCommandRepository;
 import org.idp.server.core.extension.ciba.repository.CibaGrantOperationCommandRepository;
 import org.idp.server.core.openid.authentication.repository.AuthenticationTransactionOperationCommandRepository;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationChallengeOperationCommandRepository;
 import org.idp.server.core.openid.federation.sso.SsoSessionOperationCommandRepository;
 import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeOperationCommandRepository;
+import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttestationChallengeOperationCommandRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationCodeGrantOperationCommandRepository;
 import org.idp.server.core.openid.oauth.repository.AuthorizationRequestOperationCommandRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenOperationCommandRepository;
@@ -55,6 +57,10 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
   SsoSessionOperationCommandRepository ssoSessionOperationCommandRepository;
   ContactVerificationChallengeOperationCommandRepository
       contactVerificationChallengeOperationCommandRepository;
+  ClientAttestationChallengeOperationCommandRepository
+      clientAttestationChallengeOperationCommandRepository;
+  ClientInstanceRegistrationChallengeOperationCommandRepository
+      clientInstanceRegistrationChallengeOperationCommandRepository;
 
   public IdpServerOperationEntryService(
       TenantQueryRepository tenantQueryRepository,
@@ -69,7 +75,11 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
       CibaGrantOperationCommandRepository cibaGrantOperationCommandRepository,
       SsoSessionOperationCommandRepository ssoSessionOperationCommandRepository,
       ContactVerificationChallengeOperationCommandRepository
-          contactVerificationChallengeOperationCommandRepository) {
+          contactVerificationChallengeOperationCommandRepository,
+      ClientAttestationChallengeOperationCommandRepository
+          clientAttestationChallengeOperationCommandRepository,
+      ClientInstanceRegistrationChallengeOperationCommandRepository
+          clientInstanceRegistrationChallengeOperationCommandRepository) {
     this.tenantQueryRepository = tenantQueryRepository;
     this.oAuthTokenOperationCommandRepository = oAuthTokenOperationCommandRepository;
     this.authenticationTransactionOperationCommandRepository =
@@ -84,6 +94,10 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
     this.ssoSessionOperationCommandRepository = ssoSessionOperationCommandRepository;
     this.contactVerificationChallengeOperationCommandRepository =
         contactVerificationChallengeOperationCommandRepository;
+    this.clientAttestationChallengeOperationCommandRepository =
+        clientAttestationChallengeOperationCommandRepository;
+    this.clientInstanceRegistrationChallengeOperationCommandRepository =
+        clientInstanceRegistrationChallengeOperationCommandRepository;
   }
 
   @Override
@@ -125,6 +139,14 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
     deleted.put(
         "contact_verification_challenge",
         contactVerificationChallengeOperationCommandRepository.deleteExpired(
+            adminTenant, maxDeletionNumber));
+    deleted.put(
+        "client_attestation_challenge",
+        clientAttestationChallengeOperationCommandRepository.deleteExpired(
+            adminTenant, maxDeletionNumber));
+    deleted.put(
+        "client_instance_registration_challenge",
+        clientInstanceRegistrationChallengeOperationCommandRepository.deleteExpired(
             adminTenant, maxDeletionNumber));
 
     int total = deleted.values().stream().mapToInt(Integer::intValue).sum();

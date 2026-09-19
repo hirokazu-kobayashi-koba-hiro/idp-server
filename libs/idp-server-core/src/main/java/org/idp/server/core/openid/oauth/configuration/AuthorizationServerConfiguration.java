@@ -75,6 +75,9 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
   boolean tlsClientCertificateBoundAccessTokens = false;
   Map<String, String> mtlsEndpointAliases = new HashMap<>();
   List<String> dpopSigningAlgValuesSupported = new ArrayList<>();
+  List<String> clientAttestationSigningAlgValuesSupported = new ArrayList<>();
+  List<String> clientAttestationPopSigningAlgValuesSupported = new ArrayList<>();
+  String challengeEndpoint = "";
   boolean requireSignedRequestObject = false;
   boolean authorizationResponseIssParameterSupported = false;
 
@@ -321,6 +324,43 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
 
   public boolean isDPoPSupported() {
     return hasDpopSigningAlgValuesSupported();
+  }
+
+  public String challengeEndpoint() {
+    return challengeEndpoint;
+  }
+
+  /**
+   * Whether to advertise {@code challenge_endpoint} in discovery.
+   *
+   * <p>Descriptive only, like {@code userinfo_endpoint} and the other optional endpoint fields: it
+   * decides what discovery says, not whether the endpoint answers. Section 6.1 obliges the
+   * <em>client</em> to use a challenge once the server advertises one; it does not say a server
+   * that stays silent must refuse to issue them.
+   *
+   * <p>Rolling the feature out is staged by {@code client_attestation_challenge_required} instead —
+   * advertise, let clients follow, then start rejecting requests that carry no challenge.
+   */
+  public boolean hasChallengeEndpoint() {
+    return Objects.nonNull(challengeEndpoint) && !challengeEndpoint.isEmpty();
+  }
+
+  public List<String> clientAttestationSigningAlgValuesSupported() {
+    return clientAttestationSigningAlgValuesSupported;
+  }
+
+  public boolean hasClientAttestationSigningAlgValuesSupported() {
+    return clientAttestationSigningAlgValuesSupported != null
+        && !clientAttestationSigningAlgValuesSupported.isEmpty();
+  }
+
+  public List<String> clientAttestationPopSigningAlgValuesSupported() {
+    return clientAttestationPopSigningAlgValuesSupported;
+  }
+
+  public boolean hasClientAttestationPopSigningAlgValuesSupported() {
+    return clientAttestationPopSigningAlgValuesSupported != null
+        && !clientAttestationPopSigningAlgValuesSupported.isEmpty();
   }
 
   public boolean requireSignedRequestObject() {
@@ -646,6 +686,14 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     return extension.authorizationResponseDuration();
   }
 
+  public boolean isClientAttestationChallengeRequired() {
+    return extension.clientAttestationChallengeRequired();
+  }
+
+  public int clientAttestationChallengeDuration() {
+    return extension.clientAttestationChallengeDuration();
+  }
+
   public boolean hasKey(String algorithm) {
     return jwks.contains(algorithm);
   }
@@ -872,6 +920,19 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
     }
     if (hasDpopSigningAlgValuesSupported()) {
       map.put("dpop_signing_alg_values_supported", dpopSigningAlgValuesSupported);
+    }
+    if (hasClientAttestationSigningAlgValuesSupported()) {
+      map.put(
+          "client_attestation_signing_alg_values_supported",
+          clientAttestationSigningAlgValuesSupported);
+    }
+    if (hasClientAttestationPopSigningAlgValuesSupported()) {
+      map.put(
+          "client_attestation_pop_signing_alg_values_supported",
+          clientAttestationPopSigningAlgValuesSupported);
+    }
+    if (hasChallengeEndpoint()) {
+      map.put("challenge_endpoint", challengeEndpoint);
     }
     if (hasBackchannelTokenDeliveryModesSupported()) {
       map.put("backchannel_token_delivery_modes_supported", backchannelTokenDeliveryModesSupported);

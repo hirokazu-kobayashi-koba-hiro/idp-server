@@ -77,6 +77,7 @@ identifier.sqlite
 ### Claude Code ###
 .claude/settings.local.json
 .claude/projects/
+.claude/worktrees/
 CLAUDE.local.md
 
 # Allure test reports

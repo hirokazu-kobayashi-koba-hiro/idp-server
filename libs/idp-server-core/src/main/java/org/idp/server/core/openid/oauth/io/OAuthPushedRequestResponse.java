@@ -21,12 +21,29 @@ import java.util.Map;
 public class OAuthPushedRequestResponse {
   OAuthPushedRequestStatus status;
   Map<String, Object> contents;
+  Map<String, String> headers;
 
-  public OAuthPushedRequestResponse() {}
+  public OAuthPushedRequestResponse() {
+    this.headers = Map.of();
+  }
 
   public OAuthPushedRequestResponse(OAuthPushedRequestStatus status, Map<String, Object> contents) {
+    this(status, contents, Map.of());
+  }
+
+  /**
+   * @param headers response headers an error carries, such as the {@code
+   *     OAuth-Client-Attestation-Challenge} that must accompany {@code use_attestation_challenge}
+   */
+  public OAuthPushedRequestResponse(
+      OAuthPushedRequestStatus status, Map<String, Object> contents, Map<String, String> headers) {
     this.status = status;
     this.contents = contents;
+    this.headers = headers;
+  }
+
+  public Map<String, String> responseHeaders() {
+    return headers;
   }
 
   public OAuthPushedRequestStatus status() {

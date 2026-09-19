@@ -156,6 +156,13 @@ public enum DefaultSecurityEventType {
   revoke_token_success("Token was revoked"),
   revoke_token_failure("Token revocation failed"),
 
+  // Client Instance registration (attest_jwt_client_auth). Both endpoints are unauthenticated and
+  // answer every rejection identically, so these events are the only place a reason is recorded.
+  client_instance_registration_challenge_issued(
+      "Client Instance registration ticket was issued", false, true),
+  client_instance_registration_success("Client Instance key was registered"),
+  client_instance_registration_failure("Client Instance registration was rejected"),
+
   // CIBA device notification
   authentication_device_notification_success("Push notification was delivered to user device"),
   authentication_device_notification_cancel("Push notification to user device was cancelled"),

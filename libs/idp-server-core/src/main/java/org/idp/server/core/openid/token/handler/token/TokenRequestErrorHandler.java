@@ -70,12 +70,17 @@ public class TokenRequestErrorHandler {
           BAD_REQUEST, new TokenErrorResponse(badRequest.error(), badRequest.errorDescription()));
     }
 
-    if (exception instanceof ClientUnAuthorizedException) {
-      log.warn("Client authentication failed: reason={}", exception.getMessage());
+    if (exception instanceof ClientUnAuthorizedException clientUnAuthorized) {
+      log.warn(
+          "Client authentication failed: error={}, reason={}",
+          clientUnAuthorized.errorCode(),
+          exception.getMessage());
       return new TokenRequestResponse(
           UNAUTHORIZE,
           new TokenErrorResponse(
-              new Error("invalid_client"), new ErrorDescription(exception.getLocalizedMessage())));
+              new Error(clientUnAuthorized.errorCode()),
+              new ErrorDescription(exception.getLocalizedMessage())),
+          clientUnAuthorized.responseHeaders());
     }
 
     if (exception instanceof ClientConfigurationNotFoundException) {
