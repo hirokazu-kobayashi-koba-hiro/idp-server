@@ -1,7 +1,14 @@
 openapi: 3.0.3
 info:
   title: リソースオーナー用API
+  description: リソースオーナー（エンドユーザー）本人が、自身のアカウント・連絡先・認証手段・身元確認を操作するためのエンドポイント仕様
   version: 1.0.0
+  contact:
+    name: idp-server OSS
+
+servers:
+  - url: https://api.local.test
+    description: IdP Server API エンドポイント(ローカル)
 
 tags:
   - name: ユーザー
@@ -9,8 +16,11 @@ tags:
       リソースオーナー（ユーザー）本人による操作に関するAPI群。
 
       主に以下のような操作を提供します：
-       - 自身のアカウント削除
+       - 連絡先（メールアドレス / 電話番号）の確認・変更
+       - パスワードの変更・リセット
        - 多要素認証（MFA）の登録要求（FIDO-UAF など）
+       - 認証デバイスの部分更新・削除
+       - 自身のアカウント削除
       
       アクセストークンを用いて、ユーザー本人による安全な自己操作を実現します。
   - name: 身元確認申込み
@@ -43,13 +53,12 @@ paths:
         ユーザー（リソースオーナー）自身の削除を行う。
       parameters:
         - $ref: '#/components/parameters/TenantId'
+      security:
+        - OAuth2:
+            - openid
       responses:
         '204':
           description: User deleted
-          content:
-            application/json:
-              schema:
-                type: object
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
@@ -65,6 +74,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/MfaOperationType'
+      security:
+        - OAuth2: []
       requestBody:
         required: false
         description: MFAの仕様に応じたパラメータをBodyに設定する。
@@ -104,6 +115,9 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - $ref: '#/components/parameters/DeviceId'
+      security:
+        - OAuth2:
+            - claims:authentication_devices
       requestBody:
         required: false
         content:
@@ -114,11 +128,82 @@ paths:
         '200':
           description: 200 OK
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: |
+            リクエストボディの検証エラー、または指定したデバイスを当該ユーザーが保持していない。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "invalid_request"
+                  error_description:
+                    type: string
+                    example: "User does not have authentication device (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)."
+                  error_messages:
+                    type: array
+                    items:
+                      type: string
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`claims:authentication_devices` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: "The request requires 'claims:authentication_devices' scope"
+                scope: claims:authentication_devices
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - ユーザー
+      summary: 認証デバイス削除API
+      description: |
+        認証デバイスの登録解除を行う。削除後、当該デバイスでの認証はできなくなる。
+
+        ## セキュリティイベント
+        - `authentication_device_deregistration_success` / `authentication_device_deregistration_failure`
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/DeviceId'
+      security:
+        - OAuth2:
+            - claims:authentication_devices
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: スコープ不足（`claims:authentication_devices` が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientScopeError'
+              example:
+                error: insufficient_scope
+                error_description: "The request requires 'claims:authentication_devices' scope"
+                scope: claims:authentication_devices
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: |
+            指定したデバイスを当該ユーザーが保持していない。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "invalid_request"
+                  error_description:
+                    type: string
+                    example: "User does not have authentication device (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)."
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -1132,7 +1217,7 @@ paths:
         - 身元確認結果
       security:
         - OAuth2:
-          - identity-verification-result
+          - identity_verification_result
       summary: 身元確認結果の一覧取得
       description: |
         身元確認結果の一覧を取得します。
@@ -2286,9 +2371,14 @@ components:
       type: oauth2
       flows:
         authorizationCode:
-          authorizationUrl: https://xxx/{tenant-id}/v1/authorizations
-          tokenUrl: https://xxx/{tenant-id}/v1//tokens
+          authorizationUrl: https://api.local.test/{tenant-id}/v1/authorizations
+          tokenUrl: https://api.local.test/{tenant-id}/v1/tokens
           scopes:
+            openid: OpenID Connect の必須スコープ。自身の連絡先の確認とプロフィール操作に必要
+            email:change: メールアドレスの変更に必要なスコープ。確認（verification）には不要
+            phone:change: 電話番号の変更に必要なスコープ。確認（verification）には不要
+            password:reset: パスワードリセットに必要なスコープ
+            claims:authentication_devices: 認証デバイス情報の参照・更新に必要なスコープ
             identity_verification_application: 身元確認の申込みのAPIに必要なスコープ
             identity_verification_application_delete: 身元確認の申込みの削除スコープ
             identity_verification_result: 身元確認結果のAPIに必要なスコープ
