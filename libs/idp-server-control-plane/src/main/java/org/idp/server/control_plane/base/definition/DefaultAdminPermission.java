@@ -144,6 +144,9 @@ public enum DefaultAdminPermission {
       "idp:authentication-transaction:read", "Admin Read authentication-transaction information"),
   AUTHENTICATION_INTERACTION_READ(
       "idp:authentication-interaction:read", "Admin Read authentication-interaction information"),
+  CONTACT_VERIFICATION_CHALLENGE_READ(
+      "idp:contact-verification-challenge:read",
+      "Admin Read self-service contact verification challenge information"),
 
   SESSION_READ("idp:session:read", "Admin Read user session information"),
   SESSION_DELETE("idp:session:delete", "Admin Delete user session"),

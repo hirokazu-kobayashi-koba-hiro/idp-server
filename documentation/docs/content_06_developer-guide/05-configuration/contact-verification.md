@@ -1,0 +1,561 @@
+# セルフサービス 連絡先の確認・変更
+
+認証済みエンドユーザーが自分の**メールアドレス**または**電話番号**を、確認(検証)または変更するフロー。
+対象の値へ確認コードを送り、本人到達性を検証してから確定する。
+
+送信には既存の認証設定をそのまま流用する（Email は [Email認証](./authn/email.md) の
+`email-authentication-challenge`、電話番号は [SMS認証](./authn/sms.md) の `sms-authentication-challenge`）。
+テナントが追加で書く設定は、変更用スコープと（必要なら）変更ポリシーだけ。
+
+:::tip このページは設定リファレンスです
+- **なぜ**識別子移動と属性更新を分けるのか → [連絡先変更ポリシー](../../content_03_concepts/02-identity-management/concept-03-contact-change-policy.md)
+- **フローとエンドポイント** → [セルフサービス 連絡先の確認・変更（プロトコル）](../../content_04_protocols/protocol-08-self-service-contact-change.md)
+:::
+
+---
+
+## どの実装が動くかは `execution.function` が決める
+
+流用する認証設定には形が2つあり、**どちらも動く**。どちらになるかは `execution.function` の値で
+決まる。ログイン側の `AuthenticationExecutors` と同じ仕組みで、モードを指定する設定項目は無いし、
+設定の形から推測もしない。
+
+| `execution.function` | 動く実装 | コードを持つのは |
+|---|---|---|
+| `email_authentication_challenge` | ローカル生成・送信（`details` の sender を使う） | idp-server |
+| `sms_authentication_challenge` | 同上 | idp-server |
+| `http_request` | 外部サービスへ単発で委譲 | 外部サービス |
+| `http_requests` | 外部サービスへチェーンで委譲 | 外部サービス |
+| `email_authentication` / `sms_authentication` | チャレンジ行の `verification_code` と照合 | idp-server |
+| 上記以外 | （実装が無い） | — |
+
+実装が無い `function` は**設定エラーとして報告される**。以前は sender の記述が無いことから
+「委譲だろう」と推測していたため、`no_action` のような別の設定形で 500 になっていた。
+
+| | ローカル生成 | 外部委譲 |
+|---|---|---|
+| コード生成・送信 | idp-server（SMTP / HTTP API / AWS SES など） | 外部サービス |
+| 照合 | idp-server（`verification_code` 列と比較） | 外部の検証API |
+| idp-server が保持するもの | コードそのもの | 外部の識別子（`transaction_id` 等） |
+| 参照する設定 | `details`（sender / settings / templates） | `http_request` / `http_requests` と `*_store` |
+
+### インタラクションの必須・任意
+
+| インタラクション | 必須 | 無い場合 |
+|---|---|---|
+| `{channel}-authentication-challenge` | **必須** | 設定エラー。送信手段が無いため安全な既定が無い |
+| `{channel}-authentication` | 任意 | チャレンジ行との照合にフォールバックする |
+
+送信だけを設定したテナント（verify 側を書いていない）でも、ローカル生成なら動く。委譲のチャレンジが
+このフォールバックに来た場合は、行にコードが無いので必ず失敗する（fail closed）。
+
+### idp-server が組み立てるリクエストボディ
+
+委譲時、idp-server は次のボディを `$.request_body` として渡す。実際に外部へ送る形は
+テナントの `body_mapping_rules` が決める（`{"from": "$.request_body", "to": "*"}` なら素通し）。
+
+```jsonc
+// {channel}-authentication-challenge
+{ "email": "new@example.com", "template": "email_change", "operation": "email_change" }
+{ "phone_number": "+819011112222", "template": "phone_change", "operation": "phone_change" }
+
+// {channel}-authentication
+{ "verification_code": "123456", "operation": "email_change" }
+```
+
+宛先の項目名は各チャネルの `request.schema` と同じ **`email` / `phone_number`**。ログイン側の
+チャレンジと同じ名前なので、既存の外部サービス設定をそのまま向けられる。
+
+マッピングで読める値もログイン側と同じ。
+
+| パス | 内容 |
+|---|---|
+| `$.request_body` | 上記のボディ |
+| `$.request_attributes` | IPアドレス・User-Agent など |
+| `$.user` | 認証済みユーザーの許可リスト射影（`sub` / `email` / `phone_number` / 名前 / `roles` / `custom_properties`） |
+| `$.interaction` | challenge で保持した値（`previous_interaction` を書いた場合） |
+| `$.execution_http_requests` | チェーン中の各結果（チェーンのみ） |
+
+### 外部委譲で参照する設定
+
+challenge 側（`{channel}-authentication-challenge`）:
+
+| 項目 | 用途 |
+|---|---|
+| `execution.http_request` | 外部API設定（単発） |
+| `execution.http_requests` | 外部API設定（チェーン。認証してから送るなど） |
+| `execution.http_request_store` / `http_requests_store` | レスポンスから何を保持するか。入力は `$.response_body.*` / `$.status_code` / `$.response_headers` |
+
+verify 側（`{channel}-authentication`）:
+
+| 項目 | 用途 |
+|---|---|
+| `execution.http_request` / `http_requests` | 外部検証API設定 |
+| `execution.previous_interaction` | challenge で保持した値を `$.interaction.*` に載せる（`key` は受け付けるが無視される。チャレンジ行が持つ交換は1つだけのため） |
+
+チェーンの挙動もログイン側と同じ。各結果を `$.execution_http_requests` に積み、最初の失敗で
+打ち切る。`condition` を満たさないリクエストはスキップされ、その枠に `skipped` が残るので
+インデックス指定のマッピングがずれない。**全部スキップされたチェーンは失敗扱い**（外部に一度も
+聞かずに成功を返さないため）。設定が空のチェーンは、実行するものが無い設定なので成功扱い。
+
+### 失敗時のレスポンス整形
+
+`response.body_mapping_rules` は**失敗時のみ**適用される。マッピング結果に `error_description` が
+あれば、それをそのまま API のエラー内容として返す。外部サービスが断った理由（配信不可の番号、
+レート制限、向こう側での期限切れ）が呼び出し側に届く。
+
+成功時の応答は `{id}` / 更新後のユーザーで固定。テナントの設定で公開APIの形が変わらないようにしている。
+
+### 外部委譲での制約
+
+| 項目 | 挙動 |
+|---|---|
+| `expire_seconds` / `retry_count_limitation` / `resend_cooldown_seconds` | `execution.details` に書けば効く。委譲設定は通常持たないので既定値（300 / 5 / 60）。実際の有効期限や試行上限は外部サービスが持つ |
+| 変更通知（`notify_previous_value`） | **送られない**。文面の置き場が認証設定の `templates` しか無く、委譲設定はそれを持たないため。ログに残してスキップする |
+
+通知の制約は連絡先変更に固有ではなく、テナント単位の通知設定が存在しないことに起因する。
+
+#### 委譲チャネルで通知したい場合: セキュリティイベントフック
+
+`notify_previous_value` が使えない委譲チャネルでも、**セキュリティイベントフック（`Email` 型）で
+別チャネルに知らせる**ことはできる。電話番号の変更をメールで通知する、という組み合わせになる。
+
+```json
+{
+  "type": "Email",
+  "triggers": ["phone_change_success"],
+  "events": {
+    "phone_change_success": {
+      "execution": {
+        "function": "email",
+        "details": {
+          "function": "smtp",
+          "sender": "noreply@example.com",
+          "subject": "登録情報が変更されました",
+          "body": "お客様の登録情報が変更されました。心当たりが無い場合はサポートへご連絡ください。"
+        }
+      }
+    }
+  }
+}
+```
+
+`details.function` が送信手段（`smtp` / `http_request` / `no_action` など）で、`sender` / `subject` /
+`body` と並ぶ。`events` に `default` を置くと、個別キーが無い trigger はそちらに落ちる。
+実例は `config/examples/e2e/test-tenant/security-event-hook/email.json`。
+
+発火できるイベントは [セキュリティイベント](../03-application-plane/09-security-event.md) の
+`{email|phone}_{verify|change}_{request_,}{success|failure}` 系。
+
+:::warning `*_notice` の代わりにはなりません
+書ける内容が違うので、どちらか一方で済む関係ではない。
+
+| | `notify_previous_value`（`*_notice`） | `Email` フック |
+|---|---|---|
+| 宛先 | **置き換えられる側の値**（チャネル内） | `securityEvent.user().email()` **固定**。狙って旧値に送ることはできず、電話番号の変更でもメールに飛ぶ |
+| 文面 | `{CHANGED_AT}` / `{NEW_VALUE_MASKED}` が使える | `EmailSenderConfiguration` の **固定文言**。変更後の値などは差し込めない |
+| チャネル | 変更したチャネルと同じ | メールのみ |
+
+宛先に使われる `securityEvent.user()` は、変更後のユーザーではなく
+**アクセストークン発行時のスナップショット**（`UserEventCreator` → `OAuthToken.user()` →
+`AccessToken.user()`）。結果として `email_change_success` のフックは実質**変更前のアドレス**に届くが、
+「置き換えられた値」ではなく「トークンを取った時点の値」なので、**同じトークンで 2 回変更した場合は
+2 回とも最初のアドレス**に飛ぶ。
+
+この宛先は E2E で固定している（`me-01-contact-selfservice.test.js` の
+"an Email hook on email_change_success reaches the pre-change address"）。
+:::
+
+### 成否をボディで伝える外部サービス
+
+外部OTPサービスには、誤ったコードでも `200` を返してボディで結果を伝える形がある。
+成否は HTTP ステータスで判定するので、そのままだと誤コードが通ってしまう。
+
+`http_request.response_resolve_configs` で、ボディを条件にステータスを差し替える。
+ログイン側と同じ設定項目で、書く場所も同じ。
+
+```json
+"response_resolve_configs": [
+  {
+    "conditions": [
+      { "path": "$.status_code", "operation": "in", "value": [200, 201] },
+      { "path": "$.response_body.verified", "operation": "eq", "value": true }
+    ],
+    "match_mode": "ALL",
+    "mapped_status_code": 200
+  },
+  {
+    "conditions": [{ "path": "$.status_code", "operation": "in", "value": [200, 201] }],
+    "match_mode": "ALL",
+    "mapped_status_code": 401
+  }
+]
+```
+
+条件は `$.status_code` / `$.response_headers.*` / `$.response_body.*` に対して書く。
+上から順に最初に一致したものが使われるので、**成功条件を先に**置く。どれにも一致しなければ
+元のステータスのまま。
+
+:::warning ボディで成否を伝えるサービスでは必須です
+設定しないと `200` がすべて成功として扱われ、**誤ったコードで連絡先が書き換わります**。
+:::
+
+---
+
+## 認証フローの仕組みには乗せていない
+
+このフローは `AuthenticationTransaction` / `AuthenticationInteractor` を**使わない**。専用テーブル
+`contact_verification_challenge` に自前で状態を持つ。
+
+理由は、認証インタラクションのエンドポイント
+(`POST /{tenant-id}/v1/authorizations|authentications/{id}/{interaction-type}`)が**設計上あえて無認証**
+だから。あれは「まだ資格情報を持たない相手」との交渉を駆動するためのもので、公開されている必要がある。
+一方こちらは**すでに認証済みのユーザーによる属性変更**で、公開エンドポイントを持つ理由が無い。
+乗せると、その公開ドアから属性変更に到達できてしまう。
+
+その結果、以下が構造的に不要・不可能になっている:
+
+- 認証ポリシー(`flow` 設定)が不要 — テナントに追加する設定は送信元の認証設定とスコープだけ
+- 無認証エンドポイントからの駆動が不可能 — そもそも生えない
+- 所有者チェックの書き忘れが不可能 — 後述のとおり SQL の述語
+
+---
+
+## 確認と変更が別エンドポイントである理由
+
+| | 確認 | 変更 |
+|---|---|---|
+| 変わるもの | `*_verified` のみ | 値 + `*_verified`（+ 対応する identity policy なら `preferred_username`） |
+| IdP 内部の権限 | 実質なし(クレーム値のみ) | **ログイン識別子の移動** |
+| 必要スコープ | `openid` | **`email:change` / `phone:change`** |
+| 送信先 | **現在値に固定**(リクエストから受け取らない) | リクエストの `new_value` |
+
+1本にまとめると、**コードを送る前に認可を判定できない**(意図はサーバが `new_value` と現在値を
+比較して初めて分かる)。「再確認に十分軽く、識別子移動に十分重い」スコープは存在しないため分割している。
+`email:change` を `openid` で代替すると、通常の OIDC トークン全て — 第三者クライアントに発行したものを
+含む — に識別子の乗っ取り能力を与えることになる。
+
+---
+
+## エンドポイント
+
+`{channel}` は `email` または `phone`。`{channel}:change` はそれぞれ `email:change` / `phone:change`。
+
+| メソッド・パス | ボディ | スコープ | 説明 |
+|---|---|---|---|
+| `POST /{tenant-id}/v1/me/{channel}/verification` | なし | `openid` | 現在値へコード送信し `{ "id": "<challenge>" }` を返す |
+| `POST /{tenant-id}/v1/me/{channel}/verification/{id}/verify` | `{ "verification_code": "..." }` | `openid` | 検証 + `*_verified: true` |
+| `POST /{tenant-id}/v1/me/{channel}/change` | `{ "new_value": "..." }` | `{channel}:change` | 新しい値へコード送信し `{ "id": "<challenge>" }` を返す |
+| `POST /{tenant-id}/v1/me/{channel}/change/{id}/verify` | `{ "verification_code": "..." }` | `{channel}:change` | 検証 + 値の確定 |
+
+- 確認側は `new_value` を**受け取らない**(送っても無視)。送信先が呼び出し側の指定で動かないので、この半分は宛先を差し替えられない
+- 確認側は、アカウントにその channel の値が無ければ `400`
+- 変更側で `new_value` に現在値を指定すると `400`(確認エンドポイントを使う)
+- `new_value` は送信前に形式・型検証する。不正なら `400` で、コードは送られない
+  - `email`: `local@domain.tld` 相当・最大255文字
+  - `phone`: 先頭が `+` または数字・以降は数字と ` ()-` ・最大32文字。E.164 を推奨するが、
+    国内表記も受け付ける（テナントごとの表記揺れを弾かないため、意図的に緩い）
+  - 非文字列(数値・オブジェクト・配列・null・真偽値)はいずれも拒否
+- スコープは**開始時と確定時の両方**で検証する
+
+### 再送クールダウン
+
+同一ユーザー × 同一操作で、直前の送信から `resend_cooldown_seconds` 以内の再送は `400` で拒否します。
+**未設定時は 60 秒**（0 = 無制限にはしません）。
+
+変更側は宛先を呼び出し側が指定できるため、無制限だと SMS の課金と送信者レピュテーションが、
+呼び出し側の都合で消費されます。受け取る側は関与を求めていない第三者です。
+
+キーは「ユーザー + 操作」なので、Email 変更のクールダウン中でも電話番号の変更や Email の確認は通ります。
+経過判定は DB 側の時刻で行うため、アプリ側の時計のズレで短縮されません。
+
+---
+
+## テナントポリシー: 何を要求するか
+
+`identity_policy_config.contact_change_policy` で、**識別子を動かす変更**と**属性だけの更新**を
+別々に規定できます。どちらになるかは `identity_unique_key_type` で決まります。
+
+| `identity_unique_key_type` | email 変更 | phone 変更 |
+|---|---|---|
+| `EMAIL` / `EMAIL_OR_EXTERNAL_USER_ID` | `identifier_move` | `attribute_only` |
+| `PHONE` / `PHONE_OR_EXTERNAL_USER_ID` | `attribute_only` | `identifier_move` |
+| `USERNAME` 系 / `EXTERNAL_USER_ID` | `attribute_only` | `attribute_only` |
+
+```json
+"identity_policy_config": {
+  "identity_unique_key_type": "EMAIL",
+  "contact_change_policy": {
+    "identifier_move": {
+      "allowed": true,
+      "authentication_conditions": {
+        "any_of": [
+          [ { "path": "$.amr", "operation": "contains", "value": "password" } ],
+          [ { "path": "$.amr", "operation": "contains", "value": "fido-uaf" } ]
+        ]
+      },
+      "max_auth_age_seconds": 300,
+      "notify_previous_value": true
+    },
+    "attribute_only": {
+      "notify_previous_value": true
+    }
+  }
+}
+```
+
+### `authentication_conditions`
+
+「本人が、最近、認証していること」をアクセストークンの認証情報に対する条件で表します。
+**認証方式を名指ししません。** パスワードを持たない利用者（passkey のみ、外部 IdP 由来）を
+締め出さないためです。
+
+記法は `device_registration_conditions` と同じで、`any_of` はグループの OR、
+グループ内は AND です。評価できるパス:
+
+| path | 内容 |
+|---|---|
+| `$.amr` | 認証方式の配列。**このサーバ独自の値**で RFC 8176 の登録名ではありません（`password` / `email` / `sms` / `fido-uaf` / `fido2` / `external-api`） |
+| `$.acr` | 認証コンテキストクラス |
+| `$.auth_time` | 認証時刻（epoch 秒） |
+| `$.auth_age` | 認証からの経過秒 |
+
+`$.auth_time` を持たないトークンでは `auth_time` / `auth_age` の**キー自体が存在しません**。
+その場合 `max_auth_age_seconds` は**満たされない**扱いです（欠落を「たった今」と解釈すると
+規則が反転するため）。
+
+未設定なら条件なし＝スコープだけが門番です。
+
+:::warning 既定では再認証を要求しません
+`max_auth_age_seconds` の既定は `0`（＝上限なし）で、`authentication_conditions` も空です。
+つまり**既定のままだと、`{channel}:change` スコープを持つトークンがあれば、いつ認証したかに
+関係なく識別子を動かせます**。長期アクセストークンや refresh で延命されたトークンでは
+「認証したのは数週間前」ということが起こります。
+
+`authentication_conditions` を既定で空にしているのはテナントごとに保有する認証方式が違うから
+ですが、`max_auth_age_seconds` は**方式に依存しません**。識別子が動くテナントでは明示的に
+設定することを推奨します。
+
+```json
+"identifier_move": { "max_auth_age_seconds": 300 }
+```
+:::
+
+### 身元確認の状態で絞る
+
+専用の設定項目はありません。`$.user.status` に対する条件として書きます。
+
+```json
+// 身元確認済みだけが識別子を動かせる
+"identifier_move": {
+  "authentication_conditions": {
+    "any_of": [[ { "path": "$.user.status", "operation": "eq", "value": "IDENTITY_VERIFIED" } ]]
+  }
+}
+
+// 身元確認済みは動かせない（確認結果が主張した連絡先を守りたい場合）
+"identifier_move": {
+  "authentication_conditions": {
+    "any_of": [[ { "path": "$.user.status", "operation": "ne", "value": "IDENTITY_VERIFIED" } ]]
+  }
+}
+```
+
+条件式なので、**認証の強さと組み合わせられます**。
+
+```json
+"any_of": [[
+  { "path": "$.user.status", "operation": "eq", "value": "IDENTITY_VERIFIED" },
+  { "path": "$.amr", "operation": "contains", "value": "fido-uaf" }
+]]
+```
+
+:::warning `IDENTITY_VERIFICATION_REQUIRED` は「未確認」です
+「身元確認が要求されている」状態であって、**済んでいる状態ではありません**。
+`authentication_device_rule.required_identity_verification: true` のテナントでは
+**端末登録の時点で全利用者がこの状態になります**（`FidoUafRegistrationInteractor` /
+`Fido2RegistrationInteractor`）。`IDENTITY_VERIFIED` と同一視すると、端末必須の
+クライアントでは連絡先を変更できる利用者が居なくなります。
+
+確認が**実施中**かどうかは利用者の status ではなく `identity_verification_application`
+側で持ちます。
+:::
+
+### `notify_previous_value`
+
+確定後、**置き換えられた側の値**へ「変更されました」を送ります（既定 `true`）。
+
+確認コードは新しい値に届くので、フローの間、現在の持ち主には何も届きません。
+これは変更を**防ぐ**層ではなく、**気づかせる**層です。
+
+文面は送信元の認証設定の `templates` に置きます。キーは
+`email_change_notice` / `phone_change_notice`。
+
+```json
+"email_change_notice": {
+  "subject": "メールアドレスが変更されました",
+  "body": "{CHANGED_AT} に {NEW_VALUE_MASKED} へ変更されました。心当たりが無い場合はサポートへご連絡ください。"
+}
+```
+
+確認コード用のテンプレートとはプレースホルダが異なります。
+
+| プレースホルダ | 使える場所 |
+|---|---|
+| `{VERIFICATION_CODE}` / `{EXPIRE_SECONDS}` | 確認コード（`email_change` / `email_verify` 等） |
+| `{CHANGED_AT}` / `{NEW_VALUE_MASKED}` | 変更通知（`*_notice`） |
+
+:::warning `*_notice` を定義していない場合は送られません（既定は `notify_previous_value: true`）
+確認コード側（`email_change` 等）は未定義なら既定文面にフォールバックしますが、変更通知は
+**フォールバックせずスキップ**し、ログに `Contact change notice skipped` を残します。
+
+既定文面は確認コード用（`Your verification code is: {VERIFICATION_CODE}`）なので、通知として
+流用すると**プレースホルダが未置換のまま旧アドレスに届きます**。コードが書かれていないのに
+コードの案内に見えるメールになるため、送らないほうを選んでいます。
+
+`notify_previous_value` の既定は `true` なので、**「有効にしたのに飛ばない」ではなく
+「テンプレートを書いていないので飛んでいない」**という形で現れます。切り分けはログの
+`Contact change notice skipped: template (email_change_notice) is not configured.` を見てください。
+:::
+
+新しい値は部分マスクで引用します（`n***@example.com` / `*****5678`）。乗っ取り後は
+その受信箱を第三者も読んでいる可能性があるため、本人が「自分のではない」と判別できる分だけを載せます。
+
+送信失敗は**ログに残して握りつぶします**。変更は既に確定しており、通知の不達で成功を
+失敗に変えるほうが悪いためです。
+
+:::warning 外部委譲モードでは送られません
+文面の置き場が認証設定の `templates` しか無く、委譲設定はそれを持たないためです。通知自体は
+認証チャレンジではないので本来は送れるはずで、テナント単位の通知設定ができれば解消します。
+:::
+
+### 判定のタイミング
+
+開始時（コード送信前）と確定時の両方で評価します。満たせない要求で開始できてしまうと、
+拒否のたびに呼び出し側の選んだ宛先へメッセージが飛ぶためです。確定時にも見るのは、
+チャレンジが未消費の間に身元確認状態も認証経過時間も動きうるからです。
+
+---
+
+## 所有権と操作種別の扱い
+
+チャレンジの取得は所有者を**述語**に含める:
+
+```sql
+WHERE id = ? AND tenant_id = ? AND user_id = ? FOR UPDATE
+```
+
+他人のチャレンジは「見つかって拒否」ではなく**存在しない**(`404`)。ID とコードの両方を知っていても駆動できない。
+
+操作種別(`email_verify` / `email_change` / `phone_verify` / `phone_change`)は**チャレンジ行に永続化**され、
+必要スコープも channel もそこから導く。URL でスコープを決めて行で挙動を決める、という食い違いが起きない。
+変更チャレンジを確認エンドポイントへ投げても `404` になる。
+
+確定時は該当列の**部分更新**を行う。全カラムを書き戻すと、呼び出し側が保持する古いユーザー像で
+`status` 等を巻き戻してしまうため。
+
+---
+
+## 必要な設定
+
+1. **送信元の認証設定**
+   - Email: [Email認証](./authn/email.md) の `email` config。`templates` に `email_verify` /
+     `email_change` を追加推奨(未定義ならデフォルト文面にフォールバック)
+   - 電話番号: [SMS認証](./authn/sms.md) の `sms` config。`templates` に `phone_verify` /
+     `phone_change` を追加推奨(同上)
+   - 再送間隔を変えるなら `resend_cooldown_seconds`（未設定は 60 秒）
+   - 変更通知を使うなら `templates` に `email_change_notice` / `phone_change_notice`
+     （**未定義なら通知は送られません**。確認コード用のデフォルト文面にはフォールバックしない）
+   - 外部委譲で、成否をボディで伝えるサービスなら `http_request.response_resolve_configs`
+2. **変更用スコープ**をテナントの `scopes_supported` とクライアントの `scope` に追加する。
+   無いとトークンに載らず、変更エンドポイントが常に `403 insufficient_scope` になる
+   (クライアント登録スコープの allow-list フィルタが効くため、fail closed)。
+
+```json
+"scopes_supported": ["openid", "profile", "email", "email:change", "phone:change"]
+```
+
+3. **変更の重さを決めるなら** `identity_policy_config.contact_change_policy`。
+   未設定なら `notify_previous_value: true` だけが効きます（＝スコープだけが門番）
+
+**認証ポリシー（`flow` 設定）の追加は不要。**
+
+---
+
+## identity policy による一意性の挙動(変更時のみ)
+
+一意性は identity policy 由来の `preferred_username` に対して働く。確認側は現在値のままなので無関係。
+
+| `identity_unique_key_type` | 挙動 |
+|---|---|
+| `EMAIL` | メール = ログイン識別子。**既存ユーザーと同じメールへの変更は拒否**(`400`)。変更後は新メールでログイン(旧メールは不可) |
+| `PHONE` | 電話番号 = ログイン識別子。上と同様 |
+| その他 | その channel の値は属性のみ。**重複する値への変更も許可** |
+
+---
+
+## 監査
+
+操作ごとに別種別のイベントを発行する(いずれもログイン時の `email_verification_*` とは別):
+
+| 操作 | イベント |
+|---|---|
+| Email 確認 | `email_verify_request_success` / `_failure`、`email_verify_success` / `_failure` |
+| Email 変更 | `email_change_request_success` / `_failure`、`email_change_success` / `_failure` |
+| 電話番号 確認 | `phone_verify_request_success` / `_failure`、`phone_verify_success` / `_failure` |
+| 電話番号 変更 | `phone_change_request_success` / `_failure`、`phone_change_success` / `_failure` |
+
+永続化して照会するにはテナントに `security_event_log_config.persistence_enabled: true` が必要。
+
+---
+
+## 運用: 期限切れチャレンジの掃除
+
+確定したチャレンジは削除されますが、**コードを要求して放置された行は残ります**（利用者がコードを持って
+戻ってこないだけなので、消す契機が無い）。有効な宛先と使い捨てコードを保持したままなので、他の
+有効期限付きテーブルと同じ一括削除の対象にしています。
+
+```
+POST /v1/admin/operations/delete-expired-data   { "max_deletion_number": 10000 }
+```
+
+レスポンスの内訳に `contact_verification_challenge` が並びます。
+
+---
+
+## 運用: 「コードが届かない」問い合わせ
+
+発行済みチャレンジは管理APIで参照できる。
+
+```
+GET /v1/management/tenants/{tenant-id}/contact-verification-challenges?user_id=...&operation=email_change
+GET /v1/management/tenants/{tenant-id}/contact-verification-challenges/{id}
+GET /v1/management/organizations/{org-id}/tenants/{tenant-id}/contact-verification-challenges
+GET /v1/management/organizations/{org-id}/tenants/{tenant-id}/contact-verification-challenges/{id}
+```
+
+権限は `idp:contact-verification-challenge:read`。
+
+**まず `target_value`（実際の送信先）を見る。** ユーザーが言っているアドレス／番号と違っていれば、
+それが原因。ここはモードによらず同じ。
+
+その次に見るものはモードで変わり、`delivery` がどちらかを示す。
+
+```json
+// ローカル生成
+{ "delivery": "internal", "target_value": "...", "verification_code": "123456", "attempts": 0, ... }
+
+// 外部委譲
+{ "delivery": "external", "target_value": "...", "external_reference": { "transaction_id": "ext-..." }, ... }
+```
+
+| `delivery` | コードの在処 |
+|---|---|
+| `internal` | `verification_code` に入っている |
+| `external` | **idp-server は持っていない。** 外部サービスの記録を `external_reference` で引く |
+
+`internal` で `verification_code` を返すのは意図的。チャレンジの消費には**本人のアクセストークン**が
+必要なため、コードだけを入手したオペレーターが単独で確定させることはできない。
+
+参照は監査ログに記録される。ただし監査ログには `verification_code` も `external_reference` も
+残さない（監査ログは永続で、そこに使い捨ての秘密を残す理由が無いため）。

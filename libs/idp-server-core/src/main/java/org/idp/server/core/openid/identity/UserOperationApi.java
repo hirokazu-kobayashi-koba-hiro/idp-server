@@ -24,6 +24,10 @@ import org.idp.server.core.openid.authentication.AuthenticationTransactionIdenti
 import org.idp.server.core.openid.identity.authentication.PasswordChangeRequest;
 import org.idp.server.core.openid.identity.authentication.PasswordChangeResponse;
 import org.idp.server.core.openid.identity.authentication.PasswordResetRequest;
+import org.idp.server.core.openid.identity.contact.ContactVerificationChallengeIdentifier;
+import org.idp.server.core.openid.identity.contact.ContactVerificationOperation;
+import org.idp.server.core.openid.identity.contact.ContactVerificationRequest;
+import org.idp.server.core.openid.identity.contact.ContactVerificationResponse;
 import org.idp.server.core.openid.identity.device.AuthenticationDeviceIdentifier;
 import org.idp.server.core.openid.identity.io.AuthenticationDevicePatchRequest;
 import org.idp.server.core.openid.identity.io.MfaRegistrationRequest;
@@ -42,6 +46,43 @@ public interface UserOperationApi {
       OAuthToken token,
       AuthFlow authFlow,
       MfaRegistrationRequest request,
+      RequestAttributes requestAttributes);
+
+  /**
+   * Starts a self-service contact (email / phone) verification or change (Issue #1416).
+   *
+   * <p>Deliberately not built on {@link #requestMfaOperation}: that mints an {@code
+   * AuthenticationTransaction}, whose interaction endpoints are unauthenticated by design because
+   * they exist to drive parties that hold no credentials yet. An already-authenticated profile
+   * mutation has no business being reachable through those doors, so this flow keeps its own
+   * challenge state and is reachable only from {@code /v1/me}.
+   *
+   * <p>{@code operation} decides the channel, the required scope and where the code is sent: a
+   * verify always targets the value already on the account and ignores the request body, a change
+   * targets a validated {@code new_value}.
+   */
+  ContactVerificationResponse requestContactVerification(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      ContactVerificationOperation operation,
+      ContactVerificationRequest request,
+      RequestAttributes requestAttributes);
+
+  /**
+   * Verifies the emailed code and commits the address for {@link #requestContactVerification}.
+   *
+   * <p>The challenge is looked up by ({@code id}, tenant, owner), so one belonging to another user
+   * is not found rather than found-and-rejected, and the operation comes from the stored row so
+   * what was authorized and what is committed cannot disagree.
+   */
+  ContactVerificationResponse verifyContactVerification(
+      TenantIdentifier tenantIdentifier,
+      User user,
+      OAuthToken oAuthToken,
+      ContactVerificationOperation operation,
+      ContactVerificationChallengeIdentifier challengeIdentifier,
+      ContactVerificationRequest request,
       RequestAttributes requestAttributes);
 
   AuthenticationInteractionRequestResult interact(

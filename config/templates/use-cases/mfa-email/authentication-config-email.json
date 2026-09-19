@@ -36,10 +36,23 @@
             "authentication": {
               "subject": "[Local Dev] Your login email confirmation code",
               "body": "Hello,\n\nPlease enter the following verification code:\n\n{VERIFICATION_CODE}\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\n- Local Dev IDP"
+            },
+            "email_verify": {
+              "subject": "[Local Dev] Confirm your email address",
+              "body": "Hello,\n\nPlease enter the following verification code to confirm this address:\n\n{VERIFICATION_CODE}\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\n- Local Dev IDP"
+            },
+            "email_change": {
+              "subject": "[Local Dev] Confirm your new email address",
+              "body": "Hello,\n\nPlease enter the following verification code to set this address on your account:\n\n{VERIFICATION_CODE}\n\nThis code will expire in {EXPIRE_SECONDS} seconds.\n\n- Local Dev IDP"
+            },
+            "email_change_notice": {
+              "subject": "[Local Dev] Your email address was changed",
+              "body": "Hello,\n\nThe email address on your account was changed at {CHANGED_AT} to {NEW_VALUE_MASKED}.\n\nIf this was not you, contact support immediately.\n\n- Local Dev IDP"
             }
           },
           "retry_count_limitation": 5,
-          "expire_seconds": 300
+          "expire_seconds": 300,
+          "resend_cooldown_seconds": 60
         }
       },
       "post_hook": {},

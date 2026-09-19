@@ -15,6 +15,7 @@
 | アカウントロック | 5回失敗で15分ロック |
 | セッション有効期限 | 24時間 |
 | ユーザー登録必須項目 | email, password, name |
+| セルフサービス連絡先 | Email の確認・変更（`email:change` スコープ / ローカル生成モード） |
 
 > **no-action モード**: ローカル開発では実際のメールは送信されません。認証コードはサーバーログに出力されます。本番環境では `authentication-config-email.json` の `execution.details.function` を適切なメール送信プロバイダに変更してください。
 

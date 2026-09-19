@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "description": "Request body of POST /{tenant-id}/v1/me/email/change (#1416).",
+  "required": ["new_value"],
+  "properties": {
+    "new_value": {
+      "type": "string",
+      "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+      "minLength": 3,
+      "maxLength": 255,
+      "description": "The address the verification code is sent to. Committed verbatim as the user's email and, under an EMAIL identity policy, as preferred_username, so its shape is bounded here before anything is sent. The pattern is the pragmatic local@domain.tld check, not full RFC 5322 - deliverability is proven by the code round-trip. It also rejects CR/LF, which keeps header injection out of the sender."
+    }
+  }
+}

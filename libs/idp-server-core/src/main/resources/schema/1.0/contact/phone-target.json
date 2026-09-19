@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "description": "Request body of POST /{tenant-id}/v1/me/phone/change (#1416).",
+  "required": ["new_value"],
+  "properties": {
+    "new_value": {
+      "type": "string",
+      "pattern": "^[+0-9][0-9 ()\\-]{2,31}$",
+      "minLength": 3,
+      "maxLength": 32,
+      "description": "The number the verification code is sent to. Deliberately loose: this codebase stores phone_number as given (user.json declares it as a bare string, and the SMS login flow does not validate format either), so requiring E.164 here would reject values that are already the login identifier under a PHONE policy. Normalisation is the same open question as email case-sensitivity and is tracked separately. What this pattern does enforce is what makes a value safe to hand to a sender: digits and dial punctuation only, no CR/LF, no control characters, bounded length."
+    }
+  }
+}

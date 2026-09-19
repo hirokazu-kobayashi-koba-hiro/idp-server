@@ -8,9 +8,134 @@ info:
 servers:
 - url: http://localhost:8080
 tags:
+- name: organization-contact-verification-challenge
+  description: 組織レベル 連絡先確認チャレンジ参照（セルフサービスの Email/電話番号 確認・変更）
 - name: organization-user
   description: 組織レベルユーザー管理
 paths:
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/contact-verification-challenges:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: 組織内 連絡先確認チャレンジ一覧取得
+      description: |
+        セルフサービスの Email / 電話番号 確認・変更（`POST /{tenant-id}/v1/me/{email|phone}/{verification|change}`）で
+        発行された確認チャレンジの一覧を取得します（読み取り専用）。
+
+        「確認コードのメール／SMS が届かない」という問い合わせに対して、**どの宛先に送ったか**（`target_value`）と
+        **どのコードを発行したか**（`verification_code`）をオペレーターが確認するためのAPIです。
+
+        `verification_code` を返すのは意図的です。チャレンジの消費には本人のアクセストークンが必要なため、
+        コードだけを入手したオペレーターが単独で確定させることはできません。
+
+        外部サービスにコード生成・検証を委譲しているテナントでは、コードは idp-server にありません
+        （`delivery: external`）。その場合は `external_reference` で外部サービスの記録を引きます。
+
+        アクセスには `idp:contact-verification-challenge:read` 権限が必要で、参照は監査ログに記録されます。
+        ただし監査ログには `verification_code` も `external_reference` も残りません。
+      tags:
+      - organization-contact-verification-challenge
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+      - name: user_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: ユーザーIDでフィルタリング
+      - name: operation
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - email_verify
+          - email_change
+          - phone_verify
+          - phone_change
+        description: 操作種別でフィルタリング
+      responses:
+        '200':
+          description: 連絡先確認チャレンジ一覧取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContactVerificationChallenge'
+                  total_count:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 20
+                  offset:
+                    type: integer
+                    example: 0
+        '400':
+          description: クエリパラメータが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: 組織アクセス権限不足、テナントアクセス拒否、または権限不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織またはテナントが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/contact-verification-challenges/{id}:
+    parameters:
+    - $ref: '#/components/parameters/OrganizationId'
+    - $ref: '#/components/parameters/TenantId'
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 連絡先確認チャレンジID
+      example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+    get:
+      summary: 組織内 連絡先確認チャレンジ詳細取得
+      description: 指定した組織・テナント内の特定の連絡先確認チャレンジの詳細を取得します
+      tags:
+      - organization-contact-verification-challenge
+      responses:
+        '200':
+          description: 連絡先確認チャレンジ詳細取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactVerificationChallenge'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: 組織アクセス権限不足、テナントアクセス拒否、または権限不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 組織、テナント、または連絡先確認チャレンジが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /v1/management/organizations/{organization-id}/tenants/{tenant-id}/users:
     parameters:
     - $ref: '#/components/parameters/OrganizationId'
@@ -665,6 +790,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
+  responses:
+    Unauthorized:
+      description: 認証されていません（アクセストークンが無効または未指定）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
   parameters:
     TenantId:
       name: tenant-id
@@ -725,6 +858,71 @@ components:
         default: 0
       description: アイテムを返す開始インデックス
   schemas:
+    ContactVerificationChallenge:
+      type: object
+      description: セルフサービス 連絡先確認チャレンジ（Email / 電話番号）
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: チャレンジID
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        user_id:
+          type: string
+          format: uuid
+          description: チャレンジを発行したユーザーのID
+        operation:
+          type: string
+          enum:
+          - email_verify
+          - email_change
+          - phone_verify
+          - phone_change
+          description: 操作種別。発行時に確定し、確定処理まで変わりません
+          example: email_change
+        target_value:
+          type: string
+          description: |
+            確認コードの実際の送信先。`*_verify` はアカウントの現在値、`*_change` は変更先の値。
+            「届かない」の問い合わせでまず確認する項目で、`delivery` によらず記録されます
+          example: new@example.com
+        delivery:
+          type: string
+          enum:
+          - internal
+          - external
+          description: |
+            コードの在処。`internal` は idp-server が生成・照合するモードで `verification_code` が入る。
+            `external` は外部サービスに委譲したモードで、コードは idp-server に無く `external_reference` が入る
+          example: internal
+        verification_code:
+          type: string
+          description: |
+            発行した確認コード。`delivery: internal` のときのみ返る。
+            確定には本人のアクセストークンが別途必要なため、コードだけでは確定できません
+          example: "123456"
+        external_reference:
+          type: object
+          additionalProperties: true
+          description: |
+            外部サービスの記録に突き合わせるための識別子。`delivery: external` のときのみ返る。
+            中身はテナントが `http_request_store` のマッピングで選んだ項目（典型は `transaction_id`）
+          example:
+            transaction_id: ext-3fa85f64-5717-4562-b3fc-2c963f66afa6
+        attempts:
+          type: integer
+          description: 検証失敗の試行回数。上限に達したチャレンジは使用できません
+          example: 0
+        expires_at:
+          type: string
+          format: date-time
+          description: 有効期限
+          example: "2026-09-10T02:01:53.367123"
+        expired:
+          type: boolean
+          description: 参照時点で期限切れかどうか
+          example: false
+
     ErrorResponse:
       type: object
       properties:

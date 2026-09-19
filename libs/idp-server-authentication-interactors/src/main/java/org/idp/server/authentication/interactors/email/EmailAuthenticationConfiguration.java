@@ -27,6 +27,10 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
   Map<String, EmailVerificationTemplate> templates;
   int retryCountLimitation;
   int expireSeconds;
+  // Read by ContactVerificationExchange straight off execution.details, which is where the
+  // effective default lives (Issue #1416). Declared here so the key round-trips with the rest
+  // of the configuration rather than being dropped on the next write.
+  int resendCooldownSeconds;
 
   public EmailAuthenticationConfiguration() {}
 
@@ -47,6 +51,18 @@ public class EmailAuthenticationConfiguration implements JsonReadable {
 
   public String sender() {
     return sender;
+  }
+
+  /**
+   * Whether the tenant actually defined this template.
+   *
+   * <p>{@link #findTemplate(String)} falls back to a generic "here is your verification code" body,
+   * which is right for a code and wrong for anything else: a change notice interpolated over it
+   * delivers the literal {@code {VERIFICATION_CODE\}} placeholder to the address being replaced.
+   * Callers whose message is not a code ask this first and skip rather than send that.
+   */
+  public boolean hasTemplate(String templateKey) {
+    return templates != null && templates.containsKey(templateKey);
   }
 
   public EmailVerificationTemplate findTemplate(String templateKey) {

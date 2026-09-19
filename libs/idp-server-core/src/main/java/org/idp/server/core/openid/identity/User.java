@@ -293,10 +293,10 @@ public class User implements JsonReadable, Serializable, UuidConvertable {
   public User applyIdentityPolicy(
       org.idp.server.platform.multi_tenancy.tenant.policy.TenantIdentityPolicy policy) {
     String value =
-        switch (policy.uniqueKeyType()) {
-          case USERNAME, USERNAME_OR_EXTERNAL_USER_ID -> this.name;
-          case EMAIL, EMAIL_OR_EXTERNAL_USER_ID -> this.email;
-          case PHONE, PHONE_OR_EXTERNAL_USER_ID -> this.phoneNumber;
+        switch (policy.uniqueKeyType().attribute()) {
+          case NAME -> this.name;
+          case EMAIL -> this.email;
+          case PHONE_NUMBER -> this.phoneNumber;
           case EXTERNAL_USER_ID -> this.externalUserId;
         };
 

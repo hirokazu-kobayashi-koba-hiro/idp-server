@@ -28,6 +28,10 @@ public class SmsAuthenticationConfiguration implements JsonReadable {
   Map<String, SmslVerificationTemplate> templates = new HashMap<>();
   int retryCountLimitation = 5;
   int expireSeconds = 300;
+  // Read by ContactVerificationExchange straight off execution.details, which is where the
+  // effective default lives (Issue #1416). Declared here so the key round-trips with the rest
+  // of the configuration rather than being dropped on the next write.
+  int resendCooldownSeconds;
 
   public SmsAuthenticationConfiguration() {}
 
@@ -42,6 +46,16 @@ public class SmsAuthenticationConfiguration implements JsonReadable {
 
   public SmsSenderType senderType() {
     return new SmsSenderType(senderType);
+  }
+
+  /**
+   * Whether the tenant actually defined this template.
+   *
+   * <p>See the email counterpart: the fallback body is a verification-code message, so a change
+   * notice rendered over it ships an unreplaced placeholder to the number being replaced.
+   */
+  public boolean hasTemplate(String templateKey) {
+    return templates != null && templates.containsKey(templateKey);
   }
 
   public SmslVerificationTemplate findTemplate(String templateKey) {
