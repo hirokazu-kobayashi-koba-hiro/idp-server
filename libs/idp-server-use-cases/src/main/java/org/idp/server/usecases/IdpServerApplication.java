@@ -526,10 +526,10 @@ public class IdpServerApplication {
         applicationComponentContainer.resolve(CibaGrantOperationCommandRepository.class);
     SsoSessionOperationCommandRepository ssoSessionOperationCommandRepository =
         applicationComponentContainer.resolve(SsoSessionOperationCommandRepository.class);
-      ContactVerificationChallengeOperationCommandRepository
-              contactVerificationChallengeOperationCommandRepository =
-              applicationComponentContainer.resolve(
-                      ContactVerificationChallengeOperationCommandRepository.class);
+    ContactVerificationChallengeOperationCommandRepository
+        contactVerificationChallengeOperationCommandRepository =
+            applicationComponentContainer.resolve(
+                ContactVerificationChallengeOperationCommandRepository.class);
     ClientAttestationChallengeOperationCommandRepository
         clientAttestationChallengeOperationCommandRepository =
             applicationComponentContainer.resolve(
@@ -714,6 +714,7 @@ public class IdpServerApplication {
                 backchannelAuthenticationRequestOperationCommandRepository,
                 cibaGrantOperationCommandRepository,
                 ssoSessionOperationCommandRepository,
+                contactVerificationChallengeOperationCommandRepository,
                 clientAttestationChallengeOperationCommandRepository,
                 clientInstanceRegistrationChallengeOperationCommandRepository),
             IdpServerOperationApi.class,

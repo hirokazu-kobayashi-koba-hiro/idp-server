@@ -56,7 +56,7 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
   CibaGrantOperationCommandRepository cibaGrantOperationCommandRepository;
   SsoSessionOperationCommandRepository ssoSessionOperationCommandRepository;
   ContactVerificationChallengeOperationCommandRepository
-          contactVerificationChallengeOperationCommandRepository;
+      contactVerificationChallengeOperationCommandRepository;
   ClientAttestationChallengeOperationCommandRepository
       clientAttestationChallengeOperationCommandRepository;
   ClientInstanceRegistrationChallengeOperationCommandRepository
@@ -75,7 +75,7 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
       CibaGrantOperationCommandRepository cibaGrantOperationCommandRepository,
       SsoSessionOperationCommandRepository ssoSessionOperationCommandRepository,
       ContactVerificationChallengeOperationCommandRepository
-              contactVerificationChallengeOperationCommandRepository,
+          contactVerificationChallengeOperationCommandRepository,
       ClientAttestationChallengeOperationCommandRepository
           clientAttestationChallengeOperationCommandRepository,
       ClientInstanceRegistrationChallengeOperationCommandRepository
@@ -93,7 +93,7 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
     this.cibaGrantOperationCommandRepository = cibaGrantOperationCommandRepository;
     this.ssoSessionOperationCommandRepository = ssoSessionOperationCommandRepository;
     this.contactVerificationChallengeOperationCommandRepository =
-            contactVerificationChallengeOperationCommandRepository;
+        contactVerificationChallengeOperationCommandRepository;
     this.clientAttestationChallengeOperationCommandRepository =
         clientAttestationChallengeOperationCommandRepository;
     this.clientInstanceRegistrationChallengeOperationCommandRepository =
@@ -141,13 +141,13 @@ public class IdpServerOperationEntryService implements IdpServerOperationApi {
         contactVerificationChallengeOperationCommandRepository.deleteExpired(
             adminTenant, maxDeletionNumber));
     deleted.put(
-            "client_attestation_challenge",
-            clientAttestationChallengeOperationCommandRepository.deleteExpired(
-                    adminTenant, maxDeletionNumber));
+        "client_attestation_challenge",
+        clientAttestationChallengeOperationCommandRepository.deleteExpired(
+            adminTenant, maxDeletionNumber));
     deleted.put(
-            "client_instance_registration_challenge",
-            clientInstanceRegistrationChallengeOperationCommandRepository.deleteExpired(
-                    adminTenant, maxDeletionNumber));
+        "client_instance_registration_challenge",
+        clientInstanceRegistrationChallengeOperationCommandRepository.deleteExpired(
+            adminTenant, maxDeletionNumber));
 
     int total = deleted.values().stream().mapToInt(Integer::intValue).sum();
     log.info(
