@@ -594,6 +594,9 @@ public class IdpServerApplication {
         new HttpRequestExecutor(ssrfProtectedHttpClient, oAuthAuthorizationResolvers);
     applicationComponentContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
     dependencyContainer.register(HttpRequestExecutor.class, httpRequestExecutor);
+    // Protocol providers assemble plugins of their own and need it there too, not only in the
+    // datasource container: see DefaultClientInstanceRegistrationProtocolProvider.
+    applicationComponentContainer.register(CacheStore.class, cacheStore);
 
     SmsSenders smsSenders = SmsSenderPluginLoader.load(dependencyContainer);
     applicationComponentContainer.register(SmsSenders.class, smsSenders);

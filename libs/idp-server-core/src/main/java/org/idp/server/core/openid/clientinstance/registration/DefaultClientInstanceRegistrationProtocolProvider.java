@@ -23,8 +23,10 @@ import org.idp.server.core.openid.clientinstance.registration.verifier.ClientIns
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.plugin.clientinstance.PlatformAttestationVerifierPluginLoader;
+import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolProvider;
+import org.idp.server.platform.http.HttpRequestExecutor;
 
 public class DefaultClientInstanceRegistrationProtocolProvider
     implements ProtocolProvider<ClientInstanceRegistrationProtocol> {
@@ -48,7 +50,8 @@ public class DefaultClientInstanceRegistrationProtocolProvider
             container.resolve(ClientInstanceQueryRepository.class),
             container.resolve(ClientInstanceCommandRepository.class),
             clientConfigurationQueryRepository,
-            new PlatformAttestationVerifiers(PlatformAttestationVerifierPluginLoader.load()));
+            new PlatformAttestationVerifiers(
+                PlatformAttestationVerifierPluginLoader.load(verifierDependencies(container))));
 
     ClientInstanceRegistrationHandler handler =
         new ClientInstanceRegistrationHandler(
@@ -59,5 +62,23 @@ public class DefaultClientInstanceRegistrationProtocolProvider
             registrationService);
 
     return new DefaultClientInstanceRegistrationProtocol(handler);
+  }
+
+  /**
+   * The subset of the application's components that platform verifiers may build on.
+   *
+   * <p>Copied across one type at a time rather than passing {@code container} itself: verifiers are
+   * loaded through {@code ServiceLoader}, {@code plugins/} jars included, and the application
+   * container holds every repository in the system. See {@link
+   * ClientInstanceRegistrationDependencyContainer}.
+   */
+  private ClientInstanceRegistrationDependencyContainer verifierDependencies(
+      ApplicationComponentContainer container) {
+
+    ClientInstanceRegistrationDependencyContainer dependencies =
+        new ClientInstanceRegistrationDependencyContainer();
+    dependencies.register(HttpRequestExecutor.class, container.resolve(HttpRequestExecutor.class));
+    dependencies.register(CacheStore.class, container.resolve(CacheStore.class));
+    return dependencies;
   }
 }

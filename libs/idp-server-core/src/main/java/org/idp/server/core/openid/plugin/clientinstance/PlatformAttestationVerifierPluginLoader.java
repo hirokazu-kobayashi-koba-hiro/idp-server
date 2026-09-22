@@ -18,7 +18,9 @@ package org.idp.server.core.openid.plugin.clientinstance;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationDependencyContainer;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerifier;
+import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerifierFactory;
 import org.idp.server.core.openid.clientinstance.registration.RequestHashBindingVerifier;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.plugin.PluginLoader;
@@ -29,6 +31,9 @@ import org.idp.server.platform.plugin.PluginLoader;
  * <p>Nothing is registered by default: with no verifier every registration is rejected, which is
  * the safe direction for an unauthenticated endpoint. Platform verifiers are contributed by their
  * own modules, and the development bypass has to be added deliberately.
+ *
+ * <p>What the SPI registers is {@link PlatformAttestationVerifierFactory} rather than the verifier,
+ * so that a verifier can be built with collaborators. See that interface for why.
  */
 public class PlatformAttestationVerifierPluginLoader extends PluginLoader {
 
@@ -42,10 +47,18 @@ public class PlatformAttestationVerifierPluginLoader extends PluginLoader {
    */
   static final String DEVELOPMENT_VERIFIER_ENV = "IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER";
 
-  public static List<PlatformAttestationVerifier> load() {
-    List<PlatformAttestationVerifier> verifiers =
-        new ArrayList<>(loadFromInternalModule(PlatformAttestationVerifier.class));
-    verifiers.addAll(loadFromExternalModule(PlatformAttestationVerifier.class));
+  public static List<PlatformAttestationVerifier> load(
+      ClientInstanceRegistrationDependencyContainer container) {
+
+    List<PlatformAttestationVerifier> verifiers = new ArrayList<>();
+    for (PlatformAttestationVerifierFactory factory :
+        loadFromInternalModule(PlatformAttestationVerifierFactory.class)) {
+      verifiers.add(factory.create(container));
+    }
+    for (PlatformAttestationVerifierFactory factory :
+        loadFromExternalModule(PlatformAttestationVerifierFactory.class)) {
+      verifiers.add(factory.create(container));
+    }
 
     if (Boolean.parseBoolean(System.getenv(DEVELOPMENT_VERIFIER_ENV))) {
       verifiers.add(new RequestHashBindingVerifier());
