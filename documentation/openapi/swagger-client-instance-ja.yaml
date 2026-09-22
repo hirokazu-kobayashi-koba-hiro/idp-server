@@ -1,0 +1,321 @@
+openapi: 3.0.3
+info:
+  title: Client Instance 登録API
+  description: |
+    ネイティブアプリのインスタンスが、端末内で生成した鍵（Client Instance Key）を認可サーバーに登録するためのエンドポイント仕様。
+    Attestation-Based Client Authentication（`attest_jwt_client_auth`）で `client_attestation_trust_source: registered_instance_key` を使う構成で必要になります。
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+
+servers:
+  - url: https://api.local.test
+    description: IdP Server API エンドポイント(ローカル)
+
+tags:
+  - name: Client Instance
+    description: |
+      アプリのインスタンスごとに端末内で生成した鍵を、認可サーバーに登録するAPI群。
+
+      登録が済むと、そのインスタンスは自分の鍵で Client Attestation JWT を自己署名し、
+      トークンエンドポイント等で `attest_jwt_client_auth` として認証できるようになります。
+      認証フェーズの仕様は [RP用API](/docs/content_07_reference/api-rp-ja/) を参照してください。
+
+      ## 2段階になっている理由
+
+      チャレンジを先に発行するのは、プラットフォーム証明（`platform_evidence`）を
+      **この登録のために作られたもの**に縛るためです。証明の中にサーバーが発行した値が
+      入っていなければ、過去に取得した証明を使い回せてしまいます。
+
+      ```
+      1. POST /v1/client-instances/challenges  → challenge / instance_id
+      2. 端末内で鍵を生成し、challenge を埋め込んだプラットフォーム証明を取得
+      3. POST /v1/client-instances             → 登録完了
+      ```
+
+      ## このAPIは無認証です
+
+      登録はクライアント認証より前に行う必要があるため、どちらのエンドポイントも
+      アクセストークンもクライアントシークレットも要求しません。
+
+      **`POST /v1/client-instances` では、プラットフォーム証明の検証がリクエストの認証そのものです。**
+      検証の中身は
+      [Attestation-Based Client Authentication](/docs/content_04_protocols/protocol-08-attestation-based-client-authentication)
+      を参照してください。
+
+      検証器（`PlatformAttestationVerifier`）が1つも登録されていない場合、**すべての登録が拒否されます**。
+      無認証エンドポイントに対する安全側の既定です。
+
+paths:
+  /{tenant-id}/v1/client-instances/challenges:
+    post:
+      tags:
+        - Client Instance
+      summary: 登録チャレンジの発行
+      description: |
+        登録に使う一回限りのチャレンジと、予約された `instance_id` を発行します。
+
+        `device_id` を要求するかどうかはクライアント設定の
+        `extension.client_instance_registration_policy` で決まります。
+
+        | 値 | `device_id` |
+        |---|---|
+        | `require_authentication_device` | **必須**。この認可サーバーに登録済みの認証デバイスであること |
+        | `attestation_only` | 不要。プラットフォーム証明だけを裏付けとする |
+
+        レスポンスは `Cache-Control: no-store` を伴います。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - client_id
+              properties:
+                client_id:
+                  type: string
+                  description: 登録先のクライアント。`token_endpoint_auth_method` が `attest_jwt_client_auth` であること
+                  example: "de2f6a1c-8f29-4a1f-9a2b-1c0d5f7e3b44"
+                device_id:
+                  type: string
+                  description: |
+                    認証デバイスの識別子。`client_instance_registration_policy` が
+                    `require_authentication_device` のときのみ必要
+                  example: "4b1b6e0c-2a1b-4f2e-9b3a-7d5e8c1f0a26"
+      responses:
+        '200':
+          description: チャレンジ発行成功
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - challenge
+                  - instance_id
+                  - expires_in
+                properties:
+                  challenge:
+                    type: string
+                    description: プラットフォーム証明に埋め込む値
+                  instance_id:
+                    type: string
+                    description: この登録のために予約された Client Instance の識別子
+                  expires_in:
+                    type: integer
+                    description: チャレンジの有効期間（秒）
+                    example: 300
+        '400':
+          $ref: '#/components/responses/ClientInstanceInvalidRequest'
+        '500':
+          $ref: '#/components/responses/ClientInstanceServerError'
+
+  /{tenant-id}/v1/client-instances:
+    post:
+      tags:
+        - Client Instance
+      summary: Client Instance の登録
+      description: |
+        発行済みのチャレンジ・登録したい公開鍵・プラットフォーム証明を提示して、Client Instance を登録します。
+
+        サーバーは次の3つがすべて成立することを確認します（詳細は
+        [Attestation-Based Client Authentication](/docs/content_04_protocols/protocol-08-attestation-based-client-authentication)）。
+
+        1. **チャレンジの束縛** — 証明がこの登録のために作られたこと
+        2. **インスタンス鍵の束縛** — 証明が `client_instance_public_key` を対象にしていること
+        3. **アプリ同一性の束縛** — 証明されたアプリがこのクライアントのアプリであること
+
+        加えて証明書チェーンをピン留めしたルートまで検証し、鍵がセキュアハードウェアで
+        **生成された**署名可能な鍵であることを確認します。
+
+        登録が済むと、このインスタンスは自分の鍵で Client Attestation JWT を自己署名できます。
+
+        レスポンスは `Cache-Control: no-store` を伴います。
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - challenge
+                - client_instance_public_key
+                - platform_evidence
+              properties:
+                challenge:
+                  type: string
+                  description: "`POST /v1/client-instances/challenges` で得た値"
+                client_instance_public_key:
+                  type: object
+                  description: |
+                    登録する公開鍵（JWK）。プラットフォーム証明が対象にしている鍵と一致すること。
+                    以降の Client Attestation JWT はこの鍵の秘密鍵で署名します
+                  example:
+                    kty: EC
+                    crv: P-256
+                    x: "f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU"
+                    y: "x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0"
+                platform_evidence:
+                  $ref: '#/components/schemas/PlatformEvidence'
+            examples:
+              android:
+                summary: Android Key Attestation
+                value:
+                  challenge: "Zm9vYmFyLWNoYWxsZW5nZS0wMQ"
+                  client_instance_public_key:
+                    kty: EC
+                    crv: P-256
+                    x: "f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU"
+                    y: "x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0"
+                  platform_evidence:
+                    platform: android-key-attestation
+                    x5c:
+                      - "<リーフ証明書 DER の base64>"
+                      - "<中間証明書>"
+                      - "<ルート証明書>"
+              ios:
+                summary: Apple App Attest
+                value:
+                  challenge: "Zm9vYmFyLWNoYWxsZW5nZS0wMQ"
+                  client_instance_public_key:
+                    kty: EC
+                    crv: P-256
+                    x: "f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU"
+                    y: "x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0"
+                  platform_evidence:
+                    platform: ios-app-attest
+                    attestation_object: "<CBOR の attestation object を base64 したもの>"
+      responses:
+        '201':
+          description: 登録成功
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - instance_id
+                properties:
+                  instance_id:
+                    type: string
+                    description: |
+                      登録された Client Instance の識別子。チャレンジ発行時に返したものと同じ値です
+                      （ボディに新しい秘密は含まれません）
+        '400':
+          $ref: '#/components/responses/ClientInstanceInvalidRequest'
+        '500':
+          $ref: '#/components/responses/ClientInstanceServerError'
+
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      description: テナント識別子
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    PlatformEvidence:
+      type: object
+      description: |
+        プラットフォームが発行した、鍵とアプリに関する証明。`platform` の値で構造が決まります。
+
+        対応プラットフォームは `PlatformAttestationVerifier` の実装として登録されたものだけです。
+        未知の `platform` は拒否されます。
+      required:
+        - platform
+      properties:
+        platform:
+          type: string
+          description: 証明の種類
+          enum:
+            - android-key-attestation
+            - ios-app-attest
+      oneOf:
+        - title: Android Key Attestation
+          type: object
+          required:
+            - platform
+            - x5c
+          properties:
+            platform:
+              type: string
+              enum: [android-key-attestation]
+            x5c:
+              type: array
+              description: |
+                Android が鍵に対して発行する証明書チェーン。リーフが先頭で、末尾が
+                Google のハードウェア証明ルート（クライアント設定で上書き可）。
+                リーフの拡張 `1.3.6.1.4.1.11129.2.1.17` を読みます
+              items:
+                type: string
+                description: 証明書 DER の base64
+        - title: Apple App Attest
+          type: object
+          required:
+            - platform
+            - attestation_object
+          properties:
+            platform:
+              type: string
+              enum: [ios-app-attest]
+            attestation_object:
+              type: string
+              description: |
+                App Attest の attestation object（CBOR）を base64 したもの。
+                `fmt` が `apple-appattest` であること
+
+  responses:
+    ClientInstanceInvalidRequest:
+      description: |
+        リクエストが受け付けられなかった。
+
+        **理由は区別されません。** エンドポイントが無認証なので、詳細な理由を返すと
+        どの `client_id` / `device_id` の組み合わせが存在するか、既にインスタンスを
+        持っているかを外から探れてしまうためです。
+
+        チャレンジの不一致・期限切れ・使用済み、プラットフォーム証明の検証失敗、
+        登録ポリシー違反は、いずれも同じ応答になります。
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                example: invalid_request
+
+    ClientInstanceServerError:
+      description: |
+        サーバー側の障害。呼び出し側の誤りとは区別して返します（すべてを
+        `invalid_request` にすると、リトライで直るものが直らないものに見えるため）。
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                example: server_error

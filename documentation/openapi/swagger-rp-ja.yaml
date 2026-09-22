@@ -70,6 +70,12 @@ tags:
       📘 関連仕様:  
       [OpenID Connect Core 1.0](https://openid-foundation-japan.github.io/openid-connect-core-1_0.ja.html)
 
+  - name: Client Attestation
+    description: |
+      Attestation-Based Client Authentication（`attest_jwt_client_auth`）で使うチャレンジの発行。
+
+      クライアントインスタンスの**登録**は別仕様です
+      → [Client Instance 登録API](/docs/content_07_reference/api-client-instance-ja/)
   - name: OIDCメタデータ
     description: |
       OpenID Connect Discovery 1.0 に基づく、OpenID Provider（OP）のメタデータ情報を提供するエンドポイント群です。
@@ -114,6 +120,7 @@ paths:
         - **private_key_jwt**：登録済みの公開鍵に対応する秘密鍵で署名した JWT を `client_assertion` として送信します。
         - **tls_client_auth（mTLS）**：クライアント証明書を使って双方向TLS認証を行います。サーバーは証明書のサブジェクトなどでクライアントを識別します。
         - **self_signed_tls_client_auth（自己署名TLS）**: 自己署名のクライアント証明書を用いたTLS認証方式。証明書のフィンガープリントを事前登録することで認証が成立します。
+        - **attest_jwt_client_auth**：Client Attestation JWT と Client Attestation PoP JWT を`OAuth-Client-Attestation` / `OAuth-Client-Attestation-PoP` ヘッダで送信します（[draft-ietf-oauth-attestation-based-client-auth](https://datatracker.ietf.org/doc/draft-ietf-oauth-attestation-based-client-auth/)）。ボディにもヘッダにもシークレットを載せないため、配布物にシークレットを埋め込めないネイティブアプリで使います。
 
         JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
 
@@ -125,6 +132,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/OAuthClientAttestation'
+        - $ref: '#/components/parameters/OAuthClientAttestationPop'
       requestBody:
         required: true
         description: |
@@ -223,6 +232,15 @@ paths:
         '401':
           description: |
             クライアント認証が必要、または認証情報が無効
+
+            `attest_jwt_client_auth` の場合、`invalid_client` に加えて
+            `invalid_client_attestation`（Client Attestation JWT / PoP JWT が不正、対で送られていない）と
+            `use_attestation_challenge`（PoP JWT の `challenge` が無い / 期待値でない）が返ります
+            （draft-ietf-oauth-attestation-based-client-auth Section 7.4）。
+            後者には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴います。
+          headers:
+            OAuth-Client-Attestation-Challenge:
+              $ref: '#/components/headers/OAuthClientAttestationChallenge'
           content:
             application/json:
               schema:
@@ -259,6 +277,7 @@ paths:
           - **private_key_jwt**：登録済みの公開鍵に対応する秘密鍵で署名した JWT を `client_assertion` として送信します。
           - **tls_client_auth（mTLS）**：クライアント証明書を使って双方向TLS認証を行います。サーバーは証明書のサブジェクトなどでクライアントを識別します。
           - **self_signed_tls_client_auth（自己署名TLS）**: 自己署名のクライアント証明書を用いたTLS認証方式。証明書のフィンガープリントを事前登録することで認証が成立します。
+          - **attest_jwt_client_auth**：Client Attestation JWT と Client Attestation PoP JWT を`OAuth-Client-Attestation` / `OAuth-Client-Attestation-PoP` ヘッダで送信します（[draft-ietf-oauth-attestation-based-client-auth](https://datatracker.ietf.org/doc/draft-ietf-oauth-attestation-based-client-auth/)）。ボディにもヘッダにもシークレットを載せないため、配布物にシークレットを埋め込めないネイティブアプリで使います。
 
           JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
 
@@ -267,6 +286,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/OAuthClientAttestation'
+        - $ref: '#/components/parameters/OAuthClientAttestationPop'
       requestBody:
         required: true
         content:
@@ -289,7 +310,17 @@ paths:
                 $ref: '#/components/schemas/BackchannelAuthenticationBadRequestErrorResponse'
 
         '401':
-          description: クライアント認証エラー（invalid_client）
+          description: |
+            クライアント認証エラー（`invalid_client`）。
+
+            `attest_jwt_client_auth` の場合、`invalid_client` に加えて
+            `invalid_client_attestation`（Client Attestation JWT / PoP JWT が不正、対で送られていない）と
+            `use_attestation_challenge`（PoP JWT の `challenge` が無い / 期待値でない）が返ります
+            （draft-ietf-oauth-attestation-based-client-auth Section 7.4）。
+            後者には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴います。
+          headers:
+            OAuth-Client-Attestation-Challenge:
+              $ref: '#/components/headers/OAuthClientAttestationChallenge'
           content:
             application/json:
               schema:
@@ -487,6 +518,68 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
         '504':
           $ref: '#/components/responses/GatewayTimeout'
+  /{tenant-id}/v1/client-attestation/challenges:
+    post:
+      tags:
+        - Client Attestation
+      summary: Client Attestation チャレンジの発行
+      description: |
+        Client Attestation PoP JWT の `challenge` クレームに入れる値を発行します
+        （draft-ietf-oauth-attestation-based-client-auth Section 6.1）。
+
+        テナントで `client_attestation_challenge_required` を有効にしている場合、
+        PoP JWT はここで得た値を持っていなければ `use_attestation_challenge` で拒否されます。
+
+        ## 無認証です
+
+        不透明な nonce を返すだけで、リクエストからは何も読みません。
+        クライアント認証の前に呼ぶ必要があるため、認証は要求しません。
+
+        ## 有効期限まで再利用できます
+
+        チャレンジは単回消費ではなく、期限まで何度でも使えます（Section 11.1 が挙げる
+        3つの方式のうちの1つ）。
+
+        レスポンスは `Cache-Control: no-store` を伴います（Section 6.1 の要求）。
+
+        既に持っているチャレンジが期限切れになった場合、このエンドポイントを呼ばなくても、
+        エラー応答に付く `OAuth-Client-Attestation-Challenge` ヘッダから次の値を得られます。
+      parameters:
+        - $ref: '#/components/parameters/tenant-id'
+      security: []
+      responses:
+        '200':
+          description: 発行成功
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - attestation_challenge
+                properties:
+                  attestation_challenge:
+                    type: string
+                    description: PoP JWT の `challenge` クレームに入れる値
+        '500':
+          description: |
+            サーバー側の障害。リクエストから何も読まないため、呼び出し側の誤りで
+            失敗することはありません。
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    example: server_error
+
   /{tenant-id}/v1/tokens:
     post:
       summary: トークンリクエスト
@@ -512,6 +605,7 @@ paths:
           - **none**：認証を行いません。PKCEを使用するPublicクライアント向け。
           - **tls_client_auth（mTLS）**：クライアント証明書を使って双方向TLS認証を行います。サーバーは証明書のサブジェクトなどでクライアントを識別します。
           - **self_signed_tls_client_auth（自己署名TLS）**: 自己署名のクライアント証明書を用いたTLS認証方式。証明書のフィンガープリントを事前登録することで認証が成立します。
+          - **attest_jwt_client_auth**：Client Attestation JWT と Client Attestation PoP JWT を`OAuth-Client-Attestation` / `OAuth-Client-Attestation-PoP` ヘッダで送信します（[draft-ietf-oauth-attestation-based-client-auth](https://datatracker.ietf.org/doc/draft-ietf-oauth-attestation-based-client-auth/)）。ボディにもヘッダにもシークレットを載せないため、配布物にシークレットを埋め込めないネイティブアプリで使います。
 
           JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
 
@@ -520,6 +614,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/OAuthClientAttestation'
+        - $ref: '#/components/parameters/OAuthClientAttestationPop'
       requestBody:
         required: true
         content:
@@ -597,7 +693,21 @@ paths:
               - JWTの `exp`, `aud`, `iss`, `jti` が不正または不整合だった
               - 登録されていないクライアントがアクセスした
 
-              エラーコードは常に `invalid_client` が返されます。
+              エラーコードは `invalid_client` が返されます。
+
+            `attest_jwt_client_auth` の場合のみ、次の 2 つが追加で返ります
+            （draft-ietf-oauth-attestation-based-client-auth Section 7.4）。
+
+            | error | 意味 |
+            |---|---|
+            | `invalid_client_attestation` | Client Attestation JWT / PoP JWT が不正、対で送られていない、署名検証に失敗した |
+            | `use_attestation_challenge` | PoP JWT の `challenge` クレームが無い、または期待した値でない |
+
+            `use_attestation_challenge` のときは `OAuth-Client-Attestation-Challenge`
+            レスポンスヘッダに次に使うチャレンジが入るので、それで作り直します。
+          headers:
+            OAuth-Client-Attestation-Challenge:
+              $ref: '#/components/headers/OAuthClientAttestationChallenge'
           content:
             application/json:
               schema:
@@ -632,6 +742,7 @@ paths:
         - **private_key_jwt**：登録済みの公開鍵に対応する秘密鍵で署名した JWT を `client_assertion` として送信します。
         - **tls_client_auth（mTLS）**：クライアント証明書を使って双方向TLS認証を行います。サーバーは証明書のサブジェクトなどでクライアントを識別します。
         - **self_signed_tls_client_auth（自己署名TLS）**: 自己署名のクライアント証明書を用いたTLS認証方式。証明書のフィンガープリントを事前登録することで認証が成立します。
+        - **attest_jwt_client_auth**：Client Attestation JWT と Client Attestation PoP JWT を`OAuth-Client-Attestation` / `OAuth-Client-Attestation-PoP` ヘッダで送信します（[draft-ietf-oauth-attestation-based-client-auth](https://datatracker.ietf.org/doc/draft-ietf-oauth-attestation-based-client-auth/)）。ボディにもヘッダにもシークレットを載せないため、配布物にシークレットを埋め込めないネイティブアプリで使います。
 
         JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
 
@@ -642,6 +753,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/OAuthClientAttestation'
+        - $ref: '#/components/parameters/OAuthClientAttestationPop'
       requestBody:
         required: true
         content:
@@ -656,13 +769,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenIntrospectionResponse'
         '400':
-          description: 不正なリクエスト形式または必須パラメータの欠落。
+          description: |
+            不正なリクエスト形式または必須パラメータの欠落、**およびクライアント認証の失敗**。
+
+            クライアント認証に失敗すると `400` + `{"active": false, "error": "invalid_client"}`
+            を返します。
+
+            > **⚠️ RFC 7662 Section 2.3 に準拠していません（[#1891](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1891)）**
+            >
+            > 仕様上は `401` を返すべきで、`active: false` は「**認可された**クエリでトークンが無効」
+            > のときの応答として定義されています。認証エラーで `active: false` が返るため、
+            > そのフィールドだけを見る Resource Server は「資格情報が不正」を
+            > 「トークンが無効」と解釈します。
+            >
+            > **`active` だけで判定せず、`error` の有無も確認してください。**
+            > 修正は Resource Server から見て破壊的変更になるため、移行方針とあわせて
+            > #1891 で扱います。トークンエンドポイントと revocation は `401` です。
+
+            `attest_jwt_client_auth` の場合、`invalid_client` に加えて
+            `invalid_client_attestation`（Client Attestation JWT / PoP JWT が不正、対で送られていない）と
+            `use_attestation_challenge`（PoP JWT の `challenge` が無い / 期待値でない）が返ります
+            （draft-ietf-oauth-attestation-based-client-auth Section 7.4）。
+            後者には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴います。
+          headers:
+            OAuth-Client-Attestation-Challenge:
+              $ref: '#/components/headers/OAuthClientAttestationChallenge'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenIntrospectionBadRequestResponse'
         '401':
-          description: 認証エラー。クライアント認証に失敗した場合。
+          description: |
+            **検査対象のトークン**の問題。クライアント認証の失敗ではありません（そちらは `400`）。
+
+            `error: invalid_token` として、トークンが不正・期限切れ、ユーザーが無効、
+            証明書バインディング不一致、DPoP 証明が不正、のいずれかで返ります。
 
         '429':
           $ref: '#/components/responses/TooManyRequests'
@@ -717,6 +858,7 @@ paths:
         - **private_key_jwt**：登録済みの公開鍵に対応する秘密鍵で署名した JWT を `client_assertion` として送信します。
         - **tls_client_auth（mTLS）**：クライアント証明書を使って双方向TLS認証を行います。サーバーは証明書のサブジェクトなどでクライアントを識別します。
         - **self_signed_tls_client_auth（自己署名TLS）**: 自己署名のクライアント証明書を用いたTLS認証方式。証明書のフィンガープリントを事前登録することで認証が成立します。
+        - **attest_jwt_client_auth**：Client Attestation JWT と Client Attestation PoP JWT を`OAuth-Client-Attestation` / `OAuth-Client-Attestation-PoP` ヘッダで送信します（[draft-ietf-oauth-attestation-based-client-auth](https://datatracker.ietf.org/doc/draft-ietf-oauth-attestation-based-client-auth/)）。ボディにもヘッダにもシークレットを載せないため、配布物にシークレットを埋め込めないネイティブアプリで使います。
 
         JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
 
@@ -727,6 +869,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/OAuthClientAttestation'
+        - $ref: '#/components/parameters/OAuthClientAttestationPop'
       requestBody:
         required: true
         content:
@@ -751,6 +895,21 @@ paths:
             不正なリクエスト、またはクライアント認証失敗。
             - `error: invalid_request` — 必須パラメータの欠落、不正な形式
             - `error: invalid_client` — クライアントシークレット不一致、未登録クライアント、認証情報なし
+
+            > **⚠️ クライアント認証失敗が `401` でないのは RFC 7662 Section 2.3 に準拠していません
+            > （[#1891](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/issues/1891)）**
+            >
+            > `active: false` も同時に返るため、そのフィールドだけを見る Resource Server は
+            > 「資格情報が不正」を「トークンが無効」と解釈します。`error` の有無も確認してください。
+
+            `attest_jwt_client_auth` の場合、`invalid_client` に加えて
+            `invalid_client_attestation`（Client Attestation JWT / PoP JWT が不正、対で送られていない）と
+            `use_attestation_challenge`（PoP JWT の `challenge` が無い / 期待値でない）が返ります
+            （draft-ietf-oauth-attestation-based-client-auth Section 7.4）。
+            後者には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴います。
+          headers:
+            OAuth-Client-Attestation-Challenge:
+              $ref: '#/components/headers/OAuthClientAttestationChallenge'
           content:
             application/json:
               schema:
@@ -784,6 +943,7 @@ paths:
         - **private_key_jwt**：登録済みの公開鍵に対応する秘密鍵で署名した JWT を `client_assertion` として送信します。
         - **tls_client_auth（mTLS）**：クライアント証明書を使って双方向TLS認証を行います。サーバーは証明書のサブジェクトなどでクライアントを識別します。
         - **self_signed_tls_client_auth（自己署名TLS）**: 自己署名のクライアント証明書を用いたTLS認証方式。証明書のフィンガープリントを事前登録することで認証が成立します。
+        - **attest_jwt_client_auth**：Client Attestation JWT と Client Attestation PoP JWT を`OAuth-Client-Attestation` / `OAuth-Client-Attestation-PoP` ヘッダで送信します（[draft-ietf-oauth-attestation-based-client-auth](https://datatracker.ietf.org/doc/draft-ietf-oauth-attestation-based-client-auth/)）。ボディにもヘッダにもシークレットを載せないため、配布物にシークレットを埋め込めないネイティブアプリで使います。
 
         JWT認証（client_secret_jwt / private_key_jwt）では、以下のクレームを含むJWTを生成し、次のパラメータを使用して送信してください：
 
@@ -794,6 +954,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/OAuthClientAttestation'
+        - $ref: '#/components/parameters/OAuthClientAttestationPop'
       requestBody:
         required: true
         content:
@@ -812,7 +974,17 @@ paths:
         '400':
           description: リクエスト形式エラーまたはパラメータの欠落。
         '401':
-          description: クライアント認証エラー。
+          description: |
+            クライアント認証エラー。
+
+            `attest_jwt_client_auth` の場合、`invalid_client` に加えて
+            `invalid_client_attestation`（Client Attestation JWT / PoP JWT が不正、対で送られていない）と
+            `use_attestation_challenge`（PoP JWT の `challenge` が無い / 期待値でない）が返ります
+            （draft-ietf-oauth-attestation-based-client-auth Section 7.4）。
+            後者には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴います。
+          headers:
+            OAuth-Client-Attestation-Challenge:
+              $ref: '#/components/headers/OAuthClientAttestationChallenge'
 
         '429':
           $ref: '#/components/responses/TooManyRequests'
@@ -1462,6 +1634,17 @@ components:
 
         📘 関連仕様: [RFC 6749 Section 2.3 - Client Authentication](https://datatracker.ietf.org/doc/html/rfc6749#section-2.3)
 
+  headers:
+    OAuthClientAttestationChallenge:
+      description: |
+        次の Client Attestation PoP JWT の `challenge` クレームに入れる値
+        （draft-ietf-oauth-attestation-based-client-auth Section 6.2）。
+
+        `use_attestation_challenge` エラーには**必ず伴います**。それ以外の応答にも
+        付くことがあり、その場合は次回から新しい値を使います。
+      schema:
+        type: string
+
   parameters:
     tenant-id:
       name: tenant-id
@@ -1482,6 +1665,37 @@ components:
         `Basic base64(client_id:client_secret)` 形式で送信します。
       schema:
         type: string
+
+    OAuthClientAttestation:
+      name: OAuth-Client-Attestation
+      in: header
+      required: false
+      description: |
+        Client Attestation JWT（`attest_jwt_client_auth` 用）。
+
+        Client Attester が発行した JWT で、`cnf.jwk` にクライアントインスタンスの公開鍵を持ちます。
+        `OAuth-Client-Attestation-PoP` と**必ず対で**送信します（片方だけのリクエストは拒否されます）。
+
+        `typ` は `oauth-client-attestation+jwt`。
+      schema:
+        type: string
+        format: jwt
+
+    OAuthClientAttestationPop:
+      name: OAuth-Client-Attestation-PoP
+      in: header
+      required: false
+      description: |
+        Client Attestation PoP JWT（`attest_jwt_client_auth` 用）。
+
+        `OAuth-Client-Attestation` の `cnf.jwk` に対応する秘密鍵で署名し、そのインスタンスが
+        鍵を保持していることを示します。`typ` は `oauth-client-attestation-pop+jwt`。
+
+        テナントが `client_attestation_challenge_required` を有効にしている場合、
+        `challenge` クレームに [チャレンジエンドポイント](#tag/Client-Attestation) で得た値が必要です。
+      schema:
+        type: string
+        format: jwt
 
     response_type:
       name: response_type

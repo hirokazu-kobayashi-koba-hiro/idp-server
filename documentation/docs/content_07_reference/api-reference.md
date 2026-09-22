@@ -2,6 +2,8 @@
 
 [RP用のAPI仕様](api-rp-ja)
 
+[Client Instance 登録API仕様（Attestation-Based Client Authentication の登録フェーズ）](api-client-instance-ja)
+
 [認証デバイス用のAPI仕様](api-authentication-device-ja)
 
 [リソースオーナー用のAPI仕様（身元確認関連の申込みAPIを含む）](api-resource-owner-ja)
