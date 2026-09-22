@@ -75,6 +75,19 @@ const createPopJwt = () =>
     additionalOptions: { header: { typ: POP_TYP } },
   });
 
+/**
+ * Every trust failure in this file lands on the same error code, so the reason is asserted too:
+ * without it a test named after one way of breaking the chain passes when another one refuses
+ * the request.
+ */
+const expectNoTrustedKey = (response) => {
+  expect(response.status).toBe(401);
+  expect(response.data.error).toBe("invalid_client_attestation");
+  expect(response.data.error_description).toContain(
+    "reason=no trusted client attestation key is available for the client"
+  );
+};
+
 const requestTokenWith = async (attestationJwt) =>
   await requestToken({
     endpoint: serverConfig.tokenEndpoint,
@@ -190,8 +203,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11 §10.8: trust establ
       );
       console.log("chain under another root:", response.status, JSON.stringify(response.data));
 
-      expect(response.status).toBe(401);
-      expect(response.data.error).toBe("invalid_client_attestation");
+      expectNoTrustedKey(response);
     }, 120000);
 
     it("rejects an attestation carrying no chain", async () => {
@@ -201,7 +213,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11 §10.8: trust establ
         createAttestationJwt({ attester, x5c: null })
       );
 
-      expect(response.status).toBe(401);
+      expectNoTrustedKey(response);
     }, 120000);
 
     it("rejects a chain whose leaf did not sign the attestation", async () => {
@@ -216,7 +228,12 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11 §10.8: trust establ
         })
       );
 
+      // The chain verifies to the root, so the resolver hands back the leaf key; the JOSE layer
+      // is what refuses, and its reason is different from the trust failures above.
       expect(response.status).toBe(401);
+      expect(response.data.error_description).toContain(
+        "reason=client attestation jwt validation failed: invalid signature"
+      );
     }, 120000);
   });
 
@@ -251,7 +268,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11 §10.8: trust establ
       });
       console.log("no trust anchor configured:", response.status);
 
-      expect(response.status).toBe(401);
+      expectNoTrustedKey(response);
     }, 120000);
   });
 });

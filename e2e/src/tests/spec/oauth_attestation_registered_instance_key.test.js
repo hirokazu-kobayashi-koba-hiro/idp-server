@@ -155,6 +155,10 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed C
         body: { id: uuidv4(), instance_key: instanceJwk },
       });
       expect(response.status).toBe(400);
+      expect(response.data.error).toBe("invalid_request");
+      expect(response.data.error_description).toContain(
+        "instance_key must not contain private key material: d"
+      );
     });
   });
 
@@ -176,6 +180,10 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed C
         popJwt: createPopJwt(),
       });
       expect(response.status).toBe(401);
+      expect(response.data.error).toBe("invalid_client_attestation");
+      expect(response.data.error_description).toContain(
+        "reason=no trusted client attestation key is available for the client"
+      );
       expect(response.data).toHaveProperty("error", "invalid_client_attestation");
     });
 
@@ -189,6 +197,10 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed C
         popJwt: createPopJwt({ signingKey: () => attackerJwk }),
       });
       expect(response.status).toBe(401);
+      expect(response.data.error).toBe("invalid_client_attestation");
+      expect(response.data.error_description).toContain(
+        "reason=client attestation jwt validation failed: invalid signature"
+      );
       expect(response.data).toHaveProperty("error", "invalid_client_attestation");
     });
 
@@ -203,6 +215,10 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed C
         popJwt: createPopJwt({ signingKey: () => otherJwk }),
       });
       expect(response.status).toBe(401);
+      expect(response.data.error).toBe("invalid_client_attestation");
+      expect(response.data.error_description).toContain(
+        "reason=client attestation jwt cnf.jwk must be the registered client instance key that signed it"
+      );
       expect(response.data).toHaveProperty("error", "invalid_client_attestation");
     });
 
@@ -214,6 +230,10 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed C
         popJwt: createPopJwt(),
       });
       expect(response.status).toBe(401);
+      expect(response.data.error).toBe("invalid_client_attestation");
+      expect(response.data.error_description).toContain(
+        "reason=client attestation jwt lifetime (exp - iat) must not exceed 86400 seconds"
+      );
       expect(response.data).toHaveProperty("error", "invalid_client_attestation");
     });
 
@@ -246,6 +266,10 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed C
         popJwt: createPopJwt({ signingKey: () => disposableJwk }),
       });
       expect(after.status).toBe(401);
+      expect(after.data.error).toBe("invalid_client_attestation");
+      expect(after.data.error_description).toContain(
+        "reason=no trusted client attestation key is available for the client"
+      );
       expect(after.data).toHaveProperty("error", "invalid_client_attestation");
     });
   });

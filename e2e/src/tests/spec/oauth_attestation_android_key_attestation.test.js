@@ -195,6 +195,31 @@ describe("Android key attestation (Issue #1521)", () => {
     }
   });
 
+  /**
+   * The registration endpoint answers failures with error alone, no error_description.
+   *
+   * <p>Every other suite here asserts the server's stated reason, because a status and an error
+   * code shared by many checks cannot say which one refused. This endpoint deliberately withholds
+   * that: it is unauthenticated, and a detailed reason would let a caller probe which client_id /
+   * device_id combinations exist or already hold an instance. The absence is the requirement, so
+   * it is pinned rather than left to be discovered as a gap.
+   */
+  describe("failure responses", () => {
+    it("says only that the request was invalid, never which check refused", async () => {
+      const { challenge } = await requestChallenge();
+      const instanceKey = await generateInstanceKey();
+
+      const response = await register({
+        challenge,
+        instanceKey,
+        chainOptions: { origin: ORIGIN.imported },
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.data).toEqual({ error: "invalid_request" });
+    }, 120000);
+  });
+
   describe("registration", () => {
     it("registers an instance whose key the chain certifies", async () => {
       const { challenge } = await requestChallenge();
