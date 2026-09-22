@@ -184,21 +184,45 @@ PoP JWT は**リクエストごとに新しく作ります**。`jti` はリプ�
 
 ## 信頼モデル: 誰が Attestation JWT に署名するか
 
-draft-10 は**鍵の管理と信頼の確立を仕様の範囲外**としています（Section 9.8）。`idp-server` はクライアント設定 `client_attestation_trust_source` で切り替えます。
+draft-11 は**Client Attester への信頼の確立を仕様の範囲外**としています（Section 10.8「Trust Management and Key Resolution」）。ただし同じ節で取りうる形は示しており、`attester_jwks` と `x5c` はそのうちの 2 つです。`idp-server` はクライアント設定 `client_attestation_trust_source` で切り替えます。
 
-| | `attester_jwks`（既定） | `registered_instance_key` |
-|---|---|---|
-| Attestation JWT の署名者 | Client Attester | Client Instance（自己署名） |
-| 認可サーバーが信頼する鍵 | `client_attestation_attester_jwks` に登録した公開鍵 | 事前登録した Client Instance Key |
-| インスタンスの事前登録 | 不要 | 必要 |
-| Client Attester の運用 | 必要 | 不要 |
-| 「正当なアプリか」の判断 | Attester がプラットフォーム証明を検証 | 登録時のみ。以降は鍵の所持が根拠 |
+| | `attester_jwks`（既定） | `x5c` | `registered_instance_key` |
+|---|---|---|---|
+| Attestation JWT の署名者 | Client Attester | Client Attester | Client Instance（自己署名） |
+| 認可サーバーが信頼する鍵 | `client_attestation_attester_jwks` に登録した公開鍵 | `x5c` のチェーンを `client_attestation_trusted_root_certificates` まで検証したリーフ | 事前登録した Client Instance Key |
+| インスタンスの事前登録 | 不要 | 不要 | 必要 |
+| Client Attester の運用 | 必要 | 必要 | 不要 |
+| 「正当なアプリか」の判断 | Attester がプラットフォーム証明を検証 | 同左 | 登録時のみ。以降は鍵の所持が根拠 |
+| Attester の鍵交代 | **全クライアント設定の更新が必要** | ルートが変わらなければ設定変更不要 | 該当なし |
 
 ### どちらを選ぶか
 
-**アプリ提供者がサーバーを持っている**なら `attester_jwks`。App Attest / Play Integrity の検証を Attester 側に集約でき、認可サーバーはプラットフォームごとの差異を知らずに済みます。アプリが複数の認可サーバーに接続する場合も、Attestation JWT を1か所で発行できます。
+**アプリ提供者がサーバーを持っている**なら `attester_jwks` か `x5c`。App Attest / Play Integrity の検証を Attester 側に集約でき、認可サーバーはプラットフォームごとの差異を知らずに済みます。アプリが複数の認可サーバーに接続する場合も、Attestation JWT を1か所で発行できます。
+
+そのうえで、**証明書の階層を持っているなら `x5c`**。違いは鍵交代を誰が負担するかです。`attester_jwks` は Attester が署名鍵を替えるたびに、その Attester を信頼している全クライアント設定を更新して回る必要があります。`x5c` ならルートを1つ登録しておけば、リーフの交代は認可サーバー側の設定変更なしに吸収されます。
 
 **Attester を運用しない**なら `registered_instance_key`。認可サーバーへの登録が信頼の起点になるため、**登録経路の強度がそのまま全体の強度**になります。誰でも鍵を登録できる状態にしないよう、`client_instance_registration_policy` を併せて設計します。
+
+### `x5c` の設定
+
+```json
+"extension": {
+  "client_attestation_trust_source": "x5c",
+  "client_attestation_trusted_root_certificates": ["<ルート証明書 DER の base64>"]
+}
+```
+
+ピン留めするのは**ルート**であって Attester の証明書ではありません。ルートがリーフより長生きすることが、この方式の利点の前提だからです。
+
+チェーンは信頼できない入力です。**ルートまでの検証だけが意味を与えます** — 単にパースできるチェーンは送ってきた者が書いたもので、そのリーフ鍵は自分の署名を検証できてしまいます。したがって検証に失敗したチェーンからは鍵を返さず、認証は「信頼できる鍵が無い」として失敗します。
+
+:::tip トラストアンカーはチェーンに含めても含めなくても動きます
+HAIP は `x5c` に**トラストアンカーを含めてはならない**としています。認可サーバーはルートを設定から持っているため、リーフだけのチェーンでも、ルートまで含むチェーンでも検証できます。
+:::
+
+:::danger x5c では JWKS に alg を書く必要がありません
+`attester_jwks` では、JWKS の鍵に `kid` も `alg` も無いと**署名検証に到達する前に 401 になります**（`kid` が無ければ `alg` で鍵を引くため）。`x5c` では証明書から鍵を取り出す際に、提示された `alg` をその鍵に付けてから返すので、この落とし穴がありません。
+:::
 
 ### 2つの設定の関係
 

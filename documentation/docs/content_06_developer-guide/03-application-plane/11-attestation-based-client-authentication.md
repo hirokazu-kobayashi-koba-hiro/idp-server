@@ -56,6 +56,7 @@
 | `ClientAttestationPopJwtVerifier` | PoP JWT（§7.2）。Challenge の検証も持つ |
 | `ClientAttestationKeyResolvers` | `trust_source` で鍵の解決方法を切り替えるレジストリ |
 | `StaticJwksClientAttestationKeyResolver` | `attester_jwks`。設定の JWKS で検証 |
+| `X5cClientAttestationKeyResolver` | `x5c`。JOSE ヘッダのチェーンをピン留めしたルートまで検証し、リーフの鍵を返す |
 | `RegisteredInstanceKeyResolver` | `registered_instance_key`。`kid` を instance_id として鍵を引く |
 
 ### 鍵解決の切り替え
@@ -66,7 +67,16 @@
 // ClientAttestationKeyResolvers
 resolvers.put(ClientAttestationTrustSource.registered_instance_key, new RegisteredInstanceKeyResolver(...));
 resolvers.put(ClientAttestationTrustSource.attester_jwks, new StaticJwksClientAttestationKeyResolver());
+resolvers.put(ClientAttestationTrustSource.x5c, new X5cClientAttestationKeyResolver());
 ```
+
+リゾルバは JWKS 文字列を返す契約です。`x5c` のように単一の鍵に辿り着く実装は `JwkParser.parseFromCertificate` で 1 鍵の JWKS にして返します。
+
+:::warning attester_jwks では JWKS に kid か alg が要ります
+`JsonWebSignatureVerifierFactory` は `kid` が無いと `alg` で鍵を引きます（`JsonWebKeys.findByAlgorithm`）。`client_attestation_attester_jwks` の鍵に **`kid` も `alg` も無いと、署名検証に到達する前に 401 になります**。ログからは「鍵が見つからない」以上のことが読めないので、切り分けにくい形です。
+
+`x5c` ではこの分岐がありません。`X5cClientAttestationKeyResolver` が証明書から鍵を取り出すとき、提示された `alg` をその鍵に付けてから返します。鍵の材料は検証済み証明書のもので固定なので、ヘッダが偽った `alg` は署名検証で落ちます。
+:::
 
 :::warning registered_instance_key では kid が鍵の索引になります
 `RegisteredInstanceKeyResolver` は JOSE ヘッダの `kid` を `ClientInstanceIdentifier` として扱います。`kid` が無いと鍵を解決できず、署名検証に到達する前に失敗します。クライアント実装のつまずきどころなので、401 の切り分け時はまずここを見てください。

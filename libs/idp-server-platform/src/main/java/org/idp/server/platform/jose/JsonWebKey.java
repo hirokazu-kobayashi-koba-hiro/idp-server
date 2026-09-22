@@ -18,6 +18,7 @@ package org.idp.server.platform.jose;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyType;
 import com.nimbusds.jose.jwk.ThumbprintUtils;
 import com.nimbusds.jose.util.Base64;
@@ -152,6 +153,20 @@ public class JsonWebKey {
     } catch (Exception e) {
       throw new JsonWebKeyInvalidException("Failed to build canonical JWK: " + e.getMessage(), e);
     }
+  }
+
+  /**
+   * This key alone, rendered as a JWKS document.
+   *
+   * <p>Key resolvers hand back a JWKS whatever the trust source was, so that the JOSE layer has one
+   * shape to verify against. A resolver that arrives at a single key — from a certificate, say —
+   * needs this to meet that contract.
+   *
+   * <p>Only the public half is emitted: a resolver returns candidate keys for verification, and a
+   * document that carried private material would put it somewhere it is never needed.
+   */
+  public String toJwks() {
+    return new JWKSet(value.toPublicJWK()).toString();
   }
 
   public String thumbprintSha256() throws JsonWebKeyInvalidException {

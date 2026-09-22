@@ -16,6 +16,7 @@
 
 package org.idp.server.core.openid.oauth.configuration.client;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   String clientAttestationTrustSource;
   String clientInstanceRegistrationPolicy;
   String clientAttestationAttesterJwks;
+  List<String> clientAttestationTrustedRootCertificates = new ArrayList<>();
   Map<String, Object> clientInstancePlatformConfig = new HashMap<>();
   Map<String, Object> customProperties = new HashMap<>();
 
@@ -92,6 +94,25 @@ public class ClientExtensionConfiguration implements JsonReadable {
 
   public boolean hasClientAttestationAttesterJwks() {
     return clientAttestationAttesterJwks != null && !clientAttestationAttesterJwks.isEmpty();
+  }
+
+  /**
+   * Roots the {@code x5c} chain of a Client Attestation JWT must lead to, base64 encoded DER.
+   * idp-server specific.
+   *
+   * <p>Roots rather than the attester's own certificate: the point of this trust source is that the
+   * attester can replace its signing key without the client being reconfigured, which only holds
+   * while what is pinned outlives that key.
+   */
+  public List<String> clientAttestationTrustedRootCertificates() {
+    return clientAttestationTrustedRootCertificates != null
+        ? clientAttestationTrustedRootCertificates
+        : new ArrayList<>();
+  }
+
+  public boolean hasClientAttestationTrustedRootCertificates() {
+    return clientAttestationTrustedRootCertificates != null
+        && !clientAttestationTrustedRootCertificates.isEmpty();
   }
 
   public Map<String, Object> customProperties() {
@@ -221,6 +242,9 @@ public class ClientExtensionConfiguration implements JsonReadable {
       map.put("client_instance_registration_policy", clientInstanceRegistrationPolicy);
     if (hasClientAttestationAttesterJwks())
       map.put("client_attestation_attester_jwks", clientAttestationAttesterJwks);
+    if (hasClientAttestationTrustedRootCertificates())
+      map.put(
+          "client_attestation_trusted_root_certificates", clientAttestationTrustedRootCertificates);
     if (hasCustomProperties()) map.put("custom_properties", customProperties);
     return map;
   }

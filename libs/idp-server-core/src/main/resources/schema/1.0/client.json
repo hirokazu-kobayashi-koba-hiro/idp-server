@@ -401,14 +401,22 @@
           "type": "string",
           "enum": [
             "registered_instance_key",
-            "attester_jwks"
+            "attester_jwks",
+            "x5c"
           ],
-          "description": "OPTIONAL. idp-server specific. Where the Authorization Server takes its trust from when verifying a Client Attestation JWT for attest_jwt_client_auth. OAuth 2.0 Attestation-Based Client Authentication leaves trust management and key resolution out of scope (Section 9.8), so this is a deployment choice. registered_instance_key: the Client Instance signs its own Client Attestation JWT and the server trusts the Client Instance Key registered via the client instance management API. attester_jwks: a Client Attester signs it and the server trusts client_attestation_attester_jwks. Required when the client uses attest_jwt_client_auth."
+          "description": "OPTIONAL. idp-server specific. Where the Authorization Server takes its trust from when verifying a Client Attestation JWT for attest_jwt_client_auth. OAuth 2.0 Attestation-Based Client Authentication leaves establishing trust in the Client Attester out of scope (Section 10.8), so this is a deployment choice, though that section does name the shapes it can take. registered_instance_key: the Client Instance signs its own Client Attestation JWT and the server trusts the Client Instance Key registered via the client instance management API. attester_jwks: a Client Attester signs it and the server trusts client_attestation_attester_jwks. x5c: a Client Attester signs it and carries its certificate chain in the x5c JOSE header, validated against client_attestation_trusted_root_certificates, so the attester can replace its signing key without every relying client being reconfigured. Required when the client uses attest_jwt_client_auth."
         },
         "client_attestation_attester_jwks": {
           "type": "string",
           "format": "jwks",
           "description": "OPTIONAL. idp-server specific. JWK Set document holding the trusted Client Attester public keys, used when client_attestation_trust_source is attester_jwks. MUST NOT contain private or symmetric key values."
+        },
+        "client_attestation_trusted_root_certificates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "OPTIONAL. idp-server specific. Root certificates an x5c chain on a Client Attestation JWT must lead to, base64 encoded DER, used when client_attestation_trust_source is x5c. Roots rather than the attester's own certificate: the point of that trust source is that the attester can replace its signing key without the client being reconfigured, which only holds while what is pinned outlives that key. Required when client_attestation_trust_source is x5c; without it every chain is refused rather than the presented one being trusted."
         },
         "client_instance_registration_policy": {
           "type": "string",

@@ -39,6 +39,7 @@ public class ClientAttestationKeyResolvers {
         new RegisteredInstanceKeyResolver(clientInstanceQueryRepository));
     resolvers.put(
         ClientAttestationTrustSource.attester_jwks, new StaticJwksClientAttestationKeyResolver());
+    resolvers.put(ClientAttestationTrustSource.x5c, new X5cClientAttestationKeyResolver());
   }
 
   /**

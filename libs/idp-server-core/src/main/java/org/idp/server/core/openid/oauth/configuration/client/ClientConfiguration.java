@@ -578,6 +578,15 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return extension.hasClientAttestationAttesterJwks();
   }
 
+  /** Roots an {@code x5c} chain on a Client Attestation JWT must lead to. */
+  public List<String> clientAttestationTrustedRootCertificates() {
+    return extension.clientAttestationTrustedRootCertificates();
+  }
+
+  public boolean hasClientAttestationTrustedRootCertificates() {
+    return extension.hasClientAttestationTrustedRootCertificates();
+  }
+
   public ClientInstanceRegistrationPolicy clientInstanceRegistrationPolicy() {
     return extension.clientInstanceRegistrationPolicy();
   }

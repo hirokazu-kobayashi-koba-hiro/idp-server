@@ -16,8 +16,13 @@
 
 package org.idp.server.platform.jose;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +36,43 @@ public class JwkParser {
       return new JsonWebKey(jwk);
     } catch (ParseException e) {
       throw new JsonWebKeyInvalidException(e.getMessage(), e);
+    }
+  }
+
+  /**
+   * The public key of {@code certificate}, labelled with {@code algorithm}.
+   *
+   * <p>For trust sources that carry a certificate rather than a JWKS ({@code x5c}). The caller has
+   * already decided the certificate is trustworthy; this only changes the encoding, so that the
+   * JOSE layer verifies signatures the same way whatever the key came from.
+   *
+   * <p>A certificate says nothing about which JWS algorithm its key signs with, and the key
+   * selection this feeds matches on {@code alg} when the header carries no {@code kid} — which an
+   * attester publishing through {@code x5c} has no reason to send. Without the label the key is
+   * never found and the request fails as "no trusted key", which is the wrong answer and an opaque
+   * one.
+   *
+   * <p>Taking the label from the presented header is safe because it selects nothing but the
+   * verifier: the key material is whatever the validated certificate holds, so a header claiming an
+   * algorithm that key cannot produce fails at signature verification rather than earlier.
+   */
+  public static JsonWebKey parseFromCertificate(X509Certificate certificate, String algorithm)
+      throws JsonWebKeyInvalidException {
+    try {
+      JWK jwk = JWK.parse(certificate);
+      JWSAlgorithm jwsAlgorithm = JWSAlgorithm.parse(algorithm);
+
+      if (jwk instanceof ECKey ecKey) {
+        return new JsonWebKey(new ECKey.Builder(ecKey).algorithm(jwsAlgorithm).build());
+      }
+      if (jwk instanceof RSAKey rsaKey) {
+        return new JsonWebKey(new RSAKey.Builder(rsaKey).algorithm(jwsAlgorithm).build());
+      }
+      throw new JsonWebKeyInvalidException(
+          "unsupported certificate key type for signature verification: " + jwk.getKeyType());
+    } catch (JOSEException e) {
+      throw new JsonWebKeyInvalidException(
+          "failed to read the public key of the certificate: " + e.getMessage(), e);
     }
   }
 
