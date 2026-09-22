@@ -71,6 +71,17 @@ public class ClientCredentials {
     return clientCertification;
   }
 
+  /**
+   * True when the client authenticated with a Client Attestation.
+   *
+   * <p>Null safe on purpose: a public client is represented by the no-argument constructor, so
+   * {@link #clientAuthenticationType()} is null on that path and reading it directly is how this
+   * broke once already.
+   */
+  public boolean isAttestJwtClientAuth() {
+    return clientAuthenticationType != null && clientAuthenticationType.isAttestJwtClientAuth();
+  }
+
   public boolean isTlsClientAuthOrSelfSignedTlsClientAuth() {
     if (Objects.isNull(clientAuthenticationType)) {
       return false;

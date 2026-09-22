@@ -18,6 +18,7 @@ package org.idp.server.core.openid.token;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.oauth.clientauthenticator.mtls.ClientCertificationThumbprint;
@@ -39,6 +40,7 @@ public class AccessToken {
   AuthorizationGrant authorizationGrant;
   ClientCertificationThumbprint clientCertificationThumbprint;
   JwkThumbprint jwkThumbprint;
+  ClientInstanceThumbprint clientInstanceThumbprint;
   AccessTokenCustomClaims customClaims;
   CreatedAt createdAt;
   ExpiresIn expiresIn;
@@ -58,6 +60,35 @@ public class AccessToken {
       CreatedAt createdAt,
       ExpiresIn expiresIn,
       ExpiresAt expiresAt) {
+    this(
+        tenantIdentifier,
+        tokenIssuer,
+        tokenType,
+        accessTokenEntity,
+        authorizationGrant,
+        clientCertificationThumbprint,
+        jwkThumbprint,
+        new ClientInstanceThumbprint(),
+        customClaims,
+        createdAt,
+        expiresIn,
+        expiresAt);
+  }
+
+  public AccessToken(
+      TenantIdentifier tenantIdentifier,
+      TokenIssuer tokenIssuer,
+      TokenType tokenType,
+      AccessTokenEntity accessTokenEntity,
+      AuthorizationGrant authorizationGrant,
+      ClientCertificationThumbprint clientCertificationThumbprint,
+      JwkThumbprint jwkThumbprint,
+      ClientInstanceThumbprint clientInstanceThumbprint,
+      AccessTokenCustomClaims customClaims,
+      CreatedAt createdAt,
+      ExpiresIn expiresIn,
+      ExpiresAt expiresAt) {
+    this.clientInstanceThumbprint = clientInstanceThumbprint;
     this.tenantIdentifier = tenantIdentifier;
     this.tokenIssuer = tokenIssuer;
     this.tokenType = tokenType;
@@ -117,6 +148,24 @@ public class AccessToken {
 
   public boolean matchJwkThumbprint(JwkThumbprint thumbprint) {
     return jwkThumbprint != null && jwkThumbprint.equals(thumbprint);
+  }
+
+  public ClientInstanceThumbprint clientInstanceThumbprint() {
+    return clientInstanceThumbprint != null
+        ? clientInstanceThumbprint
+        : new ClientInstanceThumbprint();
+  }
+
+  /**
+   * True when this token was issued to a Client Instance, so a refresh has to come from the same
+   * one (draft-ietf-oauth-attestation-based-client-auth Section 10.3).
+   */
+  public boolean hasClientInstanceBinding() {
+    return clientInstanceThumbprint != null && clientInstanceThumbprint.exists();
+  }
+
+  public boolean matchClientInstanceThumbprint(ClientInstanceThumbprint thumbprint) {
+    return clientInstanceThumbprint != null && clientInstanceThumbprint.equals(thumbprint);
   }
 
   public AccessTokenCustomClaims customClaims() {

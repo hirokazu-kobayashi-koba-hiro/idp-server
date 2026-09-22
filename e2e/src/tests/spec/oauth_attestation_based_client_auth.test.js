@@ -1,5 +1,5 @@
 /**
- * draft-ietf-oauth-attestation-based-client-auth-10:
+ * draft-ietf-oauth-attestation-based-client-auth-11:
  * OAuth 2.0 Attestation-Based Client Authentication (attest_jwt_client_auth)
  *
  * The Client Attester issues a Client Attestation JWT binding the Client
@@ -7,19 +7,19 @@
  * with a Client Attestation PoP JWT on each request. The Authorization Server
  * verifies both JWTs.
  *
- * Section structure of this file traces draft-10:
- *   4.  Client Attestation JWT (format)
- *   5.1 Client Attestation PoP JWT (format)
- *   6.  Challenges
- *   7.1 / 7.2 Verification rules (numbered, 1:1)
- *   7.3 DPoP Combined Mode
- *   7.4 Errors
- *   7.5 Client Attestation as an OAuth Client Authentication
- *   7.6 Client Attestation as an additional security signal
- *   8.  Authorization Server Metadata
- *   9.3 Refresh token binding
- *   9.4 Binding of OAuth protocol artifacts
- *   11.1 Replay Attacks
+ * Numbering follows draft-11, which moved several sections from draft-10:
+ * 9.3 -> 10.3, 9.4 -> 10.4, 9.8 -> 10.8, 11.1 -> 12.1, 11.2 -> 12.2. A ledger
+ * whose numbers have drifted cannot be compared against the document, so the
+ * renumbering is carried here rather than left for whoever reads it next.
+ *
+ * Sections covered in sibling files rather than here, because they are about
+ * which trust source a deployment picks (10.8) rather than the exchange:
+ *   oauth_attestation_registered_instance_key.test.js  self-signed model
+ *   oauth_attestation_x5c.test.js                      certificate chain model
+ *   usecase/abca/abca-01-attester-jwks.test.js         configured JWKS model
+ *
+ * Informative sections carry no entries: 1-3 (introduction, conventions,
+ * terminology), 14 (relation to RATS), 16 (references).
  *
  * Prerequisite: the test tenant's authorization-server enables attest_jwt_client_auth
  * with client_attestation(_pop)_signing_alg_values_supported = [ES256, RS256]
@@ -33,7 +33,7 @@
  *   attest_jwt_client_auth and the trusted attester JWKS
  *   (extension.client_attestation_trust_source = attester_jwks)
  *
- * @see https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-10.html
+ * @see https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-11.html
  */
 import { beforeAll, describe, expect, it, xit } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
@@ -53,6 +53,8 @@ const CHALLENGE_HEADER = "OAuth-Client-Attestation-Challenge";
 let attesterEs256Jwk;
 let attesterEs384Jwk;
 let instanceEs256Jwk;
+let otherInstanceEs256Jwk;
+let refreshableClient;
 let instanceEs384Jwk;
 let attestedClient;
 /**
@@ -209,6 +211,8 @@ beforeAll(async () => {
   attesterEs256Jwk = await generateSigningJwk("ES256", "attester-es256");
   attesterEs384Jwk = await generateSigningJwk("ES384", "attester-es384");
   instanceEs256Jwk = await generateSigningJwk("ES256", "instance-es256");
+  // A second Client Instance of the same client: same attester, different cnf key.
+  otherInstanceEs256Jwk = await generateSigningJwk("ES256", "instance-es256-other");
   instanceEs384Jwk = await generateSigningJwk("ES384", "instance-es384");
 
   // clients: register the attested client with the trusted attester JWKS
@@ -260,10 +264,35 @@ beforeAll(async () => {
     },
   });
   expect(otherRegistrationResponse.status).toBe(201);
+
+  // Section 10.3 needs a grant that issues a refresh token; client_credentials does not.
+  const refreshableClientId = uuidv4();
+  const refreshableRegistrationResponse = await postWithJson({
+    url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
+    headers: managementHeaders,
+    body: {
+      client_id: refreshableClientId,
+      client_name: "Attestation Based Client Auth Test Client (refreshable)",
+      token_endpoint_auth_method: "attest_jwt_client_auth",
+      extension: {
+        client_attestation_trust_source: "attester_jwks",
+        client_attestation_attester_jwks: JSON.stringify({
+          keys: [publicJwkOf(attesterEs256Jwk), publicJwkOf(attesterEs384Jwk)],
+        }),
+      },
+      grant_types: ["password", "refresh_token"],
+      redirect_uris: ["http://localhost:3000/callback"],
+      response_types: ["code"],
+      scope: "openid account management",
+      enabled: true,
+    },
+  });
+  expect(refreshableRegistrationResponse.status).toBe(201);
+  refreshableClient = { clientId: refreshableClientId };
   otherAttestedClient = { clientId: otherClientId };
 });
 
-describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestation-Based Client Authentication", () => {
+describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestation-Based Client Authentication", () => {
 
   describe("4. Client Attestation JWT", () => {
 
@@ -367,6 +396,16 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
       });
       expectInvalidClientAttestation(response);
     });
+  });
+
+  /**
+   * The construction side of DPoP combined mode. 7.3 holds the verification steps; this is the
+   * section that says what the client sends, and neither is implemented.
+   */
+  describe("5.2. Using DPoP as the Proof of Possession (not implemented yet)", () => {
+    xit("The DPoP proof MUST adhere to the rules defined in [RFC9449].", async () => {});
+
+    xit("The public key in the jwk header parameter of the DPoP proof MUST match the public key in the cnf claim of the Client Attestation JWT.", async () => {});
   });
 
   describe("6. Challenges", () => {
@@ -891,23 +930,191 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
     xit("The Authorization Server SHOULD communicate support for authentication using a DPoP proof as the PoP by using the value attest_jwt_client_auth_dpop. The Authorization Server MUST include dpop_signing_alg_values_supported if DPoP is used as the Proof of Possession in combined mode.", async () => {});
   });
 
-  describe("9.3. Refresh token binding (not implemented yet)", () => {
+  /**
+   * Section 9 is the client's own declaration of what it signs with. idp-server has none of it:
+   * the client configuration schema carries no client_attestation_* algorithm parameters, only
+   * the idp-server specific trust source fields.
+   *
+   * The restrictions the section states are satisfied in substance elsewhere — the Authorization
+   * Server metadata schema allows only asymmetric algorithms, so neither none nor a MAC can be
+   * configured, and ClientAttestationJwtVerifier rejects alg: none outright. What is missing is
+   * the client being able to narrow that further, which a profile building on Section 9 would
+   * expect. Left as xit rather than removed so the gap stays visible (Issue #1892).
+   */
+  describe("9. Client Metadata (not implemented yet)", () => {
+    xit("token_endpoint_auth_method: the Client indicates support by using the value attest_jwt_client_auth or attest_jwt_client_auth_dpop. (supported; the rest of this section is not)", async () => {});
 
-    xit("Authorization servers issuing a refresh token in response to a token request using the client attestation mechanism MUST bind the refresh token to the Client Instance and its associated public key. To prove this binding, the Client Instance MUST use the client attestation mechanism when refreshing an access token, and MUST also use the same key that was present in the cnf claim.", async () => {});
+    xit("client_attestation_signing_alg_values_supported: JSON array containing a list of the JWS [RFC7515] algorithms (alg values) supported for signing the Client Attestation JWT. The value none MUST NOT be present.", async () => {});
+
+    xit("client_attestation_pop_signing_alg_values_supported: JSON array containing a list of the JWS [RFC7515] algorithms (alg values) supported for signing the Client Attestation PoP JWT. The values none and symmetric algorithms MUST NOT be present.", async () => {});
+
+    xit("client_attestation_pop_methods_supported: the Proof of Possession methods the Client supports.", async () => {});
   });
 
-  describe("9.4. Binding of OAuth protocol artifacts (not implemented yet)", () => {
+  describe("10.2. Reuse of a Client Attestation JWT", () => {
+    it("A Client Attestation JWT stays usable for its whole lifetime: only the PoP JWT is created per request.", async () => {
+      // A fresh PoP each time, the same attestation both times. This is what lets a client avoid
+      // a round trip to its Attester on every request.
+      const attestationJwt = createAttestationJwt();
+
+      const first = await requestTokenWithAttestation({
+        attestationJwt,
+        popJwt: createPopJwt(),
+      });
+      const second = await requestTokenWithAttestation({
+        attestationJwt,
+        popJwt: createPopJwt(),
+      });
+
+      expect(first.status).toBe(200);
+      expect(second.status).toBe(200);
+    }, 120000);
+  });
+
+  /**
+   * Why client authentication is not enough here: several Client Instances of one application
+   * share a client_id, so authenticating as the client says nothing about which instance is
+   * refreshing. RFC 9449 Section 5 leaves confidential clients' refresh tokens unbound on the
+   * reasoning that client authentication constrains the sender; that reasoning does not carry
+   * over, which is why this section exists.
+   */
+  describe("10.3. Refresh token binding", () => {
+
+    /** Instance A obtains a refresh token; the attestation names A's key in cnf. */
+    const passwordGrantAs = async (instanceKey) => {
+      const params = new URLSearchParams();
+      params.append("grant_type", "password");
+      params.append("username", serverConfig.oauth.username);
+      params.append("password", serverConfig.oauth.password);
+      params.append("scope", "openid account");
+      params.append("client_id", refreshableClient.clientId);
+
+      return await post({
+        url: serverConfig.tokenEndpoint,
+        body: params,
+        headers: {
+          [ATTESTATION_HEADER]: createAttestationJwt({
+            sub: refreshableClient.clientId,
+            cnf: () => ({ jwk: publicJwkOf(instanceKey) }),
+          }),
+          [POP_HEADER]: createPopJwt({ signingKey: () => instanceKey }),
+        },
+      });
+    };
+
+    const refreshAs = async (instanceKey, refreshToken) => {
+      const params = new URLSearchParams();
+      params.append("grant_type", "refresh_token");
+      params.append("refresh_token", refreshToken);
+      params.append("client_id", refreshableClient.clientId);
+
+      return await post({
+        url: serverConfig.tokenEndpoint,
+        body: params,
+        headers: {
+          [ATTESTATION_HEADER]: createAttestationJwt({
+            sub: refreshableClient.clientId,
+            cnf: () => ({ jwk: publicJwkOf(instanceKey) }),
+          }),
+          [POP_HEADER]: createPopJwt({ signingKey: () => instanceKey }),
+        },
+      });
+    };
+
+    it("Authorization servers issuing a refresh token in response to a token request using the client attestation mechanism MUST bind the refresh token to the Client Instance and its associated public key. (the instance that obtained it can refresh)", async () => {
+      const issued = await passwordGrantAs(instanceEs256Jwk);
+      console.log("password grant with attestation:", issued.status);
+      expect(issued.status).toBe(200);
+      expect(issued.data).toHaveProperty("refresh_token");
+
+      const refreshed = await refreshAs(instanceEs256Jwk, issued.data.refresh_token);
+      console.log("refresh by the same instance:", refreshed.status);
+
+      expect(refreshed.status).toBe(200);
+      expect(refreshed.data).toHaveProperty("access_token");
+    }, 120000);
+
+    it("the Client Instance MUST use the same key that was present in the cnf claim. (another instance of the same client is refused)", async () => {
+      // Both instances authenticate as the same client and pass every other check. Only the
+      // binding separates them — this is the case the section exists for.
+      const issued = await passwordGrantAs(instanceEs256Jwk);
+      expect(issued.status).toBe(200);
+
+      const refreshed = await refreshAs(
+        otherInstanceEs256Jwk,
+        issued.data.refresh_token
+      );
+      console.log(
+        "refresh by another instance:",
+        refreshed.status,
+        JSON.stringify(refreshed.data)
+      );
+
+      expect(refreshed.status).toBe(400);
+      expect(refreshed.data.error).toBe("invalid_grant");
+      // The description is asserted because the status alone does not say which check refused:
+      // a request that never reached the binding fails the same way.
+      expect(refreshed.data.error_description).toBe(
+        "the refresh token was issued to a different client instance of this client"
+      );
+    }, 120000);
+
+    it("security: the binding survives rotation, so the refresh token handed back is bound to the same instance.", async () => {
+      // The new token is issued from the credentials of whoever refreshed, and only the bound
+      // instance gets that far. A rotation that dropped the binding would reopen the hole one
+      // refresh later, which the first two tests would not notice.
+      const issued = await passwordGrantAs(instanceEs256Jwk);
+      expect(issued.status).toBe(200);
+
+      const rotated = await refreshAs(instanceEs256Jwk, issued.data.refresh_token);
+      expect(rotated.status).toBe(200);
+      expect(rotated.data).toHaveProperty("refresh_token");
+
+      const stolen = await refreshAs(otherInstanceEs256Jwk, rotated.data.refresh_token);
+      console.log("another instance against the rotated token:", stolen.status);
+
+      expect(stolen.status).toBe(400);
+      expect(stolen.data.error).toBe("invalid_grant");
+      expect(stolen.data.error_description).toBe(
+        "the refresh token was issued to a different client instance of this client"
+      );
+    }, 120000);
+
+  });
+
+  describe("10.4. Binding of OAuth protocol artifacts (not implemented yet)", () => {
 
     xit("Authorization servers using Attestation-Based Client Authentication are RECOMMENDED to bind relevant protocol artifacts to the Client Instance and its associated public key where possible, and NOT just the client as specified in [RFC6749]. (the authorization_code as specified in Section 4.1 of [RFC6749])", async () => {});
 
     xit("Examples of these artifacts include but are not limited to: the auth_req_id as specified in section 7.3 [CIBA].", async () => {});
   });
 
-  describe("11.1. Replay Attacks (not implemented yet)", () => {
+  describe("10.5. Web Server Default Maximum HTTP Header Sizes (not implemented yet)", () => {
+    xit("The two JWTs travel in HTTP header fields, so a deployment has to allow header sizes above the common defaults. Nothing here bounds or reports the size.", async () => {});
+  });
+
+  describe("10.6. Rotation of Client Instance Key (not implemented yet)", () => {
+    xit("A Client Instance that rotates its key obtains a new Client Attestation JWT for the new key. Nothing here covers what happens to artifacts bound to the previous key.", async () => {});
+  });
+
+  describe("10.7. Replay Attack Detection (not implemented yet)", () => {
+    xit("Implementation guidance for the detection 12.1 recommends. See 12.1 for the requirement itself.", async () => {});
+  });
+
+  /**
+   * The linkability question. HAIP forbids a Wallet Attestation from carrying an identifier
+   * specific to one instance, which is exactly what registered_instance_key sends as kid. See
+   * Issue #1887.
+   */
+  describe("11.1. Client Instance Tracking Across Authorization Servers or Resource Servers (not implemented yet)", () => {
+    xit("The same Client Attestation JWT presented to multiple Authorization Servers or Resource Servers allows them to correlate the Client Instance by colluding.", async () => {});
+  });
+
+  describe("12.1. Replay Attacks (not implemented yet)", () => {
 
     xit("An Authorization/Resource Server SHOULD implement measures to detect replay attacks by the Client Instance. (witnessed jti values of the Client Attestation PoP JWT for the validity time window)", async () => {});
   });
-  describe("11.2. Client Attestation Protection", () => {
+  describe("12.2. Client Attestation Protection", () => {
 
     it("This specification allows both, digital signatures using asymmetric cryptography, and Message Authentication Codes (MAC) to be used to protect Client Attestation JWTs. (idp-server accepts only digital signatures)", async () => {
       // Section 11.2 permits MACs where the Attester and the Authorization Server share a key.
@@ -930,5 +1137,11 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10: OAuth 2.0 Attestati
       });
       expectInvalidClientAttestation(response);
     });
+  });
+
+  describe("13. Considerations for Profiling this specification (not implemented yet)", () => {
+    xit("A profile of this specification MUST define how an Authorization Server or Resource Server determines that the profile applies to a given request.", async () => {});
+
+    xit("All other requirements of this specification continue to apply unchanged unless the profile states otherwise. HAIP is the profile this matters for; see Issue #1887.", async () => {});
   });
 });

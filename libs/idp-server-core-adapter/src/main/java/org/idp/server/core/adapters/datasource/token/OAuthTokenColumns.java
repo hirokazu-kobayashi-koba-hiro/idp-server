@@ -59,6 +59,7 @@ public final class OAuthTokenColumns {
           "id_token",
           "client_certification_thumbprint",
           "jwk_thumbprint",
+          "client_instance_thumbprint",
           "c_nonce",
           "c_nonce_expires_in");
 

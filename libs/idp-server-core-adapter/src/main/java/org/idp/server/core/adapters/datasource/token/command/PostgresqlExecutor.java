@@ -32,12 +32,9 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
 
   JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
-  @Override
-  public Map<String, String> insert(
-      OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher) {
-    SqlExecutor sqlExecutor = new SqlExecutor();
-    String sqlTemplate =
-        """
+  /** Exposed so the column list and the placeholder list can be checked against each other. */
+  static final String INSERT_SQL =
+      """
                          INSERT INTO oauth_token (
                             id,
                             tenant_id,
@@ -67,6 +64,7 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             id_token,
                             client_certification_thumbprint,
                             jwk_thumbprint,
+                            client_instance_thumbprint,
                             c_nonce,
                             c_nonce_expires_in,
                             expires_at
@@ -102,9 +100,16 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             ?,
                             ?,
                             ?,
+                            ?,
                             ?
                             );
                           """;
+
+  @Override
+  public Map<String, String> insert(
+      OAuthToken oAuthToken, AesCipher aesCipher, HmacHasher hmacHasher) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate = INSERT_SQL;
 
     List<Object> params = new ArrayList<>();
     Map<String, String> row = buildParamsAndRow(oAuthToken, aesCipher, hmacHasher, params);
@@ -256,6 +261,16 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
     } else {
       OAuthTokenRowBuilder.add(params, row, "jwk_thumbprint", null);
     }
+
+    // Independent of DPoP: an attestation client binds its refresh token to the Client Instance
+    // whether or not it also presents DPoP proofs.
+    OAuthTokenRowBuilder.add(
+        params,
+        row,
+        "client_instance_thumbprint",
+        oAuthToken.accessToken().hasClientInstanceBinding()
+            ? oAuthToken.accessToken().clientInstanceThumbprint().value()
+            : null);
 
     if (oAuthToken.hasCNonce()) {
       OAuthTokenRowBuilder.add(params, row, "c_nonce", oAuthToken.cNonce().value());
