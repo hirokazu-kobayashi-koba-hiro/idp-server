@@ -23,6 +23,8 @@ import { createJwtWithPrivateKey, generateJti } from "../../lib/jose";
 import { toEpocTime } from "../../lib/util";
 import { adminServerConfig, backendUrl } from "../testConfig";
 import {
+  ORIGIN,
+  PURPOSE,
   SECURITY_LEVEL,
   generateAttestationRoot,
   generateAttestedKey,
@@ -302,6 +304,95 @@ describe("Android key attestation (Issue #1521)", () => {
         challenge,
         instanceKey,
         chainOptions: { securityLevel: SECURITY_LEVEL.software },
+      });
+
+      expect(response.status).toBe(400);
+    }, 120000);
+
+    it("rejects a key that was imported rather than generated in secure hardware", async () => {
+      // Every binding holds and the key lives in the TEE. A copy of the private half exists
+      // wherever it was generated, so possession does not say which device is calling.
+      const { challenge } = await requestChallenge();
+      const instanceKey = await generateInstanceKey();
+
+      const response = await register({
+        challenge,
+        instanceKey,
+        chainOptions: { origin: ORIGIN.imported },
+      });
+      console.log("imported key:", response.status, JSON.stringify(response.data));
+
+      expect(response.status).toBe(400);
+    }, 120000);
+
+    it("rejects a securely imported key", async () => {
+      // Secure import means the plaintext never appeared on this device. The system that wrapped
+      // it held the plaintext by definition.
+      const { challenge } = await requestChallenge();
+      const instanceKey = await generateInstanceKey();
+
+      const response = await register({
+        challenge,
+        instanceKey,
+        chainOptions: { origin: ORIGIN.securely_imported },
+      });
+
+      expect(response.status).toBe(400);
+    }, 120000);
+
+    it("rejects a key whose origin the device did not report", async () => {
+      const { challenge } = await requestChallenge();
+      const instanceKey = await generateInstanceKey();
+
+      const response = await register({
+        challenge,
+        instanceKey,
+        chainOptions: { origin: null },
+      });
+
+      expect(response.status).toBe(400);
+    }, 120000);
+
+    it("rejects a key KeyMint will not sign with", async () => {
+      // Registering it would succeed and the first PoP would fail signature verification, on an
+      // endpoint that cannot say why.
+      const { challenge } = await requestChallenge();
+      const instanceKey = await generateInstanceKey();
+
+      const response = await register({
+        challenge,
+        instanceKey,
+        chainOptions: { purposes: [PURPOSE.encrypt, PURPOSE.decrypt] },
+      });
+
+      expect(response.status).toBe(400);
+    }, 120000);
+
+    it("rejects a key held in software whose attestation was produced in hardware", async () => {
+      // attestationSecurityLevel and keyMintSecurityLevel have different subjects. Reading only
+      // the first accepts a software key whose attestation the TEE happened to sign.
+      const { challenge } = await requestChallenge();
+      const instanceKey = await generateInstanceKey();
+
+      const response = await register({
+        challenge,
+        instanceKey,
+        chainOptions: { keyMintSecurityLevel: SECURITY_LEVEL.software },
+      });
+
+      expect(response.status).toBe(400);
+    }, 120000);
+
+    it("does not read the key's own properties from softwareEnforced", async () => {
+      // Everything a device would report, moved to the list the platform writes. Only KeyMint
+      // knows these, so the chain is refused exactly as one that reported them nowhere.
+      const { challenge } = await requestChallenge();
+      const instanceKey = await generateInstanceKey();
+
+      const response = await register({
+        challenge,
+        instanceKey,
+        chainOptions: { keyPropertiesInSoftwareList: true },
       });
 
       expect(response.status).toBe(400);

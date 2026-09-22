@@ -54,10 +54,15 @@ import org.idp.server.platform.x509.X509CertificateChain;
  *       signing certificate digests, checked against the client's configuration
  * </ol>
  *
- * <p>On top of the bindings the chain is validated to a pinned root and the key is required to live
- * in secure hardware. A chain that merely parses proves nothing: without the root check any
- * self-signed chain would satisfy every binding above, since the attacker would be writing the
- * extension themselves.
+ * <p>On top of the bindings the chain is validated to a pinned root and the key itself is required
+ * to be one secure hardware generated, holds, and will sign with. A chain that merely parses proves
+ * nothing: without the root check any self-signed chain would satisfy every binding above, since
+ * the attacker would be writing the extension themselves.
+ *
+ * <p>The properties of the key are checked separately from the bindings because they fail for a
+ * different reason. A binding that does not hold means the evidence belongs to some other
+ * registration; a key that was imported, or that KeyMint will not sign with, means the evidence is
+ * genuinely about this registration and still does not support what registering it would claim.
  */
 public class AndroidKeyAttestationVerifier implements PlatformAttestationVerifier {
 
@@ -88,6 +93,8 @@ public class AndroidKeyAttestationVerifier implements PlatformAttestationVerifie
     throwExceptionIfInstanceKeyDoesNotMatch(leaf, request);
     throwExceptionIfApplicationDoesNotMatch(extension, configuration);
     throwExceptionIfSecurityLevelIsNotAccepted(extension, configuration);
+    throwExceptionIfKeyWasNotGeneratedInSecureHardware(extension);
+    throwExceptionIfKeyCannotSign(extension);
 
     if (configuration.hasTrustedRootCertificates()) {
       log.warn(
@@ -154,6 +161,15 @@ public class AndroidKeyAttestationVerifier implements PlatformAttestationVerifie
     }
   }
 
+  /**
+   * Both security levels have to clear the configured minimum.
+   *
+   * <p>{@code attestationSecurityLevel} says where the attestation was produced and {@code
+   * keyMintSecurityLevel} where the key lives. Checking only the first accepts a key held in
+   * software whose attestation happens to have been signed in the TEE, and the hardware
+   * AuthorizationList that {@code origin} and {@code purpose} are read from is exactly as
+   * trustworthy as the second.
+   */
   private void throwExceptionIfSecurityLevelIsNotAccepted(
       AndroidKeyAttestationExtension extension, AndroidKeyAttestationConfiguration configuration) {
 
@@ -163,6 +179,43 @@ public class AndroidKeyAttestationVerifier implements PlatformAttestationVerifie
               + extension.attestationSecurityLevel().name()
               + " is below the configured minimum "
               + configuration.minSecurityLevel().name());
+    }
+
+    if (!configuration.accepts(extension.keyMintSecurityLevel())) {
+      throw new PlatformAttestationVerificationException(
+          "keyMint security level "
+              + extension.keyMintSecurityLevel().name()
+              + " is below the configured minimum "
+              + configuration.minSecurityLevel().name());
+    }
+  }
+
+  /**
+   * The key was created by the secure hardware rather than handed to it.
+   *
+   * <p>An imported key satisfies every other check here — it lives in the TEE, it certifies the
+   * registered public key, it names the right app — while a copy of the private key exists wherever
+   * it was generated. Possession would then prove that <i>someone</i> holds it, not that this
+   * device does, which is the claim registering a Client Instance makes.
+   *
+   * <p>A device that reports no {@code origin} is refused rather than trusted: the field is what
+   * the check reads, and an absent one is not evidence of anything.
+   */
+  private void throwExceptionIfKeyWasNotGeneratedInSecureHardware(
+      AndroidKeyAttestationExtension extension) {
+
+    if (!extension.origin().isGeneratedInSecureHardware()) {
+      throw new PlatformAttestationVerificationException(
+          "the attested key was not generated in secure hardware: origin="
+              + extension.origin().name());
+    }
+  }
+
+  /** The key can produce the PoP signatures a Client Instance key exists to produce. */
+  private void throwExceptionIfKeyCannotSign(AndroidKeyAttestationExtension extension) {
+    if (!extension.purposes().contains(AndroidKeyPurpose.sign)) {
+      throw new PlatformAttestationVerificationException(
+          "the attested key is not authorized to sign: purpose=" + extension.purposes());
     }
   }
 }

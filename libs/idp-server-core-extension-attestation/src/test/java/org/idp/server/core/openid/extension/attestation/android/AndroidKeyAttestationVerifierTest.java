@@ -26,6 +26,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationException;
+import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationRequest;
 import org.idp.server.core.openid.extension.attestation.StubVerificationRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -87,6 +88,28 @@ class AndroidKeyAttestationVerifierTest {
         AndroidKeyAttestationSecurityLevel.trusted_environment,
         AndroidAttestationFixture.PACKAGE_NAME,
         List.of(SIGNING_DIGEST));
+  }
+
+  /** {@link #validChain()} with the hardware list saying something else about the key. */
+  private List<String> chainWith(AndroidAttestationFixture.KeyProperties properties)
+      throws Exception {
+    return fixture.chain(
+        instanceKeyPair,
+        Base64.getUrlDecoder().decode(CHALLENGE),
+        AndroidKeyAttestationSecurityLevel.trusted_environment,
+        AndroidAttestationFixture.PACKAGE_NAME,
+        List.of(SIGNING_DIGEST),
+        properties);
+  }
+
+  private PlatformAttestationVerificationRequest requestFor(List<String> chain) throws Exception {
+    return StubVerificationRequest.of(
+        clientPlatformConfig(fixture.rootBase64()), CHALLENGE, instanceKeyAsJwk(), evidence(chain));
+  }
+
+  private AndroidAttestationFixture.KeyProperties deviceProperties() {
+    return AndroidAttestationFixture.KeyProperties.ofDevice(
+        AndroidKeyAttestationSecurityLevel.trusted_environment);
   }
 
   @Nested
@@ -314,6 +337,122 @@ class AndroidKeyAttestationVerifierTest {
                       CHALLENGE,
                       instanceKeyAsJwk(),
                       evidence(chain))));
+    }
+  }
+
+  /**
+   * What the hardware list says about the key itself (#1521 review).
+   *
+   * <p>These are not bindings: the evidence here is about this challenge, this key and this
+   * application, and is still refused. Each case is one where the chain verifies and the premise
+   * registering a Client Instance rests on does not hold.
+   *
+   * <p>Every value is read from {@code hardwareEnforced}. The same tags may appear in {@code
+   * softwareEnforced}, where they are the platform's word about a property only KeyMint can know,
+   * so the last test states that reading them there decides nothing.
+   */
+  @Nested
+  class KeyProperties {
+
+    @Test
+    void rejectsAnImportedKey() throws Exception {
+      // The key lives in the TEE, certifies the registered public key and names the right app —
+      // and a copy of the private key exists wherever it was generated, so possession says nothing
+      // about which device is calling.
+      PlatformAttestationVerificationRequest request =
+          requestFor(chainWith(deviceProperties().withOrigin(AndroidKeyOrigin.imported)));
+
+      PlatformAttestationVerificationException exception =
+          assertThrows(
+              PlatformAttestationVerificationException.class, () -> verifier.verify(request));
+
+      assertTrue(exception.getMessage().contains("not generated in secure hardware"));
+    }
+
+    @Test
+    void rejectsASecurelyImportedKey() throws Exception {
+      // Secure import means the plaintext never appeared on this device. The system that wrapped
+      // it held the plaintext by definition, so the premise still does not hold.
+      PlatformAttestationVerificationRequest request =
+          requestFor(chainWith(deviceProperties().withOrigin(AndroidKeyOrigin.securely_imported)));
+
+      PlatformAttestationVerificationException exception =
+          assertThrows(
+              PlatformAttestationVerificationException.class, () -> verifier.verify(request));
+
+      assertTrue(exception.getMessage().contains("not generated in secure hardware"));
+    }
+
+    @Test
+    void rejectsAKeyWhoseOriginTheDeviceDidNotReport() throws Exception {
+      // The field is what the check reads. An absent one is not evidence that the key was
+      // generated in place.
+      PlatformAttestationVerificationRequest request =
+          requestFor(chainWith(deviceProperties().withOrigin(AndroidKeyOrigin.undefined)));
+
+      PlatformAttestationVerificationException exception =
+          assertThrows(
+              PlatformAttestationVerificationException.class, () -> verifier.verify(request));
+
+      assertTrue(exception.getMessage().contains("undefined"));
+    }
+
+    @Test
+    void rejectsAKeyKeyMintWillNotSignWith() throws Exception {
+      // A Client Instance key exists to sign PoP JWTs. Registering one that cannot would fail at
+      // first use instead, on an endpoint that cannot say why.
+      PlatformAttestationVerificationRequest request =
+          requestFor(
+              chainWith(
+                  deviceProperties()
+                      .withPurposes(
+                          List.of(AndroidKeyPurpose.encrypt, AndroidKeyPurpose.decrypt))));
+
+      PlatformAttestationVerificationException exception =
+          assertThrows(
+              PlatformAttestationVerificationException.class, () -> verifier.verify(request));
+
+      assertTrue(exception.getMessage().contains("not authorized to sign"));
+    }
+
+    @Test
+    void rejectsAKeyHeldInSoftwareWhoseAttestationWasProducedInHardware() throws Exception {
+      // attestationSecurityLevel and keyMintSecurityLevel describe different subjects. Reading
+      // only the first accepts a software key whose attestation the TEE happened to sign — and
+      // the hardware list the checks above read would mean nothing on such a key.
+      PlatformAttestationVerificationRequest request =
+          requestFor(
+              chainWith(
+                  deviceProperties()
+                      .withKeyMintSecurityLevel(AndroidKeyAttestationSecurityLevel.software)));
+
+      PlatformAttestationVerificationException exception =
+          assertThrows(
+              PlatformAttestationVerificationException.class, () -> verifier.verify(request));
+
+      assertTrue(exception.getMessage().contains("keyMint security level"));
+    }
+
+    @Test
+    void doesNotAcceptTheSoftwareListAsTheKeysOwnProperties() throws Exception {
+      // Everything a device would report, moved to the list the platform writes. The platform is
+      // not in a position to know either value, so the chain is refused exactly as one that
+      // reported them nowhere.
+      PlatformAttestationVerificationRequest request =
+          requestFor(chainWith(deviceProperties().movedToSoftwareList()));
+
+      PlatformAttestationVerificationException exception =
+          assertThrows(
+              PlatformAttestationVerificationException.class, () -> verifier.verify(request));
+
+      assertTrue(exception.getMessage().contains("not generated in secure hardware"));
+    }
+
+    @Test
+    void acceptsWhatADeviceGeneratingASigningKeyReports() throws Exception {
+      PlatformAttestationVerificationRequest request = requestFor(chainWith(deviceProperties()));
+
+      assertDoesNotThrow(() -> verifier.verify(request));
     }
   }
 

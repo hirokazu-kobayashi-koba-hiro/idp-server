@@ -285,10 +285,19 @@ Android Key Attestation の検証は次の順で行います。
 |---|---|---|
 | `package_names` | 必須 | 許可するパッケージ名 |
 | `signature_digests` | 必須 | 署名証明書のダイジェスト。**提示された値がすべてここに含まれること**が条件 |
-| `min_security_level` | `trusted_environment` | `trusted_environment` / `strong_box`。`software` は常に拒否 |
+| `min_security_level` | `trusted_environment` | `trusted_environment` / `strong_box`。`software` は常に拒否。**`attestationSecurityLevel` と `keyMintSecurityLevel` の両方**に適用されます |
 | `trusted_root_certificates` | — | ルートの上書き。設定すると WARN ログが出ます（実質そのルートの持ち主を信頼することになるため） |
 
 `signature_digests` が必須なのは、パッケージ名が秘密ではないためです。攻撃者は自分の端末で同じパッケージ名のアプリを名乗れるので、**再署名を見分けるのは署名証明書のダイジェストだけ**です。
+
+設定できない、常に要求する条件が 2 つあります。
+
+| 条件 | 無いと通ってしまうもの |
+|---|---|
+| `origin` が `KM_ORIGIN_GENERATED` | 外部で生成して取り込んだ鍵。セキュアハードウェア内にあっても生成元に複製が存在するため、所持を示しても「どの端末か」を示せない。`KM_ORIGIN_SECURELY_IMPORTED` も同様に拒否します（ラップした側は平文を持っていたため） |
+| `purpose` が `KM_PURPOSE_SIGN` を含む | 署名に使えない鍵。登録は通り、最初の PoP で署名検証に落ちる |
+
+どちらも `hardwareEnforced` 側の `AuthorizationList` から読みます。鍵自身の性質を知っているのは KeyMint だけで、`softwareEnforced` に同じ値があっても、それはプラットフォームの申告にすぎないためです。端末が報告しなかった場合も拒否します（判定の材料が無いことは、条件を満たす証拠にはなりません）。
 
 登録をどこまでデバイスに紐づけるかは `client_instance_registration_policy` で決めます。
 

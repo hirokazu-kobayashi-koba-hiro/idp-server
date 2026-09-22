@@ -17,11 +17,16 @@
 package org.idp.server.core.openid.extension.attestation.android;
 
 /**
- * Where the attested key lives, as recorded in {@code attestationSecurityLevel}.
+ * A {@code SecurityLevel}, as carried by both {@code attestationSecurityLevel} and {@code
+ * keyMintSecurityLevel}.
  *
- * <p>{@link #software} means the key is held by the OS rather than by secure hardware, so a
- * compromised device can export it. A registration that accepts it gains nothing over having no
- * attestation at all, which is why the verifier requires a hardware level by default.
+ * <p>The two fields use the same scale for different subjects — where the attestation was produced,
+ * and where the key that it describes lives — so the verifier holds both to the configured minimum
+ * rather than reading one and assuming the other.
+ *
+ * <p>{@link #software} means the subject is the OS rather than secure hardware. For a key that
+ * means a compromised device can export it, and a registration that accepts it gains nothing over
+ * having no attestation at all, which is why the verifier requires a hardware level by default.
  */
 public enum AndroidKeyAttestationSecurityLevel {
   software(0),

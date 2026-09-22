@@ -103,6 +103,17 @@ public interface PlatformAttestationVerifier {
 加えて証明書チェーンはピン留めしたルートまで検証すること。検証できないものを通す実装は `attest_jwt_client_auth` 全体を無意味にします。
 :::
 
+:::danger 束縛が揃っても、鍵そのものの性質は別に確かめること
+3つの束縛は「この証拠がこの登録のものか」を決めるだけで、**その鍵を登録してよいか**は決めません。次の 2 つは束縛がすべて成立していても成立しないことがあります。
+
+| 確かめること | 通してしまうもの |
+|---|---|
+| 鍵がセキュアハードウェアで**生成**されたこと | 外部で生成して取り込んだ鍵。セキュアハードウェア内にあっても、生成元に複製が存在する。「鍵は端末から出ない」という ABCA の前提が崩れる |
+| 鍵が**署名に使える**こと | PoP を署名できない鍵。登録は通り、最初の利用時に署名検証で落ちる |
+
+**どちらのフィールドをどちらのリストから読むかも意味の一部です。** Android の `AuthorizationList` は 2 つあり、`softwareEnforced` は Android プラットフォームが、`hardwareEnforced` は KeyMint がセキュアハードウェア内で書きます。鍵自身の性質（`origin` / `purpose`）はハードウェア側から読まなければ、プラットフォームが知り得ないことをプラットフォームの申告で信じることになります。`attestationApplicationId` は逆で、どのアプリが要求したかを知っているのはプラットフォームです。
+:::
+
 ### 登録の既定は「全拒否」
 
 `PlatformAttestationVerifierPluginLoader` は既定で何も登録しません。verifier が1つも無ければ未知 platform として例外になり、**登録はすべて拒否**されます。無認証エンドポイントに対する安全側の既定です。
@@ -119,11 +130,13 @@ public interface PlatformAttestationVerifier {
 
 | クラス | 担当 |
 |---|---|
-| `AndroidKeyAttestationVerifier` | SPI 実装。3つの束縛とハードウェア裏付けを判定 |
+| `AndroidKeyAttestationVerifier` | SPI 実装。3つの束縛・鍵の性質・ハードウェア裏付けを判定 |
 | `AndroidCertificateChain` | どのルートを信頼するかの判断 |
 | `AndroidKeyAttestationExtension` | KeyDescription のスキーマ解釈 |
 | `AndroidAttestationApplicationId` | package name / 署名証明書ダイジェスト |
 | `AndroidKeyAttestationSecurityLevel` | `software` / `trusted_environment` / `strong_box` |
+| `AndroidKeyOrigin` | `generated` / `imported` / `securely_imported` ほか（`origin`） |
+| `AndroidKeyPurpose` | `sign` / `verify` / `encrypt` ほか（`purpose`） |
 | `AndroidKeyAttestationConfiguration` | クライアント設定の読み取り |
 | `platform.x509.X509CertificateChain` | チェーンのパース・有効期限・署名連鎖・ルート照合 |
 | `platform.asn1.Asn1Node` | DER の読み取り（BouncyCastle を隠す） |
@@ -149,7 +162,26 @@ KeyDescription ::= SEQUENCE {
 SecurityLevel ::= ENUMERATED { Software (0), TrustedEnvironment (1), StrongBox (2) }
 ```
 
-`attestationApplicationId` は `AuthorizationList` の `[709] EXPLICIT OCTET_STRING OPTIONAL`。プラットフォームが埋めるフィールドなので `softwareEnforced` 側に入ります。
+`AuthorizationList` から読むフィールドと、**どちらのリストから読むか**は次のとおりです。
+
+| フィールド | タグ | 読むリスト | 判定 |
+|---|---|---|---|
+| `purpose` | `[1] EXPLICIT SET OF INTEGER` | `hardwareEnforced` | `sign`(2) を含むこと |
+| `origin` | `[702] EXPLICIT INTEGER` | `hardwareEnforced` | `KM_ORIGIN_GENERATED`(0) であること |
+| `attestationApplicationId` | `[709] EXPLICIT OCTET_STRING` | `softwareEnforced`（無ければ `hardwareEnforced`） | package / 署名ダイジェストの照合 |
+
+`attestationApplicationId` だけプラットフォームが埋めるフィールドなので `softwareEnforced` 側です。逆に `origin` / `purpose` は鍵自身の性質なので、`hardwareEnforced` にあるときだけセキュアハードウェアの申告として扱います。
+
+`SecurityLevel` は 2 か所にあり、**どちらも**設定した `min_security_level` 以上であることを要求します。
+
+| フィールド | 主語 |
+|---|---|
+| `attestationSecurityLevel` | 証明書（attestation）がどこで作られたか |
+| `keyMintSecurityLevel` | 鍵を保持する KeyMint がどこで動いているか |
+
+前者だけを見ると、TEE で署名された証明書を持つソフトウェア鍵を通します。そのとき `hardwareEnforced` の中身も同じだけ信頼できないので、`origin` / `purpose` の判定ごと意味を失います。
+
+これらは OPTIONAL なフィールドなので、`AndroidKeyAttestationExtension` は不在をエラーにせず `undefined` / 空として返し、**受け入れ可否は verifier が決めます**。「スキーマに従っていない」と「端末が報告しなかった」を混ぜないためです。verifier は報告されなかった `origin` を拒否します（フィールドが判定の材料そのもので、不在は何の証拠でもないため）。
 
 :::warning SecurityLevel は ENUMERATED であって INTEGER ではありません
 DER 上のタグが異なるため、INTEGER として読む実装は**実機のチェーンで落ちます**。テストのフィクスチャを INTEGER で組むと、テストだけ通って実機で壊れる形になります。同じ取り違えは WebAuthn のテストベクタでも報告されています。
@@ -172,10 +204,10 @@ iOS App Attest を足す場合、束縛②の作り方が Android と異なり�
 |---|---|
 | `AttestJwtClientAuthAuthenticatorTest` | 認証フェーズ |
 | `RegisteredInstanceKeyModeTest` | 自己署名モードの追加検証 |
-| `AndroidKeyAttestationVerifierTest` | 登録フェーズの3つの束縛・チェーン・レベル |
+| `AndroidKeyAttestationVerifierTest` | 登録フェーズの3つの束縛・チェーン・レベル・鍵の性質 |
 | `e2e/src/tests/spec/oauth_attestation_based_client_auth.test.js` | draft-10 の章立てに沿った準拠台帳 |
 
-`AndroidAttestationFixture` が BouncyCastle でチェーンを合成するので、実機なしで検証ロジックを動かせます。
+`AndroidAttestationFixture` が BouncyCastle でチェーンを合成するので、実機なしで検証ロジックを動かせます。`hardwareEnforced` も実機が埋めるとおりに埋めます。**verifier がそこから読む値を、空のリストを持つフィックスチャでは動かせない**ためです（ルート証明書に CA 制約を持たせているのと同じ理由）。
 
 :::tip 一番効くテスト
 `rejectsAChainThatDoesNotLeadToTheConfiguredRoot` — 攻撃者が自分のルートで作った、**内部的には完璧なチェーン**を拒否できることを固定しています。これが通らないと他の検証がすべて飾りになります。

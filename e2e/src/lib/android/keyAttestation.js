@@ -30,11 +30,32 @@ export const SECURITY_LEVEL = {
   strong_box: 2,
 };
 
+/** KM_ORIGIN_*. Only `generated` means the secure hardware created the key itself. */
+export const ORIGIN = {
+  generated: 0,
+  derived: 1,
+  imported: 2,
+  unknown: 3,
+  securely_imported: 4,
+};
+
+/** KM_PURPOSE_*. A Client Instance key has to carry `sign`. */
+export const PURPOSE = {
+  encrypt: 0,
+  decrypt: 1,
+  sign: 2,
+  verify: 3,
+};
+
 /**
  * KeyDescription, with the elements the server reads.
  *
  * SecurityLevel is ENUMERATED. Encoding it as INTEGER is rejected, so `encodeSecurityLevelAsInteger`
  * exists to produce that rejection on purpose.
+ *
+ * `origin` and `purpose` go in `hardwareEnforced` because only KeyMint knows them; the server
+ * refuses to read them from `softwareEnforced`, so `keyPropertiesInSoftwareList` can produce that
+ * rejection too. `attestationApplicationId` is the opposite case and stays in `softwareEnforced`.
  */
 const keyDescription = ({
   challenge,
@@ -42,29 +63,45 @@ const keyDescription = ({
   packageName,
   signatureDigests,
   encodeSecurityLevelAsInteger = false,
+  origin = ORIGIN.generated,
+  purposes = [PURPOSE.sign, PURPOSE.verify],
+  keyMintSecurityLevel = securityLevel,
+  keyPropertiesInSoftwareList = false,
 }) => {
   const applicationId = derSequence(
     derSet(derSequence(derOctetString(packageName), derInteger(1))),
     derSet(...signatureDigests.map((digest) => derOctetString(digest)))
   );
 
+  // `origin: null` / `purposes: []` stand for a device that omitted the field.
+  const keyProperties = [
+    ...(purposes.length
+      ? [derTagged(1, derSet(...purposes.map((purpose) => derInteger(purpose))))]
+      : []),
+    ...(origin === null ? [] : [derTagged(702, derInteger(origin))]),
+  ];
+
   const softwareEnforced = derSequence(
-    derTagged(709, derOctetString(applicationId))
+    derTagged(709, derOctetString(applicationId)),
+    ...(keyPropertiesInSoftwareList ? keyProperties : [])
   );
 
-  const level = encodeSecurityLevelAsInteger
-    ? derInteger(securityLevel)
-    : derEnumerated(securityLevel);
+  const hardwareEnforced = derSequence(
+    ...(keyPropertiesInSoftwareList ? [] : keyProperties)
+  );
+
+  const encodeLevel = (value) =>
+    encodeSecurityLevelAsInteger ? derInteger(value) : derEnumerated(value);
 
   return derSequence(
     derInteger(4), // attestationVersion
-    level, // attestationSecurityLevel
+    encodeLevel(securityLevel), // attestationSecurityLevel
     derInteger(4), // keyMintVersion
-    level, // keyMintSecurityLevel
+    encodeLevel(keyMintSecurityLevel), // keyMintSecurityLevel
     derOctetString(challenge), // attestationChallenge
     derOctetString(Buffer.alloc(0)), // uniqueId
     softwareEnforced,
-    derSequence() // hardwareEnforced
+    hardwareEnforced
   );
 };
 
@@ -171,6 +208,10 @@ export const generateAttestedKey = ({
   publicKeyPem,
   securityLevel = SECURITY_LEVEL.trusted_environment,
   encodeSecurityLevelAsInteger = false,
+  origin,
+  purposes,
+  keyMintSecurityLevel,
+  keyPropertiesInSoftwareList,
 }) => {
   const publicKey = publicKeyPem
     ? forge.pki.publicKeyFromPem(publicKeyPem)
@@ -182,6 +223,12 @@ export const generateAttestedKey = ({
     packageName,
     signatureDigests: [signatureDigest],
     encodeSecurityLevelAsInteger,
+    ...(origin !== undefined ? { origin } : {}),
+    ...(purposes !== undefined ? { purposes } : {}),
+    ...(keyMintSecurityLevel !== undefined ? { keyMintSecurityLevel } : {}),
+    ...(keyPropertiesInSoftwareList !== undefined
+      ? { keyPropertiesInSoftwareList }
+      : {}),
   });
 
   const leaf = certificate({

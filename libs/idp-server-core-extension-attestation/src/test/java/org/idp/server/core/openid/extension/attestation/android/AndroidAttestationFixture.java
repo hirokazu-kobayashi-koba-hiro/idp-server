@@ -48,10 +48,56 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
  * <p>The fixture is deliberately able to produce a <b>valid looking but untrusted</b> chain: that
  * is exactly what an attacker can do, and the tests rely on it to show that parsing alone decides
  * nothing.
+ *
+ * <p>{@code hardwareEnforced} is populated the way KeyMint fills it rather than left empty. A key
+ * property the verifier reads from that list cannot be exercised against a fixture that does not
+ * have one, and a fixture that omits what every real device sends is not a fixture of the real
+ * thing — the same reason the root here carries CA constraints.
  */
 class AndroidAttestationFixture {
 
   static final String PACKAGE_NAME = "com.example.wallet";
+
+  /**
+   * What an AuthorizationList says about the key, so a test can say "the same chain but imported".
+   *
+   * @param keyMintSecurityLevel where the key lives, which a device may report below the level it
+   *     produced the attestation at
+   * @param inSoftwareList writes {@code origin} and {@code purpose} into {@code softwareEnforced}
+   *     instead, which is where a platform that wanted to claim them could put them
+   */
+  record KeyProperties(
+      AndroidKeyOrigin origin,
+      List<AndroidKeyPurpose> purposes,
+      AndroidKeyAttestationSecurityLevel keyMintSecurityLevel,
+      boolean inSoftwareList) {
+
+    /** What a device generating a signing key in secure hardware reports. */
+    static KeyProperties ofDevice(AndroidKeyAttestationSecurityLevel securityLevel) {
+      return new KeyProperties(
+          AndroidKeyOrigin.generated,
+          List.of(AndroidKeyPurpose.sign, AndroidKeyPurpose.verify),
+          securityLevel,
+          false);
+    }
+
+    KeyProperties withOrigin(AndroidKeyOrigin replacement) {
+      return new KeyProperties(replacement, purposes, keyMintSecurityLevel, inSoftwareList);
+    }
+
+    KeyProperties withPurposes(List<AndroidKeyPurpose> replacement) {
+      return new KeyProperties(origin, replacement, keyMintSecurityLevel, inSoftwareList);
+    }
+
+    KeyProperties withKeyMintSecurityLevel(AndroidKeyAttestationSecurityLevel replacement) {
+      return new KeyProperties(origin, purposes, replacement, inSoftwareList);
+    }
+
+    /** The same values, moved to the list the platform writes. */
+    KeyProperties movedToSoftwareList() {
+      return new KeyProperties(origin, purposes, keyMintSecurityLevel, true);
+    }
+  }
 
   KeyPair rootKeyPair;
   X509Certificate rootCertificate;
@@ -93,6 +139,38 @@ class AndroidAttestationFixture {
       List<byte[]> signatureDigests,
       boolean encodeSecurityLevelAsInteger)
       throws Exception {
+    return chain(
+        attestedKey,
+        challenge,
+        securityLevel,
+        packageName,
+        signatureDigests,
+        encodeSecurityLevelAsInteger,
+        KeyProperties.ofDevice(securityLevel));
+  }
+
+  /** A chain whose hardware list says {@code properties} rather than what a device would say. */
+  List<String> chain(
+      KeyPair attestedKey,
+      byte[] challenge,
+      AndroidKeyAttestationSecurityLevel securityLevel,
+      String packageName,
+      List<byte[]> signatureDigests,
+      KeyProperties properties)
+      throws Exception {
+    return chain(
+        attestedKey, challenge, securityLevel, packageName, signatureDigests, false, properties);
+  }
+
+  private List<String> chain(
+      KeyPair attestedKey,
+      byte[] challenge,
+      AndroidKeyAttestationSecurityLevel securityLevel,
+      String packageName,
+      List<byte[]> signatureDigests,
+      boolean encodeSecurityLevelAsInteger,
+      KeyProperties properties)
+      throws Exception {
 
     X509Certificate leaf =
         leafCertificate(
@@ -101,7 +179,8 @@ class AndroidAttestationFixture {
             securityLevel,
             packageName,
             signatureDigests,
-            encodeSecurityLevelAsInteger);
+            encodeSecurityLevelAsInteger,
+            properties);
 
     List<String> encoded = new ArrayList<>();
     encoded.add(Base64.getEncoder().encodeToString(leaf.getEncoded()));
@@ -115,7 +194,8 @@ class AndroidAttestationFixture {
       AndroidKeyAttestationSecurityLevel securityLevel,
       String packageName,
       List<byte[]> signatureDigests,
-      boolean encodeSecurityLevelAsInteger)
+      boolean encodeSecurityLevelAsInteger,
+      KeyProperties properties)
       throws Exception {
 
     Instant now = Instant.now();
@@ -132,7 +212,12 @@ class AndroidAttestationFixture {
         new org.bouncycastle.asn1.ASN1ObjectIdentifier(AndroidKeyAttestationExtension.OID),
         false,
         keyDescription(
-            challenge, securityLevel, packageName, signatureDigests, encodeSecurityLevelAsInteger));
+            challenge,
+            securityLevel,
+            packageName,
+            signatureDigests,
+            encodeSecurityLevelAsInteger,
+            properties));
 
     ContentSigner signer =
         new JcaContentSignerBuilder("SHA256withECDSA").build(rootKeyPair.getPrivate());
@@ -145,7 +230,8 @@ class AndroidAttestationFixture {
       AndroidKeyAttestationSecurityLevel securityLevel,
       String packageName,
       List<byte[]> signatureDigests,
-      boolean encodeSecurityLevelAsInteger)
+      boolean encodeSecurityLevelAsInteger,
+      KeyProperties properties)
       throws Exception {
 
     ASN1EncodableVector packageInfo = new ASN1EncodableVector();
@@ -164,24 +250,54 @@ class AndroidAttestationFixture {
         new DERTaggedObject(
             true, 709, new DEROctetString(new DERSequence(applicationId).getEncoded())));
 
+    if (properties.inSoftwareList()) {
+      addKeyProperties(softwareEnforced, properties);
+    }
+
     // A device encodes SecurityLevel as ENUMERATED. Building it as INTEGER would make the tests
     // pass against an implementation that breaks on the first real chain.
     ASN1Encodable level =
         encodeSecurityLevelAsInteger
             ? new ASN1Integer(securityLevel.value)
             : new ASN1Enumerated(securityLevel.value);
+    ASN1Encodable keyMintLevel =
+        encodeSecurityLevelAsInteger
+            ? new ASN1Integer(properties.keyMintSecurityLevel().value)
+            : new ASN1Enumerated(properties.keyMintSecurityLevel().value);
+
+    // KeyMint writes the key's own properties here, and only a value from this list is a statement
+    // the secure hardware made.
+    ASN1EncodableVector hardwareEnforced = new ASN1EncodableVector();
+    if (!properties.inSoftwareList()) {
+      addKeyProperties(hardwareEnforced, properties);
+    }
 
     ASN1EncodableVector keyDescription = new ASN1EncodableVector();
     keyDescription.add(new ASN1Integer(4)); // attestationVersion
     keyDescription.add(level); // attestationSecurityLevel
     keyDescription.add(new ASN1Integer(4)); // keyMintVersion
-    keyDescription.add(level); // keyMintSecurityLevel
+    keyDescription.add(keyMintLevel); // keyMintSecurityLevel
     keyDescription.add(new DEROctetString(challenge)); // attestationChallenge
     keyDescription.add(new DEROctetString(new byte[0])); // uniqueId
     keyDescription.add(new DERSequence(softwareEnforced)); // softwareEnforced
-    keyDescription.add(new DERSequence()); // hardwareEnforced
+    keyDescription.add(new DERSequence(hardwareEnforced)); // hardwareEnforced
 
     return new DERSequence(keyDescription);
+  }
+
+  /** An {@code undefined} origin or an empty purpose set stands for a device that omitted it. */
+  private static void addKeyProperties(
+      ASN1EncodableVector authorizationList, KeyProperties properties) {
+
+    if (!properties.purposes().isEmpty()) {
+      ASN1EncodableVector purposes = new ASN1EncodableVector();
+      properties.purposes().forEach(purpose -> purposes.add(new ASN1Integer(purpose.value)));
+      authorizationList.add(new DERTaggedObject(true, 1, new DERSet(purposes)));
+    }
+    if (properties.origin() != AndroidKeyOrigin.undefined) {
+      authorizationList.add(
+          new DERTaggedObject(true, 702, new ASN1Integer(properties.origin().value)));
+    }
   }
 
   private static X509Certificate selfSignedRoot(KeyPair keyPair) throws Exception {
