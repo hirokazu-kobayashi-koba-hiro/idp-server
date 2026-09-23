@@ -79,7 +79,7 @@ EU の枠組みそのものは [EUDI Wallet の全体像](./eu-wallet-ecosystem.
 │  鍵の生成と署名        証明を頼む            │◀─────────── └────────────────────────┘
 │         ▼                  ▼                 │   KA / WIA               ┊ 認証に使うかは
 │ ┌──────────────────┐ ┌─────────────────────┐ │                          ┊ Wallet Provider
-│ │ WSCD             │ │ OS の証明機能       │ │                          ┊ の選択
+│ │ Keystore         │ │ OS の証明機能       │ │                          ┊ の選択
 │ │ Secure Enclave / │ │ Key Attestation API │ │                          ▼
 │ │ StrongBox / TEE  │ │ Device Integrity    │ │                   ┌──────────────┐
 │ └──────────────────┘ │ Service             │ │                   │ 国の IdP     │
@@ -93,7 +93,8 @@ EU の枠組みそのものは [EUDI Wallet の全体像](./eu-wallet-ecosystem.
 
 | システム | 役割 |
 |---|---|
-| **Wallet Instance** | 利用者の端末で動くアプリ。鍵は自分で持たず、WSCD に生成と署名を頼む |
+| **Wallet Instance** | 利用者の端末で動くアプリ。鍵は自分で持たず、Keystore に生成と署名を頼む |
+| **Keystore** | 端末に組み込まれた鍵の保管領域（Android の TEE / StrongBox、iOS の Secure Enclave）。仕様 v1.4.7 は、これを高い認証水準の **WSCD** とは区別して Keystore と呼び、利用者の鍵はここに置くとしている（初期化の章には WSCD と書いた箇所も残っている） |
 | **Key Attestation API / Device Integrity Service** | 端末メーカー（Apple、Google）が OS に組み込んだ仕組み。「この鍵はハードウェアにある」「このアプリは改ざんされていない」を署名付きで証明する |
 | **Wallet Provider Backend** | Wallet Instance を登録し、KA と WIA を発行する。Wallet Instance の失効は、WIA の Status List で表す |
 | **利用者アカウント** | 有効化のときに作られ、Wallet Instance と紐付く。利用者は Wallet Provider の **Web ポータル**にログインし、端末が無くても失効を頼める。ポータルはアプリからも外部ブラウザからも使え、ログインには 2 要素以上の認証が必須 |
