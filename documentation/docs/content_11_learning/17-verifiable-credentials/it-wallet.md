@@ -1,20 +1,42 @@
 ---
-sidebar_position: 32
+sidebar_position: 33
 ---
 
 # IT-Wallet を読む: 国家規模のウォレット生態系はどう設計されるか
 
-EU の ARF は「何を満たすべきか」を定めますが、「どう作るか」の多くを各国の裁量に残しています。[ウォレットはどうやって「本物」を証明するか](./wallet-attestation.md) で見たとおり、インストール直後の信頼をどう確立するかさえ規定がありません。
+[EUDI Wallet の全体像](./eu-wallet-ecosystem.md) で見たとおり、EU の枠組みは「何を満たすべきか」を定めますが、「どう作るか」の多くを各国に残しています。[ウォレットはどうやって「本物」を証明するか](./wallet-attestation.md) で見たとおり、インストール直後の信頼をどう確立するかさえ規定がありません。
 
-では実際に作るとどうなるのか。イタリアの **IT-Wallet** は、その空白を具体的に埋めた数少ない公開仕様です。この記事では、そこから「国家規模のウォレット生態系を設計するとどんな問題を解くことになるか」を読み取ります。
+では実際に作るとどうなるのか。イタリアの **IT-Wallet** は、その空白を具体的に埋めた数少ない公開仕様です。この記事では、まず制度としての全体像を押さえ、そのうえで「国家規模のウォレット生態系を設計するとどんな問題を解くことになるか」を読み取ります。
 
 :::note この記事の読み方
-IT-Wallet の仕様書そのものを解説するのではなく、**設計判断とその理由**に注目します。同じ問題は、ウォレットに限らず「多数の事業者が参加する認証基盤」を作るときに繰り返し現れます。
+前半は制度と現状、後半は信頼基盤の**設計判断とその理由**です。後半の問題は、ウォレットに限らず「多数の事業者が参加する認証基盤」を作るときに繰り返し現れます。
+
+現状の数字や進捗は **2026 年 9 月時点**のものです。技術仕様は v1.4.7（2026-09-22）を参照しています。
 :::
 
-## 制度としての位置づけ
+## 全体像
 
-IT-Wallet はイタリアの法令（Decree-Law No.19, 2024-03-02）に根拠を持つ**国家制度**です。技術仕様は義務的な Guidelines を補完するもので、規制の枠組みの一部として位置づけられます。
+### 制度としての位置づけ
+
+IT-Wallet はイタリアの法令（Decree-Law No.19, 2024-03-02 が導入したデジタル行政法典 第 64-quater 条）に根拠を持つ**国家制度**です。技術仕様は義務的な Guidelines を補完するもので、規制の枠組みの一部として位置づけられます。
+
+```
+ ┌─ EU ───────────────────────────────────────────────┐
+ │ Regulation (EU) 2024/1183（eIDAS 2）                  │
+ │ EUDI Wallet の枠組み。加盟国に提供を義務づける          │
+ └──────────────────────┬─────────────────────────────┘
+                        │ 段階的に寄せる
+ ┌─ イタリア ────────────▼─────────────────────────────┐
+ │ デジタル行政法典 第 64-quater 条                      │
+ │   （Decree-Law No.19, 2024 で導入）                   │
+ │        │                                             │
+ │        ▼                                             │
+ │ Guidelines（義務的）                                  │
+ │        │ 補完する                                     │
+ │        ▼                                             │
+ │ 技術仕様（eid-wallet-it-docs）                         │
+ └─────────────────────────────────────────────────────┘
+```
 
 > a system allowing **natural or legal persons** to access public and private services through the secure presentation of Digital Credential
 
@@ -26,17 +48,129 @@ EU との関係は「段階的に寄せる」という立場です。
 
 先に作って、EU 仕様の確定に合わせて調整していく。仕様が固まるのを待たずに動く、という判断です。
 
-## 役割は 5 つに分かれる
+### 誰が何を担うか
 
-| 役割 | 担うこと |
+```
+ ┌─ 制度 ─────────────────────────────────────────────────────────┐
+ │ デジタル変革局: 推進と調整    AgID: Guidelines の提案、民間の認定規則   │
+ │ ACN / Garante: 規則づくりに参加                                     │
+ └────────────────────────────────────────────────────────────────┘
+
+  Authentic Source       Credential Issuer      Wallet               Relying Party
+ ┌────────────┐  属性  ┌────────────┐  発行  ┌──────────────┐ 提示 ┌────────────┐
+ │ MIT        │───────▶│ IPZS       │───────▶│ IO（PagoPA）  │─────▶│ 対面での   │
+ │ MEF        │        │ 公的な      │        │ 民間（試験中） │      │ 確認       │
+ │ INPS など   │        │ 電子証明    │        └──────────────┘      └────────────┘
+ └────────────┘        └────────────┘
+
+ ┌─ 信頼基盤 ─────────────────────────────────────────────────────┐
+ │ OpenID Federation。中央インフラは IPZS が運営する                     │
+ └────────────────────────────────────────────────────────────────┘
+```
+
+| 組織 | 担うこと |
 |---|---|
-| **Users** | Wallet Instance を所有し、格納物を統制する |
-| **Wallet Providers** | Wallet Solution を設計・開発する |
-| **Credential Issuers** | クレデンシャルを発行する |
-| **Relying Parties** | 提示を要求し、認証・認可に使う |
-| **Authentic Sources** | クレデンシャルの元になる**権威データを管理する** |
+| **デジタル変革局**（Dipartimento per la trasformazione digitale） | 制度全体の推進と調整。技術仕様を公開する |
+| **AgID**（イタリア・デジタル庁） | Guidelines の提案。民間事業者の参加と認定の規則を定める |
+| **IPZS**（国立印刷造幣局） | 中央インフラの運営と、公的な電子証明の発行 |
+| **PagoPA** | 行政アプリ **IO** を運営し、**公的ウォレット**を提供する |
+| **ACN**（国家サイバーセキュリティ庁）、**Garante**（データ保護当局） | 実施のための規則づくりに加わる |
 
-**Authentic Source が Issuer と別に定義されている**のが目を引きます。「真正なデータを持っている主体」と「クレデンシャルとして発行する主体」は、同じとは限らないからです。住民データを持つ自治体と、それを証明書として出す機関が別、という構造がありえます。
+技術仕様は Trust Anchor や Registration Body という**役割**を定めますが、どの組織がそれを担うかは書いていません。役割と主体を分けて書くのは、[ARF](./eu-wallet-ecosystem.md) と同じ流儀です。
+
+### ウォレットは公的と民間の 2 本立て
+
+```
+                    IT-Wallet の仕組み（共通の信頼基盤・共通の技術仕様）
+                                    │
+              ┌─────────────────────┴─────────────────────┐
+              ▼                                           ▼
+  ┌──────────────────────┐                  ┌──────────────────────┐
+  │ 公的ウォレット          │                  │ 民間ウォレット          │
+  │ IO アプリ（PagoPA）     │                  │ AgID の認定を受けた事業者 │
+  │ 2024-12 から全利用者へ   │                  │ 2026-05 から試験環境     │
+  └──────────────────────┘                  └──────────────────────┘
+```
+
+| | 状況 |
+|---|---|
+| **公的ウォレット** | 行政アプリ IO に組み込まれている。2024 年 12 月に全利用者へ開放 |
+| **民間ウォレット** | 制度上は認められている。2026 年 5 月から、実在しないデータを使う試験環境で検証中 |
+
+民間ウォレットの一般提供は、国内の規則が出揃うのを待って始まります。
+
+### 何が載っているか
+
+IO のウォレットで使えるのは、現時点で 3 つです。
+
+| クレデンシャル | 元データを持つ主体（Authentic Source） |
+|---|---|
+| 運転免許証 | インフラ交通省（MIT） |
+| 健康保険証 / 欧州健康保険カード | 経済財政省（MEF） |
+| 欧州障害者カード | 国立社会保障機構（INPS） |
+
+デジタル変革局は、IO で書類を追加するとき「身元は常に CIE（電子身分証）か SPID の認証で確認される」と説明しています。紙やカードの置き換えは**任意**で、使える場面も**対面での確認**に限られています。
+
+```
+ 利用者                IO アプリ                    確認する人
+   │  CIE / SPID で      │                             │
+   │  身元を確認 ───────▶ │                             │
+   │                     │ 免許証などを追加              │
+   │                     │ （元データは各省庁）           │
+   │                     │                             │
+   │ ────── 対面で提示 ──────────────────────────────▶ │
+   │                     │                    その場で確認
+```
+
+規模はすでに大きく、2026 年 2 月時点で 1,010 万件の有効化と 1,730 万件の書類が登録され、7 月には有効化が 1,200 万件に達しました。
+
+```
+ 2024-10 ─┬─ 5 万人から段階的に開放
+          │
+ 2024-12 ─┼─ 全利用者へ開放
+          │
+ 2025-06 ─┼─ オフラインでも使えるように
+          │
+ 2026-02 ─┼─ 有効化 1,010 万件 / 書類 1,730 万件
+          │
+ 2026-05 ─┼─ 民間ウォレットの試験環境が開く
+          │
+ 2026-07 ─┴─ 有効化 1,200 万件
+```
+
+選挙人証などの追加が予告されています。技術仕様は PID を定義していますが、IO に載っている 3 つはどれも PID ではありません。
+
+### EU の役割との対応
+
+| ARF の役割 | IT-Wallet |
+|---|---|
+| Wallet Provider | PagoPA（公的）、民間事業者（試験中） |
+| PID Provider / Attestation Provider | Credential Issuer として一つにまとめられている |
+| Authentic Source | 省庁などの正本データ保有者。ARF と同じく発行者と別の役割 |
+| Relying Party | 同じ |
+| Registrar、Access CA、LoTE | **OpenID Federation**（Trust Anchor / Intermediate）で担う |
+
+いちばん大きな違いは最終行です。EU の枠組みが X.509 の証明書と一覧で組む部分を、IT-Wallet は国内では **OpenID Federation** で組んでいます。
+
+ただし EU の手続きから抜けるわけではありません。Wallet Provider は Wallet Solution の適合性評価を受け、EU の一覧へ通知される流れにも乗ります。**国内は Federation、EU とは一覧**、という二重構造です。
+
+```
+ ┌─ EU の枠組み ─────────────────────────────────────┐
+ │ 欧州委員会の一覧（LoTE）/ Wallet Solution の適合性評価 │
+ └────────────────────────▲──────────────────────────┘
+                          │ Wallet Provider を通知
+ ┌─ イタリア国内: OpenID Federation ──┴──────────────────┐
+ │                  Trust Anchor                        │
+ │                       │                              │
+ │           Intermediate（Registration Body）            │
+ │                       │                              │
+ │   Wallet Provider / Credential Issuer / Relying Party │
+ └───────────────────────┬──────────────────────────────┘
+                         │ Wallet Provider が attestation を発行
+                  Wallet Instance（Federation の外）
+```
+
+IT-Wallet 固有のものとしては、ほかに **IT-Wallet ID**（国内の RP 専用の身元証明で、PID ではない）や、属性やスキーマを管理する**レジストリ群**があります。
 
 ## 原則が 2 つ、設計を貫いている
 
@@ -53,6 +187,14 @@ EU との関係は「段階的に寄せる」という立場です。
 > usage occurs **without issuer awareness**, with no usage information released to third parties as the relationship is **exclusive between the User and the Relying Party**
 
 **Issuer は利用を追跡できません。** 関係は User と Relying Party の間で閉じます。
+
+```
+  ┌──────────┐   発行    ┌──────────┐   提示    ┌───────────────┐
+  │  Issuer  │─────────▶│   User   │─────────▶│ Relying Party │
+  └──────────┘          └──────────┘          └───────────────┘
+        │                                             │
+        └───────────── ✕ 利用の情報は流れない ─────────┘
+```
 
 これは技術的制約ではなく、**制度としての原則**です。「クレデンシャルを発行した機関が、それが使われた先を知れてしまう」構造を最初から禁じています。紙の身分証を店で見せても発行元には伝わらない、という性質をデジタルでも保つ、ということです。
 
@@ -174,6 +316,21 @@ Federation の失効表現は独特です。
 
 Registration Body（Trust Anchor または Intermediate）が、参加者を Federation のルールに照らして評価し、通れば Subordinate Statement を発行します。
 
+技術仕様は、参加の手続きを段階に分けています。
+
+```
+ ① 管理上の登録       法的な立場と規制への適合を確認する
+          │
+          ▼
+ ② 技術的な登録       参加者の種類ごとに手続きが分かれる
+          │
+          ▼
+ ③ レジストリへの統合   属性・Authentic Source・Federation のレジストリ、
+          │            クレデンシャルのカタログに載る
+          ▼
+ ④ Wallet Instance    Wallet Provider を通して間接的に登録される
+```
+
 **「誰をどうやって信頼するか」が仕様の章になっている**ことに意味があります。技術的に鍵を検証できることと、その鍵の持ち主を信頼してよいことは別問題で、後者は運用と制度の話です。IT-Wallet はそこを技術仕様と同じ文書に置いています。
 
 ## 設計から読み取れること
@@ -195,5 +352,10 @@ Registration Body（Trust Anchor または Intermediate）が、参加者を Fed
 - [Introduction](https://italia.github.io/eid-wallet-it-docs/versione-corrente/en/introduction.html)
 - [Trust Infrastructure](https://italia.github.io/eid-wallet-it-docs/versione-corrente/en/trust.html)
 - [Wallet Instance Lifecycle](https://italia.github.io/eid-wallet-it-docs/versione-corrente/en/wallet-instance-lifecycle.html)
+- [Onboarding System](https://italia.github.io/eid-wallet-it-docs/versione-corrente/en/onboarding-high-level.html)
 - [OpenID Federation 1.0](https://openid.net/specs/openid-federation-1_0.html)
 - [italia/eid-wallet-it-docs](https://github.com/italia/eid-wallet-it-docs)
+- [Sistema IT-Wallet（デジタル変革局）](https://innovazione.gov.it/progetti/sistema-it-wallet/)
+- [IT-Wallet（AgID）](https://www.agid.gov.it/en/it-wallet)
+- [Il sistema IT-Wallet apre ai test con le aziende private（2026-07-23）](https://innovazione.gov.it/notizie/comunicati-stampa/il-sistema-it-wallet-apre-ai-test-con-le-aziende-private/)
+- [IT-Wallet supera quota 10 milioni di attivazioni（2026-02-17）](https://innovazione.gov.it/notizie/articoli/it-wallet-supera-quota-10-milioni-di-attivazioni-su-app-io-17-3-milioni-di-documenti-gia-caricati/)

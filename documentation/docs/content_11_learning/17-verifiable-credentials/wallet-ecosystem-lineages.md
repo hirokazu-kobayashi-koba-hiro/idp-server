@@ -26,7 +26,7 @@ sidebar_position: 30
 ├────────────────────────────────────────────────────────────┤
 │ ③ EU / eIDAS 2 系  規制と国家制度から                        │
 │    EUDI ARF / HAIP / OpenID4VCI・VP                         │
-│    信頼の起点: Trusted List、または OpenID Federation        │
+│    信頼の起点: 欧州委員会の LoTE と X.509 証明書             │
 └────────────────────────────────────────────────────────────┘
 ```
 
@@ -54,18 +54,17 @@ sidebar_position: 30
 
 詳しくは [DID](./did.md) を参照してください。
 
-### ③ EU / eIDAS 2: リストか、Federation か
+### ③ EU / eIDAS 2: 一覧と証明書
 
-EU の枠組みには**さらに内部で分岐があります**。
+発行者と Wallet Provider は、欧州委員会が公開する一覧（**LoTE**: List of Trusted Entities）に載ります。適格な属性証明（QEAA）の発行者だけは、eIDAS 1 から続く各国の **Trusted List** です。
 
-| | 仕組み |
-|---|---|
-| **Trusted List**（ETSI） | 認定された事業者を国が一覧として公開する。eIDAS 1 からの継承 |
-| **OpenID Federation 1.0** | 階層構造と Trust Chain で信頼を辿る。[IT-Wallet](./it-wallet.md) の選択 |
+Relying Party は一覧に載りません。数が多すぎるからです。代わりに登録を受け、**X.509 のアクセス証明書**と、何を要求してよいかを示す**登録証明書**を持ちます。
 
-**EU ARF はどちらかを義務づけていません。** イタリアは OpenID Federation を採りましたが、これは国の判断です。
+OpenID Federation は ARF の本文に登場しません。[IT-Wallet](./it-wallet.md) は国内の信頼基盤に Federation を採りましたが、これは EU の枠組みの上に積んだ国の判断です。
 
-Federation が持つ特徴は、鍵の正当性だけでなく **Metadata Policy**（何を要求してよいか）まで上位から降ろせる点です。Trusted List は「載っているか否か」が基本で、権限の細かい制御は別の仕組みに委ねます。
+Federation が持つ特徴は、鍵の正当性だけでなく **Metadata Policy**（何を要求してよいか）まで上位から降ろせる点です。EU の枠組みでは、同じことを登録証明書が担います。
+
+詳しくは [EUDI Wallet の全体像](./eu-wallet-ecosystem.md) を参照してください。
 
 ## クレデンシャルの形式
 
@@ -75,11 +74,9 @@ Federation が持つ特徴は、鍵の正当性だけでなく **Metadata Policy
 | W3C VC | **JSON-LD** / JWT | JWS、BBS+ など |
 | EU | **SD-JWT VC** と **mdoc** の両方 | JWS / COSE |
 
-EU が 2 つ採用しているのが目を引きます。
+EU が 2 つ採用しているのが目を引きます。ARF は **mdoc と SD-JWT VC をウォレットの必須**とし、W3C VCDM 2.0 は任意としています。
 
-> The recognised credential formats are now IETF **SD-JWT VC** and **ISO/IEC-mdoc**, with W3C Verifiable Credentials Data Model remaining on the roadmap
-
-**W3C VCDM はロードマップ上**で、プロファイルが整ってから、という位置づけです。免許証（mdoc）との相互運用を捨てられないので両対応になった、という経緯が読み取れます。
+免許証（mdoc）との相互運用を捨てられないので両対応になった、という経緯が読み取れます。対面の提示は mdoc だけ、リモートの提示は SD-JWT VC が主、という分担です。
 
 形式ごとの詳細は [VC フォーマット比較](./vc-formats.md) を参照してください。
 
@@ -130,7 +127,7 @@ AnonCreds の方式だけ性質が違います。他は「失効リストを引�
 | | ISO mDL | W3C VC + DID | EU / eIDAS 2 |
 |---|---|---|---|
 | **出自** | 運転免許証 | 自己主権型アイデンティティ | 規制・国家制度 |
-| **信頼の起点** | IACA ルート証明書 | DID method | Trusted List / OpenID Federation |
+| **信頼の起点** | IACA ルート証明書 | DID method | LoTE / Trusted List + X.509 証明書 |
 | **形式** | mdoc（CBOR） | JSON-LD / JWT | SD-JWT VC + mdoc |
 | **選択的開示** | 項目ごとの署名 | BBS+（ZKP）など | disclosure（SD-JWT）/ 項目署名（mdoc） |
 | **提示の束縛** | SessionTranscript | 方式による | KB-JWT / SessionTranscript |
@@ -148,7 +145,7 @@ W3C VC ───┘        │
                    └──▶ 各国実装（IT-Wallet、ドイツ国家ウォレット など）
 ```
 
-EU は mdoc を取り込むことで免許証の世界と繋がり、SD-JWT VC を採ることで JWT の世界と繋がりました。W3C VCDM はロードマップに残っています。
+EU は mdoc を取り込むことで免許証の世界と繋がり、SD-JWT VC を採ることで JWT の世界と繋がりました。W3C VCDM は任意の形式として残っています。
 
 そして各国が ARF の上に自国の判断を積みます。**イタリアが OpenID Federation を選んだのはその一例**で、EU の枠組みそのものではありません。
 
@@ -164,7 +161,7 @@ EU の枠組みに沿うと言っても、ARF のレベル、HAIP のレベル�
 |---|---|---|
 | ISO mDL | 証明書階層 | 発行主体が限られ、変化が遅い |
 | W3C VC + DID | 識別子の解決方式 | 中央の登録機関を置きたくない |
-| EU | リストまたは Federation | 規制と認定が前提にある |
+| EU | 一覧（LoTE）と証明書 | 規制と認定が前提にある |
 
 そして選んだ起点が、形式・失効・開示方法まで連鎖して決まっていきます。**どこか一箇所だけ他の流派から借りてくる、ということは難しい**構造になっています。
 
@@ -172,7 +169,7 @@ EU の枠組みに沿うと言っても、ARF のレベル、HAIP のレベル�
 
 - [ISO/IEC 18013-5](https://www.iso.org/standard/69084.html)
 - [W3C Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model-2.0/)
-- [EUDI ARF](https://eu-digital-identity-wallet.github.io/eudi-doc-architecture-and-reference-framework/)
+- [EUDI ARF](https://eudi.dev/latest/)
 - [OpenID for Verifiable Credentials（OIDF ホワイトペーパー）](https://openid.net/wordpress-content/uploads/2022/06/OIDF-Whitepaper_OpenID-for-Verifiable-Credentials-V2_2022-06-23.pdf)
 - [Verifiable Credential Formats in the EUDI Wallet](https://docs.igrant.io/concepts/eudi-wallet-verifiable-credential-formats/)
 - [Where can the W3C VCs meet the ISO 18013-5 mDL?](https://medium.com/@identitywoman-in-business/where-can-the-w3c-vcs-meet-the-iso-18013-5-mdl-b2d450bb19f8)

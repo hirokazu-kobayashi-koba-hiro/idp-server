@@ -164,12 +164,12 @@ eIDAS 2.0 による強制的な普及:
   2026年: 加盟国は EU Digital Identity Wallet を提供する義務
     │
     ▼
-  2027年以降: 公共サービス、銀行、通信事業者などが Wallet 対応必須
+  その後: 銀行・通信など強い認証が要る民間サービスに受け入れ義務（利用者が望めば）
 
-  フォーマット: SD-JWT VC + mdoc の両対応が想定される
+  フォーマット: SD-JWT VC と mdoc がウォレットの必須
 ```
 
-信頼基盤をどう組むかは ARF が加盟国に委ねています。具体例は [IT-Wallet](./it-wallet.md)、流派ごとの違いは [ウォレット生態系の流派](./wallet-ecosystem-lineages.md) を参照してください。
+枠組みの全体像は [EUDI Wallet の全体像](./eu-wallet-ecosystem.md)、各国実装の例は [IT-Wallet](./it-wallet.md) を参照してください。
 
 ### 米国
 

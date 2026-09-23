@@ -503,7 +503,15 @@ Status List:
 
 **読み方:** トラステッド・リスト
 
-**意味:** 認定された事業者を国が一覧として公開する仕組み（ETSI 標準）。eIDAS 1 からの継承。
+**意味:** 適格トラストサービス事業者を各加盟国が一覧として公開する仕組み（ETSI TS 119 612）。eIDAS 1 からの継承。EUDI Wallet の生態系では QEAA の発行者だけが載る。
+
+---
+
+### LoTE（List of Trusted Entities）
+
+**読み方:** エル・オー・ティー・イー
+
+**意味:** 欧州委員会が署名・公開する信頼済み主体の一覧（ETSI TS 119 602）。Wallet Provider、PID Provider、PuB-EAA Provider、アクセス証明書の発行機関などが載る。加盟国からの通知で登録される。Relying Party の一覧は無い（[全体像](./eu-wallet-ecosystem.md)）
 
 ---
 
@@ -513,7 +521,7 @@ Status List:
 
 **意味:** 階層構造で信頼を辿る仕組み。Trust Anchor から Subordinate Statement を連ねた **Trust Chain** で参加者の正当性を検証する。鍵だけでなくメタデータやポリシーも配る。
 
-**注意:** EU ARF の必須要件ではなく、イタリアなど採用した国の選択（[流派](./wallet-ecosystem-lineages.md)）
+**注意:** EU ARF の本文には登場しない。IT-Wallet は国内の信頼基盤として採用している（[流派](./wallet-ecosystem-lineages.md)）
 
 ---
 
