@@ -71,6 +71,7 @@ Verifiable Credentials:
 | [eu-wallet-ecosystem](./eu-wallet-ecosystem.md) | EUDI Wallet の全体像: 文書の層、登場人物、信頼の張り方 |
 | [wallet-attestation](./wallet-attestation.md) | ウォレット自身の真正性をどう証明するか |
 | [it-wallet](./it-wallet.md) | イタリアの実装例: 制度と現状、信頼基盤（OpenID Federation） |
+| [it-wallet-configuration](./it-wallet-configuration.md) | イタリアの実装例: 各主体の設定（メタデータ、鍵、登録、クライアント認証） |
 | [it-wallet-ecosystem](./it-wallet-ecosystem.md) | イタリアの実装例: 発行と提示の流れ |
 
 > ここから先は「誰が誰を信頼するか」の話です。フォーマットの違い（上のセクション）とは別の軸で、**流派ごとに答えが違います**。
@@ -217,8 +218,8 @@ Verifiable Credentials の基本的な三者モデル:
 3. wallet-attestation
    └── ウォレット自身をどう信頼するか（流派共通の問題）
 
-4. it-wallet / it-wallet-ecosystem
-   └── 各国実装の例で具体を見る
+4. it-wallet / it-wallet-ecosystem / it-wallet-configuration
+   └── 各国実装の例で具体を見る（制度 → 動き → 設定）
 ```
 
 ---
