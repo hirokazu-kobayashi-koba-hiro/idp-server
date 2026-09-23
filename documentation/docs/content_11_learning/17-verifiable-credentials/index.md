@@ -63,6 +63,17 @@ Verifiable Credentials:
 | [sd-jwt](./sd-jwt.md) | SD-JWT（Selective Disclosure JWT） |
 | [mdoc](./mdoc.md) | mdoc / mDL（ISO 18013-5） |
 
+### ウォレットと生態系
+
+| ドキュメント | 内容 |
+|-------------|------|
+| [wallet-ecosystem-lineages](./wallet-ecosystem-lineages.md) | 流派の比較（ISO mDL / W3C VC+DID / EU）。**このグループの地図** |
+| [wallet-attestation](./wallet-attestation.md) | ウォレット自身の真正性をどう証明するか |
+| [it-wallet](./it-wallet.md) | イタリアの実装例: 信頼基盤（OpenID Federation） |
+| [it-wallet-ecosystem](./it-wallet-ecosystem.md) | イタリアの実装例: 発行と提示の流れ |
+
+> ここから先は「誰が誰を信頼するか」の話です。フォーマットの違い（上のセクション）とは別の軸で、**流派ごとに答えが違います**。
+
 ### トピック
 
 | ドキュメント | 内容 |
@@ -148,6 +159,7 @@ Verifiable Credentials の基本的な三者モデル:
 | [OID4VCI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html) | VC の発行プロトコル |
 | [OID4VP](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html) | VC の提示プロトコル |
 | [SIOP v2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html) | Self-Issued OP |
+| [OpenID Federation 1.0](https://openid.net/specs/openid-federation-1_0.html) | 階層型の信頼基盤（EU の必須要件ではない。[流派](./wallet-ecosystem-lineages.md)参照） |
 
 ---
 
@@ -190,6 +202,19 @@ Verifiable Credentials の基本的な三者モデル:
 
 3. OID4VCI/OID4VP
    └── OAuth/OIDC RFC 学習ガイド参照
+```
+
+### 生態系を設計する人向け
+
+```
+1. wallet-ecosystem-lineages
+   └── どの流派の話をしているのかを掴む
+
+2. wallet-attestation
+   └── ウォレット自身をどう信頼するか（流派共通の問題）
+
+3. it-wallet / it-wallet-ecosystem
+   └── 実装例で具体を見る
 ```
 
 ---

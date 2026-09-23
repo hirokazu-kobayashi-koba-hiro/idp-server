@@ -1,5 +1,5 @@
 ---
-sidebar_position: 32
+sidebar_position: 42
 ---
 
 # VC の歴史と今後の展望
@@ -168,6 +168,8 @@ eIDAS 2.0 による強制的な普及:
 
   フォーマット: SD-JWT VC + mdoc の両対応が想定される
 ```
+
+信頼基盤をどう組むかは ARF が加盟国に委ねています。具体例は [IT-Wallet](./it-wallet.md)、流派ごとの違いは [ウォレット生態系の流派](./wallet-ecosystem-lineages.md) を参照してください。
 
 ### 米国
 
