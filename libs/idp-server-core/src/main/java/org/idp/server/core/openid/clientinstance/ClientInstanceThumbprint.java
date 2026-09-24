@@ -16,7 +16,11 @@
 
 package org.idp.server.core.openid.clientinstance;
 
+import java.util.Map;
 import java.util.Objects;
+import org.idp.server.platform.jose.JsonWebKeyInvalidException;
+import org.idp.server.platform.jose.JwkParser;
+import org.idp.server.platform.json.JsonConverter;
 
 /**
  * The RFC 7638 thumbprint of the Client Instance Key a token was issued to.
@@ -42,6 +46,19 @@ public class ClientInstanceThumbprint {
 
   public ClientInstanceThumbprint(String value) {
     this.value = value;
+  }
+
+  /**
+   * The RFC 7638 thumbprint of a Client Instance Key given as a JWK; empty when it is not a valid
+   * JWK.
+   */
+  public static ClientInstanceThumbprint of(Map<String, Object> instanceKey) {
+    try {
+      return new ClientInstanceThumbprint(
+          JwkParser.parse(JsonConverter.snakeCaseInstance().write(instanceKey)).thumbprintSha256());
+    } catch (JsonWebKeyInvalidException e) {
+      return new ClientInstanceThumbprint();
+    }
   }
 
   public String value() {

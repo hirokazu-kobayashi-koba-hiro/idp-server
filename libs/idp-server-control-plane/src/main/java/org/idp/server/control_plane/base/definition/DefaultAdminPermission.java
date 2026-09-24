@@ -56,6 +56,7 @@ public enum DefaultAdminPermission {
   CLIENT_DELETE("idp:client:delete", "Admin Delete client"),
   CLIENT_INSTANCE_CREATE("idp:client-instance:create", "Admin Register a client instance key"),
   CLIENT_INSTANCE_READ("idp:client-instance:read", "Admin Read client instance information"),
+  CLIENT_INSTANCE_REVOKE("idp:client-instance:revoke", "Admin Revoke a client instance"),
   CLIENT_INSTANCE_DELETE("idp:client-instance:delete", "Admin Delete client instance"),
 
   USER_CREATE("idp:user:create", "Admin Create a user"),

@@ -112,6 +112,29 @@ public class ClientInstanceManagementV1Api implements ParameterTransformable {
     return toResponseEntity(response);
   }
 
+  @PostMapping("/{id}/revoke")
+  public ResponseEntity<?> revoke(
+      @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
+      @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
+      @PathVariable("client-id") String clientId,
+      @PathVariable("id") String id,
+      @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
+      HttpServletRequest httpServletRequest) {
+
+    RequestAttributes requestAttributes = transform(httpServletRequest);
+
+    ClientInstanceManagementResponse response =
+        clientInstanceManagementApi.revoke(
+            operatorPrincipal.authenticationContext(),
+            tenantIdentifier,
+            new RequestedClientId(clientId),
+            new ClientInstanceIdentifier(id),
+            requestAttributes,
+            dryRun);
+
+    return toResponseEntity(response);
+  }
+
   @DeleteMapping("/{id}")
   public ResponseEntity<?> delete(
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,

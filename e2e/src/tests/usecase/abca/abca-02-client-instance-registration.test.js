@@ -22,6 +22,7 @@
  * 3. Reinstall: the user logs in again and the newly registered key takes over
  * 4. Lost device: revoking the instance stops the app from authenticating
  * 5. The same credentials working at the Pushed Authorization Request endpoint
+ * 6. Lifecycle: revocation is final and keeps the key taken; deletion forgets the instance
  */
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
@@ -76,13 +77,27 @@ const activeInstancesOf = async (user = userSub) => {
   );
 };
 
+const revokeInstance = async (instanceId) =>
+  await post({ url: `${instancesUrl()}/${instanceId}/revoke`, headers: managementHeaders });
+
+const deleteInstance = async (instanceId) =>
+  await deletion({ url: `${instancesUrl()}/${instanceId}`, headers: managementHeaders });
+
+const getInstance = async (instanceId) =>
+  await get({ url: `${instancesUrl()}/${instanceId}`, headers: managementHeaders });
+
+/** Operator action on a lost device, and what the reinstall does to the instance left behind. */
 const revokeInstancesOf = async (user = userSub) => {
   for (const instance of await activeInstancesOf(user)) {
-    const response = await deletion({
-      url: `${instancesUrl()}/${instance.id}`,
-      headers: managementHeaders,
-    });
-    expect(response.status).toBe(204);
+    expect((await revokeInstance(instance.id)).status).toBe(200);
+  }
+};
+
+/** Clean up between tests, so that each one starts without an instance of the user. */
+const deleteInstancesOf = async (user = userSub) => {
+  const response = await get({ url: instancesUrl(), headers: managementHeaders });
+  for (const instance of response.data.list.filter((i) => i.user_id === user)) {
+    expect((await deleteInstance(instance.id)).status).toBe(204);
   }
 };
 
@@ -91,8 +106,8 @@ const revokeInstancesOf = async (user = userSub) => {
  * request_hash, and register the key with the ID token of that login. Returns the code of the same
  * authorization response, for the app to exchange with the key it just registered.
  */
-const enrollInstance = async () => {
-  const jwk = await generateInstanceJwk();
+const enrollInstance = async ({ jwk = undefined, expectedStatus = 201 } = {}) => {
+  jwk = jwk ?? (await generateInstanceJwk());
 
   const challengeResponse = await postWithJson({
     url: `${issuer}/v1/client-instances/challenges`,
@@ -124,9 +139,9 @@ const enrollInstance = async () => {
       },
     },
   });
-  expect(registerResponse.status).toBe(201);
+  expect(registerResponse.status).toBe(expectedStatus);
 
-  return { jwk, instanceId, code };
+  return { jwk, instanceId, code, registerResponse };
 };
 
 const selfSignedAttestationJwt = ({ jwk, instanceId }) =>
@@ -334,7 +349,7 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     expect(response.status).toBe(200);
     expect(response.data).toHaveProperty("access_token");
 
-    await revokeInstancesOf();
+    await deleteInstancesOf();
   });
 
   it("steady state: reuses one self-signed attestation across requests, with a server-provided Challenge", async () => {
@@ -347,7 +362,7 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     expect(first.status).toBe(200);
     expect(second.status).toBe(200);
 
-    await revokeInstancesOf();
+    await deleteInstancesOf();
   });
 
   it("reinstall: the user logs in again, and the newly registered key takes over from the old one", async () => {
@@ -369,7 +384,7 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     expect(withOld.status).toBe(401);
     expect(withOld.data).toHaveProperty("error", "invalid_client_attestation");
 
-    await revokeInstancesOf();
+    await deleteInstancesOf();
   });
 
   it("lost device: revoking the instance stops the app from authenticating", async () => {
@@ -383,6 +398,8 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     const response = await requestTokenWith(instance);
     expect(response.status).toBe(401);
     expect(response.data).toHaveProperty("error", "invalid_client_attestation");
+
+    await deleteInstancesOf();
   });
 
   it("the tenant enforces the Challenge: a PoP without one is rejected and a Challenge is handed back", async () => {
@@ -398,7 +415,7 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     const retried = await requestTokenWith(instance, handedBack);
     expect(retried.status).toBe(200);
 
-    await revokeInstancesOf();
+    await deleteInstancesOf();
   });
 
   it("uses the same credentials at the Pushed Authorization Request endpoint", async () => {
@@ -422,6 +439,60 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     expect(response.status).toBe(201);
     expect(response.data).toHaveProperty("request_uri");
 
-    await revokeInstancesOf();
+    await deleteInstancesOf();
+  });
+
+  it("lifecycle: revocation is final and keeps the key taken; deletion forgets the instance", async () => {
+    const instance = await enrollInstance();
+    expect((await requestTokenWith(instance)).status).toBe(200);
+
+    console.log("\n=== revoke: the instance stays, marked revoked, and stops authenticating ===");
+    const dryRun = await post({
+      url: `${instancesUrl()}/${instance.instanceId}/revoke?dry_run=true`,
+      headers: managementHeaders,
+    });
+    expect(dryRun.status).toBe(200);
+    expect(dryRun.data).toHaveProperty("dry_run", true);
+    expect((await getInstance(instance.instanceId)).data.status).toBe("active");
+
+    const revoked = await revokeInstance(instance.instanceId);
+    expect(revoked.status).toBe(200);
+    expect(revoked.data).toHaveProperty("status", "revoked");
+    expect(revoked.data).toHaveProperty("revoked_at");
+
+    const afterRevocation = await getInstance(instance.instanceId);
+    expect(afterRevocation.status).toBe(200);
+    expect(afterRevocation.data).toHaveProperty("status", "revoked");
+    expect(afterRevocation.data.revoked_at).toBe(revoked.data.revoked_at);
+    expect(afterRevocation.data).toHaveProperty("user_id", userSub);
+    expect(afterRevocation.data).toHaveProperty("attestation_evidence");
+
+    const withRevoked = await requestTokenWith(instance);
+    expect(withRevoked.status).toBe(401);
+    expect(withRevoked.data).toHaveProperty("error", "invalid_client_attestation");
+
+    console.log("=== revocation is final: revoking again is refused, and there is no way back ===");
+    const again = await revokeInstance(instance.instanceId);
+    expect(again.status).toBe(400);
+    expect((await getInstance(instance.instanceId)).data.revoked_at).toBe(revoked.data.revoked_at);
+
+    console.log("=== the revoked key stays taken: registering it again is refused ===");
+    await enrollInstance({ jwk: instance.jwk, expectedStatus: 400 });
+
+    console.log("=== a new key is how the device is trusted again ===");
+    const renewed = await enrollInstance();
+    expect((await requestTokenWith(renewed)).status).toBe(200);
+
+    console.log("=== delete: the instance is forgotten, and its key with it ===");
+    expect((await deleteInstance(instance.instanceId)).status).toBe(204);
+    expect((await getInstance(instance.instanceId)).status).toBe(404);
+    expect((await deleteInstance(instance.instanceId)).status).toBe(404);
+    expect((await revokeInstance(instance.instanceId)).status).toBe(404);
+
+    const reRegistered = await enrollInstance({ jwk: instance.jwk });
+    expect(reRegistered.instanceId).not.toBe(instance.instanceId);
+    expect((await requestTokenWith(reRegistered)).status).toBe(200);
+
+    await deleteInstancesOf();
   });
 });

@@ -105,6 +105,16 @@ public class ClientInstance {
     return instanceKey != null ? instanceKey : new HashMap<>();
   }
 
+  /**
+   * The RFC 7638 thumbprint of the Client Instance Key; empty when the key is not a valid JWK.
+   *
+   * <p>A key identifies one instance within a tenant: the same value is what a refresh token of
+   * this instance is bound to, so a second instance holding the key would redeem them too.
+   */
+  public ClientInstanceThumbprint instanceKeyThumbprint() {
+    return ClientInstanceThumbprint.of(instanceKey());
+  }
+
   /** Returns the Client Instance Key wrapped as a single-key JWKS document. */
   public String instanceKeyAsJwks() {
     JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
@@ -172,6 +182,27 @@ public class ClientInstance {
 
   public boolean isRevoked() {
     return revokedAt != null || status().isRevoked();
+  }
+
+  /**
+   * Returns this instance revoked at the given time. A revocation is final: nothing turns a revoked
+   * instance back to active, and its key stays registered so it cannot be registered again. A
+   * device that is to be trusted again registers a new key, with a fresh login and attestation.
+   */
+  public ClientInstance revoke(LocalDateTime revokedAt) {
+    return new ClientInstance(
+        id,
+        tenantId,
+        clientId,
+        instanceKey,
+        ClientInstanceStatus.revoked.name(),
+        attestationEvidence,
+        deviceId,
+        userId,
+        createdAt,
+        revokedAt,
+        expiresAt,
+        revokedAt);
   }
 
   /** Returns true when this instance may be used for client authentication. */

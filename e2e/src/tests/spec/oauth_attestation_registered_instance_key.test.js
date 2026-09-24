@@ -160,6 +160,48 @@ describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed C
         "instance_key must not contain private key material: d"
       );
     });
+
+    // A refresh token is bound to the key, so a second instance holding it would redeem the tokens
+    // of the first, and revoking the first would not stop the key. One key, one instance, within a
+    // tenant.
+    it("rejects a key already registered to another instance of the client", async () => {
+      const response = await postWithJson({
+        url: instancesUrl(),
+        headers: managementHeaders,
+        body: { id: uuidv4(), instance_key: publicJwkOf(instanceJwk) },
+      });
+      expect(response.status).toBe(400);
+      expect(response.data.error).toBe("invalid_request");
+      expect(response.data.error_description).toContain("already registered");
+    });
+
+    it("rejects a key already registered to an instance of another client of the tenant", async () => {
+      const otherClientId = uuidv4();
+      const otherClientResponse = await postWithJson({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients`,
+        headers: managementHeaders,
+        body: {
+          client_id: otherClientId,
+          client_name: "Self-signed Attestation Test Client (other)",
+          token_endpoint_auth_method: "attest_jwt_client_auth",
+          extension: { client_attestation_trust_source: "registered_instance_key" },
+          grant_types: ["client_credentials"],
+          redirect_uris: ["http://localhost:3000/callback"],
+          response_types: ["code"],
+          scope: "account",
+          enabled: true,
+        },
+      });
+      expect(otherClientResponse.status).toBe(201);
+
+      const response = await postWithJson({
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${otherClientId}/instances`,
+        headers: managementHeaders,
+        body: { id: uuidv4(), instance_key: publicJwkOf(instanceJwk) },
+      });
+      expect(response.status).toBe(400);
+      expect(response.data.error_description).toContain("already registered");
+    });
   });
 
   describe("Client authentication", () => {

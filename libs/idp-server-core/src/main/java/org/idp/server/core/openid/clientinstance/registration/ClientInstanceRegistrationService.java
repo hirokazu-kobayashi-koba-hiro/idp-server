@@ -22,6 +22,7 @@ import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceStatus;
+import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.clientinstance.registration.verifier.ClientInstanceRegistrationIdTokenVerifier;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.identity.UserIdentifier;
@@ -106,6 +107,7 @@ public class ClientInstanceRegistrationService {
     }
 
     throwExceptionIfInvalidInstanceKey(instanceKey);
+    throwExceptionIfKeyIsAlreadyRegistered(tenant, instanceKey);
 
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, challenge.requestedClientId());
@@ -169,6 +171,24 @@ public class ClientInstanceRegistrationService {
       throw new ClientInstanceRegistrationException("platform_evidence.platform is required");
     }
     return value;
+  }
+
+  /**
+   * A key belongs to at most one instance within a tenant, revoked ones included. A refresh token
+   * is bound to the key, so a second instance holding it would redeem the tokens of the first, and
+   * revoking the first would not stop the key.
+   */
+  private void throwExceptionIfKeyIsAlreadyRegistered(
+      Tenant tenant, Map<String, Object> instanceKey) {
+    ClientInstanceThumbprint thumbprint = ClientInstanceThumbprint.of(instanceKey);
+    if (!thumbprint.exists()) {
+      throw new ClientInstanceRegistrationException(
+          "client_instance_public_key is not a valid JWK");
+    }
+    if (clientInstanceQueryRepository.findByThumbprint(tenant, thumbprint).exists()) {
+      throw new ClientInstanceRegistrationException(
+          "client_instance_public_key is already registered to an instance of this tenant");
+    }
   }
 
   private void throwExceptionIfInvalidInstanceKey(Map<String, Object> instanceKey) {

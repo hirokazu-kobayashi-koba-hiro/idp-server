@@ -47,6 +47,7 @@ public interface ClientInstanceManagementApi {
     map.put("create", new AdminPermissions(Set.of(DefaultAdminPermission.CLIENT_INSTANCE_CREATE)));
     map.put("findList", new AdminPermissions(Set.of(DefaultAdminPermission.CLIENT_INSTANCE_READ)));
     map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.CLIENT_INSTANCE_READ)));
+    map.put("revoke", new AdminPermissions(Set.of(DefaultAdminPermission.CLIENT_INSTANCE_REVOKE)));
     map.put("delete", new AdminPermissions(Set.of(DefaultAdminPermission.CLIENT_INSTANCE_DELETE)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
@@ -77,6 +78,19 @@ public interface ClientInstanceManagementApi {
       RequestedClientId requestedClientId,
       ClientInstanceIdentifier identifier,
       RequestAttributes requestAttributes);
+
+  /**
+   * Stops trusting an instance, keeping its record. Unlike {@link #delete}, the instance and its
+   * key stay registered, so the key cannot be registered again; there is no operation that undoes
+   * it.
+   */
+  ClientInstanceManagementResponse revoke(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      RequestedClientId requestedClientId,
+      ClientInstanceIdentifier identifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun);
 
   ClientInstanceManagementResponse delete(
       AdminAuthenticationContext authenticationContext,

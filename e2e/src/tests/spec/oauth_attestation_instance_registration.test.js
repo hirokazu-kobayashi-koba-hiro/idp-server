@@ -403,6 +403,19 @@ describe("Client Instance registration (application plane, user bound)", () => {
       expect(replayed.status).toBe(400);
     });
 
+    it("rejects a key that is already registered to an instance", async () => {
+      // A refresh token is bound to the key: a second instance holding it would redeem the tokens of
+      // the first, and revoking the first would not stop the key.
+      const { jwk } = await enrollInstance();
+
+      const { challenge } = (await requestChallenge()).data;
+      const { idToken } = await loginForRegistration({ challenge, jwk });
+
+      const response = await registerInstance({ challenge, jwk, idToken });
+      expect(response.status).toBe(400);
+      expect(response.data).toEqual({ error: "invalid_request" });
+    });
+
     it("rejects an instance key that carries private key material", async () => {
       const jwk = await generateInstanceJwk();
       const { challenge } = (await requestChallenge()).data;

@@ -21,6 +21,7 @@ import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
+import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -36,6 +37,17 @@ public class ClientInstanceQueryDataSource implements ClientInstanceQueryReposit
   public ClientInstance find(
       Tenant tenant, RequestedClientId requestedClientId, ClientInstanceIdentifier identifier) {
     Map<String, String> result = executor.selectOne(tenant, requestedClientId, identifier);
+
+    if (result == null || result.isEmpty()) {
+      return new ClientInstance();
+    }
+
+    return ModelConverter.convert(result);
+  }
+
+  @Override
+  public ClientInstance findByThumbprint(Tenant tenant, ClientInstanceThumbprint thumbprint) {
+    Map<String, String> result = executor.selectOneByThumbprint(tenant, thumbprint);
 
     if (result == null || result.isEmpty()) {
       return new ClientInstance();

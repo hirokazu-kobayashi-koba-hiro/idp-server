@@ -22,6 +22,7 @@ import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
+import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
@@ -45,6 +46,14 @@ class StubClientInstanceQueryRepository implements ClientInstanceQueryRepository
   public List<ClientInstance> findList(
       Tenant tenant, RequestedClientId requestedClientId, int limit, int offset) {
     return List.copyOf(instances.values());
+  }
+
+  @Override
+  public ClientInstance findByThumbprint(Tenant tenant, ClientInstanceThumbprint thumbprint) {
+    return instances.values().stream()
+        .filter(instance -> thumbprint.equals(instance.instanceKeyThumbprint()))
+        .findFirst()
+        .orElse(new ClientInstance());
   }
 
   @Override

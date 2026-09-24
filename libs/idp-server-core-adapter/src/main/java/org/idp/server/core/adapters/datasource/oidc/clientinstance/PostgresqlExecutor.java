@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
+import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.datasource.SqlExecutor;
 import org.idp.server.platform.json.JsonConverter;
@@ -48,8 +49,9 @@ public class PostgresqlExecutor implements ClientInstanceSqlExecutor {
     String sqlTemplate =
         """
         INSERT INTO client_instance
-        (id, tenant_id, client_id, instance_key, status, attestation_evidence, device_id, user_id, expires_at)
-        VALUES (?, ?::uuid, ?, ?::jsonb, ?, ?::jsonb, ?::uuid, ?::uuid, ?)
+        (id, tenant_id, client_id, instance_key, instance_key_thumbprint, status, attestation_evidence,
+         device_id, user_id, expires_at)
+        VALUES (?, ?::uuid, ?, ?::jsonb, ?, ?, ?::jsonb, ?::uuid, ?::uuid, ?)
         """;
 
     List<Object> params = new ArrayList<>();
@@ -57,6 +59,7 @@ public class PostgresqlExecutor implements ClientInstanceSqlExecutor {
     params.add(tenant.identifierUUID());
     params.add(clientInstance.clientId());
     params.add(jsonConverter.write(clientInstance.instanceKey()));
+    params.add(clientInstance.instanceKeyThumbprint().value());
     params.add(clientInstance.status().name());
     params.add(jsonConverter.write(clientInstance.attestationEvidence()));
     params.add(clientInstance.deviceId());
@@ -162,6 +165,25 @@ public class PostgresqlExecutor implements ClientInstanceSqlExecutor {
     params.add(offset);
 
     return sqlExecutor.selectList(sqlTemplate, params);
+  }
+
+  @Override
+  public Map<String, String> selectOneByThumbprint(
+      Tenant tenant, ClientInstanceThumbprint thumbprint) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+
+    String sqlTemplate =
+        selectColumns
+            + """
+            WHERE tenant_id = ?::uuid
+            AND instance_key_thumbprint = ?
+            """;
+
+    List<Object> params = new ArrayList<>();
+    params.add(tenant.identifierUUID());
+    params.add(thumbprint.value());
+
+    return sqlExecutor.selectOne(sqlTemplate, params);
   }
 
   @Override

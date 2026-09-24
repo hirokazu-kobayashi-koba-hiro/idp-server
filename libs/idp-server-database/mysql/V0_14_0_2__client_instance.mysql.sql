@@ -19,6 +19,7 @@ CREATE TABLE client_instance
     tenant_id            CHAR(36)                                 NOT NULL,
     client_id            VARCHAR(255)                             NOT NULL,
     instance_key         JSON                                     NOT NULL,
+    instance_key_thumbprint VARCHAR(64)                           NOT NULL,
     status               VARCHAR(32)  DEFAULT 'active'            NOT NULL,
     attestation_evidence JSON,
     device_id            CHAR(36),
@@ -33,6 +34,9 @@ CREATE TABLE client_instance
 
 -- Registration rejects a device that already holds an active instance, which is
 -- a lookup by device rather than by primary key.
+CREATE UNIQUE INDEX uq_client_instance_tenant_key_thumbprint
+    ON client_instance (tenant_id, instance_key_thumbprint);
+
 CREATE INDEX idx_client_instance_tenant_client_user
     ON client_instance (tenant_id, client_id, user_id);
 

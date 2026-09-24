@@ -27,6 +27,7 @@ import org.idp.server.control_plane.management.oidc.clientinstance.handler.Clien
 import org.idp.server.control_plane.management.oidc.clientinstance.handler.ClientInstanceManagementHandler;
 import org.idp.server.control_plane.management.oidc.clientinstance.handler.ClientInstanceManagementService;
 import org.idp.server.control_plane.management.oidc.clientinstance.handler.ClientInstanceRegistrationService;
+import org.idp.server.control_plane.management.oidc.clientinstance.handler.ClientInstanceRevocationService;
 import org.idp.server.control_plane.management.oidc.clientinstance.io.*;
 import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
@@ -52,9 +53,16 @@ public class ClientInstanceManagementEntryService implements ClientInstanceManag
       AuditLogPublisher auditLogPublisher) {
 
     Map<String, ClientInstanceManagementService<?>> services = new HashMap<>();
-    services.put("create", new ClientInstanceRegistrationService(clientInstanceCommandRepository));
+    services.put(
+        "create",
+        new ClientInstanceRegistrationService(
+            clientInstanceQueryRepository, clientInstanceCommandRepository));
     services.put("findList", new ClientInstanceFindListService(clientInstanceQueryRepository));
     services.put("get", new ClientInstanceFindService(clientInstanceQueryRepository));
+    services.put(
+        "revoke",
+        new ClientInstanceRevocationService(
+            clientInstanceQueryRepository, clientInstanceCommandRepository));
     services.put(
         "delete",
         new ClientInstanceDeletionService(
@@ -124,6 +132,27 @@ public class ClientInstanceManagementEntryService implements ClientInstanceManag
     auditLogPublisher.publish(auditLog);
 
     return result.toResponse(false);
+  }
+
+  @Override
+  public ClientInstanceManagementResponse revoke(
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      RequestedClientId requestedClientId,
+      ClientInstanceIdentifier identifier,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
+    ClientInstanceFindRequest request =
+        new ClientInstanceFindRequest(requestedClientId, identifier);
+    ClientInstanceManagementResult result =
+        handler.handle(
+            "revoke", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
+
+    AuditLog auditLog = AuditLogCreator.create(result.context());
+    auditLogPublisher.publish(auditLog);
+
+    return result.toResponse(dryRun);
   }
 
   @Override

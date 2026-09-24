@@ -26,7 +26,9 @@ import org.idp.server.control_plane.management.oidc.clientinstance.io.ClientInst
 import org.idp.server.control_plane.management.oidc.clientinstance.io.ClientInstanceRegistrationRequest;
 import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
+import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceStatus;
+import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.date.LocalDateTimeParser;
@@ -42,9 +44,13 @@ import org.idp.server.platform.type.RequestAttributes;
 public class ClientInstanceRegistrationService
     implements ClientInstanceManagementService<ClientInstanceRegistrationRequest> {
 
+  private final ClientInstanceQueryRepository queryRepository;
   private final ClientInstanceCommandRepository commandRepository;
 
-  public ClientInstanceRegistrationService(ClientInstanceCommandRepository commandRepository) {
+  public ClientInstanceRegistrationService(
+      ClientInstanceQueryRepository queryRepository,
+      ClientInstanceCommandRepository commandRepository) {
+    this.queryRepository = queryRepository;
     this.commandRepository = commandRepository;
   }
 
@@ -60,6 +66,7 @@ public class ClientInstanceRegistrationService
 
     Map<String, Object> instanceKey = request.instanceKey();
     throwExceptionIfInvalidInstanceKey(instanceKey);
+    throwExceptionIfKeyIsAlreadyRegistered(tenant, instanceKey);
 
     String id = request.id() != null ? request.id() : UUID.randomUUID().toString();
     LocalDateTime expiresAt =
@@ -93,6 +100,23 @@ public class ClientInstanceRegistrationService
     return new ClientInstanceManagementResponse(
         ClientInstanceManagementStatus.CREATED,
         Map.of("result", clientInstance.toMap(), "dry_run", false));
+  }
+
+  /**
+   * A key belongs to at most one instance within a tenant, revoked ones included, whichever path
+   * registered it: a refresh token is bound to the key, so a second instance holding it would
+   * redeem the tokens of the first.
+   */
+  private void throwExceptionIfKeyIsAlreadyRegistered(
+      Tenant tenant, Map<String, Object> instanceKey) {
+    ClientInstanceThumbprint thumbprint = ClientInstanceThumbprint.of(instanceKey);
+    if (!thumbprint.exists()) {
+      throw new InvalidRequestException("instance_key is not a valid JWK");
+    }
+    if (queryRepository.findByThumbprint(tenant, thumbprint).exists()) {
+      throw new InvalidRequestException(
+          "instance_key is already registered to an instance of this tenant");
+    }
   }
 
   private void throwExceptionIfInvalidInstanceKey(Map<String, Object> instanceKey) {

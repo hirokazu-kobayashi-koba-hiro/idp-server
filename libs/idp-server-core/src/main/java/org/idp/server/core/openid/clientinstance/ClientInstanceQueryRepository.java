@@ -37,6 +37,16 @@ public interface ClientInstanceQueryRepository {
       Tenant tenant, RequestedClientId requestedClientId, int limit, int offset);
 
   /**
+   * Finds the instance holding a key, whatever its client and status.
+   *
+   * <p>A key belongs to at most one instance within a tenant, revoked ones included: registering it
+   * again would give it a second way to authenticate, and a revoked key must stay revoked.
+   *
+   * @return the instance, or a non-existing instance when the key is not registered
+   */
+  ClientInstance findByThumbprint(Tenant tenant, ClientInstanceThumbprint thumbprint);
+
+  /**
    * Returns the active instances of a client bound to a user.
    *
    * <p>A user holds one active instance per client: registering a new one revokes the others.

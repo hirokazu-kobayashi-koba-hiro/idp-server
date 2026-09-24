@@ -102,9 +102,11 @@ Challenge を必須にしている場合は、リクエスト前に `POST /{tena
 
 | エンドポイント | 用途 |
 |---|---|
-| `POST\|GET\|DELETE /v1/management/tenants/{tenant-id}/clients/{client-id}/instances` | Client Instance の登録・一覧・削除 |
+| `POST\|GET /v1/management/tenants/{tenant-id}/clients/{client-id}/instances` | Client Instance の登録・一覧 |
+| `GET\|DELETE /v1/management/tenants/{tenant-id}/clients/{client-id}/instances/{id}` | 取得・削除 |
+| `POST /v1/management/tenants/{tenant-id}/clients/{client-id}/instances/{id}/revoke` | 失効（→ [失効と削除](#client-instance-の失効と削除)） |
 
-専用権限 `idp:client-instance:create` / `:read` / `:delete` で保護されています。アプリからの登録を使わず、運用側で鍵を登録する場合に使います。
+専用権限 `idp:client-instance:create` / `:read` / `:revoke` / `:delete` で保護されています。登録は、アプリからの登録を使わず運用側で鍵を登録する場合に使います。
 
 ---
 
@@ -291,6 +293,12 @@ canonical_jwk = RFC 7638 thumbprint の入力（必須メンバのみ・辞書�
 `nonce` がチャレンジだけだと、漏れた ID トークンと**攻撃者自身の本物の端末**の証明を組み合わせて、被害者の利用者に攻撃者の鍵を束縛できてしまいます。鍵を含めた `request_hash` なら、被害者の端末の中にある鍵が無い限り一致しません。
 :::
 
+### 1 つの鍵は 1 つのインスタンスだけ
+
+同じテナントの中では、1 つの鍵を登録できるインスタンスは 1 つだけです。クライアントが違っても、失効したインスタンスの鍵でも、同じ鍵はもう一度登録できません（削除したインスタンスの鍵は除きます）。アプリからの登録でも管理API からの登録でも同じです。
+
+リフレッシュトークンは鍵に束縛されます。同じ鍵が 2 つのインスタンスに載ると、片方を失効させても鍵がもう片方の経路で使え続けてしまうためです。範囲をテナントに留めているのは、テナントをまたぐ制約にすると、あるテナントの登録が別のテナントの鍵の有無を明かしたり、妨げたりできてしまうためです。
+
 ### ID トークンの検証
 
 | # | 検証 |
@@ -414,6 +422,24 @@ iOS App Attest では `key` を持たず、`app` が `{ "app_id": "...", "enviro
 チェーンそのものと、端末を一意に識別する値は残しません。
 
 開発用の検証器で登録したインスタンスは `{ "platform": "request-hash-binding-development-only", "binding_only": true, ... }` になり、アプリも端末も確かめていないことが記録に残ります。
+
+---
+
+## Client Instance の失効と削除
+
+インスタンスを止める操作と、消す操作は別です。
+
+| | 失効（`POST .../instances/{id}/revoke`） | 削除（`DELETE .../instances/{id}`） |
+|---|---|---|
+| 意味 | 信頼をやめる | 記録を消す |
+| インスタンスの記録 | 残る（`status: revoked`、`revoked_at`、登録時の証跡） | 消える |
+| その鍵での認証 | 401 `invalid_client_attestation` | 401 `invalid_client_attestation` |
+| 同じ鍵の再登録 | できない | できる |
+| 使う場面 | 端末の紛失、鍵の漏えい、不正の発覚 | 誤って登録したものの片付け、保持期間を過ぎた記録の整理 |
+
+端末を止めたいときは失効を使います。記録が残るので、誰のどの端末を、いつ止めたかを後から追えます。
+
+**失効は元に戻せません。** 失効したインスタンスを有効に戻す操作はありません。すでに失効しているインスタンスをもう一度失効させようとすると 400 を返し、最初の `revoked_at` を保ちます。見つかった端末をもう一度信頼するときは、アプリが新しい鍵を作り、ログインから登録し直します。鍵が手元を離れていたあいだに何があったかは分からないため、ログインとプラットフォーム証明で確かめ直すところから始めます。
 
 ---
 

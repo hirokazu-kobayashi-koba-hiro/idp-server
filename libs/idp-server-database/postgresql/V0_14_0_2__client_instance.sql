@@ -18,6 +18,11 @@
 --       * the management API takes a caller supplied id, and only generates one when
 --         the request omits it
 --   - instance_key: CIK public key (JWK). Never contains private material.
+--   - instance_key_thumbprint: RFC 7638 thumbprint of instance_key, unique within a tenant.
+--     A refresh token of an instance is bound to this value, so a second instance holding the
+--     same key would redeem it; and a revoked key must stay revoked rather than come back as a
+--     new instance. The scope is the tenant, not the table: a constraint across tenants would let
+--     one tenant learn of, or block, the keys of another.
 --   - status: active / revoked. Revocation applies immediately because
 --     every authentication resolves the key from this table.
 --   - attestation_evidence: verification result of the platform attestation
@@ -36,6 +41,7 @@ CREATE TABLE client_instance
     tenant_id            UUID                    NOT NULL,
     client_id            VARCHAR(255)            NOT NULL,
     instance_key         JSONB                   NOT NULL,
+    instance_key_thumbprint VARCHAR(64)          NOT NULL,
     status               VARCHAR(32)             NOT NULL DEFAULT 'active',
     attestation_evidence JSONB,
     device_id            UUID,
@@ -58,6 +64,9 @@ ALTER TABLE client_instance FORCE ROW LEVEL SECURITY;
 -- Instances registered by the end-user flow are bound to a user. Registering a new one
 -- revokes the user's other active instances of the client, and deleting a user revokes
 -- theirs: both are lookups by user rather than by primary key.
+CREATE UNIQUE INDEX uq_client_instance_tenant_key_thumbprint
+    ON client_instance (tenant_id, instance_key_thumbprint);
+
 CREATE INDEX idx_client_instance_tenant_client_user
     ON client_instance (tenant_id, client_id, user_id);
 

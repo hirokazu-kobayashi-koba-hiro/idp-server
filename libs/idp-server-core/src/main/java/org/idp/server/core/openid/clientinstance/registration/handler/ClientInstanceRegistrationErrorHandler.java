@@ -20,6 +20,7 @@ import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegi
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationException;
 import org.idp.server.core.openid.clientinstance.registration.handler.io.ClientInstanceRegistrationResponse;
 import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
+import org.idp.server.platform.datasource.SqlDuplicateKeyException;
 import org.idp.server.platform.log.LoggerWrapper;
 
 /**
@@ -41,9 +42,12 @@ public class ClientInstanceRegistrationErrorHandler {
 
   public ClientInstanceRegistrationResponse handle(String operation, Exception exception) {
 
+    // SqlDuplicateKeyException: two registrations of the same key raced past the lookup and the
+    // unique constraint on the key thumbprint stopped the second. The caller's mistake, not ours.
     if (exception instanceof ClientInstanceRegistrationException
         || exception instanceof PlatformAttestationVerificationException
-        || exception instanceof ClientConfigurationNotFoundException) {
+        || exception instanceof ClientConfigurationNotFoundException
+        || exception instanceof SqlDuplicateKeyException) {
       log.warn("Client instance {} rejected: {}", operation, exception.getMessage());
       return ClientInstanceRegistrationResponse.invalidRequest(exception.getMessage());
     }
