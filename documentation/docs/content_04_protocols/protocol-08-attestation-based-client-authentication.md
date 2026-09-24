@@ -285,7 +285,7 @@ draft-11 は**Client Attester への信頼の確立を仕様の範囲外**とし
 
 **Attester を運用しない**なら `registered_instance_key`。認可サーバーへの登録が信頼の起点になるため、**登録経路の強度がそのまま全体の強度**になります。アプリからの登録は ID トークンで認証し、インスタンスを利用者に束縛します（`client_instance_registration_policy: user_bound`）。
 
-1 つのインスタンスを複数の利用者が使う端末（窓口の端末など）や、Attester が別の事業者であるウォレット型のクライアントは、利用者に束縛できないため `registered_instance_key` の対象外です。`attester_jwks` か `x5c` を使います。
+1 つのインスタンスを複数の利用者が使う端末（窓口の端末など）や、Attester が別の事業者であるウォレット型のクライアントは、利用者に束縛できないため `registered_instance_key` の対象外です。`attester_jwks` か `x5c` を使います。ウォレットについては、HAIP がインスタンスに固有の識別子を持ち込まないことを求めている点も理由です（`registered_instance_key` は `kid` にインスタンスの ID を入れるため、インスタンスごとに固有の値が認可サーバーに渡ります）。
 
 ### `x5c` の設定
 
@@ -530,7 +530,8 @@ iOS App Attest では `key` を持たず、`app` が `{ "app_id": "...", "enviro
 `registered_instance_key` で発行したトークンは、鍵（draft-11 Section 10.3）に加えて**インスタンス**に束縛されます。
 
 - **リフレッシュは同じインスタンスから。** 同じ鍵でも、削除後に登録し直したインスタンスは別物として扱い、`invalid_grant` を返します
-- **利用者に束縛したインスタンスは、その利用者のトークンだけを受け取ります。** 別の利用者の認可コード・CIBA の `auth_req_id`・リフレッシュトークンは `invalid_grant` です。管理API から登録した（利用者の無い）インスタンスと、利用者の無いグラント（`client_credentials`）は照合しません
+- **利用者に束縛したインスタンスは、その利用者のトークンだけを受け取ります。** 別の利用者の認可コード・CIBA の `auth_req_id`・リフレッシュトークンは `invalid_grant` です
+- **`client_instance_registration_policy: user_bound` のクライアントは `client_credentials` を使えません**（`400 unauthorized_client`）。利用者のいるグラントは、ログイン・リフレッシュのたびに利用者が有効かを確かめますが、`client_credentials` のトークンには利用者がいないため、利用者を削除・無効化しても端末がトークンを取り続けられてしまうからです。グラントの可否は他のグラントと同じくクライアント単位で決まり、管理API から登録した（利用者の無い）インスタンスも同じ扱いです。利用者のいない端末やサーバーで `client_credentials` が必要なら、別のクライアントにします。ABCA の仕様の要件ではなく `idp-server` の方針です。先行事例も同じ方向で、IT-Wallet の Credential Issuer はトークンエンドポイントのグラントを `authorization_code` と `refresh_token` に限り、EUDI の PID Issuer は Attestation で認証するクライアントの `client_credentials` を無効にし、バックエンド用の別クライアントにだけ許しています
 - **管理API で失効・削除するとトークンも削除します。** リフレッシュトークンと、introspection で確かめるアクセストークンはその時点で止まります。新しい登録で置き換えられた（`superseded`）インスタンスのトークンは削除しません。JWT をリソースサーバーが手元で検証する場合は有効期限まで通るため、即座に止めたいならアクセストークンの有効期限を短くするか introspection を使います
 
 ---

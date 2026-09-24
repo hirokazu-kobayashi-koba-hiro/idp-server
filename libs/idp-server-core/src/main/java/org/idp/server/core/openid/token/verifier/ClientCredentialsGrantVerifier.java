@@ -18,6 +18,7 @@ package org.idp.server.core.openid.token.verifier;
 
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.openid.clientinstance.ClientInstanceRegistrationPolicy;
 import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAuthorizedException;
 import org.idp.server.core.openid.oauth.type.oauth.ClientAuthenticationType;
 import org.idp.server.core.openid.oauth.type.oauth.Scopes;
@@ -28,18 +29,36 @@ public class ClientCredentialsGrantVerifier {
   Scopes scopes;
   Map<String, List<String>> scopeResourceMapping;
   ClientAuthenticationType clientAuthenticationType;
+  ClientInstanceRegistrationPolicy clientInstanceRegistrationPolicy;
 
   public ClientCredentialsGrantVerifier(
       Scopes scopes,
       Map<String, List<String>> scopeResourceMapping,
       ClientAuthenticationType clientAuthenticationType) {
+    this(
+        scopes,
+        scopeResourceMapping,
+        clientAuthenticationType,
+        ClientInstanceRegistrationPolicy.undefined);
+  }
+
+  public ClientCredentialsGrantVerifier(
+      Scopes scopes,
+      Map<String, List<String>> scopeResourceMapping,
+      ClientAuthenticationType clientAuthenticationType,
+      ClientInstanceRegistrationPolicy clientInstanceRegistrationPolicy) {
     this.scopes = scopes;
     this.scopeResourceMapping = scopeResourceMapping;
     this.clientAuthenticationType = clientAuthenticationType;
+    this.clientInstanceRegistrationPolicy =
+        clientInstanceRegistrationPolicy != null
+            ? clientInstanceRegistrationPolicy
+            : ClientInstanceRegistrationPolicy.undefined;
   }
 
   public void verify() {
     throwExceptionIfPublicClient();
+    throwExceptionIfUserBoundClient();
     throwExceptionIfInvalidScope();
     new ScopeResourceGrantVerifier(scopes, scopeResourceMapping).verify();
   }
@@ -68,6 +87,32 @@ public class ClientCredentialsGrantVerifier {
           "The client credentials grant requires a confidential client; a public client"
               + " (token_endpoint_auth_method=none) is not allowed to use grant_type="
               + "client_credentials.");
+    }
+  }
+
+  /**
+   * A client whose instances are bound to users does not obtain tokens without one (Issue #1521).
+   *
+   * <p>With {@code client_instance_registration_policy = user_bound} the client is an application
+   * installed by users, each install registered by a user's login. Every token it obtains otherwise
+   * carries a user: the code, CIBA and refresh paths check that the user is still active, and that
+   * it is the instance's user. A client credentials token carries none, so a deleted or disabled
+   * user's device would keep obtaining tokens.
+   *
+   * <p>Decided by the client, as grant types are, so that every instance of the client behaves the
+   * same. A device or a server that needs the grant is a client of its own.
+   *
+   * <p>Not required by Attestation-Based Client Authentication, which leaves grant types open. It
+   * follows how attested clients are deployed: the IT-Wallet token endpoint allows only {@code
+   * authorization_code} and {@code refresh_token}, and the EUDI PID issuer disables the grant for
+   * its attested client and serves it to a separate backend client.
+   */
+  void throwExceptionIfUserBoundClient() {
+    if (clientInstanceRegistrationPolicy.isUserBound()) {
+      throw new TokenBadRequestException(
+          "unauthorized_client",
+          "a client whose instances are bound to users (client_instance_registration_policy=user_bound)"
+              + " cannot use grant_type=client_credentials");
     }
   }
 

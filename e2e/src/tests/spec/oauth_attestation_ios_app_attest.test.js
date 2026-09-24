@@ -88,7 +88,7 @@ describe("Apple App Attest (Issue #1521)", () => {
    * obtained for this challenge and this key.
    */
   const postRegistration = async ({ challenge, instanceKey, attestationObject }) => {
-    const { idToken } = await loginForRegistration({
+    const { idToken, code } = await loginForRegistration({
       tenantId,
       clientId,
       redirectUri: REDIRECT_URI,
@@ -97,7 +97,7 @@ describe("Apple App Attest (Issue #1521)", () => {
       password,
     });
 
-    return await postWithJson({
+    const response = await postWithJson({
       url: instancesUrl(),
       body: {
         challenge,
@@ -106,6 +106,8 @@ describe("Apple App Attest (Issue #1521)", () => {
         platform_evidence: platformEvidence(attestationObject),
       },
     });
+    // The code of the same login is what the app exchanges with the key it just registered.
+    return { ...response, code };
   };
 
   const register = async ({
@@ -414,8 +416,11 @@ describe("Apple App Attest (Issue #1521)", () => {
 
       const response = await requestToken({
         endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
-        grantType: "client_credentials",
-        scope: "account",
+        // The instance is bound to the user who logged in, so it obtains tokens in that user's
+        // context: the code of the login that authenticated the registration.
+        grantType: "authorization_code",
+        code: registration.code,
+        redirectUri: REDIRECT_URI,
         clientId,
         additionalHeaders: {
           [ATTESTATION_HEADER]: attestationJwt,

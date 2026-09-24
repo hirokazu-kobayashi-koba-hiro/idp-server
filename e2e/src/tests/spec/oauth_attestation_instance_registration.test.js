@@ -309,14 +309,29 @@ describe("Client Instance registration (application plane, user bound)", () => {
       const registerResponse = await registerInstance({ challenge, jwk, idToken });
       expect(registerResponse.status).toBe(201);
 
+      // The registration client only obtained the ID token. The app then logs the user in with its
+      // own client and exchanges that code with the key it registered: a user bound instance
+      // obtains tokens in its user's context, never through client_credentials.
+      const { code } = await loginForRegistration({ challenge, jwk });
       const tokenResponse = await requestToken({
+        endpoint: serverConfig.tokenEndpoint,
+        grantType: "authorization_code",
+        code,
+        redirectUri: REDIRECT_URI,
+        clientId,
+        additionalHeaders: attestationHeaders({ jwk, instanceId }),
+      });
+      expect(tokenResponse.status).toBe(200);
+
+      const withoutUser = await requestToken({
         endpoint: serverConfig.tokenEndpoint,
         grantType: "client_credentials",
         scope: "account",
         clientId,
         additionalHeaders: attestationHeaders({ jwk, instanceId }),
       });
-      expect(tokenResponse.status).toBe(200);
+      expect(withoutUser.status).toBe(400);
+      expect(withoutUser.data).toHaveProperty("error", "unauthorized_client");
     });
 
     it("rejects the ID token of a client that is not listed", async () => {

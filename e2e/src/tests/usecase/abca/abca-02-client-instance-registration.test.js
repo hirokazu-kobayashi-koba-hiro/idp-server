@@ -28,6 +28,7 @@
  *    of the same key does not inherit them
  * 8. An instance receives its own user's tokens only
  * 9. The operator finds instances across the clients of the tenant, by what is at hand
+ * 10. A user_bound client obtains tokens in its users' context only: no client_credentials
  */
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
@@ -199,12 +200,30 @@ const fetchChallenge = async () => {
 };
 
 /** The app exchanges the code of the login it registered with, using the registered key. */
-const exchangeCodeWith = async (instance) =>
-  await requestToken({
+const exchangeCodeWith = async (instance, challenge = undefined) => {
+  const response = await requestToken({
     endpoint: tokenEndpoint,
     grantType: "authorization_code",
     code: instance.code,
     redirectUri: REDIRECT_URI,
+    clientId,
+    additionalHeaders: {
+      [ATTESTATION_HEADER]: selfSignedAttestationJwt(instance),
+      [POP_HEADER]: popJwt(instance.jwk, challenge === undefined ? await fetchChallenge() : challenge),
+    },
+  });
+  if (response.status === 200 && response.data.refresh_token) {
+    instance.refreshToken = response.data.refresh_token;
+  }
+  return response;
+};
+
+/** A token without a user, which a user_bound client is refused. */
+const clientCredentialsWith = async (instance) =>
+  await requestToken({
+    endpoint: tokenEndpoint,
+    grantType: "client_credentials",
+    scope: "account",
     clientId,
     additionalHeaders: {
       [ATTESTATION_HEADER]: selfSignedAttestationJwt(instance),
@@ -238,20 +257,32 @@ const isActive = async (accessToken) => {
 };
 
 /**
+ * The app's next token request with its instance key. A user bound instance obtains tokens in its
+ * user's context only, so this is the code of the login it registered with the first time, and its
+ * refresh token afterwards — never client_credentials.
+ *
  * This tenant enforces the Challenge, so one is fetched unless the caller supplies its own (or
  * explicitly passes null to exercise the enforcement).
  */
-const requestTokenWith = async (instance, challenge = undefined) =>
-  await requestToken({
+const requestTokenWith = async (instance, challenge = undefined) => {
+  if (!instance.refreshToken) {
+    return await exchangeCodeWith(instance, challenge);
+  }
+  const response = await requestToken({
     endpoint: tokenEndpoint,
-    grantType: "client_credentials",
-    scope: "account",
+    grantType: "refresh_token",
+    refreshToken: instance.refreshToken,
     clientId,
     additionalHeaders: {
       [ATTESTATION_HEADER]: selfSignedAttestationJwt(instance),
       [POP_HEADER]: popJwt(instance.jwk, challenge === undefined ? await fetchChallenge() : challenge),
     },
   });
+  if (response.status === 200 && response.data.refresh_token) {
+    instance.refreshToken = response.data.refresh_token;
+  }
+  return response;
+};
 
 beforeAll(async () => {
   const tokenResponse = await requestToken({
@@ -711,7 +742,8 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
   it("the operator registers an instance for a client named in the body, with a UUID of its own", async () => {
     const register = async (body) =>
       await postWithJson({ url: instancesUrl(), headers: managementHeaders, body });
-    const key = publicJwkOf(await generateInstanceJwk());
+    const jwk = await generateInstanceJwk();
+    const key = publicJwkOf(jwk);
 
     expect((await register({ instance_key: key })).status).toBe(400);
     expect((await register({ client_id: uuidv4(), instance_key: key })).status).toBe(400);
@@ -721,11 +753,33 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     const created = await register({ id, client_id: clientId, instance_key: key });
     expect(created.status).toBe(201);
     expect(created.data.result).toHaveProperty("client_id", clientId);
+    expect(created.data.result).not.toHaveProperty("user_id");
+
+    // The grant is the client's to allow, as any grant type: an instance the operator registered
+    // without a user is still an install of this user_bound client, and is refused like the others.
+    const withoutUser = await clientCredentialsWith({ jwk, instanceId: id });
+    expect(withoutUser.status).toBe(400);
+    expect(withoutUser.data).toHaveProperty("error", "unauthorized_client");
 
     const otherKey = publicJwkOf(await generateInstanceJwk());
     const sameId = await register({ id, client_id: clientId, instance_key: otherKey });
     expect(sameId.status).toBe(400);
 
     expect((await deleteInstance(id)).status).toBe(204);
+  });
+
+  it("a user_bound client obtains tokens in its users' context only: client_credentials is refused", async () => {
+    const instance = await enrollInstance();
+
+    console.log("\n=== a token without a user is refused to the instance of a user ===");
+    const withoutUser = await clientCredentialsWith(instance);
+    expect(withoutUser.status).toBe(400);
+    expect(withoutUser.data).toHaveProperty("error", "unauthorized_client");
+
+    console.log("=== the same key obtains tokens through the user's login and refresh ===");
+    expect((await requestTokenWith(instance)).status).toBe(200);
+    expect((await requestTokenWith(instance)).status).toBe(200);
+
+    await deleteInstancesOf();
   });
 });

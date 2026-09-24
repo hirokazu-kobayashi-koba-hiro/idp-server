@@ -79,9 +79,12 @@ describe("Android key attestation (Issue #1521)", () => {
     return response.data;
   };
 
-  /** The ID token that authenticates a registration: obtained for this challenge and this key. */
-  const idTokenFor = async ({ challenge, publicJwk }) => {
-    const { idToken } = await loginForRegistration({
+  /**
+   * The login that authenticates a registration: its ID token is obtained for this challenge and
+   * this key, and the code of the same response is what the app then exchanges with the key.
+   */
+  const loginFor = async ({ challenge, publicJwk }) =>
+    await loginForRegistration({
       tenantId,
       clientId,
       redirectUri: REDIRECT_URI,
@@ -89,11 +92,9 @@ describe("Android key attestation (Issue #1521)", () => {
       username,
       password,
     });
-    return idToken;
-  };
 
   const register = async ({ challenge, instanceKey, chainOptions = {}, idTokenKey }) => {
-    const idToken = await idTokenFor({
+    const { idToken, code } = await loginFor({
       challenge,
       publicJwk: (idTokenKey ?? instanceKey).publicJwk,
     });
@@ -106,7 +107,7 @@ describe("Android key attestation (Issue #1521)", () => {
       ...chainOptions,
     });
 
-    return await postWithJson({
+    const response = await postWithJson({
       url: instancesUrl(),
       body: {
         challenge,
@@ -115,6 +116,7 @@ describe("Android key attestation (Issue #1521)", () => {
         platform_evidence: platformEvidence(attested.x5c),
       },
     });
+    return { ...response, code };
   };
 
   beforeAll(async () => {
@@ -596,8 +598,11 @@ describe("Android key attestation (Issue #1521)", () => {
 
       const response = await requestToken({
         endpoint: `${backendUrl}/${tenantId}/v1/tokens`,
-        grantType: "client_credentials",
-        scope: "account",
+        // The instance is bound to the user who logged in, so it obtains tokens in that user's
+        // context: the code of the login that authenticated the registration.
+        grantType: "authorization_code",
+        code: registration.code,
+        redirectUri: REDIRECT_URI,
         clientId,
         additionalHeaders: {
           [ATTESTATION_HEADER]: attestationJwt,
