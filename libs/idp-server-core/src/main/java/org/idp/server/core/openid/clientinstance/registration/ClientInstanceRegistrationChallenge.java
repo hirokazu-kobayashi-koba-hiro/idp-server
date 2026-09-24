@@ -28,23 +28,21 @@ import org.idp.server.platform.json.JsonReadable;
 /**
  * Authorization ticket for registering a Client Instance.
  *
- * <p>The registration endpoint is unauthenticated — platform attestation evidence takes the role of
- * the credential — so the server decides at challenge issuance what may be registered and keeps
- * that decision here. The registration request carries only the challenge value; the client_id,
- * device_id and instance identifier are recovered from this ticket rather than read from the
- * request body.
+ * <p>The server decides at challenge issuance what may be registered and keeps that decision here.
+ * The registration request carries the challenge value; the client_id and the instance identifier
+ * are recovered from this ticket rather than read from the request body.
  *
  * <p>The challenge value is what the client embeds in the platform evidence (the Android Key
- * Attestation challenge, and the {@code request_hash} / {@code client_data_hash} computed over
- * {@code challenge || canonical JWK}), so verifying the evidence against this ticket binds the
- * evidence to the client, the device and the instance key being registered.
+ * Attestation challenge, the App Attest client data hash), and {@code challenge || canonical JWK}
+ * hashed is the {@code nonce} of the ID token that authenticates the registration (see {@link
+ * ClientInstanceRequestHash}). Verifying both against this ticket binds the evidence, the user and
+ * the instance key being registered to one another.
  */
 public class ClientInstanceRegistrationChallenge implements Serializable, JsonReadable {
 
   String challenge;
   String tenantId;
   String clientId;
-  String deviceId;
   String instanceId;
   LocalDateTime expiresAt;
   LocalDateTime usedAt;
@@ -56,7 +54,6 @@ public class ClientInstanceRegistrationChallenge implements Serializable, JsonRe
       String challenge,
       String tenantId,
       String clientId,
-      String deviceId,
       String instanceId,
       LocalDateTime expiresAt,
       LocalDateTime usedAt,
@@ -64,7 +61,6 @@ public class ClientInstanceRegistrationChallenge implements Serializable, JsonRe
     this.challenge = challenge;
     this.tenantId = tenantId;
     this.clientId = clientId;
-    this.deviceId = deviceId;
     this.instanceId = instanceId;
     this.expiresAt = expiresAt;
     this.usedAt = usedAt;
@@ -85,14 +81,6 @@ public class ClientInstanceRegistrationChallenge implements Serializable, JsonRe
 
   public String clientId() {
     return clientId;
-  }
-
-  public String deviceId() {
-    return deviceId;
-  }
-
-  public boolean hasDeviceId() {
-    return deviceId != null && !deviceId.isEmpty();
   }
 
   /** Instance identifier assigned at issuance; becomes the {@code kid} of the self-signed CAJ. */
@@ -139,7 +127,6 @@ public class ClientInstanceRegistrationChallenge implements Serializable, JsonRe
     map.put("challenge", challenge);
     map.put("client_id", clientId);
     map.put("instance_id", instanceId);
-    if (hasDeviceId()) map.put("device_id", deviceId);
     if (expiresAt != null) map.put("expires_at", expiresAt.toString());
     if (usedAt != null) map.put("used_at", usedAt.toString());
     if (createdAt != null) map.put("created_at", createdAt.toString());

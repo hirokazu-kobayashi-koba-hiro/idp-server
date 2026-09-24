@@ -34,6 +34,7 @@ class ModelConverter {
         stringMap.get("status"),
         toMap(stringMap.get("attestation_evidence")),
         stringMap.get("device_id"),
+        stringMap.get("user_id"),
         parseOrNull(stringMap.get("created_at")),
         parseOrNull(stringMap.get("updated_at")),
         parseOrNull(stringMap.get("expires_at")),

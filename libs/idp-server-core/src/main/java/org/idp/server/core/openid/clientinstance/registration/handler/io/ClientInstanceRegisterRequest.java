@@ -33,6 +33,12 @@ public class ClientInstanceRegisterRequest {
     return value instanceof String stringValue && !stringValue.isEmpty() ? stringValue : null;
   }
 
+  /** The ID token that authenticates the registration; its nonce is the request hash. */
+  public String idToken() {
+    Object value = values.get("id_token");
+    return value instanceof String stringValue && !stringValue.isEmpty() ? stringValue : null;
+  }
+
   public Map<String, Object> instanceKey() {
     return mapValue("client_instance_public_key");
   }

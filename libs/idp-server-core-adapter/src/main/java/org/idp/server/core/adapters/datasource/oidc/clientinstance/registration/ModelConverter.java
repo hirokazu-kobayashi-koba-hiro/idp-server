@@ -28,7 +28,6 @@ class ModelConverter {
         stringMap.get("challenge"),
         stringMap.get("tenant_id"),
         stringMap.get("client_id"),
-        stringMap.get("device_id"),
         stringMap.get("instance_id"),
         parseOrNull(stringMap.get("expires_at")),
         parseOrNull(stringMap.get("used_at")),

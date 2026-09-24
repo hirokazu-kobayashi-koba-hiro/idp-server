@@ -456,16 +456,14 @@ echo "Step 12: Creating ABCA client (trust_source=registered_instance_key)..."
 SELF_SIGNED_CLIENT_ID="${SELF_SIGNED_CLIENT_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 SELF_SIGNED_CLIENT_ALIAS="${SELF_SIGNED_CLIENT_ALIAS:-self-attested-app}"
 SELF_SIGNED_CLIENT_NAME="${SELF_SIGNED_CLIENT_NAME:-Self Attested Native App}"
-# require_authentication_device: the device_id must be an authentication device this server issued
-#                                (registered through the FIDO-UAF flow configured above)
-# attestation_only:              no device is involved; platform attestation is the only backing
-CLIENT_INSTANCE_REGISTRATION_POLICY="${CLIENT_INSTANCE_REGISTRATION_POLICY:-require_authentication_device}"
+# client_instance_registration_policy is user_bound: an app registers its instance key with an
+# ID token (nonce = request_hash) obtained in the hybrid flow (response_type=code id_token), and the
+# instance is bound to that user. The client therefore allows "code id_token".
 
 SELF_SIGNED_CLIENT_JSON=$(substitute_template "${SCRIPT_DIR}/self-signed-client-template.json" \
   "SELF_SIGNED_CLIENT_ID" "${SELF_SIGNED_CLIENT_ID}" \
   "SELF_SIGNED_CLIENT_ALIAS" "${SELF_SIGNED_CLIENT_ALIAS}" \
   "SELF_SIGNED_CLIENT_NAME" "${SELF_SIGNED_CLIENT_NAME}" \
-  "CLIENT_INSTANCE_REGISTRATION_POLICY" "${CLIENT_INSTANCE_REGISTRATION_POLICY}" \
   "REDIRECT_URI" "${REDIRECT_URI}")
 
 echo "${SELF_SIGNED_CLIENT_JSON}" | jq '.' > "${OUTPUT_DIR}/self-signed-client.json"
@@ -514,7 +512,7 @@ echo ""
 echo "ABCA Client (registered_instance_key):"
 echo "  Client ID:     ${SELF_SIGNED_CLIENT_ID}"
 echo "  Trust source:  registered_instance_key"
-echo "  Reg policy:    ${CLIENT_INSTANCE_REGISTRATION_POLICY}"
+echo "  Reg policy:    user_bound"
 echo ""
 echo "Challenge endpoint (Section 6.1):"
 echo "  ${AUTHORIZATION_SERVER_URL}/${PUBLIC_TENANT_ID}/v1/client-attestation/challenges"

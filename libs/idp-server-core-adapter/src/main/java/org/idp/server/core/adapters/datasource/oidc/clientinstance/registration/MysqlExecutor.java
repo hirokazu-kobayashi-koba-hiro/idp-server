@@ -32,7 +32,7 @@ public class MysqlExecutor implements ClientInstanceRegistrationChallengeSqlExec
     String sqlTemplate =
         """
         INSERT INTO client_instance_registration_challenge
-        (challenge, tenant_id, client_id, device_id, instance_id, expires_at)
+        (challenge, tenant_id, client_id, instance_id, expires_at, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
         """;
 
@@ -40,9 +40,9 @@ public class MysqlExecutor implements ClientInstanceRegistrationChallengeSqlExec
     params.add(challenge.challenge());
     params.add(tenant.identifierValue());
     params.add(challenge.clientId());
-    params.add(challenge.deviceId());
     params.add(challenge.instanceId());
     params.add(challenge.expiresAt());
+    params.add(challenge.createdAt());
 
     sqlExecutor.execute(sqlTemplate, params);
   }
@@ -53,7 +53,7 @@ public class MysqlExecutor implements ClientInstanceRegistrationChallengeSqlExec
 
     String sqlTemplate =
         """
-        SELECT challenge, tenant_id, client_id, device_id, instance_id,
+        SELECT challenge, tenant_id, client_id, instance_id,
                expires_at, used_at, created_at
         FROM client_instance_registration_challenge
         WHERE tenant_id = ?

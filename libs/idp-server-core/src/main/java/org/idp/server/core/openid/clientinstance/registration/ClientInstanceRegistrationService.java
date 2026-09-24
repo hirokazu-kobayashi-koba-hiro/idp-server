@@ -22,22 +22,30 @@ import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceStatus;
+import org.idp.server.core.openid.clientinstance.registration.verifier.ClientInstanceRegistrationIdTokenVerifier;
+import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.identity.UserIdentifier;
+import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfiguration;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.platform.jose.JsonWebTokenClaims;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
- * Registers a Client Instance from an end-user application.
+ * Registers a Client Instance from an end-user application and binds it to the user.
  *
- * <p>The endpoint is unauthenticated. What authorizes the registration is the combination of a
- * server issued ticket and the platform attestation bound to it:
+ * <p>What authorizes the registration is the combination of a server issued ticket, an ID token and
+ * the platform attestation, all three bound to one another:
  *
  * <ol>
  *   <li>The challenge is consumed atomically, so a captured request cannot be replayed
- *   <li>client_id / device_id / instance id come from the ticket, never from the request body
- *   <li>The device must not already hold an active instance, so a stolen piece of evidence cannot
- *       silently add a second key alongside the legitimate one
+ *   <li>client_id / instance id come from the ticket, never from the request body
+ *   <li>The ID token identifies the user, and its {@code nonce} is the request hash of the ticket
+ *       and the key, so it authenticates the registration of this key only ({@link
+ *       ClientInstanceRegistrationIdTokenVerifier})
  *   <li>The platform attestation must bind the challenge, the instance key and the application
  *       identity ({@link PlatformAttestationVerifier})
  * </ol>
@@ -50,6 +58,9 @@ public class ClientInstanceRegistrationService {
   ClientInstanceQueryRepository clientInstanceQueryRepository;
   ClientInstanceCommandRepository clientInstanceCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
+  AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
+  UserQueryRepository userQueryRepository;
+  ClientInstanceRegistrationIdTokenVerifier idTokenVerifier;
   PlatformAttestationVerifiers verifiers;
 
   public ClientInstanceRegistrationService(
@@ -57,11 +68,19 @@ public class ClientInstanceRegistrationService {
       ClientInstanceQueryRepository clientInstanceQueryRepository,
       ClientInstanceCommandRepository clientInstanceCommandRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
+      AuthorizationServerConfigurationQueryRepository
+          authorizationServerConfigurationQueryRepository,
+      UserQueryRepository userQueryRepository,
+      ClientInstanceRegistrationIdTokenVerifier idTokenVerifier,
       PlatformAttestationVerifiers verifiers) {
     this.challengeRepository = challengeRepository;
     this.clientInstanceQueryRepository = clientInstanceQueryRepository;
     this.clientInstanceCommandRepository = clientInstanceCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
+    this.authorizationServerConfigurationQueryRepository =
+        authorizationServerConfigurationQueryRepository;
+    this.userQueryRepository = userQueryRepository;
+    this.idTokenVerifier = idTokenVerifier;
     this.verifiers = verifiers;
   }
 
@@ -69,7 +88,8 @@ public class ClientInstanceRegistrationService {
       Tenant tenant,
       String challengeValue,
       Map<String, Object> instanceKey,
-      Map<String, Object> platformEvidence) {
+      Map<String, Object> platformEvidence,
+      String idToken) {
 
     ClientInstanceRegistrationChallenge challenge =
         challengeRepository.find(tenant, challengeValue);
@@ -85,10 +105,16 @@ public class ClientInstanceRegistrationService {
     }
 
     throwExceptionIfInvalidInstanceKey(instanceKey);
-    throwExceptionIfDeviceAlreadyHasActiveInstance(tenant, challenge);
 
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, challenge.requestedClientId());
+    AuthorizationServerConfiguration serverConfiguration =
+        authorizationServerConfigurationQueryRepository.get(tenant);
+
+    JsonWebTokenClaims idTokenClaims =
+        idTokenVerifier.verify(
+            serverConfiguration, clientConfiguration, challenge, instanceKey, idToken);
+    User user = resolveUser(tenant, idTokenClaims);
 
     PlatformAttestationVerifier verifier = verifiers.get(platform(platformEvidence));
     verifier.verify(
@@ -103,7 +129,8 @@ public class ClientInstanceRegistrationService {
             instanceKey,
             ClientInstanceStatus.active.name(),
             Map.of(),
-            challenge.deviceId(),
+            null,
+            user.sub(),
             null,
             null,
             null,
@@ -112,11 +139,26 @@ public class ClientInstanceRegistrationService {
     clientInstanceCommandRepository.register(tenant, clientInstance);
 
     log.info(
-        "Client instance registered: client_id={}, instance_id={}",
+        "Client instance registered: client_id={}, instance_id={}, user={}",
         challenge.clientId(),
-        challenge.instanceId());
+        challenge.instanceId(),
+        user.sub());
 
     return clientInstance;
+  }
+
+  /**
+   * Resolves the user the ID token names. The user is looked up by the internal identifier rather
+   * than trusted from the token alone: a user deleted or suspended since the login must not end up
+   * owning a new instance.
+   */
+  private User resolveUser(Tenant tenant, JsonWebTokenClaims idTokenClaims) {
+    User user = userQueryRepository.findById(tenant, new UserIdentifier(idTokenClaims.getSub()));
+    if (!user.isActive()) {
+      throw new ClientInstanceRegistrationException(
+          "the user of the id_token does not exist or is not active");
+    }
+    return user;
   }
 
   private String platform(Map<String, Object> platformEvidence) {
@@ -139,22 +181,6 @@ public class ClientInstanceRegistrationService {
         throw new ClientInstanceRegistrationException(
             "client_instance_public_key must not contain private key material: " + privateMember);
       }
-    }
-  }
-
-  private void throwExceptionIfDeviceAlreadyHasActiveInstance(
-      Tenant tenant, ClientInstanceRegistrationChallenge challenge) {
-    if (!challenge.hasDeviceId()) {
-      return;
-    }
-
-    List<ClientInstance> activeInstances =
-        clientInstanceQueryRepository.findActiveListByDevice(
-            tenant, challenge.requestedClientId(), challenge.deviceId());
-
-    if (!activeInstances.isEmpty()) {
-      throw new ClientInstanceRegistrationException(
-          "device already holds an active client instance; revoke it before re-registering");
     }
   }
 }

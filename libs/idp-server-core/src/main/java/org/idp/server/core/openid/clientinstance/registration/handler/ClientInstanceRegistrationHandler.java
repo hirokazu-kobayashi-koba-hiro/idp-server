@@ -33,14 +33,15 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 /**
  * Client Instance registration, in two steps.
  *
- * <p>Both endpoints are unauthenticated. What authorizes a registration is a server issued ticket
- * plus the platform attestation bound to it, so the two steps carry different weight:
+ * <p>The challenge endpoint is unauthenticated; the registration is authenticated by an ID token.
+ * The two steps carry different weight:
  *
  * <ul>
- *   <li>{@link #handleChallenge} decides what may be registered — which client, which device, which
- *       instance identifier — and keeps that decision server-side as the ticket
- *   <li>{@link #handleRegister} only checks that the ticket is valid and that the evidence is bound
- *       to it ({@link ClientInstanceRegistrationService})
+ *   <li>{@link #handleChallenge} decides what may be registered — which client, which instance
+ *       identifier — and keeps that decision server-side as the ticket
+ *   <li>{@link #handleRegister} checks that the ticket is valid, that the ID token names a user and
+ *       is bound to the key, and that the evidence is bound to the ticket ({@link
+ *       ClientInstanceRegistrationService})
  * </ul>
  */
 public class ClientInstanceRegistrationHandler {
@@ -70,14 +71,13 @@ public class ClientInstanceRegistrationHandler {
       Tenant tenant, ClientInstanceChallengeRequest request) {
 
     RequestedClientId requestedClientId = request.requestedClientId();
-    String deviceId = request.deviceId();
 
     ClientConfiguration clientConfiguration =
         clientConfigurationQueryRepository.get(tenant, requestedClientId);
-    policyVerifier.verify(tenant, clientConfiguration, requestedClientId, deviceId);
+    policyVerifier.verify(clientConfiguration, requestedClientId);
 
     ClientInstanceRegistrationChallenge challenge =
-        challengeIssuer.issue(tenant, requestedClientId, deviceId, CHALLENGE_EXPIRES_IN_SECONDS);
+        challengeIssuer.issue(tenant, requestedClientId, CHALLENGE_EXPIRES_IN_SECONDS);
     challengeRepository.register(tenant, challenge);
 
     return ClientInstanceRegistrationResponse.challengeIssued(
@@ -89,7 +89,11 @@ public class ClientInstanceRegistrationHandler {
 
     ClientInstance clientInstance =
         registrationService.register(
-            tenant, request.challenge(), request.instanceKey(), request.platformEvidence());
+            tenant,
+            request.challenge(),
+            request.instanceKey(),
+            request.platformEvidence(),
+            request.idToken());
 
     return ClientInstanceRegistrationResponse.registered(clientInstance);
   }

@@ -98,10 +98,12 @@
       "account"
     ],
     "response_types_supported": [
-      "code"
+      "code",
+      "code id_token"
     ],
     "response_modes_supported": [
-      "query"
+      "query",
+      "fragment"
     ],
     "subject_types_supported": [
       "public"

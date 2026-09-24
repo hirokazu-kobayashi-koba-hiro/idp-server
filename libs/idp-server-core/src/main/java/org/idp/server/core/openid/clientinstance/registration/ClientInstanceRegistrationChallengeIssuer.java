@@ -38,7 +38,7 @@ public class ClientInstanceRegistrationChallengeIssuer {
   SecureRandom secureRandom = new SecureRandom();
 
   public ClientInstanceRegistrationChallenge issue(
-      Tenant tenant, RequestedClientId requestedClientId, String deviceId, int expiresInSeconds) {
+      Tenant tenant, RequestedClientId requestedClientId, int expiresInSeconds) {
 
     byte[] random = new byte[CHALLENGE_BYTES];
     secureRandom.nextBytes(random);
@@ -50,7 +50,6 @@ public class ClientInstanceRegistrationChallengeIssuer {
         challenge,
         tenant.identifierValue(),
         requestedClientId.value(),
-        deviceId,
         UUID.randomUUID().toString(),
         now.plusSeconds(expiresInSeconds),
         null,

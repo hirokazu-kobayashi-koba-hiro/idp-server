@@ -237,7 +237,7 @@ describe("client management api", () => {
           rotate_refresh_token: true,
           client_attestation_trust_source: "attester_jwks",
           client_attestation_attester_jwks: JSON.stringify({ keys: [] }),
-          client_instance_registration_policy: "attestation_only",
+          client_instance_registration_policy: "user_bound",
         },
       };
 

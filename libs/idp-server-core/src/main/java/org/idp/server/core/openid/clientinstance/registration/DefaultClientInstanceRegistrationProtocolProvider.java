@@ -19,8 +19,10 @@ package org.idp.server.core.openid.clientinstance.registration;
 import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.clientinstance.registration.handler.ClientInstanceRegistrationHandler;
+import org.idp.server.core.openid.clientinstance.registration.verifier.ClientInstanceRegistrationIdTokenVerifier;
 import org.idp.server.core.openid.clientinstance.registration.verifier.ClientInstanceRegistrationPolicyVerifier;
 import org.idp.server.core.openid.identity.repository.UserQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.plugin.clientinstance.PlatformAttestationVerifierPluginLoader;
 import org.idp.server.platform.datasource.cache.CacheStore;
@@ -50,6 +52,9 @@ public class DefaultClientInstanceRegistrationProtocolProvider
             container.resolve(ClientInstanceQueryRepository.class),
             container.resolve(ClientInstanceCommandRepository.class),
             clientConfigurationQueryRepository,
+            container.resolve(AuthorizationServerConfigurationQueryRepository.class),
+            userQueryRepository,
+            new ClientInstanceRegistrationIdTokenVerifier(),
             new PlatformAttestationVerifiers(
                 PlatformAttestationVerifierPluginLoader.load(verifierDependencies(container))));
 
@@ -58,7 +63,7 @@ public class DefaultClientInstanceRegistrationProtocolProvider
             clientConfigurationQueryRepository,
             challengeRepository,
             new ClientInstanceRegistrationChallengeIssuer(),
-            new ClientInstanceRegistrationPolicyVerifier(userQueryRepository),
+            new ClientInstanceRegistrationPolicyVerifier(),
             registrationService);
 
     return new DefaultClientInstanceRegistrationProtocol(handler);

@@ -30,6 +30,9 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
  *     unresolvable
  * @param instanceIdentifier the instance this outcome concerns, kept as a value rather than read
  *     back out of {@code contents}
+ * @param userId the user a registered instance is bound to; null for every other outcome. Kept out
+ *     of {@code contents}: the caller already knows who logged in, the security event is what needs
+ *     it
  * @param auditReason why a request was rejected. Never serialized — {@code contents} says the same
  *     thing for every rejection. This carries the reason back to the use case so the security event
  *     can record it.
@@ -39,6 +42,7 @@ public record ClientInstanceRegistrationResponse(
     Map<String, Object> contents,
     RequestedClientId requestedClientId,
     ClientInstanceIdentifier instanceIdentifier,
+    String userId,
     String auditReason) {
 
   /** The ticket, plus the instance identifier it reserves. */
@@ -52,6 +56,7 @@ public record ClientInstanceRegistrationResponse(
             "expires_in", expiresInSeconds),
         new RequestedClientId(challenge.clientId()),
         new ClientInstanceIdentifier(challenge.instanceId()),
+        null,
         null);
   }
 
@@ -62,14 +67,16 @@ public record ClientInstanceRegistrationResponse(
         Map.of("instance_id", clientInstance.id()),
         new RequestedClientId(clientInstance.clientId()),
         clientInstance.identifier(),
+        clientInstance.userId(),
         null);
   }
 
   /**
    * Registration failures are reported without distinguishing the cause.
    *
-   * <p>The endpoint is unauthenticated, so a detailed reason would let a caller probe which
-   * client_id / device_id combinations exist or already hold an instance.
+   * <p>The challenge endpoint is unauthenticated, so a detailed reason would let a caller probe
+   * which clients exist or take part in registration, and which step of an ID token or evidence
+   * check a forged request got past.
    */
   public static ClientInstanceRegistrationResponse invalidRequest(String auditReason) {
     return new ClientInstanceRegistrationResponse(
@@ -77,6 +84,7 @@ public record ClientInstanceRegistrationResponse(
         Map.of("error", "invalid_request"),
         new RequestedClientId(),
         new ClientInstanceIdentifier(),
+        null,
         auditReason);
   }
 
@@ -93,6 +101,7 @@ public record ClientInstanceRegistrationResponse(
         Map.of("error", "server_error"),
         new RequestedClientId(),
         new ClientInstanceIdentifier(),
+        null,
         auditReason);
   }
 

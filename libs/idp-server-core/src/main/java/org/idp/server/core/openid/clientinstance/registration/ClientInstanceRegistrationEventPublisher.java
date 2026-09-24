@@ -30,8 +30,8 @@ import org.idp.server.platform.type.RequestAttributes;
  * Publishes the security events of the Client Instance registration flow.
  *
  * <p>The endpoints answer every rejection with the same opaque {@code invalid_request}, because a
- * distinguishable reason would let an unauthenticated caller probe which client_id / device_id
- * combinations exist. These events are where the reason is kept instead.
+ * distinguishable reason would let a caller probe which clients take part in registration, or which
+ * check a forged request got past. These events are where the reason is kept instead.
  */
 public class ClientInstanceRegistrationEventPublisher {
 
@@ -45,22 +45,18 @@ public class ClientInstanceRegistrationEventPublisher {
    * Ticket issuance, which is where the server decides what may be registered.
    *
    * <p>Discardable: the outcome is captured by the success or failure event that follows. What it
-   * is here for is the shape of the traffic — repeated issuance across client_id or device_id
-   * values is what enumeration looks like.
+   * is here for is the shape of the traffic — repeated issuance across client_id values is what
+   * enumeration looks like.
    */
   public void publishChallengeIssued(
       Tenant tenant,
       RequestedClientId requestedClientId,
-      String deviceId,
       ClientInstanceIdentifier instanceIdentifier,
       RequestAttributes requestAttributes) {
 
     Map<String, Object> details = new HashMap<>();
     details.put("client_id", requestedClientId.value());
     details.put("instance_id", instanceIdentifier.value());
-    if (deviceId != null) {
-      details.put("device_id", deviceId);
-    }
 
     publish(
         tenant,
@@ -73,11 +69,15 @@ public class ClientInstanceRegistrationEventPublisher {
       Tenant tenant,
       RequestedClientId requestedClientId,
       ClientInstanceIdentifier instanceIdentifier,
+      String userId,
       RequestAttributes requestAttributes) {
 
     Map<String, Object> details = new HashMap<>();
     details.put("client_id", requestedClientId.value());
     details.put("instance_id", instanceIdentifier.value());
+    if (userId != null) {
+      details.put("user_id", userId);
+    }
 
     publish(
         tenant,
@@ -89,8 +89,8 @@ public class ClientInstanceRegistrationEventPublisher {
   /**
    * @param operation which of the two endpoints rejected, since both share this event type
    * @param reason the message the caller is deliberately not told
-   * @param details what the step knew — the challenge endpoint has client_id and device_id, the
-   *     registration endpoint carries only the ticket and so may have neither
+   * @param details what the step knew — the challenge endpoint has client_id, the registration
+   *     endpoint carries only the ticket and so may not
    */
   public void publishFailure(
       Tenant tenant,

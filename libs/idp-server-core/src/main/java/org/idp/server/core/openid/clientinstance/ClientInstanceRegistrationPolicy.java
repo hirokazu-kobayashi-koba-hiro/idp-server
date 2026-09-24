@@ -19,22 +19,22 @@ package org.idp.server.core.openid.clientinstance;
 import java.util.Objects;
 
 /**
- * How much a client instance registration must be backed by an authentication device.
+ * How a client instance registration must be backed.
  *
  * <ul>
- *   <li>{@link #require_authentication_device} — the device_id must be an authentication device
- *       registered at this Authorization Server. Registering such a device involves the user (FIDO
- *       UAF registration is performed with biometrics), so the unauthenticated registration
- *       endpoint gains an indirect "the user approved this device" backing
- *   <li>{@link #attestation_only} — no device is involved and the platform attestation is the only
- *       backing. Wallet style clients (OID4VCI / HAIP) have no authentication device
+ *   <li>{@link #user_bound} — the registration is authenticated by an ID token this Authorization
+ *       Server issued, and the instance is bound to that user. The ID token carries {@code nonce =
+ *       request_hash}, so it only authenticates the registration of the key it was obtained for
  *   <li>{@link #undefined} — not configured or unknown; registration is rejected rather than
- *       falling back to the weaker policy
+ *       falling back to a weaker policy
  * </ul>
+ *
+ * <p>Registration that is not tied to a user is not offered: clients whose instances serve several
+ * users (shared terminals) or whose attester is another party (wallets) use the {@code
+ * attester_jwks} or {@code x5c} trust sources instead of registered instance keys.
  */
 public enum ClientInstanceRegistrationPolicy {
-  require_authentication_device,
-  attestation_only,
+  user_bound,
   undefined;
 
   public static ClientInstanceRegistrationPolicy of(String value) {
@@ -49,8 +49,8 @@ public enum ClientInstanceRegistrationPolicy {
     return undefined;
   }
 
-  public boolean requiresAuthenticationDevice() {
-    return this == require_authentication_device;
+  public boolean isUserBound() {
+    return this == user_bound;
   }
 
   public boolean isUndefined() {

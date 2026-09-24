@@ -37,7 +37,7 @@ public class PostgresqlExecutor implements ClientInstanceSqlExecutor {
   String selectColumns =
       """
       SELECT id, tenant_id, client_id, instance_key, status, attestation_evidence,
-             device_id, created_at, updated_at, expires_at, revoked_at
+             device_id, user_id, created_at, updated_at, expires_at, revoked_at
       FROM client_instance
       """;
 
@@ -48,8 +48,8 @@ public class PostgresqlExecutor implements ClientInstanceSqlExecutor {
     String sqlTemplate =
         """
         INSERT INTO client_instance
-        (id, tenant_id, client_id, instance_key, status, attestation_evidence, device_id, expires_at)
-        VALUES (?, ?::uuid, ?, ?::jsonb, ?, ?::jsonb, ?::uuid, ?)
+        (id, tenant_id, client_id, instance_key, status, attestation_evidence, device_id, user_id, expires_at)
+        VALUES (?, ?::uuid, ?, ?::jsonb, ?, ?::jsonb, ?::uuid, ?::uuid, ?)
         """;
 
     List<Object> params = new ArrayList<>();
@@ -60,6 +60,7 @@ public class PostgresqlExecutor implements ClientInstanceSqlExecutor {
     params.add(clientInstance.status().name());
     params.add(jsonConverter.write(clientInstance.attestationEvidence()));
     params.add(clientInstance.deviceId());
+    params.add(clientInstance.userId());
     params.add(clientInstance.expiresAt());
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -164,8 +165,8 @@ public class PostgresqlExecutor implements ClientInstanceSqlExecutor {
   }
 
   @Override
-  public List<Map<String, String>> selectActiveListByDevice(
-      Tenant tenant, RequestedClientId requestedClientId, String deviceId) {
+  public List<Map<String, String>> selectActiveListByUser(
+      Tenant tenant, RequestedClientId requestedClientId, String userId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -173,7 +174,7 @@ public class PostgresqlExecutor implements ClientInstanceSqlExecutor {
             + """
             WHERE tenant_id = ?::uuid
             AND client_id = ?
-            AND device_id = ?::uuid
+            AND user_id = ?::uuid
             AND status = 'active'
             AND revoked_at IS NULL
             AND (expires_at IS NULL OR expires_at > now())
@@ -182,7 +183,7 @@ public class PostgresqlExecutor implements ClientInstanceSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierUUID());
     params.add(requestedClientId.value());
-    params.add(deviceId);
+    params.add(userId);
 
     return sqlExecutor.selectList(sqlTemplate, params);
   }

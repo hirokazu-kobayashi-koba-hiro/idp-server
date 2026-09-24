@@ -591,6 +591,11 @@ public class ClientConfiguration implements JsonReadable, Configurable {
     return extension.clientInstanceRegistrationPolicy();
   }
 
+  /** Other clients whose ID tokens may authenticate this client's instance registration. */
+  public List<String> clientInstanceRegistrationClients() {
+    return extension.clientInstanceRegistrationClients();
+  }
+
   /** Per-platform settings read by the platform attestation verifiers at instance registration. */
   public Map<String, Object> clientInstancePlatformConfig() {
     return extension.clientInstancePlatformConfig();

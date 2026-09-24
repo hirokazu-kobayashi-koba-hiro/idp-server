@@ -1,10 +1,11 @@
 /**
  * Android key attestation at Client Instance registration (Issue #1521).
  *
- * The registration endpoint is unauthenticated, so the platform attestation is what authenticates
- * the request. These tests exercise that decision through the real stack: the chain is built the
- * way a device's KeyMint would build it, and each case removes exactly one of the bindings the
- * verifier requires.
+ * A registration is authenticated by an ID token (who) and the platform attestation (which device
+ * and key). Every registration here carries a valid ID token, obtained in the hybrid flow with
+ * nonce = request_hash, so what these tests exercise is the platform attestation alone: the chain
+ * is built the way a device's KeyMint would build it, and each case removes exactly one of the
+ * bindings the verifier requires.
  *
  * The chain leads to a root the test generates rather than to Google's, so the client under test
  * sets `trusted_root_certificates`. That is the one difference from a device.
@@ -22,6 +23,11 @@ import { generateECP256JWKS } from "../../lib/jose";
 import { createJwtWithPrivateKey, generateJti } from "../../lib/jose";
 import { toEpocTime } from "../../lib/util";
 import { adminServerConfig, backendUrl } from "../testConfig";
+import {
+  deriveRequestHash,
+  enablePasswordLogin,
+  loginForRegistration,
+} from "../../lib/clientInstance";
 import {
   ORIGIN,
   PURPOSE,
@@ -46,6 +52,10 @@ describe("Android key attestation (Issue #1521)", () => {
   let clientId;
   let issuer;
   let root;
+  let username;
+  let password;
+
+  const REDIRECT_URI = "https://app.example.com/callback";
 
   const challengesUrl = () => `${backendUrl}/${tenantId}/v1/client-instances/challenges`;
   const instancesUrl = () => `${backendUrl}/${tenantId}/v1/client-instances`;
@@ -60,16 +70,7 @@ describe("Android key attestation (Issue #1521)", () => {
     };
   };
 
-  const requestChallenge = async ({ deviceId = uuidv4() } = {}) => {
-    const response = await postWithJson({
-      url: challengesUrl(),
-      body: { client_id: clientId, device_id: deviceId },
-    });
-    expect(response.status).toBe(200);
-    return response.data;
-  };
-
-  const requestChallengeWithoutDevice = async () => {
+  const requestChallenge = async () => {
     const response = await postWithJson({
       url: challengesUrl(),
       body: { client_id: clientId },
@@ -78,7 +79,24 @@ describe("Android key attestation (Issue #1521)", () => {
     return response.data;
   };
 
-  const register = async ({ challenge, instanceKey, chainOptions = {} }) => {
+  /** The ID token that authenticates a registration: obtained for this challenge and this key. */
+  const idTokenFor = async ({ challenge, publicJwk }) => {
+    const { idToken } = await loginForRegistration({
+      tenantId,
+      clientId,
+      redirectUri: REDIRECT_URI,
+      nonce: deriveRequestHash(challenge, publicJwk),
+      username,
+      password,
+    });
+    return idToken;
+  };
+
+  const register = async ({ challenge, instanceKey, chainOptions = {}, idTokenKey }) => {
+    const idToken = await idTokenFor({
+      challenge,
+      publicJwk: (idTokenKey ?? instanceKey).publicJwk,
+    });
     const attested = generateAttestedKey({
       root,
       challenge,
@@ -92,6 +110,7 @@ describe("Android key attestation (Issue #1521)", () => {
       url: instancesUrl(),
       body: {
         challenge,
+        id_token: idToken,
         client_instance_public_key: instanceKey.publicJwk,
         platform_evidence: platformEvidence(attested.x5c),
       },
@@ -105,6 +124,8 @@ describe("Android key attestation (Issue #1521)", () => {
     clientId = uuidv4();
     issuer = `${backendUrl}/${tenantId}`;
     root = generateAttestationRoot();
+    username = `android-attestation-${timestamp}@test.example.com`;
+    password = `AndroidAttestation${timestamp}!`;
 
     const systemTokenResponse = await requestToken({
       endpoint: adminServerConfig.tokenEndpoint,
@@ -140,8 +161,8 @@ describe("Android key attestation (Issue #1521)", () => {
           jwks_uri: `${backendUrl}/${tenantId}/v1/jwks`,
           jwks: await generateECP256JWKS(),
           scopes_supported: ["openid", "account"],
-          response_types_supported: ["code"],
-          response_modes_supported: ["query"],
+          response_types_supported: ["code", "code id_token"],
+          response_modes_supported: ["query", "fragment"],
           subject_types_supported: ["public"],
           grant_types_supported: ["authorization_code", "client_credentials", "password"],
           id_token_signing_alg_values_supported: ["ES256"],
@@ -156,21 +177,21 @@ describe("Android key attestation (Issue #1521)", () => {
         user: {
           sub: uuidv4(),
           provider_id: "idp-server",
-          email: `android-attestation-${timestamp}@test.example.com`,
+          email: username,
           email_verified: true,
-          raw_password: `AndroidAttestation${timestamp}!`,
+          raw_password: password,
         },
         client: {
           client_id: clientId,
-          redirect_uris: ["https://app.example.com/callback"],
+          redirect_uris: [REDIRECT_URI],
           grant_types: ["authorization_code", "client_credentials"],
-          response_types: ["code"],
+          response_types: ["code", "code id_token"],
           scope: "openid account",
           client_name: "Android Key Attestation Client",
           token_endpoint_auth_method: "attest_jwt_client_auth",
           extension: {
             client_attestation_trust_source: "registered_instance_key",
-            client_instance_registration_policy: "attestation_only",
+            client_instance_registration_policy: "user_bound",
             client_instance_platform_config: {
               android_key_attestation: {
                 package_names: [PACKAGE_NAME],
@@ -184,6 +205,11 @@ describe("Android key attestation (Issue #1521)", () => {
       },
     });
     expect(onboardingResponse.status).toBe(201);
+
+    await enablePasswordLogin({
+      tenantId,
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
+    });
   }, 120000);
 
   afterAll(async () => {
@@ -200,9 +226,9 @@ describe("Android key attestation (Issue #1521)", () => {
    *
    * <p>Every other suite here asserts the server's stated reason, because a status and an error
    * code shared by many checks cannot say which one refused. This endpoint deliberately withholds
-   * that: it is unauthenticated, and a detailed reason would let a caller probe which client_id /
-   * device_id combinations exist or already hold an instance. The absence is the requirement, so
-   * it is pinned rather than left to be discovered as a gap.
+   * that: a detailed reason would let a caller probe which clients take part in registration, or
+   * which check a forged registration got past. The absence is the requirement, so it is pinned
+   * rather than left to be discovered as a gap.
    */
   describe("failure responses", () => {
     it("says only that the request was invalid, never which check refused", async () => {
@@ -439,52 +465,19 @@ describe("Android key attestation (Issue #1521)", () => {
     }, 120000);
   });
 
-  describe("registration limits", () => {
-    it("rejects a second registration for a device that already holds an instance", async () => {
-      // device_id is generated by the server for each authentication device registration, so a
-      // reinstalled app arrives with a fresh one and never reaches here. What reaches here is a
-      // second registration against a device record that already holds an instance, which would
-      // otherwise leave two keys able to authenticate as the client for one device.
-      const deviceId = uuidv4();
+  describe("the ID token and the evidence name the same key", () => {
+    it("rejects evidence for a key other than the one the ID token was obtained for", async () => {
+      // Both halves are genuine on their own: an ID token of the user, and an attested key of this
+      // app. What must not happen is combining them across keys, which is what a leaked ID token
+      // presented next to an attacker's own device looks like.
+      const { challenge } = await requestChallenge();
+      const victimKey = await generateInstanceKey();
+      const attackerKey = await generateInstanceKey();
 
-      const first = await requestChallenge({ deviceId });
-      const firstKey = await generateInstanceKey();
-      const firstRegistration = await register({
-        challenge: first.challenge,
-        instanceKey: firstKey,
-      });
-      expect(firstRegistration.status).toBe(201);
+      const response = await register({ challenge, instanceKey: attackerKey, idTokenKey: victimKey });
 
-      const second = await requestChallenge({ deviceId });
-      const secondKey = await generateInstanceKey();
-      const secondRegistration = await register({
-        challenge: second.challenge,
-        instanceKey: secondKey,
-      });
-
-      expect(secondRegistration.status).toBe(400);
-    }, 120000);
-
-    it("does not bound the number of instances when the challenge carries no device", async () => {
-      // attestation_only clients may omit device_id, and the duplicate check above is keyed on it.
-      // Nothing else caps registrations, so this pins the current behaviour rather than assuming
-      // it: one attested app can hold any number of instances of the same client.
-      const first = await requestChallengeWithoutDevice();
-      const firstKey = await generateInstanceKey();
-      const firstRegistration = await register({
-        challenge: first.challenge,
-        instanceKey: firstKey,
-      });
-      expect(firstRegistration.status).toBe(201);
-
-      const second = await requestChallengeWithoutDevice();
-      const secondKey = await generateInstanceKey();
-      const secondRegistration = await register({
-        challenge: second.challenge,
-        instanceKey: secondKey,
-      });
-
-      expect(secondRegistration.status).toBe(201);
+      expect(response.status).toBe(400);
+      expect(response.data).toEqual({ error: "invalid_request" });
     }, 120000);
   });
 

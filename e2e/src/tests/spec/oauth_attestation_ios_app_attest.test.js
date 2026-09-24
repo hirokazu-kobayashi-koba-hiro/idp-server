@@ -1,10 +1,11 @@
 /**
  * Apple App Attest at Client Instance registration (Issue #1521).
  *
- * The registration endpoint is unauthenticated, so the platform attestation is what authenticates
- * the request. These tests exercise that decision through the real stack: the attestation object is
- * built the way a device's Secure Enclave would build it, and each case removes exactly one of the
- * properties the verifier requires.
+ * A registration is authenticated by an ID token (who) and the platform attestation (which device
+ * and key). Every registration here carries a valid ID token, obtained in the hybrid flow with
+ * nonce = request_hash, so what these tests exercise is the platform attestation alone: the
+ * attestation object is built the way a device's Secure Enclave would build it, and each case
+ * removes exactly one of the properties the verifier requires.
  *
  * The chain leads to a root the test generates rather than to Apple's, so the client under test
  * sets `trusted_root_certificates`. That is the one difference from a device.
@@ -22,6 +23,11 @@ import { generateECP256JWKS } from "../../lib/jose";
 import { createJwtWithPrivateKey, generateJti } from "../../lib/jose";
 import { toEpocTime } from "../../lib/util";
 import { adminServerConfig, backendUrl } from "../testConfig";
+import {
+  deriveRequestHash,
+  enablePasswordLogin,
+  loginForRegistration,
+} from "../../lib/clientInstance";
 import {
   ENVIRONMENT,
   generateAttestation,
@@ -43,6 +49,10 @@ describe("Apple App Attest (Issue #1521)", () => {
   let clientId;
   let issuer;
   let authority;
+  let username;
+  let password;
+
+  const REDIRECT_URI = "https://app.example.com/callback";
 
   const challengesUrl = () =>
     `${backendUrl}/${tenantId}/v1/client-instances/challenges`;
@@ -67,10 +77,35 @@ describe("Apple App Attest (Issue #1521)", () => {
   const requestChallenge = async () => {
     const response = await postWithJson({
       url: challengesUrl(),
-      body: { client_id: clientId, device_id: uuidv4() },
+      body: { client_id: clientId },
     });
     expect(response.status).toBe(200);
     return response.data;
+  };
+
+  /**
+   * Posts a registration of instanceKey with the given attestation, authenticated by an ID token
+   * obtained for this challenge and this key.
+   */
+  const postRegistration = async ({ challenge, instanceKey, attestationObject }) => {
+    const { idToken } = await loginForRegistration({
+      tenantId,
+      clientId,
+      redirectUri: REDIRECT_URI,
+      nonce: deriveRequestHash(challenge, instanceKey.publicJwk),
+      username,
+      password,
+    });
+
+    return await postWithJson({
+      url: instancesUrl(),
+      body: {
+        challenge,
+        id_token: idToken,
+        client_instance_public_key: instanceKey.publicJwk,
+        platform_evidence: platformEvidence(attestationObject),
+      },
+    });
   };
 
   const register = async ({
@@ -87,14 +122,7 @@ describe("Apple App Attest (Issue #1521)", () => {
       ...attestationOptions,
     });
 
-    return await postWithJson({
-      url: instancesUrl(),
-      body: {
-        challenge,
-        client_instance_public_key: instanceKey.publicJwk,
-        platform_evidence: platformEvidence(attestationObject),
-      },
-    });
+    return await postRegistration({ challenge, instanceKey, attestationObject });
   };
 
   /** Registers with one property removed, and expects the registration to be refused. */
@@ -117,6 +145,8 @@ describe("Apple App Attest (Issue #1521)", () => {
     clientId = uuidv4();
     issuer = `${backendUrl}/${tenantId}`;
     authority = generateAttestationAuthority();
+    username = `app-attest-${timestamp}@test.example.com`;
+    password = `AppAttest${timestamp}!`;
 
     const systemTokenResponse = await requestToken({
       endpoint: adminServerConfig.tokenEndpoint,
@@ -152,8 +182,8 @@ describe("Apple App Attest (Issue #1521)", () => {
           jwks_uri: `${backendUrl}/${tenantId}/v1/jwks`,
           jwks: await generateECP256JWKS(),
           scopes_supported: ["openid", "account"],
-          response_types_supported: ["code"],
-          response_modes_supported: ["query"],
+          response_types_supported: ["code", "code id_token"],
+          response_modes_supported: ["query", "fragment"],
           subject_types_supported: ["public"],
           grant_types_supported: [
             "authorization_code",
@@ -175,21 +205,21 @@ describe("Apple App Attest (Issue #1521)", () => {
         user: {
           sub: uuidv4(),
           provider_id: "idp-server",
-          email: `app-attest-${timestamp}@test.example.com`,
+          email: username,
           email_verified: true,
-          raw_password: `AppAttest${timestamp}!`,
+          raw_password: password,
         },
         client: {
           client_id: clientId,
-          redirect_uris: ["https://app.example.com/callback"],
+          redirect_uris: [REDIRECT_URI],
           grant_types: ["authorization_code", "client_credentials"],
-          response_types: ["code"],
+          response_types: ["code", "code id_token"],
           scope: "openid account",
           client_name: "App Attest Client",
           token_endpoint_auth_method: "attest_jwt_client_auth",
           extension: {
             client_attestation_trust_source: "registered_instance_key",
-            client_instance_registration_policy: "attestation_only",
+            client_instance_registration_policy: "user_bound",
             client_instance_platform_config: {
               ios_app_attest: {
                 app_ids: [APP_ID],
@@ -202,6 +232,11 @@ describe("Apple App Attest (Issue #1521)", () => {
       },
     });
     expect(onboardingResponse.status).toBe(201);
+
+    await enablePasswordLogin({
+      tenantId,
+      headers: { Authorization: `Bearer ${systemAccessToken}` },
+    });
   }, 120000);
 
   afterAll(async () => {
@@ -244,14 +279,7 @@ describe("Apple App Attest (Issue #1521)", () => {
         publicJwk: instanceKey.publicJwk,
       });
 
-      const response = await postWithJson({
-        url: instancesUrl(),
-        body: {
-          challenge,
-          client_instance_public_key: instanceKey.publicJwk,
-          platform_evidence: platformEvidence(attestationObject),
-        },
-      });
+      const response = await postRegistration({ challenge, instanceKey, attestationObject });
 
       expect(response.status).toBe(400);
     }, 120000);
@@ -271,14 +299,7 @@ describe("Apple App Attest (Issue #1521)", () => {
         publicJwk: otherKey.publicJwk,
       });
 
-      const response = await postWithJson({
-        url: instancesUrl(),
-        body: {
-          challenge,
-          client_instance_public_key: instanceKey.publicJwk,
-          platform_evidence: platformEvidence(attestationObject),
-        },
-      });
+      const response = await postRegistration({ challenge, instanceKey, attestationObject });
 
       expect(response.status).toBe(400);
     }, 120000);

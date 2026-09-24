@@ -3,19 +3,23 @@
 -- Client Instance registration challenge (refs #1521)
 --
 -- Summary:
---   The registration endpoint is unauthenticated: platform attestation evidence
---   takes the role of the credential. The challenge is therefore issued as an
---   authorization ticket rather than a bare nonce.
+--   A registration is authenticated by two things: an ID token (who) and platform
+--   attestation evidence (which device and key). The challenge ties them together.
 --
---   At challenge issuance the server decides what may be registered
---   (client_id / device_id / the instance identifier to assign) and keeps that
---   decision server-side. The registration request carries only the challenge,
---   so the request body is never trusted for those values.
+--   At challenge issuance the server decides what may be registered (client_id /
+--   the instance identifier to assign) and keeps that decision server-side. The
+--   registration request carries the challenge, so the request body is never
+--   trusted for those values.
 --
---   The challenge is also embedded in the platform evidence itself (Android Key
---   Attestation extension, and request_hash / client_data_hash computed over
---   challenge || canonical JWK), which is what binds the evidence to the
---   client_id, device_id and instance identifier of the ticket.
+--   The challenge is embedded in the platform evidence (Android Key Attestation
+--   extension, App Attest client data hash), and
+--   request_hash = SHA-256( challenge || canonical JWK ) is the nonce of the ID
+--   token, which binds the user, the evidence and the key being registered to
+--   the client_id and instance identifier of the ticket.
+--
+--   created_at is written by the application together with expires_at rather than
+--   left to the column default, because it is compared with the iat of the ID token
+--   and both have to be on the application clock.
 --
 -- Single use:
 --   used_at is stamped on consumption. Rows are kept after use so that replays
@@ -40,7 +44,6 @@ CREATE TABLE client_instance_registration_challenge
     challenge   VARCHAR(255)            NOT NULL,
     tenant_id   UUID                    NOT NULL,
     client_id   VARCHAR(255)            NOT NULL,
-    device_id   UUID,
     instance_id VARCHAR(255)            NOT NULL,
     expires_at  TIMESTAMP               NOT NULL,
     used_at     TIMESTAMP,

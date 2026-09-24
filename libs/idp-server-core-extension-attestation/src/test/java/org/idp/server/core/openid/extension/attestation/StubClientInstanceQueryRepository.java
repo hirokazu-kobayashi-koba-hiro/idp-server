@@ -48,10 +48,10 @@ class StubClientInstanceQueryRepository implements ClientInstanceQueryRepository
   }
 
   @Override
-  public List<ClientInstance> findActiveListByDevice(
-      Tenant tenant, RequestedClientId requestedClientId, String deviceId) {
+  public List<ClientInstance> findActiveListByUser(
+      Tenant tenant, RequestedClientId requestedClientId, String userId) {
     return instances.values().stream()
-        .filter(instance -> instance.isActive() && deviceId.equals(instance.deviceId()))
+        .filter(instance -> instance.isActive() && userId.equals(instance.userId()))
         .toList();
   }
 }

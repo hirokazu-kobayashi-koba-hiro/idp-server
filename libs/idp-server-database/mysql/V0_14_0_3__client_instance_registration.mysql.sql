@@ -11,7 +11,6 @@ CREATE TABLE client_instance_registration_challenge
     challenge   VARCHAR(255)                             NOT NULL,
     tenant_id   CHAR(36)                                 NOT NULL,
     client_id   VARCHAR(255)                             NOT NULL,
-    device_id   CHAR(36),
     instance_id VARCHAR(255)                             NOT NULL,
     expires_at  DATETIME(6)                              NOT NULL,
     used_at     DATETIME(6),

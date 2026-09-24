@@ -37,11 +37,10 @@ public interface ClientInstanceQueryRepository {
       Tenant tenant, RequestedClientId requestedClientId, int limit, int offset);
 
   /**
-   * Returns the active instances registered for a device.
+   * Returns the active instances of a client bound to a user.
    *
-   * <p>Registration rejects a device that already holds one, so that a captured piece of platform
-   * evidence cannot add a second key alongside the legitimate one.
+   * <p>A user holds one active instance per client: registering a new one revokes the others.
    */
-  List<ClientInstance> findActiveListByDevice(
-      Tenant tenant, RequestedClientId requestedClientId, String deviceId);
+  List<ClientInstance> findActiveListByUser(
+      Tenant tenant, RequestedClientId requestedClientId, String userId);
 }

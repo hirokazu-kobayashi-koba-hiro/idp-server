@@ -24,6 +24,7 @@ import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import com.nimbusds.jose.util.Base64URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRequestHash;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -113,5 +114,24 @@ class RequestHashDerivationTest {
 
     System.out.println("[fixed vector] challenge(b64url) = Zm9vYmFyLWNoYWxsZW5nZS0wMQ");
     System.out.println("[fixed vector] request_hash      = " + requestHash(challenge, publicKey));
+  }
+
+  @Test
+  void serverDerivationMatchesTheFixedVector() throws Exception {
+    // The value the server compares with the ID token nonce and the development evidence. Pinned
+    // to the vector shared with the client implementations.
+    ECKey publicKey =
+        ECKey.parse(
+            "{\"kty\":\"EC\",\"crv\":\"P-256\","
+                + "\"x\":\"VcKVNBZ4IaBAYW3jxM4w3TJFVA7myeUGQyGt-g_yvpQ\","
+                + "\"y\":\"f-E-hYE3TAWKwhVv9pej9NABs9SX9XsNO80x57jFTyU\"}");
+
+    ClientInstanceRequestHash derived =
+        ClientInstanceRequestHash.derive("Zm9vYmFyLWNoYWxsZW5nZS0wMQ", publicKey.toJSONObject());
+
+    assertEquals("YY-nDEK6JHQLVe893qieCiyyQ2kW5fBmIPNlVdflj1I", derived.value());
+    assertEquals(
+        requestHash(Base64URL.from("Zm9vYmFyLWNoYWxsZW5nZS0wMQ").decode(), publicKey),
+        derived.value());
   }
 }

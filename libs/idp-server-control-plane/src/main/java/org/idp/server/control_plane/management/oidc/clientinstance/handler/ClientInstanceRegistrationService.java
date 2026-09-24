@@ -76,6 +76,7 @@ public class ClientInstanceRegistrationService
             request.deviceId(),
             null,
             null,
+            null,
             expiresAt,
             null);
 

@@ -40,6 +40,7 @@ public class ClientExtensionConfiguration implements JsonReadable {
   boolean cibaRequireRar = false;
   String clientAttestationTrustSource;
   String clientInstanceRegistrationPolicy;
+  List<String> clientInstanceRegistrationClients = new ArrayList<>();
   String clientAttestationAttesterJwks;
   List<String> clientAttestationTrustedRootCertificates = new ArrayList<>();
   Map<String, Object> clientInstancePlatformConfig = new HashMap<>();
@@ -60,11 +61,29 @@ public class ClientExtensionConfiguration implements JsonReadable {
   }
 
   /**
-   * How much a client instance registration must be backed by an authentication device ({@code
-   * require_authentication_device} | {@code attestation_only}). idp-server specific.
+   * How a client instance registration must be backed ({@code user_bound}). idp-server specific.
    */
   public ClientInstanceRegistrationPolicy clientInstanceRegistrationPolicy() {
     return ClientInstanceRegistrationPolicy.of(clientInstanceRegistrationPolicy);
+  }
+
+  /**
+   * Other clients whose ID tokens may authenticate the registration of this client's instances.
+   * idp-server specific.
+   *
+   * <p>The client's own ID tokens are always accepted. This list is for tenants that require PAR,
+   * where the client cannot obtain an ID token before it has an instance: a public client listed
+   * here obtains it instead.
+   */
+  public List<String> clientInstanceRegistrationClients() {
+    return clientInstanceRegistrationClients != null
+        ? clientInstanceRegistrationClients
+        : new ArrayList<>();
+  }
+
+  public boolean hasClientInstanceRegistrationClients() {
+    return clientInstanceRegistrationClients != null
+        && !clientInstanceRegistrationClients.isEmpty();
   }
 
   /**
@@ -240,6 +259,8 @@ public class ClientExtensionConfiguration implements JsonReadable {
       map.put("client_instance_platform_config", clientInstancePlatformConfig);
     if (clientInstanceRegistrationPolicy != null && !clientInstanceRegistrationPolicy.isEmpty())
       map.put("client_instance_registration_policy", clientInstanceRegistrationPolicy);
+    if (hasClientInstanceRegistrationClients())
+      map.put("client_instance_registration_clients", clientInstanceRegistrationClients);
     if (hasClientAttestationAttesterJwks())
       map.put("client_attestation_attester_jwks", clientAttestationAttesterJwks);
     if (hasClientAttestationTrustedRootCertificates())

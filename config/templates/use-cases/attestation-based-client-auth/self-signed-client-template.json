@@ -5,7 +5,8 @@
     "${REDIRECT_URI}"
   ],
   "response_types": [
-    "code"
+    "code",
+    "code id_token"
   ],
   "grant_types": [
     "authorization_code",
@@ -18,6 +19,6 @@
   "application_type": "native",
   "extension": {
     "client_attestation_trust_source": "registered_instance_key",
-    "client_instance_registration_policy": "${CLIENT_INSTANCE_REGISTRATION_POLICY}"
+    "client_instance_registration_policy": "user_bound"
   }
 }

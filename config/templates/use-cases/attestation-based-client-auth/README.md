@@ -22,10 +22,10 @@
 | 信頼モデル | `attester_jwks` と `registered_instance_key` の**両方**をクライアント2つで用意 |
 | Challenge | エンドポイントは公開。強制は `false`（移行期の姿） |
 | Challenge 有効期間 | 300 秒。単回消費ではなく期間内は再利用可 |
-| インスタンス登録ポリシー | `require_authentication_device` |
-| ユーザー認証 | FIDO-UAF + パスワードフォールバック（`require_authentication_device` の前提） |
+| インスタンス登録ポリシー | `user_bound` |
+| ユーザー認証 | FIDO-UAF + パスワードフォールバック |
 
-`require_authentication_device` は `device_id` が**このサーバーが発行した認証デバイス**であることを要求します。デバイスの発行元が FIDO-UAF 登録なので、FIDO-UAF の設定一式が同梱されています。デバイスを介さない構成にする場合は `attestation_only` に変更してください（→ [EXPERIMENTS.md](./EXPERIMENTS.md)）。
+`user_bound` では、アプリがインスタンスを登録するときに**ログインした利用者の ID トークン**を提示し、インスタンスはその利用者に束縛されます。ID トークンはハイブリッドフロー（`response_type=code id_token`）で、`nonce` に `request_hash` を指定して取得します。そのため `registered_instance_key` のクライアントは `code id_token` を許可し、テナントは `code id_token` とフラグメントの応答モードを公開しています（→ [EXPERIMENTS.md](./EXPERIMENTS.md) の Experiment 6）。
 
 ## ファイル構成
 

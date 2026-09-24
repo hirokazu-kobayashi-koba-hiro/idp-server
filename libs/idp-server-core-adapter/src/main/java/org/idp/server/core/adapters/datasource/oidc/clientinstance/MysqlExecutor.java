@@ -37,7 +37,7 @@ public class MysqlExecutor implements ClientInstanceSqlExecutor {
   String selectColumns =
       """
       SELECT id, tenant_id, client_id, instance_key, status, attestation_evidence,
-             device_id, created_at, updated_at, expires_at, revoked_at
+             device_id, user_id, created_at, updated_at, expires_at, revoked_at
       FROM client_instance
       """;
 
@@ -48,8 +48,8 @@ public class MysqlExecutor implements ClientInstanceSqlExecutor {
     String sqlTemplate =
         """
         INSERT INTO client_instance
-        (id, tenant_id, client_id, instance_key, status, attestation_evidence, device_id, expires_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        (id, tenant_id, client_id, instance_key, status, attestation_evidence, device_id, user_id, expires_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
     List<Object> params = new ArrayList<>();
@@ -60,6 +60,7 @@ public class MysqlExecutor implements ClientInstanceSqlExecutor {
     params.add(clientInstance.status().name());
     params.add(jsonConverter.write(clientInstance.attestationEvidence()));
     params.add(clientInstance.deviceId());
+    params.add(clientInstance.userId());
     params.add(clientInstance.expiresAt());
 
     sqlExecutor.execute(sqlTemplate, params);
@@ -164,8 +165,8 @@ public class MysqlExecutor implements ClientInstanceSqlExecutor {
   }
 
   @Override
-  public List<Map<String, String>> selectActiveListByDevice(
-      Tenant tenant, RequestedClientId requestedClientId, String deviceId) {
+  public List<Map<String, String>> selectActiveListByUser(
+      Tenant tenant, RequestedClientId requestedClientId, String userId) {
     SqlExecutor sqlExecutor = new SqlExecutor();
 
     String sqlTemplate =
@@ -173,7 +174,7 @@ public class MysqlExecutor implements ClientInstanceSqlExecutor {
             + """
             WHERE tenant_id = ?
             AND client_id = ?
-            AND device_id = ?
+            AND user_id = ?
             AND status = 'active'
             AND revoked_at IS NULL
             AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP(6))
@@ -182,7 +183,7 @@ public class MysqlExecutor implements ClientInstanceSqlExecutor {
     List<Object> params = new ArrayList<>();
     params.add(tenant.identifierValue());
     params.add(requestedClientId.value());
-    params.add(deviceId);
+    params.add(userId);
 
     return sqlExecutor.selectList(sqlTemplate, params);
   }

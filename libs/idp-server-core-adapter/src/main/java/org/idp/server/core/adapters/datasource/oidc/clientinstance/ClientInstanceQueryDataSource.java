@@ -58,10 +58,10 @@ public class ClientInstanceQueryDataSource implements ClientInstanceQueryReposit
   }
 
   @Override
-  public List<ClientInstance> findActiveListByDevice(
-      Tenant tenant, RequestedClientId requestedClientId, String deviceId) {
+  public List<ClientInstance> findActiveListByUser(
+      Tenant tenant, RequestedClientId requestedClientId, String userId) {
     List<Map<String, String>> results =
-        executor.selectActiveListByDevice(tenant, requestedClientId, deviceId);
+        executor.selectActiveListByUser(tenant, requestedClientId, userId);
 
     if (results == null || results.isEmpty()) {
       return List.of();

@@ -69,9 +69,6 @@ public class ClientInstanceRegistrationEntryService implements ClientInstanceReg
     // The challenge endpoint knows who asked, even when it refuses to say why it declined.
     Map<String, Object> details = new HashMap<>();
     details.put("client_id", request.requestedClientId().value());
-    if (request.deviceId() != null) {
-      details.put("device_id", request.deviceId());
-    }
 
     if (response.isError()) {
       eventPublisher.publishFailure(
@@ -80,11 +77,7 @@ public class ClientInstanceRegistrationEntryService implements ClientInstanceReg
     }
 
     eventPublisher.publishChallengeIssued(
-        tenant,
-        response.requestedClientId(),
-        request.deviceId(),
-        response.instanceIdentifier(),
-        requestAttributes);
+        tenant, response.requestedClientId(), response.instanceIdentifier(), requestAttributes);
 
     return response;
   }
@@ -102,14 +95,18 @@ public class ClientInstanceRegistrationEntryService implements ClientInstanceReg
 
     if (response.isError()) {
       // Only the ticket identifies this request, and a rejected ticket may be unknown, so the
-      // client and the device are not always resolvable here. The issuance event holds them.
+      // client is not always resolvable here. The issuance event holds it.
       eventPublisher.publishFailure(
           tenant, "registration", response.auditReason(), Map.of(), requestAttributes);
       return response;
     }
 
     eventPublisher.publishSuccess(
-        tenant, response.requestedClientId(), response.instanceIdentifier(), requestAttributes);
+        tenant,
+        response.requestedClientId(),
+        response.instanceIdentifier(),
+        response.userId(),
+        requestAttributes);
 
     return response;
   }

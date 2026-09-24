@@ -6,27 +6,35 @@
  * (client_attestation_trust_source = registered_instance_key). Section 9.8 leaves trust management
  * out of scope and Section 1 explicitly allows a client to act as its own attester.
  *
- * Registration cannot require an access token -- the token endpoint is where login happens -- so
- * the endpoints are unauthenticated and a server-issued challenge plus platform attestation carry
- * the authorization. These tests run against the development verifier, which checks the
- * challenge-to-key binding but performs no real device attestation
+ * The instance belongs to a user. At first launch the user logs in in the hybrid flow
+ * (response_type=code id_token) with nonce = request_hash, the app registers its key with the ID
+ * token of that login, and exchanges the code of the same response with the key it just
+ * registered: one login covers registration and the first token. The client cannot authenticate
+ * before that, so the ID token is obtained without client authentication.
+ *
+ * These tests run against the development verifier, which checks the challenge-to-key binding of
+ * the evidence but performs no real device attestation
  * (IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER).
  *
  * What this covers beyond the spec-level tests, which check one request at a time:
- * 1. First launch: register the instance key, then authenticate with it
+ * 1. First launch: log in, register the key, and exchange the code of the same login with it
  * 2. Steady state: reuse one self-signed attestation, with a server-provided Challenge
- * 3. Reinstall on the same device: revoke, re-register, and authenticate with the new key
+ * 3. Reinstall: the user logs in again and the newly registered key takes over
  * 4. Lost device: revoking the instance stops the app from authenticating
  * 5. The same credentials working at the Pushed Authorization Request endpoint
  */
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import * as jose from "jose";
-import crypto from "crypto";
 import { deletion, get, post, postWithJson } from "../../../lib/http";
 import { onboarding } from "../../../api/managementClient";
 import { requestToken } from "../../../api/oauthClient";
 import { adminServerConfig, backendUrl } from "../../testConfig";
+import {
+  deriveRequestHash,
+  enablePasswordLogin,
+  loginForRegistration,
+} from "../../../lib/clientInstance";
 import { createJwtWithPrivateKey, generateECP256JWKS, generateJti } from "../../../lib/jose";
 import { toEpocTime } from "../../../lib/util";
 
@@ -43,42 +51,33 @@ let tokenEndpoint;
 let pushedAuthorizationEndpoint;
 let challengeEndpoint;
 let clientId;
-let deviceId;
+let userSub;
+let username;
+let password;
 
-const base64url = (buffer) =>
-  buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-const base64urlDecode = (value) =>
-  Buffer.from(value.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+const REDIRECT_URI = "http://localhost:3000/callback";
 
 const generateInstanceJwk = async () => {
   const { privateKey } = await jose.generateKeyPair("ES256", { extractable: true });
   return await jose.exportJWK(privateKey);
 };
 
-/** RFC 7638 required members only, lexicographic, no whitespace. */
-const canonicalJwk = (jwk) => JSON.stringify({ crv: jwk.crv, kty: jwk.kty, x: jwk.x, y: jwk.y });
-
 const publicJwkOf = (jwk) => ({ kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y });
-
-const deriveRequestHash = (challenge, jwk) => {
-  const digest = crypto.createHash("sha256");
-  digest.update(base64urlDecode(challenge));
-  digest.update(Buffer.from(canonicalJwk(jwk), "utf8"));
-  return base64url(digest.digest());
-};
 
 const clientsUrl = () => `${backendUrl}/v1/management/tenants/${tenantId}/clients`;
 const instancesUrl = () => `${clientsUrl()}/${clientId}/instances`;
 
-/** Operator view: what the Authorization Server currently trusts for this device. */
-const activeInstancesOf = async (device) => {
+/** Operator view: the instances the Authorization Server currently trusts for this user. */
+const activeInstancesOf = async (user = userSub) => {
   const response = await get({ url: instancesUrl(), headers: managementHeaders });
   expect(response.status).toBe(200);
-  return response.data.list.filter((instance) => instance.device_id === device);
+  return response.data.list.filter(
+    (instance) => instance.user_id === user && instance.status === "active"
+  );
 };
 
-const revokeInstancesOf = async (device = deviceId) => {
-  for (const instance of await activeInstancesOf(device)) {
+const revokeInstancesOf = async (user = userSub) => {
+  for (const instance of await activeInstancesOf(user)) {
     const response = await deletion({
       url: `${instancesUrl()}/${instance.id}`,
       headers: managementHeaders,
@@ -87,31 +86,47 @@ const revokeInstancesOf = async (device = deviceId) => {
   }
 };
 
-/** App side: generate a key on the device and enroll it against a server-issued challenge. */
-const enrollInstance = async (device = deviceId) => {
+/**
+ * App side, at first launch: generate a key on the device, log the user in with nonce =
+ * request_hash, and register the key with the ID token of that login. Returns the code of the same
+ * authorization response, for the app to exchange with the key it just registered.
+ */
+const enrollInstance = async () => {
   const jwk = await generateInstanceJwk();
 
   const challengeResponse = await postWithJson({
     url: `${issuer}/v1/client-instances/challenges`,
-    body: { client_id: clientId, device_id: device },
+    body: { client_id: clientId },
   });
   expect(challengeResponse.status).toBe(200);
   const { challenge, instance_id: instanceId } = challengeResponse.data;
+
+  const requestHash = deriveRequestHash(challenge, jwk);
+  const { code, idToken } = await loginForRegistration({
+    tenantId,
+    clientId,
+    redirectUri: REDIRECT_URI,
+    nonce: requestHash,
+    username,
+    password,
+    scope: "openid account",
+  });
 
   const registerResponse = await postWithJson({
     url: `${issuer}/v1/client-instances`,
     body: {
       challenge,
+      id_token: idToken,
       client_instance_public_key: publicJwkOf(jwk),
       platform_evidence: {
         platform: DEV_PLATFORM,
-        request_hash: deriveRequestHash(challenge, jwk),
+        request_hash: requestHash,
       },
     },
   });
   expect(registerResponse.status).toBe(201);
 
-  return { jwk, instanceId };
+  return { jwk, instanceId, code };
 };
 
 const selfSignedAttestationJwt = ({ jwk, instanceId }) =>
@@ -153,6 +168,20 @@ const fetchChallenge = async () => {
   return response.data.attestation_challenge;
 };
 
+/** The app exchanges the code of the login it registered with, using the registered key. */
+const exchangeCodeWith = async (instance) =>
+  await requestToken({
+    endpoint: tokenEndpoint,
+    grantType: "authorization_code",
+    code: instance.code,
+    redirectUri: REDIRECT_URI,
+    clientId,
+    additionalHeaders: {
+      [ATTESTATION_HEADER]: selfSignedAttestationJwt(instance),
+      [POP_HEADER]: popJwt(instance.jwk, await fetchChallenge()),
+    },
+  });
+
 /**
  * This tenant enforces the Challenge, so one is fetched unless the caller supplies its own (or
  * explicitly passes null to exercise the enforcement).
@@ -187,7 +216,9 @@ beforeAll(async () => {
   const timestamp = Date.now();
   const organizationId = uuidv4();
   tenantId = uuidv4();
-  deviceId = uuidv4();
+  userSub = uuidv4();
+  username = `admin-${timestamp}@abca-instance.example.com`;
+  password = `AbcaPass_${timestamp}!`;
   issuer = `${backendUrl}/${tenantId}`;
   tokenEndpoint = `${issuer}/v1/tokens`;
   pushedAuthorizationEndpoint = `${issuer}/v1/authorizations/push`;
@@ -224,8 +255,8 @@ beforeAll(async () => {
         challenge_endpoint: challengeEndpoint,
         grant_types_supported: ["authorization_code", "password", "client_credentials"],
         scopes_supported: ["openid", "profile", "email", "account", "management"],
-        response_types_supported: ["code"],
-        response_modes_supported: ["query"],
+        response_types_supported: ["code", "code id_token"],
+        response_modes_supported: ["query", "fragment"],
         subject_types_supported: ["public"],
         id_token_signing_alg_values_supported: ["ES256"],
         token_signed_key_id: "signing_key_1",
@@ -237,12 +268,11 @@ beforeAll(async () => {
         },
       },
       user: {
-        sub: uuidv4(),
+        sub: userSub,
         provider_id: "idp-server",
-        email: `admin-${timestamp}@abca-instance.example.com`,
+        email: username,
         email_verified: true,
-        raw_password: `AbcaPass_${timestamp}!`,
-        authentication_devices: [{ id: deviceId, app_name: "ABCA Use Case App" }],
+        raw_password: password,
       },
       client: {
         client_id: uuidv4(),
@@ -269,26 +299,37 @@ beforeAll(async () => {
       token_endpoint_auth_method: "attest_jwt_client_auth",
       extension: {
         client_attestation_trust_source: "registered_instance_key",
-        client_instance_registration_policy: "require_authentication_device",
+        client_instance_registration_policy: "user_bound",
       },
-      grant_types: ["client_credentials"],
-      redirect_uris: ["http://localhost:3000/callback"],
-      response_types: ["code"],
-      scope: "account management",
+      grant_types: ["authorization_code", "client_credentials"],
+      redirect_uris: [REDIRECT_URI],
+      response_types: ["code", "code id_token"],
+      scope: "openid account management",
       enabled: true,
     },
   });
   expect(registrationResponse.status).toBe(201);
+
+  await enablePasswordLogin({ tenantId, headers: managementHeaders });
 });
 
 describe("ABCA Use Case: an app that registers its own Client Instance Key", () => {
 
-  it("first launch: registers the instance key on the device and then authenticates with it", async () => {
-    console.log("\n=== Step 1: the app enrolls the key it generated on the device ===");
+  it("first launch: one login registers the key and yields the first token", async () => {
+    console.log("\n=== Step 1: the user logs in and the app registers the key with that login ===");
     const instance = await enrollInstance();
-    expect(await activeInstancesOf(deviceId)).toHaveLength(1);
 
-    console.log("=== Step 2: the app authenticates with a self-signed Client Attestation JWT ===");
+    const instances = await activeInstancesOf();
+    expect(instances).toHaveLength(1);
+    expect(instances[0].id).toBe(instance.instanceId);
+
+    console.log("=== Step 2: the code of the same login is exchanged with the registered key ===");
+    const exchanged = await exchangeCodeWith(instance);
+    expect(exchanged.status).toBe(200);
+    expect(exchanged.data).toHaveProperty("access_token");
+    expect(exchanged.data).toHaveProperty("id_token");
+
+    console.log("=== Step 3: later requests authenticate with a self-signed Client Attestation JWT ===");
     const response = await requestTokenWith(instance);
     expect(response.status).toBe(200);
     expect(response.data).toHaveProperty("access_token");
@@ -309,13 +350,14 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     await revokeInstancesOf();
   });
 
-  it("reinstall on the same device: the old key stops working and the newly enrolled one takes over", async () => {
-    console.log("\n=== Step 1: the app is enrolled and working ===");
+  it("reinstall: the user logs in again, and the newly registered key takes over from the old one", async () => {
+    console.log("\n=== Step 1: the app is registered and working ===");
     const beforeReinstall = await enrollInstance();
     expect((await requestTokenWith(beforeReinstall)).status).toBe(200);
 
-    console.log("=== Step 2: the previous instance is revoked so the device can enroll again ===");
-    // Only one active instance per device is allowed, so a reinstall revokes before enrolling.
+    console.log("=== Step 2: the previous instance is revoked and the user registers again ===");
+    // The key of the uninstalled app is gone with it. Revoking the instance it left behind is done
+    // here by the operator; the reinstalled app registers a new key with a fresh login.
     await revokeInstancesOf();
     const afterReinstall = await enrollInstance();
 
@@ -336,7 +378,7 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
 
     console.log("\n=== the operator revokes the instance of the lost device ===");
     await revokeInstancesOf();
-    expect(await activeInstancesOf(deviceId)).toHaveLength(0);
+    expect(await activeInstancesOf()).toHaveLength(0);
 
     const response = await requestTokenWith(instance);
     expect(response.status).toBe(401);

@@ -35,18 +35,25 @@
  アプリ                              idp-server
  （Client Instance）
    │
-   │  === インストール時に一度だけ ===
-   ├─ 端末内で鍵ペアを生成（セキュアハードウェア）
-   │
+   │  === インストール時（利用者のログインごと）に一度 ===
    ├─ POST /{tenant-id}/v1/client-instances/challenges ─────▶
-   │     { client_id, device_id }
+   │     { client_id }
    │◀──── { challenge, instance_id }
    │
+   ├─ 端末内で鍵ペアを生成（セキュアハードウェア）
    ├─ request_hash = SHA-256(challenge_bytes || canonical_jwk)
    │
+   ├─ 認可リクエスト（response_type=code id_token, nonce=request_hash）▶
+   │     利用者がログイン
+   │◀──── code + id_token（nonce = request_hash）
+   │
+   ├─ challenge を埋め込んだプラットフォーム証明を取得
+   │
    ├─ POST /{tenant-id}/v1/client-instances ────────────────▶
-   │     { challenge, client_instance_public_key, platform_evidence }
-   │◀──── 201                                 鍵を client_instance に登録
+   │     { challenge, id_token, client_instance_public_key, platform_evidence }
+   │◀──── 201                 鍵を client_instance に登録し、利用者に束縛
+   │
+   ├─ 同じ応答の code を、登録した鍵の attest_jwt_client_auth で交換
    │
    │  === 以降、リクエストのたびに ===
    ├─ Client Attestation JWT を自己署名で作成（cnf.jwk = 自分の公開鍵）
@@ -71,11 +78,11 @@ Challenge を必須にしている場合は、リクエスト前に `POST /{tena
 
 | エンドポイント | 用途 |
 |---|---|
-| `POST /{tenant-id}/v1/client-instances/challenges` | インスタンス登録用チャレンジの取得。`{ client_id, device_id }` を送り、`{ challenge, instance_id }` を受け取る |
-| `POST /{tenant-id}/v1/client-instances` | Client Instance Key の登録。`{ challenge, client_instance_public_key, platform_evidence }` |
+| `POST /{tenant-id}/v1/client-instances/challenges` | インスタンス登録用チャレンジの取得。`{ client_id }` を送り、`{ challenge, instance_id }` を受け取る |
+| `POST /{tenant-id}/v1/client-instances` | Client Instance Key の登録。`{ challenge, id_token, client_instance_public_key, platform_evidence }` |
 | `POST /{tenant-id}/v1/client-attestation/challenges` | PoP 用チャレンジの取得。レスポンスの `attestation_challenge` を PoP JWT に入れる |
 
-登録系の2つは**無認証**です（インストール直後でトークンを持たないため）。所有証明はチャレンジと `request_hash` が担います。
+登録系の2つは**クライアント認証を要求しません**（インストール直後で、まだ認証に使う鍵が無いため）。チャレンジ取得は無認証、登録は **ID トークン**（誰か）と**プラットフォーム証明**（どの端末・鍵か）で認証されます。詳しくは [Client Instance 登録の認証](#client-instance-登録の認証)。
 
 なお2つのヘッダは、リクエストごとに**それぞれ厳密に1個**です。同じヘッダを複数送ると拒否されます。
 
@@ -201,7 +208,9 @@ draft-11 は**Client Attester への信頼の確立を仕様の範囲外**とし
 
 そのうえで、**証明書の階層を持っているなら `x5c`**。違いは鍵交代を誰が負担するかです。`attester_jwks` は Attester が署名鍵を替えるたびに、その Attester を信頼している全クライアント設定を更新して回る必要があります。`x5c` ならルートを1つ登録しておけば、リーフの交代は認可サーバー側の設定変更なしに吸収されます。
 
-**Attester を運用しない**なら `registered_instance_key`。認可サーバーへの登録が信頼の起点になるため、**登録経路の強度がそのまま全体の強度**になります。誰でも鍵を登録できる状態にしないよう、`client_instance_registration_policy` を併せて設計します。
+**Attester を運用しない**なら `registered_instance_key`。認可サーバーへの登録が信頼の起点になるため、**登録経路の強度がそのまま全体の強度**になります。アプリからの登録は ID トークンで認証し、インスタンスを利用者に束縛します（`client_instance_registration_policy: user_bound`）。
+
+1 つのインスタンスを複数の利用者が使う端末（窓口の端末など）や、Attester が別の事業者であるウォレット型のクライアントは、利用者に束縛できないため `registered_instance_key` の対象外です。`attester_jwks` か `x5c` を使います。
 
 ### `x5c` の設定
 
@@ -229,46 +238,92 @@ HAIP は `x5c` に**トラストアンカーを含めてはならない**とし�
 `client_instance_registration_policy` が効くのは、**`registered_instance_key` を選んでインスタンス登録を行うときだけ**です。`attester_jwks` では登録した鍵が認証時に参照されないため、設定しても効きません。
 
 ```
- attester_jwks
+ attester_jwks / x5c
    └ 登録エンドポイントを使わない
         → client_instance_registration_policy は不要
 
  registered_instance_key
    ├ アプリから登録させる
-   │    ├ require_authentication_device … 端末が認証デバイスとして登録済みであることを要求
-   │    └ attestation_only             … デバイスを介さない（ウォレット系）
+   │    └ user_bound … ID トークンで登録を認証し、インスタンスを利用者に束縛する
    └ 運用側が管理APIで登録する
         → policy は参照されない
 ```
 
 | 登録経路 | policy | 挙動 |
 |---|---|---|
-| アプリから | `require_authentication_device` | `device_id` がこのサーバーに登録済みの認証デバイスであることを検証。未登録・未指定なら拒否 |
-| アプリから | `attestation_only` | デバイス検証なし。プラットフォーム証明のみが裏付け |
-| アプリから | **未設定** | **登録を拒否**。弱い側にフォールバックしません |
-| 管理APIから | 何でも | policy に関係なく登録できます |
+| アプリから | `user_bound` | ID トークンとプラットフォーム証明を検証し、ID トークンの利用者に束縛する |
+| アプリから | **未設定・未知の値** | **登録を拒否**します |
+| 管理APIから | 何でも | policy に関係なく登録できます（利用者には束縛されません） |
 
 ---
 
-## Client Instance 登録の所有証明
+## Client Instance 登録の認証
 
-アプリからの登録は無認証のため、**チャレンジと `request_hash`** で「いま鍵を持っている」ことを示します。
+アプリからの登録は、2 つのもので認証します。
+
+| 何で | 何を示すか |
+|---|---|
+| **ID トークン** | 誰がログインしたか（インスタンスを束縛する利用者） |
+| **プラットフォーム証明** | どの端末の、どのアプリの、どの鍵か |
+
+2 つを結びつけるのが `request_hash` です。
 
 ```
 request_hash = base64url_nopad( SHA-256( challenge_bytes || canonical_jwk_utf8 ) )
 canonical_jwk = RFC 7638 thumbprint の入力（必須メンバのみ・辞書順・空白なし）
 ```
 
+アプリはこの値を**認可リクエストの `nonce`** に指定してログインします。返ってくる ID トークンの `nonce` は、このチャレンジとこの鍵にしか合いません。
+
 ```json
 {
   "challenge": "<チャレンジ取得で得た値>",
+  "id_token": "<nonce に request_hash を指定して取得した ID トークン>",
   "client_instance_public_key": { "kty": "EC", "crv": "P-256", "x": "...", "y": "..." },
   "platform_evidence": {
     "platform": "<プラットフォーム識別子>",
-    "request_hash": "<上記の計算結果>"
+    "...": "<プラットフォームごとの証明>"
   }
 }
 ```
+
+:::info nonce に鍵まで含める理由
+`nonce` がチャレンジだけだと、漏れた ID トークンと**攻撃者自身の本物の端末**の証明を組み合わせて、被害者の利用者に攻撃者の鍵を束縛できてしまいます。鍵を含めた `request_hash` なら、被害者の端末の中にある鍵が無い限り一致しません。
+:::
+
+### ID トークンの検証
+
+| # | 検証 |
+|---|---|
+| 1 | この認可サーバーが署名した JWS であること（暗号化された ID トークンは受け付けません） |
+| 2 | `iss` がこの認可サーバーで、`exp` を過ぎていないこと |
+| 3 | `aud` が登録先のクライアント、またはその `client_instance_registration_clients` に載ったクライアントであること |
+| 4 | `nonce` が、チャレンジと `client_instance_public_key` から計算した `request_hash` と一致すること |
+| 5 | `iat` がチャレンジの発行より後であること（この登録のためのログインであること） |
+| 6 | `sub` の利用者が存在し、有効であること |
+
+### ID トークンの取り方
+
+ID トークンは**クライアント認証なしで**取得する必要があります。登録が済むまで、アプリはクライアント認証に使う鍵を持たないからです。
+
+| 経路 | 取得のしかた | 使いどころ |
+|---|---|---|
+| **同じクライアント** | ハイブリッドフロー（`response_type=code id_token`）。認可応答で ID トークンとコードが同時に返る。登録後、同じコードを登録した鍵の `attest_jwt_client_auth` で交換する | 基本。ログイン 1 回で登録とトークン取得が済む |
+| **登録用クライアント** | 登録先クライアントの `client_instance_registration_clients` に載せたパブリッククライアントでログインする | **PAR 必須のテナント**。PAR にはクライアント認証が要るため、登録先クライアント自身では ID トークンを取れない |
+
+```json
+"extension": {
+  "client_attestation_trust_source": "registered_instance_key",
+  "client_instance_registration_policy": "user_bound",
+  "client_instance_registration_clients": ["<登録用パブリッククライアントの client_id>"]
+}
+```
+
+:::warning 登録用クライアントは明示したものだけ
+`client_instance_registration_clients` に載っていないクライアントの ID トークンは拒否します。載せていないクライアント（利用者がログインしただけの第三者アプリなど）の ID トークンで、登録先クライアントのインスタンスを登録できないようにするためです。登録用クライアントには `openid` 以外のスコープを与えないでください。
+:::
+
+パブリッククライアントを置けないテナント（FAPI 2.0 など）では、どちらの経路も使えません。
 
 :::warning request_hash の計算で間違えやすいところ
 1. `challenge` を base64url デコードせず文字列のまま連結している
@@ -281,7 +336,7 @@ canonical_jwk = RFC 7638 thumbprint の入力（必須メンバのみ・辞書�
 
 ### プラットフォーム証明の検証
 
-`platform_evidence` を検証するのは `PlatformAttestationVerifier` の実装で、プラットフォームごとにモジュールが提供します。**実装が1つも登録されていなければ、登録はすべて拒否されます**（無認証エンドポイントに対する安全側の既定）。
+`platform_evidence` を検証するのは `PlatformAttestationVerifier` の実装で、プラットフォームごとにモジュールが提供します。**実装が1つも登録されていなければ、登録はすべて拒否されます**（安全側の既定）。
 
 Android Key Attestation の検証は次の順で行います。
 
@@ -323,12 +378,6 @@ Android Key Attestation の検証は次の順で行います。
 
 どちらも `hardwareEnforced` 側の `AuthorizationList` から読みます。鍵自身の性質を知っているのは KeyMint だけで、`softwareEnforced` に同じ値があっても、それはプラットフォームの申告にすぎないためです。端末が報告しなかった場合も拒否します（判定の材料が無いことは、条件を満たす証拠にはなりません）。
 
-登録をどこまでデバイスに紐づけるかは `client_instance_registration_policy` で決めます。
-
-| 値 | 意味 |
-|----|------|
-| `require_authentication_device` | `device_id` がこの認可サーバーに登録済みの認証デバイスであること。FIDO UAF 登録が生体認証を伴うため、ユーザーが承認したデバイスに登録が結び付く |
-| `attestation_only` | デバイスを介さず、プラットフォーム証明だけを裏付けとする |
 
 ---
 
@@ -367,9 +416,10 @@ PoP JWT の `challenge` クレームは、その PoP がこの認可サーバー
 | フィールド | 必須 | 内容 |
 |-----------|------|------|
 | `token_endpoint_auth_method` | ✅ | `attest_jwt_client_auth` |
-| `client_attestation_trust_source` | ✅ | `attester_jwks` / `registered_instance_key` |
+| `client_attestation_trust_source` | ✅ | `attester_jwks` / `x5c` / `registered_instance_key` |
 | `client_attestation_attester_jwks` | `attester_jwks` 時 | 信頼する Client Attester の公開鍵（JWK Set）。秘密鍵・共通鍵を含めてはならない |
-| `client_instance_registration_policy` | 登録エンドポイント使用時 | `require_authentication_device` / `attestation_only` |
+| `client_instance_registration_policy` | 登録エンドポイント使用時 | `user_bound` |
+| `client_instance_registration_clients` | — | 登録を認証する ID トークンを受け付ける、ほかのクライアントの `client_id`。自分自身の ID トークンは常に受け付ける |
 
 ### 認可サーバー
 

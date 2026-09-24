@@ -25,10 +25,11 @@ import org.idp.server.platform.log.LoggerWrapper;
 /**
  * Maps a registration failure to a response.
  *
- * <p>Every rejection answers the same way. The endpoints are unauthenticated, so a distinguishable
- * reason would let a caller probe which client_id / device_id combinations exist, or already hold
- * an instance — see {@link ClientInstanceRegistrationResponse#invalidRequest()}. An unknown
- * client_id is therefore reported as a bad request rather than as not-found.
+ * <p>Every rejection answers the same way. The challenge endpoint is unauthenticated, so a
+ * distinguishable reason would let a caller probe which clients take part in registration, or which
+ * check a forged registration got past — see {@link
+ * ClientInstanceRegistrationResponse#invalidRequest()}. An unknown client_id is therefore reported
+ * as a bad request rather than as not-found.
  *
  * <p>What the caller cannot see, the log does: a rejection carries its reason at warn, and anything
  * unrecognised is a server fault, logged at error with its stack rather than disguised as the

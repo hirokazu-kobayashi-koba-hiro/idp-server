@@ -125,32 +125,11 @@ curl -sk -X PUT "$AS_URL" \
 
 ---
 
-## Experiment 2: 登録ポリシーを attestation_only にする
+## Experiment 2: 登録ポリシーを外すと登録が止まる
 
-`require_authentication_device` は `device_id` がこのサーバーの認証デバイスであることを要求します。ウォレット系（OID4VCI / HAIP）のように認証デバイスを持たないクライアントは `attestation_only` にします。
+アプリからのインスタンス登録は、`client_instance_registration_policy` が `user_bound` のクライアントにしか許されません。設定を外すと、弱いほうにフォールバックせず**チャレンジの発行から拒否**されます。
 
-### 1. ベースライン：device_id 無しでチャレンジを要求する
-
-```bash
-curl -sk -X POST "${ISSUER}/v1/client-instances/challenges" \
-  -H "Content-Type: application/json" \
-  -d "{\"client_id\":\"${SELF_SIGNED_CLIENT}\"}" | jq '.'
-```
-
-→ `{ "error": "invalid_request" }`（`device_id` が要るため）
-
-### 2. 設定変更
-
-```bash
-curl -sk "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-  | jq '.extension.client_instance_registration_policy = "attestation_only"' > /tmp/c.json
-
-curl -sk -X PUT "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" -H "Content-Type: application/json" -d @/tmp/c.json \
-  | jq '{diff}'
-```
-
-### 3. 挙動確認
+### 1. ベースライン：チャレンジを要求する
 
 ```bash
 curl -sk -X POST "${ISSUER}/v1/client-instances/challenges" \
@@ -160,20 +139,35 @@ curl -sk -X POST "${ISSUER}/v1/client-instances/challenges" \
 
 → `challenge` と `instance_id` が返ります。`instance_id` はサーバーが決めた値で、リクエストには含めません。
 
-デバイスを介さずに登録チケットが払い出されます。以降の登録は `request_hash` とプラットフォーム証明だけが裏付けになります。
-
-### 5. 元に戻す
+### 2. 設定変更：ポリシーを外す
 
 ```bash
 curl -sk "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-  | jq '.extension.client_instance_registration_policy = "require_authentication_device"' > /tmp/c.json
+  | jq 'del(.extension.client_instance_registration_policy)' > /tmp/c.json
+
+curl -sk -X PUT "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}" -H "Content-Type: application/json" -d @/tmp/c.json \
+  | jq '{diff}'
+```
+
+### 3. 挙動確認
+
+手順1と同じリクエストを送ります。
+
+→ `{ "error": "invalid_request" }`
+
+### 4. 元に戻す
+
+```bash
+curl -sk "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+  | jq '.extension.client_instance_registration_policy = "user_bound"' > /tmp/c.json
 curl -sk -X PUT "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" -H "Content-Type: application/json" -d @/tmp/c.json \
   | jq '{diff}'
 ```
 
 > ポリシーは**チャレンジ発行の時点**で判定されます。登録リクエストで弾かれるのではありません。
-> ポリシーを未設定にすると、弱いほうにフォールバックせず**登録が全部拒否**されます。
+> 拒否の理由はレスポンスに出ません（どのクライアントが登録に参加しているかを外から探れないようにするため）。理由はセキュリティイベント `client_instance_registration_failure` に残ります。
 
 ---
 
@@ -303,22 +297,19 @@ request_token "$ATTESTER_CLIENT" | jq '.'
 
 ## Experiment 6: アプリ自身にインスタンスを登録させる
 
-[VERIFY.md](./VERIFY.md) の Phase 2 は管理API から鍵を登録しました。ここでは**アプリが無認証のエンドポイントから自分で登録する**経路を通します。実アプリのインストール時の流れです。
+[VERIFY.md](./VERIFY.md) の Phase 2 は管理API から鍵を登録しました。ここでは**アプリがログインして自分で登録する**経路を通します。実アプリのインストール時の流れです。
 
-### 1. 登録ポリシーを attestation_only にする
+登録は **ID トークン**（誰か）と**プラットフォーム証明**（どの端末・鍵か）で認証され、インスタンスはログインした利用者に束縛されます。ID トークンの `nonce` に `request_hash` を入れることで、ID トークンがこの鍵の登録にしか使えないようにします。
 
-この経路は `attestation_only` でないと通りません。`require_authentication_device` のままだと、次のチャレンジ取得が `invalid_request` になります。
-
-```bash
-curl -sk "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" -H "Authorization: Bearer ${ADMIN_TOKEN}" \
-  | jq '.extension.client_instance_registration_policy = "attestation_only"' > /tmp/c.json
-
-curl -sk -X PUT "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" -H "Content-Type: application/json" -d @/tmp/c.json \
-  | jq '{diff}'
+```
+1. チャレンジを取得
+2. 端末で鍵を作り、request_hash を計算
+3. ハイブリッドフロー（response_type=code id_token, nonce=request_hash）でログイン → code + id_token
+4. id_token と鍵と証明で登録
+5. 手順3の code を、登録した鍵で交換
 ```
 
-### 2. チャレンジを取得
+### 1. チャレンジを取得
 
 ```bash
 CH_RESP=$(curl -sk -X POST "${ISSUER}/v1/client-instances/challenges" \
@@ -332,16 +323,56 @@ INSTANCE_ID=$(echo "$CH_RESP" | jq -r '.instance_id')
 
 > ここで返る `challenge` は**登録用**で、`/v1/client-attestation/challenges` が返す `attestation_challenge` とは**別物**です。登録用は単回消費、attestation 用は有効期間内なら再利用可。変数名を分けているのはそのためです。
 
-### 3. 端末で鍵を作り、request_hash を計算して登録
+### 2. 端末で鍵を作り、request_hash を計算
 
 ```bash
 rm -f "$OUT/instance-key.json"        # 新しい端末を模す
 INSTANCE_JWK=$(node $TPL/mint-attestation.mjs --print-jwk --out-dir "$OUT")
 REQUEST_HASH=$(node $TPL/mint-attestation.mjs --request-hash --challenge "$REGISTRATION_CHALLENGE" --out-dir "$OUT")
+```
 
+`request_hash` は `SHA-256(challenge のバイト列 || RFC 7638 の canonical JWK)` です。チャレンジと**登録しようとしている鍵**の両方に縛られます。
+
+### 3. ハイブリッドフローでログインする
+
+`nonce` に `request_hash` を指定します。クライアント認証は要りません（まだ認証に使う鍵が登録されていないため）。
+
+```bash
+REDIRECT_URI=$(jq -r '.redirect_uris[0]' $OUT/self-signed-client.json)
+COOKIE_JAR=$(mktemp)
+
+AUTH_REDIRECT=$(curl -sk -c "$COOKIE_JAR" -o /dev/null -w "%{redirect_url}" -G "${ISSUER}/v1/authorizations" \
+  --data-urlencode "response_type=code id_token" \
+  --data-urlencode "client_id=${SELF_SIGNED_CLIENT}" \
+  --data-urlencode "redirect_uri=${REDIRECT_URI}" \
+  --data-urlencode "scope=openid account" \
+  --data-urlencode "state=experiment-6" \
+  --data-urlencode "nonce=${REQUEST_HASH}")
+AUTHORIZATION_ID=$(echo "$AUTH_REDIRECT" | sed -n 's/.*[?&]id=\([^&#]*\).*/\1/p')
+
+# 利用者を作ってログインする
+curl -sk -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
+  -X POST "${ISSUER}/v1/authorizations/${AUTHORIZATION_ID}/initial-registration" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"experiment6-$(date +%s)@example.com\",\"password\":\"VerifyPass123\",\"name\":\"Experiment 6\"}" | jq '.user.sub'
+
+AUTHZ_REDIRECT=$(curl -sk -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
+  -X POST "${ISSUER}/v1/authorizations/${AUTHORIZATION_ID}/authorize" \
+  -H "Content-Type: application/json" -d '{}' | jq -r '.redirect_uri')
+
+ID_TOKEN=$(echo "$AUTHZ_REDIRECT" | sed -n 's/.*[#&]id_token=\([^&]*\).*/\1/p')
+AUTHORIZATION_CODE=$(echo "$AUTHZ_REDIRECT" | sed -n 's/.*[#&]code=\([^&]*\).*/\1/p')
+```
+
+ハイブリッドフローの応答はフラグメント（`#`）で返ります。`ID_TOKEN` をデコードすると、`nonce` が `REQUEST_HASH` と同じ値になっています。
+
+### 4. ID トークンと鍵と証明で登録
+
+```bash
 curl -sk -X POST "${ISSUER}/v1/client-instances" \
   -H "Content-Type: application/json" \
   -d "{\"challenge\":\"${REGISTRATION_CHALLENGE}\",
+       \"id_token\":\"${ID_TOKEN}\",
        \"client_instance_public_key\":${INSTANCE_JWK},
        \"platform_evidence\":{\"platform\":\"request-hash-binding-development-only\",
                               \"request_hash\":\"${REQUEST_HASH}\"}}" -w "\n%{http_code}\n"
@@ -349,32 +380,39 @@ curl -sk -X POST "${ISSUER}/v1/client-instances" \
 
 → `201`
 
-`request_hash` は `SHA-256(challenge のバイト列 || RFC 7638 の canonical JWK)` です。チャレンジと**登録しようとしている鍵**の両方に証跡を縛るためのもので、実機では App Attest の `clientDataHash` や Android Key Attestation の challenge に埋め込みます。
+実機では、チャレンジを App Attest の `clientDataHash` や Android Key Attestation の challenge に埋め込んだ証明を送ります。
 
 > `platform` に `request-hash-binding-development-only` を指定しているのは開発用の検証器です。この検証器は request_hash の束縛しか見ておらず、**アプリの正当性もデバイスの正当性も検証しません**。本番では App Attest / Play Integrity の検証器が必要で、検証器が1つも登録されていない場合は登録が全拒否されます。
 
-### 4. 登録した鍵でトークンを取得
+試しに、手順2で作った鍵とは**別の鍵**を `client_instance_public_key` にして送ると `400` になります。ID トークンの `nonce` が元の鍵を指しているためです。漏れた ID トークンを別の鍵と組み合わせても登録できない、ということです。
+
+### 5. 手順3のコードを、登録した鍵で交換する
 
 ```bash
 eval "$(node $TPL/mint-attestation.mjs --mode self-signed \
   --client-id "$SELF_SIGNED_CLIENT" --issuer "$ISSUER" \
   --instance-id "$INSTANCE_ID" --out-dir "$OUT")"
 
-request_token "$SELF_SIGNED_CLIENT" | jq '.'
+curl -sk -X POST "${ISSUER}/v1/tokens" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "OAuth-Client-Attestation: ${OAUTH_CLIENT_ATTESTATION}" \
+  -H "OAuth-Client-Attestation-PoP: ${OAUTH_CLIENT_ATTESTATION_POP}" \
+  --data-urlencode "grant_type=authorization_code" \
+  --data-urlencode "code=${AUTHORIZATION_CODE}" \
+  --data-urlencode "redirect_uri=${REDIRECT_URI}" \
+  --data-urlencode "client_id=${SELF_SIGNED_CLIENT}" | jq '.'
 ```
 
-→ `access_token` が返ります。
+→ `access_token` と `id_token` が返ります。
 
-管理API を一度も使わずに、インストールから認証までが完結しました。
-
-### 5. 元に戻す
-
-登録ポリシーを `require_authentication_device` に戻します（Experiment 2 の手順4）。登録したインスタンスは管理API から削除できます。
+ログイン1回で、登録からトークン取得までが完結しました。登録したインスタンスはログインした利用者に束縛されています。
 
 ```bash
 curl -sk "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}/instances" \
-  -H "Authorization: Bearer ${ADMIN_TOKEN}" | jq -r '.list[].id'
+  -H "Authorization: Bearer ${ADMIN_TOKEN}" | jq '.list[] | {id, user_id, status}'
 ```
+
+登録したインスタンスは管理API から削除できます。
 
 ---
 

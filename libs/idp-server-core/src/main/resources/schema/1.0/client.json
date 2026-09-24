@@ -421,10 +421,16 @@
         "client_instance_registration_policy": {
           "type": "string",
           "enum": [
-            "require_authentication_device",
-            "attestation_only"
+            "user_bound"
           ],
-          "description": "OPTIONAL. idp-server specific. How much a client instance registration must be backed by an authentication device. require_authentication_device: device_id must be an authentication device registered at this Authorization Server, which ties the registration to a device the user approved (FIDO UAF registration uses biometrics). attestation_only: no device is involved and the platform attestation is the only backing, as for wallet style clients. Required when the client instance registration endpoints are used."
+          "description": "OPTIONAL. idp-server specific. How a client instance registration must be backed. user_bound: the registration is authenticated by an ID token this Authorization Server issued, whose nonce is the request hash of the challenge and the key being registered, and the instance is bound to that user. Required when the client instance registration endpoints are used; an unset or unknown value rejects registration."
+        },
+        "client_instance_registration_clients": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "OPTIONAL. idp-server specific. client_id values of other clients whose ID tokens may authenticate the registration of this client's instances. The client's own ID tokens are always accepted. Intended for tenants that require PAR, where the client cannot obtain an ID token before it has an instance; list a public client that obtains it instead, and give that client no scope beyond openid."
         }
       }
     }

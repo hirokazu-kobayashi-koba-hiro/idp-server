@@ -26,9 +26,9 @@ import org.idp.server.platform.type.RequestAttributes;
 /**
  * Builds the security events of the Client Instance registration flow.
  *
- * <p>There is no authenticated user to attribute these to: the endpoints are unauthenticated, and
- * what the registration establishes is a client credential, not a session. The event therefore
- * carries the tenant, whatever of client_id / device_id / instance_id the step actually knows, and
+ * <p>What the registration establishes is a client credential, not a session, and a rejected
+ * registration has no user it could trust. The event therefore carries the tenant, whatever of
+ * client_id / instance_id the step actually knows, the user_id of a successful registration, and
  * the caller's address.
  */
 public class ClientInstanceRegistrationEventCreator {

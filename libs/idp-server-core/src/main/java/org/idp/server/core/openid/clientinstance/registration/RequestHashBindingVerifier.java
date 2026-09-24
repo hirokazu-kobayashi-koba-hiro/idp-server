@@ -16,14 +16,7 @@
 
 package org.idp.server.core.openid.clientinstance.registration;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.Base64;
 import java.util.Map;
-import org.idp.server.platform.jose.JsonWebKey;
-import org.idp.server.platform.jose.JsonWebKeyInvalidException;
-import org.idp.server.platform.jose.JwkParser;
-import org.idp.server.platform.json.JsonConverter;
 import org.idp.server.platform.log.LoggerWrapper;
 
 /**
@@ -48,7 +41,6 @@ public class RequestHashBindingVerifier implements PlatformAttestationVerifier {
   public static final String PLATFORM = "request-hash-binding-development-only";
 
   LoggerWrapper log = LoggerWrapper.getLogger(RequestHashBindingVerifier.class);
-  JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   @Override
   public String platform() {
@@ -63,10 +55,9 @@ public class RequestHashBindingVerifier implements PlatformAttestationVerifier {
           "platform_evidence.request_hash is required");
     }
 
-    String expected = derive(request.challenge().challenge(), request.instanceKey());
+    ClientInstanceRequestHash expected = derive(request);
 
-    if (!MessageDigest.isEqual(
-        expected.getBytes(StandardCharsets.UTF_8), presented.getBytes(StandardCharsets.UTF_8))) {
+    if (!expected.matches(presented)) {
       throw new PlatformAttestationVerificationException(
           "platform_evidence.request_hash does not bind the challenge to the instance key");
     }
@@ -79,23 +70,12 @@ public class RequestHashBindingVerifier implements PlatformAttestationVerifier {
         request.challenge().instanceId());
   }
 
-  private String derive(String challenge, Map<String, Object> instanceKey) {
+  private ClientInstanceRequestHash derive(PlatformAttestationVerificationRequest request) {
     try {
-      JsonWebKey jsonWebKey = JwkParser.parse(jsonConverter.write(instanceKey));
-      byte[] challengeBytes = Base64.getUrlDecoder().decode(challenge);
-      byte[] canonical = jsonWebKey.canonicalJson().getBytes(StandardCharsets.UTF_8);
-
-      MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      digest.update(challengeBytes);
-      digest.update(canonical);
-
-      return Base64.getUrlEncoder().withoutPadding().encodeToString(digest.digest());
-    } catch (JsonWebKeyInvalidException e) {
-      throw new PlatformAttestationVerificationException(
-          "client_instance_public_key is not a valid JWK: " + e.getMessage(), e);
-    } catch (Exception e) {
-      throw new PlatformAttestationVerificationException(
-          "failed to derive request hash: " + e.getMessage(), e);
+      return ClientInstanceRequestHash.derive(
+          request.challenge().challenge(), request.instanceKey());
+    } catch (ClientInstanceRegistrationException e) {
+      throw new PlatformAttestationVerificationException(e.getMessage(), e);
     }
   }
 

@@ -23,7 +23,11 @@
 --   - attestation_evidence: verification result of the platform attestation
 --     (e.g. Play Integrity verdict, App Attest result) kept for audit and
 --     risk decisions.
---   - device_id: optional cross reference to an authentication device.
+--   - device_id: optional cross reference to an authentication device, set only through
+--     the management API.
+--   - user_id: the user the instance is bound to. The end-user registration flow sets it
+--     from the ID token that authenticates the registration; instances registered through
+--     the management API have none.
 -- ============================================================================
 
 CREATE TABLE client_instance
@@ -35,6 +39,7 @@ CREATE TABLE client_instance
     status               VARCHAR(32)             NOT NULL DEFAULT 'active',
     attestation_evidence JSONB,
     device_id            UUID,
+    user_id              UUID,
     created_at           TIMESTAMP DEFAULT now() NOT NULL,
     updated_at           TIMESTAMP DEFAULT now() NOT NULL,
     expires_at           TIMESTAMP,
@@ -50,10 +55,11 @@ POLICY tenant_isolation_policy
   USING (tenant_id = current_setting('app.tenant_id')::uuid);
 ALTER TABLE client_instance FORCE ROW LEVEL SECURITY;
 
--- Registration rejects a device that already holds an active instance, which is
--- a lookup by device rather than by primary key.
-CREATE INDEX idx_client_instance_tenant_client_device
-    ON client_instance (tenant_id, client_id, device_id);
+-- Instances registered by the end-user flow are bound to a user. Registering a new one
+-- revokes the user's other active instances of the client, and deleting a user revokes
+-- theirs: both are lookups by user rather than by primary key.
+CREATE INDEX idx_client_instance_tenant_client_user
+    ON client_instance (tenant_id, client_id, user_id);
 
 -- The management list API pages by (tenant_id, client_id) ordered by created_at.
 -- Without this index the ordering has to be produced by sorting every instance of the

@@ -22,11 +22,13 @@
  ─────────────────────────────────────       ─────────────────────────────
  POST /{tenant}/v1/client-instances           OAuth-Client-Attestation
         ↓                                     OAuth-Client-Attestation-PoP
- PlatformAttestationVerifier                         ↓
-   （端末・アプリの証明を検証）                 AttestJwtClientAuthAuthenticator
+ ClientInstanceRegistrationIdTokenVerifier          ↓
+   （ID トークン: 誰か、nonce で鍵に束縛）       AttestJwtClientAuthAuthenticator
         ↓                                            ↓
- client_instance に鍵を登録                    ClientAttestationJwtVerifier
-                                                     + ClientAttestationPopJwtVerifier
+ PlatformAttestationVerifier                   ClientAttestationJwtVerifier
+   （端末・アプリの証明を検証）                      + ClientAttestationPopJwtVerifier
+        ↓
+ client_instance に鍵を登録し、利用者に束縛
 ```
 
 ①は `registered_instance_key`（自己署名）モードのときだけ通る経路です。`attester_jwks` モードでは Client Attester が発行するため、①は不要になります。
@@ -103,8 +105,9 @@ public interface PlatformAttestationVerifier {
 
 `PlatformAttestationVerificationRequest` は `tenant` / `clientConfiguration` / `challenge` / `instanceKey` / `evidence` を持つ record です。
 
+登録は ID トークンでも認証されますが、ID トークンが示すのは「誰か」だけです。**どの端末の、どのアプリの、どの鍵か**は、この検証だけが示します。ID トークンは `nonce = request_hash` で鍵に束縛されるので（`ClientInstanceRegistrationIdTokenVerifier`）、この検証が鍵を確かめて初めて、利用者と端末の鍵がつながります。
+
 :::danger 実装は3つの束縛をすべて確立すること
-登録エンドポイントは無認証なので、**この検証がリクエストの認証そのもの**です。
 
 1. **チャレンジ** — 証拠がこの登録のために作られたこと
 2. **インスタンス鍵** — 証拠が登録しようとしている鍵を対象にしていること
@@ -126,7 +129,7 @@ public interface PlatformAttestationVerifier {
 
 ### 登録の既定は「全拒否」
 
-`PlatformAttestationVerifierPluginLoader` は既定で何も登録しません。verifier が1つも無ければ未知 platform として例外になり、**登録はすべて拒否**されます。無認証エンドポイントに対する安全側の既定です。
+`PlatformAttestationVerifierPluginLoader` は既定で何も登録しません。verifier が1つも無ければ未知 platform として例外になり、**登録はすべて拒否**されます。端末を確かめられないなら登録させない、という安全側の既定です。
 
 開発用の `RequestHashBindingVerifier` は環境変数 `IDP_SERVER_CLIENT_INSTANCE_DEVELOPMENT_VERIFIER` を明示したときだけ読み込まれ、有効時は WARN ログを出します。**アプリとデバイスについて何も検証しない**ので本番では使えません。
 

@@ -158,7 +158,7 @@ curl -sk -X POST \
 
 `201` が返れば登録完了です。
 
-> 管理API からの登録は `client_instance_registration_policy` に縛られません。アプリ自身が登録する経路（`POST /{tenant}/v1/client-instances`）はポリシーの対象で、`require_authentication_device` では登録済みの認証デバイスが必要になります。その経路を実際に通す手順は [EXPERIMENTS.md](./EXPERIMENTS.md) の Experiment 6 にあります。
+> 管理API からの登録は `client_instance_registration_policy` に縛られず、利用者にも束縛されません。アプリ自身が登録する経路（`POST /{tenant}/v1/client-instances`）はポリシー（`user_bound`）の対象で、ログインした利用者の ID トークンが必要になります。その経路を実際に通す手順は [EXPERIMENTS.md](./EXPERIMENTS.md) の Experiment 6 にあります。
 
 ## Step 2: 自己署名で2つの JWT を生成
 

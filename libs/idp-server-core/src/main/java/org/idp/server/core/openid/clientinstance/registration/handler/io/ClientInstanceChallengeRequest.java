@@ -33,10 +33,6 @@ public class ClientInstanceChallengeRequest {
     return new RequestedClientId(stringValue("client_id"));
   }
 
-  public String deviceId() {
-    return stringValue("device_id");
-  }
-
   private String stringValue(String key) {
     Object value = values.get(key);
     return value instanceof String stringValue && !stringValue.isEmpty() ? stringValue : null;

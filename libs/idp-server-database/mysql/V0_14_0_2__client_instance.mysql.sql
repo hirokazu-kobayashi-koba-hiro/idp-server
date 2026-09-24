@@ -22,6 +22,7 @@ CREATE TABLE client_instance
     status               VARCHAR(32)  DEFAULT 'active'            NOT NULL,
     attestation_evidence JSON,
     device_id            CHAR(36),
+    user_id              CHAR(36),
     created_at           DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     updated_at           DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     expires_at           DATETIME(6),
@@ -32,8 +33,8 @@ CREATE TABLE client_instance
 
 -- Registration rejects a device that already holds an active instance, which is
 -- a lookup by device rather than by primary key.
-CREATE INDEX idx_client_instance_tenant_client_device
-    ON client_instance (tenant_id, client_id, device_id);
+CREATE INDEX idx_client_instance_tenant_client_user
+    ON client_instance (tenant_id, client_id, user_id);
 
 -- The management list API pages by (tenant_id, client_id) ordered by created_at.
 -- See the PostgreSQL migration for the measurements behind this index.

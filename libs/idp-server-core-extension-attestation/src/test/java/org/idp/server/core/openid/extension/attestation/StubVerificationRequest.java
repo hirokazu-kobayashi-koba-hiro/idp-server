@@ -56,7 +56,6 @@ public class StubVerificationRequest {
             challenge,
             TENANT_ID,
             CLIENT_ID,
-            null,
             "instance-0001",
             LocalDateTime.now().plusMinutes(5),
             null,

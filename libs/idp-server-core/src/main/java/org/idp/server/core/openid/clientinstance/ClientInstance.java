@@ -47,6 +47,7 @@ public class ClientInstance implements Serializable, JsonReadable {
   String status;
   Map<String, Object> attestationEvidence = new HashMap<>();
   String deviceId;
+  String userId;
   LocalDateTime createdAt;
   LocalDateTime updatedAt;
   LocalDateTime expiresAt;
@@ -62,6 +63,7 @@ public class ClientInstance implements Serializable, JsonReadable {
       String status,
       Map<String, Object> attestationEvidence,
       String deviceId,
+      String userId,
       LocalDateTime createdAt,
       LocalDateTime updatedAt,
       LocalDateTime expiresAt,
@@ -73,6 +75,7 @@ public class ClientInstance implements Serializable, JsonReadable {
     this.status = status;
     this.attestationEvidence = attestationEvidence != null ? attestationEvidence : new HashMap<>();
     this.deviceId = deviceId;
+    this.userId = userId;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.expiresAt = expiresAt;
@@ -128,6 +131,18 @@ public class ClientInstance implements Serializable, JsonReadable {
 
   public boolean hasDeviceId() {
     return deviceId != null && !deviceId.isEmpty();
+  }
+
+  /**
+   * The user this instance is bound to. Set by the end-user registration flow, which authenticates
+   * the registration with an ID token; instances registered through the management API have none.
+   */
+  public String userId() {
+    return userId;
+  }
+
+  public boolean hasUserId() {
+    return userId != null && !userId.isEmpty();
   }
 
   public LocalDateTime createdAt() {
@@ -192,6 +207,7 @@ public class ClientInstance implements Serializable, JsonReadable {
     map.put("status", status);
     if (hasAttestationEvidence()) map.put("attestation_evidence", attestationEvidence);
     if (hasDeviceId()) map.put("device_id", deviceId);
+    if (hasUserId()) map.put("user_id", userId);
     if (createdAt != null) map.put("created_at", createdAt.toString());
     if (updatedAt != null) map.put("updated_at", updatedAt.toString());
     if (expiresAt != null) map.put("expires_at", expiresAt.toString());
