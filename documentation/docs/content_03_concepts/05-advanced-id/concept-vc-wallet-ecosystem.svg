@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 800" font-family="'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#546e7a"/>
+    </marker>
+    <marker id="arrowGrey" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9e9e9e"/>
+    </marker>
+  </defs>
+
+  <rect width="1060" height="800" fill="#ffffff"/>
+  <text x="30" y="38" font-size="20" font-weight="bold" fill="#212121">VC ウォレットのエコシステムと idp-server の対応範囲</text>
+  <text x="30" y="60" font-size="12.5" fill="#616161">v0.14.0 時点。色は idp-server の対応状況、白い枠はウォレット事業者など他の主体が運用する部分</text>
+
+  <!-- Legend -->
+  <rect x="640" y="76" width="18" height="14" rx="3" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="664" y="88" font-size="12" fill="#212121">対応済み</text>
+  <rect x="730" y="76" width="18" height="14" rx="3" fill="#fff4e0" stroke="#b26a00"/>
+  <text x="754" y="88" font-size="12" fill="#212121">一部</text>
+  <rect x="800" y="76" width="18" height="14" rx="3" fill="#f5f5f5" stroke="#9e9e9e" stroke-dasharray="4 3"/>
+  <text x="824" y="88" font-size="12" fill="#212121">未対応（計画）</text>
+  <rect x="930" y="76" width="18" height="14" rx="3" fill="#ffffff" stroke="#bdbdbd"/>
+  <text x="954" y="88" font-size="12" fill="#212121">対象外</text>
+
+  <!-- ===== Trust framework ===== -->
+  <rect x="20" y="104" width="1020" height="96" rx="10" fill="#fafafa" stroke="#e0e0e0"/>
+  <text x="38" y="128" font-size="14.5" font-weight="bold" fill="#37474f">信頼の枠組み — 誰の鍵・証明書を信頼するか</text>
+
+  <rect x="38" y="142" width="300" height="46" rx="7" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="188" y="162" font-size="12.5" text-anchor="middle" fill="#1b5e20">X.509 証明書チェーンの検証</text>
+  <text x="188" y="179" font-size="11" text-anchor="middle" fill="#2e7d32">Attester の x5c / 端末の証明のルートまで</text>
+
+  <rect x="356" y="142" width="300" height="46" rx="7" fill="#f5f5f5" stroke="#9e9e9e" stroke-dasharray="4 3"/>
+  <text x="506" y="162" font-size="12.5" text-anchor="middle" fill="#424242">OpenID Federation</text>
+  <text x="506" y="179" font-size="11" text-anchor="middle" fill="#757575">Trust Chain による参加者の確認（IT-Wallet）</text>
+
+  <rect x="674" y="142" width="348" height="46" rx="7" fill="#f5f5f5" stroke="#9e9e9e" stroke-dasharray="4 3"/>
+  <text x="848" y="162" font-size="12.5" text-anchor="middle" fill="#424242">Trusted List / LoTE</text>
+  <text x="848" y="179" font-size="11" text-anchor="middle" fill="#757575">発行者・Wallet Provider の一覧（EUDI）</text>
+
+  <!-- ===== Wallet side (out of scope) ===== -->
+  <rect x="20" y="226" width="250" height="250" rx="10" fill="#ffffff" stroke="#bdbdbd"/>
+  <text x="38" y="252" font-size="14.5" font-weight="bold" fill="#37474f">利用者の端末</text>
+  <text x="38" y="270" font-size="11" fill="#757575">ウォレット事業者が提供</text>
+
+  <rect x="38" y="284" width="214" height="60" rx="8" fill="#ffffff" stroke="#bdbdbd"/>
+  <text x="145" y="308" font-size="12.5" text-anchor="middle" fill="#212121">Wallet Instance（アプリ）</text>
+  <text x="145" y="327" font-size="11" text-anchor="middle" fill="#616161">Credential を保管・提示する</text>
+
+  <rect x="38" y="356" width="214" height="56" rx="8" fill="#ffffff" stroke="#bdbdbd"/>
+  <text x="145" y="379" font-size="12.5" text-anchor="middle" fill="#212121">OS のキーストア</text>
+  <text x="145" y="397" font-size="11" text-anchor="middle" fill="#616161">TEE / StrongBox / Secure Enclave</text>
+
+  <text x="145" y="444" font-size="12" text-anchor="middle" fill="#37474f">利用者</text>
+  <circle cx="145" cy="459" r="0" fill="none"/>
+
+  <rect x="20" y="500" width="250" height="118" rx="10" fill="#ffffff" stroke="#bdbdbd"/>
+  <text x="38" y="526" font-size="14.5" font-weight="bold" fill="#37474f">Wallet Provider</text>
+  <text x="38" y="546" font-size="11.5" fill="#616161">アプリが本物であることを証明する</text>
+  <text x="38" y="566" font-size="11.5" fill="#616161">Wallet Attestation（WIA）/</text>
+  <text x="38" y="584" font-size="11.5" fill="#616161">Key Attestation を発行する</text>
+  <text x="38" y="604" font-size="11" fill="#9e9e9e">idp-server は受け取って検証する側</text>
+
+  <!-- ===== Credential Issuer (idp-server main role) ===== -->
+  <rect x="306" y="226" width="448" height="392" rx="10" fill="#f7fbff" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="324" y="252" font-size="14.5" font-weight="bold" fill="#0d47a1">Credential Issuer（PID・属性の発行者）</text>
+  <text x="324" y="270" font-size="11.5" fill="#1565c0">idp-server が担う中心の役割</text>
+
+  <rect x="324" y="284" width="412" height="62" rx="8" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="340" y="306" font-size="12.5" font-weight="bold" fill="#1b5e20">認可サーバー</text>
+  <text x="340" y="326" font-size="11.5" fill="#2e7d32">PAR / DPoP / Attestation-Based Client Authentication（draft-11）</text>
+  <text x="340" y="341" font-size="11" fill="#2e7d32">トークン・PAR・CIBA・introspection・revocation で Wallet を認証</text>
+
+  <rect x="324" y="356" width="412" height="62" rx="8" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="340" y="378" font-size="12.5" font-weight="bold" fill="#1b5e20">Wallet の真正性の確認</text>
+  <text x="340" y="398" font-size="11.5" fill="#2e7d32">信頼元: attester_jwks / x5c / registered_instance_key</text>
+  <text x="340" y="413" font-size="11" fill="#2e7d32">端末の証明（Android Key Attestation / Apple App Attest）</text>
+
+  <rect x="324" y="428" width="412" height="46" rx="8" fill="#fff4e0" stroke="#b26a00"/>
+  <text x="340" y="448" font-size="12.5" font-weight="bold" fill="#8a5100">Credential 要求の受け付け（旧ドラフト）</text>
+  <text x="340" y="466" font-size="11" fill="#b26a00">authorization_details（openid_credential）の検証と c_nonce の発行のみ</text>
+
+  <rect x="324" y="484" width="200" height="62" rx="8" fill="#f5f5f5" stroke="#9e9e9e" stroke-dasharray="4 3"/>
+  <text x="424" y="506" font-size="12.5" text-anchor="middle" fill="#424242">Credential エンドポイント</text>
+  <text x="424" y="523" font-size="11" text-anchor="middle" fill="#757575">OID4VCI 1.0 / 鍵の証明（proof）</text>
+  <text x="424" y="538" font-size="11" text-anchor="middle" fill="#757575">SD-JWT VC / mdoc</text>
+
+  <rect x="536" y="484" width="200" height="62" rx="8" fill="#f5f5f5" stroke="#9e9e9e" stroke-dasharray="4 3"/>
+  <text x="636" y="506" font-size="12.5" text-anchor="middle" fill="#424242">Issuer メタデータ</text>
+  <text x="636" y="523" font-size="11" text-anchor="middle" fill="#757575">Nonce / Credential Offer</text>
+  <text x="636" y="538" font-size="11" text-anchor="middle" fill="#757575">Pre-Authorized Code</text>
+
+  <rect x="324" y="556" width="200" height="46" rx="8" fill="#f5f5f5" stroke="#9e9e9e" stroke-dasharray="4 3"/>
+  <text x="424" y="576" font-size="12.5" text-anchor="middle" fill="#424242">失効（Status List）</text>
+  <text x="424" y="592" font-size="11" text-anchor="middle" fill="#757575">発行した Credential の失効</text>
+
+  <rect x="536" y="556" width="200" height="46" rx="8" fill="#f5f5f5" stroke="#9e9e9e" stroke-dasharray="4 3"/>
+  <text x="636" y="576" font-size="12.5" text-anchor="middle" fill="#424242">WIA の失効確認</text>
+  <text x="636" y="592" font-size="11" text-anchor="middle" fill="#757575">client_status / key_storage_status</text>
+
+  <!-- ===== Verifier ===== -->
+  <rect x="790" y="226" width="250" height="250" rx="10" fill="#f5f5f5" stroke="#9e9e9e" stroke-dasharray="5 4"/>
+  <text x="808" y="252" font-size="14.5" font-weight="bold" fill="#424242">Verifier（RP）</text>
+  <text x="808" y="270" font-size="11.5" fill="#757575">Credential の提示を受けて使う側</text>
+  <rect x="808" y="288" width="214" height="64" rx="8" fill="#f5f5f5" stroke="#9e9e9e" stroke-dasharray="4 3"/>
+  <text x="915" y="312" font-size="12.5" text-anchor="middle" fill="#424242">OID4VP 1.0</text>
+  <text x="915" y="330" font-size="11" text-anchor="middle" fill="#757575">DCQL / direct_post</text>
+  <text x="915" y="345" font-size="11" text-anchor="middle" fill="#757575">SD-JWT VC・mdoc の検証</text>
+  <text x="808" y="384" font-size="11.5" fill="#757575">将来、idp-server が Verifier として</text>
+  <text x="808" y="402" font-size="11.5" fill="#757575">提示を受け、RP には OIDC で</text>
+  <text x="808" y="420" font-size="11.5" fill="#757575">つなぐ形を想定</text>
+
+  <!-- ===== Data source ===== -->
+  <rect x="306" y="646" width="448" height="62" rx="10" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text x="324" y="670" font-size="13" font-weight="bold" fill="#1b5e20">発行する中身の出どころ: 身元確認・本人情報</text>
+  <text x="324" y="690" font-size="11.5" fill="#2e7d32">eKYC の身元確認結果（verified_claims / OIDC4IDA）、利用者の属性</text>
+  <line x1="530" y1="646" x2="530" y2="620" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowGrey)"/>
+  <text x="538" y="637" font-size="11" fill="#757575">Credential の元データ（計画）</text>
+
+  <!-- ===== Flows ===== -->
+  <!-- 1: wallet -> wallet provider -->
+  <line x1="145" y1="476" x2="145" y2="498" stroke="#9e9e9e" stroke-width="1.5" marker-end="url(#arrowGrey)"/>
+  <text x="156" y="492" font-size="11" fill="#757575">① 登録・WIA の取得</text>
+
+  <!-- 2: wallet -> issuer -->
+  <line x1="252" y1="314" x2="322" y2="314" stroke="#546e7a" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="258" y="304" font-size="11" fill="#37474f">② 発行</text>
+  <text x="258" y="332" font-size="10.5" fill="#546e7a">OID4VCI</text>
+
+  <!-- 3: wallet -> verifier (goes over the issuer) -->
+  <path d="M 250 226 L 250 214 L 1000 214 L 1000 224" fill="none" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arrowGrey)"/>
+  <text x="600" y="210" font-size="11" fill="#757575">③ 提示（OID4VP）</text>
+
+
+  <!-- ===== Footer ===== -->
+  <rect x="20" y="732" width="1020" height="52" rx="8" fill="#fafafa" stroke="#e0e0e0"/>
+  <text x="38" y="754" font-size="12" fill="#37474f">今動くのは「Wallet を認証し、本物のアプリ・端末かを確かめる」ところまで。Credential の発行（OID4VCI）と提示（OID4VP）は計画段階。</text>
+  <text x="38" y="772" font-size="12" fill="#37474f">旧ドラフト（draft 13 相当）で書かれた発行処理のドメイン層は HTTP に公開していない。OID4VCI 1.0 に合わせて作り直す方針。</text>
+</svg>

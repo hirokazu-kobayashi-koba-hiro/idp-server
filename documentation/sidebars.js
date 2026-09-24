@@ -132,6 +132,7 @@ const sidebars = {
           items: [
             "content_03_concepts/advanced-id/concept-01-id-verified",
             "content_03_concepts/advanced-id/concept-02-enterprise-id",
+            "content_03_concepts/advanced-id/concept-03-vc-wallet",
           ]
         },
         {
