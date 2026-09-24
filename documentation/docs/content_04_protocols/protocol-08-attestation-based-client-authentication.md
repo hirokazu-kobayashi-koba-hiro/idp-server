@@ -157,11 +157,29 @@ Challenge を必須にしている場合は、リクエスト前に `POST /{tena
 
 | エンドポイント | 用途 |
 |---|---|
-| `POST\|GET /v1/management/tenants/{tenant-id}/clients/{client-id}/instances` | Client Instance の登録・一覧 |
-| `GET\|DELETE /v1/management/tenants/{tenant-id}/clients/{client-id}/instances/{id}` | 取得・削除 |
-| `POST /v1/management/tenants/{tenant-id}/clients/{client-id}/instances/{id}/revoke` | 失効（→ [失効と削除](#client-instance-の失効と削除)） |
+| `GET /v1/management/tenants/{tenant-id}/client-instances` | テナント内のインスタンスの検索 |
+| `POST /v1/management/tenants/{tenant-id}/client-instances` | 登録（`client_id` はボディで指定） |
+| `GET\|DELETE /v1/management/tenants/{tenant-id}/client-instances/{id}` | 取得・削除 |
+| `POST /v1/management/tenants/{tenant-id}/client-instances/{id}/revoke` | 失効（→ [失効と削除](#client-instance-の失効と削除)） |
 
 専用権限 `idp:client-instance:create` / `:read` / `:revoke` / `:delete` で保護されています。登録は、アプリからの登録を使わず運用側で鍵を登録する場合に使います。
+
+インスタンスはクライアントの下ではなくテナントの直下に置いています。運用で手元にあるのは利用者・鍵・証明書のシリアルで、どのクライアントのものかは調べるまで分からないためです。`id` は UUID で、テナント内で 1 件に決まります。
+
+検索条件（すべて任意、組み合わせ可）:
+
+| パラメータ | 使う場面 |
+|---|---|
+| `client_id` | クライアントで絞る |
+| `user_id` | 利用者の問い合わせ（その人の端末の一覧） |
+| `status` / `revocation_reason` | 有効なもの、失効したものと理由（`active` / `revoked`、`operator` / `superseded`） |
+| `certificate_serial` | 証明書の漏えい時に、その証明書を経由して登録したインスタンスを探す（`attestation_evidence` のチェーンのシリアル。大文字でも可） |
+| `platform` | 証明の種類（`android-key-attestation` / `ios-app-attest` など） |
+| `instance_key_thumbprint` | 鍵（RFC 7638 サムプリント）からインスタンスを引く |
+| `from` / `to` | 登録日時の範囲 |
+| `limit` / `offset` | ページング。レスポンスに `total_count` が付きます |
+
+取りうる値が決まっている条件（`status`、`revocation_reason`、UUID の `user_id`）に合わない値は 400 を返します。空の一覧を返すと「該当なし」と読み違えるためです。
 
 ---
 
@@ -348,6 +366,15 @@ canonical_jwk = RFC 7638 thumbprint の入力（必須メンバのみ・辞書�
 `nonce` がチャレンジだけだと、漏れた ID トークンと**攻撃者自身の本物の端末**の証明を組み合わせて、被害者の利用者に攻撃者の鍵を束縛できてしまいます。鍵を含めた `request_hash` なら、被害者の端末の中にある鍵が無い限り一致しません。
 :::
 
+### 1 人の利用者に有効なインスタンスは 1 つ
+
+登録が成功すると、**同じ利用者の同じクライアントの、他の有効なインスタンスを失効させます**。失効と新しいインスタンスの登録は同じトランザクションで行い、失効したインスタンスのトークンも削除します。
+
+- 端末が同じかどうかは判定しません。インスタンスは端末ではなく、鍵の登録の単位です。アプリを入れ直しても、2 台目の端末に入れても、前のインスタンスは失効します
+- 失効したインスタンスは `revocation_reason: superseded` として残り、失効したインスタンスごとにセキュリティイベント `client_instance_revoked`（`superseded_by` に新しいインスタンス）を出します。利用者への通知に使えます
+- 旧い端末のアプリは次のリクエストで `401 invalid_client_attestation` を受け取ります。登録し直すには鍵を作り直してログインからやり直します（失効した鍵は再登録できません）。そうすると今度は新しい端末の方が失効します
+- 同じ利用者の登録が同時に 2 件走っても、有効なインスタンスが 2 つ残ることはありません。データベースの一意制約で後の方が失敗します
+
 ### 1 つの鍵は 1 つのインスタンスだけ
 
 同じテナントの中では、1 つの鍵を登録できるインスタンスは 1 つだけです。クライアントが違っても、失効したインスタンスの鍵でも、同じ鍵はもう一度登録できません（削除したインスタンスの鍵は除きます）。アプリからの登録でも管理API からの登録でも同じです。
@@ -484,16 +511,16 @@ iOS App Attest では `key` を持たず、`app` が `{ "app_id": "...", "enviro
 
 インスタンスを止める操作と、消す操作は別です。
 
-| | 失効（`POST .../instances/{id}/revoke`） | 削除（`DELETE .../instances/{id}`） |
+| | 失効（`POST .../client-instances/{id}/revoke`） | 削除（`DELETE .../client-instances/{id}`） |
 |---|---|---|
 | 意味 | 信頼をやめる | 記録を消す |
-| インスタンスの記録 | 残る（`status: revoked`、`revoked_at`、登録時の証跡） | 消える |
+| インスタンスの記録 | 残る（`status: revoked`、`revoked_at`、`revocation_reason`、登録時の証跡） | 消える |
 | その鍵での認証 | 401 `invalid_client_attestation` | 401 `invalid_client_attestation` |
 | 発行済みのトークン | 削除 | 削除 |
 | 同じ鍵の再登録 | できない | できる（別のインスタンスになり、旧いトークンは引き継がない） |
 | 使う場面 | 端末の紛失、鍵の漏えい、不正の発覚 | 誤って登録したものの片付け、保持期間を過ぎた記録の整理 |
 
-端末を止めたいときは失効を使います。記録が残るので、誰のどの端末を、いつ止めたかを後から追えます。
+端末を止めたいときは失効を使います。記録が残るので、誰のどの端末を、いつ、なぜ止めたかを後から追えます。`revocation_reason` は、管理API からの失効が `operator`、同じ利用者の新しい登録に置き換わった失効が `superseded` です。
 
 **失効は元に戻せません。** 失効したインスタンスを有効に戻す操作はありません。すでに失効しているインスタンスをもう一度失効させようとすると 400 を返し、最初の `revoked_at` を保ちます。見つかった端末をもう一度信頼するときは、アプリが新しい鍵を作り、ログインから登録し直します。鍵が手元を離れていたあいだに何があったかは分からないため、ログインとプラットフォーム証明で確かめ直すところから始めます。
 

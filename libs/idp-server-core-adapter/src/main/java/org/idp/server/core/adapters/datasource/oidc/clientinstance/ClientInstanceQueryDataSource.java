@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
+import org.idp.server.core.openid.clientinstance.ClientInstanceQueries;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
@@ -36,6 +37,9 @@ public class ClientInstanceQueryDataSource implements ClientInstanceQueryReposit
   @Override
   public ClientInstance find(
       Tenant tenant, RequestedClientId requestedClientId, ClientInstanceIdentifier identifier) {
+    if (!identifier.isUuid()) {
+      return new ClientInstance();
+    }
     Map<String, String> result = executor.selectOne(tenant, requestedClientId, identifier);
 
     if (result == null || result.isEmpty()) {
@@ -57,16 +61,33 @@ public class ClientInstanceQueryDataSource implements ClientInstanceQueryReposit
   }
 
   @Override
-  public List<ClientInstance> findList(
-      Tenant tenant, RequestedClientId requestedClientId, int limit, int offset) {
-    List<Map<String, String>> results =
-        executor.selectList(tenant, requestedClientId, limit, offset);
+  public ClientInstance find(Tenant tenant, ClientInstanceIdentifier identifier) {
+    if (!identifier.isUuid()) {
+      return new ClientInstance();
+    }
+    Map<String, String> result = executor.selectOne(tenant, identifier);
+    if (result == null || result.isEmpty()) {
+      return new ClientInstance();
+    }
+    return ModelConverter.convert(result);
+  }
 
+  @Override
+  public List<ClientInstance> findList(Tenant tenant, ClientInstanceQueries queries) {
+    List<Map<String, String>> results = executor.selectList(tenant, queries);
     if (results == null || results.isEmpty()) {
       return List.of();
     }
-
     return results.stream().map(ModelConverter::convert).toList();
+  }
+
+  @Override
+  public long findTotalCount(Tenant tenant, ClientInstanceQueries queries) {
+    Map<String, String> result = executor.selectCount(tenant, queries);
+    if (result == null || result.isEmpty()) {
+      return 0;
+    }
+    return Long.parseLong(result.get("count"));
   }
 
   @Override

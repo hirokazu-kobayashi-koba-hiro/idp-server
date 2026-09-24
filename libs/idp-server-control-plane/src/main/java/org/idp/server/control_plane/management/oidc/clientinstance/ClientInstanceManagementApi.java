@@ -25,7 +25,7 @@ import org.idp.server.control_plane.base.definition.DefaultAdminPermission;
 import org.idp.server.control_plane.management.oidc.clientinstance.io.ClientInstanceManagementResponse;
 import org.idp.server.control_plane.management.oidc.clientinstance.io.ClientInstanceRegistrationRequest;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
-import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.clientinstance.ClientInstanceQueries;
 import org.idp.server.platform.exception.UnSupportedException;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
@@ -59,23 +59,20 @@ public interface ClientInstanceManagementApi {
   ClientInstanceManagementResponse create(
       AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
       ClientInstanceRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun);
 
+  /** Searches the instances of every client of the tenant; {@code client_id} is a condition. */
   ClientInstanceManagementResponse findList(
       AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
-      int limit,
-      int offset,
+      ClientInstanceQueries queries,
       RequestAttributes requestAttributes);
 
   ClientInstanceManagementResponse get(
       AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
       ClientInstanceIdentifier identifier,
       RequestAttributes requestAttributes);
 
@@ -87,7 +84,6 @@ public interface ClientInstanceManagementApi {
   ClientInstanceManagementResponse revoke(
       AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
       ClientInstanceIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun);
@@ -95,7 +91,6 @@ public interface ClientInstanceManagementApi {
   ClientInstanceManagementResponse delete(
       AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
       ClientInstanceIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun);

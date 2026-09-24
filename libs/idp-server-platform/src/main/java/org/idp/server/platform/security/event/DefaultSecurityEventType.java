@@ -162,6 +162,8 @@ public enum DefaultSecurityEventType {
       "Client Instance registration ticket was issued", false, true),
   client_instance_registration_success("Client Instance key was registered"),
   client_instance_registration_failure("Client Instance registration was rejected"),
+  // Recorded apart from the registration: the user's instance on another device stopped working.
+  client_instance_revoked("Client Instance was revoked"),
 
   // CIBA device notification
   authentication_device_notification_success("Push notification was delivered to user device"),

@@ -18,6 +18,7 @@ package org.idp.server.usecases.application.enduser;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationApi;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationEventPublisher;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationProtocol;
@@ -107,6 +108,16 @@ public class ClientInstanceRegistrationEntryService implements ClientInstanceReg
         response.instanceIdentifier(),
         response.userId(),
         requestAttributes);
+
+    for (ClientInstanceIdentifier superseded : response.supersededInstances()) {
+      eventPublisher.publishRevoked(
+          tenant,
+          response.requestedClientId(),
+          superseded,
+          response.instanceIdentifier(),
+          response.userId(),
+          requestAttributes);
+    }
 
     return response;
   }

@@ -26,10 +26,13 @@ import org.idp.server.control_plane.management.oidc.clientinstance.io.ClientInst
 import org.idp.server.control_plane.management.oidc.clientinstance.io.ClientInstanceRegistrationRequest;
 import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
+import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceStatus;
 import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.identity.User;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.oauth.configuration.exception.ClientConfigurationNotFoundException;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.platform.date.LocalDateTimeParser;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -46,12 +49,15 @@ public class ClientInstanceRegistrationService
 
   private final ClientInstanceQueryRepository queryRepository;
   private final ClientInstanceCommandRepository commandRepository;
+  private final ClientConfigurationQueryRepository clientConfigurationQueryRepository;
 
   public ClientInstanceRegistrationService(
       ClientInstanceQueryRepository queryRepository,
-      ClientInstanceCommandRepository commandRepository) {
+      ClientInstanceCommandRepository commandRepository,
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository) {
     this.queryRepository = queryRepository;
     this.commandRepository = commandRepository;
+    this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
   }
 
   @Override
@@ -64,11 +70,14 @@ public class ClientInstanceRegistrationService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
+    throwExceptionIfClientIsUnknown(tenant, request);
+
     Map<String, Object> instanceKey = request.instanceKey();
     throwExceptionIfInvalidInstanceKey(instanceKey);
     throwExceptionIfKeyIsAlreadyRegistered(tenant, instanceKey);
 
     String id = request.id() != null ? request.id() : UUID.randomUUID().toString();
+    throwExceptionIfIdIsUnusable(tenant, new ClientInstanceIdentifier(id));
     LocalDateTime expiresAt =
         request.expiresAt() != null ? LocalDateTimeParser.parse(request.expiresAt()) : null;
 
@@ -100,6 +109,33 @@ public class ClientInstanceRegistrationService
     return new ClientInstanceManagementResponse(
         ClientInstanceManagementStatus.CREATED,
         Map.of("result", clientInstance.toMap(), "dry_run", false));
+  }
+
+  /** The client comes from the body: the path no longer names one. */
+  private void throwExceptionIfClientIsUnknown(
+      Tenant tenant, ClientInstanceRegistrationRequest request) {
+    if (!request.hasClientId()) {
+      throw new InvalidRequestException("client_id is required");
+    }
+    try {
+      clientConfigurationQueryRepository.get(tenant, request.requestedClientId());
+    } catch (ClientConfigurationNotFoundException e) {
+      throw new InvalidRequestException(
+          "client_id is not a client of this tenant: " + request.requestedClientId().value());
+    }
+  }
+
+  /**
+   * An instance is addressed by its identifier alone, so a caller supplied one has to be a UUID not
+   * taken yet — by an instance of any client.
+   */
+  private void throwExceptionIfIdIsUnusable(Tenant tenant, ClientInstanceIdentifier identifier) {
+    if (!identifier.isUuid()) {
+      throw new InvalidRequestException("id must be a UUID");
+    }
+    if (queryRepository.find(tenant, identifier).exists()) {
+      throw new InvalidRequestException("id is already used by another instance");
+    }
   }
 
   /**

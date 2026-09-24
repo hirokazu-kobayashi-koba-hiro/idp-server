@@ -10,9 +10,12 @@
 --   header kid (= client_instance.id).
 --
 -- Design:
---   - id: instance identifier, and the kid that the Client Attestation JWT carries to
---     select which registered key to verify with. Two paths assign it, and they differ
---     in who chooses the value:
+--   - id: instance identifier (UUID, the primary key like the other entity tables), and
+--     the kid that the Client Attestation JWT carries to select which registered key to
+--     verify with. An operator looks an instance up by id alone, without knowing which
+--     client it belongs to; authentication still matches client_id as well, so the key of
+--     one client's instance never authenticates another client. Two paths assign it, and
+--     they differ in who chooses the value:
 --       * the registration endpoint (V0_14_0_3) issues it together with the challenge
 --         and keeps it server-side, so the registration request cannot choose it
 --       * the management API takes a caller supplied id, and only generates one when
@@ -24,7 +27,10 @@
 --     new instance. The scope is the tenant, not the table: a constraint across tenants would let
 --     one tenant learn of, or block, the keys of another.
 --   - status: active / revoked. Revocation applies immediately because
---     every authentication resolves the key from this table.
+--     every authentication resolves the key from this table. A revoked row is kept: it
+--     holds the key taken, and records what was revoked, when and why.
+--   - revocation_reason: why the instance was revoked — operator (the management API) or
+--     superseded (the same user registered a newer instance of the client).
 --   - attestation_evidence: verification result of the platform attestation
 --     (e.g. Play Integrity verdict, App Attest result) kept for audit and
 --     risk decisions.
@@ -37,7 +43,7 @@
 
 CREATE TABLE client_instance
 (
-    id                   VARCHAR(255)            NOT NULL,
+    id                   UUID                    NOT NULL,
     tenant_id            UUID                    NOT NULL,
     client_id            VARCHAR(255)            NOT NULL,
     instance_key         JSONB                   NOT NULL,
@@ -50,7 +56,8 @@ CREATE TABLE client_instance
     updated_at           TIMESTAMP DEFAULT now() NOT NULL,
     expires_at           TIMESTAMP,
     revoked_at           TIMESTAMP,
-    PRIMARY KEY (tenant_id, client_id, id),
+    revocation_reason    VARCHAR(32),
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 );
 
@@ -69,6 +76,13 @@ CREATE UNIQUE INDEX uq_client_instance_tenant_key_thumbprint
 
 CREATE INDEX idx_client_instance_tenant_client_user
     ON client_instance (tenant_id, client_id, user_id);
+
+-- A user holds at most one active instance of a client. Registering a new one revokes the
+-- others in the same transaction; this index is what keeps two registrations running at once
+-- from both leaving an active instance, the later one failing instead.
+CREATE UNIQUE INDEX uq_client_instance_active_user
+    ON client_instance (tenant_id, client_id, user_id)
+    WHERE status = 'active' AND user_id IS NOT NULL;
 
 -- The management list API pages by (tenant_id, client_id) ordered by created_at.
 -- Without this index the ordering has to be produced by sorting every instance of the

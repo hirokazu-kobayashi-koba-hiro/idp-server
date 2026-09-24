@@ -16,16 +16,16 @@
 
 package org.idp.server.control_plane.management.oidc.clientinstance.io;
 
+import java.util.HashMap;
 import java.util.Map;
-import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.clientinstance.ClientInstanceQueries;
 
-/** Request wrapper for client instance list operations. */
-public record ClientInstanceFindListRequest(
-    RequestedClientId requestedClientId, int limit, int offset)
+/** Request wrapper for the client instance search across the clients of a tenant. */
+public record ClientInstanceFindListRequest(ClientInstanceQueries queries)
     implements ClientInstanceManagementRequest {
 
   @Override
   public Map<String, Object> toMap() {
-    return Map.of("client_id", requestedClientId.value(), "limit", limit, "offset", offset);
+    return new HashMap<>(queries.toMap());
   }
 }

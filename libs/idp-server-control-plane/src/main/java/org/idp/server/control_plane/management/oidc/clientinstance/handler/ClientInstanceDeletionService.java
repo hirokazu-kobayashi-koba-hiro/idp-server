@@ -62,8 +62,7 @@ public class ClientInstanceDeletionService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    ClientInstance clientInstance =
-        queryRepository.find(tenant, request.requestedClientId(), request.identifier());
+    ClientInstance clientInstance = queryRepository.find(tenant, request.identifier());
 
     if (!clientInstance.exists()) {
       throw new ResourceNotFoundException(
@@ -85,8 +84,9 @@ public class ClientInstanceDeletionService
     }
 
     tokenCommandRepository.deleteByClientInstance(
-        tenant, request.requestedClientId(), request.identifier());
-    commandRepository.delete(tenant, request.requestedClientId(), request.identifier());
+        tenant, clientInstance.requestedClientId(), clientInstance.identifier());
+    commandRepository.delete(
+        tenant, clientInstance.requestedClientId(), clientInstance.identifier());
 
     return new ClientInstanceManagementResponse(
         ClientInstanceManagementStatus.NO_CONTENT, Map.of());

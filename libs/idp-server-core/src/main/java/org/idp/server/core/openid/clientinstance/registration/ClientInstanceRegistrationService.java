@@ -16,11 +16,14 @@
 
 package org.idp.server.core.openid.clientinstance.registration;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
+import org.idp.server.core.openid.clientinstance.ClientInstanceRevocationReason;
 import org.idp.server.core.openid.clientinstance.ClientInstanceStatus;
 import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.clientinstance.registration.verifier.ClientInstanceRegistrationIdTokenVerifier;
@@ -31,6 +34,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -51,6 +55,12 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  *   <li>The platform attestation must bind the challenge, the instance key and the application
  *       identity ({@link PlatformAttestationVerifier})
  * </ol>
+ *
+ * <p>A user holds one active instance of a client. The new instance takes the place of the user's
+ * others, which are revoked in the same transaction, with their tokens deleted. There is no way to
+ * tell whether it is the same device: an instance is a registration of a key, not a device. Two
+ * registrations running at once cannot both leave an active instance; the database constrains that,
+ * and the later one fails.
  */
 public class ClientInstanceRegistrationService {
 
@@ -59,6 +69,7 @@ public class ClientInstanceRegistrationService {
   ClientInstanceRegistrationChallengeRepository challengeRepository;
   ClientInstanceQueryRepository clientInstanceQueryRepository;
   ClientInstanceCommandRepository clientInstanceCommandRepository;
+  OAuthTokenCommandRepository oAuthTokenCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   UserQueryRepository userQueryRepository;
@@ -69,6 +80,7 @@ public class ClientInstanceRegistrationService {
       ClientInstanceRegistrationChallengeRepository challengeRepository,
       ClientInstanceQueryRepository clientInstanceQueryRepository,
       ClientInstanceCommandRepository clientInstanceCommandRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
@@ -78,6 +90,7 @@ public class ClientInstanceRegistrationService {
     this.challengeRepository = challengeRepository;
     this.clientInstanceQueryRepository = clientInstanceQueryRepository;
     this.clientInstanceCommandRepository = clientInstanceCommandRepository;
+    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
@@ -86,7 +99,7 @@ public class ClientInstanceRegistrationService {
     this.verifiers = verifiers;
   }
 
-  public ClientInstance register(
+  public ClientInstanceRegistrationResult register(
       Tenant tenant,
       String challengeValue,
       Map<String, Object> instanceKey,
@@ -140,6 +153,8 @@ public class ClientInstanceRegistrationService {
             null,
             null);
 
+    // Before the insert: the database admits one active instance per user and client.
+    List<ClientInstance> superseded = supersedeActiveInstancesOf(tenant, clientInstance);
     clientInstanceCommandRepository.register(tenant, clientInstance);
 
     log.info(
@@ -148,7 +163,35 @@ public class ClientInstanceRegistrationService {
         challenge.instanceId(),
         user.sub());
 
-    return clientInstance;
+    return new ClientInstanceRegistrationResult(clientInstance, superseded);
+  }
+
+  /**
+   * Revokes the user's other active instances of the client, and deletes their tokens: the device
+   * the user moved away from stops at once, and its refresh tokens cannot follow.
+   */
+  private List<ClientInstance> supersedeActiveInstancesOf(
+      Tenant tenant, ClientInstance newInstance) {
+    List<ClientInstance> actives =
+        clientInstanceQueryRepository.findActiveListByUser(
+            tenant, newInstance.requestedClientId(), newInstance.userId());
+
+    LocalDateTime revokedAt = SystemDateTime.now().truncatedTo(ChronoUnit.MICROS);
+    for (ClientInstance active : actives) {
+      clientInstanceCommandRepository.update(
+          tenant, active.revoke(revokedAt, ClientInstanceRevocationReason.superseded));
+      oAuthTokenCommandRepository.deleteByClientInstance(
+          tenant, active.requestedClientId(), active.identifier());
+    }
+
+    if (!actives.isEmpty()) {
+      log.info(
+          "Client instances superseded: client_id={}, user={}, count={}",
+          newInstance.clientId(),
+          newInstance.userId(),
+          actives.size());
+    }
+    return actives;
   }
 
   /**

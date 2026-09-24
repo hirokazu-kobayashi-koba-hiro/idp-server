@@ -18,15 +18,13 @@ package org.idp.server.control_plane.management.oidc.clientinstance.io;
 
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
-import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 
-/** Request wrapper for client instance get / delete operations. */
-public record ClientInstanceFindRequest(
-    RequestedClientId requestedClientId, ClientInstanceIdentifier identifier)
+/** Request wrapper for client instance get / revoke / delete operations. */
+public record ClientInstanceFindRequest(ClientInstanceIdentifier identifier)
     implements ClientInstanceManagementRequest {
 
   @Override
   public Map<String, Object> toMap() {
-    return Map.of("client_id", requestedClientId.value(), "id", identifier.value());
+    return Map.of("id", identifier.value() != null ? identifier.value() : "");
   }
 }

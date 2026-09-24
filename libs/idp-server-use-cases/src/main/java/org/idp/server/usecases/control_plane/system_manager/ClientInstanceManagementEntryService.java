@@ -31,8 +31,9 @@ import org.idp.server.control_plane.management.oidc.clientinstance.handler.Clien
 import org.idp.server.control_plane.management.oidc.clientinstance.io.*;
 import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
+import org.idp.server.core.openid.clientinstance.ClientInstanceQueries;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
-import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
@@ -51,6 +52,7 @@ public class ClientInstanceManagementEntryService implements ClientInstanceManag
       TenantQueryRepository tenantQueryRepository,
       ClientInstanceCommandRepository clientInstanceCommandRepository,
       ClientInstanceQueryRepository clientInstanceQueryRepository,
+      ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       OAuthTokenCommandRepository oAuthTokenCommandRepository,
       AuditLogPublisher auditLogPublisher) {
 
@@ -58,7 +60,9 @@ public class ClientInstanceManagementEntryService implements ClientInstanceManag
     services.put(
         "create",
         new ClientInstanceRegistrationService(
-            clientInstanceQueryRepository, clientInstanceCommandRepository));
+            clientInstanceQueryRepository,
+            clientInstanceCommandRepository,
+            clientConfigurationQueryRepository));
     services.put("findList", new ClientInstanceFindListService(clientInstanceQueryRepository));
     services.put("get", new ClientInstanceFindService(clientInstanceQueryRepository));
     services.put(
@@ -82,19 +86,12 @@ public class ClientInstanceManagementEntryService implements ClientInstanceManag
   public ClientInstanceManagementResponse create(
       AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
       ClientInstanceRegistrationRequest request,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    ClientInstanceManagementResult result =
-        handler.handle(
-            "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
-
-    AuditLog auditLog = AuditLogCreator.create(result.context());
-    auditLogPublisher.publish(auditLog);
-
-    return result.toResponse(dryRun);
+    return handle(
+        "create", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
   }
 
   @Override
@@ -102,21 +99,16 @@ public class ClientInstanceManagementEntryService implements ClientInstanceManag
   public ClientInstanceManagementResponse findList(
       AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
-      int limit,
-      int offset,
+      ClientInstanceQueries queries,
       RequestAttributes requestAttributes) {
 
-    ClientInstanceFindListRequest request =
-        new ClientInstanceFindListRequest(requestedClientId, limit, offset);
-    ClientInstanceManagementResult result =
-        handler.handle(
-            "findList", authenticationContext, tenantIdentifier, request, requestAttributes, false);
-
-    AuditLog auditLog = AuditLogCreator.create(result.context());
-    auditLogPublisher.publish(auditLog);
-
-    return result.toResponse(false);
+    return handle(
+        "findList",
+        authenticationContext,
+        tenantIdentifier,
+        new ClientInstanceFindListRequest(queries),
+        requestAttributes,
+        false);
   }
 
   @Override
@@ -124,57 +116,63 @@ public class ClientInstanceManagementEntryService implements ClientInstanceManag
   public ClientInstanceManagementResponse get(
       AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
       ClientInstanceIdentifier identifier,
       RequestAttributes requestAttributes) {
 
-    ClientInstanceFindRequest request =
-        new ClientInstanceFindRequest(requestedClientId, identifier);
-    ClientInstanceManagementResult result =
-        handler.handle(
-            "get", authenticationContext, tenantIdentifier, request, requestAttributes, false);
-
-    AuditLog auditLog = AuditLogCreator.create(result.context());
-    auditLogPublisher.publish(auditLog);
-
-    return result.toResponse(false);
+    return handle(
+        "get",
+        authenticationContext,
+        tenantIdentifier,
+        new ClientInstanceFindRequest(identifier),
+        requestAttributes,
+        false);
   }
 
   @Override
   public ClientInstanceManagementResponse revoke(
       AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
       ClientInstanceIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    ClientInstanceFindRequest request =
-        new ClientInstanceFindRequest(requestedClientId, identifier);
-    ClientInstanceManagementResult result =
-        handler.handle(
-            "revoke", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
-
-    AuditLog auditLog = AuditLogCreator.create(result.context());
-    auditLogPublisher.publish(auditLog);
-
-    return result.toResponse(dryRun);
+    return handle(
+        "revoke",
+        authenticationContext,
+        tenantIdentifier,
+        new ClientInstanceFindRequest(identifier),
+        requestAttributes,
+        dryRun);
   }
 
   @Override
   public ClientInstanceManagementResponse delete(
       AdminAuthenticationContext authenticationContext,
       TenantIdentifier tenantIdentifier,
-      RequestedClientId requestedClientId,
       ClientInstanceIdentifier identifier,
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    ClientInstanceFindRequest request =
-        new ClientInstanceFindRequest(requestedClientId, identifier);
+    return handle(
+        "delete",
+        authenticationContext,
+        tenantIdentifier,
+        new ClientInstanceFindRequest(identifier),
+        requestAttributes,
+        dryRun);
+  }
+
+  private ClientInstanceManagementResponse handle(
+      String method,
+      AdminAuthenticationContext authenticationContext,
+      TenantIdentifier tenantIdentifier,
+      ClientInstanceManagementRequest request,
+      RequestAttributes requestAttributes,
+      boolean dryRun) {
+
     ClientInstanceManagementResult result =
         handler.handle(
-            "delete", authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
+            method, authenticationContext, tenantIdentifier, request, requestAttributes, dryRun);
 
     AuditLog auditLog = AuditLogCreator.create(result.context());
     auditLogPublisher.publish(auditLog);

@@ -408,7 +408,7 @@ curl -sk -X POST "${ISSUER}/v1/tokens" \
 ログイン1回で、登録からトークン取得までが完結しました。登録したインスタンスはログインした利用者に束縛されています。
 
 ```bash
-curl -sk "${CLIENTS_URL}/${SELF_SIGNED_CLIENT}/instances" \
+curl -sk "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/client-instances?client_id=${SELF_SIGNED_CLIENT}" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" | jq '.list[] | {id, user_id, status}'
 ```
 

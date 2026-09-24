@@ -25,6 +25,7 @@ import org.idp.server.core.openid.identity.repository.UserQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
 import org.idp.server.core.openid.plugin.clientinstance.PlatformAttestationVerifierPluginLoader;
+import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.datasource.cache.CacheStore;
 import org.idp.server.platform.dependency.ApplicationComponentContainer;
 import org.idp.server.platform.dependency.protocol.ProtocolProvider;
@@ -51,6 +52,7 @@ public class DefaultClientInstanceRegistrationProtocolProvider
             challengeRepository,
             container.resolve(ClientInstanceQueryRepository.class),
             container.resolve(ClientInstanceCommandRepository.class),
+            container.resolve(OAuthTokenCommandRepository.class),
             clientConfigurationQueryRepository,
             container.resolve(AuthorizationServerConfigurationQueryRepository.class),
             userQueryRepository,

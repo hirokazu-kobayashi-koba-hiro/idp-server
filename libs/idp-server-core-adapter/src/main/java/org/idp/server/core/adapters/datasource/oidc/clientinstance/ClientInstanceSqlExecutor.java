@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
+import org.idp.server.core.openid.clientinstance.ClientInstanceQueries;
 import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -36,8 +37,11 @@ public interface ClientInstanceSqlExecutor {
   Map<String, String> selectOne(
       Tenant tenant, RequestedClientId requestedClientId, ClientInstanceIdentifier identifier);
 
-  List<Map<String, String>> selectList(
-      Tenant tenant, RequestedClientId requestedClientId, int limit, int offset);
+  Map<String, String> selectOne(Tenant tenant, ClientInstanceIdentifier identifier);
+
+  List<Map<String, String>> selectList(Tenant tenant, ClientInstanceQueries queries);
+
+  Map<String, String> selectCount(Tenant tenant, ClientInstanceQueries queries);
 
   Map<String, String> selectOneByThumbprint(Tenant tenant, ClientInstanceThumbprint thumbprint);
 

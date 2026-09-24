@@ -50,6 +50,7 @@ public class ClientInstance {
   LocalDateTime updatedAt;
   LocalDateTime expiresAt;
   LocalDateTime revokedAt;
+  String revocationReason;
 
   public ClientInstance() {}
 
@@ -66,6 +67,37 @@ public class ClientInstance {
       LocalDateTime updatedAt,
       LocalDateTime expiresAt,
       LocalDateTime revokedAt) {
+    this(
+        id,
+        tenantId,
+        clientId,
+        instanceKey,
+        status,
+        attestationEvidence,
+        deviceId,
+        userId,
+        createdAt,
+        updatedAt,
+        expiresAt,
+        revokedAt,
+        null);
+  }
+
+  public ClientInstance(
+      String id,
+      String tenantId,
+      String clientId,
+      Map<String, Object> instanceKey,
+      String status,
+      Map<String, Object> attestationEvidence,
+      String deviceId,
+      String userId,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      LocalDateTime expiresAt,
+      LocalDateTime revokedAt,
+      String revocationReason) {
+    this.revocationReason = revocationReason;
     this.id = id;
     this.tenantId = tenantId;
     this.clientId = clientId;
@@ -180,6 +212,10 @@ public class ClientInstance {
     return revokedAt;
   }
 
+  public ClientInstanceRevocationReason revocationReason() {
+    return ClientInstanceRevocationReason.of(revocationReason);
+  }
+
   public boolean isRevoked() {
     return revokedAt != null || status().isRevoked();
   }
@@ -189,7 +225,8 @@ public class ClientInstance {
    * instance back to active, and its key stays registered so it cannot be registered again. A
    * device that is to be trusted again registers a new key, with a fresh login and attestation.
    */
-  public ClientInstance revoke(LocalDateTime revokedAt) {
+  public ClientInstance revoke(
+      LocalDateTime revokedAt, ClientInstanceRevocationReason revocationReason) {
     return new ClientInstance(
         id,
         tenantId,
@@ -202,7 +239,8 @@ public class ClientInstance {
         createdAt,
         revokedAt,
         expiresAt,
-        revokedAt);
+        revokedAt,
+        revocationReason.name());
   }
 
   /** Returns true when this instance may be used for client authentication. */
@@ -241,6 +279,7 @@ public class ClientInstance {
     if (updatedAt != null) map.put("updated_at", updatedAt.toString());
     if (expiresAt != null) map.put("expires_at", expiresAt.toString());
     if (revokedAt != null) map.put("revoked_at", revokedAt.toString());
+    if (revocationReason().exists()) map.put("revocation_reason", revocationReason);
     return map;
   }
 }

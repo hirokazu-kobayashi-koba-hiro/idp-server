@@ -48,8 +48,7 @@ public class ClientInstanceFindService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    ClientInstance clientInstance =
-        queryRepository.find(tenant, request.requestedClientId(), request.identifier());
+    ClientInstance clientInstance = queryRepository.find(tenant, request.identifier());
 
     if (!clientInstance.exists()) {
       throw new ResourceNotFoundException(

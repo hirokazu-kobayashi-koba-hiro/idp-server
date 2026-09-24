@@ -16,10 +16,12 @@
 
 package org.idp.server.core.openid.clientinstance.registration.handler.io;
 
+import java.util.List;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationChallenge;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationResult;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 
 /**
@@ -36,6 +38,8 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
  * @param auditReason why a request was rejected. Never serialized — {@code contents} says the same
  *     thing for every rejection. This carries the reason back to the use case so the security event
  *     can record it.
+ * @param supersededInstances the user's instances a registration revoked, for the security events
+ *     that record them. Never serialized: the instances belong to other devices of the user
  */
 public record ClientInstanceRegistrationResponse(
     int statusCode,
@@ -43,7 +47,8 @@ public record ClientInstanceRegistrationResponse(
     RequestedClientId requestedClientId,
     ClientInstanceIdentifier instanceIdentifier,
     String userId,
-    String auditReason) {
+    String auditReason,
+    List<ClientInstanceIdentifier> supersededInstances) {
 
   /** The ticket, plus the instance identifier it reserves. */
   public static ClientInstanceRegistrationResponse challengeIssued(
@@ -57,18 +62,22 @@ public record ClientInstanceRegistrationResponse(
         new RequestedClientId(challenge.clientId()),
         new ClientInstanceIdentifier(challenge.instanceId()),
         null,
-        null);
+        null,
+        List.of());
   }
 
   /** The instance id was already returned with the challenge, so the body carries no secret. */
-  public static ClientInstanceRegistrationResponse registered(ClientInstance clientInstance) {
+  public static ClientInstanceRegistrationResponse registered(
+      ClientInstanceRegistrationResult result) {
+    ClientInstance clientInstance = result.registered();
     return new ClientInstanceRegistrationResponse(
         201,
         Map.of("instance_id", clientInstance.id()),
         new RequestedClientId(clientInstance.clientId()),
         clientInstance.identifier(),
         clientInstance.userId(),
-        null);
+        null,
+        result.superseded().stream().map(ClientInstance::identifier).toList());
   }
 
   /**
@@ -85,7 +94,8 @@ public record ClientInstanceRegistrationResponse(
         new RequestedClientId(),
         new ClientInstanceIdentifier(),
         null,
-        auditReason);
+        auditReason,
+        List.of());
   }
 
   /**
@@ -102,7 +112,8 @@ public record ClientInstanceRegistrationResponse(
         new RequestedClientId(),
         new ClientInstanceIdentifier(),
         null,
-        auditReason);
+        auditReason,
+        List.of());
   }
 
   public boolean isSuccess() {

@@ -44,7 +44,7 @@ const publicJwkOf = (privateJwk) => {
 };
 
 const instancesUrl = () =>
-  `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${clientId}/instances`;
+  `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/client-instances`;
 
 /** Client Instance role: self-signs the Client Attestation JWT with its own CIK. */
 const createSelfSignedAttestationJwt = ({
@@ -95,7 +95,7 @@ const registerInstance = async (jwk, id = uuidv4()) => {
   const response = await postWithJson({
     url: instancesUrl(),
     headers: managementHeaders,
-    body: { id, instance_key: publicJwkOf(jwk) },
+    body: { id, client_id: clientId, instance_key: publicJwkOf(jwk) },
   });
   expect(response.status).toBe(201);
   return id;
@@ -141,7 +141,10 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11 §10.8: self-signed 
   describe("Client Instance management API", () => {
 
     it("registers a Client Instance Key and returns it in the instance list", async () => {
-      const response = await get({ url: instancesUrl(), headers: managementHeaders });
+      const response = await get({
+        url: `${instancesUrl()}?client_id=${clientId}`,
+        headers: managementHeaders,
+      });
       expect(response.status).toBe(200);
       const ids = response.data.list.map((instance) => instance.id);
       expect(ids).toContain(instanceId);
@@ -152,7 +155,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11 §10.8: self-signed 
         url: instancesUrl(),
         headers: managementHeaders,
         // instanceJwk still holds the private component d
-        body: { id: uuidv4(), instance_key: instanceJwk },
+        body: { id: uuidv4(), client_id: clientId, instance_key: instanceJwk },
       });
       expect(response.status).toBe(400);
       expect(response.data.error).toBe("invalid_request");
@@ -168,7 +171,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11 §10.8: self-signed 
       const response = await postWithJson({
         url: instancesUrl(),
         headers: managementHeaders,
-        body: { id: uuidv4(), instance_key: publicJwkOf(instanceJwk) },
+        body: { id: uuidv4(), client_id: clientId, instance_key: publicJwkOf(instanceJwk) },
       });
       expect(response.status).toBe(400);
       expect(response.data.error).toBe("invalid_request");
@@ -195,9 +198,9 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11 §10.8: self-signed 
       expect(otherClientResponse.status).toBe(201);
 
       const response = await postWithJson({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${otherClientId}/instances`,
+        url: instancesUrl(),
         headers: managementHeaders,
-        body: { id: uuidv4(), instance_key: publicJwkOf(instanceJwk) },
+        body: { id: uuidv4(), client_id: otherClientId, instance_key: publicJwkOf(instanceJwk) },
       });
       expect(response.status).toBe(400);
       expect(response.data.error_description).toContain("already registered");

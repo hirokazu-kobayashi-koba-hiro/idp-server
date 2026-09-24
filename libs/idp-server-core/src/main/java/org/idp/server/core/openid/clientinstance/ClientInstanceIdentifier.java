@@ -17,6 +17,7 @@
 package org.idp.server.core.openid.clientinstance;
 
 import java.util.Objects;
+import org.idp.server.platform.uuid.UuidMatcher;
 
 /**
  * Identifier of a Client Instance.
@@ -41,6 +42,14 @@ public class ClientInstanceIdentifier {
 
   public boolean exists() {
     return Objects.nonNull(value) && !value.isBlank();
+  }
+
+  /**
+   * An instance identifier is a UUID. A presented value that is not one — a {@code kid}, a path
+   * parameter — names no instance, and is not to reach a query that would fail on it.
+   */
+  public boolean isUuid() {
+    return exists() && value.length() == 36 && UuidMatcher.isValid(value);
   }
 
   @Override

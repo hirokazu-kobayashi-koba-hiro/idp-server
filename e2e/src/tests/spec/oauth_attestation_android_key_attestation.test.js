@@ -490,7 +490,7 @@ describe("Android key attestation (Issue #1521)", () => {
       expect(registration.status).toBe(201);
 
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${tenantId}/clients/${clientId}/instances`,
+        url: `${backendUrl}/v1/management/tenants/${tenantId}/client-instances?client_id=${clientId}`,
         headers: { Authorization: `Bearer ${systemAccessToken}` },
       });
       expect(listResponse.status).toBe(200);
@@ -515,6 +515,46 @@ describe("Android key attestation (Issue #1521)", () => {
         expect(certificate.not_after).toBeDefined();
         expect(certificate.sha256).toMatch(/^[0-9a-f]{64}$/);
       }
+    }, 120000);
+
+    it("is found by the serial of a certificate it was attested through, for revoking in bulk", async () => {
+      const { challenge } = await requestChallenge();
+      const instanceKey = await generateInstanceKey();
+      const registration = await register({ challenge, instanceKey });
+      expect(registration.status).toBe(201);
+
+      const instancesUrl = `${backendUrl}/v1/management/tenants/${tenantId}/client-instances`;
+      const headers = { Authorization: `Bearer ${systemAccessToken}` };
+      const registered = (
+        await get({ url: `${instancesUrl}/${registration.data.instance_id}`, headers })
+      ).data;
+      const leafSerial = registered.attestation_evidence.chain.certificates[0].serial;
+
+      // No client_id: an incident starts from the certificate, not from a client.
+      const bySerial = await get({ url: `${instancesUrl}?certificate_serial=${leafSerial}`, headers });
+      expect(bySerial.status).toBe(200);
+      expect(bySerial.data.total_count).toBe(1);
+      expect(bySerial.data.list[0].id).toBe(registration.data.instance_id);
+
+      // A revocation list may print the serial in uppercase.
+      const upperCase = await get({
+        url: `${instancesUrl}?certificate_serial=${leafSerial.toUpperCase()}`,
+        headers,
+      });
+      expect(upperCase.data.list.map((instance) => instance.id)).toEqual([
+        registration.data.instance_id,
+      ]);
+
+      const byPlatform = await get({
+        url: `${instancesUrl}?platform=android-key-attestation&client_id=${clientId}`,
+        headers,
+      });
+      expect(byPlatform.data.list.map((instance) => instance.id)).toContain(
+        registration.data.instance_id
+      );
+
+      const unknownSerial = await get({ url: `${instancesUrl}?certificate_serial=deadbeef`, headers });
+      expect(unknownSerial.data.total_count).toBe(0);
     }, 120000);
   });
 

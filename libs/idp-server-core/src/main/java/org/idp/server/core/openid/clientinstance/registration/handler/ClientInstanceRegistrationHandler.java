@@ -16,10 +16,10 @@
 
 package org.idp.server.core.openid.clientinstance.registration.handler;
 
-import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationChallenge;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationChallengeIssuer;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationChallengeRepository;
+import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationResult;
 import org.idp.server.core.openid.clientinstance.registration.ClientInstanceRegistrationService;
 import org.idp.server.core.openid.clientinstance.registration.handler.io.ClientInstanceChallengeRequest;
 import org.idp.server.core.openid.clientinstance.registration.handler.io.ClientInstanceRegisterRequest;
@@ -87,7 +87,7 @@ public class ClientInstanceRegistrationHandler {
   public ClientInstanceRegistrationResponse handleRegister(
       Tenant tenant, ClientInstanceRegisterRequest request) {
 
-    ClientInstance clientInstance =
+    ClientInstanceRegistrationResult result =
         registrationService.register(
             tenant,
             request.challenge(),
@@ -95,6 +95,6 @@ public class ClientInstanceRegistrationHandler {
             request.platformEvidence(),
             request.idToken());
 
-    return ClientInstanceRegistrationResponse.registered(clientInstance);
+    return ClientInstanceRegistrationResponse.registered(result);
   }
 }

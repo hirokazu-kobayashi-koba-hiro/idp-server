@@ -19,6 +19,7 @@ package org.idp.server.core.openid.clientinstance.registration;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
+import org.idp.server.core.openid.clientinstance.ClientInstanceRevocationReason;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.security.SecurityEvent;
@@ -84,6 +85,30 @@ public class ClientInstanceRegistrationEventPublisher {
         DefaultSecurityEventType.client_instance_registration_success,
         details,
         requestAttributes);
+  }
+
+  /**
+   * An instance of the user that a registration revoked, one event per instance.
+   *
+   * <p>Kept apart from the registration event: it is the user's other device that stopped working,
+   * which is what a notification to the user is about.
+   */
+  public void publishRevoked(
+      Tenant tenant,
+      RequestedClientId requestedClientId,
+      ClientInstanceIdentifier revokedInstance,
+      ClientInstanceIdentifier supersededBy,
+      String userId,
+      RequestAttributes requestAttributes) {
+    Map<String, Object> details = new HashMap<>();
+    details.put("client_id", requestedClientId.value());
+    details.put("instance_id", revokedInstance.value());
+    details.put("revocation_reason", ClientInstanceRevocationReason.superseded.name());
+    details.put("superseded_by", supersededBy.value());
+    if (userId != null) {
+      details.put("user_id", userId);
+    }
+    publish(tenant, DefaultSecurityEventType.client_instance_revoked, details, requestAttributes);
   }
 
   /**

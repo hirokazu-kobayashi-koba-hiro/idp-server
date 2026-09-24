@@ -1090,6 +1090,7 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 applicationComponentContainer.resolve(ClientInstanceCommandRepository.class),
                 applicationComponentContainer.resolve(ClientInstanceQueryRepository.class),
+                clientConfigurationQueryRepository,
                 oAuthTokenCommandRepository,
                 auditLogPublisher),
             ClientInstanceManagementApi.class,

@@ -278,7 +278,7 @@ describe("Client Instance registration (application plane, user bound)", () => {
       const { sub } = jose.decodeJwt(idToken);
 
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/clients/${clientId}/instances`,
+        url: `${backendUrl}/v1/management/tenants/${serverConfig.tenantId}/client-instances?client_id=${clientId}`,
         headers: managementHeaders,
       });
       expect(listResponse.status).toBe(200);

@@ -38,7 +38,8 @@ class ModelConverter {
         parseOrNull(stringMap.get("created_at")),
         parseOrNull(stringMap.get("updated_at")),
         parseOrNull(stringMap.get("expires_at")),
-        parseOrNull(stringMap.get("revoked_at")));
+        parseOrNull(stringMap.get("revoked_at")),
+        stringMap.get("revocation_reason"));
   }
 
   private static Map<String, Object> toMap(String json) {

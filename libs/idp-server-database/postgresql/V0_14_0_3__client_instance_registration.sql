@@ -44,7 +44,7 @@ CREATE TABLE client_instance_registration_challenge
     challenge   VARCHAR(255)            NOT NULL,
     tenant_id   UUID                    NOT NULL,
     client_id   VARCHAR(255)            NOT NULL,
-    instance_id VARCHAR(255)            NOT NULL,
+    instance_id UUID                    NOT NULL,
     expires_at  TIMESTAMP               NOT NULL,
     used_at     TIMESTAMP,
     created_at  TIMESTAMP DEFAULT now() NOT NULL,

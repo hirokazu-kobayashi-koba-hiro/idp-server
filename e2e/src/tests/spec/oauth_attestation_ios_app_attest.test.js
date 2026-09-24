@@ -345,7 +345,7 @@ describe("Apple App Attest (Issue #1521)", () => {
       expect(registration.status).toBe(201);
 
       const listResponse = await get({
-        url: `${backendUrl}/v1/management/tenants/${tenantId}/clients/${clientId}/instances`,
+        url: `${backendUrl}/v1/management/tenants/${tenantId}/client-instances?client_id=${clientId}`,
         headers: { Authorization: `Bearer ${systemAccessToken}` },
       });
       expect(listResponse.status).toBe(200);

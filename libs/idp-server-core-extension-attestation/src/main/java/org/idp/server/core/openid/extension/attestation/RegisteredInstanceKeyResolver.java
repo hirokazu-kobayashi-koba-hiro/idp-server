@@ -60,10 +60,13 @@ public class RegisteredInstanceKeyResolver implements ClientAttestationKeyResolv
     if (tenant == null || !header.hasKid()) {
       return TrustedAttestationKeys.none();
     }
+    ClientInstanceIdentifier identifier = new ClientInstanceIdentifier(header.kid());
+    if (!identifier.isUuid()) {
+      return TrustedAttestationKeys.none();
+    }
 
     ClientInstance clientInstance =
-        clientInstanceQueryRepository.find(
-            tenant, context.requestedClientId(), new ClientInstanceIdentifier(header.kid()));
+        clientInstanceQueryRepository.find(tenant, context.requestedClientId(), identifier);
 
     if (!clientInstance.isActive()) {
       return TrustedAttestationKeys.none();

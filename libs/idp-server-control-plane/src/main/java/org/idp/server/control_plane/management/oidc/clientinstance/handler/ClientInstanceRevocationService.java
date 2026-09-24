@@ -27,6 +27,7 @@ import org.idp.server.control_plane.management.oidc.clientinstance.io.ClientInst
 import org.idp.server.core.openid.clientinstance.ClientInstance;
 import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
+import org.idp.server.core.openid.clientinstance.ClientInstanceRevocationReason;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
 import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
@@ -74,8 +75,7 @@ public class ClientInstanceRevocationService
       RequestAttributes requestAttributes,
       boolean dryRun) {
 
-    ClientInstance clientInstance =
-        queryRepository.find(tenant, request.requestedClientId(), request.identifier());
+    ClientInstance clientInstance = queryRepository.find(tenant, request.identifier());
     if (!clientInstance.exists()) {
       throw new ResourceNotFoundException(
           "Client instance not found: " + request.identifier().value());
@@ -88,7 +88,9 @@ public class ClientInstanceRevocationService
     // Truncated to the precision both databases store, so that the revocation time in this response
     // is the one later reads return.
     ClientInstance revoked =
-        clientInstance.revoke(SystemDateTime.now().truncatedTo(ChronoUnit.MICROS));
+        clientInstance.revoke(
+            SystemDateTime.now().truncatedTo(ChronoUnit.MICROS),
+            ClientInstanceRevocationReason.operator);
     contextBuilder.withBefore(clientInstance).withAfter(revoked);
 
     if (dryRun) {
@@ -107,7 +109,7 @@ public class ClientInstanceRevocationService
     // Refreshing would already fail, the instance no longer authenticating. Deleting its tokens
     // also stops the access tokens a Resource Server checks by introspection.
     tokenCommandRepository.deleteByClientInstance(
-        tenant, request.requestedClientId(), request.identifier());
+        tenant, clientInstance.requestedClientId(), clientInstance.identifier());
 
     return new ClientInstanceManagementResponse(ClientInstanceManagementStatus.OK, revoked.toMap());
   }

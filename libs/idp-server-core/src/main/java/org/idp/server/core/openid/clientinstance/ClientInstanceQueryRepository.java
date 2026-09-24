@@ -33,8 +33,18 @@ public interface ClientInstanceQueryRepository {
   ClientInstance find(
       Tenant tenant, RequestedClientId requestedClientId, ClientInstanceIdentifier identifier);
 
-  List<ClientInstance> findList(
-      Tenant tenant, RequestedClientId requestedClientId, int limit, int offset);
+  /**
+   * Finds an instance by its identifier alone, whatever its client. For the management API: an
+   * operator does not necessarily know which client an instance belongs to.
+   *
+   * @return the instance, or a non-existing instance when not found
+   */
+  ClientInstance find(Tenant tenant, ClientInstanceIdentifier identifier);
+
+  /** Instances of the tenant matching the conditions, newest first. */
+  List<ClientInstance> findList(Tenant tenant, ClientInstanceQueries queries);
+
+  long findTotalCount(Tenant tenant, ClientInstanceQueries queries);
 
   /**
    * Finds the instance holding a key, whatever its client and status.
@@ -47,9 +57,11 @@ public interface ClientInstanceQueryRepository {
   ClientInstance findByThumbprint(Tenant tenant, ClientInstanceThumbprint thumbprint);
 
   /**
-   * Returns the active instances of a client bound to a user.
+   * Returns the instances of a client bound to a user whose status is active, expired ones
+   * included.
    *
-   * <p>A user holds one active instance per client: registering a new one revokes the others.
+   * <p>A user holds one active instance per client: registering a new one revokes the others. The
+   * set is the one the database constrains to a single row, so an expired instance still counts.
    */
   List<ClientInstance> findActiveListByUser(
       Tenant tenant, RequestedClientId requestedClientId, String userId);

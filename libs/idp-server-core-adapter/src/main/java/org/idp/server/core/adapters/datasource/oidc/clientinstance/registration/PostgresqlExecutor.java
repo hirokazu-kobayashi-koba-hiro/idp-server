@@ -33,7 +33,7 @@ public class PostgresqlExecutor implements ClientInstanceRegistrationChallengeSq
         """
         INSERT INTO client_instance_registration_challenge
         (challenge, tenant_id, client_id, instance_id, expires_at, created_at)
-        VALUES (?, ?::uuid, ?, ?, ?, ?)
+        VALUES (?, ?::uuid, ?, ?::uuid, ?, ?)
         """;
 
     List<Object> params = new ArrayList<>();

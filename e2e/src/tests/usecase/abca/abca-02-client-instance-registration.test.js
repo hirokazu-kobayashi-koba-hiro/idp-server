@@ -19,13 +19,15 @@
  * What this covers beyond the spec-level tests, which check one request at a time:
  * 1. First launch: log in, register the key, and exchange the code of the same login with it
  * 2. Steady state: reuse one self-signed attestation, with a server-provided Challenge
- * 3. Reinstall: the user logs in again and the newly registered key takes over
+ * 3. Reinstall: the user logs in again and the newly registered key takes over; the old instance
+ *    is revoked as superseded, with its tokens
  * 4. Lost device: revoking the instance stops the app from authenticating
  * 5. The same credentials working at the Pushed Authorization Request endpoint
  * 6. Lifecycle: revocation is final and keeps the key taken; deletion forgets the instance
  * 7. Tokens follow the instance: revoking or deleting it deletes its tokens, and a new registration
  *    of the same key does not inherit them
  * 8. An instance receives its own user's tokens only
+ * 9. The operator finds instances across the clients of the tenant, by what is at hand
  */
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
@@ -34,7 +36,9 @@ import { deletion, get, post, postWithJson } from "../../../lib/http";
 import { onboarding } from "../../../api/managementClient";
 import { inspectToken, requestToken } from "../../../api/oauthClient";
 import { adminServerConfig, backendUrl } from "../../testConfig";
+import crypto from "crypto";
 import {
+  canonicalJwk,
   deriveRequestHash,
   enablePasswordLogin,
   loginForRegistration,
@@ -72,15 +76,16 @@ const generateInstanceJwk = async () => {
 const publicJwkOf = (jwk) => ({ kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y });
 
 const clientsUrl = () => `${backendUrl}/v1/management/tenants/${tenantId}/clients`;
-const instancesUrl = () => `${clientsUrl()}/${clientId}/instances`;
+const instancesUrl = () => `${backendUrl}/v1/management/tenants/${tenantId}/client-instances`;
 
 /** Operator view: the instances the Authorization Server currently trusts for this user. */
 const activeInstancesOf = async (user = userSub) => {
-  const response = await get({ url: instancesUrl(), headers: managementHeaders });
+  const response = await get({
+    url: `${instancesUrl()}?client_id=${clientId}&user_id=${user}&status=active`,
+    headers: managementHeaders,
+  });
   expect(response.status).toBe(200);
-  return response.data.list.filter(
-    (instance) => instance.user_id === user && instance.status === "active"
-  );
+  return response.data.list;
 };
 
 const revokeInstance = async (instanceId) =>
@@ -101,7 +106,7 @@ const revokeInstancesOf = async (user = userSub) => {
 
 /** Clean up between tests, so that each one starts without an instance of the user. */
 const deleteInstancesOf = async (user = userSub) => {
-  const response = await get({ url: instancesUrl(), headers: managementHeaders });
+  const response = await get({ url: `${instancesUrl()}?client_id=${clientId}&user_id=${user}`, headers: managementHeaders });
   for (const instance of response.data.list.filter((i) => i.user_id === user)) {
     expect((await deleteInstance(instance.id)).status).toBe(204);
   }
@@ -407,12 +412,12 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
   it("reinstall: the user logs in again, and the newly registered key takes over from the old one", async () => {
     console.log("\n=== Step 1: the app is registered and working ===");
     const beforeReinstall = await enrollInstance();
-    expect((await requestTokenWith(beforeReinstall)).status).toBe(200);
+    const beforeTokens = await exchangeCodeWith(beforeReinstall);
+    expect(beforeTokens.status).toBe(200);
+    expect(await isActive(beforeTokens.data.access_token)).toBe(true);
 
-    console.log("=== Step 2: the previous instance is revoked and the user registers again ===");
-    // The key of the uninstalled app is gone with it. Revoking the instance it left behind is done
-    // here by the operator; the reinstalled app registers a new key with a fresh login.
-    await revokeInstancesOf();
+    console.log("=== Step 2: the reinstalled app registers a new key with a fresh login ===");
+    // Nobody revokes the instance the uninstalled app left behind: registering the new one does.
     const afterReinstall = await enrollInstance();
 
     console.log("=== Step 3: the new key authenticates, the old one no longer does ===");
@@ -422,6 +427,17 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     expect(withNew.status).toBe(200);
     expect(withOld.status).toBe(401);
     expect(withOld.data).toHaveProperty("error", "invalid_client_attestation");
+
+    console.log("=== Step 4: the old instance is kept, revoked as superseded; one stays active ===");
+    const old = await getInstance(beforeReinstall.instanceId);
+    expect(old.data).toHaveProperty("status", "revoked");
+    expect(old.data).toHaveProperty("revocation_reason", "superseded");
+    expect(old.data).toHaveProperty("revoked_at");
+    const actives = await activeInstancesOf();
+    expect(actives.map((instance) => instance.id)).toEqual([afterReinstall.instanceId]);
+
+    console.log("=== Step 5: the tokens of the old instance went with it ===");
+    expect(await isActive(beforeTokens.data.access_token)).toBe(false);
 
     await deleteInstancesOf();
   });
@@ -498,6 +514,7 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     expect(revoked.status).toBe(200);
     expect(revoked.data).toHaveProperty("status", "revoked");
     expect(revoked.data).toHaveProperty("revoked_at");
+    expect(revoked.data).toHaveProperty("revocation_reason", "operator");
 
     const afterRevocation = await getInstance(instance.instanceId);
     expect(afterRevocation.status).toBe(200);
@@ -619,5 +636,71 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     expect((await exchangeCodeWith(othersInstance)).status).toBe(200);
 
     await deleteInstancesOf(otherSub);
+  });
+
+  it("the operator finds instances across the clients of the tenant, by what is at hand", async () => {
+    const first = await enrollInstance();
+    const second = await enrollInstance(); // supersedes the first
+    const search = async (query) =>
+      await get({ url: `${instancesUrl()}?${query}`, headers: managementHeaders });
+
+    console.log("\n=== a user asking about their devices: by user, no client needed ===");
+    const byUser = await search(`user_id=${userSub}`);
+    expect(byUser.status).toBe(200);
+    expect(byUser.data.total_count).toBe(2);
+    expect(byUser.data.list.map((instance) => instance.id)).toEqual([
+      second.instanceId,
+      first.instanceId,
+    ]);
+
+    console.log("=== what is trusted now, and what was replaced ===");
+    const active = await search(`user_id=${userSub}&status=active`);
+    expect(active.data.list.map((instance) => instance.id)).toEqual([second.instanceId]);
+    const superseded = await search(`user_id=${userSub}&revocation_reason=superseded`);
+    expect(superseded.data.list.map((instance) => instance.id)).toEqual([first.instanceId]);
+
+    console.log("=== a key: which instance holds it (RFC 7638 thumbprint) ===");
+    const thumbprint = crypto
+      .createHash("sha256")
+      .update(canonicalJwk(publicJwkOf(second.jwk)))
+      .digest("base64url");
+    const byKey = await search(`instance_key_thumbprint=${thumbprint}`);
+    expect(byKey.data.list.map((instance) => instance.id)).toEqual([second.instanceId]);
+
+    console.log("=== paging carries the total ===");
+    const firstPage = await search(`user_id=${userSub}&limit=1`);
+    expect(firstPage.data.total_count).toBe(2);
+    expect(firstPage.data.list).toHaveLength(1);
+
+    console.log("=== a condition no value can meet is refused, not answered with nothing ===");
+    expect((await search("status=deleted")).status).toBe(400);
+    expect((await search("user_id=not-a-uuid")).status).toBe(400);
+
+    console.log("=== an instance is addressed by id alone; an unknown or malformed id is not found ===");
+    expect((await getInstance(uuidv4())).status).toBe(404);
+    expect((await getInstance("not-a-uuid")).status).toBe(404);
+
+    await deleteInstancesOf();
+  });
+
+  it("the operator registers an instance for a client named in the body, with a UUID of its own", async () => {
+    const register = async (body) =>
+      await postWithJson({ url: instancesUrl(), headers: managementHeaders, body });
+    const key = publicJwkOf(await generateInstanceJwk());
+
+    expect((await register({ instance_key: key })).status).toBe(400);
+    expect((await register({ client_id: uuidv4(), instance_key: key })).status).toBe(400);
+    expect((await register({ id: "instance-1", client_id: clientId, instance_key: key })).status).toBe(400);
+
+    const id = uuidv4();
+    const created = await register({ id, client_id: clientId, instance_key: key });
+    expect(created.status).toBe(201);
+    expect(created.data.result).toHaveProperty("client_id", clientId);
+
+    const otherKey = publicJwkOf(await generateInstanceJwk());
+    const sameId = await register({ id, client_id: clientId, instance_key: otherKey });
+    expect(sameId.status).toBe(400);
+
+    expect((await deleteInstance(id)).status).toBe(204);
   });
 });

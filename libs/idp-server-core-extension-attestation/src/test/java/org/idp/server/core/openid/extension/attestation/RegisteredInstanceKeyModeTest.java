@@ -60,7 +60,7 @@ class RegisteredInstanceKeyModeTest {
   static final JsonConverter JSON = JsonConverter.snakeCaseInstance();
   static final String CLIENT_ID = "self-signed-client";
   static final String ISSUER = "https://idp.example.com/tenant-1";
-  static final String INSTANCE_ID = "instance-abc";
+  static final String INSTANCE_ID = "3f2a1c4e-8b7d-4e6f-9a0b-1c2d3e4f5a6b";
   static final String ATTESTATION_TYP = "oauth-client-attestation+jwt";
   static final String POP_TYP = "oauth-client-attestation-pop+jwt";
   static final String TENANT_ID = "1e68932e-ed4a-43e7-b412-460665e42df3";

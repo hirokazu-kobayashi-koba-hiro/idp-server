@@ -15,7 +15,7 @@
 
 CREATE TABLE client_instance
 (
-    id                   VARCHAR(255)                             NOT NULL,
+    id                   CHAR(36)                                 NOT NULL,
     tenant_id            CHAR(36)                                 NOT NULL,
     client_id            VARCHAR(255)                             NOT NULL,
     instance_key         JSON                                     NOT NULL,
@@ -28,17 +28,25 @@ CREATE TABLE client_instance
     updated_at           DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) NOT NULL,
     expires_at           DATETIME(6),
     revoked_at           DATETIME(6),
-    PRIMARY KEY (tenant_id, client_id, id),
+    revocation_reason    VARCHAR(32),
+    -- MySQL has no partial index. NULL for every row but an active one bound to a user, so the
+    -- unique index below constrains active instances only (a unique index admits many NULLs).
+    active_user_id       CHAR(36) GENERATED ALWAYS AS (CASE WHEN status = 'active' THEN user_id END) VIRTUAL,
+    PRIMARY KEY (id),
     FOREIGN KEY (tenant_id) REFERENCES tenant (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Registration rejects a device that already holds an active instance, which is
--- a lookup by device rather than by primary key.
+-- A key belongs to at most one instance within a tenant, revoked ones included.
+-- See the PostgreSQL migration for why the scope is the tenant.
 CREATE UNIQUE INDEX uq_client_instance_tenant_key_thumbprint
     ON client_instance (tenant_id, instance_key_thumbprint);
 
 CREATE INDEX idx_client_instance_tenant_client_user
     ON client_instance (tenant_id, client_id, user_id);
+
+-- A user holds at most one active instance of a client (see the PostgreSQL migration).
+CREATE UNIQUE INDEX uq_client_instance_active_user
+    ON client_instance (tenant_id, client_id, active_user_id);
 
 -- The management list API pages by (tenant_id, client_id) ordered by created_at.
 -- See the PostgreSQL migration for the measurements behind this index.

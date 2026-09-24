@@ -24,7 +24,7 @@ import org.idp.server.control_plane.management.oidc.clientinstance.ClientInstanc
 import org.idp.server.control_plane.management.oidc.clientinstance.io.ClientInstanceManagementResponse;
 import org.idp.server.control_plane.management.oidc.clientinstance.io.ClientInstanceRegistrationRequest;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
-import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.clientinstance.ClientInstanceQueries;
 import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 import org.idp.server.usecases.IdpServerApplication;
@@ -35,7 +35,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/v1/management/tenants/{tenant-id}/clients/{client-id}/instances")
+@RequestMapping("/v1/management/tenants/{tenant-id}/client-instances")
 public class ClientInstanceManagementV1Api implements ParameterTransformable {
 
   ClientInstanceManagementApi clientInstanceManagementApi;
@@ -48,20 +48,17 @@ public class ClientInstanceManagementV1Api implements ParameterTransformable {
   public ResponseEntity<?> post(
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("client-id") String clientId,
       @RequestBody(required = false) Map<String, Object> body,
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
-    RequestedClientId requestedClientId = new RequestedClientId(clientId);
 
     ClientInstanceManagementResponse response =
         clientInstanceManagementApi.create(
             operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            requestedClientId,
-            new ClientInstanceRegistrationRequest(requestedClientId, body),
+            new ClientInstanceRegistrationRequest(body),
             requestAttributes,
             dryRun);
 
@@ -72,9 +69,7 @@ public class ClientInstanceManagementV1Api implements ParameterTransformable {
   public ResponseEntity<?> getList(
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("client-id") String clientId,
-      @RequestParam(value = "limit", required = false, defaultValue = "20") int limit,
-      @RequestParam(value = "offset", required = false, defaultValue = "0") int offset,
+      @RequestParam Map<String, String> queryParams,
       HttpServletRequest httpServletRequest) {
 
     RequestAttributes requestAttributes = transform(httpServletRequest);
@@ -83,9 +78,7 @@ public class ClientInstanceManagementV1Api implements ParameterTransformable {
         clientInstanceManagementApi.findList(
             operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            new RequestedClientId(clientId),
-            limit,
-            offset,
+            new ClientInstanceQueries(queryParams),
             requestAttributes);
 
     return toResponseEntity(response);
@@ -95,7 +88,6 @@ public class ClientInstanceManagementV1Api implements ParameterTransformable {
   public ResponseEntity<?> get(
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("client-id") String clientId,
       @PathVariable("id") String id,
       HttpServletRequest httpServletRequest) {
 
@@ -105,7 +97,6 @@ public class ClientInstanceManagementV1Api implements ParameterTransformable {
         clientInstanceManagementApi.get(
             operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            new RequestedClientId(clientId),
             new ClientInstanceIdentifier(id),
             requestAttributes);
 
@@ -116,7 +107,6 @@ public class ClientInstanceManagementV1Api implements ParameterTransformable {
   public ResponseEntity<?> revoke(
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("client-id") String clientId,
       @PathVariable("id") String id,
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
@@ -127,7 +117,6 @@ public class ClientInstanceManagementV1Api implements ParameterTransformable {
         clientInstanceManagementApi.revoke(
             operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            new RequestedClientId(clientId),
             new ClientInstanceIdentifier(id),
             requestAttributes,
             dryRun);
@@ -139,7 +128,6 @@ public class ClientInstanceManagementV1Api implements ParameterTransformable {
   public ResponseEntity<?> delete(
       @AuthenticationPrincipal OperatorPrincipal operatorPrincipal,
       @PathVariable("tenant-id") TenantIdentifier tenantIdentifier,
-      @PathVariable("client-id") String clientId,
       @PathVariable("id") String id,
       @RequestParam(value = "dry_run", required = false, defaultValue = "false") boolean dryRun,
       HttpServletRequest httpServletRequest) {
@@ -150,7 +138,6 @@ public class ClientInstanceManagementV1Api implements ParameterTransformable {
         clientInstanceManagementApi.delete(
             operatorPrincipal.authenticationContext(),
             tenantIdentifier,
-            new RequestedClientId(clientId),
             new ClientInstanceIdentifier(id),
             requestAttributes,
             dryRun);

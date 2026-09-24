@@ -100,7 +100,7 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
                             ?,
                             ?,
                             ?,
-                            ?,
+                            ?::uuid,
                             ?,
                             ?,
                             ?
@@ -360,7 +360,7 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
             SELECT hashed_access_token FROM oauth_token
             WHERE tenant_id = ?::uuid
               AND client_id = ?
-              AND client_instance_id = ?;
+              AND client_instance_id = ?::uuid;
             """;
     List<Object> params = List.of(tenantId, clientId, clientInstanceId);
     List<Map<String, String>> results = sqlExecutor.selectList(sqlTemplate, params);
@@ -375,7 +375,7 @@ public class PostgresqlExecutor implements OAuthTokenSqlExecutor {
             DELETE FROM oauth_token
             WHERE tenant_id = ?::uuid
               AND client_id = ?
-              AND client_instance_id = ?;
+              AND client_instance_id = ?::uuid;
             """;
     List<Object> params = List.of(tenantId, clientId, clientInstanceId);
 

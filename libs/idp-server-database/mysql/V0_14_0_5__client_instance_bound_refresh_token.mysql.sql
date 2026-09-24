@@ -13,4 +13,4 @@ ALTER TABLE oauth_token ADD COLUMN client_instance_thumbprint VARCHAR(64);
 -- has to come from that instance, not merely from one holding the same key: a deleted instance
 -- frees its key, and a new registration of it must not inherit the old refresh tokens. Revoking or
 -- deleting the instance deletes its tokens by this column; the index is V0_14_0_6.
-ALTER TABLE oauth_token ADD COLUMN client_instance_id VARCHAR(255);
+ALTER TABLE oauth_token ADD COLUMN client_instance_id CHAR(36);

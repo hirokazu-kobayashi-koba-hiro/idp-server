@@ -28,17 +28,19 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
  */
 public class ClientInstanceRegistrationRequest implements ClientInstanceManagementRequest {
 
-  RequestedClientId requestedClientId;
   Map<String, Object> values;
 
-  public ClientInstanceRegistrationRequest(
-      RequestedClientId requestedClientId, Map<String, Object> values) {
-    this.requestedClientId = requestedClientId;
+  public ClientInstanceRegistrationRequest(Map<String, Object> values) {
     this.values = values != null ? values : new HashMap<>();
   }
 
+  /** The client the instance is registered to, carried in the body. */
+  public boolean hasClientId() {
+    return optString("client_id") != null && !optString("client_id").isEmpty();
+  }
+
   public RequestedClientId requestedClientId() {
-    return requestedClientId;
+    return new RequestedClientId(optString("client_id"));
   }
 
   public String id() {
@@ -73,8 +75,6 @@ public class ClientInstanceRegistrationRequest implements ClientInstanceManageme
   @Override
   public Map<String, Object> toMap() {
     // instance_key is a public key, safe to record in the audit log
-    Map<String, Object> map = new HashMap<>(values);
-    map.put("client_id", requestedClientId.value());
-    return map;
+    return new HashMap<>(values);
   }
 }

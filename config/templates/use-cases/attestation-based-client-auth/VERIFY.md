@@ -150,10 +150,10 @@ INSTANCE_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
 INSTANCE_JWK=$(node $TPL/mint-attestation.mjs --print-jwk --out-dir "$OUT")
 
 curl -sk -X POST \
-  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/clients/${SELF_SIGNED_CLIENT}/instances" \
+  "${AUTHORIZATION_SERVER_URL}/v1/management/tenants/${TENANT_ID}/client-instances" \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d "{\"id\":\"${INSTANCE_ID}\",\"instance_key\":${INSTANCE_JWK}}" -w "\n%{http_code}\n"
+  -d "{\"id\":\"${INSTANCE_ID}\",\"client_id\":\"${SELF_SIGNED_CLIENT}\",\"instance_key\":${INSTANCE_JWK}}" -w "\n%{http_code}\n"
 ```
 
 `201` が返れば登録完了です。
