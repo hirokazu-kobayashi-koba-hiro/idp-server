@@ -23,13 +23,16 @@
  * 4. Lost device: revoking the instance stops the app from authenticating
  * 5. The same credentials working at the Pushed Authorization Request endpoint
  * 6. Lifecycle: revocation is final and keeps the key taken; deletion forgets the instance
+ * 7. Tokens follow the instance: revoking or deleting it deletes its tokens, and a new registration
+ *    of the same key does not inherit them
+ * 8. An instance receives its own user's tokens only
  */
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import * as jose from "jose";
 import { deletion, get, post, postWithJson } from "../../../lib/http";
 import { onboarding } from "../../../api/managementClient";
-import { requestToken } from "../../../api/oauthClient";
+import { inspectToken, requestToken } from "../../../api/oauthClient";
 import { adminServerConfig, backendUrl } from "../../testConfig";
 import {
   deriveRequestHash,
@@ -52,6 +55,9 @@ let tokenEndpoint;
 let pushedAuthorizationEndpoint;
 let challengeEndpoint;
 let clientId;
+let managementClientId;
+let managementClientSecret;
+let introspectionEndpoint;
 let userSub;
 let username;
 let password;
@@ -106,7 +112,11 @@ const deleteInstancesOf = async (user = userSub) => {
  * request_hash, and register the key with the ID token of that login. Returns the code of the same
  * authorization response, for the app to exchange with the key it just registered.
  */
-const enrollInstance = async ({ jwk = undefined, expectedStatus = 201 } = {}) => {
+const enrollInstance = async ({
+  jwk = undefined,
+  expectedStatus = 201,
+  as = { username: undefined, password: undefined },
+} = {}) => {
   jwk = jwk ?? (await generateInstanceJwk());
 
   const challengeResponse = await postWithJson({
@@ -122,8 +132,8 @@ const enrollInstance = async ({ jwk = undefined, expectedStatus = 201 } = {}) =>
     clientId,
     redirectUri: REDIRECT_URI,
     nonce: requestHash,
-    username,
-    password,
+    username: as.username ?? username,
+    password: as.password ?? password,
     scope: "openid account",
   });
 
@@ -197,6 +207,31 @@ const exchangeCodeWith = async (instance) =>
     },
   });
 
+/** The app refreshes with the key of the instance it runs as. */
+const refreshWith = async (instance, refreshToken) =>
+  await requestToken({
+    endpoint: tokenEndpoint,
+    grantType: "refresh_token",
+    refreshToken,
+    clientId,
+    additionalHeaders: {
+      [ATTESTATION_HEADER]: selfSignedAttestationJwt(instance),
+      [POP_HEADER]: popJwt(instance.jwk, await fetchChallenge()),
+    },
+  });
+
+/** Resource Server view: is the access token still active? */
+const isActive = async (accessToken) => {
+  const response = await inspectToken({
+    endpoint: introspectionEndpoint,
+    token: accessToken,
+    clientId: managementClientId,
+    clientSecret: managementClientSecret,
+  });
+  expect(response.status).toBe(200);
+  return response.data.active;
+};
+
 /**
  * This tenant enforces the Challenge, so one is fetched unless the caller supplies its own (or
  * explicitly passes null to exercise the enforcement).
@@ -238,6 +273,9 @@ beforeAll(async () => {
   tokenEndpoint = `${issuer}/v1/tokens`;
   pushedAuthorizationEndpoint = `${issuer}/v1/authorizations/push`;
   challengeEndpoint = `${issuer}/v1/client-attestation/challenges`;
+  introspectionEndpoint = `${issuer}/v1/tokens/introspection`;
+  managementClientId = uuidv4();
+  managementClientSecret = `cs-${timestamp}`;
 
   const onboardingResponse = await onboarding({
     headers: managementHeaders,
@@ -264,11 +302,12 @@ beforeAll(async () => {
         jwks_uri: `${issuer}/v1/jwks`,
         jwks: await generateECP256JWKS(),
         pushed_authorization_request_endpoint: pushedAuthorizationEndpoint,
+        token_introspection_endpoint: introspectionEndpoint,
         token_endpoint_auth_methods_supported: ["client_secret_post", "attest_jwt_client_auth"],
         client_attestation_signing_alg_values_supported: ["ES256"],
         client_attestation_pop_signing_alg_values_supported: ["ES256"],
         challenge_endpoint: challengeEndpoint,
-        grant_types_supported: ["authorization_code", "password", "client_credentials"],
+        grant_types_supported: ["authorization_code", "password", "client_credentials", "refresh_token"],
         scopes_supported: ["openid", "profile", "email", "account", "management"],
         response_types_supported: ["code", "code id_token"],
         response_modes_supported: ["query", "fragment"],
@@ -290,8 +329,8 @@ beforeAll(async () => {
         raw_password: password,
       },
       client: {
-        client_id: uuidv4(),
-        client_secret: `cs-${timestamp}`,
+        client_id: managementClientId,
+        client_secret: managementClientSecret,
         redirect_uris: ["http://localhost:3000/callback"],
         response_types: ["code"],
         grant_types: ["authorization_code", "password"],
@@ -316,7 +355,7 @@ beforeAll(async () => {
         client_attestation_trust_source: "registered_instance_key",
         client_instance_registration_policy: "user_bound",
       },
-      grant_types: ["authorization_code", "client_credentials"],
+      grant_types: ["authorization_code", "client_credentials", "refresh_token"],
       redirect_uris: [REDIRECT_URI],
       response_types: ["code", "code id_token"],
       scope: "openid account management",
@@ -494,5 +533,91 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     expect((await requestTokenWith(reRegistered)).status).toBe(200);
 
     await deleteInstancesOf();
+  });
+
+  it("tokens follow the instance: revoking it stops its access and refresh tokens at once", async () => {
+    const instance = await enrollInstance();
+    const issued = await exchangeCodeWith(instance);
+    expect(issued.status).toBe(200);
+    expect(issued.data).toHaveProperty("refresh_token");
+
+    console.log("\n=== while the instance is active, it refreshes its own tokens ===");
+    const refreshed = await refreshWith(instance, issued.data.refresh_token);
+    expect(refreshed.status).toBe(200);
+    expect(await isActive(refreshed.data.access_token)).toBe(true);
+
+    console.log("=== revoke: its tokens are deleted with it ===");
+    expect((await revokeInstance(instance.instanceId)).status).toBe(200);
+    expect(await isActive(refreshed.data.access_token)).toBe(false);
+
+    const afterRevocation = await refreshWith(instance, refreshed.data.refresh_token);
+    expect(afterRevocation.status).toBe(401);
+    expect(afterRevocation.data).toHaveProperty("error", "invalid_client_attestation");
+
+    await deleteInstancesOf();
+  });
+
+  it("tokens follow the instance: deleting it and registering the same key again does not bring them back", async () => {
+    const instance = await enrollInstance();
+    const issued = await exchangeCodeWith(instance);
+    expect(issued.status).toBe(200);
+    expect(await isActive(issued.data.access_token)).toBe(true);
+
+    console.log("\n=== delete: the instance and its tokens are forgotten ===");
+    expect((await deleteInstance(instance.instanceId)).status).toBe(204);
+    expect(await isActive(issued.data.access_token)).toBe(false);
+
+    console.log("=== the same key registered again is a new instance, without the old refresh token ===");
+    const reRegistered = await enrollInstance({ jwk: instance.jwk });
+    expect(reRegistered.instanceId).not.toBe(instance.instanceId);
+
+    const withOldRefreshToken = await refreshWith(reRegistered, issued.data.refresh_token);
+    expect(withOldRefreshToken.status).toBe(400);
+    expect(withOldRefreshToken.data).toHaveProperty("error", "invalid_grant");
+
+    await deleteInstancesOf();
+  });
+
+  it("an instance receives its own user's tokens only: the code of another user is refused", async () => {
+    const otherSub = uuidv4();
+    const otherUsername = `other-${Date.now()}@abca-instance.example.com`;
+    const otherPassword = `AbcaOther_${Date.now()}!`;
+    const created = await postWithJson({
+      url: `${backendUrl}/v1/management/tenants/${tenantId}/users`,
+      headers: managementHeaders,
+      body: {
+        sub: otherSub,
+        provider_id: "idp-server",
+        name: otherUsername,
+        email: otherUsername,
+        email_verified: true,
+        raw_password: otherPassword,
+      },
+    });
+    expect(created.status).toBe(201);
+
+    console.log("\n=== the other user's app registers its own instance ===");
+    const othersInstance = await enrollInstance({
+      as: { username: otherUsername, password: otherPassword },
+    });
+
+    console.log("=== a code issued to this user, redeemed by the other user's instance ===");
+    const { code } = await loginForRegistration({
+      tenantId,
+      clientId,
+      redirectUri: REDIRECT_URI,
+      nonce: uuidv4(),
+      username,
+      password,
+      scope: "openid account",
+    });
+    const crossUser = await exchangeCodeWith({ ...othersInstance, code });
+    expect(crossUser.status).toBe(400);
+    expect(crossUser.data).toHaveProperty("error", "invalid_grant");
+
+    console.log("=== the other user's own code is redeemed by its instance ===");
+    expect((await exchangeCodeWith(othersInstance)).status).toBe(200);
+
+    await deleteInstancesOf(otherSub);
   });
 });

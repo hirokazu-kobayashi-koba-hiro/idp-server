@@ -40,6 +40,13 @@ import org.idp.server.platform.jose.JsonWebKeyInvalidException;
  *
  * <p>The comparison is against the key that verified the Client Attestation on this request, so a
  * caller cannot choose it: {@link ClientCredentials} carries what the authenticator accepted.
+ *
+ * <h2>The key, and the registered instance</h2>
+ *
+ * <p>The key is what the specification requires. When the token was issued to a registered Client
+ * Instance, the instance has to match as well: a deleted instance frees its key, and an instance
+ * registered again with the same key is a new registration — possibly of another user — that must
+ * not inherit the refresh tokens of the one it replaced.
  */
 public class RefreshTokenClientInstanceBindingVerifier {
 
@@ -64,6 +71,12 @@ public class RefreshTokenClientInstanceBindingVerifier {
       throw new TokenBadRequestException(
           "invalid_grant",
           "the refresh token was issued to a different client instance of this client");
+    }
+    if (originalAccessToken.hasClientInstanceIdentifier()
+        && !originalAccessToken.matchClientInstanceIdentifier(
+            clientCredentials.clientInstance().identifier())) {
+      throw new TokenBadRequestException(
+          "invalid_grant", "the refresh token was issued to another registration of this key");
     }
   }
 

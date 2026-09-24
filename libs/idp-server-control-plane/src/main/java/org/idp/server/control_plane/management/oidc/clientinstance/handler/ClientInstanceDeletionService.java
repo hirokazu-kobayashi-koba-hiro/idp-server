@@ -27,6 +27,7 @@ import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
 
@@ -40,12 +41,15 @@ public class ClientInstanceDeletionService
 
   private final ClientInstanceQueryRepository queryRepository;
   private final ClientInstanceCommandRepository commandRepository;
+  private final OAuthTokenCommandRepository tokenCommandRepository;
 
   public ClientInstanceDeletionService(
       ClientInstanceQueryRepository queryRepository,
-      ClientInstanceCommandRepository commandRepository) {
+      ClientInstanceCommandRepository commandRepository,
+      OAuthTokenCommandRepository tokenCommandRepository) {
     this.queryRepository = queryRepository;
     this.commandRepository = commandRepository;
+    this.tokenCommandRepository = tokenCommandRepository;
   }
 
   @Override
@@ -80,6 +84,8 @@ public class ClientInstanceDeletionService
               true));
     }
 
+    tokenCommandRepository.deleteByClientInstance(
+        tenant, request.requestedClientId(), request.identifier());
     commandRepository.delete(tenant, request.requestedClientId(), request.identifier());
 
     return new ClientInstanceManagementResponse(

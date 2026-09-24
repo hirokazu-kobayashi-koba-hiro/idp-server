@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.idp.server.core.openid.clientinstance.ClientInstance;
+import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.clientinstance.ClientInstanceThumbprint;
 import org.idp.server.core.openid.grant_management.grant.AuthorizationGrant;
 import org.idp.server.core.openid.oauth.clientauthenticator.clientcredentials.ClientAuthenticationPublicKey;
@@ -40,6 +42,7 @@ import org.idp.server.core.openid.oauth.type.oauth.ExpiresIn;
 import org.idp.server.core.openid.oauth.type.oauth.TokenType;
 import org.idp.server.core.openid.token.exception.TokenBadRequestException;
 import org.idp.server.core.openid.token.plugin.AccessTokenCustomClaimsCreators;
+import org.idp.server.core.openid.token.verifier.ClientInstanceUserBindingVerifier;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JoseInvalidException;
 import org.idp.server.platform.jose.JsonWebKeyInvalidException;
@@ -216,6 +219,8 @@ public class AccessTokenCreator {
         dpopResult.exists() ? dpopResult.jwkThumbprint() : new JwkThumbprint();
     ClientInstanceThumbprint clientInstanceThumbprint =
         createClientInstanceThumbprint(clientCredentials);
+    ClientInstanceIdentifier clientInstanceIdentifier =
+        createClientInstanceIdentifier(authorizationGrant, clientCredentials);
 
     payloadBuilder.addConfirmation(certThumbprint, jwkThumbprint);
 
@@ -237,10 +242,33 @@ public class AccessTokenCreator {
         certThumbprint,
         jwkThumbprint,
         clientInstanceThumbprint,
+        clientInstanceIdentifier,
         accessTokenCustomClaims,
         createdAt,
         expiresIn,
         expiresAt);
+  }
+
+  /**
+   * The registered Client Instance this token is being issued to, so that a refresh has to come
+   * from that instance and not merely from one holding the same key, and so that the instance's
+   * tokens can be found when it is revoked or deleted.
+   *
+   * <p>An instance bound to a user receives that user's tokens only. Every grant that yields a
+   * token for a user passes through here, so this is where a code, an {@code auth_req_id} or a
+   * refresh token of one user is refused to an instance of another.
+   */
+  private ClientInstanceIdentifier createClientInstanceIdentifier(
+      AuthorizationGrant authorizationGrant, ClientCredentials clientCredentials) {
+
+    ClientInstance clientInstance = clientCredentials.clientInstance();
+    if (!clientInstance.exists()) {
+      return new ClientInstanceIdentifier();
+    }
+
+    new ClientInstanceUserBindingVerifier(authorizationGrant, clientInstance).verify();
+
+    return clientInstance.identifier();
   }
 
   private AccessTokenEntity createAccessTokenEntity(

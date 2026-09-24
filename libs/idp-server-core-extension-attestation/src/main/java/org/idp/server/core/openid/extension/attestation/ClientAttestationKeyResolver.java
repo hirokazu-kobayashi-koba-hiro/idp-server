@@ -51,4 +51,14 @@ public interface ClientAttestationKeyResolver {
    *     available (the authenticator rejects the client in that case)
    */
   String resolveJwks(BackchannelRequestContext context, JsonWebSignatureHeader header);
+
+  /**
+   * Returns the trusted keys together with the registered Client Instance they belong to. Only a
+   * resolver of registered instance keys has one; the others return the keys alone.
+   */
+  default TrustedAttestationKeys resolve(
+      BackchannelRequestContext context, JsonWebSignatureHeader header) {
+    String jwks = resolveJwks(context, header);
+    return jwks == null ? TrustedAttestationKeys.none() : TrustedAttestationKeys.of(jwks);
+  }
 }

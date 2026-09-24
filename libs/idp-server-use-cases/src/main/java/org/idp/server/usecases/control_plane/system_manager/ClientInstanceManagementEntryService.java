@@ -33,6 +33,7 @@ import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
+import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.audit.AuditLog;
 import org.idp.server.platform.audit.AuditLogPublisher;
 import org.idp.server.platform.datasource.Transaction;
@@ -50,6 +51,7 @@ public class ClientInstanceManagementEntryService implements ClientInstanceManag
       TenantQueryRepository tenantQueryRepository,
       ClientInstanceCommandRepository clientInstanceCommandRepository,
       ClientInstanceQueryRepository clientInstanceQueryRepository,
+      OAuthTokenCommandRepository oAuthTokenCommandRepository,
       AuditLogPublisher auditLogPublisher) {
 
     Map<String, ClientInstanceManagementService<?>> services = new HashMap<>();
@@ -62,11 +64,15 @@ public class ClientInstanceManagementEntryService implements ClientInstanceManag
     services.put(
         "revoke",
         new ClientInstanceRevocationService(
-            clientInstanceQueryRepository, clientInstanceCommandRepository));
+            clientInstanceQueryRepository,
+            clientInstanceCommandRepository,
+            oAuthTokenCommandRepository));
     services.put(
         "delete",
         new ClientInstanceDeletionService(
-            clientInstanceQueryRepository, clientInstanceCommandRepository));
+            clientInstanceQueryRepository,
+            clientInstanceCommandRepository,
+            oAuthTokenCommandRepository));
 
     this.handler = new ClientInstanceManagementHandler(services, this, tenantQueryRepository);
     this.auditLogPublisher = auditLogPublisher;

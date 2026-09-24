@@ -85,12 +85,13 @@ class ClientAttestationJwtVerifier {
 
   /**
    * Verifies the Client Attestation JWT and returns the Client Instance Key bound via {@code
-   * cnf.jwk}.
+   * cnf.jwk}, with the registered Client Instance that signed it when self-signed.
    */
-  JsonWebKey verify() {
+  VerifiedClientAttestation verify() {
     JsonWebSignatureHeader header = parseHeader();
     throwExceptionIfInvalidType(header);
-    JoseContext joseContext = verifySignature(header);
+    TrustedAttestationKeys trustedKeys = keyResolver.resolve(context, header);
+    JoseContext joseContext = verifySignature(trustedKeys);
     throwExceptionIfUnsupportedAlg(joseContext);
     throwExceptionIfInvalidSub(joseContext);
     throwExceptionIfInvalidExp(joseContext);
@@ -102,7 +103,7 @@ class ClientAttestationJwtVerifier {
       throwExceptionIfCnfDoesNotMatchSigningKey(joseContext, clientInstanceKey);
     }
 
-    return clientInstanceKey;
+    return new VerifiedClientAttestation(clientInstanceKey, trustedKeys.clientInstance());
   }
 
   private JsonWebSignatureHeader parseHeader() {
@@ -113,11 +114,11 @@ class ClientAttestationJwtVerifier {
     }
   }
 
-  private JoseContext verifySignature(JsonWebSignatureHeader header) {
-    String trustedJwks = keyResolver.resolveJwks(context, header);
-    if (trustedJwks == null || trustedJwks.isEmpty()) {
+  private JoseContext verifySignature(TrustedAttestationKeys trustedKeys) {
+    if (!trustedKeys.exists()) {
       throw exception("no trusted client attestation key is available for the client");
     }
+    String trustedJwks = trustedKeys.jwks();
     try {
       JoseContext joseContext =
           joseHandler.handle(context.clientAttestationJwt().value(), trustedJwks, trustedJwks, "");

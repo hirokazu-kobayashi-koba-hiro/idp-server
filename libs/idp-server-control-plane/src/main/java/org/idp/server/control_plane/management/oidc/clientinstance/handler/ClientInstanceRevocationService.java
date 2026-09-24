@@ -29,6 +29,7 @@ import org.idp.server.core.openid.clientinstance.ClientInstanceCommandRepository
 import org.idp.server.core.openid.clientinstance.ClientInstanceQueryRepository;
 import org.idp.server.core.openid.identity.User;
 import org.idp.server.core.openid.token.OAuthToken;
+import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 import org.idp.server.platform.type.RequestAttributes;
@@ -40,6 +41,10 @@ import org.idp.server.platform.type.RequestAttributes;
  * device, a compromised key — and keeps who registered it, when, and with what evidence. The key
  * stays registered, so it cannot be registered again. Deletion forgets the instance.
  *
+ * <p>The tokens issued to the instance are deleted with it, so that its refresh tokens and — for a
+ * Resource Server that introspects — its access tokens stop at once. An access token a Resource
+ * Server verifies locally as a JWT runs until it expires.
+ *
  * <p>A revocation is final. Revoking an instance that is already revoked is refused rather than
  * silently accepted, so that the recorded revocation time stays the first one.
  */
@@ -48,12 +53,15 @@ public class ClientInstanceRevocationService
 
   private final ClientInstanceQueryRepository queryRepository;
   private final ClientInstanceCommandRepository commandRepository;
+  private final OAuthTokenCommandRepository tokenCommandRepository;
 
   public ClientInstanceRevocationService(
       ClientInstanceQueryRepository queryRepository,
-      ClientInstanceCommandRepository commandRepository) {
+      ClientInstanceCommandRepository commandRepository,
+      OAuthTokenCommandRepository tokenCommandRepository) {
     this.queryRepository = queryRepository;
     this.commandRepository = commandRepository;
+    this.tokenCommandRepository = tokenCommandRepository;
   }
 
   @Override
@@ -96,6 +104,10 @@ public class ClientInstanceRevocationService
     }
 
     commandRepository.update(tenant, revoked);
+    // Refreshing would already fail, the instance no longer authenticating. Deleting its tokens
+    // also stops the access tokens a Resource Server checks by introspection.
+    tokenCommandRepository.deleteByClientInstance(
+        tenant, request.requestedClientId(), request.identifier());
 
     return new ClientInstanceManagementResponse(ClientInstanceManagementStatus.OK, revoked.toMap());
   }

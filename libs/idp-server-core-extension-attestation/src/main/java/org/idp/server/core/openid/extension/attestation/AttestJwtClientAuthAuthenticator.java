@@ -88,8 +88,9 @@ public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
     }
     ClientAttestationKeyResolver keyResolver = keyResolvers.get(trustSource);
 
-    JsonWebKey clientInstanceKey =
+    VerifiedClientAttestation attestation =
         new ClientAttestationJwtVerifier(context, keyResolver, trustSource).verify();
+    JsonWebKey clientInstanceKey = attestation.clientInstanceKey();
     JsonWebSignature popJws =
         new ClientAttestationPopJwtVerifier(
                 context, clientInstanceKey, challengeRepository, challengeIssuer)
@@ -106,7 +107,8 @@ public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {
         new ClientSecret(),
         new ClientAuthenticationPublicKey(clientInstanceKey),
         new ClientAssertionJwt(popJws),
-        new ClientCertification());
+        new ClientCertification(),
+        attestation.clientInstance());
   }
 
   void throwExceptionIfNotContainsAttestationHeaders(BackchannelRequestContext context) {

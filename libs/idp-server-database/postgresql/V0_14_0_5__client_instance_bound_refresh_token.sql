@@ -8,3 +8,9 @@
 -- Nullable and unindexed: only rows issued through attest_jwt_client_auth carry a value, and the
 -- lookup is by primary key on the refresh path, never by this column.
 ALTER TABLE oauth_token ADD COLUMN IF NOT EXISTS client_instance_thumbprint VARCHAR(64);
+
+-- The registered Client Instance the token was issued to (registered_instance_key only). A refresh
+-- has to come from that instance, not merely from one holding the same key: a deleted instance
+-- frees its key, and a new registration of it must not inherit the old refresh tokens. Revoking or
+-- deleting the instance deletes its tokens by this column; the index is V0_14_0_6.
+ALTER TABLE oauth_token ADD COLUMN IF NOT EXISTS client_instance_id VARCHAR(255);

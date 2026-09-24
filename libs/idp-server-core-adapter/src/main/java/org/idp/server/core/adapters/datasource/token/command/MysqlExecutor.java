@@ -65,11 +65,13 @@ public class MysqlExecutor implements OAuthTokenSqlExecutor {
                                 client_certification_thumbprint,
                                 jwk_thumbprint,
                                 client_instance_thumbprint,
+                                client_instance_id,
                                 c_nonce,
                                 c_nonce_expires_in,
                                 expires_at
                                 )
                                 VALUES (
+                                ?,
                                 ?,
                                 ?,
                                 ?,
@@ -270,6 +272,13 @@ public class MysqlExecutor implements OAuthTokenSqlExecutor {
         oAuthToken.accessToken().hasClientInstanceBinding()
             ? oAuthToken.accessToken().clientInstanceThumbprint().value()
             : null);
+    OAuthTokenRowBuilder.add(
+        params,
+        row,
+        "client_instance_id",
+        oAuthToken.accessToken().hasClientInstanceIdentifier()
+            ? oAuthToken.accessToken().clientInstanceIdentifier().value()
+            : null);
 
     if (oAuthToken.hasCNonce()) {
       OAuthTokenRowBuilder.add(params, row, "c_nonce", oAuthToken.cNonce().value());
@@ -334,6 +343,37 @@ public class MysqlExecutor implements OAuthTokenSqlExecutor {
               AND client_id = ?;
             """;
     List<Object> params = List.of(tenantId, userId, clientId);
+
+    sqlExecutor.execute(sqlTemplate, params);
+  }
+
+  @Override
+  public List<String> selectHashedAccessTokensByClientInstance(
+      String tenantId, String clientId, String clientInstanceId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+            SELECT hashed_access_token FROM oauth_token
+            WHERE tenant_id = ?
+              AND client_id = ?
+              AND client_instance_id = ?;
+            """;
+    List<Object> params = List.of(tenantId, clientId, clientInstanceId);
+    List<Map<String, String>> results = sqlExecutor.selectList(sqlTemplate, params);
+    return results.stream().map(row -> row.get("hashed_access_token")).toList();
+  }
+
+  @Override
+  public void deleteByClientInstance(String tenantId, String clientId, String clientInstanceId) {
+    SqlExecutor sqlExecutor = new SqlExecutor();
+    String sqlTemplate =
+        """
+            DELETE FROM oauth_token
+            WHERE tenant_id = ?
+              AND client_id = ?
+              AND client_instance_id = ?;
+            """;
+    List<Object> params = List.of(tenantId, clientId, clientInstanceId);
 
     sqlExecutor.execute(sqlTemplate, params);
   }

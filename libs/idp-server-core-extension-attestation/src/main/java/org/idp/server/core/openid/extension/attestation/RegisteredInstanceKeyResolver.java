@@ -46,9 +46,19 @@ public class RegisteredInstanceKeyResolver implements ClientAttestationKeyResolv
 
   @Override
   public String resolveJwks(BackchannelRequestContext context, JsonWebSignatureHeader header) {
+    return resolve(context, header).jwks();
+  }
+
+  /**
+   * The instance is returned along with its key, so that what is issued on this request can be
+   * bound to it: its refresh tokens, and the user its tokens may be for.
+   */
+  @Override
+  public TrustedAttestationKeys resolve(
+      BackchannelRequestContext context, JsonWebSignatureHeader header) {
     Tenant tenant = context.tenant();
     if (tenant == null || !header.hasKid()) {
-      return null;
+      return TrustedAttestationKeys.none();
     }
 
     ClientInstance clientInstance =
@@ -56,9 +66,9 @@ public class RegisteredInstanceKeyResolver implements ClientAttestationKeyResolv
             tenant, context.requestedClientId(), new ClientInstanceIdentifier(header.kid()));
 
     if (!clientInstance.isActive()) {
-      return null;
+      return TrustedAttestationKeys.none();
     }
 
-    return clientInstance.instanceKeyAsJwks();
+    return TrustedAttestationKeys.ofInstance(clientInstance);
   }
 }
