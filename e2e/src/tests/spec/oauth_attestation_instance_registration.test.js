@@ -403,6 +403,22 @@ describe("Client Instance registration (application plane, user bound)", () => {
       expect(replayed.status).toBe(400);
     });
 
+    it("consumes a challenge once even when the registrations arrive at the same time", async () => {
+      // The consumption is a single conditional update, not a read followed by a write: of requests
+      // racing on one challenge, exactly one gets it.
+      const jwk = await generateInstanceJwk();
+      const { challenge } = (await requestChallenge()).data;
+      const { idToken } = await loginForRegistration({ challenge, jwk });
+
+      const responses = await Promise.all(
+        Array.from({ length: 10 }, () => registerInstance({ challenge, jwk, idToken }))
+      );
+      const statuses = responses.map((response) => response.status).sort();
+
+      expect(statuses.filter((status) => status === 201)).toHaveLength(1);
+      expect(statuses.filter((status) => status === 400)).toHaveLength(9);
+    });
+
     it("rejects a key that is already registered to an instance", async () => {
       // A refresh token is bound to the key: a second instance holding it would redeem the tokens of
       // the first, and revoking the first would not stop the key.

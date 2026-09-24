@@ -20,6 +20,7 @@
 - [テナント管理API](cp-tenant-api-ja)
 - [Grant管理API](api-grant-management-ja)
 - [クライアント管理API](cp-client-api-ja)
+- [Client Instance 管理API](cp-client-instance-api-ja)
 - [ユーザー管理API](cp-user-api-ja)
 - [ロール・権限管理API](cp-role-permission-api-ja)
 - [認証設定管理API](cp-authentication-api-ja)

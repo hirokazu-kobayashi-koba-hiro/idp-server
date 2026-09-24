@@ -12,5 +12,7 @@ ALTER TABLE oauth_token ADD COLUMN client_instance_thumbprint VARCHAR(64);
 -- The registered Client Instance the token was issued to (registered_instance_key only). A refresh
 -- has to come from that instance, not merely from one holding the same key: a deleted instance
 -- frees its key, and a new registration of it must not inherit the old refresh tokens. Revoking or
--- deleting the instance deletes its tokens by this column; the index is V0_14_0_6.
+-- deleting an instance through the management API deletes its tokens by this column. Unindexed on
+-- purpose: that is a rare operator action, and an index on this table would have to be built
+-- CONCURRENTLY in production. Registration does not delete tokens (see ClientInstanceRegistrationService).
 ALTER TABLE oauth_token ADD COLUMN client_instance_id CHAR(36);

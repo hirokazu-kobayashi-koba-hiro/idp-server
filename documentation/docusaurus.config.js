@@ -114,6 +114,10 @@ const config = {
             route: '/docs/content_07_reference/cp-client-api-ja/',
           },
           {
+            spec: 'openapi/swagger-cp-client-instance-ja.yaml',
+            route: '/docs/content_07_reference/cp-client-instance-api-ja/',
+          },
+          {
             spec: 'openapi/swagger-cp-user-ja.yaml',
             route: '/docs/content_07_reference/cp-user-api-ja/',
           },

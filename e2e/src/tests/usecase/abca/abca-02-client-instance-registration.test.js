@@ -20,7 +20,7 @@
  * 1. First launch: log in, register the key, and exchange the code of the same login with it
  * 2. Steady state: reuse one self-signed attestation, with a server-provided Challenge
  * 3. Reinstall: the user logs in again and the newly registered key takes over; the old instance
- *    is revoked as superseded, with its tokens
+ *    is revoked as superseded, and stops at its next client authentication
  * 4. Lost device: revoking the instance stops the app from authenticating
  * 5. The same credentials working at the Pushed Authorization Request endpoint
  * 6. Lifecycle: revocation is final and keeps the key taken; deletion forgets the instance
@@ -436,8 +436,13 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     const actives = await activeInstancesOf();
     expect(actives.map((instance) => instance.id)).toEqual([afterReinstall.instanceId]);
 
-    console.log("=== Step 5: the tokens of the old instance went with it ===");
-    expect(await isActive(beforeTokens.data.access_token)).toBe(false);
+    console.log("=== Step 5: the old device stops at its next client authentication ===");
+    // Registering another device replaces the old instance; it does not sign the old device out.
+    // Its refresh fails with the instance, and its access token runs until it expires.
+    const oldRefresh = await refreshWith(beforeReinstall, beforeTokens.data.refresh_token);
+    expect(oldRefresh.status).toBe(401);
+    expect(oldRefresh.data).toHaveProperty("error", "invalid_client_attestation");
+    expect(await isActive(beforeTokens.data.access_token)).toBe(true);
 
     await deleteInstancesOf();
   });
@@ -675,6 +680,26 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     console.log("=== a condition no value can meet is refused, not answered with nothing ===");
     expect((await search("status=deleted")).status).toBe(400);
     expect((await search("user_id=not-a-uuid")).status).toBe(400);
+
+    console.log("=== another tenant sees none of it: not by id, not by key ===");
+    const otherTenantInstances = `${backendUrl}/v1/management/tenants/${adminServerConfig.tenantId}/client-instances`;
+    const fromOtherTenant = await get({
+      url: `${otherTenantInstances}/${second.instanceId}`,
+      headers: managementHeaders,
+    });
+    expect(fromOtherTenant.status).toBe(404);
+    const byKeyFromOtherTenant = await get({
+      url: `${otherTenantInstances}?instance_key_thumbprint=${thumbprint}`,
+      headers: managementHeaders,
+    });
+    expect(byKeyFromOtherTenant.status).toBe(200);
+    expect(byKeyFromOtherTenant.data.total_count).toBe(0);
+    const revokeFromOtherTenant = await post({
+      url: `${otherTenantInstances}/${second.instanceId}/revoke`,
+      headers: managementHeaders,
+    });
+    expect(revokeFromOtherTenant.status).toBe(404);
+    expect((await getInstance(second.instanceId)).data.status).toBe("active");
 
     console.log("=== an instance is addressed by id alone; an unknown or malformed id is not found ===");
     expect((await getInstance(uuidv4())).status).toBe(404);

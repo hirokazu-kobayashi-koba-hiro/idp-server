@@ -1,0 +1,530 @@
+openapi: 3.0.3
+info:
+  title: idp-server Client Instance 管理 API
+  description: |
+    Client Instance（Attestation-Based Client Authentication の自己署名モードで使う、アプリのインスタンスごとの鍵）を管理する API です。
+
+    ## 概要
+
+    Client Instance は、`client_attestation_trust_source = registered_instance_key` のクライアントで、
+    アプリのインストールごとに登録する鍵（Client Instance Key）です。アプリはこの鍵で Client Attestation JWT を自己署名し、
+    `kid` にインスタンスの `id` を入れます。詳しくは
+    [Attestation-Based Client Authentication](/docs/content_04_protocols/protocol-08-attestation-based-client-authentication) を参照してください。
+
+    インスタンスはふつう、アプリ自身が登録エンドポイント（`POST /{tenant-id}/v1/client-instances`）で登録します。
+    この API は、運用側での検索・失効・削除と、アプリからの登録を使わない場合の登録に使います。
+
+    ### テナント直下のリソース
+
+    インスタンスはクライアントの下ではなくテナントの直下に置いています。運用で手元にあるのは利用者・鍵・証明書のシリアルで、
+    どのクライアントのものかは調べるまで分からないためです。`id` は UUID で、テナント内で 1 件に決まります。
+    `client_id` は登録時のボディと、検索条件で指定します。
+
+    ### 失効と削除
+
+    | | 失効（`POST .../{id}/revoke`） | 削除（`DELETE .../{id}`） |
+    |---|---|---|
+    | 意味 | 信頼をやめる | 記録を消す |
+    | インスタンスの記録 | 残る（`status: revoked`、`revoked_at`、`revocation_reason`、証跡） | 消える |
+    | その鍵での認証 | 拒否（401 `invalid_client_attestation`） | 拒否 |
+    | 発行済みのトークン | 削除 | 削除 |
+    | 同じ鍵の再登録 | できない | できる（別のインスタンスになる） |
+
+    失効は元に戻せません。
+
+    ### 権限
+
+    | 操作 | 権限 |
+    |---|---|
+    | 登録 | `idp:client-instance:create` |
+    | 検索・取得 | `idp:client-instance:read` |
+    | 失効 | `idp:client-instance:revoke` |
+    | 削除 | `idp:client-instance:delete` |
+
+  version: 1.0.0
+  contact:
+    name: idp-server OSS
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: client-instance
+    description: Client Instance 管理（システムレベル）
+
+paths:
+  /v1/management/tenants/{tenant-id}/client-instances:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: Client Instance の検索
+      description: |
+        テナント内のインスタンスを、クライアントをまたいで検索します。新しく登録したものから順に返します。
+
+        条件はすべて任意で、組み合わせられます。取りうる値が決まっている条件（`status`、`revocation_reason`、
+        UUID の `user_id`、日時の `from` / `to`）に合わない値は 400 を返します。空の一覧を返すと「該当なし」と読み違えるためです。
+      tags:
+        - client-instance
+      operationId: listClientInstances
+      parameters:
+        - name: client_id
+          in: query
+          description: クライアントで絞り込む
+          required: false
+          schema:
+            type: string
+          example: "mobile-app"
+        - name: user_id
+          in: query
+          description: 利用者で絞り込む（利用者の問い合わせで、その人の端末を一覧する）
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: 状態で絞り込む
+          required: false
+          schema:
+            type: string
+            enum: [active, revoked]
+        - name: revocation_reason
+          in: query
+          description: 失効の理由で絞り込む
+          required: false
+          schema:
+            type: string
+            enum: [operator, superseded]
+        - name: platform
+          in: query
+          description: 登録時のプラットフォーム証明の種類（`attestation_evidence.platform`）で絞り込む
+          required: false
+          schema:
+            type: string
+          example: "android-key-attestation"
+        - name: certificate_serial
+          in: query
+          description: |
+            登録時の証明書チェーンに含まれる証明書のシリアル番号（小文字の 16 進）で絞り込む。
+            証明の鍵や中間証明書の漏えいが分かったときに、その証明書を経由して登録したインスタンスを探すために使います。
+            大文字で指定しても一致します。
+          required: false
+          schema:
+            type: string
+          example: "7f3a9c01"
+        - name: instance_key_thumbprint
+          in: query
+          description: インスタンスの鍵の RFC 7638 サムプリント（SHA-256、base64url）で引く
+          required: false
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: 登録日時の開始（この日時以降）
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: 登録日時の終了（この日時以前）
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: 検索結果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientInstanceListResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      summary: Client Instance の登録
+      description: |
+        運用側でインスタンスの鍵を登録します。アプリからの登録（`client_instance_registration_policy`）には縛られず、利用者にも束縛されません。
+
+        - `client_id` は必須で、このテナントのクライアントであること
+        - `id` を指定する場合は UUID で、どのインスタンスにも使われていないこと。省略するとサーバーが払い出します
+        - `instance_key` は公開鍵の JWK であること（`d` などの秘密鍵の要素を含むと 400）
+        - 同じテナントのいずれかのインスタンス（失効したものを含む）にすでに登録されている鍵は登録できません
+      tags:
+        - client-instance
+      operationId: createClientInstance
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientInstanceCreateRequest'
+      responses:
+        '201':
+          description: 登録した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientInstanceResultResponse'
+        '200':
+          description: dry_run の結果（登録はしない）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientInstanceResultResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /v1/management/tenants/{tenant-id}/client-instances/{id}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/InstanceId'
+    get:
+      summary: Client Instance の取得
+      description: UUID でない `id` や、存在しない `id` は 404 を返します。
+      tags:
+        - client-instance
+      operationId: getClientInstance
+      responses:
+        '200':
+          description: インスタンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientInstance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Client Instance の削除
+      description: |
+        インスタンスの記録を消し、そのインスタンスに発行したトークンも削除します。
+        止めるだけなら失効（`POST .../{id}/revoke`）を使ってください。削除すると、同じ鍵をもう一度登録できるようになります（別のインスタンスとして扱われ、旧いトークンは引き継ぎません）。
+      tags:
+        - client-instance
+      operationId: deleteClientInstance
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: 削除した
+        '200':
+          description: dry_run の結果（削除はしない）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Deletion simulated successfully"
+                  id:
+                    type: string
+                    format: uuid
+                  dry_run:
+                    type: boolean
+                    example: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/management/tenants/{tenant-id}/client-instances/{id}/revoke:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/InstanceId'
+    post:
+      summary: Client Instance の失効
+      description: |
+        インスタンスの信頼をやめます。記録と証跡は残り（`status: revoked`、`revoked_at`、`revocation_reason: operator`）、
+        そのインスタンスに発行したトークンは削除します。リフレッシュトークンと、introspection で確かめるアクセストークンはその時点で止まります。
+        JWT のアクセストークンをリソースサーバーが手元で検証する場合は、有効期限まで通ります。
+
+        **失効は元に戻せません。** すでに失効しているインスタンスを失効させようとすると 400 を返し、最初の `revoked_at` を保ちます。
+        端末をもう一度信頼するときは、アプリが新しい鍵を作って登録し直します（失効した鍵は再登録できません）。
+      tags:
+        - client-instance
+      operationId: revokeClientInstance
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: |
+            失効した（失効後のインスタンスを返す）。dry_run のときは失効後の姿を `result` に入れて返し、記録は変えない
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ClientInstance'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Revocation simulated successfully"
+                      result:
+                        $ref: '#/components/schemas/ClientInstance'
+                      dry_run:
+                        type: boolean
+                        example: true
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  parameters:
+    TenantId:
+      name: tenant-id
+      in: path
+      required: true
+      description: テナント識別子
+      schema:
+        type: string
+        format: uuid
+    InstanceId:
+      name: id
+      in: path
+      required: true
+      description: インスタンスの識別子（Client Attestation JWT の `kid`）
+      schema:
+        type: string
+        format: uuid
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      description: '`true` なら検証だけ行い、変更はしない'
+      schema:
+        type: boolean
+        default: false
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: 最大件数（最大 1000）
+      schema:
+        type: integer
+        default: 20
+        maximum: 1000
+    Offset:
+      name: offset
+      in: query
+      required: false
+      description: スキップする件数
+      schema:
+        type: integer
+        default: 0
+
+  responses:
+    InvalidRequest:
+      description: リクエストが不正（条件の値が不正、鍵が不正・登録済み、失効済みのインスタンスの失効 など）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: invalid_request
+            error_description: "status must be one of: active, revoked"
+    Unauthorized:
+      description: 管理者の認証に失敗した
+    Forbidden:
+      description: 必要な権限が無い
+    NotFound:
+      description: インスタンスが見つからない（UUID でない `id` を含む）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ClientInstance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: インスタンスの識別子。Client Attestation JWT の `kid` に入れる値
+        client_id:
+          type: string
+          description: インスタンスが属するクライアント
+        instance_key:
+          type: object
+          description: インスタンスの鍵（公開鍵の JWK）
+          additionalProperties: true
+          example:
+            kty: EC
+            crv: P-256
+            x: "..."
+            y: "..."
+        status:
+          type: string
+          enum: [active, revoked]
+        user_id:
+          type: string
+          format: uuid
+          description: インスタンスを束縛した利用者。アプリからの登録（ID トークンで認証）で設定され、管理 API で登録したものには無い
+        attestation_evidence:
+          $ref: '#/components/schemas/AttestationEvidence'
+        device_id:
+          type: string
+          format: uuid
+          description: 認証デバイスへの参照（管理 API で登録したときだけ設定できる）
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        revoked_at:
+          type: string
+          format: date-time
+          description: 失効した日時（マイクロ秒精度）
+        revocation_reason:
+          type: string
+          enum: [operator, superseded]
+          description: |
+            失効の理由。`operator` は管理 API からの失効、`superseded` は同じ利用者の新しい登録に置き換えられた失効
+      required:
+        - id
+        - client_id
+        - instance_key
+        - status
+
+    AttestationEvidence:
+      type: object
+      description: |
+        登録時のプラットフォーム証明で確かめたこと。目的は ①証明書の漏えい時にまとめて失効 ②監査 ③方針変更時の再評価。
+        チェーンそのものや端末を識別する値は残しません。
+      properties:
+        platform:
+          type: string
+          example: "android-key-attestation"
+        verified_at:
+          type: string
+          format: date-time
+        binding_only:
+          type: boolean
+          description: 開発用検証器で登録したとき `true`（アプリや端末については何も確かめていない）
+        key:
+          type: object
+          description: 鍵の性質（Android）
+          properties:
+            attestation_security_level:
+              type: string
+            keymint_security_level:
+              type: string
+            origin:
+              type: string
+        app:
+          type: object
+          description: 一致したアプリの識別（Android は package_names / signature_digests、iOS は app_id / environment）
+          additionalProperties: true
+        chain:
+          type: object
+          properties:
+            certificates:
+              type: array
+              items:
+                type: object
+                properties:
+                  serial:
+                    type: string
+                    description: シリアル番号（小文字の 16 進）
+                  not_after:
+                    type: string
+                    format: date-time
+                  sha256:
+                    type: string
+                    description: 証明書（DER）の SHA-256（16 進）
+
+    ClientInstanceCreateRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 省略するとサーバーが払い出す
+        client_id:
+          type: string
+          description: 登録先のクライアント（このテナントのクライアントであること）
+        instance_key:
+          type: object
+          description: 公開鍵の JWK。秘密鍵の要素（`d` など）を含んではならない
+          additionalProperties: true
+        attestation_evidence:
+          type: object
+          additionalProperties: true
+        device_id:
+          type: string
+          format: uuid
+        expires_at:
+          type: string
+          format: date-time
+      required:
+        - client_id
+        - instance_key
+
+    ClientInstanceResultResponse:
+      type: object
+      properties:
+        result:
+          $ref: '#/components/schemas/ClientInstance'
+        dry_run:
+          type: boolean
+
+    ClientInstanceListResponse:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientInstance'
+        total_count:
+          type: integer
+          description: 条件に一致するインスタンスの総数
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+        - list
+        - total_count
+        - limit
+        - offset
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: invalid_request
+        error_description:
+          type: string
+      required:
+        - error

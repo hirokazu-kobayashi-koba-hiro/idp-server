@@ -34,7 +34,6 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
-import org.idp.server.core.openid.token.repository.OAuthTokenCommandRepository;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
 import org.idp.server.platform.log.LoggerWrapper;
@@ -57,10 +56,14 @@ import org.idp.server.platform.multi_tenancy.tenant.Tenant;
  * </ol>
  *
  * <p>A user holds one active instance of a client. The new instance takes the place of the user's
- * others, which are revoked in the same transaction, with their tokens deleted. There is no way to
- * tell whether it is the same device: an instance is a registration of a key, not a device. Two
- * registrations running at once cannot both leave an active instance; the database constrains that,
- * and the later one fails.
+ * others, which are revoked in the same transaction. There is no way to tell whether it is the same
+ * device: an instance is a registration of a key, not a device. Two registrations running at once
+ * cannot both leave an active instance; the database constrains that, and the later one fails.
+ *
+ * <p>The tokens of a replaced instance are left alone. Revoking it already stops the device the
+ * user moved away from at its next client authentication, a refresh included; deleting its tokens
+ * would sign it out as well, which is an explicit act — the management API's revocation and
+ * deletion do it — rather than a side effect of registering another device.
  */
 public class ClientInstanceRegistrationService {
 
@@ -69,7 +72,6 @@ public class ClientInstanceRegistrationService {
   ClientInstanceRegistrationChallengeRepository challengeRepository;
   ClientInstanceQueryRepository clientInstanceQueryRepository;
   ClientInstanceCommandRepository clientInstanceCommandRepository;
-  OAuthTokenCommandRepository oAuthTokenCommandRepository;
   ClientConfigurationQueryRepository clientConfigurationQueryRepository;
   AuthorizationServerConfigurationQueryRepository authorizationServerConfigurationQueryRepository;
   UserQueryRepository userQueryRepository;
@@ -80,7 +82,6 @@ public class ClientInstanceRegistrationService {
       ClientInstanceRegistrationChallengeRepository challengeRepository,
       ClientInstanceQueryRepository clientInstanceQueryRepository,
       ClientInstanceCommandRepository clientInstanceCommandRepository,
-      OAuthTokenCommandRepository oAuthTokenCommandRepository,
       ClientConfigurationQueryRepository clientConfigurationQueryRepository,
       AuthorizationServerConfigurationQueryRepository
           authorizationServerConfigurationQueryRepository,
@@ -90,7 +91,6 @@ public class ClientInstanceRegistrationService {
     this.challengeRepository = challengeRepository;
     this.clientInstanceQueryRepository = clientInstanceQueryRepository;
     this.clientInstanceCommandRepository = clientInstanceCommandRepository;
-    this.oAuthTokenCommandRepository = oAuthTokenCommandRepository;
     this.clientConfigurationQueryRepository = clientConfigurationQueryRepository;
     this.authorizationServerConfigurationQueryRepository =
         authorizationServerConfigurationQueryRepository;
@@ -167,8 +167,8 @@ public class ClientInstanceRegistrationService {
   }
 
   /**
-   * Revokes the user's other active instances of the client, and deletes their tokens: the device
-   * the user moved away from stops at once, and its refresh tokens cannot follow.
+   * Revokes the user's other active instances of the client. Their next client authentication
+   * fails, so their refresh tokens stop with them.
    */
   private List<ClientInstance> supersedeActiveInstancesOf(
       Tenant tenant, ClientInstance newInstance) {
@@ -180,8 +180,6 @@ public class ClientInstanceRegistrationService {
     for (ClientInstance active : actives) {
       clientInstanceCommandRepository.update(
           tenant, active.revoke(revokedAt, ClientInstanceRevocationReason.superseded));
-      oAuthTokenCommandRepository.deleteByClientInstance(
-          tenant, active.requestedClientId(), active.identifier());
     }
 
     if (!actives.isEmpty()) {
