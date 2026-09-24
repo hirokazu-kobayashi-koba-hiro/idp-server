@@ -29,44 +29,99 @@
 
 ## シーケンス
 
-インストールから最初のトークン取得まで。`registered_instance_key`（自己署名）の場合です。
+Attestation JWT に誰が署名するかで、流れが 2 つに分かれます（どちらを選ぶかは[信頼モデル](#信頼モデル-誰が-attestation-jwt-に署名するか)）。
 
-```
- アプリ                              idp-server
- （Client Instance）
-   │
-   │  === インストール時（利用者のログインごと）に一度 ===
-   ├─ POST /{tenant-id}/v1/client-instances/challenges ─────▶
-   │     { client_id }
-   │◀──── { challenge, instance_id }
-   │
-   ├─ 端末内で鍵ペアを生成（セキュアハードウェア）
-   ├─ request_hash = SHA-256(challenge_bytes || canonical_jwk)
-   │
-   ├─ 認可リクエスト（response_type=code id_token, nonce=request_hash）▶
-   │     利用者がログイン
-   │◀──── code + id_token（nonce = request_hash）
-   │
-   ├─ challenge を埋め込んだプラットフォーム証明を取得
-   │
-   ├─ POST /{tenant-id}/v1/client-instances ────────────────▶
-   │     { challenge, id_token, client_instance_public_key, platform_evidence }
-   │◀──── 201                 鍵を client_instance に登録し、利用者に束縛
-   │
-   ├─ 同じ応答の code を、登録した鍵の attest_jwt_client_auth で交換
-   │
-   │  === 以降、リクエストのたびに ===
-   ├─ Client Attestation JWT を自己署名で作成（cnf.jwk = 自分の公開鍵）
-   ├─ Client Attestation PoP JWT を作成（aud = issuer, jti, iat）
-   │
-   ├─ POST /{tenant-id}/v1/tokens ──────────────────────────▶
-   │     OAuth-Client-Attestation: <Attestation JWT>
-   │     OAuth-Client-Attestation-PoP: <PoP JWT>
-   │     grant_type=...&client_id=...
-   │◀──── 200 { access_token, ... }
+| 形 | `client_attestation_trust_source` | Attestation JWT の署名者 | 認可サーバーへのインスタンス登録 |
+|---|---|---|---|
+| [自己署名](#自己署名registered_instance_key) | `registered_instance_key` | アプリ自身 | 必要 |
+| [Attester をバックエンドに持つ](#attester-をバックエンドに持つattester_jwks--x5c) | `attester_jwks` / `x5c` | アプリ提供者のバックエンド（Client Attester） | 不要 |
+
+### 自己署名（registered_instance_key）
+
+インストールから最初のトークン取得まで。
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 利用者
+    participant App as アプリ<br/>（Client Instance）
+    participant OS as 端末の OS<br/>（Key Attestation / App Attest）
+    participant AS as idp-server
+
+    rect rgba(127, 127, 127, 0.08)
+    Note over User,AS: 登録（インストール時、利用者のログインごとに一度）
+    App->>AS: POST /{tenant-id}/v1/client-instances/challenges<br/>{ client_id }
+    AS-->>App: { challenge, instance_id }
+    App->>OS: 鍵ペアを生成（セキュアハードウェア）
+    Note over App: request_hash = SHA-256(challenge_bytes ‖ canonical_jwk)
+    App->>AS: 認可リクエスト<br/>response_type=code id_token, nonce=request_hash
+    User->>AS: ログイン
+    AS-->>App: code と id_token（nonce = request_hash）
+    App->>OS: challenge を埋め込んだプラットフォーム証明を要求
+    OS-->>App: platform_evidence
+    App->>AS: POST /{tenant-id}/v1/client-instances<br/>{ challenge, id_token, client_instance_public_key, platform_evidence }
+    Note over AS: ID トークンと証明を検証し、<br/>鍵を登録して利用者に束縛
+    AS-->>App: 201 { instance_id }
+    App->>AS: POST /{tenant-id}/v1/tokens（grant_type=authorization_code）<br/>同じ応答の code を、登録した鍵の attest_jwt_client_auth で交換
+    AS-->>App: 200 { access_token, id_token, ... }
+    end
+
+    rect rgba(127, 127, 127, 0.08)
+    Note over App,AS: 以降、リクエストのたびに
+    Note over App: Client Attestation JWT を自己署名<br/>（kid = instance_id, cnf.jwk = 自分の公開鍵）<br/>PoP JWT を作成（aud = issuer, jti, iat）
+    App->>AS: POST /{tenant-id}/v1/tokens<br/>OAuth-Client-Attestation と OAuth-Client-Attestation-PoP
+    AS-->>App: 200 { access_token, ... }
+    end
 ```
 
-`attester_jwks` の場合は、インストール時の登録の代わりに **Client Attester から Attestation JWT を受け取る**ステップが入ります（デバイス証明を Attester に提示し、Attester が署名した JWT を受け取る）。認可サーバーへの事前登録は不要です。
+Android Key Attestation では、証明書チェーンは鍵の生成時に得られます（手順 3 と 7〜8 が一度に済みます）。どちらの場合も、鍵は challenge を受け取ってから作ります。証明に challenge を埋め込むためです。
+
+### Attester をバックエンドに持つ（attester_jwks / x5c）
+
+アプリ提供者が **Client Attester**（バックエンド）を運用する形です。端末とアプリが本物かを確かめるのは Attester で、認可サーバーは Attester の署名を信頼します。認可サーバーへのインスタンス登録はありません。
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 利用者
+    participant App as アプリ<br/>（Client Instance）
+    participant OS as 端末の OS<br/>（Key Attestation / App Attest）
+    participant Attester as Client Attester<br/>（アプリ提供者のバックエンド）
+    participant AS as idp-server
+
+    rect rgba(127, 127, 127, 0.08)
+    Note over App,Attester: Attestation JWT の取得（有効期限が切れるたびに）
+    App->>OS: 鍵ペアを生成（セキュアハードウェア）
+    App->>OS: プラットフォーム証明を要求
+    OS-->>App: プラットフォーム証明
+    App->>Attester: 公開鍵とプラットフォーム証明（独自プロトコル）
+    Note over Attester: 証明を検証<br/>（アプリと端末は本物か、鍵はセキュアハードウェアにあるか）
+    Attester-->>App: Client Attestation JWT<br/>（sub = client_id, cnf.jwk = アプリの公開鍵, exp）<br/>Attester の鍵で署名（x5c なら証明書チェーン付き）
+    end
+
+    rect rgba(127, 127, 127, 0.08)
+    Note over User,AS: ログインとトークン取得
+    App->>AS: 認可リクエスト
+    User->>AS: ログイン
+    AS-->>App: code
+    Note over App: PoP JWT を作成（aud = issuer, jti, iat）<br/>Instance の鍵で署名
+    App->>AS: POST /{tenant-id}/v1/tokens<br/>OAuth-Client-Attestation と OAuth-Client-Attestation-PoP
+    Note over AS: Attestation JWT を Attester の鍵で検証<br/>（attester_jwks: 設定した JWKS / x5c: チェーンを設定したルートまで）<br/>PoP JWT を cnf.jwk で検証
+    AS-->>App: 200 { access_token, refresh_token, ... }
+    end
+
+    rect rgba(127, 127, 127, 0.08)
+    Note over App,AS: 以降のリクエスト
+    Note over App: 期限内は同じ Attestation JWT を使い回し、<br/>PoP JWT だけ作り直す
+    App->>AS: OAuth-Client-Attestation と OAuth-Client-Attestation-PoP
+    AS-->>App: 200
+    end
+```
+
+- **アプリと Attester のやりとり**（証明の送り方、チャレンジの出し方）は ABCA の範囲外で、アプリ提供者が決めます。Attester が発行した使い捨てのチャレンジを証明に含めさせ、過去の証明の使い回しを防ぐのが一般的です。
+- **Attestation JWT の期限が切れたら**、アプリは Attester から取り直します。期限切れのまま送ると `use_fresh_attestation` が返ります。
+- **特定のインスタンスを止める手段は、Attestation JWT の有効期限だけです。** インスタンスは認可サーバーに登録されていないので、認可サーバーからは止められません。Attester が次の Attestation JWT を出さなければ、期限切れで止まります。`idp-server` はこの形では有効期限に上限を掛けない（自己署名は 24 時間まで）ので、Attester 側で短くしてください。
+- 利用者への束縛はありません。Attestation JWT が保証するのは「本物のアプリの、この鍵」までで、誰が使っているかはログインで決まります。
 
 Challenge を必須にしている場合は、リクエスト前に `POST /{tenant-id}/v1/client-attestation/challenges` で取得した値を PoP JWT の `challenge` クレームに入れます。
 
