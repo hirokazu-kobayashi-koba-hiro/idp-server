@@ -238,6 +238,7 @@ describe("client management api", () => {
           client_attestation_trust_source: "attester_jwks",
           client_attestation_attester_jwks: JSON.stringify({ keys: [] }),
           client_instance_registration_policy: "user_bound",
+          client_instance_registration_clients: [uuidv4()],
         },
       };
 

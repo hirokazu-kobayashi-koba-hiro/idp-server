@@ -20,6 +20,8 @@ import java.security.MessageDigest;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
+import java.util.Map;
+import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationEvidence;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationException;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationRequest;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerifier;
@@ -78,7 +80,7 @@ public class AndroidKeyAttestationVerifier implements PlatformAttestationVerifie
   }
 
   @Override
-  public void verify(PlatformAttestationVerificationRequest request) {
+  public PlatformAttestationEvidence verify(PlatformAttestationVerificationRequest request) {
     AndroidKeyAttestationConfiguration configuration =
         AndroidKeyAttestationConfiguration.fromPlatformConfig(
             request.clientConfiguration().clientInstancePlatformConfig());
@@ -104,6 +106,26 @@ public class AndroidKeyAttestationVerifier implements PlatformAttestationVerifie
           request.tenant().identifierValue(),
           request.challenge().clientId());
     }
+
+    return evidenceOf(extension, chain);
+  }
+
+  /**
+   * What the verification established, read from the fields the checks above accepted: the key's
+   * security levels and origin from the hardware enforced list, and the application identity.
+   */
+  private PlatformAttestationEvidence evidenceOf(
+      AndroidKeyAttestationExtension extension, X509CertificateChain chain) {
+    return PlatformAttestationEvidence.of(
+        PLATFORM,
+        Map.of(
+            "attestation_security_level", extension.attestationSecurityLevel().name(),
+            "keymint_security_level", extension.keyMintSecurityLevel().name(),
+            "origin", extension.origin().name()),
+        Map.of(
+            "package_names", extension.packageNames(),
+            "signature_digests", extension.signatureDigests()),
+        chain);
   }
 
   /** Binding 1: the evidence was produced for this registration. */

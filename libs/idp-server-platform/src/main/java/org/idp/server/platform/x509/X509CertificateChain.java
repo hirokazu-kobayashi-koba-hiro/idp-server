@@ -238,6 +238,11 @@ public class X509CertificateChain {
     return certificates.get(0);
   }
 
+  /** The certificates as presented, leaf first. */
+  public List<X509Certificate> certificates() {
+    return List.copyOf(certificates);
+  }
+
   public X509Certificate root() {
     return certificates.get(certificates.size() - 1);
   }

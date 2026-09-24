@@ -30,6 +30,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigurationQueryRepository;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfigurationQueryRepository;
+import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.jose.JsonWebTokenClaims;
 import org.idp.server.platform.log.LoggerWrapper;
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
@@ -117,9 +118,10 @@ public class ClientInstanceRegistrationService {
     User user = resolveUser(tenant, idTokenClaims);
 
     PlatformAttestationVerifier verifier = verifiers.get(platform(platformEvidence));
-    verifier.verify(
-        new PlatformAttestationVerificationRequest(
-            tenant, clientConfiguration, challenge, instanceKey, platformEvidence));
+    PlatformAttestationEvidence evidence =
+        verifier.verify(
+            new PlatformAttestationVerificationRequest(
+                tenant, clientConfiguration, challenge, instanceKey, platformEvidence));
 
     ClientInstance clientInstance =
         new ClientInstance(
@@ -128,7 +130,7 @@ public class ClientInstanceRegistrationService {
             challenge.clientId(),
             instanceKey,
             ClientInstanceStatus.active.name(),
-            Map.of(),
+            evidence.toMap(SystemDateTime.now()),
             null,
             user.sub(),
             null,

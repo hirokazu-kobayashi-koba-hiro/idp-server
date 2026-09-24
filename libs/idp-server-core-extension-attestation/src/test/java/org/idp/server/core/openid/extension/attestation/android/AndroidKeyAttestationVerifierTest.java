@@ -22,12 +22,15 @@ import com.nimbusds.jose.jwk.ECKey;
 import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.security.interfaces.ECPublicKey;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationEvidence;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationException;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationRequest;
 import org.idp.server.core.openid.extension.attestation.StubVerificationRequest;
+import org.idp.server.platform.x509.X509CertificateChain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -127,6 +130,43 @@ class AndroidKeyAttestationVerifierTest {
                       CHALLENGE,
                       instanceKeyAsJwk(),
                       evidence(chain))));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void recordsWhatTheVerificationEstablished() throws Exception {
+      List<String> chain = validChain();
+
+      PlatformAttestationEvidence evidence =
+          verifier.verify(
+              StubVerificationRequest.of(
+                  clientPlatformConfig(fixture.rootBase64()),
+                  CHALLENGE,
+                  instanceKeyAsJwk(),
+                  evidence(chain)));
+      Map<String, Object> stored = evidence.toMap(LocalDateTime.now());
+
+      assertEquals("android-key-attestation", stored.get("platform"));
+      Map<String, Object> key = (Map<String, Object>) stored.get("key");
+      assertEquals("trusted_environment", key.get("attestation_security_level"));
+      assertEquals("trusted_environment", key.get("keymint_security_level"));
+      assertEquals("generated", key.get("origin"));
+      Map<String, Object> app = (Map<String, Object>) stored.get("app");
+      assertEquals(List.of(AndroidAttestationFixture.PACKAGE_NAME), app.get("package_names"));
+
+      // Every certificate of the presented chain, by the serial a revocation list is keyed on.
+      List<Map<String, Object>> certificates =
+          (List<Map<String, Object>>)
+              ((Map<String, Object>) stored.get("chain")).get("certificates");
+      List<java.security.cert.X509Certificate> presented =
+          X509CertificateChain.parse(chain).certificates();
+      assertEquals(presented.size(), certificates.size());
+      for (int i = 0; i < presented.size(); i++) {
+        assertEquals(
+            presented.get(i).getSerialNumber().toString(16), certificates.get(i).get("serial"));
+        assertNotNull(certificates.get(i).get("not_after"));
+        assertNotNull(certificates.get(i).get("sha256"));
+      }
     }
 
     @Test

@@ -21,9 +21,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.nimbusds.jose.jwk.ECKey;
 import java.security.KeyPair;
 import java.security.interfaces.ECPublicKey;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationEvidence;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationException;
 import org.idp.server.core.openid.extension.attestation.StubVerificationRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -104,8 +106,8 @@ class IosAppAttestVerifierTest {
         "rejected, but for another reason: " + exception.getMessage());
   }
 
-  private void verify(String attestationObject) throws Exception {
-    verifier.verify(
+  private PlatformAttestationEvidence verify(String attestationObject) throws Exception {
+    return verifier.verify(
         StubVerificationRequest.of(
             clientPlatformConfig(fixture.rootBase64()),
             CHALLENGE,
@@ -121,6 +123,24 @@ class IosAppAttestVerifierTest {
       String attestation = fixture.attestation(instanceKeyPair).challenge(challengeBytes()).build();
 
       assertDoesNotThrow(() -> verify(attestation));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void recordsWhatTheVerificationEstablished() throws Exception {
+      String attestation = fixture.attestation(instanceKeyPair).challenge(challengeBytes()).build();
+
+      Map<String, Object> stored = verify(attestation).toMap(LocalDateTime.now());
+
+      assertEquals("ios-app-attest", stored.get("platform"));
+      Map<String, Object> app = (Map<String, Object>) stored.get("app");
+      assertEquals(IosAppAttestFixture.APP_ID, app.get("app_id"));
+      assertEquals("production", app.get("environment"));
+      List<Map<String, Object>> certificates =
+          (List<Map<String, Object>>)
+              ((Map<String, Object>) stored.get("chain")).get("certificates");
+      assertFalse(certificates.isEmpty());
+      certificates.forEach(certificate -> assertNotNull(certificate.get("serial")));
     }
 
     @Test

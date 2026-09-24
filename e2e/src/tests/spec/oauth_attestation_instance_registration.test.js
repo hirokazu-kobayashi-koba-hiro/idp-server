@@ -287,6 +287,13 @@ describe("Client Instance registration (application plane, user bound)", () => {
       expect(registered).toBeDefined();
       expect(registered.user_id).toBe(sub);
       expect(registered).not.toHaveProperty("device_id");
+      // The development verifier establishes the request hash binding and nothing about the app or
+      // the device, and the instance records it as such.
+      expect(registered.attestation_evidence).toMatchObject({
+        platform: DEV_PLATFORM,
+        binding_only: true,
+      });
+      expect(registered.attestation_evidence.verified_at).toBeDefined();
     });
 
     it("N2: registers with the ID token of a registration client the client lists", async () => {

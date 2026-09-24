@@ -16,14 +16,12 @@
 
 package org.idp.server.core.openid.clientinstance.registration;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.idp.server.core.openid.clientinstance.ClientInstanceIdentifier;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
-import org.idp.server.platform.json.JsonReadable;
 
 /**
  * Authorization ticket for registering a Client Instance.
@@ -38,7 +36,7 @@ import org.idp.server.platform.json.JsonReadable;
  * ClientInstanceRequestHash}). Verifying both against this ticket binds the evidence, the user and
  * the instance key being registered to one another.
  */
-public class ClientInstanceRegistrationChallenge implements Serializable, JsonReadable {
+public class ClientInstanceRegistrationChallenge {
 
   String challenge;
   String tenantId;

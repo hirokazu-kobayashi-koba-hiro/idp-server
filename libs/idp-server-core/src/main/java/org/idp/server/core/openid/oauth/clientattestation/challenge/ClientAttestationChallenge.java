@@ -16,10 +16,8 @@
 
 package org.idp.server.core.openid.oauth.clientattestation.challenge;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import org.idp.server.platform.date.SystemDateTime;
-import org.idp.server.platform.json.JsonReadable;
 
 /**
  * A Challenge the Authorization Server handed to a Client Instance.
@@ -40,7 +38,7 @@ import org.idp.server.platform.json.JsonReadable;
  * would catch it is unimplemented (Section 11.1 makes it a SHOULD; see {@code
  * ClientAttestationPopJwtVerifier}).
  */
-public class ClientAttestationChallenge implements Serializable, JsonReadable {
+public class ClientAttestationChallenge {
 
   String challenge;
   String tenantId;

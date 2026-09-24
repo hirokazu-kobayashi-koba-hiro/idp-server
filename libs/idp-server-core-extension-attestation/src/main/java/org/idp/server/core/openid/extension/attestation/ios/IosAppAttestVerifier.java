@@ -26,6 +26,8 @@ import java.security.interfaces.ECPublicKey;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationEvidence;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationException;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerificationRequest;
 import org.idp.server.core.openid.clientinstance.registration.PlatformAttestationVerifier;
@@ -84,7 +86,7 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
   }
 
   @Override
-  public void verify(PlatformAttestationVerificationRequest request) {
+  public PlatformAttestationEvidence verify(PlatformAttestationVerificationRequest request) {
     IosAppAttestConfiguration configuration =
         IosAppAttestConfiguration.fromPlatformConfig(
             request.clientConfiguration().clientInstancePlatformConfig());
@@ -100,7 +102,7 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
     throwExceptionIfNonceDoesNotMatch(credentialCertificate, authenticatorData, request);
     throwExceptionIfInstanceKeyDoesNotMatch(credentialCertificate, request);
     throwExceptionIfCredentialIdDoesNotMatchKey(credentialCertificate, authenticatorData);
-    throwExceptionIfApplicationDoesNotMatch(authenticatorData, configuration);
+    String appId = attestedApplication(authenticatorData, configuration);
     throwExceptionIfCounterIsNotZero(authenticatorData);
     throwExceptionIfEnvironmentDoesNotMatch(authenticatorData, configuration);
 
@@ -111,6 +113,12 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
           request.tenant().identifierValue(),
           request.challenge().clientId());
     }
+
+    return PlatformAttestationEvidence.of(
+        PLATFORM,
+        Map.of(),
+        Map.of("app_id", appId, "environment", configuration.environment().name()),
+        object.certificateChain());
   }
 
   private void throwExceptionIfFormatIsNotAppAttest(IosAppAttestObject object) {
@@ -251,14 +259,18 @@ public class IosAppAttestVerifier implements PlatformAttestationVerifier {
     }
   }
 
-  /** Binding 3, Apple step 6: the attested application is this client's application. */
-  private void throwExceptionIfApplicationDoesNotMatch(
+  /**
+   * Binding 3, Apple step 6: the attested application is this client's application.
+   *
+   * @return the configured App ID the attestation matched
+   */
+  private String attestedApplication(
       IosAppAttestAuthenticatorData authenticatorData, IosAppAttestConfiguration configuration) {
 
     for (String appId : configuration.appIds()) {
       byte[] expected = sha256(appId.getBytes(StandardCharsets.UTF_8));
       if (MessageDigest.isEqual(expected, authenticatorData.rpIdHash())) {
-        return;
+        return appId;
       }
     }
 

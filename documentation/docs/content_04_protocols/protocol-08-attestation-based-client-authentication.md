@@ -379,6 +379,42 @@ Android Key Attestation の検証は次の順で行います。
 どちらも `hardwareEnforced` 側の `AuthorizationList` から読みます。鍵自身の性質を知っているのは KeyMint だけで、`softwareEnforced` に同じ値があっても、それはプラットフォームの申告にすぎないためです。端末が報告しなかった場合も拒否します（判定の材料が無いことは、条件を満たす証拠にはなりません）。
 
 
+### 登録時に残す証跡
+
+検証で確かめたことは、登録したインスタンスの `attestation_evidence` に残ります。管理API の Client Instance 一覧・取得で読めます。
+
+```json
+{
+  "platform": "android-key-attestation",
+  "verified_at": "2026-09-24T12:00:00.000",
+  "key": {
+    "attestation_security_level": "strong_box",
+    "keymint_security_level": "strong_box",
+    "origin": "generated"
+  },
+  "app": { "package_names": ["com.example.wallet"], "signature_digests": ["..."] },
+  "chain": {
+    "certificates": [
+      { "serial": "1", "not_after": "2036-01-01T00:00:00Z", "sha256": "<証明書の SHA-256（16進）>" }
+    ]
+  }
+}
+```
+
+iOS App Attest では `key` を持たず、`app` が `{ "app_id": "...", "environment": "production" }` になります。
+
+残す目的は 3 つです。
+
+| 目的 | 使う項目 |
+|---|---|
+| **まとめて失効する** | `chain.certificates` の `serial`。提示されたチェーンの証明書をすべて、Google の失効リストと同じ形（小文字の 16 進）で残すので、漏洩した鍵や中間証明書に連なるインスタンスを後から探せる |
+| **監査** | `key`（セキュリティレベル、生成元）、`app`（一致したアプリ） |
+| **方針を厳しくしたときの再評価** | `key`。たとえば StrongBox を必須にしたとき、対象のインスタンスを引ける |
+
+チェーンそのものと、端末を一意に識別する値は残しません。
+
+開発用の検証器で登録したインスタンスは `{ "platform": "request-hash-binding-development-only", "binding_only": true, ... }` になり、アプリも端末も確かめていないことが記録に残ります。
+
 ---
 
 ## Challenge

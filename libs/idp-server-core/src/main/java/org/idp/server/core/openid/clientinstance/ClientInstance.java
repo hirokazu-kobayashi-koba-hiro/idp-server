@@ -16,7 +16,6 @@
 
 package org.idp.server.core.openid.clientinstance;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +23,6 @@ import java.util.Objects;
 import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
 import org.idp.server.platform.date.SystemDateTime;
 import org.idp.server.platform.json.JsonConverter;
-import org.idp.server.platform.json.JsonReadable;
 
 /**
  * A registered instance of a client — a single installation of an application on a single device.
@@ -38,7 +36,7 @@ import org.idp.server.platform.json.JsonReadable;
  * by {@code (tenant, client_id)} and has a lifecycle of its own, so a CIK can be revoked without
  * touching the user's FIDO registrations.
  */
-public class ClientInstance implements Serializable, JsonReadable {
+public class ClientInstance {
 
   String id;
   String tenantId;

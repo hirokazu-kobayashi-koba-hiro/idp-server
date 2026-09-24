@@ -99,11 +99,18 @@ resolvers.put(ClientAttestationTrustSource.x5c, new X5cClientAttestationKeyResol
 ```java
 public interface PlatformAttestationVerifier {
   String platform();                                  // platform_evidence.platform の値
-  void verify(PlatformAttestationVerificationRequest request);
+  PlatformAttestationEvidence verify(PlatformAttestationVerificationRequest request);
 }
 ```
 
 `PlatformAttestationVerificationRequest` は `tenant` / `clientConfiguration` / `challenge` / `instanceKey` / `evidence` を持つ record です。
+
+`verify` は、検証で確かめたことを `PlatformAttestationEvidence` として返します。登録サービスはこれを `client_instance.attestation_evidence` に保存します（中身は [Attestation-Based Client Authentication](../../content_04_protocols/protocol-08-attestation-based-client-authentication.md#登録時に残す証跡)）。
+
+| 返し方 | 使いどころ |
+|---|---|
+| `PlatformAttestationEvidence.of(platform, key, app, chain)` | 証明を検証した実装。`key` は鍵について確かめたこと、`app` は一致したアプリの識別子、`chain` は提示された証明書チェーン |
+| `PlatformAttestationEvidence.bindingOnly(platform)` | `request_hash` の束縛しか確かめない実装（開発用の `RequestHashBindingVerifier`）。何も証明していないことが記録に残る |
 
 登録は ID トークンでも認証されますが、ID トークンが示すのは「誰か」だけです。**どの端末の、どのアプリの、どの鍵か**は、この検証だけが示します。ID トークンは `nonce = request_hash` で鍵に束縛されるので（`ClientInstanceRegistrationIdTokenVerifier`）、この検証が鍵を確かめて初めて、利用者と端末の鍵がつながります。
 

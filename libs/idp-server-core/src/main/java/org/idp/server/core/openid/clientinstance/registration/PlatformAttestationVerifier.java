@@ -19,10 +19,11 @@ package org.idp.server.core.openid.clientinstance.registration;
 /**
  * Verifies the platform attestation presented at Client Instance registration.
  *
- * <p>The registration endpoint is unauthenticated, so this verification <b>is</b> the
- * authentication of the request. An implementation that accepts evidence it cannot verify makes the
- * whole of {@code attest_jwt_client_auth} meaningless: anyone could register a key for a client and
- * then authenticate as it.
+ * <p>A registration is authenticated by an ID token (who) and by this verification (which device,
+ * which application, which key). The ID token says nothing about the device: an implementation that
+ * accepts evidence it cannot verify lets any logged-in user register a key of their choosing for
+ * the client, and the whole of {@code attest_jwt_client_auth} then proves nothing about the
+ * application.
  *
  * <h2>Contract</h2>
  *
@@ -49,7 +50,9 @@ public interface PlatformAttestationVerifier {
   /**
    * Verifies the evidence, or throws when it does not hold.
    *
+   * @return what the verification established, kept on the registered instance for bulk revocation,
+   *     audit and re-evaluation ({@link PlatformAttestationEvidence})
    * @throws PlatformAttestationVerificationException when any binding or chain check fails
    */
-  void verify(PlatformAttestationVerificationRequest request);
+  PlatformAttestationEvidence verify(PlatformAttestationVerificationRequest request);
 }

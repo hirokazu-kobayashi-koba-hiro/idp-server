@@ -48,7 +48,7 @@ public class RequestHashBindingVerifier implements PlatformAttestationVerifier {
   }
 
   @Override
-  public void verify(PlatformAttestationVerificationRequest request) {
+  public PlatformAttestationEvidence verify(PlatformAttestationVerificationRequest request) {
     String presented = stringValue(request.evidence(), "request_hash");
     if (presented == null) {
       throw new PlatformAttestationVerificationException(
@@ -68,6 +68,8 @@ public class RequestHashBindingVerifier implements PlatformAttestationVerifier {
         request.tenant().identifierValue(),
         request.challenge().clientId(),
         request.challenge().instanceId());
+
+    return PlatformAttestationEvidence.bindingOnly(PLATFORM);
   }
 
   private ClientInstanceRequestHash derive(PlatformAttestationVerificationRequest request) {

@@ -16,7 +16,7 @@ import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
 import * as jose from "jose";
 import crypto from "crypto";
-import { deletion, postWithJson } from "../../lib/http";
+import { deletion, get, postWithJson } from "../../lib/http";
 import { requestToken } from "../../api/oauthClient";
 import { onboarding } from "../../api/managementClient";
 import { generateECP256JWKS } from "../../lib/jose";
@@ -478,6 +478,43 @@ describe("Android key attestation (Issue #1521)", () => {
 
       expect(response.status).toBe(400);
       expect(response.data).toEqual({ error: "invalid_request" });
+    }, 120000);
+  });
+
+  describe("what the registered instance records", () => {
+    it("keeps what the attestation established, with every certificate of the chain by serial", async () => {
+      const { challenge } = await requestChallenge();
+      const instanceKey = await generateInstanceKey();
+
+      const registration = await register({ challenge, instanceKey });
+      expect(registration.status).toBe(201);
+
+      const listResponse = await get({
+        url: `${backendUrl}/v1/management/tenants/${tenantId}/clients/${clientId}/instances`,
+        headers: { Authorization: `Bearer ${systemAccessToken}` },
+      });
+      expect(listResponse.status).toBe(200);
+      const registered = listResponse.data.list.find(
+        (instance) => instance.id === registration.data.instance_id
+      );
+      const evidence = registered.attestation_evidence;
+
+      expect(evidence.platform).toBe("android-key-attestation");
+      expect(evidence.verified_at).toBeDefined();
+      expect(evidence).not.toHaveProperty("binding_only");
+      expect(evidence.key).toEqual({
+        attestation_security_level: "trusted_environment",
+        keymint_security_level: "trusted_environment",
+        origin: "generated",
+      });
+      expect(evidence.app.package_names).toEqual([PACKAGE_NAME]);
+      // Serial numbers are what a revocation list is keyed on: lowercase hex.
+      expect(evidence.chain.certificates.length).toBeGreaterThan(0);
+      for (const certificate of evidence.chain.certificates) {
+        expect(certificate.serial).toMatch(/^[0-9a-f]+$/);
+        expect(certificate.not_after).toBeDefined();
+        expect(certificate.sha256).toMatch(/^[0-9a-f]{64}$/);
+      }
     }, 120000);
   });
 
