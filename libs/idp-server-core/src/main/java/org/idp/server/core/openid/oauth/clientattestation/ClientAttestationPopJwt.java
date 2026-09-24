@@ -27,7 +27,7 @@ import java.util.Objects;
  * ({@code cnf.jwk}).
  *
  * @see <a
- *     href="https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-10.html">OAuth
+ *     href="https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-11.html">OAuth
  *     2.0 Attestation-Based Client Authentication</a>
  */
 public class ClientAttestationPopJwt {

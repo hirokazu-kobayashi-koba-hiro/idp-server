@@ -98,7 +98,7 @@ grep -i "oauth-client-attestation-challenge" /tmp/h.txt
 OAuth-Client-Attestation-Challenge: 7ttaSN9pXpWZvQgJpkAIkgkWw5rMaBPjV_AW-SuFAPA
 ```
 
-拒否されたレスポンス自体が**次に使う Challenge を運んで**きます（draft-10 Section 7.4 は同梱を必須にしています）。Challenge エンドポイントを別途叩く必要はありません。
+ステータスは `400 Bad Request` です（`invalid_client` 系の 401 ではありません）。拒否されたレスポンス自体が**次に使う Challenge を運んで**きます（draft-11 Section 6.1 は認可サーバーに 400 とこの同梱を必須にしています）。Challenge エンドポイントを別途叩く必要はありません。
 
 ### 4. 受け取った Challenge で再送
 
@@ -262,7 +262,7 @@ curl -sk -X PUT "$AS_URL" \
 
 ## Experiment 5: Client Attestation JWT を期限切れにする
 
-CAJ は `exp` まで使い回せます（draft-10 Section 9.2）。期限が切れたときにクライアントが何を受け取るかを見ます。
+CAJ は `exp` まで使い回せます（draft-11 Section 10.2）。期限が切れたときにクライアントが何を受け取るかを見ます。
 
 ### 1. 挙動確認：60 秒前に切れた CAJ を送る
 

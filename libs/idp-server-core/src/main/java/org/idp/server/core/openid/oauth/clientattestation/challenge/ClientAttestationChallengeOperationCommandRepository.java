@@ -24,10 +24,10 @@ public interface ClientAttestationChallengeOperationCommandRepository {
    * Delete expired client attestation challenges across <strong>all tenants</strong> (system-wide
    * batch).
    *
-   * <p>A challenge is written on issue and read on use, but never removed. draft-10 requires it to
-   * be opaque and not reused across requests, so a compliant client asks for a new one per request
-   * and the table grows with instances times requests. {@code use_attestation_challenge} adds a row
-   * for every failed attempt as well, on a path that runs before the client is authenticated.
+   * <p>A challenge is written on issue and read on use, but never removed. draft-11 Section 6 lets
+   * a client fetch a new one whenever it likes, so a client that asks for one per request makes the
+   * table grow with instances times requests. {@code use_attestation_challenge} adds a row for
+   * every failed attempt as well, on a path that runs before the client is authenticated.
    *
    * <p>The {@code tenant} argument carries the admin tenant context used by the caller for audit /
    * logging purposes; it is intentionally not applied as a SQL filter.

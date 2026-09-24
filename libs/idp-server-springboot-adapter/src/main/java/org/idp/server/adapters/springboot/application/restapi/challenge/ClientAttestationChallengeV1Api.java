@@ -29,7 +29,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Challenge endpoint of draft-ietf-oauth-attestation-based-client-auth-10 Section 6.1.
+ * Challenge endpoint of draft-ietf-oauth-attestation-based-client-auth-11 Section 6.3.
  *
  * <p>Unauthenticated by design: it hands out an opaque nonce that the Client Instance carries in
  * the {@code challenge} claim of its next Client Attestation PoP JWT.
@@ -56,7 +56,7 @@ public class ClientAttestationChallengeV1Api implements ParameterTransformable {
 
     HttpHeaders httpHeaders = new HttpHeaders();
     httpHeaders.add("Content-Type", "application/json");
-    // Section 6.1: the response MUST be uncacheable.
+    // Section 6.3: the response MUST be uncacheable.
     httpHeaders.add("Cache-Control", "no-store");
     return new ResponseEntity<>(
         response.contents(), httpHeaders, HttpStatus.valueOf(response.statusCode()));

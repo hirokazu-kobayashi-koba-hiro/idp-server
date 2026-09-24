@@ -41,7 +41,7 @@ import org.idp.server.platform.jose.JwtClockSkewValidator;
 import org.idp.server.platform.json.JsonConverter;
 
 /**
- * Client Attestation JWT Verifier (draft-ietf-oauth-attestation-based-client-auth-10 Section 7.1).
+ * Client Attestation JWT Verifier (draft-ietf-oauth-attestation-based-client-auth-11 Section 7.1).
  *
  * <p>Verifies the JWT conveyed by the {@code OAuth-Client-Attestation} header:
  *

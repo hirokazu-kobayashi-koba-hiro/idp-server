@@ -22,14 +22,14 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
  * Represents the {@code use_fresh_attestation} client authentication error.
  *
  * <p>Defined in <a
- * href="https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-10.html#name-errors">OAuth
+ * href="https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-11.html#name-errors">OAuth
  * 2.0 Attestation-Based Client Authentication, Section 7.4</a>: it MUST be used when the Client
  * Attestation JWT is deemed to be not fresh enough to be acceptable by the server.
  *
  * <p>Kept distinct from {@link InvalidClientAttestationException} because the Client Instance can
  * recover from it by obtaining a new Client Attestation JWT from its Client Attester, without
  * changing anything else about the request. A Client Attestation JWT whose {@code exp} has passed
- * is the case this server reports; per Section 9.2 a single Client Attestation JWT is deliberately
+ * is the case this server reports; per Section 10.2 a single Client Attestation JWT is deliberately
  * reusable until then.
  */
 public class UseFreshAttestationException extends ClientUnAuthorizedException {

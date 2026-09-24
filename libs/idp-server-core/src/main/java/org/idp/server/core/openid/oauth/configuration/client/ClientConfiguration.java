@@ -562,7 +562,7 @@ public class ClientConfiguration implements JsonReadable, Configurable {
 
   /**
    * Where the Authorization Server takes its trust from when verifying this client's Client
-   * Attestation JWT. draft-ietf-oauth-attestation-based-client-auth-10 Section 9.8 leaves trust
+   * Attestation JWT. draft-ietf-oauth-attestation-based-client-auth-11 Section 10.8 leaves trust
    * management out of scope, so it is a per-client deployment choice.
    */
   public ClientAttestationTrustSource clientAttestationTrustSource() {

@@ -22,20 +22,20 @@ import org.idp.server.platform.date.SystemDateTime;
 /**
  * A Challenge the Authorization Server handed to a Client Instance.
  *
- * <p>draft-ietf-oauth-attestation-based-client-auth-10 Section 6. The value is opaque to the
+ * <p>draft-ietf-oauth-attestation-based-client-auth-11 Section 6. The value is opaque to the
  * client, which echoes it back as the {@code challenge} claim of the Client Attestation PoP JWT.
  *
- * <p>Deliberately reusable until {@link #expiresAt()}. Section 11.1 offers this as one of its three
+ * <p>Deliberately reusable until {@link #expiresAt()}. Section 12.1 offers this as one of its three
  * approaches — issue challenges without storing the seen ones — and states what it buys: "This
  * approach scales well, while only guaranteeing freshness, but no replay protection within the
- * limited time-window chosen by the Authorization/Resource Server." Nothing in the draft requires a
- * challenge to be single-use, and CIBA polling is the case that makes reuse worth having: with the
- * default 300s / 5s settings a single-use challenge would force up to 61 round-trips per
- * authentication.
+ * limited time-window chosen by the Authorization/Resource Server." Section 6 leaves "whether a
+ * Challenge may be used in more than one Client Attestation PoP JWT" to local policy, and CIBA
+ * polling is the case that makes reuse worth having: with the default 300s / 5s settings a
+ * single-use challenge would force up to 61 round-trips per authentication.
  *
  * <p>So the challenge here proves freshness, not uniqueness. Replay of an individual PoP JWT within
  * its {@code iat} window is <strong>not</strong> detected — the {@code jti} seen-values store that
- * would catch it is unimplemented (Section 11.1 makes it a SHOULD; see {@code
+ * would catch it is unimplemented (Section 12.1 makes it a SHOULD; see {@code
  * ClientAttestationPopJwtVerifier}).
  */
 public class ClientAttestationChallenge {

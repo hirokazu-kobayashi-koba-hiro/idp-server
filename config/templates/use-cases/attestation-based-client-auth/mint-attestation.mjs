@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Mints the two JWTs of Attestation-Based Client Authentication (draft-10).
+ * Mints the two JWTs of Attestation-Based Client Authentication (draft-11).
  *
  * Uses only Node built-ins, so the template needs no npm install.
  *

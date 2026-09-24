@@ -92,7 +92,7 @@ public class CibaRequest implements AuthorizationHeaderHandlerable {
         return new RequestedClientId(issuer);
       }
     }
-    // draft-10 Section 7.5: the client_id parameter is optional under attest_jwt_client_auth,
+    // draft-11 Section 7.5: the client_id parameter is optional under attest_jwt_client_auth,
     // because the Client Attestation names the client in sub. Unverified here, like the
     // client_assertion iss above: it selects which client configuration to load, and
     // ClientAttestationJwtVerifier still checks the signature and that sub is the requested client.

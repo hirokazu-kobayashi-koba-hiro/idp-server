@@ -22,7 +22,7 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
  * Represents the {@code invalid_client_attestation} client authentication error.
  *
  * <p>Defined in <a
- * href="https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-10.html#name-errors">OAuth
+ * href="https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-11.html#name-errors">OAuth
  * 2.0 Attestation-Based Client Authentication, Section 7.4</a>: it MAY be used in addition to the
  * more general {@code invalid_client} when the attestation or its proof of possession could not be
  * successfully verified. Reporting it tells the Client Instance that the failure is about the two

@@ -22,7 +22,7 @@ import org.idp.server.core.openid.oauth.clientauthenticator.exception.ClientUnAu
 /**
  * Validates the Client Attestation HTTP request header presence rules.
  *
- * <p>Per draft-ietf-oauth-attestation-based-client-auth-10 Section 7.1 (rule 1) and Section 7.2
+ * <p>Per draft-ietf-oauth-attestation-based-client-auth-11 Section 7.1 (rule 1) and Section 7.2
  * (rule 1), there is precisely one {@code OAuth-Client-Attestation} HTTP request header field and
  * precisely one {@code OAuth-Client-Attestation-PoP} HTTP request header field in a request that
  * uses Attestation-Based Client Authentication. This validator rejects requests carrying more than

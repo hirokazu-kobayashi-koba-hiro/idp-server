@@ -28,7 +28,7 @@ import org.idp.server.core.openid.token.handler.tokenrevocation.io.TokenRevocati
 import org.junit.jupiter.api.Test;
 
 /**
- * draft-ietf-oauth-attestation-based-client-auth-10 Section 7.4: the attestation specific error
+ * draft-ietf-oauth-attestation-based-client-auth-11 Section 7.4: the attestation specific error
  * codes are carried by dedicated subclasses of {@link ClientUnAuthorizedException}, so every error
  * handler resolves the reported code through {@link ClientUnAuthorizedException#errorCode()} rather
  * than hard-coding {@code invalid_client}.
@@ -104,7 +104,8 @@ class ClientAuthenticationErrorCodeTest {
                 new UseAttestationChallengeException(
                     METHOD, CLIENT_ID, "no challenge", "fresh-challenge"));
 
-    assertEquals(401, response.statusCode());
+    // Section 6.1: an Authorization Server responds with 400, not the 401 of invalid_client.
+    assertEquals(400, response.statusCode());
     assertTrue(response.contents().contains("use_attestation_challenge"), response.contents());
     assertEquals(
         "fresh-challenge",
@@ -119,9 +120,19 @@ class ClientAuthenticationErrorCodeTest {
                 new UseAttestationChallengeException(
                     METHOD, CLIENT_ID, "no challenge", "fresh-challenge"));
 
+    assertEquals(400, response.statusCode());
     assertEquals(
         "fresh-challenge",
         response.responseHeaders().get(UseAttestationChallengeException.CHALLENGE_HEADER_NAME));
+  }
+
+  @Test
+  void generalFailureStaysUnauthorized() {
+    TokenRequestResponse response =
+        new TokenRequestErrorHandler()
+            .handle(new ClientUnAuthorizedException(METHOD, CLIENT_ID, "no credential presented"));
+
+    assertEquals(401, response.statusCode());
   }
 
   @Test

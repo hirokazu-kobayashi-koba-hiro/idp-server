@@ -1,8 +1,8 @@
 /**
- * draft-ietf-oauth-attestation-based-client-auth-10 §9.8 (Trust Management and Key Resolution):
+ * draft-ietf-oauth-attestation-based-client-auth-11 §10.8 (Trust Management and Key Resolution):
  * self-signed model.
  *
- * The specification leaves trust establishment out of scope, and §1 explicitly allows a client
+ * The specification leaves trust establishment out of scope, and §1.1 explicitly allows a client
  * without a backend Client Attester to perform the attester functions itself. In this mode the
  * Client Instance signs its own Client Attestation JWT with the Client Instance Key (CIK), and the
  * Authorization Server trusts the CIK it registered beforehand.
@@ -11,7 +11,7 @@
  * extension.client_attestation_trust_source = registered_instance_key, and the JOSE kid of the
  * Client Attestation JWT selects which registered instance to verify with.
  *
- * @see https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-10.html
+ * @see https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-11.html
  */
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
@@ -136,7 +136,7 @@ beforeAll(async () => {
   instanceId = await registerInstance(instanceJwk);
 });
 
-describe("draft-ietf-oauth-attestation-based-client-auth-10 §9.8: self-signed Client Attestation verified by a registered Client Instance Key", () => {
+describe("draft-ietf-oauth-attestation-based-client-auth-11 §10.8: self-signed Client Attestation verified by a registered Client Instance Key", () => {
 
   describe("Client Instance management API", () => {
 

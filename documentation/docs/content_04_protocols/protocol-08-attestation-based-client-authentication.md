@@ -12,7 +12,7 @@
 
 ## 概要
 
-`attest_jwt_client_auth` は、**シークレットを配布せずにネイティブアプリを認証する**クライアント認証方式です（[draft-ietf-oauth-attestation-based-client-auth-10](https://datatracker.ietf.org/doc/draft-ietf-oauth-attestation-based-client-auth/)）。
+`attest_jwt_client_auth` は、**シークレットを配布せずにネイティブアプリを認証する**クライアント認証方式です（[draft-ietf-oauth-attestation-based-client-auth-11](https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-11.html)）。
 
 モバイルアプリは配布物であり、埋め込んだシークレットは取り出せます。そのため従来は Public Client（`none`）として扱うしかありませんでした。この方式は、**アプリのインスタンスごとに端末内で生成した鍵**（Client Instance Key）で認証します。鍵は端末のセキュアハードウェアから出ないため、アプリを複製しても他の端末では使えません。
 
@@ -209,7 +209,7 @@ Challenge を必須にしている場合は、リクエスト前に `POST /{tena
 
 自己署名の場合は追加で、`cnf.jwk` が登録済みの鍵と一致すること（RFC 7638 thumbprint 比較）、`exp - iat` が **24時間以内**であることが必要です。
 
-**Client Attestation JWT は有効期限まで使い回せます**（draft-10 Section 9.2）。リクエストごとに作り直す必要があるのは PoP JWT の方だけです。`attester_jwks` では Attester への往復を有効期限のあいだ省けます。
+**Client Attestation JWT は有効期限まで使い回せます**（draft-11 Section 10.2）。リクエストごとに作り直す必要があるのは PoP JWT の方だけです。`attester_jwks` では Attester への往復を有効期限のあいだ省けます。
 
 ### Client Attestation PoP JWT
 
@@ -235,7 +235,7 @@ Challenge を必須にしている場合は、リクエスト前に `POST /{tena
 | `jti` | 必須。リクエストごとに一意な値 |
 | `iat` | 必須。現在時刻から**±5分以内**であること |
 | `challenge` | `client_attestation_challenge_required` が有効なテナントでは必須 |
-| `iss` | draft-10 は PoP JWT に定義していません。載せても §5.1 の「MAY contain other claims」として無視されます |
+| `iss` | draft-11 は PoP JWT に定義していません。載せても §5.1 の「MAY contain other claims」として無視されます |
 | `exp` | 同上。有効範囲は `iat` の窓が決めます |
 
 :::tip 実装のポイント
@@ -500,7 +500,7 @@ iOS App Attest では `key` を持たず、`app` が `{ "app_id": "...", "enviro
 
 ## Challenge
 
-PoP JWT の `challenge` クレームは、その PoP がこの認可サーバー向けに作られたことを示します（draft-10 Section 7.2 item 5）。
+PoP JWT の `challenge` クレームは、その PoP がこの認可サーバー向けに作られたことを示します（draft-11 Section 7.2 item 5）。
 
 ### 有効化
 
@@ -515,6 +515,8 @@ PoP JWT の `challenge` クレームは、その PoP がこの認可サーバー
 
 ### 必須化後に Challenge が無いとき
 
+`400 Bad Request` で次のエラーが返ります（draft-11 Section 6.1）。
+
 ```json
 {
   "error": "use_attestation_challenge",
@@ -522,7 +524,7 @@ PoP JWT の `challenge` クレームは、その PoP がこの認可サーバー
 }
 ```
 
-このエラーには**新しく発行された Challenge が同梱されます**（Section 7.4）。レスポンスヘッダ `OAuth-Client-Attestation-Challenge` に載るため、失敗したリクエストがそのまま次の Challenge の受け渡しを兼ねます。クライアントは Challenge エンドポイントを別途叩かずに、その値で PoP JWT を作り直して再送できます。
+このエラーには**新しく発行された Challenge が同梱されます**（Section 6.1 / 7.4）。レスポンスヘッダ `OAuth-Client-Attestation-Challenge` に載るため、失敗したリクエストがそのまま次の Challenge の受け渡しを兼ねます。クライアントは Challenge エンドポイントを別途叩かずに、その値で PoP JWT を作り直して再送できます。
 
 ---
 
@@ -555,17 +557,19 @@ discovery（`/.well-known/openid-configuration`）には次が出力されます
 | `client_attestation_pop_signing_alg_values_supported` | PoP JWT に許可する alg |
 | `challenge_endpoint` | チャレンジエンドポイントの URL |
 
-`challenge_endpoint` は**広告するかどうかだけ**を決めます（`userinfo_endpoint` などと同じ扱い）。未設定でもエンドポイント自体は応答します。§6.1 が課すのは「サーバーが広告したらクライアントは使う」という**クライアント側の義務**で、広告していないサーバーが応答してはならないとは定めていません。段階導入は `client_attestation_challenge_required` で行います。
+`challenge_endpoint` は**広告するかどうかだけ**を決めます（`userinfo_endpoint` などと同じ扱い）。未設定でもエンドポイント自体は応答します。ただし §6.3 は、エンドポイントを提供するサーバーに `challenge_endpoint` の広告を求めています（MUST）。未設定のまま応答している状態はこれに沿いません。段階導入は `client_attestation_challenge_required` で行います。
 
 ---
 
 ## エラー
 
-| エラーコード | 意味 | クライアントの対応 |
-|-------------|------|------------------|
-| `invalid_client_attestation` | Attestation JWT / PoP JWT の検証に失敗した | JWT の内容を見直す。再送しても通らない |
-| `use_attestation_challenge` | Challenge が必須だが含まれていない | 同梱された Challenge で PoP を作り直して再送する |
-| `use_fresh_attestation` | Attestation JWT が期限切れ、または有効期間が長すぎる | Attestation JWT を取り直す（`attester_jwks` なら Attester へ、自己署名なら作り直す） |
+| エラーコード | HTTP | 意味 | クライアントの対応 |
+|-------------|------|------|------------------|
+| `invalid_client_attestation` | 401 | Attestation JWT / PoP JWT の検証に失敗した | JWT の内容を見直す。再送しても通らない |
+| `use_attestation_challenge` | 400 | Challenge が必須だが含まれていない、または発行していない・期限切れの Challenge が含まれている | 同梱された Challenge で PoP を作り直して再送する |
+| `use_fresh_attestation` | 401 | Attestation JWT が期限切れ、または有効期間が長すぎる | Attestation JWT を取り直す（`attester_jwks` なら Attester へ、自己署名なら作り直す） |
+
+`use_attestation_challenge` だけが 400 なのは、draft-11 Section 6.1 が認可サーバーにそう定めているためです。ただしイントロスペクション（拡張エンドポイントを含む）と PAR はクライアント認証の失敗をすべて 400 で返すため、そこでは 3 つとも 400 です。
 
 `invalid_client` ではなく専用コードを返すことで、「認証情報が違う」のか「Challenge を付ければ通る」のかを区別できます。
 
@@ -573,13 +577,25 @@ discovery（`/.well-known/openid-configuration`）には次が出力されます
 
 ## 準拠状況
 
-draft-10 の章立てに沿った E2E 仕様準拠テストがあります。
+準拠対象は **draft-11**（2026-09-03 公開、2026-09-08 から WG Last Call）です。draft-11 の章立てに沿った E2E 仕様準拠テストがあります。
 
 | テスト | 内容 | 状況 |
 |--------|------|------|
-| `e2e/src/tests/spec/oauth_attestation_based_client_auth.test.js` | draft-10 の要件 | 42 実装 / 13 未対応（`xit` で列挙） |
-| `e2e/src/tests/spec/oauth_attestation_registered_instance_key.test.js` | 自己署名モード | 8 |
-| `e2e/src/tests/spec/oauth_attestation_instance_registration.test.js` | インスタンス登録フロー | 14 |
+| `e2e/src/tests/spec/oauth_attestation_based_client_auth.test.js` | draft-11 の要件 | 52 実装 / 34 未対応（`xit` で列挙） |
+| `e2e/src/tests/spec/oauth_attestation_registered_instance_key.test.js` | 自己署名モード | 10 |
+| `e2e/src/tests/spec/oauth_attestation_x5c.test.js` | 証明書チェーンモード | 7 |
+| `e2e/src/tests/spec/oauth_attestation_instance_registration.test.js` | インスタンス登録フロー | 17 |
+
+draft-11 のうち、次は対応していません。
+
+| 項目 | 状況 |
+|------|------|
+| DPoP 結合モード（`attest_jwt_client_auth_dpop`、§5.2 / §7.3） | 未対応。`OAuth-Client-Attestation` と DPoP があって PoP ヘッダが無いリクエストは、§7 のとおり `invalid_client` で拒否します |
+| Challenge エンドポイントでの `DPoP-Nonce` 返却（§6.3） | 未対応。DPoP のサーバー発行 nonce 自体を持たないため、現状は該当しません |
+| 成功レスポンスでの Challenge 返却（§6.2、MAY） | 未対応。Challenge を返すのは `use_attestation_challenge` のエラー時だけです |
+| クライアントメタデータ（§9） | 未対応。`client_attestation_signing_alg_values_supported` などをクライアント設定に持てません |
+| 追加のセキュリティシグナルとしての利用（§7.6） | 未対応 |
+| プロファイル（§13） | 未対応。`typ` / `sub` の読み替えやリフレッシュトークン束縛の変更は受け付けません |
 
 未対応の要件は削除せず `xit` で残してあるため、「カバー済み / 未対応 / 欠落」がテストファイルから読み取れます。
 
@@ -588,7 +604,7 @@ draft-10 の章立てに沿った E2E 仕様準拠テストがあります。
 | テスト | 内容 | 状況 |
 |--------|------|------|
 | `e2e/src/tests/usecase/abca/abca-01-attester-jwks.test.js` | Attester が JWKS を公開するモデルの一生（起動・CAJ 再利用・期限切れからの回復・Attester 鍵ローテーション） | 7 |
-| `e2e/src/tests/usecase/abca/abca-02-client-instance-registration.test.js` | 自己署名モデルの一生（初回登録・再インストール・端末紛失時の失効）。Challenge を強制したテナントで実行 | 6 |
+| `e2e/src/tests/usecase/abca/abca-02-client-instance-registration.test.js` | 自己署名モデルの一生（初回登録・再インストール・端末紛失時の失効）。Challenge を強制したテナントで実行 | 7 |
 
 設定を実際に組んで動かす手順は [ユースケーステンプレート](https://github.com/hirokazu-kobayashi-koba-hiro/idp-server/tree/main/config/templates/use-cases/attestation-based-client-auth) にあります。
 
@@ -606,7 +622,7 @@ draft-10 の章立てに沿った E2E 仕様準拠テストがあります。
 
 ## 関連仕様
 
-- [OAuth 2.0 Attestation-Based Client Authentication draft-10](https://datatracker.ietf.org/doc/draft-ietf-oauth-attestation-based-client-auth/)
+- [OAuth 2.0 Attestation-Based Client Authentication draft-11](https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-11.html)
 - [RFC 7638: JSON Web Key (JWK) Thumbprint](https://www.rfc-editor.org/rfc/rfc7638.html)
 - [RFC 7800: Proof-of-Possession Key Semantics for JWTs](https://www.rfc-editor.org/rfc/rfc7800.html)
 

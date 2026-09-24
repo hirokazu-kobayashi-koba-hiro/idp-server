@@ -334,9 +334,10 @@ public class AuthorizationServerConfiguration implements JsonReadable, Configura
    * Whether to advertise {@code challenge_endpoint} in discovery.
    *
    * <p>Descriptive only, like {@code userinfo_endpoint} and the other optional endpoint fields: it
-   * decides what discovery says, not whether the endpoint answers. Section 6.1 obliges the
-   * <em>client</em> to use a challenge once the server advertises one; it does not say a server
-   * that stays silent must refuse to issue them.
+   * decides what discovery says, not whether the endpoint answers. Section 6 obliges the
+   * <em>client</em> to include a Challenge once one is provided. Section 6.3 does have a server
+   * that offers the endpoint signal it in its metadata, so leaving this off while the endpoint
+   * answers departs from that MUST.
    *
    * <p>Rolling the feature out is staged by {@code client_attestation_challenge_required} instead —
    * advertise, let clients follow, then start rejecting requests that carry no challenge.

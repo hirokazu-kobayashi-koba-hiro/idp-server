@@ -38,7 +38,8 @@ import org.idp.server.platform.log.LoggerWrapper;
  *
  * <ul>
  *   <li>TokenRevocationBadRequestException → 400 Bad Request (invalid_request)
- *   <li>ClientUnAuthorizedException → 401 Unauthorized (invalid_client)
+ *   <li>ClientUnAuthorizedException → 401 Unauthorized (invalid_client); 400 for {@code
+ *       use_attestation_challenge}
  *   <li>ClientConfigurationNotFoundException → 400 Bad Request (invalid_client)
  *   <li>ServerConfigurationNotFoundException → 400 Bad Request (invalid_client)
  *   <li>Other exceptions → 500 Internal Server Error (server_error)
@@ -84,7 +85,10 @@ public class TokenRevocationErrorHandler {
       contents.put("error_description", exception.getMessage());
 
       return new TokenRevocationResponse(
-          UNAUTHORIZED, new OAuthToken(), contents, clientUnAuthorized.responseHeaders());
+          clientUnAuthorized.isReportedAsBadRequest() ? BAD_REQUEST : UNAUTHORIZED,
+          new OAuthToken(),
+          contents,
+          clientUnAuthorized.responseHeaders());
     }
 
     // Configuration errors (400)

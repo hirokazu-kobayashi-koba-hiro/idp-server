@@ -65,7 +65,7 @@ public interface BackchannelRequestContext {
 
   /**
    * Whether the {@code challenge} claim of the Client Attestation PoP JWT is enforced
-   * (draft-ietf-oauth-attestation-based-client-auth-10 Section 7.2 item 5).
+   * (draft-ietf-oauth-attestation-based-client-auth-11 Section 7.2 item 5).
    */
   default boolean isClientAttestationChallengeRequired() {
     return serverConfiguration().isClientAttestationChallengeRequired();

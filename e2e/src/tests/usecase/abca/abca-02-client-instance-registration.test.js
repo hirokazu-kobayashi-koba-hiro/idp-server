@@ -3,8 +3,8 @@
  *
  * There is no backend Client Attester here. The app generates a key on the device, registers it
  * with the Authorization Server, and from then on signs its own Client Attestation JWT with it
- * (client_attestation_trust_source = registered_instance_key). Section 9.8 leaves trust management
- * out of scope and Section 1 explicitly allows a client to act as its own attester.
+ * (client_attestation_trust_source = registered_instance_key). Section 10.8 leaves trust management
+ * out of scope and Section 1.1 explicitly allows a client to act as its own attester.
  *
  * The instance belongs to a user. At first launch the user logs in in the hybrid flow
  * (response_type=code id_token) with nonce = request_hash, the app registers its key with the ID
@@ -406,7 +406,7 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     const instance = await enrollInstance();
 
     const withoutChallenge = await requestTokenWith(instance, null);
-    expect(withoutChallenge.status).toBe(401);
+    expect(withoutChallenge.status).toBe(400);
     expect(withoutChallenge.data).toHaveProperty("error", "use_attestation_challenge");
 
     const handedBack = withoutChallenge.headers["oauth-client-attestation-challenge"];

@@ -22,7 +22,7 @@ import org.idp.server.platform.jose.JsonWebSignatureHeader;
 /**
  * Resolves the trusted keys used to verify the Client Attestation JWT signature.
  *
- * <p>draft-ietf-oauth-attestation-based-client-auth-10 Section 9.8 leaves the trust establishment
+ * <p>draft-ietf-oauth-attestation-based-client-auth-11 Section 10.8 leaves the trust establishment
  * between the Authorization Server and the Client Attester out of scope. This interface is the
  * extension point for that deployment choice:
  *

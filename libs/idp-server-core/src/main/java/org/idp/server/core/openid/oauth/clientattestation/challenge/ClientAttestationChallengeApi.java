@@ -21,7 +21,7 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Challenge endpoint of draft-ietf-oauth-attestation-based-client-auth-10 Section 6.1.
+ * Challenge endpoint of draft-ietf-oauth-attestation-based-client-auth-11 Section 6.3.
  *
  * <p>Unauthenticated by design: the endpoint hands out an opaque nonce, and the credential it will
  * be used with is only presented on the subsequent request.

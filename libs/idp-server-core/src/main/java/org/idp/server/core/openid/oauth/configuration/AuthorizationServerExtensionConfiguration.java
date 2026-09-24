@@ -188,7 +188,7 @@ public class AuthorizationServerExtensionConfiguration implements JsonReadable {
 
   /**
    * Whether the {@code challenge} claim of the Client Attestation PoP JWT is enforced
-   * (draft-ietf-oauth-attestation-based-client-auth-10 Section 7.2 item 5).
+   * (draft-ietf-oauth-attestation-based-client-auth-11 Section 7.2 item 5).
    *
    * <p>Kept separate from advertising {@code challenge_endpoint} so a tenant can publish the
    * endpoint first, let its clients start fetching challenges, and only then start rejecting

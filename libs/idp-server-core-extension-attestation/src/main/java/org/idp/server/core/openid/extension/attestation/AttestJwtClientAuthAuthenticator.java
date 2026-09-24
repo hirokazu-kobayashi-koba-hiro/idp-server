@@ -39,7 +39,7 @@ import org.idp.server.platform.log.LoggerWrapper;
  * Attestation-Based Client Authentication ({@code attest_jwt_client_auth}).
  *
  * <p>Authenticates a client with the two JWTs defined by
- * draft-ietf-oauth-attestation-based-client-auth-10:
+ * draft-ietf-oauth-attestation-based-client-auth-11:
  *
  * <ul>
  *   <li>{@code OAuth-Client-Attestation} header — Client Attestation JWT, verified with the key
@@ -49,7 +49,7 @@ import org.idp.server.platform.log.LoggerWrapper;
  * </ul>
  *
  * @see <a
- *     href="https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-10.html">OAuth
+ *     href="https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-11.html">OAuth
  *     2.0 Attestation-Based Client Authentication</a>
  */
 public class AttestJwtClientAuthAuthenticator implements ClientAuthenticator {

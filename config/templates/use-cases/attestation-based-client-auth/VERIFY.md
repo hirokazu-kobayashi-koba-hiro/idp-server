@@ -302,5 +302,5 @@ curl -sk -X POST "${ISSUER}/v1/tokens" \
 |------|------|
 | `invalid_client_attestation` / 401 | いずれかの JWT の検証失敗。`typ` の付け忘れ、`kid` 無し（自己署名）、`cnf.jwk` と署名鍵の不一致が多い |
 | `use_fresh_attestation` | Client Attestation JWT の `exp` 切れ。作り直して再送 |
-| `use_attestation_challenge` | Challenge が必須なのに無い、または期限切れ。レスポンスヘッダ `OAuth-Client-Attestation-Challenge` に新しい値が入っているので、それで作り直します |
+| `use_attestation_challenge` / 400 | Challenge が必須なのに無い、または期限切れ。レスポンスヘッダ `OAuth-Client-Attestation-Challenge` に新しい値が入っているので、それで作り直します |
 | `invalid_client`（専用コードでない） | ヘッダそのものが無い、または同じヘッダを複数送っている |

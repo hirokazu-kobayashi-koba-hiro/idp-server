@@ -23,10 +23,12 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
  * Represents the {@code use_attestation_challenge} client authentication error.
  *
  * <p>Defined in <a
- * href="https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-10.html#name-errors">OAuth
+ * href="https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-11.html#name-errors">OAuth
  * 2.0 Attestation-Based Client Authentication, Section 7.4</a>: it MUST be used when the Client
  * Attestation PoP JWT is not using an expected server-provided challenge, and when used it MUST be
- * accompanied by the {@code OAuth-Client-Attestation-Challenge} HTTP header field parameter.
+ * accompanied by a fresh Challenge in the {@code OAuth-Client-Attestation-Challenge} HTTP header
+ * field. Section 6.1 has an Authorization Server respond with HTTP 400 (a Resource Server with
+ * 401).
  *
  * <p>The exception therefore carries a freshly issued challenge, which every error handler copies
  * into that response header. Section 6.2 defines the same header as the way a server hands the
@@ -34,7 +36,7 @@ import org.idp.server.core.openid.oauth.type.oauth.RequestedClientId;
  */
 public class UseAttestationChallengeException extends ClientUnAuthorizedException {
 
-  /** Section 6.2 response header field carrying a fresh Challenge. */
+  /** Section 6.1 / 6.2 response header field carrying a fresh Challenge. */
   public static final String CHALLENGE_HEADER_NAME = "OAuth-Client-Attestation-Challenge";
 
   private String challenge;
@@ -53,6 +55,12 @@ public class UseAttestationChallengeException extends ClientUnAuthorizedExceptio
   @Override
   public Map<String, String> responseHeaders() {
     return Map.of(CHALLENGE_HEADER_NAME, challenge);
+  }
+
+  /** Section 6.1: an Authorization Server responds with HTTP 400 (Bad Request). */
+  @Override
+  public boolean isReportedAsBadRequest() {
+    return true;
   }
 
   public String challenge() {

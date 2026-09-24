@@ -22,7 +22,7 @@ import org.idp.server.core.openid.oauth.clientattestation.challenge.ClientAttest
 /**
  * Response of the challenge endpoint.
  *
- * <p>Section 6.1 names the member {@code attestation_challenge} and requires the response to be
+ * <p>Section 6.3 names the member {@code attestation_challenge} and requires the response to be
  * uncacheable; the {@code Cache-Control: no-store} header is added by the adapter.
  */
 public record ClientAttestationChallengeResponse(int statusCode, Map<String, Object> contents) {

@@ -1,6 +1,6 @@
 # Attestation-Based Client Authentication Use Case Template
 
-ネイティブアプリを**シークレットを配布せずに**認証するテンプレートセット（[draft-ietf-oauth-attestation-based-client-auth-10](https://datatracker.ietf.org/doc/draft-ietf-oauth-attestation-based-client-auth/)）。
+ネイティブアプリを**シークレットを配布せずに**認証するテンプレートセット（[draft-ietf-oauth-attestation-based-client-auth-11](https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-11.html)）。
 
 > Claude Code を使用している場合は `/use-case-setup` でヒアリング付きの対話型セットアップが利用できます。
 

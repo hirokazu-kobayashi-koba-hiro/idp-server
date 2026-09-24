@@ -359,7 +359,7 @@
     "challenge_endpoint": {
       "type": "string",
       "format": "uri",
-      "description": "OPTIONAL. URL of the challenge endpoint defined in OAuth 2.0 Attestation-Based Client Authentication Section 6.1. When present the Authorization Server offers server-provided Challenges and the value is published in the discovery document; clients are then expected to fetch a Challenge and carry it in the Client Attestation PoP JWT."
+      "description": "OPTIONAL. URL of the challenge endpoint defined in OAuth 2.0 Attestation-Based Client Authentication Section 6.3. When present the Authorization Server offers server-provided Challenges and the value is published in the discovery document; clients are then expected to fetch a Challenge and carry it in the Client Attestation PoP JWT."
     },
     "display_values_supported": {
       "type": "array",

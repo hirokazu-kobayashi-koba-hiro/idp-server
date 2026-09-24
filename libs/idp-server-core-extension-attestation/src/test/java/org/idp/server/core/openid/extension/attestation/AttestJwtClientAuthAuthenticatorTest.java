@@ -47,7 +47,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
- * Verifies {@code attest_jwt_client_auth} per draft-ietf-oauth-attestation-based-client-auth-10
+ * Verifies {@code attest_jwt_client_auth} per draft-ietf-oauth-attestation-based-client-auth-11
  * Section 7 (verification rules for the Client Attestation JWT and the Client Attestation PoP JWT).
  */
 class AttestJwtClientAuthAuthenticatorTest {

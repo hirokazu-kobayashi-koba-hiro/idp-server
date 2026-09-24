@@ -37,7 +37,7 @@ import org.idp.server.platform.jose.JwtClockSkewException;
 import org.idp.server.platform.jose.JwtClockSkewValidator;
 
 /**
- * Client Attestation PoP JWT Verifier (draft-ietf-oauth-attestation-based-client-auth-10 Section
+ * Client Attestation PoP JWT Verifier (draft-ietf-oauth-attestation-based-client-auth-11 Section
  * 7.2).
  *
  * <p>Verifies the JWT conveyed by the {@code OAuth-Client-Attestation-PoP} header:
@@ -186,10 +186,11 @@ class ClientAttestationPopJwtVerifier {
   }
 
   /**
-   * Section 7.2 item 5 and item 8: a Challenge the server provided has to come back in the {@code
-   * challenge} claim. A presented challenge is always validated; whether one is mandatory is a
-   * tenant policy, so that a deployment can advertise the challenge endpoint and let its clients
-   * adopt it before requests without a challenge start failing.
+   * Section 7.2 item 5: a Challenge the server provided has to come back in the {@code challenge}
+   * claim. Section 6.1 answers a missing or rejected one with {@code use_attestation_challenge}. A
+   * presented challenge is always validated; whether one is mandatory is a tenant policy, so that a
+   * deployment can advertise the challenge endpoint and let its clients adopt it before requests
+   * without a challenge start failing.
    */
   private void throwExceptionIfInvalidChallenge(JsonWebTokenClaims claims) {
     String presented = claims.getValue("challenge");

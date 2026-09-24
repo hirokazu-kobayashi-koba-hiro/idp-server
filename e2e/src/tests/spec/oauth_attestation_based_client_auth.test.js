@@ -8,7 +8,8 @@
  * verifies both JWTs.
  *
  * Numbering follows draft-11, which moved several sections from draft-10:
- * 9.3 -> 10.3, 9.4 -> 10.4, 9.8 -> 10.8, 11.1 -> 12.1, 11.2 -> 12.2. A ledger
+ * 6.1 -> 6.3 (6.1 is now "Providing Challenges in Errors"), 9.x -> 10.x, 10.1 -> 11.1,
+ * 11.x -> 12.x, and 7.2 item 8 was folded into item 5 (replay is now item 8). A ledger
  * whose numbers have drifted cannot be compared against the document, so the
  * renumbering is carried here rather than left for whoever reads it next.
  *
@@ -43,6 +44,7 @@ import { requestToken } from "../../api/oauthClient";
 import { adminServerConfig, backendUrl, serverConfig } from "../testConfig";
 import { createJwt, createJwtWithPrivateKey, generateJti } from "../../lib/jose";
 import { toEpocTime } from "../../lib/util";
+import { createDPoPProof, generateDPoPKeyPair } from "../../lib/dpop";
 
 const ATTESTATION_TYP = "oauth-client-attestation+jwt";
 const POP_TYP = "oauth-client-attestation-pop+jwt";
@@ -130,7 +132,7 @@ const createPopJwt = ({
   });
 };
 
-/** Section 6.1: fetch a server-provided Challenge from the challenge endpoint. */
+/** Section 6.3: fetch a server-provided Challenge from the challenge endpoint. */
 const fetchChallenge = async () => {
   const response = await postWithJson({
     url: `${backendUrl}/${serverConfig.tenantId}/v1/client-attestation/challenges`,
@@ -179,7 +181,8 @@ const expectInvalidClientAttestation = (response, reason) => {
  * accompanied by the OAuth-Client-Attestation-Challenge header carrying a Challenge to use next.
  */
 const expectUseAttestationChallenge = (response) => {
-  expect(response.status).toBe(401);
+  // Section 6.1: an Authorization Server responds with HTTP 400 (a Resource Server with 401).
+  expect(response.status).toBe(400);
   expect(response.data).toHaveProperty("error", "use_attestation_challenge");
   expect(response.headers[CHALLENGE_HEADER.toLowerCase()]).toBeDefined();
 };
@@ -303,7 +306,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
 
   describe("4. Client Attestation JWT", () => {
 
-    it("typ REQUIRED. The typ (JWT type) header MUST be oauth-client-attestation+jwt.", async () => {
+    it("typ REQUIRED. The typ (JWT type) header MUST be oauth-client-attestation+jwt unless specified otherwise by a profile as described in Section 13.", async () => {
       const response = await requestTokenWithAttestation({
         attestationJwt: createAttestationJwt({ typ: "JWT" }),
         popJwt: createPopJwt(),
@@ -314,7 +317,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
       );
     });
 
-    it("sub REQUIRED. The sub (subject) claim MUST specify client_id value of the OAuth Client.", async () => {
+    it("sub REQUIRED. The sub (subject) claim MUST specify the client_id value of the OAuth Client, unless specified otherwise by a profile as described in Section 13.", async () => {
       const response = await requestTokenWithAttestation({
         attestationJwt: createAttestationJwt({ sub: null }),
         popJwt: createPopJwt(),
@@ -437,65 +440,22 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
    * section that says what the client sends, and neither is implemented.
    */
   describe("5.2. Using DPoP as the Proof of Possession (not implemented yet)", () => {
-    xit("The DPoP proof MUST adhere to the rules defined in [RFC9449].", async () => {});
+    xit("1. The DPoP proof MUST adhere to [RFC9449]", async () => {});
 
-    xit("The public key in the jwk header parameter of the DPoP proof MUST match the public key in the cnf claim of the Client Attestation JWT.", async () => {});
+    xit("2. The public key located in the DPoP proof MUST match the public key located in the cnf claim of the Client Attestation JWT.", async () => {});
+
+    xit("In combined mode, the Challenge mechanisms defined by this specification (the challenge claim and the OAuth-Client-Attestation-Challenge HTTP header field, see Section 6) are not used for the DPoP proof. Instead, server-provided freshness and replay protection rely solely on the DPoP nonce mechanism defined in Section 8 of [RFC9449] and Section 9 of [RFC9449] ...", async () => {});
   });
 
+  /**
+   * Requirements §6 places on the Client alone (include the most recently received Challenge,
+   * SHOULD fetch one from the challenge endpoint rather than rely on the error, retry once and
+   * MUST NOT retry indefinitely) are not observable at the server and carry no entries here.
+   */
   describe("6. Challenges", () => {
 
-    it("6.1. The Authorization Server or Resource Server MAY offer a challenge endpoint for Clients to fetch Challenges. It MUST signal support by including the metadata entry challenge_endpoint.", async () => {
-      const response = await get({ url: serverConfig.discoveryEndpoint });
-      expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty("challenge_endpoint");
-      expect(response.data.challenge_endpoint).toContain("/v1/client-attestation/challenges");
-    });
-
-    it("6.1. The response contains attestation_challenge. The Authorization Server MUST make the response uncacheable by adding a Cache-Control header field including the value no-store.", async () => {
-      const response = await postWithJson({
-        url: `${backendUrl}/${serverConfig.tenantId}/v1/client-attestation/challenges`,
-        body: {},
-      });
-      console.log(response.status, response.data);
-      expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty("attestation_challenge");
-      expect(typeof response.data.attestation_challenge).toBe("string");
-      expect(response.headers["cache-control"]).toContain("no-store");
-    });
-
-    it("6.1. The value of the challenge is opaque to the client and is not reused across requests.", async () => {
-      const first = await fetchChallenge();
-      const second = await fetchChallenge();
-
-      expect(first).not.toBe(second);
-    });
-
-    it("6.2. The Authorization Server MAY provide a fresh Challenge with any HTTP response using the OAuth-Client-Attestation-Challenge HTTP header field.", async () => {
-      // A challenge the server never issued is rejected, and the rejection carries the Challenge
-      // the client is expected to use next.
-      const response = await requestTokenWithAttestation({
-        attestationJwt: createAttestationJwt(),
-        popJwt: createPopJwt({ extraClaims: { challenge: "never-issued-by-this-server" } }),
-      });
-      console.log(response.status, response.data, response.headers[CHALLENGE_HEADER.toLowerCase()]);
-      expect(response.status).toBe(401);
-      expect(response.data).toHaveProperty("error", "use_attestation_challenge");
-      expect(response.headers[CHALLENGE_HEADER.toLowerCase()]).toBeDefined();
-    });
-
-    it("challenge OPTIONAL. If the Authorization Server offers a challenge endpoint, the Client MUST retrieve a challenge and MUST use this challenge in the Client Attestation PoP JWT.", async () => {
-      const challenge = await fetchChallenge();
-      const response = await requestTokenWithAttestation({
-        attestationJwt: createAttestationJwt(),
-        popJwt: createPopJwt({ extraClaims: { challenge } }),
-      });
-      console.log(response.status, response.data);
-      expect(response.status).toBe(200);
-      expect(response.data).toHaveProperty("access_token");
-    });
-
-    it("6.1. A Challenge stays usable for its whole lifetime, so one Challenge covers a polling cycle.", async () => {
-      // Section 9.7: a challenge bound to a Client Instance session is validated against the single
+    it("Support for Challenges is OPTIONAL for the Authorization Server or Resource Server. The lifetime of a Challenge, and whether a Challenge may be used in more than one Client Attestation PoP JWT, are determined solely by the local policy of the Authorization Server or Resource Server. (idp-server accepts a Challenge until it expires, so one Challenge covers a polling cycle)", async () => {
+      // Section 10.7: a challenge bound to a Client Instance session is validated against the single
       // value expected for that session, without a seen-values store. It is therefore not consumed.
       const challenge = await fetchChallenge();
 
@@ -510,6 +470,118 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
 
       expect(first.status).toBe(200);
       expect(second.status).toBe(200);
+    });
+
+    it("If they are provided, the Client MUST include the Challenge in the proof of possession.", async () => {
+      const challenge = await fetchChallenge();
+      const response = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ extraClaims: { challenge } }),
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("access_token");
+    });
+
+    it("The value of the challenge is opaque to the Client. (the challenge endpoint issues a distinct value on each request)", async () => {
+      const first = await fetchChallenge();
+      const second = await fetchChallenge();
+
+      expect(first).not.toBe(second);
+    });
+
+    it("A server that uses Challenges: MUST provide a Challenge when returning an use_attestation_challenge error defined in Section 7.4", async () => {
+      const response = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ extraClaims: { challenge: "never-issued-by-this-server" } }),
+      });
+      expectUseAttestationChallenge(response);
+    });
+
+    xit("This mechanism applies only to the Client Attestation PoP JWT. In the DPoP combined mode (see Section 5.2), the use_dpop_nonce error and the DPoP-Nonce HTTP header field defined in [RFC9449] are used instead, see Section 7.4. (DPoP combined mode is not implemented)", async () => {});
+  });
+
+  describe("6.1. Providing Challenges in Errors", () => {
+
+    it("An Authorization Server that requires a Challenge that the Client did not provide, or that rejects the Challenge contained in the Client Attestation PoP JWT, MUST respond with an HTTP 400 (Bad Request) status code and the error code use_attestation_challenge (see Section 7.4). The response MUST include a fresh Challenge in the OAuth-Client-Attestation-Challenge HTTP header field.", async () => {
+      // The rejected-Challenge case. The did-not-provide case needs a tenant that enforces the
+      // Challenge (client_attestation_challenge_required), which this tenant does not: see
+      // usecase/abca/abca-02-client-instance-registration.test.js.
+      const response = await requestTokenWithAttestation({
+        attestationJwt: createAttestationJwt(),
+        popJwt: createPopJwt({ extraClaims: { challenge: "never-issued-by-this-server" } }),
+      });
+      console.log(response.status, response.data, response.headers[CHALLENGE_HEADER.toLowerCase()]);
+      expect(response.status).toBe(400);
+      expect(response.data).toHaveProperty("error", "use_attestation_challenge");
+      expect(response.headers[CHALLENGE_HEADER.toLowerCase()]).toBeDefined();
+    });
+
+    xit("A Resource Server that requires a Challenge that the Client did not provide, or that rejects the Challenge contained in the Client Attestation PoP JWT, MUST respond with an HTTP 401 (Unauthorized) status code with the error code use_attestation_challenge in the WWW-Authenticate HTTP header field and a fresh Challenge in the OAuth-Client-Attestation-Challenge HTTP header field. (idp-server does not accept Client Attestations as a Resource Server)", async () => {});
+  });
+
+  describe("6.2. Providing Challenges in Previous Responses", () => {
+
+    xit("The Authorization Server or Resource Server MAY provide a fresh Challenge with any HTTP response using a HTTP header-based syntax. The HTTP header field MUST be named \"OAuth-Client-Attestation-Challenge\" and contain the value of the Challenge. (idp-server hands a Challenge back only on use_attestation_challenge error responses, see 6.1; that the value handed back is usable is checked under 7.2 item 5)", async () => {});
+  });
+
+  describe("6.3. Providing Challenges through the Challenge Endpoint", () => {
+
+    it("The Authorization Server or Resource Server MAY provide a challenge endpoint for Clients to fetch Challenges in the context of this specification. If the Authorization Server supports metadata as defined in [RFC8414] ..., it MUST signal support for the challenge endpoint by including the metadata entry challenge_endpoint containing the URL of the endpoint as its value.", async () => {
+      const response = await get({ url: serverConfig.discoveryEndpoint });
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("challenge_endpoint");
+      expect(response.data.challenge_endpoint).toContain("/v1/client-attestation/challenges");
+    });
+
+    it("attestation_challenge: REQUIRED if the Authorization Server or Resource Server supports Client Attestations and server-provided challenges as described in this document. ... The Authorization Server or Resource Server MUST make the response uncacheable by adding a Cache-Control header field including the value no-store.", async () => {
+      const response = await postWithJson({
+        url: `${backendUrl}/${serverConfig.tenantId}/v1/client-attestation/challenges`,
+        body: {},
+      });
+      console.log(response.status, response.data);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty("attestation_challenge");
+      expect(typeof response.data.attestation_challenge).toBe("string");
+      expect(response.headers["cache-control"]).toContain("no-store");
+    });
+
+    xit("If the server supports DPoP [RFC9449] with server-provided nonces, the response MUST additionally include a fresh DPoP nonce in the DPoP-Nonce HTTP header field as defined in [RFC9449]. (idp-server does not provide DPoP nonces)", async () => {});
+  });
+
+  describe("7. Verification and Processing", () => {
+
+    xit("If the request contains an OAuth-Client-Attestation-PoP HTTP request header field, the receiving server MUST apply the validation rules of Section 7.2 and if present, a DPoP proof present in the request is validated according to [RFC9449] independently of this specification. (a DPoP proof alongside the PoP JWT is not covered here)", async () => {});
+
+    xit("If an OAuth-Client-Attestation HTTP request header field and a DPoP proof are present, but no OAuth-Client-Attestation-PoP HTTP request header field, the receiving server MUST apply the validation rules of Section 7.3. (DPoP combined mode is not implemented)", async () => {});
+
+    it("If the request contains an OAuth-Client-Attestation header field and a DPoP proof, but no OAuth-Client-Attestation-PoP header field, and the Authorization Server does not support attest_jwt_client_auth_dpop, it MUST reject the request (see Section 7.4).", async () => {
+      // idp-server does not support attest_jwt_client_auth_dpop, so the DPoP proof cannot stand in
+      // for the missing PoP JWT: client authentication runs before the DPoP proof is verified and
+      // fails on the absent header.
+      const dpopKey = await generateDPoPKeyPair();
+      const params = new URLSearchParams();
+      params.append("grant_type", "client_credentials");
+      params.append("scope", "account");
+      params.append("client_id", attestedClient.clientId);
+
+      const response = await post({
+        url: serverConfig.tokenEndpoint,
+        body: params,
+        headers: {
+          [ATTESTATION_HEADER]: createAttestationJwt({
+            cnf: () => ({ jwk: dpopKey.publicJwk }),
+          }),
+          DPoP: await createDPoPProof({
+            privateKey: dpopKey.privateKey,
+            publicJwk: dpopKey.publicJwk,
+            htu: serverConfig.tokenEndpoint,
+          }),
+        },
+      });
+      console.log(response.status, response.data);
+      expectInvalidClient(response);
+      expect(response.data.error_description).toContain(POP_HEADER);
     });
   });
 
@@ -623,7 +695,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
       );
     });
 
-    it("5. If the server provided a challenge value to the client, the challenge claim is present in the Client Attestation PoP JWT and matches the server-provided challenge value.", async () => {
+    it("5. If the server provides challenges through the challenge endpoint or within previous responses as described in Section 6, the challenge claim of the Client Attestation PoP JWT MUST match a provided challenge. (challenge endpoint)", async () => {
       const challenge = await fetchChallenge();
       const accepted = await requestTokenWithAttestation({
         attestationJwt: createAttestationJwt(),
@@ -638,9 +710,9 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
       expectUseAttestationChallenge(mismatched);
     });
 
-    it("8. If the Client received a challenge through the Authorization Server's challenge endpoint or within previous responses, it MUST match the challenge claim of the Client Attestation PoP JWT.", async () => {
-      // The Challenge handed back on a previous response is accepted on the next request, which is
-      // the Section 6.2 hand-off working end to end.
+    it("5. If the server provides challenges through the challenge endpoint or within previous responses as described in Section 6, the challenge claim of the Client Attestation PoP JWT MUST match a provided challenge. (previous responses)", async () => {
+      // The Challenge handed back on the error response (Section 6.1) is accepted on the next
+      // request, which is the hand-off working end to end. draft-10 listed this as item 8.
       const rejected = await requestTokenWithAttestation({
         attestationJwt: createAttestationJwt(),
         popJwt: createPopJwt({ extraClaims: { challenge: "never-issued-by-this-server" } }),
@@ -655,7 +727,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
       expect(response.status).toBe(200);
     });
 
-    xit("9. Depending on the security requirements of the deployment, additional checks to guarantee replay protection for the Client Attestation PoP JWT might need to be applied.", async () => {});
+    xit("8. Depending on the security requirements of the deployment, additional checks to guarantee replay protection for the Client Attestation PoP JWT might need to be applied (see Section 12.1 for more details).", async () => {});
   });
 
   describe("7.3. DPoP Combined Mode (not implemented yet)", () => {
@@ -664,22 +736,22 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
 
     xit("2. There is precisely one DPoP HTTP request header field present in the request.", async () => {});
 
-    xit("3. Validate the DPoP proof in accordance with [RFC9449].", async () => {});
+    xit("3. Validate the DPoP proof in accordance with [RFC9449]. If the server provides DPoP nonces, this includes validating that the nonce claim of the DPoP proof contains a valid nonce provided by the server, whether it was provided via the DPoP-Nonce HTTP header field as defined in [RFC9449] or via the challenge endpoint as described in Section 6.3.", async () => {});
 
-    xit("4. The public key in the jwk header parameter of the DPoP proof MUST be identical to the public key in the cnf claim of the Client Attestation JWT.", async () => {});
-
-    xit("5. If the Client received a challenge, it MUST match the nonce payload claim of the DPoP proof.", async () => {});
+    xit("4. The public key in the jwk header parameter of the DPoP proof MUST be identical to the public key in the cnf claim of the Client Attestation JWT. Note that this doesn't mean the comparison of a canonical representation of the JWK, but a check via JWK thumbprint or by comparing the required members per key type (e.g., kty, curve, x, y).", async () => {});
   });
 
   describe("7.4. Errors", () => {
 
-    it("use_attestation_challenge MUST be used when the Client Attestation PoP JWT is not using an expected server-provided challenge. When used this error code MUST be accompanied by the OAuth-Client-Attestation-Challenge HTTP header field parameter.", async () => {
+    it("use_attestation_challenge MUST be used when the Client Attestation PoP JWT is not using an expected server-provided challenge. When used, this error code MUST be accompanied by a fresh Challenge in the OAuth-Client-Attestation-Challenge HTTP header field (as described in Section 6.2).", async () => {
       const response = await requestTokenWithAttestation({
         attestationJwt: createAttestationJwt(),
         popJwt: createPopJwt({ extraClaims: { challenge: "never-issued-by-this-server" } }),
       });
       expectUseAttestationChallenge(response);
     });
+
+    xit("If the combined mode as defined in Section 5.2 is used and the DPoP proof does not contain an expected server-provided nonce, the DPoP error use_dpop_nonce MUST be used instead and a fresh nonce provided in the DPoP-Nonce HTTP header field of the response, as defined in [RFC9449]. (DPoP combined mode is not implemented)", async () => {});
 
     it("use_fresh_attestation MUST be used when the Client Attestation JWT is deemed to be not fresh enough to be acceptable by the server.", async () => {
       const response = await requestTokenWithAttestation({
@@ -689,7 +761,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
       expectUseFreshAttestation(response);
     });
 
-    it("invalid_client_attestation MAY be used in addition to the more general invalid_client error code if the attestation or its proof of possession could not be successfully verified.", async () => {
+    it("invalid_client_attestation MAY be used in addition to the more general invalid_client error code as defined in [RFC6749] if the attestation or its proof of possession could not be successfully verified, the public keys of the Client Attestation JWT and the proof of possession don't match, or the proof of possession is not supported.", async () => {
       const attestationFailure = await requestTokenWithAttestation({
         attestationJwt: createAttestationJwt({ signingKey: () => instanceEs256Jwk }),
         popJwt: createPopJwt(),
@@ -748,7 +820,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
       expect(response.data).toHaveProperty("access_token");
     });
 
-    it("If the token request contains a client_id parameter as per [RFC6749] the Authorization Server MUST verify that the value of this parameter is the same as the client_id value in the sub claim of the Client Attestation.", async () => {
+    it("If the token request contains a client_id parameter as per [RFC6749] the Authorization Server MUST verify that the value of this parameter is the same as the client_id value in the sub claim of the Client Attestation, unless specified otherwise by a profile as described in Section 13.", async () => {
       const response = await requestTokenWithAttestation({
         attestationJwt: createAttestationJwt({ sub: "another-client" }),
         popJwt: createPopJwt(),
@@ -976,7 +1048,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
 
   describe("8. Authorization Server and Resource Server Metadata", () => {
 
-    it("The Authorization Server SHOULD communicate support by using the value attest_jwt_client_auth in the token_endpoint_auth_methods_supported. The Authorization Server MUST include client_attestation_signing_alg_values_supported and client_attestation_pop_signing_alg_values_supported in its published metadata if the Client Attestation PoP JWT mechanism is used.", async () => {
+    it("The Authorization Server SHOULD communicate support by using the value attest_jwt_client_auth in the token_endpoint_auth_methods_supported. The Authorization Server or Resource Server MUST include client_attestation_signing_alg_values_supported and client_attestation_pop_signing_alg_values_supported in its published metadata if the Client Attestation PoP JWT mechanism is used.", async () => {
       const response = await get({ url: serverConfig.discoveryEndpoint });
       expect(response.status).toBe(200);
       expect(response.data.token_endpoint_auth_methods_supported).toContain(
@@ -988,7 +1060,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
       );
     });
 
-    xit("The Authorization Server SHOULD communicate support for authentication using a DPoP proof as the PoP by using the value attest_jwt_client_auth_dpop. The Authorization Server MUST include dpop_signing_alg_values_supported if DPoP is used as the Proof of Possession in combined mode.", async () => {});
+    xit("The Authorization Server SHOULD communicate support for authentication using a DPoP proof as the PoP by using the value attest_jwt_client_auth_dpop. The Authorization Server or Resource Server MUST include dpop_signing_alg_values_supported as defined in [RFC9449], if DPoP is used as the Proof of Possession in combined mode.", async () => {});
   });
 
   /**
@@ -1003,13 +1075,13 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
    * expect. Left as xit rather than removed so the gap stays visible (Issue #1892).
    */
   describe("9. Client Metadata (not implemented yet)", () => {
-    xit("token_endpoint_auth_method: the Client indicates support by using the value attest_jwt_client_auth or attest_jwt_client_auth_dpop. (supported; the rest of this section is not)", async () => {});
+    xit("A Client that supports attestation-based client authentication as defined in this specification indicates this by using the value attest_jwt_client_auth or attest_jwt_client_auth_dpop in the token_endpoint_auth_method client metadata parameter defined in [RFC7591]. (attest_jwt_client_auth is supported; the rest of this section is not)", async () => {});
 
-    xit("client_attestation_signing_alg_values_supported: JSON array containing a list of the JWS [RFC7515] algorithms (alg values) supported for signing the Client Attestation JWT. The value none MUST NOT be present.", async () => {});
+    xit("client_attestation_signing_alg_values_supported: OPTIONAL. JSON array containing a list of the JWS alg values (as defined in [IANA.JOSE.ALGS]) supported by the Client for signing the Client Attestation JWT. The value none MUST NOT be present.", async () => {});
 
-    xit("client_attestation_pop_signing_alg_values_supported: JSON array containing a list of the JWS [RFC7515] algorithms (alg values) supported for signing the Client Attestation PoP JWT. The values none and symmetric algorithms MUST NOT be present.", async () => {});
+    xit("client_attestation_pop_signing_alg_values_supported: OPTIONAL. JSON array containing a list of the JWS alg values (as defined in [IANA.JOSE.ALGS]) supported by the Client for signing the Client Attestation PoP JWT. The values none and any symmetric algorithms MUST NOT be present.", async () => {});
 
-    xit("client_attestation_pop_methods_supported: the Proof of Possession methods the Client supports.", async () => {});
+    xit("client_attestation_pop_methods_supported: OPTIONAL. JSON array of case-sensitive strings, each identifying a Proof of Possession method supported by the Client, as registered in the \"OAuth Client Attestation Proof-of-Possession Methods\" registry established by this specification (see Section 15.5).", async () => {});
   });
 
   describe("10.2. Reuse of a Client Attestation JWT", () => {
@@ -1082,7 +1154,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
       });
     };
 
-    it("Authorization servers issuing a refresh token in response to a token request using the client attestation mechanism MUST bind the refresh token to the Client Instance and its associated public key. (the instance that obtained it can refresh)", async () => {
+    it("Authorization servers issuing a refresh token in response to a token request using the client attestation mechanism as defined by this specification MUST bind the refresh token to the Client Instance, and NOT just the client as specified in Section 6 of [RFC6749]. (the instance that obtained it can refresh)", async () => {
       const issued = await passwordGrantAs(instanceEs256Jwk);
       console.log("password grant with attestation:", issued.status);
       expect(issued.status).toBe(200);
@@ -1095,7 +1167,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
       expect(refreshed.data).toHaveProperty("access_token");
     }, 120000);
 
-    it("the Client Instance MUST use the same key that was present in the cnf claim. (another instance of the same client is refused)", async () => {
+    it("Unless a profile specifies otherwise as described in Section 13, the refresh token MUST be bound to the Client Instance Key, and the Client Instance MUST use the same key that was present in the cnf claim of the Client Attestation that was used when the refresh token was issued. (another instance of the same client is refused)", async () => {
       // Both instances authenticate as the same client and pass every other check. Only the
       // binding separates them — this is the case the section exists for.
       const issued = await passwordGrantAs(instanceEs256Jwk);
@@ -1178,7 +1250,7 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
   describe("12.2. Client Attestation Protection", () => {
 
     it("This specification allows both, digital signatures using asymmetric cryptography, and Message Authentication Codes (MAC) to be used to protect Client Attestation JWTs. (idp-server accepts only digital signatures)", async () => {
-      // Section 11.2 permits MACs where the Attester and the Authorization Server share a key.
+      // Section 12.2 permits MACs where the Attester and the Authorization Server share a key.
       // idp-server does not: the trust sources it offers are a public JWKS and a registered public
       // key, neither of which can verify a MAC. A MAC-protected attestation is therefore rejected
       // rather than silently trusted.
@@ -1204,8 +1276,14 @@ describe("draft-ietf-oauth-attestation-based-client-auth-11: OAuth 2.0 Attestati
   });
 
   describe("13. Considerations for Profiling this specification (not implemented yet)", () => {
-    xit("A profile of this specification MUST define how an Authorization Server or Resource Server determines that the profile applies to a given request.", async () => {});
+    xit("A profile MUST define how an Authorization Server or Resource Server determines that the profile applies to a given request (which could also be an out-of-band mechanism).", async () => {});
 
-    xit("All other requirements of this specification continue to apply unchanged unless the profile states otherwise. HAIP is the profile this matters for; see Issue #1887.", async () => {});
+    xit("The type of the Client Attestation JWT: a profile MAY redefine a typ header parameter value other than oauth-client-attestation+jwt (see Section 4) in order to distinguish profile-specific Client Attestations.", async () => {});
+
+    xit("The subject of the Client Attestation JWT: a profile MAY redefine the meaning of the sub claim (see Section 4) and how a client_id maps to Client Instances. Such a profile MUST define how the checks that rely on sub matching the client_id are replaced, in particular those in Section 7.1 and Section 7.5.", async () => {});
+
+    xit("The binding of refresh tokens: a profile MAY redefine the refresh token binding described in Section 10.3 if its use case does not allow binding refresh tokens to the Client Instance Key. Such a profile MUST define what the refresh token is bound to instead and how that binding is proven when the refresh token is used.", async () => {});
+
+    xit("All other requirements of this specification continue to apply unchanged. (HAIP is the profile this matters for; see Issue #1887)", async () => {});
   });
 });

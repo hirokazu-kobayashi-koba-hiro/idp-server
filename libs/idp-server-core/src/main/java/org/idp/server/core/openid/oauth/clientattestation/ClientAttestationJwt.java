@@ -29,7 +29,7 @@ import org.idp.server.platform.jose.JsonWebTokenClaims;
  * binds the Client Instance Key ({@code cnf.jwk}) to the client ({@code sub}).
  *
  * @see <a
- *     href="https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-10.html">OAuth
+ *     href="https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-11.html">OAuth
  *     2.0 Attestation-Based Client Authentication</a>
  */
 public class ClientAttestationJwt {
@@ -56,7 +56,7 @@ public class ClientAttestationJwt {
   /**
    * Reads {@code sub} without verifying the signature, so the client can be looked up.
    *
-   * <p>draft-10 Section 7.5 leaves the {@code client_id} parameter optional, because the Client
+   * <p>draft-11 Section 7.5 leaves the {@code client_id} parameter optional, because the Client
    * Attestation already names the client: "If the token request contains a client_id parameter ...
    * the Authorization Server MUST verify that the value of this parameter is the same as the
    * client_id value in the sub claim". Without this, a compliant request that omits the parameter

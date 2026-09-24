@@ -2,7 +2,7 @@
 
 ## このドキュメントの目的
 
-`attest_jwt_client_auth`（[draft-ietf-oauth-attestation-based-client-auth-10](https://datatracker.ietf.org/doc/draft-ietf-oauth-attestation-based-client-auth/)）が `idp-server` の中でどう組み立てられているかを、**コードを触る人向け**に説明します。
+`attest_jwt_client_auth`（[draft-ietf-oauth-attestation-based-client-auth-11](https://www.ietf.org/archive/id/draft-ietf-oauth-attestation-based-client-auth-11.html)）が `idp-server` の中でどう組み立てられているかを、**コードを触る人向け**に説明します。
 
 プロトコルとしての挙動・設定値・エラーは [プロトコル仕様](../../content_04_protocols/protocol-08-attestation-based-client-authentication.md) を参照してください。ここでは「どのクラスが何を担当し、どこを触れば拡張できるか」を扱います。
 
@@ -54,7 +54,7 @@
 | クラス | 担当 |
 |---|---|
 | `AttestJwtClientAuthAuthenticator` | `ClientAuthenticator` SPI の実装。2つの Verifier を順に呼ぶ |
-| `ClientAttestationJwtVerifier` | Attestation JWT（draft-10 §7.1） |
+| `ClientAttestationJwtVerifier` | Attestation JWT（draft-11 §7.1） |
 | `ClientAttestationPopJwtVerifier` | PoP JWT（§7.2）。Challenge の検証も持つ |
 | `ClientAttestationKeyResolvers` | `trust_source` で鍵の解決方法を切り替えるレジストリ |
 | `StaticJwksClientAttestationKeyResolver` | `attester_jwks`。設定の JWKS で検証 |
@@ -225,7 +225,7 @@ iOS App Attest を足す場合、束縛②の作り方が Android と異なり�
 | `AttestJwtClientAuthAuthenticatorTest` | 認証フェーズ |
 | `RegisteredInstanceKeyModeTest` | 自己署名モードの追加検証 |
 | `AndroidKeyAttestationVerifierTest` | 登録フェーズの3つの束縛・チェーン・レベル・鍵の性質 |
-| `e2e/src/tests/spec/oauth_attestation_based_client_auth.test.js` | draft-10 の章立てに沿った準拠台帳 |
+| `e2e/src/tests/spec/oauth_attestation_based_client_auth.test.js` | draft-11 の章立てに沿った準拠台帳 |
 
 `AndroidAttestationFixture` が BouncyCastle でチェーンを合成するので、実機なしで検証ロジックを動かせます。`hardwareEnforced` も実機が埋めるとおりに埋めます。**verifier がそこから読む値を、空のリストを持つフィックスチャでは動かせない**ためです（ルート証明書に CA 制約を持たせているのと同じ理由）。
 

@@ -25,7 +25,7 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.platform.multi_tenancy.tenant.Tenant;
 
 /**
- * Issues a Challenge for draft-ietf-oauth-attestation-based-client-auth-10 Section 6.1.
+ * Issues a Challenge for draft-ietf-oauth-attestation-based-client-auth-11 Section 6.3.
  *
  * <p>The lifetime is the tenant's, not a constant: a Challenge stands in for the session it is used
  * across, and how long that is depends on the flow the tenant runs.

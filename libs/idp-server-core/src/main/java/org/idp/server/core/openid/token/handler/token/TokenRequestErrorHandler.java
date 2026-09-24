@@ -76,7 +76,7 @@ public class TokenRequestErrorHandler {
           clientUnAuthorized.errorCode(),
           exception.getMessage());
       return new TokenRequestResponse(
-          UNAUTHORIZE,
+          clientUnAuthorized.isReportedAsBadRequest() ? BAD_REQUEST : UNAUTHORIZE,
           new TokenErrorResponse(
               new Error(clientUnAuthorized.errorCode()),
               new ErrorDescription(exception.getLocalizedMessage())),

@@ -109,7 +109,7 @@ class ClientAttestationEndpointWiringTest {
 
   @Test
   void repeatedHeadersArePreservedSoTheValidatorCanRejectThem() {
-    // draft-ietf-oauth-attestation-based-client-auth-10 Section 7.1 / 7.2 require precisely one
+    // draft-ietf-oauth-attestation-based-client-auth-11 Section 7.1 / 7.2 require precisely one
     // header field each; ClientAttestationHeaderValidator needs every value to detect a violation.
     HttpRequestInputs inputs =
         new HttpRequestInputs(

@@ -26,9 +26,9 @@ import org.idp.server.platform.date.SystemDateTime;
 import org.junit.jupiter.api.Test;
 
 /**
- * draft-ietf-oauth-attestation-based-client-auth-10 Section 6: Challenges issued by the server.
+ * draft-ietf-oauth-attestation-based-client-auth-11 Section 6: Challenges issued by the server.
  *
- * <p>Section 9.7 and Section 11.1 let a challenge bound to a Client Instance session be validated
+ * <p>Section 10.7 and Section 12.1 let a challenge bound to a Client Instance session be validated
  * against the single value expected for that session, so a challenge here is reusable for its whole
  * lifetime and there is no consume step.
  */

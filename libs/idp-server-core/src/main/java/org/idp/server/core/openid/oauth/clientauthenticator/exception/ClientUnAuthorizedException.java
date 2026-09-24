@@ -90,6 +90,14 @@ public class ClientUnAuthorizedException extends RuntimeException {
     return Map.of();
   }
 
+  /**
+   * Whether an Authorization Server reports this failure with HTTP 400 rather than 401. A failed
+   * client authentication is 401; a specification that requires otherwise overrides this.
+   */
+  public boolean isReportedAsBadRequest() {
+    return false;
+  }
+
   public boolean hasStructuredData() {
     return method != null && clientId != null && reason != null;
   }

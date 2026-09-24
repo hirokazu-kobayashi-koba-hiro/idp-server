@@ -127,7 +127,7 @@ paths:
         - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
         - `client_assertion`: 署名済みJWT
 
-        認証に失敗した場合は `401 Unauthorized` が返されます。
+        認証に失敗した場合は `400 Bad Request` が返されます（エラーコードは下記 `400` を参照）。
 
       parameters:
         - $ref: '#/components/parameters/tenant-id'
@@ -209,6 +209,18 @@ paths:
         '400':
           description: |
             リクエストパラメータが不正、またはクライアント認証に失敗
+
+            このエンドポイントはクライアント認証の失敗をすべて `400` で返します（`401` は返しません）。
+            `attest_jwt_client_auth` の場合、`invalid_client` に加えて
+            `invalid_client_attestation`（Client Attestation JWT / PoP JWT の検証に失敗）、
+            `use_fresh_attestation`（Client Attestation JWT の期限切れ）、
+            `use_attestation_challenge`（PoP JWT の `challenge` が無い（必須化時）、または発行していない・期限切れの値）が返ります
+            （draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）。
+            `use_attestation_challenge` には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴い、
+            次に使うチャレンジが入ります。
+          headers:
+            OAuth-Client-Attestation-Challenge:
+              $ref: '#/components/headers/OAuthClientAttestationChallenge'
           content:
             application/json:
               schema:
@@ -229,28 +241,6 @@ paths:
                   value:
                     error: "invalid_request"
                     error_description: "Invalid redirect_uri"
-        '401':
-          description: |
-            クライアント認証が必要、または認証情報が無効
-
-            `attest_jwt_client_auth` の場合、`invalid_client` に加えて
-            `invalid_client_attestation`（Client Attestation JWT / PoP JWT が不正、対で送られていない）と
-            `use_attestation_challenge`（PoP JWT の `challenge` が無い / 期待値でない）が返ります
-            （draft-ietf-oauth-attestation-based-client-auth Section 7.4）。
-            後者には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴います。
-          headers:
-            OAuth-Client-Attestation-Challenge:
-              $ref: '#/components/headers/OAuthClientAttestationChallenge'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                unauthorized:
-                  summary: 認証が必要
-                  value:
-                    error: "invalid_client"
-                    error_description: "Client authentication required"
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -303,7 +293,15 @@ paths:
                 $ref: '#/components/schemas/BackchannelAuthenticationResponse'
 
         '400':
-          description: バリデーションエラーや不正リクエスト
+          description: |
+            バリデーションエラーや不正リクエスト
+
+            `attest_jwt_client_auth` で PoP JWT の `challenge` が無い（必須化時）、または発行していない・期限切れの値だった場合は
+            `use_attestation_challenge` が `400` で返ります（draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）。
+            `OAuth-Client-Attestation-Challenge` レスポンスヘッダに次に使うチャレンジが入るので、それで PoP JWT を作り直します。
+          headers:
+            OAuth-Client-Attestation-Challenge:
+              $ref: '#/components/headers/OAuthClientAttestationChallenge'
           content:
             application/json:
               schema:
@@ -314,13 +312,9 @@ paths:
             クライアント認証エラー（`invalid_client`）。
 
             `attest_jwt_client_auth` の場合、`invalid_client` に加えて
-            `invalid_client_attestation`（Client Attestation JWT / PoP JWT が不正、対で送られていない）と
-            `use_attestation_challenge`（PoP JWT の `challenge` が無い / 期待値でない）が返ります
-            （draft-ietf-oauth-attestation-based-client-auth Section 7.4）。
-            後者には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴います。
-          headers:
-            OAuth-Client-Attestation-Challenge:
-              $ref: '#/components/headers/OAuthClientAttestationChallenge'
+            `invalid_client_attestation`（Client Attestation JWT / PoP JWT の検証に失敗）と
+            `use_fresh_attestation`（Client Attestation JWT の期限切れ）が返ります
+            （draft-ietf-oauth-attestation-based-client-auth-11 Section 7.4）。
           content:
             application/json:
               schema:
@@ -525,7 +519,7 @@ paths:
       summary: Client Attestation チャレンジの発行
       description: |
         Client Attestation PoP JWT の `challenge` クレームに入れる値を発行します
-        （draft-ietf-oauth-attestation-based-client-auth Section 6.1）。
+        （draft-ietf-oauth-attestation-based-client-auth-11 Section 6.3）。
 
         テナントで `client_attestation_challenge_required` を有効にしている場合、
         PoP JWT はここで得た値を持っていなければ `use_attestation_challenge` で拒否されます。
@@ -537,10 +531,10 @@ paths:
 
         ## 有効期限まで再利用できます
 
-        チャレンジは単回消費ではなく、期限まで何度でも使えます（Section 11.1 が挙げる
+        チャレンジは単回消費ではなく、期限まで何度でも使えます（Section 12.1 が挙げる
         3つの方式のうちの1つ）。
 
-        レスポンスは `Cache-Control: no-store` を伴います（Section 6.1 の要求）。
+        レスポンスは `Cache-Control: no-store` を伴います（Section 6.3 の要求）。
 
         既に持っているチャレンジが期限切れになった場合、このエンドポイントを呼ばなくても、
         エラー応答に付く `OAuth-Client-Attestation-Challenge` ヘッダから次の値を得られます。
@@ -667,13 +661,20 @@ paths:
             - **invalid_scope**  
               リクエストされた scope が不正または許可されていない場合。  
               例：`offline_access` の要求が許可されていない。
-            
+
+            `attest_jwt_client_auth` で PoP JWT の `challenge` が無い（必須化時）、または発行していない・期限切れの値だった場合は
+            `use_attestation_challenge` が `400` で返ります（draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）。
+            `OAuth-Client-Attestation-Challenge` レスポンスヘッダに次に使うチャレンジが入るので、それで PoP JWT を作り直します。
+
             CIBAフローでは、通常のOAuth 2.0のエラーに加えて、以下の固有のエラー値も含まれます：
             
             - `authorization_pending`: ユーザーの認証がまだ完了していない
             - `slow_down`: ポーリング間隔が短すぎる
             - `expired_token`: 認証リクエストの有効期限が切れた
             - `access_denied`: ユーザーが認証を拒否した
+          headers:
+            OAuth-Client-Attestation-Challenge:
+              $ref: '#/components/headers/OAuthClientAttestationChallenge'
           content:
             application/json:
               schema:
@@ -696,18 +697,13 @@ paths:
               エラーコードは `invalid_client` が返されます。
 
             `attest_jwt_client_auth` の場合のみ、次の 2 つが追加で返ります
-            （draft-ietf-oauth-attestation-based-client-auth Section 7.4）。
+            （draft-ietf-oauth-attestation-based-client-auth-11 Section 7.4）。
+            `use_attestation_challenge` は `401` ではなく `400` です（上記 `400` を参照）。
 
             | error | 意味 |
             |---|---|
-            | `invalid_client_attestation` | Client Attestation JWT / PoP JWT が不正、対で送られていない、署名検証に失敗した |
-            | `use_attestation_challenge` | PoP JWT の `challenge` クレームが無い、または期待した値でない |
-
-            `use_attestation_challenge` のときは `OAuth-Client-Attestation-Challenge`
-            レスポンスヘッダに次に使うチャレンジが入るので、それで作り直します。
-          headers:
-            OAuth-Client-Attestation-Challenge:
-              $ref: '#/components/headers/OAuthClientAttestationChallenge'
+            | `invalid_client_attestation` | Client Attestation JWT / PoP JWT の検証に失敗した（署名、`typ`、`aud`、`iat` など） |
+            | `use_fresh_attestation` | Client Attestation JWT の期限が切れている |
           content:
             application/json:
               schema:
@@ -749,7 +745,7 @@ paths:
         - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
         - `client_assertion`: 署名済みJWT
 
-        認証に失敗した場合は `401 Unauthorized` が返されます。
+        認証に失敗した場合は `400 Bad Request` が返されます（下記 `400` を参照）。
       parameters:
         - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
@@ -787,10 +783,12 @@ paths:
             > #1891 で扱います。トークンエンドポイントと revocation は `401` です。
 
             `attest_jwt_client_auth` の場合、`invalid_client` に加えて
-            `invalid_client_attestation`（Client Attestation JWT / PoP JWT が不正、対で送られていない）と
-            `use_attestation_challenge`（PoP JWT の `challenge` が無い / 期待値でない）が返ります
-            （draft-ietf-oauth-attestation-based-client-auth Section 7.4）。
-            後者には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴います。
+            `invalid_client_attestation`（Client Attestation JWT / PoP JWT の検証に失敗）、
+            `use_fresh_attestation`（Client Attestation JWT の期限切れ）、
+            `use_attestation_challenge`（PoP JWT の `challenge` が無い（必須化時）、または発行していない・期限切れの値）が
+            いずれも `400` で返ります（draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）。
+            `use_attestation_challenge` には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴い、
+            次に使うチャレンジが入ります。
           headers:
             OAuth-Client-Attestation-Challenge:
               $ref: '#/components/headers/OAuthClientAttestationChallenge'
@@ -865,7 +863,7 @@ paths:
         - `client_assertion_type`: urn:ietf:params:oauth:client-assertion-type:jwt-bearer
         - `client_assertion`: 署名済みJWT
 
-        認証に失敗した場合は `401 Unauthorized` が返されます。
+        認証に失敗した場合は `400 Bad Request` が返されます（下記 `400` を参照）。
       parameters:
         - $ref: '#/components/parameters/tenant-id'
         - $ref: '#/components/parameters/Authorization'
@@ -903,10 +901,12 @@ paths:
             > 「資格情報が不正」を「トークンが無効」と解釈します。`error` の有無も確認してください。
 
             `attest_jwt_client_auth` の場合、`invalid_client` に加えて
-            `invalid_client_attestation`（Client Attestation JWT / PoP JWT が不正、対で送られていない）と
-            `use_attestation_challenge`（PoP JWT の `challenge` が無い / 期待値でない）が返ります
-            （draft-ietf-oauth-attestation-based-client-auth Section 7.4）。
-            後者には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴います。
+            `invalid_client_attestation`（Client Attestation JWT / PoP JWT の検証に失敗）、
+            `use_fresh_attestation`（Client Attestation JWT の期限切れ）、
+            `use_attestation_challenge`（PoP JWT の `challenge` が無い（必須化時）、または発行していない・期限切れの値）が
+            いずれも `400` で返ります（draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）。
+            `use_attestation_challenge` には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴い、
+            次に使うチャレンジが入ります。
           headers:
             OAuth-Client-Attestation-Challenge:
               $ref: '#/components/headers/OAuthClientAttestationChallenge'
@@ -972,19 +972,23 @@ paths:
             - セキュリティ上の理由により、トークンの存在/非存在を区別しません
             - クライアントは200レスポンスをリボケーション完了として扱ってください
         '400':
-          description: リクエスト形式エラーまたはパラメータの欠落。
+          description: |
+            リクエスト形式エラーまたはパラメータの欠落。
+
+            `attest_jwt_client_auth` で PoP JWT の `challenge` が無い（必須化時）、または発行していない・期限切れの値だった場合は
+            `use_attestation_challenge` が `400` で返ります（draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 7.4）。
+            `OAuth-Client-Attestation-Challenge` レスポンスヘッダに次に使うチャレンジが入るので、それで PoP JWT を作り直します。
+          headers:
+            OAuth-Client-Attestation-Challenge:
+              $ref: '#/components/headers/OAuthClientAttestationChallenge'
         '401':
           description: |
             クライアント認証エラー。
 
             `attest_jwt_client_auth` の場合、`invalid_client` に加えて
-            `invalid_client_attestation`（Client Attestation JWT / PoP JWT が不正、対で送られていない）と
-            `use_attestation_challenge`（PoP JWT の `challenge` が無い / 期待値でない）が返ります
-            （draft-ietf-oauth-attestation-based-client-auth Section 7.4）。
-            後者には `OAuth-Client-Attestation-Challenge` レスポンスヘッダが伴います。
-          headers:
-            OAuth-Client-Attestation-Challenge:
-              $ref: '#/components/headers/OAuthClientAttestationChallenge'
+            `invalid_client_attestation`（Client Attestation JWT / PoP JWT の検証に失敗）と
+            `use_fresh_attestation`（Client Attestation JWT の期限切れ）が返ります
+            （draft-ietf-oauth-attestation-based-client-auth-11 Section 7.4）。
 
         '429':
           $ref: '#/components/responses/TooManyRequests'
@@ -1638,10 +1642,10 @@ components:
     OAuthClientAttestationChallenge:
       description: |
         次の Client Attestation PoP JWT の `challenge` クレームに入れる値
-        （draft-ietf-oauth-attestation-based-client-auth Section 6.2）。
+        （draft-ietf-oauth-attestation-based-client-auth-11 Section 6.1 / 6.2）。
 
-        `use_attestation_challenge` エラーには**必ず伴います**。それ以外の応答にも
-        付くことがあり、その場合は次回から新しい値を使います。
+        `use_attestation_challenge` エラー（`400`）には**必ず伴います**。仕様上はそれ以外の応答にも
+        付けてよい（MAY）ですが、idp-server が付けるのはこのエラーのときだけです。
       schema:
         type: string
 
@@ -2506,9 +2510,9 @@ components:
       properties:
         error:
           type: string
-          enum: [invalid_request, invalid_client, invalid_grant, unauthorized_client, unsupported_grant_type, invalid_scope]
+          enum: [invalid_request, invalid_client, invalid_grant, unauthorized_client, unsupported_grant_type, invalid_scope, use_attestation_challenge]
           description: |
-            エラーの種類。
+            エラーの種類。`use_attestation_challenge` は `attest_jwt_client_auth` 固有です。
         error_description:
           type: string
           description: エラーの詳細な説明（ユーザー向けではない）
@@ -2523,9 +2527,9 @@ components:
       properties:
         error:
           type: string
-          enum: [ invalid_client ]
+          enum: [ invalid_client, invalid_client_attestation, use_fresh_attestation ]
           description: |
-            エラーの種類。
+            エラーの種類。`invalid_client_attestation` と `use_fresh_attestation` は `attest_jwt_client_auth` 固有です。
         error_description:
           type: string
           description: エラーの詳細な説明（ユーザー向けではない）
@@ -2753,9 +2757,9 @@ components:
       properties:
         error:
           type: string
-          enum: [ invalid_request ]
+          enum: [ invalid_request, invalid_client, invalid_client_attestation, use_fresh_attestation, use_attestation_challenge ]
           description: |
-            エラーの種類。
+            エラーの種類。`invalid_client_attestation` / `use_fresh_attestation` / `use_attestation_challenge` は `attest_jwt_client_auth` 固有です。
         error_description:
           type: string
           description: エラーに関する詳細な説明（省略可能）
@@ -2820,10 +2824,14 @@ components:
           enum:
             - invalid_request
             - invalid_client
+            - invalid_client_attestation
+            - use_fresh_attestation
+            - use_attestation_challenge
           description: |
             エラーの種類。
             - `invalid_request`: 必須パラメータの欠落、不正な形式
             - `invalid_client`: クライアントシークレット不一致、未登録クライアント、認証情報なし、サーバー設定未発見
+            - `invalid_client_attestation` / `use_fresh_attestation` / `use_attestation_challenge`: `attest_jwt_client_auth` 固有（draft-ietf-oauth-attestation-based-client-auth-11 Section 7.4）
         error_description:
           type: string
           description: エラーの詳細説明。原因の特定に使用できます。
@@ -3354,6 +3362,7 @@ components:
             | `missing_user_code` | 必須の user_code がリクエストに含まれていない。 |
             | `invalid_user_code` | 指定された user_code が無効。 |
             | `invalid_binding_message` | binding_message が無効または不適切。 |
+            | `use_attestation_challenge` | `attest_jwt_client_auth` で PoP JWT の `challenge` が無い、または発行していない・期限切れの値。 |
           enum:
             - invalid_request
             - invalid_scope
@@ -3363,6 +3372,7 @@ components:
             - missing_user_code
             - invalid_user_code
             - invalid_binding_message
+            - use_attestation_challenge
           example: invalid_request
         error_description:
           type: string
@@ -3388,9 +3398,13 @@ components:
             | エラーコード | 説明 |
             | ------------ | ---- |
             | `invalid_client` | クライアント認証に失敗。無効なクライアントID/シークレット、未知のクライアント、認証方式の不備、または認証ヘッダーがない等。 |
+            | `invalid_client_attestation` | `attest_jwt_client_auth` で Client Attestation JWT / PoP JWT の検証に失敗。 |
+            | `use_fresh_attestation` | `attest_jwt_client_auth` で Client Attestation JWT の期限が切れている。 |
 
           enum:
             - invalid_client
+            - invalid_client_attestation
+            - use_fresh_attestation
           example: invalid_client
         error_description:
           type: string

@@ -63,7 +63,9 @@ public class CibaRequestErrorHandler {
           clientUnAuthorized.errorCode(),
           exception.getMessage());
       return new CibaIssueResponse(
-          CibaRequestStatus.UNAUTHORIZE,
+          clientUnAuthorized.isReportedAsBadRequest()
+              ? CibaRequestStatus.BAD_REQUEST
+              : CibaRequestStatus.UNAUTHORIZE,
           new BackchannelAuthenticationErrorResponse(
               new Error(clientUnAuthorized.errorCode()),
               new ErrorDescription(exception.getMessage())),

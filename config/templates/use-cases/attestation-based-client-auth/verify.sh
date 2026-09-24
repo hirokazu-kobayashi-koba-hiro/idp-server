@@ -4,9 +4,9 @@ set -e
 # Attestation-Based Client Authentication - Verification Script
 #
 # Verifies that the tenant created by setup.sh is configured for
-# draft-ietf-oauth-attestation-based-client-auth-10:
+# draft-ietf-oauth-attestation-based-client-auth-11:
 #   1. Discovery advertises attest_jwt_client_auth and the two alg lists
-#   2. Discovery advertises challenge_endpoint (Section 6.1)
+#   2. Discovery advertises challenge_endpoint (Section 6.3)
 #   3. The challenge endpoint returns attestation_challenge and is uncacheable
 #   4. A Challenge stays usable for its whole lifetime (it is not single use)
 #   5. Both clients are registered with the intended trust source
@@ -94,7 +94,7 @@ echo "  alg (attestation): $(echo "${DISCOVERY}" | jq -c '.client_attestation_si
 echo "  alg (pop):         $(echo "${DISCOVERY}" | jq -c '.client_attestation_pop_signing_alg_values_supported')"
 echo ""
 
-# --- Step 2: challenge_endpoint (Section 6.1) ---
+# --- Step 2: challenge_endpoint (Section 6.3) ---
 echo "Step 2: Checking challenge_endpoint metadata..."
 CHALLENGE_ENDPOINT=$(echo "${DISCOVERY}" | jq -r '.challenge_endpoint // empty')
 check "challenge_endpoint advertised" "true" "$([ -n "${CHALLENGE_ENDPOINT}" ] && echo true || echo false)"
@@ -111,7 +111,7 @@ check "Cache-Control: no-store" "true" \
   "$(echo "${CHALLENGE_RESPONSE}" | grep -iq 'cache-control:.*no-store' && echo true || echo false)"
 echo ""
 
-# --- Step 4: a Challenge is reusable within its lifetime (Section 9.7) ---
+# --- Step 4: a Challenge is reusable within its lifetime (Section 10.7) ---
 echo "Step 4: Checking that a Challenge is not single use..."
 SECOND=$(curl -sk -X POST "${BASE}/v1/client-attestation/challenges" | jq -r '.attestation_challenge')
 check "each request returns a distinct Challenge" "true" \

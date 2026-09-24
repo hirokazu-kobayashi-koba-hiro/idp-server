@@ -9,7 +9,7 @@
  * What this covers beyond the spec-level tests, which check one request at a time:
  * 1. App start-up: fetch a Challenge, have the Attester issue a Client Attestation JWT, and
  *    authenticate
- * 2. Reuse of a single Client Attestation JWT across requests (Section 9.2), with a fresh PoP each
+ * 2. Reuse of a single Client Attestation JWT across requests (Section 10.2), with a fresh PoP each
  *    time
  * 3. Expiry of the Client Attestation JWT and recovery from use_fresh_attestation
  * 4. Attester key rotation: publishing both keys, then retiring the old one
@@ -181,7 +181,7 @@ beforeAll(async () => {
         token_endpoint_auth_methods_supported: ["client_secret_post", "attest_jwt_client_auth"],
         client_attestation_signing_alg_values_supported: ["ES256"],
         client_attestation_pop_signing_alg_values_supported: ["ES256"],
-        // Section 6.1: advertising the endpoint is what tells clients Challenges are available.
+        // Section 6.3: advertising the endpoint is what tells clients Challenges are available.
         challenge_endpoint: challengeEndpoint,
         grant_types_supported: ["authorization_code", "password", "client_credentials"],
         scopes_supported: ["openid", "profile", "email", "account", "management"],
@@ -252,7 +252,7 @@ describe("ABCA Use Case: Client Attester with a static JWKS", () => {
     expect(response.data).toHaveProperty("access_token");
   });
 
-  it("reuses one Client Attestation JWT across requests while producing a fresh PoP each time (Section 9.2)", async () => {
+  it("reuses one Client Attestation JWT across requests while producing a fresh PoP each time (Section 10.2)", async () => {
     // The Attester is a backend round-trip, so an instance is expected to keep its attestation for
     // its whole lifetime and only re-sign the cheap PoP.
     const attestationJwt = issueAttestationJwt();
@@ -364,7 +364,7 @@ describe("ABCA Use Case: Client Attester with a static JWKS", () => {
       attestationJwt: issueAttestationJwt({ signingKey: () => attesterNextJwk }),
       popJwt: createPopJwt({ challenge: "stale-challenge-from-an-old-session" }),
     });
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(400);
     expect(response.data).toHaveProperty("error", "use_attestation_challenge");
 
     const handedBack = response.headers[CHALLENGE_HEADER.toLowerCase()];
