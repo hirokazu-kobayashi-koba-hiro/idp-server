@@ -162,7 +162,9 @@ Challenge を必須にしている場合は、リクエスト前に `POST /{tena
 | `GET\|DELETE /v1/management/tenants/{tenant-id}/client-instances/{id}` | 取得・削除 |
 | `POST /v1/management/tenants/{tenant-id}/client-instances/{id}/revoke` | 失効（→ [失効と削除](#client-instance-の失効と削除)） |
 
-専用権限 `idp:client-instance:create` / `:read` / `:revoke` / `:delete` で保護されています。詳細は [Client Instance 管理API](/docs/content_07_reference/cp-client-instance-api-ja) を参照してください。登録は、アプリからの登録を使わず運用側で鍵を登録する場合に使います。
+上はシステムレベル（管理テナントのトークン）のパスです。組織の管理者は、同じ操作を組織レベルのパス `/v1/management/organizations/{organization-id}/tenants/{tenant-id}/client-instances` で使います。
+
+どちらも専用権限 `idp:client-instance:create` / `:read` / `:revoke` / `:delete` で保護されています。詳細は [Client Instance 管理API](/docs/content_07_reference/cp-client-instance-api-ja) を参照してください。登録は、アプリからの登録を使わず運用側で鍵を登録する場合に使います。
 
 インスタンスはクライアントの下ではなくテナントの直下に置いています。運用で手元にあるのは利用者・鍵・証明書のシリアルで、どのクライアントのものかは調べるまで分からないためです。`id` は UUID で、テナント内で 1 件に決まります。
 

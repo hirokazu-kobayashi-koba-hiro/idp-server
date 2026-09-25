@@ -32,6 +32,15 @@ info:
 
     失効は元に戻せません。
 
+    ### システムレベルと組織レベル
+
+    | | パス | 使えるトークン |
+    |---|---|---|
+    | システムレベル | `/v1/management/tenants/{tenant-id}/client-instances` | 管理テナントで発行したもの |
+    | 組織レベル | `/v1/management/organizations/{organization-id}/tenants/{tenant-id}/client-instances` | 組織の管理者のもの。組織に所属し、テナントがその組織のものであること |
+
+    操作・リクエスト・レスポンスは同じで、要求する権限も同じです。組織に属さないテナントを指定すると 403（`organization_access_denied`）を返します。
+
     ### 権限
 
     | 操作 | 権限 |
@@ -51,6 +60,8 @@ servers:
 tags:
   - name: client-instance
     description: Client Instance 管理（システムレベル）
+  - name: organization-client-instance
+    description: Client Instance 管理（組織レベル）
 
 paths:
   /v1/management/tenants/{tenant-id}/client-instances:
@@ -67,71 +78,15 @@ paths:
         - client-instance
       operationId: listClientInstances
       parameters:
-        - name: client_id
-          in: query
-          description: クライアントで絞り込む
-          required: false
-          schema:
-            type: string
-          example: "mobile-app"
-        - name: user_id
-          in: query
-          description: 利用者で絞り込む（利用者の問い合わせで、その人の端末を一覧する）
-          required: false
-          schema:
-            type: string
-            format: uuid
-        - name: status
-          in: query
-          description: 状態で絞り込む
-          required: false
-          schema:
-            type: string
-            enum: [active, revoked]
-        - name: revocation_reason
-          in: query
-          description: 失効の理由で絞り込む
-          required: false
-          schema:
-            type: string
-            enum: [operator, superseded]
-        - name: platform
-          in: query
-          description: 登録時のプラットフォーム証明の種類（`attestation_evidence.platform`）で絞り込む
-          required: false
-          schema:
-            type: string
-          example: "android-key-attestation"
-        - name: certificate_serial
-          in: query
-          description: |
-            登録時の証明書チェーンに含まれる証明書のシリアル番号（小文字の 16 進）で絞り込む。
-            証明の鍵や中間証明書の漏えいが分かったときに、その証明書を経由して登録したインスタンスを探すために使います。
-            大文字で指定しても一致します。
-          required: false
-          schema:
-            type: string
-          example: "7f3a9c01"
-        - name: instance_key_thumbprint
-          in: query
-          description: インスタンスの鍵の RFC 7638 サムプリント（SHA-256、base64url）で引く
-          required: false
-          schema:
-            type: string
-        - name: from
-          in: query
-          description: 登録日時の開始（この日時以降）
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - name: to
-          in: query
-          description: 登録日時の終了（この日時以前）
-          required: false
-          schema:
-            type: string
-            format: date-time
+        - $ref: '#/components/parameters/SearchClientId'
+        - $ref: '#/components/parameters/SearchUserId'
+        - $ref: '#/components/parameters/SearchStatus'
+        - $ref: '#/components/parameters/SearchRevocationReason'
+        - $ref: '#/components/parameters/SearchPlatform'
+        - $ref: '#/components/parameters/SearchCertificateSerial'
+        - $ref: '#/components/parameters/SearchInstanceKeyThumbprint'
+        - $ref: '#/components/parameters/SearchFrom'
+        - $ref: '#/components/parameters/SearchTo'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
       responses:
@@ -294,8 +249,204 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/client-instances:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+    get:
+      summary: Client Instance の検索
+      description: |
+        テナント内のインスタンスを、クライアントをまたいで検索します。新しく登録したものから順に返します。
+
+        条件はすべて任意で、組み合わせられます。取りうる値が決まっている条件（`status`、`revocation_reason`、
+        UUID の `user_id`、日時の `from` / `to`）に合わない値は 400 を返します。空の一覧を返すと「該当なし」と読み違えるためです。
+      tags:
+        - organization-client-instance
+      operationId: organizationListClientInstances
+      parameters:
+        - $ref: '#/components/parameters/SearchClientId'
+        - $ref: '#/components/parameters/SearchUserId'
+        - $ref: '#/components/parameters/SearchStatus'
+        - $ref: '#/components/parameters/SearchRevocationReason'
+        - $ref: '#/components/parameters/SearchPlatform'
+        - $ref: '#/components/parameters/SearchCertificateSerial'
+        - $ref: '#/components/parameters/SearchInstanceKeyThumbprint'
+        - $ref: '#/components/parameters/SearchFrom'
+        - $ref: '#/components/parameters/SearchTo'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: 検索結果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientInstanceListResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/OrganizationForbidden'
+
+    post:
+      summary: Client Instance の登録
+      description: |
+        運用側でインスタンスの鍵を登録します。アプリからの登録（`client_instance_registration_policy`）には縛られず、利用者にも束縛されません。
+
+        - `client_id` は必須で、このテナントのクライアントであること
+        - `id` を指定する場合は UUID で、どのインスタンスにも使われていないこと。省略するとサーバーが払い出します
+        - `instance_key` は公開鍵の JWK であること（`d` などの秘密鍵の要素を含むと 400）
+        - 同じテナントのいずれかのインスタンス（失効したものを含む）にすでに登録されている鍵は登録できません
+      tags:
+        - organization-client-instance
+      operationId: organizationCreateClientInstance
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientInstanceCreateRequest'
+      responses:
+        '201':
+          description: 登録した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientInstanceResultResponse'
+        '200':
+          description: dry_run の結果（登録はしない）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientInstanceResultResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/OrganizationForbidden'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/client-instances/{id}:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/InstanceId'
+    get:
+      summary: Client Instance の取得
+      description: UUID でない `id` や、存在しない `id` は 404 を返します。
+      tags:
+        - organization-client-instance
+      operationId: organizationGetClientInstance
+      responses:
+        '200':
+          description: インスタンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientInstance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/OrganizationForbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Client Instance の削除
+      description: |
+        インスタンスの記録を消し、そのインスタンスに発行したトークンも削除します。
+        止めるだけなら失効（`POST .../{id}/revoke`）を使ってください。削除すると、同じ鍵をもう一度登録できるようになります（別のインスタンスとして扱われ、旧いトークンは引き継ぎません）。
+      tags:
+        - organization-client-instance
+      operationId: organizationDeleteClientInstance
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: 削除した
+        '200':
+          description: dry_run の結果（削除はしない）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Deletion simulated successfully"
+                  id:
+                    type: string
+                    format: uuid
+                  dry_run:
+                    type: boolean
+                    example: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/OrganizationForbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/management/organizations/{organization-id}/tenants/{tenant-id}/client-instances/{id}/revoke:
+    parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/InstanceId'
+    post:
+      summary: Client Instance の失効
+      description: |
+        インスタンスの信頼をやめます。記録と証跡は残り（`status: revoked`、`revoked_at`、`revocation_reason: operator`）、
+        そのインスタンスに発行したトークンは削除します。リフレッシュトークンと、introspection で確かめるアクセストークンはその時点で止まります。
+        JWT のアクセストークンをリソースサーバーが手元で検証する場合は、有効期限まで通ります。
+
+        **失効は元に戻せません。** すでに失効しているインスタンスを失効させようとすると 400 を返し、最初の `revoked_at` を保ちます。
+        端末をもう一度信頼するときは、アプリが新しい鍵を作って登録し直します（失効した鍵は再登録できません）。
+      tags:
+        - organization-client-instance
+      operationId: organizationRevokeClientInstance
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: |
+            失効した（失効後のインスタンスを返す）。dry_run のときは失効後の姿を `result` に入れて返し、記録は変えない
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ClientInstance'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Revocation simulated successfully"
+                      result:
+                        $ref: '#/components/schemas/ClientInstance'
+                      dry_run:
+                        type: boolean
+                        example: true
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/OrganizationForbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
   parameters:
+    OrganizationId:
+      name: organization-id
+      in: path
+      required: true
+      description: 組織識別子
+      schema:
+        type: string
+        format: uuid
     TenantId:
       name: tenant-id
       in: path
@@ -320,6 +471,80 @@ components:
       schema:
         type: boolean
         default: false
+    SearchClientId:
+      name: client_id
+      in: query
+      description: クライアントで絞り込む
+      required: false
+      schema:
+        type: string
+      example: "mobile-app"
+    SearchUserId:
+      name: user_id
+      in: query
+      description: 利用者で絞り込む（利用者の問い合わせで、その人の端末を一覧する）
+      required: false
+      schema:
+        type: string
+        format: uuid
+    SearchStatus:
+      name: status
+      in: query
+      description: 状態で絞り込む
+      required: false
+      schema:
+        type: string
+        enum: [active, revoked]
+    SearchRevocationReason:
+      name: revocation_reason
+      in: query
+      description: 失効の理由で絞り込む
+      required: false
+      schema:
+        type: string
+        enum: [operator, superseded]
+    SearchPlatform:
+      name: platform
+      in: query
+      description: 登録時のプラットフォーム証明の種類（`attestation_evidence.platform`）で絞り込む
+      required: false
+      schema:
+        type: string
+      example: "android-key-attestation"
+    SearchCertificateSerial:
+      name: certificate_serial
+      in: query
+      description: |
+        登録時の証明書チェーンに含まれる証明書のシリアル番号（小文字の 16 進）で絞り込む。
+        証明の鍵や中間証明書の漏えいが分かったときに、その証明書を経由して登録したインスタンスを探すために使います。
+        大文字で指定しても一致します。
+      required: false
+      schema:
+        type: string
+      example: "7f3a9c01"
+    SearchInstanceKeyThumbprint:
+      name: instance_key_thumbprint
+      in: query
+      description: インスタンスの鍵の RFC 7638 サムプリント（SHA-256、base64url）で引く
+      required: false
+      schema:
+        type: string
+    SearchFrom:
+      name: from
+      in: query
+      description: 登録日時の開始（この日時以降）
+      required: false
+      schema:
+        type: string
+        format: date-time
+    SearchTo:
+      name: to
+      in: query
+      description: 登録日時の終了（この日時以前）
+      required: false
+      schema:
+        type: string
+        format: date-time
     Limit:
       name: limit
       in: query
@@ -352,6 +577,15 @@ components:
       description: 管理者の認証に失敗した
     Forbidden:
       description: 必要な権限が無い
+    OrganizationForbidden:
+      description: 必要な権限が無い、組織に所属していない、またはテナントがその組織のものでない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: organization_access_denied
+            error_description: "User does not have access to tenant: ..."
     NotFound:
       description: インスタンスが見つからない（UUID でない `id` を含む）
       content:

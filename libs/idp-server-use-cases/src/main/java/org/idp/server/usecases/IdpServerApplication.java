@@ -65,6 +65,7 @@ import org.idp.server.control_plane.management.oidc.authorization.OrgAuthorizati
 import org.idp.server.control_plane.management.oidc.client.ClientManagementApi;
 import org.idp.server.control_plane.management.oidc.client.OrgClientManagementApi;
 import org.idp.server.control_plane.management.oidc.clientinstance.ClientInstanceManagementApi;
+import org.idp.server.control_plane.management.oidc.clientinstance.OrgClientInstanceManagementApi;
 import org.idp.server.control_plane.management.oidc.grant.OrgGrantManagementApi;
 import org.idp.server.control_plane.management.onboarding.OnboardingApi;
 import org.idp.server.control_plane.management.organization.OrganizationManagementApi;
@@ -305,6 +306,7 @@ public class IdpServerApplication {
   OrgTenantManagementApi orgTenantManagementApi;
   OrgTenantStatisticsApi orgTenantStatisticsApi;
   OrgClientManagementApi orgClientManagementApi;
+  OrgClientInstanceManagementApi orgClientInstanceManagementApi;
   OrgUserManagementApi orgUserManagementApi;
   OrgAuthenticationConfigManagementApi orgAuthenticationConfigManagementApi;
   OrgAuthenticationPolicyConfigManagementApi orgAuthenticationPolicyConfigManagementApi;
@@ -1320,6 +1322,18 @@ public class IdpServerApplication {
             OrgClientManagementApi.class,
             databaseTypeProvider);
 
+    this.orgClientInstanceManagementApi =
+        ManagementTypeEntryServiceProxy.createProxy(
+            new OrgClientInstanceManagementEntryService(
+                tenantQueryRepository,
+                applicationComponentContainer.resolve(ClientInstanceCommandRepository.class),
+                applicationComponentContainer.resolve(ClientInstanceQueryRepository.class),
+                clientConfigurationQueryRepository,
+                oAuthTokenCommandRepository,
+                auditLogPublisher),
+            OrgClientInstanceManagementApi.class,
+            databaseTypeProvider);
+
     this.orgGrantManagementApi =
         ManagementTypeEntryServiceProxy.createProxy(
             new OrgGrantManagementEntryService(
@@ -1743,6 +1757,10 @@ public class IdpServerApplication {
 
   public OrgClientManagementApi orgClientManagementApi() {
     return orgClientManagementApi;
+  }
+
+  public OrgClientInstanceManagementApi orgClientInstanceManagementApi() {
+    return orgClientInstanceManagementApi;
   }
 
   public OrgGrantManagementApi orgGrantManagementApi() {

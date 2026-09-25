@@ -29,6 +29,7 @@
  * 8. An instance receives its own user's tokens only
  * 9. The operator finds instances across the clients of the tenant, by what is at hand
  * 10. A user_bound client obtains tokens in its users' context only: no client_credentials
+ * 11. The organization's own administrator manages the instances of its tenant, and no other
  */
 import { beforeAll, describe, expect, it } from "@jest/globals";
 import { v4 as uuidv4 } from "uuid";
@@ -54,6 +55,7 @@ const ATTESTATION_HEADER = "OAuth-Client-Attestation";
 const POP_HEADER = "OAuth-Client-Attestation-PoP";
 
 let managementHeaders;
+let organizationId;
 let tenantId;
 let issuer;
 let tokenEndpoint;
@@ -300,7 +302,7 @@ beforeAll(async () => {
   // A tenant of its own, which lets this use case run with the Challenge enforced. Turning that on
   // for the shared test tenant would break every client there that does not send one yet.
   const timestamp = Date.now();
-  const organizationId = uuidv4();
+  organizationId = uuidv4();
   tenantId = uuidv4();
   userSub = uuidv4();
   username = `admin-${timestamp}@abca-instance.example.com`;
@@ -781,5 +783,54 @@ describe("ABCA Use Case: an app that registers its own Client Instance Key", () 
     expect((await requestTokenWith(instance)).status).toBe(200);
 
     await deleteInstancesOf();
+  });
+
+  it("the organization's own administrator manages the instances of its tenant, and no other", async () => {
+    // The system-level API accepts only tokens of the admin tenant; the administrator of this
+    // organization signs in to its own tenant and goes through the organization path.
+    const tokenResponse = await requestToken({
+      endpoint: tokenEndpoint,
+      grantType: "password",
+      username,
+      password,
+      scope: "openid management",
+      clientId: managementClientId,
+      clientSecret: managementClientSecret,
+    });
+    expect(tokenResponse.status).toBe(200);
+    const orgHeaders = { Authorization: `Bearer ${tokenResponse.data.access_token}` };
+    const orgInstancesUrl = (tenant = tenantId) =>
+      `${backendUrl}/v1/management/organizations/${organizationId}/tenants/${tenant}/client-instances`;
+
+    const instance = await enrollInstance();
+
+    console.log("\n=== the system-level path is not the organization administrator's ===");
+    const systemLevel = await get({ url: `${instancesUrl()}/${instance.instanceId}`, headers: orgHeaders });
+    console.log("system-level with an organization token:", systemLevel.status);
+    expect(systemLevel.status).toBe(401);
+
+    console.log("=== the organization path: find, read, revoke, delete ===");
+    const found = await get({ url: `${orgInstancesUrl()}?user_id=${userSub}&status=active`, headers: orgHeaders });
+    expect(found.status).toBe(200);
+    expect(found.data.list.map((i) => i.id)).toEqual([instance.instanceId]);
+
+    const read = await get({ url: `${orgInstancesUrl()}/${instance.instanceId}`, headers: orgHeaders });
+    expect(read.status).toBe(200);
+    expect(read.data).toHaveProperty("user_id", userSub);
+
+    const revoked = await post({ url: `${orgInstancesUrl()}/${instance.instanceId}/revoke`, headers: orgHeaders });
+    expect(revoked.status).toBe(200);
+    expect((await getInstance(instance.instanceId)).data).toHaveProperty("revocation_reason", "operator");
+    expect((await requestTokenWith(instance)).status).toBe(401);
+
+    console.log("=== a tenant outside the organization is refused, and its instances untouched ===");
+    const outside = await get({ url: orgInstancesUrl(adminServerConfig.tenantId), headers: orgHeaders });
+    console.log("tenant outside the organization:", outside.status, JSON.stringify(outside.data));
+    expect(outside.status).toBe(403);
+    expect(outside.data).toHaveProperty("error", "organization_access_denied");
+
+    const deleted = await deletion({ url: `${orgInstancesUrl()}/${instance.instanceId}`, headers: orgHeaders });
+    expect(deleted.status).toBe(204);
+    expect((await getInstance(instance.instanceId)).status).toBe(404);
   });
 });
