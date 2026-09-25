@@ -1526,6 +1526,60 @@ describe("Me Use Case: self-service contact verification and change", () => {
     expect(resp.status).toBe(200);
   });
 
+  it("policy: attribute_only.allowed=false stops the change, not the verification", async () => {
+    // Issue #1895. Under USERNAME policy neither channel moves the login identifier, so both fall
+    // on attribute_only. Turning `allowed` off is a statement about replacing the value; a
+    // verification replaces nothing - it records that the address already on the account was
+    // reachable - so it has to keep working. Otherwise a tenant that asked for "no self-service
+    // email change" lost email and phone verification along with it.
+    const ctx = await provisionTenant(systemAccessToken, "USERNAME", {
+      contactChangePolicy: { attribute_only: { allowed: false } },
+    });
+    tenants.push(ctx);
+
+    const name = `locked-${Date.now()}`;
+    const email = `${name}@me-email.example.com`;
+    const password = "LockedPass_1!";
+    await createUser(ctx, { name, email, password, emailVerified: false });
+    const token = (await passwordGrant(ctx, name, password, changeScope)).data
+      .access_token;
+
+    const verified = await runVerification(ctx, token, "email", email);
+    console.log(
+      "verify under attribute_only.allowed=false:",
+      verified.status,
+      JSON.stringify(verified.data)
+    );
+    expect(verified.status).toBe(200);
+
+    const userinfoResp = await getUserinfo({
+      endpoint: `${backendUrl}/${ctx.tenantId}/v1/userinfo`,
+      authorizationHeader: createBearerHeader(
+        (
+          await passwordGrant(ctx, name, password, "openid email")
+        ).data.access_token
+      ),
+    });
+    expect(userinfoResp.data.email_verified).toBe(true);
+
+    // The change is refused before any code is sent, so the rule still does what it was set for.
+    const refusedTarget = `denied-${Date.now()}@me-email.example.com`;
+    const changed = await postWithJson({
+      url: `${backendUrl}/${ctx.tenantId}/v1/me/email/change`,
+      headers: createBearerHeader(token),
+      body: { new_value: refusedTarget },
+    });
+    console.log(
+      "change under attribute_only.allowed=false:",
+      changed.status,
+      JSON.stringify(changed.data)
+    );
+    expect(changed.status).toBe(400);
+
+    const sent = await get({ url: "http://localhost:4000/sent-emails" });
+    expect(sent.data.filter((e) => e.to === refusedTarget).length).toBe(0);
+  });
+
   it("policy: a satisfied condition lets the identifier move through", async () => {
     const ctx = await provisionTenant(systemAccessToken, "EMAIL", {
       contactChangePolicy: {

@@ -304,6 +304,34 @@ verify 側（`{channel}-authentication`）:
 }
 ```
 
+### `allowed`
+
+その区分の**変更**を許すかどうか（既定 `true`）。`false` なら `POST /v1/me/{channel}/change` は
+コードを送る前に `400` で拒否します。
+
+**確認（`POST /v1/me/{channel}/verification`）には掛かりません。** 確認はアカウントが既に持って
+いる値に `*_verified` を立てるだけで、値を置き換えないためです。一方
+`authentication_conditions` と `max_auth_age_seconds` は確認にも掛かります（確認も `*_verified`
+を書くので、テナントが直近の認証を要求したい場合があるため）。
+
+| | 変更 | 確認 |
+|---|---|---|
+| `allowed` | 掛かる | **掛からない** |
+| `authentication_conditions` | 掛かる | 掛かる |
+| `max_auth_age_seconds` | 掛かる | 掛かる |
+| `notify_previous_value` | 掛かる | 置き換えがないため無関係 |
+
+**確認に掛かるのは、常に `attribute_only` 側の条件です。** 区分を分けるのは識別子が動くかどうか
+で、確認は何も動かさないためです。`EMAIL` テナントの場合、メール**変更**は `identifier_move`、
+メール**確認**は `attribute_only` の `authentication_conditions` / `max_auth_age_seconds` で
+評価されます。確認に条件を掛けたいなら、書く先は `attribute_only` です。
+
+:::warning `attribute_only.allowed: false` は両チャネルに効くことがあります
+どちらの区分になるかは `identity_unique_key_type` が決めるため、`USERNAME` 系 /
+`EXTERNAL_USER_ID` のテナントでは email も phone も `attribute_only` です。ここを `false` に
+すると**両方の変更が止まります**。片方だけを止めることはできません。
+:::
+
 ### `authentication_conditions`
 
 「本人が、最近、認証していること」をアクセストークンの認証情報に対する条件で表します。
