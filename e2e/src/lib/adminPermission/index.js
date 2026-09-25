@@ -40,8 +40,8 @@ export async function fetchPermissionIds(
  * Creates a role holding only `permissionName`, a user holding only that role, and returns a token
  * for them.
  *
- * <p>The user is assigned to the organization and the tenant. {@code OrganizationAccessVerifier}
- * checks membership before permissions, so without the assignment every call answers
+ * The user is assigned to the organization and the tenant. `OrganizationAccessVerifier` checks
+ * membership before permissions, so without the assignment every call answers
  * `organization_access_denied` and the permission is never consulted — a green test that proves
  * nothing.
  */
@@ -131,7 +131,7 @@ export async function createOperatorWithPermission({
   };
 }
 
-/** Removes what {@link createOperatorWithPermission} left behind. Never throws. */
+/** Removes what `createOperatorWithPermission` left behind. Never throws. */
 export async function deleteOperators(
   managementToken,
   organizationId,

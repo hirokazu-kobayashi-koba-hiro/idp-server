@@ -11,19 +11,19 @@ import {
 /**
  * Which admin permission each organization-level read endpoint actually demands (Issue #1898).
  *
- * <p>Every other control-plane E2E provisions an administrator holding `idp:*`, which satisfies any
+ * Every other control-plane E2E provisions an administrator holding `idp:*`, which satisfies any
  * permission the API asks for. That is why an API requiring the wrong one — the organization
  * authentication *configuration* endpoint requiring the authentication *policy* permission, copied
  * from its sibling interface — answered 200 to every test that existed. The permission name lives
  * only in a `Map` inside a default `getRequiredPermissions`; nothing downstream restates it, so
  * there was no second place for it to disagree with.
  *
- * <p>Each case is asked twice: once by an operator holding only the expected permission, and once
+ * Each case is asked twice: once by an operator holding only the expected permission, and once
  * by an operator holding only the `decoy` — the permission this endpoint must NOT accept. The decoy
  * is the confusable sibling wherever one exists (config vs policy-config, hook vs hook-config,
  * role vs permission), because a copy-paste lands on the sibling, not on something unrelated.
  *
- * <p>This is a ledger as much as a test: the table is the readable form of what the
+ * This is a ledger as much as a test: the table is the readable form of what the
  * `getRequiredPermissions` maps say, so a new endpoint that is missing here is visible as a gap.
  */
 
@@ -208,13 +208,19 @@ describe("organization management api admin permission enforcement", () => {
     );
   });
 
-  it("an operator holding no admin permission is refused everywhere", async () => {
-    // The organization list endpoint sits one level up, outside the per-tenant table above.
+  it("GET organization tenants refuses idp:client:read", async () => {
+    // The tenant list sits one level up, outside the per-tenant table above, so it is asked
+    // separately. OrgTenantManagementApi requires idp:tenant:read for it.
     const response = await get({
       url: `${backendUrl}/v1/management/organizations/${ORG_ID}/tenants`,
       headers: { Authorization: `Bearer ${operatorFor("idp:client:read")}` },
     });
-    console.log("organization tenants with idp:client:read:", response.status);
+    console.log(
+      "organization tenants with idp:client:read:",
+      response.status,
+      JSON.stringify(response.data).slice(0, 140)
+    );
     expect(response.status).toBe(403);
+    expect(response.data.error_description).toContain("idp:tenant:read");
   });
 });
