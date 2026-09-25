@@ -105,6 +105,9 @@ import org.idp.server.core.extension.identity.verification.repository.IdentityVe
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationConfigurationQueryRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultCommandRepository;
 import org.idp.server.core.extension.identity.verification.repository.IdentityVerificationResultQueryRepository;
+import org.idp.server.core.extension.oid4vci.Oid4vciMetaDataApi;
+import org.idp.server.core.extension.oid4vci.Oid4vciProtocol;
+import org.idp.server.core.extension.oid4vci.Oid4vciProtocols;
 import org.idp.server.core.openid.authentication.AuthenticationInteractors;
 import org.idp.server.core.openid.authentication.AuthenticationTransactionApi;
 import org.idp.server.core.openid.authentication.interaction.execution.AuthenticationExecutors;
@@ -226,6 +229,7 @@ import org.idp.server.platform.system.SystemConfigurationApi;
 import org.idp.server.platform.system.SystemConfigurationRepository;
 import org.idp.server.platform.system.SystemConfigurationResolver;
 import org.idp.server.security.event.hook.ssf.SharedSignalsFrameworkMetaDataApi;
+import org.idp.server.usecases.application.credential_issuer.Oid4vciMetaDataEntryService;
 import org.idp.server.usecases.application.enduser.*;
 import org.idp.server.usecases.application.enduser.AuthenticationDeviceLogEntryService;
 import org.idp.server.usecases.application.identity_verification_service.IdentityVerificationCallbackEntryService;
@@ -249,6 +253,7 @@ public class IdpServerApplication {
   OAuthFlowApi rawOAuthFlowApi;
   TokenApi tokenApi;
   OidcMetaDataApi oidcMetaDataApi;
+  Oid4vciMetaDataApi oid4vciMetaDataApi;
   UserinfoApi userinfoApi;
   CibaFlowApi cibaFlowApi;
   CibaFlowApi rawCibaFlowApi;
@@ -783,6 +788,14 @@ public class IdpServerApplication {
                 tenantQueryRepository,
                 new DiscoveryProtocols(protocolContainer.resolveAll(DiscoveryProtocol.class))),
             OidcMetaDataApi.class,
+            databaseTypeProvider);
+
+    this.oid4vciMetaDataApi =
+        TenantAwareEntryServiceProxy.createProxy(
+            new Oid4vciMetaDataEntryService(
+                tenantQueryRepository,
+                new Oid4vciProtocols(protocolContainer.resolveAll(Oid4vciProtocol.class))),
+            Oid4vciMetaDataApi.class,
             databaseTypeProvider);
 
     this.userinfoApi =
@@ -1543,6 +1556,10 @@ public class IdpServerApplication {
 
   public OidcMetaDataApi oidcMetaDataApi() {
     return oidcMetaDataApi;
+  }
+
+  public Oid4vciMetaDataApi oid4vciMetaDataApi() {
+    return oid4vciMetaDataApi;
   }
 
   public UserinfoApi userinfoApi() {

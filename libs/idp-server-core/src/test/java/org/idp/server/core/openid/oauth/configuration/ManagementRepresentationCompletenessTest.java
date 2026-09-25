@@ -43,8 +43,9 @@ class ManagementRepresentationCompletenessTest {
   private final JsonConverter jsonConverter = JsonConverter.snakeCaseInstance();
 
   /**
-   * The verifiable credential model is provisional and does not hold every member of the stored
-   * metadata, so exposing it would advertise a round trip that drops what the model does not know.
+   * The Credential Issuer Metadata is a model of its own rather than a plain value, so this test
+   * cannot build a sample for it. {@code toMap()} does carry it; its round trip is covered by
+   * {@code CredentialIssuerMetadataConfigurationTest}.
    */
   private static final Set<String> AUTHORIZATION_SERVER_EXCLUSIONS =
       Set.of("credential_issuer_metadata");

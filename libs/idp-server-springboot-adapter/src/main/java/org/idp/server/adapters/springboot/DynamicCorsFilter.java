@@ -141,9 +141,18 @@ public class DynamicCorsFilter extends OncePerRequestFilter {
     return tenantMetaDataApi.get(tenantIdentifier);
   }
 
+  /**
+   * The tenant is the first path segment ({@code /{tenant}/...}), except for well-known documents
+   * of an issuer with a path component, where RFC 8414 Section 3.1 puts the well-known segment
+   * first: {@code /.well-known/{document}/{tenant}}.
+   */
   private TenantIdentifier extractTenantIdentifier(HttpServletRequest request) {
     String path = request.getRequestURI();
     String[] parts = path.split("/");
+
+    if (parts.length > 3 && ".well-known".equals(parts[1])) {
+      return new TenantIdentifier(parts[3]);
+    }
 
     if (parts.length > 1) {
       return new TenantIdentifier(parts[1]);

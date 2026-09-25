@@ -20,7 +20,6 @@ import org.idp.server.core.openid.oauth.configuration.AuthorizationServerConfigu
 import org.idp.server.core.openid.oauth.configuration.client.ClientConfiguration;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetails;
 import org.idp.server.core.openid.oauth.rar.AuthorizationDetailsInvalidException;
-import org.idp.server.core.openid.oauth.type.vc.VerifiableCredentialInvalidException;
 
 public class VerifiableCredentialVerifier {
   AuthorizationDetails authorizationDetails;
@@ -38,10 +37,9 @@ public class VerifiableCredentialVerifier {
 
   public void verify() {
     throwExceptionIfNotContainsType();
-    throwExceptionIfUnauthorizedType();
     throwExceptionIfUnSupportedType();
     throwExceptionIfUnauthorizedType();
-    throwIfUnSupportedVerifiableCredential();
+    throwExceptionIfUnknownCredentialConfiguration();
   }
 
   void throwExceptionIfNotContainsType() {
@@ -80,10 +78,30 @@ public class VerifiableCredentialVerifier {
         });
   }
 
-  void throwIfUnSupportedVerifiableCredential() {
-    if (!authorizationServerConfiguration.hasCredentialIssuerMetadata()) {
-      throw new VerifiableCredentialInvalidException(
-          "invalid_request", "unsupported verifiable credential");
-    }
+  /**
+   * OpenID4VCI 1.0 Section 5.1.1: {@code credential_configuration_id} is REQUIRED and names an
+   * entry of the Credential Issuer's {@code credential_configurations_supported}.
+   */
+  void throwExceptionIfUnknownCredentialConfiguration() {
+    authorizationDetails.forEach(
+        authorizationDetail -> {
+          if (!authorizationDetail.isVerifiableCredential()) {
+            return;
+          }
+          String credentialConfigurationId = authorizationDetail.credentialConfigurationId();
+          if (credentialConfigurationId.isEmpty()) {
+            throw new AuthorizationDetailsInvalidException(
+                "invalid_authorization_details",
+                "openid_credential authorization details does not contain credential_configuration_id");
+          }
+          if (!authorizationServerConfiguration
+              .credentialIssuerMetadata()
+              .hasCredentialConfiguration(credentialConfigurationId)) {
+            throw new AuthorizationDetailsInvalidException(
+                "invalid_authorization_details",
+                String.format(
+                    "unknown credential_configuration_id (%s)", credentialConfigurationId));
+          }
+        });
   }
 }

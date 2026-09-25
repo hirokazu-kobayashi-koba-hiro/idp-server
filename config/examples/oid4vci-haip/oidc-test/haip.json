@@ -1,0 +1,71 @@
+{
+  "alias": "idp-server-oid4vci-haip",
+  "description": "OID4VCI 1.0 Final / HAIP issuer test against local idp-server (attest_jwt_client_auth + DPoP)",
+  "vci": {
+    "credential_issuer_url": "https://api.local.test/b01c0787-b7be-4699-9a5a-042f70d41697",
+    "credential_configuration_id": "identity_credential"
+  },
+  "client": {
+    "client_id": "876cfb14-9fef-4436-a3b0-7282879164f4",
+    "jwks": {
+      "keys": [
+        {
+          "kty": "EC",
+          "x": "2uk6iSK3fEzffOii3NRDazRnq5Q5ecjhPyMBbElk4zU",
+          "y": "hQqS2iA3kcfGT5slXqWMocD30roQ3gvclfujCZ205Tk",
+          "crv": "P-256",
+          "d": "2BTqTJoR0qWLZEiN9jtIi0q_woc99tQ3PcjlM3xAXS0",
+          "kid": "wallet-instance-1",
+          "use": "sig",
+          "alg": "ES256"
+        }
+      ]
+    }
+  },
+  "client2": {
+    "client_id": "f4840d7f-b58f-4f1c-9f65-ba3ea2ce1f54",
+    "jwks": {
+      "keys": [
+        {
+          "kty": "EC",
+          "x": "T2-rfhJCyJwT1PMPT00Mfpfan_SzLWzq7W80Rt0G4rg",
+          "y": "xf02aEEXXZVU3DJ8yieB0Wu4EBsv0YhShxbIlceN000",
+          "crv": "P-256",
+          "d": "JEFrB91T44zm0h-1pPJOC8bcE7B4CvDC-QUHl1t0nC0",
+          "kid": "wallet-instance-2",
+          "use": "sig",
+          "alg": "ES256"
+        }
+      ]
+    }
+  },
+  "client_attestation": {
+    "issuer": "https://wallet-provider.idp-server.example/",
+    "attester_jwks": {
+      "keys": [
+        {
+          "kty": "EC",
+          "x": "n-YyQDa8HZ3AiENQYew3DoNqF8xFIgKgr1oHHLe2OAM",
+          "y": "S3I9ew7ZP4d61lTV8gjqGdNtDbf5RzDJq4hk_LvFaMk",
+          "crv": "P-256",
+          "d": "2KNYQ91bFErkBquIcQUipS13hj8Px61SZSPzGpnSFXI",
+          "kid": "attester-signing-key",
+          "use": "sig",
+          "alg": "ES256",
+          "x5c": [
+            "MIIB1jCCAX2gAwIBAgIUOxAGOdsfXZ8/ZE0PRwR+BRD7Y2UwCgYIKoZIzj0EAwIwPDE6MDgGA1UEAwwxaWRwLXNlcnZlciBPSUQ0VkNJIGNvbmZvcm1hbmNlIFdhbGxldCBQcm92aWRlciBDQTAeFw0yNjA5MjUxNDUzMDhaFw0zNjA5MjIxNDUzMDhaMDkxNzA1BgNVBAMMLmlkcC1zZXJ2ZXIgT0lENFZDSSBjb25mb3JtYW5jZSBXYWxsZXQgUHJvdmlkZXIwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASf5jJANrwdncCIQ1Bh7DcOg2oXzEUiAqCvWgcct7Y4A0tyPXsO2T+HetZU1fII6hnTbQ23+UcwyauIZPy7xWjJo2AwXjAMBgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIHgDAdBgNVHQ4EFgQUufaz/eP282mlXQziyvL1WQ+n8f8wHwYDVR0jBBgwFoAUzevoV2cwh5SzateKykfhhjDXj1AwCgYIKoZIzj0EAwIDRwAwRAIgDqFeahUXv2FANGS/XFTmKBTT50YTSfDd/XVGmsDJCgsCIFzqSrG5AUx2XDcTm3TqK6IehRxQRBpWbs4YGSj32bvT"
+          ]
+        }
+      ]
+    }
+  },
+  "server": {
+    "allow_unexpected_metadata_fields": [
+      "verified_claims_supported"
+    ]
+  },
+  "credential": {
+    "trust_anchor_pem": "-----BEGIN CERTIFICATE-----\nMIIB4DCCAYegAwIBAgIUXZ1BTws3hm7lB7BOwTjXsTYeE/4wCgYIKoZIzj0EAwIw\nPjE8MDoGA1UEAwwzaWRwLXNlcnZlciBPSUQ0VkNJIGNvbmZvcm1hbmNlIENyZWRl\nbnRpYWwgSXNzdWVyIENBMB4XDTI2MDkyNTE0NTMwOFoXDTM2MDkyMjE0NTMwOFow\nPjE8MDoGA1UEAwwzaWRwLXNlcnZlciBPSUQ0VkNJIGNvbmZvcm1hbmNlIENyZWRl\nbnRpYWwgSXNzdWVyIENBMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEF0VUW66P\nZbqNOpJuh4TNdVltTGYhcD/y+opFdlViFc5xNKpRufBlj7l/eV+WSZSEknvtFOKc\ngLOxQVCyybLBBaNjMGEwHQYDVR0OBBYEFO9l+EDLGT0YWgRmtv//JTCYbPxtMB8G\nA1UdIwQYMBaAFO9l+EDLGT0YWgRmtv//JTCYbPxtMA8GA1UdEwEB/wQFMAMBAf8w\nDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMCA0cAMEQCIH3E+YEYGIpjla+1Pjzd\nj0ywGANIV9YNU0rpbjBaqZOtAiAi30Zz+oxKxaIdd+X/G0khUsclvf3zqeWAXckS\nkn6klg==\n-----END CERTIFICATE-----\n",
+    "status_list_trust_anchor_pem": "-----BEGIN CERTIFICATE-----\nMIIB4DCCAYegAwIBAgIUXZ1BTws3hm7lB7BOwTjXsTYeE/4wCgYIKoZIzj0EAwIw\nPjE8MDoGA1UEAwwzaWRwLXNlcnZlciBPSUQ0VkNJIGNvbmZvcm1hbmNlIENyZWRl\nbnRpYWwgSXNzdWVyIENBMB4XDTI2MDkyNTE0NTMwOFoXDTM2MDkyMjE0NTMwOFow\nPjE8MDoGA1UEAwwzaWRwLXNlcnZlciBPSUQ0VkNJIGNvbmZvcm1hbmNlIENyZWRl\nbnRpYWwgSXNzdWVyIENBMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEF0VUW66P\nZbqNOpJuh4TNdVltTGYhcD/y+opFdlViFc5xNKpRufBlj7l/eV+WSZSEknvtFOKc\ngLOxQVCyybLBBaNjMGEwHQYDVR0OBBYEFO9l+EDLGT0YWgRmtv//JTCYbPxtMB8G\nA1UdIwQYMBaAFO9l+EDLGT0YWgRmtv//JTCYbPxtMA8GA1UdEwEB/wQFMAMBAf8w\nDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMCA0cAMEQCIH3E+YEYGIpjla+1Pjzd\nj0ywGANIV9YNU0rpbjBaqZOtAiAi30Zz+oxKxaIdd+X/G0khUsclvf3zqeWAXckS\nkn6klg==\n-----END CERTIFICATE-----\n"
+  }
+}

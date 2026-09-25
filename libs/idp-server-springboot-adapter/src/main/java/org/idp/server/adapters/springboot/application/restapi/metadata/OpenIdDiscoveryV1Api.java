@@ -41,6 +41,17 @@ public class OpenIdDiscoveryV1Api implements SecurityHeaderConfigurable {
     this.oidcMetaDataApi = idpServerApplication.oidcMetaDataApi();
   }
 
+  /**
+   * Authorization Server Metadata at the RFC 8414 Section 3.1 location: for an issuer with a path
+   * component ({@code https://host/{tenant}}) the well-known segment goes between the host and the
+   * path. OpenID4VCI clients look the authorization server up this way. The document is the same.
+   */
+  @GetMapping(".well-known/oauth-authorization-server/{tenant-id}")
+  public ResponseEntity<?> getAuthorizationServerMetadata(
+      @PathVariable("tenant-id") TenantIdentifier tenantId) {
+    return getConfiguration(tenantId);
+  }
+
   @GetMapping("{tenant-id}/.well-known/openid-configuration")
   public ResponseEntity<?> getConfiguration(@PathVariable("tenant-id") TenantIdentifier tenantId) {
 
