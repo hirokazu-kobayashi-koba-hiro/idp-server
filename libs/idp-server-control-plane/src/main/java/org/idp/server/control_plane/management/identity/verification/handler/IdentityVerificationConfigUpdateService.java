@@ -78,11 +78,12 @@ public class IdentityVerificationConfigUpdateService
     // 2. Create updated configuration
     IdentityVerificationConfiguration after = updateConfiguration(before, request.configRequest());
 
-    verifyTypeUnchanged(before, after);
-
     // 3. Populate builder with before/after
     builder.withBefore(before);
     builder.withAfter(after);
+
+    // Verified after the builder is populated so the refusal is audited with what was attempted.
+    verifyTypeUnchanged(before, after);
 
     // 4. Build response
     JsonNodeWrapper beforeJson = JsonNodeWrapper.fromMap(before.toMap());
