@@ -35,11 +35,11 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Organization-level authentication policy configuration management entry service.
+ * Organization-level authentication configuration management entry service.
  *
- * <p>This service implements organization-scoped authentication policy configuration management
- * operations that allow organization administrators to manage authentication policy configurations
- * within their organization boundaries.
+ * <p>This service implements organization-scoped authentication configuration management operations
+ * that allow organization administrators to manage authentication configurations within their
+ * organization boundaries.
  *
  * <p>Organization-level operations follow the standard access control pattern:
  *
@@ -47,11 +47,11 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li><strong>Organization access verification</strong> - Ensures the user has access to the
  *       organization
  *   <li><strong>Permission verification</strong> - Validates the user has necessary
- *       AUTHENTICATION_POLICY_CONFIG_* permissions (handled by Handler)
+ *       AUTHENTICATION_CONFIG_* permissions (handled by Handler)
  * </ol>
  *
  * <p>All operations support dry-run functionality for safe preview of changes and comprehensive
- * audit logging for organization-level authentication policy configuration operations.
+ * audit logging for organization-level authentication configuration operations.
  *
  * @see OrgAuthenticationConfigManagementApi
  * @see OrganizationAccessVerifier

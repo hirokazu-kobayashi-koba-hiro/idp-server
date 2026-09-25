@@ -31,10 +31,10 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantIdentifier;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Organization-level authentication policy configuration management API.
+ * Organization-level authentication configuration management API.
  *
- * <p>This interface defines operations for managing authentication policy configurations within an
- * organization context. It provides CRUD operations for authentication policy configurations with
+ * <p>This interface defines operations for managing authentication configurations within an
+ * organization context. It provides CRUD operations for authentication configurations with
  * organization-level access control.
  *
  * <p>Organization-level operations follow the standard access control pattern:
@@ -43,8 +43,14 @@ import org.idp.server.platform.type.RequestAttributes;
  *   <li><strong>Organization access verification</strong> - Ensures the user has access to the
  *       organization
  *   <li><strong>Permission verification</strong> - Validates the user has necessary
- *       AUTHENTICATION_POLICY_CONFIG_* permissions
+ *       AUTHENTICATION_CONFIG_* permissions
  * </ol>
+ *
+ * <p>The permissions are the same ones {@link AuthenticationConfigurationManagementApi} requires
+ * (Issue #1898). What an authentication configuration holds — the endpoint and credentials of an
+ * external authentication service among them — does not change because the request arrived through
+ * the organization path, so the permission that gates it must not change either. This interface
+ * previously required AUTHENTICATION_POLICY_CONFIG_*, which is a different resource.
  *
  * <p>All operations support dry-run functionality for safe preview of changes.
  *
@@ -57,19 +63,17 @@ public interface OrgAuthenticationConfigManagementApi {
     Map<String, AdminPermissions> map = new HashMap<>();
     map.put(
         "create",
-        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_POLICY_CONFIG_CREATE)));
+        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_CONFIG_CREATE)));
     map.put(
         "findList",
-        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_POLICY_CONFIG_READ)));
-    map.put(
-        "get",
-        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_POLICY_CONFIG_READ)));
+        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_CONFIG_READ)));
+    map.put("get", new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_CONFIG_READ)));
     map.put(
         "update",
-        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_POLICY_CONFIG_UPDATE)));
+        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_CONFIG_UPDATE)));
     map.put(
         "delete",
-        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_POLICY_CONFIG_DELETE)));
+        new AdminPermissions(Set.of(DefaultAdminPermission.AUTHENTICATION_CONFIG_DELETE)));
     AdminPermissions adminPermissions = map.get(method);
     if (adminPermissions == null) {
       throw new UnSupportedException("Method " + method + " not supported");
