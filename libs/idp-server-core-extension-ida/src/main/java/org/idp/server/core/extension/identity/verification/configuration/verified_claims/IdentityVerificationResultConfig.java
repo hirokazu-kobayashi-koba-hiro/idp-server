@@ -166,8 +166,29 @@ public class IdentityVerificationResultConfig implements JsonReadable {
     return keys;
   }
 
+  /**
+   * Whether anything is configured here at all (Issue #1900).
+   *
+   * <p>This used to answer only for {@code verified_claims_mapping_rules}, and {@code
+   * IdentityVerificationConfiguration#toMap} used it to decide whether to emit {@code result}. A
+   * configuration that mapped user claims or set {@code user_status} without producing verified
+   * claims was therefore stored in full but never returned, so a caller who read the configuration,
+   * edited it and wrote it back lost those settings.
+   *
+   * <p>Every field is considered, because every field is worth returning.
+   */
   public boolean exists() {
-    return verifiedClaimsMappingRules != null && !verifiedClaimsMappingRules.isEmpty();
+    return hasRules(verifiedClaimsMappingRules)
+        || hasRules(sourceDetailsMappingRules)
+        || hasRules(userClaimsMappingRules)
+        || hasRules(customPropertiesMappingRules)
+        || hasUserStatus()
+        || hasVerifiedClaimsUpdatePolicy()
+        || hasCustomPropertiesUpdatePolicy();
+  }
+
+  private static boolean hasRules(List<MappingRule> rules) {
+    return rules != null && !rules.isEmpty();
   }
 
   public Map<String, Object> toMap() {

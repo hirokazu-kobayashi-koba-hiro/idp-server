@@ -18,6 +18,7 @@ package org.idp.server.control_plane.management.identity.verification.handler;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.idp.server.control_plane.management.exception.InvalidRequestException;
 import org.idp.server.control_plane.management.exception.ResourceNotFoundException;
 import org.idp.server.control_plane.management.identity.verification.IdentityVerificationConfigManagementContextBuilder;
 import org.idp.server.control_plane.management.identity.verification.io.IdentityVerificationConfigManagementResponse;
@@ -77,6 +78,8 @@ public class IdentityVerificationConfigUpdateService
     // 2. Create updated configuration
     IdentityVerificationConfiguration after = updateConfiguration(before, request.configRequest());
 
+    verifyTypeUnchanged(before, after);
+
     // 3. Populate builder with before/after
     builder.withBefore(before);
     builder.withAfter(after);
@@ -99,6 +102,35 @@ public class IdentityVerificationConfigUpdateService
 
     return new IdentityVerificationConfigManagementResponse(
         IdentityVerificationConfigManagementStatus.OK, contents);
+  }
+
+  /**
+   * Refuses a request that would change {@code type} (Issue #1900).
+   *
+   * <p>The update statement matches on {@code (id, type, tenant_id)} and does not write {@code
+   * type}, so a request carrying a different one — or none — matched no row, updated nothing, and
+   * still answered 200 with a body showing the change as if it had been applied. There was no way
+   * for a caller to tell the difference.
+   *
+   * <p>Refusing is the answer rather than making the rename work: {@code type} is the key the
+   * runtime looks a configuration up by and the value {@code
+   * identity_verification_application.verification_type} records, so renaming one would strand the
+   * applications already filed under the old name.
+   */
+  private void verifyTypeUnchanged(
+      IdentityVerificationConfiguration before, IdentityVerificationConfiguration after) {
+
+    if (after.type() == null || !after.type().exists()) {
+      throw new InvalidRequestException(
+          "type is required and must match the stored configuration: " + before.type().name());
+    }
+
+    if (!before.type().equals(after.type())) {
+      throw new InvalidRequestException(
+          String.format(
+              "type cannot be changed. stored=%s, requested=%s",
+              before.type().name(), after.type().name()));
+    }
   }
 
   private IdentityVerificationConfiguration updateConfiguration(

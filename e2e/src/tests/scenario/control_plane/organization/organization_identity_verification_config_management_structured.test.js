@@ -36,7 +36,7 @@ describe("Organization Identity Verification Config Management API - Structured 
       password: "successUserCode001",
       clientId: "org-client",
       clientSecret: "org-client-001",
-      scope: "org-management account management"
+      scope: "org-management account management",
     });
 
     expect(authResponse.status).toBe(200);
@@ -53,7 +53,7 @@ describe("Organization Identity Verification Config Management API - Structured 
       it("should return correct response structure for identity verification config list", async () => {
         const response = await get({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations?limit=10&offset=0`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(response.status).toBe(200);
@@ -74,49 +74,49 @@ describe("Organization Identity Verification Config Management API - Structured 
             id: configId,
             type: uuidv4(),
             attributes: {
-              enabled: true
+              enabled: true,
             },
             common: {
               callback_application_id_param: "app_id",
-              auth_type: "bearer"
+              auth_type: "bearer",
             },
             processes: {
               email_verification: {
                 request: {
                   basic_auth: {
                     username: "test_user",
-                    password: "test_pass"
+                    password: "test_pass",
                   },
                   schema: {
                     type: "object",
                     properties: {
-                      email: { type: "string" }
-                    }
-                  }
+                      email: { type: "string" },
+                    },
+                  },
                 },
                 execution: {
                   mock: {
                     enabled: true,
-                    response: { status: "success" }
-                  }
-                }
-              }
+                    response: { status: "success" },
+                  },
+                },
+              },
             },
             registration: {
               enabled: true,
               auto_registration: false,
-              required_attributes: ["email"]
+              required_attributes: ["email"],
             },
             result: {
               verified_claims_mapping_rules: [
                 {
                   from: "$.email",
                   to: "$.verified_claims.email",
-                  convert_type: "string"
-                }
-              ]
-            }
-          }
+                  convert_type: "string",
+                },
+              ],
+            },
+          },
         });
 
         expect(response.status).toBe(200);
@@ -124,7 +124,10 @@ describe("Organization Identity Verification Config Management API - Structured 
         expect(response.data).toHaveProperty("result");
 
         // Log the actual response structure for verification
-        console.log("Create Response Result:", JSON.stringify(response.data.result, null, 2));
+        console.log(
+          "Create Response Result:",
+          JSON.stringify(response.data.result, null, 2)
+        );
 
         // Verify detailed structure elements
         expect(response.data.result).toHaveProperty("id");
@@ -134,8 +137,12 @@ describe("Organization Identity Verification Config Management API - Structured 
         expect(response.data.result).toHaveProperty("processes");
         expect(response.data.result).toHaveProperty("registration");
         expect(response.data.result).toHaveProperty("result");
-        expect(response.data.result.result).toHaveProperty("verified_claims_mapping_rules");
-        expect(response.data.result.result).toHaveProperty("source_details_mapping_rules");
+        expect(response.data.result.result).toHaveProperty(
+          "verified_claims_mapping_rules"
+        );
+        expect(response.data.result.result).toHaveProperty(
+          "source_details_mapping_rules"
+        );
 
         // Verify nested attributes structure
         expect(response.data.result.attributes).toHaveProperty("enabled");
@@ -143,14 +150,24 @@ describe("Organization Identity Verification Config Management API - Structured 
 
         // Verify common structure
         expect(response.data.result.common).toHaveProperty("auth_type");
-        expect(response.data.result.common).toHaveProperty("callback_application_id_param");
+        expect(response.data.result.common).toHaveProperty(
+          "callback_application_id_param"
+        );
 
         // Verify processes structure
         expect(typeof response.data.result.processes).toBe("object");
 
         // Verify mapping rules are arrays in result.result
-        expect(Array.isArray(response.data.result.result.verified_claims_mapping_rules)).toBe(true);
-        expect(Array.isArray(response.data.result.result.source_details_mapping_rules)).toBe(true);
+        expect(
+          Array.isArray(
+            response.data.result.result.verified_claims_mapping_rules
+          )
+        ).toBe(true);
+        expect(
+          Array.isArray(
+            response.data.result.result.source_details_mapping_rules
+          )
+        ).toBe(true);
       });
     });
 
@@ -159,7 +176,7 @@ describe("Organization Identity Verification Config Management API - Structured 
         const nonExistentConfigId = "00000000-0000-0000-0000-000000000000";
         const response = await get({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${nonExistentConfigId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(response.status).toBe(404);
@@ -170,8 +187,8 @@ describe("Organization Identity Verification Config Management API - Structured 
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
-            invalid: "data"
-          }
+            invalid: "data",
+          },
         });
 
         expect(response.status).toBe(400);
@@ -195,11 +212,11 @@ describe("Organization Identity Verification Config Management API - Structured 
             type: uuidv4(),
             attributes: {
               enabled: true,
-              verification_timeout: 300
+              verification_timeout: 300,
             },
             common: {
               callback_application_id_param: "app_id",
-              auth_type: "bearer"
+              auth_type: "bearer",
             },
             processes: {
               document_check: {
@@ -208,19 +225,19 @@ describe("Organization Identity Verification Config Management API - Structured 
                     type: "object",
                     properties: {
                       document_type: { type: "string" },
-                      document_image: { type: "string" }
+                      document_image: { type: "string" },
                     },
-                    required: ["document_type", "document_image"]
-                  }
+                    required: ["document_type", "document_image"],
+                  },
                 },
                 execution: {
                   http_request: {
                     url: "https://api.example.com/verify",
                     method: "POST",
                     headers: {
-                      "Content-Type": "application/json"
-                    }
-                  }
+                      "Content-Type": "application/json",
+                    },
+                  },
                 },
                 transition: {
                   approved: {
@@ -229,9 +246,9 @@ describe("Organization Identity Verification Config Management API - Structured 
                         path: "$.verification_result.status",
                         operator: "eq",
                         value: "approved",
-                        type: "string"
-                      }
-                    ]
+                        type: "string",
+                      },
+                    ],
                   },
                   rejected: {
                     conditions: [
@@ -239,35 +256,35 @@ describe("Organization Identity Verification Config Management API - Structured 
                         path: "$.verification_result.status",
                         operator: "eq",
                         value: "rejected",
-                        type: "string"
-                      }
-                    ]
-                  }
-                }
-              }
+                        type: "string",
+                      },
+                    ],
+                  },
+                },
+              },
             },
             registration: {
               enabled: true,
               auto_registration: false,
-              required_attributes: ["document_type"]
+              required_attributes: ["document_type"],
             },
             result: {
               verified_claims_mapping_rules: [
                 {
                   from: "$.verification_result.document_data.name",
                   to: "$.verified_claims.name",
-                  convert_type: "string"
-                }
+                  convert_type: "string",
+                },
               ],
               source_details_mapping_rules: [
                 {
                   from: "$.verification_result.document_data.issuer",
                   to: "$.source_details.issuer",
-                  convert_type: "string"
-                }
-              ]
-            }
-          }
+                  convert_type: "string",
+                },
+              ],
+            },
+          },
         });
 
         expect(response.status).toBe(201);
@@ -279,7 +296,7 @@ describe("Organization Identity Verification Config Management API - Structured 
         // Clean up
         await deletion({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
       });
 
@@ -292,19 +309,19 @@ describe("Organization Identity Verification Config Management API - Structured 
             id: configId,
             type: uuidv4(),
             attributes: {
-              enabled: false
+              enabled: false,
             },
             processes: {
               simple_check: {
                 execution: {
                   mock: {
                     enabled: true,
-                    response: { status: "pending" }
-                  }
-                }
-              }
-            }
-          }
+                    response: { status: "pending" },
+                  },
+                },
+              },
+            },
+          },
         });
 
         expect(response.status).toBe(200);
@@ -317,7 +334,7 @@ describe("Organization Identity Verification Config Management API - Structured 
       it("should successfully retrieve identity verification config list", async () => {
         const response = await get({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(response.status).toBe(200);
@@ -329,7 +346,7 @@ describe("Organization Identity Verification Config Management API - Structured 
       it("should support pagination with limit parameter", async () => {
         const response = await get({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations?limit=5`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(response.status).toBe(200);
@@ -340,7 +357,7 @@ describe("Organization Identity Verification Config Management API - Structured 
       it("should support pagination with offset parameter", async () => {
         const response = await get({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations?limit=5&offset=2`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(response.status).toBe(200);
@@ -360,19 +377,19 @@ describe("Organization Identity Verification Config Management API - Structured 
             id: configId,
             type: uuidv4(),
             attributes: {
-              enabled: true
+              enabled: true,
             },
             processes: {
               test_process: {
                 execution: {
                   mock: {
                     enabled: true,
-                    response: { status: "test" }
-                  }
-                }
-              }
-            }
-          }
+                    response: { status: "test" },
+                  },
+                },
+              },
+            },
+          },
         });
 
         expect(createResponse.status).toBe(201);
@@ -380,13 +397,16 @@ describe("Organization Identity Verification Config Management API - Structured 
         // Now retrieve it
         const response = await get({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(response.status).toBe(200);
 
         // Log the actual GET response structure for verification
-        console.log("GET Response Data:", JSON.stringify(response.data, null, 2));
+        console.log(
+          "GET Response Data:",
+          JSON.stringify(response.data, null, 2)
+        );
 
         // Verify detailed GET response structure elements
         expect(response.data).toHaveProperty("id", configId);
@@ -403,13 +423,17 @@ describe("Organization Identity Verification Config Management API - Structured 
         expect(response.data.processes).toHaveProperty("test_process");
 
         // Verify UUID format for id and type
-        expect(response.data.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
-        expect(response.data.type).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+        expect(response.data.id).toMatch(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+        );
+        expect(response.data.type).toMatch(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+        );
 
         // Clean up
         await deletion({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
       });
 
@@ -423,29 +447,32 @@ describe("Organization Identity Verification Config Management API - Structured 
             id: configId,
             type: uuidv4(),
             attributes: {
-              enabled: true
+              enabled: true,
             },
             processes: {
               test_process: {
                 execution: {
                   mock: {
                     enabled: true,
-                    response: { status: "success" }
-                  }
+                    response: { status: "success" },
+                  },
                 },
                 response: {
                   body_mapping_rules: [
-                    { from: "$.execution_http_request.response_body", to: "*" }
-                  ]
+                    { from: "$.execution_http_request.response_body", to: "*" },
+                  ],
                 },
                 store: {
                   application_details_mapping_rules: [
-                    { from: "$.execution_http_request.response_body.user_id", to: "$.user_id" }
-                  ]
-                }
-              }
-            }
-          }
+                    {
+                      from: "$.execution_http_request.response_body.user_id",
+                      to: "$.user_id",
+                    },
+                  ],
+                },
+              },
+            },
+          },
         });
 
         expect(createResponse.status).toBe(201);
@@ -453,7 +480,7 @@ describe("Organization Identity Verification Config Management API - Structured 
         // Retrieve the config and verify snake_case keys
         const response = await get({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(response.status).toBe(200);
@@ -466,17 +493,25 @@ describe("Organization Identity Verification Config Management API - Structured 
         // Verify response config uses snake_case key "body_mapping_rules" (not camelCase "bodyMappingRules")
         expect(testProcess.response).toHaveProperty("body_mapping_rules");
         expect(testProcess.response).not.toHaveProperty("bodyMappingRules");
-        expect(Array.isArray(testProcess.response.body_mapping_rules)).toBe(true);
+        expect(Array.isArray(testProcess.response.body_mapping_rules)).toBe(
+          true
+        );
 
         // Verify store config uses snake_case key "application_details_mapping_rules" (not camelCase)
-        expect(testProcess.store).toHaveProperty("application_details_mapping_rules");
-        expect(testProcess.store).not.toHaveProperty("applicationDetailsMappingRules");
-        expect(Array.isArray(testProcess.store.application_details_mapping_rules)).toBe(true);
+        expect(testProcess.store).toHaveProperty(
+          "application_details_mapping_rules"
+        );
+        expect(testProcess.store).not.toHaveProperty(
+          "applicationDetailsMappingRules"
+        );
+        expect(
+          Array.isArray(testProcess.store.application_details_mapping_rules)
+        ).toBe(true);
 
         // Clean up
         await deletion({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
       });
 
@@ -484,7 +519,7 @@ describe("Organization Identity Verification Config Management API - Structured 
         const nonExistentId = "00000000-0000-0000-0000-000000000000";
         const response = await get({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${nonExistentId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(response.status).toBe(404);
@@ -495,16 +530,18 @@ describe("Organization Identity Verification Config Management API - Structured 
       it("should successfully update identity verification configuration", async () => {
         // Create a config specifically for this test
         const configId = uuidv4();
+        // Issue #1900: type is immutable, so the update has to carry the one it was created with.
+        const configType = `ivc-${uuidv4()}`;
         const createResponse = await postWithJson({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
-            type: uuidv4(),
+            type: configType,
             attributes: {
-              enabled: true
-            }
-          }
+              enabled: true,
+            },
+          },
         });
 
         expect(createResponse.status).toBe(201);
@@ -514,25 +551,25 @@ describe("Organization Identity Verification Config Management API - Structured 
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
-            type: uuidv4(),
+            type: configType,
             attributes: {
               enabled: false,
-              updated_field: "new_value"
+              updated_field: "new_value",
             },
             common: {
-              auth_type: "hmac"
+              auth_type: "hmac",
             },
             processes: {
               updated_process: {
                 execution: {
                   mock: {
                     enabled: true,
-                    response: { status: "updated" }
-                  }
-                }
-              }
-            }
-          }
+                    response: { status: "updated" },
+                  },
+                },
+              },
+            },
+          },
         });
 
         expect(response.status).toBe(200);
@@ -543,23 +580,25 @@ describe("Organization Identity Verification Config Management API - Structured 
         // Clean up
         await deletion({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
       });
 
       it("should support dry run mode for update", async () => {
         // Create a config specifically for this test
         const configId = uuidv4();
+        // Issue #1900: type is immutable, so the update has to carry the one it was created with.
+        const configType = `ivc-${uuidv4()}`;
         const createResponse = await postWithJson({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
-            type: uuidv4(),
+            type: configType,
             attributes: {
-              enabled: true
-            }
-          }
+              enabled: true,
+            },
+          },
         });
 
         expect(createResponse.status).toBe(201);
@@ -569,11 +608,11 @@ describe("Organization Identity Verification Config Management API - Structured 
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}?dry_run=true`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
-            type: uuidv4(),
+            type: configType,
             attributes: {
-              enabled: false
-            }
-          }
+              enabled: false,
+            },
+          },
         });
 
         expect(response.status).toBe(200);
@@ -582,7 +621,122 @@ describe("Organization Identity Verification Config Management API - Structured 
         // Clean up
         await deletion({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+      });
+
+      it("should return 400 when type differs from the stored configuration", async () => {
+        // Issue #1900: the update matched on (id, type, tenant_id) and did not write type, so a
+        // request carrying a different one updated no row and still answered 200 with a body
+        // showing the change. Refusing is what makes the outcome readable.
+        const configId = uuidv4();
+        const configType = `ivc-${uuidv4()}`;
+        const createResponse = await postWithJson({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: {
+            id: configId,
+            type: configType,
+            attributes: { enabled: true },
+          },
+        });
+        expect(createResponse.status).toBe(201);
+
+        const renamed = await putWithJson({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: { type: `ivc-${uuidv4()}`, common: { auth_type: "hmac" } },
+        });
+        console.log(
+          "type change:",
+          renamed.status,
+          JSON.stringify(renamed.data)
+        );
+        expect(renamed.status).toBe(400);
+        expect(renamed.data.error_description).toContain(
+          "type cannot be changed"
+        );
+
+        const omitted = await putWithJson({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: { common: { auth_type: "hmac" } },
+        });
+        console.log(
+          "type omitted:",
+          omitted.status,
+          JSON.stringify(omitted.data)
+        );
+        expect(omitted.status).toBe(400);
+
+        // Neither request reached the row.
+        const unchanged = await get({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        expect(unchanged.data).toHaveProperty("type", configType);
+
+        await deletion({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+      });
+
+      it("should return result and registration.response it was given", async () => {
+        // Issue #1900: both were stored and neither came back, so reading a configuration, editing
+        // one field and writing it back erased them.
+        const configId = uuidv4();
+        const configType = `ivc-${uuidv4()}`;
+        const createResponse = await postWithJson({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: {
+            id: configId,
+            type: configType,
+            result: {
+              user_status: "KEEP",
+              user_claims_mapping_rules: [
+                {
+                  from: "$.application.application_details.email",
+                  to: "email",
+                },
+              ],
+            },
+            registration: {
+              response: { body_mapping_rules: [{ from: "$.x", to: "y" }] },
+            },
+          },
+        });
+        expect(createResponse.status).toBe(201);
+
+        const created = await get({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        expect(created.data.result).toHaveProperty("user_status", "KEEP");
+        expect(created.data.result.user_claims_mapping_rules).toHaveLength(1);
+        expect(
+          created.data.registration.response.body_mapping_rules
+        ).toHaveLength(1);
+
+        // Write back exactly what was read, the way an editor would, and read it again.
+        const roundTrip = await putWithJson({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: created.data,
+        });
+        expect(roundTrip.status).toBe(200);
+
+        const after = await get({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        console.log("round trip:", JSON.stringify(after.data));
+        expect(after.data).toEqual(created.data);
+
+        await deletion({
+          url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
       });
     });
@@ -598,9 +752,9 @@ describe("Organization Identity Verification Config Management API - Structured 
             id: configId,
             type: uuidv4(),
             attributes: {
-              enabled: true
-            }
-          }
+              enabled: true,
+            },
+          },
         });
 
         expect(createResponse.status).toBe(201);
@@ -608,7 +762,7 @@ describe("Organization Identity Verification Config Management API - Structured 
         // Test dry run deletion
         const response = await deletion({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}?dry_run=true`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(response.status).toBe(200);
@@ -616,7 +770,7 @@ describe("Organization Identity Verification Config Management API - Structured 
         // Clean up (actual deletion)
         await deletion({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
       });
 
@@ -630,9 +784,9 @@ describe("Organization Identity Verification Config Management API - Structured 
             id: configId,
             type: uuidv4(),
             attributes: {
-              enabled: true
-            }
-          }
+              enabled: true,
+            },
+          },
         });
 
         expect(createResponse.status).toBe(201);
@@ -640,7 +794,7 @@ describe("Organization Identity Verification Config Management API - Structured 
         // Now delete it
         const response = await deletion({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(response.status).toBe(204);
@@ -656,7 +810,7 @@ describe("Organization Identity Verification Config Management API - Structured 
     it("should return 401 for unauthenticated requests", async () => {
       const response = await get({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations`,
-        headers: {}
+        headers: {},
       });
 
       expect(response.status).toBe(401);
@@ -666,7 +820,7 @@ describe("Organization Identity Verification Config Management API - Structured 
       const invalidOrgId = "invalid-org-id";
       const response = await get({
         url: `${backendUrl}/v1/management/organizations/${invalidOrgId}/tenants/${tenantId}/identity-verification-configurations`,
-        headers: { Authorization: `Bearer ${accessToken}` }
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       expect([400, 404]).toContain(response.status);
@@ -676,7 +830,7 @@ describe("Organization Identity Verification Config Management API - Structured 
       const invalidTenantId = "invalid-tenant-id";
       const response = await get({
         url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${invalidTenantId}/identity-verification-configurations`,
-        headers: { Authorization: `Bearer ${accessToken}` }
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       expect([400, 404]).toContain(response.status);
@@ -691,6 +845,8 @@ describe("Organization Identity Verification Config Management API - Structured 
     describe("Complete Identity Verification Config Management Workflow", () => {
       it("should successfully manage identity verification config lifecycle", async () => {
         const configId = uuidv4();
+        // Issue #1900: type is immutable, so the update has to carry the one it was created with.
+        const configType = `ivc-${uuidv4()}`;
 
         // 1. Create identity verification config (POST)
         const createResponse = await postWithJson({
@@ -698,14 +854,14 @@ describe("Organization Identity Verification Config Management API - Structured 
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
             id: configId,
-            type: uuidv4(),
+            type: configType,
             attributes: {
               enabled: true,
-              test_mode: true
+              test_mode: true,
             },
             common: {
               callback_application_id_param: "lifecycle_app",
-              auth_type: "bearer"
+              auth_type: "bearer",
             },
             processes: {
               lifecycle_process: {
@@ -713,32 +869,32 @@ describe("Organization Identity Verification Config Management API - Structured 
                   schema: {
                     type: "object",
                     properties: {
-                      user_id: { type: "string" }
-                    }
-                  }
+                      user_id: { type: "string" },
+                    },
+                  },
                 },
                 execution: {
                   mock: {
                     enabled: true,
-                    response: { status: "lifecycle_success" }
-                  }
-                }
-              }
+                    response: { status: "lifecycle_success" },
+                  },
+                },
+              },
             },
             registration: {
               enabled: true,
-              auto_registration: true
+              auto_registration: true,
             },
             result: {
               verified_claims_mapping_rules: [
                 {
                   from: "$.user_data.id",
                   to: "$.verified_claims.user_id",
-                  convert_type: "string"
-                }
-              ]
-            }
-          }
+                  convert_type: "string",
+                },
+              ],
+            },
+          },
         });
 
         expect(createResponse.status).toBe(201);
@@ -747,7 +903,7 @@ describe("Organization Identity Verification Config Management API - Structured 
         // 2. Retrieve the created config (GET detail)
         const getResponse = await get({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(getResponse.status).toBe(200);
@@ -758,16 +914,16 @@ describe("Organization Identity Verification Config Management API - Structured 
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
-            type: uuidv4(),
+            type: configType,
             attributes: {
               enabled: false,
               test_mode: false,
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             },
             common: {
-              auth_type: "hmac"
-            }
-          }
+              auth_type: "hmac",
+            },
+          },
         });
 
         expect(updateResponse.status).toBe(200);
@@ -776,16 +932,23 @@ describe("Organization Identity Verification Config Management API - Structured 
         // 4. Verify the update (GET detail)
         const getUpdatedResponse = await get({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(getUpdatedResponse.status).toBe(200);
         expect(getUpdatedResponse.data).toHaveProperty("id", configId);
+        // Issue #1900: this step only checked the id, so a PUT that matched no row and changed
+        // nothing still passed. Assert something the update actually set.
+        expect(getUpdatedResponse.data.common).toHaveProperty(
+          "auth_type",
+          "hmac"
+        );
+        expect(getUpdatedResponse.data).toHaveProperty("type", configType);
 
         // 5. Delete the config (DELETE)
         const deleteResponse = await deletion({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(deleteResponse.status).toBe(204);
@@ -793,7 +956,7 @@ describe("Organization Identity Verification Config Management API - Structured 
         // 6. Verify deletion (GET detail should return 404)
         const getDeletedResponse = await get({
           url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations/${configId}`,
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         expect(getDeletedResponse.status).toBe(404);
@@ -805,10 +968,11 @@ describe("Organization Identity Verification Config Management API - Structured 
         let hasMoreConfigs = true;
         let allConfigs = [];
 
-        while (hasMoreConfigs && allConfigs.length < 20) { // Limit to prevent infinite loops
+        while (hasMoreConfigs && allConfigs.length < 20) {
+          // Limit to prevent infinite loops
           const response = await get({
             url: `${backendUrl}/v1/management/organizations/${orgId}/tenants/${tenantId}/identity-verification-configurations?limit=${limit}&offset=${offset}`,
-            headers: { Authorization: `Bearer ${accessToken}` }
+            headers: { Authorization: `Bearer ${accessToken}` },
           });
 
           expect(response.status).toBe(200);
@@ -820,7 +984,10 @@ describe("Organization Identity Verification Config Management API - Structured 
           allConfigs = allConfigs.concat(response.data.list);
 
           // Check if there are more configs
-          if (response.data.list.length < limit || allConfigs.length >= response.data.total_count) {
+          if (
+            response.data.list.length < limit ||
+            allConfigs.length >= response.data.total_count
+          ) {
             hasMoreConfigs = false;
           } else {
             offset += limit;
