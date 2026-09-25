@@ -39,9 +39,9 @@ import org.idp.server.platform.multi_tenancy.tenant.TenantQueryRepository;
 import org.idp.server.platform.type.RequestAttributes;
 
 /**
- * Organization-level authentication policy configuration management handler.
+ * Organization-level authentication configuration management handler.
  *
- * <p>Orchestrates organization-scoped authentication policy configuration management operations by
+ * <p>Orchestrates organization-scoped authentication configuration management operations by
  * delegating to appropriate Service implementations via strategy pattern.
  *
  * <h2>Organization-Level Access Control</h2>
