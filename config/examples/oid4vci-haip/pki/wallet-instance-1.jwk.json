@@ -1,0 +1,10 @@
+{
+  "kty": "EC",
+  "x": "2uk6iSK3fEzffOii3NRDazRnq5Q5ecjhPyMBbElk4zU",
+  "y": "hQqS2iA3kcfGT5slXqWMocD30roQ3gvclfujCZ205Tk",
+  "crv": "P-256",
+  "d": "2BTqTJoR0qWLZEiN9jtIi0q_woc99tQ3PcjlM3xAXS0",
+  "kid": "wallet-instance-1",
+  "use": "sig",
+  "alg": "ES256"
+}
